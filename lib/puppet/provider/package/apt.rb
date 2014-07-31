@@ -34,7 +34,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
                    false
                  end
 
-    if have_cdrom and @resource[:allowcdrom] != :true
+    if have_cdrom && (@resource[:allowcdrom] != :true)
       raise Puppet::Error,
         "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
     end
@@ -89,7 +89,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # preseeds answers to dpkg-set-selection from the "responsefile"
   #
   def run_preseed
-    if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
+    if (response = @resource[:responsefile]) && Puppet::FileSystem.exist?(response)
       self.info("Preseeding #{response} to debconf-set-selections")
 
       preseed response

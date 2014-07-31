@@ -104,11 +104,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
+    if !@resource.allowdupe? && @resource.forcelocal?
+       if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
-    elsif @resource.allowdupe? and not @resource.forcelocal?
+    elsif @resource.allowdupe? && !@resource.forcelocal?
        return ["-o"]
     end
     []
@@ -125,9 +125,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_home
     cmd = []
-    if @resource.managehome? and not @resource.forcelocal?
+    if @resource.managehome? && !@resource.forcelocal?
       cmd << "-m"
-    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
+    elsif !@resource.managehome? && (Facter.value(:osfamily) == 'RedHat')
       cmd << "-M"
     end
     cmd
@@ -135,7 +135,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_expiry
     cmd = []
-    if @resource[:expiry] and not @resource.forcelocal?
+    if @resource[:expiry] && !@resource.forcelocal?
       cmd << "-e #{@resource[:expiry]}"
     end
 
@@ -143,7 +143,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_system_users
-    if self.class.system_users? and resource.system?
+    if self.class.system_users? && resource.system?
       ["-r"]
     else
       []
@@ -157,11 +157,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
-      next if property == :groups and @resource.forcelocal?
-      next if property == :expiry and @resource.forcelocal?
+      next if (property == :groups) && @resource.forcelocal?
+      next if (property == :expiry) && @resource.forcelocal?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
-      if value = @resource.should(property) and value != ""
+      if (value = @resource.should(property)) && (value != "")
         cmd << flag(property) << munge(property, value)
       end
     end
@@ -175,7 +175,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if not @resource.should(:gid) and Puppet::Util.gid(@resource[:name])
+    if !@resource.should(:gid) && Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties
@@ -217,10 +217,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? && self.groups?
        set(:groups, @resource[:groups])
      end
-     if @resource.forcelocal? and @resource[:expiry]
+     if @resource.forcelocal? && @resource[:expiry]
        set(:expiry, @resource[:expiry])
      end
   end

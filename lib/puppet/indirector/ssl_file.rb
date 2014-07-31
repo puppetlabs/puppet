@@ -49,7 +49,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   def initialize
     Puppet.settings.use(:main, :ssl)
 
-    (collection_directory || file_location) or raise Puppet::DevError, "No file or directory setting provided; terminus #{self.class.name} cannot function"
+    (collection_directory || file_location) || (raise Puppet::DevError, "No file or directory setting provided; terminus #{self.class.name} cannot function")
   end
 
   def path(name)
@@ -58,7 +58,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
       raise ArgumentError, "invalid key"
     end
 
-    if ca?(name) and ca_location
+    if ca?(name) && ca_location
       ca_location
     elsif collection_directory
       File.join(collection_directory, name.to_s + ".pem")
@@ -158,7 +158,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # Yield a filehandle set up appropriately, either with our settings doing
   # the work or opening a filehandle manually.
   def write(name, path)
-    if ca?(name) and ca_location
+    if ca?(name) && ca_location
       Puppet.settings.setting(self.class.ca_setting).open('w') { |f| yield f }
     elsif file_location
       Puppet.settings.setting(self.class.file_setting).open('w') { |f| yield f }

@@ -135,10 +135,10 @@ module Puppet
             return true unless [:absent, :purged, :held].include?(is)
           when :latest
             # Short-circuit packages that are not present
-            return false if is == :absent or is == :purged
+            return false if (is == :absent) || (is == :purged)
 
             # Don't run 'latest' more than about every 5 minutes
-            if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
+            if @latest && ((Time.now.to_i - @lateststamp) / 60) < 5
               #self.debug "Skipping latest check"
             else
               begin
@@ -166,7 +166,7 @@ module Puppet
 
 
           when :absent
-            return true if is == :absent or is == :purged
+            return true if (is == :absent) || (is == :purged)
           when :purged
             return true if is == :purged
           # this handles version number matches and
@@ -440,7 +440,7 @@ module Puppet
         end
       }
 
-      if source = self[:source] and absolute_path?(source)
+      if (source = self[:source]) && absolute_path?(source)
         autos << source
       end
       autos

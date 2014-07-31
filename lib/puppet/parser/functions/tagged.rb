@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(:tagged, :type => :rvalue, :arity => -2, 
 
     retval = true
     vals.each do |val|
-      unless configtags.include?(val) or resourcetags.include?(val)
+      unless configtags.include?(val) || resourcetags.include?(val)
         retval = false
         break
       end

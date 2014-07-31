@@ -75,7 +75,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
                   # blowing up.
                   nil
                 end
-      next unless trigger and scheduler_trigger_types.include?(trigger['trigger_type'])
+      next unless trigger && scheduler_trigger_types.include?(trigger['trigger_type'])
 
       puppet_trigger = {}
       case trigger['trigger_type']
@@ -316,13 +316,13 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       }
 
       if puppet_trigger.keys.include?('on')
-        if puppet_trigger.has_key?('day_of_week') or puppet_trigger.has_key?('which_occurrence')
+        if puppet_trigger.has_key?('day_of_week') || puppet_trigger.has_key?('which_occurrence')
           self.fail "Neither 'day_of_week' nor 'which_occurrence' can be specified when creating a monthly date-based trigger"
         end
 
         trigger['trigger_type'] = Win32::TaskScheduler::MONTHLYDATE
         trigger['type']['days'] = bitfield_from_days(puppet_trigger['on'])
-      elsif puppet_trigger.keys.include?('which_occurrence') or puppet_trigger.keys.include?('day_of_week')
+      elsif puppet_trigger.keys.include?('which_occurrence') || puppet_trigger.keys.include?('day_of_week')
         self.fail 'which_occurrence cannot be specified as an array' if puppet_trigger['which_occurrence'].is_a?(Array)
         %w{day_of_week which_occurrence}.each do |field|
           self.fail "#{field} must be specified when creating a monthly day-of-week based trigger" unless puppet_trigger.has_key?(field)
@@ -376,7 +376,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     months = [months] unless months.is_a?(Array)
     months.each do |month|
       integer_month = Integer(month) rescue nil
-      self.fail 'Month must be specified as an integer in the range 1-12' unless integer_month == month.to_f and integer_month.between?(1,12)
+      self.fail 'Month must be specified as an integer in the range 1-12' unless (integer_month == month.to_f) && integer_month.between?(1,12)
 
       bitfield |= scheduler_months[integer_month - 1]
     end
@@ -395,7 +395,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       day = 32 if day == 'last'
 
       integer_day = Integer(day)
-      self.fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless integer_day = day.to_f and integer_day.between?(1,32)
+      self.fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless (integer_day = day.to_f) && integer_day.between?(1,32)
 
       bitfield |= 1 << integer_day - 1
     end

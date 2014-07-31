@@ -82,7 +82,7 @@ module Puppet::Util::FileParsing
 
       fields.collect { |field|
         # If the field is marked absent, use the appropriate replacement
-        if details[field] == :absent or details[field] == [:absent] or details[field].nil?
+        if (details[field] == :absent) || (details[field] == [:absent]) || details[field].nil?
           if self.optional.include?(field)
             self.absent
           else
@@ -184,14 +184,14 @@ module Puppet::Util::FileParsing
       line_fields = line.split(sep)
       record.fields.each do |param|
         value = line_fields.shift
-        if value and value != record.absent
+        if value && (value != record.absent)
           ret[param] = value
         else
           ret[param] = :absent
         end
       end
 
-      if record.rollup and ! line_fields.empty?
+      if record.rollup && !line_fields.empty?
         last_field = record.fields[-1]
         val = ([ret[last_field]] + line_fields).join(record.joiner)
         ret[last_field] = val
@@ -279,7 +279,7 @@ module Puppet::Util::FileParsing
 
   # Are there any record types defined?
   def records?
-    defined?(@record_types) and ! @record_types.empty?
+    defined?(@record_types) && ! @record_types.empty?
   end
 
   # Define a new type of text record.
@@ -342,7 +342,7 @@ module Puppet::Util::FileParsing
 
   def valid_attr?(type, attr)
     type = type.intern
-    if record = record_type(type) and record.fields.include?(attr.intern)
+    if (record = record_type(type)) && record.fields.include?(attr.intern)
       return true
     else
       if attr.intern == :ensure

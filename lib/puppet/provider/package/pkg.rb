@@ -132,7 +132,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # return the first known we find. The only way that is currently available is to do a dry run of
     # pkg update and see if could get installed (`pkg update -n res`).
     known = lst.find {|p| p[:status] == 'known' }
-    return known[:ensure] if known and exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
+    return known[:ensure] if known && exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
 
     # If not, then return the installed, else nil
     (lst.find {|p| p[:status] == 'installed' } || {})[:ensure]

@@ -51,7 +51,7 @@ class Puppet::Settings
   def self.default_certname()
     hostname = hostname_fact
     domain = domain_fact
-    if domain and domain != ""
+    if domain && (domain != "")
       fqdn = [hostname, domain].join(".")
     else
       fqdn = hostname
@@ -169,7 +169,7 @@ class Puppet::Settings
   # Is our setting a boolean setting?
   def boolean?(param)
     param = param.to_sym
-    @config.include?(param) and @config[param].kind_of?(BooleanSetting)
+    @config.include?(param) && @config[param].kind_of?(BooleanSetting)
   end
 
   # Remove all set values, potentially skipping cli values.
@@ -222,7 +222,7 @@ class Puppet::Settings
     # but we don't really know if, say, the vardir is changed and the modulepath
     # is defined relative to it. We need the defined?(stuff) because of loading
     # order issues.
-    Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
+    Puppet::Node::Environment.clear if defined?(Puppet::Node) && defined?(Puppet::Node::Environment)
   end
   private :unsafe_flush_cache
 
@@ -294,7 +294,7 @@ class Puppet::Settings
   # @param [String, TrueClass, FalseClass] val the value for the setting (as determined by the OptionParser)
   def self.clean_opt(opt, val)
     # rewrite --[no-]option to --no-option if that's what was given
-    if opt =~ /\[no-\]/ and !val
+    if (opt =~ /\[no-\]/) && !val
       opt = opt.gsub(/\[no-\]/,'no-')
     end
     # otherwise remove the [no-] prefix to not confuse everybody
@@ -395,7 +395,7 @@ class Puppet::Settings
     str = str.intern
 
     if @config[str].is_a?(Puppet::Settings::BooleanSetting)
-      if value == "" or value.nil?
+      if (value == "") || value.nil?
         value = bool
       end
     end
@@ -474,7 +474,7 @@ class Puppet::Settings
 
   # Return a given object's file metadata.
   def metadata(param)
-    if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
+    if (obj = @config[param.to_sym]) && obj.is_a?(FileSetting)
       {
         :owner => obj.owner,
         :group => obj.group,
@@ -889,7 +889,7 @@ class Puppet::Settings
 
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
-      next unless (sections.nil? or sections.include?(file.section))
+      next unless (sections.nil? || sections.include?(file.section))
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
 
@@ -1048,7 +1048,7 @@ Generated on #{Time.now}.
   # @todo this code duplicates {Puppet::Util::RunMode#which_dir} as described
   #   in {http://projects.puppetlabs.com/issues/16637 #16637}
   def which_configuration_file
-    if explicit_config_file? or Puppet.features.root? then
+    if explicit_config_file? || Puppet.features.root? then
       return main_config_file
     else
       return user_config_file
@@ -1144,14 +1144,14 @@ Generated on #{Time.now}.
 
     @config.each do |name, setting|
       next unless setting.respond_to?(:owner)
-      next unless sections.nil? or sections.include?(setting.section)
+      next unless sections.nil? || sections.include?(setting.section)
 
-      if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
+      if (user = setting.owner) && (user != "root") && (catalog.resource(:user, user).nil?)
         resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
-      if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+      if (group = setting.group) && !%w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
       end
     end

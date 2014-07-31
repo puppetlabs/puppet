@@ -117,7 +117,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.make_label_to_path_map(refresh=false)
-    return @label_to_path_map if @label_to_path_map and not refresh
+    return @label_to_path_map if @label_to_path_map && !refresh
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|
@@ -257,7 +257,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As load -w clears the Disabled flag, we need to add it in after
-    self.disable if did_enable_job and resource[:enable] == :false
+    self.disable if did_enable_job && (resource[:enable] == :false)
   end
 
 
@@ -278,7 +278,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As unload -w sets the Disabled flag, we need to add it in after
-    self.enable if did_disable_job and resource[:enable] == :true
+    self.enable if did_disable_job && (resource[:enable] == :true)
   end
 
   def restart
@@ -303,7 +303,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if has_macosx_plist_overrides?
-      if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
+      if FileTest.file?(self.class.launchd_overrides) && (overrides = self.class.read_plist(self.class.launchd_overrides))
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
         end
@@ -311,7 +311,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
 
     if overrides_disabled.nil?
-      if job_plist_disabled.nil? or job_plist_disabled == false
+      if job_plist_disabled.nil? || (job_plist_disabled == false)
         return :true
       end
     elsif overrides_disabled == false

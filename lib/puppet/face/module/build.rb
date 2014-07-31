@@ -34,7 +34,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |*args|
       options = args.pop
-      if options.nil? or args.length > 1 then
+      if options.nil? || (args.length > 1) then
         raise ArgumentError, "puppet module build only accepts 0 or 1 arguments"
       end
 

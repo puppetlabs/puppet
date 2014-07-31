@@ -140,7 +140,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # In the case of attributes, return a list of key=vlaue
     if key == :attributes
       raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
-        unless value and value.is_a? Hash
+        unless value && (value.is_a? Hash)
       return value.map { |k,v| k.to_s.strip + "=" + v.to_s.strip}
     end
 
@@ -152,7 +152,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
-      if attrs and attrs.include? :id and gid == attrs[:id].to_i
+      if attrs && attrs.include?(:id) && (gid == attrs[:id].to_i)
         groupname = entry.split(" ")[0]
       end
     }
@@ -167,7 +167,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Check that a group exists and is valid
   def verify_group(value)
-    if value.is_a? Integer or value.is_a? Fixnum
+    if value.is_a?(Integer) || value.is_a?(Fixnum)
       groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else
@@ -193,7 +193,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # For chuser the expires parameter is a 10-character string in the MMDDhhmmyy format
     # that is,"%m%d%H%M%y"
     newdate = '0'
-    if value.is_a? String and value!="0000-00-00"
+    if value.is_a?(String) && (value!="0000-00-00")
       d = DateTime.parse(value, "%Y-%m-%d %H:%M")
       newdate = d.strftime("%m%d%H%M%y")
     end
@@ -283,8 +283,8 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def should_include?(key, managed_keys)
-    !self.class.attribute_mapping_from.include?(key) and
-            !self.class.attribute_ignore.include?(key) and
+    !self.class.attribute_mapping_from.include?(key) &&
+            !self.class.attribute_ignore.include?(key) &&
             managed_keys.include?(key)
   end
 

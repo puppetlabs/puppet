@@ -122,7 +122,7 @@ class Puppet::Util::Log
       klass.match?(dest)
     end
 
-    if type.respond_to?(:suitable?) and not type.suitable?(dest)
+    if type.respond_to?(:suitable?) && !type.suitable?(dest)
       return
     end
 
@@ -140,7 +140,7 @@ class Puppet::Util::Log
       Puppet.log_exception(detail)
 
       # If this was our only destination, then add the console back in.
-      newdestination(:console) if @destinations.empty? and (dest != :console and dest != "console")
+      newdestination(:console) if @destinations.empty? && ((dest != :console) && (dest != "console"))
     end
   end
 
@@ -191,7 +191,7 @@ class Puppet::Util::Log
   #  error scenario.
   # @return nil
   def Log.force_flushqueue()
-    if (@destinations.empty? and !(@queued.empty?))
+    if (@destinations.empty? && !(@queued.empty?))
       newdestination(:console)
     end
     flushqueue

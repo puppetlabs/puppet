@@ -27,8 +27,8 @@ module Puppet::SSL::CertificateFactory
   def self.build(cert_type, csr, issuer, serial, ttl = nil)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
-    respond_to?(build_extensions) or
-      raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!"
+    respond_to?(build_extensions) ||
+      (raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!")
 
     raise ArgumentError, "Certificate TTL must be an integer" unless ttl.nil? || ttl.is_a?(Fixnum)
 
@@ -203,7 +203,7 @@ module Puppet::SSL::CertificateFactory
     # always do. --daniel 2011-10-18
     crit = false if oid == "subjectAltName"
 
-    if Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
+    if Puppet::SSL::Oids.subtree_of?('id-ce',oid) || Puppet::SSL::Oids.subtree_of?('id-pkix',oid)
       # Attempt to create a X509v3 certificate extension. Standard certificate
       # extensions may need access to the associated subject certificate and
       # issuing certificate, so must be created by the OpenSSL::X509::ExtensionFactory

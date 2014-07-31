@@ -334,11 +334,11 @@ end
   end
 
   def validate_exclusive(interface, address, router)
-    return if !interface.nil? and address.nil?
+    return if !interface.nil? && address.nil?
     self.fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
   end
   def validate_shared(interface, address, router)
-    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
+    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? || address.nil?
     [address, router].each do |ip|
       validate_ip(address, "IP address") unless ip.nil?
     end
@@ -361,7 +361,7 @@ end
   def retrieve
     provider.flush
     hash = provider.properties
-    return setstatus(hash) unless hash.nil? or hash[:ensure] == :absent
+    return setstatus(hash) unless hash.nil? || (hash[:ensure] == :absent)
     # Return all properties as absent.
     return Hash[properties.map{|p| [p, :absent]} ]
   end

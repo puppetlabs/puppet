@@ -42,7 +42,7 @@ module Semantic
         subject = 'Prerelease identifiers'
         prerelease = prerelease.split('.', -1)
 
-        if prerelease.empty? or prerelease.any? { |x| x.empty? }
+        if prerelease.empty? || (prerelease.any? { |x| x.empty? })
           raise "#{subject} MUST NOT be empty"
         elsif prerelease.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
           raise "#{subject} MUST use only ASCII alphanumerics and hyphens"
@@ -57,7 +57,7 @@ module Semantic
         subject = 'Build identifiers'
         build = build.split('.', -1)
 
-        if build.empty? or build.any? { |x| x.empty? }
+        if build.empty? || (build.any? { |x| x.empty? })
           raise "#{subject} MUST NOT be empty"
         elsif build.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
           raise "#{subject} MUST use only ASCII alphanumerics and hyphens"

@@ -124,7 +124,7 @@ module Puppet::Util::ProviderFeatures
       # determine if the feature is present.
       @feature_module.send(:define_method, :feature?) do |name|
         method = name.to_s + "?"
-        return !!(respond_to?(method) and send(method))
+        return !!(respond_to?(method) && send(method))
       end
 
       # Create a method that will list all functional features.
@@ -153,7 +153,7 @@ module Puppet::Util::ProviderFeatures
       @features.each do |name, feature|
         method = name.to_s + "?"
         @feature_module.send(:define_method, method) do
-          (is_a?(Class) ?  declared_feature?(name) : self.class.declared_feature?(name)) or feature.available?(self)
+          (is_a?(Class) ?  declared_feature?(name) : self.class.declared_feature?(name)) || feature.available?(self)
         end
       end
 

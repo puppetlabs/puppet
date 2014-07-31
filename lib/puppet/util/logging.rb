@@ -38,10 +38,10 @@ module Puppet::Util::Logging
       arr << message
     end
 
-    if trace and exception.backtrace
+    if trace && exception.backtrace
       arr << Puppet::Util.pretty_backtrace(exception.backtrace)
     end
-    if exception.respond_to?(:original) and exception.original
+    if exception.respond_to?(:original) && exception.original
       arr << "Wrapped exception:"
       arr << format_exception(exception.original, :default, trace)
     end
@@ -175,7 +175,7 @@ module Puppet::Util::Logging
 
   def log_source
     # We need to guard the existence of the constants, since this module is used by the base Puppet module.
-    (is_resource? or is_resource_parameter?) and respond_to?(:path) and return path.to_s
+    (is_resource? || is_resource_parameter?) && respond_to?(:path) && (return path.to_s)
     to_s
   end
 end

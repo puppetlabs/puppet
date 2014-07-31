@@ -230,7 +230,7 @@ module Puppet
           is in Ruby's search path\n",
       :call_hook => :on_initialize_and_write,
       :hook             => proc do |value|
-        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) and $LOAD_PATH.include?(@oldlibdir)
+        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) && $LOAD_PATH.include?(@oldlibdir)
         @oldlibdir = value
         $LOAD_PATH << value
       end
@@ -289,7 +289,7 @@ module Puppet
           currently cannot daemonize).",
         :short    => "D",
         :hook     => proc do |value|
-          if value and Puppet.features.microsoft_windows?
+          if value && Puppet.features.microsoft_windows?
             raise "Cannot daemonize on Windows"
           end
       end
@@ -578,7 +578,7 @@ module Puppet
     :certdnsnames => {
       :default => '',
       :hook    => proc do |value|
-        unless value.nil? or value == '' then
+        unless value.nil? || (value == '') then
           Puppet.warning <<WARN
 The `certdnsnames` setting is no longer functional,
 after CVE-2011-3872. We ignore the value completely.
@@ -1225,7 +1225,7 @@ EOT
         auth.conf configuration on the Puppet Master.  Please see
         http://links.puppetlabs.com/node_name_fact for more information.",
       :hook => proc do |value|
-        if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
+        if !value.empty? && (Puppet[:node_name_value] != Puppet[:certname])
           raise "Cannot specify both the node_name_value and node_name_fact settings"
         end
       end

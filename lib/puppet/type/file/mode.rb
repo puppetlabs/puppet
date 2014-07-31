@@ -60,7 +60,7 @@ module Puppet
     EOT
 
     validate do |value|
-      unless value.nil? or valid_symbolic_mode?(value)
+      unless value.nil? || valid_symbolic_mode?(value)
         raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"
       end
     end
@@ -84,7 +84,7 @@ module Puppet
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
-      if FileTest.directory?(resource[:path]) and value =~ /^\d+$/ then
+      if FileTest.directory?(resource[:path]) && (value =~ /^\d+$/) then
         value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
         value |= 010 if value & 040 != 0
@@ -98,7 +98,7 @@ module Puppet
     # If we're not following links and we're a link, then we just turn
     # off mode management entirely.
     def insync?(currentvalue)
-      if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
+      if (stat = @resource.stat) && (stat.ftype == "link") && (@resource[:links] != :follow)
         self.debug "Not managing symlink mode"
         return true
       else

@@ -52,7 +52,7 @@ module Puppet::Util::POSIX
     end
 
     Etc.send(type) do |object|
-      if integer and object.send(idmethod) == id
+      if integer && (object.send(idmethod) == id)
         return object.send(field)
       elsif object.name == id
         return object.send(field)

@@ -17,13 +17,13 @@ class Puppet::Util::Log::Destination
   # See whether we match a given thing.
   def self.match?(obj)
     # Convert single-word strings into symbols like :console and :syslog
-    if obj.is_a? String and obj =~ /^\w+$/
+    if obj.is_a?(String) && (obj =~ /^\w+$/)
       obj = obj.downcase.intern
     end
 
     @matches.each do |thing|
       # Search for direct matches or class matches
-      return true if thing === obj or thing == obj.class.to_s
+      return true if (thing === obj) || (thing == obj.class.to_s)
     end
     false
   end

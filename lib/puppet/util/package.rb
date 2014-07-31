@@ -16,7 +16,7 @@ module Puppet::Util::Package
       elsif (a == '.' )            then return -1
       elsif (b == '.' )            then return 1
       elsif (a =~ /^\d+$/ && b =~ /^\d+$/) then
-        if( a =~ /^0/ or b =~ /^0/ ) then
+        if( (a =~ /^0/) || (b =~ /^0/) ) then
           return a.to_s.upcase <=> b.to_s.upcase
         end
         return a.to_i <=> b.to_i

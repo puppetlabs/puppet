@@ -219,7 +219,7 @@ Puppet::Util::Log.newdesttype :eventlog do
       :source      => "Puppet",
       :event_type  => native_type,
       :event_id    => native_id,
-      :data        => (msg.source and msg.source != 'Puppet' ? "#{msg.source}: " : '') + msg.to_s
+      :data        => (msg.source && (msg.source != 'Puppet') ? "#{msg.source}: " : '') + msg.to_s
     )
   end
 

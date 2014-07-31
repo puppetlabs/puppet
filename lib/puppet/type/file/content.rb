@@ -59,7 +59,7 @@ module Puppet
     # Checksums need to invert how changes are printed.
     def change_to_s(currentvalue, newvalue)
       # Our "new" checksum value is provided by the source.
-      if source = resource.parameter(:source) and tmp = source.checksum
+      if (source = resource.parameter(:source)) && (tmp = source.checksum)
         newvalue = tmp
       end
       if currentvalue == :absent
@@ -85,7 +85,7 @@ module Puppet
     end
 
     def length
-      (actual_content and actual_content.length) || 0
+      (actual_content && actual_content.length) || 0
     end
 
     def content
@@ -99,7 +99,7 @@ module Puppet
       if resource.should_be_file?
         return false if is == :absent
       else
-        if resource[:ensure] == :present and resource[:content] and s = resource.stat
+        if resource[:ensure] == :present && resource[:content] && s = resource.stat
           resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
         end
         return true
@@ -109,7 +109,7 @@ module Puppet
 
       result = super
 
-      if ! result and Puppet[:show_diff] and resource.show_diff?
+      if !result && Puppet[:show_diff] && resource.show_diff?
         write_temporarily do |path|
           send @resource[:loglevel], "\n" + diff(@resource[:path], path)
         end

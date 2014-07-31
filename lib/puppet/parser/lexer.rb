@@ -55,7 +55,7 @@ class Puppet::Parser::Lexer
     end
 
     def to_s
-      string or @name.to_s
+      string || @name.to_s
     end
 
     def acceptable?(context={})
@@ -202,7 +202,7 @@ class Puppet::Parser::Lexer
     end
 
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
-      Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+      Contextual::DASHED_VARIABLES_ALLOWED.call(context) && TOKENS[:VARIABLE].acceptable?(context)
     end
   end
 
@@ -328,7 +328,7 @@ class Puppet::Parser::Lexer
   def expected
     return nil if @expected.empty?
     name = @expected[-1]
-    TOKENS.lookup(name) or lex_error "Could not find expected token #{name}"
+    TOKENS.lookup(name) || (lex_error "Could not find expected token #{name}")
   end
 
   # scan the whole file
@@ -372,7 +372,7 @@ class Puppet::Parser::Lexer
     # I tried optimizing based on the first char, but it had
     # a slightly negative affect and was a good bit more complicated.
     TOKENS.regex_tokens.each do |token|
-      if length = @scanner.match?(token.regex) and token.acceptable?(lexing_context)
+      if (length = @scanner.match?(token.regex)) && token.acceptable?(lexing_context)
         # We've found a longer match
         if length > best_length
           best_length = length
@@ -420,7 +420,7 @@ class Puppet::Parser::Lexer
 
     skip if token.skip_text
 
-    return if token.skip and not token.accumulate?
+    return if token.skip && !token.accumulate?
 
     token, value = token.convert(self, value) if token.respond_to?(:convert)
 
@@ -459,7 +459,7 @@ class Puppet::Parser::Lexer
     # Skip any initial whitespace.
     skip
 
-    until token_queue.empty? and @scanner.eos? do
+    until token_queue.empty? && @scanner.eos? do
       matched_token, value = find_token
 
       # error out if we didn't match anything at all
@@ -468,7 +468,7 @@ class Puppet::Parser::Lexer
       newline = matched_token.name == :RETURN
 
       # this matches a blank line; eat the previously accumulated comments
-      getcomment if lexing_context[:start_of_line] and newline
+      getcomment if lexing_context[:start_of_line] && newline
       lexing_context[:start_of_line] = newline
 
       final_token, token_value = munge_token(matched_token, value)
@@ -485,13 +485,13 @@ class Puppet::Parser::Lexer
 
       value = token_value[:value]
 
-      if match = @@pairs[value] and final_token_name != :DQUOTE and final_token_name != :SQUOTE
+      if (match = @@pairs[value]) && (final_token_name != :DQUOTE) && (final_token_name != :SQUOTE)
         @expected << match
-      elsif exp = @expected[-1] and exp == value and final_token_name != :DQUOTE and final_token_name != :SQUOTE
+      elsif (exp = @expected[-1]) && (exp == value) && (final_token_name != :DQUOTE) && (final_token_name != :SQUOTE)
         @expected.pop
       end
 
-      if final_token_name == :LBRACE or final_token_name == :LPAREN
+      if (final_token_name == :LBRACE) || (final_token_name == :LPAREN)
         commentpush
       end
       if final_token_name == :RPAREN
@@ -501,7 +501,7 @@ class Puppet::Parser::Lexer
       yield [final_token_name, token_value]
 
       if @previous_token
-        namestack(value) if @previous_token.name == :CLASS and value != '{'
+        namestack(value) if (@previous_token.name == :CLASS) && (value != '{')
 
         if @previous_token.name == :DEFINE
           if indefine?
@@ -536,7 +536,7 @@ class Puppet::Parser::Lexer
   def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
-    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
+    (str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/)) || (lex_error "Unclosed quote after '#{last}' in '#{rest}'")
     @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/m) {
       ch = $1
@@ -565,7 +565,7 @@ class Puppet::Parser::Lexer
                      else
                        TOKENS[:VARIABLE].regex
                      end
-    if terminator != '$' or @scanner.scan(/\{/)
+    if (terminator != '$') || @scanner.scan(/\{/)
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
       warn_if_variable_has_hyphen(var_name)
@@ -588,7 +588,7 @@ class Puppet::Parser::Lexer
 
   def getcomment(line = nil)
     comment = @commentstack.last
-    if line.nil? or comment[1] <= line
+    if line.nil? || (comment[1] <= line)
       @commentstack.pop
       @commentstack.push(['', @line])
       return comment[0]

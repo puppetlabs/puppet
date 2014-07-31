@@ -23,7 +23,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # @return [Array<String>] the given paths
   #
   def validate_path(paths)
-    if paths.is_a?(Array) and ! self.class.arrays? then
+    if paths.is_a?(Array) && !self.class.arrays? then
       fail "#{name} only accepts a single path, not an array of paths"
     end
 
@@ -44,12 +44,12 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # If the concrete parameter defines a `munge` method, this default implementation will be overridden.
   # This default implementation does not perform any munging, it just checks the one/many paths
   # constraints. A derived implementation can perform this check as:
-  # `paths.is_a?(Array) and ! self.class.arrays?` and raise a {Puppet::Error}.
+  # `paths.is_a?(Array) and !self.class.arrays?` and raise a {Puppet::Error}.
   # @param paths [String, Array<String>] one of multiple paths
   # @return [String, Array<String>] the given paths
   # @raise [Puppet::Error] if the given paths does not comply with the on/many paths rule.
   def unsafe_munge(paths)
-    if paths.is_a?(Array) and ! self.class.arrays? then
+    if paths.is_a?(Array) && !self.class.arrays? then
       fail "#{name} only accepts a single path, not an array of paths"
     end
     paths

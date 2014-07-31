@@ -73,7 +73,7 @@ class Puppet::Network::HTTP::API::V1
 
     params.delete(:bucket_path)
 
-    raise ArgumentError, "No request key specified in #{uri}" if key == "" or key.nil?
+    raise ArgumentError, "No request key specified in #{uri}" if (key == "") || key.nil?
 
     key = URI.unescape(key)
 
@@ -163,7 +163,7 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def accepted_response_formatter_for(model_class, request)
-    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new("Missing required Accept header", Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
+    (accepted_formats = request.headers['accept']) || (raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new("Missing required Accept header", Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD))
     request.response_formatter_for(model_class.supported_formats, accepted_formats)
   end
 

@@ -292,7 +292,7 @@ class Application
         Puppet.settings.preferred_run_mode = mode_name
       end
 
-      return @run_mode if @run_mode and not mode_name
+      return @run_mode if @run_mode && !mode_name
 
       require 'puppet/util/run_mode'
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]

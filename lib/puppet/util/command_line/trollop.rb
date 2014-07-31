@@ -401,7 +401,7 @@ class Parser
 
       case opts[:type]
       when :flag
-        if arg =~ /^--no-/ and sym.to_s =~ /^--\[no-\]/
+        if (arg =~ /^--no-/) && (sym.to_s =~ /^--\[no-\]/)
           vals[sym] = opts[:default]
         else
           vals[sym] = !opts[:default]

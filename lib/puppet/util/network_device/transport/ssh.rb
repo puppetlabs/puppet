@@ -78,7 +78,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
     sock = @ssh.transport.socket
 
     while not @eof
-      break if line =~ prompt and @buf == ''
+      break if (line =~ prompt) && (@buf == '')
       break if sock.closed?
 
       IO::select([sock], [sock], nil, nil)
@@ -111,7 +111,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
   end
 
   def process_ssh
-    while @buf == "" and not eof?
+    while (@buf == "") && (not eof?)
       begin
         @channel.connection.process(0.1)
       rescue IOError

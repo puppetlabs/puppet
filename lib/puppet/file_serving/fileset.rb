@@ -103,7 +103,7 @@ class Puppet::FileServing::Fileset
       next if value.nil?
       value = true if value == "true"
       value = false if value == "false"
-      value = Integer(value) if value.is_a?(String) and value =~ /^\d+$/
+      value = Integer(value) if value.is_a?(String) && (value =~ /^\d+$/)
       send(param.to_s + "=", value)
     end
   end

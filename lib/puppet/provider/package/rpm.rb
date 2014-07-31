@@ -117,13 +117,13 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     end
     # RPM gets pissy if you try to install an already
     # installed package
-    if @resource.should(:ensure) == @property_hash[:ensure] or
-      @resource.should(:ensure) == :latest && @property_hash[:ensure] == latest
+    if @resource.should(:ensure) == @property_hash[:ensure] ||
+      (@resource.should(:ensure) == :latest && @property_hash[:ensure] == latest)
       return
     end
 
     flag = ["-i"]
-    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] and @property_hash[:ensure] != :absent
+    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] && (@property_hash[:ensure] != :absent)
     flag += install_options if resource[:install_options]
     rpm flag, source
   end

@@ -72,7 +72,7 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
-    if not resource.class? and resource[:stage]
+    if !resource.class? && resource[:stage]
       raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
     end
 
@@ -167,7 +167,7 @@ class Puppet::Parser::Compiler
   # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
     if @node.classes.is_a? Hash
-      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params and !params.empty?}
+      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params && !params.empty?}
 
       # The results from Hash#partition are arrays of pairs rather than hashes,
       # so we have to convert to the forms evaluate_classes expects (Hash, and
@@ -206,7 +206,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name, :assume_fqname => fqname) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      scope.find_hostclass(name, :assume_fqname => fqname) || (raise Puppet::Error, "Could not find class #{name} for #{node.name}")
     end
 
     if class_parameters
@@ -597,7 +597,7 @@ class Puppet::Parser::Compiler
   # which need to get evaluated into native resources.
   def unevaluated_resources
     # The order of these is significant for speed due to short-circuting
-    resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
+    resources.reject { |resource| resource.evaluated? || resource.virtual? || resource.builtin_type? }
   end
 
   # Creates the injector from bindings found in the current environment.

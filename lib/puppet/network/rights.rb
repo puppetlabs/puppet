@@ -155,9 +155,9 @@ class Rights
     def allowed?(name, ip, args = {})
       if not @methods.include?(args[:method])
         return :dunno
-      elsif @environment.size > 0 and not @environment.include?(args[:environment])
+      elsif (@environment.size > 0) && (not @environment.include?(args[:environment]))
         return :dunno
-      elsif (@authentication and not args[:authenticated])
+      elsif (@authentication && !args[:authenticated])
         return :dunno
       end
 

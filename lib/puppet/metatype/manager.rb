@@ -28,7 +28,7 @@ module Manager
   def eachtype
     @types.each do |name, type|
       # Only consider types that have names
-      #if ! type.parameters.empty? or ! type.validproperties.empty?
+      #if ! type.parameters.empty? or !type.validproperties.empty?
         yield type
       #end
     end
@@ -112,7 +112,7 @@ module Manager
 
     # If they've got all the necessary methods defined and they haven't
     # already added the property, then do so now.
-    klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+    klass.ensurable if klass.ensurable? && !klass.validproperty?(:ensure)
 
     # Now set up autoload any providers that might exist for this type.
 

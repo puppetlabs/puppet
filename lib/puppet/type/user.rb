@@ -84,7 +84,7 @@ module Puppet
 
       def retrieve
         if provider.exists?
-          if provider.respond_to?(:is_role?) and provider.is_role?
+          if provider.respond_to?(:is_role?) && provider.is_role?
             return :role
           else
             return :present
@@ -132,7 +132,7 @@ module Puppet
         meaningful for domain accounts, which Puppet does not currently manage.)"
 
       munge do |value|
-        if value.is_a?(String) and value =~ /^[-0-9]+$/
+        if value.is_a?(String) && (value =~ /^[-0-9]+$/)
           Integer(value)
         else
           value
@@ -143,7 +143,7 @@ module Puppet
         # We know the 'is' is a number, so we need to convert the 'should' to a number,
         # too.
         @should.each do |value|
-          return true if number = Puppet::Util.gid(value) and is == number
+          return true if (number = Puppet::Util.gid(value)) && (is == number)
         end
 
         false
@@ -201,7 +201,7 @@ module Puppet
         quotes (') to avoid accidental variable interpolation.}
 
       validate do |value|
-        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
+        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) && value.include?(":")
       end
 
       def change_to_s(currentvalue, newvalue)
@@ -318,7 +318,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and not provider.class.manages_homedir?
+          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider && !provider.class.manages_homedir?
         end
       end
     end
@@ -333,7 +333,7 @@ module Puppet
       newvalues /^\d{4}-\d{2}-\d{2}$/
 
       validate do |value|
-        if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
+        if (value.intern != :absent) && (value !~ /^\d{4}-\d{2}-\d{2}$/)
           raise ArgumentError, "Expiry dates must be YYYY-MM-DD or the string \"absent\""
         end
       end
@@ -343,7 +343,7 @@ module Puppet
     autorequire(:group) do
       autos = []
 
-      if obj = @parameters[:gid] and groups = obj.shouldorig
+      if (obj = @parameters[:gid]) && (groups = obj.shouldorig)
         groups = groups.collect { |group|
           if group =~ /^\d+$/
             Integer(group)
@@ -354,7 +354,7 @@ module Puppet
         groups.each { |group|
           case group
           when Integer
-            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) and r.should(:gid) == group }
+            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && (r.should(:gid) == group) }
               autos << resource
             end
           else
@@ -363,7 +363,7 @@ module Puppet
         }
       end
 
-      if obj = @parameters[:groups] and groups = obj.should
+      if (obj = @parameters[:groups]) && (groups = obj.should)
         autos += groups.split(",")
       end
 
@@ -394,7 +394,7 @@ module Puppet
           prophash[property] = current_value
         end
 
-        if property.name == :ensure and current_value == :absent
+        if (property.name == :ensure) && (current_value == :absent)
           absent = true
         end
         prophash
@@ -421,7 +421,7 @@ module Puppet
     autorequire(:user) do
       reqs = []
 
-      if roles_property = @parameters[:roles] and roles = roles_property.should
+      if (roles_property = @parameters[:roles]) && (roles = roles_property.should)
         reqs += roles.split(',')
       end
 
@@ -557,7 +557,7 @@ module Puppet
             is used in OS X. This field is required for managing passwords on OS X >= 10.8."
 
       munge do |value|
-        if value.is_a?(String) and value =~/^[-0-9]+$/
+        if value.is_a?(String) && (value =~/^[-0-9]+$/)
           Integer(value)
         else
           value
@@ -622,14 +622,14 @@ module Puppet
 
         return [] if value == :false
         home = resource[:home]
-        if value == :true and not home
+        if (value == :true) && (not home)
           raise ArgumentError, "purge_ssh_keys can only be true for users with a defined home directory"
         end
 
         return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
-          if entry =~ /^~|^%h/ and not home
+          if (entry =~ /^~|^%h/) && (not home)
             raise ArgumentError, "purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory"
           end
           entry.gsub!(/^~\//, "#{home}/")

@@ -52,7 +52,7 @@ class Puppet::Resource::Type
   indirects :resource_type, :terminus_class => :parser
 
   def self.from_data_hash(data)
-    name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
+    (name = data.delete('name')) || (raise ArgumentError, "Resource Type names must be specified")
     kind = data.delete('kind') || "definition"
 
     unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
@@ -75,7 +75,7 @@ class Puppet::Resource::Type
 
   def to_data_hash
     data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless (value = self.send(param)) and (value != "")
+      next hash unless (value = self.send(param)) && (value != "")
       hash[param.to_s] = value
       hash
     end
@@ -164,9 +164,9 @@ class Puppet::Resource::Type
   def merge(other)
     fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
     fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
-    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
+    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if (name == "") && Puppet.settings[:freeze_main]
 
-    if parent and other.parent and parent != other.parent
+    if parent && other.parent && (parent != other.parent)
       fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
     end
 
@@ -196,7 +196,7 @@ class Puppet::Resource::Type
   # parameterized class, then all parameters take on their default
   # values.
   def ensure_in_catalog(scope, parameters=nil)
-    type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
+    (type == :definition) && (raise ArgumentError, "Cannot create resources for defined resource types")
     resource_type = type == :hostclass ? :class : :node
 
     # Do nothing if the resource already exists; this makes sure we don't
@@ -206,7 +206,7 @@ class Puppet::Resource::Type
     # if parameters are passed, we should still try to create the resource
     # even if it exists so that we can fail
     # this prevents us from being able to combine param classes with include
-    if resource = scope.catalog.resource(resource_type, name) and !parameters
+    if (resource = scope.catalog.resource(resource_type, name)) && !parameters
       return resource
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
@@ -296,12 +296,12 @@ class Puppet::Resource::Type
       scope["title"] = resource.title               unless set.include? :title
       scope["name"] =  resource.name                unless set.include? :name
     end
-    scope["module_name"] = module_name if module_name and ! set.include? :module_name
+    scope["module_name"] = module_name if module_name && !set.include?(:module_name)
 
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
+    if (caller_name = scope.parent_module_name) && !set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+    scope.class_set(self.name,scope) if hostclass? || node?
 
     # Evaluate the default parameters, now that all other variables are set
     default_params = resource.set_default_parameters(scope)
@@ -366,7 +366,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_parent_type(resource)
-    return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
+    return unless (klass = parent_type(resource.scope)) && (parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name))
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end

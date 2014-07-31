@@ -75,7 +75,7 @@ class Puppet::Transaction::EventManager
       end
       @events << event if received
 
-      queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and ! resource.deleting?
+      queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? && !resource.deleting?
     end
 
     dequeue_events_for_resource(resource, :refresh) if events.detect { |e| e.invalidate_refreshes }
@@ -122,7 +122,7 @@ class Puppet::Transaction::EventManager
   #   associated with this callback and resource.
   # @return [true, false] Whether the callback was successfully run.
   def process_callback(resource, callback, events)
-    process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
+    process_noop_events(resource, callback, events) && (return false) unless events.detect { |e| e.status != "noop" }
     resource.send(callback)
 
     if not resource.is_a?(Puppet::Type.type(:whit))

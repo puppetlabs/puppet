@@ -14,7 +14,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   # Look for external node definitions.
   def find(request)
-    output = super or return nil
+    (output = super) || (return nil)
 
     # Translate the output to ruby.
     result = translate(request.key, output)

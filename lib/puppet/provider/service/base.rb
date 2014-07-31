@@ -16,7 +16,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   def getpid
     @resource.fail "Either stop/status commands or a pattern must be specified" unless @resource[:pattern]
     ps = Facter["ps"].value
-    @resource.fail "You must upgrade Facter to a version that includes 'ps'" unless ps and ps != ""
+    @resource.fail "You must upgrade Facter to a version that includes 'ps'" unless ps && (ps != "")
     regex = Regexp.new(@resource[:pattern])
     self.debug "Executing '#{ps}'"
     IO.popen(ps) { |table|
@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # happen if, for instance, it has an init script (and thus responds to
   # 'statuscmd') but does not have 'hasstatus' enabled.
   def status
-    if @resource[:status] or statuscmd
+    if @resource[:status] || statuscmd
       # Don't fail when the exit status is not 0.
       ucommand(:status, false)
 
@@ -82,7 +82,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # for the process in the process table.
   # This method will generally not be overridden by submodules.
   def stop
-    if @resource[:stop] or stopcmd
+    if @resource[:stop] || stopcmd
       ucommand(:stop)
     else
       pid = getpid

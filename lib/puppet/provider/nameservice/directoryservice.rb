@@ -119,7 +119,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     attribute_hash = {}
     input_hash.keys.each do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
-      next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
+      next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) && (type_properties.include? ds_to_ns_attribute_map[ds_attribute]))
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
         when :members
@@ -143,7 +143,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) && Puppet.features.root?
     attribute_hash
   end
 
@@ -295,7 +295,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"
-      if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
+      if Puppet::FileSystem.exist?(password_hash_file) && File.file?(password_hash_file)
         fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
         f = File.new(password_hash_file)
         password_hash = f.read
@@ -374,7 +374,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if (ids[i+1] != next_id) && (next_id >= min_id)
     end
   end
 
@@ -429,7 +429,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # If we are meant to be authoritative for the group membership
       # then remove all existing members who haven't been specified
       # in the manifest.
-      remove_unwanted_members(current_members, value) if @resource[:auth_membership] and not current_members.nil?
+      remove_unwanted_members(current_members, value) if @resource[:auth_membership] && !current_members.nil?
 
       # if they're not a member, make them one.
       add_members(current_members, value)
@@ -473,7 +473,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
     end
 
-    if value = @resource.should(:password) and value != ""
+    if (value = @resource.should(:password)) && (value != "")
       self.class.set_password(@resource[:name], guid, value)
     end
 
@@ -481,13 +481,13 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
       next if property == :ensure
       value = @resource.should(property)
-      if property == :gid and value.nil?
+      if (property == :gid) && value.nil?
         value = self.class.next_system_id(id_type='gid')
       end
-      if property == :uid and value.nil?
+      if (property == :uid) && value.nil?
         value = self.class.next_system_id(id_type='uid')
       end
-      if value != "" and not value.nil?
+      if (value != "") && (not value.nil?)
         if property == :members
           add_members(nil, value)
         else
@@ -527,7 +527,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def add_members(current_members, new_members)
     new_members.flatten.each do |new_member|
-      if current_members.nil? or not current_members.include?(new_member)
+      if current_members.nil? || !current_members.include?(new_member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
         begin
           execute(cmd)
@@ -551,7 +551,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      This method returns and sets @infohash
     # I'm not re-factoring the name "getinfo" because this method will be
     # most likely called by nameservice.rb, which I didn't write.
-    if refresh or (! defined?(@property_value_cache_hash) or ! @property_value_cache_hash)
+    if refresh || (!defined?(@property_value_cache_hash) || ! @property_value_cache_hash)
       # JJM 2007-07-24: OK, there's a bit of magic that's about to
       # happen... Let's see how strong my grip has become... =)
       #
@@ -579,7 +579,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       type_properties << :guid  # append GeneratedUID so we just get the report here
       @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
       [:uid, :gid].each do |param|
-        @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash and @property_value_cache_hash.include?(param)
+        @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash && @property_value_cache_hash.include?(param)
       end
     end
     @property_value_cache_hash

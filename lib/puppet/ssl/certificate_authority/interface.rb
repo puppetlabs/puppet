@@ -73,7 +73,7 @@ module Puppet
 
             if verify_error
               certs[:invalid][host] = [ Puppet::SSL::Certificate.indirection.find(host), verify_error ]
-            elsif (signed and signed.include?(host))
+            elsif (signed && signed.include?(host))
               certs[:signed][host]  = Puppet::SSL::Certificate.indirection.find(host)
             else
               certs[:request][host] = Puppet::SSL::CertificateRequest.indirection.find(host)

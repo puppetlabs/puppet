@@ -159,7 +159,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
   # want class names to be required because we then can't change our
   # internal class names, which is bad.
   def data_to_instance(klass, data)
-    if data.is_a?(Hash) and d = data['data']
+    if data.is_a?(Hash) && (d = data['data'])
       data = d
     end
     return data if data.is_a?(klass)
@@ -184,7 +184,7 @@ Puppet::Network::FormatHandler.create(:console,
     return datum if datum.is_a? Numeric
 
     # Simple hash to table
-    if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+    if datum.is_a?(Hash) && (datum.keys.all? { |x| x.is_a?(String) || x.is_a?(Numeric) })
       output = ''
       column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
       datum.sort_by { |k,v| k.to_s } .each do |key, value|

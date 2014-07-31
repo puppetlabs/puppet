@@ -217,7 +217,7 @@ rescue GetoptLong::InvalidOption => detail
   exit(1)
 end
 
-unless $options[:cert] and $options[:key]
+unless $options[:cert] && $options[:key]
   raise "--cert and --key are mandatory to authenticate the client"
 end
 
@@ -229,7 +229,7 @@ end
 
 $options[:node].each do |node|
   factfile = $options[:factsdir] ? File.join($options[:factsdir], node + ".yaml") : $options[:facts]
-  unless fact = read_facts(factfile) or fact = Puppet::Node::Facts.find(node)
+  unless (fact = read_facts(factfile)) || (fact = Puppet::Node::Facts.find(node))
     raise "Could not find facts for %s" % node
   end
   fact.values["fqdn"] = node

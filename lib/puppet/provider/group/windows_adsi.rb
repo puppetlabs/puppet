@@ -17,7 +17,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
     # Cannot use munge of the group property to canonicalize @should
     # since the default array_matching comparison is not commutative
-    should_empty = should.nil? or should.empty?
+    (should_empty = should.nil?) || should.empty?
 
     return false if current.empty? != should_empty
 
@@ -26,7 +26,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def members_to_s(users)
-    return '' if users.nil? or !users.kind_of?(Array)
+    return '' if users.nil? || !users.kind_of?(Array)
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
       if sid.account =~ /\\/

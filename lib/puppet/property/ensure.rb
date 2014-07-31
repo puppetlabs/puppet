@@ -12,7 +12,7 @@ class Puppet::Property::Ensure < Puppet::Property
 
   def self.defaultvalues
     newvalue(:present) do
-      if @resource.provider and @resource.provider.respond_to?(:create)
+      if @resource.provider && @resource.provider.respond_to?(:create)
         @resource.provider.create
       else
         @resource.create
@@ -21,7 +21,7 @@ class Puppet::Property::Ensure < Puppet::Property
     end
 
     newvalue(:absent) do
-      if @resource.provider and @resource.provider.respond_to?(:destroy)
+      if @resource.provider && @resource.provider.respond_to?(:destroy)
         @resource.provider.destroy
       else
         @resource.destroy
@@ -49,7 +49,7 @@ class Puppet::Property::Ensure < Puppet::Property
 
   def change_to_s(currentvalue, newvalue)
     begin
-      if currentvalue == :absent or currentvalue.nil?
+      if (currentvalue == :absent) || currentvalue.nil?
         return "created"
       elsif newvalue == :absent
         return "removed"
@@ -77,7 +77,7 @@ class Puppet::Property::Ensure < Puppet::Property
     # to get checked, which means that those other properties do not have
     # @is values set.  This seems to be the source of quite a few bugs,
     # although they're mostly logging bugs, not functional ones.
-    if prov = @resource.provider and prov.respond_to?(:exists?)
+    if (prov = @resource.provider) && prov.respond_to?(:exists?)
       result = prov.exists?
     elsif @resource.respond_to?(:exists?)
       result = @resource.exists?

@@ -317,7 +317,7 @@ end
 # by stripping the drive letter, but only if the basedir is not empty.
 #
 def join(basedir, dir)
-  return "#{basedir}#{dir[2..-1]}" if $operatingsystem == "windows" and basedir.length > 0 and dir.length > 2
+  return "#{basedir}#{dir[2..-1]}" if ($operatingsystem == "windows") && (basedir.length > 0) && (dir.length > 2)
 
   "#{basedir}#{dir}"
 end

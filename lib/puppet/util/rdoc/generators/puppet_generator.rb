@@ -39,7 +39,7 @@ module Generators
     def new_markup(str, remove_para=false)
       first = @markup.nil?
       res = old_markup(str, remove_para)
-      if first and not @markup.nil?
+      if first && !@markup.nil?
         @markup.add_special(/\b([a-z]\w+(::\w+)*)/,:CROSSREF)
         # we need to call it again, since we added a rule
         res = old_markup(str, remove_para)
@@ -163,7 +163,7 @@ module Generators
       # scan all classes to create the childs references
       @allclasses.values.each do |klass|
         if superklass = klass.context.superclass
-          if superklass = AllReferences[superklass] and (superklass.is_a?(HTMLPuppetClass) or superklass.is_a?(HTMLPuppetNode))
+          if (superklass = AllReferences[superklass]) && (superklass.is_a?(HTMLPuppetClass) || superklass.is_a?(HTMLPuppetNode))
             superklass.context.add_child(klass.context)
           end
         end
@@ -175,7 +175,7 @@ module Generators
     # produce a class/module list of HTMLPuppetModule/HTMLPuppetClass
     # based on the code object traversal.
     def generate_class_list(classes, modules, from, html_file, class_dir)
-      if from.is_module? and !@modules.has_key?(from.name)
+      if from.is_module? && !@modules.has_key?(from.name)
         k = HTMLPuppetModule.new(from, html_file, class_dir, @options)
         classes << k
         @modules[from.name] = k
@@ -321,7 +321,7 @@ module Generators
 
       unless ref
         for file in @files
-          if file.document_self and file.context.global
+          if file.document_self && file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break
           end
@@ -330,7 +330,7 @@ module Generators
 
       unless ref
         for file in @files
-          if file.document_self and !file.context.global
+          if file.document_self && !file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break
           end
@@ -354,10 +354,10 @@ module Generators
       res = []
       list.each do |i|
         ref = AllReferences[i.name] || @context.find_symbol(i.name)
-        ref = ref.viewer if ref and ref.respond_to?(:viewer)
+        ref = ref.viewer if ref && ref.respond_to?(:viewer)
         name = i.respond_to?(:full_name) ? i.full_name : i.name
         h_name = CGI.escapeHTML(name)
-        if ref and ref.document_self
+        if ref && ref.document_self
           path = url(ref.path)
           res << { "name" => h_name, "aref" => path }
         else
@@ -394,7 +394,7 @@ module Generators
       resources = @resources.sort
       resources.each do |r|
         row = {}
-        if r.section == section and r.document_self
+        if (r.section == section) && r.document_self
           row["name"]        = CGI.escapeHTML(r.name)
           desc = r.description.strip
           row["m_desc"]      = desc unless desc.empty?
@@ -591,7 +591,7 @@ module Generators
       @values["title"]     = CGI.escapeHTML("#{@values['classmod']}: #{h_name}")
 
       c = @context
-      c = c.parent while c and !c.diagram
+      c = c.parent while c && !c.diagram
 
       @values["diagram"] = diagram_reference(c.diagram) if c && c.diagram
 
@@ -609,7 +609,7 @@ module Generators
         end
         lookup = "NODE(#{lookup})"
         parent_url = AllReferences[lookup] || AllReferences[parent_class]
-        @values["par_url"] = aref_to(parent_url.path) if parent_url and parent_url.document_self
+        @values["par_url"] = aref_to(parent_url.path) if parent_url && parent_url.document_self
       end
 
       files = []

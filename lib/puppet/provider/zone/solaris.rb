@@ -48,7 +48,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   def self.def_multiprop(var, &conf)
     define_method(var.to_s) do |v|
       o = properties[var]
-      return '' if o.nil? or o == :absent
+      return '' if o.nil? || (o == :absent)
       o.join(' ')
     end
     define_method('%s=' % var.to_s) do |v|
@@ -154,7 +154,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
     command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
     r = exec_cmd(:cmd => command, :input => str)
-    if r[:exit] != 0 or r[:out] =~ /not allowed/
+    if (r[:exit] != 0) || (r[:out] =~ /not allowed/)
       raise ArgumentError, "Failed to apply configuration"
     end
   end

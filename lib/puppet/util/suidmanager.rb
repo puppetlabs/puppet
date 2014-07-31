@@ -37,7 +37,7 @@ module Puppet::Util::SUIDManager
       # operating system side.  Therefore we catch the exception and look whether
       # we run under OS X or not -- if so, then we acknowledge the problem and
       # re-throw the exception otherwise.
-      if osx_maj_ver and not osx_maj_ver.empty?
+      if osx_maj_ver && !osx_maj_ver.empty?
         return true
       else
         raise e
@@ -63,7 +63,7 @@ module Puppet::Util::SUIDManager
   def asuser(new_uid=nil, new_gid=nil)
     return yield if Puppet.features.microsoft_windows?
     return yield unless root?
-    return yield unless new_uid or new_gid
+    return yield unless new_uid || new_gid
 
     old_euid, old_egid = self.euid, self.egid
     begin
@@ -82,7 +82,7 @@ module Puppet::Util::SUIDManager
   # supplied, only gid will be changed. This method will fail if used on
   # Windows.
   def change_privileges(uid=nil, gid=nil, permanently=false)
-    return unless uid or gid
+    return unless uid || gid
 
     unless gid
       uid = convert_xid(:uid, uid)

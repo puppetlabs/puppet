@@ -24,7 +24,7 @@ module Puppet::Interface::OptionManager
   # @api private
   def walk_inheritance_tree(start, sym)
     result = (start ||= [])
-    if self.is_a?(Class) and superclass.respond_to?(sym)
+    if self.is_a?(Class) && superclass.respond_to?(sym)
       result = superclass.send(sym) + result
     elsif self.class.respond_to?(sym)
       result = self.class.send(sym) + result
@@ -81,8 +81,8 @@ module Puppet::Interface::OptionManager
     @options_hash ||= {}
 
     result = @options_hash[name.to_sym]
-    if result.nil? and with_inherited_options then
-      if self.is_a?(Class) and superclass.respond_to?(:get_option)
+    if result.nil? && with_inherited_options then
+      if self.is_a?(Class) && superclass.respond_to?(:get_option)
         result = superclass.get_option(name)
       elsif self.class.respond_to?(:get_option)
         result = self.class.get_option(name)

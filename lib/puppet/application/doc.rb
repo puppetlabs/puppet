@@ -31,7 +31,7 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--mode MODE", "-m") do |arg|
     require 'puppet/util/reference'
-    if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
+    if Puppet::Util::Reference.modes.include?(arg) || arg.intern==:rdoc
       options[:mode] = arg.intern
     else
       raise "Invalid output mode #{arg}"
@@ -257,7 +257,7 @@ HELP
     if @unknown_args.size > 0
       @unknown_args.each do |option|
         # force absolute path for modulepath when passed on commandline
-        if option[:opt]=="--modulepath" or option[:opt] == "--manifestdir"
+        if (option[:opt]=="--modulepath") || (option[:opt] == "--manifestdir")
           option[:arg] = option[:arg].split(::File::PATH_SEPARATOR).collect { |p| ::File.expand_path(p) }.join(::File::PATH_SEPARATOR)
         end
         Puppet.settings.handlearg(option[:opt], option[:arg])

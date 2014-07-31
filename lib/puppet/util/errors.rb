@@ -20,11 +20,11 @@ module Puppet::Util::Errors
   # @param other [Exception] original exception, source of backtrace info
   # @return [Exception] error parameter
   def adderrorcontext(error, other = nil)
-    error.line ||= self.line if error.respond_to?(:line=) and self.respond_to?(:line) and self.line
-    error.file ||= self.file if error.respond_to?(:file=) and self.respond_to?(:file) and self.file
+    error.line ||= self.line if error.respond_to?(:line=) && self.respond_to?(:line) && self.line
+    error.file ||= self.file if error.respond_to?(:file=) && self.respond_to?(:file) && self.file
     error.original ||= other if error.respond_to?(:original=)
 
-    error.set_backtrace(other.backtrace) if other and other.respond_to?(:backtrace)
+    error.set_backtrace(other.backtrace) if other && other.respond_to?(:backtrace)
 
     error
   end
@@ -34,7 +34,7 @@ module Puppet::Util::Errors
   #
   # @return [String] description of file and line
   def error_context
-    if file and line
+    if file && line
       " at #{file}:#{line}"
     elsif line
       " at line #{line}"

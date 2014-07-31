@@ -105,7 +105,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+    if resource.respond_to?(:isomorphic?) && resource.isomorphic? && (resource.name != resource.title)
       self.alias(resource, resource.uniqueness_key)
     end
   end
@@ -129,8 +129,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
-      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
+      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file && resource.line
+      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file && existing.line
       msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
       raise ArgumentError, msg
     end
@@ -284,7 +284,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
         @aliases.delete(resource.ref)
       end
       remove_vertex!(resource) if vertex?(resource)
-      @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+      @relationship_graph.remove_vertex!(resource) if @relationship_graph && @relationship_graph.vertex?(resource)
       @resources.delete(title_key)
       resource.remove
     end
@@ -483,7 +483,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # If we've gotten this far, it's a real conflict
     msg = "Duplicate declaration: #{resource.ref} is already declared"
 
-    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
+    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file && existing_resource.line
 
     msg << "; cannot redeclare"
 
@@ -501,7 +501,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     map = {}
     resources.each do |resource|
       next if virtual_not_exported?(resource)
-      next if block_given? and yield resource
+      next if block_given? && (yield resource)
 
       newres = resource.copy_as_resource
       newres.catalog = result
@@ -522,10 +522,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     edges.each do |edge|
       # Skip edges between virtual resources.
       next if virtual_not_exported?(edge.source)
-      next if block_given? and yield edge.source
+      next if block_given? && (yield edge.source)
 
       next if virtual_not_exported?(edge.target)
-      next if block_given? and yield edge.target
+      next if block_given? && (yield edge.target)
 
       unless source = map[edge.source.ref]
         raise Puppet::DevError, "Could not find resource #{edge.source.ref} when converting #{message} resources"
@@ -547,6 +547,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def virtual_not_exported?(resource)
-    resource.respond_to?(:virtual?) and resource.virtual? and (resource.respond_to?(:exported?) and not resource.exported?)
+    resource.respond_to?(:virtual?) && resource.virtual? && (resource.respond_to?(:exported?) && !resource.exported?)
   end
 end

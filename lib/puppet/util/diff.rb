@@ -6,10 +6,10 @@ module Puppet::Util::Diff
   require 'tempfile'
 
   def diff(old, new)
-    return '' unless diff_cmd = Puppet[:diff] and diff_cmd != ""
+    return '' unless (diff_cmd = Puppet[:diff]) && (diff_cmd != "")
 
     command = [diff_cmd]
-    if args = Puppet[:diff_args] and args != ""
+    if (args = Puppet[:diff_args]) && (args != "")
       args.split(' ').each do|arg|
         command << arg
       end
@@ -52,7 +52,7 @@ module Puppet::Util::Diff
       # Hunks may overlap, which is why we need to be careful when our
       # diff includes lines of context. Otherwise, we might print
       # redundant lines.
-      if (context_lines > 0) and hunk.overlaps?(oldhunk)
+      if ((context_lines > 0)) && hunk.overlaps?(oldhunk)
         hunk.unshift(oldhunk)
       else
         output << oldhunk.diff(format)

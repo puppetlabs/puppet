@@ -62,7 +62,7 @@ module PSON
         modul = generator_methods.const_get(const)
         klass.class_eval do
           instance_methods(false).each do |m|
-            m.to_s == 'to_pson' and remove_method m
+            (m.to_s == 'to_pson') && (remove_method m)
           end
           include modul
         end
@@ -303,7 +303,7 @@ module PSON
   # This method is part of the implementation of the load/dump interface of
   # Marshal and YAML.
   def dump(obj, anIO = nil, limit = nil)
-    if anIO and limit.nil?
+    if anIO && limit.nil?
       anIO = anIO.to_io if anIO.respond_to?(:to_io)
       unless anIO.respond_to?(:write)
         limit = anIO

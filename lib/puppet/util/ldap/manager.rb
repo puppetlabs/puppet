@@ -55,10 +55,10 @@ class Puppet::Util::Ldap::Manager
         ssl = false
       end
       options = {:ssl => ssl}
-      if user = Puppet[:ldapuser] and user != ""
+      if (user = Puppet[:ldapuser]) && (user != "")
         options[:user] = user
       end
-      if password = Puppet[:ldappassword] and password != ""
+      if (password = Puppet[:ldappassword]) && (password != "")
         options[:password] = password
       end
       @connection = Puppet::Util::Ldap::Connection.new(Puppet[:ldapserver], Puppet[:ldapport], options)
@@ -219,7 +219,7 @@ class Puppet::Util::Ldap::Manager
     end
 
     # We're creating a new entry
-    if is.empty? or is[:ensure] == :absent
+    if is.empty? || (is[:ensure] == :absent)
       Puppet.info "Creating #{dn(name)} in ldap"
       # Remove any :absent params and :ensure, then convert the names to ldap names.
       attrs = ldap_convert(should)
@@ -241,13 +241,13 @@ class Puppet::Util::Ldap::Manager
       prop_name = ldap_name(property).to_s
 
       # We're creating it.
-      if is[property] == :absent or is[property].nil?
+      if (is[property] == :absent) || is[property].nil?
         mods << LDAP::Mod.new(LDAP::LDAP_MOD_ADD, prop_name, attributes[prop_name])
         next
       end
 
       # We're deleting it
-      if should[property] == :absent or should[property].nil?
+      if (should[property] == :absent) || should[property].nil?
         mods << LDAP::Mod.new(LDAP::LDAP_MOD_DELETE, prop_name, [])
         next
       end
@@ -261,7 +261,7 @@ class Puppet::Util::Ldap::Manager
 
   # Is this a complete ldap configuration?
   def valid?
-    location and objectclasses and ! objectclasses.empty? and puppet2ldap
+    location && objectclasses && ! objectclasses.empty? && puppet2ldap
   end
 
   private
@@ -269,7 +269,7 @@ class Puppet::Util::Ldap::Manager
   # Convert a hash of attributes to ldap-like forms.  This mostly means
   # getting rid of :ensure and making sure everything's an array of strings.
   def ldap_convert(attributes)
-    attributes.reject { |param, value| value == :absent or param == :ensure }.inject({}) do |result, ary|
+    attributes.reject { |param, value| (value == :absent) || (param == :ensure) }.inject({}) do |result, ary|
       value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect { |v| v.to_s }
       result[ldap_name(ary[0])] = value
       result

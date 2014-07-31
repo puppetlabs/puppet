@@ -93,11 +93,11 @@ module PSON
         until eos?
           case
           when scan(OBJECT_OPEN)
-            obj and raise ParserError, "source '#{peek(20)}' not in PSON!"
+            obj && (raise ParserError, "source '#{peek(20)}' not in PSON!")
             @current_nesting = 1
             obj = parse_object
           when scan(ARRAY_OPEN)
-            obj and raise ParserError, "source '#{peek(20)}' not in PSON!"
+            obj && (raise ParserError, "source '#{peek(20)}' not in PSON!")
             @current_nesting = 1
             obj = parse_array
           when skip(IGNORE)
@@ -106,7 +106,7 @@ module PSON
             raise ParserError, "source '#{peek(20)}' not in PSON!"
           end
         end
-        obj or raise ParserError, "source did not contain any PSON!"
+        obj || (raise ParserError, "source did not contain any PSON!")
         obj
       end
 
@@ -299,9 +299,9 @@ module PSON
             end
           when scan(OBJECT_CLOSE)
             raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!" if delim
-            if @create_id and klassname = result[@create_id]
+            if @create_id && (klassname = result[@create_id])
               klass = PSON.deep_const_get klassname
-              break unless klass and klass.pson_creatable?
+              break unless klass && klass.pson_creatable?
               result = klass.pson_create(result)
             end
             break

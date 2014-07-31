@@ -31,7 +31,7 @@ module Puppet::Util::IniConfig
     #   section has been modified so the associated file can be rewritten
     #   without this section.
     def dirty?
-      @dirty or @destroy
+      @dirty || @destroy
     end
 
     def mark_dirty
@@ -204,7 +204,7 @@ module Puppet::Util::IniConfig
     # @return [Puppet::Util::IniConfig::Section, nil] The section with the
     #   given name if it exists, else nil.
     def get_section(name)
-      @contents.find { |entry| entry.is_a? Section and entry.name == name }
+      @contents.find { |entry| entry.is_a?(Section) && (entry.name == name) }
     end
 
     def format
@@ -222,7 +222,7 @@ module Puppet::Util::IniConfig
     end
 
     def store
-      if @destroy_empty and (sections.empty? or sections.all?(&:destroy?))
+      if @destroy_empty && (sections.empty? || sections.all?(&:destroy?))
         ::File.unlink(@file)
       elsif sections.any?(&:dirty?)
         text = self.format
@@ -252,7 +252,7 @@ module Puppet::Util::IniConfig
     def section_exists?(name)
       if self.get_section(name)
         true
-      elsif @file_collection and @file_collection.get_section(name)
+      elsif @file_collection && @file_collection.get_section(name)
         true
       else
         false

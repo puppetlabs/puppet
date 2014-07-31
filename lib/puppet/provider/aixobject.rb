@@ -157,7 +157,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_attr_list(str, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if str.nil? or (attrs = str.split()).empty?
+    if str.nil? || ((attrs = str.split()).empty?)
       return nil
     end
 
@@ -165,7 +165,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       if i.include? "=" # Ignore if it does not include '='
         (key_str, val) = i.split('=')
         # Check the key
-        if key_str.nil? or key_str.empty?
+        if key_str.nil? || key_str.empty?
           info "Empty key in string 'i'?"
           continue
         end
@@ -191,7 +191,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_colon_list(str, key_list, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if str.nil? or (attrs = str.split(':')).empty?
+    if str.nil? || ((attrs = str.split(':')).empty?)
       return nil
     end
 
@@ -221,7 +221,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # It will execute 'lscmd' command and parse the output, using the mapping
   # 'attribute_mapping_from' to translate the keys and values.
   def getinfo(refresh = false)
-    if @objectinfo.nil? or refresh == true
+    if @objectinfo.nil? || (refresh == true)
       # Execute lsuser, split all attributes and add them to a dict.
       begin
         output = execute(self.lscmd)
@@ -239,7 +239,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Like getinfo, but it will not use the mapping to translate the keys and values.
   # It might be usefult to retrieve some raw information.
   def getosinfo(refresh = false)
-    if @objectosinfo.nil? or refresh == true
+    if @objectosinfo.nil? || (refresh == true)
       getinfo(refresh)
     end
     @objectosinfo || Hash.new

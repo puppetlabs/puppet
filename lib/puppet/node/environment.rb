@@ -288,7 +288,7 @@ class Puppet::Node::Environment
   def module_by_forge_name(forge_name)
     author, modname = forge_name.split('/')
     found_mod = self.module(modname)
-    found_mod and found_mod.forge_name == forge_name ?
+    found_mod && (found_mod.forge_name == forge_name) ?
       found_mod :
       nil
   end
@@ -401,14 +401,14 @@ class Puppet::Node::Environment
       next unless mod.forge_name
       deps[mod.forge_name] ||= []
 
-      mod.dependencies and mod.dependencies.each do |mod_dep|
+      mod.dependencies && (mod.dependencies.each do |mod_dep|
         dep_name = mod_dep['name'].tr('-', '/')
         (deps[dep_name] ||= []) << {
           'name'                => mod.forge_name,
           'version'             => mod.version,
           'version_requirement' => mod_dep['version_requirement']
         }
-      end
+      end)
     end
 
     deps.each do |mod, mod_deps|

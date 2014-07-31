@@ -45,7 +45,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def add(instance)
-    if instance.type == :hostclass and other = @hostclasses[instance.name] and other.type == :hostclass
+    if (instance.type == :hostclass) && (other = @hostclasses[instance.name]) && (other.type == :hostclass)
       other.merge(instance)
       return other
     end
@@ -203,7 +203,7 @@ class Puppet::Resource::TypeCollection
     searchspace.each do |fqname|
       result = send(type, fqname)
       unless result
-        if @notfound[fqname] and Puppet[:ignoremissingtypes]
+        if @notfound[fqname] && Puppet[:ignoremissingtypes]
           # do not try to autoload if we already tried and it wasn't conclusive
           # as this is a time consuming operation. Warn the user.
           debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"

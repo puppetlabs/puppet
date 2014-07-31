@@ -66,7 +66,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # The parent attribute, if we have one.
   def parent_attribute
-    if pattr = Puppet[:ldapparentattr] and ! pattr.empty?
+    if (pattr = Puppet[:ldapparentattr]) && !pattr.empty?
       pattr
     else
       nil
@@ -145,8 +145,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # Add our hash of ldap information to the node instance.
   def add_to_node(node, information)
-    node.classes = information[:classes].uniq unless information[:classes].nil? or information[:classes].empty?
-    node.parameters = information[:parameters] unless information[:parameters].nil? or information[:parameters].empty?
+    node.classes = information[:classes].uniq unless information[:classes].nil? || information[:classes].empty?
+    node.parameters = information[:parameters] unless information[:parameters].nil? || information[:parameters].empty?
     node.environment = information[:environment] if information[:environment]
   end
 

@@ -75,7 +75,7 @@ module Puppet::Util::RDoc
   end
 
   def output_astnode_doc(ast)
-    puts ast.doc if !ast.doc.nil? and !ast.doc.empty?
+    puts ast.doc if !ast.doc.nil? && !ast.doc.empty?
     if Puppet.settings[:document_all]
       # scan each underlying resources to produce documentation
       code = ast.code.children if ast.code.is_a?(Puppet::Parser::AST::ASTArray)
@@ -89,7 +89,7 @@ module Puppet::Util::RDoc
       output_resource_doc(stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
       if stmt.is_a?(Puppet::Parser::AST::Resource)
-        puts stmt.doc if !stmt.doc.nil? and !stmt.doc.empty?
+        puts stmt.doc if !stmt.doc.nil? && !stmt.doc.empty?
       end
     end
   end

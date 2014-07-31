@@ -132,7 +132,7 @@ module Puppet
           # If we cannot find the configured environment, which may not exist,
           # we do not attempt to add plugin directories to the load path.
           #
-          if @subcommand_name != 'master' and @subcommand_name != 'agent'
+          if (@subcommand_name != 'master') && (@subcommand_name != 'agent')
             if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
@@ -169,7 +169,7 @@ module Puppet
 
         def run
           args = @command_line.args
-          if args.include? "--version" or args.include? "-V"
+          if args.include?("--version") || args.include?("-V")
             puts Puppet.version
           elsif @command_line.subcommand_name.nil? && args.count > 0
             # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message

@@ -83,7 +83,7 @@ module Puppet
       defaultto :absent
 
       def should
-        return super if defined?(@should) and @should[0] != :absent
+        return super if defined?(@should) && (@should[0] != :absent)
 
         return nil unless user = resource[:user]
 
@@ -107,7 +107,7 @@ module Puppet
       defaultto do :absent end
 
       def is_to_s(value)
-        if value == :absent or value.include?(:absent)
+        if (value == :absent) || value.include?(:absent)
           super
         else
           value.join(",")
@@ -115,7 +115,7 @@ module Puppet
       end
 
       def should_to_s(value)
-        if value == :absent or value.include?(:absent)
+        if (value == :absent) || value.include?(:absent)
           super
         else
           value.join(",")
@@ -123,7 +123,7 @@ module Puppet
       end
 
       validate do |value|
-        unless value == :absent or value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/
+        unless (value == :absent) || (value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/)
           raise Puppet::Error, "Option #{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
         end
       end

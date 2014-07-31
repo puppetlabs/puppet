@@ -40,7 +40,7 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def before_action(&block)
-    block or raise ArgumentError, "#{@option} before_action requires a block"
+    block || (raise ArgumentError, "#{@option} before_action requires a block")
     if @option.before_action
       raise ArgumentError, "#{@option} already has a before_action set"
     end
@@ -55,7 +55,7 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def after_action(&block)
-    block or raise ArgumentError, "#{@option} after_action requires a block"
+    block || (raise ArgumentError, "#{@option} after_action requires a block")
     if @option.after_action
       raise ArgumentError, "#{@option} already has an after_action set"
     end
@@ -79,13 +79,13 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def default_to(&block)
-    block or raise ArgumentError, "#{@option} default_to requires a block"
+    block || (raise ArgumentError, "#{@option} default_to requires a block")
     if @option.has_default?
       raise ArgumentError, "#{@option} already has a default value"
     end
     # Ruby 1.8 treats a block without arguments as accepting any number; 1.9
     # gets this right, so we work around it for now... --daniel 2011-07-20
-    unless block.arity == 0 or (RUBY_VERSION =~ /^1\.8/ and block.arity == -1)
+    unless (block.arity == 0) || ((RUBY_VERSION =~ /^1\.8/) && (block.arity == -1))
       raise ArgumentError, "#{@option} default_to block should not take any arguments"
     end
     @option.default = block

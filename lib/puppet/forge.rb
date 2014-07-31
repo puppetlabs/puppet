@@ -179,7 +179,7 @@ class Puppet::Forge < Semantic::Dependency::Source
 
     def download(uri, destination)
       @source.make_http_request(uri, destination)
-      destination.flush and destination.close
+      destination.flush && destination.close
     end
 
     def validate_checksum(file, checksum)

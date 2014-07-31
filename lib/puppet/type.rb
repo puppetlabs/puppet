@@ -264,7 +264,7 @@ class Type
     if options[:boolean]
       define_method(name.to_s + "?") do
         val = self[name]
-        if val == :true or val == true
+        if (val == :true) || (val == true)
           return true
         end
       end
@@ -355,7 +355,7 @@ class Type
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
       @parameters.find_all { |param|
-        param.isnamevar? or param.name == :name
+        param.isnamevar? || (param.name == :name)
       }
     )
   end
@@ -545,7 +545,7 @@ class Type
     @validattrs ||= {}
 
     unless @validattrs.include?(name)
-      @validattrs[name] = !!(self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name))
+      (@validattrs[name] = !!(self.validproperty?(name)) || self.validparameter?(name) || self.metaparam?(name))
     end
 
     @validattrs[name]
@@ -570,7 +570,7 @@ class Type
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
     raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
-    !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
+    !!(@paramhash.include?(name) || @@metaparamhash.include?(name))
   end
 
   # (see validattr?)
@@ -583,7 +583,7 @@ class Type
 
   # @return [Boolean] Returns true if the wanted state of the resoure is that it should be absent (i.e. to be deleted).
   def deleting?
-    obj = @parameters[:ensure] and obj.should == :absent
+    (obj = @parameters[:ensure]) && (obj.should == :absent)
   end
 
   # Creates a new property value holder for the resource if it is valid and does not already exist
@@ -719,7 +719,7 @@ class Type
   #   given attribute name is not a property (i.e. if it is a parameter, meta-parameter, or does not exist).
   def should(name)
     name = name.intern
-    (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
+    ((prop = @parameters[name]) && prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
   # Registers an attribute to this resource type insance.
@@ -745,7 +745,7 @@ class Type
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
-    if provider and ! provider.class.supports_parameter?(klass)
+    if provider && !provider.class.supports_parameter?(klass)
       missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
       debug "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
       return nil
@@ -792,7 +792,7 @@ class Type
   #   this one should probably go away at some point. - Does this mean it should be deprecated ?
   # @return [Puppet::Property] the property with the given name, or nil if not a property or does not exist.
   def property(name)
-    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
+    ((obj = @parameters[name.intern]) && obj.is_a?(Puppet::Property)) ? obj : nil
   end
 
   # @todo comment says "For any parameters or properties that have defaults and have not yet been
@@ -810,7 +810,7 @@ class Type
 
     return unless parameter = newattr(klass.name)
 
-    if value = parameter.default and ! value.nil?
+    if (value = parameter.default) && !value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)
@@ -852,7 +852,7 @@ class Type
   def value(name)
     name = name.intern
 
-    (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
+    ((obj = @parameters[name]) && obj.respond_to?(:value)) ? obj.value : nil
   end
 
   # @todo What is this used for? Needs a better explanation.
@@ -906,7 +906,7 @@ class Type
       @managed = false
       properties.each { |property|
         s = property.should
-        if s and ! property.class.unmanaged
+        if s && !property.class.unmanaged
           @managed = true
           break
         end
@@ -987,7 +987,7 @@ class Type
   #
   # @return [???, nil] WHAT DOES IT RETURN? GUESS IS VOID
   def flush
-    self.provider.flush if self.provider and self.provider.respond_to?(:flush)
+    self.provider.flush if self.provider && self.provider.respond_to?(:flush)
   end
 
   # Returns true if all contained objects are in sync.
@@ -1006,7 +1006,7 @@ class Type
           "The is value is not in the is array for '#{property.name}'"
       end
       ensureis = is[property]
-      if property.safe_insync?(ensureis) and property.should == :absent
+      if property.safe_insync?(ensureis) && (property.should == :absent)
         return true
       end
     end
@@ -1037,14 +1037,14 @@ class Type
   # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
-    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and ! provider.class.suitable?
+    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) && ! provider.class.suitable?
 
     result = Puppet::Resource.new(type, title)
 
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    if (ensure_prop = property(:ensure)) || (self.class.validattr?(:ensure) && ensure_prop = newattr(:ensure))
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
@@ -1115,7 +1115,7 @@ class Type
   def noop?
     # If we're not a host_config, we're almost certainly part of
     # Settings, and we want to ignore 'noop'
-    return false if catalog and ! catalog.host_config?
+    return false if catalog && ! catalog.host_config?
 
     if defined?(@noop)
       @noop
@@ -1309,7 +1309,7 @@ class Type
 
     def all_properties
       resource.class.properties.find_all do |property|
-        resource.provider.nil? or resource.provider.class.supports_parameter?(property)
+        resource.provider.nil? || resource.provider.class.supports_parameter?(property)
       end.collect do |property|
         property.name
       end
@@ -1869,7 +1869,7 @@ class Type
   # Removes the implementation class of a given provider.
   # @return [Object] returns what {Puppet::Util::ClassGen#rmclass} returns
   def self.unprovide(name)
-    if @defaultprovider and @defaultprovider.name == name
+    if @defaultprovider && (@defaultprovider.name == name)
       @defaultprovider = nil
     end
 
@@ -1902,7 +1902,7 @@ class Type
     return true if provider && provider.class.suitable?
 
     # We're using the default provider and there is one.
-    if !provider and self.class.defaultprovider
+    if !provider && self.class.defaultprovider
       self.provider = self.class.defaultprovider.name
       return true
     end
@@ -2418,7 +2418,7 @@ class Type
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
-      next if param.class.isnamevar? and param.value == self.title
+      next if param.class.isnamevar? && (param.value == self.title)
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)

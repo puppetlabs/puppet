@@ -89,7 +89,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     validprops = Puppet::Type.type(resource.class.name).validproperties
     validprops.each do |prop|
       next if prop == :ensure
-      if value = resource.should(prop) and value != ""
+      if (value = resource.should(prop)) && (value != "")
         new_values[prop] = value
       end
     end

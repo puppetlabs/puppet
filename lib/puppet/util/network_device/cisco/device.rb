@@ -133,7 +133,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       if l =~ /#{name} is (.+), line protocol is /
         resource[:ensure] = ($1 == 'up' ? :present : :absent);
       end
-      if l =~ /Auto Speed \(.+\),/ or l =~ /Auto Speed ,/ or l =~ /Auto-speed/
+      if (l =~ /Auto Speed \(.+\),/) || (l =~ /Auto Speed ,/) || (l =~ /Auto-speed/)
         resource[:speed] = :auto
       end
       if l =~ /, (.+)Mb\/s/

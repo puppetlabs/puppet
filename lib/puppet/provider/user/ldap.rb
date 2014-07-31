@@ -78,13 +78,13 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
     modes = {}
     [is, should].flatten.uniq.each do |group|
       # Skip it when they're in both
-      next if is.include?(group) and should.include?(group)
+      next if is.include?(group) && should.include?(group)
 
       # We're adding a group.
-      modes[group] = :add and next unless is.include?(group)
+      (modes[group] = :add) && next unless is.include?(group)
 
       # We're removing a group.
-      modes[group] = :remove and next unless should.include?(group)
+      (modes[group] = :remove) && next unless should.include?(group)
     end
 
     modes.each do |group, form|
@@ -93,7 +93,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
       current = ldap_group[:members]
 
       if form == :add
-        if current.is_a?(Array) and ! current.empty?
+        if current.is_a?(Array) && !current.empty?
           new = current + [name]
         else
           new = [name]
@@ -119,7 +119,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
   end
 
   def group_properties(values)
-    if values.empty? or values == :absent
+    if values.empty? || (values == :absent)
       {:ensure => :present}
     else
       {:ensure => :present, :members => values}

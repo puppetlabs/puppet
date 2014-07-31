@@ -99,14 +99,14 @@ Puppet::Type.type(:mount).provide(
     end
     instances = []
     mount_output = mountcmd.split("\n")
-    if mount_output.length >= 2 and mount_output[1] =~ /^[- \t]*$/
+    if (mount_output.length >= 2) && (mount_output[1] =~ /^[- \t]*$/)
       # On some OSes (e.g. AIX) mount output begins with a header line
       # followed by a line consisting of dashes and whitespace.
       # Discard these two lines.
       mount_output[0..1] = []
     end
     mount_output.each do |line|
-      if match = regex.match(line) and name = match.captures.first
+      if (match = regex.match(line)) && (name = match.captures.first)
         instances << {:name => name, :mounted => :yes} # Only :name is important here
       else
         raise Puppet::Error, "Could not understand line #{line} from mount output"

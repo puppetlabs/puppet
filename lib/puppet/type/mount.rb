@@ -95,7 +95,7 @@ module Puppet
       # insync: mounted   -> present
       #         unmounted -> present
       def insync?(is)
-        if should == :defined and [:mounted,:unmounted].include?(is)
+        if (should == :defined) && [:mounted,:unmounted].include?(is)
           true
         else
           super
@@ -141,9 +141,9 @@ module Puppet
       # Default to the device but with "dsk" replaced with "rdsk".
       defaultto do
         if Facter.value(:osfamily) == "Solaris"
-          if device = resource[:device] and device =~ %r{/dsk/}
+          if (device = resource[:device]) && (device =~ %r{/dsk/})
             device.sub(%r{/dsk/}, "/rdsk/")
-          elsif fstype = resource[:fstype] and fstype == 'nfs'
+          elsif (fstype = resource[:fstype]) && (fstype == 'nfs')
             '-'
           else
             nil
@@ -263,7 +263,7 @@ module Puppet
 
     def refresh
       # Only remount if we're supposed to be mounted.
-      provider.remount if self.should(:fstype) != "swap" and provider.mounted?
+      provider.remount if (self.should(:fstype) != "swap") && provider.mounted?
     end
 
     def value(name)

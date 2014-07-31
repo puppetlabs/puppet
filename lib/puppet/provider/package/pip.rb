@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    pip_cmd = which(cmd) or return []
+    (pip_cmd = which(cmd)) || (return [])
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)

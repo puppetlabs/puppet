@@ -142,9 +142,9 @@ class Puppet::Transaction
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
       else
-        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] && @catalog.host_config?
         seconds = thinmark { block.call(resource) }
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] && @catalog.host_config?
       end
     end
 
@@ -183,7 +183,7 @@ class Puppet::Transaction
 
   def prefetch_if_necessary(resource)
     provider_class = resource.provider.class
-    return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
+    return unless provider_class.respond_to?(:prefetch) && !prefetched_providers[resource.type][provider_class.name]
 
     resources = resources_by_provider(resource.type, provider_class.name)
 
@@ -221,7 +221,7 @@ class Puppet::Transaction
   end
 
   def failed?(resource)
-    s = resource_status(resource) and s.failed?
+    (s = resource_status(resource)) && s.failed?
   end
 
   # Does this resource have any failed dependencies?
@@ -316,7 +316,7 @@ class Puppet::Transaction
 
   # Is the resource currently scheduled?
   def scheduled?(resource)
-    self.ignoreschedules or resource_harness.scheduled?(resource)
+    self.ignoreschedules || resource_harness.scheduled?(resource)
   end
 
   # Should this resource be skipped?
