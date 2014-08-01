@@ -47,6 +47,9 @@ describe "Puppet resource expressions" do
       Puppet[:parser] = 'future'
     end
 
+    produces(
+      "$a = notify; $b = example; $c = { message => hello }; @@$a { $b: * => $c } realize(Resource[$a, $b])" => [["Notify[example]", { :message => "hello" }]])
+
     context "resource titles" do
       produces(
         "notify { thing: }"                     => ["Notify[thing]"],
