@@ -3,8 +3,6 @@ extend Puppet::Acceptance::CAUtils
 
 test_name "Puppet cert generate behavior (#6112)" do
 
-  skip_test "This test is pending additional CA work" if @options[:is_jvm_puppet]
-
   # This acceptance test documents the behavior of `puppet cert generate` calls
   # for three cases:
   #

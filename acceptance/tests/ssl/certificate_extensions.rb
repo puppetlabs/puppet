@@ -7,8 +7,6 @@ initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
 
-  skip_test "This test is pending additional CA work" if @options[:is_jvm_puppet]
-
   teardown do
     reset_agent_ssl
   end
