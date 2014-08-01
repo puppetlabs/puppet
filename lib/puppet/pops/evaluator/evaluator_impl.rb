@@ -703,11 +703,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         if title.nil?
           fail(Puppet::Pops::Issues::MISSING_TITLE_AT, body.title, {:index => index})
 
-        elsif !(title.is_a?(String) || title == :default)
+        elsif !title.is_a?(String) && title != :default
           actual = type_calculator.generalize!(type_calculator.infer(title)).to_s
           fail(Puppet::Pops::Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
 
-       elsif title.empty?
+        elsif title == EMPTY_STRING
          fail(Puppet::Pops::Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
 
         elsif titles_to_body[title]
