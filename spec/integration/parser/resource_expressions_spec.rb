@@ -11,17 +11,22 @@ describe "Puppet resource expressions" do
       it "evaluates #{manifest} to produce #{resources}" do
         catalog = compile_to_catalog(manifest)
 
-        resources.each do |reference|
-          if reference.is_a?(Array)
-            matcher = have_resource(reference[0])
-            reference[1].each do |name, value|
-              matcher = matcher.with_parameter(name, value)
+        if resources.empty?
+          base_resources = ["Class[Settings]", "Class[main]", "Stage[main]"]
+          expect(catalog.resources.collect(&:ref) - base_resources).to eq([])
+        else
+          resources.each do |reference|
+            if reference.is_a?(Array)
+              matcher = have_resource(reference[0])
+              reference[1].each do |name, value|
+                matcher = matcher.with_parameter(name, value)
+              end
+            else
+              matcher = have_resource(reference)
             end
-          else
-            matcher = have_resource(reference)
-          end
 
-          expect(catalog).to matcher
+            expect(catalog).to matcher
+          end
         end
       end
     end
@@ -181,6 +186,20 @@ describe "Puppet resource expressions" do
 
         "notify { title: * => { unknown => value } }" => /Invalid parameter unknown/
       )
+    end
+
+    context "virtual" do
+      produces(
+        "@notify { example: }" => [],
+        "@notify { example: } realize(Notify[example])" => ["Notify[example]"],
+        "@notify { virtual: message => set } notify { real: message => Notify[virtual][message] }" => [["Notify[real]", { :message => "set" }]])
+    end
+
+    context "exported" do
+      produces(
+        "@@notify { example: }" => [],
+        "@@notify { example: } realize(Notify[example])" => ["Notify[example]"],
+        "@@notify { exported: message => set } notify { real: message => Notify[exported][message] }" => [["Notify[real]", { :message => "set" }]])
     end
   end
 
