@@ -74,7 +74,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Not ideal, scope should support numeric lookup directly instead.
     # TODO: consider fixing scope
     catch(:undefined_variable) {
-      return scope.lookupvar(name.to_s)
+      x = scope.lookupvar(name.to_s)
+      # Must convert :undef back to nil - this can happen when an undefined variable is used in a
+      # parameter's default value expression - there nil must be :undef to work with the rest of 3x.
+      # Now that the value comes back to 4x it is changed to nil.
+      return (x == :undef) ? nil : x
     }
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
@@ -386,7 +390,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def resource_to_ptype(resource)
     nil if resource.nil?
-    type_calculator.infer(resource)
+    # inference returns the meta type since the 3x Resource is an alternate way to describe a type
+    type_calculator.infer(resource).type
   end
 
   # This is the same type of "truth" as used in the current Puppet DSL.

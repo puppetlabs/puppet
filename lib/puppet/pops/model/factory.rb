@@ -70,6 +70,11 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_AttributesOperation(o, value)
+    o.expr = build(value)
+    o
+  end
+
   def build_AccessExpression(o, left, *keys)
     o.left_expr = to_ops(left)
     keys.each {|expr| o.addKeys(to_ops(expr)) }
@@ -334,6 +339,10 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_TokenValue(o)
+    raise "Factory can not deal with a Lexer Token. Got token: #{o}. Probably caused by wrong index in grammar val[n]."
+  end
+
   # Puppet::Pops::Model::Factory helpers
   def f_build_unary(klazz, expr)
     Puppet::Pops::Model::Factory.new(build(klazz.new, expr))
@@ -490,7 +499,18 @@ class Puppet::Pops::Model::Factory
     Puppet::Pops::Adapters::SourcePosAdapter.adapt(current)
   end
 
-  # Returns symbolic information about an expected share of a resource expression given the LHS of a resource expr.
+  # Sets the form of the resource expression (:regular (the default), :virtual, or :exported).
+  # Produces true if the expression was a resource expression, false otherwise.
+  #
+  def self.set_resource_form(expr, form)
+    expr = expr.current if expr.is_a?(Puppet::Pops::Model::Factory)
+    # Note: Validation handles illegal combinations
+    return false unless expr.is_a?(Puppet::Pops::Model::AbstractResource)
+    expr.form = form
+    return true
+  end
+
+  # Returns symbolic information about an expected shape of a resource expression given the LHS of a resource expr.
   #
   # * `name { }` => `:resource`,  create a resource of the given type
   # * `Name { }` => ':defaults`, set defaults for the referenced type
@@ -505,7 +525,12 @@ class Puppet::Pops::Model::Factory
     when Model::QualifiedReference
       :defaults
     when Model::AccessExpression
-      :override
+      # if Resource[e], then it is not resource specific
+      if expr.left_expr.is_a?(Model::QualifiedReference) && expr.left_expr.value == 'resource' && expr.keys.size == 1
+        :defaults
+      else
+        :override
+      end
     when 'class'
       :class
     else
@@ -669,6 +694,10 @@ class Puppet::Pops::Model::Factory
     new(Model::AttributeOperation, name, op, expr)
   end
 
+  def self.ATTRIBUTES_OP(expr)
+    new(Model::AttributesOperation, expr)
+  end
+
   def self.CALL_NAMED(name, rval_required, argument_list)
     unless name.kind_of?(Model::PopsObject)
       name = Puppet::Pops::Model::Factory.fqn(name) unless name.is_a?(Puppet::Pops::Model::Factory)
@@ -790,7 +819,9 @@ class Puppet::Pops::Model::Factory
   # Transforms a left expression followed by an untitled resource (in the form of attribute_operations)
   # @param left [Factory, Expression] the lhs followed what may be a hash
   def self.transform_resource_wo_title(left, attribute_ops)
+    # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
+    return nil unless left.current.is_a?(Puppet::Pops::Model::QualifiedName)
     keyed_entries = attribute_ops.map do |ao|
       return nil if ao.operator == :'+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
@@ -1001,5 +1032,9 @@ class Puppet::Pops::Model::Factory
         raise ArgumentError, "can only concatenate strings, got #{e.class}"
       end
     end.join(''))
+  end
+
+  def to_s
+    Puppet::Pops::Model::ModelTreeDumper.new.dump(self)
   end
 end

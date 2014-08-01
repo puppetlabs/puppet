@@ -1192,7 +1192,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = '1+1 { "title": }'
       # Error references position 5 at the opening '{'
       # Set file to nil to make it easier to match with line number (no file name in output)
-      expect { parser.parse_string(source, nil) }.to raise_error(/Expression is not valid as a resource.*line 1:5/)
+      expect { parser.evaluate_string(scope, source) }.to raise_error(
+        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.*line 1:2/)
     end
 
     it 'for non r-value producing <| |>' do

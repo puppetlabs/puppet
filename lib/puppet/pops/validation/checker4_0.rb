@@ -174,6 +174,17 @@ class Puppet::Pops::Validation::Checker4_0
     rvalue(o.value_expr)
   end
 
+  def check_AttributesOperation(o)
+    # Append operator use is constrained
+    parent = o.eContainer
+    parent = parent.eContainer unless parent.nil?
+    unless parent.is_a?(Model::ResourceExpression)
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, :operator=>'* =>')
+    end
+
+    rvalue(o.expr)
+  end
+
   def check_BinaryExpression(o)
     rvalue(o.left_expr)
     rvalue(o.right_expr)
@@ -407,10 +418,12 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_ResourceExpression(o)
-    # A resource expression must have a lower case NAME as its type e.g. 'file { ... }'
-    unless o.type_name.is_a? Model::QualifiedName
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_name, :feature => 'resource type', :container => o)
-    end
+    # TODO: Can no longer be asserted
+
+    ## A resource expression must have a lower case NAME as its type e.g. 'file { ... }'
+    #unless o.type_name.is_a? Model::QualifiedName
+    #  acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_name, :feature => 'resource type', :container => o)
+    #end
 
     # This is a runtime check - the model is valid, but will have runtime issues when evaluated
     # and storeconfigs is not set.
@@ -420,6 +433,12 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_ResourceDefaultsExpression(o)
+    if o.form && o.form != :regular
+      acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
+    end
+  end
+
+  def check_ResourceOverrideExpression(o)
     if o.form && o.form != :regular
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
     end
@@ -567,10 +586,6 @@ class Puppet::Pops::Validation::Checker4_0
   # Implement specific rvalue checks for those that are not.
   #
   def rvalue_Expression(o); end
-
-  def rvalue_ResourceDefaultsExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
-  def rvalue_ResourceOverrideExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
   def rvalue_CollectExpression(o)         ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 

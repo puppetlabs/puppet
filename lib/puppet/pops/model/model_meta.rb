@@ -235,12 +235,21 @@ module Puppet::Pops::Model
     :literals => [:'=>', :'+>', ],
     :name => 'OpAttribute')
 
+  class AbstractAttributeOperation < Positioned
+  end
+
   # An attribute operation sets or appends a value to a named attribute.
   #
-  class AttributeOperation < Positioned
+  class AttributeOperation < AbstractAttributeOperation
     has_attr 'attribute_name', String, :lowerBound => 1
     has_attr 'operator', OpAttribute, :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
+  end
+
+  # An attribute operation containing an expression that must evaluate to a Hash
+  #
+  class AttributesOperation < AbstractAttributeOperation
+    contains_one_uni 'expr', Expression, :lowerBound => 1
   end
 
   # An object that collects stored objects from the central cache and returns
@@ -492,7 +501,7 @@ module Puppet::Pops::Model
   #
   class ResourceBody < Positioned
     contains_one_uni 'title', Expression
-    contains_many_uni 'operations', AttributeOperation
+    contains_many_uni 'operations', AbstractAttributeOperation
   end
 
   ResourceFormEnum = RGen::MetamodelBuilder::DataTypes::Enum.new(
@@ -523,15 +532,15 @@ module Puppet::Pops::Model
   # when illegal forms are applied to a model.
   #
   class ResourceDefaultsExpression < AbstractResource
-    contains_one_uni 'type_ref', QualifiedReference
-    contains_many_uni 'operations', AttributeOperation
+    contains_one_uni 'type_ref', Expression
+    contains_many_uni 'operations', AbstractAttributeOperation
   end
 
   # A resource override overrides already set values.
   #
-  class ResourceOverrideExpression < Expression
+  class ResourceOverrideExpression < AbstractResource
     contains_one_uni 'resources', Expression, :lowerBound => 1
-    contains_many_uni 'operations', AttributeOperation
+    contains_many_uni 'operations', AbstractAttributeOperation
   end
 
   # A selector entry describes a map from matching_expr to value_expr.
