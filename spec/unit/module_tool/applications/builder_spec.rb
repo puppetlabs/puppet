@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/file_system'
 require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 
@@ -48,19 +49,19 @@ describe Puppet::ModuleTool::Applications::Builder do
 
     it_behaves_like "a packagable module"
 
-    it "does not package with a symlink" do
+    it "does not package with a symlink", :if => Puppet.features.manages_symlinks? do
       FileUtils.touch(File.join(path, 'tempfile'))
-      File.symlink(File.join(path, 'tempfile'), File.join(path, 'tempfile2'))
+      Puppet::FileSystem.symlink(File.join(path, 'tempfile'), File.join(path, 'tempfile2'))
 
       expect {
         builder.run
       }.to raise_error Puppet::ModuleTool::Errors::ModuleToolError, /symlinks/i
     end
 
-    it "does not package with a symlink in a subdir" do
+    it "does not package with a symlink in a subdir", :if => Puppet.features.manages_symlinks? do
       FileUtils.mkdir(File.join(path, 'manifests'))
       FileUtils.touch(File.join(path, 'manifests/tempfile.pp'))
-      File.symlink(File.join(path, 'manifests/tempfile.pp'), File.join(path, 'manifests/tempfile2.pp'))
+      Puppet::FileSystem.symlink(File.join(path, 'manifests/tempfile.pp'), File.join(path, 'manifests/tempfile2.pp'))
 
       expect {
         builder.run

@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'json'
 
 require 'puppet/module_tool/applications'
+require 'puppet/file_system'
 require 'puppet_spec/modules'
 
 describe Puppet::ModuleTool::Applications::Unpacker do
@@ -32,7 +33,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     File.should be_directory(File.join(target, 'mytarball'))
   end
 
-  it "should warn about symlinks" do
+  it "should warn about symlinks", :if => Puppet.features.manages_symlinks? do
     untar = mock('Tar')
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
@@ -40,7 +41,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
         file.puts JSON.generate('name' => module_name, 'version' => '1.0.0')
       end
       FileUtils.touch(File.join(dest, 'extractedmodule/tempfile'))
-      File.symlink(File.join(dest, 'extractedmodule/tempfile'), File.join(dest, 'extractedmodule/tempfile2'))
+      Puppet::FileSystem.symlink(File.join(dest, 'extractedmodule/tempfile'), File.join(dest, 'extractedmodule/tempfile2'))
       true
     end
 
@@ -51,7 +52,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     File.should be_directory(File.join(target, 'mytarball'))
   end
 
-  it "should warn about symlinks in subdirectories" do
+  it "should warn about symlinks in subdirectories", :if => Puppet.features.manages_symlinks? do
     untar = mock('Tar')
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
@@ -60,7 +61,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
       end
       FileUtils.mkdir(File.join(dest, 'extractedmodule/manifests'))
       FileUtils.touch(File.join(dest, 'extractedmodule/manifests/tempfile'))
-      File.symlink(File.join(dest, 'extractedmodule/manifests/tempfile'), File.join(dest, 'extractedmodule/manifests/tempfile2'))
+      Puppet::FileSystem.symlink(File.join(dest, 'extractedmodule/manifests/tempfile'), File.join(dest, 'extractedmodule/manifests/tempfile2'))
       true
     end
 
