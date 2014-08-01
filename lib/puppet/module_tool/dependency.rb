@@ -20,6 +20,18 @@ module Puppet::ModuleTool
       @repository = repository ? Puppet::Forge::Repository.new(repository) : nil
     end
 
+    # We override Object's ==, eql, and hash so we can more easily find identical
+    # dependencies.
+    def ==(o)
+      self.hash == o.hash
+    end
+
+    alias :eql? :==
+
+    def hash
+      [@full_module_name, @version_requirement, @repository].hash
+    end
+
     def to_data_hash
       result = { :name => @full_module_name }
       result[:version_requirement] = @version_requirement if @version_requirement && ! @version_requirement.nil?
