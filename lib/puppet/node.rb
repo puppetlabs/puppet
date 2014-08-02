@@ -57,18 +57,20 @@ class Puppet::Node
   def environment
     if @environment
       @environment
-    elsif env = parameters["environment"]
-      self.environment = env
-      @environment
-    elsif environment_name
-      self.environment = environment_name
-      @environment
     else
-      # This should not be :current_environment, this is the default
-      # for a node when it has not specified its environment
-      # Tt will be used to establish what the current environment is.
-      #
-      Puppet.lookup(:environments).get(Puppet[:environment])
+      if env = parameters["environment"]
+        self.environment = env
+      elsif environment_name
+        self.environment = environment_name
+      else
+        # This should not be :current_environment, this is the default
+        # for a node when it has not specified its environment
+        # Tt will be used to establish what the current environment is.
+        #
+        self.environment = Puppet.lookup(:environments).get(Puppet[:environment])
+      end
+
+      @environment
     end
   end
 
