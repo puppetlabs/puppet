@@ -1229,6 +1229,8 @@ Generated on #{Time.now}.
   #
   # @api public
   class ChainedValues
+    ENVIRONMENT_SETTING = "environment".freeze
+
     # @see Puppet::Settings.values
     # @api private
     def initialize(mode, environment, value_sets, defaults)
@@ -1293,19 +1295,24 @@ Generated on #{Time.now}.
     private
 
     def convert(value)
-      return nil if value.nil?
-      return value unless value.is_a? String
-      value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-        varname = $2 || $1
-        if varname == "environment" && @environment
-          @environment
-        elsif varname == "run_mode"
-          @mode
-        elsif !(pval = interpolate(varname.to_sym)).nil?
-          pval
-        else
-          raise InterpolationError, "Could not find value for #{value}"
+      case value
+      when nil
+        nil
+      when String
+        value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+          varname = $2 || $1
+          if varname == ENVIRONMENT_SETTING && @environment
+            @environment
+          elsif varname == "run_mode"
+            @mode
+          elsif !(pval = interpolate(varname.to_sym)).nil?
+            pval
+          else
+            raise InterpolationError, "Could not find value for #{value}"
+          end
         end
+      else
+        value
       end
     end
   end
