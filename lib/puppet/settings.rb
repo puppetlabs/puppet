@@ -5,6 +5,7 @@ require 'puppet/util/command_line/puppet_option_parser'
 
 # The class for handling configuration files.
 class Puppet::Settings
+  extend Forwardable
   include Enumerable
 
   require 'puppet/settings/errors'
@@ -89,6 +90,7 @@ class Puppet::Settings
 
     # And keep a per-environment cache
     @cache = Hash.new { |hash, key| hash[key] = {} }
+    @values = Hash.new { |hash, key| hash[key] = {} }
 
     # The list of sections we've used.
     @used = []
@@ -196,6 +198,7 @@ class Puppet::Settings
     @value_sets[:memory] = Values.new(:memory, @config)
     @value_sets[:overridden_defaults] = Values.new(:overridden_defaults, @config)
 
+    @values.clear
     @cache.clear
   end
   private :unsafe_clear
@@ -349,11 +352,7 @@ class Puppet::Settings
     end
   end
 
-  def each
-    @config.each { |name, object|
-      yield name, object
-    }
-  end
+  def_delegator :@config, :each
 
   # Iterate over each section name.
   def eachsection
@@ -994,7 +993,7 @@ Generated on #{Time.now}.
   # @return [Puppet::Settings::ChainedValues] An object to perform lookups
   # @api public
   def values(environment, section)
-    ChainedValues.new(
+    @values[environment][section] ||= ChainedValues.new(
       section,
       environment,
       value_sets_for(environment, section),
@@ -1318,31 +1317,30 @@ Generated on #{Time.now}.
   end
 
   class Values
+    extend Forwardable
+
     def initialize(name, defaults)
       @name = name
       @values = {}
       @defaults = defaults
     end
 
-    def include?(name)
-      @values.include?(name)
-    end
+    def_delegator :@values, :include?
+    def_delegator :@values, :[], :lookup
 
     def set(name, value)
-      if !@defaults[name]
+      default = @defaults[name]
+
+      if !default
         raise ArgumentError,
           "Attempt to assign a value to unknown setting #{name.inspect}"
       end
 
-      if @defaults[name].has_hook?
-        @defaults[name].handle(value)
+      if default.has_hook?
+        default.handle(value)
       end
 
       @values[name] = value
-    end
-
-    def lookup(name)
-      @values[name]
     end
   end
 
@@ -1383,12 +1381,9 @@ Generated on #{Time.now}.
     end
 
     def conf
-      unless @conf
-        if environments = Puppet.lookup(:environments)
-          @conf = environments.get_conf(@environment_name)
-        end
-      end
-      return @conf
+      @conf ||= if environments = Puppet.lookup(:environments)
+                  environments.get_conf(@environment_name)
+                end
     end
   end
 end
