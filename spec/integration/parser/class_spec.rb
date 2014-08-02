@@ -9,17 +9,17 @@ describe "Class expressions" do
   end
 
   produces(
-    "class hi { }"                                       => [],
+    "class hi { }"                                       => '!defined(Class[Hi])',
 
-    "class hi { } include hi"                            => ['Class[Hi]'],
-    "include(hi) class hi { }"                           => ['Class[Hi]'],
+    "class hi { } include hi"                            => 'defined(Class[Hi])',
+    "include(hi) class hi { }"                           => 'defined(Class[Hi])',
 
-    "class hi { } class { hi: }"                         => ['Class[Hi]'],
-    "class { hi: } class hi { }"                         => ['Class[Hi]'],
+    "class hi { } class { hi: }"                         => 'defined(Class[Hi])',
+    "class { hi: } class hi { }"                         => 'defined(Class[Hi])',
 
-    "class bye { } class hi inherits bye { } include hi" => ['Class[Hi]', 'Class[Bye]'])
+    "class bye { } class hi inherits bye { } include hi" => 'defined(Class[Hi]) and defined(Class[Bye])')
 
-  produces(<<-EXAMPLE => ['Notify[foo]', 'Notify[bar]'])
+  produces(<<-EXAMPLE => 'defined(Notify[foo]) and defined(Notify[bar]) and !defined(Notify[foo::bar])')
     class bar { notify { 'bar': } }
     class foo::bar { notify { 'foo::bar': } }
     class foo inherits bar { notify { 'foo': } }
@@ -27,7 +27,7 @@ describe "Class expressions" do
     include foo
   EXAMPLE
 
-  produces(<<-EXAMPLE => ['Notify[foo]', 'Notify[bar]'])
+  produces(<<-EXAMPLE => 'defined(Notify[foo]) and defined(Notify[bar]) and !defined(Notify[foo::bar])')
     class bar { notify { 'bar': } }
     class foo::bar { notify { 'foo::bar': } }
     class foo inherits ::bar { notify { 'foo': } }
