@@ -582,9 +582,10 @@ class Puppet::Parser::Compiler
 
     scope = @topscope.class_scope(settings_type)
 
+    env = environment
     Puppet.settings.each do |name, setting|
       next if name == :name
-      scope[name.to_s] = environment[name]
+      scope[name.to_s] = env[name]
     end
   end
 
