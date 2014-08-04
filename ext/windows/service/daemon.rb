@@ -62,16 +62,7 @@ class WindowsDaemon < Win32::Daemon
     log_notice('Service started')
 
     while running? do
-      begin
-        runinterval = %x{ "#{puppet}" agent --configprint runinterval }.to_i
-        if runinterval == 0
-          runinterval = 1800
-          log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
-        end
-      rescue Exception => e
-        log_exception(e)
-        runinterval = 1800
-      end
+      runinterval = parse_runinterval(puppet)
 
       if state == RUNNING or state == IDLE
         log_notice("Executing agent with arguments: #{args}")
@@ -152,6 +143,21 @@ class WindowsDaemon < Win32::Daemon
         eventlog.close
       end
     end
+  end
+
+  def parse_runinterval(puppet_path)
+    begin
+      runinterval = %x{ "#{puppet_path}" agent --configprint runinterval }.to_i
+      if runinterval == 0
+        runinterval = 1800
+        log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
+      end
+    rescue Exception => e
+      log_exception(e)
+      runinterval = 1800
+    end
+
+    runinterval
   end
 end
 
