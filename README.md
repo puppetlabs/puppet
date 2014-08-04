@@ -1,6 +1,8 @@
 Puppet
 ======
 
+DO NOT MERGE
+
 [![Build Status](https://travis-ci.org/puppetlabs/puppet.png?branch=master)](https://travis-ci.org/puppetlabs/puppet)
 [![Inline docs](http://inch-ci.org/github/puppetlabs/puppet.png)](http://inch-ci.org/github/puppetlabs/puppet)
 
