@@ -185,7 +185,7 @@ resource
   additional_resource_bodies
     : endcomma                         { result = [] }
     | endcomma SEMIC                   { result = [] }
-    | endcomma SEMIC resource_bodies   { result = val[2] }
+    | endcomma SEMIC resource_bodies endsemi { result = val[2] }
 
 #-- EXPRESSION
 #

@@ -56,6 +56,15 @@ describe "egrammar parsing resource declarations" do
         ].join("\n")
       end
 
+      # PUP-2898, trailing ';'
+      it "#{word} { 'title': ; 'other_title': ; }" do
+        dump(parse("#{word} { 'title': ; 'other_title': ; }")).should == [
+          "(resource file",
+          "  ('title')",
+          "  ('other_title'))"
+        ].join("\n")
+      end
+
       it "#{word} { 'title1': path => 'x'; 'title2': path => 'y'}" do
         dump(parse("#{word} { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
           "(resource file",
