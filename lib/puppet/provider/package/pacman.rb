@@ -211,7 +211,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       	return { :ensure => group_version }
       else
         return {
-          :ensure => :purged,
+          :ensure => :absent,
           :status => 'missing',
           :name => @resource[:name],
           :error => 'ok',
@@ -225,7 +225,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     # report package missing if it is not installed
     else
       return {
-        :ensure => :purged,
+        :ensure => :absent,
         :status => 'missing',
         :name => @resource[:name],
         :error => 'ok',
