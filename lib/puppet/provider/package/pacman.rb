@@ -143,13 +143,19 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   def self.get_virtual_group_version group, package_versions
     begin
       fully_installed = true
-      group_version = "\n" # this is just to make Puppet's output look nicer
+      group_version = "\n" # the leading newline is just to make Puppet's output look nicer
+      group_pkgs = []
       execpipe([command(:pacman), "-Sg", group]) do |process|
         process.each_line do |line|
           group_pkg = line.split[1]
+          # if a package is missing, the group should be considered to be present
           fully_installed = false unless package_versions[group_pkg]
-          group_version += "#{group_pkg} #{package_versions[group_pkg]}\n"
+          group_pkgs << group_pkg
         end
+      end
+      # sort packages by name
+      group_pkgs.sort.each do |group_pkg|
+        group_version += "#{group_pkg} #{package_versions[group_pkg]}\n"
       end
       [group_version, fully_installed]
     rescue Puppet::ExecutionFailure
@@ -169,8 +175,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     pacman "-Sy"
     # If target is a group, construct the virtual group version
     if is_group(@resource[:name])
-      output = pacman "-Sp", "--print-format", "%n %v", @resource[:name]
-      return "\n" + output.chomp
+      output = pacman("-Sp", "--print-format", "%n %v", @resource[:name])
+      # sort packages by name and add leading line break as in get_virtual_group_version
+      return "\n" + output.lines.sort.join
     end
     pacman_check = true   # Query the main repos first
     begin
