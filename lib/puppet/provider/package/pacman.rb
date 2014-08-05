@@ -37,12 +37,12 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   def install_from_repo
     if yaourt?
-      cmd = %w{--noconfirm}
+      cmd = %w{--noconfirm --needed}
       cmd += install_options if @resource[:install_options]
       cmd << "-S" << @resource[:name]
       yaourt *cmd
     else
-      cmd = %w{--noconfirm --noprogressbar}
+      cmd = %w{--noconfirm  --needed --noprogressbar}
       cmd += install_options if @resource[:install_options]
       cmd << "-Sy" << @resource[:name]
       pacman *cmd
