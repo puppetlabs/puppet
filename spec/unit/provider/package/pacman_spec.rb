@@ -182,7 +182,7 @@ EOF
     it "should return a hash indicating that the package is missing" do
       executor.expects(:execpipe).yields("")
       expect(provider.query).to eq({
-        :ensure => :purged,
+        :ensure => :absent,
         :status => 'missing',
         :name => resource[:name],
         :error => 'ok',
