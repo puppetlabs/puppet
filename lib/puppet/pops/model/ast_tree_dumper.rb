@@ -372,7 +372,7 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_Selector o
     values = o.values
-    values = [values] unless values.instance_of? AST::ASTArray or values.instance_of? Array
+    values = [values] unless values.instance_of?(AST::ASTArray) || values.instance_of?(Array)
     ["?", do_dump(o.param)] + values.collect {|x| do_dump(x) }
   end
 
