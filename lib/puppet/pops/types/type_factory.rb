@@ -286,7 +286,14 @@ module Puppet::Pops::Types::TypeFactory
   def self.resource(type_name = nil, title = nil)
     type = Types::PResourceType.new()
     type_name = type_name.type_name if type_name.is_a?(Types::PResourceType)
-    type.type_name = type_name.downcase unless type_name.nil?
+    type_name = type_name.downcase unless type_name.nil?
+    type.type_name = type_name
+    unless type_name.nil? || type_name =~ Puppet::Pops::Patterns::CLASSREF
+      raise ArgumentError, "Illegal type name '#{type.type_name}'"
+    end
+    if type_name.nil? && !title.nil?
+      raise ArgumentError, "The type name cannot be nil, if title is given"
+    end
     type.title = title
     type
   end

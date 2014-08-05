@@ -8,57 +8,95 @@ describe Puppet::Face[:parser, :current] do
 
   let(:parser) { Puppet::Face[:parser, :current] }
 
-  context "from an interactive terminal" do
-    before :each do
-      from_an_interactive_terminal
-    end
-
-    it "validates the configured site manifest when no files are given" do
-      manifest = file_containing('site.pp', "{ invalid =>")
-
-      configured_environment = Puppet::Node::Environment.create(:default, [], manifest)
-      Puppet.override(:current_environment => configured_environment) do
-        expect { parser.validate() }.to exit_with(1)
+  context "validate" do
+    context "from an interactive terminal" do
+      before :each do
+        from_an_interactive_terminal
       end
-    end
 
-    it "validates the given file" do
-      manifest = file_containing('site.pp', "{ invalid =>")
+      it "validates the configured site manifest when no files are given" do
+        manifest = file_containing('site.pp', "{ invalid =>")
 
-      expect { parser.validate(manifest) }.to exit_with(1)
-    end
+        configured_environment = Puppet::Node::Environment.create(:default, [], manifest)
+        Puppet.override(:current_environment => configured_environment) do
+          expect { parser.validate() }.to exit_with(1)
+        end
+      end
 
-    it "runs error free when there are no validation errors" do
-      manifest = file_containing('site.pp', "notify { valid: }")
+      it "validates the given file" do
+        manifest = file_containing('site.pp', "{ invalid =>")
 
-      parser.validate(manifest)
-    end
-
-    it "reports missing files" do
-      expect do
-        parser.validate("missing.pp")
-      end.to raise_error(Puppet::Error, /One or more file\(s\) specified did not exist.*missing\.pp/m)
-    end
-
-    it "parses supplied manifest files in the context of a directory environment" do
-      manifest = file_containing('test.pp', "{ invalid =>")
-
-      env = Puppet::Node::Environment.create(:special, [])
-      env_loader = Puppet::Environments::Static.new(env)
-      Puppet.override({:environments => env_loader, :current_environment => env}) do
         expect { parser.validate(manifest) }.to exit_with(1)
       end
 
-      expect(@logs.join).to match(/environment special.*Syntax error at '\{'/)
+      it "runs error free when there are no validation errors" do
+        manifest = file_containing('site.pp', "notify { valid: }")
+
+        parser.validate(manifest)
+      end
+
+      it "reports missing files" do
+        expect do
+          parser.validate("missing.pp")
+        end.to raise_error(Puppet::Error, /One or more file\(s\) specified did not exist.*missing\.pp/m)
+      end
+
+      it "parses supplied manifest files in the context of a directory environment" do
+        manifest = file_containing('test.pp', "{ invalid =>")
+
+        env = Puppet::Node::Environment.create(:special, [])
+        env_loader = Puppet::Environments::Static.new(env)
+        Puppet.override({:environments => env_loader, :current_environment => env}) do
+          expect { parser.validate(manifest) }.to exit_with(1)
+        end
+
+        expect(@logs.join).to match(/environment special.*Syntax error at '\{'/)
+      end
+
     end
 
+    it "validates the contents of STDIN when no files given and STDIN is not a tty" do
+      from_a_piped_input_of("{ invalid =>")
+
+      Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
+        expect { parser.validate() }.to exit_with(1)
+      end
+    end
   end
 
-  it "validates the contents of STDIN when no files given and STDIN is not a tty" do
-    from_a_piped_input_of("{ invalid =>")
+  context "dump" do
+    it "prints the AST of the passed expression" do
+      expect(parser.dump({ :e => 'notice hi' })).to eq("(invoke notice hi)\n")
+    end
 
-    Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
-      expect { parser.validate() }.to exit_with(1)
+    it "prints the AST of the code read from the passed files" do
+      first_manifest = file_containing('site.pp', "notice hi")
+      second_manifest = file_containing('site2.pp', "notice bye")
+
+      output = parser.dump(first_manifest, second_manifest)
+
+      expect(output).to match(/site\.pp.*\(invoke notice hi\)/)
+      expect(output).to match(/site2\.pp.*\(invoke notice bye\)/)
+    end
+
+    it "informs the user of files that don't exist" do
+      expect(parser.dump('does_not_exist_here.pp')).to match(/did not exist:\s*does_not_exist_here\.pp/m)
+    end
+
+    it "prints the AST of STDIN when no files given and STDIN is not a tty" do
+      from_a_piped_input_of("notice hi")
+
+      Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
+        expect(parser.dump()).to eq("(invoke notice hi)\n")
+      end
+    end
+
+    it "logs an error if the input cannot be parsed" do
+      output = parser.dump({ :e => '{ invalid =>' })
+
+      expect(output).to eq("")
+      expect(@logs[0].message).to eq("Syntax error at end of file")
+      expect(@logs[0].level).to eq(:err)
     end
   end
 

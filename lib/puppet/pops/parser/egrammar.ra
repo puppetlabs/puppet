@@ -29,9 +29,7 @@ prechigh
   left  PIPE
   left  LPAREN
   left  RPAREN
-  left  AT ATAT
   left  DOT
-  left  CALL
   nonassoc EPP_START
   left  LBRACK LISTSTART
   left  RBRACK
@@ -49,13 +47,12 @@ prechigh
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
   left  AND
   left  OR
-  right APPENDS DELETES EQUALS
   left  LBRACE
   left  SELBRACE
   left  RBRACE
+  right AT ATAT
+  right APPENDS DELETES EQUALS
   left  IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-  left  TITLE_COLON
-  left  CASE_COLON
   left  FARROW
   left  COMMA
   nonassoc RENDER_EXPR
@@ -74,34 +71,127 @@ program
 statements
   : syntactic_statements { result = transform_calls(val[0]) }
 
-# Change may have issues with nil; i.e. program is a sequence of nils/nops
-# Simplified from original which had validation for top level constructs - see statement rule
+# Collects sequence of elements into a list that the statements rule can transform
+# (Needed because language supports function calls without parentheses around arguments).
 # Produces Array<Model::Expression>
+#
 syntactic_statements
   : syntactic_statement                            { result = [val[0]]}
   | syntactic_statements SEMIC syntactic_statement { result = val[0].push val[2] }
   | syntactic_statements syntactic_statement       { result = val[0].push val[1] }
 
 # Produce a single expression or Array of expression
-syntactic_statement
-  : any_expression                            { result = val[0] }
-  | syntactic_statement COMMA any_expression  { result = aryfy(val[0]).push val[2] }
-
-any_expression
-  : relationship_expression
-
-relationship_expression
-  : resource_expression                                     =LOW  { result = val[0] }
-  | relationship_expression IN_EDGE      relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | relationship_expression IN_EDGE_SUB  relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | relationship_expression OUT_EDGE     relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | relationship_expression OUT_EDGE_SUB relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-
-#---EXPRESSION
+# This exists to handle multiple arguments to non parenthesized function call. If e is expression,
+# the a program can consists of e [e,e,e] where the first may be a name of a function to call.
 #
-# Produces Model::Expression
+syntactic_statement
+  : assignment                             =LOW { result = val[0] }
+  | syntactic_statement COMMA assignment   =LOW { result = aryfy(val[0]).push val[2] }
+
+# Assignment (is right recursive since assignment is right associative)
+assignment
+  : relationship =LOW
+  | relationship EQUALS  assignment         { result = val[0].set(val[2])      ; loc result, val[1] }
+  | relationship APPENDS assignment         { result = val[0].plus_set(val[2]) ; loc result, val[1] }
+  | relationship DELETES assignment         { result = val[0].minus_set(val[2]); loc result, val[1] }
+
+assignments
+  : assignment                              { result = [val[0]] }
+  | assignments COMMA assignment            { result = val[0].push(val[2]) }
+
+relationship
+  : resource =LOW
+  | relationship IN_EDGE      resource      { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship IN_EDGE_SUB  resource      { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship OUT_EDGE     resource      { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship OUT_EDGE_SUB resource      { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+
+#-- RESOURCE
+#
+resource
+  : expression = LOW
+
+    #---VIRTUAL
+  | AT resource {
+      result = val[1]
+      unless Factory.set_resource_form(result, :virtual)
+        # This is equivalent to a syntax error - additional semantic restrictions apply
+        error val[0], "Virtual (@) can only be applied to a Resource Expression"
+      end
+      # relocate the result
+      loc result, val[0], val[1]
+    }
+
+    #---EXPORTED
+  | ATAT resource {
+      result = val[1]
+      unless Factory.set_resource_form(result, :exported)
+        # This is equivalent to a syntax error - additional semantic restrictions apply
+        error val[0], "Exported (@@) can only be applied to a Resource Expression"
+      end
+      # relocate the result
+      loc result, val[0], val[1]
+    }
+
+    #---RESOURCE TITLED 3x and 4x
+  | resource LBRACE expression COLON attribute_operations additional_resource_bodies RBRACE {
+      bodies = [Factory.RESOURCE_BODY(val[2], val[4])] + val[5]
+      result = Factory.RESOURCE(val[0], bodies)
+      loc result, val[0], val[6]
+    }
+
+    #---CLASS RESOURCE
+  | CLASS LBRACE resource_bodies endsemi RBRACE {
+        result = Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
+        loc result, val[0], val[4]
+    }
+
+    # --RESOURCE 3X Expression
+    #   Handles both 3x overrides and defaults (i.e. single resource_body without title colon)
+    #   Slated for possible deprecation since it requires transformation and mix static/evaluation check
+    #
+  | resource LBRACE attribute_operations endcomma RBRACE {
+       result = case Factory.resource_shape(val[0])
+       when :resource, :class
+        # This catches deprecated syntax.
+        # If the attribute operations does not include +>, then the found expression
+        # is actually a LEFT followed by LITERAL_HASH
+        #
+        unless tmp = transform_resource_wo_title(val[0], val[2])
+          error val[1], "Syntax error resource body without title or hash with +>"
+        end
+        tmp
+      when :defaults
+        Factory.RESOURCE_DEFAULTS(val[0], val[2])
+      when :override
+        # This was only done for override in original - TODO should it be here at all
+        Factory.RESOURCE_OVERRIDE(val[0], val[2])
+      else
+        error val[0], "Expression is not valid as a resource, resource-default, or resource-override"
+      end
+     loc result, val[0], val[4]
+    }
+
+  resource_body
+    : expression COLON attribute_operations endcomma { result = Factory.RESOURCE_BODY(val[0], val[2]) }
+
+  resource_bodies
+    : resource_body                         =HIGH { result = [val[0]] }
+    | resource_bodies SEMIC resource_body   =HIGH { result = val[0].push val[2] }
+
+  # This is a rule for the intermediate state where RACC has seen enough tokens to understand that
+  # what is expressed is a Resource Expression, it now has to get to the finishing line
+  #
+  additional_resource_bodies
+    : endcomma                         { result = [] }
+    | endcomma SEMIC                   { result = [] }
+    | endcomma SEMIC resource_bodies endsemi { result = val[2] }
+
+#-- EXPRESSION
+#
 expression
-  : higher_precedence
+  : primary_expression
+  | call_function_expression
   | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
   | expression MATCH        expression                 { result = val[0] =~  val[2]       ; loc result, val[1] }
@@ -124,28 +214,22 @@ expression
   |            NOT          expression                 { result = val[1].not              ; loc result, val[0] }
   | expression AND          expression                 { result = val[0].and val[2]       ; loc result, val[1] }
   | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
-  | expression EQUALS       expression                 { result = val[0].set(val[2])      ; loc result, val[1] }
-  | expression APPENDS      expression                 { result = val[0].plus_set(val[2]) ; loc result, val[1] }
-  | expression DELETES      expression                 { result = val[0].minus_set(val[2]); loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
-  |            LPAREN       expression RPAREN          { result = val[1].paren()          ; loc result, val[0] }
+  |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
+
 
 #---EXPRESSIONS
-#   (e.g. argument list)
+#   (i.e. "argument list")
 #
 # This expression list can not contain function calls without parentheses around arguments
 # Produces Array<Model::Expression>
+#
 expressions
   : expression                   { result = [val[0]] }
   | expressions COMMA expression { result = val[0].push(val[2]) }
 
-# These go through a chain of left recursion, ending with primary_expression
-higher_precedence
-  : call_function_expression
-
 primary_expression
-  : literal_expression
-  | variable
+  : variable
   | call_method_with_lambda_expression
   | collection_expression
   | case_expression
@@ -156,60 +240,53 @@ primary_expression
   | node_definition_expression
   | epp_render_expression
   | reserved_word
-
-# Allways have the same value
-literal_expression
-  : array
-  | boolean
-  | default
+  | array
   | hash
   | regex
-  | text_or_name
-  | number
+  | quotedtext
   | type
-  | undef
+  | NUMBER       { result = Factory.NUMBER(val[0][:value])          ; loc result, val[0] }
+  | BOOLEAN      { result = Factory.literal(val[0][:value])         ; loc result, val[0] }
+  | DEFAULT      { result = Factory.literal(:default)               ; loc result, val[0] }
+  | UNDEF        { result = Factory.literal(:undef)                 ; loc result, val[0] }
+  | NAME         { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
 
-text_or_name
-  : name       { result = val[0] }
-  | quotedtext { result = val[0] }
 
 #---CALL FUNCTION
 #
 # Produces Model::CallNamedFunction
 
 call_function_expression
-  : primary_expression LPAREN expressions endcomma RPAREN {
+  : expression LPAREN assignments endcomma RPAREN {
       result = Factory.CALL_NAMED(val[0], true, val[2])
       loc result, val[0], val[4]
     }
-  | primary_expression LPAREN RPAREN {
+  | expression LPAREN RPAREN {
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[2]
     }
-  | primary_expression LPAREN expressions endcomma RPAREN lambda {
+  | expression LPAREN assignments endcomma RPAREN lambda {
       result = Factory.CALL_NAMED(val[0], true, val[2])
       loc result, val[0], val[4]
       result.lambda = val[5]
     }
-  | primary_expression LPAREN RPAREN  lambda {
+  | expression LPAREN RPAREN  lambda {
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[2]
       result.lambda = val[3]
     }
-  | primary_expression = LOW { result = val[0] }
 
 #---CALL METHOD
 #
 call_method_with_lambda_expression
   : call_method_expression         =LOW { result = val[0] }
-  | call_method_expression lambda  { result = val[0]; val[0].lambda = val[1] }
+  | call_method_expression lambda       { result = val[0]; val[0].lambda = val[1] }
 
   call_method_expression
-    : named_access LPAREN expressions RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
+    : named_access LPAREN assignments RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
     | named_access LPAREN RPAREN             { result = Factory.CALL_METHOD(val[0], []); loc result, val[1], val[3] }
     | named_access =LOW                      { result = Factory.CALL_METHOD(val[0], []); loc result, val[0] }
 
-  # TODO: It may be of value to access named elements of types too
   named_access
     : expression DOT NAME {
         result = val[0].dot(Factory.fqn(val[2][:value]))
@@ -218,31 +295,25 @@ call_method_with_lambda_expression
 
 #---LAMBDA
 #
-# This is a temporary switch while experimenting with concrete syntax
-# One should be picked for inclusion in puppet.
-
-# Lambda with parameters to the left of the body
 lambda
   : lambda_parameter_list lambda_rest {
-      result = Factory.LAMBDA(val[0], val[1])
-#      loc result, val[1] # TODO
+      result = Factory.LAMBDA(val[0][:value], val[1][:value])
+      loc result, val[0][:start], val[1][:end]
     }
 
 lambda_rest
-  : LBRACE statements RBRACE { result = val[1] }
-  | LBRACE RBRACE { result = nil }
+  : LBRACE statements RBRACE  { result = {:end => val[2], :value =>val[1] } }
+  | LBRACE RBRACE             { result = {:end => val[1], :value => nil } }
 
-# Produces Array<Model::Parameter>
+
 lambda_parameter_list
-  : PIPE PIPE                     { result = [] }
-  | PIPE parameters endcomma PIPE { result = val[1] }
+  : PIPE PIPE                     { result = {:start => val[0], :value => [] } }
+  | PIPE parameters endcomma PIPE { result = {:start => val[0], :value => val[1] } }
 
 #---CONDITIONALS
-#
 
 #--IF
 #
-# Produces Model::IfExpression
 if_expression
   : IF if_part {
       result = val[1]
@@ -277,8 +348,6 @@ if_expression
 
 #--UNLESS
 #
-# Changed from Puppet 3x where there is no else part on unless
-#
 unless_expression
   : UNLESS expression LBRACE statements RBRACE unless_else {
       result = Factory.UNLESS(val[1], Factory.block_or_expression(*val[3]), val[5])
@@ -304,7 +373,6 @@ unless_expression
 
 #--- CASE EXPRESSION
 #
-# Produces Model::CaseExpression
 case_expression
   : CASE expression LBRACE case_options RBRACE {
       result = Factory.CASE(val[1], *val[3])
@@ -314,20 +382,17 @@ case_expression
   # Produces Array<Model::CaseOption>
   case_options
     : case_option               { result = [val[0]] }
-    | case_options case_option { result = val[0].push val[1] }
+    | case_options case_option  { result = val[0].push val[1] }
 
   # Produced Model::CaseOption (aka When)
   case_option
-    : expressions case_colon LBRACE statements RBRACE {
-        result = Factory.WHEN(val[0], val[3])
-        loc result, val[1], val[4]
-      }
-    | expressions case_colon LBRACE RBRACE = LOW {
-        result = Factory.WHEN(val[0], nil)
-        loc result, val[1], val[3]
+    : expressions COLON LBRACE options_statements RBRACE {
+        result = Factory.WHEN(val[0], val[3]); loc result, val[1], val[4]
       }
 
-  case_colon: COLON =CASE_COLON { result = val[0] }
+  options_statements
+    : nil
+    | statements
 
   # This special construct is required or racc will produce the wrong result when the selector entry
   # LHS is generalized to any expression (LBRACE looks like a hash). Thus it is not possible to write
@@ -351,108 +416,11 @@ case_expression
   selector_entry
     : expression FARROW expression { result = Factory.MAP(val[0], val[2]) ; loc result, val[1] }
 
-#---RESOURCE
-#
-# Produces [Model::ResourceExpression, Model::ResourceDefaultsExpression]
-
-# The resource expression parses a generalized syntax and then selects the correct
-# resulting model based on the combinatoin of the LHS and what follows.
-# It also handled exported and virtual resources, and the class case
-#
-resource_expression
-  : expression =LOW {
-      result = val[0]
-    }
-  | at expression LBRACE resourceinstances endsemi RBRACE {
-      result = case Factory.resource_shape(val[1])
-      when :resource, :class
-        tmp = Factory.RESOURCE(Factory.fqn(token_text(val[1])), val[3])
-        tmp.form = val[0]
-        tmp
-      when :defaults
-        error val[1], "A resource default can not be virtual or exported"
-      when :override
-        error val[1], "A resource override can not be virtual or exported"
-      else
-        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
-      end
-      loc result, val[1], val[4]
-    }
-  | at expression LBRACE attribute_operations endcomma RBRACE {
-      result = case Factory.resource_shape(val[1])
-      when :resource, :class, :defaults, :override
-        error val[1], "Defaults are not virtualizable"
-      else
-        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
-      end
-    }
-  | expression LBRACE resourceinstances endsemi RBRACE {
-      result = case Factory.resource_shape(val[0])
-      when :resource, :class
-        Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
-      when :defaults
-        error val[1], "A resource default can not specify a resource name"
-      when :override
-        error val[1], "A resource override does not allow override of name of resource"
-      else
-        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
-      end
-      loc result, val[0], val[4]
-    }
-  | expression LBRACE attribute_operations endcomma RBRACE {
-      result = case Factory.resource_shape(val[0])
-      when :resource, :class
-        # This catches deprecated syntax.
-        # If the attribute operations does not include +>, then the found expression
-        # is actually a LEFT followed by LITERAL_HASH
-        #
-        unless tmp = transform_resource_wo_title(val[0], val[2])
-          error val[1], "Syntax error resource body without title or hash with +>"
-        end
-        tmp
-      when :defaults
-        Factory.RESOURCE_DEFAULTS(val[0], val[2])
-      when :override
-        # This was only done for override in original - TODO shuld it be here at all
-        Factory.RESOURCE_OVERRIDE(val[0], val[2])
-      else
-        error val[0], "Expression is not valid as a resource, resource-default, or resource-override"
-      end
-      loc result, val[0], val[4]
-    }
-  | at CLASS LBRACE resourceinstances endsemi RBRACE {
-        result = Factory.RESOURCE(Factory.fqn(token_text(val[1])), val[3])
-        result.form = val[0]
-        loc result, val[1], val[5]
-    }
-  | CLASS LBRACE resourceinstances endsemi RBRACE {
-        result = Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
-        loc result, val[0], val[4]
-    }
-
-  resourceinst
-    : expression title_colon attribute_operations endcomma { result = Factory.RESOURCE_BODY(val[0], val[2]) }
-
-  title_colon : COLON =TITLE_COLON { result = val[0] }
-
-  resourceinstances
-    : resourceinst                         { result = [val[0]] }
-    | resourceinstances SEMIC resourceinst { result = val[0].push val[2] }
-
-  # Produces Symbol corresponding to resource form
-  #
-  at
-    : AT    { result = :virtual  }
-    | AT AT { result = :exported }
-    | ATAT  { result = :exported }
-
 #---COLLECTION
 #
 # A Collection is a predicate applied to a set of objects with an implied context (used variables are
 # attributes of the object.
-# i.e. this is equivalent for source.select(QUERY).apply(ATTRIBUTE_OPERATIONS)
-#
-# Produces Model::CollectExpression
+# i.e. this is equivalent to source.select(QUERY).apply(ATTRIBUTE_OPERATIONS)
 #
 collection_expression
   : expression collect_query LBRACE attribute_operations endcomma RBRACE {
@@ -472,14 +440,11 @@ collection_expression
     : nil
     | expression
 
-#---ATTRIBUTE OPERATIONS
-#
-# (Not an expression)
-#
-# Produces Array<Model::AttributeOperation>
+#---ATTRIBUTE OPERATIONS (Not an expression)
 #
 attribute_operations
   :                                                { result = [] }
+  | TIMES FARROW expression                        { result = [tmp = Factory.ATTRIBUTES_OP(val[2])] ; loc tmp, val[0], val[2] }
   | attribute_operation                            { result = [val[0]] }
   | attribute_operations COMMA attribute_operation { result = val[0].push(val[2]) }
 
@@ -489,7 +454,7 @@ attribute_operations
   attribute_name
     : NAME
     | keyword
-    | BOOLEAN
+#    | BOOLEAN
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -581,8 +546,8 @@ node_definition_expression
   # Produces a LiteralExpression (string, :default, or regexp)
   # String with interpolation is validated for better error message
   hostname
-    : dotted_name { result = val[0] }
-    | quotedtext  { result = val[0] }
+    : dotted_name
+    | quotedtext
     | DEFAULT     { result = Factory.literal(:default); loc result, val[0] }
     | regex
 
@@ -613,7 +578,7 @@ node_definition_expression
 #   Produces String
 #   TODO: The error that "class" is not a valid classname is bad - classname rule is also used for other things
 classname
-  : NAME  { result = val[0] }
+  : NAME
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
@@ -650,14 +615,6 @@ parameter_type
   : type { result = val[0] }
   | type LBRACK expressions RBRACK { result = val[0][*val[2]] ; loc result, val[0], val[3] }
 
-#--RESTRICTED EXPRESSIONS
-#  i.e. where one could have expected an expression, but the set is limited
-
-## What is allowed RHS of match operators (see expression)
-#match_rvalue
-#  : regex
-#  | text_or_name
-
 #--VARIABLE
 #
 variable
@@ -675,12 +632,10 @@ reserved_word
 #
 
 array
-  : LBRACK expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
-  | LBRACK expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LBRACK                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
-  | LISTSTART expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
-  | LISTSTART expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LISTSTART                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  : LISTSTART assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LISTSTART                       RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  | LBRACK    assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LBRACK                          RBRACK { result = Factory.literal([]) ; loc result, val[0] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
@@ -692,7 +647,7 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : expression FARROW expression { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : assignment FARROW assignment { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
 
 quotedtext
   : string
@@ -708,7 +663,7 @@ dqpre           : DQPRE                  { result = Factory.literal(val[0][:valu
 dqpost          : DQPOST                 { result = Factory.literal(val[0][:value]); loc result, val[0] }
 dqmid           : DQMID                  { result = Factory.literal(val[0][:value]); loc result, val[0] }
 dqrval          : text_expression dqtail { result = [val[0]] + val[1] }
-text_expression : expression             { result = Factory.TEXT(val[0]) }
+text_expression : assignment             { result = Factory.TEXT(val[0]) }
 
 dqtail
   : dqpost        { result = [val[0]] }
@@ -742,16 +697,7 @@ epp_end
   : EPP_END
   | EPP_END_TRIM
 
-number   : NUMBER   { result = Factory.NUMBER(val[0][:value]) ; loc result, val[0] }
-name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
 type     : CLASSREF { result = Factory.QREF(val[0][:value])  ; loc result, val[0] }
-undef    : UNDEF    { result = Factory.literal(:undef); loc result, val[0] }
-default  : DEFAULT  { result = Factory.literal(:default); loc result, val[0] }
-
-          # Assumes lexer produces a Boolean value for booleans, or this will go wrong and produce a literal string
-          # with the text 'true'.
-          #TODO: could be changed to a specific boolean literal factory method to prevent this possible glitch.
-boolean  : BOOLEAN { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 
 regex
   : REGEX { result = Factory.literal(val[0][:value]); loc result, val[0] }

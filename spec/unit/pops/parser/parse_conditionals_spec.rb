@@ -30,10 +30,14 @@ describe "egrammar parsing conditionals" do
     end
 
     it "if true { $a = 10 $b = 10 } else {$a = 20}" do
-      dump(parse("if true { $a = 10 $b = 20} else {$a = 20}")).should ==
-      ["(if true",
-        "  (then (block (= $a 10) (= $b 20)))",
-        "  (else (= $a 20)))"].join("\n")
+      dump(parse("if true { $a = 10 $b = 20} else {$a = 20}")).should == [
+       "(if true",
+       "  (then (block",
+       "      (= $a 10)",
+       "      (= $b 20)",
+       "    ))",
+       "  (else (= $a 20)))"
+       ].join("\n")
     end
 
     it "allows a parenthesized conditional expression" do
@@ -142,7 +146,10 @@ describe "egrammar parsing conditionals" do
     it "case $a { a : {$b = 10 $c = 20}}" do
       dump(parse("case $a { a : {$b = 10 $c = 20}}")).should ==
       ["(case $a",
-        "  (when (a) (then (block (= $b 10) (= $c 20)))))"
+       "  (when (a) (then (block",
+       "    (= $b 10)",
+       "    (= $c 20)",
+       "  ))))"
       ].join("\n")
     end
   end

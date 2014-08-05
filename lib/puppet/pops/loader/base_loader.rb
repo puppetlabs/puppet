@@ -72,7 +72,6 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   private
 
   def fail_redefine(entry)
-    require 'debugger'; debugger
     origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : "unknown location"
     raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}' originally set at #{origin_info}"
   end

@@ -66,7 +66,7 @@ describe "egrammar parsing function calls" do
 
     # For egrammar where a bare word can be a "statement"
     it "$a = foo bar # illegal, must have parentheses" do
-      dump(parse("$a = foo bar")).should == "(block (= $a foo) bar)"
+      dump(parse("$a = foo bar")).should == "(block\n  (= $a foo)\n  bar\n)"
     end
 
     context "in nested scopes" do
@@ -94,8 +94,11 @@ describe "egrammar parsing function calls" do
     end
 
     it "$a.foo |$x|{ }" do
-      dump(parse("$a.foo |$x|{ $b = $x}")).should ==
-      "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"
+      dump(parse("$a.foo |$x|{ $b = $x}")).should == [
+        "(call-method (. $a foo) (lambda (parameters x) (block",
+        "  (= $b $x)",
+        ")))"
+        ].join("\n")
     end
   end
 end

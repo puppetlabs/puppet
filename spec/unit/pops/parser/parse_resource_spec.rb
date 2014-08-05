@@ -9,64 +9,83 @@ describe "egrammar parsing resource declarations" do
   include ParserRspecHelper
 
   context "When parsing regular resource" do
-    it "file { 'title': }" do
-      dump(parse("file { 'title': }")).should == [
-        "(resource file",
-        "  ('title'))"
-      ].join("\n")
-    end
+    ["File", "file"].each do |word|
+      it "#{word} { 'title': }" do
+        dump(parse("#{word} { 'title': }")).should == [
+          "(resource file",
+          "  ('title'))"
+        ].join("\n")
+      end
 
-    it "file { 'title': path => '/somewhere', mode => 0777}" do
-      dump(parse("file { 'title': path => '/somewhere', mode => 0777}")).should == [
-        "(resource file",
-        "  ('title'",
-        "    (path => '/somewhere')",
-        "    (mode => 0777)))"
-      ].join("\n")
-    end
+      it "#{word} { 'title': path => '/somewhere', mode => 0777}" do
+        dump(parse("#{word} { 'title': path => '/somewhere', mode => 0777}")).should == [
+          "(resource file",
+          "  ('title'",
+          "    (path => '/somewhere')",
+          "    (mode => 0777)))"
+        ].join("\n")
+      end
 
-    it "file { 'title': path => '/somewhere', }" do
-      dump(parse("file { 'title': path => '/somewhere', }")).should == [
-        "(resource file",
-        "  ('title'",
-        "    (path => '/somewhere')))"
-      ].join("\n")
-    end
+      it "#{word} { 'title': path => '/somewhere', }" do
+        dump(parse("#{word} { 'title': path => '/somewhere', }")).should == [
+          "(resource file",
+          "  ('title'",
+          "    (path => '/somewhere')))"
+        ].join("\n")
+      end
 
-    it "file { 'title': , }" do
-      dump(parse("file { 'title': , }")).should == [
-        "(resource file",
-        "  ('title'))"
-      ].join("\n")
-    end
+      it "#{word} { 'title': , }" do
+        dump(parse("#{word} { 'title': , }")).should == [
+          "(resource file",
+          "  ('title'))"
+        ].join("\n")
+      end
 
-    it "file { 'title': ; }" do
-      dump(parse("file { 'title': ; }")).should == [
-        "(resource file",
-        "  ('title'))"
-      ].join("\n")
-    end
+      it "#{word} { 'title': ; }" do
+        dump(parse("#{word} { 'title': ; }")).should == [
+          "(resource file",
+          "  ('title'))"
+        ].join("\n")
+      end
 
-    it "file { 'title': ; 'other_title': }" do
-      dump(parse("file { 'title': ; 'other_title': }")).should == [
-        "(resource file",
-        "  ('title')",
-        "  ('other_title'))"
-      ].join("\n")
-    end
+      it "#{word} { 'title': ; 'other_title': }" do
+        dump(parse("#{word} { 'title': ; 'other_title': }")).should == [
+          "(resource file",
+          "  ('title')",
+          "  ('other_title'))"
+        ].join("\n")
+      end
 
-    it "file { 'title1': path => 'x'; 'title2': path => 'y'}" do
-      dump(parse("file { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
-        "(resource file",
-        "  ('title1'",
-        "    (path => 'x'))",
-        "  ('title2'",
-        "    (path => 'y')))",
-      ].join("\n")
+      # PUP-2898, trailing ';'
+      it "#{word} { 'title': ; 'other_title': ; }" do
+        dump(parse("#{word} { 'title': ; 'other_title': ; }")).should == [
+          "(resource file",
+          "  ('title')",
+          "  ('other_title'))"
+        ].join("\n")
+      end
+
+      it "#{word} { 'title1': path => 'x'; 'title2': path => 'y'}" do
+        dump(parse("#{word} { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
+          "(resource file",
+          "  ('title1'",
+          "    (path => 'x'))",
+          "  ('title2'",
+          "    (path => 'y')))",
+        ].join("\n")
+      end
+
+      it "#{word} { title: * => {mode => 0777} }" do
+        dump(parse("#{word} { title: * => {mode => 0777}}")).should == [
+          "(resource file",
+          "  (title",
+          "    (* => ({} (mode 0777)))))"
+        ].join("\n")
+      end
     end
   end
 
-  context "When parsing resource defaults" do
+  context "When parsing (type based) resource defaults" do
     it "File {  }" do
       dump(parse("File { }")).should == "(resource-defaults file)"
     end
@@ -77,6 +96,13 @@ describe "egrammar parsing resource declarations" do
         "  (mode => 0777))"
       ].join("\n")
     end
+
+    it "File { * => {mode => 0777} } (even if validated to be illegal)" do
+      dump(parse("File { * => {mode => 0777}}")).should == [
+        "(resource-defaults file",
+        "  (* => ({} (mode 0777))))"
+      ].join("\n")
+    end
   end
 
   context "When parsing resource override" do
@@ -85,36 +111,92 @@ describe "egrammar parsing resource declarations" do
     end
 
     it "File['x'] { x => 1 }" do
-      dump(parse("File['x'] { x => 1}")).should == "(override (slice file 'x')\n  (x => 1))"
+      dump(parse("File['x'] { x => 1}")).should == [
+        "(override (slice file 'x')",
+        "  (x => 1))"
+        ].join("\n")
     end
 
+
     it "File['x', 'y'] { x => 1 }" do
-      dump(parse("File['x', 'y'] { x => 1}")).should == "(override (slice file ('x' 'y'))\n  (x => 1))"
+      dump(parse("File['x', 'y'] { x => 1}")).should == [
+        "(override (slice file ('x' 'y'))",
+        "  (x => 1))"
+        ].join("\n")
     end
 
     it "File['x'] { x => 1, y => 2 }" do
-      dump(parse("File['x'] { x => 1, y=> 2}")).should == "(override (slice file 'x')\n  (x => 1)\n  (y => 2))"
+      dump(parse("File['x'] { x => 1, y=> 2}")).should == [
+        "(override (slice file 'x')",
+        "  (x => 1)",
+        "  (y => 2))"
+        ].join("\n")
     end
 
     it "File['x'] { x +> 1 }" do
-      dump(parse("File['x'] { x +> 1}")).should == "(override (slice file 'x')\n  (x +> 1))"
+      dump(parse("File['x'] { x +> 1}")).should == [
+        "(override (slice file 'x')",
+        "  (x +> 1))"
+        ].join("\n")
+    end
+
+    it "File['x'] { * => {mode => 0777} } (even if validated to be illegal)" do
+      dump(parse("File['x'] { * => {mode => 0777}}")).should == [
+        "(override (slice file 'x')",
+        "  (* => ({} (mode 0777))))"
+      ].join("\n")
     end
   end
 
   context "When parsing virtual and exported resources" do
-    it "@@file { 'title': }" do
+    it "parses exported @@file { 'title': }" do
       dump(parse("@@file { 'title': }")).should ==  "(exported-resource file\n  ('title'))"
     end
 
-    it "@file { 'title': }" do
+    it "parses virtual @file { 'title': }" do
       dump(parse("@file { 'title': }")).should ==  "(virtual-resource file\n  ('title'))"
     end
 
-    it "@file { mode => 0777 }" do
-      # Defaults are not virtualizeable
-      expect {
-        dump(parse("@file { mode => 0777 }")).should ==  ""
-      }.to raise_error(Puppet::ParseError, /Defaults are not virtualizable/)
+    it "nothing before the title colon is a syntax error" do
+      expect do
+        parse("@file {: mode => 0777 }")
+      end.to raise_error(/Syntax error/)
+    end
+
+    it "raises error for user error; not a resource" do
+      # The expression results in VIRTUAL, CALL FUNCTION('file', HASH) since the resource body has
+      # no title.
+      expect do
+        parse("@file { mode => 0777 }")
+      end.to raise_error(/Virtual \(@\) can only be applied to a Resource Expression/)
+    end
+
+    it "parses global defaults with @ (even if validated to be illegal)" do
+      dump(parse("@File { mode => 0777 }")).should == [
+        "(virtual-resource-defaults file",
+        "  (mode => 0777))"
+        ].join("\n")
+    end
+
+    it "parses global defaults with @@ (even if validated to be illegal)" do
+      dump(parse("@@File { mode => 0777 }")).should == [
+        "(exported-resource-defaults file",
+        "  (mode => 0777))"
+        ].join("\n")
+    end
+
+    it "parses override with @ (even if validated to be illegal)" do
+      dump(parse("@File[foo] { mode => 0777 }")).should == [
+        "(virtual-override (slice file foo)",
+        "  (mode => 0777))"
+        ].join("\n")
+    end
+
+    it "parses override combined with @@ (even if validated to be illegal)" do
+      dump(parse("@@File[foo] { mode => 0777 }")).should == [
+        "(exported-override (slice file foo)",
+        "  (mode => 0777))"
+        ].join("\n")
     end
   end
 
