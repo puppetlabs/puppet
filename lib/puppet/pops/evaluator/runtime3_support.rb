@@ -432,6 +432,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     undef_value
   end
 
+  def convert_String(o, scope, undef_value)
+    # although wasteful, needed because user code may mutate these strings in Resources
+    o.frozen? ? o.dup : o
+  end
+
   def convert_Object(o, scope, undef_value)
     o
   end
