@@ -12,9 +12,12 @@ module Puppet::FileSystem
          elsif Puppet::Util::Platform.windows?
            require 'puppet/file_system/file19windows'
            Puppet::FileSystem::File19Windows
-         else
+         elsif RUBY_VERSION =~ /^1\.9/
            require 'puppet/file_system/file19'
            Puppet::FileSystem::File19
+         else
+           require 'puppet/file_system/file2'
+           Puppet::FileSystem::File2
          end.new()
 
   # Allows overriding the filesystem for the duration of the given block.
