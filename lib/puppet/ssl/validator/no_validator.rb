@@ -1,3 +1,6 @@
+require 'openssl'
+require 'puppet/ssl'
+
 # Performs no SSL verification
 # @api private
 #
