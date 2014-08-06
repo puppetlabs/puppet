@@ -3,7 +3,6 @@
 require 'spec_helper'
 
 require 'puppet/file_bucket/file'
-require 'tempfile'
 
 describe Puppet::FileBucket::File do
   describe "#indirection" do
@@ -40,16 +39,6 @@ describe Puppet::FileBucket::File do
           described_class.indirection.find(key)
         end
       end
-    end
-  end
-
-  describe "saving binary files", :if => RUBY_VERSION.match(/^2/) do
-    let(:binary) { "\xD1\xF2\r\n\x81NuSc\x00".force_encoding(Encoding::ASCII_8BIT) }
-
-    it "does not error when the same contents are saved twice" do
-      bucket_file = Puppet::FileBucket::File.new(binary)
-      Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
-      Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
     end
   end
 end
