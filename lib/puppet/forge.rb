@@ -66,7 +66,7 @@ class Puppet::Forge < Semantic::Dependency::Source
         uri = result['pagination']['next']
         matches.concat result['results']
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri) , :input => term, :response => response)
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end
     end
 
@@ -100,7 +100,7 @@ class Puppet::Forge < Semantic::Dependency::Source
       if response.code == '200'
         response = JSON.parse(response.body)
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :input => input, :response => response)
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end
 
       releases.concat(process(response['results']))
@@ -186,8 +186,11 @@ class Puppet::Forge < Semantic::Dependency::Source
     end
 
     def download(uri, destination)
-      @source.make_http_request(uri, destination)
+      response = @source.make_http_request(uri, destination)
       destination.flush and destination.close
+      unless response.code == 200
+        raise Puppet::Forge::Errors::ResponseError.new(:uri => uri, :response => response)
+      end
     end
 
     def validate_checksum(file, checksum)
