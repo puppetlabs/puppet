@@ -297,7 +297,7 @@ module Puppet::Pops::Validation
 
       if file && line && pos
         " at #{file}:#{line}:#{pos}"
-      elsif file and line
+      elsif file && line
         " at #{file}:#{line}"
       elsif line && pos
         " at line #{line}:#{pos}"
