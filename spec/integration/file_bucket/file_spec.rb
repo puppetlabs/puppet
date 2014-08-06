@@ -43,13 +43,26 @@ describe Puppet::FileBucket::File do
     end
   end
 
-  describe "saving binary files", :if => RUBY_VERSION.match(/^2/) do
+  describe "#verify_identical_file!", :if => RUBY_VERSION.match(/^2/) do
+    subject { Puppet::FileBucketFile::File.new }
     let(:binary) { "\xD1\xF2\r\n\x81NuSc\x00".force_encoding(Encoding::ASCII_8BIT) }
 
-    it "does not error when the same contents are saved twice" do
-      bucket_file = Puppet::FileBucket::File.new(binary)
-      Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
-      Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
+    let(:contents_file) do
+      tf = Tempfile.new("hello")
+      tf.write(binary)
+      tf.close
+      tf.path
+    end
+
+    let(:bucket_file) do
+      stub(
+        :stream   => StringIO.new(binary),
+        :contents => binary,
+        :checksum => nil)
+    end
+
+    it "must be identical for binary files" do
+      subject.send :verify_identical_file!, contents_file, bucket_file
     end
   end
 end
