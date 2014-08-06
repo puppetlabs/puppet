@@ -58,15 +58,14 @@ describe Puppet::Forge::ModuleRelease do
     describe '#download' do
       it 'should call make_http_request with correct params' do
         # valid URI comes from file_uri in JSON blob above
-        ssl_repository.expects(:make_http_request).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file).returns(stub(:body => '{}', :code => 200))
+        ssl_repository.expects(:make_http_request).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file).returns(stub(:body => '{}', :code => '200'))
 
         release.send(:download, "/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
       end
 
       it 'should raise a response error when it receives an error from forge' do
-        ssl_repository.stubs(:make_http_request).returns(stub(:body => '{"errors": ["error"]}', :code => 500, :message => 'server error'))
+        ssl_repository.stubs(:make_http_request).returns(stub(:body => '{"errors": ["error"]}', :code => '500', :message => 'server error'))
         expect { release.send(:download, "/some/path", mock_file)}. to raise_error Puppet::Forge::Errors::ResponseError
-
       end
     end
 
