@@ -7,14 +7,14 @@ provider = Puppet::Type.type(:package).provider(:portage)
 describe provider do
   before do
     packagename="sl"
-    @resource = stub('resource', :[] => packagename,:should => true)
+    @resource = stub('resource', :[] => packagename, :should => :present)
     @provider = provider.new(@resource)
     
     portage   = stub(:executable => "foo",:execute => true)
     Puppet::Provider::CommandDefiner.stubs(:define).returns(portage)
 
     @nomatch_result = ""
-    @match_result   = "app-misc sl [] [] http://www.tkl.iis.u-tokyo.ac.jp/~toyoda/index_e.html http://www.izumix.org.uk/sl/ sophisticated graphical program which corrects your miss typing\n"
+    @match_result   = "app-misc sl [] [] [] [] http://www.tkl.iis.u-tokyo.ac.jp/~toyoda/index_e.html http://www.izumix.org.uk/sl/ sophisticated graphical program which corrects your miss typing\n"
   end
 
   it "is versionable" do
