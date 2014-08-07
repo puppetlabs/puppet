@@ -10,19 +10,16 @@ describe provider do
     @resource = stub('resource', :should => true)
     @resource.stubs(:[]).with(:name).returns(packagename)
     @resource.stubs(:[]).with(:category).returns(nil)
-    @resource.stubs(:[]).with(:slot).returns(nil)
 
     unslotted_packagename = "dev-lang/ruby"
     @unslotted_resource = stub('resource', :should => true)
     @unslotted_resource.stubs(:[]).with(:name).returns(unslotted_packagename)
     @unslotted_resource.stubs(:[]).with(:category).returns(nil)
-    @unslotted_resource.stubs(:[]).with(:slot).returns(nil)
 
     slotted_packagename = "dev-lang/ruby:1.9"
     @slotted_resource = stub('resource', :should => true)
     @slotted_resource.stubs(:[]).with(:name).returns(slotted_packagename)
     @slotted_resource.stubs(:[]).with(:category).returns(nil)
-    @slotted_resource.stubs(:[]).with(:slot).returns(nil)
 
     @provider = provider.new(@resource)
     @unslotted_provider = provider.new(@unslotted_resource)
