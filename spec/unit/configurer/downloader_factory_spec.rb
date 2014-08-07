@@ -89,9 +89,7 @@ describe Puppet::Configurer::DownloaderFactory do
 
     context "on Windows", :if => Puppet.features.microsoft_windows? do
       it "ignores source permissions during external fact pluginsync" do
-        pending("bug PUP-2907") do
-          ignores_source_permissions(facts_downloader)
-        end
+        ignores_source_permissions(facts_downloader)
       end
     end
   end
