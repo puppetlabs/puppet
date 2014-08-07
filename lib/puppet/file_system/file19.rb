@@ -11,7 +11,7 @@ class Puppet::FileSystem::File19 < Puppet::FileSystem::FileImpl
   # compare binary File and StringIO streams.
   def compare_stream(path, stream)
     open(path, 0, 'rb') do |this|
-      bsize = FileUtils.send(:fu_stream_blksize, this, stream)
+      bsize = stream_blksize(this, stream)
       sa = "".force_encoding('ASCII-8BIT')
       sb = "".force_encoding('ASCII-8BIT')
       begin
@@ -21,5 +21,26 @@ class Puppet::FileSystem::File19 < Puppet::FileSystem::FileImpl
       end while sa == sb
       false
     end
+  end
+
+  private
+  def stream_blksize(*streams)
+    streams.each do |s|
+      next unless s.respond_to?(:stat)
+      size = blksize(s.stat)
+      return size if size
+    end
+    default_blksize()
+  end
+
+  def blksize(st)
+    s = st.blksize
+    return nil unless s
+    return nil if s == 0
+    s
+  end
+
+  def default_blksize
+    1024
   end
 end
