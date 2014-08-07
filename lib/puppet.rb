@@ -194,7 +194,11 @@ module Puppet
     end
 
     {
-      :environments => Puppet::Environments::Cached.new(*loaders)
+      :environments => Puppet::Environments::Cached.new(*loaders),
+      :http_pool => proc {
+        require 'puppet/network/http'
+        Puppet::Network::HTTP::NoCachePool.new
+      }
     }
   end
 

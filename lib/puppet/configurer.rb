@@ -125,6 +125,17 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
+    pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+    begin
+      Puppet.override(:http_pool => pool) do
+        run_internal(options)
+      end
+    ensure
+      pool.close
+    end
+  end
+
+  def run_internal(options)
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
@@ -225,6 +236,7 @@ class Puppet::Configurer
     send_report(report)
     Puppet.pop_context
   end
+  private :run_internal
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]

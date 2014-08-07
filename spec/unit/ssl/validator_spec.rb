@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/ssl'
-require 'puppet/ssl/configuration'
 
 describe Puppet::SSL::Validator::DefaultValidator do
   let(:ssl_context) do

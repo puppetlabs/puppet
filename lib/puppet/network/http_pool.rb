@@ -3,10 +3,9 @@ require 'puppet/network/http/connection'
 module Puppet::Network; end
 
 # This module contains the factory methods that should be used for getting a
-# {Puppet::Network::HTTP::Connection} instance.
-#
-# @note The name "HttpPool" is a misnomer, and a leftover of history, but we would
-#   like to make this cache connections in the future.
+# {Puppet::Network::HTTP::Connection} instance. The pool may return a new
+# connection or a persistent cached connection, depending on the underlying
+# pool implementation in use.
 #
 # @api public
 #
