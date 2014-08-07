@@ -124,8 +124,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
             package[field] = value unless !value or value.empty?
           end
           if package_slot
-            package[:version_available] = Hash[package[:slot_versions_available].split(",").map{ |slot| slot.split(":").reverse }][package_slot]
-            package[:ensure] = Hash[package[:installed_slots].split(",").map{ |slot| slot.split(":").reverse }][package_slot]
+            package[:version_available] = eix_get_version_for_slot(package[:slot_versions_available], package_slot)
+            package[:ensure] = eix_get_version_for_slot(package[:installed_slots], package_slot)
           end
           package[:ensure] = package[:ensure] ? package[:ensure] : :absent
           packages << package
@@ -151,6 +151,13 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   private
+  def eix_get_version_for_slot(versions_and_slots, slot)
+    versions_and_slots = versions_and_slots.split(",")
+    versions_and_slots.map! { |version_and_slot| version_and_slot.split(":") }
+    version_and_slot = versions_and_slots.find { |version_and_slot| version_and_slot.last == slot }
+    version_and_slot.first if version_and_slot
+  end
+
   def self.slot_pattern
     /:([\w+.\/*=-]+)$/
   end
