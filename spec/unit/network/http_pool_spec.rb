@@ -9,7 +9,6 @@ describe Puppet::Network::HttpPool do
   end
 
   describe "when managing http instances" do
-
     it "should return an http instance created with the passed host and port" do
       http = Puppet::Network::HttpPool.http_instance("me", 54321)
       http.should be_an_instance_of Puppet::Network::HTTP::Connection
@@ -47,7 +46,6 @@ describe Puppet::Network::HttpPool do
       Puppet::Network::HttpPool.http_instance("me", 54321, true).should be_use_ssl
     end
 
-
     describe 'peer verification' do
       def setup_standard_ssl_configuration
         ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
@@ -77,12 +75,18 @@ describe Puppet::Network::HttpPool do
         setup_standard_ssl_host
       end
 
-      it 'can enable peer verification' do
-        Puppet::Network::HttpPool.http_instance("me", 54321, true, true).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_PEER
+      it 'enables peer verification by default' do
+        response = Net::HTTPOK.new('1.1', 200, 'body')
+        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true)
+        conn.expects(:execute_request).with { |http, request| expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER) }.returns(response)
+        conn.get('/')
       end
 
       it 'can disable peer verification' do
-        Puppet::Network::HttpPool.http_instance("me", 54321, true, false).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_NONE
+        response = Net::HTTPOK.new('1.1', 200, 'body')
+        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true, false)
+        conn.expects(:execute_request).with { |http, request| expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE) }.returns(response)
+        conn.get('/')
       end
     end
 
@@ -91,5 +95,4 @@ describe Puppet::Network::HttpPool do
         should_not equal(Puppet::Network::HttpPool.http_instance("me", 54321))
     end
   end
-
 end
