@@ -3,14 +3,10 @@ require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/plugin_handler'
 
-class PluginHandlerTester
-  include Puppet::Configurer::PluginHandler
-  attr_accessor :environment
-end
-
 describe Puppet::Configurer::PluginHandler do
   before do
-    @pluginhandler = PluginHandlerTester.new
+    factory = Puppet::Configurer::DownloaderFactory.new
+    @pluginhandler = Puppet::Configurer::PluginHandler.new(factory)
 
     # PluginHandler#load_plugin has an extra-strong rescue clause
     # this mock is to make sure that we don't silently ignore errors

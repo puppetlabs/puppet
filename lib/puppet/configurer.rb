@@ -8,9 +8,9 @@ require 'securerandom'
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
+  require 'puppet/configurer/downloader_factory'
 
   include Puppet::Configurer::FactHandler
-  include Puppet::Configurer::PluginHandler
 
   # For benchmarking
   include Puppet::Util
@@ -44,13 +44,14 @@ class Puppet::Configurer
     end
   end
 
-  def initialize
+  def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
     Puppet.settings.use(:main, :ssl, :agent)
 
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
+    @handler = Puppet::Configurer::PluginHandler.new(factory)
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -294,5 +295,9 @@ class Puppet::Configurer
   rescue Exception => detail
     Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
+  end
+
+  def download_plugins(remote_environment_for_plugins)
+    @handler.download_plugins(remote_environment_for_plugins)
   end
 end
