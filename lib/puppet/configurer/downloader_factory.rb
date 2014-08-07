@@ -20,13 +20,15 @@ class Puppet::Configurer::DownloaderFactory
   end
 
   def create_plugin_facts_downloader(environment)
+    source_permissions = Puppet.features.microsoft_windows? ? :ignore : :use
+
     plugin_fact_downloader = Puppet::Configurer::Downloader.new(
       "pluginfacts",
       Puppet[:pluginfactdest],
       Puppet[:pluginfactsource],
       Puppet[:pluginsignore],
       environment,
-      :use
-     )
+      source_permissions
+    )
   end
 end
