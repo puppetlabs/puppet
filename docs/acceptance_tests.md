@@ -123,6 +123,8 @@ Then you can log into the hosts, or rerun tests against them by:
 
 This will use the existing hosts.
 
+NOTE: If you want configuration information to be preserved for all runs (potentially allowing you to run ci:test_against_preserved_hosts for any previous run that failed, and who's hosts were preserved, regardless of whether you initiated with a ci:test_and_preserve_hosts call) then you should add a ':__preserve_config__ => true' to your local_options.rb.
+
 ### Cleaning Up Preserved Hosts
 
 If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hosts, you may eventually generate a large number of stale vms.  They should be reaped automatically by qa infrastructure within a day or so, but you may also run:
