@@ -97,7 +97,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     wanted = @resource[:name]
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
-      yum '-d', '0', '-e', '0', '-y', :list, wanted
+      yum *['-d', '0', '-e', '0', '-y', install_options, :list, wanted].compact
     end
 
     should = @resource.should(:ensure)
