@@ -84,9 +84,7 @@ describe Puppet::Network::HTTP::Connection do
     end
 
     def setup_connection(connection)
-      connection.stubs(:request).with do
-        true
-      end.raises(OpenSSL::SSL::SSLError.new(@fails_with))
+      connection.stubs(:start).raises(OpenSSL::SSL::SSLError.new(@fails_with))
     end
 
     def peer_certs
@@ -169,6 +167,7 @@ describe Puppet::Network::HTTP::Connection do
         host, port,
         :verify => NoProblemsValidator.new(cert))
 
+      Net::HTTP.any_instance.stubs(:start)
       Net::HTTP.any_instance.stubs(:request).returns(httpok)
 
       connection.expects(:warn_if_near_expiration).with(cert)
@@ -178,6 +177,19 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   context "when using single use HTTPS connections" do
+    it_behaves_like 'ssl verifier' do
+    end
+  end
+
+  context "when using persistent HTTPS connections" do
+    around :each do |example|
+      pool = Puppet::Network::HTTP::Pool.new
+      Puppet.override(:http_pool => pool) do
+        example.run
+      end
+      pool.close
+    end
+
     it_behaves_like 'ssl verifier' do
     end
   end
