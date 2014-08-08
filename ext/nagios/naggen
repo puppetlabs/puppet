@@ -195,7 +195,7 @@ class NagiosWriter
     def write(target, resources)
         # Skip the nagios type when we have no resources and no existing
         # file.
-        return if resources.empty? && ! FileTest.exist?(target)
+        return if resources.empty? && !FileTest.exist?(target)
 
         dir = File.dirname(target)
         unless FileTest.exist?(dir)

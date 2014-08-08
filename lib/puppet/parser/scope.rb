@@ -176,7 +176,7 @@ class Puppet::Parser::Scope
   #       this include? is only useful because of checking against the boolean value false.
   #
   def include?(name)
-    ! self[name].nil?
+    !self[name].nil?
   end
 
   # Returns true if the variable of the given name is set to any value (including nil)

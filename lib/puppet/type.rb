@@ -745,8 +745,8 @@ class Type
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
-    if provider && ! provider.class.supports_parameter?(klass)
-      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+    if provider && !provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| !provider.class.feature?(f) }
       debug "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
       return nil
     end
@@ -810,7 +810,7 @@ class Type
 
     return unless parameter = newattr(klass.name)
 
-    if value = parameter.default and ! value.nil?
+    if value = parameter.default and !value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)
@@ -906,7 +906,7 @@ class Type
       @managed = false
       properties.each { |property|
         s = property.should
-        if s && ! property.class.unmanaged
+        if s && !property.class.unmanaged
           @managed = true
           break
         end
@@ -1037,7 +1037,7 @@ class Type
   # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
-    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) && ! provider.class.suitable?
+    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) && !provider.class.suitable?
 
     result = Puppet::Resource.new(self.class, title)
 
@@ -1115,7 +1115,7 @@ class Type
   def noop?
     # If we're not a host_config, we're almost certainly part of
     # Settings, and we want to ignore 'noop'
-    return false if catalog && ! catalog.host_config?
+    return false if catalog && !catalog.host_config?
 
     if defined?(@noop)
       @noop

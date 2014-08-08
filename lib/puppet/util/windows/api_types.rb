@@ -79,7 +79,7 @@ module Puppet::Util::Windows::APITypes
         ptr = read_pointer
         yield ptr
       ensure
-        if ptr && ! ptr.null?
+        if ptr && !ptr.null?
           if FFI::WIN32::LocalFree(ptr.address) != FFI::Pointer::NULL_HANDLE
             Puppet.debug "LocalFree memory leak"
           end
@@ -96,7 +96,7 @@ module Puppet::Util::Windows::APITypes
         ptr = read_pointer
         yield ptr
       ensure
-        FFI::WIN32::CoTaskMemFree(ptr) if ptr && ! ptr.null?
+        FFI::WIN32::CoTaskMemFree(ptr) if ptr && !ptr.null?
       end
 
       # ptr has already had CoTaskMemFree called, so nothing to return

@@ -19,7 +19,7 @@ class Puppet::Transaction::ResourceHarness
       context = ResourceApplicationContext.from_resource(resource, status)
       perform_changes(resource, context)
 
-      if status.changed? && ! resource.noop?
+      if status.changed? && !resource.noop?
         cache(resource, :synced, Time.now)
         resource.flush if resource.respond_to?(:flush)
       end
@@ -69,7 +69,7 @@ class Puppet::Transaction::ResourceHarness
   def perform_changes(resource, context)
     cache(resource, :checked, Time.now)
 
-    return [] if ! allow_changes?(resource)
+    return [] if !allow_changes?(resource)
 
     # Record the current state in state.yml.
     context.audited_params.each do |param|
@@ -98,7 +98,7 @@ class Puppet::Transaction::ResourceHarness
 
   def allow_changes?(resource)
     if resource.purging? && resource.deleting? && deps = relationship_graph.dependents(resource) \
-            and ! deps.empty? and deps.detect { |d| ! d.deleting? }
+            and !deps.empty? and deps.detect { |d| !d.deleting? }
       deplabel = deps.collect { |r| r.ref }.join(",")
       plurality = deps.length > 1 ? "":"s"
       resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"

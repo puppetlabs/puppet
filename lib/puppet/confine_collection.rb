@@ -45,6 +45,6 @@ class Puppet::ConfineCollection
   end
 
   def valid?
-    ! @confines.detect { |c| ! c.valid? }
+    ! @confines.detect { |c| !c.valid? }
   end
 end

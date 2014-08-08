@@ -35,7 +35,7 @@ class Puppet::Parameter::ValueCollection
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|
-          if aliases = value.aliases and ! aliases.empty?
+          if aliases = value.aliases and !aliases.empty?
             "`#{value.name}` (also called `#{aliases.join(", ")}`)"
           else
             "`#{value.name}`"
@@ -150,7 +150,7 @@ class Puppet::Parameter::ValueCollection
       value.call = options[:call] || :none
     end
 
-    value.method ||= "set_#{value.name}" if block_given? && ! value.regex?
+    value.method ||= "set_#{value.name}" if block_given? && !value.regex?
 
     value
   end

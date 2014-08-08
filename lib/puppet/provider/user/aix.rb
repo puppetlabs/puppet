@@ -237,7 +237,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     f = open_security_passwd
     # Skip to the user
     f.each_line { |l| break if l  =~ /^#{user}:\s*$/ }
-    if ! f.eof?
+    if !f.eof?
       f.each_line { |l|
         # If there is a new user stanza, stop
         break if l  =~ /^\S*:\s*$/

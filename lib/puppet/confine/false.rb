@@ -6,7 +6,7 @@ class Puppet::Confine::False < Puppet::Confine
   end
 
   def pass?(value)
-    ! value
+    !value
   end
 
   def message(value)

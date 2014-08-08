@@ -71,7 +71,7 @@ module Puppet::Util::Windows
 
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
-      if ! psid.instance_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
+      if !psid.instance_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
@@ -122,7 +122,7 @@ module Puppet::Util::Windows
       valid = false
 
       begin
-        string_to_sid_ptr(string_sid) { |ptr| valid = ! ptr.nil? && ! ptr.null? }
+        string_to_sid_ptr(string_sid) { |ptr| valid = !ptr.nil? && !ptr.null? }
       rescue Puppet::Util::Windows::Error => e
         raise if e.code != ERROR_INVALID_SID_STRUCTURE
       end

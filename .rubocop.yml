@@ -250,7 +250,7 @@ Style/SpaceAfterMethodName:
   Enabled: false
 
 Style/SpaceAfterNot:
-  Enabled: false
+  Enabled: true
 
 Style/SpaceAfterSemicolon:
   Enabled: false

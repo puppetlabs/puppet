@@ -755,7 +755,7 @@ module Private
 
     # @api private
     def singleton?(descriptor)
-      ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
+      !descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
     end
 
     # Special marker class used in entries

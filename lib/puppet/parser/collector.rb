@@ -18,7 +18,7 @@ class Puppet::Parser::Collector
     end
 
     if self.resources
-      unless objects = collect_resources and ! objects.empty?
+      unless objects = collect_resources and !objects.empty?
         return false
       end
     else
@@ -99,7 +99,7 @@ class Puppet::Parser::Collector
     time = Puppet::Util.thinmark do
       # First get everything from the export table.  Just reuse our
       # collect_virtual method but tell it to use 'exported? for the test.
-      resources = collect_virtual(true).reject { |r| ! r.virtual? }
+      resources = collect_virtual(true).reject { |r| !r.virtual? }
 
       # key is '#{type}/#{name}', and host and filter.
       found = Puppet::Resource.indirection.

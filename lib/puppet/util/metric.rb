@@ -58,7 +58,7 @@ class Puppet::Util::Metric
 
     args = []
 
-    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+    if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
       @rrd = RRDtool.new(self.path)
     end
 
@@ -70,7 +70,7 @@ class Puppet::Util::Metric
     args.push "RRA:AVERAGE:0.5:1:300"
 
     begin
-      if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+      if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
         @rrd.create( Puppet[:rrdinterval], start, args)
       else
         RRD.create( self.path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
@@ -81,7 +81,7 @@ class Puppet::Util::Metric
   end
 
   def dump
-    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+    if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
       puts @rrd.info
     else
       puts RRD.info(self.path)
@@ -117,13 +117,13 @@ class Puppet::Util::Metric
       args << lines
       args.flatten!
       if range
-        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+        if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
           args.push("--start",range[0],"--end",range[1])
         else
           args.push("--start",range[0].to_i.to_s,"--end",range[1].to_i.to_s)
         end
       else
-        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+        if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
           args.push("--start", Time.now.to_i - time, "--end", Time.now.to_i)
         else
           args.push("--start", (Time.now.to_i - time).to_s, "--end", Time.now.to_i.to_s)
@@ -132,7 +132,7 @@ class Puppet::Util::Metric
 
       begin
         #Puppet.warning "args = #{args}"
-        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+        if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
           RRDtool.graph( args )
         else
           RRD.graph( *args )
@@ -168,7 +168,7 @@ class Puppet::Util::Metric
     end
     self.create(time - 5) unless Puppet::FileSystem.exist?(self.path)
 
-    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+    if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
       @rrd ||= RRDtool.new(self.path)
     end
 
@@ -183,7 +183,7 @@ class Puppet::Util::Metric
     arg = args.join(":")
     template = temps.join(":")
     begin
-      if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+      if Puppet.features.rrd_legacy? && !Puppet.features.rrd?
         @rrd.update( template, [ arg ] )
       else
         RRD.update( self.path, '-t', template, arg )

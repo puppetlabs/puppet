@@ -79,7 +79,7 @@ class Puppet::Indirector::Request
   # Is this an authenticated request?
   def authenticated?
     # Double negative, so we just get true or false
-    ! ! authenticated
+    ! !authenticated
   end
 
   def environment

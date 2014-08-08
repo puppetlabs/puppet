@@ -74,7 +74,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def evaluate
     return if evaluated?
     @evaluated = true
-    if klass = resource_type and ! builtin_type?
+    if klass = resource_type and !builtin_type?
       finish
       evaluated_code = klass.evaluate_code(self)
 
@@ -162,11 +162,11 @@ class Puppet::Parser::Resource < Puppet::Resource
   # if we ever receive a parameter named 'tag', set
   # the resource tags with its value.
   def set_parameter(param, value = nil)
-    if ! value.nil?
+    if !value.nil?
       param = Puppet::Parser::Resource::Param.new(
         :name => param, :value => value, :source => self.source
       )
-    elsif ! param.is_a?(Puppet::Parser::Resource::Param)
+    elsif !param.is_a?(Puppet::Parser::Resource::Param)
       raise ArgumentError, "Received incomplete information - no value provided for parameter #{param}"
     end
 

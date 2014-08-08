@@ -254,7 +254,7 @@ class Puppet::Resource
     tag(self.title) if valid_tag?(self.title)
 
     @reference = self # for serialization compatibility with 0.25.x
-    if strict? && ! resource_type
+    if strict? && !resource_type
       if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else

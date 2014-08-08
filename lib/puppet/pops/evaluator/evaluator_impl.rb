@@ -228,7 +228,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def eval_NotExpression(o, scope)
-    ! is_true?(evaluate(o.expr, scope))
+    !is_true?(evaluate(o.expr, scope))
   end
 
   def eval_UnaryMinusExpression(o, scope)

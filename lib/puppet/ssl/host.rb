@@ -237,7 +237,7 @@ ERROR_STRING
     # If we can get a CA instance, then we're a valid CA, and we
     # should use it to sign our request; else, just try to read
     # the cert.
-    if ! certificate && ca = Puppet::SSL::CertificateAuthority.instance
+    if !certificate && ca = Puppet::SSL::CertificateAuthority.instance
       ca.sign(self.name, true)
     end
   end

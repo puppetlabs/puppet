@@ -6,7 +6,7 @@ module Puppet::Util::Windows::ADSI
 
     def connectable?(uri)
       begin
-        !! connect(uri)
+        !!connect(uri)
       rescue
         false
       end

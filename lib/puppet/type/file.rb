@@ -393,7 +393,7 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) && ! self.should(:owner).is_a?(Symbol)
+    if self.should(:owner) && !self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
@@ -630,7 +630,7 @@ Puppet::Type.newtype(:file) do
       next unless result = perform_recursion(source)
       return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
-      break result if result && ! result.empty? && sourceselect == :first
+      break result if result && !result.empty? && sourceselect == :first
       result
     end.flatten.compact
 

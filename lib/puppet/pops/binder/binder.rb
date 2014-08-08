@@ -283,7 +283,7 @@ class Puppet::Pops::Binder::Binder
 
     # @api private
     def is_contribution?(binding)
-      ! binding.multibind_id.nil?
+      !binding.multibind_id.nil?
     end
 
     # @api private

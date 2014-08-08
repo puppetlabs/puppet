@@ -323,7 +323,7 @@ class Puppet::Transaction
   def skip?(resource)
     if missing_tags?(resource)
       resource.debug "Not tagged with #{tags.join(", ")}"
-    elsif ! scheduled?(resource)
+    elsif !scheduled?(resource)
       resource.debug "Not scheduled"
     elsif failed_dependencies?(resource)
       # When we introduced the :whit into the graph, to reduce the combinatorial

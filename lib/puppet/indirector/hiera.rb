@@ -3,7 +3,7 @@ require 'hiera/scope'
 
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
-    if ! Puppet.features.hiera?
+    if !Puppet.features.hiera?
       raise "Hiera terminus not supported without hiera library"
     end
     super

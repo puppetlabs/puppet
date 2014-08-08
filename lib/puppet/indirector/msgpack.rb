@@ -7,7 +7,7 @@ require 'puppet/util'
 # implementations, since it is ~ 30 times faster
 class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
   def initialize(*args)
-    if ! Puppet.features.msgpack?
+    if !Puppet.features.msgpack?
       raise "MessagePack terminus not supported without msgpack library"
     end
     super
