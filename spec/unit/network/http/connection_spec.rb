@@ -76,7 +76,46 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-  context "when validating HTTPS requests" do
+  class ConstantErrorValidator
+    def initialize(args)
+      @fails_with = args[:fails_with]
+      @error_string = args[:error_string] || ""
+      @peer_certs = args[:peer_certs] || []
+    end
+
+    def setup_connection(connection)
+      connection.stubs(:request).with do
+        true
+      end.raises(OpenSSL::SSL::SSLError.new(@fails_with))
+    end
+
+    def peer_certs
+      @peer_certs
+    end
+
+    def verify_errors
+      [@error_string]
+    end
+  end
+
+  class NoProblemsValidator
+    def initialize(cert)
+      @cert = cert
+    end
+
+    def setup_connection(connection)
+    end
+
+    def peer_certs
+      [@cert]
+    end
+
+    def verify_errors
+      []
+    end
+  end
+
+  shared_examples_for 'ssl verifier' do
     include PuppetSpec::Files
 
     let (:host) { "my_server" }
@@ -97,11 +136,11 @@ describe Puppet::Network::HTTP::Connection do
       Puppet[:confdir] = tmpdir('conf')
 
       connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => ConstantErrorValidator.new(
-          :fails_with => 'hostname was not match with server certificate',
-          :peer_certs => [Puppet::SSL::CertificateAuthority.new.generate(
-            'not_my_server', :dns_alt_names => 'foo,bar,baz')]))
+      host, port,
+      :verify => ConstantErrorValidator.new(
+        :fails_with => 'hostname was not match with server certificate',
+        :peer_certs => [Puppet::SSL::CertificateAuthority.new.generate(
+          'not_my_server', :dns_alt_names => 'foo,bar,baz')]))
 
       expect do
         connection.get('request')
@@ -136,44 +175,10 @@ describe Puppet::Network::HTTP::Connection do
 
       connection.get('request')
     end
+  end
 
-    class ConstantErrorValidator
-      def initialize(args)
-        @fails_with = args[:fails_with]
-        @error_string = args[:error_string] || ""
-        @peer_certs = args[:peer_certs] || []
-      end
-
-      def setup_connection(connection)
-        connection.stubs(:request).with do
-          true
-        end.raises(OpenSSL::SSL::SSLError.new(@fails_with))
-      end
-
-      def peer_certs
-        @peer_certs
-      end
-
-      def verify_errors
-        [@error_string]
-      end
-    end
-
-    class NoProblemsValidator
-      def initialize(cert)
-        @cert = cert
-      end
-
-      def setup_connection(connection)
-      end
-
-      def peer_certs
-        [@cert]
-      end
-
-      def verify_errors
-        []
-      end
+  context "when using single use HTTPS connections" do
+    it_behaves_like 'ssl verifier' do
     end
   end
 
