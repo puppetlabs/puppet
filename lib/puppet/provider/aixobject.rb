@@ -258,7 +258,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
       output.each do |line|
         name = line.split(/[ :]/)[0]
-        names << name if not name.empty?
+        names << name if !name.empty?
       end
     rescue Puppet::ExecutionFailure => detail
       # Print error if needed

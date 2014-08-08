@@ -153,11 +153,11 @@ class Rights
     # then return :dunno so that upper layers have a chance to try another right
     # tailored to the given method
     def allowed?(name, ip, args = {})
-      if not @methods.include?(args[:method])
+      if !@methods.include?(args[:method])
         return :dunno
-      elsif @environment.size > 0 and not @environment.include?(args[:environment])
+      elsif @environment.size > 0 and !@environment.include?(args[:environment])
         return :dunno
-      elsif (@authentication and not args[:authenticated])
+      elsif (@authentication and !args[:authenticated])
         return :dunno
       end
 

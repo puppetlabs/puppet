@@ -40,7 +40,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       args.pop
       files = args
       if files.empty?
-        if not STDIN.tty?
+        if !STDIN.tty?
           Puppet[:code] = STDIN.read
           validate_manifest
         else

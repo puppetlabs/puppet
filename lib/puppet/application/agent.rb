@@ -360,7 +360,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     daemon.stop(:exit => false)
 
-    if not exitstatus
+    if !exitstatus
       exit(1)
     elsif options[:detailed_exitcodes] then
       exit(exitstatus)
@@ -455,7 +455,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # if --no-client is set.
     require 'puppet/agent'
     require 'puppet/configurer'
-    agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
+    agent = Puppet::Agent.new(Puppet::Configurer, (!Puppet[:onetime]))
 
     enable_disable_client(agent) if options[:enable] || options[:disable]
 

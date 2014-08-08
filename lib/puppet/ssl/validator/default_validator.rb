@@ -119,7 +119,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
     descending_cert_chain = @peer_certs.reverse.map {|c| c.content }
     authz_ca_certs = ssl_configuration.ca_auth_certificates
 
-    if not has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
+    if !has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
       msg = "The server presented a SSL certificate chain which does not include a " <<
         "CA listed in the ssl_client_ca_auth file.  "
       msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  " <<

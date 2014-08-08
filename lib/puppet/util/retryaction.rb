@@ -25,10 +25,10 @@ module Puppet::Util::RetryAction
 
       raise RetryException::RetriesExceeded, "#{parameters[:retries]} exceeded", e.backtrace if parameters[:retries] == 0
 
-      if (not parameters[:retry_exceptions].keys.empty?) && parameters[:retry_exceptions].keys.include?(e.class)
+      if (!parameters[:retry_exceptions].keys.empty?) && parameters[:retry_exceptions].keys.include?(e.class)
         Puppet.info("Caught exception #{e.class}:#{e}")
         Puppet.info(parameters[:retry_exceptions][e.class])
-      elsif (not parameters[:retry_exceptions].keys.empty?)
+      elsif (!parameters[:retry_exceptions].keys.empty?)
         # If the exceptions is not in the list of retry_exceptions re-raise.
         raise e
       end

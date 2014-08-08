@@ -104,11 +104,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if not @resource.allowdupe? and @resource.forcelocal?
+    if !@resource.allowdupe? and @resource.forcelocal?
        if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
-    elsif @resource.allowdupe? and not @resource.forcelocal?
+    elsif @resource.allowdupe? and !@resource.forcelocal?
        return ["-o"]
     end
     []
@@ -125,9 +125,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_home
     cmd = []
-    if @resource.managehome? and not @resource.forcelocal?
+    if @resource.managehome? and !@resource.forcelocal?
       cmd << "-m"
-    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
+    elsif !@resource.managehome? and Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
     cmd
@@ -135,7 +135,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_expiry
     cmd = []
-    if @resource[:expiry] and not @resource.forcelocal?
+    if @resource[:expiry] and !@resource.forcelocal?
       cmd << "-e #{@resource[:expiry]}"
     end
 
@@ -175,7 +175,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if not @resource.should(:gid) and Puppet::Util.gid(@resource[:name])
+    if !@resource.should(:gid) and Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties

@@ -101,7 +101,7 @@ class Puppet::Graph::SimpleGraph
     # decent Ruby stack.
     recur = [{ :node => root }]
 
-    while not recur.empty? do
+    while !recur.empty? do
       frame = recur.last
       vertex = frame[:node]
 

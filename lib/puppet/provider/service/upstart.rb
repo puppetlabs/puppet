@@ -98,7 +98,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enabled?
-    return super if not is_upstart?
+    return super if !is_upstart?
 
     script_contents = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -111,7 +111,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enable
-    return super if not is_upstart?
+    return super if !is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_9_0
@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def disable
-    return super if not is_upstart?
+    return super if !is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -151,7 +151,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def status
-    return super if not is_upstart?
+    return super if !is_upstart?
 
     output = status_exec(@resource[:name].split)
     if output =~ /start\//

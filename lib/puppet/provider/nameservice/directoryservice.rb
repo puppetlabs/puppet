@@ -296,7 +296,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"
       if Puppet::FileSystem.exist?(password_hash_file) && File.file?(password_hash_file)
-        fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
+        fail("Could not read password hash file at #{password_hash_file}") if !File.readable?(password_hash_file)
         f = File.new(password_hash_file)
         password_hash = f.read
         f.close
@@ -429,7 +429,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # If we are meant to be authoritative for the group membership
       # then remove all existing members who haven't been specified
       # in the manifest.
-      remove_unwanted_members(current_members, value) if @resource[:auth_membership] and not current_members.nil?
+      remove_unwanted_members(current_members, value) if @resource[:auth_membership] and !current_members.nil?
 
       # if they're not a member, make them one.
       add_members(current_members, value)
@@ -487,7 +487,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       if property == :uid && value.nil?
         value = self.class.next_system_id(id_type='uid')
       end
-      if value != "" and not value.nil?
+      if value != "" and !value.nil?
         if property == :members
           add_members(nil, value)
         else
@@ -507,7 +507,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def remove_unwanted_members(current_members, new_members)
     current_members.each do |member|
-      if not new_members.flatten.include?(member)
+      if !new_members.flatten.include?(member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)
@@ -527,7 +527,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def add_members(current_members, new_members)
     new_members.flatten.each do |new_member|
-      if current_members.nil? or not current_members.include?(new_member)
+      if current_members.nil? or !current_members.include?(new_member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
         begin
           execute(cmd)

@@ -191,7 +191,7 @@ class Puppet::Indirector::Indirection
     terminus = prepare(request)
 
     result = find_in_cache(request)
-    if not result.nil?
+    if !result.nil?
       result
     elsif request.ignore_terminus?
       nil
@@ -199,7 +199,7 @@ class Puppet::Indirector::Indirection
       # Otherwise, return the result from the terminus, caching if
       # appropriate.
       result = terminus.find(request)
-      if not result.nil?
+      if !result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
         if cache?
           Puppet.info "Caching #{self.name} for #{request.key}"

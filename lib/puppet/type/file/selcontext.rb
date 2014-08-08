@@ -42,15 +42,15 @@ module Puppet
       end
 
       property_default = self.parse_selinux_context(property, context)
-      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if not property_default.nil?
+      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if !property_default.nil?
       property_default
     end
 
     def insync?(value)
-      if not selinux_support?
+      if !selinux_support?
         debug("SELinux bindings not found. Ignoring parameter.")
         true
-      elsif not selinux_label_support?(@resource[:path])
+      elsif !selinux_label_support?(@resource[:path])
         debug("SELinux not available for this filesystem. Ignoring parameter.")
         true
       else

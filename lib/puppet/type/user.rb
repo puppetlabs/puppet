@@ -318,7 +318,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and not provider.class.manages_homedir?
+          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and !provider.class.manages_homedir?
         end
       end
     end
@@ -622,14 +622,14 @@ module Puppet
 
         return [] if value == :false
         home = resource[:home]
-        if value == :true and not home
+        if value == :true and !home
           raise ArgumentError, "purge_ssh_keys can only be true for users with a defined home directory"
         end
 
         return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
-          if entry =~ /^~|^%h/ and not home
+          if entry =~ /^~|^%h/ and !home
             raise ArgumentError, "purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory"
           end
           entry.gsub!(/^~\//, "#{home}/")

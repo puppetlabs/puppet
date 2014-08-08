@@ -361,7 +361,7 @@ class Puppet::Transaction
     return false if ignore_tags?
     return false if tags.empty?
 
-    not resource.tagged?(*tags)
+    !resource.tagged?(*tags)
   end
 end
 

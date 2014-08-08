@@ -9,7 +9,7 @@ module SSL
   #   assume one single self signed CA cert for everyone.
 class Configuration
   def initialize(localcacert, options={})
-    if (options[:ca_chain_file] and not options[:ca_auth_file])
+    if (options[:ca_chain_file] and !options[:ca_auth_file])
       raise ArgumentError, "The CA auth chain is required if the chain file is provided"
     end
     @localcacert = localcacert

@@ -442,7 +442,7 @@ Style/NonNilCheck:
   Enabled: false
 
 Style/Not:
-  Enabled: false
+  Enabled: true
 
 Style/NumericLiterals:
   Enabled: false

@@ -328,7 +328,7 @@ class Puppet::SSL::CertificateAuthority
         Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true)
     end
 
-    if unknown_req and not unknown_req.empty?
+    if unknown_req and !unknown_req.empty?
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
       raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
     end

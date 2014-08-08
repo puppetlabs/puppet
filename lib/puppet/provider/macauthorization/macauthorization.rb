@@ -63,7 +63,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
     def populate_rules_rights
       auth_plist = Plist::parse_xml(AuthDB)
-      raise Puppet::Error.new("Cannot parse: #{AuthDB}") if not auth_plist
+      raise Puppet::Error.new("Cannot parse: #{AuthDB}") if !auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
       self.parsed_auth_db = self.rights.dup
@@ -230,7 +230,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       new_key = key
       if PuppetToNativeAttributeMap.has_key?(key)
         new_key = PuppetToNativeAttributeMap[key].to_s
-      elsif not key.is_a?(String)
+      elsif !key.is_a?(String)
         new_key = key.to_s
       end
       newplist[new_key] = value
@@ -240,7 +240,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
   def retrieve_value(resource_name, attribute)
     # We set boolean values to symbols when retrieving values
-    raise Puppet::Error.new("Cannot find #{resource_name} in auth db") if not self.class.parsed_auth_db.has_key?(resource_name)
+    raise Puppet::Error.new("Cannot find #{resource_name} in auth db") if !self.class.parsed_auth_db.has_key?(resource_name)
 
     if PuppetToNativeAttributeMap.has_key?(attribute)
       native_attribute = PuppetToNativeAttributeMap[attribute]

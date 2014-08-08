@@ -2,7 +2,7 @@
 # load gems. If Bundler is loaded, let it determine what can be
 # loaded. If it's not loaded, then use rubygems. But do this before
 # loading any puppet code, so that our gem loading system is sane.
-if not defined? ::Bundler
+if !defined? ::Bundler
   begin
     require 'rubygems'
   rescue LoadError

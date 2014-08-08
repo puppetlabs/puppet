@@ -230,7 +230,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
         exit_status = apply_catalog(catalog)
 
-        if not exit_status
+        if !exit_status
           exit(1)
         elsif options[:detailed_exitcodes] then
           exit(exit_status)

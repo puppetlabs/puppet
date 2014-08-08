@@ -244,7 +244,7 @@ def prepare_installation
     RbConfig::CONFIG['bindir'] = "/usr/bin"
   end
 
-  if not InstallOptions.configdir.nil?
+  if !InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
   elsif $operatingsystem == "windows"
     begin
@@ -258,13 +258,13 @@ def prepare_installation
     configdir = "/etc/puppet"
   end
 
-  if not InstallOptions.bindir.nil?
+  if !InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
   else
     bindir = RbConfig::CONFIG['bindir']
   end
 
-  if not InstallOptions.sitelibdir.nil?
+  if !InstallOptions.sitelibdir.nil?
     sitelibdir = InstallOptions.sitelibdir
   else
     sitelibdir = RbConfig::CONFIG["sitelibdir"]
@@ -278,17 +278,17 @@ def prepare_installation
     end
   end
 
-  if not InstallOptions.mandir.nil?
+  if !InstallOptions.mandir.nil?
     mandir = InstallOptions.mandir
   else
     mandir = RbConfig::CONFIG['mandir']
   end
 
   # This is the new way forward
-  if not InstallOptions.destdir.nil?
+  if !InstallOptions.destdir.nil?
     destdir = InstallOptions.destdir
   # To be deprecated once people move over to using --destdir option
-  elsif not ENV['DESTDIR'].nil?
+  elsif !ENV['DESTDIR'].nil?
     destdir = ENV['DESTDIR']
     warn "DESTDIR is deprecated. Use --destdir instead."
   else
@@ -359,7 +359,7 @@ end
 def install_binfile(from, op_file, target)
   tmp_file = Tempfile.new('puppet-binfile')
 
-  if not InstallOptions.ruby.nil?
+  if !InstallOptions.ruby.nil?
     ruby = InstallOptions.ruby
   else
     ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
@@ -387,7 +387,7 @@ def install_binfile(from, op_file, target)
       installed_wrapper = true
     end
 
-    if not installed_wrapper
+    if !installed_wrapper
       tmp_file2 = Tempfile.new('puppet-wrapper')
       cwv = <<-EOS
 @echo off

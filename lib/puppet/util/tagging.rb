@@ -25,7 +25,7 @@ module Puppet::Util::Tagging
 
   # Is the receiver tagged with the given tags?
   def tagged?(*tags)
-    not ( self.tags & tags.flatten.collect { |t| t.to_s } ).empty?
+    !( self.tags & tags.flatten.collect { |t| t.to_s } ).empty?
   end
 
   # Return a copy of the tag list, so someone can't ask for our tags

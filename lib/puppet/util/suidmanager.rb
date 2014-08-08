@@ -37,7 +37,7 @@ module Puppet::Util::SUIDManager
       # operating system side.  Therefore we catch the exception and look whether
       # we run under OS X or not -- if so, then we acknowledge the problem and
       # re-throw the exception otherwise.
-      if osx_maj_ver and not osx_maj_ver.empty?
+      if osx_maj_ver and !osx_maj_ver.empty?
         return true
       else
         raise e

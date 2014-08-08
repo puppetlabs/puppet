@@ -382,7 +382,7 @@ Puppet::Type.newtype(:cron) do
       the user account specified by this property."
 
     defaultto {
-      if not provider.is_a?(@resource.class.provider(:crontab))
+      if !provider.is_a?(@resource.class.provider(:crontab))
         struct = Etc.getpwuid(Process.uid)
         struct.respond_to?(:name) && struct.name || 'root'
       end

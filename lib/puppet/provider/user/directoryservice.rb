@@ -242,7 +242,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
     if Puppet::FileSystem.exist?(password_hash_file) && File.file?(password_hash_file)
-      raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
+      raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if !File.readable?(password_hash_file)
       f = File.new(password_hash_file)
       password_hash = f.read
       f.close
@@ -307,7 +307,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       # For the :password and :groups properties, call the setter methods
       # to enforce those values. For everything else, use dscl with the
       # ns_to_ds_attribute_map to set the appropriate values.
-      if value != "" and not value.nil?
+      if value != "" and !value.nil?
         case attribute
         when :password
           self.password = value

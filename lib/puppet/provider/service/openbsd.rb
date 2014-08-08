@@ -310,7 +310,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
       # We need only add append the resource name to the pkg_scripts if the
       # package is not found in the base system.
 
-      if not in_base?
+      if !in_base?
         content = set_content_scripts(content,pkg_scripts_append())
       end
     elsif resource[:enable] == :false
@@ -318,7 +318,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
       # By virtue of being excluded from the base system, all packages are
       # disabled by default and need not be set in the rc.conf.local at all.
 
-      if not in_base?
+      if !in_base?
         content = remove_content_flags(content)
         content = set_content_scripts(content,pkg_scripts_remove())
       else

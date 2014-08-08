@@ -117,7 +117,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.make_label_to_path_map(refresh=false)
-    return @label_to_path_map if @label_to_path_map and not refresh
+    return @label_to_path_map if @label_to_path_map and !refresh
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|

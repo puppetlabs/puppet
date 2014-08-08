@@ -27,7 +27,7 @@ class Puppet::SSL::CertificateRequestAttributes
       end
       @custom_attributes = hash.delete('custom_attributes') || {}
       @extension_requests = hash.delete('extension_requests') || {}
-      if not hash.keys.empty?
+      if !hash.keys.empty?
         raise Puppet::Error, "unexpected attributes #{hash.keys.inspect} in #{@path.inspect}"
       end
       return true

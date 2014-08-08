@@ -513,7 +513,7 @@ class Puppet::Parser::Scope
   private :has_inherited_class?
 
   def has_enclosing_scope?
-    not parent.nil?
+    !parent.nil?
   end
   private :has_enclosing_scope?
 
