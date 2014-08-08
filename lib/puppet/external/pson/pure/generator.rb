@@ -229,7 +229,7 @@ module PSON
           end
 
           def pson_shift(state, depth)
-            state and !state.object_nl.empty? or return ''
+            state && !state.object_nl.empty? or return ''
             state.indent * depth
           end
 
@@ -291,7 +291,7 @@ module PSON
           end
 
           def pson_shift(state, depth)
-            state and !state.array_nl.empty? or return ''
+            state && !state.array_nl.empty? or return ''
             state.indent * depth
           end
 

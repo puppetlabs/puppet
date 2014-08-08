@@ -429,7 +429,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # If we are meant to be authoritative for the group membership
       # then remove all existing members who haven't been specified
       # in the manifest.
-      remove_unwanted_members(current_members, value) if @resource[:auth_membership] and !current_members.nil?
+      remove_unwanted_members(current_members, value) if @resource[:auth_membership] && !current_members.nil?
 
       # if they're not a member, make them one.
       add_members(current_members, value)
@@ -487,7 +487,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       if property == :uid && value.nil?
         value = self.class.next_system_id(id_type='uid')
       end
-      if value != "" and !value.nil?
+      if value != "" && !value.nil?
         if property == :members
           add_members(nil, value)
         else
@@ -527,7 +527,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def add_members(current_members, new_members)
     new_members.flatten.each do |new_member|
-      if current_members.nil? or !current_members.include?(new_member)
+      if current_members.nil? || !current_members.include?(new_member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
         begin
           execute(cmd)

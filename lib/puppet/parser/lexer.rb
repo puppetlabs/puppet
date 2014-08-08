@@ -420,7 +420,7 @@ class Puppet::Parser::Lexer
 
     skip if token.skip_text
 
-    return if token.skip and !token.accumulate?
+    return if token.skip && !token.accumulate?
 
     token, value = token.convert(self, value) if token.respond_to?(:convert)
 

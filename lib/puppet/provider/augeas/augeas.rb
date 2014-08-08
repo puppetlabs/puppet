@@ -407,7 +407,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         end
       end
     ensure
-      if !return_value or resource.noop? or !save_result
+      if !return_value || resource.noop? || !save_result
         close_augeas
       end
     end

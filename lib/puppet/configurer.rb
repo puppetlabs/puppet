@@ -207,7 +207,7 @@ class Puppet::Configurer
       # facts may be used to determine which catalog we get, we need to
       # rerun the process if the environment is changed.
       tries = 0
-      while catalog.environment and !catalog.environment.empty? and catalog.environment != @environment
+      while catalog.environment && !catalog.environment.empty? && catalog.environment != @environment
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end

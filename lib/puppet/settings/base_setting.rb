@@ -92,10 +92,10 @@ class Puppet::Settings::BaseSetting
     @name = args[:name] if args.include? :name
 
     #set the default value for call_hook
-    @call_hook = :on_write_only if args[:hook] and !args[:call_hook]
+    @call_hook = :on_write_only if args[:hook] && !args[:call_hook]
     @has_hook = false
 
-    raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] and !args[:hook]
+    raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] && !args[:hook]
 
     args.each do |param, value|
       method = param.to_s + "="
