@@ -679,6 +679,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       end
     end
 
+    # This is a runtime check - the model is valid, but will have runtime issues when evaluated
+    # and storeconfigs is not set.
+    #if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.exported
+    if(o.exported)
+      optionally_fail(Puppet::Pops::Issues::RT_NO_STORECONFIGS_EXPORT, o);
+    end
+
     titles_to_body = {}
     body_to_titles = {}
     body_to_params = {}

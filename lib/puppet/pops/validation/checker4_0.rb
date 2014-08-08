@@ -425,11 +425,6 @@ class Puppet::Pops::Validation::Checker4_0
     #  acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_name, :feature => 'resource type', :container => o)
     #end
 
-    # This is a runtime check - the model is valid, but will have runtime issues when evaluated
-    # and storeconfigs is not set.
-    if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.exported
-      acceptor.accept(Issues::RT_NO_STORECONFIGS_EXPORT, o)
-    end
   end
 
   def check_ResourceDefaultsExpression(o)

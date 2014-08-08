@@ -541,6 +541,10 @@ module Puppet::Pops::Evaluator::Runtime3Support
       else
         p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
       end
+
+      # Store config issues, ignore or warning
+      p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
+      p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
     end
   end
 
