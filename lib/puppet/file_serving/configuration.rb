@@ -51,10 +51,10 @@ class Puppet::FileServing::Configuration
     mount_name, path = request.key.split(File::Separator, 2)
 
     raise(ArgumentError, "Cannot find file: Invalid mount '#{mount_name}'") unless mount_name =~ %r{^[-\w]+$}
-    raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path and path.split('/').include?('..')
+    raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path && path.split('/').include?('..')
 
     return nil unless mount = find_mount(mount_name, request.environment)
-    if mount.name == "modules" and mount_name != "modules"
+    if mount.name == "modules" && mount_name != "modules"
       # yay backward-compatibility
       path = "#{mount_name}/#{path}"
     end
@@ -92,7 +92,7 @@ class Puppet::FileServing::Configuration
 
     @parser ||= Puppet::FileServing::Configuration::Parser.new(config)
 
-    return if check and ! @parser.changed?
+    return if check && ! @parser.changed?
 
     # Don't assign the mounts hash until we're sure the parsing succeeded.
     begin

@@ -153,7 +153,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
+      if stmt.is_a?(Puppet::Parser::AST::Function) && ['include','require'].include?(stmt.name)
         stmt.arguments.each do |included|
           Puppet.debug "found #{stmt.name}: #{included}"
           container.send("add_#{stmt.name}", RDoc::Include.new(included.to_s, stmt.doc))
@@ -169,7 +169,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == 'realize'
+      if stmt.is_a?(Puppet::Parser::AST::Function) && stmt.name == 'realize'
         stmt.arguments.each do |realized|
           Puppet.debug "found #{stmt.name}: #{realized}"
           container.add_realize( RDoc::Include.new(realized.to_s, stmt.doc))
@@ -199,7 +199,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
+      if stmt.is_a?(Puppet::Parser::AST::Resource) && !stmt.type.nil?
         begin
           type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
           stmt.instances.each do |inst|
@@ -230,7 +230,7 @@ module RDoc::PuppetParserCore
     container, name = get_class_or_module(container, name)
 
     superclass = klass.parent
-    superclass = "" if superclass.nil? or superclass.empty?
+    superclass = "" if superclass.nil? || superclass.empty?
 
     comment = klass.doc
     look_for_directives_in(container, comment) unless comment.empty?
@@ -259,7 +259,7 @@ module RDoc::PuppetParserCore
   def document_node(name, node, container)
     Puppet.debug "rdoc: found new node #{name}"
     superclass = node.parent
-    superclass = "" if superclass.nil? or superclass.empty?
+    superclass = "" if superclass.nil? || superclass.empty?
 
     comment = node.doc
     look_for_directives_in(container, comment) unless comment.empty?

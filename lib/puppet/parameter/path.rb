@@ -23,7 +23,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # @return [Array<String>] the given paths
   #
   def validate_path(paths)
-    if paths.is_a?(Array) and ! self.class.arrays? then
+    if paths.is_a?(Array) && ! self.class.arrays? then
       fail "#{name} only accepts a single path, not an array of paths"
     end
 
@@ -49,7 +49,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # @return [String, Array<String>] the given paths
   # @raise [Puppet::Error] if the given paths does not comply with the on/many paths rule.
   def unsafe_munge(paths)
-    if paths.is_a?(Array) and ! self.class.arrays? then
+    if paths.is_a?(Array) && ! self.class.arrays? then
       fail "#{name} only accepts a single path, not an array of paths"
     end
     paths

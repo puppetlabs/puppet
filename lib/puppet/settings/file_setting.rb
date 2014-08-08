@@ -49,7 +49,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   private
     def safe_to_use_settings_value?
-      @settings[:mkusers] or @settings.send(@available_method)
+      @settings[:mkusers] || @settings.send(@available_method)
     end
   end
 
@@ -113,7 +113,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def munge(value)
-    if value.is_a?(String) and value != ':memory:' # for sqlite3 in-memory tests
+    if value.is_a?(String) && value != ':memory:' # for sqlite3 in-memory tests
       value = File.expand_path(value)
     end
     value
@@ -134,8 +134,8 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     # Make sure the paths are fully qualified.
     path = File.expand_path(path)
 
-    return nil unless type == :directory or create_files? or Puppet::FileSystem.exist?(path)
-    return nil if path =~ /^\/dev/ or path =~ /^[A-Z]:\/dev/i
+    return nil unless type == :directory || create_files? || Puppet::FileSystem.exist?(path)
+    return nil if path =~ /^\/dev/ || path =~ /^[A-Z]:\/dev/i
 
     resource = Puppet::Resource.new(:file, path)
 
@@ -156,7 +156,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       end
 
       # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
+      if Puppet.features.root? && !Puppet.features.microsoft_windows?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end

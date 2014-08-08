@@ -74,7 +74,7 @@ class Puppet::Resource::Type
 
   def to_data_hash
     data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless (value = self.send(param)) and (value != "")
+      next hash unless (value = self.send(param)) && (value != "")
       hash[param.to_s] = value
       hash
     end
@@ -161,9 +161,9 @@ class Puppet::Resource::Type
   def merge(other)
     fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
     fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
-    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
+    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" && Puppet.settings[:freeze_main]
 
-    if parent and other.parent and parent != other.parent
+    if parent && other.parent && parent != other.parent
       fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
     end
 
@@ -298,7 +298,7 @@ class Puppet::Resource::Type
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+    scope.class_set(self.name,scope) if hostclass? || node?
 
     # Evaluate the default parameters, now that all other variables are set
     default_params = resource.set_default_parameters(scope)

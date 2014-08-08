@@ -289,7 +289,7 @@ class Puppet::Transaction::Report
       metric.values.each do |name, label, value|
         report[key][name.to_s] = value
       end
-      report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
+      report[key]["total"] = 0 unless key == "time" || report[key].include?("total")
     end
     (report["time"] ||= {})["last_run"] = Time.now.tv_sec
     report

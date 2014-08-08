@@ -313,7 +313,7 @@ class Puppet::Graph::SimpleGraph
 
   # Is there an edge between the two vertices?
   def edge?(source, target)
-    vertex?(source) and vertex?(target) and @out_from[source][target]
+    vertex?(source) && vertex?(target) && @out_from[source][target]
   end
 
   def edges

@@ -7,7 +7,7 @@ Puppet::Type.type(:service).provide :service do
 
   # How to restart the process.
   def restart
-    if @resource[:restart] or restartcmd
+    if @resource[:restart] || restartcmd
       ucommand(:restart)
     else
       self.stop

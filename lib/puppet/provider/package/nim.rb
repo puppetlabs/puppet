@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     pkg = @resource[:name]
 
-    version_specified = (useversion and (! @resource.should(:ensure).is_a? Symbol))
+    version_specified = (useversion && (! @resource.should(:ensure).is_a? Symbol))
 
     # This is unfortunate for a couple of reasons.  First, because of a subtle
     # difference in the command-line syntax for installing an RPM vs an
@@ -272,7 +272,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
   def determine_package_type(showres_output, package_name, version)
     packages = parse_showres_output(showres_output)
-    unless (packages.has_key?(package_name) and packages[package_name].has_key?(version))
+    unless (packages.has_key?(package_name) && packages[package_name].has_key?(version))
       return nil
     end
     packages[package_name][version]

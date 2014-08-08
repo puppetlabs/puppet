@@ -187,7 +187,7 @@ class Puppet::Forge < Semantic::Dependency::Source
 
     def download(uri, destination)
       response = @source.make_http_request(uri, destination)
-      destination.flush and destination.close
+      destination.flush && destination.close
       unless response.code == '200'
         raise Puppet::Forge::Errors::ResponseError.new(:uri => uri, :response => response)
       end

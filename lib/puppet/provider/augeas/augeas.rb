@@ -170,7 +170,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
         restricted_metadata = "/augeas//error"
-      elsif glob_avail and opt_ctx
+      elsif glob_avail && opt_ctx
         # Optimize loading if the context is given, requires the glob function
         # from Augeas 0.8.2 or up
         ctx_path = resource[:context].sub(/^\/files(.*?)\/?$/, '\1/')
@@ -377,7 +377,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       unless force
         # If we have a verison of augeas which is at least 0.3.6 then we
         # can make the changes now and see if changes were made.
-        if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
+        if return_value && versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
           # Execute in NEWFILE mode so we can show a diff
           set_augeas_save_mode(SAVE_NEWFILE)

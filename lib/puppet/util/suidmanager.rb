@@ -63,7 +63,7 @@ module Puppet::Util::SUIDManager
   def asuser(new_uid=nil, new_gid=nil)
     return yield if Puppet.features.microsoft_windows?
     return yield unless root?
-    return yield unless new_uid or new_gid
+    return yield unless new_uid || new_gid
 
     old_euid, old_egid = self.euid, self.egid
     begin
@@ -82,7 +82,7 @@ module Puppet::Util::SUIDManager
   # supplied, only gid will be changed. This method will fail if used on
   # Windows.
   def change_privileges(uid=nil, gid=nil, permanently=false)
-    return unless uid or gid
+    return unless uid || gid
 
     unless gid
       uid = convert_xid(:uid, uid)

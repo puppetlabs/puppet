@@ -53,7 +53,7 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       operator ||= "eq"
       if type == "facts"
         fact_filters[operator] << [name,value]
-      elsif type == "meta" and name == "timestamp"
+      elsif type == "meta" && name == "timestamp"
         meta_filters[operator] << [name,value]
       end
     end

@@ -65,7 +65,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # non-option word to use as the action.
     action_name = nil
     index       = -1
-    until action_name or (index += 1) >= command_line.args.length do
+    until action_name || (index += 1) >= command_line.args.length do
       item = command_line.args[index]
       if item =~ /^-/ then
         option = @face.options.find do |name|
@@ -77,9 +77,9 @@ class Puppet::Application::FaceBase < Puppet::Application
           # care about optional vs mandatory in that case because we do a real
           # parse later, and that will totally take care of raising the error
           # when we get there. --daniel 2011-04-04
-          if option.takes_argument? and !item.index('=') then
+          if option.takes_argument? && !item.index('=') then
             index += 1 unless
-              (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
+              (option.optional_argument? && command_line.args[index + 1] =~ /^-/)
           end
         elsif option = find_global_settings_argument(item) then
           unless Puppet.settings.boolean? option.name then

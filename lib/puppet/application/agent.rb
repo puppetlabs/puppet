@@ -457,7 +457,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'puppet/configurer'
     agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
 
-    enable_disable_client(agent) if options[:enable] or options[:disable]
+    enable_disable_client(agent) if options[:enable] || options[:disable]
 
     @agent = agent if options[:client]
   end

@@ -217,7 +217,7 @@ rescue GetoptLong::InvalidOption => detail
   exit(1)
 end
 
-unless $options[:cert] and $options[:key]
+unless $options[:cert] && $options[:key]
   raise "--cert and --key are mandatory to authenticate the client"
 end
 

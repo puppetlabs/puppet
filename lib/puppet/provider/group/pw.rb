@@ -39,7 +39,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
 
   def modifycmd(param, value)
     # members may be an array, need a comma separated list
-    if param == :members and value.is_a?(Array)
+    if param == :members && value.is_a?(Array)
       value = value.join(",")
     end
     super(param, value)

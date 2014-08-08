@@ -88,7 +88,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     made.values.each do |res|
       # Depend on the nearest ancestor we generated, falling back to the
       # resource if we have none
-      parent_name = res.ancestors.find { |a| made[a] and made[a] != res }
+      parent_name = res.ancestors.find { |a| made[a] && made[a] != res }
       parent = made[parent_name] || resource
 
       add_conditional_directed_dependency(parent, res)

@@ -55,7 +55,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:gid) and findgroup('gid', @resource.should(:gid).to_s)
+       if @resource.should(:gid) && findgroup('gid', @resource.should(:gid).to_s)
            raise(Puppet::Error, "GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
@@ -78,7 +78,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       end
     end
     cmd += check_allow_dup
-    cmd << "-r" if @resource.system? and self.class.system_groups?
+    cmd << "-r" if @resource.system? && self.class.system_groups?
     cmd << @resource[:name]
     cmd
   end

@@ -6,7 +6,7 @@ module Puppet::Network::Resolver
   # and yield each server/port since SRV records have ports in them
   # It will override whatever masterport setting is already set.
   def self.each_srv_record(domain, service_name = :puppet, &block)
-    if (domain.nil? or domain.empty?)
+    if (domain.nil? || domain.empty?)
       Puppet.debug "Domain not known; skipping SRV lookup"
       return
     end

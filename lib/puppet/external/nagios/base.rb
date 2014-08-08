@@ -157,7 +157,7 @@ class Nagios::Base
 
   # Whether a given parameter is suppressed.
   def self.suppress?(name)
-    defined?(@suppress) and @suppress.include?(name)
+    defined?(@suppress) && @suppress.include?(name)
   end
 
   # Return our name as the string.

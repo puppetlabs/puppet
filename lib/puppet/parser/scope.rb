@@ -59,7 +59,7 @@ class Puppet::Parser::Scope
     end
 
     def include?(name)
-      (@parent and @parent.include?(name))
+      (@parent && @parent.include?(name))
     end
 
     def bound?(name)
@@ -143,7 +143,7 @@ class Puppet::Parser::Scope
     end
 
     def include?(name)
-      bound?(name) or super
+      bound?(name) || super
     end
 
     def bound?(name)
@@ -358,7 +358,7 @@ class Puppet::Parser::Scope
   end
 
   def undef_as(x,v)
-    if v.nil? or v == :undef
+    if v.nil? || v == :undef
       x
     else
       v
@@ -447,7 +447,7 @@ class Puppet::Parser::Scope
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
     if has_enclosing_scope?
-      if parent.is_topscope? or parent.is_nodescope?
+      if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
@@ -458,15 +458,15 @@ class Puppet::Parser::Scope
   end
 
   def is_classscope?
-    resource and resource.type == "Class"
+    resource && resource.type == "Class"
   end
 
   def is_nodescope?
-    resource and resource.type == "Node"
+    resource && resource.type == "Node"
   end
 
   def is_topscope?
-    compiler and self == compiler.topscope
+    compiler && self == compiler.topscope
   end
 
   def lookup_qualified_variable(class_name, variable_name, position)
@@ -508,7 +508,7 @@ class Puppet::Parser::Scope
   end
 
   def has_inherited_class?
-    is_classscope? and resource.resource_type.parent
+    is_classscope? && resource.resource_type.parent
   end
   private :has_inherited_class?
 
@@ -547,7 +547,7 @@ class Puppet::Parser::Scope
   #
   # @see to_hash
   def to_hash_future(recursive)
-    if recursive and has_enclosing_scope?
+    if recursive && has_enclosing_scope?
       target = enclosing_scope.to_hash_future(recursive)
       if !(inherited = inherited_scope).nil?
         target.merge!(inherited.to_hash_future(recursive))
@@ -566,7 +566,7 @@ class Puppet::Parser::Scope
   #
   # @see to_hash
   def to_hash_legacy(recursive = true)
-    if recursive and parent
+    if recursive && parent
       target = parent.to_hash_legacy(recursive)
     else
       target = Hash.new

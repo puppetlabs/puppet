@@ -17,7 +17,7 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     host   = request.options[:host]
     filter = request.options[:filter]
 
-    if filter and filter[1] =~ /^(and|or)$/i then
+    if filter && filter[1] =~ /^(and|or)$/i then
       raise Puppet::Error, "Complex search on StoreConfigs resources is not supported"
     end
 

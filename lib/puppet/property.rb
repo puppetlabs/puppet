@@ -157,7 +157,7 @@ class Puppet::Property < Puppet::Parameter
   def self.newvalue(name, options = {}, &block)
     value = value_collection.newvalue(name, options, &block)
 
-    define_method(value.method, &value.block) if value.method and value.block
+    define_method(value.method, &value.block) if value.method && value.block
     value
   end
 
@@ -218,7 +218,7 @@ class Puppet::Property < Puppet::Parameter
     begin
       if current_value == :absent
         return "defined '#{name}' as #{self.class.format_value_for_display should_to_s(newvalue)}"
-      elsif newvalue == :absent or newvalue == [:absent]
+      elsif newvalue == :absent || newvalue == [:absent]
         return "undefined '#{name}' from #{self.class.format_value_for_display is_to_s(current_value)}"
       else
         return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} to #{self.class.format_value_for_display should_to_s(newvalue)}"
@@ -268,7 +268,7 @@ class Puppet::Property < Puppet::Parameter
   # @see Puppet::Type#event
   def event
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }
-    if should and value = self.class.value_collection.match?(should)
+    if should && value = self.class.value_collection.match?(should)
       attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
     end
     resource.event attrs
@@ -344,7 +344,7 @@ class Puppet::Property < Puppet::Parameter
       #
       # This does mean that property equality is not commutative, and will not
       # work unless the `is` value is carefully arranged to match the should.
-      return (is == @should or is == @should.map(&:to_s))
+      return (is == @should || is == @should.map(&:to_s))
 
       # When we stop being idiots about this, and actually have meaningful
       # semantics, this version is the thing we actually want to do.
@@ -369,7 +369,7 @@ class Puppet::Property < Puppet::Parameter
     # This preserves the older Puppet behaviour of doing raw and string
     # equality comparisons for all equality.  I am not clear this is globally
     # desirable, but at least it is not a breaking change. --daniel 2011-11-11
-    current == desired or current == desired.to_s
+    current == desired || current == desired.to_s
   end
 
   # Produces a pretty printing string for the given value.

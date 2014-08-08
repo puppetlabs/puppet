@@ -24,7 +24,7 @@ module Util
   extend Puppet::Util::SymbolicFileMode
 
   def self.activerecord_version
-    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
+    if (defined?(::ActiveRecord) && defined?(::ActiveRecord::VERSION) && defined?(::ActiveRecord::VERSION::MAJOR) && defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
     else
       0
@@ -156,7 +156,7 @@ module Util
     end
 
     # Only benchmark if our log level is high enough
-    if level != :none and Puppet::Util::Log.sendlevel?(level)
+    if level != :none && Puppet::Util::Log.sendlevel?(level)
       seconds = Benchmark.realtime {
         yield
       }
@@ -186,7 +186,7 @@ module Util
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
+          if e.to_s =~ /HOME/ && (ENV['HOME'].nil? || ENV['HOME'] == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
             Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
@@ -274,7 +274,7 @@ module Util
 
     path = URI.unescape(uri.path)
 
-    if Puppet.features.microsoft_windows? and uri.scheme == 'file'
+    if Puppet.features.microsoft_windows? && uri.scheme == 'file'
       if uri.host
         path = "//#{uri.host}" + path # UNC
       else

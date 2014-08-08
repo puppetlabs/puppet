@@ -15,11 +15,11 @@ module Puppet
     # is non-nil, then both inputs must be provided.  If neither input
     # is provided, then the authstore is considered local and defaults to "true".
     def allowed?(name, ip)
-      if name or ip
+      if name || ip
         # This is probably unnecessary, and can cause some weirdnesses in
         # cases where we're operating over localhost but don't have a real
         # IP defined.
-        raise Puppet::DevError, "Name and IP must be passed to 'allowed?'" unless name and ip
+        raise Puppet::DevError, "Name and IP must be passed to 'allowed?'" unless name && ip
         # else, we're networked and such
       else
         # we're local
@@ -211,7 +211,7 @@ module Puppet
       # -1 if the first is true, and 1 if the second is true.  Used
       # in the <=> operator.
       def compare(me, them)
-        (me and them) ? nil : me ? -1 : them ? 1 : nil
+        (me && them) ? nil : me ? -1 : them ? 1 : nil
       end
 
       # Does the name match our pattern?
@@ -219,7 +219,7 @@ module Puppet
         case @name
           when :domain, :dynamic, :opaque
             name = munge_name(name)
-            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+            (pattern == name) || (not exact? and pattern.zip(name).all? { |p,n| p == n })
           when :regex
             Regexp.new(pattern.slice(1..-2)).match(name)
         end

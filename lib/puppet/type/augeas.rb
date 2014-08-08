@@ -63,7 +63,7 @@ Puppet::Type.newtype(:augeas) do
       defaults to `/files + incl`; otherwise, defaults to the empty string."
     defaultto ""
     munge do |value|
-      if value.empty? and resource[:incl]
+      if value.empty? && resource[:incl]
         "/files" + resource[:incl]
       else
         value

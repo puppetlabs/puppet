@@ -159,7 +159,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
   # want class names to be required because we then can't change our
   # internal class names, which is bad.
   def data_to_instance(klass, data)
-    if data.is_a?(Hash) and d = data['data']
+    if data.is_a?(Hash) && d = data['data']
       data = d
     end
     return data if data.is_a?(klass)

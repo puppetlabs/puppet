@@ -61,7 +61,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       modified(record[:target] || default_target)
     end
 
-    return unless defined?(@modified) and ! @modified.empty?
+    return unless defined?(@modified) && ! @modified.empty?
 
     flushed = []
     begin
@@ -166,7 +166,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # If it's not a valid field for this record type (which can happen
         # when different platforms support different fields), then just
         # return the should value, so the resource shuts up.
-        if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
+        if @property_hash[attr] || self.class.valid_attr?(self.class.name, attr)
           @property_hash[attr] || :absent
         else
           if defined?(@resource)
@@ -293,7 +293,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.retrieve(path)
     # XXX We need to be doing something special here in case of failure.
     text = target_object(path).read
-    if text.nil? or text == ""
+    if text.nil? || text == ""
       # there is no file
       return []
     else
@@ -379,7 +379,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # @api private
   def self.to_file(records)
     text = super
-    if native_header_regex and (match = text.match(native_header_regex))
+    if native_header_regex && (match = text.match(native_header_regex))
       if drop_native_header
         # concatenate the text in front of and after the native header
         text = match.pre_match + match.post_match
@@ -408,7 +408,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+    !(@property_hash[:ensure] == :absent || @property_hash[:ensure].nil?)
   end
 
   # Write our data to disk.
@@ -451,9 +451,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    if defined?(@resource) && restarget = @resource.should(:target) and restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
-    self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]
+    self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent && @property_hash[:target]
   end
 end

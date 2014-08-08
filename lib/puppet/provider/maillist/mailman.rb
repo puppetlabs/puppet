@@ -98,7 +98,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
   # getting some double entendre here....
   def query
     self.class.instances.each do |list|
-      if list.name == self.name or list.name.downcase == self.name
+      if list.name == self.name || list.name.downcase == self.name
         return list.properties
       end
     end

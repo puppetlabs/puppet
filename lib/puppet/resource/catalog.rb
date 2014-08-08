@@ -107,7 +107,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+    if resource.respond_to?(:isomorphic?) && resource.isomorphic? && resource.name != resource.title
       self.alias(resource, resource.uniqueness_key)
     end
   end
@@ -131,8 +131,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
-      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
+      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file && resource.line
+      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file && existing.line
       msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
       raise ArgumentError, msg
     end
@@ -286,7 +286,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
         @aliases.delete(resource.ref)
       end
       remove_vertex!(resource) if vertex?(resource)
-      @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+      @relationship_graph.remove_vertex!(resource) if @relationship_graph && @relationship_graph.vertex?(resource)
       @resources.delete(title_key)
       resource.remove
     end
@@ -485,7 +485,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # If we've gotten this far, it's a real conflict
     msg = "Duplicate declaration: #{resource.ref} is already declared"
 
-    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
+    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file && existing_resource.line
 
     msg << "; cannot redeclare"
 

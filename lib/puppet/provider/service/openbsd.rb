@@ -171,7 +171,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
       content.reject! {|l| l.nil? }
     end
 
-    if flags.nil? or flags.size == 0
+    if flags.nil? || flags.size == 0
       if in_base?
         append = resource[:name] + '_flags=""'
       end
@@ -260,7 +260,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   def enabled?
     if in_base?
-      if (@property_hash[:flags].nil? or @property_hash[:flags] == 'NO')
+      if (@property_hash[:flags].nil? || @property_hash[:flags] == 'NO')
         :false
       else
         :true

@@ -128,11 +128,11 @@ Puppet::Type.type(:user).provide :directoryservice do
     ##############
     groups_array = []
     get_list_of_groups.each do |group|
-      if group["dsAttrTypeStandard:GroupMembership"] and group["dsAttrTypeStandard:GroupMembership"].include?(attribute_hash[:name])
+      if group["dsAttrTypeStandard:GroupMembership"] && group["dsAttrTypeStandard:GroupMembership"].include?(attribute_hash[:name])
         groups_array << group["dsAttrTypeStandard:RecordName"][0]
       end
 
-      if group["dsAttrTypeStandard:GroupMembers"] and group["dsAttrTypeStandard:GroupMembers"].include?(attribute_hash[:guid])
+      if group["dsAttrTypeStandard:GroupMembers"] && group["dsAttrTypeStandard:GroupMembers"].include?(attribute_hash[:guid])
         groups_array << group["dsAttrTypeStandard:RecordName"][0]
       end
     end
@@ -241,7 +241,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.get_sha1(guid)
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
-    if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
+    if Puppet::FileSystem.exist?(password_hash_file) && File.file?(password_hash_file)
       raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
       f = File.new(password_hash_file)
       password_hash = f.read
@@ -519,7 +519,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if ids[i+1] != next_id && next_id >= min_id
     end
   end
 

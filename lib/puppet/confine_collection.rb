@@ -37,7 +37,7 @@ class Puppet::ConfineCollection
     result = {}
     confines.each do |klass, list|
       value = klass.summarize(list)
-      next if (value.respond_to?(:length) and value.length == 0) or (value == 0)
+      next if (value.respond_to?(:length) && value.length == 0) || (value == 0)
       result[klass.name] = value
 
     end

@@ -14,7 +14,7 @@ module Puppet::Interface::FaceCollection
 
   def self.[](name, version)
     name = underscorize(name)
-    get_face(name, version) or load_face(name, version)
+    get_face(name, version) || load_face(name, version)
   end
 
   def self.get_action_for_face(name, action_name, version)
@@ -87,7 +87,7 @@ module Puppet::Interface::FaceCollection
       end
     end
 
-    unless version == :current or get_face(name, version)
+    unless version == :current || get_face(name, version)
       # Try an obsolete version of the face, if needed, to see if that helps?
       safely_require name, version
     end

@@ -26,7 +26,7 @@ class Puppet::Util::Instrumentation::Listener
   end
 
   def listen_to?(label)
-    enabled? and (!@pattern || @pattern === label.to_s)
+    enabled? && (!@pattern || @pattern === label.to_s)
   end
 
   def enabled?

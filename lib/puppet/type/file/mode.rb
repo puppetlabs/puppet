@@ -93,7 +93,7 @@ module Puppet
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
-      if FileTest.directory?(resource[:path]) and value =~ /^\d+$/ then
+      if FileTest.directory?(resource[:path]) && value =~ /^\d+$/ then
         value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
         value |= 010 if value & 040 != 0

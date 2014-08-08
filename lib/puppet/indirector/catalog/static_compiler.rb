@@ -144,7 +144,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       next unless result = file.perform_recursion(source)
       return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
-      break result if result and ! result.empty? and sourceselect == :first
+      break result if result && ! result.empty? && sourceselect == :first
       result
     end.flatten.compact
 

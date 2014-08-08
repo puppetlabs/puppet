@@ -84,7 +84,7 @@ module Puppet
 
       def retrieve
         if provider.exists?
-          if provider.respond_to?(:is_role?) and provider.is_role?
+          if provider.respond_to?(:is_role?) && provider.is_role?
             return :role
           else
             return :present
@@ -132,7 +132,7 @@ module Puppet
         meaningful for domain accounts, which Puppet does not currently manage.)"
 
       munge do |value|
-        if value.is_a?(String) and value =~ /^[-0-9]+$/
+        if value.is_a?(String) && value =~ /^[-0-9]+$/
           Integer(value)
         else
           value
@@ -201,7 +201,7 @@ module Puppet
         quotes (') to avoid accidental variable interpolation.}
 
       validate do |value|
-        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
+        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) && value.include?(":")
       end
 
       def change_to_s(currentvalue, newvalue)
@@ -333,7 +333,7 @@ module Puppet
       newvalues /^\d{4}-\d{2}-\d{2}$/
 
       validate do |value|
-        if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
+        if value.intern != :absent && value !~ /^\d{4}-\d{2}-\d{2}$/
           raise ArgumentError, "Expiry dates must be YYYY-MM-DD or the string \"absent\""
         end
       end
@@ -354,7 +354,7 @@ module Puppet
         groups.each { |group|
           case group
           when Integer
-            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) and r.should(:gid) == group }
+            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && r.should(:gid) == group }
               autos << resource
             end
           else
@@ -394,7 +394,7 @@ module Puppet
           prophash[property] = current_value
         end
 
-        if property.name == :ensure and current_value == :absent
+        if property.name == :ensure && current_value == :absent
           absent = true
         end
         prophash
@@ -557,7 +557,7 @@ module Puppet
             is used in OS X. This field is required for managing passwords on OS X >= 10.8."
 
       munge do |value|
-        if value.is_a?(String) and value =~/^[-0-9]+$/
+        if value.is_a?(String) && value =~/^[-0-9]+$/
           Integer(value)
         else
           value

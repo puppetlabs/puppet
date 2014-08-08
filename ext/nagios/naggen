@@ -129,7 +129,7 @@ class NagiosWriter
     attr_accessor :nagios_type, :bucket
 
     def backup(target)
-        return unless FileTest.exist?(target) and File.stat(target).size > 0
+        return unless FileTest.exist?(target) && File.stat(target).size > 0
 
         Puppet.info "Backing up %s" % target
         bucket.backup(target)
@@ -195,7 +195,7 @@ class NagiosWriter
     def write(target, resources)
         # Skip the nagios type when we have no resources and no existing
         # file.
-        return if resources.empty? and ! FileTest.exist?(target)
+        return if resources.empty? && ! FileTest.exist?(target)
 
         dir = File.dirname(target)
         unless FileTest.exist?(dir)
@@ -213,7 +213,7 @@ class NagiosWriter
         end
 
         if $options[:compare]
-            if FileTest.exist?(target) and File.read(tempfile) == File.read(target)
+            if FileTest.exist?(target) && File.read(tempfile) == File.read(target)
                 return false
             end
         end
@@ -227,7 +227,7 @@ class NagiosWriter
 
         return true
     ensure
-        File.unlink(tempfile) if tempfile and FileTest.exist?(tempfile)
+        File.unlink(tempfile) if tempfile && FileTest.exist?(tempfile)
     end
 end
 
@@ -301,7 +301,7 @@ Nagios::Base.eachtype do |name, type|
     changed = true if writer.evaluate
 end
 
-if $options[:compare] and changed
+if $options[:compare] && changed
     exit(1)
 else
     exit(0)

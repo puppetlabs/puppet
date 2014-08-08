@@ -30,7 +30,7 @@ Puppet::Face.define(:help, '0.0.1') do
       # yet.  REVISIT: when we do option defaults, and positional options, we
       # should rewrite this to use those. --daniel 2011-04-04
       options = args.pop
-      if options.nil? or args.length > 2 then
+      if options.nil? || args.length > 2 then
         if args.select { |x| x == 'help' }.length > 2 then
           c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
           i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
@@ -124,7 +124,7 @@ Detail: "#{detail.message}"
   # Return a list of applications that are not simply just stubs for Faces.
   def legacy_applications
     Puppet::Application.available_application_names.reject do |appname|
-      (is_face_app?(appname)) or (exclude_from_docs?(appname))
+      (is_face_app?(appname)) || (exclude_from_docs?(appname))
     end.sort
   end
 

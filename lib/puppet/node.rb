@@ -75,7 +75,7 @@ class Puppet::Node
   end
 
   def environment=(env)
-    if env.is_a?(String) or env.is_a?(Symbol)
+    if env.is_a?(String) || env.is_a?(Symbol)
       @environment = Puppet.lookup(:environments).get(env)
     else
       @environment = env
@@ -143,7 +143,7 @@ class Puppet::Node
 
     # First, get the fqdn
     unless fqdn = parameters["fqdn"]
-      if parameters["hostname"] and parameters["domain"]
+      if parameters["hostname"] && parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
         Puppet.warning "Host is missing hostname and/or domain: #{name}"

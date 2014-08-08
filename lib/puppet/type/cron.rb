@@ -85,7 +85,7 @@ Puppet::Type.newtype(:cron) do
     # Verify that a number is within the specified limits.  Return the
     # number if it is, or false if it is not.
     def limitcheck(num, lower, upper)
-      (num >= lower and num <= upper) && num
+      (num >= lower && num <= upper) && num
     end
 
     # Verify that a value falls within the specified array.  Does case
@@ -137,7 +137,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     def should
-      if @should and @should[0] == :absent
+      if @should && @should[0] == :absent
         :absent
       else
         @should
@@ -157,7 +157,7 @@ Puppet::Type.newtype(:cron) do
     munge do |value|
       # Support 'absent' as a value, so that they can remove
       # a value
-      if value == "absent" or value == :absent
+      if value == "absent" || value == :absent
         return :absent
       end
 
@@ -259,7 +259,7 @@ Puppet::Type.newtype(:cron) do
     def munge(value)
       # Support value absent so that a schedule can be
       # forced to change to numeric.
-      if value == "absent" or value == :absent
+      if value == "absent" || value == :absent
         return :absent
       end
       value
@@ -321,7 +321,7 @@ Puppet::Type.newtype(:cron) do
       the crontab, e.g., `PATH=/bin:/usr/bin:/usr/sbin`."
 
     validate do |value|
-      unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"
+      unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ || value == :absent || value == "absent"
         raise ArgumentError, "Invalid environment setting #{value.inspect}"
       end
     end
@@ -384,7 +384,7 @@ Puppet::Type.newtype(:cron) do
     defaultto {
       if not provider.is_a?(@resource.class.provider(:crontab))
         struct = Etc.getpwuid(Process.uid)
-        struct.respond_to?(:name) && struct.name or 'root'
+        struct.respond_to?(:name) && struct.name || 'root'
       end
     }
   end
@@ -411,7 +411,7 @@ Puppet::Type.newtype(:cron) do
           val
         else
           struct = Etc.getpwuid(Process.uid)
-          struct.respond_to?(:name) && struct.name or 'root'
+          struct.respond_to?(:name) && struct.name || 'root'
         end
       elsif provider.class.ancestors.include?(Puppet::Provider::ParsedFile)
         provider.class.default_target

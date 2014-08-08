@@ -54,7 +54,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     end
 
     def pre_gen(record)
-      if record[:special] and record[:special] != :absent
+      if record[:special] && record[:special] != :absent
         record[:special] = "@#{record[:special]}"
       end
 
@@ -70,16 +70,16 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
       str = ""
       record[:name] = nil if record[:unmanaged]
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
-      if record[:environment] and record[:environment] != :absent
+      if record[:environment] && record[:environment] != :absent
         str += record[:environment].map {|line| "#{line}\n"}.join('')
       end
-      if record[:special] and record[:special] != :absent
+      if record[:special] && record[:special] != :absent
         fields = [:special, :command]
       else
         fields = Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS + [:command]
       end
       str += record.values_at(*fields).map do |field|
-        if field.nil? or field == :absent
+        if field.nil? || field == :absent
           self.absent
         else
           field
@@ -145,7 +145,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   def self.match(record, resources)
     # if the record is named, do not even bother (#19876)
     # except the resource name was implicitly generated (#3220)
-    return false if record[:name] and !record[:unmanaged]
+    return false if record[:name] && !record[:unmanaged]
     resources.each do |name, resource|
       # Match the command first, since it's the most important one.
       next unless record[:target] == resource[:target]
@@ -169,7 +169,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         if record_value = record[field] and resource_value = resource.value(field)
           # The record translates '*' into absent in the post_parse hook and
           # the resource type does exactly the opposite (alias :absent to *)
-          next if resource_value == '*' and record_value == :absent
+          next if resource_value == '*' && record_value == :absent
           next if resource_value == record_value
         end
         matched =false
@@ -215,7 +215,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
           record[:name] = "unmanaged:#{cmd_string}-#{ index.to_s }"
           record[:unmanaged] = true
         end
-        if envs.nil? or envs.empty?
+        if envs.nil? || envs.empty?
           record[:environment] = :absent
         else
           # Collect all of the environment lines, and mark the records to be skipped,
@@ -278,7 +278,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     return unless File.readable?(CRONTAB_DIR)
     Dir.foreach(CRONTAB_DIR) do |file|
       path = "#{CRONTAB_DIR}/#{file}"
-      yield(file) if File.file?(path) and File.writable?(path)
+      yield(file) if File.file?(path) && File.writable?(path)
     end
   end
 

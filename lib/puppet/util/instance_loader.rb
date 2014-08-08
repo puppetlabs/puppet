@@ -8,7 +8,7 @@ module Puppet::Util::InstanceLoader
 
   # Are we instance-loading this type?
   def instance_loading?(type)
-    defined?(@autoloaders) and @autoloaders.include?(type.intern)
+    defined?(@autoloaders) && @autoloaders.include?(type.intern)
   end
 
   # Define a new type of autoloading.

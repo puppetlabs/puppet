@@ -38,7 +38,7 @@ module Puppet::Rails::Benchmark
   def log_accumulated_marks(message)
     return unless time_debug?
 
-    return if $benchmarks[:accumulated].empty? or $benchmarks[:accumulated][message].nil? or $benchmarks[:accumulated][message].empty?
+    return if $benchmarks[:accumulated].empty? || $benchmarks[:accumulated][message].nil? || $benchmarks[:accumulated][message].empty?
 
     $benchmarks[:accumulated][message].each do |label, value|
       Puppet.debug(message + ("(#{label})") + (" in %0.2f seconds" % value))

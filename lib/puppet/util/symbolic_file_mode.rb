@@ -33,7 +33,7 @@ module SymbolicFileMode
   end
 
   def symbolic_mode_to_int(modification, to_mode = 0, is_a_directory = false)
-    if modification.nil? or modification == '' then
+    if modification.nil? || modification == '' then
       raise Puppet::Error, "An empty mode string is illegal"
     end
     if modification =~ /^[0-7]+$/ then return modification.to_i(8) end
@@ -62,7 +62,7 @@ module SymbolicFileMode
       begin
         _, to, dsl = /^([ugoa]*)([-+=].*)$/.match(part).to_a
         if dsl.nil? then raise Puppet::Error, 'Missing action' end
-        to = "a" unless to and to.length > 0
+        to = "a" unless to && to.length > 0
 
         # We want a snapshot of the mode before we start messing with it to
         # make actions like 'a-g' atomic.  Various parts of the DSL refer to
@@ -104,7 +104,7 @@ module SymbolicFileMode
               # As per the BSD manual page, set if this is a directory, or if
               # any execute bit is set on the original (unmodified) mode.
               # Ignored otherwise; it is "add if", not "add or clear".
-              if is_a_directory or original_mode['any x?'] then
+              if is_a_directory || original_mode['any x?'] then
                 value = actions[action].call(value, ExecBit)
               end
 

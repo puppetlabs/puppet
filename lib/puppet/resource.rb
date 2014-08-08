@@ -71,7 +71,7 @@ class Puppet::Resource
       param, value = ary
 
       # Don't duplicate the title as the namevar
-      next hash if param == namevar and value == title
+      next hash if param == namevar && value == title
 
       hash[param] = Puppet::Resource.value_to_pson_data(value)
       hash
@@ -147,7 +147,7 @@ class Puppet::Resource
   end
 
   def ==(other)
-    return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
+    return false unless other.respond_to?(:title) && self.type == other.type && self.title == other.title
 
     return false unless to_hash == other.to_hash
     true
@@ -242,7 +242,7 @@ class Puppet::Resource
       extract_parameters(params)
     end
 
-    if resource_type and ! @@nondeprecating_type[resource_type]
+    if resource_type && ! @@nondeprecating_type[resource_type]
       if resource_type.respond_to?(:deprecate_params)
         resource_type.deprecate_params(title, attributes[:parameters])
       else
@@ -254,7 +254,7 @@ class Puppet::Resource
     tag(self.title) if valid_tag?(self.title)
 
     @reference = self # for serialization compatibility with 0.25.x
-    if strict? and ! resource_type
+    if strict? && ! resource_type
       if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
@@ -403,7 +403,7 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def set_default_parameters(scope)
-    return [] unless resource_type and resource_type.respond_to?(:arguments)
+    return [] unless resource_type && resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
       fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
@@ -457,7 +457,7 @@ class Puppet::Resource
         # This behavior is not done in the future parser, but we can't issue a
         # deprecation warning either since there isn't anything that a user can
         # do about it.
-        result[p] = if v.is_a?(Array) and v.length == 1
+        result[p] = if v.is_a?(Array) && v.length == 1
                       v[0]
                     else
                       v
@@ -479,7 +479,7 @@ class Puppet::Resource
   # Must be called after 'set_default_parameters'.  We can't join the methods
   # because Type#set_parameters needs specifically ordered behavior.
   def validate_complete
-    return unless resource_type and resource_type.respond_to?(:arguments)
+    return unless resource_type && resource_type.respond_to?(:arguments)
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym
@@ -510,9 +510,9 @@ class Puppet::Resource
     properties = resource_type.properties.map(&:name)
 
     dup.collect do |attribute, value|
-      if value.to_s.empty? or Array(value).empty?
+      if value.to_s.empty? || Array(value).empty?
         delete(attribute)
-      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+      elsif value.to_s == "absent" && attribute.to_s != "ensure"
         delete(attribute)
       end
 
@@ -527,7 +527,7 @@ class Puppet::Resource
   # Produce a canonical method name.
   def parameter_name(param)
     param = param.to_s.downcase.to_sym
-    if param == :name and namevar
+    if param == :name && namevar
       param = namevar
     end
     param
@@ -536,7 +536,7 @@ class Puppet::Resource
   # The namevar for our resource type. If the type doesn't exist,
   # always use :name.
   def namevar
-    if builtin_type? and t = resource_type and t.key_attributes.length == 1
+    if builtin_type? && t = resource_type and t.key_attributes.length == 1
       t.key_attributes.first
     else
       :name
@@ -565,7 +565,7 @@ class Puppet::Resource
 
   def munge_type_name(value)
     return :main if value == :main
-    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
+    return "Class" if value == "" || value.nil? || value.to_s.downcase == "component"
 
     value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end

@@ -56,7 +56,7 @@ DOC
   # with key/value pairs for the extension's oid, and its value.
   def custom_extensions
     custom_exts = content.extensions.select do |ext|
-      Puppet::SSL::Oids.subtree_of?('ppRegCertExt', ext.oid) or
+      Puppet::SSL::Oids.subtree_of?('ppRegCertExt', ext.oid) ||
         Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', ext.oid)
     end
 

@@ -100,10 +100,10 @@ class CheckPuppet
     end
 
     case
-    when (@proc == 2 or @file == 2)
+    when (@proc == 2 || @file == 2)
       status = "CRITICAL"
       exitcode = 2
-    when (@proc == 0 and @file == 0)
+    when (@proc == 0 && @file == 0)
       status = "OK"
       exitcode = 0
     else

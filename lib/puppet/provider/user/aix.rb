@@ -283,8 +283,8 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def should_include?(key, managed_keys)
-    !self.class.attribute_mapping_from.include?(key) and
-            !self.class.attribute_ignore.include?(key) and
+    !self.class.attribute_mapping_from.include?(key) &&
+            !self.class.attribute_ignore.include?(key) &&
             managed_keys.include?(key)
   end
 

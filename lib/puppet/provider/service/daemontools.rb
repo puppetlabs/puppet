@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     # or don't contain a run file
     Dir.entries(path).reject { |e|
       fullpath = File.join(path, e)
-      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! Puppet::FileSystem.exist?(File.join(fullpath,"run"))
+      e =~ /^\./ || ! FileTest.directory?(fullpath) || ! Puppet::FileSystem.exist?(File.join(fullpath,"run"))
     }.collect do |name|
       new(:name => name, :path => path)
     end

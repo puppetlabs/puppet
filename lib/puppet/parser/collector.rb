@@ -12,7 +12,7 @@ class Puppet::Parser::Collector
   def evaluate
     # Shortcut if we're not using storeconfigs and they're trying to collect
     # exported resources.
-    if form == :exported and Puppet[:storeconfigs] != true
+    if form == :exported && Puppet[:storeconfigs] != true
       Puppet.warning "Not collecting exported resources without storeconfigs"
       return false
     end
@@ -30,7 +30,7 @@ class Puppet::Parser::Collector
     end
 
     # we have an override for the collected resources
-    if @overrides and !objects.empty?
+    if @overrides && !objects.empty?
       # force the resource to be always child of any other resource
       overrides[:source].meta_def(:child_of?) do |klass|
         true
@@ -141,7 +141,7 @@ class Puppet::Parser::Collector
   # Collect resources directly; this is the result of using 'realize',
   # which specifies resources, rather than using a normal collection.
   def collect_virtual_resources
-    return [] unless defined?(@resources) and ! @resources.empty?
+    return [] unless defined?(@resources) && ! @resources.empty?
     result = @resources.dup.collect do |ref|
       if res = @scope.findresource(ref.to_s)
         @resources.delete(ref)
@@ -161,7 +161,7 @@ class Puppet::Parser::Collector
   # Collect just virtual objects, from our local compiler.
   def collect_virtual(exported = false)
     scope.compiler.resources.find_all do |resource|
-      resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
+      resource.type == @type && (exported ? resource.exported? : true) && match?(resource)
     end
   end
 

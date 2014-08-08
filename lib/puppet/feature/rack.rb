@@ -5,7 +5,7 @@ require 'puppet/util/feature'
 Puppet.features.add(:rack) do
   require 'rack'
 
-  if ! (defined?(::Rack) and defined?(::Rack.release))
+  if ! (defined?(::Rack) && defined?(::Rack.release))
     false
   else
     major_version = ::Rack.release.split('.')[0].to_i

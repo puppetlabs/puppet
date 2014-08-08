@@ -56,7 +56,7 @@ module Puppet::Util::Windows
     def sid_to_name(value)
       sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(value))
 
-      if sid.domain and sid.domain.length > 0
+      if sid.domain && sid.domain.length > 0
         "#{sid.domain}\\#{sid.account}"
       else
         sid.account

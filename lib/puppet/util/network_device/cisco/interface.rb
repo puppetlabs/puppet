@@ -43,7 +43,7 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
       next if is[property] == should[property]
 
       # We're deleting it
-      if should[property] == :absent or should[property].nil?
+      if should[property] == :absent || should[property].nil?
         execute(property, is[property], "no ")
         next
       end

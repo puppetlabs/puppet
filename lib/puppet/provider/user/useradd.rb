@@ -105,7 +105,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
+       if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
@@ -143,7 +143,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_system_users
-    if self.class.system_users? and resource.system?
+    if self.class.system_users? && resource.system?
       ["-r"]
     else
       []
@@ -157,8 +157,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
-      next if property == :groups and @resource.forcelocal?
-      next if property == :expiry and @resource.forcelocal?
+      next if property == :groups && @resource.forcelocal?
+      next if property == :expiry && @resource.forcelocal?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
@@ -217,10 +217,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? && self.groups?
        set(:groups, @resource[:groups])
      end
-     if @resource.forcelocal? and @resource[:expiry]
+     if @resource.forcelocal? && @resource[:expiry]
        set(:expiry, @resource[:expiry])
      end
   end

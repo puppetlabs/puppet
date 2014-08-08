@@ -25,7 +25,7 @@ class Puppet::Parser::AST
     def initialize(hash)
       super
 
-      unless @value == true or @value == false
+      unless @value == true || @value == false
         raise Puppet::DevError, "'#{@value}' is not a boolean"
       end
       @value
@@ -154,7 +154,7 @@ class Puppet::Parser::AST
     def evaluate(scope)
       object = evaluate_container(scope)
       accesskey = evaluate_key(scope)
-      raise Puppet::ParseError, "#{variable} is not a hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
+      raise Puppet::ParseError, "#{variable} is not a hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) || object.is_a?(Array)
 
       result = object[array_index_or_key(object, accesskey)]
       result.nil? ? :undef : result
@@ -165,7 +165,7 @@ class Puppet::Parser::AST
       object = evaluate_container(scope)
       accesskey = evaluate_key(scope)
 
-      if object.is_a?(Hash) and object.include?(accesskey)
+      if object.is_a?(Hash) && object.include?(accesskey)
         raise Puppet::ParseError, "Assigning to the hash '#{variable}' with an existing key '#{accesskey}' is forbidden"
       end
 

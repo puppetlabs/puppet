@@ -67,7 +67,7 @@ class WindowsDaemon < Win32::Daemon
       begin
         while service.running? do
           runinterval = service.parse_runinterval(puppet)
-          if service.state == RUNNING or service.state == IDLE
+          if service.state == RUNNING || service.state == IDLE
             service.log_notice("Executing agent with arguments: #{args}")
             pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
             service.log_debug("Process created: #{pid}")

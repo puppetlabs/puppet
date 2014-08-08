@@ -152,7 +152,7 @@ class Puppet::Provider
   def self.command(name)
     name = name.intern
 
-    if defined?(@commands) and command = @commands[name]
+    if defined?(@commands) && command = @commands[name]
       # nothing
     elsif superclass.respond_to? :command and command = superclass.command(name)
       # nothing
@@ -276,7 +276,7 @@ class Puppet::Provider
 
   # @return [Boolean] Return whether the given feature has been declared or not.
   def self.declared_feature?(name)
-    defined?(@declared_features) and @declared_features.include?(name)
+    defined?(@declared_features) && @declared_features.include?(name)
   end
 
   # @return [Boolean] Returns whether this implementation satisfies all of the default requirements or not.

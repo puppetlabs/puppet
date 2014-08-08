@@ -98,8 +98,8 @@ Put angle brackets around each octet in the node's IP address:
   if target.respond_to?(operation)
     # String parameter -> string result
     result = target.send(operation, re, replacement)
-  elsif target.respond_to?(:collect) and
-    target.respond_to?(:all?) and
+  elsif target.respond_to?(:collect) &&
+    target.respond_to?(:all?) &&
     target.all? { |e| e.respond_to?(operation) }
     # Array parameter -> array result
     result = target.collect { |e|

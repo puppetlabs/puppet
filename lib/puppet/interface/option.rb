@@ -17,7 +17,7 @@ class Puppet::Interface::Option
     dups = {}
     declaration.each do |item|
       if item.is_a? String and item.to_s =~ /^-/ then
-        unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
+        unless item =~ /^-[a-z]\b/ || item =~ /^--[^-]/ then
           raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
         end
         @optparse << item
@@ -116,7 +116,7 @@ class Puppet::Interface::Option
   end
 
   def default
-    @default and @default.call
+    @default && @default.call
   end
 
   attr_reader   :parent, :name, :aliases, :optparse

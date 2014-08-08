@@ -137,7 +137,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def main
     type, name, params = parse_args(command_line.args)
 
-    raise "You cannot edit a remote host" if options[:edit] and @host
+    raise "You cannot edit a remote host" if options[:edit] && @host
 
     resources = find_or_save_resources(type, name, params)
     text = resources.

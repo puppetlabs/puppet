@@ -30,11 +30,11 @@ module Puppet
     def to_s
       msg = super
       @file = nil if (@file.is_a?(String) && @file.empty?)
-      if @file and @line and @pos
+      if @file && @line && @pos
         "#{msg} at #{@file}:#{@line}:#{@pos}"
-      elsif @file and @line
+      elsif @file && @line
         "#{msg} at #{@file}:#{@line}"
-      elsif @line and @pos
+      elsif @line && @pos
           "#{msg} at line #{@line}:#{@pos}"
       elsif @line
         "#{msg} at line #{@line}"

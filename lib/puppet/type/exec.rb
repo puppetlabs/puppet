@@ -129,7 +129,7 @@ module Puppet
             debug("Exec try #{try+1}/#{tries}") if tries > 1
             @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
-            if try_sleep > 0 and tries > 1
+            if try_sleep > 0 && tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
               sleep try_sleep
             end
@@ -553,7 +553,7 @@ module Puppet
     # within refresh
     def check_all_attributes(refreshing = false)
       self.class.checks.each { |check|
-        next if refreshing and check == :refreshonly
+        next if refreshing && check == :refreshonly
         if @parameters.include?(check)
           val = @parameters[check].value
           val = [val] unless val.is_a? Array

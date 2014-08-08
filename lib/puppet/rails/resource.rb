@@ -106,7 +106,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     # Handle file specially
-    self.file = resource.file if (resource.file and  (!resource.file or self.file != resource.file))
+    self.file = resource.file if (resource.file &&  (!resource.file || self.file != resource.file))
   end
 
   def merge_parameters(resource)
@@ -120,7 +120,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     deletions = []
     params_list.each do |value|
       # First remove any parameters our catalog resource doesn't have at all.
-      deletions << value['id'] and next unless catalog_params.include?(value['name'])
+      deletions << value['id'] && next unless catalog_params.include?(value['name'])
 
       # Now store them for later testing.
       db_params[value['name']] ||= []
@@ -157,7 +157,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     deletions = []
     resource_tags = resource.tags
     tags_list.each do |tag|
-      deletions << tag['id'] and next unless resource_tags.include?(tag['name'])
+      deletions << tag['id'] && next unless resource_tags.include?(tag['name'])
       in_db << tag['name']
     end
     Puppet::Rails::ResourceTag.delete(deletions) unless deletions.empty?

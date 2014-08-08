@@ -18,14 +18,14 @@ class Puppet::Provider::Package::Windows
     # Is this a valid executable package we should manage?
     def self.valid?(name, values)
       # See http://community.spiceworks.com/how_to/show/2238
-      !!(values['DisplayName'] and values['DisplayName'].length > 0 and
-         values['UninstallString'] and values['UninstallString'].length > 0 and
-         values['SystemComponent'] != 1 and # DWORD
-         values['WindowsInstaller'] != 1 and # DWORD
-         name !~ /^KB[0-9]{6}/ and
-         values['ParentKeyName'] == nil and
-         values['Security Update'] == nil and
-         values['Update Rollup'] == nil and
+      !!(values['DisplayName'] && values['DisplayName'].length > 0 &&
+         values['UninstallString'] && values['UninstallString'].length > 0 &&
+         values['SystemComponent'] != 1 && # DWORD
+         values['WindowsInstaller'] != 1 && # DWORD
+         name !~ /^KB[0-9]{6}/ &&
+         values['ParentKeyName'] == nil &&
+         values['Security Update'] == nil &&
+         values['Update Rollup'] == nil &&
          values['Hotfix'] == nil)
     end
 

@@ -23,14 +23,14 @@ Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile
     :match    => /^(\S+)\s+(\S+)\s*(.*?)?(?:\s*#\s*(.*))?$/,
     :post_parse => proc { |hash|
       # An absent comment should match "comment => ''"
-      hash[:comment] = '' if hash[:comment].nil? or hash[:comment] == :absent
-      unless hash[:host_aliases].nil? or hash[:host_aliases] == :absent
+      hash[:comment] = '' if hash[:comment].nil? || hash[:comment] == :absent
+      unless hash[:host_aliases].nil? || hash[:host_aliases] == :absent
         hash[:host_aliases].gsub!(/\s+/,' ') # Change delimiter
       end
     },
     :to_line  => proc { |hash|
       [:ip, :name].each do |n|
-        raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] and hash[n] != :absent
+        raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] && hash[n] != :absent
       end
       str = "#{hash[:ip]}\t#{hash[:name]}"
       if hash.include? :host_aliases and !hash[:host_aliases].nil? and hash[:host_aliases] != :absent

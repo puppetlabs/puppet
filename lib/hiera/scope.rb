@@ -19,7 +19,7 @@ class Hiera
         ans = @real.lookupvar(key)
       end
 
-      if ans.nil? or ans == ""
+      if ans.nil? || ans == ""
         nil
       else
         ans
@@ -27,7 +27,7 @@ class Hiera
     end
 
     def include?(key)
-      if key == CALLING_CLASS or key == CALLING_MODULE
+      if key == CALLING_CLASS || key == CALLING_MODULE
         true
       else
         @real.lookupvar(key) != ""
@@ -47,7 +47,7 @@ class Hiera
     end
 
     def find_hostclass(scope)
-      if scope.source and scope.source.type == :hostclass
+      if scope.source && scope.source.type == :hostclass
         return scope.source.name.downcase
       elsif scope.parent
         return find_hostclass(scope.parent)

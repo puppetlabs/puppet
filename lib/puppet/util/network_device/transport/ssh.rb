@@ -78,7 +78,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
     sock = @ssh.transport.socket
 
     while not @eof
-      break if line =~ prompt and @buf == ''
+      break if line =~ prompt && @buf == ''
       break if sock.closed?
 
       IO::select([sock], [sock], nil, nil)

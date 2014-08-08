@@ -55,7 +55,7 @@ class Puppet::Parser::Lexer
     end
 
     def to_s
-      string or @name.to_s
+      string || @name.to_s
     end
 
     def acceptable?(context={})
@@ -202,7 +202,7 @@ class Puppet::Parser::Lexer
     end
 
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
-      Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+      Contextual::DASHED_VARIABLES_ALLOWED.call(context) && TOKENS[:VARIABLE].acceptable?(context)
     end
   end
 
@@ -459,7 +459,7 @@ class Puppet::Parser::Lexer
     # Skip any initial whitespace.
     skip
 
-    until token_queue.empty? and @scanner.eos? do
+    until token_queue.empty? && @scanner.eos? do
       matched_token, value = find_token
 
       # error out if we didn't match anything at all
@@ -468,7 +468,7 @@ class Puppet::Parser::Lexer
       newline = matched_token.name == :RETURN
 
       # this matches a blank line; eat the previously accumulated comments
-      getcomment if lexing_context[:start_of_line] and newline
+      getcomment if lexing_context[:start_of_line] && newline
       lexing_context[:start_of_line] = newline
 
       final_token, token_value = munge_token(matched_token, value)
@@ -491,7 +491,7 @@ class Puppet::Parser::Lexer
         @expected.pop
       end
 
-      if final_token_name == :LBRACE or final_token_name == :LPAREN
+      if final_token_name == :LBRACE || final_token_name == :LPAREN
         commentpush
       end
       if final_token_name == :RPAREN
@@ -501,7 +501,7 @@ class Puppet::Parser::Lexer
       yield [final_token_name, token_value]
 
       if @previous_token
-        namestack(value) if @previous_token.name == :CLASS and value != '{'
+        namestack(value) if @previous_token.name == :CLASS && value != '{'
 
         if @previous_token.name == :DEFINE
           if indefine?
@@ -565,7 +565,7 @@ class Puppet::Parser::Lexer
                      else
                        TOKENS[:VARIABLE].regex
                      end
-    if terminator != '$' or @scanner.scan(/\{/)
+    if terminator != '$' || @scanner.scan(/\{/)
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
       warn_if_variable_has_hyphen(var_name)
@@ -588,7 +588,7 @@ class Puppet::Parser::Lexer
 
   def getcomment(line = nil)
     comment = @commentstack.last
-    if line.nil? or comment[1] <= line
+    if line.nil? || comment[1] <= line
       @commentstack.pop
       @commentstack.push(['', @line])
       return comment[0]
