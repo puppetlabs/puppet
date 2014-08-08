@@ -211,6 +211,14 @@ module Puppet::Network::HTTP
       warn_if_near_expiration(*@verify.peer_certs)
 
       response
+    end
+
+    def with_connection(site, &block)
+      response = nil
+      @pool.with_connection(site, @verify) do |conn|
+        response = yield conn
+      end
+      response
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
@@ -221,20 +229,12 @@ module Puppet::Network::HTTP
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
-        msg = "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
+        msg = "Server hostname '#{site.host}' did not match server certificate; expected #{msg}"
 
         raise Puppet::Error, msg, error.backtrace
       else
         raise
       end
-    end
-
-    def with_connection(site, &block)
-      response = nil
-      @pool.with_connection(site, @verify) do |conn|
-        response = yield conn
-      end
-      response
     end
   end
 end
