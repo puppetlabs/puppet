@@ -22,20 +22,37 @@ class Puppet::Network::HTTP::Pool
   def with_connection(site, verify, &block)
     reuse = true
 
-    http = borrow(site, verify)
     begin
+      http = borrow(site, verify)
       if http.use_ssl? && http.verify_mode != OpenSSL::SSL::VERIFY_PEER
         reuse = false
       end
 
       yield http
+    rescue OpenSSL::SSL::SSLError => error
+      reuse = false
+      if error.message.include? "certificate verify failed"
+        msg = error.message
+        msg << ": [" + verify.verify_errors.join('; ') + "]"
+        raise Puppet::Error, msg, error.backtrace
+      elsif error.message =~ /hostname.*not match.*server certificate/
+        leaf_ssl_cert = verify.peer_certs.last
+
+        valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
+        msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+        msg = "Server hostname '#{site.host}' did not match server certificate; expected #{msg}"
+
+        raise Puppet::Error, msg, error.backtrace
+      else
+        raise Puppet::Error, error.backtrace
+      end
     rescue => detail
       reuse = false
       raise detail
     ensure
       if reuse
         release(site, http)
-      else
+      elsif http
         close_connection(site, http)
       end
     end
