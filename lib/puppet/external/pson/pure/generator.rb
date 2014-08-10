@@ -219,13 +219,13 @@ module PSON
 
           def pson_check_circular(state)
             if state && state.check_circular?
-              state.seen?(self) and raise PSON::CircularDatastructure,
-                "circular data structures not supported!"
+              state.seen?(self) && raise( PSON::CircularDatastructure,
+                "circular data structures not supported!" )
               state.remember self
             end
             yield
           ensure
-            state and state.forget self
+            state && state.forget( self )
           end
 
           def pson_shift(state, depth)
@@ -281,13 +281,13 @@ module PSON
 
           def pson_check_circular(state)
             if state && state.check_circular?
-              state.seen?(self) and raise PSON::CircularDatastructure,
-                "circular data structures not supported!"
+              state.seen?(self) && raise( PSON::CircularDatastructure,
+                "circular data structures not supported!" )
               state.remember self
             end
             yield
           ensure
-            state and state.forget self
+            state && state.forget( self )
           end
 
           def pson_shift(state, depth)

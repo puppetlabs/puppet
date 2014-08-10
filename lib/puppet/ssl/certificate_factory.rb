@@ -27,8 +27,8 @@ module Puppet::SSL::CertificateFactory
   def self.build(cert_type, csr, issuer, serial, ttl = nil)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
-    respond_to?(build_extensions) or
-      raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!"
+    respond_to?(build_extensions) ||
+      raise( ArgumentError, "#{cert_type.to_s} is an invalid certificate type!" )
 
     raise ArgumentError, "Certificate TTL must be an integer" unless ttl.nil? || ttl.is_a?(Fixnum)
 

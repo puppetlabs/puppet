@@ -154,7 +154,7 @@ class Puppet::Provider
 
     if defined?(@commands) && command = @commands[name]
       # nothing
-    elsif superclass.respond_to? :command and command = superclass.command(name)
+    elsif superclass.respond_to?( :command ) && command = superclass.command(name)
       # nothing
     else
       raise Puppet::DevError, "No command #{name} defined for provider #{self.name}"

@@ -33,7 +33,7 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
 
   def filter_to_active_record(filter)
     # Don't call me if you don't have a filter, please.
-    filter.is_a?(Array) or raise ArgumentError, "active record filters must be arrays"
+    filter.is_a?(Array) || raise( ArgumentError, "active record filters must be arrays" )
     a, op, b = filter
 
     case op

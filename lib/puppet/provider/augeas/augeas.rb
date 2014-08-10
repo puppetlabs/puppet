@@ -225,7 +225,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     #check the value in augeas
     result = @aug.get(path) || ''
 
-    if ['<', '<=', '>=', '>'].include? comparator and is_numeric?(result) and
+    if ['<', '<=', '>=', '>'].include?( comparator ) && is_numeric?(result) &&
                                                       is_numeric?(arg)
       resultf = result.to_f
       argf = arg.to_f

@@ -177,7 +177,7 @@ module Util
   # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
-      return bin if FileTest.file? bin and FileTest.executable? bin
+      return bin if FileTest.file?( bin ) && FileTest.executable?( bin )
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
         begin
@@ -202,10 +202,10 @@ module Util
             exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
             exts.each do |ext|
               destext = File.expand_path(dest + ext)
-              return destext if FileTest.file? destext and FileTest.executable? destext
+              return destext if FileTest.file?( destext ) && FileTest.executable?( destext )
             end
           end
-          return dest if FileTest.file? dest and FileTest.executable? dest
+          return dest if FileTest.file?( dest ) && FileTest.executable?( dest )
         end
       end
     end

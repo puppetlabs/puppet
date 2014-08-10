@@ -33,7 +33,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def option(name, option)
       name = name.intern if name.is_a? String
-      (defined?(@options) and @options.include? name and @options[name].include? option) ? @options[name][option] : nil
+      (defined?(@options) && @options.include?( name ) && @options[name].include?( option )) ? @options[name][option] : nil
     end
 
     def options(name, hash)

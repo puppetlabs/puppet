@@ -74,7 +74,7 @@ module Puppet
           raise ArgumentError, "You can only have one filebucket path"
         end
 
-        if value.is_a? String and !Puppet::Util.absolute_path?(value)
+        if value.is_a?( String ) && !Puppet::Util.absolute_path?(value)
           raise ArgumentError, "Filebucket paths must be absolute"
         end
 

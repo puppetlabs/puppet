@@ -184,7 +184,7 @@ Puppet::Network::FormatHandler.create(:console,
     return datum if datum.is_a? Numeric
 
     # Simple hash to table
-    if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+    if datum.is_a?( Hash ) && datum.keys.all? { |x| x.is_a?( String ) || x.is_a?( Numeric ) }
       output = ''
       column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
       datum.sort_by { |k,v| k.to_s } .each do |key, value|
