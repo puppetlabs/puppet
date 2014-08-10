@@ -143,7 +143,7 @@ module Puppet
         # We know the 'is' is a number, so we need to convert the 'should' to a number,
         # too.
         @should.each do |value|
-          return true if number = Puppet::Util.gid(value) and is == number
+          return true if (number = Puppet::Util.gid(value)) && is == number
         end
 
         false
@@ -343,7 +343,7 @@ module Puppet
     autorequire(:group) do
       autos = []
 
-      if obj = @parameters[:gid] and groups = obj.shouldorig
+      if (obj = @parameters[:gid]) && (groups = obj.shouldorig)
         groups = groups.collect { |group|
           if group =~ /^\d+$/
             Integer(group)
@@ -363,7 +363,7 @@ module Puppet
         }
       end
 
-      if obj = @parameters[:groups] and groups = obj.should
+      if (obj = @parameters[:groups]) && (groups = obj.should)
         autos += groups.split(",")
       end
 
@@ -421,7 +421,7 @@ module Puppet
     autorequire(:user) do
       reqs = []
 
-      if roles_property = @parameters[:roles] and roles = roles_property.should
+      if (roles_property = @parameters[:roles]) && (roles = roles_property.should)
         reqs += roles.split(',')
       end
 

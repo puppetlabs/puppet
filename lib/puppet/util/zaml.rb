@@ -271,7 +271,7 @@ class Exception
   #     change we'll most likely want to remove this.  To mitigate the risks
   #     as much as possible, we test for the bug before appling the patch.
   #
-  if respond_to? :yaml_new and yaml_new(self, :tag, "message" => "blurp").message != "blurp"
+  if respond_to?( :yaml_new ) && yaml_new(self, :tag, "message" => "blurp").message != "blurp"
     def self.yaml_new( klass, tag, val )
       o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
       val.each_pair do |k,v|

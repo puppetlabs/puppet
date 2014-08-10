@@ -189,7 +189,7 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def call_valuemethod(name, value)
-    if method = self.class.value_option(name, :method) and self.respond_to?(method)
+    if (method = self.class.value_option(name, :method)) && self.respond_to?(method)
       begin
         self.send(method)
       rescue Puppet::Error

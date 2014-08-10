@@ -16,7 +16,7 @@ class Puppet::Interface::Option
     # Collect and sort the arguments in the declaration.
     dups = {}
     declaration.each do |item|
-      if item.is_a? String and item.to_s =~ /^-/ then
+      if item.is_a?( String ) && item.to_s =~ /^-/ then
         unless item =~ /^-[a-z]\b/ || item =~ /^--[^-]/ then
           raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
         end

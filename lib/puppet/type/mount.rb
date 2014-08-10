@@ -141,9 +141,9 @@ module Puppet
       # Default to the device but with "dsk" replaced with "rdsk".
       defaultto do
         if Facter.value(:osfamily) == "Solaris"
-          if device = resource[:device] and device =~ %r{/dsk/}
+          if (device = resource[:device]) && device =~ %r{/dsk/}
             device.sub(%r{/dsk/}, "/rdsk/")
-          elsif fstype = resource[:fstype] and fstype == 'nfs'
+          elsif (fstype = resource[:fstype]) && fstype == 'nfs'
             '-'
           else
             nil

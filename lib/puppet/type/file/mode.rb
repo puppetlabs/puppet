@@ -107,7 +107,7 @@ module Puppet
     # If we're not following links and we're a link, then we just turn
     # off mode management entirely.
     def insync?(currentvalue)
-      if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
+      if (stat = @resource.stat) && stat.ftype == "link" && @resource[:links] != :follow
         self.debug "Not managing symlink mode"
         return true
       else

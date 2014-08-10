@@ -440,7 +440,7 @@ module Puppet
         end
       }
 
-      if source = self[:source] and absolute_path?(source)
+      if (source = self[:source]) && absolute_path?(source)
         autos << source
       end
       autos

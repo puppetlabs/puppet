@@ -296,7 +296,7 @@ Puppet::Type.newtype(:tidy) do
 
     # The 'matches' parameter isn't OR'ed with the other tests --
     # it's just used to reduce the list of files we can match.
-    return false if param = parameter(:matches) and !param.tidy?(path, stat)
+    return false if (param = parameter(:matches)) && !param.tidy?(path, stat)
 
     tested = false
     [:age, :size].each do |name|

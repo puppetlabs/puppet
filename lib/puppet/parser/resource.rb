@@ -74,7 +74,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def evaluate
     return if evaluated?
     @evaluated = true
-    if klass = resource_type and !builtin_type?
+    if (klass = resource_type) && !builtin_type?
       finish
       evaluated_code = klass.evaluate_code(self)
 

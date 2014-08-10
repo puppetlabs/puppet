@@ -151,7 +151,7 @@ module Util
 
     raise Puppet::DevError, "Failed to provide level to :benchmark" unless level
 
-    unless level == :none or object.respond_to? level
+    unless level == :none || object.respond_to?( level )
       raise Puppet::DevError, "Benchmarked object does not respond to #{level}"
     end
 

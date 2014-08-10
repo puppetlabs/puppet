@@ -74,7 +74,7 @@ module Puppet::Util::ClassGen
       retval = true
     end
 
-    if hash = options[:hash] and hash.include? name
+    if (hash = options[:hash]) && hash.include?( name )
       hash.delete(name)
       retval = true
     end

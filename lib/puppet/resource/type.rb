@@ -203,7 +203,7 @@ class Puppet::Resource::Type
     # if parameters are passed, we should still try to create the resource
     # even if it exists so that we can fail
     # this prevents us from being able to combine param classes with include
-    if resource = scope.catalog.resource(resource_type, name) and !parameters
+    if (resource = scope.catalog.resource(resource_type, name)) && !parameters
       return resource
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
@@ -295,7 +295,7 @@ class Puppet::Resource::Type
     end
     scope["module_name"] = module_name if module_name and !set.include? :module_name
 
-    if caller_name = scope.parent_module_name and !set.include?(:caller_module_name)
+    if (caller_name = scope.parent_module_name) && !set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? || node?
@@ -363,7 +363,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_parent_type(resource)
-    return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
+    return unless (klass = parent_type(resource.scope)) && (parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name))
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end

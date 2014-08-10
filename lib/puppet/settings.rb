@@ -475,7 +475,7 @@ class Puppet::Settings
 
   # Return a given object's file metadata.
   def metadata(param)
-    if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
+    if (obj = @config[param.to_sym]) && obj.is_a?(FileSetting)
       {
         :owner => obj.owner,
         :group => obj.group,
@@ -1147,12 +1147,12 @@ Generated on #{Time.now}.
       next unless setting.respond_to?(:owner)
       next unless sections.nil? || sections.include?(setting.section)
 
-      if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
+      if (user = setting.owner) && user != "root" && catalog.resource(:user, user).nil?
         resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
-      if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+      if (group = setting.group) && ! %w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
       end
     end

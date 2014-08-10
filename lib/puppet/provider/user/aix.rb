@@ -152,7 +152,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
-      if attrs && attrs.include?( :id ) and gid == attrs[:id].to_i
+      if attrs && attrs.include?( :id ) && gid == attrs[:id].to_i
         groupname = entry.split(" ")[0]
       end
     }
@@ -193,7 +193,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # For chuser the expires parameter is a 10-character string in the MMDDhhmmyy format
     # that is,"%m%d%H%M%y"
     newdate = '0'
-    if value.is_a? String and value!="0000-00-00"
+    if value.is_a?( String ) && value!="0000-00-00"
       d = DateTime.parse(value, "%Y-%m-%d %H:%M")
       newdate = d.strftime("%m%d%H%M%y")
     end

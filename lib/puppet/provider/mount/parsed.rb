@@ -106,7 +106,7 @@ Puppet::Type.type(:mount).provide(
       mount_output[0..1] = []
     end
     mount_output.each do |line|
-      if match = regex.match(line) and name = match.captures.first
+      if (match = regex.match(line)) && (name = match.captures.first)
         instances << {:name => name, :mounted => :yes} # Only :name is important here
       else
         raise Puppet::Error, "Could not understand line #{line} from mount output"

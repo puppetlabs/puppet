@@ -342,7 +342,7 @@ module Puppet::Util::FileParsing
 
   def valid_attr?(type, attr)
     type = type.intern
-    if record = record_type(type) and record.fields.include?(attr.intern)
+    if (record = record_type(type)) && record.fields.include?(attr.intern)
       return true
     else
       if attr.intern == :ensure

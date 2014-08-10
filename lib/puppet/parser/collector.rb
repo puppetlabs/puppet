@@ -18,7 +18,7 @@ class Puppet::Parser::Collector
     end
 
     if self.resources
-      unless objects = collect_resources and !objects.empty?
+      unless (objects = collect_resources) && !objects.empty?
         return false
       end
     else

@@ -539,7 +539,7 @@ module Puppet
 
     autorequire(:user) do
       # Autorequire users if they are specified by name
-      if user = self[:user] and user !~ /^\d+$/
+      if (user = self[:user]) && user !~ /^\d+$/
         user
       end
     end

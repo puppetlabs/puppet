@@ -628,7 +628,7 @@ Puppet::Type.newtype(:file) do
 
     total = self[:source].collect do |source|
       next unless result = perform_recursion(source)
-      return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      return if (top = result.find { |r| r.relative_path == "." }) && top.ftype != "directory"
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
       break result if result && !result.empty? && sourceselect == :first
       result
@@ -734,7 +734,7 @@ Puppet::Type.newtype(:file) do
     return true if self[:ensure] == :file
 
     # I.e., it's set to something like "directory"
-    return false if e = self[:ensure] and e != :present
+    return false if (e = self[:ensure]) && e != :present
 
     # The user doesn't really care, apparently
     if self[:ensure] == :present

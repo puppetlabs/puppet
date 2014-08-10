@@ -206,7 +206,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def munge(name, value)
-    if block = self.class.option(name, :munge) and block.is_a? Proc
+    if (block = self.class.option(name, :munge)) && block.is_a?( Proc )
       block.call(value)
     else
       value
@@ -214,7 +214,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def unmunge(name, value)
-    if block = self.class.option(name, :unmunge) and block.is_a? Proc
+    if (block = self.class.option(name, :unmunge)) && block.is_a?( Proc )
       block.call(value)
     else
       value

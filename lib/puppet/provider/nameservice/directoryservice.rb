@@ -473,7 +473,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
     end
 
-    if value = @resource.should(:password) and value != ""
+    if (value = @resource.should(:password)) && value != ""
       self.class.set_password(@resource[:name], guid, value)
     end
 

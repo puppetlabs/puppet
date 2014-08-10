@@ -14,7 +14,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     properties = []
     Puppet::Type.type(:zfs).validproperties.each do |property|
       next if property == :ensure
-      if value = @resource[property] and value != ""
+      if (value = @resource[property]) && value != ""
         properties << "-o" << "#{property}=#{value}"
       end
     end

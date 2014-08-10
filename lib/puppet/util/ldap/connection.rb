@@ -20,9 +20,9 @@ class Puppet::Util::Ldap::Connection
 
     options = {}
     options[:ssl] = ssl
-    if user = Puppet.settings[:ldapuser] and user != ""
+    if (user = Puppet.settings[:ldapuser]) && user != ""
       options[:user] = user
-      if pass = Puppet.settings[:ldappassword] and pass != ""
+      if (pass = Puppet.settings[:ldappassword]) && pass != ""
         options[:password] = pass
       end
     end
