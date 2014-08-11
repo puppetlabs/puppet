@@ -321,21 +321,17 @@ class Puppet::Parser::Scope
   end
 
   # Collect all of the defaults set at any higher scopes.
-  # This is a different type of lookup because it's additive --
-  # it collects all of the defaults, with defaults in closer scopes
-  # overriding those in later scopes.
-  def lookupdefaults(type)
-    if Puppet[:parser] == 'future'
-      lookupdefaults_4x(type)
-    else
-      lookupdefaults_3x(type)
-    end
-  end
-
-  # The implemetation for lookupdefaults for 3x where the order is:
-  # inherited, contained (recursive), self
+  # This is a different type of lookup because it's
+  # additive -- it collects all of the defaults, with defaults
+  # in closer scopes overriding those in later scopes.
   #
-  def lookupdefaults_3x(type)
+  # The lookupdefaults searches in the the order:
+  #
+  #   * inherited
+  #   * contained (recursive)
+  #   * self
+  #
+  def lookupdefaults(type)
     values = {}
 
     # first collect the values from the parents
@@ -354,35 +350,6 @@ class Puppet::Parser::Scope
     end
 
     values
-  end
-
-  # The implementation for lookupdefaults for 4x where the order is:
-  # inherited-scope, closure-scope, self
-  #
-  def lookupdefaults_4x(type)
-    # This is an optimized version that avoids method calls and garbage creation
-    # Build array with scopes from most significant to least significant
-    influencing_scopes = [self]
-    is = inherited_scope
-    while is do
-      influencing_scopes << is
-      is = is.inherited_scope
-    end
-
-    es = enclosing_scope
-    while es do
-      influencing_scopes << es
-      es = es.enclosing_scope
-    end
-
-    # apply from least significant, to most significant
-    influencing_scopes.reverse.reduce({}) do | values, scope |
-      scope_defaults = scope.defaults
-      if scope_defaults.include?(type)
-        values.merge!(scope_defaults[type])
-      end
-      values
-    end
   end
 
   # Look up a defined type.

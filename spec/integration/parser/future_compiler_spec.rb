@@ -61,7 +61,7 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "evoe")
     end
 
-    it 'does not apply defaults from dynamic scopes (PUP-867)' do
+    it 'Applies defaults from dynamic scopes (3x and future with reverted PUP-867)' do
       catalog = compile_to_catalog(<<-CODE)
       class a {
         Notify { message => "defaulted" }
@@ -72,7 +72,7 @@ describe "Puppet::Parser::Compiler" do
 
       include a
       CODE
-      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, nil)
+      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, "defaulted")
       expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
     end
 
