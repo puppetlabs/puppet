@@ -267,43 +267,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     name = lvalue(o.left_expr, scope)
     value = evaluate(o.right_expr, scope)
 
-    case o.operator
-    when :'=' # regular assignment
+    if o.operator == :'='
       assign(name, value, o, scope)
-
-    when :'+='
-      # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
-      existing_value = get_variable_value(name, o, scope)
-      begin
-        # Supports :undef as it may come from a 3x structure.
-        if existing_value.nil? || existing_value == :undef
-          assign(name, value, o, scope)
-        else
-          # Delegate to calculate function to deal with check of LHS, and perform ´+´ as arithmetic or concatenation the
-          # same way as ArithmeticExpression performs `+`.
-          assign(name, calculate(existing_value, value, :'+', o.left_expr, o.right_expr, scope), o, scope)
-        end
-      rescue ArgumentError => e
-        fail(Issues::APPEND_FAILED, o, {:message => e.message})
-      end
-
-    when :'-='
-      # If an attempt is made to delete values from something that does not exists, the value is :undef (it is guaranteed to not
-      # include any values the user wants deleted anyway :-)
-      #
-      # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
-      existing_value = get_variable_value(name, o, scope)
-      begin
-      # Supports :undef as it may come from a 3x structure.
-      if existing_value.nil? || existing_value == :undef
-        assign(name, nil, o, scope)
-      else
-        # Delegate to delete function to deal with check of LHS, and perform deletion
-        assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
-      end
-      rescue ArgumentError => e
-        fail(Issues::APPEND_FAILED, o, {:message => e.message}, e)
-      end
     else
       fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
     end
