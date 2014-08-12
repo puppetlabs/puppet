@@ -22,7 +22,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
            :stop    => "/sbin/stop",
            :restart => "/sbin/restart",
            :status_exec  => "/sbin/status",
-           :initctl => "/sbin/initctl"
+           :initctl => "/sbin/initctl",
+           :telinit => "/sbin/telinit"
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
@@ -72,7 +73,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def upstart_version
-    @upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
+    @upstart_version ||= telinit("--version").match(/telinit \(upstart ([^\)]*)\)/)[1]
   end
 
   # Where is our override script?
