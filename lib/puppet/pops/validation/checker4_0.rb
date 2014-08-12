@@ -150,9 +150,15 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_AssignmentExpression(o)
-    acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator}) unless [:'=', :'+=', :'-='].include? o.operator
-    assign(o.left_expr)
-    rvalue(o.right_expr)
+    case o.operator
+    when :'='
+      assign(o.left_expr)
+      rvalue(o.right_expr)
+    when :'+=', :'-='
+      acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, {:operator => o.operator})
+    else
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+    end
   end
 
   # Checks that operation with :+> is contained in a ResourceOverride or Collector.
@@ -179,7 +185,7 @@ class Puppet::Pops::Validation::Checker4_0
     parent = o.eContainer
     parent = parent.eContainer unless parent.nil?
     unless parent.is_a?(Model::ResourceExpression)
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, :operator=>'* =>')
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, o, :operator=>'* =>')
     end
 
     rvalue(o.expr)
