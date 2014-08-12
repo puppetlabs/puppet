@@ -202,6 +202,10 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
+  APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
+    "The operator '#{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals"
+  end
+
   # For unsupported operators (e.g. += and -= in puppet 4).
   #
   UNSUPPORTED_OPERATOR = hard_issue :UNSUPPORTED_OPERATOR, :operator do
@@ -211,7 +215,7 @@ module Puppet::Pops::Issues
   # For operators that are not supported in specific contexts (e.g. '* =>' in
   # resource defaults)
   #
-  OPERATOR_NOT_SUPPORTED_IN_CONTEXT = hard_issue :OPERATOR_NOT_SUPPORTED_IN_CONTEXT, :operator do
+  UNSUPPORTED_OPERATOR_IN_CONTEXT = hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT, :operator do
     "The operator '#{operator}' in #{label.a_an(semantic)} is not supported."
   end
 

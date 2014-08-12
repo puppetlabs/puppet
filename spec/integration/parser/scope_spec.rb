@@ -48,7 +48,7 @@ describe "Two step scoping for variables" do
                 $var += ["override"]
               }
             MANIFEST
-        end.to raise_error(/The operator '\+=' is not supported/)
+        end.to raise_error(/The operator '\+=' is no longer supported/)
       end
 
       it "issues an error for -=" do
@@ -59,7 +59,7 @@ describe "Two step scoping for variables" do
                 $var -= ["top_msg"]
               }
             MANIFEST
-        end.to raise_error(/The operator '-=' is not supported/)
+        end.to raise_error(/The operator '-=' is no longer supported/)
       end
     end
 
