@@ -25,8 +25,8 @@ module Puppet
         :hook    => proc do |value|
           return unless value
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
-          require 'puppet/facts'
-          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet::Facts.replace_facter
+          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
+          CFacter.initialize
         end
     }
   )
