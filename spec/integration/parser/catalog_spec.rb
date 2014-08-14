@@ -75,6 +75,14 @@ describe "A catalog" do
         expect(resources_in(agent_catalog)).to_not include(*exported_resources)
       end
     end
+  end
+
+  describe 'using classic parser' do
+    before :each do
+      Puppet[:parser] = 'current'
+    end
+    it_behaves_like 'when compiled' do
+    end
 
     it "compiles resource creation from appended array as two separate resources" do
       # moved here from acceptance test "jeff_append_to_array.rb"
@@ -89,14 +97,6 @@ describe "A catalog" do
         include parent::child
       EOM
       expect(resources_in(master_catalog)).to include('Notify[parent array element]', 'Notify[child array element]')
-    end
-  end
-
-  describe 'using classic parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-    it_behaves_like 'when compiled' do
     end
   end
 

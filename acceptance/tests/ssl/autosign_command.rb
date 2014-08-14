@@ -114,7 +114,6 @@ custom_attributes:
         'autosign' => autosign_inspect_csr_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
       },
-      :__commandline_args__ => '--debug --trace',
     }
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
