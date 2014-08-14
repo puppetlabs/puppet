@@ -4,6 +4,10 @@ require 'puppet/indirector/code'
 class Puppet::Node::Facts::NetworkDevice < Puppet::Indirector::Code
   desc "Retrieve facts from a network device."
 
+  def allow_remote_requests?
+    false
+  end
+
   # Look a device's facts up through the current device.
   def find(request)
     result = Puppet::Node::Facts.new(request.key, Puppet::Util::NetworkDevice.current.facts)
