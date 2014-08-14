@@ -2,7 +2,8 @@
 confine :except, :platform => 'windows'
 
 test_name "#7117 Broke the environment criteria in auth.conf"
-testdir = master.tmpdir('env_in_auth_conf')
+
+testdir = create_tmpdir_for_user master, 'env_in_auth_conf'
 
 # add to auth.conf
 add_2_authconf = %q{

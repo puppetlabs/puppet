@@ -6,6 +6,7 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
+
   teardown do
     reset_agent_ssl
   end
