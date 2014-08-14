@@ -24,6 +24,14 @@ module Puppet
         hostname = on(master, 'facter hostname').stdout.strip
         fqdn = on(master, 'facter fqdn').stdout.strip
 
+        if master.use_service_scripts?
+          step "Ensure puppet is stopped"
+          # Passenger, in particular, must be shutdown for the cert setup steps to work,
+          # but any running puppet master will interfere with webrick starting up and
+          # potentially ignore the puppet.conf changes.
+          on(master, puppet('resource', 'service', master['puppetservice'], "ensure=stopped"))
+        end
+
         step "Clear SSL on all hosts"
         hosts.each do |host|
           ssldir = on(host, puppet('agent --configprint ssldir')).stdout.chomp
@@ -31,7 +39,16 @@ module Puppet
         end
 
         step "Master: Start Puppet Master" do
-          with_puppet_running_on(master, :main => { :dns_alt_names => "puppet,#{hostname},#{fqdn}", :verbose => true, :daemonize => true }) do
+          master_opts = {
+            :main => {
+              :dns_alt_names => "puppet,#{hostname},#{fqdn}",
+            },
+            :__service_args__ => {
+              # apache2 service scripts can't restart if we've removed the ssl dir
+              :bypass_service_script => true,
+            },
+          }
+          with_puppet_running_on(master, master_opts) do
 
             hosts.each do |host|
               next if host['roles'].include? 'master'
@@ -78,6 +95,7 @@ module Puppet
 
         step "Clear old agent certificates from master" do
           agents.each do |agent|
+            next if agent == master && agent.is_using_passenger?
             agent_cn = on(agent, puppet('agent --configprint certname')).stdout.chomp
             clean_cert(master, agent_cn, false) if agent_cn
           end
@@ -93,7 +111,7 @@ module Puppet
                                 ) do
 
             agents.each do |agent|
-
+              next if agent == master && agent.is_using_passenger?
               step "Agents: Run agent --test once to obtain auto-signed cert" do
                 on agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
               end

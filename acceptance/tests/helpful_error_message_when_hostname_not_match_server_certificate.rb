@@ -1,6 +1,6 @@
 test_name "generate a helpful error message when hostname doesn't match server certificate"
 
-skip_test( 'Changing certnames of the master will break PE' )if master.is_pe?
+skip_test( 'Changing certnames of the master will break PE/Passenger installations' ) if master.is_using_passenger?
 
 # Start the master with a certname not matching its hostname
 master_opts = {

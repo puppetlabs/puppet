@@ -38,6 +38,7 @@ if master.is_pe?
 else
 
   testdir = master.tmpdir('report_submission')
+  on(master, "chown puppet:puppet #{testdir}")
 
   teardown do
     on master, "rm -rf #{testdir}"

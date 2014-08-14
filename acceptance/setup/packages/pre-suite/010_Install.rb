@@ -20,7 +20,7 @@ MASTER_PACKAGES = {
     'puppet-server',
   ],
   :debian => [
-    'puppetmaster',
+    'puppetmaster-passenger',
   ],
 #  :solaris => [
 #    'puppet-server',
@@ -46,7 +46,4 @@ AGENT_PACKAGES = {
 }
 
 install_packages_on(master, MASTER_PACKAGES)
-if master['platform'] =~ /debian|ubuntu/
-  on(master, '/etc/init.d/puppetmaster stop')
-end
 install_packages_on(agents, AGENT_PACKAGES)

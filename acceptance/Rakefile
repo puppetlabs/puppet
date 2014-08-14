@@ -26,7 +26,8 @@ module HarnessOptions
     :repo_proxy => true,
     :add_el_extras => true,
     :preserve_hosts => 'onfail',
-    :forge_host => 'forge-aio01-petest.puppetlabs.com'
+    :forge_host => 'forge-aio01-petest.puppetlabs.com',
+    :'master-start-curl-retries' => 30,
   }
 
   class Aggregator
@@ -324,13 +325,24 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
     preserved = list_preserved_configurations
     print_preserved(preserved)
     config_path = preserved[config_number][0]
+
     puts "Using ##{config_number}: #{config_path}"
-    beaker_test(beaker_run_type,
+
+    options = {
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => 'always',
-      :__delete_options__ => [:pre_suite]
-    )
+    }
+    run_type = beaker_run_type
+    if run_type == :packages
+      options.merge!(:pre_suite => [
+        'setup/packages/pre-suite/015_PackageHostsPresets.rb',
+        'setup/packages/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
+      ])
+    else
+      options.merge!(:__delete_options__ => [:pre_suite])
+    end
+    beaker_test(beaker_run_type, options)
   end
 end
 
