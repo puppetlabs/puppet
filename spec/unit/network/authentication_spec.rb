@@ -81,6 +81,10 @@ describe Puppet::Network::Authentication do
         cert.stubs(:unmunged_name).returns('foo')
       end
 
+      after(:all) do
+        reload_module
+      end
+
       it "should log a warning if a certificate's expiration is near" do
         logger.expects(:warning)
         subject.warn_if_near_expiration(cert)
