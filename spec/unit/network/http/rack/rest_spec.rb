@@ -12,11 +12,11 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
     before :all do
       @model_class = stub('indirected model class')
       Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@model_class)
-      @handler = Puppet::Network::HTTP::RackREST.new(:handler => :foo)
     end
 
     before :each do
       @response = Rack::Response.new
+      @handler = Puppet::Network::HTTP::RackREST.new(:handler => :foo)
     end
 
     def mk_req(uri, opts = {})
