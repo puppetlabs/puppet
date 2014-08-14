@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http/connection'
-require 'puppet/network/authentication'
 
 describe Puppet::Network::HTTP::Connection do
 
@@ -169,8 +168,6 @@ describe Puppet::Network::HTTP::Connection do
 
       Net::HTTP.any_instance.stubs(:start)
       Net::HTTP.any_instance.stubs(:request).returns(httpok)
-
-      connection.expects(:warn_if_near_expiration).with(cert)
 
       connection.get('request')
     end

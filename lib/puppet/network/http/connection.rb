@@ -2,7 +2,6 @@ require 'net/https'
 require 'puppet/ssl/host'
 require 'puppet/ssl/configuration'
 require 'puppet/ssl/validator'
-require 'puppet/network/authentication'
 require 'puppet/network/http'
 require 'uri'
 
@@ -22,7 +21,6 @@ module Puppet::Network::HTTP
   #   during a request.
   # @api public
   class Connection
-    include Puppet::Network::Authentication
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
@@ -205,12 +203,7 @@ module Puppet::Network::HTTP
     end
 
     def execute_request(connection, request)
-      response = connection.request(request)
-
-      # Check the peer certs and warn if they're nearing expiration.
-      warn_if_near_expiration(*@verify.peer_certs)
-
-      response
+      connection.request(request)
     end
 
     def with_connection(site, &block)
