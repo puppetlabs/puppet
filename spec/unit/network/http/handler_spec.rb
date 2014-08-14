@@ -3,7 +3,6 @@ require 'spec_helper'
 require 'puppet/indirector_testing'
 
 require 'puppet/network/authorization'
-require 'puppet/network/authentication'
 
 require 'puppet/network/http'
 
