@@ -101,6 +101,7 @@ module Puppet::Util::Windows::Security
   SE_BACKUP_NAME              = 'SeBackupPrivilege'
   SE_RESTORE_NAME             = 'SeRestorePrivilege'
 
+  DELETE                      = 0x00010000
   READ_CONTROL                = 0x20000
   WRITE_DAC                   = 0x40000
   WRITE_OWNER                 = 0x80000

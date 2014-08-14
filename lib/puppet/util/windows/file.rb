@@ -196,6 +196,9 @@ module Puppet::Util::Windows::File
   module_function :symlink?
 
   GENERIC_READ                  = 0x80000000
+  GENERIC_WRITE                 = 0x40000000
+  GENERIC_EXECUTE               = 0x20000000
+  GENERIC_ALL                   = 0x10000000
   FILE_SHARE_READ               = 1
   FILE_SHARE_WRITE              = 2
   OPEN_EXISTING                 = 3
