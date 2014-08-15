@@ -119,6 +119,7 @@ class Puppet::FileBucket::File
     end
 
     def checksum_data(base_method)
+      Puppet.info("Computing checksum on string")
       Puppet::Util::Checksums.method(base_method).call(@contents)
     end
 
@@ -144,6 +145,7 @@ class Puppet::FileBucket::File
     end
 
     def checksum_data(base_method)
+      Puppet.info("Computing checksum on file #{@path}")
       Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
     end
 
