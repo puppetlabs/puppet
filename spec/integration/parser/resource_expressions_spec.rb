@@ -1,46 +1,8 @@
 require 'spec_helper'
-require 'puppet_spec/compiler'
-require 'matchers/resource'
+require 'puppet_spec/language'
 
 describe "Puppet resource expressions" do
-  include PuppetSpec::Compiler
-  include Matchers::Resource
-
-  def self.produces(expectations)
-    expectations.each do |manifest, resources|
-      it "evaluates #{manifest} to produce #{resources}" do
-        catalog = compile_to_catalog(manifest)
-
-        if resources.empty?
-          base_resources = ["Class[Settings]", "Class[main]", "Stage[main]"]
-          expect(catalog.resources.collect(&:ref) - base_resources).to eq([])
-        else
-          resources.each do |reference|
-            if reference.is_a?(Array)
-              matcher = have_resource(reference[0])
-              reference[1].each do |name, value|
-                matcher = matcher.with_parameter(name, value)
-              end
-            else
-              matcher = have_resource(reference)
-            end
-
-            expect(catalog).to matcher
-          end
-        end
-      end
-    end
-  end
-
-  def self.fails(expectations)
-    expectations.each do |manifest, pattern|
-      it "fails to evaluate #{manifest} with message #{pattern}" do
-        expect do
-          compile_to_catalog(manifest)
-        end.to raise_error(Puppet::Error, pattern)
-      end
-    end
-  end
+  extend PuppetSpec::Language
 
   describe "future parser" do
     before :each do

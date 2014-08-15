@@ -327,7 +327,7 @@ describe "Puppet::Parser::Compiler" do
         match do |manifest|
           @error = nil
           begin
-            compile_to_catalog(manifest, node)
+            PuppetSpec::Compiler.compile_to_catalog(manifest, node)
             false
           rescue Puppet::Error => e
             @error = e
