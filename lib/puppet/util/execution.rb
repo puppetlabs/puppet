@@ -1,3 +1,5 @@
+require 'puppet/file_system/tempfile'
+
 module Puppet
   require 'rbconfig'
 
@@ -168,7 +170,7 @@ module Puppet::Util::Execution
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
     stdin = File.open(options[:stdinfile] || null_file, 'r')
-    stdout = options[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
+    stdout = options[:squelch] ? File.open(null_file, 'w') : Puppet::FileSystem::Tempfile.new('puppet')
     stderr = options[:combine] ? stdout : File.open(null_file, 'w')
 
     exec_args = [command, options, stdin, stdout, stderr]
