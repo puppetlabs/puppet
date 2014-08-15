@@ -319,7 +319,7 @@ describe "Two step scoping for variables" do
                 $var = "inner baz"
               }
 
-              class bar inherits baz {
+              class bar inherits foo::baz {
                 notify { 'something': message => $var, }
               }
             }
