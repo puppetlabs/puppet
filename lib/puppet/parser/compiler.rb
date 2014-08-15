@@ -154,9 +154,6 @@ class Puppet::Parser::Compiler
 
   # Return the node's environment.
   def environment
-    unless node.environment.is_a? Puppet::Node::Environment
-      raise Puppet::DevError, "node #{node} has an invalid environment!"
-    end
     node.environment
   end
 
@@ -574,10 +571,8 @@ class Puppet::Parser::Compiler
   end
 
   def create_settings_scope
-    unless settings_type = environment.known_resource_types.hostclass("settings")
-      settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-      environment.known_resource_types.add(settings_type)
-    end
+    settings_type = Puppet::Resource::Type.new :hostclass, "settings"
+    environment.known_resource_types.add(settings_type)
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
 
@@ -587,9 +582,10 @@ class Puppet::Parser::Compiler
 
     scope = @topscope.class_scope(settings_type)
 
+    env = environment
     Puppet.settings.each do |name, setting|
-      next if name.to_s == "name"
-      scope[name.to_s] = environment[name]
+      next if name == :name
+      scope[name.to_s] = env[name]
     end
   end
 
