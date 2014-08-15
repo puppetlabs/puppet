@@ -1,6 +1,6 @@
 require 'puppet'
 require 'fileutils'
-require 'tempfile'
+require 'puppet/util'
 
 SEPARATOR = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
 
@@ -31,17 +31,12 @@ Puppet::Reports.register_report(:store) do
 
     file = File.join(dir, name)
 
-    f = Tempfile.new(name, dir)
     begin
-      begin
-        f.chmod(0640)
-        f.print to_yaml
-      ensure
-        f.close
+      Puppet::Util.replace_file(file, 0640) do |fh|
+        fh.print to_yaml
       end
-      FileUtils.mv(f.path, file)
     rescue => detail
-      Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
+       Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
     end
 
     # Only testing cares about the return value
