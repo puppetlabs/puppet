@@ -80,6 +80,9 @@ module Puppet
       end
 
       newvalue(:running, :event => :service_started, :invalidate_refreshes => true) do
+        # Ensure flags are written out before starting the service as it may
+        # need to read it's flags from the filesystem.
+        @resource.flush if @resource.provider.flaggable?
         provider.start
       end
 
