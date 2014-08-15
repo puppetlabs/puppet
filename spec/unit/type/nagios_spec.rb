@@ -217,6 +217,15 @@ describe "Nagios generator" do
     results = parser.parse(nagios_type.to_s)
     results[0].command_line.should eql(param)
   end
+
+  it "should accept FixNum params and convert to string" do
+    param = 1
+    nagios_type = Nagios::Base.create(:serviceescalation)
+    nagios_type.first_notification = param
+    parser =  Nagios::Parser.new
+    results = parser.parse(nagios_type.to_s)
+    results[0].first_notification.should eql(param.to_s)
+  end
 end
 
 describe "Nagios resource types" do
