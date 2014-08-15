@@ -293,7 +293,7 @@ class Puppet::SSL::CertificateAuthority
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
       check_internal_signing_policies(hostname, csr, allow_dns_alt_names) ||
-        raise( CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!" )
+        raise(CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!")
     end
 
     cert = Puppet::SSL::Certificate.new(hostname)
@@ -323,7 +323,7 @@ class Puppet::SSL::CertificateAuthority
   def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.reject do |x|
-      RequestExtensionWhitelist.include?( x["oid"] ) ||
+      RequestExtensionWhitelist.include?(x["oid"]) ||
         Puppet::SSL::Oids.subtree_of?('ppRegCertExt', x["oid"], true) ||
         Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true)
     end

@@ -191,7 +191,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def parse_args(args)
     type = args.shift or raise "You must specify the type to display"
-    Puppet::Type.type(type) || raise( "Could not find type #{type}" )
+    Puppet::Type.type(type) || raise("Could not find type #{type}")
     name = args.shift
     params = {}
     args.each do |setting|

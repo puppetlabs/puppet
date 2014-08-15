@@ -111,7 +111,7 @@ class Puppet::Interface::ActionBuilder
   # Sets the default rendering format
   # @api private
   def render_as(value = nil)
-    value.nil? && raise( ArgumentError, "You must give a rendering format to render_as" )
+    value.nil? && raise(ArgumentError, "You must give a rendering format to render_as")
 
     formats = Puppet::Network::FormatHandler.formats
     unless formats.include? value
@@ -144,6 +144,6 @@ class Puppet::Interface::ActionBuilder
     @face   = face
     @action = Puppet::Interface::Action.new(face, name)
     instance_eval(&block)
-    @action.when_invoked || raise( ArgumentError, "actions need to know what to do when_invoked; please add the block" )
+    @action.when_invoked || raise(ArgumentError, "actions need to know what to do when_invoked; please add the block")
   end
 end

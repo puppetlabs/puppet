@@ -93,11 +93,11 @@ module PSON
         until eos?
           case
           when scan(OBJECT_OPEN)
-            obj && raise( ParserError, "source '#{peek(20)}' not in PSON!" )
+            obj && raise(ParserError, "source '#{peek(20)}' not in PSON!")
             @current_nesting = 1
             obj = parse_object
           when scan(ARRAY_OPEN)
-            obj && raise( ParserError, "source '#{peek(20)}' not in PSON!" )
+            obj && raise(ParserError, "source '#{peek(20)}' not in PSON!")
             @current_nesting = 1
             obj = parse_array
           when skip(IGNORE)
@@ -106,7 +106,7 @@ module PSON
             raise ParserError, "source '#{peek(20)}' not in PSON!"
           end
         end
-        obj || raise( ParserError, "source did not contain any PSON!" )
+        obj || raise(ParserError, "source did not contain any PSON!")
         obj
       end
 

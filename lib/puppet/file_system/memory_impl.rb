@@ -57,7 +57,7 @@ class Puppet::FileSystem::MemoryImpl
     if path.is_a?(Puppet::FileSystem::MemoryFile)
       path
     else
-      find(path) || raise( ArgumentError, "Unable to find registered object for #{path.inspect}" )
+      find(path) || raise(ArgumentError, "Unable to find registered object for #{path.inspect}")
     end
   end
 

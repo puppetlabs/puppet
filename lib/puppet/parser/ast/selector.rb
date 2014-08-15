@@ -18,7 +18,7 @@ class Puppet::Parser::AST
 
       default = nil
 
-      @values = [@values] unless @values.instance_of?( AST::ASTArray ) || @values.instance_of?( Array )
+      @values = [@values] unless @values.instance_of?(AST::ASTArray) || @values.instance_of?(Array)
 
       # Then look for a match in the options.
       @values.each do |obj|
@@ -38,7 +38,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      if @values.instance_of?( AST::ASTArray ) || @values.instance_of?( Array )
+      if @values.instance_of?(AST::ASTArray) || @values.instance_of?(Array)
         v = @values
       else
         v = [@values]

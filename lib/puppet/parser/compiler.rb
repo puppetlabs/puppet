@@ -214,7 +214,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name, :assume_fqname => fqname) || raise( Puppet::Error, "Could not find class #{name} for #{node.name}" )
+      scope.find_hostclass(name, :assume_fqname => fqname) || raise(Puppet::Error, "Could not find class #{name} for #{node.name}")
     end
 
     if class_parameters

@@ -143,10 +143,10 @@ class Puppet::Node::Facts
       ret
     elsif fact.is_a? Array then
       fact.collect { |i| sanitize_fact i }
-    elsif fact.is_a?( Numeric ) \
-      || fact.is_a?( TrueClass ) \
-      || fact.is_a?( FalseClass ) \
-      || fact.is_a?( String )
+    elsif fact.is_a?(Numeric) \
+      || fact.is_a?(TrueClass) \
+      || fact.is_a?(FalseClass) \
+      || fact.is_a?(String)
       fact
     else
       fact.to_s

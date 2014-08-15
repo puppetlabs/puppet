@@ -99,7 +99,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
     # In the case of attributes, return a list of key=vlaue
     if key == :attributes
       raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
-        unless value && value.is_a?( Hash )
+        unless value && value.is_a?(Hash)
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
     super(key, value, mapping, objectinfo)

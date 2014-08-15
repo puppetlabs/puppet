@@ -17,7 +17,7 @@ class Puppet::Util::Log::Destination
   # See whether we match a given thing.
   def self.match?(obj)
     # Convert single-word strings into symbols like :console and :syslog
-    if obj.is_a?( String ) && obj =~ /^\w+$/
+    if obj.is_a?(String) && obj =~ /^\w+$/
       obj = obj.downcase.intern
     end
 

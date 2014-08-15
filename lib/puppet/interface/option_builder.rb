@@ -40,7 +40,7 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def before_action(&block)
-    block || raise( ArgumentError, "#{@option} before_action requires a block" )
+    block || raise(ArgumentError, "#{@option} before_action requires a block")
     if @option.before_action
       raise ArgumentError, "#{@option} already has a before_action set"
     end
@@ -55,7 +55,7 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def after_action(&block)
-    block || raise( ArgumentError, "#{@option} after_action requires a block" )
+    block || raise(ArgumentError, "#{@option} after_action requires a block")
     if @option.after_action
       raise ArgumentError, "#{@option} already has an after_action set"
     end
@@ -79,7 +79,7 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def default_to(&block)
-    block || raise( ArgumentError, "#{@option} default_to requires a block" )
+    block || raise(ArgumentError, "#{@option} default_to requires a block")
     if @option.has_default?
       raise ArgumentError, "#{@option} already has a default value"
     end
