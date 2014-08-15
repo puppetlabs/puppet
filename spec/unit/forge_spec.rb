@@ -154,4 +154,19 @@ describe Puppet::Forge do
       expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Request to Puppet Forge failed. Detail: 410 Gone."
     end
   end
+
+  context "when the forge returns a module with unparseable dependencies" do
+    before :each do
+      response = JSON.parse(http_response)
+      release = response['results'][0]['current_release']
+      release['metadata']['dependencies'] = [{'name' => 'broken-garbage >= 1.0.0', 'version_requirement' => 'banana'}]
+      response['results'] = [release]
+      repository_responds_with(stub(:body => JSON.dump(response), :code => '200'))
+    end
+
+    it "ignores modules with unparseable dependencies" do
+      expect { result = forge.fetch('puppetlabs/bacula') }.to_not raise_error
+      expect { result.to be_empty }
+    end
+  end
 end
