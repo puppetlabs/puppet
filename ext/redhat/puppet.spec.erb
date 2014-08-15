@@ -169,6 +169,8 @@ install -Dp -m0644 ext/emacs/puppet-mode-init.el \
 vimdir=%{buildroot}%{_datadir}/vim/vimfiles
 install -Dp -m0644 ext/vim/ftdetect/puppet.vim $vimdir/ftdetect/puppet.vim
 install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
+install -Dp -m0644 ext/vim/indent/puppet.vim $vimdir/indent/puppet.vim
+install -Dp -m0644 ext/vim/ftplugin/puppet.vim $vimdir/ftplugin/puppet.vim
 
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # Setup tmpfiles.d config
