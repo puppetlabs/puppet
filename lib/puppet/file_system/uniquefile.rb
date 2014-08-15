@@ -2,12 +2,20 @@ require 'puppet/file_system'
 require 'delegate'
 require 'tmpdir'
 
-class Puppet::FileSystem::Tempfile < DelegateClass(File)
+# A class that provides `Tempfile`-like capabilities, but does not attempt to
+# manage the deletion of the file for you.  API is identical to the
+# normal `Tempfile` class.
+#
+# @api public
+class Puppet::FileSystem::Uniquefile < DelegateClass(File)
+  # Convenience method which ensures that the file is closed and
+  # unlinked before returning
+  #
   # @param identifier [String] additional part of generated pathname
   # @yieldparam file [File] the temporary file object
   # @return result of the passed block
   # @api private
-  def self.open(identifier)
+  def self.open_tmp(identifier)
     f = new(identifier)
     yield f
   ensure

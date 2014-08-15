@@ -1,14 +1,14 @@
 require 'spec_helper'
 
-describe Puppet::FileSystem::Tempfile do
+describe Puppet::FileSystem::Uniquefile do
   it "makes the name of the file available" do
-    Puppet::FileSystem::Tempfile.open('foo') do |file|
+    Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       expect(file.path).to match(/foo/)
     end
   end
 
   it "provides a writeable file" do
-    Puppet::FileSystem::Tempfile.open('foo') do |file|
+    Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       file.write("stuff")
       file.flush
 
@@ -17,7 +17,7 @@ describe Puppet::FileSystem::Tempfile do
   end
 
   it "returns the value of the block" do
-    the_value = Puppet::FileSystem::Tempfile.open('foo') do |file|
+    the_value = Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       "my value"
     end
 
@@ -25,7 +25,7 @@ describe Puppet::FileSystem::Tempfile do
   end
 
   it "unlinks the temporary file" do
-    filename = Puppet::FileSystem::Tempfile.open('foo') do |file|
+    filename = Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       file.path
     end
 
@@ -36,7 +36,7 @@ describe Puppet::FileSystem::Tempfile do
     filename = nil
 
     begin
-      Puppet::FileSystem::Tempfile.open('foo') do |file|
+      Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
         filename = file.path
         raise "error!"
       end
