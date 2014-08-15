@@ -1,3 +1,4 @@
+require 'facter'
 require 'puppet/util/feature'
 
 Puppet.features.add :cfacter do
