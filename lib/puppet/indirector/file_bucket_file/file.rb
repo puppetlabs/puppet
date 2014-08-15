@@ -87,7 +87,10 @@ module Puppet::FileBucketFile
             Puppet::FileSystem.touch(contents_file)
           else
             Puppet::FileSystem.open(contents_file, 0440, 'wb') do |of|
-              of.write(bucket_file.contents)
+              # PUP-1044 writes all of the contents
+              src = bucket_file.stream;
+              IO.copy_stream(src, of)
+              src.close
             end
           end
 
@@ -124,7 +127,8 @@ module Puppet::FileBucketFile
     # @param contents_file [Object] Opaque file path
     # @param bucket_file [IO]
     def verify_identical_file!(contents_file, bucket_file)
-      if bucket_file.contents.size == Puppet::FileSystem.size(contents_file)
+      # PUP-1044 needs all of content to verify size if calling contents.size, call size instead
+      if bucket_file.size == Puppet::FileSystem.size(contents_file)
         if Puppet::FileSystem.compare_stream(contents_file, bucket_file.stream)
           Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
           return

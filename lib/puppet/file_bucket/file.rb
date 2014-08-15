@@ -11,7 +11,6 @@ class Puppet::FileBucket::File
   extend Puppet::Indirector
   indirects :file_bucket_file, :terminus_class => :selector
 
-  attr :contents
   attr :bucket_path
 
   def self.supported_formats
@@ -28,8 +27,14 @@ class Puppet::FileBucket::File
   end
 
   def initialize(contents, options = {})
-    raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
-    @contents = contents
+    case contents
+    when String
+      @contents = StringContents.new(contents);
+    when Pathname
+      @contents = FileContents.new(contents);
+    else
+      raise ArgumentError.new("contents must be a String or Pathname, got a #{contents.class}")
+    end
 
     @bucket_path = options.delete(:bucket_path)
     @checksum_type = Puppet[:digest_algorithm].to_sym
@@ -38,12 +43,12 @@ class Puppet::FileBucket::File
 
   # @return [Num] The size of the contents
   def size
-    contents.size
+    @contents.size()
   end
 
   # @return [IO] A stream that reads the contents
   def stream
-    StringIO.new(contents)
+    @contents.stream()
   end
 
   def checksum_type
@@ -55,12 +60,15 @@ class Puppet::FileBucket::File
   end
 
   def checksum_data
-    algorithm = Puppet::Util::Checksums.method(@checksum_type)
-    @checksum_data ||= algorithm.call(contents)
+    @checksum_data ||= @contents.checksum_data(@checksum_type)
   end
 
   def to_s
-    contents
+    @contents.to_s
+  end
+
+  def contents
+    to_s
   end
 
   def name
@@ -72,10 +80,14 @@ class Puppet::FileBucket::File
   end
 
   def to_data_hash
-    { "contents" => contents }
+    # TODO: where is this used? should it keep the String /Pathname, or does it have to expand it to a String?
+    # Is this serialized? Now it retains the API by getting the String
+    { "contents" => contents.to_s }
   end
 
   def self.from_data_hash(data)
+    # TODO: where is this used? should it keep the String /Pathname, or does it have to expand it to a String?
+    # Is this serialized?
     self.new(data["contents"])
   end
 
@@ -91,4 +103,53 @@ class Puppet::FileBucket::File
     self.from_data_hash(pson)
   end
 
+  private
+
+  class StringContents
+    def initialize(content)
+      @contents = content;
+    end
+
+    def stream
+      StringIO.new(@contents)
+    end
+
+    def size
+      @contents.size
+    end
+
+    def checksum_data(base_method)
+      Puppet::Util::Checksums.method(base_method).call(@contents)
+    end
+
+    def to_s
+      # This is not so horrible as for FileContent, but still possible to mutate the content that the
+      # checksum is based on... so semi horrible...
+      return @contents;
+    end
+  end
+
+  class FileContents
+    def initialize(path)
+      @path = path
+    end
+
+    # Caller *must* close the stream
+    def stream()
+      Puppet::FileSystem.open(@path, 'r')
+    end
+
+    def size
+      Puppet::FileSystem.size(@path)
+    end
+
+    def checksum_data(base_method)
+      Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
+    end
+
+    def to_s
+      # This is just a  horribly bad idea, but here to support the old way of working with FileBucketFile
+      Puppet::FileSystem::binread(@path)
+    end
+  end
 end

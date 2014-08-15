@@ -23,8 +23,12 @@ Puppet::Face.define(:file, '0.0.1') do
       if sum =~ /^puppet:\/\// # it's a puppet url
         require 'puppet/file_serving'
         require 'puppet/file_serving/content'
-        raise "Could not find metadata for #{sum}" unless content = Puppet::FileServing::Content.indirection.find(sum)
-        file = Puppet::FileBucket::File.new(content.content)
+        unless content = Puppet::FileServing::Content.indirection.find(sum)
+          raise "Could not find metadata for #{sum}"
+        end
+        require 'debugger'; debugger
+        pathname = Puppet::FileSystem.pathname(content.full_path())
+        file = Puppet::FileBucket::File.new(pathname)
       else
         tester = Object.new
         tester.extend(Puppet::Util::Checksums)
