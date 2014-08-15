@@ -11,8 +11,6 @@ Puppet::Face.define(:file, '0.0.1') do
     EOT
 
     when_invoked do |path, options|
-      # PUP-1044, do not read the file
-#      file = Puppet::FileBucket::File.new(Puppet::FileSystem.binread(path))
       file = Puppet::FileBucket::File.new(Puppet::FileSystem.pathname(path))
 
       Puppet::FileBucket::File.indirection.terminus_class = :file

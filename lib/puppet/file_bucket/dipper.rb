@@ -36,11 +36,7 @@ class Puppet::FileBucket::Dipper
   def backup(file)
     file_handle = Puppet::FileSystem.pathname(file)
     raise(ArgumentError, "File #{file} does not exist") unless Puppet::FileSystem.exist?(file_handle)
-    # PUP-1044 reads the entire file !
-    #contents = Puppet::FileSystem.binread(file_handle)
     begin
-      # PUP-1044 write the entire file
-      #file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       file_bucket_file = Puppet::FileBucket::File.new(file_handle, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
       dest_path = "#{@rest_path}#{file_bucket_file.name}/#{files_original_path}"
@@ -79,9 +75,7 @@ class Puppet::FileBucket::Dipper
     restore = true
     file_handle = Puppet::FileSystem.pathname(file)
     if Puppet::FileSystem.exist?(file_handle)
-      # PUP-1044 reads the entire file to get the digest
       cursum = Puppet::FileBucket::File.new(file_handle).checksum_data()
-      # cursum = @digest.call(Puppet::FileSystem.binread(file_handle))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -92,9 +86,7 @@ class Puppet::FileBucket::Dipper
 
     if restore
       if newcontents = get_bucket_file(sum)
-        # PUP-1044 get sum via FileBucket::File
         newsum = newcontents.checksum_data()
-        #newsum = @digest.call(newcontents)
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode

@@ -80,14 +80,11 @@ class Puppet::FileBucket::File
   end
 
   def to_data_hash
-    # TODO: where is this used? should it keep the String /Pathname, or does it have to expand it to a String?
-    # Is this serialized? Now it retains the API by getting the String
+    # Note that this serializes the entire data to a string and places it in a hash.
     { "contents" => contents.to_s }
   end
 
   def self.from_data_hash(data)
-    # TODO: where is this used? should it keep the String /Pathname, or does it have to expand it to a String?
-    # Is this serialized?
     self.new(data["contents"])
   end
 
@@ -150,7 +147,6 @@ class Puppet::FileBucket::File
     end
 
     def to_s
-      # This is just a  horribly bad idea, but here to support the old way of working with FileBucketFile
       Puppet::FileSystem::binread(@path)
     end
   end
