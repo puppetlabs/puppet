@@ -4,11 +4,11 @@ require 'English'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
-require 'tempfile'
 require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
 require 'puppet/util/symbolic_file_mode'
+require 'puppet/file_system/tempfile'
 require 'securerandom'
 
 module Puppet
@@ -397,7 +397,7 @@ module Util
     end
 
     file     = Puppet::FileSystem.pathname(file)
-    tempfile = Tempfile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
+    tempfile = Puppet::FileSystem::Tempfile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just

@@ -1,6 +1,7 @@
 require 'tempfile'
+require 'puppet/file_system'
 
-class Puppet::FileSystem::Tempfile
+class Puppet::FileSystem::Tempfile < ::Tempfile
 
   # Variation of Tempfile.open which ensures that the tempfile is closed and
   # unlinked before returning
@@ -10,10 +11,8 @@ class Puppet::FileSystem::Tempfile
   # @return result of the passed block
   # @api private
   def self.open(identifier)
-    file = ::Tempfile.new(identifier)
-
+    file = Puppet::FileSystem::Tempfile.new(identifier)
     yield file
-
   ensure
     file.close!
   end
