@@ -642,7 +642,8 @@ class Puppet::Parser::Scope
     end
 
     if options[:append]
-      table[name] = append_value(undef_as('', self[name]), value)
+      # produced result (value) is the resulting appended value, note: the table[]= does not return the value
+      table[name] = (value = append_value(undef_as('', self[name]), value))
     else
       table[name] = value
     end
