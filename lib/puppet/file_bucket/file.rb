@@ -134,7 +134,7 @@ class Puppet::FileBucket::File
 
     # Caller *must* close the stream
     def stream()
-      Puppet::FileSystem.open(@path, 'r')
+      Puppet::FileSystem.open(@path, nil, 'r')
     end
 
     def size
