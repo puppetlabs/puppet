@@ -38,7 +38,7 @@ with_puppet_running_on master, {} do
         Timeout.timeout(timeout) do
           loop do
             # 7 is "Could not connect to host", which will happen before it's running
-            result = on(agent, "curl -k https://#{agent}:8139", :acceptable_exit_codes => [0,7])
+            result = on(agent, "curl --tlsv1 -k https://#{agent}:8139", :acceptable_exit_codes => [0,7])
             break if result.exit_code == 0
             sleep 1
           end
