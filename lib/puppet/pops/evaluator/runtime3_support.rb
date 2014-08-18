@@ -366,18 +366,27 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # This gets the parameter value, or nil (for both valid parameters and parameters that do not exist).
     val = resource[parameter_name]
 
-    # The defaults must be looked up in the scope where the resource was created (not in the given
-    # scope where the lookup takes place.
-    resource_scope = resource.scope
-    if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
-      # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
-      # name and value.
-      # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
-      # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
-      param = defaults[parameter_name.to_sym]
-      # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
-      # at all times. Instead, they return a nil param until a value has been set.
-      val = param.nil? ? nil : param.value
+    # Sometimes the resource is a Puppet::Parser::Resource and sometimes it is
+    # a Puppet::Resource. The Puppet::Resource case occurs when puppet language
+    # is evaluated against an already completed catalog (where all instances of
+    # Puppet::Parser::Resource are converted to Puppet::Resource instances).
+    # Evaluating against an already completed catalog is really only found in
+    # the language specification tests, where the puppet language is used to
+    # test itself.
+    if resource.is_a?(Puppet::Parser::Resource)
+      # The defaults must be looked up in the scope where the resource was created (not in the given
+      # scope where the lookup takes place.
+      resource_scope = resource.scope
+      if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
+        # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
+        # name and value.
+        # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
+        # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
+        param = defaults[parameter_name.to_sym]
+        # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
+        # at all times. Instead, they return a nil param until a value has been set.
+        val = param.nil? ? nil : param.value
+      end
     end
     val
   end

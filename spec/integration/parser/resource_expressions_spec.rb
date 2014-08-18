@@ -1,46 +1,8 @@
 require 'spec_helper'
-require 'puppet_spec/compiler'
-require 'matchers/resource'
+require 'puppet_spec/language'
 
 describe "Puppet resource expressions" do
-  include PuppetSpec::Compiler
-  include Matchers::Resource
-
-  def self.produces(expectations)
-    expectations.each do |manifest, resources|
-      it "evaluates #{manifest} to produce #{resources}" do
-        catalog = compile_to_catalog(manifest)
-
-        if resources.empty?
-          base_resources = ["Class[Settings]", "Class[main]", "Stage[main]"]
-          expect(catalog.resources.collect(&:ref) - base_resources).to eq([])
-        else
-          resources.each do |reference|
-            if reference.is_a?(Array)
-              matcher = have_resource(reference[0])
-              reference[1].each do |name, value|
-                matcher = matcher.with_parameter(name, value)
-              end
-            else
-              matcher = have_resource(reference)
-            end
-
-            expect(catalog).to matcher
-          end
-        end
-      end
-    end
-  end
-
-  def self.fails(expectations)
-    expectations.each do |manifest, pattern|
-      it "fails to evaluate #{manifest} with message #{pattern}" do
-        expect do
-          compile_to_catalog(manifest)
-        end.to raise_error(Puppet::Error, pattern)
-      end
-    end
-  end
+  extend PuppetSpec::Language
 
   describe "future parser" do
     before :each do
@@ -48,24 +10,25 @@ describe "Puppet resource expressions" do
     end
 
     produces(
-      "$a = notify; $b = example; $c = { message => hello }; @@$a { $b: * => $c } realize(Resource[$a, $b])" => [["Notify[example]", { :message => "hello" }]])
+      "$a = notify; $b = example; $c = { message => hello }; @@$a { $b: * => $c } realize(Resource[$a, $b])" => "Notify[example][message] == 'hello'")
+
 
     context "resource titles" do
       produces(
-        "notify { thing: }"                     => ["Notify[thing]"],
-        "$x = thing notify { $x: }"             => ["Notify[thing]"],
+        "notify { thing: }"                     => "defined(Notify[thing])",
+        "$x = thing notify { $x: }"             => "defined(Notify[thing])",
 
-        "notify { [thing]: }"                   => ["Notify[thing]"],
-        "$x = [thing] notify { $x: }"           => ["Notify[thing]"],
+        "notify { [thing]: }"                   => "defined(Notify[thing])",
+        "$x = [thing] notify { $x: }"           => "defined(Notify[thing])",
 
-        "notify { [[nested, array]]: }"         => ["Notify[nested]", "Notify[array]"],
-        "$x = [[nested, array]] notify { $x: }" => ["Notify[nested]", "Notify[array]"],
+        "notify { [[nested, array]]: }"         => "defined(Notify[nested]) and defined(Notify[array])",
+        "$x = [[nested, array]] notify { $x: }" => "defined(Notify[nested]) and defined(Notify[array])",
 
-        "notify { []: }"                        => [],
-        "$x = [] notify { $x: }"                => [],
+        "notify { []: }"                        => [], # this asserts nothing added
+        "$x = [] notify { $x: }"                => [], # this asserts nothing added
 
-        "notify { default: }"                   => [], # nothing created because this is just a local default
-        "$x = default notify { $x: }"           => [])
+        "notify { default: }"                   => "!defined(Notify['default'])", # nothing created because this is just a local default
+        "$x = default notify { $x: }"           => "!defined(Notify['default'])")
 
       fails(
         "notify { '': }"                         => /Empty string title/,
@@ -120,24 +83,24 @@ describe "Puppet resource expressions" do
 
     context "type names" do
       produces(
-        "notify { testing: }"                  => ["Notify[testing]"],
-        "$a = notify; $a { testing: }"         => ["Notify[testing]"],
-        "'notify' { testing: }"                => ["Notify[testing]"],
-        "sprintf('%s', 'notify') { testing: }" => ["Notify[testing]"],
-        "$a = ify; \"not$a\" { testing: }"     => ["Notify[testing]"],
+        "notify { testing: }"                  => "defined(Notify[testing])",
+        "$a = notify; $a { testing: }"         => "defined(Notify[testing])",
+        "'notify' { testing: }"                => "defined(Notify[testing])",
+        "sprintf('%s', 'notify') { testing: }" => "defined(Notify[testing])",
+        "$a = ify; \"not$a\" { testing: }"     => "defined(Notify[testing])",
 
-        "Notify { testing: }"           => ["Notify[testing]"],
-        "Resource[Notify] { testing: }" => ["Notify[testing]"],
-        "'Notify' { testing: }"         => ["Notify[testing]"],
+        "Notify { testing: }"           => "defined(Notify[testing])",
+        "Resource[Notify] { testing: }" => "defined(Notify[testing])",
+        "'Notify' { testing: }"         => "defined(Notify[testing])",
 
-        "class a { notify { testing: } } class { a: }"   => ["Notify[testing]"],
-        "class a { notify { testing: } } Class { a: }"   => ["Notify[testing]"],
-        "class a { notify { testing: } } 'class' { a: }" => ["Notify[testing]"],
+        "class a { notify { testing: } } class { a: }"   => "defined(Notify[testing])",
+        "class a { notify { testing: } } Class { a: }"   => "defined(Notify[testing])",
+        "class a { notify { testing: } } 'class' { a: }" => "defined(Notify[testing])",
 
-        "define a::b { notify { testing: } } a::b { title: }" => ["Notify[testing]"],
-        "define a::b { notify { testing: } } A::B { title: }" => ["Notify[testing]"],
-        "define a::b { notify { testing: } } 'a::b' { title: }" => ["Notify[testing]"],
-        "define a::b { notify { testing: } } Resource['a::b'] { title: }" => ["Notify[testing]"])
+        "define a::b { notify { testing: } } a::b { title: }" => "defined(Notify[testing])",
+        "define a::b { notify { testing: } } A::B { title: }" => "defined(Notify[testing])",
+        "define a::b { notify { testing: } } 'a::b' { title: }" => "defined(Notify[testing])",
+        "define a::b { notify { testing: } } Resource['a::b'] { title: }" => "defined(Notify[testing])")
 
       fails(
         "'' { testing: }" => /Illegal type reference/,
@@ -154,30 +117,27 @@ describe "Puppet resource expressions" do
 
     context "local defaults" do
       produces(
-        "notify { example:;                     default: message => defaulted }" => [["Notify[example]", { :message => "defaulted" }]],
-        "notify { example: message => specific; default: message => defaulted }" => [["Notify[example]", { :message => "specific" }]],
-        "notify { example: message => undef;    default: message => defaulted }" => [["Notify[example]", { :message => nil }]],
-        "notify { [example, other]: ;           default: message => defaulted }" => [["Notify[example]", { :message => "defaulted" }],
-                                                                                     ["Notify[other]",   { :message => "defaulted" }]],
-        "notify { [example, default]: message => set; other: }"                  => [["Notify[example]", { :message => "set" }],
-                                                                                     ["Notify[other]",   { :message => "set" }]])
+        "notify { example:;                     default: message => defaulted }" => "Notify[example][message] == 'defaulted'",
+        "notify { example: message => specific; default: message => defaulted }" => "Notify[example][message] == 'specific'",
+        "notify { example: message => undef;    default: message => defaulted }" => "Notify[example][message] == undef",
+        "notify { [example, other]: ;           default: message => defaulted }" => "Notify[example][message] == 'defaulted' and Notify[other][message] == 'defaulted'",
+        "notify { [example, default]: message => set; other: }"                  => "Notify[example][message] == 'set' and Notify[other][message] == 'set'")
     end
 
     context "order of evaluation" do
       fails("notify { hi: message => value; bye: message => Notify[hi][message] }" => /Resource not found: Notify\['hi'\]/)
 
-      produces("notify { hi: message => (notify { param: message => set }); bye: message => Notify[param][message] }" => ["Notify[hi]",
-                                                                                                                          ["Notify[bye]", { :message => "set" }]])
+      produces("notify { hi: message => (notify { param: message => set }); bye: message => Notify[param][message] }" => "defined(Notify[hi]) and Notify[bye][message] == 'set'")
       fails("notify { bye: message => Notify[param][message]; hi: message => (notify { param: message => set }) }" => /Resource not found: Notify\['param'\]/)
     end
 
     context "parameters" do
       produces(
-        "notify { title: message => set }" => [["Notify[title]", { :message => "set" }]],
-        "$x = set notify { title: message => $x }" => [["Notify[title]", { :message => "set" }]],
+        "notify { title: message => set }" => "Notify[title][message] == 'set'",
+        "$x = set notify { title: message => $x }" => "Notify[title][message] == 'set'",
 
-        "notify { title: *=> { message => set } }" => [["Notify[title]", { :message => "set" }]],
-        "$x = { message => set } notify { title: * => $x }" => [["Notify[title]", { :message => "set" }]])
+        "notify { title: *=> { message => set } }" => "Notify[title][message] == 'set'",
+        "$x = { message => set } notify { title: * => $x }" => "Notify[title][message] == 'set'")
 
       fails(
         "notify { title: unknown => value }" => /Invalid parameter unknown/,
@@ -191,16 +151,16 @@ describe "Puppet resource expressions" do
 
     context "virtual" do
       produces(
-        "@notify { example: }" => [],
-        "@notify { example: } realize(Notify[example])" => ["Notify[example]"],
-        "@notify { virtual: message => set } notify { real: message => Notify[virtual][message] }" => [["Notify[real]", { :message => "set" }]])
+        "@notify { example: }" => "!defined(Notify[example])",
+        "@notify { example: } realize(Notify[example])" => "defined(Notify[example])",
+        "@notify { virtual: message => set } notify { real: message => Notify[virtual][message] }" => "Notify[real][message] == 'set'")
     end
 
     context "exported" do
       produces(
-        "@@notify { example: }" => [],
-        "@@notify { example: } realize(Notify[example])" => ["Notify[example]"],
-        "@@notify { exported: message => set } notify { real: message => Notify[exported][message] }" => [["Notify[real]", { :message => "set" }]])
+        "@@notify { example: }" => "!defined(Notify[example])",
+        "@@notify { example: } realize(Notify[example])" => "defined(Notify[example])",
+        "@@notify { exported: message => set } notify { real: message => Notify[exported][message] }" => "Notify[real][message] == 'set'")
     end
   end
 
