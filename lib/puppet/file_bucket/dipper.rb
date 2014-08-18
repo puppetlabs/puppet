@@ -96,7 +96,7 @@ class Puppet::FileBucket::Dipper
           of.binmode
           begin
             source_stream = newcontents.stream();
-            IO.copy_stream(source_stream, of)
+            FileUtils.copy_stream(source_stream, of)
           ensure
             source_stream.close()
           end

@@ -89,7 +89,7 @@ module Puppet::FileBucketFile
             Puppet::FileSystem.open(contents_file, 0440, 'wb') do |of|
               # PUP-1044 writes all of the contents
               src = bucket_file.stream;
-              IO.copy_stream(src, of)
+              FileUtils.copy_stream(src, of)
               src.close
             end
           end
