@@ -24,8 +24,8 @@ describe "Puppet resource expressions" do
         "notify { [[nested, array]]: }"         => "defined(Notify[nested]) and defined(Notify[array])",
         "$x = [[nested, array]] notify { $x: }" => "defined(Notify[nested]) and defined(Notify[array])",
 
-        "notify { []: }"                        => "true", # don't know what can actually be asserted here
-        "$x = [] notify { $x: }"                => "true",
+        "notify { []: }"                        => [], # this asserts nothing added
+        "$x = [] notify { $x: }"                => [], # this asserts nothing added
 
         "notify { default: }"                   => "!defined(Notify['default'])", # nothing created because this is just a local default
         "$x = default notify { $x: }"           => "!defined(Notify['default'])")
