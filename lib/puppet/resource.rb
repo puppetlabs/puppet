@@ -324,6 +324,26 @@ class Puppet::Resource
     resource_type.respond_to?(:key_attributes) ? resource_type.key_attributes : [:name]
   end
 
+  # Convert our resource to yaml for Hiera purposes.
+  def to_hierayaml
+    # Collect list of attributes to align => and move ensure first
+    attr = parameters.keys
+    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+
+    attr.sort!
+    if attr.first != :ensure  && attr.include?(:ensure)
+      attr.delete(:ensure)
+      attr.unshift(:ensure)
+    end
+
+    attributes = attr.collect { |k|
+      v = parameters[k]
+      "    %-#{attr_max}s: %s\n" % [k, Puppet::Parameter.format_value_for_display(v)]
+    }.join
+
+    "  %s:\n%s" % [self.title, attributes]
+  end
+
   # Convert our resource to Puppet code.
   def to_manifest
     # Collect list of attributes to align => and move ensure first
