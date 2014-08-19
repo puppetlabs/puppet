@@ -40,6 +40,10 @@ module Puppet
   # the hash that determines how our system behaves
   @@settings = Puppet::Settings.new
 
+  # Note: It's important that these accessors (`self.settings`, `self.[]`) are
+  # defined before we try to load any "features" (which happens a few lines below),
+  # because the implementation of the features loading may examine the values of
+  # settings.
   def self.settings
     @@settings
   end
