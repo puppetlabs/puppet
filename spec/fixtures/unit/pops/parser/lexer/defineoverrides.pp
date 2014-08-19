@@ -7,11 +7,11 @@ define myfile($mode) {
 }
 
 class base {
-    myfile { $file: mode => 644 }
+    myfile { $file: mode => '0644' }
 }
 
 class sub inherits base {
-    Myfile[$file] { mode => 755, } # test the end-comma
+    Myfile[$file] { mode => '0755', } # test the end-comma
 }
 
 include sub

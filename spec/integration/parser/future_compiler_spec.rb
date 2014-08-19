@@ -230,10 +230,10 @@ describe "Puppet::Parser::Compiler" do
       def assert_creates_relationships(relationship_code, expectations)
         base_manifest = <<-MANIFEST
           file { [a,b,c]:
-            mode => 0644,
+            mode => '0644',
           }
           file { [d,e]:
-            mode => 0755,
+            mode => '0755',
           }
         MANIFEST
         catalog = compile_to_catalog(base_manifest + relationship_code)

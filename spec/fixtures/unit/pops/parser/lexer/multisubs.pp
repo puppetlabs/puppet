@@ -1,9 +1,9 @@
 class base {
-    file { "/tmp/multisubtest": content => "base", mode => 644 }
+    file { "/tmp/multisubtest": content => "base", mode => '0644' }
 }
 
 class sub1 inherits base {
-    File["/tmp/multisubtest"] { mode => 755 }
+    File["/tmp/multisubtest"] { mode => '0755' }
 }
 
 class sub2 inherits base {

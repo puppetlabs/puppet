@@ -10,5 +10,5 @@ testargs { "testingname":
 
 testargs { "testingother":
     file => "/tmp/argumenttest2",
-    mode => 644
+    mode => '0644'
 }

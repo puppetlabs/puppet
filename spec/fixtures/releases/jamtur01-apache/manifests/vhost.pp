@@ -8,7 +8,7 @@ define apache::vhost( $port, $docroot, $ssl=true, $template='apache/vhost-defaul
     content => template($template),
     owner => 'root',
     group => 'root',
-    mode => '777',
+    mode => '0777',
     require => Package['httpd'],
     notify => Service['httpd'],
   }

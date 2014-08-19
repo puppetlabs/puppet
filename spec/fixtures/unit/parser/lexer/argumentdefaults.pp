@@ -1,6 +1,6 @@
 # $Id$
 
-define testargs($file, $mode = 755) {
+define testargs($file, $mode = '0755') {
     file { $file: ensure => file, mode => $mode }
 }
 
@@ -10,5 +10,5 @@ testargs { "testingname":
 
 testargs { "testingother":
     file => "/tmp/argumenttest2",
-    mode => 644
+    mode => '0644'
 }
