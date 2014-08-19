@@ -1,6 +1,6 @@
 test_name "Agent should use environment given by ENC for fetching remote files"
 
-testdir = master.tmpdir('respect_enc_test')
+testdir = create_tmpdir_for_user master, 'respect_enc_test'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
 #!#{master['puppetbindir']}/ruby
@@ -36,7 +36,7 @@ end
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    atmp = agent.tmpdir('respect_enc_test')
+    atmp = create_tmpdir_for_user agent, 'respect_enc_test'
     logger.debug "agent: #{agent} \tagent.tmpdir => #{atmp}"
 
     create_remote_file master, "#{testdir}/different.pp", <<END
