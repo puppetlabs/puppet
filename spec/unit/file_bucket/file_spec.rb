@@ -14,7 +14,7 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
   end
 
   it "accepts s and pson" do
-   expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
+    expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
   end
 
   describe "making round trips through network formats" do
@@ -34,7 +34,7 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
   end
 
   it "should require contents to be a string" do
-    expect { Puppet::FileBucket::File.new(5) }.to raise_error(ArgumentError, /contents must be a String, got a Fixnum$/)
+    expect { Puppet::FileBucket::File.new(5) }.to raise_error(ArgumentError, /contents must be a String or Pathname, got a Fixnum$/)
   end
 
   it "should complain about options other than :bucket_path" do

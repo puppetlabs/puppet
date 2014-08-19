@@ -1,4 +1,5 @@
 require 'puppet/ssl/certificate_authority'
+require 'puppet/file_system/uniquefile'
 
 # This class wraps a given command and invokes it with a CSR name and body to
 # determine if the given CSR should be autosigned
@@ -21,7 +22,7 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
     name = csr.name
     cmd = [@path, name]
 
-    output = Puppet::FileSystem::Tempfile.open('puppet-csr') do |csr_file|
+    output = Puppet::FileSystem::Uniquefile.open_tmp('puppet-csr') do |csr_file|
       csr_file.write(csr.to_s)
       csr_file.flush
 

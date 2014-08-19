@@ -39,19 +39,12 @@ module Puppet
   # the hash that determines how our system behaves
   @@settings = Puppet::Settings.new
 
-  require 'puppet/util/logging'
-
-  extend Puppet::Util::Logging
-
-  # The feature collection
-  @features = Puppet::Util::Feature.new('puppet/feature')
-
-  # Load the base features.
-  require 'puppet/feature/base'
-
-  # Store a new default value.
-  def self.define_settings(section, hash)
-    @@settings.define_settings(section, hash)
+  # Note: It's important that these accessors (`self.settings`, `self.[]`) are
+  # defined before we try to load any "features" (which happens a few lines below),
+  # because the implementation of the features loading may examine the values of
+  # settings.
+  def self.settings
+    @@settings
   end
 
   # Get the value for a setting
@@ -65,6 +58,21 @@ module Puppet
     else
       return @@settings[param]
     end
+  end
+
+  require 'puppet/util/logging'
+
+  extend Puppet::Util::Logging
+
+  # The feature collection
+  @features = Puppet::Util::Feature.new('puppet/feature')
+
+  # Load the base features.
+  require 'puppet/feature/base'
+
+  # Store a new default value.
+  def self.define_settings(section, hash)
+    @@settings.define_settings(section, hash)
   end
 
   # setting access and stuff
@@ -83,11 +91,6 @@ module Puppet
       Puppet::Util::Log.level=(:notice)
     end
   end
-
-  def self.settings
-    @@settings
-  end
-
 
   def self.run_mode
     # This sucks (the existence of this method); there are a lot of places in our code that branch based the value of

@@ -1,6 +1,6 @@
 test_name "Agent should use agent environment if there is an enc that does not specify the environment"
 
-testdir = master.tmpdir('use_agent_env')
+testdir = create_tmpdir_for_user master, 'use_agent_env'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
 #!#{master['puppetbindir']}/ruby

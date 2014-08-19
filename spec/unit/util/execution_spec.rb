@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/file_system/uniquefile'
 
 describe Puppet::Util::Execution do
   include Puppet::Util::Execution
@@ -45,7 +46,7 @@ describe Puppet::Util::Execution do
         $stderr.stubs(:reopen)
 
         @stdin  = File.open(null_file, 'r')
-        @stdout = Tempfile.new('stdout')
+        @stdout = Puppet::FileSystem::Uniquefile.new('stdout')
         @stderr = File.open(null_file, 'w')
 
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
@@ -125,7 +126,7 @@ describe Puppet::Util::Execution do
         stub_process_wait(0)
 
         @stdin  = File.open(null_file, 'r')
-        @stdout = Tempfile.new('stdout')
+        @stdout = Puppet::FileSystem::Uniquefile.new('stdout')
         @stderr = File.open(null_file, 'w')
       end
 
@@ -216,8 +217,8 @@ describe Puppet::Util::Execution do
 
         describe "when squelch is not set" do
           it "should set stdout to a temporary output file" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,_|
               stdout.path == outfile.path
@@ -227,8 +228,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should set stderr to the same file as stdout if combine is true" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == outfile.path
@@ -238,8 +239,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should set stderr to the null device if combine is false" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == null_file
@@ -249,8 +250,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should combine stdout and stderr if combine is true" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == outfile.path
@@ -260,8 +261,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should default combine to true when no options are specified" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == outfile.path
@@ -271,8 +272,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should default combine to false when options are specified, but combine is not" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == null_file
@@ -282,8 +283,8 @@ describe Puppet::Util::Execution do
           end
 
           it "should default combine to false when an empty hash of options is specified" do
-            outfile = Tempfile.new('stdout')
-            Tempfile.stubs(:new).returns(outfile)
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
             Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == null_file
@@ -500,25 +501,25 @@ describe Puppet::Util::Execution do
       end
 
       it "should read and return the output if squelch is false" do
-        stdout = Tempfile.new('test')
-        Tempfile.stubs(:new).returns(stdout)
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
         Puppet::Util::Execution.execute('test command').should == "My expected command output"
       end
 
       it "should not read the output if squelch is true" do
-        stdout = Tempfile.new('test')
-        Tempfile.stubs(:new).returns(stdout)
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
         Puppet::Util::Execution.execute('test command', :squelch => true).should == ''
       end
 
       it "should delete the file used for output if squelch is false" do
-        stdout = Tempfile.new('test')
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
         path = stdout.path
-        Tempfile.stubs(:new).returns(stdout)
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
 
         Puppet::Util::Execution.execute('test command')
 
@@ -526,8 +527,8 @@ describe Puppet::Util::Execution do
       end
 
       it "should not raise an error if the file is open" do
-        stdout = Tempfile.new('test')
-        Tempfile.stubs(:new).returns(stdout)
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
         file = File.new(stdout.path, 'r')
 
         Puppet::Util.execute('test command')
