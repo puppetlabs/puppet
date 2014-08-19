@@ -1,3 +1,5 @@
+require 'puppet/file_system/uniquefile'
+
 module Puppet
   require 'rbconfig'
 
@@ -167,37 +169,44 @@ module Puppet::Util::Execution
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
-    stdin = File.open(options[:stdinfile] || null_file, 'r')
-    stdout = options[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
-    stderr = options[:combine] ? stdout : File.open(null_file, 'w')
+    begin
+      stdin = File.open(options[:stdinfile] || null_file, 'r')
+      stdout = options[:squelch] ? File.open(null_file, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      stderr = options[:combine] ? stdout : File.open(null_file, 'w')
 
-    exec_args = [command, options, stdin, stdout, stderr]
+      exec_args = [command, options, stdin, stdout, stderr]
 
-    if execution_stub = Puppet::Util::ExecutionStub.current_value
-      return execution_stub.call(*exec_args)
-    elsif Puppet.features.posix?
-      child_pid = execute_posix(*exec_args)
-      exit_status = Process.waitpid2(child_pid).last.exitstatus
-    elsif Puppet.features.microsoft_windows?
-      process_info = execute_windows(*exec_args)
-      begin
-        exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
-      ensure
-        FFI::WIN32.CloseHandle(process_info.process_handle)
-        FFI::WIN32.CloseHandle(process_info.thread_handle)
+      if execution_stub = Puppet::Util::ExecutionStub.current_value
+        return execution_stub.call(*exec_args)
+      elsif Puppet.features.posix?
+        child_pid = execute_posix(*exec_args)
+        exit_status = Process.waitpid2(child_pid).last.exitstatus
+      elsif Puppet.features.microsoft_windows?
+        process_info = execute_windows(*exec_args)
+        begin
+          exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
+        ensure
+          FFI::WIN32.CloseHandle(process_info.process_handle)
+          FFI::WIN32.CloseHandle(process_info.thread_handle)
+        end
       end
-    end
 
-    [stdin, stdout, stderr].each {|io| io.close rescue nil}
+      [stdin, stdout, stderr].each {|io| io.close rescue nil}
 
-    # read output in if required
-    unless options[:squelch]
-      output = wait_for_output(stdout)
-      Puppet.warning "Could not get output" unless output
-    end
+      # read output in if required
+      unless options[:squelch]
+        output = wait_for_output(stdout)
+        Puppet.warning "Could not get output" unless output
+      end
 
-    if options[:failonfail] and exit_status != 0
-      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
+      if options[:failonfail] and exit_status != 0
+        raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
+      end
+    ensure
+      if !options[:squelch]
+        # if we opened a temp file for stdout, we need to clean it up.
+        stdout.close!
+      end
     end
 
     Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)
