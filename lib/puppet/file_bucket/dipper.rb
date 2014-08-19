@@ -86,7 +86,7 @@ class Puppet::FileBucket::Dipper
 
     if restore
       if newcontents = get_bucket_file(sum)
-        newsum = newcontents.checksum_data()
+        newsum = newcontents.checksum_data
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode
@@ -95,7 +95,7 @@ class Puppet::FileBucket::Dipper
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
           of.binmode
           begin
-            source_stream = newcontents.stream();
+            source_stream = newcontents.stream
             FileUtils.copy_stream(source_stream, of)
           ensure
             source_stream.close()

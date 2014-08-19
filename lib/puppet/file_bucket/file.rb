@@ -29,9 +29,9 @@ class Puppet::FileBucket::File
   def initialize(contents, options = {})
     case contents
     when String
-      @contents = StringContents.new(contents);
+      @contents = StringContents.new(contents)
     when Pathname
-      @contents = FileContents.new(contents);
+      @contents = FileContents.new(contents)
     else
       raise ArgumentError.new("contents must be a String or Pathname, got a #{contents.class}")
     end
@@ -134,7 +134,7 @@ class Puppet::FileBucket::File
 
     # Caller *must* close the stream
     def stream()
-      Puppet::FileSystem.open(@path, nil, 'r')
+      Puppet::FileSystem.open(@path, nil, 'rb')
     end
 
     def size
