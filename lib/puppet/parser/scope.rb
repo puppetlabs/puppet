@@ -629,7 +629,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
-    table = effective_symtable options[:ephemeral]
+    table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
       if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
@@ -642,11 +642,12 @@ class Puppet::Parser::Scope
     end
 
     if options[:append]
-      table[name] = append_value(undef_as('', self[name]), value)
+      # produced result (value) is the resulting appended value, note: the table[]= does not return the value
+      table[name] = (value = append_value(undef_as('', self[name]), value))
     else
       table[name] = value
     end
-    table[name]
+    value
   end
 
   def set_trusted(hash)
@@ -686,15 +687,16 @@ class Puppet::Parser::Scope
   # will be returned (irrespective of it being a match scope or a local scope).
   #
   # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
-  def effective_symtable use_ephemeral
+  def effective_symtable(use_ephemeral)
     s = @ephemeral.last
-    return s || @symtable if use_ephemeral
-
-    # Why check if ephemeral is a Hash ??? Not needed, a hash cannot be a parent scope ???
-    while s && !(s.is_a?(Hash) || s.is_local_scope?())
-      s = s.parent
+    if use_ephemeral
+      return s || @symtable
+    else
+      while s && !s.is_local_scope?()
+        s = s.parent
+      end
+      s || @symtable
     end
-    s ? s : @symtable
   end
 
   # Sets the variable value of the name given as an argument to the given value. The value is

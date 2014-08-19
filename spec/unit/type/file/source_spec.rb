@@ -409,7 +409,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:group] = 2
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end
@@ -418,7 +418,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:owner] = 1
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end
@@ -437,7 +437,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           Puppet.expects(:deprecation_warning).with(deprecation_message).never
           @resource[:owner] = 1
           @resource[:group] = 2
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end

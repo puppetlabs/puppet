@@ -303,7 +303,7 @@ class Nagios::Base
         if value.is_a? Array
           value.join(",").sub(';', '\;')
         else
-          value.sub(';', '\;')
+          value.to_s.sub(';', '\;')
         end
         ]
     }

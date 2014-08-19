@@ -63,26 +63,11 @@ describe "Defaults" do
       lambda { Puppet.settings[:cfacter] = true }.should raise_exception ArgumentError, 'facter has already evaluated facts.'
     end
 
-    it 'should replace facter when set to true' do
+    it 'should initialize cfacter when set to true' do
       Puppet.features.stubs(:cfacter?).returns true
-      facter = Facter
-      external_facts = Puppet.features.external_facts?
-      begin
-        CFacter = mock
-        CFacter.stubs(:version).returns '0.2.0'
-        CFacter.stubs(:search).returns nil
-        CFacter.stubs(:search_external).returns nil
-        CFacter.stubs(:value).with(:somefact).returns 'foo'
-        Puppet.settings[:cfacter] = true
-        Facter.should eq CFacter
-        Facter.value(:somefact).should eq 'foo'
-        Puppet.features.external_facts?.should be_true
-      ensure
-        Object.send(:remove_const, :CFacter)
-        Object.send(:remove_const, :Facter)
-        Object.send(:const_set, :Facter, facter)
-        Puppet.features.add(:external_facts) { external_facts }
-      end
+      CFacter = mock
+      CFacter.stubs(:initialize)
+      Puppet.settings[:cfacter] = true
     end
 
   end

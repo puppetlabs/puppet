@@ -1,4 +1,6 @@
 module PuppetSpec::Compiler
+  module_function
+
   def compile_to_catalog(string, node = Puppet::Node.new('foonode'))
     Puppet[:code] = string
     # see lib/puppet/indirector/catalog/compiler.rb#filter

@@ -174,7 +174,7 @@ class Puppet::Parser::AST::PopsBridge
 
     def instantiate_HostClassDefinition(o, modname)
       args = args_from_definition(o, modname)
-      args[:parent] = o.parent_class
+      args[:parent] = absolute_reference(o.parent_class)
       Puppet::Resource::Type.new(:hostclass, o.name, @context.merge(args))
     end
 
@@ -241,6 +241,12 @@ class Puppet::Parser::AST::PopsBridge
       @ast_transformer.is_nop?(o)
     end
 
+    def absolute_reference(ref)
+      if ref.nil? || ref.empty? || ref.start_with?('::')
+        ref
+      else
+        "::#{ref}"
+      end
+    end
   end
-
 end
