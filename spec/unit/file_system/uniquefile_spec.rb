@@ -129,16 +129,18 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    it "close doesn't unlink if already unlinked" do
-      t = tempfile("foo")
-      path = t.path
-      t.unlink
-      File.open(path, "w").close
-      begin
-        t.close(true)
-        expect(File.exist?(path)).to eq(true)
-      ensure
-        File.unlink(path) rescue nil
+    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+      it "close doesn't unlink if already unlinked" do
+        t = tempfile("foo")
+        path = t.path
+        t.unlink
+        File.open(path, "w").close
+        begin
+          t.close(true)
+          expect(File.exist?(path)).to eq(true)
+        ensure
+          File.unlink(path) rescue nil
+        end
       end
     end
 
@@ -151,16 +153,18 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    it "close! doesn't unlink if already unlinked" do
-      t = tempfile("foo")
-      path = t.path
-      t.unlink
-      File.open(path, "w").close
-      begin
-        t.close!
-        expect(File.exist?(path)).to eq(true)
-      ensure
-        File.unlink(path) rescue nil
+    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+      it "close! doesn't unlink if already unlinked" do
+        t = tempfile("foo")
+        path = t.path
+        t.unlink
+        File.open(path, "w").close
+        begin
+          t.close!
+          expect(File.exist?(path)).to eq(true)
+        ensure
+          File.unlink(path) rescue nil
+        end
       end
     end
 
