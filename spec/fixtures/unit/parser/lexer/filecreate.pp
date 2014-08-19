@@ -1,8 +1,8 @@
 # $Id$
 
 file {
-    "/tmp/createatest": ensure => file, mode => 755;
-    "/tmp/createbtest": ensure => file, mode => 755
+    "/tmp/createatest": ensure => file, mode => '0755';
+    "/tmp/createbtest": ensure => file, mode => '0755'
 }
 
 file {

@@ -418,7 +418,7 @@ describe Puppet::Type.type(:file) do
     it "should not copy values to the child which were set by the source" do
       source = File.expand_path(__FILE__)
       file[:source] = source
-      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => 0755, :ftype => "file", :checksum => "{md5}whatever", :source => source
+      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :source => source
       file.parameter(:source).stubs(:metadata).returns metadata
 
       file.parameter(:source).copy_source_values
@@ -1357,13 +1357,13 @@ describe Puppet::Type.type(:file) do
       target = described_class.new(
         :ensure => :file, :path => @target,
         :catalog => catalog, :content => 'yayness',
-        :mode => 0644)
+        :mode => '0644')
       catalog.add_resource target
 
       @link_resource = described_class.new(
         :ensure => :link, :path => @link,
         :target => @target, :catalog => catalog,
-        :mode => 0755)
+        :mode => '0755')
       catalog.add_resource @link_resource
 
       # to prevent the catalog from trying to write state.yaml

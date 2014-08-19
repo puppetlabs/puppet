@@ -17,12 +17,12 @@ describe "egrammar parsing resource declarations" do
         ].join("\n")
       end
 
-      it "#{word} { 'title': path => '/somewhere', mode => 0777}" do
-        dump(parse("#{word} { 'title': path => '/somewhere', mode => 0777}")).should == [
+      it "#{word} { 'title': path => '/somewhere', mode => '0777'}" do
+        dump(parse("#{word} { 'title': path => '/somewhere', mode => '0777'}")).should == [
           "(resource file",
           "  ('title'",
           "    (path => '/somewhere')",
-          "    (mode => 0777)))"
+          "    (mode => '0777')))"
         ].join("\n")
       end
 
@@ -75,11 +75,11 @@ describe "egrammar parsing resource declarations" do
         ].join("\n")
       end
 
-      it "#{word} { title: * => {mode => 0777} }" do
-        dump(parse("#{word} { title: * => {mode => 0777}}")).should == [
+      it "#{word} { title: * => {mode => '0777'} }" do
+        dump(parse("#{word} { title: * => {mode => '0777'}}")).should == [
           "(resource file",
           "  (title",
-          "    (* => ({} (mode 0777)))))"
+          "    (* => ({} (mode '0777')))))"
         ].join("\n")
       end
     end
@@ -90,17 +90,17 @@ describe "egrammar parsing resource declarations" do
       dump(parse("File { }")).should == "(resource-defaults file)"
     end
 
-    it "File { mode => 0777 }" do
-      dump(parse("File { mode => 0777}")).should == [
+    it "File { mode => '0777' }" do
+      dump(parse("File { mode => '0777'}")).should == [
         "(resource-defaults file",
-        "  (mode => 0777))"
+        "  (mode => '0777'))"
       ].join("\n")
     end
 
-    it "File { * => {mode => 0777} } (even if validated to be illegal)" do
-      dump(parse("File { * => {mode => 0777}}")).should == [
+    it "File { * => {mode => '0777'} } (even if validated to be illegal)" do
+      dump(parse("File { * => {mode => '0777'}}")).should == [
         "(resource-defaults file",
-        "  (* => ({} (mode 0777))))"
+        "  (* => ({} (mode '0777'))))"
       ].join("\n")
     end
   end
@@ -140,10 +140,10 @@ describe "egrammar parsing resource declarations" do
         ].join("\n")
     end
 
-    it "File['x'] { * => {mode => 0777} } (even if validated to be illegal)" do
-      dump(parse("File['x'] { * => {mode => 0777}}")).should == [
+    it "File['x'] { * => {mode => '0777'} } (even if validated to be illegal)" do
+      dump(parse("File['x'] { * => {mode => '0777'}}")).should == [
         "(override (slice file 'x')",
-        "  (* => ({} (mode 0777))))"
+        "  (* => ({} (mode '0777'))))"
       ].join("\n")
     end
   end
@@ -159,7 +159,7 @@ describe "egrammar parsing resource declarations" do
 
     it "nothing before the title colon is a syntax error" do
       expect do
-        parse("@file {: mode => 0777 }")
+        parse("@file {: mode => '0777' }")
       end.to raise_error(/Syntax error/)
     end
 
@@ -167,35 +167,35 @@ describe "egrammar parsing resource declarations" do
       # The expression results in VIRTUAL, CALL FUNCTION('file', HASH) since the resource body has
       # no title.
       expect do
-        parse("@file { mode => 0777 }")
+        parse("@file { mode => '0777' }")
       end.to raise_error(/Virtual \(@\) can only be applied to a Resource Expression/)
     end
 
     it "parses global defaults with @ (even if validated to be illegal)" do
-      dump(parse("@File { mode => 0777 }")).should == [
+      dump(parse("@File { mode => '0777' }")).should == [
         "(virtual-resource-defaults file",
-        "  (mode => 0777))"
+        "  (mode => '0777'))"
         ].join("\n")
     end
 
     it "parses global defaults with @@ (even if validated to be illegal)" do
-      dump(parse("@@File { mode => 0777 }")).should == [
+      dump(parse("@@File { mode => '0777' }")).should == [
         "(exported-resource-defaults file",
-        "  (mode => 0777))"
+        "  (mode => '0777'))"
         ].join("\n")
     end
 
     it "parses override with @ (even if validated to be illegal)" do
-      dump(parse("@File[foo] { mode => 0777 }")).should == [
+      dump(parse("@File[foo] { mode => '0777' }")).should == [
         "(virtual-override (slice file foo)",
-        "  (mode => 0777))"
+        "  (mode => '0777'))"
         ].join("\n")
     end
 
     it "parses override combined with @@ (even if validated to be illegal)" do
-      dump(parse("@@File[foo] { mode => 0777 }")).should == [
+      dump(parse("@@File[foo] { mode => '0777' }")).should == [
         "(exported-override (slice file foo)",
-        "  (mode => 0777))"
+        "  (mode => '0777'))"
         ].join("\n")
     end
   end
@@ -302,22 +302,22 @@ describe "egrammar parsing resource declarations" do
         dump(parse("File <| tag == 'foo' |>")).should == "(collect file\n  (<| |> (== tag 'foo')))"
       end
 
-      it "File <| tag == 'foo' and mode != 0777 |>" do
-        dump(parse("File <| tag == 'foo' and mode != 0777 |>")).should == "(collect file\n  (<| |> (&& (== tag 'foo') (!= mode 0777))))"
+      it "File <| tag == 'foo' and mode != '0777' |>" do
+        dump(parse("File <| tag == 'foo' and mode != '0777' |>")).should == "(collect file\n  (<| |> (&& (== tag 'foo') (!= mode '0777'))))"
       end
 
-      it "File <| tag == 'foo' or mode != 0777 |>" do
-        dump(parse("File <| tag == 'foo' or mode != 0777 |>")).should == "(collect file\n  (<| |> (|| (== tag 'foo') (!= mode 0777))))"
+      it "File <| tag == 'foo' or mode != '0777' |>" do
+        dump(parse("File <| tag == 'foo' or mode != '0777' |>")).should == "(collect file\n  (<| |> (|| (== tag 'foo') (!= mode '0777'))))"
       end
 
-      it "File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>" do
-        dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should ==
-        "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
+      it "File <| tag == 'foo' or tag == 'bar' and mode != '0777' |>" do
+        dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != '0777' |>")).should ==
+        "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode '0777')))))"
       end
 
-      it "File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>" do
-        dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should ==
-        "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"
+      it "File <| (tag == 'foo' or tag == 'bar') and mode != '0777' |>" do
+        dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != '0777' |>")).should ==
+        "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode '0777'))))"
       end
     end
   end

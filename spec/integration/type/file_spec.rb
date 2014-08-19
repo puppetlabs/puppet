@@ -78,7 +78,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
     source = tmpfile('source')
 
-    catalog.add_resource described_class.new :path => source, :mode => 0755
+    catalog.add_resource described_class.new :path => source, :mode => '0755'
 
     status = catalog.apply.report.resource_statuses["File[#{source}]"]
     status.should_not be_failed
@@ -155,7 +155,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should set executable bits for existing readable directories" do
           set_mode(0600, target)
 
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0644)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => '0644')
           catalog.apply
 
           (get_mode(target) & 07777).should == 0755
