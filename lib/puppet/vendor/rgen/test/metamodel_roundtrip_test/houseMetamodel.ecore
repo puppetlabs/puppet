@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="HouseMetamodel">
+  <eClassifiers xsi:type="ecore:EClass" name="House">
+    <eAnnotations source="bla">
+      <details key="a" value="b"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="address" eType="#//String"
+        changeable="false"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="bathroom" lowerBound="1"
+        eType="#//Rooms/Bathroom"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="kitchen" lowerBound="1"
+        eType="#//Rooms/Kitchen" eOpposite="#//Rooms/Kitchen/house"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="room" upperBound="-1" eType="#//Rooms/Room"
+        containment="true" eOpposite="#//Rooms/Room/house"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="MeetingPlace"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Person">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="house" upperBound="-1"
+        eType="#//House"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="sex" eType="#//SexEnum"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nicknames" upperBound="-1" eType="#//String"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="String" instanceClassName="java.lang.String"/>
+  <eClassifiers xsi:type="ecore:EEnum" name="SexEnum">
+    <eLiterals name="male"/>
+    <eLiterals name="female"/>
+  </eClassifiers>
+  <eSubpackages name="Rooms">
+    <eClassifiers xsi:type="ecore:EClass" name="Room">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="house" eType="#//House"
+          defaultValueLiteral="" eOpposite="#//House/room"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Bathroom" eSuperTypes="#//Rooms/Room"/>
+    <eClassifiers xsi:type="ecore:EClass" name="Kitchen" eSuperTypes="#//Rooms/Room #//MeetingPlace">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="house" eType="#//House"
+          eOpposite="#//House/kitchen"/>
+    </eClassifiers>
+  </eSubpackages>
+</ecore:EPackage>

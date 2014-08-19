@@ -1,0 +1,41 @@
+=Known Bugs
+* <% expand ... :indent => 0 %> seems to change behaviour of active template not only expanded subtemplate
+* Ecore build in types (EString, ...) do not work in ECore instantiator, define your own EDatatype instead
+* ECore datatypes in RGen::ECore should use Java like instanceClassNames
+* overloading of transformation rules not working correctly
+* with \r\n in templates, empty lines appear in output
+* <%nl%> after <%nows%> creates no indentation (<%nl%> in another template in same file)
+
+=Major issues 
+* XML instantiator documentation
+* revise builder datatypes, especially enum implementation using Enum objects as types, 
+  also revise ecore metamodel at this point
+* revise documentation of BuilderExtensions
+* further cleanup EA UML import/export
+  - The differences between EA UML and uml13_metamodel.rb seem to be violations by EA, ArgoUML follows the standard much more closely
+  - Enums should be instances of Enumeration class with EnumerationLiterals (UML Standard), 
+    for EA convert to Classes with stereotype "enumeration" and attributes as literals 
+    (this is what EA 7 creates when clicking on the "New Enumeration" button, EA will reference these classes as type)
+    This is whats missing for Pragma MM generators.
+  - Support primitive types as instances of DataType (which basically have a name) instead of tagged values
+    (this should also be working with EA 7, the tagged values are just add on)
+  - Support more UML metamodel features in the transformers
+* Model Serializer:
+  - make "name" attribute configurable
+  - convert chars in string into something Ruby compatible (e.g newline to \n)
+
+=Minor Issues
+* allow definition of templates from within regular code
+* indexed find in environment
+* XMI Instantiator fixmap: add element names to make feature names unique
+* no error for expand '..', :forach => (foreach misspelled)
+* With JRuby (1.3.1) exceptions raised in templates have a short or no backtrace
+
+
+* extended constraint checks (feature bounds)
+* class filter in RText language
+* root classes for RText language
+* command/class aliases in RText language
+* language variants (different root classes depending on file type)
+* reference name in reference_qualifier
+
