@@ -40,6 +40,27 @@ module Puppet
   # the hash that determines how our system behaves
   @@settings = Puppet::Settings.new
 
+  # Note: It's important that these accessors (`self.settings`, `self.[]`) are
+  # defined before we try to load any "features" (which happens a few lines below),
+  # because the implementation of the features loading may examine the values of
+  # settings.
+  def self.settings
+    @@settings
+  end
+
+  # Get the value for a setting
+  #
+  # @param [Symbol] param the setting to retrieve
+  #
+  # @api public
+  def self.[](param)
+    if param == :debug
+      return Puppet::Util::Log.level == :debug
+    else
+      return @@settings[param]
+    end
+  end
+
   # The services running in this process.
   @services ||= []
 
@@ -58,19 +79,6 @@ module Puppet
     @@settings.define_settings(section, hash)
   end
 
-  # Get the value for a setting
-  #
-  # @param [Symbol] param the setting to retrieve
-  #
-  # @api public
-  def self.[](param)
-    if param == :debug
-      return Puppet::Util::Log.level == :debug
-    else
-      return @@settings[param]
-    end
-  end
-
   # setting access and stuff
   def self.[]=(param,value)
     @@settings[param] = value
@@ -87,11 +95,6 @@ module Puppet
       Puppet::Util::Log.level=(:notice)
     end
   end
-
-  def self.settings
-    @@settings
-  end
-
 
   def self.run_mode
     # This sucks (the existence of this method); there are a lot of places in our code that branch based the value of
