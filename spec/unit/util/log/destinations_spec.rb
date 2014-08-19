@@ -29,7 +29,7 @@ describe Puppet::Util::Log.desttypes[:file] do
 
   before do
     File.stubs(:open)           # prevent actually creating the file
-    File.stubs(:chown)          # prevent chown on non existing file from failing 
+    File.stubs(:chown)          # prevent chown on non existing file from failing
     @class = Puppet::Util::Log.desttypes[:file]
   end
 
@@ -184,6 +184,12 @@ end
 
 
 describe ":eventlog", :if => Puppet::Util::Platform.windows? do
+  before do
+    if Facter.value(:kernelmajversion).to_f < 6.0
+      pending("requires win32-eventlog gem upgrade to 0.6.2 on Windows 2003")
+    end
+  end
+
   let(:klass) { Puppet::Util::Log.desttypes[:eventlog] }
 
   def expects_message_with_type(klass, level, eventlog_type, eventlog_id)
