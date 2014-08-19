@@ -2,6 +2,7 @@ require 'puppet'
 require 'getoptlong'
 require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
+require 'forwardable'
 
 # The class for handling configuration files.
 class Puppet::Settings
