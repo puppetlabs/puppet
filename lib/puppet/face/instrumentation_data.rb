@@ -5,9 +5,10 @@ Puppet::Indirector::Face.define(:instrumentation_data, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Manage instrumentation listener accumulated data."
+  summary "Manage instrumentation listener accumulated data. DEPRECATED."
   description <<-EOT
     This subcommand allows to retrieve the various listener data.
+    (DEPRECATED) This subcommand will be removed in Puppet 4.0.
   EOT
 
   get_action(:destroy).summary "Invalid for this subcommand."
