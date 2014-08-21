@@ -112,7 +112,7 @@ def run_with_environment(agent, environment, options = {})
   expected_strings = options[:expected_strings]
 
   step "running an agent in environment '#{environment}'"
-  atmp = create_tmpdir_for_user agent, "use_environmentpath_#{environment}"
+  atmp = agent.tmpdir("use_environmentpath_#{environment}")
 
   agent_config = [
     "-t",

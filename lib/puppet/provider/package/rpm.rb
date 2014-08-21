@@ -40,12 +40,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     @current_version = output.gsub('RPM version ', '').strip
   end
 
-  # rpm < 4.1 don't support --nosignature
+  # rpm < 4.1 does not support --nosignature
   def self.nosignature
     '--nosignature' unless Puppet::Util::Package.versioncmp(current_version, '4.1') < 0
   end
 
-  # rpm < 4.0.2 don't support --nodigest
+  # rpm < 4.0.2 does not support --nodigest
   def self.nodigest
     '--nodigest' unless Puppet::Util::Package.versioncmp(current_version, '4.0.2') < 0
   end
