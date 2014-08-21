@@ -47,8 +47,8 @@ class Puppet::FileBucket::File
   end
 
   # @return [IO] A stream that reads the contents
-  def stream
-    @contents.stream()
+  def stream(&block)
+    @contents.stream(&block)
   end
 
   def checksum_type
@@ -107,8 +107,13 @@ class Puppet::FileBucket::File
       @contents = content;
     end
 
-    def stream
-      StringIO.new(@contents)
+    def stream(&block)
+      s = StringIO.new(@contents)
+      begin
+        block.call(s)
+      ensure
+        s.close
+      end
     end
 
     def size
@@ -132,9 +137,8 @@ class Puppet::FileBucket::File
       @path = path
     end
 
-    # Caller *must* close the stream
-    def stream()
-      Puppet::FileSystem.open(@path, nil, 'rb')
+    def stream(&block)
+      Puppet::FileSystem.open(@path, nil, 'rb', &block)
     end
 
     def size

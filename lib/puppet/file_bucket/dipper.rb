@@ -94,11 +94,8 @@ class Puppet::FileBucket::Dipper
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
           of.binmode
-          begin
-            source_stream = newcontents.stream
+          source_stream = newcontents.stream do |source_stream|
             FileUtils.copy_stream(source_stream, of)
-          ensure
-            source_stream.close()
           end
           #of.print(newcontents)
         }
