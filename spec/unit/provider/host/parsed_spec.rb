@@ -44,6 +44,33 @@ describe provider_class do
     host.flush
     @provider.target_object(@hostfile).read
   end
+  describe "when parsing on incomplete line" do
+    it "should work for only ip" do
+      @provider.parse_line("127.0.0.1")[:line].should ==  "127.0.0.1"
+    end
+    it "should work for only hostname" do
+      @provider.parse_line("www.example.com")[:line].should == "www.example.com"
+    end
+    it "should work for ip and space" do
+      @provider.parse_line("127.0.0.1 ")[:line].should ==  "127.0.0.1 "
+    end
+    it "should work for hostname and space" do
+      @provider.parse_line("www.example.com ")[:line].should == "www.example.com "
+    end
+    it "should work for hostname and host_aliases" do
+      @provider.parse_line("www.example.com  www xyz")[:line].should == "www.example.com  www xyz"
+    end
+    it "should work for ip and comment" do
+      @provider.parse_line("127.0.0.1  #www xyz")[:line].should == "127.0.0.1  #www xyz"
+    end
+    it "should work for hostname and comment" do
+      @provider.parse_line("xyz  #www test123")[:line].should == "xyz  #www test123"
+    end
+
+    it "should work for crazy incomplet lines" do
+      @provider.parse_line("%th1s is a\t cr$zy    !incompl1t line")[:line].should == "%th1s is a\t cr$zy    !incompl1t line"
+    end
+  end
 
   describe "when parsing a line with ip and hostname" do
 
