@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'json'
 require 'puppet/file_system'
+require 'pathspec'
 
 module Puppet::ModuleTool
   module Applications
@@ -57,13 +58,48 @@ module Puppet::ModuleTool
         FileUtils.mkdir(build_path)
       end
 
-      def copy_contents
-        Dir[File.join(@path, '*')].each do |path|
-          case File.basename(path)
-          when *Puppet::ModuleTool::ARTIFACTS
-            next
+      def ignored_files
+        if @ignored_files
+          return @ignored_files
+        else
+          pmtignore = File.join(@path, '.pmtignore')
+          gitignore = File.join(@path, '.gitignore')
+
+          if File.file? pmtignore
+            @ignored_files = PathSpec.new File.read(pmtignore)
+          elsif File.file? gitignore
+            @ignored_files = PathSpec.new File.read(gitignore)
           else
-            FileUtils.cp_r path, build_path, :preserve => true
+            @ignored_files = PathSpec.new
+          end
+        end
+      end
+
+      def copy_contents
+        Find.find(File.join(@path)) do |path|
+          if path == @path
+            next
+          end
+
+          # Needed because pathspec looks for a trailing slash in the path to
+          # determine if a path is a directory
+          path = path.to_s + '/' if File.directory? path
+
+          unless ignored_files.match_paths([path], @path).empty?
+            Find.prune
+          end
+
+          rel = Pathname.new(path).relative_path_from(Pathname.new(@path))
+          case rel.to_s
+          when *Puppet::ModuleTool::ARTIFACTS
+            Find.prune
+          end
+
+          dest = "#{build_path}/#{rel.to_s}"
+          if File.directory? path
+            FileUtils.mkdir dest, :mode => File.stat(path).mode
+          else
+            FileUtils.cp path, dest, :preserve => true
           end
         end
       end
