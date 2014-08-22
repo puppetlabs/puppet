@@ -30,7 +30,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
   def multi_conf(name, should, &action)
     has = properties[name]
-    has = [] if has == :absent
+    has = [] if !has || has == :absent
     rms = has - should
     adds = should - has
     (rms.map{|o| action.call(:rm,o)} + adds.map{|o| action.call(:add,o)}).join("\n")
