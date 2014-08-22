@@ -312,7 +312,7 @@ describe Puppet::Indirector::REST do
           terminus.find(request)
         end.to raise_error(
           Puppet::Error,
-          /\/production\/test_model\/foo.*long_param=A+\.\.\. resulted in 404 with the message/)
+          /\/production\/test_model\/foo.*long_param=A+\.\.\..*resulted in 404 with the message/)
       end
 
       it 'does not truncate the URI when logging debug information' do
@@ -325,7 +325,7 @@ describe Puppet::Indirector::REST do
           terminus.find(request)
         end.to raise_error(
           Puppet::Error,
-          /\/production\/test_model\/foo.*long_param=A+B resulted in 404 with the message/)
+          /\/production\/test_model\/foo.*long_param=A+B.*resulted in 404 with the message/)
       end
     end
 
