@@ -131,7 +131,7 @@ class Puppet::Forge < Semantic::Dependency::Source
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
             Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           rescue ArgumentError => e
-            Puppet.debug "Malformed dependency: #{dep['name']}. Exception was: #{e}"
+            raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
           end
         end
       else
@@ -211,6 +211,16 @@ class Puppet::Forge < Semantic::Dependency::Source
   private
 
   def process(list)
-    list.map { |release| ModuleRelease.new(self, release) }
+    l = list.map do |release|
+      metadata = release['metadata']
+      begin
+        ModuleRelease.new(self, release)
+      rescue ArgumentError => e
+        Puppet.warning "Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}"
+        false
+      end
+    end
+
+    l.select { |r| r }
   end
 end
