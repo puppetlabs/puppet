@@ -204,7 +204,7 @@ module Puppet::ModuleTool::Generate
 
   def destination(metadata)
     return @dest if defined? @dest
-    @dest = Pathname.pwd + metadata.dashed_name
+    @dest = Pathname.pwd + metadata.name
     raise ArgumentError, "#{@dest} already exists." if @dest.exist?
     return @dest
   end

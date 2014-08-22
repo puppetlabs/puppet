@@ -16,9 +16,9 @@ agents.each do |agent|
   step "Generate #{module_author}-#{module_name} module"
   on agent, puppet("module generate #{module_author}-#{module_name} --skip-interview")
 
-  step "Check for #{module_author}-#{module_name} scaffolding"
-  on agent,"test -f #{module_author}-#{module_name}/manifests/init.pp"
+  step "Check for #{module_name} scaffolding"
+  on agent,"test -f #{module_name}/manifests/init.pp"
 
   step "Clean up"
-  on agent,"rm -fr #{module_author}-#{module_name}"
+  on agent,"rm -fr #{module_name}"
 end
