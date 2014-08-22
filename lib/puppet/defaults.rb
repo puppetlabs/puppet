@@ -1038,6 +1038,32 @@ EOT
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :deprecated => :allowed_on_commandline,
     },
+    :default_manifest => {
+      :default    => "./manifests",
+      :type       => :string,
+      :desc       => "Defines the path to the file or directory that is used as
+        a directory environment's 'manifest' setting when such a setting is not
+        present in an environment.conf.",
+      :hook       => proc do |value|
+        uninterpolated_value = self.value(true)
+        if uninterpolated_value =~ /\$environment/ || value =~ /\$environment/ then
+          raise(Puppet::Settings::ValidationError,
+                "You cannot interpolate '$environment' within the 'default_manifest' setting.")
+        end
+      end
+    },
+    :restrict_environment_manifest => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Restricts use of environment specific 'manifest' setting
+        in all directory environment configurations.",
+      :hook       => proc do |value|
+        if value && !Pathname.new(Puppet[:default_manifest]).absolute?
+          raise(Puppet::Settings::ValidationError,
+                "The 'default_manifest' setting must be set to an absolute path when 'restrict_environment_manifest' is true")
+        end
+      end,
+    },
     :code => {
       :default    => "",
       :desc       => "Code to parse directly.  This is essentially only used
