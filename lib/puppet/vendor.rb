@@ -4,8 +4,10 @@ module Puppet
   # To vendor a library:
   #
   # * Download its whole git repo or untar into `lib/puppet/vendor/<libname>`
-  # * Create a lib/puppetload_libraryname.rb file to add its libdir into the $:.
+  # * Create a vendor/puppetload_libraryname.rb file to add its libdir into the $:.
   #   (Look at existing load_xxx files, they should all follow the same pattern).
+  # * Add a <libname>/PUPPET_README.md file describing what the library is for
+  #   and where it comes from.
   # * To load the vendored lib upfront, add a `require '<vendorlib>'`line to
   #   `vendor/require_vendored.rb`.
   # * To load the vendored lib on demand, add a comment to `vendor/require_vendored.rb`
