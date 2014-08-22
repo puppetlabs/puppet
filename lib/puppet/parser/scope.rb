@@ -655,6 +655,10 @@ class Puppet::Parser::Scope
   end
 
   def set_facts(hash)
+    # Remove _timestamp (it has an illegal datatype). It is not allowed to mutate the given hash
+    # since it contins the facts.
+    hash = hash.dup
+    hash.delete('_timestamp')
     setvar('facts', deep_freeze(hash), :privileged => true)
   end
 
