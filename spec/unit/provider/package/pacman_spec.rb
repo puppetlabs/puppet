@@ -39,16 +39,16 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       provider.install
     end
 
-    it "should raise an ExecutionFailure if the installation failed" do
+    it "should raise an Puppet::Error if the installation failed" do
       executor.stubs(:execute).returns("")
       provider.expects(:query).returns(nil)
 
-      expect { provider.install }.to raise_exception(Puppet::ExecutionFailure)
+      expect { provider.install }.to raise_exception(Puppet::Error)
     end
 
     it "should raise an Puppet::Error when trying to install a group and allow_virtual is false" do
       described_class.stubs(:group?).returns(true)
-      lambda { provider.install }.should raise_error(Puppet::Error)
+      expect { provider.install }.to raise_error(Puppet::Error)
     end
 
     it "should not raise an Puppet::Error when trying to install a group and allow_virtual is true" do
@@ -332,6 +332,11 @@ EOF
       expect { described_class.instances }.to raise_error(RuntimeError)
     end
 
+    it "should warn on invalid input" do
+      described_class.expects(:execpipe).twice.yields(StringIO.new("blah"))
+      described_class.expects(:warning).with("Failed to match line 'blah'")
+      expect(described_class.instances).to eq([])
+    end
   end
 
   describe "when determining the latest version" do

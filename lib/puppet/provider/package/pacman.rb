@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       !pacman("-Sg", name).empty?
     rescue Puppet::ExecutionFailure
-      false
+      fail("Error while determining if '#{@resource[:name]}' is a group")
     end
   end
 
@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
 
     unless self.query
-      raise Puppet::ExecutionFailure.new("Could not find package %s" % self.name)
+      fail("Could not find package '#{@resource[:name]}'")
     end
   end
 
@@ -84,7 +84,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
         end
       end
     rescue Puppet::ExecutionFailure
-      fail "Error getting groupnames of installed packages (pacman -Qg)"
+      fail("Error getting groupnames of installed packages")
     end
 
     instances
@@ -101,7 +101,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
           if match = regex.match(line)
             packages[match.captures[0]] = match.captures[1]
           else
-            warning("Failed to match line %s" % line)
+            warning("Failed to match line '#{line}'")
           end
         end
       end
@@ -135,7 +135,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       end
       [group_version, fully_installed]
     rescue Puppet::ExecutionFailure
-      [nil, nil]
+      fail("Error while getting virtual group version for '#{@resource[:name]}'")
     end
   end
 
@@ -201,8 +201,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     # return the version if the package is installed
     if pkgversion = installed_packages[@resource[:name]]
       return { :ensure => pkgversion }
-      # report package missing if it is not installed
     else
+      # report package missing if it is not installed
       return {
         :ensure => :absent,
         :status => 'missing',
