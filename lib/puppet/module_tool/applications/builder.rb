@@ -15,7 +15,6 @@ module Puppet::ModuleTool
 
       def run
         load_metadata!
-        sanity_check
         create_directory
         copy_contents
         write_json
@@ -76,7 +75,9 @@ module Puppet::ModuleTool
       end
 
       def copy_contents
+        symlinks = []
         Find.find(File.join(@path)) do |path|
+          # because Find.find finds the path itself
           if path == @path
             next
           end
@@ -85,32 +86,35 @@ module Puppet::ModuleTool
           # determine if a path is a directory
           path = path.to_s + '/' if File.directory? path
 
+          # if it matches, then prune it with fire
           unless ignored_files.match_paths([path], @path).empty?
             Find.prune
           end
 
+          # don't copy all the Puppet ARTIFACTS
           rel = Pathname.new(path).relative_path_from(Pathname.new(@path))
           case rel.to_s
           when *Puppet::ModuleTool::ARTIFACTS
             Find.prune
           end
 
+          # make dir tree, copy files, and add symlinks to the symlinks list
           dest = "#{build_path}/#{rel.to_s}"
           if File.directory? path
             FileUtils.mkdir dest, :mode => File.stat(path).mode
+          elsif Puppet::FileSystem.symlink? path
+            symlinks << path
           else
             FileUtils.cp path, dest, :preserve => true
           end
         end
-      end
 
-      def sanity_check
-        symlinks = Dir.glob("#{@path}/**/*", File::FNM_DOTMATCH).map { |f| Pathname.new(f) }.select {|p| Puppet::FileSystem.symlink? p}
-        dirpath = Pathname.new @path
-
+        # send a message about each symlink and raise an error if they exist
         unless symlinks.empty?
           symlinks.each do |s|
-            Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from dirpath}->#{s.realpath.relative_path_from dirpath}."
+            s = Pathname.new s
+            mpath = Pathname.new @path
+            Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from mpath} -> #{s.realpath.relative_path_from mpath}."
           end
 
           raise Puppet::ModuleTool::Errors::ModuleToolError, "Found symlinks. Symlinks in modules are not allowed, please remove them."
