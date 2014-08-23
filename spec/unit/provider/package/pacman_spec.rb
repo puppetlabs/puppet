@@ -212,6 +212,7 @@ EOF
     it "should warn when querying a group and allow_virtual is false" do
       provider.stubs(:group?).returns(true)
       resource.stubs(:allow_virtual?).returns(false)
+      executor.stubs(:execpipe).yields("")
       provider.expects(:warning)
       provider.query
     end
@@ -219,6 +220,7 @@ EOF
     it "should not warn when querying a group and allow_virtual is true" do
       provider.stubs(:group?).returns(true)
       resource.stubs(:allow_virtual?).returns(false)
+      executor.stubs(:execpipe).yields("")
       described_class.expects(:warning).never
       provider.query
     end
