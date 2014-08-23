@@ -14,6 +14,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :upgradeable
+  has_feature :virtual_packages
 
   # If yaourt is installed, we can make use of it
   def yaourt?
@@ -36,6 +37,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   end
 
   def install_from_repo
+    if is_group(@resource[:name]) && !@resource.allow_virtual?
+      fail("Refusing to install package group #{@resource[:name]}, because allow_virtual is false.")
+    end
     if yaourt?
       cmd = %w{--noconfirm --needed}
       cmd += install_options if @resource[:install_options]
@@ -206,6 +210,10 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     # generate the virtual group version of the target is a group
     if is_group(@resource[:name])
+      unless @resource.allow_virtual?
+        warning("#{@resource[:name]} is a group, but allow_virtual is false.")
+        return nil
+      end
       group_version, fully_installed = self.class.get_virtual_group_version(@resource[:name], installed_packages)
       if group_version && fully_installed
       	return { :ensure => group_version }
