@@ -46,6 +46,18 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       expect { provider.install }.to raise_exception(Puppet::ExecutionFailure)
     end
 
+    it "should raise an Puppet::Error when trying to install a group and allow_virtual is false" do
+      described_class.stubs(:group?).returns(true)
+      lambda { provider.install }.should raise_error(Puppet::Error)
+    end
+
+    it "should not raise an Puppet::Error when trying to install a group and allow_virtual is true" do
+      described_class.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(true)
+      executor.stubs(:execute).returns("")
+      provider.install
+    end
+
     describe "and install_options are given" do
       before do
         resource[:install_options] = ['-x', {'--arg' => 'value'}]
@@ -193,6 +205,22 @@ EOF
       executor.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
 
       expect { provider.query }.to raise_error(RuntimeError)
+    end
+
+    it "should warn when querying a group and allow_virtual is false" do
+      described_class.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(false)
+      executor.stubs(:execpipe).yields("")
+      provider.expects(:warning)
+      provider.query
+    end
+
+    it "should not warn when querying a group and allow_virtual is true" do
+      described_class.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(true)
+      executor.stubs(:execpipe).yields("")
+      described_class.expects(:warning).never
+      provider.query
     end
   end
 

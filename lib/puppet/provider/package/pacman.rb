@@ -23,6 +23,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :upgradeable
+  has_feature :virtual_packages
 
   # Checks if a given name is a group
   def self.group?(name)
@@ -180,6 +181,10 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     # generate the virtual group version of the target is a group
     if self.class.group?(@resource[:name])
+      unless @resource.allow_virtual?
+        warning("#{@resource[:name]} is a group, but allow_virtual is false.")
+        return nil
+      end
       group_version, fully_installed = self.class.get_virtual_group_version(@resource[:name], installed_packages)
       if group_version && fully_installed
         return { :ensure => group_version }
@@ -248,15 +253,20 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   end
 
   def install_from_repo
+    resource_name = @resource[:name]
+
+    # Refuse to install if not allowing virtual packages and the resource is a group
+    fail("Refusing to install package group #{resource_name}, because allow_virtual is false.") if self.class.group?(resource_name) && !@resource.allow_virtual?
+
     if self.class.yaourt?
       cmd = %w{--noconfirm --needed}
       cmd += install_options if @resource[:install_options]
-      cmd << "-S" << @resource[:name]
+      cmd << "-S" << resource_name
       yaourt *cmd
     else
       cmd = %w{--noconfirm  --needed --noprogressbar}
       cmd += install_options if @resource[:install_options]
-      cmd << "-Sy" << @resource[:name]
+      cmd << "-Sy" << resource_name
       pacman *cmd
     end
   end
