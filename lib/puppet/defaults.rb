@@ -417,17 +417,21 @@ module Puppet
     },
     :http_proxy_user => {
       :default    => "none",
-      :desc       => "The user name for an authenticated HTTP proxy. Requires http_proxy_host.",
+      :desc       => "The user name for an authenticated HTTP proxy. Requires the `http_proxy_host` setting.",
     },
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
         if Puppet.settings[:http_proxy_password] =~ /[@!# \/]/
-          raise "Special characters in passwords must be URL compliant, we received #{value}"
+          raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,
-      :desc       => "The password for the user of an authenticated HTTP proxy. Requires http_proxy_user.
-      NOTE: Special characters must be escaped or encoded for URL compliance",
+      :desc       => "The password for the user of an authenticated HTTP proxy.
+        Requires the `http_proxy_user` setting.
+
+        Note that passwords must be valid when used as part of a URL. If a password
+        contains any characters with special meanings in URLs (as specified by RFC 3986
+        section 2.2), they must be URL-encoded. (For example, `#` would become `%23`.)",
     },
     :http_keepalive_timeout => {
       :default    => "4s",
