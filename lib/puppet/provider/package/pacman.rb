@@ -32,13 +32,13 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
 
     unless self.query
-      raise Puppet::ExecutionFailure.new("Could not find package %s" % self.name)
+      fail("Could not find package '#{self.name}'")
     end
   end
 
   def install_from_repo
     if is_group(@resource[:name]) && !@resource.allow_virtual?
-      fail("Refusing to install package group #{@resource[:name]}, because allow_virtual is false.")
+      fail("Refusing to install package group '#{@resource[:name]}', because allow_virtual is false.")
     end
     if yaourt?
       cmd = %w{--noconfirm --needed}
@@ -59,7 +59,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       source_uri = URI.parse source
     rescue => detail
-      self.fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
+      fail("Invalid source '#{source}': #{detail}")
     end
 
     source = case source_uri.scheme
@@ -68,9 +68,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     when /ftp/i then source
     when /file/i then source_uri.path
     when /puppet/i
-      fail "puppet:// URL is not supported by pacman"
+      fail("puppet:// URL is not supported by pacman")
     else
-      fail "Source #{source} is not supported by pacman"
+      fail("Source '#{source}' is not supported by pacman")
     end
     pacman "--noconfirm", "--noprogressbar", "-Sy"
     pacman "--noconfirm", "--noprogressbar", "-U", source
@@ -112,7 +112,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
         end
       end
     rescue Puppet::ExecutionFailure
-      fail "Error getting groupnames of installed packages (pacman -Qg)"
+      fail("Error getting groupnames of installed packages")
     end
 
     instances
@@ -129,13 +129,13 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
           if match = regex.match(line)
             packages[match.captures[0]] = match.captures[1]
           else
-            warning("Failed to match line %s" % line)
+            warning("Failed to match line '#{line}'")
           end
         end
       end
       packages
     rescue Puppet::ExecutionFailure
-      []
+      fail("Error getting installed packages")
     end
   end
 
@@ -163,7 +163,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       end
       [group_version, fully_installed]
     rescue Puppet::ExecutionFailure
-      [nil, nil]
+      fail("Error while getting virtual group version for '#{@resource[:name]}'")
     end
   end
 
@@ -216,7 +216,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       end
       group_version, fully_installed = self.class.get_virtual_group_version(@resource[:name], installed_packages)
       if group_version && fully_installed
-      	return { :ensure => group_version }
+        return { :ensure => group_version }
       else
         return {
           :ensure => :absent,
@@ -229,7 +229,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     # return the version if the package is installed
     if pkgversion = installed_packages[@resource[:name]]
-    	return { :ensure => pkgversion }
+      return { :ensure => pkgversion }
     # report package missing if it is not installed
     else
       return {
@@ -264,7 +264,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       !pacman("-Sg", @resource[:name]).empty?
     rescue Puppet::ExecutionFailure
-      false
+      fail("Error while determining if '#{@resource[:name]}' is a group")
     end
   end
 
