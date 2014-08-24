@@ -20,8 +20,7 @@ Puppet::Type.newtype(:file) do
   @doc = "Manages files, including their content, ownership, and permissions.
 
     The `file` type can manage normal files, directories, and symlinks; the
-    type should be specified in the `ensure` attribute. Note that symlinks cannot
-    be managed on Windows systems.
+    type should be specified in the `ensure` attribute.
 
     File contents can be managed directly with the `content` attribute, or
     downloaded from a remote source using the `source` attribute; the latter

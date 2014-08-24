@@ -1,6 +1,8 @@
 test_name "Commandline modulepath and manifest settings override environment"
 
-testdir = master.tmpdir('cmdline_and_environment')
+skip_test "CLI-master tests are not applicable" if @options[:is_jvm_puppet]
+
+testdir = create_tmpdir_for_user master, 'cmdline_and_environment'
 environmentpath = "#{testdir}/environments"
 modulepath = "#{testdir}/modules"
 manifests = "#{testdir}/manifests"
@@ -110,18 +112,39 @@ file { "#{cmdline_manifest}":
 }
 MANIFEST
 
+def shutdown_puppet_if_running_as_a_service
+  if master.use_service_scripts?
+    # Beaker defaults to leaving puppet running when using service scripts,
+    # Need to shut it down so we can start up with commandline options
+    on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=stopped'))
+  end
+end
+
+teardown do
+  if master.use_service_scripts?
+    # Beaker defaults to leaving puppet running when using service scripts,
+    on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=running'))
+  end
+end
+
 # Note: this is the semantics seen with legacy environments if commandline
 # manifest/modulepath are set.
 step "CASE 1: puppet master with --manifest and --modulepath overrides set production directory environment" do
-  if master.is_pe?
+  if master.is_using_passenger?
     step "Skipping for Passenger (PE) setup; since the equivalent of a commandline override would be adding the setting to config.ru, which seems like a very odd thing to do."
   else
+
+    shutdown_puppet_if_running_as_a_service
+
     master_opts = {
       'master' => {
         'environmentpath' => environmentpath,
         'manifest' => sitepp,
         'modulepath' => modulepath,
-      }
+      },
+      :__service_args__ => {
+        :bypass_service_script => true,
+      },
     }
 
     master_opts_with_cmdline = master_opts.merge(:__commandline_args__ => "--manifest=#{cmdline_manifest} --modulepath=#{other_modulepath}")
@@ -201,11 +224,17 @@ end
 
 step "CASE 4: puppet master with default manifest, modulepath, environment, environmentpath and an existing '#{environmentpath}/production' directory environment that has not been set" do
 
-  if master.is_pe?
+  if master.is_using_passenger?
     step "Skipping for PE because PE requires most of the existing puppet.conf and /etc/puppetlabs/puppet configuration, and we cannot simply point to a new conf directory."
   else
+
+    shutdown_puppet_if_running_as_a_service
+
     ssldir = on(master, puppet("master --configprint ssldir")).stdout.chomp
     master_opts = {
+      :__service_args__ => {
+        :bypass_service_script => true,
+      },
       :__commandline_args__ => "--confdir=#{testdir} --ssldir=#{ssldir}"
     }
 

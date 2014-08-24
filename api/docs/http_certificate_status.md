@@ -39,9 +39,8 @@ certificate signing request; similar to `puppet cert --sign`) and
 `{"desired_state":"revoked"}` (for revoking a certificate; similar to
 `puppet cert --revoke`).
 
-When revoking certificates, you may wish to use a DELETE request
-instead, which will also clean up other info about the host.
-
+Note that revoking a certificate will not clean up other info about the
+host - see the DELETE request for more information.
 
 Delete
 -----

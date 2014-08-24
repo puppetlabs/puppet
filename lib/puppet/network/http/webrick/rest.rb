@@ -60,7 +60,9 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   def client_cert(request)
     if cert = request.client_cert
-      Puppet::SSL::Certificate.from_instance(cert)
+      cert = Puppet::SSL::Certificate.from_instance(cert)
+      warn_if_near_expiration(cert)
+      cert
     else
       nil
     end

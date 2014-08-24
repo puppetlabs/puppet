@@ -1,6 +1,6 @@
 test_name "Use environments from the environmentpath"
 
-testdir = master.tmpdir('use_environmentpath')
+testdir = create_tmpdir_for_user master, 'use_environmentpath'
 
 def generate_environment(path_to_env, environment)
   env_content = <<-EOS
@@ -63,10 +63,11 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   EOS
 end
 
+master_user = on(master, "puppet master --configprint user").stdout.strip
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => #{master['user']},
+  owner => #{master_user},
   group => #{master['group']},
   mode => 0770,
 }

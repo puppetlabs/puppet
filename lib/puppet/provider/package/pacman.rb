@@ -3,7 +3,11 @@ require 'set'
 require 'uri'
 
 Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Package do
-  desc "Support for the Package Manager Utility (pacman) used in Archlinux."
+  desc "Support for the Package Manager Utility (pacman) used in Archlinux.
+
+  This provider supports the `install_options` attribute, which allows command-line flags to be passed to pacman.
+  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+  or an array where each element is either a string or a hash."
 
   commands :pacman => "/usr/bin/pacman"
   # Yaourt is a common AUR helper which, if installed, we can use to query the AUR

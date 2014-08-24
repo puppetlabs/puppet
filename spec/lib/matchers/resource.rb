@@ -64,4 +64,5 @@ module Matchers; module Resource
       @mismatch.empty? ? @matcher.failure_message_for_should : @mismatch
     end
   end
+  module_function :have_resource
 end; end

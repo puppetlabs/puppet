@@ -5,3 +5,5 @@ require 'safe_yaml'
 require 'puppet/vendor/safe_yaml_patches'
 
 # The vendored library 'semantic' is loaded on demand.
+# The vendored library 'rgen' is loaded on demand.
+# The vendored library 'pathspec' is loaded on demand.

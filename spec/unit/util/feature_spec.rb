@@ -91,4 +91,16 @@ describe Puppet::Util::Feature do
     @features.should_not be_myfeature
     @features.should be_myfeature
   end
+
+  it "should cache load failures when configured to do so" do
+    Puppet[:always_cache_features] = true
+
+    @features.add(:myfeature, :libs => %w{foo bar})
+    @features.expects(:require).with("foo").raises(LoadError)
+
+    @features.should_not be_myfeature
+    # second call would cause an expectation exception if 'require' was
+    # called a second time
+    @features.should_not be_myfeature
+  end
 end

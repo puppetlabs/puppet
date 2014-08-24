@@ -2,8 +2,11 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:zone) do
-  let(:zone)     { described_class.new(:name => 'dummy', :path => '/dummy', :provider => :solaris) }
+  let(:zone)     { described_class.new(:name => 'dummy', :path => '/dummy', :provider => :solaris, :ip=>'if:1.2.3.4:2.3.4.5', :inherit=>'/', :dataset=>'tank') }
   let(:provider) { zone.provider }
+  let(:ip)      { zone.property(:ip) }
+  let(:inherit) { zone.property(:inherit) }
+  let(:dataset) { zone.property(:dataset) }
 
   parameters = [:create_args, :install_args, :sysidcfg, :realhostname]
 
@@ -18,6 +21,46 @@ describe Puppet::Type.type(:zone) do
   properties.each do |property|
     it "should have a #{property} property" do
       described_class.attrclass(property).ancestors.should be_include(Puppet::Property)
+    end
+  end
+
+  describe  "when trying to set a property that is empty" do
+    it "should verify that property.insync? of nil or :absent is true" do
+      [inherit, ip, dataset].each do |prop|
+        prop.stubs(:should).returns []
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(nil).should be_true
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(:absent).should be_true
+      end
+    end
+  end
+  describe  "when trying to set a property that is non empty" do
+    it "should verify that property.insync? of nil or :absent is false" do
+      [inherit, ip, dataset].each do |prop|
+        prop.stubs(:should).returns ['a','b']
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(nil).should be_false
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(:absent).should be_false
+      end
+    end
+  end
+  describe  "when trying to set a property that is non empty" do
+    it "insync? should return true or false depending on the current value, and new value" do
+      [inherit, ip, dataset].each do |prop|
+        prop.stubs(:should).returns ['a','b']
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(['b', 'a']).should be_true
+      end
+      [inherit, ip, dataset].each do |prop|
+        prop.insync?(['a']).should be_false
+      end
     end
   end
 

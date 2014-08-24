@@ -1039,16 +1039,7 @@ class Type
   def retrieve
     fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and ! provider.class.suitable?
 
-    result = Puppet::Resource.new(type, title)
-    # Normally, a Puppet::Resource instance will follow a very expensive code
-    # path that involves hitting the type loader to determine the Type class
-    # for `resource_type`. Since we're constructing this Resource inside a Type
-    # instance, we have the class information readily available and can save
-    # a lot of time by setting it directly.
-    #
-    # TODO: Puppet::Resource.new(type, ...) should handle this case during
-    # initialization.
-    result.resource_type = self.class
+    result = Puppet::Resource.new(self.class, title)
 
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
@@ -1083,7 +1074,7 @@ class Type
   # @api private
   def retrieve_resource
     resource = retrieve
-    resource = Resource.new(type, title, :parameters => resource) if resource.is_a? Hash
+    resource = Resource.new(self.class, title, :parameters => resource) if resource.is_a? Hash
     resource
   end
 
@@ -1202,9 +1193,8 @@ class Type
     raise Puppet::Error, "Title or name must be provided" unless title
 
     # Now create our resource.
-    resource = Puppet::Resource.new(self.name, title)
+    resource = Puppet::Resource.new(self, title)
     resource.catalog = hash.delete(:catalog)
-    resource.resource_type = self
 
     hash.each do |param, value|
       resource[param] = value

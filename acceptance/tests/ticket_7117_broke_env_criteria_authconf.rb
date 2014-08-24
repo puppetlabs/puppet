@@ -2,7 +2,8 @@
 confine :except, :platform => 'windows'
 
 test_name "#7117 Broke the environment criteria in auth.conf"
-testdir = master.tmpdir('env_in_auth_conf')
+
+testdir = create_tmpdir_for_user master, 'env_in_auth_conf'
 
 # add to auth.conf
 add_2_authconf = %q{
@@ -30,7 +31,7 @@ with_puppet_running_on master, {'master' => {'rest_authconfig' => "#{testdir}/au
        on(agent, facter('fqdn')).stdout.chomp
 
     step "Fetch agent facts from Puppet Master"
-    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{certname}") do
+    on(agent, "curl --tlsv1 -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{certname}") do
       assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{agent}")
     end
   end

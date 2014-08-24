@@ -50,9 +50,11 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # Prevent puppet failing to get status of these services, which need parameters
     # passed in (see https://bugs.launchpad.net/ubuntu/+source/puppet/+bug/1276766).
     excludes += %w{idmapd-mounting startpar-bridge}
-    # Prevent puppet failing to get status of cryptdisks-udev, another upstart
+    # Prevent puppet failing to get status of these services, additional upstart
     # service with instances
     excludes += %w{cryptdisks-udev}
+    excludes += %w{statd-mounting}
+    excludes += %w{gssd-mounting}
   end
 
   # List all services of this type.

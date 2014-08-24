@@ -1,7 +1,8 @@
 Environments
 ============
 
-The `environments` endpoint allows for enumeration of the environments known to the master, along with the modules available in each.
+The `environments` endpoint allows for enumeration of the environments known to the master. Each environment contains information
+about itself like its modulepath, manifest directory, environment timeout, and the config version.
 This endpoint is by default accessible to any client with a valid certificate, though this may be changed by `auth.conf`.
 
 Get
@@ -27,12 +28,16 @@ None
       "environments": {
         "production": {
           "settings": {
-            "modulepath": ["/first/module/directory", "/second/module/directory"],
-            "manifest": ["/location/of/manifests"]
+            "modulepath": ["/etc/puppetlabs/puppet/environments/production/modules", "/etc/puppetlabs/puppet/environments/development/modules"],
+            "manifest": ["/etc/puppetlabs/puppet/environments/production/manifests"]
+            "environment_timeout": 180,
+            "config_version": "/version/of/config"
           }
         }
       }
     }
+
+The `environment_timeout` attribute could also be the string "unlimited".
 
 Schema
 ------

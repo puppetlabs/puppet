@@ -57,7 +57,6 @@ module Puppet::Network::HTTP::Handler
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
     profiler = configure_profiler(request_headers, request_params)
-    warn_if_near_expiration(new_request.client_cert)
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}", [:http, request_method, request_path]) do
       if route = @routes.find { |route| route.matches?(new_request) }

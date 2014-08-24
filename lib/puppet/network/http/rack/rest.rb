@@ -94,7 +94,9 @@ class Puppet::Network::HTTP::RackREST
     if cert.nil? || cert.empty?
       nil
     else
-      Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
+      cert = Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
+      warn_if_near_expiration(cert)
+      cert
     end
   end
 

@@ -25,8 +25,8 @@ module Puppet
         :hook    => proc do |value|
           return unless value
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
-          require 'puppet/facts'
-          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet::Facts.replace_facter
+          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
+          CFacter.initialize
         end
     }
   )
@@ -63,7 +63,7 @@ module Puppet
     :logdir => {
         :default  => nil,
         :type     => :directory,
-        :mode     => 0750,
+        :mode     => "0750",
         :owner    => "service",
         :group    => "service",
         :desc     => "The directory in which to store log files",
@@ -143,7 +143,7 @@ module Puppet
     :statedir => {
         :default  => "$vardir/state",
         :type     => :directory,
-        :mode     => 01755,
+        :mode     => "01755",
         :desc     => "The directory where Puppet state is stored.  Generally,
           this directory can be removed without causing harm (although it
           might result in spurious service restarts)."
@@ -151,7 +151,7 @@ module Puppet
     :rundir => {
       :default  => nil,
       :type     => :directory,
-      :mode     => 0755,
+      :mode     => "0755",
       :owner    => "service",
       :group    => "service",
       :desc     => "Where Puppet PID files are kept."
@@ -259,6 +259,25 @@ module Puppet
         recommended value is `$confdir/environments`. For more details, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :type    => :path,
+    },
+    :always_cache_features => {
+      :type     => :boolean,
+      :default  => false,
+      :desc     => <<-'EOT'
+        Affects how we cache attempts to load Puppet 'features'.  If false, then
+        calls to `Puppet.features.<feature>?` will always attempt to load the
+        feature (which can be an expensive operation) unless it has already been
+        loaded successfully.  This makes it possible for a single agent run to,
+        e.g., install a package that provides the underlying capabilities for
+        a feature, and then later load that feature during the same run (even if
+        the feature had been tested earlier and had not been available).
+
+        If this setting is set to true, then features will only be checked once,
+        and if they are not available, the negative result is cached and returned
+        for all subsequent attempts to load the feature.  This behavior is almost
+        always appropriate for the server, and can result in a significant performance
+        improvement for features that are checked frequently.
+      EOT
     },
     :diff_args => {
         :default  => lambda { default_diffargs },
@@ -383,7 +402,7 @@ module Puppet
         :default  => "$logdir/http.log",
         :type     => :file,
         :owner    => "root",
-        :mode     => 0640,
+        :mode     => "0640",
         :desc     => "Where the puppet agent web server logs.",
     },
     :http_proxy_host => {
@@ -398,17 +417,21 @@ module Puppet
     },
     :http_proxy_user => {
       :default    => "none",
-      :desc       => "The user name for an authenticated HTTP proxy. Requires http_proxy_host.",
+      :desc       => "The user name for an authenticated HTTP proxy. Requires the `http_proxy_host` setting.",
     },
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
         if Puppet.settings[:http_proxy_password] =~ /[@!# \/]/
-          raise "Special characters in passwords must be URL compliant, we received #{value}"
+          raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,
-      :desc       => "The password for the user of an authenticated HTTP proxy. Requires http_proxy_user.
-      NOTE: Special characters must be escaped or encoded for URL compliance",
+      :desc       => "The password for the user of an authenticated HTTP proxy.
+        Requires the `http_proxy_user` setting.
+
+        Note that passwords must be valid when used as part of a URL. If a password
+        contains any characters with special meanings in URLs (as specified by RFC 3986
+        section 2.2), they must be URL-encoded. (For example, `#` would become `%23`.)",
     },
     :http_keepalive_timeout => {
       :default    => "4s",
@@ -518,7 +541,7 @@ module Puppet
       :default => true,
       :type    => :boolean,
       :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or
-        hashes as fact values.",
+        hashes as fact values. (DEPRECATED) This option will be removed in Puppet 4.0.",
     },
     :trusted_node_data => {
       :default => false,
@@ -671,7 +694,7 @@ EOT
     :certdir => {
       :default => "$ssldir/certs",
       :type   => :directory,
-      :mode => 0755,
+      :mode => "0755",
       :owner => "service",
       :group => "service",
       :desc => "The certificate directory."
@@ -679,7 +702,7 @@ EOT
     :ssldir => {
       :default => "$confdir/ssl",
       :type   => :directory,
-      :mode => 0771,
+      :mode => "0771",
       :owner => "service",
       :group => "service",
       :desc => "Where SSL certificates are kept."
@@ -687,7 +710,7 @@ EOT
     :publickeydir => {
       :default => "$ssldir/public_keys",
       :type   => :directory,
-      :mode => 0755,
+      :mode => "0755",
       :owner => "service",
       :group => "service",
       :desc => "The public key directory."
@@ -695,7 +718,7 @@ EOT
     :requestdir => {
       :default => "$ssldir/certificate_requests",
       :type => :directory,
-      :mode => 0755,
+      :mode => "0755",
       :owner => "service",
       :group => "service",
       :desc => "Where host certificate requests are stored."
@@ -703,7 +726,7 @@ EOT
     :privatekeydir => {
       :default => "$ssldir/private_keys",
       :type   => :directory,
-      :mode => 0750,
+      :mode => "0750",
       :owner => "service",
       :group => "service",
       :desc => "The private key directory."
@@ -711,7 +734,7 @@ EOT
     :privatedir => {
       :default => "$ssldir/private",
       :type   => :directory,
-      :mode => 0750,
+      :mode => "0750",
       :owner => "service",
       :group => "service",
       :desc => "Where the client stores private certificate information."
@@ -719,7 +742,7 @@ EOT
     :passfile => {
       :default => "$privatedir/password",
       :type   => :file,
-      :mode => 0640,
+      :mode => "0640",
       :owner => "service",
       :group => "service",
       :desc => "Where puppet agent stores the password for its private key.
@@ -728,7 +751,7 @@ EOT
     :hostcsr => {
       :default => "$ssldir/csr_$certname.pem",
       :type   => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "Where individual hosts store and look for their certificate requests."
@@ -736,7 +759,7 @@ EOT
     :hostcert => {
       :default => "$certdir/$certname.pem",
       :type   => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "Where individual hosts store and look for their certificates."
@@ -744,7 +767,7 @@ EOT
     :hostprivkey => {
       :default => "$privatekeydir/$certname.pem",
       :type   => :file,
-      :mode => 0640,
+      :mode => "0640",
       :owner => "service",
       :group => "service",
       :desc => "Where individual hosts store and look for their private key."
@@ -752,7 +775,7 @@ EOT
     :hostpubkey => {
       :default => "$publickeydir/$certname.pem",
       :type   => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "Where individual hosts store and look for their public key."
@@ -760,14 +783,14 @@ EOT
     :localcacert => {
       :default => "$certdir/ca.pem",
       :type   => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "Where each client stores the CA certificate."
     },
     :ssl_client_ca_auth => {
       :type  => :file,
-      :mode  => 0644,
+      :mode  => "0644",
       :owner => "service",
       :group => "service",
       :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be
@@ -777,7 +800,7 @@ EOT
     },
     :ssl_server_ca_auth => {
       :type  => :file,
-      :mode  => 0644,
+      :mode  => "0644",
       :owner => "service",
       :group => "service",
       :desc  => "Certificate authorities who issue client certificates.  SSL clients will not be
@@ -788,7 +811,7 @@ EOT
     :hostcrl => {
       :default => "$ssldir/crl.pem",
       :type   => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "Where the host's certificate revocation list can be found.
@@ -827,7 +850,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0755,
+      :mode => "0755",
       :desc => "The root directory for the certificate authority."
     },
     :cacert => {
@@ -835,7 +858,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => "0644",
       :desc => "The CA certificate."
     },
     :cakey => {
@@ -843,7 +866,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0640,
+      :mode => "0640",
       :desc => "The CA private key."
     },
     :capub => {
@@ -851,7 +874,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => "0644",
       :desc => "The CA public key."
     },
     :cacrl => {
@@ -859,7 +882,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => "0644",
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
@@ -867,7 +890,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0750,
+      :mode => "0750",
       :desc => "Where the CA stores private certificate information."
     },
     :csrdir => {
@@ -875,7 +898,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode  => 0755,
+      :mode  => "0755",
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -883,7 +906,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0755,
+      :mode => "0755",
       :desc => "Where the CA stores signed certificates."
     },
     :capass => {
@@ -891,7 +914,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0640,
+      :mode => "0640",
       :desc => "Where the CA stores the password for the private key."
     },
     :serial => {
@@ -899,7 +922,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => "0644",
       :desc => "Where the serial number for certificates is stored."
     },
     :autosign => {
@@ -953,7 +976,7 @@ EOT
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
       :type => :file,
-      :mode => 0644,
+      :mode => "0644",
       :owner => "service",
       :group => "service",
       :desc => "The inventory file. This is a text file to which the CA writes a
@@ -1030,7 +1053,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => "0660",
       :desc => "This file is literally never used, although Puppet may create it
         as an empty file. For more context, see the `puppetdlog` setting and
         puppet master's `--logdest` command line option.
@@ -1043,7 +1066,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => "0660",
       :create => true,
       :desc => "Where the puppet master web server saves its access log. This is
         only used when running a WEBrick puppet master. When puppet master is
@@ -1068,7 +1091,7 @@ EOT
     :bucketdir => {
       :default => "$vardir/bucket",
       :type => :directory,
-      :mode => 0750,
+      :mode => "0750",
       :owner => "service",
       :group => "service",
       :desc => "Where FileBucket files are stored."
@@ -1146,14 +1169,14 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => "750",
+      :mode => "0750",
       :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
     :server_datadir => {
       :default => "$vardir/server_data",
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => "750",
+      :mode => "0750",
       :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
     :reports => {
       :default    => "store",
@@ -1174,7 +1197,7 @@ EOT
     :reportdir => {
       :default => "$vardir/reports",
       :type => :directory,
-      :mode => 0750,
+      :mode => "0750",
       :owner => "service",
       :group => "service",
       :desc => "The directory in which to store reports. Each node gets
@@ -1204,7 +1227,7 @@ EOT
     :rrddir => {
       :type     => :directory,
       :default  => "$vardir/rrd",
-      :mode     => 0750,
+      :mode     => "0750",
       :owner    => "service",
       :group    => "service",
       :desc     => "The directory where RRD database files are stored.
@@ -1223,7 +1246,7 @@ EOT
     :devicedir =>  {
         :default  => "$vardir/devices",
         :type     => :directory,
-        :mode     => "750",
+        :mode     => "0750",
         :desc     => "The root directory of devices' $vardir.",
     },
     :deviceconfig => {
@@ -1258,13 +1281,13 @@ EOT
       :default => "$statedir/localconfig",
       :type => :file,
       :owner => "root",
-      :mode => 0660,
+      :mode => "0660",
       :desc => "Where puppet agent caches the local configuration.  An
         extension indicating the cache format is added automatically."},
     :statefile => {
       :default => "$statedir/state.yaml",
       :type => :file,
-      :mode => 0660,
+      :mode => "0660",
       :desc => "Where puppet agent and puppet master store state associated
         with the running configuration.  In the case of puppet master,
         this file reflects the state discovered through interacting
@@ -1273,20 +1296,20 @@ EOT
     :clientyamldir => {
       :default => "$vardir/client_yaml",
       :type => :directory,
-      :mode => "750",
+      :mode => "0750",
       :desc => "The directory in which client-side YAML data is stored."
     },
     :client_datadir => {
       :default => "$vardir/client_data",
       :type => :directory,
-      :mode => "750",
+      :mode => "0750",
       :desc => "The directory in which serialized data is stored on the client."
     },
     :classfile => {
       :default => "$statedir/classes.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0640,
+      :mode => "0640",
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
@@ -1295,14 +1318,14 @@ EOT
       :default => "$statedir/resources.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0640,
+      :mode => "0640",
       :desc => "The file in which puppet agent stores a list of the resources
         associated with the retrieved configuration."  },
     :puppetdlog => {
       :default => "$logdir/puppetd.log",
       :type => :file,
       :owner => "root",
-      :mode => 0640,
+      :mode => "0640",
       :desc => "The fallback log file. This is only used when the `--logdest` option
         is not specified AND Puppet is running on an operating system where both
         the POSIX syslog service and the Windows Event Log are unavailable. (Currently,
@@ -1515,7 +1538,7 @@ EOT
     :clientbucketdir => {
       :default  => "$vardir/clientbucket",
       :type     => :directory,
-      :mode     => 0750,
+      :mode     => "0750",
       :desc     => "Where FileBucket files are stored locally."
     },
     :configtimeout => {
@@ -1549,13 +1572,13 @@ EOT
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",
       :type     => :file,
-      :mode     => 0644,
+      :mode     => "0644",
       :desc     => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  {
       :default  => "$statedir/last_run_report.yaml",
       :type     => :file,
-      :mode     => 0640,
+      :mode     => "0640",
       :desc     => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => {
@@ -1726,7 +1749,7 @@ EOT
     :dblocation => {
       :default  => "$statedir/clientconfigs.sqlite3",
       :type     => :file,
-      :mode     => 0660,
+      :mode     => "0660",
       :owner    => "service",
       :group    => "service",
       :desc     => "The sqlite database file. #{STORECONFIGS_ONLY}"
@@ -1777,7 +1800,7 @@ EOT
     :railslog => {
       :default  => "$logdir/rails.log",
       :type     => :file,
-      :mode     => 0600,
+      :mode     => "0600",
       :owner    => "service",
       :group    => "service",
       :desc     => "Where Rails-specific logs are sent. #{STORECONFIGS_ONLY}"

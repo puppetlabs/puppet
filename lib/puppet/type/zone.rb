@@ -171,8 +171,7 @@ end
 
     # overridden so that we match with self.should
     def insync?(is)
-      return true unless is
-      is = [] if is == :absent
+      is = [] if !is || is == :absent
       is.sort == self.should.sort
     end
   end
@@ -228,8 +227,7 @@ end
 
     # overridden so that we match with self.should
     def insync?(is)
-      return true unless is
-      is = [] if is == :absent
+      is = [] if !is || is == :absent
       is.sort == self.should.sort
     end
 
@@ -250,8 +248,7 @@ end
 
     # overridden so that we match with self.should
     def insync?(is)
-      return true unless is
-      is = [] if is == :absent
+      is = [] if !is || is == :absent
       is.sort == self.should.sort
     end
 

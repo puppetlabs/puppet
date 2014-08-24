@@ -9,6 +9,19 @@ end
 confine :to, :platform => 'el-6'
 confine :except, :type => 'pe'
 
+skip_test "Test not supported on jvm" if @options[:is_jvm_puppet]
+
+if master.use_service_scripts?
+  # Beaker defaults to leaving puppet running when using service scripts,
+  # Need to shut it down so we can start up our apache instance
+  on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=stopped'))
+
+  teardown do
+    # And ensure that it is up again after everything is done
+    on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=running'))
+  end
+end
+
 # Verify that a trivial manifest can be run to completion.
 # Supported Setup: Single, Root CA
 #  - Agent and Master SSL cert issued by the Root CA

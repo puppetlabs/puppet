@@ -189,9 +189,39 @@ class Puppet::Resource
   # Cache to reduce respond_to? lookups
   @@nondeprecating_type = {}
 
-  # Create our resource.
+  # Construct a resource from data.
+  #
+  # Constructs a resource instance with the given `type` and `title`. Multiple
+  # type signatures are possible for these arguments and most will result in an
+  # expensive call to {Puppet::Node::Environment#known_resource_types} in order
+  # to resolve `String` and `Symbol` Types to actual Ruby classes.
+  #
+  # @param type [Symbol, String] The name of the Puppet Type, as a string or
+  #   symbol. The actual Type will be looked up using
+  #   {Puppet::Node::Environment#known_resource_types}. This lookup is expensive.
+  # @param type [String] The full resource name in the form of
+  #   `"Type[Title]"`. This method of calling should only be used when
+  #   `title` is `nil`.
+  # @param type [nil] If a `nil` is passed, the title argument must be a string
+  #   of the form `"Type[Title]"`.
+  # @param type [Class] A class that inherits from `Puppet::Type`. This method
+  #   of construction is much more efficient as it skips calls to
+  #   {Puppet::Node::Environment#known_resource_types}.
+  #
+  # @param title [String, :main, nil] The title of the resource. If type is `nil`, may also
+  #   be the full resource name in the form of `"Type[Title]"`.
+  #
+  # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
+    if type.is_a?(Class) && type < Puppet::Type
+      # Set the resource type to avoid an expensive `known_resource_types`
+      # lookup.
+      self.resource_type = type
+      # From this point on, the constructor behaves the same as if `type` had
+      # been passed as a symbol.
+      type = type.name
+    end
 
     # Set things like strictness first.
     attributes.each do |attr, value|

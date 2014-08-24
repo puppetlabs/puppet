@@ -20,16 +20,17 @@ def curl_master_from(agent, path, headers = '', &block)
   url = "https://#{master}:#{master_port(agent)}#{path}"
   cert_path = full_path(agent, setting_on(agent, "agent", "hostcert"))
   key_path = full_path(agent, setting_on(agent, "agent", "hostprivkey"))
-  curl_base = "curl -sg --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
+  curl_base = "curl --tlsv1 -sg --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
 
   on agent, "#{curl_base} '#{url}'", &block
 end
 
-environments_dir = master.tmpdir("environments")
+master_user = on(master, "puppet master --configprint user").stdout.strip
+environments_dir = create_tmpdir_for_user master, "environments"
 apply_manifest_on(master, <<-MANIFEST)
 File {
   ensure => directory,
-  owner => #{master['user']},
+  owner => #{master_user},
   group => #{master['group']},
   mode => 0770,
 }
@@ -53,7 +54,7 @@ end
 with_puppet_running_on(master, master_opts) do
   agents.each do |agent|
     step "Ensure that an unauthenticated client cannot access the environments list" do
-      on agent, "curl -ksv https://#{master}:#{master_port(agent)}/v2.0/environments", :acceptable_exit_codes => [0,7] do
+      on agent, "curl --tlsv1 -ksv https://#{master}:#{master_port(agent)}/v2.0/environments", :acceptable_exit_codes => [0,7] do
         assert_match(/< HTTP\/1\.\d 403/, stderr)
       end
     end

@@ -11,7 +11,6 @@ class Puppet::FileBucket::File
   extend Puppet::Indirector
   indirects :file_bucket_file, :terminus_class => :selector
 
-  attr :contents
   attr :bucket_path
 
   def self.supported_formats
@@ -28,8 +27,14 @@ class Puppet::FileBucket::File
   end
 
   def initialize(contents, options = {})
-    raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
-    @contents = contents
+    case contents
+    when String
+      @contents = StringContents.new(contents)
+    when Pathname
+      @contents = FileContents.new(contents)
+    else
+      raise ArgumentError.new("contents must be a String or Pathname, got a #{contents.class}")
+    end
 
     @bucket_path = options.delete(:bucket_path)
     @checksum_type = Puppet[:digest_algorithm].to_sym
@@ -38,12 +43,12 @@ class Puppet::FileBucket::File
 
   # @return [Num] The size of the contents
   def size
-    contents.size
+    @contents.size()
   end
 
   # @return [IO] A stream that reads the contents
-  def stream
-    StringIO.new(contents)
+  def stream(&block)
+    @contents.stream(&block)
   end
 
   def checksum_type
@@ -55,12 +60,15 @@ class Puppet::FileBucket::File
   end
 
   def checksum_data
-    algorithm = Puppet::Util::Checksums.method(@checksum_type)
-    @checksum_data ||= algorithm.call(contents)
+    @checksum_data ||= @contents.checksum_data(@checksum_type)
   end
 
   def to_s
-    contents
+    @contents.to_s
+  end
+
+  def contents
+    to_s
   end
 
   def name
@@ -72,7 +80,8 @@ class Puppet::FileBucket::File
   end
 
   def to_data_hash
-    { "contents" => contents }
+    # Note that this serializes the entire data to a string and places it in a hash.
+    { "contents" => contents.to_s }
   end
 
   def self.from_data_hash(data)
@@ -91,4 +100,58 @@ class Puppet::FileBucket::File
     self.from_data_hash(pson)
   end
 
+  private
+
+  class StringContents
+    def initialize(content)
+      @contents = content;
+    end
+
+    def stream(&block)
+      s = StringIO.new(@contents)
+      begin
+        block.call(s)
+      ensure
+        s.close
+      end
+    end
+
+    def size
+      @contents.size
+    end
+
+    def checksum_data(base_method)
+      Puppet.info("Computing checksum on string")
+      Puppet::Util::Checksums.method(base_method).call(@contents)
+    end
+
+    def to_s
+      # This is not so horrible as for FileContent, but still possible to mutate the content that the
+      # checksum is based on... so semi horrible...
+      return @contents;
+    end
+  end
+
+  class FileContents
+    def initialize(path)
+      @path = path
+    end
+
+    def stream(&block)
+      Puppet::FileSystem.open(@path, nil, 'rb', &block)
+    end
+
+    def size
+      Puppet::FileSystem.size(@path)
+    end
+
+    def checksum_data(base_method)
+      Puppet.info("Computing checksum on file #{@path}")
+      Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
+    end
+
+    def to_s
+      Puppet::FileSystem::binread(@path)
+    end
+  end
 end

@@ -39,23 +39,27 @@ describe "Two step scoping for variables" do
       Puppet[:parser] = 'future'
     end
 
-    describe "using plussignment to change in a new scope" do
-      it "does not change a string in the parent scope" do
-        # Expects to be able to concatenate string using +=
+    describe "using unsupported operators" do
+      it "issues an error for +=" do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new('the node'))
-              $var = "top_msg"
-              class override {
-                $var += "override"
-                include foo
+          catalog = compile_to_catalog(<<-MANIFEST)
+              $var = ["top_msg"]
+              node default {
+                $var += ["override"]
               }
-              class foo {
-                notify { 'something': message => $var, }
-              }
-
-              include override
             MANIFEST
-        end.to raise_error(/The value 'top_msg' cannot be converted to Numeric/)
+        end.to raise_error(/The operator '\+=' is no longer supported/)
+      end
+
+      it "issues an error for -=" do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+              $var = ["top_msg"]
+              node default {
+                $var -= ["top_msg"]
+              }
+            MANIFEST
+        end.to raise_error(/The operator '-=' is no longer supported/)
       end
     end
 
@@ -315,7 +319,7 @@ describe "Two step scoping for variables" do
                 $var = "inner baz"
               }
 
-              class bar inherits baz {
+              class bar inherits foo::baz {
                 notify { 'something': message => $var, }
               }
             }
@@ -598,89 +602,6 @@ describe "Two step scoping for variables" do
             class bar {
               notify { 'something': message => inline_template("<%= scope.lookupvar('var') %>"), }
             }
-          MANIFEST
-        end
-      end
-    end
-
-    describe "using plussignment to change in a new scope" do
-
-      it "does not change an array in the parent scope" do
-        # Under the future parser single element arrays are no longer converted
-        # into the first element of the array. This causes the message to be
-        # different in the two versions.
-        if Puppet[:parser] == 'future'
-          expected = ['top_msg']
-        else
-          expected = 'top_msg'
-        end
-
-        expect_the_message_to_be(expected) do <<-MANIFEST
-            $var = ["top_msg"]
-            class override {
-              $var += ["override"]
-              include foo
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-
-            include override
-          MANIFEST
-        end
-      end
-
-      it "concatenates two arrays" do
-        expect_the_message_to_be(['top_msg', 'override']) do <<-MANIFEST
-            $var = ["top_msg"]
-            class override {
-              $var += ["override"]
-              notify { 'something': message => $var, }
-            }
-
-            include override
-          MANIFEST
-        end
-      end
-
-      it "leaves an array of arrays unflattened" do
-        expect_the_message_to_be([['top_msg'], ['override']]) do <<-MANIFEST
-            $var = [["top_msg"]]
-            class override {
-              $var += [["override"]]
-              notify { 'something': message => $var, }
-            }
-
-            include override
-          MANIFEST
-        end
-      end
-
-      it "does not change a hash in the parent scope" do
-        expect_the_message_to_be({"key"=>"top_msg"}) do <<-MANIFEST
-            $var = { "key" => "top_msg" }
-            class override {
-              $var += { "other" => "override" }
-              include foo
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-
-            include override
-          MANIFEST
-        end
-      end
-
-      it "replaces a value of a key in the hash instead of merging the values" do
-        expect_the_message_to_be({"key"=>"override"}) do <<-MANIFEST
-            $var = { "key" => "top_msg" }
-            class override {
-              $var += { "key" => "override" }
-              notify { 'something': message => $var, }
-            }
-
-            include override
           MANIFEST
         end
       end

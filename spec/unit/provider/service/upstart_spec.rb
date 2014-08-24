@@ -60,6 +60,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       processes += "\nidmapd-mounting stop/waiting"
       processes += "\nstartpar-bridge start/running"
       processes += "\ncryptdisks-udev stop/waiting"
+      processes += "\nstatd-mounting stop/waiting"
+      processes += "\ngssd-mounting stop/waiting"
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.should be_empty
     end

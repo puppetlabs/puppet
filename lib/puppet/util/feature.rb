@@ -1,3 +1,5 @@
+require 'puppet'
+
 class Puppet::Util::Feature
   attr_reader :path
 
@@ -23,10 +25,19 @@ class Puppet::Util::Feature
     end
 
     meta_def(method) do
-      # Positive cache only, except blocks which are executed just once above
-      final = @results[name] || block_given?
-      @results[name] = test(name, options) unless final
-      @results[name]
+      # we return a cached result if:
+      #  * if a block is given (and we just evaluated it above)
+      #  * if we already have a positive result
+      #  * if we've tested this feature before and it failed, but we're
+      #    configured to always cache
+      if block_given?     ||
+          @results[name]  ||
+          (@results.has_key?(name) and Puppet[:always_cache_features])
+        @results[name]
+      else
+        @results[name] = test(name, options)
+        @results[name]
+      end
     end
   end
 
