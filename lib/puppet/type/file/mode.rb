@@ -10,9 +10,14 @@ module Puppet
 
     desc <<-'EOT'
       The desired permissions mode for the file, in symbolic or numeric
-      notation. Puppet uses traditional Unix permission schemes and translates
+      notation. This value should be specified as a quoted string; do not use
+      un-quoted numbers to represent file modes.
+
+      The `file` type uses traditional Unix permission schemes and translates
       them to equivalent permissions for systems which represent permissions
-      differently, including Windows.
+      differently, including Windows. For detailed ACL controls on Windows,
+      you can leave `mode` unmanaged and use
+      [the puppetlabs/acl module.](https://forge.puppetlabs.com/puppetlabs/acl)
 
       Numeric modes should use the standard four-digit octal notation of
       `<setuid/setgid/sticky><owner><group><other>` (e.g. 0644). Each of the

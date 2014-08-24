@@ -273,7 +273,10 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:proxy) do
-    desc "URL to the proxy server for this repository. #{ABSENT_DOC}"
+    desc "URL of a proxy server that Yum should use when accessing this repository.
+      This attribute can also be set to `'_none_'`, which will make Yum bypass any
+      global proxy settings when accessing this repository.
+      #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
     validate do |value|
