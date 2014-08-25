@@ -5,7 +5,7 @@ After=basic.target network.target
 
 [Service]
 EnvironmentFile=-/etc/sysconfig/puppetmaster
-ExecStart=/usr/bin/puppet master ${PUPPETMASTER_EXTRA_OPTS} --no-daemonize
+ExecStart=/usr/bin/puppet master $PUPPETMASTER_EXTRA_OPTS --no-daemonize
 
 [Install]
 WantedBy=multi-user.target
