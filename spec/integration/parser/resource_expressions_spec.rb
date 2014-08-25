@@ -146,7 +146,29 @@ describe "Puppet resource expressions" do
          file { $t:
            path => '/somewhere',
            * => $x,
-           * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
+           * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'",
+
+        # picks up defaults
+        "$x = { owner => the_x }
+         $y = { mode =>  '0666' }
+         $t = '/tmp/x'
+         file {
+           default:
+             * => $x;
+           $t:
+             path => '/somewhere',
+             * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'",
+
+        # explicit wins over default - no error
+        "$x = { owner => the_x, mode => '0777' }
+         $y = { mode =>  '0666' }
+         $t = '/tmp/x'
+         file {
+           default:
+             * => $x;
+           $t:
+             path => '/somewhere',
+             * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
 
       fails(
         "notify { title: unknown => value }" => /Invalid parameter unknown/,
