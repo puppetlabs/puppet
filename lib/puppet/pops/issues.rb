@@ -466,6 +466,10 @@ module Puppet::Pops::Issues
     "The title '#{title}' has already been used in this resource expression"
   end
 
+  DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
+    "The attribute '#{attribute}' has already been set in this resource body"
+  end
+
   MISSING_TITLE = hard_issue :MISSING_TITLE do
     "Missing title. The title expression resulted in undef"
   end

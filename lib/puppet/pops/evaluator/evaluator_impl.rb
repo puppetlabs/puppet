@@ -698,7 +698,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       body_to_params[body] = body.operations.reduce({}) do |param_memo, op|
         params = evaluate(op, scope)
         params = [params] unless params.is_a?(Array)
-        params.each { |p| param_memo[p.name] = p }
+        params.each do |p|
+          if param_memo.include? p.name
+            fail(Puppet::Pops::Issues::DUPLICATE_ATTRIBUTE, o, {:attribute => p.name})
+          end
+          param_memo[p.name] = p 
+        end
         param_memo
       end
     end

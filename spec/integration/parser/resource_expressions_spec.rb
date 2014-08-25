@@ -133,27 +133,47 @@ describe "Puppet resource expressions" do
 
     context "parameters" do
       produces(
-        "notify { title: message => set }" => "Notify[title][message] == 'set'",
-        "$x = set notify { title: message => $x }" => "Notify[title][message] == 'set'",
+        "notify { title: message => set }"                   => "Notify[title][message] == 'set'",
+        "$x = set notify { title: message => $x }"           => "Notify[title][message] == 'set'",
 
-        "notify { title: *=> { message => set } }" => "Notify[title][message] == 'set'",
-        "$x = { message => set } notify { title: * => $x }" => "Notify[title][message] == 'set'")
+        "notify { title: *=> { message => set } }"           => "Notify[title][message] == 'set'",
+
+        "$x = { message => set } notify { title: * => $x }"  => "Notify[title][message] == 'set'",
+
+        "$x = { owner => the_x }
+         $y = { mode =>  '0666' }
+         $t = '/tmp/x'
+         file { $t:
+           path => '/somewhere',
+           * => $x,
+           * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
 
       fails(
         "notify { title: unknown => value }" => /Invalid parameter unknown/,
 
         #BUG
         "notify { title: * => { hash => value }, message => oops }" => /Invalid parameter hash/, # this really needs to be a better error message.
-        "notify { title: message => oops, * => { hash => value } }" => /Syntax error/, # should this be a better error message?
+        "notify { title: message => oops, * => { hash => value } }" => /Invalid parameter hash/, # should this be a better error message?
 
-        "notify { title: * => { unknown => value } }" => /Invalid parameter unknown/)
+        "notify { title: * => { unknown => value } }" => /Invalid parameter unknown/,
+        "$x = { owner => the_x }
+         $y = { owner => the_y }
+         $t = '/tmp/x'
+         file { $t:
+           * => $x,
+           * => $y }"  => /The attribute 'owner' has already been set/)
     end
 
     context "virtual" do
       produces(
-        "@notify { example: }" => "!defined(Notify[example])",
-        "@notify { example: } realize(Notify[example])" => "defined(Notify[example])",
-        "@notify { virtual: message => set } notify { real: message => Notify[virtual][message] }" => "Notify[real][message] == 'set'")
+        "@notify { example: }"                     => "!defined(Notify[example])",
+
+        "@notify { example: }
+         realize(Notify[example])"                 => "defined(Notify[example])",
+
+        "@notify { virtual: message => set }
+         notify { real:
+           message => Notify[virtual][message] }"  => "Notify[real][message] == 'set'")
     end
 
     context "exported" do
