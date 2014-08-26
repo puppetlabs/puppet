@@ -319,6 +319,43 @@ Listen 8141 https
 </VirtualHost>
 EO_HTTPD_CONF
   end
+
+  ##
+  # webserver.conf for a trustworthy master for use with Jetty
+  def jetty_webserver_conf_for_trustworthy_master
+    @jetty_webserver_conf_for_trustworthy_master ||= <<-EO_WEBSERVER_CONF
+webserver: {
+    client-auth: want
+    ssl-host: 0.0.0.0
+    ssl-port: 8140
+
+    ssl-cert: "#{test_dir}/master.crt"
+    ssl-key: "#{test_dir}/master.key"
+
+    ssl-cert-chain: "#{test_dir}/ca_master_bundle.crt"
+    ssl-ca-cert: "#{test_dir}/ca_agent_bundle.crt"
+}
+    EO_WEBSERVER_CONF
+  end
+
+  ##
+  # webserver.conf for a rogue master for use with Jetty
+  def jetty_webserver_conf_for_rogue_master
+    @jetty_webserver_conf_for_rogue_master ||= <<-EO_WEBSERVER_CONF
+webserver: {
+    client-auth: want
+    ssl-host: 0.0.0.0
+    ssl-port: 8140
+
+    ssl-cert: "#{test_dir}/master_rogue.crt"
+    ssl-key: "#{test_dir}/master_rogue.key"
+
+    ssl-cert-chain: "#{test_dir}/ca_agent_bundle.crt"
+    ssl-ca-cert: "#{test_dir}/ca_agent_bundle.crt"
+}
+    EO_WEBSERVER_CONF
+  end
+
 end
 end
 end
