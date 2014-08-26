@@ -311,7 +311,7 @@ symlinkfile
       it_behaves_like "pmtignored files are not present"
     end
 
-    context "with unignored symlinks" do
+    context "with unignored symlinks", :if => Puppet.features.manages_symlinks? do
       before :each do
         create_regular_files
         create_symlinks
@@ -323,7 +323,7 @@ symlinkfile
       end
     end
 
-    context "with .gitignore file and ignored symlinks" do
+    context "with .gitignore file and ignored symlinks", :if => Puppet.features.manages_symlinks? do
       before :each do
         create_regular_files
         create_symlinks
