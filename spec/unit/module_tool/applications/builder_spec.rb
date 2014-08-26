@@ -27,7 +27,7 @@ describe Puppet::ModuleTool::Applications::Builder do
       builder.run
     end
 
-    def create_regular_files
+      def create_regular_files
       Puppet::FileSystem.touch(File.join(path, '.dotfile'))
       Puppet::FileSystem.touch(File.join(path, 'file.foo'))
       Puppet::FileSystem.touch(File.join(path, 'REVISION'))
@@ -43,6 +43,11 @@ describe Puppet::ModuleTool::Applications::Builder do
       Puppet::FileSystem.touch(File.join(path, 'sub/#file'))
       Puppet::FileSystem.mkpath(File.join(path, 'sub/pkg'))
       Puppet::FileSystem.mkpath(File.join(path, 'sub/coverage'))
+    end
+
+    def create_symlinks
+      Puppet::FileSystem.touch(File.join(path, 'symlinkedfile'))
+      Puppet::FileSystem.symlink(File.join(path, 'symlinkedfile'), File.join(path, 'symlinkfile'))
     end
 
     def create_ignored_files
@@ -77,6 +82,14 @@ gitdirectory/sub/**
 gitdirectory/git*
 !gitimportantfile
 GITIGNORE
+      end
+    end
+
+    def create_symlink_gitignore_file
+      Puppet::FileSystem.open(File.join(path, '.gitignore'), 0600, 'w') do |f|
+        f << <<-GITIGNORE
+symlinkfile
+    GITIGNORE
       end
     end
 
@@ -296,6 +309,31 @@ GITIGNORE
       it_behaves_like "default artifacts are removed in module dir but not in subdirs"
       it_behaves_like "gitignored files are present"
       it_behaves_like "pmtignored files are not present"
+    end
+
+    context "with unignored symlinks" do
+      before :each do
+        create_regular_files
+        create_symlinks
+        create_ignored_files
+      end
+
+      it "give an error about symlinks" do
+        expect { builder.run }.to raise_error
+      end
+    end
+
+    context "with .gitignore file and ignored symlinks" do
+      before :each do
+        create_regular_files
+        create_symlinks
+        create_ignored_files
+        create_symlink_gitignore_file
+      end
+
+      it "does not give an error about symlinks" do
+        expect { build }.not_to raise_error
+      end
     end
   end
 
