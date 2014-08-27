@@ -295,8 +295,7 @@ module Puppet::Pops::Issues
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
+  # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
     "Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric)."
