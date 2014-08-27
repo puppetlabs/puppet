@@ -10,7 +10,15 @@ describe "Puppet resource expressions" do
     end
 
     produces(
-      "$a = notify; $b = example; $c = { message => hello }; @@$a { $b: * => $c } realize(Resource[$a, $b])" => "Notify[example][message] == 'hello'")
+      "$a = notify
+       $b = example
+       $c = { message => hello }
+       @@Resource[$a] {
+         $b:
+           * => $c
+       }
+       realize(Resource[$a, $b])
+       " => "Notify[example][message] == 'hello'")
 
 
     context "resource titles" do
@@ -82,37 +90,37 @@ describe "Puppet resource expressions" do
     end
 
     context "type names" do
-      produces(
-        "notify { testing: }"                  => "defined(Notify[testing])",
-        "$a = notify; $a { testing: }"         => "defined(Notify[testing])",
-        "'notify' { testing: }"                => "defined(Notify[testing])",
-        "sprintf('%s', 'notify') { testing: }" => "defined(Notify[testing])",
-        "$a = ify; \"not$a\" { testing: }"     => "defined(Notify[testing])",
+      produces( "notify { testing: }"                            => "defined(Notify[testing])")
+      produces( "$a = notify; Resource[$a] { testing: }"         => "defined(Notify[testing])")
+      produces( "Resource['notify'] { testing: }"                => "defined(Notify[testing])")
+      produces( "Resource[sprintf('%s', 'notify')] { testing: }" => "defined(Notify[testing])")
+      produces( "$a = ify; Resource[\"not$a\"] { testing: }"     => "defined(Notify[testing])")
 
-        "Notify { testing: }"           => "defined(Notify[testing])",
-        "Resource[Notify] { testing: }" => "defined(Notify[testing])",
-        "'Notify' { testing: }"         => "defined(Notify[testing])",
+      produces( "Notify { testing: }"           => "defined(Notify[testing])")
+      produces( "Resource[Notify] { testing: }" => "defined(Notify[testing])")
+      produces( "Resource['Notify'] { testing: }"         => "defined(Notify[testing])")
 
-        "class a { notify { testing: } } class { a: }"   => "defined(Notify[testing])",
-        "class a { notify { testing: } } Class { a: }"   => "defined(Notify[testing])",
-        "class a { notify { testing: } } 'class' { a: }" => "defined(Notify[testing])",
+      produces( "class a { notify { testing: } } class { a: }"   => "defined(Notify[testing])")
+      produces( "class a { notify { testing: } } Class { a: }"   => "defined(Notify[testing])")
+      produces( "class a { notify { testing: } } Resource['class'] { a: }" => "defined(Notify[testing])")
 
-        "define a::b { notify { testing: } } a::b { title: }" => "defined(Notify[testing])",
-        "define a::b { notify { testing: } } A::B { title: }" => "defined(Notify[testing])",
-        "define a::b { notify { testing: } } 'a::b' { title: }" => "defined(Notify[testing])",
-        "define a::b { notify { testing: } } Resource['a::b'] { title: }" => "defined(Notify[testing])")
+      produces( "define a::b { notify { testing: } } a::b { title: }" => "defined(Notify[testing])")
+      produces( "define a::b { notify { testing: } } A::B { title: }" => "defined(Notify[testing])")
+      produces( "define a::b { notify { testing: } } Resource['a::b'] { title: }" => "defined(Notify[testing])")
 
-      fails(
-        "'' { testing: }" => /Illegal type reference/,
-        "1 { testing: }" => /Illegal Resource Type expression.*got Integer/,
-        "3.0 { testing: }" => /Illegal Resource Type expression.*got Float/,
-        "true { testing: }" => /Illegal Resource Type expression.*got Boolean/,
-        "'not correct' { testing: }" => /Illegal type reference/,
+      fails( "'class' { a: }"              => /Illegal Resource Type expression.*got String/)
+      fails( "'' { testing: }"             => /Illegal Resource Type expression.*got String/)
+      fails( "1 { testing: }"              => /Illegal Resource Type expression.*got Integer/)
+      fails( "3.0 { testing: }"            => /Illegal Resource Type expression.*got Float/)
+      fails( "true { testing: }"           => /Illegal Resource Type expression.*got Boolean/)
+      fails( "'not correct' { testing: }"  => /Illegal Resource Type expression.*got String/)
 
-        "Notify[hi] { testing: }" => /Illegal Resource Type expression.*got Notify\['hi'\]/,
-        "[Notify, File] { testing: }" => /Illegal Resource Type expression.*got Array\[Type\[Resource\]\]/,
+      fails( "Notify[hi] { testing: }"     => /Illegal Resource Type expression.*got Notify\['hi'\]/)
+      fails( "[Notify, File] { testing: }" => /Illegal Resource Type expression.*got Array\[Type\[Resource\]\]/)
 
-        "Does::Not::Exist { title: }" => /Invalid resource type does::not::exist/)
+      fails( "define a::b { notify { testing: } } 'a::b' { title: }" => /Illegal Resource Type expression.*got String/)
+
+      fails( "Does::Not::Exist { title: }" => /Invalid resource type does::not::exist/)
     end
 
     context "local defaults" do
@@ -140,14 +148,6 @@ describe "Puppet resource expressions" do
 
         "$x = { message => set } notify { title: * => $x }"  => "Notify[title][message] == 'set'",
 
-        "$x = { owner => the_x }
-         $y = { mode =>  '0666' }
-         $t = '/tmp/x'
-         file { $t:
-           path => '/somewhere',
-           * => $x,
-           * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'",
-
         # picks up defaults
         "$x = { owner => the_x }
          $y = { mode =>  '0666' }
@@ -170,20 +170,22 @@ describe "Puppet resource expressions" do
              path => '/somewhere',
              * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
 
-      fails(
-        "notify { title: unknown => value }" => /Invalid parameter unknown/,
+      fails("notify { title: unknown => value }" => /Invalid parameter unknown/)
 
-        #BUG
-        "notify { title: * => { hash => value }, message => oops }" => /Invalid parameter hash/, # this really needs to be a better error message.
-        "notify { title: message => oops, * => { hash => value } }" => /Invalid parameter hash/, # should this be a better error message?
+        # this really needs to be a better error message.
+        fails("notify { title: * => { hash => value }, message => oops }" => /Invalid parameter hash/)
 
-        "notify { title: * => { unknown => value } }" => /Invalid parameter unknown/,
-        "$x = { owner => the_x }
+        # should this be a better error message?
+        fails("notify { title: message => oops, * => { hash => value } }" => /Invalid parameter hash/)
+
+        fails("notify { title: * => { unknown => value } }" => /Invalid parameter unknown/)
+        fails("
+         $x = { mode => '0666' }
          $y = { owner => the_y }
          $t = '/tmp/x'
          file { $t:
            * => $x,
-           * => $y }"  => /The attribute 'owner' has already been set/)
+           * => $y }"  => /Unfolding of attributes from Hash can only be used once per resource body/)
     end
 
     context "virtual" do

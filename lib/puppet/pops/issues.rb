@@ -550,4 +550,8 @@ module Puppet::Pops::Issues
   TYPE_MISMATCH = hard_issue :TYPE_MISMATCH, :expected, :actual do
     "Expected value of type #{expected}, got #{actual}"
   end
+
+  MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
+    "Unfolding of attributes from Hash can only be used once per resource body"
+  end
 end

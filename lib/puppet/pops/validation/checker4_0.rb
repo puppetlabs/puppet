@@ -424,13 +424,23 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_ResourceExpression(o)
-    # TODO: Can no longer be asserted
+    # The expression for type name cannot be statically checked - this is instead done at runtime
+    # to enable better error message of the result of the expression rather than the static instruction.
+    # (This can be revised as there are static constructs that are illegal, but require updating many
+    # tests that expect the detailed reporting).
+  end
 
-    ## A resource expression must have a lower case NAME as its type e.g. 'file { ... }'
-    #unless o.type_name.is_a? Model::QualifiedName
-    #  acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_name, :feature => 'resource type', :container => o)
-    #end
-
+  def check_ResourceBody(o)
+    seenUnfolding = false
+    o.operations.each do |ao|
+      if ao.is_a?(Puppet::Pops::Model::AttributesOperation)
+        if seenUnfolding
+          acceptor.accept(Issues::MULTIPLE_ATTRIBUTES_UNFOLD, ao)
+        else
+          seenUnfolding = true
+        end
+      end
+    end
   end
 
   def check_ResourceDefaultsExpression(o)
