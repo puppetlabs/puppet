@@ -21,6 +21,11 @@ answers = {
 }
 
 agents.each do |agent|
+
+  if agent['platform'] =~ /windows/
+    pending_test("Skip on Windows until PE-5081 is resolved")
+  end
+
   tmpfile = agent.tmpfile('answers')
 
   teardown do
