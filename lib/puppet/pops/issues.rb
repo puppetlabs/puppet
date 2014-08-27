@@ -176,7 +176,7 @@ module Puppet::Pops::Issues
 
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
-    "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
+    "The numeric parameter name '$#{name}' cannot be used (clashes with numeric match result variables)"
   end
 
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key

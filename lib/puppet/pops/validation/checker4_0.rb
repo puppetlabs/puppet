@@ -404,7 +404,7 @@ class Puppet::Pops::Validation::Checker4_0
   def relation_RelationshipExpression(o); end
 
   def check_Parameter(o)
-    if o.name =~ /^[0-9]+$/
+    if o.name =~ /^(?:0x)?[0-9]+$/
       acceptor.accept(Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name)
     end
   end
