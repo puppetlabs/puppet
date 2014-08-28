@@ -284,6 +284,12 @@ describe Puppet::Type.type(:user) do
         @instance[:membership] = :inclusive
         @instance[:groups].should == 'a,b,c'
       end
+
+      # it "should deduplicate groups" do
+      #   @instance = described_class.new(:name => 'foo', :groups => [ 'a', 'b', 'c', 'b', 'a' ], :provider => @provider)
+      #   @instance[:membership] = :inclusive
+      #   @instance[:groups].should == 'a,b,c'
+      # end
     end
   end
 
