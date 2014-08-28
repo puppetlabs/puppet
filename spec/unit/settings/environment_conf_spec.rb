@@ -38,6 +38,12 @@ describe Puppet::Settings::EnvironmentConf do
 
       expect(envconf.environment_timeout).to eq(180)
     end
+
+    it "can retrieve raw settings" do
+      setup_environment_conf(config, :manifest => 'manifest.pp')
+
+      expect(envconf.raw_setting(:manifest)).to eq('manifest.pp')
+    end
   end
 
   context "without config" do
@@ -60,6 +66,10 @@ describe Puppet::Settings::EnvironmentConf do
 
     it "returns a defult of 0 for environment_timeout when config has none" do
       expect(envconf.environment_timeout).to eq(0)
+    end
+
+    it "can still retrieve raw setting" do
+      expect(envconf.raw_setting(:manifest)).to be_nil
     end
   end
 

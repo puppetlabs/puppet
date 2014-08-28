@@ -62,7 +62,7 @@ class Puppet::Settings::EnvironmentConf
     end
 
     if restrict_environment_manifest
-      environment_conf_manifest = absolute(section.setting(:manifest).value)
+      environment_conf_manifest = absolute(raw_setting(:manifest))
       if environment_conf_manifest && fallback_manifest_directory != environment_conf_manifest
         errmsg = ["The 'restrict_environment_manifest' setting is true, but the",
         "environment located at #{@path_to_env} has a manifest setting in its",
@@ -106,6 +106,11 @@ class Puppet::Settings::EnvironmentConf
     end
   end
 
+  def raw_setting(setting_name)
+    setting = section.setting(setting_name) if section
+    setting.value if setting
+  end
+
   private
 
   def self.validate(path_to_conf_file, config)
@@ -127,8 +132,7 @@ class Puppet::Settings::EnvironmentConf
   end
 
   def get_setting(setting_name, default = nil)
-    setting = section.setting(setting_name) if section
-    value = setting.value if setting
+    value = raw_setting(setting_name)
     value ||= default
     yield value
   end
