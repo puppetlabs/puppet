@@ -119,6 +119,7 @@ install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/mod
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet/state
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 
 # As per redhat bz #495096
@@ -259,6 +260,7 @@ cp -pr ext/puppet-nm-dispatcher \
 %defattr(-, puppet, puppet, 0750)
 %{_localstatedir}/log/puppet
 %{_localstatedir}/lib/puppet
+%{_localstatedir}/lib/puppet/state
 # Return the default attributes to 0755 to
 # prevent incorrect permission assignment on EL6
 %defattr(-, root, root, 0755)
