@@ -117,7 +117,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
         it "should set the mode to the file's masked mode" do
           set_mode(33261, path)
 
-          metadata.mode.should == 0755
+          metadata.mode.should == '755'
         end
 
         describe "checksumming" do
