@@ -7,6 +7,6 @@ if ($one < $two) and (($two < 3) or ($two == 2)) {
 
 if "test regex" =~ /(.*) regex/ {
     file {
-        "/tmp/${1}iftest": ensure => file, mode => 0755
+        "/tmp/${1}iftest": ensure => file, mode => '0755'
     }
 }

@@ -42,7 +42,7 @@
                     "type": "integer"
                 },
                 "mode": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "type": {
                     "enum": ["file", "directory", "link"]

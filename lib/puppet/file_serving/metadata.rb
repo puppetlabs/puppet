@@ -12,7 +12,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   extend Puppet::Indirector
   indirects :file_metadata, :terminus_class => :selector
 
-  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination
+  attr_reader :path, :owner, :group, :checksum_type, :checksum, :ftype, :destination
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
@@ -20,6 +20,10 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     raise(ArgumentError, "Unsupported checksum type #{type}") unless respond_to?("#{type}_file")
 
     @checksum_type = type
+  end
+
+  def mode
+    @mode.is_a?(Numeric) ? @mode.to_s(8) : @mode
   end
 
   class MetaStat

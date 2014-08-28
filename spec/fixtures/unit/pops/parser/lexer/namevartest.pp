@@ -5,5 +5,5 @@ define filetest($mode, $ensure = file) {
     }
 }
 
-filetest { "/tmp/testfiletest": mode => 644}
-filetest { "/tmp/testdirtest": mode => 755, ensure => directory}
+filetest { "/tmp/testfiletest": mode => '0644'}
+filetest { "/tmp/testdirtest": mode => '0755', ensure => directory}
