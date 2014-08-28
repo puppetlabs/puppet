@@ -1,4 +1,8 @@
 test_name "puppet module generate should succeed when metadata erb template contains deprecated field 'description'"
+require 'puppet/acceptance/windows_utils'
+extend Puppet::Acceptance::WindowsUtils
+
+confine :except, :platform => 'windows'
 
 module_author = "foo"
 module_name   = "bar"
@@ -22,7 +26,7 @@ agents.each do |agent|
       pending_test("managehome needs work on solaris")
     end
 
-    on agent, puppet_resource('user', module_author, ["ensure=present", "managehome=true", home_prop].compact)
+    on agent, puppet_resource('user', module_author, ["ensure=present", "managehome=true", "password='Puppet11'", home_prop].compact)
   end
 
   step "Add skeleton .fixtures.yml.erb file" do
