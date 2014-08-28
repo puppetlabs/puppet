@@ -1,5 +1,5 @@
 # $Id$
 
-File { mode => 755 }
+File { mode => '0755' }
 
 file { "/tmp/defaulttest": ensure => file }

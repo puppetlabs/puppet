@@ -171,10 +171,10 @@ describe "Puppet::Parser::Compiler" do
     let(:code) do
       <<-MANIFEST
         file { [a,b,c]:
-          mode => 0644,
+          mode => '0644',
         }
         file { [d,e]:
-          mode => 0755,
+          mode => '0755',
         }
       MANIFEST
     end

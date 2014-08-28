@@ -1506,14 +1506,14 @@ describe Puppet::Settings do
           :maindir => { :type => :directory, :default => make_absolute("/maindir"), :desc => "a" },
           :seconddir => { :type => :directory, :default => make_absolute("/seconddir"), :desc => "a"}
       @settings.define_settings :main, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
-      @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => 0755}
+      @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => '0755'}
       @settings.define_settings :third, :thirddir => { :type => :directory, :default => make_absolute("/thirddir"), :desc => "b"}
-      @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => 0755}
+      @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => '0755'}
     end
 
     it "should provide a method that creates directories with the correct modes" do
       Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
-      Dir.expects(:mkdir).with(make_absolute("/otherdir"), 0755)
+      Dir.expects(:mkdir).with(make_absolute("/otherdir"), '0755')
       @settings.mkdir(:otherdir)
     end
 
