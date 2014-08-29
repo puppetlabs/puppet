@@ -153,7 +153,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def status
-    return super if not is_upstart?
+    if (@resource[:hasstatus] == :false) ||
+        @resource[:status] ||
+        ! is_upstart?
+      return super
+    end
 
     output = status_exec(@resource[:name].split)
     if output =~ /start\//
