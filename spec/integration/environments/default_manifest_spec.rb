@@ -123,7 +123,7 @@ default_manifest=/foo/$environment
     end
   end
 
-  context "with restrict_environment_manifest true" do
+  context "with disable_per_environment_manifest true" do
     let(:manifestsdir) { File.expand_path("manifests", confdir) }
     let(:testingdir) { File.join(environmentpath, "testing") }
 
@@ -138,7 +138,7 @@ default_manifest=/foo/$environment
         f.puts(<<-EOF)
 environmentpath=#{environmentpath}
 default_manifest=#{manifestsdir}
-restrict_environment_manifest=true
+disable_per_environment_manifest=true
         EOF
       end
 
@@ -159,7 +159,7 @@ restrict_environment_manifest=true
       end
 
       expect { a_catalog_compiled_for_environment('testing') }.to(
-        raise_error(Puppet::Error, /restrict_environment_manifest.*environment.conf.*manifest.*conflict/)
+        raise_error(Puppet::Error, /disable_per_environment_manifest.*environment.conf.*manifest.*conflict/)
       )
     end
 
@@ -182,7 +182,7 @@ restrict_environment_manifest=true
       expect(Puppet[:environmentpath]).to eq(environmentpath)
       environment = Puppet.lookup(:environments).get('testing')
       expect(environment.manifest).to eq(manifestsdir)
-      expect(@logs.first.to_s).to match(%r{restrict_environment_manifest.*is true, but.*environment.*at #{testingdir}.*has.*environment.conf.*manifest.*#{testingdir}/special_manifests})
+      expect(@logs.first.to_s).to match(%r{disable_per_environment_manifest.*is true, but.*environment.*at #{testingdir}.*has.*environment.conf.*manifest.*#{testingdir}/special_manifests})
     end
 
     it "raises an error if default_manifest is not absolute" do
@@ -190,11 +190,11 @@ restrict_environment_manifest=true
         f.puts(<<-EOF)
 environmentpath=#{environmentpath}
 default_manifest=./relative
-restrict_environment_manifest=true
+disable_per_environment_manifest=true
         EOF
       end
 
-      expect { Puppet.initialize_settings }.to raise_error(Puppet::Settings::ValidationError, /default_manifest.*must be.*absolute.*when.*restrict_environment_manifest.*true/)
+      expect { Puppet.initialize_settings }.to raise_error(Puppet::Settings::ValidationError, /default_manifest.*must be.*absolute.*when.*disable_per_environment_manifest.*true/)
     end
   end
 
@@ -209,7 +209,7 @@ restrict_environment_manifest=true
       File.open(File.join(confdir, "puppet.conf"), "w") do |f|
         f.puts(<<-EOF)
 default_manifest=#{manifestsdir}
-restrict_environment_manifest=true
+disable_per_environment_manifest=true
 manifest=#{legacy_manifestsdir}
         EOF
       end

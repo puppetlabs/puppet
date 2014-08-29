@@ -239,7 +239,7 @@ class Puppet::Node::Environment
 
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
-  # +restrict_environment_manifest+ set true.  If it did, the environment's
+  # +disable_per_environment_manifest+ set true.  If it did, the environment's
   # modules may not function as intended by the original authors, and we may
   # seek to halt a puppet compilation for a node in this environment.
   #
@@ -247,12 +247,12 @@ class Puppet::Node::Environment
   # uninterpolated match for the current +default_manifest+ setting.
   #
   # @return [Boolean] true if using directory environments, and
-  #   Puppet[:restrict_environment_manifest] is true, and this environment's
+  #   Puppet[:disable_per_environment_manifest] is true, and this environment's
   #   original environment.conf had a manifest setting that is not the
   #   Puppet[:default_manifest].
   # @api public
   def conflicting_manifest_settings?
-    return false if Puppet[:environmentpath].empty? || !Puppet[:restrict_environment_manifest]
+    return false if Puppet[:environmentpath].empty? || !Puppet[:disable_per_environment_manifest]
     environment_conf = Puppet.lookup(:environments).get_conf(name)
     original_manifest = environment_conf.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]

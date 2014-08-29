@@ -52,7 +52,7 @@ class Puppet::Settings::EnvironmentConf
 
   def manifest
     puppet_conf_manifest = Pathname.new(Puppet.settings.value(:default_manifest))
-    restrict_environment_manifest = Puppet.settings.value(:restrict_environment_manifest)
+    disable_per_environment_manifest = Puppet.settings.value(:disable_per_environment_manifest)
 
     fallback_manifest_directory =
     if puppet_conf_manifest.absolute?
@@ -61,10 +61,10 @@ class Puppet::Settings::EnvironmentConf
       File.join(@path_to_env, puppet_conf_manifest.to_s)
     end
 
-    if restrict_environment_manifest
+    if disable_per_environment_manifest
       environment_conf_manifest = absolute(raw_setting(:manifest))
       if environment_conf_manifest && fallback_manifest_directory != environment_conf_manifest
-        errmsg = ["The 'restrict_environment_manifest' setting is true, but the",
+        errmsg = ["The 'disable_per_environment_manifest' setting is true, but the",
         "environment located at #{@path_to_env} has a manifest setting in its",
         "environment.conf of '#{environment_conf_manifest}' which does not match",
         "the default_manifest setting '#{puppet_conf_manifest}'. If this",

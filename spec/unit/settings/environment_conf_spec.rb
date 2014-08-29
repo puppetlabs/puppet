@@ -73,7 +73,7 @@ describe Puppet::Settings::EnvironmentConf do
     end
   end
 
-  describe "with restrict_environment_manifest" do
+  describe "with disable_per_environment_manifest" do
 
     let(:config) { stub('config') }
     let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, ["/global/modulepath"]) }
@@ -82,7 +82,7 @@ describe Puppet::Settings::EnvironmentConf do
 
       before(:each) do
         Puppet[:default_manifest] = '/default/manifest'
-        Puppet[:restrict_environment_manifest] = true
+        Puppet[:disable_per_environment_manifest] = true
       end
 
       it "ignores environment.conf manifest" do
@@ -95,7 +95,7 @@ describe Puppet::Settings::EnvironmentConf do
         setup_environment_conf(config, :manifest => '/some/manifest.pp')
 
         envconf.manifest
-        expect(@logs.first.to_s).to match(/restrict_environment_manifest.*true.*environment.conf.*does not match the default_manifest/)
+        expect(@logs.first.to_s).to match(/disable_per_environment_manifest.*true.*environment.conf.*does not match the default_manifest/)
       end
 
       it "does not log an error when environment.conf does not have a manifest set" do
@@ -110,7 +110,7 @@ describe Puppet::Settings::EnvironmentConf do
       setup_environment_conf(config, :manifest => '/some/manifest.pp')
 
       Puppet[:default_manifest] = '/default/manifest'
-      Puppet[:restrict_environment_manifest] = false
+      Puppet[:disable_per_environment_manifest] = false
 
       expect(envconf.manifest).to eq(File.expand_path('/some/manifest.pp'))
     end

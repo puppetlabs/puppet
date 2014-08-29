@@ -101,7 +101,7 @@ describe Puppet::Parser::Compiler do
     conflicted_environment = Puppet::Node::Environment.create(:testing, [], '/some/environment.conf/manifest.pp')
     conflicted_environment.stubs(:conflicting_manifest_settings?).returns(true)
     @node.environment = conflicted_environment
-    expect { Puppet::Parser::Compiler.compile(@node) }.to raise_error(Puppet::Error, /restrict_environment_manifest.*true.*environment.conf.*manifest.*conflict/)
+    expect { Puppet::Parser::Compiler.compile(@node) }.to raise_error(Puppet::Error, /disable_per_environment_manifest.*true.*environment.conf.*manifest.*conflict/)
   end
 
   it "should include the resource type collection helper" do

@@ -18,15 +18,15 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "when restrict_environment_manifest is set" do
+  describe "when disable_per_environment_manifest is set" do
     it "returns false by default" do
-      expect(Puppet[:restrict_environment_manifest]).to eq(false)
+      expect(Puppet[:disable_per_environment_manifest]).to eq(false)
     end
 
     it "errors when set to true and default_manifest is not an absolute path" do
       expect {
         Puppet[:default_manifest] = './some/relative/manifest.pp'
-        Puppet[:restrict_environment_manifest] = true
+        Puppet[:disable_per_environment_manifest] = true
       }.to raise_error Puppet::Settings::ValidationError, /'default_manifest' setting must be.*absolute/
     end
   end

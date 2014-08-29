@@ -22,7 +22,7 @@ class Puppet::Parser::Compiler
 
     if node.environment.conflicting_manifest_settings?
       errmsg = [
-        "The 'restrict_environment_manifest' setting is true, and this '#{node.environment}'",
+        "The 'disable_per_environment_manifest' setting is true, and this '#{node.environment}'",
         "has an environment.conf manifest that conflicts with the 'default_manifest' setting.",
         "Compilation has been halted in order to avoid running a catalog which may be using",
         "unexpected manifests. For more information, see",

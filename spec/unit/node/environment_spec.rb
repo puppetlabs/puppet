@@ -197,17 +197,17 @@ describe Puppet::Node::Environment do
         Puppet[:default_manifest] = "/default/manifests/site.pp"
       end
 
-      it "has no conflicting_manifest_settings? when restrict_environment_manifest is false" do
+      it "has no conflicting_manifest_settings? when disable_per_environment_manifest is false" do
         expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').conflicting_manifest_settings?).to be_false
       end
 
-      context "when restrict_environment_manifest is true" do
+      context "when disable_per_environment_manifest is true" do
         let(:config) { mock('config') }
         let(:global_modulepath) { ["/global/modulepath"] }
         let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, global_modulepath) }
 
         before(:each) do
-          Puppet[:restrict_environment_manifest] = true
+          Puppet[:disable_per_environment_manifest] = true
         end
 
         def assert_manifest_conflict(expectation, envconf_manifest_value)

@@ -1052,7 +1052,7 @@ EOT
         end
       end
     },
-    :restrict_environment_manifest => {
+    :disable_per_environment_manifest => {
       :default    => false,
       :type       => :boolean,
       :desc       => "Restricts use of environment specific 'manifest' setting
@@ -1060,7 +1060,7 @@ EOT
       :hook       => proc do |value|
         if value && !Pathname.new(Puppet[:default_manifest]).absolute?
           raise(Puppet::Settings::ValidationError,
-                "The 'default_manifest' setting must be set to an absolute path when 'restrict_environment_manifest' is true")
+                "The 'default_manifest' setting must be set to an absolute path when 'disable_per_environment_manifest' is true")
         end
       end,
     },
