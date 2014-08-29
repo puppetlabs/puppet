@@ -203,7 +203,7 @@ module Puppet::Util::Execution
         raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
       end
     ensure
-      if !options[:squelch]
+      if !options[:squelch] && stdout
         # if we opened a temp file for stdout, we need to clean it up.
         stdout.close!
       end
