@@ -23,6 +23,8 @@ if [ "$1" = "configure" ]; then
 	# to be owned by the "puppet" user
 	install --owner puppet --group puppet --directory \
 		/var/lib/puppet/state
+	install --owner puppet --group puppet --directory \
+		/var/lib/puppet/reports
 	
 	# Handle 
 	if [ -d /etc/puppet/ssl ] && [ ! -e /var/lib/puppet/ssl ] && grep -q 'ssldir=/var/lib/puppet/ssl' /etc/puppet/puppet.conf; then
