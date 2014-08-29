@@ -19,6 +19,10 @@ teardown do
 end
 
 agents.each do |agent|
+  if agent['platform'] =~ /windows/
+    p = on(agent, 'cygpath -uF 35').stdout.chomp
+    agent['distmoduledir'] = agent['distmoduledir'].sub('`cygpath -smF 35`', p)
+  end
 
   step "Install older version of module" do
     stub_forge_on(agent)
@@ -40,6 +44,7 @@ agents.each do |agent|
     metadata = on(agent, "cat #{metafile}").stdout
     m = JSON.parse(metadata)
     m['version'] = 'hello.world'
+    on(agent, "rm -f #{agent['distmoduledir']}/#{other_module_name}/metadata.json")
     create_remote_file(agent, "#{agent['distmoduledir']}/#{other_module_name}/metadata.json", JSON.dump(m))
   end
 
