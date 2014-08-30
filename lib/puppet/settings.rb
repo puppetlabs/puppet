@@ -1197,6 +1197,7 @@ Generated on #{Time.now}.
   # @return nil
   def clear_everything_for_tests()
     unsafe_clear(true, true)
+    @configuration_file = nil
     @global_defaults_initialized = false
     @app_defaults_initialized = false
   end
