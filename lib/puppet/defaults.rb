@@ -1041,9 +1041,17 @@ EOT
     :default_manifest => {
       :default    => "./manifests",
       :type       => :string,
-      :desc       => "Defines the path to the file or directory that is used as
-        a directory environment's 'manifest' setting when such a setting is not
-        present in an environment.conf.",
+      :desc       => "The default main manifest for directory environments. Any environment that
+        doesn't set the `manifest` setting in its `environment.conf` file will use
+        this manifest.
+
+        This setting's value can be an absolute or relative path. An absolute path
+        will make all environments default to the same main manifest; a relative
+        path will allow each environment to use its own manifest, and Puppet will
+        resolve the path relative to each environment's main directory.
+
+        In either case, the path can point to a single file or to a directory of
+        manifests to be evaluated in alphabetical order.",
       :hook       => proc do |value|
         uninterpolated_value = self.value(true)
         if uninterpolated_value =~ /\$environment/ || value =~ /\$environment/ then
@@ -1055,8 +1063,12 @@ EOT
     :disable_per_environment_manifest => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Restricts use of environment specific 'manifest' setting
-        in all directory environment configurations.",
+      :desc       => "Whether to disallow an environment-specific main manifest. When set
+        to `true`, Puppet will use the manifest specified in the `default_manifest` setting
+        for all environments. If an environment specifies a different main manifest in its
+        `environment.conf` file, catalog requests for that environment will fail with an error.
+
+        This setting requires `default_manifest` to be set to an absolute path.",
       :hook       => proc do |value|
         if value && !Pathname.new(Puppet[:default_manifest]).absolute?
           raise(Puppet::Settings::ValidationError,
