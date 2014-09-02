@@ -158,4 +158,28 @@ describe Puppet::Util::Ldap::Connection do
       Puppet::Util::Ldap::Connection.instance
     end
   end
+  
+  describe "when creating a connection with ldapcrtdir" do
+    it "should support specifing a ldapcrtdir" do
+      lambda { Puppet::Util::Ldap::Connection.new("myhost", "myport", :crtdir => "/var/ldap") }.should_not raise_error
+    end
+    
+    it "should set the ldapcrtdir if it is used and will also use ssl" do
+      Puppet[:ldapcrtdir] = "/var/ldap"
+      Puppet[:ldapssl] = true
+      Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:crtdir] == "/var/ldap" and options[:ssl] == true }
+      Puppet::Util::Ldap::Connection.instance
+    end
+    
+    it "should not use the ldapcrtdir if it is false" do
+      Puppet[:ldapcrtdir] = false
+      Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:crtdir] == false }
+      Puppet::Util::Ldap::Connection.instance
+    end
+    
+    it "should not use the ldapcrtdir if it is not set (default)" do
+      Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:crtdir] == false }
+      Puppet::Util::Ldap::Connection.instance
+    end
+  end
 end
