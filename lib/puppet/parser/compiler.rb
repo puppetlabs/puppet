@@ -20,6 +20,17 @@ class Puppet::Parser::Compiler
     $env_module_directories = nil
     node.environment.check_for_reparse
 
+    if node.environment.conflicting_manifest_settings?
+      errmsg = [
+        "The 'disable_per_environment_manifest' setting is true, and this '#{node.environment}'",
+        "has an environment.conf manifest that conflicts with the 'default_manifest' setting.",
+        "Compilation has been halted in order to avoid running a catalog which may be using",
+        "unexpected manifests. For more information, see",
+        "http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      ]
+      raise(Puppet::Error, errmsg.join(' '))
+    end
+
     new(node).compile.to_resource
   rescue => detail
     message = "#{detail} on node #{node.name}"

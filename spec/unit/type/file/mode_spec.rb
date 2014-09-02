@@ -6,7 +6,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('mode_spec') }
-  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => 0644 }
+  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => '0644' }
   let(:mode) { resource.property(:mode) }
 
   describe "#validate" do

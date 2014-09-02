@@ -174,17 +174,9 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
 
-  APPEND_FAILED = issue :APPEND_FAILED, :message do
-    "Append assignment += failed with error: #{message}"
-  end
-
-  DELETE_FAILED = issue :DELETE_FAILED, :message do
-    "'Delete' assignment -= failed with error: #{message}"
-  end
-
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
-    "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
+    "The numeric parameter name '$#{name}' cannot be used (clashes with numeric match result variables)"
   end
 
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key
@@ -303,8 +295,7 @@ module Puppet::Pops::Issues
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
+  # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
     "Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric)."
@@ -466,6 +457,10 @@ module Puppet::Pops::Issues
     "The title '#{title}' has already been used in this resource expression"
   end
 
+  DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
+    "The attribute '#{attribute}' has already been set in this resource body"
+  end
+
   MISSING_TITLE = hard_issue :MISSING_TITLE do
     "Missing title. The title expression resulted in undef"
   end
@@ -545,5 +540,9 @@ module Puppet::Pops::Issues
 
   TYPE_MISMATCH = hard_issue :TYPE_MISMATCH, :expected, :actual do
     "Expected value of type #{expected}, got #{actual}"
+  end
+
+  MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
+    "Unfolding of attributes from Hash can only be used once per resource body"
   end
 end

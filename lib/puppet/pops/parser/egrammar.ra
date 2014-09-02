@@ -444,7 +444,6 @@ collection_expression
 #
 attribute_operations
   :                                                { result = [] }
-  | TIMES FARROW expression                        { result = [tmp = Factory.ATTRIBUTES_OP(val[2])] ; loc tmp, val[0], val[2] }
   | attribute_operation                            { result = [val[0]] }
   | attribute_operations COMMA attribute_operation { result = val[0].push(val[2]) }
 
@@ -469,6 +468,9 @@ attribute_operations
         result = Factory.ATTRIBUTE_OP(val[0][:value], :'+>', val[2])
         loc result, val[0], val[2]
       }
+  | TIMES FARROW expression {
+      result = Factory.ATTRIBUTES_OP(val[2]) ; loc result, val[0], val[2]
+   }
 
 #---DEFINE
 #

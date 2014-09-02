@@ -176,7 +176,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   describe "when copying the source values" do
-    before do
+    before :each do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
@@ -184,6 +184,20 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @source.stubs(:metadata).returns @metadata
 
       Puppet.features.stubs(:root?).returns true
+    end
+
+    it "should not issue a deprecation warning if the source mode value is a Numeric" do
+      @metadata.stubs(:mode).returns 0173
+      Puppet.expects(:deprecation_warning).never
+
+      @source.copy_source_values
+    end
+
+    it "should not issue a deprecation warning if the source mode value is a String" do
+      @metadata.stubs(:mode).returns "173"
+      Puppet.expects(:deprecation_warning).never
+
+      @source.copy_source_values
     end
 
     it "should fail if there is no metadata" do

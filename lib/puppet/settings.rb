@@ -199,6 +199,7 @@ class Puppet::Settings
     @value_sets[:memory] = Values.new(:memory, @config)
     @value_sets[:overridden_defaults] = Values.new(:overridden_defaults, @config)
 
+    @deprecated_settings_that_have_been_configured.clear
     @values.clear
     @cache.clear
   end
@@ -541,11 +542,11 @@ class Puppet::Settings
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
     return if data.nil?
 
-    record_deprecations_from_puppet_conf(data)
-
-    # If we get here then we have some data, so we need to clear out any previous settings that may have come from
-    #  config files.
+    # If we get here then we have some data, so we need to clear out any
+    # previous settings that may have come from config files.
     unsafe_clear(false, false)
+
+    record_deprecations_from_puppet_conf(data)
 
     # And now we can repopulate with the values from our last parsing of the config files.
     @configuration_file = data
@@ -1196,6 +1197,7 @@ Generated on #{Time.now}.
   # @return nil
   def clear_everything_for_tests()
     unsafe_clear(true, true)
+    @configuration_file = nil
     @global_defaults_initialized = false
     @app_defaults_initialized = false
   end

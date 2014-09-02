@@ -70,7 +70,7 @@ describe Puppet::Util::CommandLine do
       it "should print the version and exit if #{arg} is given" do
         expect do
           described_class.new("puppet", [arg]).execute
-        end.to have_printed(/^#{Puppet.version}$/)
+        end.to have_printed(/^#{Regexp.escape(Puppet.version)}$/)
       end
     end
   end
@@ -125,7 +125,7 @@ describe Puppet::Util::CommandLine do
 
             expect {
               commandline.execute
-            }.to have_printed(/^#{Puppet.version}$/).and_exit_with(1)
+            }.to have_printed(%r[^#{Regexp.escape(Puppet.version)}$]).and_exit_with(1)
           end
         end
       end

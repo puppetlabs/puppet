@@ -463,7 +463,9 @@ module Util
     ensure
       # in case an error occurred before we renamed the temp file, make sure it
       # gets deleted
-      tempfile.close!
+      if tempfile
+        tempfile.close!
+      end
     end
 
 
