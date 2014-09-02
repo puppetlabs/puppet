@@ -81,7 +81,7 @@ describe Puppet::Settings::EnvironmentConf do
     context "set true" do
 
       before(:each) do
-        Puppet[:default_manifest] = '/default/manifest'
+        Puppet[:default_manifest] = File.expand_path('/default/manifest')
         Puppet[:disable_per_environment_manifest] = true
       end
 
@@ -109,7 +109,7 @@ describe Puppet::Settings::EnvironmentConf do
     it "uses environment.conf when false" do
       setup_environment_conf(config, :manifest => '/some/manifest.pp')
 
-      Puppet[:default_manifest] = '/default/manifest'
+      Puppet[:default_manifest] = File.expand_path('/default/manifest')
       Puppet[:disable_per_environment_manifest] = false
 
       expect(envconf.manifest).to eq(File.expand_path('/some/manifest.pp'))
