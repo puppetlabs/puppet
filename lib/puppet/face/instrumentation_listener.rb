@@ -5,9 +5,10 @@ Puppet::Indirector::Face.define(:instrumentation_listener, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Manage instrumentation listeners."
+  summary "Manage instrumentation listeners. DEPRECATED."
   description <<-EOT
     This subcommand enables/disables or list instrumentation listeners.
+    (DEPRECATED) This subcommand will be removed in Puppet 4.0.
   EOT
 
   get_action(:destroy).summary "Invalid for this subcommand."

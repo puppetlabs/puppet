@@ -67,17 +67,23 @@ describe Puppet::Util::Colors do
     end
   end
 
-  describe "on Windows", :if => Puppet.features.microsoft_windows? do
-    it "expects a trailing embedded NULL character in the wide string" do
-      message = "hello"
+  context "on Windows in Ruby 1.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^1./ do
+    it "should define WideConsole" do
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_true
+    end
 
-      console = Puppet::Util::Colors::WideConsole.new
-      wstr, nchars = console.string_encode(message)
+    it "should define WideIO" do
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_true
+    end
+  end
 
-      expect(nchars).to eq(message.length)
+  context "on Windows in Ruby 2.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^2./ do
+    it "should not define WideConsole" do
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_false
+    end
 
-      expect(wstr.length).to eq(nchars + 1)
-      expect(wstr[-1].ord).to be_zero
+    it "should not define WideIO" do
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_false
     end
   end
 end

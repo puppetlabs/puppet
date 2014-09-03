@@ -37,8 +37,8 @@ describe 'the assert_type function' do
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'assert_type' called with mis-matched arguments
 expected one of:
-  assert_type(Type type, Optional[Object] value) - arg count {2}
-  assert_type(String type_string, Optional[Object] value) - arg count {2}
+  assert_type(Type type, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
+  assert_type(String type_string, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
 actual:
   assert_type(Integer, Integer) - arg count {2}")))
   end
@@ -46,7 +46,13 @@ actual:
   it 'allows the second arg to be undef/nil)' do
     expect do
       func.call({}, optional(String), nil)
-    end.to_not raise_error(ArgumentError)
+    end.to_not raise_error
+  end
+
+  it 'can be called with a callable that receives a specific type' do
+    expected, actual = func.call({}, optional(String), 1, create_callable_2_args_unit)
+    expect(expected.to_s).to eql('Optional[String]')
+    expect(actual.to_s).to eql('Integer[1, 1]')
   end
 
   def optional(type_ref)
@@ -55,5 +61,18 @@ actual:
 
   def type(type_ref)
     Puppet::Pops::Types::TypeFactory.type_of(type_ref)
+  end
+
+  def create_callable_2_args_unit()
+    Puppet::Functions.create_function(:func) do
+      dispatch :func do
+        param 'Type', 'expected'
+        param 'Type', 'actual'
+      end
+
+      def func(expected, actual)
+        [expected, actual]
+      end
+    end.new({}, nil)
   end
 end

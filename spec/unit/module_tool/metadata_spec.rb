@@ -5,6 +5,19 @@ describe Puppet::ModuleTool::Metadata do
   let(:data) { {} }
   let(:metadata) { Puppet::ModuleTool::Metadata.new }
 
+  describe 'property lookups' do
+    subject { metadata }
+
+    %w[ name version author summary license source project_page issues_url
+    dependencies dashed_name release_name description ].each do |prop|
+      describe "##{prop}" do
+        it "responds to the property" do
+          subject.send(prop)
+        end
+      end
+    end
+  end
+
   describe "#update" do
     subject { metadata.update(data) }
 
@@ -156,6 +169,61 @@ describe Puppet::ModuleTool::Metadata do
 
     end
 
+    context "with a valid dependency" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabs-goodmodule'}] }}
+
+      it "adds the dependency" do
+        subject.dependencies.size.should == 1
+      end
+    end
+
+    context "with a invalid dependency name" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabsbadmodule'}] }}
+
+      it "raises an exception" do
+        expect { subject }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "with a valid dependency version range" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabs-badmodule', 'version_requirement' => '>= 2.0.0'}] }}
+
+      it "adds the dependency" do
+        subject.dependencies.size.should == 1
+      end
+    end
+
+    context "with a invalid version range" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabsbadmodule', 'version_requirement' => '>= banana'}] }}
+
+      it "raises an exception" do
+        expect { subject }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "with duplicate dependencies" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabs-dupmodule', 'version_requirement' => '1.0.0'},
+        {'name' => 'puppetlabs-dupmodule', 'version_requirement' => '0.0.1'}] }
+      }
+
+      it "raises an exception" do
+        expect { subject }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "adding a duplicate dependency" do
+      let(:data) { {'dependencies' => [{'name' => 'puppetlabs-origmodule', 'version_requirement' => '1.0.0'}] }}
+
+      it "with a different version raises an exception" do
+        metadata.add_dependency('puppetlabs-origmodule', '>= 0.0.1')
+        expect { subject }.to raise_error(ArgumentError)
+      end
+
+      it "with the same version does not add another dependency" do
+        metadata.add_dependency('puppetlabs-origmodule', '1.0.0')
+        subject.dependencies.size.should == 1
+      end
+    end
   end
 
   describe '#dashed_name' do
@@ -202,8 +270,8 @@ describe Puppet::ModuleTool::Metadata do
   describe "#to_hash" do
     subject { metadata.to_hash }
 
-    its(:keys) do
-      subject.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
+    it "contains the default set of keys" do
+      subject.keys.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
     end
 
     describe "['license']" do
@@ -213,8 +281,8 @@ describe Puppet::ModuleTool::Metadata do
     end
 
     describe "['dependencies']" do
-      it "defaults to an empty Array" do
-        subject['dependencies'].should == []
+      it "defaults to an empty set" do
+        subject['dependencies'].should == Set.new
       end
     end
 

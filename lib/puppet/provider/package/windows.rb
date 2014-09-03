@@ -10,6 +10,11 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     This provider requires a `source` attribute when installing the package.
     It accepts paths to local files, mapped drives, or UNC paths.
 
+    This provider supports the `install_options` and `uninstall_options`
+    attributes, which allow command-line flags to be passed to the installer.
+    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+    or an array where each element is either a string or a hash.
+
     If the executable requires special arguments to perform a silent install or
     uninstall, then the appropriate arguments should be specified using the
     `install_options` or `uninstall_options` attributes, respectively.  Puppet
@@ -93,7 +98,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     end
   end
 
-  # This only get's called if there is a value to validate, but not if it's absent
+  # This only gets called if there is a value to validate, but not if it's absent
   def validate_source(value)
     fail("The source parameter cannot be empty when using the Windows provider.") if value.empty?
   end

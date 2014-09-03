@@ -49,7 +49,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should be able to add exported resources' do
-      catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}}) realize(File['/etc/foo'])")
       catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
       catalog.resource(:file, "/etc/foo").exported.should == true
     end
@@ -201,6 +201,13 @@ describe 'function for dynamically creating resources' do
 
       catalog.resource(:notify, "test")['message'].should == 'two'
       catalog.resource(:class, "bar").should_not be_nil
+    end
+
+    it 'should fail with a correct error message if the syntax of an imported file is incorrect' do
+      expect{
+        Puppet[:modulepath] = my_fixture_dir
+        compile_to_catalog('include foo')
+      }.to raise_error(Puppet::Error, /Syntax error at.*/)
     end
   end
 end

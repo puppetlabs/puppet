@@ -134,6 +134,11 @@ describe "egrammar parsing basic expressions" do
     it "$a = 'a' !~ 'b.*'"   do; dump(parse("$a = 'a' !~ 'b.*'")).should == "(= $a (!~ 'a' 'b.*'))"    ; end
   end
 
+  context "When parsing unfold" do
+    it "$a = *[1,2]" do; dump(parse("$a = *[1,2]")).should == "(= $a (unfold ([] 1 2)))" ; end
+    it "$a = *1"     do; dump(parse("$a = *1")).should == "(= $a (unfold 1))" ; end
+  end
+
   context "When parsing Lists" do
     it "$a = []" do
       dump(parse("$a = []")).should == "(= $a ([]))"

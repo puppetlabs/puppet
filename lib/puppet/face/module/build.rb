@@ -43,11 +43,11 @@ Puppet::Face.define(:module, '1.0.0') do
         pwd = Dir.pwd
         module_path = Puppet::ModuleTool.find_module_root(pwd)
         if module_path.nil?
-          raise "Unable to find module root at #{pwd} or parent directories"
+          raise "Unable to find metadata.json or Modulefile in module root #{pwd} or parent directories. See <http://links.puppetlabs.com/modulefile> for required file format."
         end
       else
         unless Puppet::ModuleTool.is_module_root?(module_path)
-          raise "Unable to find module root at #{module_path}"
+          raise "Unable to find metadata.json or Modulefile in module root #{module_path}. See <http://links.puppetlabs.com/modulefile> for required file format."
         end
       end
 

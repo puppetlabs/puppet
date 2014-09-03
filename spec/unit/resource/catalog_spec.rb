@@ -606,7 +606,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.apply
       end
 
-      after { Puppet.settings.clear }
     end
 
     describe "non-host catalogs" do
@@ -627,7 +626,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.apply
       end
 
-      after { Puppet.settings.clear }
     end
   end
 
@@ -659,9 +657,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.write_graph(@name)
     end
 
-    after do
-      Puppet.settings.clear
-    end
   end
 
   describe "when indirecting" do

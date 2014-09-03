@@ -168,7 +168,7 @@ module Puppet
     newparam(:forcelocal, :boolean => true,
              :required_features => :libuser,
              :parent => Puppet::Parameter::Boolean) do
-      desc "Forces the mangement of local accounts when accounts are also
+      desc "Forces the management of local accounts when accounts are also
             being managed by some other NSS"
       defaultto false
     end

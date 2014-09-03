@@ -99,6 +99,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :destroy do
+    summary "Destroy named certificate or pending certificate request."
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
@@ -111,6 +112,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :revoke do
+    summary "Add certificate to certificate revocation list."
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
@@ -131,6 +133,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :generate do
+    summary "Generate a certificate for a named client."
     option "--dns-alt-names NAMES" do
       summary "Additional DNS names to add to the certificate request"
       description Puppet.settings.setting(:dns_alt_names).desc
@@ -162,6 +165,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :sign do
+    summary "Sign an outstanding certificate request."
     option("--[no-]allow-dns-alt-names") do
       summary "Whether or not to accept DNS alt names in the certificate request"
     end
@@ -186,6 +190,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :print do
+    summary "Print the full-text version of a host's certificate."
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
@@ -198,6 +203,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :fingerprint do
+    summary "Print the DIGEST (defaults to the signing algorithm) fingerprint of a host's certificate."
     option "--digest ALGORITHM" do
       summary "The hash algorithm to use when displaying the fingerprint"
     end
@@ -218,6 +224,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :verify do
+    summary "Verify the named certificate against the local CA certificate."
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance

@@ -54,6 +54,9 @@ class Puppet::Forge < Semantic::Dependency::Source
   def search(term)
     matches = []
     uri = "/v3/modules?query=#{URI.escape(term)}"
+    if Puppet[:module_groups]
+      uri += "&module_groups=#{Puppet[:module_groups]}"
+    end
 
     while uri
       response = make_http_request(uri)
@@ -63,7 +66,7 @@ class Puppet::Forge < Semantic::Dependency::Source
         uri = result['pagination']['next']
         matches.concat result['results']
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri) , :input => term, :response => response)
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end
     end
 
@@ -86,6 +89,9 @@ class Puppet::Forge < Semantic::Dependency::Source
   def fetch(input)
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
+    if Puppet[:module_groups]
+      uri += "&module_groups=#{Puppet[:module_groups]}"
+    end
     releases = []
 
     while uri
@@ -94,7 +100,7 @@ class Puppet::Forge < Semantic::Dependency::Source
       if response.code == '200'
         response = JSON.parse(response.body)
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :input => input, :response => response)
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end
 
       releases.concat(process(response['results']))
@@ -119,9 +125,17 @@ class Puppet::Forge < Semantic::Dependency::Source
       version = Semantic::Version.parse(meta['version'])
       release = "#{name}@#{version}"
 
-      dependencies = (meta['dependencies'] || [])
-      dependencies.map! do |dep|
-        Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+      if meta['dependencies']
+        dependencies = meta['dependencies'].collect do |dep|
+          begin
+            Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+          rescue ArgumentError => e
+            raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
+          end
+        end
+      else
+        dependencies = []
       end
 
       super(source, name, version, Hash[dependencies])
@@ -172,8 +186,11 @@ class Puppet::Forge < Semantic::Dependency::Source
     end
 
     def download(uri, destination)
-      @source.make_http_request(uri, destination)
+      response = @source.make_http_request(uri, destination)
       destination.flush and destination.close
+      unless response.code == '200'
+        raise Puppet::Forge::Errors::ResponseError.new(:uri => uri, :response => response)
+      end
     end
 
     def validate_checksum(file, checksum)
@@ -194,6 +211,16 @@ class Puppet::Forge < Semantic::Dependency::Source
   private
 
   def process(list)
-    list.map { |release| ModuleRelease.new(self, release) }
+    l = list.map do |release|
+      metadata = release['metadata']
+      begin
+        ModuleRelease.new(self, release)
+      rescue ArgumentError => e
+        Puppet.warning "Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}"
+        false
+      end
+    end
+
+    l.select { |r| r }
   end
 end

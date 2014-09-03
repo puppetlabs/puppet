@@ -3,7 +3,11 @@ require 'set'
 require 'uri'
 
 Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Package do
-  desc "Support for the Package Manager Utility (pacman) used in Archlinux."
+  desc "Support for the Package Manager Utility (pacman) used in Archlinux.
+
+  This provider supports the `install_options` attribute, which allows command-line flags to be passed to pacman.
+  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+  or an array where each element is either a string or a hash."
 
   commands :pacman => "/usr/bin/pacman"
   # Yaourt is a common AUR helper which, if installed, we can use to query the AUR
@@ -11,6 +15,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   confine     :operatingsystem => :archlinux
   defaultfor  :operatingsystem => :archlinux
+  has_feature :install_options
+  has_feature :uninstall_options
   has_feature :upgradeable
 
   # If yaourt is installed, we can make use of it
@@ -35,9 +41,15 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   def install_from_repo
     if yaourt?
-      yaourt "--noconfirm", "-S", @resource[:name]
+      cmd = %w{--noconfirm}
+      cmd += install_options if @resource[:install_options]
+      cmd << "-S" << @resource[:name]
+      yaourt *cmd
     else
-        pacman "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]
+      cmd = %w{--noconfirm --noprogressbar}
+      cmd += install_options if @resource[:install_options]
+      cmd << "-Sy" << @resource[:name]
+      pacman *cmd
     end
   end
   private :install_from_repo
@@ -204,6 +216,19 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Removes a package from the system.
   def uninstall
-    pacman "--noconfirm", "--noprogressbar", "-R", @resource[:name]
+    cmd = %w{--noconfirm --noprogressbar}
+    cmd += uninstall_options if @resource[:uninstall_options]
+    cmd << "-R" << @resource[:name]
+    pacman *cmd
+  end
+
+  private
+
+  def install_options
+    join_options(@resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(@resource[:uninstall_options])
   end
 end

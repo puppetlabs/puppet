@@ -65,7 +65,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   #
   def promote_entry(named_entry)
     typed_name = named_entry.typed_name
-    if entry = @named_values[typed_name] then fail_redefined(entry); end
+    if entry = @named_values[typed_name] then fail_redefine(entry); end
     @named_values[typed_name] = named_entry
   end
 
@@ -73,7 +73,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
 
   def fail_redefine(entry)
     origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : "unknown location"
-    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}' originally set at #{origin_label(origin)}.#{origin_info}"
+    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}' originally set at #{origin_info}"
   end
 
   # TODO: Should not really be here?? - TODO: A Label provider ? semantics for the URI?
@@ -84,7 +84,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     elsif origin.respond_to?(:uri)
       origin.uri.to_s
     else
-      nil
+      origin
     end
   end
 

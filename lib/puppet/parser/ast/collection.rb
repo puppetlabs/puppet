@@ -15,6 +15,10 @@ class Puppet::Parser::AST
     def evaluate(scope)
       match, code = query && query.safeevaluate(scope)
 
+      if @type == 'class'
+        fail "Classes cannot be collected"
+      end
+
       resource_type = scope.find_resource_type(@type)
       fail "Resource type #{@type} doesn't exist" unless resource_type
       newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, match, code, self.form)

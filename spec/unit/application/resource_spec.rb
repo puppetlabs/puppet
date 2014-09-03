@@ -16,11 +16,6 @@ describe Puppet::Application::Resource do
       @resource_app.preinit
       @resource_app.extra_params.should == []
     end
-
-    it "should load Facter facts" do
-      Facter.expects(:loadfacts).once
-      @resource_app.preinit
-    end
   end
 
   describe "when handling options" do

@@ -17,31 +17,19 @@ and resource-like declarations with the same class.
 The `include` function does not cause classes to be contained in the class
 where they are declared. For that, see the `contain` function. It also
 does not create a dependency relationship between the declared class and the
-surrounding class; for that, see the `require` function.") do |vals|
-    if vals.is_a?(Array)
-      # Protect against array inside array
-      vals = vals.flatten
-    else
-      vals = [vals]
-    end
+surrounding class; for that, see the `require` function.
 
-    # The 'false' disables lazy evaluation.
-    klasses = compiler.evaluate_classes(vals, self, false)
+When the future parser is used, you must use the class's full name;
+relative names are no longer allowed. In addition to names in string form,
+you may also directly use Class and Resource Type values that are produced by
+the future parser's resource and relationship expressions.
 
-    missing = vals.find_all do |klass|
-      ! klasses.include?(klass)
-    end
+") do |vals|
 
-    unless missing.empty?
-      # Throw an error if we didn't evaluate all of the classes.
-      str = "Could not find class"
-      str += "es" if missing.length > 1
-
-      str += " " + missing.join(", ")
-
-      if n = namespaces and ! n.empty? and n != [""]
-        str += " in namespaces #{@namespaces.join(", ")}"
-      end
-      self.fail Puppet::ParseError, str
-    end
+  # Unify call patterns (if called with nested arrays), make names absolute if
+  # wanted and evaluate the classes
+  compiler.evaluate_classes(
+  transform_and_assert_classnames(
+      vals.is_a?(Array) ? vals.flatten : [vals]),
+      self, false)
 end

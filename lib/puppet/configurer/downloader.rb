@@ -10,18 +10,15 @@ class Puppet::Configurer::Downloader
 
     files = []
     begin
-      ::Timeout.timeout(Puppet[:configtimeout]) do
-        catalog.apply do |trans|
-          trans.changed?.find_all do |resource|
-            yield resource if block_given?
-            files << resource[:path]
-          end
+      catalog.apply do |trans|
+        trans.changed?.each do |resource|
+          yield resource if block_given?
+          files << resource[:path]
         end
       end
-    rescue Puppet::Error, Timeout::Error => detail
+    rescue Puppet::Error => detail
       Puppet.log_exception(detail, "Could not retrieve #{name}: #{detail}")
     end
-
     files
   end
 
@@ -43,8 +40,6 @@ class Puppet::Configurer::Downloader
   end
 
   private
-
-  require 'sys/admin' if Puppet.features.microsoft_windows?
 
   def default_arguments
     defargs = {

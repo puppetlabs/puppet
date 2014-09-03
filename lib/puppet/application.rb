@@ -354,7 +354,19 @@ class Application
     end
 
     Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{self.class.run_mode})")
-    configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    # This use of configured environment is correct, this is used to establish
+    # the defaults for an application that does not override, or where an override
+    # has not been made from the command line.
+    #
+    configured_environment_name = Puppet[:environment]
+    if self.class.run_mode.name != :agent
+      configured_environment = Puppet.lookup(:environments).get(configured_environment_name)
+      if configured_environment.nil?
+        fail(Puppet::Environments::EnvironmentNotFound, configured_environment_name)
+      end
+    else
+      configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
+    end
     configured_environment = configured_environment.override_from_commandline(Puppet.settings)
 
     # Setup a new context using the app's configuration
@@ -368,6 +380,7 @@ class Application
     exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
     exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("log runtime debug info")                       { log_runtime_environment }
     exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
   end
 
@@ -417,6 +430,26 @@ class Application
       application_routes = routes[name.to_s]
       Puppet::Indirector.configure_routes(application_routes) if application_routes
     end
+  end
+
+  # Output basic information about the runtime environment for debugging
+  # purposes.
+  #
+  # @api public
+  #
+  # @param extra_info [Hash{String => #to_s}] a flat hash of extra information
+  #   to log. Intended to be passed to super by subclasses.
+  # @return [void]
+  def log_runtime_environment(extra_info=nil)
+    runtime_info = {
+      'puppet_version' => Puppet.version,
+      'ruby_version'   => RUBY_VERSION,
+      'run_mode'       => self.class.run_mode.name,
+    }
+    runtime_info['default_encoding'] = Encoding.default_external if RUBY_VERSION >= '1.9.3'
+    runtime_info.merge!(extra_info) unless extra_info.nil?
+
+    Puppet.debug 'Runtime environment: ' + runtime_info.map{|k,v| k + '=' + v.to_s}.join(', ')
   end
 
   def parse_options

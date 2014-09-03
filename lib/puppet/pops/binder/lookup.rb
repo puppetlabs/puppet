@@ -78,7 +78,7 @@ class Puppet::Pops::Binder::Lookup
     end
 
     # unless a type is already given (future case), parse the type (or default 'Data'), fails if invalid type is given
-    unless options[:type].is_a?(Puppet::Pops::Types::PAbstractType)
+    unless options[:type].is_a?(Puppet::Pops::Types::PAnyType)
       options[:type] = type_parser.parse(options[:type] || 'Data')
     end
 
@@ -159,17 +159,21 @@ class Puppet::Pops::Binder::Lookup
       result_with_name[1]
     end
 
+    # If a block is given it is called with :undef passed as 'nil' since the lookup function
+    # is available from 3x with --binder turned on, and the evaluation is always 4x.
+    # TODO PUPPET4: Simply pass the value
+    #
     result = if pblock = options[:pblock]
       result2 = case pblock.parameter_count
       when 1
-        pblock.call(scope, nil_as_undef(result))
+        pblock.call(scope, undef_as_nil(result))
       when 2
-        pblock.call(scope, result_with_name[ 0 ], nil_as_undef(result))
+        pblock.call(scope, result_with_name[ 0 ], undef_as_nil(result))
       else
-        pblock.call(scope, result_with_name[ 0 ], nil_as_undef(result), nil_as_undef(options[ :default ]))
+        pblock.call(scope, result_with_name[ 0 ], undef_as_nil(result), undef_as_nil(options[ :default ]))
       end
 
-      # if the given result was returned, there is not need to type-check it again
+      # if the given result was returned, there is no need to type-check it again
       if !result2.equal?(result)
         t = type_calculator.infer(undef_as_nil(result2))
         if !type_calculator.assignable?(type, t)
@@ -185,7 +189,11 @@ class Puppet::Pops::Binder::Lookup
     if is_nil_or_undef?(result) && !options[:accept_undef]
       fail_lookup(names)
     else
-      nil_as_undef(result)
+      # Since the function may be used without future parser being in effect, nil is not handled in a good
+      # way, and should instead be turned into :undef.
+      # TODO PUPPET4: Simply return the result
+      #
+      Puppet[:parser] == 'future' ? result : nil_as_undef(result)
     end
   end
 end

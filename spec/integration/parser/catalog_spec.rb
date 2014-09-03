@@ -75,6 +75,14 @@ describe "A catalog" do
         expect(resources_in(agent_catalog)).to_not include(*exported_resources)
       end
     end
+  end
+
+  describe 'using classic parser' do
+    before :each do
+      Puppet[:parser] = 'current'
+    end
+    it_behaves_like 'when compiled' do
+    end
 
     it "compiles resource creation from appended array as two separate resources" do
       # moved here from acceptance test "jeff_append_to_array.rb"
@@ -92,14 +100,6 @@ describe "A catalog" do
     end
   end
 
-  describe 'using classic parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-    it_behaves_like 'when compiled' do
-    end
-  end
-
   describe 'using future parser' do
     before :each do
       Puppet[:parser] = 'future'
@@ -113,9 +113,9 @@ describe "A catalog" do
   end
 
   def master_and_agent_catalogs_for(manifest)
-    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest))
+    compiler = Puppet::Resource::Catalog::Compiler.new
+    master_catalog = compiler.filter(compile_to_catalog(manifest))
     agent_catalog = Puppet::Resource::Catalog.convert_from(:pson, master_catalog.render(:pson))
-
     [master_catalog, agent_catalog]
   end
 

@@ -592,7 +592,7 @@ describe Puppet::Resource do
       text = @resource.render('yaml')
 
       newresource = Puppet::Resource.convert_from('yaml', text)
-      newresource.should equal_attributes_of @resource
+      newresource.should equal_resource_attributes_of @resource
     end
   end
 
@@ -615,7 +615,7 @@ describe Puppet::Resource do
       text = @resource.render('yaml')
 
       newresource = Puppet::Resource.convert_from('yaml', text)
-      newresource.should equal_attributes_of @resource
+      newresource.should equal_resource_attributes_of @resource
     end
   end
 

@@ -18,14 +18,7 @@ module Puppet::Util::SUIDManager
 
   def osx_maj_ver
     return @osx_maj_ver unless @osx_maj_ver.nil?
-    # 'kernel' is available without explicitly loading all facts
-    if Facter.value('kernel') != 'Darwin'
-      @osx_maj_ver = false
-      return @osx_maj_ver
-    end
-    # But 'macosx_productversion_major' requires it.
-    Facter.loadfacts
-    @osx_maj_ver = Facter.value('macosx_productversion_major')
+    @osx_maj_ver = Facter.value('macosx_productversion_major') || false
   end
   module_function :osx_maj_ver
 

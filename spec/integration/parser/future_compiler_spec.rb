@@ -61,13 +61,73 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "evoe")
     end
 
+    it 'Applies defaults from dynamic scopes (3x and future with reverted PUP-867)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include b
+        notify { bye: }
+      }
+      class b { notify { hi: } }
+
+      include a
+      CODE
+      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, "defaulted")
+      expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
+    end
+
+    it 'gets default from inherited class (PUP-867)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include c
+        notify { bye: }
+      }
+      class b { Notify { message => "inherited" } }
+      class c inherits b { notify { hi: } }
+
+      include a
+      CODE
+
+      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, "inherited")
+      expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
+    end
+
+    it 'looks up default parameter values from inherited class (PUP-2532)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include c
+        notify { bye: }
+      }
+      class b { Notify { message => "inherited" } }
+      class c inherits b { notify { hi: } }
+
+      include a
+      notify {hi_test: message => Notify[hi][message] }
+      notify {bye_test: message => Notify[bye][message] }
+      CODE
+
+      expect(catalog).to have_resource("Notify[hi_test]").with_parameter(:message, "inherited")
+      expect(catalog).to have_resource("Notify[bye_test]").with_parameter(:message, "defaulted")
+    end
+
+    it 'does not allow override of class parameters using a resource override expression' do
+      expect do
+        compile_to_catalog(<<-CODE)
+          Class[a] { x => 2}
+        CODE
+      end.to raise_error(/Resource Override can only.*got: Class\[a\].*/)
+    end
+
     describe "when resolving class references" do
-      it "should favor local scope, even if there's an included class in topscope" do
+      it "should not favor local scope (with class included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
             }
             notify {"x" : require => Class[Baz] }
+            notify {"y" : require => Class[Experiment::Baz] }
           }
           class baz {
           }
@@ -76,15 +136,17 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
-      it "should favor local scope, even if there's an unincluded class in topscope" do
+      it "should not favor local scope, (with class not included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
             }
             notify {"x" : require => Class[Baz] }
+            notify {"y" : require => Class[Experiment::Baz] }
           }
           class baz {
           }
@@ -92,7 +154,8 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
     end
 
@@ -167,10 +230,10 @@ describe "Puppet::Parser::Compiler" do
       def assert_creates_relationships(relationship_code, expectations)
         base_manifest = <<-MANIFEST
           file { [a,b,c]:
-            mode => 0644,
+            mode => '0644',
           }
           file { [d,e]:
-            mode => 0755,
+            mode => '0755',
           }
         MANIFEST
         catalog = compile_to_catalog(base_manifest + relationship_code)
@@ -301,12 +364,13 @@ describe "Puppet::Parser::Compiler" do
       end
 
       it 'a missing variable as default value becomes undef' do
+        # strict variables not on
         catalog = compile_to_catalog(<<-MANIFEST)
-          class a ($b=$x) { notify {$b: message=>'meh'} }
+        class a ($b=$x) { notify {test: message=>"yes ${undef == $b}" } }
           include a
         MANIFEST
 
-        expect(catalog).to have_resource("Notify[undef]").with_parameter(:message, "meh")
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "yes true")
       end
     end
 
@@ -364,6 +428,293 @@ describe "Puppet::Parser::Compiler" do
 
           expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
         end
+      end
+    end
+
+    context 'when using typed parameters in definition' do
+      it 'accepts type compliant arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(String $x) { }
+          foo { 'test': x =>'say friend' }
+        MANIFEST
+        expect(catalog).to have_resource("Foo[test]").with_parameter(:x, 'say friend')
+      end
+
+      it 'accepts anything when parameters are untyped' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+          define foo($a, $b, $c) { }
+          foo { 'test': a => String, b=>10, c=>undef }
+        MANIFEST
+        end.to_not raise_error()
+      end
+
+      it 'denies non type compliant arguments' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x) { }
+            foo { 'test': x =>'say friend' }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies non type compliant default argument' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x = 'pow') { }
+            foo { 'test':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'accepts a Resource as a Type' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(Type[Bar] $x) {
+            notify { 'test': message => $x[text] }
+          }
+          define bar($text) { }
+          bar { 'joke': text => 'knock knock' }
+          foo { 'test': x => Bar[joke] }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 'knock knock')
+      end
+    end
+
+    context 'when using typed parameters in class' do
+      it 'accepts type compliant arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          class foo(String $x) { }
+          class { 'foo': x =>'say friend' }
+        MANIFEST
+        expect(catalog).to have_resource("Class[Foo]").with_parameter(:x, 'say friend')
+      end
+
+      it 'accepts anything when parameters are untyped' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo($a, $b, $c) { }
+            class { 'foo': a => String, b=>10, c=>undef }
+          MANIFEST
+        end.to_not raise_error()
+      end
+
+      it 'denies non type compliant arguments' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x) { }
+            class { 'foo': x =>'say friend' }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies non type compliant default argument' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x = 'pow') { }
+            class { 'foo':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'accepts a Resource as a Type' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          class foo(Type[Bar] $x) {
+            notify { 'test': message => $x[text] }
+          }
+          define bar($text) { }
+          bar { 'joke': text => 'knock knock' }
+          class { 'foo': x => Bar[joke] }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 'knock knock')
+      end
+    end
+
+    context 'when using typed parameters in lambdas' do
+      it 'accepts type compliant arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with('value') |String $x| { notify { "$x": } }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[value]")
+      end
+
+      it 'handles an array as a single argument' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with(['value', 'second']) |$x| { notify { "${x[0]} ${x[1]}": } }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[value second]")
+      end
+
+      it 'denies when missing required arguments' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(1) |$x, $y| { }
+          MANIFEST
+        end.to raise_error(/Parameter \$y is required but no value was given/m)
+      end
+
+      it 'accepts anything when parameters are untyped' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          ['value', 1, true, undef].each |$x| { notify { "value: $x": } }
+        MANIFEST
+
+        expect(catalog).to have_resource("Notify[value: value]")
+        expect(catalog).to have_resource("Notify[value: 1]")
+        expect(catalog).to have_resource("Notify[value: true]")
+        expect(catalog).to have_resource("Notify[value: ]")
+      end
+
+      it 'accepts type-compliant, slurped arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with(1, 2) |Integer *$x| { notify { "${$x[0] + $x[1]}": } }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[3]")
+      end
+
+      it 'denies non-type-compliant arguments' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(1) |String $x| { }
+          MANIFEST
+        end.to raise_error(/expected.*String.*actual.*Integer/m)
+      end
+
+      it 'denies non-type-compliant, slurped arguments' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(1, "hello") |Integer *$x| { }
+          MANIFEST
+        end.to raise_error(/called with mis-matched arguments.*expected.*Integer.*actual.*Integer, String/m)
+      end
+
+      it 'denies non-type-compliant default argument' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(1) |$x, String $defaulted = 1| { notify { "${$x + $defaulted}": }}
+          MANIFEST
+        end.to raise_error(/expected.*Any.*String.*actual.*Integer.*Integer/m)
+      end
+
+      it 'raises an error when a default argument value is an incorrect type and there are no arguments passed' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with() |String $defaulted = 1| {}
+          MANIFEST
+        end.to raise_error(/expected.*String.*actual.*Integer/m)
+      end
+
+      it 'raises an error when the default argument for a slurped parameter is an incorrect type' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with() |String *$defaulted = 1| {}
+          MANIFEST
+        end.to raise_error(/expected.*String.*actual.*Integer/m)
+      end
+
+      it 'allows using an array as the default slurped value' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with() |String *$defaulted = [hi]| { notify { $defaulted[0]: } }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+      end
+
+      it 'allows using a value of the type as the default slurped value' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with() |String *$defaulted = hi| { notify { $defaulted[0]: } }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+      end
+
+      it 'allows specifying the type of a slurped parameter as an array' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with() |Array[String] *$defaulted = hi| { notify { $defaulted[0]: } }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+      end
+
+      it 'raises an error when the number of default values does not match the parameter\'s size specification' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with() |Array[String, 2] *$defaulted = hi| { }
+          MANIFEST
+        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
+      end
+
+      it 'raises an error when the number of passed values does not match the parameter\'s size specification' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(hi) |Array[String, 2] *$passed| { }
+          MANIFEST
+        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
+      end
+
+      it 'matches when the number of arguments passed for a slurp parameter match the size specification' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with(hi, bye) |Array[String, 2] *$passed| {
+            $passed.each |$n| { notify { $n: } }
+          }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+        expect(catalog).to have_resource('Notify[bye]')
+      end
+
+      it 'raises an error when the number of allowed slurp parameters exceeds the size constraint' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(hi, bye) |Array[String, 1, 1] *$passed| { }
+          MANIFEST
+        end.to raise_error(/expected.*arg count \{1\}.*actual.*arg count \{2\}/m)
+      end
+
+      it 'allows passing slurped arrays by specifying an array of arrays' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with([hi], [bye]) |Array[Array[String, 1, 1]] *$passed| {
+            notify { $passed[0][0]: }
+            notify { $passed[1][0]: }
+          }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+        expect(catalog).to have_resource('Notify[bye]')
+      end
+
+      it 'raises an error when a required argument follows an optional one' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with() |$y = first, $x, Array[String, 1] *$passed = bye| {}
+          MANIFEST
+        end.to raise_error(/Parameter \$x is required/)
+      end
+
+      it 'raises an error when the minimum size of a slurped argument makes it required and it follows an optional argument' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with() |$x = first, Array[String, 1] *$passed| {}
+          MANIFEST
+        end.to raise_error(/Parameter \$passed is required/)
+      end
+
+      it 'allows slurped arguments with a minimum size of 0 after an optional argument' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with() |$x = first, Array[String, 0] *$passed| {
+            notify { $x: }
+          }
+        MANIFEST
+
+        expect(catalog).to have_resource('Notify[first]')
+      end
+
+      it 'accepts a Resource as a Type' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define bar($text) { }
+          bar { 'joke': text => 'knock knock' }
+
+          with(Bar[joke]) |Type[Bar] $joke| { notify { "${joke[text]}": } }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[knock knock]")
       end
     end
   end

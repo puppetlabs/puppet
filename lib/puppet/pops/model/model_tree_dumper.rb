@@ -110,6 +110,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     [o.attribute_name, o.operator, do_dump(o.value_expr)]
   end
 
+  def dump_AttributesOperation o
+    ['* =>', do_dump(o.expr)]
+  end
+
   def dump_LiteralList o
     ["[]"] + o.values.collect {|x| do_dump(x)}
   end
@@ -182,8 +186,15 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ['-', do_dump(o.expr)]
   end
 
+  def dump_UnfoldExpression o
+    ['unfold', do_dump(o.expr)]
+  end
+
   def dump_BlockExpression o
-    ["block"] + o.statements.collect {|x| do_dump(x) }
+    result = ["block", :indent]
+    o.statements.each {|x| result << :break; result << do_dump(x) }
+    result << :dedent << :break
+    result
   end
 
   # Interpolated strings are shown as (cat seg0 seg1 ... segN)
@@ -238,7 +249,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ResourceOverrideExpression o
-    result = ["override", do_dump(o.resources), :indent]
+    form = o.form == :regular ? '' : o.form.to_s + "-"
+    result = [form+"override", do_dump(o.resources), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end
@@ -246,11 +258,20 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_ReservedWord o
+    [ 'reserved', o.word ]
+  end
+
   # Produces parameters as name, or (= name value)
   def dump_Parameter o
-    name_part = "#{o.name}"
-    if o.value
+    name_prefix = o.captures_rest ? '*' : ''
+    name_part = "#{name_prefix}#{o.name}"
+    if o.value && o.type_expr
+      ["=t", do_dump(o.type_expr), name_part, do_dump(o.value)]
+    elsif o.value
       ["=", name_part, do_dump(o.value)]
+    elsif o.type_expr
+      ["t", do_dump(o.type_expr), name_part]
     else
       name_part
     end
@@ -345,7 +366,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ResourceDefaultsExpression o
-    result = ["resource-defaults", do_dump(o.type_ref), :indent]
+    form = o.form == :regular ? '' : o.form.to_s + "-"
+    result = [form+"resource-defaults", do_dump(o.type_ref), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end

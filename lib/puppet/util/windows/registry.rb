@@ -2,6 +2,9 @@ require 'puppet/util/windows'
 
 module Puppet::Util::Windows
   module Registry
+    require 'ffi'
+    extend FFI::Library
+
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384129(v=vs.85).aspx
     KEY64 = 0x100
     KEY32 = 0x200
@@ -50,9 +53,8 @@ module Puppet::Util::Windows
           # code page. However, ruby incorrectly sets the string
           # encoding to US-ASCII. So we must force the encoding to the
           # correct value.
-          require 'windows/national'
           begin
-            cp = Windows::National::GetACP.call
+            cp = GetACP()
             @encoding = Encoding.const_get("CP#{cp}")
           rescue
             @encoding = Encoding.default_external
@@ -66,5 +68,13 @@ module Puppet::Util::Windows
       end
     end
     private :force_encoding
+
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/dd318070(v=vs.85).aspx
+    # UINT GetACP(void);
+    ffi_lib :kernel32
+    attach_function_private :GetACP, [], :uint32
   end
 end

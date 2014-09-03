@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'win32/taskscheduler' if Puppet.features.microsoft_windows?
+require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
 
 shared_examples_for "a trigger that handles start_date and start_time" do
   let(:trigger) do
@@ -569,27 +569,27 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     let(:resource) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
     it 'should consider the user as in sync if the name matches' do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').twice.returns('SID A')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').twice.returns('SID A')
 
       resource.should be_user_insync('joe', ['joe'])
     end
 
     it 'should consider the user as in sync if the current user is fully qualified' do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').returns('SID A')
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('MACHINE\joe').returns('SID A')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').returns('SID A')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('MACHINE\joe').returns('SID A')
 
       resource.should be_user_insync('MACHINE\joe', ['joe'])
     end
 
     it 'should consider a current user of the empty string to be the same as the system user' do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('system').twice.returns('SYSTEM SID')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('system').twice.returns('SYSTEM SID')
 
       resource.should be_user_insync('', ['system'])
     end
 
     it 'should consider different users as being different' do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').returns('SID A')
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('bob').returns('SID B')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').returns('SID A')
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('bob').returns('SID B')
 
       resource.should_not be_user_insync('joe', ['bob'])
     end
@@ -1469,7 +1469,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should use nil for user and password when setting the user to the SYSTEM account' do
-        Puppet::Util::Windows::Security.stubs(:name_to_sid).with('system').returns('SYSTEM SID')
+        Puppet::Util::Windows::SID.stubs(:name_to_sid).with('system').returns('SYSTEM SID')
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name    => 'Test Task',
@@ -1483,7 +1483,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should use the specified user and password when setting the user to anything other than SYSTEM' do
-        Puppet::Util::Windows::Security.stubs(:name_to_sid).with('my_user_name').returns('SID A')
+        Puppet::Util::Windows::SID.stubs(:name_to_sid).with('my_user_name').returns('SID A')
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name     => 'Test Task',

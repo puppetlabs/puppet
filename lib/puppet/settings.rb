@@ -2,9 +2,11 @@ require 'puppet'
 require 'getoptlong'
 require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
+require 'forwardable'
 
 # The class for handling configuration files.
 class Puppet::Settings
+  extend Forwardable
   include Enumerable
 
   require 'puppet/settings/errors'
@@ -89,6 +91,7 @@ class Puppet::Settings
 
     # And keep a per-environment cache
     @cache = Hash.new { |hash, key| hash[key] = {} }
+    @values = Hash.new { |hash, key| hash[key] = {} }
 
     # The list of sections we've used.
     @used = []
@@ -196,6 +199,8 @@ class Puppet::Settings
     @value_sets[:memory] = Values.new(:memory, @config)
     @value_sets[:overridden_defaults] = Values.new(:overridden_defaults, @config)
 
+    @deprecated_settings_that_have_been_configured.clear
+    @values.clear
     @cache.clear
   end
   private :unsafe_clear
@@ -349,11 +354,7 @@ class Puppet::Settings
     end
   end
 
-  def each
-    @config.each { |name, object|
-      yield name, object
-    }
-  end
+  def_delegator :@config, :each
 
   # Iterate over each section name.
   def eachsection
@@ -541,11 +542,11 @@ class Puppet::Settings
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
     return if data.nil?
 
-    record_deprecations_from_puppet_conf(data)
-
-    # If we get here then we have some data, so we need to clear out any previous settings that may have come from
-    #  config files.
+    # If we get here then we have some data, so we need to clear out any
+    # previous settings that may have come from config files.
     unsafe_clear(false, false)
+
+    record_deprecations_from_puppet_conf(data)
 
     # And now we can repopulate with the values from our last parsing of the config files.
     @configuration_file = data
@@ -825,9 +826,9 @@ class Puppet::Settings
   # @param [Hash[Hash]] defs the settings to be defined.  This argument is a hash of hashes; each key should be a symbol,
   #   which is basically the name of the setting that you are defining.  The value should be another hash that specifies
   #   the parameters for the particular setting.  Legal values include:
-  #    [:default] => required; this is a string value that will be used as a default value for a setting if no other
-  #       value is specified (via cli, config file, etc.)  This string may include "variables", demarcated with $ or ${},
-  #       which will be interpolated with values of other settings.
+  #    [:default] => not required; this is the value for the setting if no other value is specified (via cli, config file, etc.)
+  #       For string settings this may include "variables", demarcated with $ or ${} which will be interpolated with values of other settings.
+  #       The default value may also be a Proc that will be called only once to evaluate the default when the setting's value is retrieved.
   #    [:desc] => required; a description of the setting, used in documentation / help generation
   #    [:type] => not required, but highly encouraged!  This specifies the data type that the setting represents.  If
   #       you do not specify it, it will default to "string".  Legal values include:
@@ -899,6 +900,7 @@ class Puppet::Settings
     end
 
     add_user_resources(catalog, sections)
+    add_environment_resources(catalog, sections)
 
     catalog
   end
@@ -993,7 +995,7 @@ Generated on #{Time.now}.
   # @return [Puppet::Settings::ChainedValues] An object to perform lookups
   # @api public
   def values(environment, section)
-    ChainedValues.new(
+    @values[environment][section] ||= ChainedValues.new(
       section,
       environment,
       value_sets_for(environment, section),
@@ -1122,6 +1124,20 @@ Generated on #{Time.now}.
     obj
   end
 
+  def add_environment_resources(catalog, sections)
+    path = self[:environmentpath]
+    envdir = path.split(File::PATH_SEPARATOR).first if path
+    configured_environment = self[:environment]
+    if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
+      configured_environment_path = File.join(envdir, configured_environment)
+      catalog.add_resource(
+        Puppet::Resource.new(:file,
+                             configured_environment_path,
+                             :parameters => { :ensure => 'directory' })
+      )
+    end
+  end
+
   def add_user_resources(catalog, sections)
     return unless Puppet.features.root?
     return if Puppet.features.microsoft_windows?
@@ -1181,6 +1197,7 @@ Generated on #{Time.now}.
   # @return nil
   def clear_everything_for_tests()
     unsafe_clear(true, true)
+    @configuration_file = nil
     @global_defaults_initialized = false
     @app_defaults_initialized = false
   end
@@ -1214,6 +1231,8 @@ Generated on #{Time.now}.
   #
   # @api public
   class ChainedValues
+    ENVIRONMENT_SETTING = "environment".freeze
+
     # @see Puppet::Settings.values
     # @api private
     def initialize(mode, environment, value_sets, defaults)
@@ -1278,49 +1297,53 @@ Generated on #{Time.now}.
     private
 
     def convert(value)
-      return nil if value.nil?
-      return value unless value.is_a? String
-      value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-        varname = $2 || $1
-        if varname == "environment" && @environment
-          @environment
-        elsif varname == "run_mode"
-          @mode
-        elsif !(pval = interpolate(varname.to_sym)).nil?
-          pval
-        else
-          raise InterpolationError, "Could not find value for #{value}"
+      case value
+      when nil
+        nil
+      when String
+        value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+          varname = $2 || $1
+          if varname == ENVIRONMENT_SETTING && @environment
+            @environment
+          elsif varname == "run_mode"
+            @mode
+          elsif !(pval = interpolate(varname.to_sym)).nil?
+            pval
+          else
+            raise InterpolationError, "Could not find value for #{value}"
+          end
         end
+      else
+        value
       end
     end
   end
 
   class Values
+    extend Forwardable
+
     def initialize(name, defaults)
       @name = name
       @values = {}
       @defaults = defaults
     end
 
-    def include?(name)
-      @values.include?(name)
-    end
+    def_delegator :@values, :include?
+    def_delegator :@values, :[], :lookup
 
     def set(name, value)
-      if !@defaults[name]
+      default = @defaults[name]
+
+      if !default
         raise ArgumentError,
           "Attempt to assign a value to unknown setting #{name.inspect}"
       end
 
-      if @defaults[name].has_hook?
-        @defaults[name].handle(value)
+      if default.has_hook?
+        default.handle(value)
       end
 
       @values[name] = value
-    end
-
-    def lookup(name)
-      @values[name]
     end
   end
 
@@ -1361,12 +1384,9 @@ Generated on #{Time.now}.
     end
 
     def conf
-      unless @conf
-        if environments = Puppet.lookup(:environments)
-          @conf = environments.get_conf(@environment_name)
-        end
-      end
-      return @conf
+      @conf ||= if environments = Puppet.lookup(:environments)
+                  environments.get_conf(@environment_name)
+                end
     end
   end
 end

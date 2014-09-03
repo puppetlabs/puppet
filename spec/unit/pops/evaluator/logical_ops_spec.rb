@@ -63,8 +63,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         evaluate(literal('x').not()).should == false
       end
 
-      it "''             == false" do
-        evaluate(literal('').not()).should == true
+      it "''             == true" do
+        evaluate(literal('').not()).should == false
       end
 
       it ":undef         == false" do

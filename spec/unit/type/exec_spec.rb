@@ -204,6 +204,15 @@ describe Puppet::Type.type(:exec) do
         }.to raise_error Puppet::Error, /Parameter user failed/
       end
 
+      it "accepts the current user" do
+        Puppet.features.stubs(:root?).returns(false)
+        Etc.stubs(:getpwuid).returns(Struct::Passwd.new('input'))
+
+        type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
+
+        expect(type[:user]).to eq('input')
+      end
+
       ['one', 2, 'root', 4294967295, 4294967296].each do |value|
         it "should accept '#{value}' as user if we are root" do
           Puppet.features.stubs(:root?).returns(true)

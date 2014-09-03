@@ -22,7 +22,7 @@ class Puppet::Util::Pidlock
     @lockfile.lock(Process.pid)
   end
 
-  def unlock()
+  def unlock
     if mine?
       return @lockfile.unlock
     else
@@ -31,7 +31,12 @@ class Puppet::Util::Pidlock
   end
 
   def lock_pid
-    @lockfile.lock_data.to_i
+    pid = @lockfile.lock_data
+    begin
+      Integer(pid)
+    rescue ArgumentError, TypeError
+      nil
+    end
   end
 
   def file_path
@@ -39,11 +44,12 @@ class Puppet::Util::Pidlock
   end
 
   def clear_if_stale
-    return if lock_pid.nil?
+    return @lockfile.unlock if lock_pid.nil?
 
     errors = [Errno::ESRCH]
-    # Process::Error can only happen, and is only defined, on Windows
-    errors << Process::Error if defined? Process::Error
+    # Win32::Process now throws SystemCallError. Since this could be
+    # defined anywhere, only add when on Windows.
+    errors << SystemCallError if Puppet::Util::Platform.windows?
 
     begin
       Process.kill(0, lock_pid)

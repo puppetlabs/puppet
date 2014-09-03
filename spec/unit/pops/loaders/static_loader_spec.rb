@@ -37,6 +37,12 @@ describe 'the static loader' do
       it "uses the evaluator to format output" do
         expect(loader.load(:function, level).call({}, ['yay', 'surprise']).to_s).to eql('[yay, surprise]')
       end
+
+      it 'outputs name of source (scope) by passing it to the Log utility' do
+        the_scope = {}
+        Puppet::Util::Log.any_instance.expects(:source=).with(the_scope)
+        loader.load(:function, level).call(the_scope, 'x')
+      end
     end
   end
 

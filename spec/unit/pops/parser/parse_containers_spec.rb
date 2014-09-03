@@ -10,7 +10,12 @@ describe "egrammar parsing containers" do
 
   context "When parsing file scope" do
     it "$a = 10 $b = 20" do
-      dump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"
+      dump(parse("$a = 10 $b = 20")).should == [
+        "(block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        ")"
+        ].join("\n")
     end
 
     it "$a = 10" do
@@ -24,7 +29,11 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo { class bar {} }" do
-      dump(parse("class foo { class bar {}}")).should == "(class foo (block (class foo::bar ())))"
+      dump(parse("class foo { class bar {}}")).should == [
+        "(class foo (block",
+        "  (class foo::bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "class foo::bar {}" do
@@ -52,7 +61,12 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo {$a = 10 $b = 20}" do
-      dump(parse("class foo {$a = 10 $b = 20}")).should == "(class foo (block (= $a 10) (= $b 20)))"
+      dump(parse("class foo {$a = 10 $b = 20}")).should == [
+        "(class foo (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
 
     context "it should handle '3x weirdness'" do
@@ -100,6 +114,16 @@ describe "egrammar parsing containers" do
         }.to raise_error(/not a valid classname/)
       end
     end
+
+    context 'it should allow keywords as attribute names' do
+      ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
+        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        it "such as #{keyword}" do
+          expect {parse("class x ($#{keyword}){} class { x: #{keyword} => 1 }")}.to_not raise_error
+        end
+      end
+    end
+
   end
 
   context "When the parser parses define" do
@@ -108,12 +132,20 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo { define bar {}}" do
-      dump(parse("class foo {define bar {}}")).should == "(class foo (block (define foo::bar ())))"
+      dump(parse("class foo {define bar {}}")).should == [
+        "(class foo (block",
+        "  (define foo::bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "define foo { define bar {}}" do
       # This is illegal, but handled as part of validation
-      dump(parse("define foo { define bar {}}")).should == "(define foo (block (define bar ())))"
+      dump(parse("define foo { define bar {}}")).should == [
+        "(define foo (block",
+        "  (define bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "define foo::bar {}" do
@@ -133,7 +165,12 @@ describe "egrammar parsing containers" do
     end
 
     it "define foo {$a = 10 $b = 20}" do
-      dump(parse("define foo {$a = 10 $b = 20}")).should == "(define foo (block (= $a 10) (= $b 20)))"
+      dump(parse("define foo {$a = 10 $b = 20}")).should == [
+        "(define foo (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
 
     context "it should handle '3x weirdness'" do
@@ -152,11 +189,24 @@ describe "egrammar parsing containers" do
         expect { dump(parse("define default {}")).should == "(define default ())"}.to raise_error(Puppet::ParseError)
       end
     end
+
+    context 'it should allow keywords as attribute names' do
+      ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
+        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        it "such as #{keyword}" do
+          expect {parse("define x ($#{keyword}){} x { y: #{keyword} => 1 }")}.to_not raise_error
+        end
+      end
+    end
   end
 
   context "When parsing node" do
     it "node foo {}" do
       dump(parse("node foo {}")).should == "(node (matches 'foo') ())"
+    end
+
+    it "node foo, {} # trailing comma" do
+      dump(parse("node foo, {}")).should == "(node (matches 'foo') ())"
     end
 
     it "node kermit.example.com {}" do
@@ -200,7 +250,12 @@ describe "egrammar parsing containers" do
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do
-      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches 'foo') (parent 'bar') (block (= $a 10) (= $b 20)))"
+      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == [
+        "(node (matches 'foo') (parent 'bar') (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
   end
 end

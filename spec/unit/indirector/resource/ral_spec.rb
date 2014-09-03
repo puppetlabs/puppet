@@ -25,6 +25,11 @@ describe "Puppet::Resource::Ral" do
       Puppet::Resource::Ral.new.find(@request).should == my_resource
     end
 
+    it "should produce Puppet::Error instead of ArgumentError" do
+      @bad_request = stub 'thiswillcauseanerror', :key => "thiswill/causeanerror"
+      expect{Puppet::Resource::Ral.new.find(@bad_request)}.to raise_error(Puppet::Error)
+    end
+
     it "if there is no instance, it should create one" do
       wrong_instance = stub "wrong user", :name => "bob"
       root = mock "Root User"

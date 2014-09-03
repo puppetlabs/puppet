@@ -109,7 +109,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     ['lookup', do_dump(o.type), o.name]
   end
 
-  def dump_PObjectType o
+  def dump_PAnyType o
     type_calculator.string(o)
   end
 

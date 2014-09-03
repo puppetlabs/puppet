@@ -6,7 +6,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('mode_spec') }
-  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => 0644 }
+  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => '0644' }
   let(:mode) { resource.property(:mode) }
 
   describe "#validate" do
@@ -190,6 +190,31 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode_sym.sync
       stat = Puppet::FileSystem.stat(path)
       (stat.mode & 0777).to_s(8).should == "644"
+    end
+  end
+
+  describe '#sync with a symbolic mode of +X for a file' do
+    let(:resource_sym) { Puppet::Type.type(:file).new :path => path, :mode => 'g+wX' }
+    let(:mode_sym) { resource_sym.property(:mode) }
+
+    before { FileUtils.touch(path) }
+
+    it 'does not change executable bit if no executable bit is set' do
+      Puppet::FileSystem.chmod(0644, path)
+
+      mode_sym.sync
+
+      stat = Puppet::FileSystem.stat(path)
+      (stat.mode & 0777).to_s(8).should == '664'
+    end
+
+    it 'does change executable bit if an executable bit is set' do
+      Puppet::FileSystem.chmod(0744, path)
+
+      mode_sym.sync
+
+      stat = Puppet::FileSystem.stat(path)
+      (stat.mode & 0777).to_s(8).should == '774'
     end
   end
 end

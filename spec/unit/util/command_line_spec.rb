@@ -70,7 +70,7 @@ describe Puppet::Util::CommandLine do
       it "should print the version and exit if #{arg} is given" do
         expect do
           described_class.new("puppet", [arg]).execute
-        end.to have_printed(/^#{Puppet.version}$/)
+        end.to have_printed(/^#{Regexp.escape(Puppet.version)}$/)
       end
     end
   end
@@ -93,35 +93,39 @@ describe Puppet::Util::CommandLine do
       end
 
       describe "and an external implementation cannot be found" do
+        before :each do
+          Puppet::Util::CommandLine::UnknownSubcommand.any_instance.stubs(:console_has_color?).returns false
+        end
+
         it "should abort and show the usage message" do
-          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
           Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
           commandline.expects(:exec).never
 
           expect {
             commandline.execute
-          }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
+          }.to have_printed(/Unknown Puppet subcommand 'whatever'/).and_exit_with(1)
         end
 
         it "should abort and show the help message" do
-          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
           Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
           commandline.expects(:exec).never
 
           expect {
             commandline.execute
-          }.to have_printed(/See 'puppet help' for help on available puppet subcommands/)
+          }.to have_printed(/See 'puppet help' for help on available puppet subcommands/).and_exit_with(1)
         end
 
         %w{--version -V}.each do |arg|
           it "should abort and display #{arg} information" do
-            commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', arg])
             Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+            commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', arg])
             commandline.expects(:exec).never
 
             expect {
               commandline.execute
-            }.to have_printed(/^#{Puppet.version}$/)
+            }.to have_printed(%r[^#{Regexp.escape(Puppet.version)}$]).and_exit_with(1)
           end
         end
       end

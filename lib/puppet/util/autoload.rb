@@ -43,7 +43,7 @@ class Puppet::Util::Autoload
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
-      environment = Puppet.lookup(:environments).get(Puppet[:environment])
+      environment = Puppet.lookup(:current_environment)
       return true unless file == get_file(name, environment)
       begin
         old_mtime.to_i != File.mtime(file).to_i
@@ -127,7 +127,7 @@ class Puppet::Util::Autoload
       # now we are accomplishing that by calling the
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
-      if Puppet.settings.app_defaults_initialized?
+      if Puppet.settings.app_defaults_initialized? &&
         env ||= Puppet.lookup(:environments).get(Puppet[:environment])
 
         # if the app defaults have been initialized then it should be safe to access the module path setting.

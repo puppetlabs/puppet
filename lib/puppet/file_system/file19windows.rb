@@ -26,7 +26,6 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
 
     dest_exists = exist?(dest) # returns false on dangling symlink
     dest_stat = Puppet::Util::Windows::File.stat(dest) if dest_exists
-    dest_symlink = Puppet::Util::Windows::File.symlink?(dest)
 
     # silent fail to preserve semantics of original FileUtils
     return 0 if dest_exists && dest_stat.ftype == 'directory'

@@ -30,6 +30,9 @@ class Puppet::Parser::Scope
   attr_accessor :parent
   attr_reader :namespaces
 
+  # Hash of hashes of default values per type name
+  attr_reader :defaults
+
   # Add some alias methods that forward to the compiler, since we reference
   # them frequently enough to justify the extra method call.
   def_delegators :compiler, :catalog, :environment
@@ -108,7 +111,7 @@ class Puppet::Parser::Scope
     def add_entries_to(target = {})
       super
       @symbols.each do |k, v|
-        if v == :undef
+        if v == :undef || v.nil?
           target.delete(k)
         else
           target[ k ] = v
@@ -318,9 +321,16 @@ class Puppet::Parser::Scope
   end
 
   # Collect all of the defaults set at any higher scopes.
-  # This is a different type of lookup because it's additive --
-  # it collects all of the defaults, with defaults in closer scopes
-  # overriding those in later scopes.
+  # This is a different type of lookup because it's
+  # additive -- it collects all of the defaults, with defaults
+  # in closer scopes overriding those in later scopes.
+  #
+  # The lookupdefaults searches in the the order:
+  #
+  #   * inherited
+  #   * contained (recursive)
+  #   * self
+  #
   def lookupdefaults(type)
     values = {}
 
@@ -391,7 +401,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      if Puppet[:evaluator] == 'future' && Puppet[:parser] == 'future'
+      if Puppet[:parser] == 'future'
         throw :undefined_variable
       else
         reason_msg = reason.nil? ? '' : "; #{reason}"
@@ -401,6 +411,7 @@ class Puppet::Parser::Scope
       nil
     end
   end
+
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
   # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
   # or in a specific visible named scope.
@@ -618,7 +629,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
-    table = effective_symtable options[:ephemeral]
+    table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
       if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
@@ -631,11 +642,12 @@ class Puppet::Parser::Scope
     end
 
     if options[:append]
-      table[name] = append_value(undef_as('', self[name]), value)
+      # produced result (value) is the resulting appended value, note: the table[]= does not return the value
+      table[name] = (value = append_value(undef_as('', self[name]), value))
     else
       table[name] = value
     end
-    table[name]
+    value
   end
 
   def set_trusted(hash)
@@ -643,6 +655,10 @@ class Puppet::Parser::Scope
   end
 
   def set_facts(hash)
+    # Remove _timestamp (it has an illegal datatype). It is not allowed to mutate the given hash
+    # since it contains the facts.
+    hash = hash.dup
+    hash.delete('_timestamp')
     setvar('facts', deep_freeze(hash), :privileged => true)
   end
 
@@ -675,15 +691,16 @@ class Puppet::Parser::Scope
   # will be returned (irrespective of it being a match scope or a local scope).
   #
   # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
-  def effective_symtable use_ephemeral
+  def effective_symtable(use_ephemeral)
     s = @ephemeral.last
-    return s || @symtable if use_ephemeral
-
-    # Why check if ephemeral is a Hash ??? Not needed, a hash cannot be a parent scope ???
-    while s && !(s.is_a?(Hash) || s.is_local_scope?())
-      s = s.parent
+    if use_ephemeral
+      return s || @symtable
+    else
+      while s && !s.is_local_scope?()
+        s = s.parent
+      end
+      s || @symtable
     end
-    s ? s : @symtable
   end
 
   # Sets the variable value of the name given as an argument to the given value. The value is
@@ -826,7 +843,60 @@ class Puppet::Parser::Scope
     return [type, titles]
   end
 
+  # Transforms references to classes to the form suitable for
+  # lookup in the compiler.
+  #
+  # Makes names passed in the names array absolute if they are relative
+  # Names are now made absolute if Puppet[:parser] == 'future', this will
+  # be the default behavior in Puppet 4.0
+  #
+  # Transforms Class[] and Resource[] type referenes to class name
+  # or raises an error if a Class[] is unspecific, if a Resource is not
+  # a 'class' resource, or if unspecific (no title).
+  #
+  # TODO: Change this for 4.0 to always make names absolute
+  #
+  # @param names [Array<String>] names to (optionally) make absolute
+  # @return [Array<String>] names after transformation
+  #
+  def transform_and_assert_classnames(names)
+    if Puppet[:parser] == 'future'
+      names.map do |name|
+        case name
+        when String
+          name.sub(/^([^:]{1,2})/, '::\1')
+
+        when Puppet::Resource
+          assert_class_and_title(name.type, name.title)
+          name.title.sub(/^([^:]{1,2})/, '::\1')
+
+        when Puppet::Pops::Types::PHostClassType
+          raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
+          name.class_name.sub(/^([^:]{1,2})/, '::\1')
+
+        when Puppet::Pops::Types::PResourceType
+          assert_class_and_title(name.type_name, name.title)
+          name.title.sub(/^([^:]{1,2})/, '::\1')
+        end
+      end
+    else
+      names
+    end
+  end
+
   private
+
+  def assert_class_and_title(type_name, title)
+    if type_name.nil? || type_name == ''
+      raise ArgumentError, "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
+    end
+    unless type_name =~ /^[Cc]lass$/
+      raise ArgumentError, "Cannot use a Resource[#{type_name}] where a Resource['class', name] is expected"
+    end
+    if title.nil?
+      raise ArgumentError, "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
+    end
+  end
 
   def extend_with_functions_module
     root = Puppet.lookup(:root_environment)

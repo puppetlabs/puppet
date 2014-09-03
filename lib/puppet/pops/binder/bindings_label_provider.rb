@@ -13,7 +13,7 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
    @@label_visitor.visit(o)
   end
 
-  def label_PObjectType o                       ; "#{Puppet::Pops::Types::TypeFactory.label(o)}" end
+  def label_PAnyType o                          ; "#{Puppet::Pops::Types::TypeFactory.label(o)}" end
   def label_ProducerDescriptor o                ; "Producer"                                     end
   def label_NonCachingProducerDescriptor o      ; "Non Caching Producer"                         end
   def label_ConstantProducerDescriptor o        ; "Producer['#{o.value}']"                       end

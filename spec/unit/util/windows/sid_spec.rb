@@ -4,12 +4,9 @@ require 'spec_helper'
 describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows? do
   if Puppet.features.microsoft_windows?
     require 'puppet/util/windows'
-    class SIDTester
-      include Puppet::Util::Windows::SID
-    end
   end
 
-  let(:subject)      { SIDTester.new }
+  let(:subject)      { Puppet::Util::Windows::SID }
   let(:sid)          { Win32::Security::SID::LocalSystem }
   let(:invalid_sid)  { 'bogus' }
   let(:unknown_sid)  { 'S-0-0-0' }
@@ -50,7 +47,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect {
         invalid_octet = [1]
         subject.octet_string_to_sid_object(invalid_octet)
-      }.to raise_error(Win32::Security::SID::Error, /No mapping between account names and security IDs was done./)
+      }.to raise_error(SystemCallError, /No mapping between account names and security IDs was done./)
     end
   end
 
@@ -159,7 +156,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
     it "should raise if the conversion fails" do
       subject.expects(:string_to_sid_ptr).with(sid).
-        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Windows::Error::ERROR_ACCESS_DENIED))
+        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Puppet::Util::Windows::Error::ERROR_ACCESS_DENIED))
 
       expect {
         subject.string_to_sid_ptr(sid) {|ptr| }

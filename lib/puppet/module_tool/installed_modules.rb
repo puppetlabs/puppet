@@ -58,7 +58,12 @@ module Puppet::ModuleTool
         @mod = mod
         @metadata = mod.metadata
         name = mod.forge_name.tr('/', '-')
-        version = Semantic::Version.parse(mod.version)
+        begin
+          version = Semantic::Version.parse(mod.version)
+        rescue Semantic::Version::ValidationFailure => e
+          Puppet.warning "#{mod.name} (#{mod.path}) has an invalid version number (#{mod.version}). The version has been set to 0.0.0. If you are the maintainer for this module, please update the metadata.json with a valid Semantic Version (http://semver.org)."
+          version = Semantic::Version.parse("0.0.0")
+        end
         release = "#{name}@#{version}"
 
         super(source, name, version, {})

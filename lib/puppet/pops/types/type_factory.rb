@@ -18,8 +18,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.range(from, to)
     t = Types::PIntegerType.new()
-    t.from = from unless (from == :default || from == 'default')
-    t.to = to unless (to == :default || to == 'default')
+    # optimize eq with symbol (faster when it is left)
+    t.from = from unless (:default == from || from == 'default')
+    t.to = to unless (:default == to || to == 'default')
     t
   end
 
@@ -28,8 +29,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.float_range(from, to)
     t = Types::PFloatType.new()
-    t.from = Float(from) unless from == :default || from.nil?
-    t.to = Float(to) unless to == :default || to.nil?
+    # optimize eq with symbol (faster when it is left)
+    t.from = Float(from) unless :default == from || from.nil?
+    t.to = Float(to) unless :default == to || to.nil?
     t
   end
 
@@ -70,11 +72,6 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
-  # Convenience method to produce an Optional[Object] type
-  def self.optional_object()
-    optional(object())
-  end
-
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
@@ -93,9 +90,10 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
-  # Produces the Struct type, either a non parameterized instance representing all structs (i.e. all hashes)
-  # or a hash with a given set of keys of String type (names), bound to a value of a given type. Type may be
-  # a Ruby Class, a Puppet Type, or an instance from which the type is inferred.
+  # Produces the Struct type, either a non parameterized instance representing
+  # all structs (i.e. all hashes) or a hash with a given set of keys of String
+  # type (names), bound to a value of a given type. Type may be a Ruby Class, a
+  # Puppet Type, or an instance from which the type is inferred.
   #
   def self.struct(name_type_hash = {})
     t = Types::PStructType.new
@@ -124,15 +122,16 @@ module Puppet::Pops::Types::TypeFactory
     Types::PBooleanType.new()
   end
 
-  # Produces the Object type
+  # Produces the Any type
   # @api public
   #
-  def self.object()
-    Types::PObjectType.new()
+  def self.any()
+    Types::PAnyType.new()
   end
 
   # Produces the Regexp type
-  # @param pattern [Regexp, String, nil] (nil) The regular expression object or a regexp source string, or nil for bare type
+  # @param pattern [Regexp, String, nil] (nil) The regular expression object or
+  #   a regexp source string, or nil for bare type
   # @api public
   #
   def self.regexp(pattern = nil)
@@ -198,20 +197,18 @@ module Puppet::Pops::Types::TypeFactory
   # use {#all_callables}.
   #
   # The params is a list of types, where the three last entries may be
-  # optionally followed by min, max count, and a Callable which is taken as the block_type.
+  # optionally followed by min, max count, and a Callable which is taken as the
+  # block_type.
   # If neither min or max are specified the parameters must match exactly.
   # A min < params.size means that the difference are optional.
   # If max > params.size means that the last type repeats.
   # if max is :default, the max value is unbound (infinity).
-  # 
+  #
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
-    case params.last
-    when Types::PCallableType
+    if Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(params.last)
       last_callable = true
-    when Types::POptionalType
-      last_callable = true if params.last.optional_type.is_a?(Types::PCallableType)
     end
     block_t = last_callable ? params.pop : nil
 
@@ -226,6 +223,10 @@ module Puppet::Pops::Types::TypeFactory
 
     types = params.map {|p| type_of(p) }
 
+    # If the specification requires types, and none were given, a Unit type is used
+    if types.empty? && !size_type.nil? && size_type.range[1] > 0
+      types << Types::PUnitType.new
+    end
     # create a signature
     callable_t = Types::PCallableType.new()
     tuple_t = tuple(*types)
@@ -266,27 +267,41 @@ module Puppet::Pops::Types::TypeFactory
     Types::PNilType.new()
   end
 
+  # Creates an instance of the Default type
+  # @api public
+  def self.default()
+    Types::PDefaultType.new()
+  end
+
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry()
     Types::PCatalogEntryType.new()
   end
 
-  # Produces a PResourceType with a String type_name
-  # A PResourceType with a nil or empty name is compatible with any other PResourceType.
-  # A PResourceType with a given name is only compatible with a PResourceType with the same name.
-  # (There is no resource-type subtyping in Puppet (yet)).
+  # Produces a PResourceType with a String type_name A PResourceType with a nil
+  # or empty name is compatible with any other PResourceType.  A PResourceType
+  # with a given name is only compatible with a PResourceType with the same
+  # name.  (There is no resource-type subtyping in Puppet (yet)).
   #
   def self.resource(type_name = nil, title = nil)
     type = Types::PResourceType.new()
     type_name = type_name.type_name if type_name.is_a?(Types::PResourceType)
-    type.type_name = type_name.downcase unless type_name.nil?
+    type_name = type_name.downcase unless type_name.nil?
+    type.type_name = type_name
+    unless type_name.nil? || type_name =~ Puppet::Pops::Patterns::CLASSREF
+      raise ArgumentError, "Illegal type name '#{type.type_name}'"
+    end
+    if type_name.nil? && !title.nil?
+      raise ArgumentError, "The type name cannot be nil, if title is given"
+    end
     type.title = title
     type
   end
 
-  # Produces PHostClassType with a string class_name.
-  # A PHostClassType with nil or empty name is compatible with any other PHostClassType.
-  # A PHostClassType with a given name is only compatible with a PHostClassType with the same name.
+  # Produces PHostClassType with a string class_name.  A PHostClassType with
+  # nil or empty name is compatible with any other PHostClassType.  A
+  # PHostClassType with a given name is only compatible with a PHostClassType
+  # with the same name.
   #
   def self.host_class(class_name = nil)
     type = Types::PHostClassType.new()
@@ -296,7 +311,8 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produces a type for Array[o] where o is either a type, or an instance for which a type is inferred.
+  # Produces a type for Array[o] where o is either a type, or an instance for
+  # which a type is inferred.
   # @api public
   #
   def self.array_of(o)
@@ -305,7 +321,8 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produces a type for Hash[Scalar, o] where o is either a type, or an instance for which a type is inferred.
+  # Produces a type for Hash[Scalar, o] where o is either a type, or an
+  # instance for which a type is inferred.
   # @api public
   #
   def self.hash_of(value, key = scalar())
@@ -343,31 +360,33 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produce a type corresponding to the class of given unless given is a String, Class or a PAbstractType.
-  # When a String is given this is taken as a classname.
+  # Produce a type corresponding to the class of given unless given is a
+  # String, Class or a PAnyType.  When a String is given this is taken as
+  # a classname.
   #
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PAbstractType)
+    elsif o.is_a?(Types::PAnyType)
       o
     elsif o.is_a?(String)
-      type = Types::PRubyType.new()
-      type.ruby_class = o
-      type
+      Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o)
     else
       @type_calculator.infer_generic(o)
     end
   end
 
-  # Produces a type for a class or infers a type for something that is not a class
+  # Produces a type for a class or infers a type for something that is not a
+  # class
   # @note
   #   To get the type for the class' class use `TypeCalculator.infer(c)`
   #
   # @overload ruby(o)
-  #   @param o [Class] produces the type corresponding to the class (e.g. Integer becomes PIntegerType)
+  #   @param o [Class] produces the type corresponding to the class (e.g.
+  #     Integer becomes PIntegerType)
   # @overload ruby(o)
-  #   @param o [Object] produces the type corresponding to the instance class (e.g. 3 becomes PIntegerType)
+  #   @param o [Object] produces the type corresponding to the instance class
+  #     (e.g. 3 becomes PIntegerType)
   #
   # @api public
   #
@@ -375,32 +394,39 @@ module Puppet::Pops::Types::TypeFactory
     if o.is_a?(Class)
       @type_calculator.type(o)
     else
-      type = Types::PRubyType.new()
-      type.ruby_class = o.class.name
-      type
+      Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o.class.name)
     end
   end
 
-  # Generic creator of a RubyType - allows creating the Ruby type with nil name, or String name.
-  # Also see ruby(o) which performs inference, or mapps a Ruby Class to its name.
+  # Generic creator of a RuntimeType["ruby"] - allows creating the Ruby type
+  # with nil name, or String name.  Also see ruby(o) which performs inference,
+  # or mapps a Ruby Class to its name.
   #
   def self.ruby_type(class_name = nil)
-    type = Types::PRubyType.new()
-    type.ruby_class = class_name
-    type
+    Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => class_name)
   end
 
-  # Sets the accepted size range of a collection if something other than the default 0 to Infinity
-  # is wanted. The semantics for from/to are the same as for #range
+  # Generic creator of a RuntimeType - allows creating the type with nil or
+  # String runtime_type_name.  Also see ruby_type(o) and ruby(o).
+  #
+  def self.runtime(runtime=nil, runtime_type_name = nil)
+    runtime = runtime.to_sym if runtime.is_a?(String)
+    Types::PRuntimeType.new(:runtime => runtime, :runtime_type_name => runtime_type_name)
+  end
+
+  # Sets the accepted size range of a collection if something other than the
+  # default 0 to Infinity is wanted. The semantics for from/to are the same as
+  # for #range
   #
   def self.constrain_size(collection_t, from, to)
     collection_t.size_type = range(from, to)
     collection_t
   end
 
-  # Returns true if the given type t is of valid range parameter type (integer or literal default).
+  # Returns true if the given type t is of valid range parameter type (integer
+  # or literal default).
   def self.is_range_parameter?(t)
-    t.is_a?(Integer) || t == 'default' || t == :default
+    t.is_a?(Integer) || t == 'default' || :default == t
   end
 
 end

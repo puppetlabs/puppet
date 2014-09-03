@@ -176,7 +176,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   describe "when copying the source values" do
-    before do
+    before :each do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
@@ -184,6 +184,28 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @source.stubs(:metadata).returns @metadata
 
       Puppet.features.stubs(:root?).returns true
+    end
+
+    it "should not issue a deprecation warning if the source mode value is a Numeric" do
+      @metadata.stubs(:mode).returns 0173
+      if Puppet::Util::Platform.windows?
+        Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
+      else
+        Puppet.expects(:deprecation_warning).never
+      end
+
+      @source.copy_source_values
+    end
+
+    it "should not issue a deprecation warning if the source mode value is a String" do
+      @metadata.stubs(:mode).returns "173"
+      if Puppet::Util::Platform.windows?
+        Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
+      else
+        Puppet.expects(:deprecation_warning).never
+      end
+
+      @source.copy_source_values
     end
 
     it "should fail if there is no metadata" do
@@ -409,7 +431,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:group] = 2
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end
@@ -418,7 +440,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:owner] = 1
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end
@@ -437,7 +459,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           Puppet.expects(:deprecation_warning).with(deprecation_message).never
           @resource[:owner] = 1
           @resource[:group] = 2
-          @resource[:mode] = 3
+          @resource[:mode] = "0003"
 
           @source.copy_source_values
         end

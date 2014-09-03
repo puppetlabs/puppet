@@ -53,7 +53,7 @@ them in order. THIS FEATURE IS DEPRECATED; use PuppetDB instead.
 
 USAGE
 -----
-puppet queue [-d|--debug] [-v|--verbose]
+puppet queue [-d|--debug] [--help] [-v|--verbose] [--version]
 
 
 DESCRIPTION

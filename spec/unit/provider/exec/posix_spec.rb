@@ -1,19 +1,18 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:posix) do
+describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix? do
   include PuppetSpec::Files
 
   def make_exe
     cmdpath = tmpdir('cmdpath')
     exepath = tmpfile('my_command', cmdpath)
-    exepath = exepath + ".exe" if Puppet.features.microsoft_windows?
     FileUtils.touch(exepath)
     File.chmod(0755, exepath)
     exepath
   end
 
-  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
+  let(:resource) { Puppet::Type.type(:exec).new(:title => '/foo', :provider => :posix) }
   let(:provider) { described_class.new(resource) }
 
   describe "#validatecmd" do
@@ -31,7 +30,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
 
     it "should pass if command is fully qualifed" do
       provider.resource[:path] = ['/bogus/bin']
-      provider.validatecmd(File.expand_path("/bin/blah/foo"))
+      provider.validatecmd("/bin/blah/foo")
     end
   end
 
@@ -64,7 +63,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+        Puppet::Util::Execution.expects(:execute).with(filename, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         provider.run(filename)
       end
@@ -91,17 +90,28 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
     end
 
+    it "does not override the user when it is already the requested user" do
+      Etc.stubs(:getpwuid).returns(Struct::Passwd.new('testing'))
+      provider.resource[:user] = 'testing'
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(anything(), has_entry(:uid, nil)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+    end
+
     it "should execute the command if the command given includes arguments or subcommands" do
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      Puppet::Util::Execution.expects(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
       provider.run("#{command} bar --sillyarg=true --blah")
     end
 
     it "should fail if quoted command doesn't exist" do
       provider.resource[:path] = ['/bogus/bin']
-      command = "#{File.expand_path('/foo')} bar --sillyarg=true --blah"
+      command = "/foo bar --sillyarg=true --blah"
 
       expect { provider.run(%Q["#{command}"]) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
     end
@@ -110,8 +120,10 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
       provider.run(command)
+
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
 
@@ -121,7 +133,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.run(provider.resource[:command])
     end
 
-    describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
+    describe "posix locale settings" do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "en_US.UTF-8"
@@ -160,7 +172,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       end
     end
 
-    describe "posix user-related environment vars", :unless => Puppet.features.microsoft_windows? do
+    describe "posix user-related environment vars" do
       # a temporary hash that contains sentinel values for each of the user-related environment variables that we
       # are expected to unset during an "exec"
       user_sentinel_env = {}
@@ -202,10 +214,6 @@ describe Puppet::Type.type(:exec).provider(:posix) do
           output.strip.should == sentinel_value
         end
       end
-
-
     end
-
-
   end
 end

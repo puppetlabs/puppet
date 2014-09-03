@@ -13,7 +13,7 @@ class Puppet::Pops::Binder::BindingsChecker
   def initialize(diagnostics_producer)
     @@check_visitor     ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
     @type_calculator      = Puppet::Pops::Types::TypeCalculator.new()
-    @expression_validator = Puppet::Pops::Validation::ValidatorFactory_3_1.new().checker(diagnostics_producer)
+    @expression_validator = Puppet::Pops::Validation::ValidatorFactory_4_0.new().checker(diagnostics_producer)
     @acceptor             = diagnostics_producer
   end
 
@@ -31,14 +31,14 @@ class Puppet::Pops::Binder::BindingsChecker
   # Performs binding validity check
   # @api private
   def check(b)
-    @@check_visitor.visit_this(self, b)
+    @@check_visitor.visit_this_0(self, b)
   end
 
   # Checks that a binding has a producer and a type
   # @api private
   def check_Binding(b)
     # Must have a type
-    acceptor.accept(Issues::MISSING_TYPE, b) unless b.type.is_a?(Types::PObjectType)
+    acceptor.accept(Issues::MISSING_TYPE, b) unless b.type.is_a?(Types::PAnyType)
 
     # Must have a producer
     acceptor.accept(Issues::MISSING_PRODUCER, b) unless b.producer.is_a?(Bindings::ProducerDescriptor)
@@ -167,7 +167,7 @@ class Puppet::Pops::Binder::BindingsChecker
   end
 
   # @api private
-  def check_PObjectType(t)
+  def check_PAnyType(t)
     # Do nothing
   end
 

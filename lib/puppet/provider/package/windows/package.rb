@@ -42,7 +42,7 @@ class Puppet::Provider::Package::Windows
               end
             end
           rescue Puppet::Util::Windows::Error => e
-            raise e unless e.code == Windows::Error::ERROR_FILE_NOT_FOUND
+            raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
           end
         end
       end
@@ -63,6 +63,18 @@ class Puppet::Provider::Package::Windows
       else
         fail("Don't know how to install '#{resource[:source]}'")
       end
+    end
+
+    def self.munge(value)
+      quote(replace_forward_slashes(value))
+    end
+
+    def self.replace_forward_slashes(value)
+      if value.include?('/')
+        value.gsub!('/', "\\") 
+        Puppet.debug('Package source parameter contained /s - replaced with \\s')
+      end
+      value
     end
 
     def self.quote(value)

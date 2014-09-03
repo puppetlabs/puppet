@@ -26,7 +26,8 @@ module HarnessOptions
     :repo_proxy => true,
     :add_el_extras => true,
     :preserve_hosts => 'onfail',
-    :forge_host => 'forge-aio01-petest.puppetlabs.com'
+    :forge_host => 'forge-aio01-petest.puppetlabs.com',
+    :'master-start-curl-retries' => 30,
   }
 
   class Aggregator
@@ -71,9 +72,9 @@ module HarnessOptions
 end
 
 def beaker_test(mode = :packages, options = {})
-  delete_options = options[:__delete_options__] || []
-  final_options = HarnessOptions.options(mode,
-                                         options.reject { |k,v| k == :__delete_options__ })
+  delete_options = options.delete(:__delete_options__) || []
+  final_options = HarnessOptions.options(mode, options)
+  preserve_config = final_options.delete(:__preserve_config__)
 
   if mode == :git
     # Build up project git urls based on git server and fork env variables or defaults
@@ -113,7 +114,7 @@ EOS
   begin
     sh("beaker", *args)
   ensure
-    preserve_configuration(final_options, options_file)
+    preserve_configuration(final_options, options_file) if preserve_config
   end
 end
 
@@ -128,28 +129,48 @@ end
 def generate_config_for_latest_hosts
   preserved_config_hash = { 'HOSTS' => {} }
 
-  config_hash = YAML.load_file('log/latest/config.yml').to_hash
-  nodes = config_hash['HOSTS'].map do |node_label,hash|
-    { :node_label => node_label, :platform => hash['platform'] }
-  end
+  puts "\nPreserving configuration so that any preserved nodes can be tested again locally..."
 
-  pre_suite_log = File.read('log/latest/pre_suite-run.log')
-  nodes.each do |node_info|
-    hostname = /^(\w+) \(#{node_info[:node_label]}\)/.match(pre_suite_log)[1]
-    fqdn = "#{hostname}.delivery.puppetlabs.net"
-    preserved_config_hash['HOSTS'][fqdn] = {
-      'roles' => [ 'agent'],
-      'platform' => node_info[:platform],
-    }
-    preserved_config_hash['HOSTS'][fqdn]['roles'].unshift('master') if node_info[:node_label] =~ /master/
-  end
-  pp preserved_config_hash
+  config_hash = YAML.load_file('log/latest/config.yml')
+  if !config_hash || !config_hash.include?('HOSTS')
+    puts "Warning: No HOSTS configuration found in log/latest/config.yml"
+    return
+  else
+    nodes = config_hash['HOSTS'].map do |node_label,hash|
+      {
+        :node_label => node_label,
+        :roles => hash['roles'],
+        :platform => hash['platform']
+      }
+    end
 
-  File.open('log/latest/preserved_config.yaml', 'w') do |config_file|
-    YAML.dump(preserved_config_hash, config_file)
+    pre_suite_log = File.read('log/latest/pre_suite-run.log')
+    nodes.each do |node_info|
+      host_regex = /^([\w.]+) \(#{node_info[:node_label]}\)/
+      if matched = host_regex.match(pre_suite_log)
+        hostname = matched[1]
+        fqdn = "#{hostname}.delivery.puppetlabs.net"
+      elsif /^#{node_info[:node_label]} /.match(pre_suite_log)
+        fqdn = "#{node_info[:node_label]}"
+        puts "* Couldn't find any log lines for #{host_regex}, assuming #{fqdn} is the fqdn"
+      end
+      if fqdn
+        preserved_config_hash['HOSTS'][fqdn] = {
+          'roles' => node_info[:roles],
+          'platform' => node_info[:platform],
+        }
+      else
+        puts "* Couldn't match #{node_info[:node_label]} in pre_suite-run.log"
+      end
+    end
+    pp preserved_config_hash
+
+    File.open('log/latest/preserved_config.yaml', 'w') do |config_file|
+      YAML.dump(preserved_config_hash, config_file)
+    end
   end
 rescue Errno::ENOENT => e
-  puts "Couldn't generate log #{e}"
+  puts "Warning: Couldn't generate preserved_config.yaml #{e}"
 end
 
 def list_preserved_configurations(secs_ago = ONE_DAY_IN_SECS)
@@ -270,7 +291,7 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
 #{USAGE}
   EOS
   task :test_and_preserve_hosts => 'ci:check_env'  do
-    beaker_test(beaker_run_type, :preserve_hosts => 'always')
+    beaker_test(beaker_run_type, :preserve_hosts => 'always', :__preserve_config__ => true)
   end
 
   desc "List acceptance runs from the past day which had hosts preserved."
@@ -304,13 +325,24 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
     preserved = list_preserved_configurations
     print_preserved(preserved)
     config_path = preserved[config_number][0]
+
     puts "Using ##{config_number}: #{config_path}"
-    beaker_test(beaker_run_type,
+
+    options = {
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => 'always',
-      :__delete_options__ => [:pre_suite]
-    )
+    }
+    run_type = beaker_run_type
+    if run_type == :packages
+      options.merge!(:pre_suite => [
+        'setup/packages/pre-suite/015_PackageHostsPresets.rb',
+        'setup/packages/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
+      ])
+    else
+      options.merge!(:__delete_options__ => [:pre_suite])
+    end
+    beaker_test(beaker_run_type, options)
   end
 end
 

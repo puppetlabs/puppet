@@ -4,6 +4,25 @@ require 'puppet_spec/files'
 require 'puppet/pops'
 require 'puppet/loaders'
 
+describe 'loader helper classes' do
+  it 'NamedEntry holds values and is frozen' do
+    ne = Puppet::Pops::Loader::Loader::NamedEntry.new('name', 'value', 'origin')
+    expect(ne.frozen?).to be_true
+    expect(ne.typed_name).to eql('name')
+    expect(ne.origin).to eq('origin')
+    expect(ne.value).to eq('value')
+  end
+
+  it 'TypedName holds values and is frozen' do
+    tn = Puppet::Pops::Loader::Loader::TypedName.new(:function, '::foo::bar')
+    expect(tn.frozen?).to be_true
+    expect(tn.type).to eq(:function)
+    expect(tn.name_parts).to eq(['foo', 'bar'])
+    expect(tn.name).to eq('foo::bar')
+    expect(tn.qualified).to be_true
+  end
+end
+
 describe 'loaders' do
   include PuppetSpec::Files
 
@@ -27,17 +46,6 @@ describe 'loaders' do
     expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:*test*')")
     expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
-  end
-
-  it 'can load 3x system functions' do
-    Puppet[:biff] = true
-    loaders = Puppet::Pops::Loaders.new(empty_test_env)
-    puppet_loader = loaders.puppet_system_loader()
-
-    function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
-
-    expect(function.class.name).to eq('sprintf')
-    expect(function).to be_a(Puppet::Functions::Function)
   end
 
   it 'can load a function using a qualified or unqualified name from a module with metadata' do
@@ -88,6 +96,18 @@ describe 'loaders' do
     moduleb_loader = loaders.private_loader_for_module('user')
     function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
 
+    expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+  end
+
+  it 'can load a function more than once from modules' do
+    env = environment_for(dependent_modules_with_metadata)
+    loaders = Puppet::Pops::Loaders.new(env)
+
+    moduleb_loader = loaders.private_loader_for_module('user')
+    function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
+    expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+
+    function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
     expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
   end
 

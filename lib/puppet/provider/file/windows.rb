@@ -8,20 +8,19 @@ Puppet::Type.type(:file).provide :windows do
 
   if Puppet.features.microsoft_windows?
     require 'puppet/util/windows'
-    require 'puppet/util/adsi'
     include Puppet::Util::Windows::Security
   end
 
   # Determine if the account is valid, and if so, return the UID
   def name2id(value)
-    Puppet::Util::Windows::Security.name_to_sid(value)
+    Puppet::Util::Windows::SID.name_to_sid(value)
   end
 
   # If it's a valid SID, get the name. Otherwise, it's already a name,
   # so just return it.
   def id2name(id)
-    if Puppet::Util::Windows::Security.valid_sid?(id)
-      Puppet::Util::Windows::Security.sid_to_name(id)
+    if Puppet::Util::Windows::SID.valid_sid?(id)
+      Puppet::Util::Windows::SID.sid_to_name(id)
     else
       id
     end

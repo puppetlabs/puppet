@@ -5,6 +5,8 @@
 # expect that after correcting their actions, puppet will work correctly.
 test_name "Puppet manages its own configuration in a robust manner"
 
+skip_test "JVM Puppet cannot change its user while running." if @options[:is_jvm_puppet]
+
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
 # when managhome roundtrips for solaris, this confine should be removed
@@ -12,6 +14,16 @@ confine :except, :platform => 'solaris'
 # pe setup includes ownership of external directories such as the passenger
 # document root, which puppet itself knows nothing about
 confine :except, :type => 'pe'
+# same issue for a foss passenger run
+if master.is_using_passenger?
+  skip_test 'Cannot test with passenger.'
+end
+
+if master.use_service_scripts?
+  # Beaker defaults to leaving puppet running when using service scripts,
+  # Need to shut it down so we can modify user/group and test startup failure
+  on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=stopped'))
+end
 
 step "Clear out yaml directory because of a bug in the indirector/yaml. (See #21145)"
 on master, 'rm -rf $(puppet master --configprint yamldir)'
@@ -62,7 +74,6 @@ end
 
 step "Ensure master starts when making users after having previously failed startup" do
   with_puppet_running_on(master,
-                         :__commandline_args__ => '--debug --trace',
                          :master => { :mkusers => true }) do
     agents.each do |agent|
       on agent, puppet('agent', '-t', '--server', master)

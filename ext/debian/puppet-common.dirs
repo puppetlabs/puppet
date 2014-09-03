@@ -10,3 +10,4 @@ usr/lib/ruby/vendor_ruby
 usr/share/puppet/ext
 var/lib/puppet
 var/log/puppet
+var/run/puppet

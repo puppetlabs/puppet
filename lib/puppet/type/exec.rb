@@ -77,9 +77,27 @@ module Puppet
       defaultto "0"
 
       attr_reader :output
-      desc "The expected return code(s).  An error will be returned if the
-        executed command returns something else.  Defaults to 0. Can be
-        specified as an array of acceptable return codes or a single value."
+      desc "The expected exit code(s).  An error will be returned if the
+        executed command has some other exit code.  Defaults to 0. Can be
+        specified as an array of acceptable exit codes or a single value.
+
+        On POSIX systems, exit codes are always integers between 0 and 255.
+
+        On Windows, **most** exit codes should be integers between 0
+        and 2147483647.
+
+        Larger exit codes on Windows can behave inconsistently across different
+        tools. The Win32 APIs define exit codes as 32-bit unsigned integers, but
+        both the cmd.exe shell and the .NET runtime cast them to signed
+        integers. This means some tools will report negative numbers for exit
+        codes above 2147483647. (For example, cmd.exe reports 4294967295 as -1.)
+        Since Puppet uses the plain Win32 APIs, it will report the very large
+        number instead of the negative number, which might not be what you
+        expect if you got the exit code from a cmd.exe session.
+
+        Microsoft recommends against using negative/very large exit codes, and
+        you should avoid them when possible. To convert a negative exit code to
+        the positive one Puppet will use, add it to 4294967296."
 
       # Make output a bit prettier
       def change_to_s(currentvalue, newvalue)
@@ -183,10 +201,12 @@ module Puppet
         Please note that the $HOME environment variable is not automatically set
         when using this attribute."
 
-      # Most validation is handled by the SUIDManager class.
       validate do |user|
-        self.fail "Only root can execute commands as other users" unless Puppet.features.root?
-        self.fail "Unable to execute commands as other users on Windows" if Puppet.features.microsoft_windows?
+        if Puppet.features.microsoft_windows?
+          self.fail "Unable to execute commands as other users on Windows"
+        elsif !Puppet.features.root? && resource.current_username() != user
+          self.fail "Only root can execute commands as other users"
+        end
       end
     end
 
@@ -382,7 +402,7 @@ module Puppet
     newcheck(:unless) do
       desc <<-'EOT'
         If this parameter is set, then this `exec` will run unless
-        the command returns 0.  For example:
+        the command has an exit code of 0.  For example:
 
             exec { "/bin/echo root >> /usr/lib/cron/cron.allow":
               path   => "/usr/bin:/usr/sbin:/bin",
@@ -394,6 +414,8 @@ module Puppet
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
+        It also uses the same provider as the main command, so any behavior
+        that differs by provider will match.
       EOT
 
       validate do |cmds|
@@ -424,7 +446,7 @@ module Puppet
     newcheck(:onlyif) do
       desc <<-'EOT'
         If this parameter is set, then this `exec` will only run if
-        the command returns 0.  For example:
+        the command has an exit code of 0.  For example:
 
             exec { "logrotate":
               path   => "/usr/bin:/usr/sbin:/bin",
@@ -435,6 +457,8 @@ module Puppet
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
+        It also uses the same provider as the main command, so any behavior
+        that differs by provider will match.
 
         Also note that onlyif can take an array as its value, e.g.:
 
@@ -559,6 +583,10 @@ module Puppet
           self.property(:returns).sync
         end
       end
+    end
+
+    def current_username
+      Etc.getpwuid(Process.uid).name
     end
   end
 end

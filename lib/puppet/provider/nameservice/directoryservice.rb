@@ -90,9 +90,6 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.get_macosx_version_major
     return @macosx_version_major if defined?(@macosx_version_major)
     begin
-      # Make sure we've loaded all of the facts
-      Facter.loadfacts
-
       product_version_major = Facter.value(:macosx_productversion_major)
 
       fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
@@ -178,7 +175,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   end
 
   def self.fail_if_wrong_version
-    fail("Puppet does not support OS X versions < 10.5") unless self.get_macosx_version_major >= "10.5"
+    if (Puppet::Util::Package.versioncmp(self.get_macosx_version_major, '10.5') == -1)
+      fail("Puppet does not support OS X versions < 10.5")
+    end
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)

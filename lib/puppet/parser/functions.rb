@@ -133,12 +133,6 @@ module Puppet::Parser::Functions
   #
   # @api public
   def self.newfunction(name, options = {}, &block)
-    # Short circuit this call when 4x "biff" is in effect to allow the new loader system to load
-    # and define the function a different way.
-    #
-    if Puppet[:biff]
-      return Puppet::Pops::Loader::RubyLegacyFunctionInstantiator.legacy_newfunction(name, options, &block)
-    end
     name = name.intern
     environment = options[:environment] || Puppet.lookup(:current_environment)
 
@@ -160,7 +154,7 @@ module Puppet::Parser::Functions
     env_module = environment_module(environment)
 
     env_module.send(:define_method, fname) do |*args|
-      Puppet::Util::Profiler.profile("Called #{name}") do
+      Puppet::Util::Profiler.profile("Called #{name}", [:functions, name]) do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"

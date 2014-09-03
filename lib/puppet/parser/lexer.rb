@@ -28,7 +28,7 @@ class Puppet::Parser::Lexer
     # Make the lexer comply with newer API. It does not produce a pos...
     nil
   end
-  
+
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end

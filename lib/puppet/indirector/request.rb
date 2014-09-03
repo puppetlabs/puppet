@@ -83,14 +83,20 @@ class Puppet::Indirector::Request
   end
 
   def environment
-    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+    # If environment has not been set directly, we should use the application's
+    # current environment
+    @environment ||= Puppet.lookup(:current_environment)
   end
 
   def environment=(env)
-    @environment = if env.is_a?(Puppet::Node::Environment)
+    @environment =
+    if env.is_a?(Puppet::Node::Environment)
       env
+    elsif (current_environment = Puppet.lookup(:current_environment)).name == env
+      current_environment
     else
-      Puppet.lookup(:environments).get(env)
+      Puppet.lookup(:environments).get(env) ||
+      raise(Puppet::Environments::EnvironmentNotFound, env)
     end
   end
 

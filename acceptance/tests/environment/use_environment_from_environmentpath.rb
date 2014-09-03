@@ -1,6 +1,6 @@
 test_name "Use environments from the environmentpath"
 
-testdir = master.tmpdir('use_environmentpath')
+testdir = create_tmpdir_for_user master, 'use_environmentpath'
 
 def generate_environment(path_to_env, environment)
   env_content = <<-EOS
@@ -63,12 +63,13 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   EOS
 end
 
+master_user = on(master, "puppet master --configprint user").stdout.strip
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => #{master['user']},
+  owner => #{master_user},
   group => #{master['group']},
-  mode => 0750,
+  mode => 0770,
 }
 
 file {
@@ -100,6 +101,9 @@ file {
 
 # And one global module (--modulepath setting)
 #{generate_module_content("globalmod", :base_path => testdir)}
+  "#{testdir}/additional/production":;
+  "#{testdir}/additional/production/manifests":;
+#{generate_site_manifest("#{testdir}/additional/production/manifests", "globalmod")}
 }
 MANIFEST
 
@@ -115,6 +119,9 @@ def run_with_environment(agent, environment, options = {})
     "--server", master,
   ]
   agent_config << '--environment' << environment if environment
+  # This to test how the agent behaves when using the directory environment
+  # loaders (which will not load an environment if it does not exist)
+  agent_config << "--environmentpath='$confdir/environments'" if agent != master
   agent_config << {
     'ENV' => { "FACTER_agent_file_location" => atmp },
   }
@@ -168,9 +175,14 @@ with_puppet_running_on master, master_opts, testdir do
     if master.is_pe?
       step("This test cannot run if the production environment directory does not exist, because the fallback production environment puppet creates has an empty modulepath and PE cannot run without it's basemodulepath in /opt.  PUP-2519, which implicitly creates the production environment directory should allow this to run again")
     else
-      run_with_environment(agent, nil, :expected_exit_code => 0) do |tmpdir, result|
-        assert_no_match(/module-atmp/, result.stdout, "module-atmp was included despite no environment being loaded")
-        assert_match(/Loading facts.*globalmod/, result.stdout)
+      run_with_environment(agent, nil, :expected_exit_code => 2) do |tmpdir, catalog_result|
+        assert_no_match(/module-atmp/, catalog_result.stdout, "module-atmp was included despite no environment being loaded")
+
+        assert_match(/environment fact from module-globalmod/, catalog_result.stdout)
+
+        on agent, "cat #{tmpdir}/file-module-globalmod" do |file_result|
+          assert_match(/data file from module-globalmod/, file_result.stdout)
+        end
       end
     end
   end

@@ -4,11 +4,11 @@ require 'English'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
-require 'tempfile'
 require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
 require 'puppet/util/symbolic_file_mode'
+require 'puppet/file_system/uniquefile'
 require 'securerandom'
 
 module Puppet
@@ -396,69 +396,78 @@ module Util
       end
     end
 
-    file     = Puppet::FileSystem.pathname(file)
-    tempfile = Tempfile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
-
-    # Set properties of the temporary file before we write the content, because
-    # Tempfile doesn't promise to be safe from reading by other people, just
-    # that it avoids races around creating the file.
-    #
-    # Our Windows emulation is pretty limited, and so we have to carefully
-    # and specifically handle the platform, which has all sorts of magic.
-    # So, unlike Unix, we don't pre-prep security; we use the default "quite
-    # secure" tempfile permissions instead.  Magic happens later.
-    if !Puppet.features.microsoft_windows?
-      # Grab the current file mode, and fall back to the defaults.
-      effective_mode =
-      if Puppet::FileSystem.exist?(file)
-        stat = Puppet::FileSystem.lstat(file)
-        tempfile.chown(stat.uid, stat.gid)
-        stat.mode
-      else
-        mode
-      end
-
-      if effective_mode
-        # We only care about the bottom four slots, which make the real mode,
-        # and not the rest of the platform stat call fluff and stuff.
-        tempfile.chmod(effective_mode & 07777)
-      end
-    end
-
-    # OK, now allow the caller to write the content of the file.
-    yield tempfile
-
-    # Now, make sure the data (which includes the mode) is safe on disk.
-    tempfile.flush
     begin
-      tempfile.fsync
-    rescue NotImplementedError
-      # fsync may not be implemented by Ruby on all platforms, but
-      # there is absolutely no recovery path if we detect that.  So, we just
-      # ignore the return code.
+      file     = Puppet::FileSystem.pathname(file)
+      tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
+
+      # Set properties of the temporary file before we write the content, because
+      # Tempfile doesn't promise to be safe from reading by other people, just
+      # that it avoids races around creating the file.
       #
-      # However, don't be fooled: that is accepting that we are running in
-      # an unsafe fashion.  If you are porting to a new platform don't stub
-      # that out.
-    end
+      # Our Windows emulation is pretty limited, and so we have to carefully
+      # and specifically handle the platform, which has all sorts of magic.
+      # So, unlike Unix, we don't pre-prep security; we use the default "quite
+      # secure" tempfile permissions instead.  Magic happens later.
+      if !Puppet.features.microsoft_windows?
+        # Grab the current file mode, and fall back to the defaults.
+        effective_mode =
+        if Puppet::FileSystem.exist?(file)
+          stat = Puppet::FileSystem.lstat(file)
+          tempfile.chown(stat.uid, stat.gid)
+          stat.mode
+        else
+          mode
+        end
 
-    tempfile.close
-
-    if Puppet.features.microsoft_windows?
-      # Windows ReplaceFile needs a file to exist, so touch handles this
-      if !Puppet::FileSystem.exist?(file)
-        Puppet::FileSystem.touch(file)
-        if mode
-          Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))
+        if effective_mode
+          # We only care about the bottom four slots, which make the real mode,
+          # and not the rest of the platform stat call fluff and stuff.
+          tempfile.chmod(effective_mode & 07777)
         end
       end
-      # Yes, the arguments are reversed compared to the rename in the rest
-      # of the world.
-      Puppet::Util::Windows::File.replace_file(FileSystem.path_string(file), tempfile.path)
 
-    else
-      File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
+      # OK, now allow the caller to write the content of the file.
+      yield tempfile
+
+      # Now, make sure the data (which includes the mode) is safe on disk.
+      tempfile.flush
+      begin
+        tempfile.fsync
+      rescue NotImplementedError
+        # fsync may not be implemented by Ruby on all platforms, but
+        # there is absolutely no recovery path if we detect that.  So, we just
+        # ignore the return code.
+        #
+        # However, don't be fooled: that is accepting that we are running in
+        # an unsafe fashion.  If you are porting to a new platform don't stub
+        # that out.
+      end
+
+      tempfile.close
+
+      if Puppet.features.microsoft_windows?
+        # Windows ReplaceFile needs a file to exist, so touch handles this
+        if !Puppet::FileSystem.exist?(file)
+          Puppet::FileSystem.touch(file)
+          if mode
+            Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))
+          end
+        end
+        # Yes, the arguments are reversed compared to the rename in the rest
+        # of the world.
+        Puppet::Util::Windows::File.replace_file(FileSystem.path_string(file), tempfile.path)
+
+      else
+        File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
+      end
+    ensure
+      # in case an error occurred before we renamed the temp file, make sure it
+      # gets deleted
+      if tempfile
+        tempfile.close!
+      end
     end
+
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't
     # have support for that, and it doesn't matter /that/ much...

@@ -18,7 +18,7 @@ Puppet::Type.newtype(:yumrepo) do
   # Doc string for properties that can be made 'absent'
   ABSENT_DOC="Set this to `absent` to remove it from the file completely."
   # False can be false/0/no and True can be true/1/yes in yum.
-  YUM_BOOLEAN=/(True|False|0|1|No|Yes)/i
+  YUM_BOOLEAN=/^(True|False|0|1|No|Yes)$/i
   YUM_BOOLEAN_DOC="Valid values are: False/0/No or True/1/Yes."
 
   VALID_SCHEMES = %w[file http https ftp]
@@ -119,6 +119,13 @@ Puppet::Type.newtype(:yumrepo) do
     end
   end
 
+  newproperty(:mirrorlist_expire) do
+    desc "Time (in seconds) after which the mirrorlist locally cached
+      will expire.\n#{ABSENT_DOC}"
+
+    newvalues(/^[0-9]+$/, :absent)
+  end
+
   newproperty(:include) do
     desc "The URL of a remote file containing additional yum configuration
       settings. Puppet does not check for this file's existence or validity.
@@ -143,6 +150,20 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
   end
 
+  newproperty(:gpgcakey) do
+    desc "The URL for the GPG CA key for this repository. #{ABSENT_DOC}"
+
+    newvalues(/.*/, :absent)
+    validate do |value|
+      next if value.to_s == 'absent'
+      parsed = URI.parse(value)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
+    end
+  end
+
   newproperty(:includepkgs) do
     desc "List of shell globs. If this is set, only packages
       matching one of the globs will be considered for
@@ -164,7 +185,7 @@ Puppet::Type.newtype(:yumrepo) do
     desc "The failover method for this repository; should be either
       `roundrobin` or `priority`. #{ABSENT_DOC}"
 
-    newvalues(/roundrobin|priority/, :absent)
+    newvalues(/^roundrobin|priority$/, :absent)
   end
 
   newproperty(:keepalive) do
@@ -175,24 +196,32 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(YUM_BOOLEAN, :absent)
   end
 
+  newproperty(:retries) do
+    desc "Set the number of times any attempt to retrieve a file should
+      retry before returning an error. Setting this to `0` makes yum
+     try forever.\n#{ABSENT_DOC}"
+
+    newvalues(/^[0-9]+$/, :absent)
+  end
+
   newproperty(:http_caching) do
     desc "What to cache from this repository. #{ABSENT_DOC}"
 
-    newvalues(/(packages|all|none)/, :absent)
+    newvalues(/^(packages|all|none)$/, :absent)
   end
 
   newproperty(:timeout) do
     desc "Number of seconds to wait for a connection before timing
       out. #{ABSENT_DOC}"
 
-    newvalues(/[0-9]+/, :absent)
+    newvalues(/^\d+$/, :absent)
   end
 
   newproperty(:metadata_expire) do
     desc "Number of seconds after which the metadata will expire.
       #{ABSENT_DOC}"
 
-    newvalues(/[0-9]+/, :absent)
+    newvalues(/^([0-9]+[dhm]?|never)$/, :absent)
   end
 
   newproperty(:protect) do
@@ -218,18 +247,40 @@ Puppet::Type.newtype(:yumrepo) do
     end
   end
 
+  newproperty(:throttle) do
+    desc "Enable bandwidth throttling for downloads. This option
+      can be expressed as a absolute data rate in bytes/sec or a
+      percentage `60%`. An SI prefix (k, M or G) may be appended
+      to the data rate values.\n#{ABSENT_DOC}"
+
+    newvalues(/^\d+[kMG%]?$/, :absent)
+  end
+
+  newproperty(:bandwidth) do
+    desc "Use to specify the maximum available network bandwidth
+      in bytes/second. Used with the `throttle` option. If `throttle`
+      is a percentage and `bandwidth` is `0` then bandwidth throttling
+      will be disabled. If `throttle` is expressed as a data rate then
+      this option is ignored.\n#{ABSENT_DOC}"
+
+    newvalues(/^\d+[kMG]?$/, :absent)
+  end
+
   newproperty(:cost) do
     desc "Cost of this repository. #{ABSENT_DOC}"
 
-    newvalues(/\d+/, :absent)
+    newvalues(/^\d+$/, :absent)
   end
 
   newproperty(:proxy) do
-    desc "URL to the proxy server for this repository. #{ABSENT_DOC}"
+    desc "URL of a proxy server that Yum should use when accessing this repository.
+      This attribute can also be set to `'_none_'`, which will make Yum bypass any
+      global proxy settings when accessing this repository.
+      #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
     validate do |value|
-      next if value.to_s == 'absent'
+      next if value.to_s =~ /^(absent|_none_)$/
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)

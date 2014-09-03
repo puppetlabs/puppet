@@ -67,16 +67,20 @@
 # type by looking at the Ruby class of the types this is considered an implementation detail, and such checks should in general
 # be performed by the type_calculator which implements the type system semantics.
 #
-# The PRubyType
+# The PRuntimeType
 # -------------
-# The PRubyType corresponds to a Ruby Class, except for the puppet types that are specialized (i.e. PRubyType should not be
-# used for Integer, String, etc. since there are specialized types for those).
-# When the type calculator deals with PRubyTypes and checks for assignability, it determines the "common ancestor class" of two classes.
-# This check is made based on the superclasses of the two classes being compared. In order to perform this, the classes must be present
-# (i.e. they are resolved from the string form in the PRubyType to a loaded, instantiated Ruby Class). In general this is not a problem,
-# since the question to produce the common super type for two objects means that the classes must be present or there would have been
-# no instances present in the first place. If however the classes are not present, the type calculator will fall back and state that
-# the two types at least have Object in common.
+# The PRuntimeType corresponds to a type in the runtime system (currently only supported runtime is 'ruby'). The
+# type has a runtime_type_name that corresponds to a Ruby Class name.
+# A Runtime[ruby] type can be used to describe any ruby class except for the puppet types that are specialized
+# (i.e. PRuntimeType should not be used for Integer, String, etc. since there are specialized types for those).
+# When the type calculator deals with PRuntimeTypes and checks for assignability, it determines the
+# "common ancestor class" of two classes.
+# This check is made based on the superclasses of the two classes being compared. In order to perform this, the
+# classes must be present (i.e. they are resolved from the string form in the PRuntimeType to a
+# loaded, instantiated Ruby Class). In general this is not a problem, since the question to produce the common
+# super type for two objects means that the classes must be present or there would have been
+# no instances present in the first place. If however the classes are not present, the type
+# calculator will fall back and state that the two types at least have Any in common.
 #
 # @see Puppet::Pops::Types::TypeFactory TypeFactory for how to create instances of types
 # @see Puppet::Pops::Types::TypeParser TypeParser how to construct a type instance from a String
@@ -86,7 +90,7 @@
 # -----
 # The type calculator can be directly used via its class methods. If doing time critical work and doing many
 # calls to the type calculator, it is more performant to create an instance and invoke the corresponding
-# instance methods. Note that inference is an expensive operation, rather than infering the same thing
+# instance methods. Note that inference is an expensive operation, rather than inferring the same thing
 # several times, it is in general better to infer once and then copy the result if mutation to a more generic form is
 # required.
 #
@@ -113,7 +117,7 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Produces a String representation of the given type.
-  # @param t [Puppet::Pops::Types::PAbstractType] the type to produce a string form
+  # @param t [Puppet::Pops::Types::PAnyType] the type to produce a string form
   # @return [String] the type in string form
   #
   # @api public
@@ -178,7 +182,7 @@ class Puppet::Pops::Types::TypeCalculator
     @data_t = Types::PDataType.new()
     @scalar_t = Types::PScalarType.new()
     @numeric_t = Types::PNumericType.new()
-    @t = Types::PObjectType.new()
+    @t = Types::PAnyType.new()
 
     # Data accepts a Tuple that has 0-infinity Data compatible entries (e.g. a Tuple equivalent to Array).
     data_tuple = Types::PTupleType.new()
@@ -233,18 +237,18 @@ class Puppet::Pops::Types::TypeCalculator
   # A class is injectable if it has a special *assisted inject* class method called `inject` taking
   # an injector and a scope as argument, or if it has a zero args `initialize` method.
   #
-  # @param klazz [Class, PRubyType] the class/type to check if it is injectable
+  # @param klazz [Class, PRuntimeType] the class/type to check if it is injectable
   # @return [Class, nil] the injectable Class, or nil if not injectable
   # @api public
   #
   def injectable_class(klazz)
     # Handle case when we get a PType instead of a class
-    if klazz.is_a?(Types::PRubyType)
+    if klazz.is_a?(Types::PRuntimeType)
       klazz = Puppet::Pops::Types::ClassLoader.provide(klazz)
     end
 
-    # data types can not be injected (check again, it is not safe to assume that given RubyType klazz arg was ok)
-    return false unless type(klazz).is_a?(Types::PRubyType)
+    # data types can not be injected (check again, it is not safe to assume that given RubyRuntime klazz arg was ok)
+    return false unless type(klazz).is_a?(Types::PRuntimeType)
     if (klazz.respond_to?(:inject) && klazz.method(:inject).arity() == -4) || klazz.instance_method(:initialize).arity() == 0
       klazz
     else
@@ -265,6 +269,8 @@ class Puppet::Pops::Types::TypeCalculator
     if t2.is_a?(Class)
       t2 = type(t2)
     end
+    # Unit can be assigned to anything
+    return true if t2.class == Types::PUnitType
 
     @@assignable_visitor.visit_this_1(self, t, t2)
  end
@@ -277,18 +283,18 @@ class Puppet::Pops::Types::TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   #
   def callable?(callable, args)
-    return false if !callable.is_a?(Types::PCallableType)
+    return false if !self.class.is_kind_of_callable?(callable)
     # Note that polymorphism is for the args type, the callable is always a callable
     @@callable_visitor.visit_this_1(self, args, callable)
   end
 
   # Answers if the two given types describe the same type
   def equals(left, right)
-    return false unless left.is_a?(Types::PAbstractType) && right.is_a?(Types::PAbstractType)
+    return false unless left.is_a?(Types::PAnyType) && right.is_a?(Types::PAnyType)
     # Types compare per class only - an extra test must be made if the are mutually assignable
     # to find all types that represent the same type of instance
     #
-    left  == right || (assignable?(right, left) && assignable?(left, right))
+    left == right || (assignable?(right, left) && assignable?(left, right))
   end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -326,8 +332,7 @@ class Puppet::Pops::Types::TypeCalculator
       type.key_type = Types::PScalarType.new()
       type.element_type = Types::PDataType.new()
     else
-      type = Types::PRubyType.new()
-      type.ruby_class = c.name
+      type = Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => c.name)
     end
     type
   end
@@ -391,9 +396,15 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_Object(t, o)
-    # Undef is Undef and Object, but nothing else when checking instance?
-    return false if (o.nil? || o == :undef) && t.class != Types::PObjectType
+    # Undef is Undef and Any, but nothing else when checking instance?
+    return false if (o.nil?) && t.class != Types::PAnyType
     assignable?(t, infer(o))
+  end
+
+  # Anything is an instance of Unit
+  # @api private
+  def instance_of_PUnitType(t, o)
+    true
   end
 
   def instance_of_PArrayType(t, o)
@@ -401,7 +412,8 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.all? {|element| instance_of(t.element_type, element) }
     size_t = t.size_type || @collection_default_size_t
     size_t2 = size_as_type(o)
-    assignable?(size_t, size_t2)
+    # optimize by calling directly
+    assignable_PIntegerType(size_t, size_t2)
   end
 
   def instance_of_PTupleType(t, o)
@@ -432,7 +444,8 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.keys.all? {|key| instance_of(key_t, key) } && o.values.all? {|value| instance_of(element_t, value) }
     size_t = t.size_type || @collection_default_size_t
     size_t2 = size_as_type(o)
-    assignable?(size_t, size_t2)
+    # optimize by calling directly
+    assignable_PIntegerType(size_t, size_t2)
   end
 
   def instance_of_PDataType(t, o)
@@ -440,11 +453,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_PNilType(t, o)
-    return o.nil? || o == :undef
+    return o.nil?
   end
 
   def instance_of_POptionalType(t, o)
-    return true if (o.nil? || o == :undef)
+    return true if (o.nil?)
     instance_of(t.optional_type, o)
   end
 
@@ -471,7 +484,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def is_ptype?(t)
-    return t.is_a?(Types::PAbstractType)
+    return t.is_a?(Types::PAnyType)
   end
 
   # Answers if t represents the puppet type PNilType
@@ -490,10 +503,18 @@ class Puppet::Pops::Types::TypeCalculator
   def common_type(t1, t2)
     raise ArgumentError, 'two types expected' unless (is_ptype?(t1) || is_pnil?(t1)) && (is_ptype?(t2) || is_pnil?(t2))
 
+    # TODO: This is not right since Scalar U Undef is Any
     # if either is nil, the common type is the other
     if is_pnil?(t1)
       return t2
     elsif is_pnil?(t2)
+      return t1
+    end
+
+    # If either side is Unit, it is the other type
+    if t1.is_a?(Types::PUnitType)
+      return t2
+    elsif t2.is_a?(Types::PUnitType)
       return t1
     end
 
@@ -566,7 +587,7 @@ class Puppet::Pops::Types::TypeCalculator
     if t1.is_a?(Types::PPatternType) && t2.is_a?(Types::PPatternType)
       t = Types::PPatternType.new()
       # must make copies since patterns are contained types, not data-types
-      t.patterns = (t1.patterns | t2.patterns).map {|p| p.copy }
+      t.patterns = (t1.patterns | t2.patterns).map(&:copy)
       return t
     end
 
@@ -580,7 +601,7 @@ class Puppet::Pops::Types::TypeCalculator
     if t1.is_a?(Types::PVariantType) && t2.is_a?(Types::PVariantType)
       # The common type is one that complies with either set
       t = Types::PVariantType.new
-      t.types = (t1.types | t2.types).map {|opt_t| opt_t.copy }
+      t.types = (t1.types | t2.types).map(&:copy)
       return t
     end
 
@@ -616,11 +637,13 @@ class Puppet::Pops::Types::TypeCalculator
       return type
     end
 
-    if t1.is_a?(Types::PRubyType) && t2.is_a?(Types::PRubyType)
-      if t1.ruby_class == t2.ruby_class
+    # If both are Runtime types
+    if t1.is_a?(Types::PRuntimeType) && t2.is_a?(Types::PRuntimeType)
+      if t1.runtime == t2.runtime && t1.runtime_type_name == t2.runtime_type_name
         return t1
       end
       # finding the common super class requires that names are resolved to class
+      # NOTE: This only supports runtime type of :ruby
       c1 = Types::ClassLoader.provide_from_type(t1)
       c2 = Types::ClassLoader.provide_from_type(t2)
       if c1 && c2
@@ -628,18 +651,16 @@ class Puppet::Pops::Types::TypeCalculator
         superclasses(c1).each do|c1_super|
           c2_superclasses.each do |c2_super|
             if c1_super == c2_super
-              result = Types::PRubyType.new()
-              result.ruby_class = c1_super.name
-              return result
+              return Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => c1_super.name)
             end
           end
         end
       end
     end
-    # If both are RubyObjects
 
-    if common_pobject?(t1, t2)
-      return Types::PObjectType.new()
+    # They better both be Any type, or the wrong thing was asked and nil is returned
+    if t1.is_a?(Types::PAnyType) && t2.is_a?(Types::PAnyType)
+      return Types::PAnyType.new()
     end
   end
 
@@ -701,15 +722,13 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Object(o)
-    type = Types::PRubyType.new()
-    type.ruby_class = o.class.name
-    type
+    Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o.class.name)
   end
 
   # The type of all types is PType
   # @api private
   #
-  def infer_PAbstractType(o)
+  def infer_PAnyType(o)
     type = Types::PType.new()
     type.type = o.copy
     type
@@ -761,10 +780,16 @@ class Puppet::Pops::Types::TypeCalculator
     Types::PNilType.new()
   end
 
-  # Inference of :undef as PNilType, all other are Ruby[Symbol]
+  # Inference of :default as PDefaultType, and all other are Ruby[Symbol]
   # @api private
   def infer_Symbol(o)
-    o == :undef ? infer_NilClass(o) : infer_Object(o)
+    case o
+    when :default
+      Types::PDefaultType.new()
+
+    else
+      infer_Object(o)
+    end
   end
 
   # @api private
@@ -782,12 +807,14 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def infer_Resource(o)
     t = Types::PResourceType.new()
-    t.type_name = o.type.to_s
+    t.type_name = o.type.to_s.downcase
     # Only Puppet::Resource can have a title that is a symbol :undef, a PResource cannot.
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
-    t.title = (title == :undef ? '' : title)
-    t
+    t.title = (:undef == title  ? '' : title)
+    type = Types::PType.new()
+    type.type = t
+    type
   end
 
   # @api private
@@ -848,7 +875,7 @@ class Puppet::Pops::Types::TypeCalculator
     type = Types::PHashType.new()
     if o.empty?
       ktype = Types::PNilType.new()
-      etype = Types::PNilType.new()
+      vtype = Types::PNilType.new()
     else
       ktype = Types::PVariantType.new()
       ktype.types = o.keys.map() {|k| infer_set(k) }
@@ -856,7 +883,7 @@ class Puppet::Pops::Types::TypeCalculator
       etype.types = o.values.map() {|e| infer_set(e) }
     end
     type.key_type = unwrap_single_variant(ktype)
-    type.element_type = unwrap_single_variant(vtype)
+    type.element_type = unwrap_single_variant(etype)
     type.size_type = size_as_type(o)
     type
   end
@@ -868,6 +895,7 @@ class Puppet::Pops::Types::TypeCalculator
       possible_variant
     end
   end
+
   # False in general type calculator
   # @api private
   def assignable_Object(t, t2)
@@ -875,14 +903,26 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PObjectType(t, t2)
-    t2.is_a?(Types::PObjectType)
+  def assignable_PAnyType(t, t2)
+    t2.is_a?(Types::PAnyType)
   end
 
   # @api private
   def assignable_PNilType(t, t2)
     # Only undef/nil is assignable to nil type
     t2.is_a?(Types::PNilType)
+  end
+
+  # Anything is assignable to a Unit type
+  # @api private
+  def assignable_PUnitType(t, t2)
+    true
+  end
+
+  # @api private
+  def assignable_PDefaultType(t, t2)
+    # Only default is assignable to default type
+    t2.is_a?(Types::PDefaultType)
   end
 
   # @api private
@@ -941,7 +981,7 @@ class Puppet::Pops::Types::TypeCalculator
       # A variant is assignable if all of its options are assignable to one of this type's options
       return true if t == t2
       t2.types.all? do |other|
-        # if the other is a Variant, all if its options, but be assignable to one of this type's options
+        # if the other is a Variant, all of its options, but be assignable to one of this type's options
         other = other.is_a?(Types::PDataType) ? @data_variant_t : other
         if other.is_a?(Types::PVariantType)
           assignable?(t, other)
@@ -966,7 +1006,7 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # Assume no block was given - i.e. it is nil, and its type is PNilType
     block_t = @nil_t
-    if args_tuple.types.last.is_a?(Types::PCallableType)
+    if self.class.is_kind_of_callable?(args_tuple.types.last)
       # a split is needed to make it possible to use required, optional, and varargs semantics
       # of the tuple type.
       #
@@ -978,14 +1018,39 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # unless argument types match parameter types
     return false unless assignable?(callable_t.param_types, args_tuple)
-    # unless given block (or no block) matches expected block (or no block)
+    # can the given block be *called* with a signature requirement specified by callable_t?
     assignable?(callable_t.block_type || @nil_t, block_t)
   end
 
+  # @api private
+  def self.is_kind_of_callable?(t, optional = true)
+    case t
+    when Types::PCallableType
+      true
+    when Types::POptionalType
+      optional && is_kind_of_callable?(t.optional_type, optional)
+    when Types::PVariantType
+      t.types.all? {|t2| is_kind_of_callable?(t2, optional) }
+    else
+      false
+    end
+  end
+
+
   def callable_PArrayType(args_array, callable_t)
     return false unless assignable?(callable_t.param_types, args_array)
-    # does not support calling with a block, but have to check that callable expects it
+    # does not support calling with a block, but have to check that callable is ok with missing block
     assignable?(callable_t.block_type || @nil_t, @nil_t)
+  end
+
+  def callable_PNilType(nil_t, callable_t)
+    # if callable_t is Optional (or indeed PNilType), this means that 'missing callable' is accepted
+    assignable?(callable_t, nil_t)
+  end
+
+  def callable_PCallableType(given_callable_t, required_callable_t)
+    # If the required callable is euqal or more specific than the given, the given is callable
+    assignable?(required_callable_t, given_callable_t)
   end
 
   def max(a,b)
@@ -1004,12 +1069,14 @@ class Puppet::Pops::Types::TypeCalculator
       size_t2 = t2.size_type || Puppet::Pops::Types::TypeFactory.range(*t2.size_range)
 
       # not assignable if the number of types in t2 is outside number of types in t1
-      return false unless assignable?(size_t, size_t2)
-      max(t.types.size, t2.types.size).times do |index|
-        return false unless assignable?((t.types[index] || t.types[-1]), (t2.types[index] || t2.types[-1]))
+      if assignable?(size_t, size_t2)
+        t2.types.size.times do |index|
+          return false unless assignable?((t.types[index] || t.types[-1]), t2.types[index])
+        end
+        return true
+      else
+        return false
       end
-      true
-
     elsif t2.is_a?(Types::PArrayType)
       t2_entry = t2.element_type
 
@@ -1064,7 +1131,7 @@ class Puppet::Pops::Types::TypeCalculator
       # hash key type must be string of min 1 size
       # hash value t must be assignable to each key
       element_type = t2.element_type
-      assignable?(size_t, size_t2) &&
+      assignable_PIntegerType(size_t, size_t2) &&
         assignable?(@non_empty_string_t, t2.key_type) &&
         h.all? {|k,v| assignable?(v, element_type) }
     else
@@ -1085,9 +1152,14 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PEnumType(t, t2)
     return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
-    if t2.is_a?(Types::PStringType)
+    case t2
+    when Types::PStringType
       # if the set of strings are all found in the set of enums
       t2.values.all? { |s| t.values.any? { |e| e == s }}
+    when Types::PVariantType
+      t2.types.all? {|variant_t| assignable_PEnumType(t, variant_t) }
+    when Types::PEnumType
+      t2.values.all? { |s| t.values.any? {|e| e == s }}
     else
       false
     end
@@ -1105,11 +1177,11 @@ class Puppet::Pops::Types::TypeCalculator
       when Types::PStringType
         # true if size compliant
         size_t2 = t2.size_type || @collection_default_size_t
-        assignable?(size_t, size_t2)
+        assignable_PIntegerType(size_t, size_t2)
 
       when Types::PPatternType
         # true if size constraint is at least 0 to +Infinity (which is the same as the default)
-        assignable?(size_t, @collection_default_size_t)
+        assignable_PIntegerType(size_t, @collection_default_size_t)
 
       when Types::PEnumType
         if t2.values
@@ -1140,7 +1212,14 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PPatternType(t, t2)
     return true if t == t2
-    return false unless t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)
+    case t2
+    when Types::PStringType, Types::PEnumType
+      values = t2.values
+    when Types::PVariantType
+      return t2.types.all? {|variant_t| assignable_PPatternType(t, variant_t) }
+    else
+      return false
+    end
 
     if t2.values.empty?
       # Strings / Enums (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
@@ -1176,12 +1255,16 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless t2.is_a?(Types::PCallableType)
     # nil param_types means, any other Callable is assignable
     return true if t.param_types.nil?
-    return false unless assignable?(t.param_types, t2.param_types)
+
+    # NOTE: these tests are made in reverse as it is calling the callable that is constrained
+    # (it's lower bound), not its upper bound
+    return false unless assignable?(t2.param_types, t.param_types)
     # names are ignored, they are just information
     # Blocks must be compatible
     this_block_t = t.block_type || @nil_t
     that_block_t = t2.block_type || @nil_t
-    assignable?(this_block_t, that_block_t)
+    assignable?(that_block_t, this_block_t)
+
   end
 
   # @api private
@@ -1190,20 +1273,20 @@ class Puppet::Pops::Types::TypeCalculator
     case t2
     when Types::PCollectionType
       size_t2 = t2.size_type || @collection_default_size_t
-      assignable?(size_t, size_t2)
+      assignable_PIntegerType(size_t, size_t2)
     when Types::PTupleType
       # compute the tuple's min/max size, and check if that size matches
       from, to = size_range(t2.size_type)
       t2s = Types::PIntegerType.new()
       t2s.from = t2.types.size - 1 + from
       t2s.to = t2.types.size - 1 + to
-      assignable?(size_t, t2s)
+      assignable_PIntegerType(size_t, t2s)
     when Types::PStructType
       from = to = t2.elements.size
       t2s = Types::PIntegerType.new()
       t2s.from = from
       t2s.to = to
-      assignable?(size_t, t2s)
+      assignable_PIntegerType(size_t, t2s)
     else
       false
     end
@@ -1310,14 +1393,18 @@ class Puppet::Pops::Types::TypeCalculator
     t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
   end
 
-  # Assignable if t2's ruby class is same or subclass of t1's ruby class
+  # Assignable if t2's has the same runtime and the runtime name resolves to
+  # a class that is the same or subclass of t1's resolved runtime type name
   # @api private
-  def assignable_PRubyType(t1, t2)
-    return false unless t2.is_a?(Types::PRubyType)
-    return true if t1.ruby_class.nil?   # t1 is wider
-    return false if t2.ruby_class.nil?  # t1 not nil, so t2 can not be wider
-    c1 = class_from_string(t1.ruby_class)
-    c2 = class_from_string(t2.ruby_class)
+  def assignable_PRuntimeType(t1, t2)
+    return false unless t2.is_a?(Types::PRuntimeType)
+    return false unless t1.runtime == t2.runtime
+    return true if t1.runtime_type_name.nil?   # t1 is wider
+    return false if t2.runtime_type_name.nil?  # t1 not nil, so t2 can not be wider
+
+    # NOTE: This only supports Ruby, must change when/if the set of runtimes is expanded
+    c1 = class_from_string(t1.runtime_type_name)
+    c2 = class_from_string(t2.runtime_type_name)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
     !!(c2 <= c1)
   end
@@ -1343,16 +1430,21 @@ class Puppet::Pops::Types::TypeCalculator
   def string_String(t)       ; t         ; end
 
   # @api private
-  def string_PObjectType(t)  ; "Object"  ; end
+  def string_Symbol(t)       ; t.to_s    ; end
+
+  def string_PAnyType(t)     ; "Any"     ; end
 
   # @api private
   def string_PNilType(t)     ; 'Undef'   ; end
 
   # @api private
+  def string_PDefaultType(t) ; 'Default' ; end
+
+  # @api private
   def string_PBooleanType(t) ; "Boolean" ; end
 
   # @api private
-  def string_PScalarType(t) ; "Scalar" ; end
+  def string_PScalarType(t)  ; "Scalar"  ; end
 
   # @api private
   def string_PDataType(t)    ; "Data"    ; end
@@ -1444,7 +1536,8 @@ class Puppet::Pops::Types::TypeCalculator
     else
       range = range_array_part(t.param_types.size_type)
     end
-    types = t.param_types.types.map {|t2| string(t2) }
+    # translate to string, and skip Unit types
+    types = t.param_types.types.map {|t2| string(t2) unless t2.class == Types::PUnitType }.compact
 
     params_part= types.join(', ')
 
@@ -1490,7 +1583,12 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def string_PRubyType(t)   ; "Ruby[#{string(t.ruby_class)}]"  ; end
+  def string_PUnitType(t)
+    "Unit"
+  end
+
+  # @api private
+  def string_PRuntimeType(t)   ; "Runtime[#{string(t.runtime)}, #{string(t.runtime_type_name)}]"  ; end
 
   # @api private
   def string_PArrayType(t)
@@ -1522,9 +1620,9 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PResourceType(t)
     if t.type_name
       if t.title
-        "#{t.type_name.capitalize}['#{t.title}']"
+        "#{capitalize_segments(t.type_name)}['#{t.title}']"
       else
-        "#{t.type_name.capitalize}"
+        capitalize_segments(t.type_name)
       end
     else
       "Resource"
@@ -1569,9 +1667,15 @@ class Puppet::Pops::Types::TypeCalculator
 
   private
 
+  NAME_SEGMENT_SEPARATOR = '::'.freeze
+
+  def capitalize_segments(s)
+    s.split(NAME_SEGMENT_SEPARATOR).map(&:capitalize).join(NAME_SEGMENT_SEPARATOR)
+  end
+
   def class_from_string(str)
     begin
-      str.split('::').inject(Object) do |memo, name_segment|
+      str.split(NAME_SEGMENT_SEPARATOR).inject(Object) do |memo, name_segment|
         memo.const_get(name_segment)
       end
     rescue NameError
@@ -1591,7 +1695,4 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(@numeric_t, t1) && assignable?(@numeric_t, t2)
   end
 
-  def common_pobject?(t1, t2)
-    assignable?(@t, t1) && assignable?(@t, t2)
-  end
 end

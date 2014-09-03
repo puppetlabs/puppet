@@ -6,14 +6,13 @@ require 'win32/dir'
 require 'win32/process'
 require 'win32/eventlog'
 
-require 'windows/synchronize'
-require 'windows/handle'
-
 class WindowsDaemon < Win32::Daemon
-  include Windows::Synchronize
-  include Windows::Handle
-  include Windows::Process
+  CREATE_NEW_CONSOLE          = 0x00000010
+  EVENTLOG_ERROR_TYPE         = 0x0001
+  EVENTLOG_WARNING_TYPE       = 0x0002
+  EVENTLOG_INFORMATION_TYPE   = 0x0004
 
+  @run_thread = nil
   @LOG_TO_FILE = false
   LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
   LEVELS = [:debug, :info, :notice, :err]
@@ -63,46 +62,42 @@ class WindowsDaemon < Win32::Daemon
 
     log_notice('Service started')
 
-    while running? do
+    service = self
+    @run_thread = Thread.new do
       begin
-        runinterval = %x{ "#{puppet}" agent --configprint runinterval }.to_i
-        if runinterval == 0
-          runinterval = 1800
-          log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
+        while service.running? do
+          runinterval = service.parse_runinterval(puppet)
+          if service.state == RUNNING or service.state == IDLE
+            service.log_notice("Executing agent with arguments: #{args}")
+            pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
+            service.log_debug("Process created: #{pid}")
+          else
+            service.log_debug("Service is paused.  Not invoking Puppet agent")
+          end
+
+          service.log_debug("Service worker thread waiting for #{runinterval} seconds")
+          sleep(runinterval)
+          service.log_debug('Service worker thread woken up')
         end
       rescue Exception => e
-        log_exception(e)
-        runinterval = 1800
+        service.log_exception(e)
       end
-
-      if state == RUNNING or state == IDLE
-        log_notice("Executing agent with arguments: #{args}")
-        pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => Process::CREATE_NEW_CONSOLE).process_id
-        log_debug("Process created: #{pid}")
-      else
-        log_debug("Service is paused.  Not invoking Puppet agent")
-      end
-
-      log_debug("Service waiting for #{runinterval} seconds")
-      sleep(runinterval)
-      log_debug('Service woken up')
     end
+    @run_thread.join
 
-    log_notice('Service stopped')
   rescue Exception => e
     log_exception(e)
+  ensure
+    log_notice('Service stopped')
   end
 
   def service_stop
-    log_notice('Service stopping')
-    Thread.main.wakeup
+    log_notice('Service stopping / killing worker thread')
+    @run_thread.kill if @run_thread
   end
 
   def service_pause
-    # The service will not stay in a paused stated, instead it will go back into a running state after a short period of time.  This is an issue in the Win32-Service ruby code
-    # Raised bug https://github.com/djberg96/win32-service/issues/11 and is fixed in version 0.8.3.
-    # Because the Pause feature is so rarely used, there is no point in creating a workaround until puppet uses 0.8.3.
-    log_notice('Service pausing. The service will not stay paused. See Puppet Issue PUP-1471 for more information')
+    log_notice('Service pausing')
   end
 
   def service_resume
@@ -130,16 +125,12 @@ class WindowsDaemon < Win32::Daemon
       end
 
       case level
-        when :debug
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
-        when :info
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
-        when :notice
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
+        when :debug, :info, :notice
+          report_windows_event(EVENTLOG_INFORMATION_TYPE,0x01,msg.to_s)
         when :err
-          report_windows_event(Win32::EventLog::ERR,0x03,msg.to_s)
+          report_windows_event(EVENTLOG_ERROR_TYPE,0x03,msg.to_s)
         else
-          report_windows_event(Win32::EventLog::WARN,0x02,msg.to_s)
+          report_windows_event(EVENTLOG_WARNING_TYPE,0x02,msg.to_s)
       end
     end
   end
@@ -150,7 +141,7 @@ class WindowsDaemon < Win32::Daemon
       eventlog = Win32::EventLog.open("Application")
       eventlog.report_event(
         :source      => "Puppet",
-        :event_type  => type,   # Win32::EventLog::INFO or WARN, ERROR
+        :event_type  => type,   # EVENTLOG_ERROR_TYPE, etc
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
@@ -161,6 +152,21 @@ class WindowsDaemon < Win32::Daemon
         eventlog.close
       end
     end
+  end
+
+  def parse_runinterval(puppet_path)
+    begin
+      runinterval = %x{ "#{puppet_path}" agent --configprint runinterval }.to_i
+      if runinterval == 0
+        runinterval = 1800
+        log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
+      end
+    rescue Exception => e
+      log_exception(e)
+      runinterval = 1800
+    end
+
+    runinterval
   end
 end
 

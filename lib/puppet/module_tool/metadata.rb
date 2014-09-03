@@ -3,6 +3,7 @@ require 'puppet/module_tool'
 require 'puppet/network/format_support'
 require 'uri'
 require 'json'
+require 'set'
 
 module Puppet::ModuleTool
 
@@ -22,7 +23,7 @@ module Puppet::ModuleTool
       'source'       => '',
       'project_page' => nil,
       'issues_url'   => nil,
-      'dependencies' => [].freeze,
+      'dependencies' => Set.new.freeze,
     }
 
     def initialize
@@ -51,9 +52,39 @@ module Puppet::ModuleTool
       process_name(data) if data['name']
       process_version(data) if data['version']
       process_source(data) if data['source']
+      merge_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
       return self
+    end
+
+    # Validates the name and version_requirement for a dependency, then creates
+    # the Dependency and adds it.
+    # Returns the Dependency that was added.
+    def add_dependency(name, version_requirement=nil, repository=nil)
+      validate_name(name)
+      validate_version_range(version_requirement) if version_requirement
+
+      if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
+        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json or the Modulefile."
+      end
+
+      dep = Dependency.new(name, version_requirement, repository)
+      @data['dependencies'].add(dep)
+
+      dep
+    end
+
+    # Provides an accessor for the now defunct 'description' property.  This
+    # addresses a regression in Puppet 3.6.x where previously valid templates
+    # refering to the 'description' property were broken.
+    # @deprecated
+    def description
+      @data['description']
+    end
+
+    def dependencies
+      @data['dependencies'].to_a
     end
 
     # Returns a hash of the module's metadata.  Used by Puppet's automated
@@ -66,6 +97,8 @@ module Puppet::ModuleTool
     alias :to_data_hash :to_hash
 
     def to_json
+      data = @data.dup.merge('dependencies' => dependencies)
+
       # This is used to simulate an ordered hash.  In particular, some keys
       # are promoted to the top of the serialized hash (while others are
       # demoted) for human-friendliness.
@@ -73,12 +106,12 @@ module Puppet::ModuleTool
       # This particularly works around the lack of ordered hashes in 1.8.7.
       promoted_keys = %w[ name version author summary license source ]
       demoted_keys = %w[ dependencies ]
-      keys = @data.keys
+      keys = data.keys
       keys -= promoted_keys
       keys -= demoted_keys
 
       contents = (promoted_keys + keys + demoted_keys).map do |k|
-        value = (JSON.pretty_generate(@data[k]) rescue @data[k].to_json)
+        value = (JSON.pretty_generate(data[k]) rescue data[k].to_json)
         "#{k.to_json}: #{value}"
       end
 
@@ -127,6 +160,16 @@ module Puppet::ModuleTool
       return
     end
 
+    # Validates and parses the dependencies.
+    def merge_dependencies(data)
+      data['dependencies'].each do |dep|
+        add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
+      end
+
+      # Clear dependencies so @data dependencies are not overwritten
+      data.delete 'dependencies'
+    end
+
     # Validates that the given module name is both namespaced and well-formed.
     def validate_name(name)
       return if name =~ /\A[a-z0-9]+[-\/][a-z][a-z0-9_]*\Z/i
@@ -154,6 +197,13 @@ module Puppet::ModuleTool
 
       err = "version string cannot be parsed as a valid Semantic Version"
       raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"
+    end
+
+    # Validates that the version range can be parsed by Semantic.
+    def validate_version_range(version_range)
+      Semantic::VersionRange.parse(version_range)
+    rescue ArgumentError => e
+      raise ArgumentError, "Invalid 'version_range' field in metadata.json: #{e}"
     end
   end
 end

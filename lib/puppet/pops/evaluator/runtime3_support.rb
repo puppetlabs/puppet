@@ -5,6 +5,8 @@
 # @api private
 module Puppet::Pops::Evaluator::Runtime3Support
 
+  NAME_SPACE_SEPARATOR = '::'.freeze
+
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -72,7 +74,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Not ideal, scope should support numeric lookup directly instead.
     # TODO: consider fixing scope
     catch(:undefined_variable) {
-      return scope.lookupvar(name.to_s)
+      x = scope.lookupvar(name.to_s)
+      # Must convert :undef back to nil - this can happen when an undefined variable is used in a
+      # parameter's default value expression - there nil must be :undef to work with the rest of 3x.
+      # Now that the value comes back to 4x it is changed to nil.
+      return (x == :undef) ? nil : x
     }
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
@@ -95,7 +101,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     scope.exist?(name.to_s)
   end
 
-  def set_match_data(match_data, o, scope)
+  def set_match_data(match_data, scope)
     # See set_variable for rationale for not passing file and line to ephemeral_from.
     # NOTE: The 3x scope adds one ephemeral(match) to its internal stack per match that succeeds ! It never
     # clears anything. Thus a context that performs many matches will get very deep (there simply is no way to
@@ -185,11 +191,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # and convoluted path of evaluation.
     # In order to do this in a way that is similar to 3.x two resources are created to be used as keys.
     #
-    #
-    # TODO: logic that creates a PCatalogEntryType should resolve it to ensure it is loaded (to the best of known_resource_types knowledge).
-    # If this is not done, the order in which things are done may be different? OTOH, it probably works anyway :-)
-    # TODO: Not sure if references needs to be resolved via the scope?
-    #
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
     #
@@ -229,22 +230,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def call_function(name, args, o, scope)
-    # Call via 4x API if it is available, and the function exists
-    #
-    if loaders = Puppet.lookup(:loaders) {nil}
-      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-      loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
-      if loader && func = loader.load(:function, name)
-        return func.call(scope, *args)
-      end
+    # Call via 4x API if the function exists there
+    loaders = scope.compiler.loaders
+    # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+    adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+    loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
+    if loader && func = loader.load(:function, name)
+      return func.call(scope, *args)
     end
 
+    # Call via 3x API if function exists there
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
-    # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts :undef to empty string
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
@@ -256,11 +255,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
+      # Here we must convert nil values to :undef for the 3x logic to work
       :value  => convert(value, scope, :undef), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
       :add    => operator == :'+>'
     )
   end
+
+  CLASS_STRING = 'class'.freeze
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
 
@@ -296,7 +298,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
           resource.resource_type.instantiate_resource(scope, resource)
         end
         scope.compiler.add_resource(scope, resource)
-        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
+        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == CLASS_STRING
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
         resource_to_ptype(resource)
@@ -317,7 +319,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Capitalizes each segment of a qualified name
   #
   def capitalize_qualified_name(name)
-    name.split(/::/).map(&:capitalize).join('::')
+    name.split(/::/).map(&:capitalize).join(NAME_SPACE_SEPARATOR)
   end
 
   # Creates resource overrides for all resource type objects in evaluated_resources. The same set of
@@ -332,6 +334,9 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
 
     evaluated_resources.each do |r|
+      unless r.is_a?(Puppet::Pops::Types::PResourceType) && r.type_name != 'class'
+        fail(Puppet::Pops::Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
+      end
       resource = Puppet::Parser::Resource.new(
       r.type_name, r.title,
         :parameters => evaluated_parameters,
@@ -360,15 +365,28 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def get_resource_parameter_value(scope, resource, parameter_name)
     # This gets the parameter value, or nil (for both valid parameters and parameters that do not exist).
     val = resource[parameter_name]
-    if val.nil? && defaults = scope.lookupdefaults(resource.type)
-      # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
-      # name and value.
-      # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
-      # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
-      param = defaults[parameter_name.to_sym]
-      # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
-      # at all times. Instead, they return a nil param until a value has been set.
-      val = param.nil? ? nil : param.value
+
+    # Sometimes the resource is a Puppet::Parser::Resource and sometimes it is
+    # a Puppet::Resource. The Puppet::Resource case occurs when puppet language
+    # is evaluated against an already completed catalog (where all instances of
+    # Puppet::Parser::Resource are converted to Puppet::Resource instances).
+    # Evaluating against an already completed catalog is really only found in
+    # the language specification tests, where the puppet language is used to
+    # test itself.
+    if resource.is_a?(Puppet::Parser::Resource)
+      # The defaults must be looked up in the scope where the resource was created (not in the given
+      # scope where the lookup takes place.
+      resource_scope = resource.scope
+      if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
+        # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
+        # name and value.
+        # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
+        # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
+        param = defaults[parameter_name.to_sym]
+        # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
+        # at all times. Instead, they return a nil param until a value has been set.
+        val = param.nil? ? nil : param.value
+      end
     end
     val
   end
@@ -381,7 +399,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def resource_to_ptype(resource)
     nil if resource.nil?
-    type_calculator.infer(resource)
+    # inference returns the meta type since the 3x Resource is an alternate way to describe a type
+    type_calculator.infer(resource).type
   end
 
   # This is the same type of "truth" as used in the current Puppet DSL.
@@ -390,8 +409,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
     case o
-    when ''
-      false
+    # Support :undef since it may come from a 3x structure
     when :undef
       false
     else
@@ -423,6 +441,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     undef_value
   end
 
+  def convert_String(o, scope, undef_value)
+    # although wasteful, needed because user code may mutate these strings in Resources
+    o.frozen? ? o.dup : o
+  end
+
   def convert_Object(o, scope, undef_value)
     o
   end
@@ -445,46 +468,53 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def convert_Symbol(o, scope, undef_value)
     case o
+    # Support :undef since it may come from a 3x structure
     when :undef
-      undef_value  # 3x wants :undef as empty string in function
+      undef_value  # 3x wants undef as either empty string or :undef
     else
       o   # :default, and all others are verbatim since they are new in future evaluator
     end
   end
 
-  def convert_PAbstractType(o, scope, undef_value)
+  def convert_PAnyType(o, scope, undef_value)
     o
   end
 
-  def convert_PResourceType(o,scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
-  end
+  def convert_PCatalogEntryType(o, scope, undef_value)
+    # Since 4x does not support dynamic scoping, all names are absolute and can be
+    # used as is (with some check/transformation/mangling between absolute/relative form
+    # due to Puppet::Resource's idiosyncratic behavior where some references must be
+    # absolute and others cannot be.
+    # Thus there is no need to call scope.resolve_type_and_titles to do dynamic lookup.
 
-  def convert_PHostClassType(o, scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
+    Puppet::Resource.new(*catalog_type_to_split_type_title(o))
   end
 
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
-  # Used to produce reference resource instances (used when 3x is operating on a resource).
+  # This method is used to produce the arguments for creation of reference resource instances
+  # (used when 3x is operating on a resource).
+  # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    case catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    case split_type
     when Puppet::Pops::Types::PHostClassType
-      return ['Class', catalog_type.class_name]
+      class_name = split_type.class_name
+      ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
     when Puppet::Pops::Types::PResourceType
-      return [catalog_type.type_name, catalog_type.title]
+      type_name = split_type.type_name
+      title = split_type.title
+      if type_name =~ /^(::)?[Cc]lass/
+        ['class', title.nil? ? nil : title.sub(/^::/, '')]
+      else
+        # Ensure that title is '' if nil
+        # Resources with absolute name always results in error because tagging does not support leading ::
+        [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
+      end
     else
-      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
+      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
     end
   end
 
@@ -504,7 +534,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
-#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
   end
 
@@ -521,6 +550,10 @@ module Puppet::Pops::Evaluator::Runtime3Support
       else
         p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
       end
+
+      # Store config issues, ignore or warning
+      p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
+      p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
     end
   end
 

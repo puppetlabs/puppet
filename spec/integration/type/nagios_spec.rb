@@ -6,9 +6,11 @@ require 'puppet/file_bucket/dipper'
 describe "Nagios file creation" do
   include PuppetSpec::Files
 
+  let(:initial_mode) { 0600 }
+
   before :each do
     FileUtils.touch(target_file)
-    File.chmod(0600, target_file)
+    Puppet::FileSystem.chmod(initial_mode, target_file)
     Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
   end
 
@@ -33,13 +35,6 @@ describe "Nagios file creation" do
     catalog.apply
   end
 
-  # These three helpers are from file_spec.rb
-  #
-  # @todo Define those centrally as well?
-  def get_mode(file)
-    Puppet::FileSystem.stat(file).mode
-  end
-
   context "when creating a nagios config file" do
     context "which is not managed" do
       it "should choose the file mode if requested" do
@@ -51,14 +46,12 @@ describe "Nagios file creation" do
           :mode   => '0640'
         )
         run_in_catalog(resource)
-        # sticky bit only applies to directories in Windows
-        mode = Puppet.features.microsoft_windows? ? "640" : "100640"
-        ( "%o" % get_mode(target_file) ).should == mode
+        expect_file_mode(target_file, "640")
       end
     end
 
     context "which is managed" do
-      it "should not the mode" do
+      it "should not override the mode" do
         file_res = Puppet::Type.type(:file).new(
           :name   => target_file,
           :ensure => :present
@@ -71,10 +64,8 @@ describe "Nagios file creation" do
           :mode   => '0640'
         )
         run_in_catalog(file_res, nag_res)
-        ( "%o" % get_mode(target_file) ).should_not == "100640"
+        expect_file_mode(target_file, initial_mode.to_s(8))
       end
     end
-
   end
-
 end

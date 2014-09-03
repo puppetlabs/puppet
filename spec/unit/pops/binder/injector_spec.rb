@@ -101,14 +101,16 @@ describe 'Injector' do
 
   let(:bindings)  { factory.named_bindings('test') }
   let(:scope)     { null_scope()}
-  let(:duck_type) { type_factory.ruby(InjectorSpecModule::TestDuck) }
-
   let(:binder)    { Puppet::Pops::Binder::Binder }
 
   let(:lbinder)   do
     binder.new(layered_bindings)
   end
 
+  def duck_type
+    # create distinct instances
+    type_factory.ruby(InjectorSpecModule::TestDuck)
+  end
 
   let(:layered_bindings) { factory.layered_bindings(test_layer_with_bindings(bindings.model)) }
 
@@ -528,7 +530,7 @@ describe 'Injector' do
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
-        }.to_not raise_error(/Duplicate key/)
+        }.to_not raise_error
       end
 
       it "should produce detailed type error message" do
@@ -592,11 +594,11 @@ describe 'Injector' do
       it "should fail attempts to append, perform  uniq or flatten on type incompatible multibind hash" do
         hash_of_integer = type_factory.hash_of(type_factory.integer())
         ids = ["ducks1", "ducks2", "ducks3"]
-        mb = bindings.multibind(ids[0]).type(hash_of_integer).name('broken_family0')
+        mb = bindings.multibind(ids[0]).type(hash_of_integer.copy).name('broken_family0')
         mb.producer_options(:conflict_resolution => :append)
-        mb = bindings.multibind(ids[1]).type(hash_of_integer).name('broken_family1')
+        mb = bindings.multibind(ids[1]).type(hash_of_integer.copy).name('broken_family1')
         mb.producer_options(:flatten => :true)
-        mb = bindings.multibind(ids[2]).type(hash_of_integer).name('broken_family2')
+        mb = bindings.multibind(ids[2]).type(hash_of_integer.copy).name('broken_family2')
         mb.producer_options(:uniq => :true)
 
         injector = injector(binder.new(factory.layered_bindings(test_layer_with_bindings(bindings.model))))

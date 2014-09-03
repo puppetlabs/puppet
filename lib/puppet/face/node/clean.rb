@@ -144,7 +144,7 @@ Puppet::Face.define(:node, '0.0.1') do
   end
 
   def environment
-    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+    @environment ||= Puppet.lookup(:current_environment)
   end
 
   def type_is_ensurable(resource)

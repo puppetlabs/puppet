@@ -62,8 +62,7 @@ module Puppet::Pops::Binder::Producers
         else
           raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
           raise ArgumentError, "Transformer lambda must take one argument; value." unless transformer_lambda.parameters.size() == 1
-          # NOTE: This depends on Puppet 3 AST Lambda
-          @transformer = Puppet::Pops::Model::AstTransformer.new().transform(transformer_lambda)
+          @transformer = Puppet::Pops::Parser::EvaluatingParser.new.closure(transformer_lambda, scope)
         end
       end
     end
@@ -111,7 +110,6 @@ module Puppet::Pops::Binder::Producers
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
-      produced_value = :undef if produced_value.nil?
       transformer.call(scope, produced_value)
     end
   end
@@ -299,14 +297,13 @@ module Puppet::Pops::Binder::Producers
     #
     def initialize(injector, binding, scope, options)
       super
-      expr = options[:expression]
-      raise ArgumentError, "Option 'expression' must be given to an EvaluatingProducer." unless expr
-      @expression = Puppet::Pops::Model::AstTransformer.new().transform(expr)
+      @expression = options[:expression]
+      raise ArgumentError, "Option 'expression' must be given to an EvaluatingProducer." unless @expression
     end
 
     # @api private
     def internal_produce(scope)
-      expression.evaluate(scope)
+      Puppet::Pops::Parser::EvaluatingParser.new.evaluate(scope, expression)
     end
   end
 
@@ -323,7 +320,7 @@ module Puppet::Pops::Binder::Producers
     # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
+    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
     # @api public
     #
@@ -352,9 +349,9 @@ module Puppet::Pops::Binder::Producers
     # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
+    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
-    # @option options [Puppet::Pops::Types::PObjectType] :key The key to lookup in the hash
+    # @option options [Puppet::Pops::Types::PAnyType] :key The key to lookup in the hash
     # @api public
     #
     def initialize(injector, binder, scope, options)
@@ -527,8 +524,8 @@ module Puppet::Pops::Binder::Producers
       @contributions_key = injector.key_factory.multibind_contributions(binding.id)
     end
 
-    # @param expected [Array<Puppet::Pops::Types::PObjectType>, Puppet::Pops::Types::PObjectType] expected type or types
-    # @param actual [Object, Puppet::Pops::Types::PObjectType> the actual value (or its type)
+    # @param expected [Array<Puppet::Pops::Types::PAnyType>, Puppet::Pops::Types::PAnyType] expected type or types
+    # @param actual [Object, Puppet::Pops::Types::PAnyType> the actual value (or its type)
     # @return [String] a formatted string for inclusion as detail in an error message
     # @api private
     #

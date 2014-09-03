@@ -47,15 +47,14 @@ Could not connect to http://fake.com:1111
       let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module') }
 
       it 'should return a valid single line error' do
-        exception.message.should == 'Could not execute operation for \'user/module\'. Detail: 404 not found.'
+        exception.message.should == 'Request to Puppet Forge failed. Detail: 404 not found.'
       end
 
       it 'should return a valid multiline error' do
         exception.multiline.should == <<-eos.chomp
-Could not execute operation for 'user/module'
+Request to Puppet Forge failed.
   The server being queried was http://fake.com:1111
   The HTTP response we received was '404 not found'
-    Check the author and module names are correct.
         eos
       end
     end
@@ -64,16 +63,15 @@ Could not execute operation for 'user/module'
       let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module', :message => 'no such module') }
 
       it 'should return a valid single line error' do
-        exception.message.should == 'Could not execute operation for \'user/module\'. Detail: no such module / 404 not found.'
+        exception.message.should == 'Request to Puppet Forge failed. Detail: no such module / 404 not found.'
       end
 
       it 'should return a valid multiline error' do
         exception.multiline.should == <<-eos.chomp
-Could not execute operation for 'user/module'
+Request to Puppet Forge failed.
   The server being queried was http://fake.com:1111
   The HTTP response we received was '404 not found'
   The message we received said 'no such module'
-    Check the author and module names are correct.
         eos
       end
     end

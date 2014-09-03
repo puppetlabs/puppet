@@ -5,7 +5,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   Using this provider's `uninstallable` feature will not remove dependent packages. To
   remove dependent packages with this provider use the `purgeable` feature, but note this
-  feature is destructive and should be used with the utmost care."
+  feature is destructive and should be used with the utmost care.
+
+  This provider supports the `install_options` attribute, which allows command-line flags to be passed to yum.
+  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+  or an array where each element is either a string or a hash."
 
   has_feature :install_options, :versionable, :virtual_packages
 
@@ -93,7 +97,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     wanted = @resource[:name]
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
-      yum '-d', '0', '-e', '0', '-y', :list, wanted
+      yum *['-d', '0', '-e', '0', '-y', install_options, :list, wanted].compact
     end
 
     should = @resource.should(:ensure)

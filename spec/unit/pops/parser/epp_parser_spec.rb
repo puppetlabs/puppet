@@ -51,36 +51,65 @@ describe "epp parser" do
 
   context "handles parsing of" do
     it "text (and nothing else)" do
-      dump(parse("Hello World")).should == "(lambda (epp (block (render-s 'Hello World'))))"
+      dump(parse("Hello World")).should == [
+        "(lambda (epp (block",
+        "  (render-s 'Hello World')",
+        ")))"].join("\n")
     end
 
     it "template parameters" do
-      dump(parse("<%|$x|%>Hello World")).should == "(lambda (parameters x) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x|%>Hello World")).should == [
+        "(lambda (parameters x) (epp (block",
+        "  (render-s 'Hello World')",
+        ")))"].join("\n")
     end
 
     it "template parameters with default" do
-      dump(parse("<%|$x='cigar'|%>Hello World")).should == "(lambda (parameters (= x 'cigar')) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x='cigar'|%>Hello World")).should == [
+        "(lambda (parameters (= x 'cigar')) (epp (block",
+        "  (render-s 'Hello World')",
+        ")))"].join("\n")
     end
 
     it "template parameters with and without default" do
-      dump(parse("<%|$x='cigar', $y|%>Hello World")).should == "(lambda (parameters (= x 'cigar') y) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x='cigar', $y|%>Hello World")).should == [
+        "(lambda (parameters (= x 'cigar') y) (epp (block",
+        "  (render-s 'Hello World')",
+        ")))"].join("\n")
     end
 
     it "template parameters + additional setup" do
-      dump(parse("<%|$x| $y = 10 %>Hello World")).should == "(lambda (parameters x) (epp (block (= $y 10) (render-s 'Hello World'))))"
+      dump(parse("<%|$x| $y = 10 %>Hello World")).should == [ 
+        "(lambda (parameters x) (epp (block",
+        "  (= $y 10)",
+        "  (render-s 'Hello World')",
+        ")))"].join("\n")
     end
 
     it "comments" do
-      dump(parse("<%#($x='cigar', $y)%>Hello World")).should == "(lambda (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%#($x='cigar', $y)%>Hello World")).should == [
+        "(lambda (epp (block",
+        "  (render-s 'Hello World')",
+        ")))"
+        ].join("\n")
     end
 
     it "verbatim epp tags" do
-      dump(parse("<%% contemplating %%>Hello World")).should == "(lambda (epp (block (render-s '<% contemplating %>Hello World'))))"
+      dump(parse("<%% contemplating %%>Hello World")).should == [
+        "(lambda (epp (block",
+        "  (render-s '<% contemplating %>Hello World')",
+        ")))"
+        ].join("\n")
     end
 
     it "expressions" do
-      dump(parse("We all live in <%= 3.14 - 2.14 %> world")).should ==
-        "(lambda (epp (block (render-s 'We all live in ') (render (- 3.14 2.14)) (render-s ' world'))))"
+      dump(parse("We all live in <%= 3.14 - 2.14 %> world")).should == [
+        "(lambda (epp (block",
+        "  (render-s 'We all live in ')",
+        "  (render (- 3.14 2.14))",
+        "  (render-s ' world')",
+        ")))"
+      ].join("\n")
     end
   end
 end

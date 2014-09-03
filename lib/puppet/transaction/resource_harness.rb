@@ -164,10 +164,23 @@ class Puppet::Transaction::ResourceHarness
     event
   end
 
+  # This method is an ugly hack because, given a Time object with nanosecond
+  # resolution, roundtripped through YAML serialization, the Time object will
+  # be truncated to microseconds.
+  # For audit purposes, this code special cases this comparison, and compares
+  # the two objects by their second and microsecond components. tv_sec is the
+  # number of seconds since the epoch, and tv_usec is only the microsecond
+  # portion of time.  This compare satisfies compatibility requirements for
+  # Ruby 1.8.7, where to_r does not exist on the Time class.
+  def are_audited_values_equal(a, b)
+    a == b || (a.is_a?(Time) && b.is_a?(Time) && a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec)
+  end
+  private :are_audited_values_equal
+
   def audit_event(event, property)
     event.audited = true
     event.status = "audit"
-    if event.historical_value != event.previous_value
+    if !are_audited_values_equal(event.historical_value, event.previous_value)
       event.message = "audit change: previously recorded value #{property.is_to_s(event.historical_value)} has been changed to #{property.is_to_s(event.previous_value)}"
     end
 
@@ -175,7 +188,7 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def audit_message(param, do_audit, historical_value, current_value)
-    if do_audit && historical_value && historical_value != current_value
+    if do_audit && historical_value && !are_audited_values_equal(historical_value, current_value)
       " (previously recorded value was #{param.is_to_s(historical_value)})"
     else
       ""
@@ -196,7 +209,7 @@ class Puppet::Transaction::ResourceHarness
   def capture_audit_events(resource, context)
     context.audited_params.each do |param_name|
       if context.historical_values.include?(param_name)
-        if context.historical_values[param_name] != context.current_values[param_name] && !context.synced_params.include?(param_name)
+        if !are_audited_values_equal(context.historical_values[param_name], context.current_values[param_name]) && !context.synced_params.include?(param_name)
           parameter = resource.parameter(param_name)
           event = audit_event(create_change_event(parameter,
                                                   context.current_values[param_name],

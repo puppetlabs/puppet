@@ -32,17 +32,18 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     option "--force", "-f" do
-      summary "Force upgrade of an installed module."
+      summary "Force upgrade of an installed module. (Implies --ignore-dependencies.)"
       description <<-EOT
         Force the upgrade of an installed module even if there are local
         changes or the possibility of causing broken dependencies.
+        Implies --ignore-dependencies.
       EOT
     end
 
     option "--ignore-dependencies" do
-      summary "Do not attempt to install dependencies"
+      summary "Do not attempt to install dependencies. (Implied by --force.)"
       description <<-EOT
-        Do not attempt to install dependencies.  (Implied by --force.)
+        Do not attempt to install dependencies. Implied by --force.
       EOT
     end
 

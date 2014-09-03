@@ -110,17 +110,38 @@ describe Puppet::Forge do
     forge.search('bacula').should == search_results
   end
 
+  context "when module_groups are defined" do
+    let(:release_response) do
+      releases = JSON.parse(http_response)
+      releases['results'] = []
+      JSON.dump(releases)
+    end
+
+    before :each do
+      repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo/}
+      Puppet[:module_groups] = "foo"
+    end
+
+    it "passes module_groups with search" do
+      forge.search('bacula')
+    end
+
+    it "passes module_groups with fetch" do
+      forge.fetch('puppetlabs-bacula')
+    end
+  end
+
   context "when the connection to the forge fails" do
     before :each do
       repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
     end
 
     it "raises an error for search" do
-      expect { forge.search('bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'bacula'. Detail: 404 not found."
+      expect { forge.search('bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Request to Puppet Forge failed. Detail: 404 not found."
     end
 
     it "raises an error for fetch" do
-      expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'puppetlabs/bacula'. Detail: 404 not found."
+      expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Request to Puppet Forge failed. Detail: 404 not found."
     end
   end
 
@@ -130,7 +151,22 @@ describe Puppet::Forge do
     end
 
     it "raises an error for fetch" do
-      expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'puppetlabs/bacula'. Detail: 410 Gone."
+      expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Request to Puppet Forge failed. Detail: 410 Gone."
+    end
+  end
+
+  context "when the forge returns a module with unparseable dependencies" do
+    before :each do
+      response = JSON.parse(http_response)
+      release = response['results'][0]['current_release']
+      release['metadata']['dependencies'] = [{'name' => 'broken-garbage >= 1.0.0', 'version_requirement' => 'banana'}]
+      response['results'] = [release]
+      repository_responds_with(stub(:body => JSON.dump(response), :code => '200'))
+    end
+
+    it "ignores modules with unparseable dependencies" do
+      expect { result = forge.fetch('puppetlabs/bacula') }.to_not raise_error
+      expect { result.to be_empty }
     end
   end
 end

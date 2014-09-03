@@ -9,6 +9,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   Issues = Puppet::Pops::Issues
   TYPEFACTORY = Puppet::Pops::Types::TypeFactory
+  EMPTY_STRING = ''.freeze
 
   attr_reader :semantic
 
@@ -44,7 +45,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
       # if k1 is outside, a length of 1 always produces an empty string
       if k1 < 0
-        ''
+        EMPTY_STRING
       else
         o[ k1, k2 ]
       end
@@ -65,7 +66,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
     # Specified as: an index outside of range, or empty result == empty string
-    (result.nil? || result.empty?) ? '' : result
+    (result.nil? || result.empty?) ? EMPTY_STRING : result
   end
 
   # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
@@ -124,21 +125,10 @@ class Puppet::Pops::Evaluator::AccessOperator
   #   Does not flatten its keys to enable looking up with a structure
   #
   def access_Hash(o, scope, keys)
-    # Look up key in hash, if key is nil or :undef, try alternate form before giving up.
-    # This makes :undef and nil "be the same key". (The alternative is to always only write one or the other
-    # in all hashes - that is much harder to guarantee since the Hash is a regular Ruby hash.
-    #
+    # Look up key in hash, if key is nil, try alternate form (:undef) before giving up.
+    # This is done because the hash may have been produced by 3x logic and may thus contain :undef.
     result = keys.collect do |k|
-      o.fetch(k) do |key|
-        case key
-        when nil
-          o[:undef]
-        when :undef
-          o[:nil]
-        else
-          nil
-        end
-      end
+      o.fetch(k) { |key| key.nil? ? o[:undef] : nil }
     end
     case result.size
     when 0
@@ -163,7 +153,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PVariantType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
   end
 
@@ -176,7 +166,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       size_type = TYPEFACTORY.range(keys[-1], :default)
       keys = keys[0, keys.size - 1]
     end
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
     t = Puppet::Pops::Types::TypeFactory.tuple(*keys)
     # set size type, or nil for default (exactly 1)
     t.size_type = size_type
@@ -237,7 +227,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def bad_key_type_name(actual)
     case actual
-    when nil, :undef
+    when nil
       'Undef'
     when :default
       'Default'
@@ -264,7 +254,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_POptionalType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+      unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::POptionalType.new()
@@ -278,7 +268,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+      unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::PType.new()
@@ -289,11 +279,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
-  def access_PRubyType(o, scope, keys)
+  def access_PRuntimeType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, 1, String)
-    # create ruby type based on name of class, not inference of key's type
-    Puppet::Pops::Types::TypeFactory.ruby_type(keys[0])
+    assert_keys(keys, o, 2, 2, String, String)
+    # create runtime type based on runtime and name of class, (not inference of key's type)
+    Puppet::Pops::Types::TypeFactory.runtime(*keys)
   end
 
   def access_PIntegerType(o, scope, keys)
@@ -335,7 +325,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PHashType(o, scope, keys)
     keys.flatten!
     keys[0,2].each_with_index do |k, index|
-      unless k.is_a?(Puppet::Pops::Types::PAbstractType)
+      unless k.is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
     end
@@ -403,7 +393,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
     end
-    unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+    unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
     end
     result = Puppet::Pops::Types::PArrayType.new()
@@ -427,6 +417,17 @@ class Puppet::Pops::Evaluator::AccessOperator
       ranged_integer.to = to == :default ? nil : to
       ranged_integer
     end
+  end
+
+  # A Puppet::Resource represents either just a type (no title), or is a fully qualified type/title.
+  #
+  def access_Resource(o, scope, keys)
+    # To access a Puppet::Resource as if it was a PResourceType, simply infer it, and take the type of
+    # the parameterized meta type (i.e. Type[Resource[the_resource_type, the_resource_title]])
+    t = Puppet::Pops::Types::TypeCalculator.infer(o).type
+    # must map "undefined title" from resource to nil
+    t.title = nil if t.title == EMPTY_STRING
+    access(t, scope, *keys)
   end
 
   # A Resource can create a new more specific Resource type, and/or an array of resource types
@@ -462,6 +463,11 @@ class Puppet::Pops::Evaluator::AccessOperator
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
       fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
+    end
+
+    # type name must conform
+    if type_name !~ Puppet::Pops::Patterns::CLASSREF
+      fail(Puppet::Pops::Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
     end
 
     # The result is an array if multiple titles are given, or if titles are specified with an array
@@ -503,7 +509,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     result = keys.each_with_index.map do |t, i|
       unless t.is_a?(String) || t == :no_title
         type_to_report = case t
-        when nil, :undef
+        when nil
           'Undef'
         when :default
           'Default'
@@ -569,7 +575,7 @@ class Puppet::Pops::Evaluator::AccessOperator
         if name =~ Puppet::Pops::Patterns::NAME
           ctype = Puppet::Pops::Types::PHostClassType.new()
           # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-          ctype.class_name = name.sub(/^::/, '')
+          ctype.class_name = name.sub(/^::/, EMPTY_STRING)
           ctype
         else
           fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})

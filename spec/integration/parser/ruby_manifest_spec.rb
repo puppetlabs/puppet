@@ -11,10 +11,6 @@ describe "Pure ruby manifests" do
     @test_dir = tmpdir('ruby_manifest_test')
   end
 
-  after do
-    Puppet.settings.clear
-  end
-
   def write_file(name, contents)
     path = File.join(@test_dir, name)
     File.open(path, "w") { |f| f.write(contents) }

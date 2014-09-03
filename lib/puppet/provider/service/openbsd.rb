@@ -171,8 +171,10 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
       content.reject! {|l| l.nil? }
     end
 
-    if flags.nil?
-      append = resource[:name] + '_flags=""'
+    if flags.nil? or flags.size == 0
+      if in_base?
+        append = resource[:name] + '_flags=""'
+      end
     else
       append = resource[:name] + '_flags="' + flags + '"'
     end
@@ -208,7 +210,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   # return the array with the current resource added
   # @api private
   def pkg_scripts_append
-    [pkg_scripts(), resource[:name]].flatten.sort.uniq
+    [pkg_scripts(), resource[:name]].flatten.uniq
   end
 
   # return the array without the current resource
@@ -243,12 +245,11 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
     content
   end
 
-  # Determine if the rc script is included in base, or if it exists as a result
-  # of a package installation.
+  # Determine if the rc script is included in base
   # @api private
   def in_base?
-    system("/usr/sbin/pkg_info -qE /etc/rc.d/#{self.name}> /dev/null")
-    $?.exitstatus == 1
+    script = File.readlines(self.class.rcconf).find {|s| s =~ /^#{rcvar_name}/ }
+    !script.nil?
   end
 
   # @api private

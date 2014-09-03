@@ -80,7 +80,7 @@
 #
 # If nothing is specified, the number of arguments given to the function must
 # be the same as the number of parameters, and all of the parameters are of
-# type 'Object'.
+# type 'Any'.
 #
 # To express that the last parameter captures the rest, the method
 # `last_captures_rest` can be called. This indicates that the last parameter is
@@ -179,7 +179,7 @@ module Puppet::Functions
     unless the_class.method_defined?(func_name)
       raise ArgumentError, "Function Creation Error, cannot create a default dispatcher for function '#{func_name}', no method with this name found"
     end
-    object_signature(*min_max_param(the_class.instance_method(func_name)))
+    any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
 
   # @api private
@@ -208,14 +208,14 @@ module Puppet::Functions
   end
 
   # Construct a signature consisting of Object type, with min, and max, and given names.
-  # (there is only one type entry). Note that this signature is Object, not Optional[Object].
+  # (there is only one type entry).
   #
   # @api private
-  def self.object_signature(from, to, names)
+  def self.any_signature(from, to, names)
     # Construct the type for the signature
     # Tuple[Object, from, to]
     factory = Puppet::Pops::Types::TypeFactory
-    [factory.callable(factory.object, from, to), names]
+    [factory.callable(factory.any, from, to), names]
   end
 
   # Function
@@ -288,10 +288,12 @@ module Puppet::Functions
     def required_block_param(*type_and_name)
       case type_and_name.size
       when 0
-        type = @all_callables
+        # the type must be an independent instance since it will be contained in another type
+        type = @all_callables.copy
         name = 'block'
       when 1
-        type = @all_callables
+        # the type must be an independent instance since it will be contained in another type
+        type = @all_callables.copy
         name = type_and_name[0]
       when 2
         type_string, name = type_and_name
@@ -300,12 +302,12 @@ module Puppet::Functions
         raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
       end
 
-      unless type.is_a?(Puppet::Pops::Types::PCallableType)
-        raise ArgumentError, "Expected PCallableType, got #{type.class}"
+      unless Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(type, false)
+        raise ArgumentError, "Expected PCallableType or PVariantType thereof, got #{type.class}"
       end
 
-      unless name.is_a?(String)
-        raise ArgumentError, "Expected block_param name to be a String, got #{name.class}"
+      unless name.is_a?(String) || name.is_a?(Symbol)
+        raise ArgumentError, "Expected block_param name to be a String or Symbol, got #{name.class}"
       end
 
       if @block_type.nil?
@@ -329,7 +331,7 @@ module Puppet::Functions
 
     # Specifies the min and max occurance of arguments (of the specified types)
     # if something other than the exact count from the number of specified
-    # types). The max value may be specified as -1 if an infinite number of
+    # types). The max value may be specified as :default if an infinite number of
     # arguments are supported. When max is > than the number of specified
     # types, the last specified type repeats.
     #
@@ -527,6 +529,11 @@ module Puppet::Functions
   #
   # @api private
   class InternalDispatchBuilder < DispatcherBuilder
+    def scope_param()
+      @injections << [:scope, 'scope', '', :dispatcher_internal]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size()-1]
+    end
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
     #
     # @api private

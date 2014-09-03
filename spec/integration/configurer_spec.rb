@@ -6,20 +6,6 @@ require 'puppet/configurer'
 describe Puppet::Configurer do
   include PuppetSpec::Files
 
-  describe "when downloading plugins" do
-    it "should use the :pluginsignore setting, split on whitespace, for ignoring remote files" do
-      Puppet.settings.stubs(:use)
-      resource = Puppet::Type.type(:notify).new :name => "yay"
-      Puppet::Type.type(:file).expects(:new).at_most(2).with do |args|
-        args[:ignore] == Puppet[:pluginsignore].split(/\s+/)
-      end.returns resource
-
-      configurer = Puppet::Configurer.new
-      configurer.stubs(:download_plugins?).returns true
-      configurer.download_plugins(Puppet::Node::Environment.remote(:testing))
-    end
-  end
-
   describe "when running" do
     before(:each) do
       @catalog = Puppet::Resource::Catalog.new("testing", Puppet.lookup(:environments).get(Puppet[:environment]))

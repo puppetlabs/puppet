@@ -27,13 +27,9 @@ gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 1.6', '< 3'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
 gem "rake", "10.1.1", :require => false
-gem "rgen", "0.6.5", :require => false
 
 group(:development, :test) do
-
-  # Jenkins workers may be using RSpec 2.9, so RSpec 2.11 syntax
-  # (like `expect(value).to eq matcher`) should be avoided.
-  gem "rspec", "~> 2.11.0", :require => false
+  gem "rspec", "~> 2.14.0", :require => false
 
   # Mocha is not compatible across minor version changes; because of this only
   # versions matching ~> 0.10.5 are supported. All other versions are unsupported
@@ -49,11 +45,13 @@ group(:development, :test) do
 end
 
 group(:development) do
-  case RUBY_VERSION
-  when /^1.8/
-    gem 'ruby-prof', "~> 0.13.1", :require => false
-  else
-    gem 'ruby-prof', :require => false
+  if RUBY_PLATFORM != 'java'
+    case RUBY_VERSION
+    when /^1.8/
+      gem 'ruby-prof', "~> 0.13.1", :require => false
+    else
+      gem 'ruby-prof', :require => false
+    end
   end
 end
 
@@ -63,6 +61,8 @@ group(:extra) do
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
+  # rest-client is used only by couchrest, so when
+  # that dependency goes away, this one can also
   gem "rest-client", '1.6.7', :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
@@ -79,7 +79,10 @@ end
 require 'yaml'
 data = YAML.load_file(File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml'))
 bundle_platforms = data['bundle_platforms']
+x64_platform = Gem::Platform.local.cpu == 'x64'
 data['gem_platform_dependencies'].each_pair do |gem_platform, info|
+  next if gem_platform == 'x86-mingw32' && x64_platform
+  next if gem_platform == 'x64-mingw32' && !x64_platform
   if bundle_deps = info['gem_runtime_dependencies']
     bundle_platform = bundle_platforms[gem_platform] or raise "Missing bundle_platform"
     platform(bundle_platform.intern) do

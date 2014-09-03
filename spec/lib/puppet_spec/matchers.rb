@@ -44,67 +44,94 @@ RSpec::Matchers.define :exit_with do |expected|
   end
 end
 
-class HavePrintedMatcher
-  attr_accessor :expected, :actual
 
-  def initialize(expected)
-    case expected
+RSpec::Matchers.define :have_printed do |expected|
+
+  case expected
     when String, Regexp
-      @expected = expected
+      expected = expected
     else
-      @expected = expected.to_s
+      expected = expected.to_s
+  end
+
+  chain :and_exit_with do |code|
+    @expected_exit_code = code
+  end
+
+  define_method :matches_exit_code? do |actual|
+    @expected_exit_code.nil? || @expected_exit_code == actual
+  end
+
+  define_method :matches_output? do |actual|
+    return false unless actual
+    case expected
+      when String
+        actual.include?(expected)
+      when Regexp
+        expected.match(actual)
+      else
+        raise ArgumentError, "No idea how to match a #{actual.class.name}"
     end
   end
 
-  def matches?(block)
+  match do |block|
+    $stderr = $stdout = StringIO.new
+    $stdout.set_encoding('UTF-8') if $stdout.respond_to?(:set_encoding)
+
     begin
-      $stderr = $stdout = StringIO.new
-      $stdout.set_encoding('UTF-8') if $stdout.respond_to?(:set_encoding)
       block.call
+    rescue SystemExit => e
+      raise unless @expected_exit_code
+      @actual_exit_code = e.status
+    ensure
       $stdout.rewind
       @actual = $stdout.read
-    ensure
+
       $stdout = STDOUT
       $stderr = STDERR
     end
 
-    if @actual then
-      case @expected
-      when String
-        @actual.include? @expected
-      when Regexp
-        @expected.match @actual
+    matches_output?(@actual) && matches_exit_code?(@actual_exit_code)
+  end
+
+  failure_message_for_should do |actual|
+    if actual.nil? then
+      "expected #{expected.inspect}, but nothing was printed"
+    else
+      if !@expected_exit_code.nil? && matches_output?(actual)
+        "expected exit with code #{@expected_exit_code} but " +
+          (@actual_exit_code.nil? ? " exit was not called" : "exited with #{@actual_exit_code} instead")
+      else
+        "expected #{expected.inspect} to be printed; got:\n#{actual}"
       end
-    else
-      false
     end
   end
 
-  def failure_message_for_should
-    if @actual.nil? then
-      "expected #{@expected.inspect}, but nothing was printed"
+  failure_message_for_should_not do |actual|
+    if @expected_exit_code && matches_exit_code?(@actual_exit_code)
+      "expected exit code to not be #{@actual_exit_code}"
     else
-      "expected #{@expected.inspect} to be printed; got:\n#{@actual}"
+      "expected #{expected.inspect} to not be printed; got:\n#{actual}"
     end
   end
 
-  def failure_message_for_should_not
-    "expected #{@expected.inspect} to not be printed; got:\n#{@actual}"
+  description do
+    "expect #{expected.inspect} to be printed" + (@expected_exit_code.nil ? '' : " with exit code #{@expected_exit_code}")
   end
-
-  def description
-    "expect #{@expected.inspect} to be printed"
-  end
-end
-
-def have_printed(what)
-  HavePrintedMatcher.new(what)
 end
 
 RSpec::Matchers.define :equal_attributes_of do |expected|
   match do |actual|
     actual.instance_variables.all? do |attr|
       actual.instance_variable_get(attr) == expected.instance_variable_get(attr)
+    end
+  end
+end
+
+RSpec::Matchers.define :equal_resource_attributes_of do |expected|
+  match do |actual|
+    actual.keys do |attr|
+      actual[attr] == expected[attr]
     end
   end
 end

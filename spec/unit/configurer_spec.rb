@@ -12,10 +12,6 @@ describe Puppet::Configurer do
     Puppet[:report] = true
   end
 
-  it "should include the Plugin Handler module" do
-    Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::PluginHandler)
-  end
-
   it "should include the Fact Handler module" do
     Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::FactHandler)
   end

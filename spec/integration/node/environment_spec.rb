@@ -80,6 +80,30 @@ describe Puppet::Node::Environment do
     end
   end
 
+  shared_examples_for "the environment's initial import in the future" do |settings|
+    it "a manifest referring to a directory invokes recursive parsing of all its files in sorted order" do
+      settings.each do |name, value|
+        Puppet[name] = value
+      end
+
+      # fixture has three files 00_a.pp, 01_b.pp, and 02_c.pp. The 'b' file
+      # depends on 'a' being evaluated first. The 'c' file is empty (to ensure
+      # empty things do not break the directory import).
+      #
+      dirname = my_fixture('sitedir2')
+
+      # Set the manifest to the directory to make it parse and combine them when compiling
+      node = Puppet::Node.new('testnode',
+                              :environment => Puppet::Node::Environment.create(:testing, [], dirname))
+
+      catalog = Puppet::Parser::Compiler.compile(node)
+
+      expect(catalog).to have_resource('Class[A]')
+      expect(catalog).to have_resource('Class[B]')
+      expect(catalog).to have_resource('Notify[variables]').with_parameter(:message, "a: 10, b: 10 c: 20")
+    end
+  end
+
   describe 'using classic parser' do
     it_behaves_like "the environment's initial import",
       :parser => 'current',
@@ -92,18 +116,10 @@ describe Puppet::Node::Environment do
   describe 'using future parser' do
     it_behaves_like "the environment's initial import",
       :parser    => 'future',
-      :evaluator => 'future',
       # Turned off because currently future parser turns on the binder which
       # causes lookup of facts that are uninitialized and it will fail with
       # errors for 'osfamily' etc.  This can be turned back on when the binder
       # is taken out of the equation.
       :strict_variables => false
-
-    context 'and evaluator current' do
-      it_behaves_like "the environment's initial import",
-        :parser           => 'future',
-        :evaluator        => 'current',
-        :strict_variables => false
-    end
   end
 end

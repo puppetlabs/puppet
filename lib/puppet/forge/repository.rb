@@ -52,6 +52,14 @@ class Puppet::Forge
       return read_response(request, io)
     end
 
+    def forge_authorization
+      if Puppet[:forge_authorization]
+        Puppet[:forge_authorization]
+      elsif Puppet.features.pe_license?
+        PELicense.load_license_key.authorization_token
+      end
+    end
+
     def get_request_object(path)
       headers = {
         "User-Agent" => user_agent,
@@ -63,9 +71,13 @@ class Puppet::Forge
         })
       end
 
+      if forge_authorization
+        headers = headers.merge({"Authorization" => forge_authorization})
+      end
+
       request = Net::HTTP::Get.new(URI.escape(path), headers)
 
-      unless @uri.user.nil? || @uri.password.nil?
+      unless @uri.user.nil? || @uri.password.nil? || forge_authorization
         request.basic_auth(@uri.user, @uri.password)
       end
 
@@ -121,7 +133,7 @@ class Puppet::Forge
     #
     # @return [Net::HTTP::Proxy] object constructed from repo settings
     def get_http_object
-      proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host, Puppet::Util::HttpProxy.http_proxy_port)
+      proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host, Puppet::Util::HttpProxy.http_proxy_port, Puppet::Util::HttpProxy.http_proxy_user, Puppet::Util::HttpProxy.http_proxy_password)
       proxy = proxy_class.new(@uri.host, @uri.port)
 
       if @uri.scheme == 'https'

@@ -8,9 +8,9 @@ require 'securerandom'
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
+  require 'puppet/configurer/downloader_factory'
 
   include Puppet::Configurer::FactHandler
-  include Puppet::Configurer::PluginHandler
 
   # For benchmarking
   include Puppet::Util
@@ -44,13 +44,14 @@ class Puppet::Configurer
     end
   end
 
-  def initialize
+  def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
     Puppet.settings.use(:main, :ssl, :agent)
 
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
+    @handler = Puppet::Configurer::PluginHandler.new(factory)
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -125,6 +126,17 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
+    pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+    begin
+      Puppet.override(:http_pool => pool) do
+        run_internal(options)
+      end
+    ensure
+      pool.close
+    end
+  end
+
+  def run_internal(options)
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
@@ -146,6 +158,13 @@ class Puppet::Configurer
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
+
+            # If we have deserialized a node from a rest call, we want to set
+            # an environment instance as a simple 'remote' environment reference.
+            if !node.has_environment_instance? && node.environment_name
+              node.environment = Puppet::Node::Environment.remote(node.environment_name)
+            end
+
             if node.environment.to_s != @environment
               Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
@@ -160,6 +179,18 @@ class Puppet::Configurer
           Puppet.warning(detail)
         end
       end
+
+      current_environment = Puppet.lookup(:current_environment)
+      local_node_environment =
+      if current_environment.name == @environment.intern
+        current_environment
+      else
+        Puppet::Node::Environment.create(@environment,
+                                         current_environment.modulepath,
+                                         current_environment.manifest,
+                                         current_environment.config_version)
+      end
+      Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
 
@@ -204,7 +235,9 @@ class Puppet::Configurer
 
     Puppet::Util::Log.close(report)
     send_report(report)
+    Puppet.pop_context
   end
+  private :run_internal
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
@@ -262,5 +295,9 @@ class Puppet::Configurer
   rescue Exception => detail
     Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
+  end
+
+  def download_plugins(remote_environment_for_plugins)
+    @handler.download_plugins(remote_environment_for_plugins)
   end
 end

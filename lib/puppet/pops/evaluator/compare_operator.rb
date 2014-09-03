@@ -9,10 +9,15 @@
 class Puppet::Pops::Evaluator::CompareOperator
   include Puppet::Pops::Utils
 
+  # Provides access to the Puppet 3.x runtime (scope, etc.)
+  # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
+  #
+  include Puppet::Pops::Evaluator::Runtime3Support
+
   def initialize
     @@equals_visitor  ||= Puppet::Pops::Visitor.new(self, "equals", 1, 1)
     @@compare_visitor ||= Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
-    @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 1, 1)
+    @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 2, 2)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
   end
 
@@ -27,8 +32,8 @@ class Puppet::Pops::Evaluator::CompareOperator
   end
 
   # Answers is b included in a
-  def include?(a, b)
-    @@include_visitor.visit_this_1(self, a, b)
+  def include?(a, b, scope)
+    @@include_visitor.visit_this_2(self, a, b, scope)
   end
 
   protected
@@ -110,50 +115,49 @@ class Puppet::Pops::Evaluator::CompareOperator
   end
 
   def equals_NilClass(a, b)
+    # :undef supported in case it is passed from a 3x data structure
     b.nil? || b == :undef
   end
 
   def equals_Symbol(a, b)
+    # :undef supported in case it is passed from a 3x data structure
     a == b || a == :undef && b.nil?
   end
 
-  def include_Object(a, b)
+  def include_Object(a, b, scope)
     false
   end
 
-  def include_String(a, b)
+  def include_String(a, b, scope)
     case b
     when String
       # subsstring search downcased
       a.downcase.include?(b.downcase)
     when Regexp
-      # match (convert to boolean)
-      !!(a =~ b)
+      matched = a.match(b)           # nil, or MatchData
+      set_match_data(matched, scope) # creates ephemeral
+      !!matched                      # match (convert to boolean)
     when Numeric
       # convert string to number, true if ==
       equals(a, b)
-    when Puppet::Pops::Types::PStringType
-      # is there a string in a string? (yes, each char is a string, and an empty string contains an empty string)
-      true
     else
-      if b == Puppet::Pops::Types::PDataType || b == Puppet::Pops::Types::PObjectType
-        # A String is Data and Object (but not of all subtypes of those types).
-        true
-      else
-        false
-      end
+      false
     end
   end
 
-  def include_Array(a, b)
+  def include_Array(a, b, scope)
     case b
     when Regexp
+      matched = nil
       a.each do |element|
         next unless element.is_a? String
-        return true if element =~ b
+        matched = element.match(b) # nil, or MatchData
+        break if matched
       end
-      return false
-    when Puppet::Pops::Types::PAbstractType
+      # Always set match data, a "not found" should not keep old match data visible
+      set_match_data(matched, scope) # creates ephemeral
+      return !!matched
+    when Puppet::Pops::Types::PAnyType
       a.each {|element| return true if @type_calculator.instance?(b, element) }
       return false
     else
@@ -162,7 +166,7 @@ class Puppet::Pops::Evaluator::CompareOperator
     end
   end
 
-  def include_Hash(a, b)
-    include?(a.keys, b)
+  def include_Hash(a, b, scope)
+    include?(a.keys, b, scope)
   end
 end

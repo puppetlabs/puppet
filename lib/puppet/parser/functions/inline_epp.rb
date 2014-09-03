@@ -9,7 +9,7 @@ EPP support the following tags:
 * `<%%` or `%%>` - Renders a literal `<%` or `%>` respectively.
 * `<%-` - Same as `<%` but suppresses any leading whitespace.
 * `-%>` - Same as `%>` but suppresses any trailing whitespace on the same line (including line break).
-* `<%-( parameters )-%>` - When placed as the first tag declares the template's parameters.
+* `<%- |parameters| -%>` - When placed as the first tag declares the template's parameters.
 
 Inline EPP supports the following visibilities of variables in scope which depends on how EPP parameters
 are used - see further below:
@@ -20,7 +20,7 @@ are used - see further below:
 * Global + declared parameters - if the EPP declares parameters, given argument names must match
 
 EPP supports parameters by placing an optional parameter list as the very first element in the EPP. As an example,
-`<%-( $x, $y, $z='unicorn' )-%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
+`<%- |$x, $y, $z='unicorn'| -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
 given as template arguments when calling `inline_epp`, and that `z` if not given as a template argument
 defaults to `'unicorn'`. Template parameters are available as variables, e.g.arguments `$x`, `$y` and `$z` in the example.
 Note that `<%-` must be used or any leading whitespace will be interpreted as text
@@ -37,43 +37,40 @@ is subject to expression interpolation before the string is parsed as an EPP tem
     # produces 'Hello local variable world!'
     $x ='local variable'
     inline_epptemplate(@(END:epp))
-    <%-( $x )-%>
+    <%- |$x| -%>
     Hello <%= $x %> world!
     END
 
     # produces 'Hello given argument world!'
     $x ='local variable world'
     inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%-( $x )-%>
+    <%- |$x| -%>
     Hello <%= $x %> world!
     END
 
     # produces 'Hello given argument world!'
     $x ='local variable world'
     inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%-( $x )-%>
+    <%- |$x| -%>
     Hello <%= $x %>!
     END
 
     # results in error, missing value for y
     $x ='local variable world'
     inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%-( $x, $y )-%>
+    <%- |$x, $y| -%>
     Hello <%= $x %>!
     END
 
     # Produces 'Hello given argument planet'
     $x ='local variable world'
     inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%-( $x, $y=planet)-%>
+    <%- |$x, $y=planet| -%>
     Hello <%= $x %> <%= $y %>!
     END
 
 - Since 3.5
 - Requires Future Parser") do |arguments|
-  # Requires future parser
-  unless Puppet[:parser] == "future"
-    raise ArgumentError, "inline_epp(): function is only available when --parser future is in effect"
-  end
-  Puppet::Pops::Evaluator::EppEvaluator.inline_epp(self, arguments[0], arguments[1])
+
+  function_fail(["inline_epp() is only available when parser/evaluator future is in effect"])
 end

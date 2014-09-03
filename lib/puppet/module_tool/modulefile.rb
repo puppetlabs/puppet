@@ -42,7 +42,7 @@ module Puppet::ModuleTool
     # optional +version_requirement+ (e.g. "0.1.0") and +repository+ (a URL
     # string). Optional. Can be called multiple times to add many dependencies.
     def dependency(name, version_requirement = nil, repository = nil)
-      @metadata.to_hash['dependencies'] << Dependency.new(name, version_requirement, repository)
+      @metadata.add_dependency(name, version_requirement, repository)
     end
 
     # Set the source

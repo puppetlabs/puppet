@@ -187,6 +187,60 @@ describe Puppet::Node::Environment do
       end
     end
 
+    it "does not register conflicting_manifest_settings? when not using directory environments" do
+      expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').conflicting_manifest_settings?).to be_false
+    end
+
+    describe "when operating in the context of directory environments" do
+      before(:each) do
+        Puppet[:environmentpath] = "$confdir/environments"
+        Puppet[:default_manifest] = "/default/manifests/site.pp"
+      end
+
+      it "has no conflicting_manifest_settings? when disable_per_environment_manifest is false" do
+        expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').conflicting_manifest_settings?).to be_false
+      end
+
+      context "when disable_per_environment_manifest is true" do
+        let(:config) { mock('config') }
+        let(:global_modulepath) { ["/global/modulepath"] }
+        let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, global_modulepath) }
+
+        before(:each) do
+          Puppet[:disable_per_environment_manifest] = true
+        end
+
+        def assert_manifest_conflict(expectation, envconf_manifest_value)
+          config.expects(:setting).with(:manifest).returns(
+            mock('setting', :value => envconf_manifest_value)
+          )
+          environment = Puppet::Node::Environment.create(:directory, [], '/default/manifests/site.pp')
+          loader = Puppet::Environments::Static.new(environment)
+          loader.stubs(:get_conf).returns(envconf)
+
+          Puppet.override(:environments => loader) do
+            expect(environment.conflicting_manifest_settings?).to eq(expectation)
+          end
+        end
+
+        it "has conflicting_manifest_settings when environment.conf manifest was set" do
+          assert_manifest_conflict(true, '/some/envconf/manifest/site.pp')
+        end
+
+        it "does not have conflicting_manifest_settings when environment.conf manifest is empty" do
+          assert_manifest_conflict(false, '')
+        end
+
+        it "does not have conflicting_manifest_settings when environment.conf manifest is nil" do
+          assert_manifest_conflict(false, nil)
+        end
+
+        it "does not have conflicting_manifest_settings when environment.conf manifest is an exact, uninterpolated match of default_manifest" do
+          assert_manifest_conflict(false, '/default/manifests/site.pp')
+        end
+      end
+    end
+
     describe "when modeling a specific environment" do
       it "should have a method for returning the environment name" do
         Puppet::Node::Environment.new("testing").name.should == :testing

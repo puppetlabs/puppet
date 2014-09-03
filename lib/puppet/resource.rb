@@ -186,9 +186,42 @@ class Puppet::Resource
     @is_stage ||= @type.to_s.downcase == "stage"
   end
 
-  # Create our resource.
+  # Cache to reduce respond_to? lookups
+  @@nondeprecating_type = {}
+
+  # Construct a resource from data.
+  #
+  # Constructs a resource instance with the given `type` and `title`. Multiple
+  # type signatures are possible for these arguments and most will result in an
+  # expensive call to {Puppet::Node::Environment#known_resource_types} in order
+  # to resolve `String` and `Symbol` Types to actual Ruby classes.
+  #
+  # @param type [Symbol, String] The name of the Puppet Type, as a string or
+  #   symbol. The actual Type will be looked up using
+  #   {Puppet::Node::Environment#known_resource_types}. This lookup is expensive.
+  # @param type [String] The full resource name in the form of
+  #   `"Type[Title]"`. This method of calling should only be used when
+  #   `title` is `nil`.
+  # @param type [nil] If a `nil` is passed, the title argument must be a string
+  #   of the form `"Type[Title]"`.
+  # @param type [Class] A class that inherits from `Puppet::Type`. This method
+  #   of construction is much more efficient as it skips calls to
+  #   {Puppet::Node::Environment#known_resource_types}.
+  #
+  # @param title [String, :main, nil] The title of the resource. If type is `nil`, may also
+  #   be the full resource name in the form of `"Type[Title]"`.
+  #
+  # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
+    if type.is_a?(Class) && type < Puppet::Type
+      # Set the resource type to avoid an expensive `known_resource_types`
+      # lookup.
+      self.resource_type = type
+      # From this point on, the constructor behaves the same as if `type` had
+      # been passed as a symbol.
+      type = type.name
+    end
 
     # Set things like strictness first.
     attributes.each do |attr, value|
@@ -207,6 +240,14 @@ class Puppet::Resource
 
     if params = attributes[:parameters]
       extract_parameters(params)
+    end
+
+    if resource_type and ! @@nondeprecating_type[resource_type]
+      if resource_type.respond_to?(:deprecate_params)
+        resource_type.deprecate_params(title, attributes[:parameters])
+      else
+        @@nondeprecating_type[resource_type] = true
+      end
     end
 
     tag(self.type)
@@ -254,7 +295,7 @@ class Puppet::Resource
     @environment ||= if catalog
                        catalog.environment_instance
                      else
-                       Puppet::Node::Environment::NONE
+                       Puppet.lookup(:current_environment) { Puppet::Node::Environment::NONE }
                      end
   end
 
@@ -407,15 +448,23 @@ class Puppet::Resource
         end
       end
 
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p] = if v.is_a?(Array) and v.length == 1
-                    v[0]
-                  else
-                    v
-                  end
+      if Puppet[:parser] == 'current'
+        # If the value is an array with only one value, then
+        # convert it to a single value.  This is largely so that
+        # the database interaction doesn't have to worry about
+        # whether it returns an array or a string.
+        #
+        # This behavior is not done in the future parser, but we can't issue a
+        # deprecation warning either since there isn't anything that a user can
+        # do about it.
+        result[p] = if v.is_a?(Array) and v.length == 1
+                      v[0]
+                    else
+                      v
+                    end
+      else
+        result[p] = v
+      end
     end
 
     result
@@ -435,6 +484,21 @@ class Puppet::Resource
     resource_type.arguments.each do |param, default|
       param = param.to_sym
       fail Puppet::ParseError, "Must pass #{param} to #{self}" unless parameters.include?(param)
+    end
+
+    # Perform optional type checking
+    if Puppet[:parser] == 'future'
+      # Perform type checking
+      arg_types = resource_type.argument_types
+      # Parameters is a map from name, to parameter, and the parameter again has name and value
+      parameters.each do |name, value|
+        next unless t = arg_types[name.to_s]  # untyped, and parameters are symbols here (aargh, strings in the type)
+        unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
+          inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value.value)
+          actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
+          fail Puppet::ParseError, "Expected parameter '#{name}' of '#{self}' to have type #{t.to_s}, got #{actual.to_s}"
+        end
+      end
     end
   end
 

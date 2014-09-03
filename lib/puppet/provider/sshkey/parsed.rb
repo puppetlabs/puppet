@@ -31,5 +31,10 @@ Puppet::Type.type(:sshkey).provide(
         hash.delete(:host_aliases)
       end
     }
+
+  # Make sure to use mode 644 if ssh_known_hosts is newly created
+  def self.default_mode
+    0644
+  end
 end
 

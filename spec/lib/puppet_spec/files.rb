@@ -75,4 +75,14 @@ module PuppetSpec::Files
     $global_tempfiles ||= []
     $global_tempfiles << tmp
   end
+
+  def expect_file_mode(file, mode)
+    actual_mode = "%o" % Puppet::FileSystem.stat(file).mode
+    target_mode = if Puppet.features.microsoft_windows?
+      mode
+    else
+      "10" + "%04i" % mode.to_i
+    end
+    actual_mode.should == target_mode
+  end
 end

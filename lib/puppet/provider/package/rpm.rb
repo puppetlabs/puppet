@@ -6,11 +6,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     binary.
 
     This provider supports the `install_options` and `uninstall_options`
-    attributes, which allow command-line flags to be passed to the RPM binary.
-    These options should be specified as an array, where each element is either
-    a string or a `{'--flag' => 'value'}` hash. (That hash example would be
-    equivalent to a `'--flag=value'` string; the hash syntax is available as a
-    convenience.)"
+    attributes, which allow command-line flags to be passed to rpm.
+    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+    or an array where each element is either a string or a hash."
 
   has_feature :versionable
   has_feature :install_options
@@ -42,12 +40,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     @current_version = output.gsub('RPM version ', '').strip
   end
 
-  # rpm < 4.1 don't support --nosignature
+  # rpm < 4.1 does not support --nosignature
   def self.nosignature
     '--nosignature' unless Puppet::Util::Package.versioncmp(current_version, '4.1') < 0
   end
 
-  # rpm < 4.0.2 don't support --nodigest
+  # rpm < 4.0.2 does not support --nodigest
   def self.nodigest
     '--nodigest' unless Puppet::Util::Package.versioncmp(current_version, '4.0.2') < 0
   end

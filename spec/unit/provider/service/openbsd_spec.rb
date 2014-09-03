@@ -173,13 +173,13 @@ describe provider_class do
     it "can append to the package_scripts array and return the result" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
       provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="dbus_daemon"']
-      expect(provider.pkg_scripts_append).to match_array(['dbus_daemon', 'cupsd'])
+      provider.pkg_scripts_append.should === ['dbus_daemon', 'cupsd']
     end
 
     it "should not duplicate the script name" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
       provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="cupsd dbus_daemon"']
-      expect(provider.pkg_scripts_append).to match_array(['dbus_daemon', 'cupsd'])
+      provider.pkg_scripts_append.should === ['cupsd', 'dbus_daemon']
     end
   end
 
@@ -210,6 +210,22 @@ describe provider_class do
       output = provider.set_content_flags(content,"-d")
       output.should match_array(['cupsd_flags="-d"'])
     end
+
+    it "does not set empty flags for package scripts" do
+      content = []
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
+      provider.expects(:in_base?).returns(false)
+      output = provider.set_content_flags(content,'')
+      output.should match_array([nil])
+    end
+
+    it "does set empty flags for base scripts" do
+      content = []
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'ntpd'))
+      provider.expects(:in_base?).returns(true)
+      output = provider.set_content_flags(content,'')
+      output.should match_array(['ntpd_flags=""'])
+    end
   end
 
   describe "#remove_content_flags" do
@@ -227,6 +243,14 @@ describe provider_class do
       scripts = ['dbus_daemon','cupsd']
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
       provider.set_content_scripts(content,scripts).should match_array(['pkg_scripts="dbus_daemon cupsd"'])
+    end
+  end
+
+  describe "#in_base?" do
+    it "should true if in base" do
+      File.stubs(:readlines).with('/etc/rc.conf').returns(['sshd_flags=""'])
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      provider.in_base?.should be_true
     end
   end
 end

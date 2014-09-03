@@ -54,7 +54,7 @@ Puppet::Face.define(:module, '1.0.0') do
         "dependencies": [
           {
             "name": "puppetlabs-stdlib",
-            "version_range": ">= 1.0.0"
+            "version_requirement": ">= 1.0.0"
           }
         ]
       }
@@ -114,7 +114,7 @@ Puppet::Face.define(:module, '1.0.0') do
           'name' => name,
           'version' => '0.1.0',
           'dependencies' => [
-            { :name => 'puppetlabs-stdlib', :version_range => '>= 1.0.0' }
+            { 'name' => 'puppetlabs-stdlib', 'version_requirement' => '>= 1.0.0' }
           ]
         )
       rescue ArgumentError
@@ -216,21 +216,29 @@ module Puppet::ModuleTool::Generate
     Puppet.notice "Generating module at #{dest}..."
     FileUtils.cp_r skeleton_path, dest
 
-    populate_erb_templates(metadata, dest)
+    populate_templates(metadata, dest)
     return dest
   end
 
-  def populate_erb_templates(metadata, destination)
-    Puppet.notice "Populating ERB templates..."
+  def populate_templates(metadata, destination)
+    Puppet.notice "Populating templates..."
 
-    templates = destination + '**/*.erb'
-    Dir[templates.to_s].each do |erb|
-      path = Pathname.new(erb)
-      content = ERB.new(path.read).result(binding)
+    formatters = {
+      :erb      => proc { |data, ctx| ERB.new(data).result(ctx) },
+      :template => proc { |data, _| data },
+    }
 
-      target = path.parent + path.basename('.erb')
-      target.open('w') { |f| f.write(content) }
-      path.unlink
+    formatters.each do |type, block|
+      templates = destination + "**/*.#{type}"
+
+      Dir.glob(templates.to_s, File::FNM_DOTMATCH).each do |erb|
+        path = Pathname.new(erb)
+        content = block[path.read, binding]
+
+        target = path.parent + path.basename(".#{type}")
+        target.open('w') { |f| f.write(content) }
+        path.unlink
+      end
     end
   end
 

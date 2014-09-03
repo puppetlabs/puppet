@@ -1359,6 +1359,44 @@ describe Puppet::Settings do
       end
     end
 
+    describe "adding default directory environment to the catalog" do
+      let(:tmpenv) { tmpdir("envs") }
+      let(:default_path) { "#{tmpenv}/environments" }
+      before(:each) do
+        @settings.define_settings :main,
+          :environment     => { :default => "production", :desc => "env"},
+          :environmentpath => { :type => :path, :default => default_path, :desc => "envpath"}
+      end
+
+      it "adds if environmentpath exists" do
+        envpath = "#{tmpenv}/custom_envpath"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envpath)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{envpath}/production"])
+      end
+
+      it "adds the first directory of environmentpath" do
+        envdir = "#{tmpenv}/custom_envpath"
+        envpath = "#{envdir}#{File::PATH_SEPARATOR}/some/other/envdir"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envdir)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{envdir}/production"])
+      end
+
+      it "handles a non-existent environmentpath" do
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to be_empty
+      end
+
+      it "handles a default environmentpath" do
+        Dir.mkdir(default_path)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{default_path}/production"])
+      end
+    end
+
     describe "when adding users and groups to the catalog" do
       before do
         Puppet.features.stubs(:root?).returns true
@@ -1468,14 +1506,14 @@ describe Puppet::Settings do
           :maindir => { :type => :directory, :default => make_absolute("/maindir"), :desc => "a" },
           :seconddir => { :type => :directory, :default => make_absolute("/seconddir"), :desc => "a"}
       @settings.define_settings :main, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
-      @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => 0755}
+      @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => '0755'}
       @settings.define_settings :third, :thirddir => { :type => :directory, :default => make_absolute("/thirddir"), :desc => "b"}
-      @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => 0755}
+      @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => '0755'}
     end
 
     it "should provide a method that creates directories with the correct modes" do
       Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
-      Dir.expects(:mkdir).with(make_absolute("/otherdir"), 0755)
+      Dir.expects(:mkdir).with(make_absolute("/otherdir"), '0755')
       @settings.mkdir(:otherdir)
     end
 

@@ -51,18 +51,23 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
     if injections.empty?
       args
     else
-      injector = Puppet.lookup(:injector)
+      injector = nil # lazy lookup of injector Puppet.lookup(:injector)
       weaving.map do |knit|
         if knit.is_a?(Array)
           injection_data = @injections[knit[0]]
-          # inject
-          if injection_data[3] == :producer
+          case injection_data[3]
+          when :dispatcher_internal
+            # currently only supports :scope injection
+            scope
+          when :producer
+            injector ||= Puppet.lookup(:injector)
             injector.lookup_producer(scope, injection_data[0], injection_data[2])
           else
+            injector ||= Puppet.lookup(:injector)
             injector.lookup(scope, injection_data[0], injection_data[2])
           end
         else
-          # pick that argument
+          # pick that argument (injection of static value)
           args[knit]
         end
       end

@@ -10,8 +10,8 @@ class Puppet::Pops::Binder::BindingsLoader
 
   # Returns a XXXXX given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.
-  # @param name [String, Array<String>, Array<Symbol>, Puppet::Pops::Types::PObjectType] A fully qualified
-  #   class name String (e.g. '::Foo::Bar', 'Foo::Bar'), a PObjectType, or a fully qualified name in Array form where each part
+  # @param name [String, Array<String>, Array<Symbol>, Puppet::Pops::Types::PAnyType] A fully qualified
+  #   class name String (e.g. '::Foo::Bar', 'Foo::Bar'), a PAnyType, or a fully qualified name in Array form where each part
   #   is either a String or a Symbol, e.g. `%w{Puppetx Puppetlabs SomeExtension}`.
   # @return [Class, nil] the looked up class or nil if no such class is loaded
   # @raise ArgumentError If the given argument has the wrong type

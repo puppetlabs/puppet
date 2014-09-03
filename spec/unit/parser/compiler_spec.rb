@@ -97,6 +97,13 @@ describe Puppet::Parser::Compiler do
     @compiler.environment.should equal(@node.environment)
   end
 
+  it "fails if the node's environment has conflicting manifest settings" do
+    conflicted_environment = Puppet::Node::Environment.create(:testing, [], '/some/environment.conf/manifest.pp')
+    conflicted_environment.stubs(:conflicting_manifest_settings?).returns(true)
+    @node.environment = conflicted_environment
+    expect { Puppet::Parser::Compiler.compile(@node) }.to raise_error(Puppet::Error, /disable_per_environment_manifest.*true.*environment.conf.*manifest.*conflict/)
+  end
+
   it "should include the resource type collection helper" do
     Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
   end
@@ -681,7 +688,7 @@ describe Puppet::Parser::Compiler do
     it "should skip classes that have already been evaluated" do
       @compiler.catalog.stubs(:tag)
 
-      @scope.stubs(:class_scope).with(@class).returns("something")
+      @scope.stubs(:class_scope).with(@class).returns(@scope)
 
       @compiler.expects(:add_resource).never
 
@@ -694,7 +701,7 @@ describe Puppet::Parser::Compiler do
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
       @scope.stubs(:find_hostclass).with("MyClass",{:assume_fqname => false}).returns(@class)
-      @scope.stubs(:class_scope).with(@class).returns("something")
+      @scope.stubs(:class_scope).with(@class).returns(@scope)
       @compiler.expects(:add_resource).never
       @resource.expects(:evaluate).never
       Puppet::Parser::Resource.expects(:new).never

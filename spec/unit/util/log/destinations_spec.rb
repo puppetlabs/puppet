@@ -29,7 +29,7 @@ describe Puppet::Util::Log.desttypes[:file] do
 
   before do
     File.stubs(:open)           # prevent actually creating the file
-    File.stubs(:chown)          # prevent chown on non existing file from failing 
+    File.stubs(:chown)          # prevent chown on non existing file from failing
     @class = Puppet::Util::Log.desttypes[:file]
   end
 
@@ -179,5 +179,49 @@ describe Puppet::Util::Log.desttypes[:console] do
       dest = klass.new
       dest.handle(msg)
     end
+  end
+end
+
+
+describe ":eventlog", :if => Puppet::Util::Platform.windows? do
+  before do
+    if Facter.value(:kernelmajversion).to_f < 6.0
+      pending("requires win32-eventlog gem upgrade to 0.6.2 on Windows 2003")
+    end
+  end
+
+  let(:klass) { Puppet::Util::Log.desttypes[:eventlog] }
+
+  def expects_message_with_type(klass, level, eventlog_type, eventlog_id)
+    eventlog = stub('eventlog')
+    eventlog.expects(:report_event).with(has_entries(:source => "Puppet", :event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
+    Win32::EventLog.stubs(:open).returns(eventlog)
+
+    msg = Puppet::Util::Log.new(:level => level, :message => "don't panic", :source => "a hitchhiker")
+    dest = klass.new
+    dest.handle(msg)
+  end
+
+  it "supports the eventlog feature" do
+    expect(Puppet.features.eventlog?).to be_true
+  end
+
+  it "logs to the Application event log" do
+    eventlog = stub('eventlog')
+    Win32::EventLog.expects(:open).with('Application').returns(stub('eventlog'))
+
+    klass.new
+  end
+
+  it "logs :debug level as an information type event" do
+    expects_message_with_type(klass, :debug, klass::EVENTLOG_INFORMATION_TYPE, 0x1)
+  end
+
+  it "logs :warning level as an warning type event" do
+    expects_message_with_type(klass, :warning, klass::EVENTLOG_WARNING_TYPE, 0x2)
+  end
+
+  it "logs :err level as an error type event" do
+    expects_message_with_type(klass, :err, klass::EVENTLOG_ERROR_TYPE, 0x3)
   end
 end

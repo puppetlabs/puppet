@@ -34,7 +34,8 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
     @type_parser = Puppet::Pops::Types::TypeParser.new()
 
-    @catalog_type = Puppet::Pops::Types::TypeFactory.catalog_entry()
+    tf = Puppet::Pops::Types::TypeFactory
+    @catalog_type = tf.variant(tf.catalog_entry, tf.type_type(tf.catalog_entry))
   end
 
   def transform(o, scope)
@@ -61,7 +62,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
 
   # Types are what they are, just check the type
   # @api private
-  def transform_PAbstractType(o, scope)
+  def transform_PAnyType(o, scope)
     assert_catalog_type(o, scope)
   end
 

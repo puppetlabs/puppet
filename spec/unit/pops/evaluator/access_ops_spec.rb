@@ -236,7 +236,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "Tuple parameterization gives an error if parameter is not a type" do
       expr = fqr('Tuple')['String']
-      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Abstract-Type is expected/)
+      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Any-Type is expected/)
     end
 
     it 'produces a varargs Tuple when the last two arguments specify size constraint' do
@@ -415,12 +415,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     # Ruby Type
     #
     it 'creates a Ruby Type instance when applied to a Ruby Type' do
-      type_expr = fqr('Ruby')['String']
+      type_expr = fqr('Runtime')['ruby','String']
       tf = Puppet::Pops::Types::TypeFactory
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
 
       # arguments are flattened
-      type_expr = fqr('Ruby')[['String']]
+      type_expr = fqr('Runtime')[['ruby', 'String']]
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
     end
 

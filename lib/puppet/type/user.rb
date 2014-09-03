@@ -297,7 +297,8 @@ module Puppet
     newparam(:system, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether the user is a system user, according to the OS's criteria;
       on most platforms, a UID less than or equal to 500 indicates a system
-      user. Defaults to `false`."
+      user. This parameter is only used when the resource is created and will
+      not affect the UID when the user is present. Defaults to `false`."
 
       defaultto false
     end
@@ -567,7 +568,7 @@ module Puppet
     newparam(:forcelocal, :boolean => true,
             :required_features => :libuser,
             :parent => Puppet::Parameter::Boolean) do
-      desc "Forces the mangement of local accounts when accounts are also
+      desc "Forces the management of local accounts when accounts are also
             being managed by some other NSS"
       defaultto false
     end
@@ -578,12 +579,17 @@ module Puppet
     end
 
     newparam(:purge_ssh_keys) do
-      desc "Purge ssh keys authorized for the user
-            if they are not managed via ssh_authorized_keys. When true,
-            looks for keys in .ssh/authorized_keys in the user's home
-            directory. Possible values are true, false, or an array of
-            paths to file to search for authorized keys. If a path starts
-            with ~ or %h, this token is replaced with the user's home directory."
+      desc "Whether to purge authorized SSH keys for this user if they are not managed
+        with the `ssh_authorized_key` resource type. Allowed values are:
+
+        * `false` (default) --- don't purge SSH keys for this user.
+        * `true` --- look for keys in the `.ssh/authorized_keys` file in the user's
+          home directory. Purge any keys that aren't managed as `ssh_authorized_key`
+          resources.
+        * An array of file paths --- look for keys in all of the files listed. Purge
+          any keys that aren't managed as `ssh_authorized_key` resources. If any of
+          these paths starts with `~` or `%h`, that token will be replaced with
+          the user's home directory."
 
       defaultto :false
 
@@ -665,9 +671,9 @@ module Puppet
     def unknown_keys_in_file(keyfile)
       names = []
       File.new(keyfile).each do |line|
-        next if line.strip.empty?
-        next if line =~ /^\s*#/
-        names << line.strip.split.last
+        next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
+        # the name is stored in the 4th capture of the regex
+        names << $4
       end
 
       names.map { |keyname|

@@ -1,6 +1,6 @@
 language: ruby
 bundler_args: --without development
-script: "bundle exec rake \"parallel:spec[1]\""
+script: "bundle exec rake \"parallel:spec[2]\""
 notifications:
   email: false
 rvm:

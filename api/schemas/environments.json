@@ -25,9 +25,31 @@
                 "modulepath": {
                   "type": "array",
                   "items": { "type": "string" }
-                }
+                },
+                "config_version": { "type": "string" },
+                "environment_timeout": { "type": ["integer", "string"] }
               },
-              "required": ["modulepath", "manifest"]
+              "required": ["modulepath", "manifest", "environment_timeout", "config_version"],
+              "oneOf": [
+                {
+                  "title": "numeric timeout",
+                  "properties": {
+                    "environment_timeout": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                },
+                {
+                  "title": "unlimited timeout",
+                  "properties": {
+                    "environment_timeout": {
+                      "type": "string",
+                      "enum": ["unlimited"]
+                    }
+                  }
+                }
+              ]
             }
           },
           "required": ["settings"]

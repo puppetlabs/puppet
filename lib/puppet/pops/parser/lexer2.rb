@@ -128,6 +128,9 @@ class Puppet::Pops::Parser::Lexer2
     "in"       => [:IN,       'in',       2],
     "unless"   => [:UNLESS,   'unless',   6],
     "function" => [:FUNCTION, 'function', 8],
+    "type"     => [:TYPE,     'type',     4],
+    "attr"     => [:ATTR,     'attr',     4],
+    "private"  => [:PRIVATE,  'private',  7],
   }
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
@@ -278,7 +281,8 @@ class Puppet::Pops::Parser::Lexer2
     # This is the lexer's main loop
     until queue.empty? && scn.eos? do
       if token = queue.shift || lex_token
-        yield [ ctx[:after] = token[0], token[1] ]
+        ctx[:after] = token[0]
+        yield token
       end
     end
 
@@ -325,7 +329,7 @@ class Puppet::Pops::Parser::Lexer2
       emit(TOKEN_COMMA, before)
 
     when '['
-      if ctx[:after] == :NAME && (before == 0 || scn.string[before-1,1] =~ /[[:blank:]\r\n]+/)
+      if (before == 0 || scn.string[before-1,1] =~ /[[:blank:]\r\n]+/)
         emit(TOKEN_LISTSTART, before)
       else
         emit(TOKEN_LBRACK, before)
@@ -525,7 +529,7 @@ class Puppet::Pops::Parser::Lexer2
           value = scn.scan(PATTERN_CLASSREF)
           if value
             after = scn.pos
-            emit_completed([:CLASSREF, value, after-before], before)
+            emit_completed([:CLASSREF, value.freeze, after-before], before)
           else
             # move to faulty position ('::<uc-letter>' was ok)
             scn.pos = scn.pos + 3
@@ -535,7 +539,7 @@ class Puppet::Pops::Parser::Lexer2
           # NAME or error
           value = scn.scan(PATTERN_NAME)
           if value
-            emit_completed([:NAME, value, scn.pos-before], before)
+            emit_completed([:NAME, value.freeze, scn.pos-before], before)
           else
             # move to faulty position ('::' was ok)
             scn.pos = scn.pos + 2
@@ -548,7 +552,7 @@ class Puppet::Pops::Parser::Lexer2
 
     when '$'
       if value = scn.scan(PATTERN_DOLLAR_VAR)
-        emit_completed([:VARIABLE, value[1..-1], scn.pos - before], before)
+        emit_completed([:VARIABLE, value[1..-1].freeze, scn.pos - before], before)
       else
         # consume the $ and let higher layer complain about the error instead of getting a syntax error
         emit(TOKEN_VARIABLE_EMPTY, before)
@@ -560,14 +564,14 @@ class Puppet::Pops::Parser::Lexer2
       interpolate_dq
 
     when "'"
-      emit_completed([:STRING, slurp_sqstring, before-scn.pos], before)
+      emit_completed([:STRING, slurp_sqstring.freeze, scn.pos - before], before)
 
     when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
       value = scn.scan(PATTERN_NUMBER)
       if value
         length = scn.pos - before
         assert_numeric(value, length)
-        emit_completed([:NUMBER, value, length], before)
+        emit_completed([:NUMBER, value.freeze, length], before)
       else
         # move to faulty position ([0-9] was ok)
         scn.pos = scn.pos + 1
@@ -579,14 +583,14 @@ class Puppet::Pops::Parser::Lexer2
       value = scn.scan(PATTERN_NAME)
       # NAME or false start because followed by hyphen(s), underscore or word
       if value && !scn.match?(/^-+\w/)
-        emit_completed(KEYWORDS[value] || [:NAME, value, scn.pos - before], before)
+        emit_completed(KEYWORDS[value] || [:NAME, value.freeze, scn.pos - before], before)
       else
         # Restart and check entire pattern (for ease of detecting non allowed trailing hyphen)
         scn.pos = before
         value = scn.scan(PATTERN_BARE_WORD)
         # If the WORD continues with :: it must be a correct fully qualified name
         if value && !(fully_qualified = scn.match?(/::/))
-          emit_completed([:WORD, value, scn.pos - before], before)
+          emit_completed([:WORD, value.freeze, scn.pos - before], before)
         else
           # move to faulty position ([a-z_] was ok)
           scn.pos = scn.pos + 1
@@ -602,7 +606,7 @@ class Puppet::Pops::Parser::Lexer2
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
       value = scn.scan(PATTERN_CLASSREF)
       if value
-        emit_completed([:CLASSREF, value, scn.pos - before], before)
+        emit_completed([:CLASSREF, value.freeze, scn.pos - before], before)
       else
         # move to faulty position ([A-Z] was ok)
         scn.pos = scn.pos + 1

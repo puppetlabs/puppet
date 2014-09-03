@@ -243,14 +243,23 @@ class Puppet::SSL::CertificateAuthority
   def revoke(name)
     raise ArgumentError, "Cannot revoke certificates when the CRL is disabled" unless crl
 
-    if cert = Puppet::SSL::Certificate.indirection.find(name)
-      serial = cert.content.serial
-    elsif name =~ /^0x[0-9A-Fa-f]+$/
-      serial = name.hex
-    elsif ! serial = inventory.serial(name)
+    cert = Puppet::SSL::Certificate.indirection.find(name)
+
+    serials = if cert
+                [cert.content.serial]
+              elsif name =~ /^0x[0-9A-Fa-f]+$/
+                [name.hex]
+              else
+                inventory.serials(name)
+              end
+
+    if serials.empty?
       raise ArgumentError, "Could not find a serial number for #{name}"
     end
-    crl.revoke(serial, host.key.content)
+
+    serials.each do |s|
+      crl.revoke(s, host.key.content)
+    end
   end
 
   # This initializes our CA so it actually works.  This should be a private

@@ -92,6 +92,7 @@ basemodulepath = #{File.expand_path("/some/base")}
     end
 
     it "prints the default configured env settings for an env that does not exist" do
+      pending "This case no longer exists because Application will through an error before we even get here because of the non-existent environment"
       Puppet[:environment] = 'doesnotexist'
 
       FS.overlay(
@@ -125,7 +126,7 @@ basemodulepath = #{File.expand_path("/some/base")}
         CONF
       end
 
-      it_behaves_like :config_printing_a_section
+      it_behaves_like :config_printing_a_section, nil
     end
 
     context "from master section" do

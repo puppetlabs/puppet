@@ -3,7 +3,7 @@
 
 # Fedora 17 ships with ruby 1.9, RHEL 7 with ruby 2.0, which use vendorlibdir instead
 # of sitelibdir. Adjust our target if installing on f17 or rhel7.
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7 || 0%{?amzn} >= 1
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
 %else
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
@@ -49,7 +49,7 @@ Requires:       rubygem-json
 %if 0%{?fedora} || 0%{?rhel} >= 6
 %{!?_without_selinux:Requires: ruby(selinux), libselinux-utils}
 %else
-%if 0%{?rhel} && 0%{?rhel} == 5
+%if ( 0%{?rhel} && 0%{?rhel} == 5 ) || 0%{?amzn} >= 1
 %{!?_without_selinux:Requires: libselinux-ruby, libselinux-utils}
 %endif
 %endif
@@ -59,7 +59,6 @@ Requires:       facter >= 1:1.7.0
 # Ruby 1.8.7 available for el5 at: yum.puppetlabs.com/el/5/devel/$ARCH
 Requires:       ruby >= 1.8.7
 Requires:       hiera >= 1.0.0
-Requires:       ruby-rgen >= 0.6.5
 Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
@@ -120,6 +119,8 @@ install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/mod
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet/state
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet/reports
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 
 # As per redhat bz #495096
@@ -260,6 +261,8 @@ cp -pr ext/puppet-nm-dispatcher \
 %defattr(-, puppet, puppet, 0750)
 %{_localstatedir}/log/puppet
 %{_localstatedir}/lib/puppet
+%{_localstatedir}/lib/puppet/state
+%{_localstatedir}/lib/puppet/reports
 # Return the default attributes to 0755 to
 # prevent incorrect permission assignment on EL6
 %defattr(-, root, root, 0755)

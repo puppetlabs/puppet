@@ -19,17 +19,13 @@ Puppet.features.add(:microsoft_windows) do
     # ruby
     require 'Win32API'          # case matters in this require!
     require 'win32ole'
-    require 'win32/registry'
     # gems
-    require 'sys/admin'
     require 'win32/process'
     require 'win32/dir'
     require 'win32/service'
-    require 'win32/api'
-    require 'win32/taskscheduler'
     true
   rescue LoadError => err
-    warn "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir, win32-service and win32-taskscheduler gems: #{err}" unless Puppet.features.posix?
+    warn "Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: #{err}" unless Puppet.features.posix?
   end
 end
 
@@ -76,13 +72,23 @@ Puppet.features.add(:manages_symlinks) do
   if ! Puppet::Util::Platform.windows?
     true
   else
-    begin
-      require 'Win32API'
-      Win32API.new('kernel32', 'CreateSymbolicLink', 'SSL', 'B')
-      true
-    rescue LoadError => err
-      Puppet.debug("CreateSymbolicLink is not available")
-      false
+    module WindowsSymlink
+      require 'ffi'
+      extend FFI::Library
+
+      def self.is_implemented
+        begin
+          ffi_lib :kernel32
+          attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :win32_bool
+
+          true
+        rescue LoadError => err
+          Puppet.debug("CreateSymbolicLink is not available")
+          false
+        end
+      end
     end
+
+    WindowsSymlink.is_implemented
   end
 end

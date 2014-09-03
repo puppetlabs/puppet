@@ -19,8 +19,8 @@ class Puppet::Parser::E4ParserAdapter
     @file_watcher = file_watcher || NullFileWatcher.new
     @file = ''
     @string = ''
-    @use = :undefined
-    @@evaluating_parser ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
+    @use = :unspecified
+    @@evaluating_parser ||= Puppet::Pops::Parser::EvaluatingParser.new()
   end
 
   def file=(file)

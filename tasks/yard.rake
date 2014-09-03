@@ -54,6 +54,6 @@ begin
   end
 rescue LoadError => e
   if verbose
-    puts "Document generation not available without yard. #{e.message}"
+    STDERR.puts "Document generation not available without yard. #{e.message}"
   end
 end

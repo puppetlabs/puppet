@@ -83,9 +83,9 @@ actual:
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
     signature = if RUBY_VERSION =~ /^1\.8/
-      'Object{2}'
+      'Any{2}'
     else
-      'Object x, Object y'
+      'Any x, Any y'
     end
     expect do
       func.call({}, 10)
@@ -102,9 +102,9 @@ actual:
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
     signature = if RUBY_VERSION =~ /^1\.8/
-      'Object{2}'
+      'Any{2}'
     else
-      'Object x, Object y'
+      'Any x, Any y'
     end
     expect do
       func.call({}, 10, 10, 10)
@@ -162,9 +162,9 @@ actual:
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_true
       signature = if RUBY_VERSION =~ /^1\.8/
-        'Object{2,}'
+        'Any{2,}'
       else
-        'Object x, Object y, Object a?, Object b?, Object c{0,}'
+        'Any x, Any y, Any a?, Any b?, Any c{0,}'
       end
       expect do
         func.call({}, 10)
@@ -439,12 +439,11 @@ actual:
         # about selection of parser and evaluator
         #
         Puppet[:parser] = 'future'
-        Puppet[:evaluator] = 'future'
         # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
         require 'puppetx'
       end
 
-      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
 

@@ -12,6 +12,13 @@ EOF
 target_file_on_windows = 'C:/windows/temp/source_attr_test'
 target_file_on_nix     = '/tmp/source_attr_test'
 
+teardown do
+  hosts.each do |host|
+    file_to_rm = host['platform'] =~ /windows/ ? target_file_on_windows : target_file_on_nix
+    on(host, "rm #{file_to_rm}", :acceptable_exit_codes => [0,1])
+  end
+end
+
 mod_manifest = "#{testdir}/modules/source_test_module/manifests/init.pp"
 on master, "mkdir -p #{File.dirname(mod_manifest)}"
 create_remote_file master, mod_manifest, <<EOF

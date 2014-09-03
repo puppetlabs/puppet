@@ -174,17 +174,9 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
 
-  APPEND_FAILED = issue :APPEND_FAILED, :message do
-    "Append assignment += failed with error: #{message}"
-  end
-
-  DELETE_FAILED = issue :DELETE_FAILED, :message do
-    "'Delete' assignment -= failed with error: #{message}"
-  end
-
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
-    "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
+    "The numeric parameter name '$#{name}' cannot be used (clashes with numeric match result variables)"
   end
 
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key
@@ -202,9 +194,20 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
-  # For unsupported operators (e.g. -= in puppet 3).
+  APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
+    "The operator '#{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals"
+  end
+
+  # For unsupported operators (e.g. += and -= in puppet 4).
   #
   UNSUPPORTED_OPERATOR = hard_issue :UNSUPPORTED_OPERATOR, :operator do
+    "The operator '#{operator}' is not supported."
+  end
+
+  # For operators that are not supported in specific contexts (e.g. '* =>' in
+  # resource defaults)
+  #
+  UNSUPPORTED_OPERATOR_IN_CONTEXT = hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT, :operator do
     "The operator '#{operator}' in #{label.a_an(semantic)} is not supported."
   end
 
@@ -292,8 +295,7 @@ module Puppet::Pops::Issues
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
+  # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
     "Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric)."
@@ -317,10 +319,6 @@ module Puppet::Pops::Issues
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
-  end
-
-  DEPRECATED_NAME_AS_TYPE = issue :DEPRECATED_NAME_AS_TYPE, :name do
-    "Resource references should now be capitalized. The given '#{name}' does not have the correct form"
   end
 
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
@@ -411,15 +409,24 @@ module Puppet::Pops::Issues
     "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
-  #
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINTION_NAME, :name do
     "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
   end
 
-  NON_NAMESPACED_FUNCTION = hard_issue :NON_NAMESPACED_FUNCTION, :name do
-    "A Puppet Function must be defined within a module name-space. The name '#{name}' is unacceptable."
+  CAPTURES_REST_NOT_LAST = hard_issue :CAPTURES_REST_NOT_LAST, :param_name do
+    "Parameter $#{param_name} is not last, and has 'captures rest'"
+  end
+
+  CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
+    "Parameter $#{param_name} has 'captures rest' - not supported in #{label.a_an(container)}"
+  end
+
+  REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
+    "Parameter $#{param_name} is required but appears after optional parameters"
+  end
+
+  MISSING_REQUIRED_PARAMETER = hard_issue :MISSING_REQUIRED_PARAMETER, :param_name do
+    "Parameter $#{param_name} is required but no value was given"
   end
 
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do
@@ -440,6 +447,34 @@ module Puppet::Pops::Issues
 
   UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
     "Resource type not found: #{type_name.capitalize}"
+  end
+
+  ILLEGAL_RESOURCE_TYPE = hard_issue :ILLEGAL_RESOURCE_TYPE, :actual do
+    "Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got #{actual}"
+  end
+
+  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
+    "The title '#{title}' has already been used in this resource expression"
+  end
+
+  DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
+    "The attribute '#{attribute}' has already been set in this resource body"
+  end
+
+  MISSING_TITLE = hard_issue :MISSING_TITLE do
+    "Missing title. The title expression resulted in undef"
+  end
+
+  MISSING_TITLE_AT = hard_issue :MISSING_TITLE_AT, :index do
+    "Missing title at index #{index}. The title expression resulted in an undef title"
+  end
+
+  ILLEGAL_TITLE_TYPE_AT = hard_issue :ILLEGAL_TITLE_TYPE_AT, :index, :actual do
+    "Illegal title type at index #{index}. Expected String, got #{actual}"
+  end
+
+  EMPTY_STRING_TITLE_AT = hard_issue :EMPTY_STRING_TITLE_AT, :index do
+    "Empty string title at #{index}. Title strings must have a length greater than zero."
   end
 
   UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
@@ -469,5 +504,45 @@ module Puppet::Pops::Issues
 
   DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
     "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation"
+  end
+
+  IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
+    "This #{label.label(semantic)} is not productive. A non productive construct may only be placed last in a block/sequence"
+  end
+
+  IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
+    "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
+  end
+
+  RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
+    "Use of reserved word: #{word}, must be quoted if intended to be a String value"
+  end
+
+  RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
+    "The name: '#{name}' is already defined by Puppet and can not be used as the name of #{label.a_an(semantic)}."
+  end
+
+  UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
+    "No matching entry for selector parameter with value '#{param_value}'"
+  end
+
+  ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
+    "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+  end
+
+  ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
+    "Resource Override can only operate on resources, got: #{label.label(actual)}"
+  end
+
+  RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
+    "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
+  end
+
+  TYPE_MISMATCH = hard_issue :TYPE_MISMATCH, :expected, :actual do
+    "Expected value of type #{expected}, got #{actual}"
+  end
+
+  MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
+    "Unfolding of attributes from Hash can only be used once per resource body"
   end
 end

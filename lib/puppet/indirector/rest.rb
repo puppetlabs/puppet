@@ -114,7 +114,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # that makes a user aware of the reason for the failure.
       #
       content_type, body = parse_response(response)
-      msg = "Find #{uri_with_query_string} resulted in 404 with the message: #{body}"
+      msg = "Find #{elide(uri_with_query_string, 100)} resulted in 404 with the message: #{body}"
       raise Puppet::Error, msg
     else
       nil
@@ -257,7 +257,11 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     nil
   end
 
-  def environment
-    Puppet.lookup(:environments).get(Puppet[:environment])
+  def elide(string, length)
+    if Puppet::Util::Log.level == :debug || string.length <= length
+      string
+    else
+      string[0, length - 3] + "..."
+    end
   end
 end

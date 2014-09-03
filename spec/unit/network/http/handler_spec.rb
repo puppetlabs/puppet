@@ -103,31 +103,30 @@ describe Puppet::Network::HTTP::Handler do
       handler.stubs(:warn_if_near_expiration)
     end
 
-    it "should check the client certificate for upcoming expiration" do
-      request = a_request
-      cert = mock 'cert'
-      handler.expects(:client_cert).returns(cert).with(request)
-      handler.expects(:warn_if_near_expiration).with(cert)
-
-      handler.process(request, response)
-    end
-
     it "should setup a profiler when the puppet-profiling header exists" do
       request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
-      handler.process(request, response)
+      p = HandlerTestProfiler.new
 
-      Puppet::Util::Profiler.current.should be_kind_of(Puppet::Util::Profiler::WallClock)
+      Puppet::Util::Profiler.expects(:add_profiler).with { |profiler|
+        profiler.is_a? Puppet::Util::Profiler::WallClock
+      }.returns(p)
+
+      Puppet::Util::Profiler.expects(:remove_profiler).with { |profiler|
+        profiler == p
+      }
+
+      handler.process(request, response)
     end
 
     it "should not setup profiler when the profile parameter is missing" do
       request = a_request
       request[:params] = { }
 
-      handler.process(request, response)
+      Puppet::Util::Profiler.expects(:add_profiler).never
 
-      Puppet::Util::Profiler.current.should == Puppet::Util::Profiler::NONE
+      handler.process(request, response)
     end
 
     it "should raise an error if the request is formatted in an unknown format" do
@@ -217,6 +216,17 @@ describe Puppet::Network::HTTP::Handler do
 
     def headers(request)
       request[:headers] || {}
+    end
+  end
+
+  class HandlerTestProfiler
+    def start(metric, description)
+    end
+
+    def finish(context, metric, description)
+    end
+
+    def shutdown()
     end
   end
 end

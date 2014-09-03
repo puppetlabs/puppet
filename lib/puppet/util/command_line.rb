@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/plugins"
 require "puppet/util/rubygems"
 require "puppet/util/limits"
+require 'puppet/util/colors'
 
 module Puppet
   module Util
@@ -125,9 +126,17 @@ module Puppet
           # ruby process, but that requires fixing (#17210, #12173, #8750). So for now
           # we try to restrict to only code that can be autoloaded from the node's
           # environment.
+
+          # PUP-2114 - at this point in the bootstrapping process we do not
+          # have an appropriate application-wide current_environment set.
+          # If we cannot find the configured environment, which may not exist,
+          # we do not attempt to add plugin directories to the load path.
+          #
           if @subcommand_name != 'master' and @subcommand_name != 'agent'
-            Puppet.lookup(:environments).get(Puppet[:environment]).each_plugin_directory do |dir|
-              $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+            if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+              configured_environment.each_plugin_directory do |dir|
+                $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+              end
             end
           end
 
@@ -152,13 +161,20 @@ module Puppet
 
       # @api private
       class NilSubcommand
+        include Puppet::Util::Colors
+
         def initialize(command_line)
           @command_line = command_line
         end
 
         def run
-          if @command_line.args.include? "--version" or @command_line.args.include? "-V"
+          args = @command_line.args
+          if args.include? "--version" or args.include? "-V"
             puts Puppet.version
+          elsif @command_line.subcommand_name.nil? && args.count > 0
+            # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message
+            puts colorize(:hred, "Error: Could not parse application options: invalid option: #{args[0]}")
+            exit 1
           else
             puts "See 'puppet help' for help on available puppet subcommands"
           end
@@ -173,8 +189,9 @@ module Puppet
         end
 
         def run
-          puts "Error: Unknown Puppet subcommand '#{@subcommand_name}'"
+          puts colorize(:hred, "Error: Unknown Puppet subcommand '#{@subcommand_name}'")
           super
+          exit 1
         end
       end
     end

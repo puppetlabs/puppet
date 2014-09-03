@@ -9,13 +9,8 @@ module Puppet::Parser
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
-      case Puppet[:parser]
-      when 'future'
-        if Puppet[:evaluator] == 'future'
-          evaluating_parser(environment)
-        else
-          eparser(environment)
-        end
+      if Puppet[:parser] == 'future'
+        evaluating_parser(environment)
       else
         classic_parser(environment)
       end
@@ -24,41 +19,35 @@ module Puppet::Parser
     # Creates an instance of the classic parser.
     #
     def self.classic_parser(environment)
-      require 'puppet/parser'
-
+      # avoid expensive require if already loaded
+      require 'puppet/parser' unless defined? Puppet::Parser::Parser
       Puppet::Parser::Parser.new(environment)
     end
 
-    # Returns an instance of an EvaluatingParser
+    # Creates an instance of an E4ParserAdapter that adapts an
+    # EvaluatingParser to the 3x way of parsing.
+    #
     def self.evaluating_parser(file_watcher)
       # Since RGen is optional, test that it is installed
-      @@asserted ||= false
-      assert_rgen_installed() unless @@asserted
-      @@asserted = true
-      require 'puppet/parser/e4_parser_adapter'
-      require 'puppet/pops/parser/code_merger'
+      assert_rgen_installed()
+      unless defined?(Puppet::Pops::Parser::E4ParserAdapter)
+        require 'puppet/parser/e4_parser_adapter'
+        require 'puppet/pops/parser/code_merger'
+      end
       E4ParserAdapter.new(file_watcher)
     end
 
-    # Creates an instance of the expression based parser 'eparser'
+    # Asserts that RGen >= 0.6.6 is installed by checking that certain behavior is available.
+    # Note that this assert is expensive as it also requires puppet/pops (if not already loaded).
     #
-    def self.eparser(environment)
-      # Since RGen is optional, test that it is installed
-      @@asserted ||= false
-      assert_rgen_installed() unless @@asserted
-      @@asserted = true
-      require 'puppet/parser'
-      require 'puppet/parser/e_parser_adapter'
-      EParserAdapter.new(Puppet::Parser::Parser.new(environment))
-    end
-
-    private
-
     def self.assert_rgen_installed
+      @@asserted ||= false
+      return if @@asserted
+      @@asserted = true
       begin
         require 'rgen/metamodel_builder'
       rescue LoadError
-        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using the setting '--parser future'. Please install 'rgen'.")
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.7.0 is required when using the setting '--parser future'. Please install 'rgen'.")
       end
       # Since RGen is optional, there is nothing specifying its version.
       # It is not installed in any controlled way, so not possible to use gems to check (it may be installed some other way).
@@ -70,19 +59,18 @@ module Puppet::Parser
         container.left_expr = litstring
         raise "no eContainer" if litstring.eContainer() != container
         raise "no eContainingFeature" if litstring.eContainingFeature() != :left_expr
-      rescue
-        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using '--parser future'. An older version is installed, please update.")
+      rescue => e
+        # TODO: RGen can raise exceptions for other reasons!
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.7.0 is required when using '--parser future'. An older version is installed, please update.")
       end
     end
 
     def self.code_merger
-      if Puppet[:parser] == 'future' && Puppet[:evaluator] == 'future'
+      if Puppet[:parser] == 'future'
         Puppet::Pops::Parser::CodeMerger.new
       else
         Puppet::Parser::CodeMerger.new
       end
     end
-
   end
-
 end
