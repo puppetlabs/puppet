@@ -1,10 +1,17 @@
 Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :arity => -2, :doc =>
-  "Evaluate a template and return its value.  See
-  [the templating docs](http://docs.puppetlabs.com/guides/templating.html) for
-  more information.
+  "Loads an ERB template from a module, evaluates it, and returns the resulting
+  value as a string.
 
-  Note that if multiple templates are specified, their output is all
-  concatenated and returned as the output of the function.") do |vals|
+  The argument to this function should be a `<MODULE NAME>/<TEMPLATE FILE>`
+  reference, which will load `<TEMPLATE FILE>` from a module's `templates`
+  directory. (For example, the reference `apache/vhost.conf.erb` will load the
+  file `<MODULES DIRECTORY>/apache/templates/vhost.conf.erb`.)
+
+  This function can also accept:
+
+  * An absolute path, which can load a template file from anywhere on disk.
+  * Multiple arguments, which will evaluate all of the specified templates and
+  return their outputs concatenated into a single string.") do |vals|
     vals.collect do |file|
       # Use a wrapper, so the template can't get access to the full
       # Scope object.

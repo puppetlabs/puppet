@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -13,18 +13,18 @@ if [ "$1" = "configure" ]; then
 	fi
 
 	# Set correct permissions and ownership for puppet directories
-	if ! dpkg-statoverride --list /var/log/puppet >/dev/null 2>&1; then
-		dpkg-statoverride --update --add puppet puppet 0750 /var/log/puppet
-	fi
-
-	if ! dpkg-statoverride --list /var/lib/puppet >/dev/null 2>&1; then
-		dpkg-statoverride --update --add puppet puppet 0750 /var/lib/puppet
-	fi
+	for dir in /var/{run,lib,log}/puppet; do
+		if ! dpkg-statoverride --list "$dir" >/dev/null 2>&1; then
+			dpkg-statoverride --update --add puppet puppet 0750 "$dir"
+		fi
+	done
 
 	# Create folders common to "puppet" and "puppetmaster", which need
 	# to be owned by the "puppet" user
 	install --owner puppet --group puppet --directory \
 		/var/lib/puppet/state
+	install --owner puppet --group puppet --directory \
+		/var/lib/puppet/reports
 	
 	# Handle 
 	if [ -d /etc/puppet/ssl ] && [ ! -e /var/lib/puppet/ssl ] && grep -q 'ssldir=/var/lib/puppet/ssl' /etc/puppet/puppet.conf; then

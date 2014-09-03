@@ -19,7 +19,9 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     f = new(identifier)
     yield f
   ensure
-    f.close!
+    if f
+      f.close!
+    end
   end
 
   def initialize(basename, *rest)

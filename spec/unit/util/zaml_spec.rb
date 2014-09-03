@@ -69,7 +69,11 @@ describe "Pure ruby yaml implementation" do
     end
 
     it "serializes a time in UTC" do
-      pending("not supported on Windows", :if => Puppet.features.microsoft_windows? && RUBY_VERSION[0,3] == '1.8') do
+      bad_rubies =
+        RUBY_VERSION[0,3] == '1.8' ||
+        RUBY_VERSION[0,3] == '2.0' && RUBY_PLATFORM == 'i386-mingw32'
+
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows? && bad_rubies) do
         the_time_in("Europe/London").should be_equivalent_to(the_time_in_yaml_offset_by("+00:00"))
       end
     end

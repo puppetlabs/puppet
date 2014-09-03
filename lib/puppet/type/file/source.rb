@@ -225,7 +225,10 @@ module Puppet
     def copy_source_value(metadata_method)
       param_name = (metadata_method == :checksum) ? :content : metadata_method
       if resource[param_name].nil? or resource[param_name] == :absent
-        resource[param_name] = metadata.send(metadata_method)
+        value = metadata.send(metadata_method)
+        # Force the mode value in file resources to be a string containing octal.
+        value = value.to_s(8) if param_name == :mode && value.is_a?(Numeric)
+        resource[param_name] = value
       end
     end
   end

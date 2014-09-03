@@ -1,13 +1,17 @@
 Puppet::Parser::Functions::newfunction(
   :file, :arity => -2, :type => :rvalue,
-  :doc => "Return the contents of a single file from a list of file selectors.
-  The file selectors are used in turn to find a file. The first file that is
-  found is read and the contents are returned. If no files are found an error
-  is raised.
+  :doc => "Loads a file from a module and returns its contents as a string.
 
-  A file selector can either be an absolute path or be a module reference in
-  the form `modulename/filename`. A module reference will find the `filename`
-  relative the files directory of a module with the given `modulename`.
+  The argument to this function should be a `<MODULE NAME>/<FILE>`
+  reference, which will load `<FILE>` from a module's `files`
+  directory. (For example, the reference `mysql/mysqltuner.pl` will load the
+  file `<MODULES DIRECTORY>/mysql/files/mysqltuner.pl`.)
+
+  This function can also accept:
+
+  * An absolute path, which can load a file from anywhere on disk.
+  * Multiple arguments, which will return the contents of the **first** file
+  found, skipping any files that don't exist.
   "
 ) do |vals|
     path = nil

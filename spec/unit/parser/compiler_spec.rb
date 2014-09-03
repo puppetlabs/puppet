@@ -97,6 +97,13 @@ describe Puppet::Parser::Compiler do
     @compiler.environment.should equal(@node.environment)
   end
 
+  it "fails if the node's environment has conflicting manifest settings" do
+    conflicted_environment = Puppet::Node::Environment.create(:testing, [], '/some/environment.conf/manifest.pp')
+    conflicted_environment.stubs(:conflicting_manifest_settings?).returns(true)
+    @node.environment = conflicted_environment
+    expect { Puppet::Parser::Compiler.compile(@node) }.to raise_error(Puppet::Error, /disable_per_environment_manifest.*true.*environment.conf.*manifest.*conflict/)
+  end
+
   it "should include the resource type collection helper" do
     Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
   end

@@ -5,6 +5,32 @@ require 'puppet/defaults'
 require 'puppet/rails'
 
 describe "Puppet defaults" do
+
+  describe "when default_manifest is set" do
+    it "returns ./manifests by default" do
+      expect(Puppet[:default_manifest]).to eq('./manifests')
+    end
+
+    it "errors when $environment is part of the value" do
+      expect {
+        Puppet[:default_manifest] = '/$environment/manifest.pp'
+      }.to raise_error Puppet::Settings::ValidationError, /cannot interpolate.*\$environment/
+    end
+  end
+
+  describe "when disable_per_environment_manifest is set" do
+    it "returns false by default" do
+      expect(Puppet[:disable_per_environment_manifest]).to eq(false)
+    end
+
+    it "errors when set to true and default_manifest is not an absolute path" do
+      expect {
+        Puppet[:default_manifest] = './some/relative/manifest.pp'
+        Puppet[:disable_per_environment_manifest] = true
+      }.to raise_error Puppet::Settings::ValidationError, /'default_manifest' setting must be.*absolute/
+    end
+  end
+
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
       Facter.expects(:search).with("/my/fact/path")

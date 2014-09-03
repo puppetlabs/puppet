@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet/indirector/facts/facter'
 
+module NodeFactsFacterSpec
 describe Puppet::Node::Facts::Facter do
   FS = Puppet::FileSystem
 
@@ -165,4 +166,5 @@ describe Puppet::Node::Facts::Facter do
       Puppet::Node::Facts::Facter.setup_external_search_paths @request
     end
   end
+end
 end

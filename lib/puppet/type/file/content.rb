@@ -38,6 +38,7 @@ module Puppet
 
       ...but for larger files, this attribute is more useful when combined with the
       [template](http://docs.puppetlabs.com/references/latest/function.html#template)
+      or [file](http://docs.puppetlabs.com/references/latest/function.html#file)
       function.
     EOT
 

@@ -1042,6 +1042,44 @@ EOT
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :deprecated => :allowed_on_commandline,
     },
+    :default_manifest => {
+      :default    => "./manifests",
+      :type       => :string,
+      :desc       => "The default main manifest for directory environments. Any environment that
+        doesn't set the `manifest` setting in its `environment.conf` file will use
+        this manifest.
+
+        This setting's value can be an absolute or relative path. An absolute path
+        will make all environments default to the same main manifest; a relative
+        path will allow each environment to use its own manifest, and Puppet will
+        resolve the path relative to each environment's main directory.
+
+        In either case, the path can point to a single file or to a directory of
+        manifests to be evaluated in alphabetical order.",
+      :hook       => proc do |value|
+        uninterpolated_value = self.value(true)
+        if uninterpolated_value =~ /\$environment/ || value =~ /\$environment/ then
+          raise(Puppet::Settings::ValidationError,
+                "You cannot interpolate '$environment' within the 'default_manifest' setting.")
+        end
+      end
+    },
+    :disable_per_environment_manifest => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether to disallow an environment-specific main manifest. When set
+        to `true`, Puppet will use the manifest specified in the `default_manifest` setting
+        for all environments. If an environment specifies a different main manifest in its
+        `environment.conf` file, catalog requests for that environment will fail with an error.
+
+        This setting requires `default_manifest` to be set to an absolute path.",
+      :hook       => proc do |value|
+        if value && !Pathname.new(Puppet[:default_manifest]).absolute?
+          raise(Puppet::Settings::ValidationError,
+                "The 'default_manifest' setting must be set to an absolute path when 'disable_per_environment_manifest' is true")
+        end
+      end,
+    },
     :code => {
       :default    => "",
       :desc       => "Code to parse directly.  This is essentially only used
