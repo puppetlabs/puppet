@@ -1,11 +1,12 @@
 require 'spec_helper'
 
+module EnvironmentsDefaultManifestsSpec
 describe "default manifests" do
+  FS = Puppet::FileSystem
+
   shared_examples_for "puppet with default_manifest settings" do
     let(:confdir) { Puppet[:confdir] }
     let(:environmentpath) { File.expand_path("envdir", confdir) }
-
-    FS = Puppet::FileSystem
 
     context "relative default" do
       let(:testingdir) { File.join(environmentpath, "testing") }
@@ -269,4 +270,5 @@ describe "default manifests" do
     expect(node.environment).to eq(Puppet.lookup(:environments).get('testing'))
     Puppet::Parser::Compiler.compile(node)
   end
+end
 end
