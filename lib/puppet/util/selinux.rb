@@ -155,36 +155,46 @@ module Puppet::Util::SELinux
   # Internal helper function to read and parse /proc/mounts
   def read_mounts
     mounts = ""
-    begin
-      if File.method_defined? "read_nonblock"
-        # If possible we use read_nonblock in a loop rather than read to work-
-        # a linux kernel bug.  See ticket #1963 for details.
-        mountfh = File.open("/proc/mounts")
-        mounts += mountfh.read_nonblock(1024) while true
-      else
-        # Otherwise we shell out and let cat do it for us
-        mountfh = IO.popen("/bin/cat /proc/mounts")
-        mounts = mountfh.read
-      end
-    rescue EOFError
+
+    if not ( $proc_mount_cache and $proc_mount_cache[:ctime] )
+      $proc_mount_cache = { :ctime => File.stat('/proc/mounts').ctime }
+    end
+
+    if not $proc_mount_cache[:mntpoint] or ( $proc_mount_cache[:ctime] != File.stat('/proc/mounts').ctime )
+      begin
+        if File.method_defined? "read_nonblock"
+          # If possible we use read_nonblock in a loop rather than read to work-
+          # a linux kernel bug.  See ticket #1963 for details.
+          mountfh = File.open("/proc/mounts")
+          mounts += mountfh.read_nonblock(1024) while true
+        else
+          # Otherwise we shell out and let cat do it for us
+          mountfh = IO.popen("/bin/cat /proc/mounts")
+          mounts = mountfh.read
+        end
+      rescue EOFError
       # that's expected
-    rescue
-      return nil
-    ensure
-      mountfh.close if mountfh
+      rescue
+        return nil
+      ensure
+        mountfh.close if mountfh
+      end
+
+      mntpoint = {}
+
+      # Read all entries in /proc/mounts.  The second column is the
+      # mountpoint and the third column is the filesystem type.
+      # We skip rootfs because it is always mounted at /
+      mounts.split("\n").uniq do |line|
+        params = line.split(' ')
+        next if params[2] == 'rootfs'
+        mntpoint[params[1]] = params[2]
+      end
+
+      $proc_mount_cache[:mntpoint] = mntpoint
     end
 
-    mntpoint = {}
-
-    # Read all entries in /proc/mounts.  The second column is the
-    # mountpoint and the third column is the filesystem type.
-    # We skip rootfs because it is always mounted at /
-    mounts.each_line do |line|
-      params = line.split(' ')
-      next if params[2] == 'rootfs'
-      mntpoint[params[1]] = params[2]
-    end
-    mntpoint
+    $proc_mount_cache[:mntpoint]
   end
 
   # Internal helper function to return which type of filesystem a given file
