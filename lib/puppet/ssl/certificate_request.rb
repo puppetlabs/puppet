@@ -68,12 +68,24 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    if OpenSSL::Digest.const_defined?('SHA256')
+      md = :SHA256
+      digest = OpenSSL::Digest::SHA256
+    elsif OpenSSL::Digest.const_defined?('SHA1')
+      md = :SHA1
+      digest = OpenSSL::Digest::SHA1
+    else
+      Puppet.info "No FIPS 140-2 compliant digest algorithm - falling back to MD5.  This is not safe!"
+      md = :MD5
+      digest = OpenSSL::Digest::MD5
+    end
+
+    csr.sign(key, digest.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 
     @content = csr
-    Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"
+    Puppet.info "Certificate Request fingerprint (#{md.to_s}): #{fingerprint(md)}"
     @content
   end
 

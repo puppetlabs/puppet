@@ -205,7 +205,18 @@ describe Puppet::SSL::CertificateRequest do
       end
     end
 
-    it "should sign the csr with the provided key and a digest" do
+    it "should sign the csr with the provided key and best available digest" do
+      digest = mock 'digest'
+      OpenSSL::Digest.stubs(:const_defined?).with('SHA256').returns(false)
+      OpenSSL::Digest.stubs(:const_defined?).with('SHA1').returns(true)
+      OpenSSL::Digest::SHA1.expects(:new).returns(digest)
+      @request.expects(:sign).with(@key, digest)
+      @instance.generate(@key)
+    end
+
+    it "should sign the csr and fall back to md5" do
+      OpenSSL::Digest.stubs(:const_defined?).with('SHA256').returns(false)
+      OpenSSL::Digest.stubs(:const_defined?).with('SHA1').returns(false)
       digest = mock 'digest'
       OpenSSL::Digest::MD5.expects(:new).returns(digest)
       @request.expects(:sign).with(@key, digest)
