@@ -1,4 +1,7 @@
 test_name "puppet module install (agent)"
+
+confine :except, :platform => 'solaris-10'
+
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
