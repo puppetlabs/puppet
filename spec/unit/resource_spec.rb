@@ -85,6 +85,12 @@ describe Puppet::Resource do
     ref.title.should =="baz"
   end
 
+  it "should not interpret the title as a reference if the type is a non component or whit reference" do
+    ref = Puppet::Resource.new("Notify", "foo::bar[baz]")
+    ref.type.should == "Notify"
+    ref.title.should =="foo::bar[baz]"
+  end
+
   it "should be able to extract its information from a Puppet::Type instance" do
     ral = Puppet::Type.type(:file).new :path => basepath+"/foo"
     ref = Puppet::Resource.new(ral)
