@@ -61,8 +61,8 @@ module Puppet
 #     their name, and these resources are said to be non-isomorphic.
 #
 # @note The Type class deals with multiple concerns; some methods provide an internal DSL for convenient definition
-#   of types, other methods deal with various aspects while running; wiring up a resource (expressed in Puppet DSL
-#   or Ruby DSL) with its _resource type_ (i.e. an instance of Type) to enable validation, transformation of values
+#   of types, other methods deal with various aspects while running; wiring up a resource (expressed in Puppet DSL)
+#   with its _resource type_ (i.e. an instance of Type) to enable validation, transformation of values
 #   (munge/unmunge), etc. Lastly, Type is also responsible for dealing with Providers; the concrete implementations
 #   of the behavior that constitutes how a particular Type behaves on a particular type of system (e.g. how
 #   commands are executed on a flavor of Linux, on Windows, etc.). This means that as you are reading through the
