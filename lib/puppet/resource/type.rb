@@ -4,7 +4,6 @@ require 'puppet/util/errors'
 require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
 require 'puppet/parser/ast/block_expression'
-require 'puppet/dsl'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #
@@ -369,10 +368,6 @@ class Puppet::Resource::Type
     return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
-  end
-
-  def evaluate_ruby_code(resource, scope)
-    Puppet::DSL::ResourceAPI.new(resource, scope, ruby_code).evaluate
   end
 
   # Split an fq name into a namespace and name

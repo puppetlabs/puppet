@@ -55,7 +55,6 @@ describe Puppet::Parser do
     end
 
     it "should treat files ending in 'rb' as ruby files" do
-      @parser.expects(:parse_ruby_file)
       @parser.file = "/my/file.rb"
       @parser.parse
     end

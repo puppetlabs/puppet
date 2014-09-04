@@ -488,17 +488,6 @@ describe Puppet::Resource::Type do
       @type.evaluate_code(@resource)
     end
 
-    describe "and ruby code is provided" do
-      it "should create a DSL Resource API and evaluate it" do
-        @type.stubs(:ruby_code).returns(proc { "foo" })
-        @api = stub 'api'
-        Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
-        @api.expects(:evaluate)
-
-        @type.evaluate_code(@resource)
-      end
-    end
-
     it "should noop if there is no code" do
       @type.expects(:code).returns nil
 
