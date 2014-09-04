@@ -120,7 +120,7 @@ class Puppet::Transaction::EventManager
   #   associated with this callback and resource.
   # @return [true, false] Whether the callback should be run.
   def process_callback?(resource, events)
-    !events.all? { |e| e.status == "noop" }
+    !(events.all? { |e| e.status == "noop" } || resource.noop?)
   end
 
   # Processes callbacks for a given resource.

@@ -238,6 +238,36 @@ describe Puppet::Transaction::EventManager do
       end
     end
 
+    describe "and the resource has noop set to true" do
+      before do
+        @event.stubs(:status).returns "success"
+        @resource.stubs(:event).returns(Puppet::Transaction::Event.new)
+        @resource.stubs(:noop?).returns(true)
+        @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+      end
+
+      it "should log" do
+        @resource.expects(:notice).with { |msg| msg.include?("Would have triggered 'callback1'") }
+
+        @manager.process_events(@resource)
+      end
+
+      it "should not call the callback" do
+        @resource.expects(:callback1).never
+
+        @manager.process_events(@resource)
+      end
+
+      it "should queue a new noop event generated from the resource" do
+        event = Puppet::Transaction::Event.new
+        @resource.expects(:event).with(:status => "noop", :name => :noop_restart).returns event
+        @manager.expects(:queue_events).with(@resource, [event])
+
+        @manager.process_events(@resource)
+      end
+    end
+
+
     describe "and the callback fails" do
       before do
         @resource.expects(:callback1).raises "a failure"
