@@ -551,10 +551,12 @@ class Puppet::Resource
   end
 
   def extract_type_and_title(argtype, argtitle)
-    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
-    elsif argtitle                                         then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
-    elsif argtype.is_a?(Hash)                              then
+    if    (argtype.nil? || argtype == :component || argtype == :whit) &&
+           argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                 then [ $1,                 $2            ]
+    elsif argtitle.nil? && argtype =~ /^([^\[\]]+)\[(.+)\]$/m  then [ $1,                 $2            ]
+    elsif argtitle                                             then [ argtype,            argtitle      ]
+    elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
+    elsif argtype.is_a?(Hash)                                  then
       raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
         "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
     else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
