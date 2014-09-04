@@ -7,46 +7,51 @@ confine :to, :platform => 'ubuntu'
 agent = agents.first
 
 def check_service_for(pkg, type, agent)
-  if pkg == "apache2"
-    if type == "stop"
-      on agent, "service #{pkg} status", :acceptable_exit_codes => [1,2,3]
+  on agent, puppet_resource("service", "#{pkg}") do
+    assert_match(/ensure => '#{type}'/, stdout, "Expect #{pkg} to be #{type}")
+  end
+end
+
+def manage_service_for(pkg, state, agent)
+
+  manifest = <<-MANIFEST
+    service { '#{pkg}':
+      ensure => #{state},
+    } ~>
+    exec { 'service #{pkg} status':
+      path      => $path,
+      logoutput => true,
+    }
+  MANIFEST
+
+  apply_manifest_on(agent, manifest) do
+    if pkg == 'rabbitmq-server'
+      if state == 'running'
+        assert_match(/Status of node/m, stdout, "Could not start #{pkg}.")
+      elsif
+        assert_match(/unable to connect to node/m, stdout, "Could not stop #{pkg}.")
+      end
     else
-      on agent, "service #{pkg} status", :acceptable_exit_codes => [0]
+      if state == 'running'
+        assert_match(/start/m, stdout, "Could not start #{pkg}.")
+      elsif
+        assert_match(/stop/m, stdout, "Could not stop #{pkg}.")
+      end
     end
-  else
-    on agent, "service #{pkg} status | grep #{type} -q"
   end
 end
 
 begin
 # in Precise these packages provide a mix of upstart with no linked init
 # script (tty2), upstart linked to an init script (rsyslog), and no upstart
-# script - only an init script (apache2)
-  %w(tty2 rsyslog apache2).each do |pkg|
+# script - only an init script (rabbitmq-server)
+  %w(tty2 rsyslog rabbitmq-server).each do |pkg|
+
     on agent, puppet_resource("package #{pkg} ensure=present")
 
-    step "Ensure #{pkg} has started"
-    on agent, "service #{pkg} start", :acceptable_exit_codes => [0,1]
-
-    step "Check that status for running #{pkg}"
-    check_service_for(pkg, "start", agent)
-
-    step "Stop #{pkg} with `puppet resource'"
-    on agent, puppet_resource("service #{pkg} ensure=stopped")
-
-    step "Check that status for stopped #{pkg}"
-    check_service_for(pkg, "stop", agent)
-
-    step "Start #{pkg} with `puppet resource'"
-    on agent, puppet_resource("service #{pkg} ensure=running")
-
-    step "Check that status for started #{pkg}"
-    check_service_for(pkg, "start", agent)
+    # Cycle the services
+    manage_service_for(pkg, "running", agent)
+    manage_service_for(pkg, "stopped", agent)
+    manage_service_for(pkg, "running", agent)
   end
-
-  on agent, puppet_resource("service") do
-    assert_match(/service \{ 'ssh':\n.*  ensure => 'running',/, stdout, "SSH isn't running, something is wrong with upstart.")
-  end
-ensure
-  on agent, puppet_resource("package apache2 ensure=absent")
 end
