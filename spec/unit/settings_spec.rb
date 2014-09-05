@@ -1338,6 +1338,14 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
+    it "should ignore manifestdir if environmentpath is set" do
+      @settings.define_settings :main,
+        :manifestdir => { :type => :directory, :default => @prefix+"/manifestdir", :desc => "a" },
+        :environmentpath => { :type => :path, :default => @prefix+"/envs", :desc => "a" }
+        catalog = @settings.to_catalog(:main)
+        catalog.resource(:file, @prefix+"/manifestdir").should be_nil
+    end
+
     describe "on Microsoft Windows" do
       before :each do
         Puppet.features.stubs(:root?).returns true
