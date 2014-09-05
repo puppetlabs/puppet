@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   def self.instances
     instances = []
     installed_packages = get_installed_packages
-    installed_packages.each do |pkgname, pkgver|
+    installed_packages.sort_by { |k, v| k }.each do |(pkgname, pkgver)|
       hash = {
         :name => pkgname,
         :ensure => pkgver,
