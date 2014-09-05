@@ -24,7 +24,7 @@ module Puppet
     class CommandLine
       include Puppet::Util::Limits
 
-      OPTION_OR_MANIFEST_FILE = /^-|\.pp$|\.rb$/
+      OPTION_OR_MANIFEST_FILE = /^-|\.pp$/
 
       # @param zero [String] the name of the executable
       # @param argv [Array<String>] the arguments passed on the command line

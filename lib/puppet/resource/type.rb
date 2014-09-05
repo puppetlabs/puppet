@@ -29,7 +29,7 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
-  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+  attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
   # Map from argument (aka parameter) names to Puppet Type
@@ -126,8 +126,6 @@ class Puppet::Resource::Type
         code.safeevaluate(scope)
       end
     end
-
-    evaluate_ruby_code(resource, scope) if ruby_code
   end
 
   def initialize(type, name, options = {})
