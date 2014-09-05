@@ -312,7 +312,6 @@ class Puppet::Resource
     }.join
 
     "  %s:\n%s" % [self.title, attributes]
-    #"%s:\n  %s:\n%s" % [self.type.to_s.downcase, self.title, attributes]
   end
 
   # Convert our resource to Puppet code.
