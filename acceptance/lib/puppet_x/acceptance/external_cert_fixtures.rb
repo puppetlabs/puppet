@@ -35,7 +35,7 @@ class ExternalCertFixtures
   end
 
   def host_entry
-    @host_entry ||= "127.0.0.3 #{master_name} #{master_short_name} puppet\n"
+    @host_entry ||= "127.0.0.3 #{master_name} #{master_short_name} puppet"
   end
 
   def root_ca_cert
