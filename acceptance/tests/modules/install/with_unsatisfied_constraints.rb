@@ -42,31 +42,31 @@ on master, puppet("module install #{module_author}-#{module_name}"), :acceptable
   assert_match(/Use `puppet module install --ignore-dependencies/, stderr,
         "Use --ignore-dependencies error was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_not_installed_on_disk(master, module_name)
 
 # FIXME I don't understand what behaviour this looking for?
 step "Install the module with an unsatisfiable dependency"
 on master, puppet("module install #{module_author}-#{module_name} --ignore-dependencies") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_installed_on_disk(master, module_name)
 
 step "Try to install a specific version of the unsatisfiable dependency"
 on master, puppet("module install #{module_author}-stdlub --version 1.x"), :acceptable_exit_codes => [1] do
   assert_match(/No version.* can satisfy all dependencies/, stderr,
         "Unsatisfiable dependency was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/stdlub ]"
+assert_module_not_installed_on_disk(master, 'stdlub')
 
 step "Try to install any version of the unsatisfiable dependency"
 on master, puppet("module install #{module_author}-stdlub"), :acceptable_exit_codes => [1] do
   assert_match(/No version.* can satisfy all dependencies/, stderr,
         "Unsatisfiable dependency was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/stdlub ]"
+assert_module_not_installed_on_disk(master, 'stdlub')
 
 step "Install the unsatisfiable dependency with --force"
 on master, puppet("module install #{module_author}-stdlub --force") do
   assert_module_installed_ui(stdout, module_author, 'stdlub')
 end
-on master, "[ -d #{master['distmoduledir']}/stdlub ]"
+assert_module_installed_on_disk(master, 'stdlub')

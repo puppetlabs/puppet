@@ -2,6 +2,10 @@ test_name 'puppet module uninstall (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+if master.is_pe?
+  skip_test
+end
+
 step 'Setup'
 
 stub_forge_on(master)

@@ -2,6 +2,10 @@ test_name "puppet module upgrade (with environment)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+if master.is_pe?
+  skip_test
+end
+
 module_author = "pmtacceptance"
 module_name   = "java"
 module_dependencies = ["stdlub"]

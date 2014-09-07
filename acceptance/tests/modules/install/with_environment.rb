@@ -2,6 +2,10 @@ test_name 'puppet module install (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+if master.is_pe?
+  skip_test
+end
+
 module_author = "pmtacceptance"
 module_name   = "nginx"
 
@@ -22,7 +26,7 @@ check_module_install_in = lambda do |environment_path, module_install_args|
     assert_match(/#{environment_path}/, stdout,
           "Notice of non default install path was not displayed")
   end
-  assert_module_installed_on_disk(master, "#{environment_path}", module_name)
+  assert_module_installed_on_disk(master, module_name, environment_path)
 end
 
 step 'Install a module into a non default legacy environment' do

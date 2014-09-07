@@ -18,7 +18,7 @@ step "Install a module, but ignore dependencies"
 on master, puppet("module install #{module_author}-#{module_name} --ignore-dependencies") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_installed_on_disk(master, module_name)
 module_dependencies.each do |dependency|
-  assert_module_not_installed_on_disk(master, master['distmoduledir'], dependency)
+  assert_module_not_installed_on_disk(master, dependency)
 end
