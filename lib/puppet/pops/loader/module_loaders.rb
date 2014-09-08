@@ -20,6 +20,28 @@
 # @api private
 #
 module Puppet::Pops::Loader::ModuleLoaders
+  def self.system_loader_from(parent_loader, loaders)
+    # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
+    # The only way to find this across the different ways puppet can be installed is
+    # to search up the path from this source file's __FILE__ location until it finds the base of
+    # puppet.
+    #
+    puppet_lib = File.join(File.dirname(__FILE__), '../../..')
+    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader,
+                                                       loaders,
+                                                       nil,
+                                                       puppet_lib,
+                                                       'puppet_system')
+  end
+
+  def self.module_loader_from(parent_loader, loaders, module_name, module_path)
+    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader,
+                                                       loaders,
+                                                       module_name,
+                                                       File.join(module_path, 'lib'),
+                                                       module_name)
+  end
+
   class AbstractPathBasedModuleLoader < Puppet::Pops::Loader::BaseLoader
 
     # The name of the module, or nil, if this is a global "component"
@@ -46,11 +68,6 @@ module Puppet::Pops::Loader::ModuleLoaders
     #
     def initialize(parent_loader, loaders, module_name, path, loader_name)
       super parent_loader, loader_name
-
-      # Irrespective of the path referencing a directory or file, the path must exist.
-      unless Puppet::FileSystem.exist?(path)
-        raise ArgumentError, "The given path '#{path}' does not exist!"
-      end
 
       @module_name = module_name
       @path = path
@@ -178,9 +195,6 @@ module Puppet::Pops::Loader::ModuleLoaders
     #
     def initialize(parent_loader, loaders, module_name, path, loader_name)
       super
-      unless Puppet::FileSystem.directory?(path)
-        raise ArgumentError, "The given module root path '#{path}' is not a directory (required for file system based module path entry)"
-      end
       @path_index = Set.new()
     end
 

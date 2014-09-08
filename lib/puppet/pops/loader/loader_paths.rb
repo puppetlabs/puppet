@@ -75,7 +75,7 @@ module Puppet::Pops::Loader::LoaderPaths
   end
 
   class FunctionPath4x < RubySmartPath
-    FUNCTION_PATH_4X = File.join('lib', 'puppet', 'functions')
+    FUNCTION_PATH_4X = File.join('puppet', 'functions')
 
     def relative_path
       FUNCTION_PATH_4X
