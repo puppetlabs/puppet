@@ -2,7 +2,6 @@ require 'spec_helper'
 
 module EnvironmentsDefaultManifestsSpec
 describe "default manifests" do
-  FS = Puppet::FileSystem
 
   shared_examples_for "puppet with default_manifest settings" do
     let(:confdir) { Puppet[:confdir] }
