@@ -11,7 +11,7 @@ describe Puppet::Resource::Type do
     Puppet::Resource::Type.new(:hostclass, "foo").name.should == "foo"
   end
 
-  [:code, :doc, :line, :file, :resource_type_collection, :ruby_code].each do |attr|
+  [:code, :doc, :line, :file, :resource_type_collection].each do |attr|
     it "should have a '#{attr}' attribute" do
       type = Puppet::Resource::Type.new(:hostclass, "foo")
       type.send(attr.to_s + "=", "yay")
@@ -486,17 +486,6 @@ describe Puppet::Resource::Type do
       code.expects(:safeevaluate).with subscope
 
       @type.evaluate_code(@resource)
-    end
-
-    describe "and ruby code is provided" do
-      it "should create a DSL Resource API and evaluate it" do
-        @type.stubs(:ruby_code).returns(proc { "foo" })
-        @api = stub 'api'
-        Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
-        @api.expects(:evaluate)
-
-        @type.evaluate_code(@resource)
-      end
     end
 
     it "should noop if there is no code" do
