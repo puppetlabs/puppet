@@ -21,6 +21,11 @@ RSpec::Matchers.define :have_matching_element do |expected|
   end
 end
 
+RSpec::Matchers.define :have_matching_log do |expected|
+  match do |actual|
+    actual.map(&:to_s).any? { |item| item =~ expected }
+  end
+end
 
 RSpec::Matchers.define :exit_with do |expected|
   actual = nil
