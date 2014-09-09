@@ -29,10 +29,6 @@ describe provider_class do
       provider.install
     end
 
-    it "should specify that dependencies should be included" do
-      provider.expects(:execute).with { |args| args[2] == "--include-dependencies" }.returns ""
-      provider.install
-    end
 
     it "should specify that documentation should not be included" do
       provider.expects(:execute).with { |args| args[3] == "--no-rdoc" }.returns ""
