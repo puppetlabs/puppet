@@ -70,10 +70,10 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   def call(preverify_ok, store_context)
     # We must make a copy since the scope of the store_context will be lost
     # across invocations of this method.
-    current_cert = store_context.current_cert
-    @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
-
     if preverify_ok
+      current_cert = store_context.current_cert
+      @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
+
       # If we've copied all of the certs in the chain out of the SSL library
       if @peer_certs.length == store_context.chain.length
         # (#20027) The peer cert must be issued by a specific authority
@@ -81,6 +81,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
       end
     else
       if store_context.error_string
+        current_cert = store_context.current_cert
         @verify_errors << "#{store_context.error_string} for #{current_cert.subject}"
       end
     end
