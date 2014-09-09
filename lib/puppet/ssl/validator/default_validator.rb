@@ -52,7 +52,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # SSL_VERIFY_PEER flag is set. It must be supplied by the application and
   # receives two arguments: preverify_ok indicates, whether the verification of
   # the certificate in question was passed (preverify_ok=1) or not
-  # (preverify_ok=0). x509_ctx is a pointer to the complete context used for
+  # (preverify_ok=0). x509_store_ctx is a pointer to the complete context used for
   # the certificate chain verification.
   #
   # See {Puppet::Network::HTTP::Connection} for more information and where this
@@ -60,28 +60,28 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   # @param [Boolean] preverify_ok indicates whether the verification of the
   #   certificate in question was passed (preverify_ok=true)
-  # @param [OpenSSL::SSL::SSLContext] ssl_context holds the SSLContext for the
-  #   chain being verified.
+  # @param [OpenSSL::X509::StoreContext] store_context holds the X509 store context
+  #   for the chain being verified.
   #
   # @return [Boolean] false if the peer is invalid, true otherwise.
   #
   # @api private
   #
-  def call(preverify_ok, ssl_context)
-    # We must make a copy since the scope of the ssl_context will be lost
+  def call(preverify_ok, store_context)
+    # We must make a copy since the scope of the store_context will be lost
     # across invocations of this method.
-    current_cert = ssl_context.current_cert
+    current_cert = store_context.current_cert
     @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
 
     if preverify_ok
       # If we've copied all of the certs in the chain out of the SSL library
-      if @peer_certs.length == ssl_context.chain.length
+      if @peer_certs.length == store_context.chain.length
         # (#20027) The peer cert must be issued by a specific authority
         preverify_ok = valid_peer?
       end
     else
-      if ssl_context.error_string
-        @verify_errors << "#{ssl_context.error_string} for #{current_cert.subject}"
+      if store_context.error_string
+        @verify_errors << "#{store_context.error_string} for #{current_cert.subject}"
       end
     end
     preverify_ok
