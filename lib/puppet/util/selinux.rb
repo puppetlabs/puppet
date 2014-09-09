@@ -13,6 +13,10 @@ require 'pathname'
 
 module Puppet::Util::SELinux
 
+  # Domains for dynamic transition which can be overriden by downstream Linux distributions.
+  SELINUX_DOMAIN_PUPPET_MASTER = ENV['PUPPET_SELINUX_MASTER_DOMAIN'] || 'puppetmaster_t'
+  SELINUX_DOMAIN_PUPPET_CA = ENV['PUPPET_SELINUX_CA_DOMAIN'] || 'puppetca_t'
+
   def selinux_support?
     return false unless defined?(Selinux)
     if Selinux.is_selinux_enabled == 1
@@ -135,6 +139,18 @@ module Puppet::Util::SELinux
       return new_context
     end
     nil
+  end
+
+  # Sets process domain and returns true on success.
+  def set_selinux_domain(domain_type)
+    return nil unless selinux_support?
+    context = Selinux.getcon[1].split(':')
+    context[2] = domain_type
+    if Selinux.setcon(context.join(':')) == 0
+      true
+    else
+      false
+    end
   end
 
   ########################################################################
