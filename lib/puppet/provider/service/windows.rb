@@ -21,21 +21,21 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   def enable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START )
     raise Puppet::Error.new("Win32 service enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
-  rescue Win32::Service::Error => detail
+  rescue SystemCallError => detail
     raise Puppet::Error.new("Cannot enable #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def disable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DISABLED )
     raise Puppet::Error.new("Win32 service disable of #{@resource[:name]} failed" ) if( w32ss.nil? )
-  rescue Win32::Service::Error => detail
+  rescue SystemCallError => detail
     raise Puppet::Error.new("Cannot disable #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def manual_start
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DEMAND_START )
     raise Puppet::Error.new("Win32 service manual enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
-  rescue Win32::Service::Error => detail
+  rescue SystemCallError => detail
     raise Puppet::Error.new("Cannot enable #{@resource[:name]} for manual start, error was: #{detail}", detail )
   end
 
@@ -55,7 +55,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
       else
         raise Puppet::Error.new("Unknown start type: #{w32ss.start_type}")
     end
-  rescue Win32::Service::Error => detail
+  rescue SystemCallError => detail
     raise Puppet::Error.new("Cannot get start type for #{@resource[:name]}, error was: #{detail}", detail )
   end
 
@@ -95,7 +95,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     end
     debug("Service #{@resource[:name]} is #{w32ss.current_state}")
     return state
-  rescue Win32::Service::Error => detail
+  rescue SystemCallError => detail
     raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
   end
 
