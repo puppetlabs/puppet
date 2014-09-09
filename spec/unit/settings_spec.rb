@@ -2,9 +2,12 @@
 require 'spec_helper'
 require 'ostruct'
 require 'puppet/settings/errors'
+require 'puppet_spec/files'
+require 'matchers/resource'
 
 describe Puppet::Settings do
   include PuppetSpec::Files
+  include Matchers::Resource
 
   let(:main_config_file_default_location) do
     File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
@@ -1342,8 +1345,10 @@ describe Puppet::Settings do
       @settings.define_settings :main,
         :manifestdir => { :type => :directory, :default => @prefix+"/manifestdir", :desc => "a" },
         :environmentpath => { :type => :path, :default => @prefix+"/envs", :desc => "a" }
-        catalog = @settings.to_catalog(:main)
-        catalog.resource(:file, @prefix+"/manifestdir").should be_nil
+
+      catalog = @settings.to_catalog(:main)
+
+      expect(catalog).to_not have_resource("File[#{@prefix}/manifestdir]")
     end
 
     describe "on Microsoft Windows" do
