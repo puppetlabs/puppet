@@ -6,13 +6,13 @@ confine :to, :platform => 'ubuntu'
 # pick any ubuntu agent
 agent = agents.first
 
-def check_service_for(pkg, type, agent)
-  on agent, puppet_resource("service", "#{pkg}") do
-    assert_match(/ensure => '#{type}'/, stdout, "Expect #{pkg} to be #{type}")
-  end
-end
-
 def manage_service_for(pkg, state, agent)
+
+  return_code = 0
+
+  if pkg == 'rabbitmq-server' && state == 'stopped'
+    return_code = 3
+  end
 
   manifest = <<-MANIFEST
     service { '#{pkg}':
@@ -21,10 +21,11 @@ def manage_service_for(pkg, state, agent)
     exec { 'service #{pkg} status':
       path      => $path,
       logoutput => true,
+      returns => #{return_code},
     }
   MANIFEST
 
-  apply_manifest_on(agent, manifest) do
+  apply_manifest_on(agent, manifest, :catch_failures => true) do
     if pkg == 'rabbitmq-server'
       if state == 'running'
         assert_match(/Status of node/m, stdout, "Could not start #{pkg}.")
