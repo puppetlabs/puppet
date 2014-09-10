@@ -11,6 +11,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   attr_reader :verify_errors
   attr_reader :ssl_configuration
 
+  FIVE_MINUTES_AS_SECONDS = 5 * 60
+
   # Creates a new DefaultValidator, optionally with an SSL Configuration and SSL Host.
   #
   # @param ssl_configuration [Puppet::SSL::Configuration] (a default configuration) ssl_configuration the SSL configuration to use
@@ -80,9 +82,27 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
         preverify_ok = valid_peer?
       end
     else
-      if store_context.error_string
+      error = store_context.error || 0
+      error_string = store_context.error_string || "OpenSSL error #{error}"
+
+      case error
+      when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
+        # current_crl can be nil
+        # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/openssl/ossl_x509store.c#L501-L510
+        crl = store_context.current_crl
+        if crl
+          if crl.last_update && crl.last_update < Time.now + FIVE_MINUTES_AS_SECONDS
+            Puppet.debug("Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}")
+            preverify_ok = true
+          else
+            @verify_errors << "#{error_string} for #{crl.issuer}"
+          end
+        else
+          @verify_errors << error_string
+        end
+      else
         current_cert = store_context.current_cert
-        @verify_errors << "#{store_context.error_string} for #{current_cert.subject}"
+        @verify_errors << "#{error_string} for #{current_cert.subject}"
       end
     end
     preverify_ok

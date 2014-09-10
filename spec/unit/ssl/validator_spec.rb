@@ -40,15 +40,34 @@ describe Puppet::SSL::Validator::DefaultValidator do
     context 'When pre-verification is not OK' do
       context 'and the ssl_context is in an error state' do
         let(:root_subject) { OpenSSL::X509::Certificate.new(root_ca).subject.to_s }
+        let(:code) { OpenSSL::X509::V_ERR_INVALID_CA }
 
         it 'rejects the connection' do
           ssl_context.stubs(:error_string).returns("Something went wrong")
+          ssl_context.stubs(:error).returns(code)
 
           expect(subject.call(false, ssl_context)).to eq(false)
         end
 
         it 'makes the error available via #verify_errors' do
           ssl_context.stubs(:error_string).returns("Something went wrong")
+          ssl_context.stubs(:error).returns(code)
+
+          subject.call(false, ssl_context)
+          expect(subject.verify_errors).to eq(["Something went wrong for #{root_subject}"])
+        end
+
+        it 'uses a generic message if error_string is nil' do
+          ssl_context.stubs(:error_string).returns(nil)
+          ssl_context.stubs(:error).returns(code)
+
+          subject.call(false, ssl_context)
+          expect(subject.verify_errors).to eq(["OpenSSL error #{code} for #{root_subject}"])
+        end
+
+        it 'uses 0 for nil error codes' do
+          ssl_context.stubs(:error_string).returns("Something went wrong")
+          ssl_context.stubs(:error).returns(nil)
 
           subject.call(false, ssl_context)
           expect(subject.verify_errors).to eq(["Something went wrong for #{root_subject}"])
@@ -57,14 +76,42 @@ describe Puppet::SSL::Validator::DefaultValidator do
         context "when CRL is not yet valid" do
           before :each do
             ssl_context.stubs(:error_string).returns("CRL is not yet valid")
+            ssl_context.stubs(:error).returns(OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID)
+          end
+
+          it 'rejects nil CRL' do
+            ssl_context.stubs(:current_crl).returns(nil)
+
+            expect(subject.call(false, ssl_context)).to eq(false)
+            expect(subject.verify_errors).to eq(["CRL is not yet valid"])
+          end
+
+          it 'includes the CRL issuer in the verify error message' do
+            crl = OpenSSL::X509::CRL.new
+            crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
+            crl.last_update = Time.now + 24 * 60 * 60
+            ssl_context.stubs(:current_crl).returns(crl)
+
+            subject.call(false, ssl_context)
+            expect(subject.verify_errors).to eq(["CRL is not yet valid for /CN=Puppet CA: puppetmaster.example.com"])
           end
 
           it 'rejects CRLs whose last_update time is more than 5 minutes in the future' do
             crl = OpenSSL::X509::CRL.new
             crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
             crl.last_update = Time.now + 24 * 60 * 60
+            ssl_context.stubs(:current_crl).returns(crl)
 
             expect(subject.call(false, ssl_context)).to eq(false)
+          end
+
+          it 'accepts CRLs whose last_update time is 10 seconds in the future' do
+            crl = OpenSSL::X509::CRL.new
+            crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
+            crl.last_update = Time.now + 10
+            ssl_context.stubs(:current_crl).returns(crl)
+
+            expect(subject.call(false, ssl_context)).to eq(true)
           end
         end
       end
