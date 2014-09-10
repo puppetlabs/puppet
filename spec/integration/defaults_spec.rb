@@ -10,12 +10,6 @@ describe "Puppet defaults" do
     it "returns ./manifests by default" do
       expect(Puppet[:default_manifest]).to eq('./manifests')
     end
-
-    it "errors when $environment is part of the value" do
-      expect {
-        Puppet[:default_manifest] = '/$environment/manifest.pp'
-      }.to raise_error Puppet::Settings::ValidationError, /cannot interpolate.*\$environment/
-    end
   end
 
   describe "when disable_per_environment_manifest is set" do

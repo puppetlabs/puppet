@@ -27,11 +27,37 @@ describe "interpolating $environment" do
 
     it "displays the interpolated value in the warning" do
       Puppet.initialize_settings(cmdline_args)
+      Puppet[setting.intern]
       expect(@logs).to have_matching_log(/cannot interpolate \$environment within '#{setting}'.*Its value will remain #{Regexp.escape(expected)}/)
     end
   end
 
   context "when environmentpath is set" do
+
+    describe "config_version" do
+      it "interpolates $environment" do
+        envname = 'testing'
+        setting = 'config_version'
+        value = '/some/script $environment'
+        expected = '/some/script testing'
+
+        set_puppet_conf(confdir, <<-EOF)
+          environmentpath=$confdir/environments
+          environment=#{envname}
+        EOF
+
+        set_environment_conf("#{confdir}/environments", envname, <<-EOF)
+          #{setting}=#{value}
+        EOF
+
+        Puppet.initialize_settings(cmdline_args)
+        expect(Puppet[:environmentpath]).to eq("#{confdir}/environments")
+        environment = Puppet.lookup(:environments).get(envname)
+        expect(environment.config_version).to eq(expected)
+        expect(@logs).to be_empty
+      end
+    end
+
     describe "basemodulepath" do
       let(:setting) { "basemodulepath" }
       let(:value) { "$confdir/environments/$environment/modules:$confdir/environments/$environment/other_modules" }
@@ -58,17 +84,12 @@ describe "interpolating $environment" do
       it_behaves_like "a setting that does not interpolate $environment"
     end
 
-    it "raises validation error parsing a puppet.conf with a $environment in the default_manifest" do
-      value = "$confdir/manifests/$environment"
-      expected = "$confdir/manifests/$environment"
+    describe "the default_manifest" do
+      let(:setting) { "default_manifest" }
+      let(:value) { "$confdir/manifests/$environment" }
+      let(:expected) { "#{confdir}/manifests/$environment" }
 
-      set_puppet_conf(confdir, <<-EOF)
-        default_manifest=#{value}
-      EOF
-
-      expect {
-        Puppet.initialize_settings(cmdline_args)
-      }.to raise_error(Puppet::Settings::ValidationError, /cannot interpolate '\$environment'.*within.*default_manifest/)
+      it_behaves_like "a setting that does not interpolate $environment"
     end
 
     it "does not interpolate $environment and logs a warning when interpolating environmentpath" do
@@ -94,22 +115,27 @@ describe "interpolating $environment" do
     Puppet.initialize_settings(cmdline_args)
     expect(Puppet[:environmentpath]).to be_empty
     expect(Puppet[setting.intern]).to eq(expected_interpolation)
-    expect(@logs).to be_empty
+    expect(@logs).to_not have_matching_log(/cannot interpolate \$environment within '#{setting}'/)
   end
 
   context "when environmentpath is not set" do
+    it "does interpolate $environment in config_version" do
+      value = "/some/script $environment"
+      expect = "/some/script production"
+      assert_does_interpolate_environment("config_version", value, expect)
+    end
+
     it "does interpolate $environment in basemodulepath" do
       value = "$confdir/environments/$environment/modules:$confdir/environments/$environment/other_modules"
       expected = "#{confdir}/environments/production/modules:#{confdir}/environments/production/other_modules"
       assert_does_interpolate_environment("basemodulepath", value, expected)
     end
 
-    it "still raises a validation error parsing a puppet.conf with a $environment in default_manifest" do
+    it "does interpolate $environment in default_manifest, which is fine, because this setting isn't used" do
       value = "$confdir/manifests/$environment"
-      expected = "#{confdir}/manifests/$environment"
-      expect {
-        assert_does_interpolate_environment("default_manifest", value, expected)
-      }.to raise_error(Puppet::Settings::ValidationError, /cannot interpolate '\$environment'.*within.*default_manifest/)
+      expected = "#{confdir}/manifests/production"
+
+      assert_does_interpolate_environment("default_manifest", value, expected)
     end
 
     it "raises something" do
@@ -121,8 +147,18 @@ describe "interpolating $environment" do
   end
 
   def set_puppet_conf(confdir, settings)
-    File.open(File.join(confdir, "puppet.conf"), "w") do |f|
-      f.puts(settings)
+    write_file(File.join(confdir, "puppet.conf"), settings)
+  end
+
+  def set_environment_conf(environmentpath, environment, settings)
+    envdir = File.join(environmentpath, environment)
+    FileUtils.mkdir_p(envdir)
+    write_file(File.join(envdir, 'environment.conf'), settings)
+  end
+
+  def write_file(file, contents)
+    File.open(file, "w") do |f|
+      f.puts(contents)
     end
   end
 end

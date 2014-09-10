@@ -1232,7 +1232,7 @@ Generated on #{Time.now}.
   # @api public
   class ChainedValues
     ENVIRONMENT_SETTING = "environment".freeze
-    ENVIRONMENT_INTERPOLATION_DISALLOWED = [ENVIRONMENT_SETTING, 'environmentpath', 'default_manifest', 'basemodulepath'].freeze
+    ENVIRONMENT_INTERPOLATION_ALLOWED = ['config_version'].freeze
 
     # @see Puppet::Settings.values
     # @api private
@@ -1334,7 +1334,7 @@ Generated on #{Time.now}.
     def ok_to_interpolate_environment(setting_name)
       return true if Puppet.settings.value(:environmentpath, nil, true).empty?
 
-      !ENVIRONMENT_INTERPOLATION_DISALLOWED.include?(setting_name.to_s)
+      ENVIRONMENT_INTERPOLATION_ALLOWED.include?(setting_name.to_s)
     end
   end
 
