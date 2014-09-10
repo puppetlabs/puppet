@@ -39,14 +39,33 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
     context 'When pre-verification is not OK' do
       context 'and the ssl_context is in an error state' do
-        before :each do
-          ssl_context.stubs(:error_string).returns("Something went wrong.")
+        let(:root_subject) { OpenSSL::X509::Certificate.new(root_ca).subject.to_s }
+
+        it 'rejects the connection' do
+          ssl_context.stubs(:error_string).returns("Something went wrong")
+
+          expect(subject.call(false, ssl_context)).to eq(false)
         end
 
         it 'makes the error available via #verify_errors' do
+          ssl_context.stubs(:error_string).returns("Something went wrong")
+
           subject.call(false, ssl_context)
-          msg_suffix = OpenSSL::X509::Certificate.new(root_ca).subject
-          subject.verify_errors.should == ["Something went wrong. for #{msg_suffix}"]
+          expect(subject.verify_errors).to eq(["Something went wrong for #{root_subject}"])
+        end
+
+        context "when CRL is not yet valid" do
+          before :each do
+            ssl_context.stubs(:error_string).returns("CRL is not yet valid")
+          end
+
+          it 'rejects CRLs whose last_update time is more than 5 minutes in the future' do
+            crl = OpenSSL::X509::CRL.new
+            crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
+            crl.last_update = Time.now + 24 * 60 * 60
+
+            expect(subject.call(false, ssl_context)).to eq(false)
+          end
         end
       end
     end
@@ -54,7 +73,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
     context 'When pre-verification is OK' do
       context 'and the ssl_context is in an error state' do
         before :each do
-          ssl_context.stubs(:error_string).returns("Something went wrong.")
+          ssl_context.stubs(:error_string).returns("Something went wrong")
         end
 
         it 'does not make the error available via #verify_errors' do
