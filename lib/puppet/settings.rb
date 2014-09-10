@@ -1137,11 +1137,13 @@ Generated on #{Time.now}.
     configured_environment = self[:environment]
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
-      catalog.add_resource(
-        Puppet::Resource.new(:file,
-                             configured_environment_path,
-                             :parameters => { :ensure => 'directory' })
-      )
+      if !Puppet::FileSystem.symlink?(configured_environment_path)
+        catalog.add_resource(
+          Puppet::Resource.new(:file,
+                               configured_environment_path,
+                               :parameters => { :ensure => 'directory' })
+        )
+      end
     end
   end
 

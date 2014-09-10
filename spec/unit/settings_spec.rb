@@ -1408,6 +1408,13 @@ describe Puppet::Settings do
         catalog = @settings.to_catalog
         expect(catalog.resource_keys).to include(["File", "#{default_path}/production"])
       end
+
+      it "does not add if the path to the default directory environment exists as a symlink" do
+        Dir.mkdir(default_path)
+        Puppet::FileSystem.symlink("#{tmpenv}/nowhere", File.join(default_path, 'production'))
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to_not include(["File", "#{default_path}/production"])
+      end
     end
 
     describe "when adding users and groups to the catalog" do
