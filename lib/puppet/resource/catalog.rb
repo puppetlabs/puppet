@@ -350,12 +350,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       edges.each do |edge_hash|
         edge = Puppet::Relationship.from_data_hash(edge_hash)
         unless source = result.resource(edge.source)
-          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect}"
+          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect} for #{edge.target.to_s}"
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect}"
+          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect} for #{edge.source.to_s}"
         end
         edge.target = target
 
