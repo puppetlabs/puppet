@@ -10,7 +10,13 @@ describe 'loader paths' do
   let(:unused_loaders) { nil }
 
   it 'module loader has smart-paths that prunes unavailable paths' do
-    module_dir = dir_containing('testmodule', {'lib' => {'puppet' => {'functions' => {'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }' }}}})
+    module_dir = dir_containing('testmodule', {'lib' => {'puppet' => {'functions' =>
+      {'foo.rb' =>
+        'Puppet::Functions.create_function("testmodule::foo") {
+          def foo; end;
+        }'
+      }
+    }}})
     module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, unused_loaders, 'testmodule', module_dir)
 
     effective_paths = module_loader.smart_paths.effective_paths(:function)
