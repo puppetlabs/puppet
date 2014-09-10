@@ -10,7 +10,7 @@ test_name "Exercise a module with 4x function and 4x system function"
 #   a function supplied in the module (helloworld::mul10).
 # * The module is manually constructed to allow the test to also run on Windows where the module tool
 #   is not supported.
-# * The module is included by setting 'code' in the configuration.
+# * The module is included by calling 'include' from 'puppet apply'.
 # * Puppet apply is executed to generate the file with the content.
 # * The generated contents is asserted.
 
@@ -23,13 +23,14 @@ initialize_temp_dirs
 
 agents.each do |agent|
   # The modulepath to use in environment 'dev'
-  dev_modulepath = get_test_file_path(agent, 'dev/modules')
+  envs_path = get_test_file_path(agent, 'environments')
+  dev_modulepath = get_test_file_path(agent, 'environments/dev/modules')
   target_path = get_test_file_path(agent, 'output')
 
   # make sure that we use the modulepath from the dev environment
   puppetconf = get_test_file_path(agent, 'puppet.conf')
   on agent, puppet("config", "set", "environment", "dev", "--section", "user", "--config", puppetconf)
-  on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
+  on agent, puppet("config", "set", "environmentpath", envs_path, "--section", "main", "--config", puppetconf)
 
   # Where the functions in the written modules should go
   helloworld_functions = 'helloworld/lib/puppet/functions/helloworld'
