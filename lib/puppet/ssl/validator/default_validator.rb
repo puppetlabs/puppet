@@ -11,6 +11,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   attr_reader :verify_errors
   attr_reader :ssl_configuration
 
+  FIVE_MINUTES_AS_SECONDS = 5 * 60
+
   # Creates a new DefaultValidator, optionally with an SSL Configuration and SSL Host.
   #
   # @param ssl_configuration [Puppet::SSL::Configuration] (a default configuration) ssl_configuration the SSL configuration to use
@@ -52,7 +54,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # SSL_VERIFY_PEER flag is set. It must be supplied by the application and
   # receives two arguments: preverify_ok indicates, whether the verification of
   # the certificate in question was passed (preverify_ok=1) or not
-  # (preverify_ok=0). x509_ctx is a pointer to the complete context used for
+  # (preverify_ok=0). x509_store_ctx is a pointer to the complete context used for
   # the certificate chain verification.
   #
   # See {Puppet::Network::HTTP::Connection} for more information and where this
@@ -60,28 +62,47 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   # @param [Boolean] preverify_ok indicates whether the verification of the
   #   certificate in question was passed (preverify_ok=true)
-  # @param [OpenSSL::SSL::SSLContext] ssl_context holds the SSLContext for the
-  #   chain being verified.
+  # @param [OpenSSL::X509::StoreContext] store_context holds the X509 store context
+  #   for the chain being verified.
   #
   # @return [Boolean] false if the peer is invalid, true otherwise.
   #
   # @api private
   #
-  def call(preverify_ok, ssl_context)
-    # We must make a copy since the scope of the ssl_context will be lost
+  def call(preverify_ok, store_context)
+    # We must make a copy since the scope of the store_context will be lost
     # across invocations of this method.
-    current_cert = ssl_context.current_cert
-    @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
-
     if preverify_ok
+      current_cert = store_context.current_cert
+      @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
+
       # If we've copied all of the certs in the chain out of the SSL library
-      if @peer_certs.length == ssl_context.chain.length
+      if @peer_certs.length == store_context.chain.length
         # (#20027) The peer cert must be issued by a specific authority
         preverify_ok = valid_peer?
       end
     else
-      if ssl_context.error_string
-        @verify_errors << "#{ssl_context.error_string} for #{current_cert.subject}"
+      error = store_context.error || 0
+      error_string = store_context.error_string || "OpenSSL error #{error}"
+
+      case error
+      when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
+        # current_crl can be nil
+        # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/openssl/ossl_x509store.c#L501-L510
+        crl = store_context.current_crl
+        if crl
+          if crl.last_update && crl.last_update < Time.now + FIVE_MINUTES_AS_SECONDS
+            Puppet.debug("Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}")
+            preverify_ok = true
+          else
+            @verify_errors << "#{error_string} for #{crl.issuer}"
+          end
+        else
+          @verify_errors << error_string
+        end
+      else
+        current_cert = store_context.current_cert
+        @verify_errors << "#{error_string} for #{current_cert.subject}"
       end
     end
     preverify_ok
