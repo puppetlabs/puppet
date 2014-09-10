@@ -20,16 +20,24 @@ auth yes
 allow *
 AUTHCONF
 
-initialize_temp_dirs
+temp_dirs = initialize_temp_dirs
 
 create_test_file master, "auth.conf", auth_contents, {}
 
 authfile = get_test_file_path master, "auth.conf"
 on master, "chmod 644 #{authfile}"
 
+temp_yamldir = File.join(temp_dirs[master.name], "yamldir")
+
+on master, "mkdir -p #{temp_yamldir}"
+user = puppet_user master
+group = puppet_group master
+on master, "chown #{user}:#{group} #{temp_yamldir}"
+
 master_opts = {
   'master' => {
-    'rest_authconfig' => authfile
+    'rest_authconfig' => authfile,
+    'yamldir' => temp_yamldir,
   }
 }
 
