@@ -2,7 +2,6 @@ require 'spec_helper'
 
 module EnvironmentsDefaultManifestsSpec
 describe "default manifests" do
-  FS = Puppet::FileSystem
 
   shared_examples_for "puppet with default_manifest settings" do
     let(:confdir) { Puppet[:confdir] }
@@ -113,16 +112,6 @@ describe "default manifests" do
         )
       end
 
-      it "raises an exception if default_manifest has $environment in it" do
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
-          f.puts(<<-EOF)
-  environmentpath=#{environmentpath}
-  default_manifest=/foo/$environment
-          EOF
-        end
-
-        expect { Puppet.initialize_settings }.to raise_error(Puppet::Settings::ValidationError, /cannot interpolate.*\$environment.*in.*default_manifest/)
-      end
     end
 
     context "with disable_per_environment_manifest true" do
