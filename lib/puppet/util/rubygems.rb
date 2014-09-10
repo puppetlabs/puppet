@@ -38,16 +38,19 @@ module Puppet::Util::RubyGems
   # For RubyGems >= 1.8.0
   # @api private
   class Gems18Source < Source
+    class << self
+      attr_accessor :paths
+    end
+
     def directories
       # `require 'mygem'` will consider and potentally load
       # prerelease gems, so we need to match that behavior.
-      Gem::Specification.latest_specs(true).collect do |spec|
+      self.class.paths ||= Gem::Specification.latest_specs(true).collect do |spec|
         File.join(spec.full_gem_path, 'lib')
       end
     end
 
     def clear_paths
-      Gem.clear_paths
     end
   end
 
@@ -59,7 +62,6 @@ module Puppet::Util::RubyGems
     end
 
     def clear_paths
-      Gem.clear_paths
     end
   end
 
