@@ -39,7 +39,7 @@ describe "interpolating $environment" do
         envname = 'testing'
         setting = 'config_version'
         value = '/some/script $environment'
-        expected = '/some/script testing'
+        expected = "#{File.expand_path('/some/script')} testing"
 
         set_puppet_conf(confdir, <<-EOF)
           environmentpath=$confdir/environments
