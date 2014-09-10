@@ -26,6 +26,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Debian boxes, and the only thing that differs is that it can
   # install packages from remote sites.
 
+  def initialize(value={})
+    super(value)
+    @property_flush ||= {}
+  end
+
   def checkforcdrom
     have_cdrom = begin
                    !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
@@ -40,37 +45,40 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
   end
 
+  def install
+    @property_flush[:ensure] = :installed
+  end
+
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
-  def install
+  def flush_install
     self.run_preseed if @resource[:responsefile]
-    should = @resource[:ensure]
 
     checkforcdrom
-    cmd = %w{-q -y}
+    aptget_options = %w{-q -y}
 
     if config = @resource[:configfiles]
       if config == :keep
-        cmd << "-o" << 'DPkg::Options::=--force-confold'
+        aptget_options << "-o" << 'DPkg::Options::=--force-confold'
       else
-        cmd << "-o" << 'DPkg::Options::=--force-confnew'
+        aptget_options << "-o" << 'DPkg::Options::=--force-confnew'
       end
     end
 
-    str = @resource[:name]
-    case should
-    when true, false, Symbol
-      # pass
-    else
-      # Add the package version and --force-yes option
-      str += "=#{should}"
-      cmd << "--force-yes"
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    package_specification = @resource[:name]
+
+    if package_version
+      aptget_options << "--force-yes"
+      package_specification += "=#{package_version}"
     end
 
-    cmd += install_options if @resource[:install_options]
-    cmd << :install << str
+    aptget_options += install_options if @resource[:install_options]
+    aptget(*(aptget_options << :install << package_specification))
+  end
 
-    aptget(*cmd)
+  def version=(version)
+    @property_flush[:ensure] = :installed
   end
 
   # What's the latest package version available?

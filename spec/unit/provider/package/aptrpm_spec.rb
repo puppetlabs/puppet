@@ -40,6 +40,18 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     pkg.provider.install
   end
 
+  it "should try and install a specific version when asked" do
+    pkg[:ensure] = '1.0'
+    pkg.provider.expects(:aptget). with('-q', '-y', 'install', 'faff=1.0'). returns(0)
+    pkg.provider.install
+  end
+
+  it "should try and install a specific version when the version property is set" do
+    pkg[:version] = '1.0'
+    pkg.provider.expects(:aptget). with('-q', '-y', 'install', 'faff=1.0'). returns(0)
+    pkg.provider.install
+  end
+
   it "should try and purge when asked" do
     pkg.provider.expects(:aptget).with('-y', '-q', 'remove', '--purge', 'faff').returns(0)
     pkg.provider.purge

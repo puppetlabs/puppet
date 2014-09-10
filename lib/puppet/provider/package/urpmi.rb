@@ -12,12 +12,9 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     wanted = @resource[:name]
 
     # XXX: We don't actually deal with epochs here.
-    case should
-    when true, false, Symbol
-      # pass
-    else
-      # Add the package version
-      wanted += "-#{should}"
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
+      wanted += "-#{package_version}"
     end
 
     urpmi "--auto", wanted
@@ -25,6 +22,10 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     unless self.query
       raise Puppet::Error, "Package #{self.name} was not present after trying to install it"
     end
+  end
+
+  def version=
+    self.install
   end
 
   # What's the latest package version available?

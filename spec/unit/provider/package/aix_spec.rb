@@ -31,7 +31,13 @@ describe provider_class do
     end
 
     it "should install a specific package version" do
-      @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+      @resource[:ensure] = "1.2.3.4"
+      @provider.expects(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage 1.2.3.4')
+      @provider.install
+    end
+
+    it "should install a specific package version when using the version property" do
+      @resource[:version] = "1.2.3.4"
       @provider.expects(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage 1.2.3.4')
       @provider.install
     end

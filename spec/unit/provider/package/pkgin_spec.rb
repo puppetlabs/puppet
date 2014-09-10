@@ -23,8 +23,13 @@ describe provider_class do
    end
 
    describe "a package with a fixed version" do
-    before { resource[:ensure] = '7.2.446' }
     it "uses pkgin install to install a fixed version" do
+      resource[:ensure] = '7.2.446'
+      subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
+      subject.install
+    end
+    it "uses pkgin install to install a fixed version, if using the version property" do
+      resource[:version] = '7.2.446'
       subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
       subject.install
     end

@@ -40,13 +40,14 @@ module Puppet
     feature :versionable, "The provider is capable of interrogating the
         package database for installed version(s), and can select
         which out of a set of available versions of a package to
-        install if asked."
+        install if asked.",
+      :methods => [:version, :version=]
     feature :holdable, "The provider is capable of placing packages on hold
         such that they are not automatically upgraded as a result of
         other package dependencies unless explicit action is taken by
         a user or another package. Held is considered a superset of
         installed.",
-      :methods => [:hold]
+      :methods => [:held, :held=]
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
@@ -82,7 +83,7 @@ module Puppet
       end
 
       newvalue(:held, :event => :package_held, :required_features => :holdable) do
-        provider.hold
+          provider.held = :true
       end
 
       # Alias the 'present' value.
@@ -136,6 +137,9 @@ module Puppet
           when :latest
             # Short-circuit packages that are not present
             return false if is == :absent or is == :purged
+            unless provider.properties[:version]
+              raise Puppet::Error.new("Could not determine package version")
+            end
 
             # Don't run 'latest' more than about every 5 minutes
             if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
@@ -152,13 +156,9 @@ module Puppet
             end
 
             case
-              when is.is_a?(Array) && is.include?(@latest)
+              when provider.properties[:version].is_a?(Array) && provider.properties[:version].include?(@latest)
                 return true
-              when is == @latest
-                return true
-              when is == :present
-                # This will only happen on retarded packaging systems
-                # that can't query versions.
+              when provider.properties[:version] == @latest
                 return true
               else
                 self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
@@ -172,6 +172,8 @@ module Puppet
           # this handles version number matches and
           # supports providers that can have multiple versions installed
           when *Array(is)
+            return true
+          when *Array(provider.properties[:version])
             return true
           end
         }
@@ -369,6 +371,23 @@ module Puppet
         Normally apt will bail if you try this."
 
       newvalues(:true, :false)
+    end
+
+    newproperty(:held, :required_features => :holdable) do
+      desc "Hold the package at its current version, and do not upgrade,
+        defaults to true if a version is specified"
+      newvalues(:true, :false)
+      defaultto do
+        if @resource[:ensure].is_a?(String) || @resource[:version]
+          :true
+        else
+          :false
+        end
+      end
+    end
+
+    newproperty(:version, :required_features => :versionable) do
+      desc "Install a specific version of a package"
     end
 
     newparam(:flavor) do

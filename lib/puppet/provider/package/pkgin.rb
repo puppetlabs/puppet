@@ -63,8 +63,11 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def install
-    if String === @resource[:ensure]
-      pkgin("-y", :install, "#{resource[:name]}-#{resource[:ensure]}")
+
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+
+    if package_version
+      pkgin("-y", :install, "#{resource[:name]}-#{package_version}")
     else
       pkgin("-y", :install, resource[:name])
     end
@@ -72,6 +75,10 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def uninstall
     pkgin("-y", :remove, resource[:name])
+  end
+
+  def version=
+    self.install
   end
 
   def latest

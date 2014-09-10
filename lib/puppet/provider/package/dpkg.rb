@@ -11,6 +11,13 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
 
+  mk_resource_methods
+
+  def initialize(value={})
+    super(value)
+    @property_flush ||= {}
+  end
+
   # Performs a dpkgquery call with a pipe so that output can be processed
   # inline in a passed block.
   # @param args [Array<String>] any command line arguments to be appended to the command
@@ -45,7 +52,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-  self::FIELDS= [:desired, :error, :status, :name, :ensure]
+  self::FIELDS= [:desired, :error, :status, :name, :version]
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
@@ -62,13 +69,20 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
       hash[:provider] = self.name
 
-      if hash[:status] == 'not-installed'
+      if hash[:status] == 'installed'
+        hash[:ensure] = :installed
+      elsif hash[:status] == 'not-installed'
         hash[:ensure] = :purged
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
         hash[:ensure] = :absent
       end
-      hash[:ensure] = :held if hash[:desired] == 'hold'
-    else 
+
+      if hash[:desired] == 'hold'
+        hash[:held] = :true
+      elsif ['install', 'deinstall', 'purge'].include?(hash[:desired])
+        hash[:held] = :false
+      end
+    else
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
@@ -77,15 +91,12 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
   public
 
-  def install
+  def flush_install
     unless file = @resource[:source]
       raise ArgumentError, "You cannot install dpkg packages without a source"
     end
 
     args = []
-
-    # We always unhold when installing to remove any prior hold.
-    self.unhold
 
     if @resource[:configfiles] == :keep
       args << '--force-confold'
@@ -95,6 +106,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     args << '-i' << file
 
     dpkg(*args)
+    @property_hash[:ensure] = :installed
+  end
+
+  def install
+    @property_flush[:ensure] = :installed
   end
 
   def update
@@ -145,21 +161,38 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     dpkg "--purge", @resource[:name]
   end
 
-  def hold
-    self.install
-    Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
-      tmpfile.write("#{@resource[:name]} hold\n")
-      tmpfile.flush
-      execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
-    end
+  def held=(package_held)
+    @property_flush[:held] = package_held
   end
 
-  def unhold
-    Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
-      tmpfile.write("#{@resource[:name]} install\n")
-      tmpfile.flush
-      execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
+  def flush_held=(package_held)
+    case package_held
+    when :true
+      Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
+        tmpfile.write("#{@resource[:name]} hold\n")
+        tmpfile.flush
+        execute([:dpkg, "--set-selections"], :failonfail => true, :combine => false, :stdinfile => tmpfile.path.to_s)
+      end
+    when :false
+      Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
+        tmpfile.write("#{@resource[:name]} install\n")
+        tmpfile.flush
+        execute([:dpkg, "--set-selections"], :failonfail => true, :combine => false, :stdinfile => tmpfile.path.to_s)
+      end
     end
+    @property_hash[:held] = package_held
   end
 
+  def flush
+    if @property_flush[:ensure] == :installed
+      self.flush_held = :false if @resource[:held] == :true
+      flush_install
+      if @resource[:held] == :true
+        self.flush_held = :true
+      end
+    end
+    if @property_flush[:held]
+      self.flush_held = @property_flush[:held]
+    end
+  end
 end

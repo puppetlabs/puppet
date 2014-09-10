@@ -176,6 +176,14 @@ describe provider_class do
       @provider.install
     end
 
+    it "should install a particular version when using the version property" do
+      @resource[:ensure] = :installed
+      @resource[:version] = "0.0.0"
+      @resource[:source] = nil
+      @provider.expects(:lazy_pip).with("install", "-q", "fake_package==0.0.0")
+      @provider.install
+    end
+
     it "should upgrade" do
       @resource[:ensure] = :latest
       @resource[:source] = nil

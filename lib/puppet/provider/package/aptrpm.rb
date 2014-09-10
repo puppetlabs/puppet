@@ -26,18 +26,21 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     should = @resource.should(:ensure)
 
     str = @resource[:name]
-    case should
-    when true, false, Symbol
-      # pass
-    else
-      # Add the package version
-      str += "=#{should}"
+
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
+      str += "=#{package_version}"
     end
+
     cmd = %w{-q -y}
 
     cmd << 'install' << str
 
     aptget(*cmd)
+  end
+
+  def version=
+    self.install
   end
 
   # What's the latest package version available?

@@ -17,7 +17,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
     end
 
     { :absent   => "deinstall ok config-files faff 1.2.3-1\n",
-      "1.2.3-1" => "install ok installed faff 1.2.3-1\n",
+      :installed => "install ok installed faff 1.2.3-1\n",
     }.each do |expect, output|
       it "detects #{expect} packages" do
         Puppet::Util::Execution.expects(:execute).with(
@@ -36,10 +36,12 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
       returns(0)
 
     pkg.provider.install
+    pkg.provider.flush
   end
 
   it "purges when asked" do
     pkg.provider.expects(:aptitude).with('-y', 'purge', 'faff').returns(0)
     pkg.provider.purge
+    pkg.provider.flush
   end
 end

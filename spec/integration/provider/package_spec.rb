@@ -19,7 +19,15 @@ describe "Package provider" do
         end
 
         pkg = Puppet::Type.newpackage(options)
-        lambda { pkg.provider.install }.should raise_error
+        provider_instance_methods = provider.instance_methods(false).map do |method|
+          method.to_sym
+        end
+        if provider_instance_methods.include?(:flush)
+          pkg.provider.install
+          lambda { pkg.provider.flush }.should raise_error
+        else
+          lambda { pkg.provider.install }.should raise_error
+        end
       end
 
       it "should be able to get a list of existing packages" do

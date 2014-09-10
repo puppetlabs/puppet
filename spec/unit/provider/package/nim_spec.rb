@@ -60,7 +60,7 @@ END
       it "should fail if the package is not available on the lpp source" do
         nimclient_showres_output = ""
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+        @resource.stubs(:[]).with(:ensure).returns("1.2.3.4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output)
         expect {
           @provider.install
@@ -70,7 +70,17 @@ END
       it "should succeed if a BFF/installp package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+        @resource.stubs(:[]).with(:ensure).returns("1.2.3.4")
+        Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
+        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
+        @provider.install
+      end
+
+      it "should succeed if a the version is specified in the version field" do
+        nimclient_sequence = sequence('nimclient')
+
+        @resource.stubs(:[]).with(:ensure).returns(:installed)
+        @resource.stubs(:[]).with(:version).returns("1.2.3.4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
         @provider.install
@@ -124,7 +134,7 @@ Name                      Level           Pre-installation Failure/Warning
 mypackage.foo              1.2.3.1         Already superseded by 1.2.3.4
 OUTPUT
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.1")
+        @resource.stubs(:[]).with(:ensure).returns("1.2.3.1")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").in_sequence(nimclient_sequence).returns(install_output)
 
@@ -135,7 +145,7 @@ OUTPUT
     it "should succeed if an RPM package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3-4")
+        @resource.stubs(:[]).with(:ensure).returns("1.2.3-4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").in_sequence(nimclient_sequence)
         @provider.install
@@ -162,7 +172,7 @@ mypackage.foo-1.2.3-1 is superseded by mypackage.foo-1.2.3-4
 
 OUTPUT
 
-      @resource.stubs(:should).with(:ensure).returns("1.2.3-1")
+      @resource.stubs(:[]).with(:ensure).returns("1.2.3-1")
       Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").in_sequence(nimclient_sequence).returns(install_output)
 

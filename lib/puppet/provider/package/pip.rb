@@ -72,18 +72,20 @@ Puppet::Type.type(:package).provide :pip,
   # gives the fully-qualified URL to the repository.
   def install
     args = %w{install -q}
+
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+
     if @resource[:source]
-      if String === @resource[:ensure]
-        args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
+      if package_version
+        args << "#{@resource[:source]}@#{package_version}#egg=#{
           @resource[:name]}"
       else
         args << "#{@resource[:source]}#egg=#{@resource[:name]}"
       end
     else
-      case @resource[:ensure]
-      when String
-        args << "#{@resource[:name]}==#{@resource[:ensure]}"
-      when :latest
+      if package_version
+        args << "#{@resource[:name]}==#{package_version}"
+      elsif @resource[:ensure] == :latest
         args << "--upgrade" << @resource[:name]
       else
         args << @resource[:name]
@@ -101,6 +103,10 @@ Puppet::Type.type(:package).provide :pip,
 
   def update
     install
+  end
+
+  def version=
+    self.install
   end
 
   # Execute a `pip` command.  If Puppet doesn't yet know how to do so,

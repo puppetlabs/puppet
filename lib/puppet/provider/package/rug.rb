@@ -14,13 +14,10 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
     # XXX: We don't actually deal with epochs here.
-    case should
-    when true, false, Symbol
-      # pass
-    else
-      # Add the package version
-      wanted += "-#{should}"
+    if package_version
+      wanted += "-#{package_version}"
     end
     rug "--quiet", :install, "-y", wanted
 
@@ -29,6 +26,10 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
         "Could not find package #{self.name}"
       )
     end
+  end
+
+  def version=
+    self.install
   end
 
   # What's the latest package version available?

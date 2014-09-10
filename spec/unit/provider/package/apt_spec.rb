@@ -87,6 +87,7 @@ Version table:
 
       provider.stubs(:aptget)
       provider.install
+      provider.flush
     end
 
     it "should check for a cdrom" do
@@ -94,6 +95,7 @@ Version table:
 
       provider.stubs(:aptget)
       provider.install
+      provider.flush
     end
 
     it "should use 'apt-get install' with the package name if no version is asked for" do
@@ -101,6 +103,7 @@ Version table:
       provider.expects(:aptget).with { |*command| command[-1] == name and command[-2] == :install }
 
       provider.install
+      provider.flush
     end
 
     it "should specify the package version if one is asked for" do
@@ -108,6 +111,16 @@ Version table:
       provider.expects(:aptget).with { |*command| command[-1] == "#{name}=1.0" }
 
       provider.install
+      provider.flush
+    end
+
+    it "should specify the package version if one is specified in the version property" do
+      resource[:ensure] = :installed
+      resource[:version] = '1.0'
+      provider.expects(:aptget).with { |*command| command[-1] == "#{name}=1.0" }
+
+      provider.install
+      provider.flush
     end
 
     it "should use --force-yes if a package version is specified" do
@@ -115,18 +128,21 @@ Version table:
       provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
 
       provider.install
+      provider.flush
     end
 
     it "should do a quiet install" do
       provider.expects(:aptget).with { |*command| command.include?("-q") }
 
       provider.install
+      provider.flush
     end
 
     it "should default to 'yes' for all questions" do
       provider.expects(:aptget).with { |*command| command.include?("-y") }
 
       provider.install
+      provider.flush
     end
 
     it "should keep config files if asked" do
@@ -134,6 +150,7 @@ Version table:
       provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
 
       provider.install
+      provider.flush
     end
 
     it "should replace config files if asked" do
@@ -141,6 +158,7 @@ Version table:
       provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
 
       provider.install
+      provider.flush
     end
 
     it 'should support string install options' do
@@ -148,6 +166,7 @@ Version table:
       provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
 
       provider.install
+      provider.flush
     end
 
     it 'should support hash install options' do
@@ -155,6 +174,7 @@ Version table:
       provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
 
       provider.install
+      provider.flush
     end
   end
 end

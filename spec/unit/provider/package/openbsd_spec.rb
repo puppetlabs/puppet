@@ -21,6 +21,12 @@ describe provider_class do
     end
   end
 
+  def expect_pkgadd_version(version)
+    provider.expects(:pkgadd).with do |fullname|
+      fullname.should == ["#{provider.resource[:name]}-#{version}"]
+    end
+  end
+
   def expect_pkgadd_with_env_and_name(source, &block)
     ENV.should_not be_key('PKG_PATH')
 
@@ -113,6 +119,26 @@ describe provider_class do
       provider.resource[:source] = source
       expect_pkgadd_with_source(source)
 
+      provider.install
+    end
+
+    it "should allow sepcifying a specific version" do
+      source = '/whatever/'
+      version = '1.0'
+      provider.resource[:source] = source
+      provider.resource[:ensure] = version
+      provider.expects(:get_version).returns(nil)
+      expect_pkgadd_version(version)
+      provider.install
+    end
+
+    it "should allow sepcifying a specific version, with the version property" do
+      source = '/whatever/'
+      version = '1.0'
+      provider.resource[:source] = source
+      provider.resource[:version] = version
+      provider.expects(:get_version).returns(nil)
+      expect_pkgadd_version(version)
       provider.install
     end
 

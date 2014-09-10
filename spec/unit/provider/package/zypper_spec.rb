@@ -46,7 +46,7 @@ describe provider_class do
 
   describe "when installing with zypper version >= 1.0" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:[]).with(:ensure).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "1.2.8"
 
@@ -56,7 +56,7 @@ describe provider_class do
     end
 
     it "should use a command-line without versioned package" do
-      @resource.stubs(:should).with(:ensure).returns :latest
+      @resource.stubs(:[]).with(:ensure).returns :latest
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "1.2.8"
       @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', 'mypackage')
@@ -67,7 +67,7 @@ describe provider_class do
 
   describe "when installing with zypper version = 0.6.104" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:[]).with(:ensure).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "0.6.104"
 
@@ -77,7 +77,7 @@ describe provider_class do
     end
 
     it "should use a command-line without versioned package" do
-      @resource.stubs(:should).with(:ensure).returns :latest
+      @resource.stubs(:[]).with(:ensure).returns :latest
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "0.6.104"
       @provider.expects(:zypper).with('--terse', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', 'mypackage')
@@ -88,7 +88,18 @@ describe provider_class do
 
   describe "when installing with zypper version = 0.6.13" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:[]).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:allow_virtual?).returns false
+      @provider.stubs(:zypper_version).returns "0.6.13"
+
+      @provider.expects(:zypper).with('--terse', :install, '--no-confirm', 'mypackage-1.2.3-4.5.6')
+      @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
+      @provider.install
+    end
+
+    it "should use a command-line with versioned package when using the version property'" do
+      @resource.stubs(:[]).with(:ensure).returns :installed
+      @resource.stubs(:[]).with(:version).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "0.6.13"
 
@@ -137,7 +148,7 @@ describe provider_class do
     it "should install the package without checking keys" do
       @resource.stubs(:[]).with(:name).returns "php5"
       @resource.stubs(:[]).with(:install_options).returns ['--no-gpg-check', {'-p' => '/vagrant/files/localrepo/'}]
-      @resource.stubs(:should).with(:ensure).returns "5.4.10-4.5.6"
+      @resource.stubs(:[]).with(:ensure).returns "5.4.10-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "1.2.8"
 

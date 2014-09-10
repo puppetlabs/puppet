@@ -20,17 +20,15 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   # Install a package using 'zypper'.
   def install
-    should = @resource.should(:ensure)
+    should = @resource[:ensure]
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
     # XXX: We don't actually deal with epochs here.
-    case should
-    when true, false, Symbol
-      should = nil
-    else
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
       # Add the package version
-      wanted = "#{wanted}-#{should}"
+      wanted = "#{wanted}-#{package_version}"
     end
 
     #This has been tested with following zypper versions
@@ -56,7 +54,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
     options << '--auto-agree-with-licenses' unless major < 1 and minor <= 6 and patch <= 13
     options << '--no-confirm'
-    options << '--name' unless @resource.allow_virtual? || should
+    options << '--name' unless @resource.allow_virtual? || package_version
     options += install_options if resource[:install_options]
     options << wanted
 
@@ -67,6 +65,10 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
         "Could not find package #{self.name}"
       )
     end
+  end
+
+  def version=(version)
+    self.install
   end
 
   # What's the latest package version available?

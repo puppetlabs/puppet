@@ -68,6 +68,15 @@ describe provider_class do
       provider.install
     end
 
+    it 'should be able to set version using the version property' do
+      version = '1.2'
+      resource[:version] = version
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}")
+      provider.stubs(:query).returns :ensure => version
+      provider.install
+    end
+
     it 'should be able to downgrade' do
       current_version = '1.2'
       version = '1.0'
