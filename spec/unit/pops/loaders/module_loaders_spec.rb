@@ -26,7 +26,7 @@ describe 'FileBased module loader' do
           }
         })
 
-    module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
+    module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
     function = module_loader.load_typed(typed_name(:function, 'foo4x')).value
 
     expect(function.class.name).to eq('foo4x')
@@ -51,7 +51,7 @@ describe 'FileBased module loader' do
           }
       }})
 
-    module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
+    module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
     function = module_loader.load_typed(typed_name(:function, 'testmodule::foo4x')).value
     expect(function.class.name).to eq('testmodule::foo4x')
     expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
@@ -68,7 +68,7 @@ describe 'FileBased module loader' do
            end
         CODE
       }}}}})
-    module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
+    module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
 
     module_dir2 = dir_containing('testmodule2', {
       'lib' => { 'puppet' => { 'functions' => { 'testmodule2' => {
