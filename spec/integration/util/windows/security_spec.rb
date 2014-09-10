@@ -447,7 +447,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         describe "when the sid refers to a deleted trustee" do
           it "should retrieve the user sid" do
             sid = nil
-            user = Puppet::Util::Windows::ADSI::User.create("delete_me_user")
+            user = Puppet::Util::Windows::ADSI::User.create("puppet#{rand(10000)}")
             user.commit
             begin
               sid = Puppet::Util::Windows::ADSI::User.new(user.name).sid.to_s
@@ -463,7 +463,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
           it "should retrieve the group sid" do
             sid = nil
-            group = Puppet::Util::Windows::ADSI::Group.create("delete_me_group")
+            group = Puppet::Util::Windows::ADSI::Group.create("puppet#{rand(10000)}")
             group.commit
             begin
               sid = Puppet::Util::Windows::ADSI::Group.new(group.name).sid.to_s
