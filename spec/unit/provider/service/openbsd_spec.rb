@@ -10,15 +10,8 @@ describe provider_class do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :openbsd
-  end
-
-  let :rcscripts do
-    [
-      '/etc/rc.d/apmd',
-      '/etc/rc.d/aucat',
-      '/etc/rc.d/cron',
-      '/etc/rc.d/puppetd'
-    ]
+    FileTest.stubs(:file?).with('/usr/sbin/rcctl').returns true
+    FileTest.stubs(:executable?).with('/usr/sbin/rcctl').returns true
   end
 
   describe "#instances" do
@@ -27,18 +20,9 @@ describe provider_class do
     end
 
     it "should list all available services" do
-      File.expects(:directory?).with('/etc/rc.d').returns true
-      Dir.expects(:glob).with('/etc/rc.d/*').returns rcscripts
-
-      rcscripts.each do |script|
-        File.expects(:executable?).with(script).returns true
-      end
-
+      described_class.stubs(:execpipe).with(['/usr/sbin/rcctl', :status]).yields File.read(my_fixture('rcctl_status'))
       described_class.instances.map(&:name).should == [
-        'apmd',
-        'aucat',
-        'cron',
-        'puppetd'
+        'accounting', 'pf', 'postgresql', 'tftpd', 'wsmoused', 'xdm',
       ]
     end
   end
@@ -52,8 +36,7 @@ describe provider_class do
 
     it "should start the service otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      provider.expects(:texecute).with(:start, ['/usr/sbin/rcctl', '-f', :start, 'sshd'], true)
       provider.start
     end
   end
@@ -67,8 +50,7 @@ describe provider_class do
 
     it "should stop the service otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      provider.expects(:texecute).with(:stop, ['/usr/sbin/rcctl', :stop, 'sshd'], true)
       provider.stop
     end
   end
@@ -76,14 +58,14 @@ describe provider_class do
   describe "#status" do
     it "should use the status command from the resource" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       provider.status
     end
 
     it "should return :stopped when status command returns with a non-zero exitcode" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 3
       provider.status.should == :stopped
@@ -91,7 +73,7 @@ describe provider_class do
 
     it "should return :running when status command returns with a zero exitcode" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 0
       provider.status.should == :running
@@ -101,156 +83,96 @@ describe provider_class do
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', '-f', :restart, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
-    it "should restart the service with rc-service restart if hasrestart is true" do
+    it "should restart the service with rcctl restart if hasrestart is true" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      provider.expects(:texecute).with(:restart, ['/usr/sbin/rcctl', '-f', :restart, 'sshd'], true)
       provider.restart
     end
 
-    it "should restart the service with rc-service stop/start if hasrestart is false" do
+    it "should restart the service with rcctl stop/start if hasrestart is false" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      provider.expects(:texecute).with(:restart, ['/usr/sbin/rcctl', '-f', :restart, 'sshd'], true).never
+      provider.expects(:texecute).with(:stop, ['/usr/sbin/rcctl', :stop, 'sshd'], true)
+      provider.expects(:texecute).with(:start, ['/usr/sbin/rcctl', '-f', :start, 'sshd'], true)
       provider.restart
     end
   end
 
-  describe "#parse_rc_line" do
-    it "can parse a flag line with a known value" do
-      output = described_class.parse_rc_line('daemon_flags=')
-      output.should eq('')
-    end
-
-    it "can parse a flag line with a flag is wrapped in single quotes" do
-      output = described_class.parse_rc_line('daemon_flags=\'\'')
-      output.should eq('\'\'')
-    end
-
-    it "can parse a flag line with a flag is wrapped in double quotes" do
-      output = described_class.parse_rc_line('daemon_flags=""')
-      output.should eq('')
-    end
-
-    it "can parse a flag line with a trailing comment" do
-      output = described_class.parse_rc_line('daemon_flags="-d" # bees')
-      output.should eq('-d')
-    end
-
-    it "can parse a flag line with a bare word" do
-      output = described_class.parse_rc_line('daemon_flags=YES')
-      output.should eq('YES')
-    end
-
-    it "can parse a flag line with a flag that contains an equals" do
-      output = described_class.parse_rc_line('daemon_flags="-Dbla -tmpdir=foo"')
-      output.should eq('-Dbla -tmpdir=foo')
-    end
-  end
-
-  describe "#pkg_scripts" do
-    it "can retrieve the package_scripts array from rc.conf.local" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="dbus_daemon cupsd"']
-      expect(provider.pkg_scripts).to match_array(['dbus_daemon', 'cupsd'])
-    end
-
-    it "returns an empty array when no pkg_scripts line is found" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ["#\n#\n#"]
-      expect(provider.pkg_scripts).to match_array([])
-    end
-  end
-
-  describe "#pkg_scripts_append" do
-    it "can append to the package_scripts array and return the result" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="dbus_daemon"']
-      provider.pkg_scripts_append.should === ['dbus_daemon', 'cupsd']
-    end
-
-    it "should not duplicate the script name" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="cupsd dbus_daemon"']
-      provider.pkg_scripts_append.should === ['cupsd', 'dbus_daemon']
-    end
-  end
-
-  describe "#pkg_scripts_remove" do
-    it "can append to the package_scripts array and return the result" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="dbus_daemon cupsd"']
-      expect(provider.pkg_scripts_remove).to match_array(['dbus_daemon'])
-    end
-
-    it "should not remove the script from the array unless its needed" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:load_rcconf_local_array).returns ['pkg_scripts="dbus_daemon"']
-      expect(provider.pkg_scripts_remove).to match_array(['dbus_daemon'])
-    end
-  end
-
-  describe "#set_content_flags" do
-    it "can create the necessary content where none is provided" do
-      content = []
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.set_content_flags(content,'-d').should match_array(['cupsd_flags="-d"'])
-    end
-
-    it "can modify the existing content" do
-      content = ['cupsd_flags="-f"']
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      output = provider.set_content_flags(content,"-d")
-      output.should match_array(['cupsd_flags="-d"'])
-    end
-
-    it "does not set empty flags for package scripts" do
-      content = []
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.expects(:in_base?).returns(false)
-      output = provider.set_content_flags(content,'')
-      output.should match_array([nil])
-    end
-
-    it "does set empty flags for base scripts" do
-      content = []
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'ntpd'))
-      provider.expects(:in_base?).returns(true)
-      output = provider.set_content_flags(content,'')
-      output.should match_array(['ntpd_flags=""'])
-    end
-  end
-
-  describe "#remove_content_flags" do
-    it "can remove the flags line from the requested content" do
-      content = ['cupsd_flags="-d"']
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      output = provider.remove_content_flags(content)
-      output.should_not match_array(['cupsd_flags="-d"'])
-    end
-  end
-
-  describe "#set_content_scripts" do
-    it "should append to the list of scripts" do
-      content = ['pkg_scripts="dbus_daemon"']
-      scripts = ['dbus_daemon','cupsd']
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'cupsd'))
-      provider.set_content_scripts(content,scripts).should match_array(['pkg_scripts="dbus_daemon cupsd"'])
-    end
-  end
-
-  describe "#in_base?" do
-    it "should true if in base" do
-      File.stubs(:readlines).with('/etc/rc.conf').returns(['sshd_flags=""'])
+  describe "#enabled?" do
+    it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.in_base?.should be_true
+      described_class.stubs(:rcctl).with('status', 'sshd').returns('-6')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
+      provider.enabled?.should == :true
+    end
+
+    it "should return :false if the service is disabled" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with('status', 'sshd').returns('NO')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('NO')
+      provider.enabled?.should == :false
+    end
+  end
+
+  describe "#enable" do
+    it "should run rcctl enable to enable the service" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:enable, 'sshd').returns('')
+      provider.expects(:rcctl).with(:enable, 'sshd')
+      provider.enable
+    end
+
+    it "should run rcctl enable with flags if provided" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
+      described_class.stubs(:rcctl).with(:enable, 'sshd', :flags, '-6').returns('')
+      provider.expects(:rcctl).with(:enable, 'sshd', :flags, '-6')
+      provider.enable
+    end
+  end
+
+  describe "#disable" do
+    it "should run rcctl disable to disable the service" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:disable, 'sshd').returns('')
+      provider.expects(:rcctl).with(:disable, 'sshd')
+      provider.disable
+    end
+  end
+
+  describe "#flags" do
+    it "should return flags when set" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
+      described_class.stubs(:rcctl).with(:status, 'sshd').returns('-6')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
+      provider.flags
+    end
+
+    it "should return empty flags" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:status, 'sshd').returns('')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('')
+      provider.flags
+    end
+
+    it "should return flags for special services" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'pf'))
+      described_class.stubs(:rcctl).with(:status, 'pf').returns('YES')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'pf'], :failonfail => false, :combine => false, :squelch => false).returns('YES')
+      provider.flags
+    end
+  end
+
+  describe "#flags=" do
+    it "should run rcctl to set flags" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:enable, 'sshd', :flags, '-4').returns('')
+      provider.expects(:rcctl).with(:enable, 'sshd', :flags, '-4')
+      provider.flags = '-4'
     end
   end
 end

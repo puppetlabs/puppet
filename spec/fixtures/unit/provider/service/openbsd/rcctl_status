@@ -1,0 +1,6 @@
+accounting=NO
+pf=YES
+postgresql_flags=-l /var/postgresql/logfile
+tftpd_flags=/tftpboot
+wsmoused_flags=NO
+xdm_flags=
