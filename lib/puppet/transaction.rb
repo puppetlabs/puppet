@@ -212,13 +212,13 @@ class Puppet::Transaction
   def eval_resource(resource, ancestor = nil)
     if skip?(resource)
       resource_status(resource).skipped = true
+      resource.info("Resource is being skipped, unscheduling all events")
+      event_manager.dequeue_all_events_for_resource(resource)
     else
       resource_status(resource).scheduled = true
       apply(resource, ancestor)
+      event_manager.process_events(resource)
     end
-
-    # Check to see if there are any events queued for this resource
-    event_manager.process_events(resource)
   end
 
   def failed?(resource)
