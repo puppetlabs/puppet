@@ -26,6 +26,7 @@ agents.each do |agent|
   envs_path = get_test_file_path(agent, 'environments')
   dev_modulepath = get_test_file_path(agent, 'environments/dev/modules')
   target_path = get_test_file_path(agent, 'output')
+  mkdirs agent, target_path
 
   # make sure that we use the modulepath from the dev environment
   puppetconf = get_test_file_path(agent, 'puppet.conf')
@@ -55,6 +56,7 @@ SOURCE
   create_remote_file(agent, File.join(dev_modulepath, "helloworld", "manifests", "init.pp"), <<SOURCE)
 class helloworld {
   file { "#{target_path}/result.txt":
+    ensure => 'file',
     mode => '0666',
     content => [1,2,3].reduce("Generated") |$memo, $n| {
       "${memo}, ${n} => ${helloworld::mul10($n)}"
