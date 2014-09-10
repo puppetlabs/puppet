@@ -95,7 +95,7 @@ module Puppet
 
         step "Clear old agent certificates from master" do
           agents.each do |agent|
-            next if agent == master && agent.is_using_passenger?
+            next if agent == master && (agent.is_using_passenger? || master[:is_puppetserver])
             agent_cn = on(agent, puppet('agent --configprint certname')).stdout.chomp
             clean_cert(master, agent_cn, false) if agent_cn
           end
