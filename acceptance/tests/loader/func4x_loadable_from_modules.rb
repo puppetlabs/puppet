@@ -5,14 +5,14 @@ test_name "Exercise a module with 4x function and 4x system function"
 # a module can be called.
 #
 # Method:
-# * Manually construct a very simple module with a maniifest that creates a file.
+# * Manually construct a very simple module with a manifest that creates a file.
 # * The file has content that depends on logic that calls both a system function (reduce), and
-# * a function supplied in the module (helloworld::mul10).
-# * The module is manually constructed to allw the test to also run on Windows where the module tool
+#   a function supplied in the module (helloworld::mul10).
+# * The module is manually constructed to allow the test to also run on Windows where the module tool
 #   is not supported.
-# * the module is included by setting 'code' in the configuration
-# * Puppet apply is executed to generated the file with the content
-# * The generated contents is asserted
+# * The module is included by setting 'code' in the configuration.
+# * Puppet apply is executed to generate the file with the content.
+# * The generated contents is asserted.
 
 # TODO: The test can be improved by adding yet another module that calls the function in helloworld.
 # TODO: The test can be improved to also test loading of a non namespaced function
