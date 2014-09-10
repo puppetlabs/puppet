@@ -9,7 +9,7 @@ end
 confine :to, :platform => 'el-6'
 confine :except, :type => 'pe'
 
-skip_test "Test not supported on jvm" if @options[:is_jvm_puppet]
+skip_test "Test not supported on jvm" if @options[:is_puppetserver]
 
 if master.use_service_scripts?
   # Beaker defaults to leaving puppet running when using service scripts,

@@ -5,7 +5,7 @@
 # expect that after correcting their actions, puppet will work correctly.
 test_name "Puppet manages its own configuration in a robust manner"
 
-skip_test "JVM Puppet cannot change its user while running." if @options[:is_jvm_puppet]
+skip_test "JVM Puppet cannot change its user while running." if @options[:is_puppetserver]
 
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
