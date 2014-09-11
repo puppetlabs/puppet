@@ -102,7 +102,7 @@ module Puppet::Pops
       module ClassModule
         def locator
           unless result = getLocator
-            setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+            setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets, char_offsets))
           end
           result
         end
