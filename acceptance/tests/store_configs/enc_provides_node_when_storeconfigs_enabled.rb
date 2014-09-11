@@ -3,6 +3,8 @@ test_name "ENC node information is used when store configs enabled (#16698)"
 confine :to, :platform => ['debian', 'ubuntu']
 confine :except, :platform => 'lucid'
 
+skip_test "Test not supported on jvm" if @options[:is_puppetserver]
+
 testdir = master.tmpdir('use_enc')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END

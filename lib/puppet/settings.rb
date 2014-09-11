@@ -887,8 +887,8 @@ class Puppet::Settings
     sections = nil if sections.empty?
 
     catalog = Puppet::Resource::Catalog.new("Settings", Puppet::Node::Environment::NONE)
-
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
+      next if (key == :manifestdir && should_skip_manifestdir?())
       file = @config[key]
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
@@ -904,6 +904,13 @@ class Puppet::Settings
 
     catalog
   end
+
+  def should_skip_manifestdir?()
+    setting = @config[:environmentpath]
+    !(setting.nil? || setting.value.nil? || setting.value.empty?)
+  end
+
+  private :should_skip_manifestdir?
 
   # Convert our list of config settings into a configuration file.
   def to_config
@@ -1130,11 +1137,13 @@ Generated on #{Time.now}.
     configured_environment = self[:environment]
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
-      catalog.add_resource(
-        Puppet::Resource.new(:file,
-                             configured_environment_path,
-                             :parameters => { :ensure => 'directory' })
-      )
+      if !Puppet::FileSystem.symlink?(configured_environment_path)
+        catalog.add_resource(
+          Puppet::Resource.new(:file,
+                               configured_environment_path,
+                               :parameters => { :ensure => 'directory' })
+        )
+      end
     end
   end
 
@@ -1232,6 +1241,7 @@ Generated on #{Time.now}.
   # @api public
   class ChainedValues
     ENVIRONMENT_SETTING = "environment".freeze
+    ENVIRONMENT_INTERPOLATION_ALLOWED = ['config_version'].freeze
 
     # @see Puppet::Settings.values
     # @api private
@@ -1280,7 +1290,7 @@ Generated on #{Time.now}.
         else
           # Convert it if necessary
           begin
-            val = convert(val)
+            val = convert(val, name)
           rescue InterpolationError => err
             # This happens because we don't have access to the param name when the
             # exception is originally raised, but we want it in the message
@@ -1296,26 +1306,44 @@ Generated on #{Time.now}.
 
     private
 
-    def convert(value)
+    def convert(value, setting_name)
       case value
       when nil
         nil
       when String
-        value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+        failed_environment_interpolation = false
+        interpolated_value = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |expression|
           varname = $2 || $1
-          if varname == ENVIRONMENT_SETTING && @environment
-            @environment
-          elsif varname == "run_mode"
-            @mode
-          elsif !(pval = interpolate(varname.to_sym)).nil?
-            pval
+          interpolated_expression =
+          if varname != ENVIRONMENT_SETTING || ok_to_interpolate_environment(setting_name)
+            if varname == ENVIRONMENT_SETTING && @environment
+              @environment
+            elsif varname == "run_mode"
+              @mode
+            elsif !(pval = interpolate(varname.to_sym)).nil?
+              pval
+            else
+              raise InterpolationError, "Could not find value for #{expression}"
+            end
           else
-            raise InterpolationError, "Could not find value for #{value}"
+            failed_environment_interpolation = true
+            expression
           end
+          interpolated_expression
         end
+        if failed_environment_interpolation
+          Puppet.warning("You cannot interpolate $environment within '#{setting_name}' when using directory environments.  Its value will remain #{interpolated_value}.")
+        end
+        interpolated_value
       else
         value
       end
+    end
+
+    def ok_to_interpolate_environment(setting_name)
+      return true if Puppet.settings.value(:environmentpath, nil, true).empty?
+
+      ENVIRONMENT_INTERPOLATION_ALLOWED.include?(setting_name.to_s)
     end
   end
 

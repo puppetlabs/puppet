@@ -16,10 +16,10 @@ describe 'dependency loader' do
         'foo.rb' => 'Puppet::Functions.create_function("foo") { def foo; end; }'
       }}}}})
 
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
-      dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
+      loader = loader_for('testmodule', module_dir)
+
       expect do
-        dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+        loader.load_typed(typed_name(:function, 'testmodule::foo')).value
       end.to raise_error(ArgumentError, /produced mis-matched name, expected 'testmodule::foo', got foo/)
     end
 
@@ -28,10 +28,10 @@ describe 'dependency loader' do
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
         'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }'
       }}}}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
-      dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
 
-      function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      loader = loader_for('testmodule', module_dir)
+
+      function = loader.load_typed(typed_name(:function, 'testmodule::foo')).value
 
       expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
@@ -42,17 +42,22 @@ describe 'dependency loader' do
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
         'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }'
       }}}}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
-      dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
 
-      function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      loader = loader_for('testmodule', module_dir)
+
+      function = loader.load_typed(typed_name(:function, 'testmodule::foo')).value
       expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
 
-      function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      function = loader.load_typed(typed_name(:function, 'testmodule::foo')).value
       expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
     end
+  end
+
+  def loader_for(name, dir)
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, name, dir)
+      Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
   end
 
   def typed_name(type, name)

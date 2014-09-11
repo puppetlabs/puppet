@@ -64,16 +64,7 @@ class Puppet::Pops::Loaders
   private
 
   def create_puppet_system_loader()
-    module_name = nil
-    loader_name = 'puppet_system'
-
-    # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
-    # The only way to find this across the different ways puppet can be installed is
-    # to search up the path from this source file's __FILE__ location until it finds the parent of
-    # lib/puppet... e.g.. dirname(__FILE__)/../../..  (i.e. <somewhere>/lib/puppet/pops/loaders.rb).
-    #
-    puppet_lib = File.join(File.dirname(__FILE__), '../../..')
-    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, self, module_name, puppet_lib, loader_name)
+    Puppet::Pops::Loader::ModuleLoaders.system_loader_from(static_loader, self)
   end
 
   def create_environment_loader(environment)
@@ -121,7 +112,7 @@ class Puppet::Pops::Loaders
       # Create data about this module
       md = LoaderModuleData.new(puppet_module)
       mr[puppet_module.name] = md
-      md.public_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, self, md.name, md.path, md.name)
+      md.public_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(parent_loader, self, md.name, md.path)
     end
     # NOTE: Do not resolve all modules here - this is wasteful if only a subset of modules / functions are used
     #       The resolution is triggered by asking for a module's private loader, since this means there is interest
