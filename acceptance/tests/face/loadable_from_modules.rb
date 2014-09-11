@@ -17,13 +17,13 @@ agents.each do |agent|
   on agent, puppet("config", "set", "modulepath", user_modulepath, "--section", "user", "--config", puppetconf)
   on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
 
-  on agent, 'rm -rf puppetlabs-helloworld'
+  on agent, 'rm -rf helloworld'
   on agent, puppet("module", "generate", "puppetlabs-helloworld", "--skip-interview")
-  mkdirs agent, 'puppetlabs-helloworld/lib/puppet/application'
-  mkdirs agent, 'puppetlabs-helloworld/lib/puppet/face'
+  mkdirs agent, 'helloworld/lib/puppet/application'
+  mkdirs agent, 'helloworld/lib/puppet/face'
 
   # copy application, face, and utility module
-  create_remote_file(agent, "puppetlabs-helloworld/lib/puppet/application/helloworld.rb", <<'EOM')
+  create_remote_file(agent, "helloworld/lib/puppet/application/helloworld.rb", <<'EOM')
 require 'puppet/face'
 require 'puppet/application/face_base'
 
@@ -31,7 +31,7 @@ class Puppet::Application::Helloworld < Puppet::Application::FaceBase
 end
 EOM
 
-  create_remote_file(agent, "puppetlabs-helloworld/lib/puppet/face/helloworld.rb", <<'EOM')
+  create_remote_file(agent, "helloworld/lib/puppet/face/helloworld.rb", <<'EOM')
 Puppet::Face.define(:helloworld, '0.1.0') do
   summary "Hello world face"
   description "This is the hello world face"
@@ -53,7 +53,7 @@ Puppet::Face.define(:helloworld, '0.1.0') do
 end
 EOM
 
-  create_remote_file(agent, "puppetlabs-helloworld/lib/puppet/helloworld.rb", <<'EOM')
+  create_remote_file(agent, "helloworld/lib/puppet/helloworld.rb", <<'EOM')
 module Puppet::Helloworld
   def print
     puts "Hello world from a required module"
@@ -62,8 +62,8 @@ module Puppet::Helloworld
 end
 EOM
 
-  on agent, puppet('module', 'build', 'puppetlabs-helloworld')
-  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.1.0.tar.gz')
+  on agent, puppet('module', 'build', 'helloworld')
+  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'helloworld/pkg/puppetlabs-helloworld-0.1.0.tar.gz')
 
   on(agent, puppet('help', '--config', puppetconf)) do
     assert_match(/helloworld\s*Hello world face/, stdout, "Face missing from list of available subcommands")
