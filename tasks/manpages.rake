@@ -15,15 +15,6 @@ task :gen_manpages do
   helpface = Puppet::Face[:help, '0.0.1']
   manface  = Puppet::Face[:man, '0.0.1']
 
-  # TODO: This line is terrible.  The reason we need this here is because we
-  #  handle state initialization differently when we run via command line
-  #  (application.rb) than we do when we try to use Faces as library code.
-  #  This is bad, we need to come up with an official stance on what our
-  #  API is and what the entry points, so that we can make sure that
-  #  state initialization is consistent.  See:
-  # http://projects.puppetlabs.com/issues/14441
-  Puppet::Util::Instrumentation.init()
-
   sbins = Dir.glob(%w{sbin/*})
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications

@@ -35,10 +35,6 @@ describe Puppet::Application::IndirectionBase do
     terminus = stub_everything("test indirection terminus")
     terminus.stubs(:name).returns(:test_indirection)
 
-    # This is necessary because Instrumentation tickles indirection, which
-    #  messes up our expectations.
-    Puppet::Util::Instrumentation.stubs(:init)
-
     Puppet::Indirector::Indirection.expects(:instance).
       with(:test_indirection).returns(terminus)
 
