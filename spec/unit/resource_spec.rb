@@ -664,6 +664,26 @@ describe Puppet::Resource do
     end
   end
 
+  describe "when converting to Yaml for Hiera" do
+    before do
+      @resource = Puppet::Resource.new("one::two", "/my/file",
+        :parameters => {
+          :noop => true,
+          :foo => %w{one two},
+          :ensure => 'present',
+        }
+      )
+    end
+
+    it "should align and sort to attributes with ensure first" do
+      @resource.to_hierayaml.should == <<-HEREDOC.gsub(/^\s{8}/, '')
+          /my/file:
+            ensure: 'present'
+            foo   : ['one', 'two']
+            noop  : 'true'
+      HEREDOC
+    end
+  end
   describe "when converting to pson" do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }

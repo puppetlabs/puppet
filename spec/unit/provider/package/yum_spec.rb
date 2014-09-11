@@ -40,6 +40,140 @@ describe provider_class do
     end
   end
 
+  describe 'package evr parsing' do
+
+    it 'should parse full simple evr' do
+      v = provider.yum_parse_evr('0:1.2.3-4.el5')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == '4.el5'
+    end
+
+    it 'should parse version only' do
+      v = provider.yum_parse_evr('1.2.3')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == nil
+    end
+
+    it 'should parse version-release' do
+      v = provider.yum_parse_evr('1.2.3-4.5.el6')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == '4.5.el6'
+    end
+
+    it 'should parse release with git hash' do
+      v = provider.yum_parse_evr('1.2.3-4.1234aefd')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == '4.1234aefd'
+    end
+
+    it 'should parse single integer versions' do
+      v = provider.yum_parse_evr('12345')
+      v[:epoch].should == '0'
+      v[:version].should == '12345'
+      v[:release].should == nil
+    end
+
+    it 'should parse text in the epoch to 0' do
+      v = provider.yum_parse_evr('foo0:1.2.3-4')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == '4'
+    end
+
+    it 'should parse revisions with text' do
+      v = provider.yum_parse_evr('1.2.3-SNAPSHOT20140107')
+      v[:epoch].should == '0'
+      v[:version].should == '1.2.3'
+      v[:release].should == 'SNAPSHOT20140107'
+    end
+
+    # test cases for PUP-682
+    it 'should parse revisions with text and numbers' do
+      v = provider.yum_parse_evr('2.2-SNAPSHOT20121119105647')
+      v[:epoch].should == '0'
+      v[:version].should == '2.2'
+      v[:release].should == 'SNAPSHOT20121119105647'
+    end
+
+  end
+
+  describe 'yum evr comparison' do
+
+    # currently passing tests
+    it 'should evaluate identical version-release as equal' do
+      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '1.el5'})
+      v.should == 0
+    end
+
+    it 'should evaluate identical version as equal' do
+      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
+                                  {:epoch => '0', :version => '1.2.3', :release => nil})
+      v.should == 0
+    end
+
+    it 'should evaluate identical version but older release as less' do
+      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      v.should == -1
+    end
+
+    it 'should evaluate identical version but newer release as greater' do
+      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '3.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      v.should == 1
+    end
+
+    it 'should evaluate a newer epoch as greater' do
+      v = provider.yum_compareEVR({:epoch => '1', :version => '1.2.3', :release => '4.5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '4.5'})
+      v.should == 1
+    end
+
+    # these tests describe PUP-1244 logic yet to be implemented
+    it 'should evaluate any version as equal to the same version followed by release' do
+      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      v.should == 0
+    end
+
+    # test cases for PUP-682
+    it 'should evaluate same-length numeric revisions numerically' do
+      provider.yum_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
+                               {:epoch => '0', :version => '2.2', :release => '406'}).should == -1
+    end
+
+  end
+
+  describe 'yum version segment comparison' do
+
+    it 'should treat two nil values as equal' do
+      v = provider.compare_values(nil, nil)
+      v.should == 0
+    end
+
+    it 'should treat a nil value as less than a non-nil value' do
+      v = provider.compare_values(nil, '0')
+      v.should == -1
+    end
+
+    it 'should treat a non-nil value as greater than a nil value' do
+      v = provider.compare_values('0', nil)
+      v.should == 1
+    end
+
+    it 'should pass two non-nil values on to rpmvercmp' do
+      provider.stubs(:rpmvercmp) { 0 }
+      provider.expects(:rpmvercmp).with('s1', 's2')
+      provider.compare_values('s1', 's2')
+    end
+
+  end
+
   describe 'when installing' do
     before(:each) do
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
@@ -65,6 +199,13 @@ describe provider_class do
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}")
       provider.stubs(:query).returns :ensure => version
+      provider.install
+    end
+
+    it 'should handle partial versions specified' do
+      version = '1.3.4'
+      resource[:ensure] = version
+      provider.stubs(:query).returns :ensure => '1.3.4-1.el6'
       provider.install
     end
 

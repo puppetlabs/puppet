@@ -1,6 +1,6 @@
 test_name "Commandline modulepath and manifest settings override environment"
 
-skip_test "CLI-master tests are not applicable" if @options[:is_jvm_puppet]
+skip_test "CLI-master tests are not applicable" if @options[:is_puppetserver]
 
 testdir = create_tmpdir_for_user master, 'cmdline_and_environment'
 environmentpath = "#{testdir}/environments"

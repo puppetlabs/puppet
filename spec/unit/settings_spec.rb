@@ -2,9 +2,12 @@
 require 'spec_helper'
 require 'ostruct'
 require 'puppet/settings/errors'
+require 'puppet_spec/files'
+require 'matchers/resource'
 
 describe Puppet::Settings do
   include PuppetSpec::Files
+  include Matchers::Resource
 
   let(:main_config_file_default_location) do
     File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
@@ -1338,6 +1341,16 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
+    it "should ignore manifestdir if environmentpath is set" do
+      @settings.define_settings :main,
+        :manifestdir => { :type => :directory, :default => @prefix+"/manifestdir", :desc => "a" },
+        :environmentpath => { :type => :path, :default => @prefix+"/envs", :desc => "a" }
+
+      catalog = @settings.to_catalog(:main)
+
+      expect(catalog).to_not have_resource("File[#{@prefix}/manifestdir]")
+    end
+
     describe "on Microsoft Windows" do
       before :each do
         Puppet.features.stubs(:root?).returns true
@@ -1394,6 +1407,13 @@ describe Puppet::Settings do
         Dir.mkdir(default_path)
         catalog = @settings.to_catalog
         expect(catalog.resource_keys).to include(["File", "#{default_path}/production"])
+      end
+
+      it "does not add if the path to the default directory environment exists as a symlink", :if => Puppet.features.manages_symlinks? do
+        Dir.mkdir(default_path)
+        Puppet::FileSystem.symlink("#{tmpenv}/nowhere", File.join(default_path, 'production'))
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to_not include(["File", "#{default_path}/production"])
       end
     end
 

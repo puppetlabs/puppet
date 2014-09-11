@@ -46,7 +46,7 @@ module Puppet::ModuleTool
         tmpdirpath = Pathname.new tmpdir
 
         symlinks.each do |s|
-          Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from tmpdirpath}->#{s.realpath.relative_path_from tmpdirpath}."
+          Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from tmpdirpath}->#{Puppet::FileSystem.readlink(s)}."
         end
       end
 

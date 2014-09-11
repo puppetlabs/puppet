@@ -1056,13 +1056,6 @@ EOT
 
         In either case, the path can point to a single file or to a directory of
         manifests to be evaluated in alphabetical order.",
-      :hook       => proc do |value|
-        uninterpolated_value = self.value(true)
-        if uninterpolated_value =~ /\$environment/ || value =~ /\$environment/ then
-          raise(Puppet::Settings::ValidationError,
-                "You cannot interpolate '$environment' within the 'default_manifest' setting.")
-        end
-      end
     },
     :disable_per_environment_manifest => {
       :default    => false,
