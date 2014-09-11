@@ -1409,7 +1409,7 @@ describe Puppet::Settings do
         expect(catalog.resource_keys).to include(["File", "#{default_path}/production"])
       end
 
-      it "does not add if the path to the default directory environment exists as a symlink" do
+      it "does not add if the path to the default directory environment exists as a symlink", :if => Puppet.features.manages_symlinks? do
         Dir.mkdir(default_path)
         Puppet::FileSystem.symlink("#{tmpenv}/nowhere", File.join(default_path, 'production'))
         catalog = @settings.to_catalog
