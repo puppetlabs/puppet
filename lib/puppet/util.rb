@@ -514,31 +514,6 @@ module Util
     end
   end
   module_function :deterministic_rand
-
-
-  #######################################################################################################
-  # Deprecated methods relating to process execution; these have been moved to Puppet::Util::Execution
-  #######################################################################################################
-
-  def execpipe(command, failonfail = true, &block)
-    Puppet.deprecation_warning("Puppet::Util.execpipe is deprecated; please use Puppet::Util::Execution.execpipe")
-    Puppet::Util::Execution.execpipe(command, failonfail, &block)
-  end
-  module_function :execpipe
-
-  def execfail(command, exception)
-    Puppet.deprecation_warning("Puppet::Util.execfail is deprecated; please use Puppet::Util::Execution.execfail")
-    Puppet::Util::Execution.execfail(command, exception)
-  end
-  module_function :execfail
-
-  def execute(*args)
-    Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
-
-    Puppet::Util::Execution.execute(*args)
-  end
-  module_function :execute
-
 end
 end
 
