@@ -349,13 +349,6 @@ class Puppet::Transaction
     resource.appliable_to_host? && resource.appliable_to_device?
   end
 
-  def handle_qualified_tags( qualified )
-    # The default behavior of Puppet::Util::Tagging is
-    # to split qualified tags into parts. That would cause
-    # qualified tags to match too broadly here.
-    return
-  end
-
   # Is this resource tagged appropriately?
   def missing_tags?(resource)
     return false if ignore_tags?
