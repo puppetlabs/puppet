@@ -75,7 +75,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # The attributes that Puppet will stack as array over the full
   # hierarchy.
-  def stacked_attributes(dummy_argument=:work_arround_for_ruby_GC_bug)
+  def stacked_attributes
     Puppet[:ldapstackedattrs].split(/\s*,\s*/)
   end
 

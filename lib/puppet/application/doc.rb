@@ -244,7 +244,7 @@ HELP
     options[:references] << :type if options[:references].empty?
   end
 
-  def setup_rdoc(dummy_argument=:work_arround_for_ruby_GC_bug)
+  def setup_rdoc
     # consume the unknown options
     # and feed them as settings
     if @unknown_args.size > 0

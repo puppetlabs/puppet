@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   class << self
     # this is necessary to autodetect a valid resource
     # default path, since there is no standard for such directory.
-    def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
+    def defpath
       unless @defpath
         ["/etc/sv", "/var/lib/service"].each do |path|
           if Puppet::FileSystem.exist?(path)
