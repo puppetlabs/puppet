@@ -42,7 +42,7 @@ module Puppet::Pops::Binder::Config
         accept(Issues::CONFIG_LAYERS_MISSING, config_file)
       end
 
-      if version = (data['version'] or data[:version])
+      if version = (data['version'] || data[:version])
         accept(Issues::CONFIG_WRONG_VERSION, config_file, {:expected => 1, :actual => version}) unless version == 1
       else
         accept(Issues::CONFIG_VERSION_MISSING, config_file)

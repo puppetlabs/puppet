@@ -50,10 +50,6 @@ describe Puppet::Property do
     property.to_s.should == property.name.to_s
   end
 
-  it "should be able to shadow metaparameters" do
-    property.must respond_to(:shadow)
-  end
-
   describe "when returning the default event name" do
     it "should use the current 'should' value to pick the event name" do
       property.expects(:should).returns "myvalue"
@@ -149,32 +145,6 @@ describe Puppet::Property do
       collection.expects(:match?).with("foo").returns(foo)
       property.class.stubs(:value_collection).returns(collection)
       property.event.invalidate_refreshes.should be_true
-    end
-  end
-
-  describe "when shadowing metaparameters" do
-    let :shadow_class do
-      shadow_class = Class.new(Puppet::Property) do
-        @name = :alias
-      end
-      shadow_class.initvars
-      shadow_class
-    end
-
-    it "should create an instance of the metaparameter at initialization" do
-      Puppet::Type.metaparamclass(:alias).expects(:new).with(:resource => resource)
-
-      shadow_class.new :resource => resource
-    end
-
-    it "should munge values using the shadow's munge method" do
-      shadow = mock 'shadow'
-      Puppet::Type.metaparamclass(:alias).expects(:new).returns shadow
-
-      shadow.expects(:munge).with "foo"
-
-      property = shadow_class.new :resource => resource
-      property.munge("foo")
     end
   end
 

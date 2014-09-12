@@ -22,13 +22,6 @@ describe Puppet::Util::CommandLine do
       command_line.args.should            == %w{ whatever.pp }
     end
 
-    it "should return nil if the first argument looks like a .rb file" do
-      command_line = Puppet::Util::CommandLine.new("puppet", %w{ whatever.rb })
-
-      command_line.subcommand_name.should == nil
-      command_line.args.should            == %w{ whatever.rb }
-    end
-
     it "should return nil if the first argument looks like a flag" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ --debug })
 

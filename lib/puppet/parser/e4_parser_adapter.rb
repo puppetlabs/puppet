@@ -33,11 +33,6 @@ class Puppet::Parser::E4ParserAdapter
   def parse(string = nil)
     self.string= string if string
 
-    if @file =~ /\.rb$/ && @use != :string
-      # Will throw an error
-      parse_ruby_file
-    end
-
     parse_result =
     if @use == :string
       # Parse with a source_file to set in created AST objects (it was either given, or it may be unknown
@@ -73,9 +68,5 @@ class Puppet::Parser::E4ParserAdapter
   def string=(string)
     @string = string
     @use = :string
-  end
-
-  def parse_ruby_file
-    raise Puppet::ParseError, "Ruby DSL is no longer supported. Attempt to parse #{@file}"
   end
 end

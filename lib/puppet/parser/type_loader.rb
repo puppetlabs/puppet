@@ -19,7 +19,7 @@ class Puppet::Parser::TypeLoader
     modname, files = Puppet::Parser::Files.find_manifests_in_modules(pattern, environment)
     if files.empty?
       abspat = File.expand_path(pattern, dir)
-      file_pattern = abspat + (File.extname(abspat).empty? ? '{.pp,.rb}' : '' )
+      file_pattern = abspat + (File.extname(abspat).empty? ? '.pp' : '' )
 
       files = Dir.glob(file_pattern).uniq.reject { |f| FileTest.directory?(f) }
       modname = nil

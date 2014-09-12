@@ -66,3 +66,15 @@ end
 task :spec do
   sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
 end
+
+desc 'run static analysis with rubocop'
+task(:rubocop) do
+  if RUBY_VERSION !~ /1.8/
+    require 'rubocop'
+    cli = RuboCop::CLI.new
+    cli.run(%w(-D -f s))
+  else
+    puts "Rubocop is disabled in ruby 1.8"
+  end
+end
+

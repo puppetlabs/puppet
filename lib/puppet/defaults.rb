@@ -452,7 +452,7 @@ module Puppet
       a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
     },
     :environment_timeout => {
-      :default    => "3m",
+      :default    => "unlimited",
       :type       => :ttl,
       :desc       => "The time to live for a cached environment.
       #{AS_DURATION}
@@ -1079,19 +1079,6 @@ EOT
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
     },
-    :masterlog => {
-      :default => "$logdir/puppetmaster.log",
-      :type => :file,
-      :owner => "service",
-      :group => "service",
-      :mode => "0660",
-      :desc => "This file is literally never used, although Puppet may create it
-        as an empty file. For more context, see the `puppetdlog` setting and
-        puppet master's `--logdest` command line option.
-
-        This setting is deprecated and will be removed in a future version of Puppet.",
-      :deprecated => :completely
-    },
     :masterhttplog => {
       :default => "$logdir/masterhttp.log",
       :type => :file,
@@ -1655,7 +1642,7 @@ EOT
     :ordering => {
       :type => :enum,
       :values => ["manifest", "title-hash", "random"],
-      :default => "title-hash",
+      :default => "manifest",
       :desc => "How unrelated resources should be ordered when applying a catalog.
       Allowed values are `title-hash`, `manifest`, and `random`. This
       setting affects puppet agent and puppet apply, but not puppet master.

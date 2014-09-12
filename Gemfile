@@ -44,6 +44,8 @@ group(:development, :test) do
   # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
+
+  gem "rubocop", :platforms => [:ruby] unless RUBY_VERSION =~ /^1.8/
 end
 
 group(:development) do

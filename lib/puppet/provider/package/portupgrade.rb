@@ -46,7 +46,6 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       output = portinfo(*cmdline)
     rescue Puppet::ExecutionFailure
       raise Puppet::Error.new(output, $!)
-      return nil
     end
 
     # split output and match it and populate temp hash
@@ -162,7 +161,6 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     # At this point normal operation has finished and we shouldn't have been called.
     # Error out and let the admin deal with it.
     raise Puppet::Error, "portversion.latest() - fatal error with portversion: #{output}"
-    return nil
   end
 
   ###### Query subcommand - return a hash of details if exists, or nil if it doesn't.

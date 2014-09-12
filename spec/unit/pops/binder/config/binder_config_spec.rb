@@ -30,6 +30,13 @@ describe 'BinderConfig' do
     expect(config.layering_config[1]['exclude']).to be == 'module:/bad::test/'
   end
 
+  it 'should correctly set values to default if not defined in bunder_config.yml)' do
+    Puppet::Pops::Binder::Config::BinderConfig.any_instance.stubs(:confdir).returns(my_fixture("/nolayer/"))
+    config = Puppet::Pops::Binder::Config::BinderConfig.new(diag)
+    expect(acceptor.errors?()).to be == false
+    expect(config.layering_config[0]['name']).to    be == 'site'
+  end
+
   # TODO: test error conditions (see BinderConfigChecker for what to test)
 
 end

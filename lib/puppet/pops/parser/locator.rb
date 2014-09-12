@@ -27,12 +27,16 @@ class Puppet::Pops::Parser::Locator
   # Creates, or recreates a Locator. A Locator is created if index is not given (a scan is then
   # performed of the given source string.
   #
-  def self.locator(string, file, index = nil)
-    case LOCATOR_VERSION
-    when :ruby20, :ruby19
-      Locator19.new(string, file, index)
+  def self.locator(string, file, index = nil, char_offsets = false)
+    if(char_offsets)
+      LocatorForChars.new(string, file, index);
     else
-      Locator18.new(string, file, index)
+      case LOCATOR_VERSION
+      when :ruby20, :ruby19
+        Locator19.new(string, file, index)
+      else
+        LocatorForChars.new(string, file, index)
+      end
     end
   end
 
@@ -162,7 +166,7 @@ class Puppet::Pops::Parser::Locator
       @prev_offset = nil
       @prev_line = nil
       @line_index = index
-      compute_line_index unless !index.nil?
+      compute_line_index if index.nil?
     end
 
     # Returns the position on line (first position on a line is 1)
@@ -247,7 +251,7 @@ class Puppet::Pops::Parser::Locator
     end
   end
 
-  class Locator18 < AbstractLocator
+  class LocatorForChars < AbstractLocator
 
     def offset_on_line(offset)
       line_offset = line_index[ line_for_offset(offset)-1 ]

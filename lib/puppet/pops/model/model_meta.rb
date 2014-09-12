@@ -563,14 +563,20 @@ module Puppet::Pops::Model
 
   # A Program is the top level construct returned by the parser
   # it contains the parsed result in the body, and has a reference to the full source text,
-  # and its origin. The line_offset's is an array with the start offset of each line.
+  # and its origin. The line_offset's is an array with the start offset of each line measured
+  # in bytes or characters (as given by the attribute char_offsets). The `char_offsets` setting
+  # applies to all offsets recorded in the mode (not just the line_offsets).
   #
+  # A model that will be shared across different platforms should use char_offsets true as the byte
+  # offsets are platform and encoding dependent.
+  # 
   class Program < PopsObject
     contains_one_uni 'body', Expression
     has_many 'definitions', Definition
     has_attr 'source_text', String
     has_attr 'source_ref', String
     has_many_attr 'line_offsets', Integer
+    has_attr 'char_offsets', Boolean, :defaultValueLiteral => 'false'
     has_attr 'locator', Object, :lowerBound => 1, :transient => true
   end
 end

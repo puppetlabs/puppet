@@ -421,6 +421,18 @@ describe tidy do
         end
       end
     end
+
+    it "should configure directories to require their contained files in sorted order" do
+      @tidy[:recurse] = true
+      @tidy[:rmdirs] = true
+      fileset = mock 'fileset'
+      Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
+      fileset.expects(:files).returns %w{. a a/2 a/1 a/3}
+      @tidy.stubs(:tidy?).returns true
+
+      result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
+      result[@basepath + '/a'][:require].collect{|a| a.name[('File//a/' + @basepath).length..-1]}.join().should == '321'
+    end
   end
 
   def lstat_is(path, stat)

@@ -106,19 +106,14 @@ describe Puppet::Parser::TypeLoader do
 
     # We have to pass the base path so that we can
     # write to modules that are in the second search path
-    def mk_manifests(base, mod, type, files)
-      exts = {"ruby" => ".rb", "puppet" => ".pp"}
+    def mk_manifests(base, mod, files)
       files.collect do |file|
         name = mod.name + "::" + file.gsub("/", "::")
-        path = File.join(base, mod.name, "manifests", file + exts[type])
+        path = File.join(base, mod.name, "manifests", file + ".pp")
         FileUtils.mkdir_p(File.split(path)[0])
 
         # write out the class
-        if type == "ruby"
-          File.open(path, "w") { |f| f.print "hostclass '#{name}' do\nend" }
-        else
-          File.open(path, "w") { |f| f.print "class #{name} {}" }
-        end
+        File.open(path, "w") { |f| f.print "class #{name} {}" }
         name
       end
     end
@@ -127,25 +122,8 @@ describe Puppet::Parser::TypeLoader do
       @module1 = mk_module(@modulebase1, "one")
       @module2 = mk_module(@modulebase2, "two")
 
-      mk_manifests(@modulebase1, @module1, "puppet", %w{a b})
-      mk_manifests(@modulebase2, @module2, "puppet", %w{c d})
-
-      loader.import_all
-
-      loader.environment.known_resource_types.hostclass("one::a").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("one::b").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("two::c").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("two::d").should be_instance_of(Puppet::Resource::Type)
-    end
-
-    it "should load all ruby manifests from all modules in the specified environment" do
-      Puppet.expects(:deprecation_warning).at_least(1)
-
-      @module1 = mk_module(@modulebase1, "one")
-      @module2 = mk_module(@modulebase2, "two")
-
-      mk_manifests(@modulebase1, @module1, "ruby", %w{a b})
-      mk_manifests(@modulebase2, @module2, "ruby", %w{c d})
+      mk_manifests(@modulebase1, @module1, %w{a b})
+      mk_manifests(@modulebase2, @module2, %w{c d})
 
       loader.import_all
 
@@ -161,8 +139,8 @@ describe Puppet::Parser::TypeLoader do
       # duplicate
       @module2 = mk_module(@modulebase2, "one")
 
-      mk_manifests(@modulebase1, @module1, "puppet", %w{a})
-      mk_manifests(@modulebase2, @module2, "puppet", %w{c})
+      mk_manifests(@modulebase1, @module1, %w{a})
+      mk_manifests(@modulebase2, @module2, %w{c})
 
       loader.import_all
 
@@ -172,7 +150,7 @@ describe Puppet::Parser::TypeLoader do
     it "should load manifests from subdirectories" do
       @module1 = mk_module(@modulebase1, "one")
 
-      mk_manifests(@modulebase1, @module1, "puppet", %w{a a/b a/b/c})
+      mk_manifests(@modulebase1, @module1, %w{a a/b a/b/c})
 
       loader.import_all
 
@@ -183,7 +161,7 @@ describe Puppet::Parser::TypeLoader do
     it "should skip modules that don't have manifests" do
       @module1 = mk_module(@modulebase1, "one")
       @module2 = mk_module(@modulebase2, "two")
-      mk_manifests(@modulebase2, @module2, "ruby", %w{c d})
+      mk_manifests(@modulebase2, @module2, %w{c d})
 
       loader.import_all
 

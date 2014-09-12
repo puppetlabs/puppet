@@ -90,7 +90,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       true
     elsif mapping[key][:method].nil?
       objectinfo[mapping[key][:key]] = value
-    elsif
+    else
       objectinfo[mapping[key][:key]] = method(mapping[key][:method]).call(value)
     end
 
@@ -117,7 +117,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     elsif mapping[key][:method].nil?
       new_key = mapping[key][:key]
       new_value = value
-    elsif
+    else
       new_key = mapping[key][:key]
       new_value = method(mapping[key][:method]).call(value)
     end
