@@ -11,7 +11,11 @@ def manage_service_for(pkg, state, agent)
   return_code = 0
 
   if pkg == 'rabbitmq-server' && state == 'stopped'
-    return_code = 3
+    if agent['platform'].codename == 'lucid'
+      return_code = 1
+    else
+      return_code = 3
+    end
   end
 
   manifest = <<-MANIFEST
@@ -28,15 +32,19 @@ def manage_service_for(pkg, state, agent)
   apply_manifest_on(agent, manifest, :catch_failures => true) do
     if pkg == 'rabbitmq-server'
       if state == 'running'
-        assert_match(/Status of node/m, stdout, "Could not start #{pkg}.")
-      elsif
-        assert_match(/unable to connect to node/m, stdout, "Could not stop #{pkg}.")
+        assert_match(/Status of.*node/m, stdout, "Could not start #{pkg}.")
+      else
+        if agent['platform'].codename == 'lucid'
+          assert_match(/no_nodes_running/, stdout, "Could not stop #{pkg}.")
+        else
+          assert_match(/unable to connect to node/, stdout, "Could not stop #{pkg}.")
+        end
       end
     else
       if state == 'running'
-        assert_match(/start/m, stdout, "Could not start #{pkg}.")
-      elsif
-        assert_match(/stop/m, stdout, "Could not stop #{pkg}.")
+        assert_match(/start/, stdout, "Could not start #{pkg}.")
+      else
+        assert_match(/stop/, stdout, "Could not stop #{pkg}.")
       end
     end
   end
