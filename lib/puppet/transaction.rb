@@ -105,6 +105,7 @@ class Puppet::Transaction
     overly_deferred_resource_handler = lambda do |resource|
       # We don't automatically assign unsuitable providers, so if there
       # is one, it must have been selected by the user.
+      return if missing_tags?(resource)
       if resource.provider
         resource.err "Provider #{resource.provider.class.name} is not functional on this host"
       else
