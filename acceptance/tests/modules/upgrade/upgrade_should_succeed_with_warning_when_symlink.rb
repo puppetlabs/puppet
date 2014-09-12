@@ -15,6 +15,8 @@ end
 
 agents.each do |agent|
 
+  pending_test("pending resolution of PE-5766 for solaris-11") if agent['platform'] =~ /solaris-11/
+
   step 'Install module containing symlink' do
     stub_forge_on(agent)
     tmpdir = agent.tmpdir(module_name)
