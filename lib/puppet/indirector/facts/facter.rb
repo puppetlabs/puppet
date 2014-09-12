@@ -6,6 +6,10 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     between Puppet and Facter.  It's only `somewhat` abstract because it always
     returns the local host's facts, regardless of what you attempt to find."
 
+  def allow_remote_requests?
+    false
+  end
+
   def destroy(facts)
     raise Puppet::DevError, 'You cannot destroy facts in the code store; it is only used for getting facts from Facter'
   end

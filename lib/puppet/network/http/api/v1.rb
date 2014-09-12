@@ -204,13 +204,11 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def plurality(indirection)
-    # NOTE This specific hook for facts is ridiculous, but it's a *many*-line
+    # NOTE These specific hooks for paths are ridiculous, but it's a *many*-line
     # fix to not need this, and our goal is to move away from the complication
     # that leads to the fix being too long.
-    return :singular if indirection == "facts"
     return :singular if indirection == "status"
     return :singular if indirection == "certificate_status"
-    return :plural if indirection == "inventory"
 
     result = (indirection =~ /s$|_search$/) ? :plural : :singular
 

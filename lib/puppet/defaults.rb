@@ -375,20 +375,6 @@ module Puppet
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",
-      :call_hook => :on_initialize_and_write,
-      :hook => proc do |value|
-        require 'puppet/node/facts'
-        # Cache to YAML if we're uploading facts away
-        if %w[rest inventory_service].include? value.to_s
-          Puppet.info "configuring the YAML fact cache because a remote terminus is active"
-          Puppet::Node::Facts.indirection.cache_class = :yaml
-        end
-      end
-    },
-    :inventory_terminus => {
-      :type       => :terminus,
-      :default    => "$facts_terminus",
-      :desc       => "Should usually be the same as the facts terminus",
     },
     :default_file_terminus => {
       :type       => :terminus,
@@ -1426,7 +1412,7 @@ EOT
       connections.  If this is true, then puppet agent will accept incoming
       REST API requests, subject to the default ACLs and the ACLs set in
       the `rest_authconfig` file. Puppet agent can respond usefully to
-      requests on the `run`, `facts`, `certificate`, and `resource` endpoints.",
+      requests on the `run`, `certificate`, and `resource` endpoints.",
     },
     :ca_server => {
       :default    => "$server",
@@ -1573,14 +1559,6 @@ EOT
     :report_port => {
       :default  => "$masterport",
       :desc     => "The port to communicate with the report_server.",
-    },
-    :inventory_server => {
-      :default  => "$server",
-      :desc     => "The server to send facts to.",
-    },
-    :inventory_port => {
-      :default  => "$masterport",
-      :desc     => "The port to communicate with the inventory_server.",
     },
     :report => {
       :default  => true,
