@@ -1539,8 +1539,6 @@ class Puppet::Pops::Types::TypeCalculator
     # translate to string, and skip Unit types
     types = t.param_types.types.map {|t2| string(t2) unless t2.class == Types::PUnitType }.compact
 
-    params_part= types.join(', ')
-
     s = "Callable[" << types.join(', ')
     unless range.empty?
       (s << ', ') unless types.empty?
