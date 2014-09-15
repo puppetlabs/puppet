@@ -56,9 +56,6 @@ Puppet.features.add(:rrd, :libs => ["RRD"])
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])
 
-# We have CouchDB
-Puppet.features.add(:couchdb, :libs => ["couchrest"])
-
 # We have sqlite
 Puppet.features.add(:sqlite, :libs => ["sqlite3"])
 

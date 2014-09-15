@@ -1832,17 +1832,7 @@ EOT
     }
   )
 
-    define_settings(
-    :couchdb,
-
-    :couchdb_url => {
-        :default  => "http://127.0.0.1:5984/puppet",
-        :desc     => "The url where the puppet couchdb database will be created.
-          Only used when `facts_terminus` is set to `couch`.",
-    }
-  )
-
-    define_settings(
+  define_settings(
     :transaction,
     :tags => {
       :default    => "",
