@@ -68,6 +68,10 @@ module Puppet
       end
 
       def clean_cert(host, cn, check = true)
+        if host == master && master[:is_puppetserver]
+            on master, puppet_resource("service", master['puppetservice'], "ensure=stopped")
+        end
+
         on(host, puppet('cert', 'clean', cn), :acceptable_exit_codes => check ? [0] : [0, 24])
         if check
           assert_match(/remov.*Certificate.*#{cn}/i, stdout, "Should see a log message that certificate request was removed.")
