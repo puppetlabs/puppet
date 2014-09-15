@@ -445,37 +445,6 @@ module Puppet
       This setting can also be set to `unlimited`, which causes the environment to
       be cached until the master is restarted."
     },
-    :queue_type => {
-      :default    => "stomp",
-      :desc       => "Which type of queue to use for asynchronous processing.",
-    },
-    :queue_type => {
-      :default    => "stomp",
-      :desc       => "Which type of queue to use for asynchronous processing.",
-    },
-    :queue_source => {
-      :default    => "stomp://localhost:61613/",
-      :desc       => "Which type of queue to use for asynchronous processing.  If your stomp server requires
-      authentication, you can include it in the URI as long as your stomp client library is at least 1.1.1",
-    },
-    :async_storeconfigs => {
-        :default  => false,
-        :type     => :boolean,
-        :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppet queue` be running.",
-        :hook     => proc do |value|
-          if value
-            # This reconfigures the termini for Node, Facts, and Catalog
-            Puppet.settings.override_default(:storeconfigs, true)
-
-            # But then we modify the configuration
-            Puppet::Resource::Catalog.indirection.cache_class = :queue
-            Puppet.settings.override_default(:catalog_cache_terminus, :queue)
-          else
-            raise "Cannot disable asynchronous storeconfigs in a running process"
-          end
-        end
-    },
     :thin_storeconfigs => {
       :default  => false,
       :type     => :boolean,
@@ -1934,12 +1903,9 @@ EOT
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          if not Puppet.settings[:async_storeconfigs]
-            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
-            Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
-          end
+          Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+          Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
           Puppet::Node::Facts.indirection.cache_class = :store_configs
-
           Puppet::Resource.indirection.terminus_class = :store_configs
         end
       end

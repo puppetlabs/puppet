@@ -166,12 +166,6 @@ describe "Puppet defaults" do
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should not set the Catalog cache class to :store_configs if asynchronous storeconfigs is enabled" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:store_configs).never
-      Puppet.settings[:async_storeconfigs] = true
-      Puppet.settings[:storeconfigs] = true
-    end
-
     it "should set the Facts cache class to :store_configs" do
       Puppet::Node::Facts.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
@@ -189,16 +183,6 @@ describe "Puppet defaults" do
       Puppet::Node::Facts.indirection.stubs(:cache_class=)
       Puppet::Node.indirection.stubs(:cache_class=)
       Puppet.features.stubs(:rails?).returns true
-    end
-
-    it "should set storeconfigs to true" do
-      Puppet.settings[:async_storeconfigs] = true
-      Puppet.settings[:storeconfigs].should be_true
-    end
-
-    it "should set the Catalog cache class to :queue" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:queue)
-      Puppet.settings[:async_storeconfigs] = true
     end
 
     it "should set the Facts cache class to :store_configs" do
