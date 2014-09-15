@@ -401,6 +401,15 @@ describe Puppet::Network::Rights do
         end
       end
 
+      it "returns true if the request is permitted for this environment" do
+        @acl.allow("me")
+        prod = Puppet::Node::Environment.create(:production, [])
+        Puppet.override(:environments => Puppet::Environments::Static.new(prod)) do
+          @acl.restrict_environment(:production)
+          expect(@acl.allowed?("me", "127.0.0.1", { :method => :save, :authenticated => true, :environment => prod })).to eq true
+        end
+      end
+
       it "should return :dunno if this right is not restricted to the given request authentication state" do
         @acl.restrict_authenticated(true)
 
