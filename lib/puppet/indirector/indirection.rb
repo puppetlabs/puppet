@@ -3,7 +3,6 @@ require 'puppet/util/profiler'
 require 'puppet/util/methodhelper'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
-require 'puppet/util/instrumentation/instrumentable'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
@@ -11,15 +10,9 @@ require 'puppet/util/instrumentation/instrumentable'
 class Puppet::Indirector::Indirection
   include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
-  extend Puppet::Util::Instrumentation::Instrumentable
 
   attr_accessor :name, :model
   attr_reader :termini
-
-  probe :find, :label => Proc.new { |parent, key, *args| "find_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
-  probe :save, :label => Proc.new { |parent, key, *args| "save_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
-  probe :search, :label => Proc.new { |parent, key, *args| "search_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
-  probe :destroy, :label => Proc.new { |parent, key, *args| "destroy_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
 
   @@indirections = []
 

@@ -373,9 +373,6 @@ class Application
     Puppet.push_context({ :current_environment => configured_environment },
                     "Update current environment from application's configuration")
 
-    require 'puppet/util/instrumentation'
-    Puppet::Util::Instrumentation.init
-
     exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
     exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
     exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }

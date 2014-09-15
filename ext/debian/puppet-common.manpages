@@ -17,9 +17,6 @@ man/man8/puppet-file.8
 man/man8/puppet-filebucket.8
 man/man8/puppet-help.8
 man/man8/puppet-inspect.8
-man/man8/puppet-instrumentation_data.8
-man/man8/puppet-instrumentation_listener.8
-man/man8/puppet-instrumentation_probe.8
 man/man8/puppet-key.8
 man/man8/puppet-kick.8
 man/man8/puppet-man.8
