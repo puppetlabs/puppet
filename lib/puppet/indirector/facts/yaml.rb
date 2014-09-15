@@ -5,6 +5,10 @@ class Puppet::Node::Facts::Yaml < Puppet::Indirector::Yaml
   desc "Store client facts as flat files, serialized using YAML, or
     return deserialized facts from disk."
 
+  def allow_remote_requests?
+    false
+  end
+
   def search(request)
     node_names = []
     Dir.glob(yaml_dir_path).each do |file|

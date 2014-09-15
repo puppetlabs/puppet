@@ -175,8 +175,8 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the server" do
-    terminus_class.expects(:server_setting).returns :inventory_server
-    Puppet[:inventory_server] = "myserver"
+    terminus_class.expects(:server_setting).returns :ca_server
+    Puppet[:ca_server] = "myserver"
     terminus_class.server.should == "myserver"
   end
 
