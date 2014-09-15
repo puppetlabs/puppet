@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-DEVICE" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-DEVICE" "8" "September 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-device\fR \- Manage remote network devices
@@ -13,18 +13,7 @@ Retrieves all configurations from the puppet master and apply them to the remote
 Currently must be run out periodically, using cron or something similar\.
 .
 .SH "USAGE"
-puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-V|\-\-version]
-.
-.IP "" 4
-.
-.nf
-
-            [\-h|\-\-help] [\-l|\-\-logdest syslog|<file>|console]
-            [\-v|\-\-verbose] [\-w|\-\-waitforcert <seconds>]
-.
-.fi
-.
-.IP "" 0
+puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-V|\-\-version] [\-h|\-\-help] [\-l|\-\-logdest syslog|\fIfile\fR|console] [\-v|\-\-verbose] [\-w|\-\-waitforcert \fIseconds\fR]
 .
 .SH "DESCRIPTION"
 Once the client has a signed certificate for a given remote device, it will retrieve its configuration and apply it\.
@@ -45,7 +34,7 @@ Supported url must conforms to: scheme://user:password@hostname/?query
 with: * scheme: either ssh or telnet * user: username, can be omitted depending on the switch/router configuration * password: the connection password * query: this is device specific\. Cisco devices supports an enable parameter whose value would be the enable password\.
 .
 .SH "OPTIONS"
-Note that any configuration parameter that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid configuration parameter, so you can specify \'\-\-server \fIservername\fR\' as an argument\.
+Note that any setting that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid configuration parameter, so you can specify \'\-\-server \fIservername\fR\' as an argument\.
 .
 .TP
 \-\-debug
