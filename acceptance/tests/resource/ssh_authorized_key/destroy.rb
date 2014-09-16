@@ -28,8 +28,6 @@ agents.each do |agent|
   on(agent, puppet_resource('ssh_authorized_key', "#{name}", args))
 
   step "verify entry deleted from #{auth_keys}"
-  on(agent, "cat #{auth_keys}")  do |res|
-    fail_test "found the ssh_authorized_key for #{name}" if stdout.include? "#{name}"
-  end
+  on(agent, "grep #{name}  #{auth_keys}", :acceptable_exit_codes => [1])
 
 end
