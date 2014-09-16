@@ -1227,25 +1227,6 @@ EOT
     }
   )
 
-  define_settings(:metrics,
-    :rrddir => {
-      :type     => :directory,
-      :default  => "$vardir/rrd",
-      :mode     => "0750",
-      :owner    => "service",
-      :group    => "service",
-      :desc     => "The directory where RRD database files are stored.
-        Directories for each reporting host will be created under
-        this directory."
-    },
-    :rrdinterval => {
-      :default  => "$runinterval",
-      :type     => :duration,
-      :desc     => "How often RRD should expect data.
-            This should match how often the hosts report back to the server. #{AS_DURATION}",
-    }
-  )
-
   define_settings(:device,
     :devicedir =>  {
         :default  => "$vardir/devices",
