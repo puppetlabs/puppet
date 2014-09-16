@@ -114,6 +114,15 @@ class Puppet::Transaction::EventManager
 
   private
 
+  # Should the callback for this resource be invoked?
+  # @param resource [Puppet::Type] The resource to be refreshed
+  # @param events [Array<Puppet::Transaction::Event>] A list of events
+  #   associated with this callback and resource.
+  # @return [true, false] Whether the callback should be run.
+  def process_callback?(resource, events)
+    !(events.all? { |e| e.status == "noop" } || resource.noop?)
+  end
+
   # Processes callbacks for a given resource.
   #
   # @param resource [Puppet::Type] The resource receiving the callback.
@@ -122,7 +131,11 @@ class Puppet::Transaction::EventManager
   #   associated with this callback and resource.
   # @return [true, false] Whether the callback was successfully run.
   def process_callback(resource, callback, events)
-    process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
+    if !process_callback?(resource, events)
+      process_noop_events(resource, callback, events)
+      return false
+    end
+
     resource.send(callback)
 
     if not resource.is_a?(Puppet::Type.type(:whit))
@@ -142,6 +155,5 @@ class Puppet::Transaction::EventManager
 
     # And then add an event for it.
     queue_events(resource, [resource.event(:status => "noop", :name => :noop_restart)])
-    true # so the 'and if' works
   end
 end

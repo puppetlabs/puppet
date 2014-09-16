@@ -193,6 +193,26 @@ describe Puppet::Transaction do
     Puppet::FileSystem.exist?(file2).should be_true
   end
 
+  it "does not refresh resources that have 'noop => true'" do
+    path = tmpfile("path")
+
+    notify = Puppet::Type.type(:notify).new(
+      :name    => "trigger",
+      :notify  => Puppet::Resource.new(:exec, "noop exec")
+    )
+
+    noop_exec = Puppet::Type.type(:exec).new(
+      :name    => "noop exec",
+      :path    => ENV["PATH"],
+      :command => touch(path),
+      :noop    => true
+    )
+
+    catalog = mk_catalog(notify, noop_exec)
+    catalog.apply
+    Puppet::FileSystem.exist?(path).should be_false
+  end
+
   it "should apply no resources whatsoever if a pre_run_check fails" do
     path = tmpfile("path")
     file = Puppet::Type.type(:file).new(
