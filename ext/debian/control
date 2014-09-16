@@ -13,7 +13,7 @@ Package: puppet-common
 Architecture: all
 Depends: ${misc:Depends}, ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1.9.1 | libruby (>= 1:1.9.3.4), ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, adduser, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.7.0), libjson-ruby | ruby-json
 Recommends: lsb-release, debconf-utils
-Suggests: ruby-selinux | libselinux-ruby1.8, librrd-ruby1.9.1 | librrd-ruby1.8
+Suggests: ruby-selinux | libselinux-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
 Provides: hiera-puppet
 Conflicts: hiera-puppet, puppet (<< 3.3.0-1puppetlabs1)

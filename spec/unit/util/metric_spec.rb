@@ -8,26 +8,11 @@ describe Puppet::Util::Metric do
     @metric = Puppet::Util::Metric.new("foo")
   end
 
-  it "should be aliased to Puppet::Metric" do
-    Puppet::Util::Metric.should equal(Puppet::Metric)
-  end
-
-  [:type, :name, :value, :label, :basedir].each do |name|
+  [:type, :name, :value, :label].each do |name|
     it "should have a #{name} attribute" do
       @metric.should respond_to(name)
       @metric.should respond_to(name.to_s + "=")
     end
-  end
-
-  it "should default to the :rrdir as the basedir "do
-    rrddir = File.expand_path("myrrd")
-    Puppet[:rrddir] = rrddir
-    @metric.basedir.should == rrddir
-  end
-
-  it "should use any provided basedir" do
-    @metric.basedir = "foo"
-    @metric.basedir.should == "foo"
   end
 
   it "should require a name at initialization" do
