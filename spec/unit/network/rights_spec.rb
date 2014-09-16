@@ -385,19 +385,29 @@ describe Puppet::Network::Rights do
         @acl.allowed?("me","127.0.0.1", { :method => :save } ).should == :dunno
       end
 
-      it "should return allow/deny if this right is restricted to the given method" do
+      it "should return true if this right is restricted to the given method" do
         @acl.restrict_method(:save)
-        @acl.allow("127.0.0.1")
+        @acl.allow("me")
 
-        @acl.allowed?("me","127.0.0.1", { :method => :save }).should be_true
+        @acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => true }).should eq true
       end
 
       it "should return :dunno if this right is not restricted to the given environment" do
-        prod = Puppet::Node::Environment.create(:prod, [])
-        Puppet.override(:environments => Puppet::Environments::Static.new(prod)) do
+        prod = Puppet::Node::Environment.create(:production, [])
+        dev = Puppet::Node::Environment.create(:development, [])
+        Puppet.override(:environments => Puppet::Environments::Static.new(prod, dev)) do
           @acl.restrict_environment(:production)
 
-          @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => :development }).should == :dunno
+          @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => dev }).should == :dunno
+        end
+      end
+
+      it "returns true if the request is permitted for this environment" do
+        @acl.allow("me")
+        prod = Puppet::Node::Environment.create(:production, [])
+        Puppet.override(:environments => Puppet::Environments::Static.new(prod)) do
+          @acl.restrict_environment(:production)
+          expect(@acl.allowed?("me", "127.0.0.1", { :method => :save, :authenticated => true, :environment => prod })).to eq true
         end
       end
 
@@ -407,11 +417,11 @@ describe Puppet::Network::Rights do
         @acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => false }).should == :dunno
       end
 
-      it "should return allow/deny if this right is restricted to the given request authentication state" do
+      it "returns true if this right is restricted to the given request authentication state" do
         @acl.restrict_authenticated(false)
-        @acl.allow("127.0.0.1")
+        @acl.allow("me")
 
-        @acl.allowed?("me","127.0.0.1", { :authenticated => false }).should be_true
+        @acl.allowed?("me","127.0.0.1", {:method => :save, :authenticated => false }).should eq true
       end
 
       it "should interpolate allow/deny patterns with the given match" do
@@ -425,16 +435,6 @@ describe Puppet::Network::Rights do
 
         @acl.allowed?("me","127.0.0.1", { :method => :save, :match => :match, :authenticated => true })
       end
-
-      # mocha doesn't allow testing super...
-      # it "should delegate to the AuthStore for the result" do
-      #     @acl.method(:save)
-      #
-      #     @acl.expects(:allowed?).with("me","127.0.0.1")
-      #
-      #     @acl.allowed?("me","127.0.0.1", :save)
-      # end
     end
   end
-
 end
