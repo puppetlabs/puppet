@@ -1,0 +1,1 @@
+master['puppetservice'] = 'pe-puppetserver'

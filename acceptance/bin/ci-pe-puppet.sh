@@ -6,7 +6,7 @@
 
 umask 0002
 
-if [[ -z "$tests" || -z "$platform" || -z "$layout" || -z "$pe_dist_dir" ]]; then
+if [[ -z "$beaker_gem" || -z "$tests" || -z "$platform" || -z "$layout" || -z "$pe_dist_dir" ]]; then
   echo "
   Usage: env <env variables listed below> bin/ci-pe-puppet.sh
     The following environment variables need to be set:
@@ -14,6 +14,7 @@ if [[ -z "$tests" || -z "$platform" || -z "$layout" || -z "$pe_dist_dir" ]]; the
     'platform'    (to one of the http://vcloud.delivery.puppetlabs.net/ platform names...'curl --url http://vcloud.delivery.puppetlabs.net/vm' for more info)
     'layout'      (to '64mcd' or '32mcd' or '32m-32d-32c' or '64m-64d-64c' for various cpu & master/database/console node combinations)
     'tests'       (to the comma separated list of tests or directory of tests to execute)
+    'beaker_gem'  (to either 'beaker' or 'pe-beaker' which is holding some temporary puppetserver related changes)
 "
   exit 1
 fi
@@ -28,7 +29,7 @@ else
   source 'http://rubygems.delivery.puppetlabs.net'
 end
 
-gem 'beaker'
+gem '$beaker_gem'
 
 # beaker-util lives only in our environment.
 unless ENV['NO_MIRROR']
@@ -40,10 +41,11 @@ rm -f Gemfile.lock
 
 bundle install --path=./.bundle/gems
 
-export pe_family=3.3
+#export pe_version=${pe_version_override:-$pe_version}
+#export pe_family=3.4
 bundle exec genconfig ${platform}-${layout} > hosts.cfg
 
-export forge_host=export forge_host=api-forge-aio01-petest.puppetlabs.com
+export forge_host=api-forge-aio01-petest.puppetlabs.com
 
 # export PRE_SUITE=./config/el6/setup/pe/pre-suite/
 export PRE_SUITE=./setup/pe/pre-suite/

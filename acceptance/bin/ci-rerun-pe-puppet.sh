@@ -104,13 +104,14 @@ EOHOSTS
 
 fi
 
-export forge_host=export forge_host=api-forge-aio01-petest.puppetlabs.com
+export forge_host=api-forge-aio01-petest.puppetlabs.com
 
 bundle exec beaker           \
   --xml                      \
   --debug                    \
   --repo-proxy               \
   --config hosts-immediate.cfg         \
+  --pre-suite setup/common/pre-suite/110_SetPEPuppetService.rb  \
   --tests=${tests}           \
   --keyfile ${HOME}/.ssh/id_rsa-acceptance \
   --root-keys \
