@@ -64,7 +64,6 @@ group(:extra) do
   gem "activerecord", '~> 3.2', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
-  gem "stomp", :require => false
   gem "tzinfo", :require => false
   case RUBY_PLATFORM
   when 'java'

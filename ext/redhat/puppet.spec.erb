@@ -138,7 +138,6 @@ install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
-install -Dp -m0755 %{confdir}/queue.init %{buildroot}%{_initrddir}/puppetqueue
 %endif
 
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
@@ -243,7 +242,6 @@ cp -pr ext/puppet-nm-dispatcher \
 %{_mandir}/man8/puppet-node.8.gz
 %{_mandir}/man8/puppet-parser.8.gz
 %{_mandir}/man8/puppet-plugin.8.gz
-%{_mandir}/man8/puppet-queue.8.gz
 %{_mandir}/man8/puppet-report.8.gz
 %{_mandir}/man8/puppet-resource.8.gz
 %{_mandir}/man8/puppet-resource_type.8.gz
@@ -271,7 +269,6 @@ cp -pr ext/puppet-nm-dispatcher \
 %{_unitdir}/puppetmaster.service
 %else
 %{_initrddir}/puppetmaster
-%{_initrddir}/puppetqueue
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
 %endif
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf

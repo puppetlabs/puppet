@@ -24,7 +24,6 @@ man/man8/puppet-module.8
 man/man8/puppet-node.8
 man/man8/puppet-parser.8
 man/man8/puppet-plugin.8
-man/man8/puppet-queue.8
 man/man8/puppet-report.8
 man/man8/puppet-resource.8
 man/man8/puppet-resource_type.8
