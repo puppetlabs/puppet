@@ -25,6 +25,8 @@ agents.each do |agent|
 
   if agent['platform'] =~ /windows/
     pending_test("Skip on Windows until PE-5081 is resolved")
+  elsif agent['platform'] =~ /solaris/
+    pending_test("Skip on Solaris until PE-5949 is resolved")
   end
 
   tmpfile = agent.tmpfile('answers')
