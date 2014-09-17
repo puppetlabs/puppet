@@ -1,6 +1,7 @@
 test_name "puppet module generate interview - project page ascii string"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
+require 'json'
 
 module_author = "foo"
 module_name   = "bar"
@@ -41,15 +42,13 @@ agents.each do |agent|
 
   step "Validate metadata.json for #{module_author}-#{module_name}" do
     on(agent, "test -f #{module_author}-#{module_name}/metadata.json")
-    on(agent, "cat #{module_author}-#{module_name}/metadata.json") do |res|
-      fail_test('not valid json') unless json_valid?(res.stdout)
-      result = /("project_page":.*)\n/.match(res.stdout)[1]
-      result = result.chomp
-      result = result.chomp(',')
-      answer_project_page.gsub!('"', '\"')
-      expected = "\"project_page\": \"#{answer_project_page}\""
-      assert_equal(expected,result,'project_page did not match expected')
-    end
+
+    tmpdir = Dir.mktmpdir('metadata')
+    scp_from(agent, "#{module_author}-#{module_name}/metadata.json", tmpdir)
+    f = File.read("#{tmpdir}/metadata.json")
+    json = JSON.parse(f)
+    result = json['project_page']
+    assert_equal(answer_project_page, result, 'project_page did not match expected')
   end
 
 end
