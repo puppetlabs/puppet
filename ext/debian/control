@@ -60,7 +60,7 @@ Architecture: all
 Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${binary:Version}), facter (>= 1.7.0), lsb-base
 Breaks: puppet (<< 0.24.7-1), puppetmaster (<< 2.6.1~rc2-1)
 Replaces: puppetmaster (<< 2.6.1~rc2-1)
-Suggests: apache2 | nginx, puppet-el, vim-puppet
+Suggests: apache2 | nginx, puppet-el, vim-puppet,
  rdoc, ruby-ldap | libldap-ruby1.8, puppetdb-terminus
 Description: Puppet master common scripts
  This package contains common scripts for the puppet master,
@@ -81,7 +81,7 @@ Package: puppetmaster
 Architecture: all
 Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.7.0), lsb-base
 Breaks: puppet (<< 0.24.7-1)
-Suggests: apache2 | nginx, puppet-el, vim-puppet
+Suggests: apache2 | nginx, puppet-el, vim-puppet,
  rdoc, ruby-ldap | libldap-ruby1.8, puppetdb-terminus
 Description: Centralized configuration management - master startup and compatibility scripts
  This package contains the startup and compatibility scripts for the puppet
