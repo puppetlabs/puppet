@@ -3,6 +3,7 @@ require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
+require 'puppet/util/retryaction'
 require 'securerandom'
 
 class Puppet::Configurer
@@ -242,9 +243,22 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
-  rescue => detail
-    Puppet.log_exception(detail, "Could not send report: #{detail}")
+    begin
+      Puppet::Util::RetryAction.retry_action :retries => 4 do
+        begin
+          Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
+        rescue => e
+          Puppet.warning("Could not send report: #{e} (retrying)")
+          raise e
+        end
+      end
+    rescue Puppet::Util::RetryAction::RetryException::RetriesExceeded => e
+      Puppet.log_exception(e, "Could not send report: retries exceeded")
+    rescue Exception => e
+      Puppet.log_exception(e, "Could not send report: #{e}")
+    else
+      Puppet.notice("Report sent")
+    end
   end
 
   def save_last_run_summary(report)
