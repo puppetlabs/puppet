@@ -493,17 +493,6 @@ class Puppet::Provider
     !!satisfies?(*features)
   end
 
-#    def self.to_s
-#        unless defined?(@str)
-#            if self.resource_type
-#                @str = "#{resource_type.name} provider #{self.name}"
-#            else
-#                @str = "unattached provider #{self.name}"
-#            end
-#        end
-#        @str
-#    end
-
   dochook(:defaults) do
     if @defaults.length > 0
       return @defaults.collect do |d|
