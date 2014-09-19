@@ -1,4 +1,4 @@
-test_name 'puppet module build creates checksum.json'
+test_name 'puppet module build creates checksums.json'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
@@ -7,7 +7,6 @@ module_name = 'nginx'
 module_version = '0.0.1'
 
 module_build_root = "#{master['distmoduledir']}/#{module_name}/pkg/#{module_author}-#{module_name}-#{module_version}"
-checksum_file = "#{module_build_root}/checksums.json"
 
 teardown do
   apply_manifest_on(master, "file { '#{master['distmoduledir']}/#{module_name}': ensure => absent, force => true }")

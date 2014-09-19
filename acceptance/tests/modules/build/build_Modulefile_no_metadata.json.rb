@@ -3,7 +3,7 @@ require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
 module_author = 'pmtacceptance'
-module_name = 'ng1nx'
+module_name = 'nginx'
 module_version = '0.0.1'
 
 teardown do
