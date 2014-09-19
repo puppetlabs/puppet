@@ -19,4 +19,4 @@ step "Install a module with no dependencies"
 on master, puppet("module install #{module_author}-#{module_name}") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_installed_on_disk(master, module_name)

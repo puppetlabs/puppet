@@ -2,6 +2,39 @@ module Puppet
   module Acceptance
     module ModuleUtils
 
+      # Return an array of module paths for a given host.
+      #
+      # Example return value:
+      #
+      # [
+      #   "/etc/puppetlabs/puppet/environments/production/modules",
+      #   "/etc/puppetlabs/puppet/modules",
+      #   "/opt/puppet/share/puppet/modules",
+      # ]
+      #
+      # @param host [String] hostname
+      # @return [Array] paths for found modulepath
+      def get_modulepaths_for_host (host)
+        separator = ':'
+        if host['platform'] =~ /windows/
+          separator = ';'
+        end
+        environment = on(host, puppet("config print environment")).stdout.chomp
+        on(host, puppet("config print modulepath --environment #{environment}")).stdout.chomp.split(separator)
+      end
+
+      # Return a string of the default (first) path in modulepath for a given host.
+      #
+      # Example return value:
+      #
+      #   "/etc/puppetlabs/puppet/environments/production/modules"
+      #
+      # @param host [String] hostname
+      # @return [String] first path for found modulepath
+      def get_default_modulepath_for_host (host)
+        get_modulepaths_for_host(host)[0]
+      end
+
       # Return an array of paths to installed modules for a given host.
       #
       # Example return value:
@@ -77,7 +110,7 @@ module Puppet
         ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
             if ! beginning_hash[host].include? mod
-              on host, "rm -rf #{mod}"
+              on host, "rm -rf '#{mod}'"
             end
           end
         end
@@ -139,11 +172,21 @@ module Puppet
       # Assert that a module is installed on disk.
       #
       # @param host [HOST] the host object to make the remote call on
-      # @param moduledir [String] the path where the module should be
       # @param module_name [String] the name portion of a module name
-      def assert_module_installed_on_disk ( host, moduledir, module_name )
-        # module directory should exist
-        on host, %Q{[ -d "#{moduledir}/#{module_name}" ]}
+      # @param optional moduledir [String, Array] the path where the module should be, will
+      #        iterate over components of the modulepath by default.
+      def assert_module_installed_on_disk (host, module_name, moduledir=nil)
+        moduledir ||= get_modulepaths_for_host(host)
+        modulepath = moduledir.is_a?(Array) ? moduledir : [moduledir]
+        moduledir= nil
+
+        modulepath.each do |i|
+          # module directory should exist
+          if on(host, %Q{[ -d "#{i}/#{module_name}" ]}, :acceptable_exit_codes => (0..255)).exit_code == 0
+            moduledir = i
+          end
+        end
+        fail_test('module directory not found') unless moduledir
 
         owner = ''
         group = ''
@@ -172,10 +215,18 @@ module Puppet
       # Assert that a module is not installed on disk.
       #
       # @param host [HOST] the host object to make the remote call on
-      # @param moduledir [String] the path where the module should be
       # @param module_name [String] the name portion of a module name
-      def assert_module_not_installed_on_disk ( host, moduledir, module_name )
-        on host, %Q{[ ! -d "#{moduledir}/#{module_name}" ]}
+      # @param optional moduledir [String, Array] the path where the module should be, will
+      #        iterate over components of the modulepath by default.
+      def assert_module_not_installed_on_disk (host, module_name, moduledir=nil)
+        moduledir ||= get_modulepaths_for_host(host)
+        modulepath = moduledir.is_a?(Array) ? moduledir : [moduledir]
+        moduledir= nil
+
+        modulepath.each do |i|
+          # module directory should not exist
+          on host, %Q{[ ! -d "#{i}/#{module_name}" ]}
+        end
       end
 
       # Create a simple legacy and directory environment at :path_to_environments.
@@ -215,6 +266,9 @@ module Puppet
               source => $settings::config,
           }
         }
+
+        # remove environmentpath entry from config
+        on master, "sed '/environmentpath/d' #{puppet_conf} > #{path_to_environments}/tmp && mv #{path_to_environments}/tmp #{puppet_conf}"
 
         on master, puppet("config", "set",
                           "modulepath", "#{legacy_env}/modules",

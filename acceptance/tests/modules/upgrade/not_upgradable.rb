@@ -1,24 +1,26 @@
 test_name "puppet module upgrade (not upgradable)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
+
+orig_installed_modules = get_installed_modules_for_hosts hosts
+teardown do
+  rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
+end
 
 step 'Setup'
 
 stub_forge_on(master)
 
-teardown do
-  on master, "rm -rf #{master['distmoduledir']}/java"
-  on master, "rm -rf #{master['distmoduledir']}/unicorns"
-  on master, "rm -rf #{master['distmoduledir']}/stdlub"
-  on master, "rm -rf #{master['distmoduledir']}/nginx"
-end
+default_moduledir = get_default_modulepath_for_host(master)
 
-on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{default_moduledir}"
 apply_manifest_on master, <<-PP
   file {
     [
-      '#{master['distmoduledir']}/nginx',
-      '#{master['distmoduledir']}/unicorns',
+      '#{default_moduledir}/nginx',
+      '#{default_moduledir}/unicorns',
     ]: ensure => directory;
-    '#{master['distmoduledir']}/unicorns/metadata.json':
+    '#{default_moduledir}/unicorns/metadata.json':
       content => '{
         "name": "notpmtacceptance/unicorns",
         "version": "0.0.3",
@@ -31,9 +33,9 @@ apply_manifest_on master, <<-PP
 PP
 
 on master, puppet("module install pmtacceptance-java --version 1.6.0")
-on master, puppet("module list --modulepath #{master['distmoduledir']}") do
+on master, puppet("module list --modulepath #{default_moduledir}") do
   assert_equal <<-OUTPUT, stdout
-#{master['distmoduledir']}
+#{default_moduledir}
 ├── nginx (\e[0;36m???\e[0m)
 ├── notpmtacceptance-unicorns (\e[0;36mv0.0.3\e[0m)
 ├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
@@ -57,7 +59,7 @@ end
 # on master, puppet("module upgrade nginx"), :acceptable_exit_codes => [1] do
 #   pattern = Regexp.new([
 #     %Q{.*Notice: Preparing to upgrade 'nginx' .*},
-#     %Q{.*Notice: Found 'nginx' \\(.*\\?\\?\\?.*\\) in #{master['distmoduledir']} .*},
+#     %Q{.*Notice: Found 'nginx' \\(.*\\?\\?\\?.*\\) in #{default_moduledir} .*},
 #     %Q{.*Notice: Downloading from https://forgeapi.puppetlabs.com .*},
 #     %Q{.*Error: Could not upgrade module 'nginx' \\(\\?\\?\\? -> latest\\)},
 #     %Q{  Module 'nginx' does not exist on https://forgeapi.puppetlabs.com.*},

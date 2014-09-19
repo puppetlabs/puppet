@@ -19,7 +19,6 @@ stub_forge_on(master)
 apply_manifest_on master, <<-PP
 file {
   [
-    '#{master['distmoduledir']}',
     '#{master['sitemoduledir']}',
     '#{master['sitemoduledir']}/#{module_name}',
   ]: ensure => directory;
@@ -35,12 +34,14 @@ file {
 }
 PP
 
+default_moduledir = get_default_modulepath_for_host(master)
+
 step "Try to install a module that is already installed"
-on master, puppet("module install #{module_author}-#{module_name}"), :acceptable_exit_codes => [0] do
+on master, puppet("module install #{module_author}-#{module_name}") do
   assert_match(/#{module_reference}.*is already installed/, stdout,
         "Error that module was already installed was not displayed")
 end
-assert_module_not_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_not_installed_on_disk(master, module_name, default_moduledir)
 
 step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install #{module_author}-#{module_name} --version 1.x"), :acceptable_exit_codes => [1] do
@@ -49,16 +50,16 @@ on master, puppet("module install #{module_author}-#{module_name} --version 1.x"
   assert_match(/#{module_author}-#{module_name}.*is already installed/, stderr,
         "Error that module was already installed was not displayed")
 end
-assert_module_not_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_not_installed_on_disk(master, module_name, default_moduledir)
 
 step "Install a specifc module version that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force --version 0.0.1") do
   assert_module_installed_ui(stdout, module_author, module_name, '0.0.1', '==')
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_installed_on_disk(master, module_name, default_moduledir)
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_installed_on_disk(master, module_name, default_moduledir)
