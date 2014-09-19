@@ -5,7 +5,6 @@ extend Puppet::Acceptance::ModuleUtils
 module_author = "pmtacceptance"
 module_name   = "nginx"
 module_reference = "#{module_author}-#{module_name}"
-module_path = "#{master['distmoduledir']}/#{module_name}"
 module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
@@ -18,15 +17,16 @@ step 'Setup' do
 end
 
 step "Check that module is not installed" do
-  on master, %Q{[ ! -d "#{module_path}" ]}
+  assert_module_not_installed_on_disk(master, module_name)
 end
 
 step "Install module" do
   on master, puppet("module install #{module_reference}")
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
 
 step "Make local changes in installed module" do
+  module_path = "#{get_default_modulepath_for_host(master)}/#{module_name}"
   on master, "echo 'changed' >> #{module_path}/README"
 end
 
@@ -39,13 +39,13 @@ step "Try to install a specific version of a module that is already installed" d
     assert_match(/changes made locally/, stderr,
           "Error that module has local changes was not displayed")
   end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
 
 step "Install a module that is already installed (with --force)" do
   on master, puppet("module install #{module_reference} --force") do
     assert_module_installed_ui(stdout, module_author, module_name)
   end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
   #validate checksum
 end

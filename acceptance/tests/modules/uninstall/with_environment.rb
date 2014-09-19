@@ -2,11 +2,13 @@ test_name 'puppet module uninstall (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tmpdir = master.tmpdir('environmentpath')
+
 step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
 
 crakorn_metadata = <<-EOS
 {
@@ -23,18 +25,18 @@ EOS
 apply_manifest_on master, %Q{
   file {
     [
-      '#{master['puppetpath']}/legacyenv/modules/crakorn',
-      '#{master['puppetpath']}/environments/direnv/modules',
-      '#{master['puppetpath']}/environments/direnv/modules/crakorn',
+      '#{tmpdir}/legacyenv/modules/crakorn',
+      '#{tmpdir}/environments/direnv/modules',
+      '#{tmpdir}/environments/direnv/modules/crakorn',
     ]:
       ensure => directory,
   }
   file {
-    '#{master['puppetpath']}/legacyenv/modules/crakorn/metadata.json':
+    '#{tmpdir}/legacyenv/modules/crakorn/metadata.json':
       content => '#{crakorn_metadata}',
   }
   file {
-    '#{master['puppetpath']}/environments/direnv/modules/crakorn/metadata.json':
+    '#{tmpdir}/environments/direnv/modules/crakorn/metadata.json':
       content => '#{crakorn_metadata}',
   }
 }
@@ -50,16 +52,16 @@ Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}
 end
 
 step 'Uninstall a module from a non default legacy environment' do
-  check_module_uninstall_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
+  check_module_uninstall_in.call('legacyenv', "#{tmpdir}/legacyenv/modules")
 end
 
 step 'Enable directory environments' do
   on master, puppet("config", "set",
-                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "environmentpath", "#{tmpdir}/environments",
                     "--section", "main",
                     "--config", puppet_conf)
 end
 
 step 'Uninstall a module from a non default directory environment' do
-  check_module_uninstall_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")
+  check_module_uninstall_in.call('direnv', "#{tmpdir}/environments/direnv/modules")
 end

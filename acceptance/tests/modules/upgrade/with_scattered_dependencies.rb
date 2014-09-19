@@ -1,5 +1,7 @@
 test_name "puppet module upgrade (with scattered dependencies)"
 
+skip_test 'needs triage'
+
 step 'Setup'
 
 stub_forge_on(master)

@@ -17,12 +17,12 @@ step "Setup" do
 end
 
 step "Check that module is not installed" do
-  on master, %Q{[ ! -d "#{master['distmoduledir']}/#{module_name}" ]}
+  assert_module_not_installed_on_disk(master, module_name)
 end
 
 step "Install module" do
   on master, puppet("module install #{module_reference}")
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
 
 step "Try to install a module that is already installed" do
@@ -30,7 +30,7 @@ step "Try to install a module that is already installed" do
     assert_match(/#{module_reference}.*is already installed/, stdout,
           "Error that module was already installed was not displayed")
   end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
 
 step "Try to install a specific version of a module that is already installed" do
@@ -40,12 +40,12 @@ step "Try to install a specific version of a module that is already installed" d
     assert_match(/#{module_reference}.*is already installed/, stderr,
           "Error that module was already installed was not displayed")
   end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
 
 step "Install a module that is already installed (with --force)" do
   on master, puppet("module install #{module_reference} --force") do
     assert_module_installed_ui(stdout, module_author, module_name)
   end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+  assert_module_installed_on_disk(master, module_name)
 end
