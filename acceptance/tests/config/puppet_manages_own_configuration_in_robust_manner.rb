@@ -45,8 +45,12 @@ teardown do
   # user and group ids back to the original uid and gid
   on master, 'rm -rf $(puppet master --configprint yamldir)'
 
+  if master.use_service_scripts?
+    on(master, puppet('resource', 'service', master['puppetservice'], 'ensure=stopped'))
+  end
+
   hosts.each do |host|
-    apply_manifest_on(host, <<-ORIG)
+    apply_manifest_on(host, <<-ORIG, :catch_failures => true)
       #{original_state[host][:ug_resources]}
     ORIG
   end
