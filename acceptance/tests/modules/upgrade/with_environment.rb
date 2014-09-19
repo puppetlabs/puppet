@@ -2,9 +2,7 @@ test_name "puppet module upgrade (with environment)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-if master.is_pe?
-  skip_test
-end
+tmpdir = master.tmpdir('environmentpath')
 
 module_author = "pmtacceptance"
 module_name   = "java"
@@ -19,7 +17,7 @@ step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
 
 install_test_module_in = lambda do |environment|
   on master, puppet("module install #{module_author}-#{module_name} --config=#{puppet_conf} --version 1.6.0 --environment=#{environment}") do
@@ -37,17 +35,17 @@ end
 
 step "Upgrade a module that has a more recent version published in a legacy environment" do
   install_test_module_in.call('legacyenv')
-  check_module_upgrade_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
+  check_module_upgrade_in.call('legacyenv', "#{tmpdir}/legacyenv/modules")
 end
 
 step 'Enable directory environments' do
   on master, puppet("config", "set",
-                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "environmentpath", "#{tmpdir}/environments",
                     "--section", "main",
                     "--config", puppet_conf)
 end
 
 step "Upgrade a module that has a more recent version published in a directory environment" do
   install_test_module_in.call('direnv')
-  check_module_upgrade_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")
+  check_module_upgrade_in.call('direnv', "#{tmpdir}/environments/direnv/modules")
 end

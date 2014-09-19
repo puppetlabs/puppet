@@ -2,15 +2,13 @@ test_name 'puppet module list (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-if master.is_pe?
-  skip_test
-end
+tmpdir = master.tmpdir('environmentpath')
 
 step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
 
 install_test_module_in = lambda do |environment|
   on master, puppet("module", "install",
@@ -31,17 +29,17 @@ end
 
 step 'List modules in a non default legacy environment' do
   install_test_module_in.call('legacyenv')
-  check_module_list_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
+  check_module_list_in.call('legacyenv', "#{tmpdir}/legacyenv/modules")
 end
 
 step 'Enable directory environments' do
   on master, puppet("config", "set",
-                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "environmentpath", "#{tmpdir}/environments",
                     "--section", "main",
                     "--config", puppet_conf)
 end
 
 step 'List modules in a non default directory environment' do
   install_test_module_in.call('direnv')
-  check_module_list_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")
+  check_module_list_in.call('direnv', "#{tmpdir}/environments/direnv/modules")
 end

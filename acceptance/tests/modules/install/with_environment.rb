@@ -2,9 +2,7 @@ test_name 'puppet module install (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-if master.is_pe?
-  skip_test
-end
+tmpdir = master.tmpdir('environmentpath')
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
@@ -18,7 +16,7 @@ step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
 
 check_module_install_in = lambda do |environment_path, module_install_args|
   on master, "puppet module install #{module_author}-#{module_name} --config=#{puppet_conf} #{module_install_args}" do
@@ -30,19 +28,19 @@ check_module_install_in = lambda do |environment_path, module_install_args|
 end
 
 step 'Install a module into a non default legacy environment' do
-  check_module_install_in.call("#{master['puppetpath']}/legacyenv/modules",
+  check_module_install_in.call("#{tmpdir}/legacyenv/modules",
                                "--environment=legacyenv")
 end
 
 step 'Enable directory environments' do
   on master, puppet("config", "set",
-                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "environmentpath", "#{tmpdir}/environments",
                     "--section", "main",
                     "--config", puppet_conf)
 end
 
 step 'Install a module into a non default directory environment' do
-  check_module_install_in.call("#{master['puppetpath']}/environments/direnv/modules",
+  check_module_install_in.call("#{tmpdir}/environments/direnv/modules",
                               "--environment=direnv")
 end
 
@@ -51,7 +49,7 @@ modulepath_dir = master.tmpdir("modulepath")
 apply_manifest_on(master, <<-MANIFEST , :catch_failures => true)
   file {
     [
-      '#{master['puppetpath']}/environments/production',
+      '#{tmpdir}/environments/production',
       '#{modulepath_dir}',
     ]:
 

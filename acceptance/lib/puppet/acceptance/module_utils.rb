@@ -267,6 +267,9 @@ module Puppet
           }
         }
 
+        # remove environmentpath entry from config
+        on master, "sed '/environmentpath/d' #{puppet_conf} > #{path_to_environments}/tmp && mv #{path_to_environments}/tmp #{puppet_conf}"
+
         on master, puppet("config", "set",
                           "modulepath", "#{legacy_env}/modules",
                           "--section", "legacyenv",
