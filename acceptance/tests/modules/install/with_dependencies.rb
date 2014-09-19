@@ -22,7 +22,7 @@ on master, puppet("module install #{module_author}-#{module_name}") do
     assert_module_installed_ui(stdout, module_author, dependency)
   end
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
+assert_module_installed_on_disk(master, module_name)
 module_dependencies.each do |dependency|
-  assert_module_installed_on_disk(master, master['distmoduledir'], dependency)
+  assert_module_installed_on_disk(master, dependency)
 end

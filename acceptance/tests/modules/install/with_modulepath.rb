@@ -27,7 +27,7 @@ on master, "cd #{master['puppetpath']}/modules2 && puppet module install #{modul
   assert_match(/#{master['puppetpath']}\/modules2/, stdout,
         "Notice of non default install path was not displayed")
 end
-assert_module_installed_on_disk(master, "#{master['puppetpath']}/modules2", module_name)
+assert_module_installed_on_disk(master, module_name, "#{master['puppetpath']}/modules2")
 
 step "Install a module with absolute modulepath"
 on master, "test -d #{master['puppetpath']}/modules2/#{module_name} && rm -rf #{master['puppetpath']}/modules2/#{module_name}"
@@ -36,4 +36,4 @@ on master, puppet("module install #{module_author}-#{module_name} --modulepath=#
   assert_match(/#{master['puppetpath']}\/modules2/, stdout,
         "Notice of non default install path was not displayed")
 end
-assert_module_installed_on_disk(master, "#{master['puppetpath']}/modules2", module_name)
+assert_module_installed_on_disk(master, module_name, "#{master['puppetpath']}/modules2")

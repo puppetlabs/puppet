@@ -6,6 +6,8 @@ module_author = "pmtacceptance"
 module_name   = "nonexistent"
 module_dependencies  = []
 
+default_moduledir = get_default_modulepath_for_host(master)
+
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
   rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
@@ -36,7 +38,7 @@ on master, puppet("module --render-as json install #{module_author}-#{module_nam
   assert_equal 'failure', json['result']
   assert_equal "#{module_author}-#{module_name}", json['module_name']
   assert_equal '>= 0.0.0', json['module_version']
-  assert_equal master['distmoduledir'], json['install_dir']
+  assert_equal default_moduledir, json['install_dir']
   assert_match oneline_expectation, json['error']['oneline']
   assert_match multiline_expectation, json['error']['multiline']
 end

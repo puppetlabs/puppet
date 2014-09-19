@@ -1,13 +1,15 @@
 test_name "puppet module upgrade (in a secondary directory)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
+
+orig_installed_modules = get_installed_modules_for_hosts hosts
+teardown do
+  rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
+end
 
 step 'Setup'
 
 stub_forge_on(master)
-
-teardown do
-  on master, "rm -rf #{master['distmoduledir']}/java"
-  on master, "rm -rf #{master['distmoduledir']}/stdlib"
-end
 
 on master, "mkdir -p #{master['distmoduledir']}"
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --target-dir #{master['distmoduledir']}")
