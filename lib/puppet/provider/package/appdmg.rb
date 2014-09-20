@@ -73,13 +73,16 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
             entity['mount-point']
           }.select { |mountloc|; mountloc }
           begin
+            found_app = false
             mounts.each do |fspath|
               Dir.entries(fspath).select { |f|
                 f =~ /\.app$/i
               }.each do |pkg|
+                found_app = true
                 installapp("#{fspath}/#{pkg}", name, source)
               end
             end
+            Puppet.debug "Unable to find .app in .appdmg. #{name} will not be installed." if !found_app
           ensure
             hdiutil "eject", mounts[0]
           end
