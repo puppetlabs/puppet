@@ -250,12 +250,23 @@ class Puppet::Node::Environment
   #   Puppet[:disable_per_environment_manifest] is true, and this environment's
   #   original environment.conf had a manifest setting that is not the
   #   Puppet[:default_manifest].
-  # @api public
+  # @api private 
   def conflicting_manifest_settings?
     return false if Puppet[:environmentpath].empty? || !Puppet[:disable_per_environment_manifest]
     environment_conf = Puppet.lookup(:environments).get_conf(name)
     original_manifest = environment_conf.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
+  end
+
+  # Checks the environment and settings for any conflicts
+  # @return [Array<String>] an array of validation errors
+  # @api public
+  def validation_errors
+    errors = []
+    if conflicting_manifest_settings?
+      errors << "The 'disable_per_environment_manifest' setting is true, and the '#{name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
+    end
+    errors
   end
 
   # Return an environment-specific Puppet setting.

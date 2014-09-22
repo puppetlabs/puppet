@@ -187,8 +187,8 @@ describe Puppet::Node::Environment do
       end
     end
 
-    it "does not register conflicting_manifest_settings? when not using directory environments" do
-      expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').conflicting_manifest_settings?).to be_false
+    it "does not register validation_errors when not using directory environments" do
+      expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').validation_errors).to be_empty
     end
 
     describe "when operating in the context of directory environments" do
@@ -197,8 +197,8 @@ describe Puppet::Node::Environment do
         Puppet[:default_manifest] = "/default/manifests/site.pp"
       end
 
-      it "has no conflicting_manifest_settings? when disable_per_environment_manifest is false" do
-        expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').conflicting_manifest_settings?).to be_false
+      it "has no validation errors when disable_per_environment_manifest is false" do
+        expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').validation_errors).to be_empty
       end
 
       context "when disable_per_environment_manifest is true" do
@@ -219,7 +219,11 @@ describe Puppet::Node::Environment do
           loader.stubs(:get_conf).returns(envconf)
 
           Puppet.override(:environments => loader) do
-            expect(environment.conflicting_manifest_settings?).to eq(expectation)
+            if expectation
+              expect(environment.validation_errors).to have_matching_element(/The 'disable_per_environment_manifest' setting is true.*and the.*environment.*conflicts/)
+            else
+              expect(environment.validation_errors).to be_empty
+            end
           end
         end
 
