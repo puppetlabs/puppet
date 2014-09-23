@@ -241,9 +241,9 @@ Puppet::Type.newtype(:tidy) do
 
     case self[:recurse]
     when Integer, Fixnum, Bignum, /^\d+$/
-      parameter = { :recurse => true, :recurselimit => self[:recurse] }
+      parameter = { :recurse => true, :links => :follow, :recurselimit => self[:recurse] }
     when true, :true, :inf
-      parameter = { :recurse => true }
+      parameter = { :recurse => true, :links => :follow }
     end
 
     if parameter
