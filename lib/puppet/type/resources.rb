@@ -134,13 +134,6 @@ Puppet::Type.newtype(:resources) do
     @resource_type
   end
 
-  def self.deprecate_params(title,params)
-    return unless params
-    if title == 'cron' and ! params.select { |param| param.name.intern == :purge and param.value == true }.empty?
-      Puppet.deprecation_warning("Change notice: purging cron entries will be more aggressive in future versions, take care when updating your agents. See http://links.puppetlabs.com/puppet-aggressive-cron-purge")
-    end
-  end
-
   # Make sure we don't purge users with specific uids
   def user_check(resource)
     return true unless self[:name] == "user"
