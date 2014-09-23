@@ -286,8 +286,15 @@ class Puppet::Property < Puppet::Parameter
     # If there is no @should value, consider the property to be in sync.
     return true unless @should
 
-    # Otherwise delegate to the (possibly derived) insync? method.
-    insync?(is)
+    # We call this if someone has added on their own method. If they haven't
+    # done this, we just fall through to {#insync?} as per usual.
+    method = self.class.name.to_s + "?"
+    if provider.respond_to? method
+      provider.send(method, is)
+    else
+      # Otherwise delegate to the (possibly derived) insync? method.
+      insync?(is)
+    end
   end
 
   # Protects against override of the {#safe_insync?} method.
@@ -319,6 +326,7 @@ class Puppet::Property < Puppet::Parameter
   # @api public
   #
   def insync?(is)
+
     self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values
@@ -564,6 +572,10 @@ class Puppet::Property < Puppet::Parameter
   # @return [Object, nil] Returns the wanted _(should)_ value of this property.
   def value
     self.should
+  end
+
+  def value?(is)
+    self.insync?(is)
   end
 
   # (see #should=)

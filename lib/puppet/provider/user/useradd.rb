@@ -217,7 +217,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? and self.has_groups?
        set(:groups, @resource[:groups])
      end
      if @resource.forcelocal? and @resource[:expiry]
@@ -225,7 +225,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      end
   end
 
-  def groups?
+  def has_groups?
     !!@resource[:groups]
   end
 end
