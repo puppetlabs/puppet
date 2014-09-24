@@ -222,18 +222,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     return rpmvercmp(s1, s2)
   end
 
-  # @deprecated
-  def latest_info
-    Puppet.deprecation_warning("#{self.class}##{__method__} is deprecated and is no longer used.")
-    @latest_info
-  end
-
-  # @deprecated
-  def latest_info=(latest)
-    Puppet.deprecation_warning("#{self.class}##{__method__} is deprecated and is no longer used.")
-    @latest_info = latest
-  end
-
   private
 
   def enablerepo
