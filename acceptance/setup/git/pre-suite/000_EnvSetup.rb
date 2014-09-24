@@ -13,7 +13,7 @@ PACKAGES = {
   :redhat => [
     'git',
     'ruby',
-    'rubygem-json',
+    # ruby json installed later via gems
   ],
   :debian => [
     ['git', 'git-core'],
@@ -22,10 +22,16 @@ PACKAGES = {
   :debian_ruby18 => [
     'libjson-ruby',
   ],
+  :sles => [
+    'gcc',
+    'git',
+    'ruby',
+    'rubygems',
+  ],
   :solaris => [
     ['git', 'developer/versioning/git'],
     ['ruby', 'runtime/ruby-18'],
-    # there isn't a package for json, so it is installed later via gems
+    # there isn't a package for ruby json, so it is installed later via gems
   ],
   :windows => [
     'git',
@@ -60,6 +66,12 @@ hosts.each do |host|
     on host, 'cd /; icacls bin /reset /T'
     on host, 'ruby --version'
     on host, 'cmd /c gem list'
+  when /el-/
+    step "#{host} Install json from rubygems"
+    on host, 'gem install json'
+  when /sles/
+    step "#{host} Install json from rubygems"
+    on host, 'gem install json'
   when /solaris/
     step "#{host} Install json from rubygems"
     on host, 'gem install json'
