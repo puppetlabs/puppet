@@ -1949,6 +1949,21 @@ class Type
     @autorequires[name] = block
   end
 
+  def self.autobefore(name, &block)
+    @autobefores ||= {}
+    @autobefores[name] = block
+  end
+
+  def self.autosubscribe(name, &block)
+    @autosubscribes ||= {}
+    @autosubscribes[name] = block
+  end
+
+  def self.autonotify(name, &block)
+    @autonotifies ||= {}
+    @autonotifies[name] = block
+  end
+
   # Provides iteration over added auto-requirements (see {autorequire}).
   # @yieldparam type [String] the name of the type to autoriquire an instance of
   # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autorequire}).
@@ -1961,6 +1976,27 @@ class Type
     }
   end
 
+  def self.eachautobefore
+    @autobefores ||= {}
+    @autobefores.each { |type,block|
+      yield(type, block)
+    }
+  end
+
+  def self.eachautosubscribe
+    @autosubscribes ||= {}
+    @autosubscribes.each { |type,block|
+      yield(type, block)
+    }
+  end
+
+  def self.eachautonotify
+    @autonotifies ||= {}
+    @autonotifies.each { |type,block|
+      yield(type, block)
+    }
+  end
+
   # Adds dependencies to the catalog from added autorequirements.
   # See {autorequire} for how to add an auto-requirement.
   # @todo needs details - see the param rel_catalog, and type of this param
@@ -1969,12 +2005,15 @@ class Type
   #   type instance was added to a catalog)
   # @raise [Puppet::DevError] if there is no catalog
   #
-  def autorequire(rel_catalog = nil)
+  def autorelation(rel_type, rel_catalog = nil)
     rel_catalog ||= catalog
     raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
 
     reqs = []
-    self.class.eachautorequire { |type, block|
+
+    auto_rel = "eachauto#{rel_type}".to_sym
+
+    self.class.send(auto_rel) { |type, block|
       # Ignore any types we can't find, although that would be a bit odd.
       next unless Puppet::Type.type(type)
 
@@ -1986,17 +2025,37 @@ class Type
       list.each { |dep|
         # Support them passing objects directly, to save some effort.
         unless dep.is_a? Puppet::Type
-          # Skip autorequires that we aren't managing
+          # Skip autorelation that we aren't managing
           unless dep = rel_catalog.resource(type, dep)
             next
           end
         end
 
-        reqs << Puppet::Relationship.new(dep, self)
+        if [:require, :subscribe].include?(rel_type)
+          reqs << Puppet::Relationship.new(dep, self)
+        else
+          reqs << Puppet::Relationship.new(self, dep)
+        end
       }
     }
 
     reqs
+  end
+
+  def autorequire(rel_catalog = nil)
+    autorelation(:require, rel_catalog)
+  end
+
+  def autobefore(rel_catalog = nil)
+    autorelation(:before, rel_catalog)
+  end
+
+  def autosubscribe(rel_catalog = nil)
+    autorelation(:subscribe, rel_catalog)
+  end
+
+  def autonotify(rel_catalog = nil)
+    autorelation(:notify, rel_catalog)
   end
 
   # Builds the dependencies associated with this resource.

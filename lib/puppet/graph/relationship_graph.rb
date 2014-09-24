@@ -22,7 +22,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
   def populate_from(catalog)
     add_all_resources_as_vertices(catalog)
     build_manual_dependencies
-    build_autorequire_dependencies(catalog)
+    build_autorelation_dependencies(catalog)
 
     write_graph(:relationships) if catalog.host_config?
 
@@ -163,17 +163,45 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     end
   end
 
-  def build_autorequire_dependencies(catalog)
+  def build_autorelation_dependencies(catalog)
     vertices.each do |vertex|
-      vertex.autorequire(catalog).each do |edge|
-        # don't let automatic relationships conflict with manual ones.
-        next if edge?(edge.source, edge.target)
+      [:require,:subscribe].each do |rel_type|
+        vertex.send("auto#{rel_type}".to_sym, catalog).each do |edge|
+          # don't let automatic relationships conflict with manual ones.
+          next if edge?(edge.source, edge.target)
 
-        if edge?(edge.target, edge.source)
-          vertex.debug "Skipping automatic relationship with #{edge.source}"
-        else
-          vertex.debug "Autorequiring #{edge.source}"
-          add_edge(edge)
+          if edge?(edge.target, edge.source)
+            vertex.debug "Skipping automatic relationship with #{edge.source}"
+          else
+            vertex.debug "Forming automation relationshipf of type #{rel_type} with #{edge.source}"
+            if rel_type == :require
+              edge.event = :NONE
+            else
+              edge.callback = :refresh
+              edge.event = :ALL_EVENTS
+            end
+            add_edge(edge)
+          end
+        end
+      end
+
+      [:before,:notify].each do |rel_type|
+        vertex.send("auto#{rel_type}".to_sym, catalog).each do |edge|
+          # don't let automatic relationships conflict with manual ones.
+          next if edge?(edge.target, edge.source)
+
+          if edge?(edge.source, edge.target)
+            vertex.debug "Skipping automatic relationship with #{edge.target}"
+          else
+            vertex.debug "Forming automation relationshipf of type #{rel_type} with #{edge.target}"
+            if rel_type == :before
+              edge.event = :NONE
+            else
+              edge.callback = :refresh
+              edge.event = :ALL_EVENTS
+            end
+            add_edge(edge)
+          end
         end
       end
     end
