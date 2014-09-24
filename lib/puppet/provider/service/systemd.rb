@@ -7,6 +7,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   defaultfor :osfamily => [:archlinux]
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
+  defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["12", "13"]
 
   def self.instances
     i = []
