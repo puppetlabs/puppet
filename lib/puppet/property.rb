@@ -289,7 +289,8 @@ class Puppet::Property < Puppet::Parameter
     # We call this if someone has added on their own method. If they haven't
     # done this, we just fall through to {#insync?} as per usual.
     method = self.class.name.to_s + "?"
-    if provider.respond_to? method
+
+    if self.class.name and provider.respond_to? method
       provider.send(method, is)
     else
       # Otherwise delegate to the (possibly derived) insync? method.
