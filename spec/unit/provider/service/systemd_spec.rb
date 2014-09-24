@@ -36,6 +36,24 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.default?.should_not be_true
   end
 
+  it "should be the default provider on sles12" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns("12")
+    described_class.default?.should be_true
+  end
+
+  it "should be the default provider on opensuse13" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns("13")
+    described_class.default?.should be_true
+  end
+
+  it "should not be the default provider on sles11" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns("11")
+    described_class.default?.should_not be_true
+  end
+
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
       provider.should respond_to(method)
