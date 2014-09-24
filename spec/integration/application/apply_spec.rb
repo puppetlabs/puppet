@@ -49,6 +49,44 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
+  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+    manifest = tmpfile("manifest.pp")
+    File.open(manifest, "w") do |f|
+      f.puts <<-EOF
+      notice('specific manifest applied')
+      EOF
+    end
+
+    site_manifest = tmpfile("site_manifest.pp")
+    File.open(site_manifest, "w") do |f|
+      f.puts <<-EOF
+      notice('the site manifest was applied instead')
+      EOF
+    end
+
+    enc = tmpfile("enc_script")
+    File.open(enc, "w") do |f|
+      f.puts <<-EOF
+      #!/bin/sh
+      echo 'classes: []'
+      EOF
+    end
+    File.chmod(0755, enc)
+
+    special = Puppet::Node::Environment.create(:special, [])
+    Puppet.override(:current_environment => special) do
+      Puppet[:environment] = 'special'
+      Puppet[:node_terminus] = 'exec'
+      Puppet[:external_nodes] = enc
+      Puppet[:manifest] = site_manifest
+      puppet = Puppet::Application[:apply]
+      puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+      expect { puppet.run_command }.to exit_with(0)
+    end
+
+    expect(@logs.map(&:to_s)).to include('specific manifest applied')
+  end
+
   context "with a module" do
     let(:modulepath) { tmpdir('modulepath') }
     let(:execute) { 'include amod' }
