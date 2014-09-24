@@ -10,6 +10,14 @@ describe "apply" do
     Puppet[:reports] = "none"
   end
 
+  def tmpfile_with_content(name, content)
+    result = tmpfile(name)
+    File.open(result, "w") do |f|
+      f.puts [ content ].flatten * "\n"
+    end
+    result
+  end
+
   describe "when applying provided catalogs" do
     it "can apply catalogs provided in a file in pson" do
       file_to_create = tmpfile("pson_catalog")
@@ -31,12 +39,7 @@ describe "apply" do
   end
 
   it "applies a given file even when a directory environment is specified" do
-    manifest = tmpfile("manifest.pp")
-    File.open(manifest, "w") do |f|
-      f.puts <<-EOF
-      notice('it was applied')
-      EOF
-    end
+    manifest = tmpfile_with_content("manifest.pp", "notice('it was applied')")
 
     special = Puppet::Node::Environment.create(:special, [])
     Puppet.override(:current_environment => special) do
@@ -50,27 +53,11 @@ describe "apply" do
   end
 
   it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
-    manifest = tmpfile("manifest.pp")
-    File.open(manifest, "w") do |f|
-      f.puts <<-EOF
-      notice('specific manifest applied')
-      EOF
-    end
+    manifest = tmpfile_with_content("manifest.pp", "notice('specific manifest applied')")
 
-    site_manifest = tmpfile("site_manifest.pp")
-    File.open(site_manifest, "w") do |f|
-      f.puts <<-EOF
-      notice('the site manifest was applied instead')
-      EOF
-    end
+    site_manifest = tmpfile_with_content("site_manifest.pp", "notice('the site manifest was applied instead')")
 
-    enc = tmpfile("enc_script")
-    File.open(enc, "w") do |f|
-      f.puts <<-EOF
-      #!/bin/sh
-      echo 'classes: []'
-      EOF
-    end
+    enc = tmpfile_with_content("enc_script", ["#!/bin/sh", "echo 'classes: []'"])
     File.chmod(0755, enc)
 
     special = Puppet::Node::Environment.create(:special, [])
