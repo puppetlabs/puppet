@@ -25,6 +25,15 @@ describe Puppet do
     ENV["PATH"].should == newpath
   end
 
+  it 'should set $LOAD_PATH with the split version of :libdir' do
+    one = tmpdir('load-path-one')
+    two = tmpdir('load-path-two')
+
+    Puppet[:libdir] = [ one, two ].join(File::PATH_SEPARATOR)
+    $LOAD_PATH.should include one
+    $LOAD_PATH.should include two
+  end
+
   it "should change $LOAD_PATH when :libdir changes" do
     one = tmpdir('load-path-one')
     two = tmpdir('load-path-two')
