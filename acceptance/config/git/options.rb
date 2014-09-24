@@ -1,9 +1,11 @@
 {
+  :type => 'git',
   :install => [
     'facter#stable',
     'hiera#stable',
     'puppet',
   ],
+  :add_el_extras => true,
   :pre_suite => [
     'setup/git/pre-suite/000_EnvSetup.rb',
     'setup/git/pre-suite/010_TestSetup.rb',

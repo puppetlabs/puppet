@@ -9,6 +9,7 @@ module Puppet
         :redhat        => /fedora|el|centos/,
         :debian        => /debian|ubuntu/,
         :debian_ruby18 => /debian|ubuntu-lucid|ubuntu-precise/,
+        :sles          => /sles/,
         :solaris       => /solaris/,
         :windows       => /windows/,
       }.freeze

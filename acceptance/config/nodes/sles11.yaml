@@ -1,0 +1,21 @@
+---
+HOSTS:
+  sles11-64-1:
+    roles:
+    - agent
+    - master
+    hypervisor: vcloud
+    platform: sles-11-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/sles-11-x86_64
+  sles11-32-2:
+    roles:
+    - agent
+    hypervisor: vcloud
+    platform: sles-11-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/sles-11-i386
+CONFIG:
+  filecount: 12
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vcloud.delivery.puppetlabs.net/
