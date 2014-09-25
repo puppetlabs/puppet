@@ -2,7 +2,6 @@
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
-require 'puppet/util/pson'
 
 describe Puppet::Indirector::Request do
   include JSONMatchers

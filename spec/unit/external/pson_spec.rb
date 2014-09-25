@@ -2,25 +2,9 @@
 # Encoding: UTF-8
 require 'spec_helper'
 
-require 'puppet/util/pson'
+require 'puppet/external/pson/common'
 
-class PsonUtil
-  include Puppet::Util::Pson
-end
-
-describe Puppet::Util::Pson do
-  it "should fail if no data is provided" do
-    expect {
-      PsonUtil.new.pson_create("type" => "foo")
-    }.to raise_error(ArgumentError, /No data provided in pson data/)
-  end
-
-  it "should call 'from_data_hash' with the provided data" do
-    pson = PsonUtil.new
-    pson.expects(:from_data_hash).with("mydata")
-    pson.pson_create("type" => "foo", "data" => "mydata")
-  end
-
+describe PSON do
   {
     'foo' => '"foo"',
     1 => '1',

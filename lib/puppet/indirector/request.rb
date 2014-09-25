@@ -1,7 +1,6 @@
 require 'cgi'
 require 'uri'
 require 'puppet/indirector'
-require 'puppet/util/pson'
 require 'puppet/network/resolver'
 
 # This class encapsulates all of the information you need to make an

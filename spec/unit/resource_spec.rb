@@ -685,14 +685,6 @@ describe Puppet::Resource do
     end
   end
   describe "when converting to pson" do
-    def pson_output_should
-      @resource.class.expects(:pson_create).with { |hash| yield hash }
-    end
-
-    it "should include the pson util module" do
-      Puppet::Resource.singleton_class.ancestors.should be_include(Puppet::Util::Pson)
-    end
-
     # LAK:NOTE For all of these tests, we convert back to the resource so we can
     # trap the actual data structure then.
 

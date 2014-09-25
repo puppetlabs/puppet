@@ -1,7 +1,6 @@
 require 'puppet/node'
 require 'puppet/indirector'
 require 'puppet/transaction'
-require 'puppet/util/pson'
 require 'puppet/util/tagging'
 require 'puppet/graph'
 
@@ -20,7 +19,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   indirects :catalog, :terminus_setting => :catalog_terminus
 
   include Puppet::Util::Tagging
-  extend Puppet::Util::Pson
 
   # The host name this is a catalog for.
   attr_accessor :name

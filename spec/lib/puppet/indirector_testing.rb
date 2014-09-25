@@ -1,5 +1,4 @@
 require 'puppet/indirector'
-require 'puppet/util/pson'
 
 class Puppet::IndirectorTesting
   extend Puppet::Indirector

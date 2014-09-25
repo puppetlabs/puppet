@@ -1,6 +1,5 @@
 require 'puppet'
 require 'puppet/util/tagging'
-require 'puppet/util/pson'
 require 'puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
@@ -15,7 +14,6 @@ class Puppet::Resource
 
   include Puppet::Util::Tagging
 
-  extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
   attr_reader :type, :title
