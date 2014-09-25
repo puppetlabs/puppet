@@ -196,6 +196,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise "Could not find node #{Puppet[:node_name_value]}"
       end
 
+      # in apply mode, we don't want to use environments that may be
+      # dictated by external nodes
+      node.environment = apply_environment
+
       # Merge in the facts.
       node.merge(facts.values) if facts
 
