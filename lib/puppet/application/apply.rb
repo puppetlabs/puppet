@@ -190,61 +190,59 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       configured_environment.override_with(:manifest => manifest) :
       configured_environment
 
-    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
-      # Find our Node
-      unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-        raise "Could not find node #{Puppet[:node_name_value]}"
+    # Find our Node
+    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+      raise "Could not find node #{Puppet[:node_name_value]}"
+    end
+
+    # in apply mode, we don't want to use environments that may be
+    # dictated by external nodes
+    node.environment = apply_environment
+
+    # Merge in the facts.
+    node.merge(facts.values) if facts
+
+    # Allow users to load the classes that puppet agent creates.
+    if options[:loadclasses]
+      file = Puppet[:classfile]
+      if Puppet::FileSystem.exist?(file)
+        unless FileTest.readable?(file)
+          $stderr.puts "#{file} is not readable"
+          exit(63)
+        end
+        node.classes = ::File.read(file).split(/[\s\n]+/)
+      end
+    end
+
+    begin
+      # Compile our catalog
+      starttime = Time.now
+      catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
+
+      # Translate it to a RAL catalog
+      catalog = catalog.to_ral
+
+      catalog.finalize
+
+      catalog.retrieval_duration = Time.now - starttime
+
+      if options[:write_catalog_summary]
+        catalog.write_class_file
+        catalog.write_resource_file
       end
 
-      # in apply mode, we don't want to use environments that may be
-      # dictated by external nodes
-      node.environment = apply_environment
+      exit_status = apply_catalog(catalog)
 
-      # Merge in the facts.
-      node.merge(facts.values) if facts
-
-      # Allow users to load the classes that puppet agent creates.
-      if options[:loadclasses]
-        file = Puppet[:classfile]
-        if Puppet::FileSystem.exist?(file)
-          unless FileTest.readable?(file)
-            $stderr.puts "#{file} is not readable"
-            exit(63)
-          end
-          node.classes = ::File.read(file).split(/[\s\n]+/)
-        end
-      end
-
-      begin
-        # Compile our catalog
-        starttime = Time.now
-        catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
-
-        # Translate it to a RAL catalog
-        catalog = catalog.to_ral
-
-        catalog.finalize
-
-        catalog.retrieval_duration = Time.now - starttime
-
-        if options[:write_catalog_summary]
-          catalog.write_class_file
-          catalog.write_resource_file
-        end
-
-        exit_status = apply_catalog(catalog)
-
-        if not exit_status
-          exit(1)
-        elsif options[:detailed_exitcodes] then
-          exit(exit_status)
-        else
-          exit(0)
-        end
-      rescue => detail
-        Puppet.log_exception(detail)
+      if not exit_status
         exit(1)
+      elsif options[:detailed_exitcodes] then
+        exit(exit_status)
+      else
+        exit(0)
       end
+    rescue => detail
+      Puppet.log_exception(detail)
+      exit(1)
     end
 
   ensure
