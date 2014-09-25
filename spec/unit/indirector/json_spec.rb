@@ -110,7 +110,6 @@ describe Puppet::Indirector::JSON do
       it "should save the instance of the request as JSON to disk" do
         subject.save(request)
         content = File.read(file)
-        content.should =~ /"document_type"\s*:\s*"IndirectorTesting"/
         content.should =~ /"value"\s*:\s*4/
       end
 

@@ -381,25 +381,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'name'      => name,
       'version'   => version,
       'environment' => environment.to_s,
-      'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
-      'edges'     => edges.   collect { |e| e.to_pson_data_hash },
+      'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
+      'edges'     => edges.   collect { |e| e.to_data_hash },
       'classes'   => classes
     }
-  end
-
-  PSON.register_document_type('Catalog',self)
-  def to_pson_data_hash
-    {
-      'document_type' => 'Catalog',
-      'data'       => to_data_hash,
-      'metadata' => {
-        'api_version' => 1
-        }
-    }
-  end
-
-  def to_pson(*args)
-    to_pson_data_hash.to_pson(*args)
   end
 
   # Convert our catalog into a RAL catalog.

@@ -79,16 +79,6 @@ class Puppet::FileServing::Base
     }
   end
 
-  def to_pson_data_hash
-    {
-      # No 'document_type' since we don't send these bare
-      'data'       => to_data_hash,
-      'metadata' => {
-        'api_version' => 1
-        }
-    }
-  end
-
   def self.absolute?(path)
     Puppet::Util.absolute_path?(path, :posix) or (Puppet.features.microsoft_windows? and Puppet::Util.absolute_path?(path, :windows))
   end

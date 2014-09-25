@@ -82,11 +82,6 @@ class Puppet::Resource
     data
   end
 
-  # This doesn't include document type as it is part of a catalog
-  def to_pson_data_hash
-    to_data_hash
-  end
-
   def self.value_to_pson_data(value)
     if value.is_a? Array
       value.map{|v| value_to_pson_data(v) }
@@ -119,10 +114,6 @@ class Puppet::Resource
   #   all of the instance variables defined on this class.
   def to_yaml_properties
     YAML_ATTRIBUTES & super
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 
   # Proxy these methods to the parameters hash.  It's likely they'll

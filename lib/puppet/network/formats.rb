@@ -154,10 +154,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
     instances.to_pson
   end
 
-  # If they pass class information, we want to ignore it.  By default,
-  # we'll include class information but we won't rely on it - we don't
-  # want class names to be required because we then can't change our
-  # internal class names, which is bad.
+  # If they pass class information, we want to ignore it.
+  # This is required for compatibility with Puppet 3.x
   def data_to_instance(klass, data)
     if data.is_a?(Hash) and d = data['data']
       data = d

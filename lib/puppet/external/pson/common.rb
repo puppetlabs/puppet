@@ -27,15 +27,6 @@ module PSON
       const_set :Parser, parser
     end
 
-    def registered_document_types
-      @registered_document_types ||= {}
-    end
-
-    # Register a class-constant for deserializaion.
-    def register_document_type(name,klass)
-      registered_document_types[name.to_s] = klass
-    end
-
     # Return the constant located at _path_.
     # Anything may be registered as a path by calling register_path, above.
     # Otherwise, the format of _path_ has to be either ::A::B::C or A::B::C.
@@ -44,7 +35,7 @@ module PSON
     # the given path, an ArgumentError is raised.
     def deep_const_get(path) # :nodoc:
       path = path.to_s
-      registered_document_types[path] || path.split(/::/).inject(Object) do |p, c|
+      path.split(/::/).inject(Object) do |p, c|
         case
         when c.empty?             then p
         when p.const_defined?(c)  then p.const_get(c)

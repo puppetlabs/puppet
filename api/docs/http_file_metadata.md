@@ -50,24 +50,18 @@ None
     Content-Type: text/pson
 
     {
-        "data": {
-            "checksum": {
-                "type": "md5",
-                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-            },
-            "destination": null,
-            "group": 20,
-            "links": "manage",
-            "mode": 420,
-            "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
-            "relative_path": null,
-            "type": "file"
+        "checksum": {
+            "type": "md5",
+            "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
         },
-        "document_type": "FileMetadata",
-        "metadata": {
-            "api_version": 1
-        }
+        "destination": null,
+        "group": 20,
+        "links": "manage",
+        "mode": 420,
+        "owner": 501,
+        "path": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "relative_path": null,
+        "type": "file"
     }
 
 #### File metadata found for a directory
@@ -78,24 +72,18 @@ None
     Content-Type: text/pson
 
     {
-        "data": {
-            "checksum": {
-                "type": "ctime",
-                "value": "{ctime}2013-10-01 13:16:10 -0700"
-            },
-            "destination": null,
-            "group": 20,
-            "links": "manage",
-            "mode": 493,
-            "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files/subdirectory",
-            "relative_path": null,
-            "type": "directory"
+        "checksum": {
+            "type": "ctime",
+            "value": "{ctime}2013-10-01 13:16:10 -0700"
         },
-        "document_type": "FileMetadata",
-        "metadata": {
-            "api_version": 1
-        }
+        "destination": null,
+        "group": 20,
+        "links": "manage",
+        "mode": 493,
+        "owner": 501,
+        "path": "/etc/puppet/conf/modules/example/files/subdirectory",
+        "relative_path": null,
+        "type": "directory"
     }
 
 #### File metadata found for a link
@@ -106,24 +94,18 @@ None
     Content-Type: text/pson
 
     {
-        "data": {
-            "checksum": {
-                "type": "md5",
-                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-            },
-            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
-            "group": 20,
-            "links": "manage",
-            "mode": 493,
-            "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files/link_to_file.txt",
-            "relative_path": null,
-            "type": "link"
+        "checksum": {
+            "type": "md5",
+            "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
         },
-        "document_type": "FileMetadata",
-        "metadata": {
-            "api_version": 1
-        }
+        "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "group": 20,
+        "links": "manage",
+        "mode": 493,
+        "owner": 501,
+        "path": "/etc/puppet/conf/modules/example/files/link_to_file.txt",
+        "relative_path": null,
+        "type": "link"
     }
 
 #### File not found
@@ -166,104 +148,74 @@ Accept: pson, text/pson
 
     [
         {
-            "data": {
-                "checksum": {
-                    "type": "ctime",
-                    "value": "{ctime}2013-10-01 13:15:59 -0700"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": ".",
-                "type": "directory"
+            "checksum": {
+                "type": "ctime",
+                "value": "{ctime}2013-10-01 13:15:59 -0700"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": ".",
+            "type": "directory"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 420,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "just_a_file.txt",
-                "type": "file"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 420,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "just_a_file.txt",
+            "type": "file"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
-                "group": 20,
-                "links": "manage",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "link_to_file.txt",
-                "type": "link"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "group": 20,
+            "links": "manage",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "link_to_file.txt",
+            "type": "link"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "ctime",
-                    "value": "{ctime}2013-10-01 13:15:59 -0700"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "subdirectory",
-                "type": "directory"
+            "checksum": {
+                "type": "ctime",
+                "value": "{ctime}2013-10-01 13:15:59 -0700"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "subdirectory",
+            "type": "directory"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d41d8cd98f00b204e9800998ecf8427e"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 420,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "subdirectory/another_file.txt",
-                "type": "file"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d41d8cd98f00b204e9800998ecf8427e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 420,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "subdirectory/another_file.txt",
+            "type": "file"
         }
     ]
 
@@ -276,64 +228,46 @@ Accept: pson, text/pson
 
     [
         {
-            "data": {
-                "checksum": {
-                    "type": "ctime",
-                    "value": "{ctime}2013-10-01 13:15:59 -0700"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": ".",
-                "type": "directory"
+            "checksum": {
+                "type": "ctime",
+                "value": "{ctime}2013-10-01 13:15:59 -0700"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": ".",
+            "type": "directory"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "manage",
-                "mode": 420,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "just_a_file.txt",
-                "type": "file"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "manage",
+            "mode": 420,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "just_a_file.txt",
+            "type": "file"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
-                "group": 20,
-                "links": "manage",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "link_to_file.txt",
-                "type": "link"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "group": 20,
+            "links": "manage",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "link_to_file.txt",
+            "type": "link"
         }
     ]
 
@@ -357,64 +291,46 @@ is identical to the above example, except for:
 
     [
         {
-            "data": {
-                "checksum": {
-                    "type": "ctime",
-                    "value": "{ctime}2013-10-01 13:15:59 -0700"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "follow",
-                "mode": 493,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": ".",
-                "type": "directory"
+            "checksum": {
+                "type": "ctime",
+                "value": "{ctime}2013-10-01 13:15:59 -0700"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "follow",
+            "mode": 493,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": ".",
+            "type": "directory"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "follow",
-                "mode": 420,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "just_a_file.txt",
-                "type": "file"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "follow",
+            "mode": 420,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "just_a_file.txt",
+            "type": "file"
         },
         {
-            "data": {
-                "checksum": {
-                    "type": "md5",
-                    "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
-                },
-                "destination": null,
-                "group": 20,
-                "links": "follow",
-                "mode": 420,
-                "owner": 501,
-                "path": "/etc/puppet/conf/modules/example/files",
-                "relative_path": "link_to_file.txt",
-                "type": "file"
+            "checksum": {
+                "type": "md5",
+                "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "document_type": "FileMetadata",
-            "metadata": {
-                "api_version": 1
-            }
+            "destination": null,
+            "group": 20,
+            "links": "follow",
+            "mode": 420,
+            "owner": 501,
+            "path": "/etc/puppet/conf/modules/example/files",
+            "relative_path": "link_to_file.txt",
+            "type": "file"
         }
     ]
 

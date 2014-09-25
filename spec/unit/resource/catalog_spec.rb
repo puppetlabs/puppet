@@ -778,55 +778,42 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   end
 
   def pson_output_should
-    @catalog.class.expects(:pson_create).with { |hash| yield hash }.returns(:something)
-  end
-
-  # LAK:NOTE For all of these tests, we convert back to the resource so we can
-  # trap the actual data structure then.
-  it "should set its document_type to 'Catalog'" do
-    pson_output_should { |hash| hash['document_type'] == "Catalog" }
-
-    PSON.parse @catalog.to_pson
-  end
-
-  it "should set its data as a hash" do
-    pson_output_should { |hash| hash['data'].is_a?(Hash) }
-    PSON.parse @catalog.to_pson
+    @catalog.class.expects(:from_data_hash).with { |hash| yield hash }.returns(:something)
   end
 
   [:name, :version, :classes].each do |param|
     it "should set its #{param} to the #{param} of the resource" do
       @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-      pson_output_should { |hash| hash['data'][param.to_s].should == @catalog.send(param) }
-      PSON.parse @catalog.to_pson
+      pson_output_should { |hash| hash[param.to_s].should == @catalog.send(param) }
+      Puppet::Resource::Catalog.from_data_hash PSON.parse @catalog.to_pson
     end
   end
 
   it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
-    one = stub 'one', :to_pson_data_hash => "one_resource", :ref => "Foo[one]"
-    two = stub 'two', :to_pson_data_hash => "two_resource", :ref => "Foo[two]"
+    one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
+    two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
 
     @catalog.add_resource(one)
     @catalog.add_resource(two)
 
     # TODO this should really guarantee sort order
-    PSON.parse(@catalog.to_pson,:create_additions => false)['data']['resources'].sort.should == ["one_resource", "two_resource"].sort
+    PSON.parse(@catalog.to_pson,:create_additions => false)['resources'].sort.should == ["one_resource", "two_resource"].sort
 
   end
 
   it "should convert its edges to a PSON-encoded array and store it as the 'edges' data" do
-    one   = stub 'one',   :to_pson_data_hash => "one_resource",   :ref => 'Foo[one]'
-    two   = stub 'two',   :to_pson_data_hash => "two_resource",   :ref => 'Foo[two]'
-    three = stub 'three', :to_pson_data_hash => "three_resource", :ref => 'Foo[three]'
+    one   = stub 'one',   :to_data_hash => "one_resource",   :ref => 'Foo[one]'
+    two   = stub 'two',   :to_data_hash => "two_resource",   :ref => 'Foo[two]'
+    three = stub 'three', :to_data_hash => "three_resource", :ref => 'Foo[three]'
 
     @catalog.add_edge(one, two)
     @catalog.add_edge(two, three)
 
-    @catalog.edges_between(one, two  )[0].expects(:to_pson_data_hash).returns "one_two_pson"
-    @catalog.edges_between(two, three)[0].expects(:to_pson_data_hash).returns "two_three_pson"
+    @catalog.edges_between(one, two  )[0].expects(:to_data_hash).returns "one_two_pson"
+    @catalog.edges_between(two, three)[0].expects(:to_data_hash).returns "two_three_pson"
 
-    PSON.parse(@catalog.to_pson,:create_additions => false)['data']['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
+    PSON.parse(@catalog.to_pson,:create_additions => false)['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
   end
 end
 
@@ -834,11 +821,6 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   before do
     @data = {
       'name' => "myhost"
-    }
-    @pson = {
-      'document_type' => 'Puppet::Resource::Catalog',
-      'data' => @data,
-      'metadata' => {}
     }
   end
 
@@ -853,7 +835,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
                           Puppet::Resource.new(:file, "/bar").to_data_hash]
 
 
-    catalog = PSON.parse @pson.to_pson
+    catalog = Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson
 
     expect(catalog.name).to eq('myhost')
     expect(catalog.version).to eq(@data['version'])
@@ -872,13 +854,13 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     @data['edges'] = [Puppet::Relationship.new("File[/missing]", "File[/bar]").to_data_hash]
     @data['resources'] = [Puppet::Resource.new(:file, "/bar").to_data_hash]
 
-    expect { PSON.parse @pson.to_pson }.to raise_error(ArgumentError, /Could not find relationship source/)
+    expect { Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson }.to raise_error(ArgumentError, /Could not find relationship source/)
   end
 
   it "should fail if the target resource cannot be found" do
     @data['edges'] = [Puppet::Relationship.new("File[/bar]", "File[/missing]").to_data_hash]
     @data['resources'] = [Puppet::Resource.new(:file, "/bar").to_data_hash]
 
-    expect { PSON.parse @pson.to_pson }.to raise_error(ArgumentError, /Could not find relationship target/)
+    expect { Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson }.to raise_error(ArgumentError, /Could not find relationship target/)
   end
 end

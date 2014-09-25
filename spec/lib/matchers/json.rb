@@ -14,7 +14,7 @@ module JSONMatchers
 
     def attr_value(attrs, instance)
       attrs = attrs.dup
-      hash = json(instance)['data']
+      hash = json(instance)
       while attrs.length > 0
         name = attrs.shift
         hash = hash[name]
@@ -50,32 +50,6 @@ module JSONMatchers
       else
         "expected #{instance.inspect} not to set #{@attributes.inspect} to nil"
       end
-    end
-  end
-
-  class SetJsonDocumentTypeTo
-    def initialize(type)
-      @type = type
-    end
-
-    def format
-      @format ||= Puppet::Network::FormatHandler.format('pson')
-    end
-
-    def matches?(instance)
-      json(instance)['document_type'] == @type
-    end
-
-    def json(instance)
-      PSON.parse(instance.to_pson)
-    end
-
-    def failure_message_for_should(instance)
-      "expected #{instance.inspect} to set document_type to #{@type.inspect}; got #{json(instance)['document_type'].inspect}"
-    end
-
-    def failure_message_for_should_not(instance)
-      "expected #{instance.inspect} not to set document_type to #{@type.inspect}"
     end
   end
 
@@ -155,10 +129,6 @@ module JSONMatchers
 
   def set_json_attribute(*attributes)
     SetJsonAttribute.new(attributes)
-  end
-
-  def set_json_document_type_to(type)
-    SetJsonDocumentTypeTo.new(type)
   end
 
   def read_json_attribute(attribute)

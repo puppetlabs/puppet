@@ -34,20 +34,17 @@ PSON
     < Content-Length: 4630
 
     {
-      "document_type":"Node",
-      "data":{
-        "name":"thinky.corp.puppetlabs.net",
-        "parameters":{
-          "architecture":"amd64",
-          "kernel":"Linux",
-          "blockdevices":"sda,sr0",
-          "clientversion":"3.3.1",
-          "clientnoop":"false",
-          "environment":"production",
-          ...
-        },
-        "environment":"production"
-      }
+      "name":"thinky.corp.puppetlabs.net",
+      "parameters":{
+        "architecture":"amd64",
+        "kernel":"Linux",
+        "blockdevices":"sda,sr0",
+        "clientversion":"3.3.1",
+        "clientnoop":"false",
+        "environment":"production",
+        ...
+      },
+      "environment":"production"
     }
 
 Schema
