@@ -57,7 +57,9 @@ describe "apply" do
 
     site_manifest = tmpfile_with_content("site_manifest.pp", "notice('the site manifest was applied instead')")
 
-    enc = tmpfile_with_content("enc_script", ["#!/bin/sh", "echo 'classes: []'"])
+    enc = tmpfile_with_content("enc_script", ["#!/bin/sh",
+                                              "echo 'classes: []'",
+                                              "echo 'environment: special'"])
     File.chmod(0755, enc)
 
     special = Puppet::Node::Environment.create(:special, [])
