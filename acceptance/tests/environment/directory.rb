@@ -1,6 +1,10 @@
 test_name "directory environments"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 step "setup environments"
 
@@ -44,6 +48,9 @@ results[with_explicit_environment_conf_scenario] = use_an_environment("testing_e
 master_environmentpath_scenario = "Test behavior of a directory environment when environmentpath is set in the master section"
 step master_environmentpath_scenario
 master_opts = {
+  'main' => {
+    'environmentpath' => '',
+  },
   'master' => {
     'environmentpath' => '$confdir/environments',
     'config_version' => '$confdir/static-version.sh',

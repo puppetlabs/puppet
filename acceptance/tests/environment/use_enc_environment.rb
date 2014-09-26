@@ -1,4 +1,4 @@
-test_name "Agent should environment given by ENC"
+test_name "Agent should use environment given by ENC"
 
 testdir = create_tmpdir_for_user master, 'use_enc_env'
 
@@ -11,21 +11,41 @@ YAML
 END
 on master, "chmod 755 #{testdir}/enc.rb"
 
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => "0770",
+    owner => #{master.puppet['user']},
+    group => #{master.puppet['group']},
+  }
+  file {
+    '#{testdir}/environments':;
+    '#{testdir}/environments/production':;
+    '#{testdir}/environments/production/manifests':;
+    '#{testdir}/environments/special/':;
+    '#{testdir}/environments/special/manifests':;
+  }
+  file { '#{testdir}/environments/production/manifests/site.pp':
+    ensure => file,
+    mode => "0640",
+    content => 'notify { "production environment": }',
+  }
+  file { '#{testdir}/environments/special/manifests/different.pp':
+    ensure => file,
+    mode => "0640",
+    content => 'notify { "expected_string": }',
+  }
+MANIFEST
+
 master_opts = {
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+  },
   'master' => {
     'node_terminus' => 'exec',
     'external_nodes' => "#{testdir}/enc.rb",
-    'manifest' => "#{testdir}/site.pp"
   },
-  'special' => {
-    'manifest' => "#{testdir}/different.pp"
-  }
 }
-
-create_remote_file(master, "#{testdir}/different.pp", 'notify { "expected_string": }')
-
-on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
-on master, "chmod -R g+rwX #{testdir}"
 
 with_puppet_running_on master, master_opts, testdir do
 

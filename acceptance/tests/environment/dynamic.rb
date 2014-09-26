@@ -1,6 +1,10 @@
 test_name "dynamic environments"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 step "setup environments"
 
@@ -21,11 +25,16 @@ existing_dynamic_scenario = "Test a specific, existing dynamic environment confi
 step existing_dynamic_scenario
 master_opts = {
   'main' => {
+    'environmentpath' => '',
     'manifest' => '$confdir/dynamic/$environment/manifests',
     'modulepath' => '$confdir/dynamic/$environment/modules',
     'config_version' => '$confdir/static-version.sh',
   }
 }
+if master.is_pe?
+  master_opts['main']['modulepath'] << ":#{master['sitemoduledir']}"
+end
+
 results[existing_dynamic_scenario] = use_an_environment("testing", "dynamic testing", master_opts, testdir, puppet_conf_backup_dir)
 
 default_environment_scenario = "Test behavior of default environment"
@@ -46,7 +55,7 @@ review[existing_dynamic_scenario] = review_results(results[existing_dynamic_scen
   :puppet_config => {
     :exit_code => 0,
     :matches => [%r{manifest.*#{confdir}/dynamic/testing/manifests$},
-                 %r{modulepath.*#{confdir}/dynamic/testing/modules$},
+                 %r{modulepath.*#{confdir}/dynamic/testing/modules(?::#{master['sitemoduledir']})?$},
                  %r{config_version.*#{confdir}/static-version.sh$}]
   },
   :puppet_module_install => {
@@ -76,7 +85,7 @@ default_expectations = lambda do |env|
     :puppet_config => {
       :exit_code => 0,
       :matches => [%r{manifest.*#{confdir}/dynamic/#{env}/manifests$},
-                   %r{modulepath.*#{confdir}/dynamic/#{env}/modules$},
+                   %r{modulepath.*#{confdir}/dynamic/#{env}/modules(?::#{master['sitemoduledir']})?$},
                    %r{^config_version.*#{confdir}/static-version.sh$}]
     },
     :puppet_module_install => {

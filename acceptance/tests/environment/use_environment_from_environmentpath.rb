@@ -1,4 +1,8 @@
 test_name "Use environments from the environmentpath"
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 testdir = create_tmpdir_for_user master, 'use_environmentpath'
 
@@ -172,17 +176,13 @@ with_puppet_running_on master, master_opts, testdir do
       end
     end
 
-    if master.is_pe?
-      step("This test cannot run if the production environment directory does not exist, because the fallback production environment puppet creates has an empty modulepath and PE cannot run without it's basemodulepath in /opt.  PUP-2519, which implicitly creates the production environment directory should allow this to run again")
-    else
-      run_with_environment(agent, nil, :expected_exit_code => 2) do |tmpdir, catalog_result|
-        assert_no_match(/module-atmp/, catalog_result.stdout, "module-atmp was included despite no environment being loaded")
+    run_with_environment(agent, nil, :expected_exit_code => 2) do |tmpdir, catalog_result|
+      assert_no_match(/module-atmp/, catalog_result.stdout, "module-atmp was included despite no environment being loaded")
 
-        assert_match(/environment fact from module-globalmod/, catalog_result.stdout)
+      assert_match(/environment fact from module-globalmod/, catalog_result.stdout)
 
-        on agent, "cat #{tmpdir}/file-module-globalmod" do |file_result|
-          assert_match(/data file from module-globalmod/, file_result.stdout)
-        end
+      on agent, "cat #{tmpdir}/file-module-globalmod" do |file_result|
+        assert_match(/data file from module-globalmod/, file_result.stdout)
       end
     end
   end

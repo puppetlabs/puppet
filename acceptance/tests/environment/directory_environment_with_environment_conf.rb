@@ -1,18 +1,20 @@
 test_name 'Use a directory environment from environmentpath with an environment.conf'
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 testdir = create_tmpdir_for_user master, 'use-environment-conf'
 absolute_manifestdir = "#{testdir}/manifests"
 absolute_modulesdir  = "#{testdir}/absolute-modules"
 absolute_globalsdir  = "#{testdir}/global-modules"
 
-
-master_user = on(master, "puppet master --configprint user").stdout.strip
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => #{master_user},
-  group => #{master['group']},
-  mode => 0770,
+  owner => #{master.puppet['user']},
+  group => #{master.puppet['group']},
+  mode => "0770",
 }
 
 file {
@@ -21,7 +23,7 @@ file {
   "#{testdir}/environments/direnv":;
   "#{testdir}/environments/direnv/environment.conf":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => '
       manifest=#{absolute_manifestdir}
       modulepath=relative-modules:#{absolute_modulesdir}:$basemodulepath
@@ -34,7 +36,7 @@ file {
   "#{testdir}/environments/direnv/relative-modules/relmod/manifests":;
   "#{testdir}/environments/direnv/relative-modules/relmod/manifests/init.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => 'class relmod {
       notify { "included relmod": }
     }'
@@ -42,7 +44,7 @@ file {
 
   "#{testdir}/environments/direnv/version_script.sh":
     ensure => file,
-    mode => 0750,
+    mode => "0750",
     content => '#!/usr/bin/env sh
 echo "ver123"
 '
@@ -51,7 +53,7 @@ echo "ver123"
   "#{absolute_manifestdir}":;
   "#{absolute_manifestdir}/site.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => '
       notify { "direnv site.pp": }
       include relmod
@@ -65,7 +67,7 @@ echo "ver123"
   "#{absolute_modulesdir}/absmod/manifests":;
   "#{absolute_modulesdir}/absmod/manifests/init.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => 'class absmod {
       notify { "included absmod": }
     }'
@@ -76,7 +78,7 @@ echo "ver123"
   "#{absolute_globalsdir}/globalmod/manifests":;
   "#{absolute_globalsdir}/globalmod/manifests/init.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => 'class globalmod {
       notify { "included globalmod": }
     }'

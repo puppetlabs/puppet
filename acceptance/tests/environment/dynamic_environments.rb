@@ -1,4 +1,8 @@
 test_name "Dynamic Environments"
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 testdir = create_tmpdir_for_user master, 'dynamic-environment'
 environmentsdir = "#{testdir}/environments"
@@ -98,6 +102,7 @@ end
 ssldir = on(master, puppet("master --configprint ssldir")).stdout.chomp
 
 common_opts = {
+    'environmentpath' => '',
     'modulepath' => "#{testdir}/environments/$environment/modules",
     'hiera_config' => "#{testdir}/hiera.yaml",
 }
@@ -106,7 +111,7 @@ if master.is_pe?
 end
 
 master_opts = {
-  'master' => {
+  'main' => {
     'manifest' => "#{testdir}/environments/$environment/manifests/site.pp",
   }.merge(common_opts)
 }
@@ -116,7 +121,7 @@ with_puppet_running_on master, master_opts, testdir do
 end
 
 master_opts = {
-  'master' => {
+  'main' => {
     'manifest' => "#{testdir}/environments/$environment/manifests/site.pp",
   }.merge(common_opts)
 }
@@ -128,7 +133,7 @@ with_puppet_running_on master, master_opts, testdir do
 end
 
 master_opts = {
-  'master' => {
+  'main' => {
     'manifestdir' => "#{testdir}/environments/$environment/manifests",
   }.merge(common_opts)
 }
