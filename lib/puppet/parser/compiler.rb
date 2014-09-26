@@ -187,9 +187,10 @@ class Puppet::Parser::Compiler
       classes_without_params = @node.classes
     end
 
-    evaluate_classes(classes_without_params, @node_scope || topscope)
-
+    # (PUP-3351) Avoid "Duplicate declaration" errors by evaluating classes
+    # with params prior to classes without params.
     evaluate_classes(classes_with_params, @node_scope || topscope)
+    evaluate_classes(classes_without_params, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
