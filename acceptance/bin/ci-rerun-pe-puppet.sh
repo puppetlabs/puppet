@@ -111,7 +111,7 @@ bundle exec beaker           \
   --debug                    \
   --repo-proxy               \
   --config hosts-immediate.cfg         \
-  --pre-suite setup/common/pre-suite/110_SetPEPuppetService.rb  \
+  --pre-suite setup/common/pre-suite/110_SetPEPuppetService.rb \
   --tests=${tests}           \
   --keyfile ${HOME}/.ssh/id_rsa-acceptance \
   --root-keys \

@@ -6,36 +6,20 @@
 
 umask 0002
 
-if [[ -z "$beaker_gem" || -z "$tests" || -z "$platform" || -z "$layout" || -z "$pe_dist_dir" ]]; then
+if [[ -z "$BEAKER_GEM" || -z "$tests" || -z "$platform" || -z "$layout" || -z "$pe_dist_dir" ]]; then
   echo "
   Usage: env <env variables listed below> bin/ci-pe-puppet.sh
     The following environment variables need to be set:
     'pe_dist_dir' (to http://enterprise.delivery.puppetlabs.net/3.3/ci-ready/ for PE 3.3.x for example)
     'platform'    (to one of the http://vcloud.delivery.puppetlabs.net/ platform names...'curl --url http://vcloud.delivery.puppetlabs.net/vm' for more info)
-    'layout'      (to '64mcd' or '32mcd' or '32m-32d-32c' or '64m-64d-64c' for various cpu & master/database/console node combinations)
+    'layout'      (to '64mcda' or '32mcda' or '32m-32d-32c-32a' or '64mdc-32a' for various cpu & master/database/console node combinations)
     'tests'       (to the comma separated list of tests or directory of tests to execute)
-    'beaker_gem'  (to either 'beaker' or 'pe-beaker' which is holding some temporary puppetserver related changes)
+    'BEAKER_GEM'  (to either 'beaker' or 'pe-beaker' which is holding some temporary puppetserver related changes)
 "
   exit 1
 fi
 
-INSTALL_PATH=`mktemp -d`
-
 cd acceptance
-cat > Gemfile << EOGEMFILE
-if ENV['NO_MIRROR']
-  source 'https://rubygems.org'
-else
-  source 'http://rubygems.delivery.puppetlabs.net'
-end
-
-gem '$beaker_gem'
-
-# beaker-util lives only in our environment.
-unless ENV['NO_MIRROR']
-  gem 'sqa-utils'
-end
-EOGEMFILE
 
 rm -f Gemfile.lock
 
@@ -64,7 +48,5 @@ bundle exec beaker           \
   --no-color
 
 RESULT=$?
-
-rm -rf $INSTALL_PATH
 
 exit $RESULT
