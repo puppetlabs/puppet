@@ -77,15 +77,25 @@ begin
   end
 
   step "start the master" do
+    basemodulepath = "#{get_test_file_path(master, master_module_dir)}"
+    if master.is_pe?
+      basemodulepath << ":#{master['sitemoduledir']}"
+    end
     master_opts = {
+      'main' => {
+        'basemodulepath' => basemodulepath,
+      },
       'master' => {
-        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
         'node_terminus' => 'plain',
-      }
+      },
     }
 
     with_puppet_running_on master, master_opts do
 
+      on(master, <<-CMD
+curl -k -H 'Accept: text/pson' --cert `puppet agent --configprint hostcert` --key `puppet agent --configprint hostprivkey` --cacert `puppet agent --configprint localcacert` https://localhost:8140/v2.0/environments | python -mjson.tool
+      CMD
+      )
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
         agents.each do |agent|

@@ -6,23 +6,36 @@
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
 
 testdir = master.tmpdir('missing_site_pp')
-manifest_file = "#{testdir}/site.pp"
+manifest_file = "#{testdir}/environments/production/manifests/site.pp"
 
-on master, "chmod 777 #{testdir}"
-on master, "rm -f #{manifest_file}"
+apply_manifest_on(master, <<-PP, :catch_failures => true)
+File {
+  ensure => directory,
+  mode => "0750",
+  owner => #{master.puppet['user']},
+  group => #{master.puppet['group']},
+}
+
+file {
+  '#{testdir}':;
+  '#{testdir}/environments':;
+  '#{testdir}/environments/production':;
+  '#{testdir}/environments/production/manifests':;
+}
+PP
 
 master_opts = {
-  'master' => {
-    'manifest' => manifest_file,
-    'node_terminus' => 'plain',
-    'filetimeout' => 1
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+    'filetimeout' => 1,
+    'environment_timeout' => 0,
   }
 }
 
 with_puppet_running_on master, master_opts, testdir do
   # Run test on Agents
   step "Agent: agent --test"
-  on agents, puppet('agent', "--test --server #{master}")
+  on agents, puppet('agent', "-t --server #{master}")
 
   # Create a new site.pp
   step "Master: create basic site.pp file"
@@ -35,7 +48,7 @@ with_puppet_running_on master, master_opts, testdir do
   step "Agent: puppet agent --test"
 
   agents.each do |host|
-    on(host, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [2]) do
+    on(host, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2]) do
       assert_match(/ticket_5477_notify/, stdout, "#{host}: Site.pp not detected on Puppet Master")
     end
   end

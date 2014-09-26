@@ -28,7 +28,7 @@ allow *
 ]
 end.join("\n")
 
-manifest_file = "#{testdir}/manifest.pp"
+manifest_file = "#{testdir}/environments/production/manifests/manifest.pp"
 manifest = %Q[
   Exec { path => "/usr/bin:/bin" }
   node default {
@@ -43,19 +43,41 @@ manifest << node_names.map do |node_name|
   ]
 end.join("\n")
 
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => '0777',
+  }
+
+  file {
+    '#{testdir}':;
+    '#{testdir}/environments':;
+    '#{testdir}/environments/production':;
+    '#{testdir}/environments/production/manifests':;
+  }
+
+  file { '#{manifest_file}':
+    ensure => file,
+    mode => '0644',
+    content => '#{manifest}',
+  }
+
+  file { '#{authfile}':
+    ensure => file,
+    mode => '0644',
+    content => '#{authconf}',
+  }
+MANIFEST
+
 with_these_opts = {
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+  },
   'master' => {
     'rest_authconfig' => "#{testdir}/auth.conf",
     'node_terminus'   => 'plain',
-    'manifest'        => manifest_file,
   },
 }
-
-create_remote_file master, authfile, authconf
-create_remote_file master, manifest_file, manifest
-
-on master, "chmod 644 #{authfile} #{manifest_file}"
-on master, "chmod 777 #{testdir}"
 
 with_puppet_running_on master, with_these_opts, testdir do
 

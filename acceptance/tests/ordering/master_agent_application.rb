@@ -2,7 +2,22 @@ test_name "Puppet applies resources without dependencies in file order over the 
 
 testdir = master.tmpdir('application_order')
 
-create_remote_file(master, "#{testdir}/site.pp", <<-PP)
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => 750,
+    owner => #{master.puppet['user']},
+    group => #{master.puppet['group']},
+  }
+  file {
+    '#{testdir}':;
+    '#{testdir}/environments':;
+    '#{testdir}/environments/production':;
+    '#{testdir}/environments/production/manifests':;
+    '#{testdir}/environments/production/manifests/site.pp':
+      ensure => file,
+      mode => 640,
+      content => '
 notify { "first": }
 notify { "second": }
 notify { "third": }
@@ -11,17 +26,13 @@ notify { "fifth": }
 notify { "sixth": }
 notify { "seventh": }
 notify { "eighth": }
-PP
-
-user = master.execute('puppet config print user')
-group = master.execute('puppet config print group')
-
-on master, "chown -R #{user}:#{group} #{testdir}"
-on master, "chmod -R g+rwX #{testdir}"
+      ';
+  }
+MANIFEST
 
 master_opts = {
-  :master => {
-    :manifest => "#{testdir}/site.pp",
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
    }
 }
 
