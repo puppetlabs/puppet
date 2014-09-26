@@ -469,6 +469,41 @@ describe Puppet::Util::Execution do
       end
     end
 
+    describe "#execute (debug logging)" do
+      it "should log if no uid or gid specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello')
+      end
+      it "should log numeric uid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with uid=100: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:uid => 100})
+      end
+      it "should log numeric gid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with gid=500: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:gid => 500})
+      end
+      it "should log numeric uid and gid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with uid=100 gid=500: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 500})
+      end
+      it "should log string uid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with uid=myuser: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser'})
+      end
+      it "should log string gid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with gid=mygroup: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:gid => 'mygroup'})
+      end
+      it "should log string uid and gid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with uid=myuser gid=mygroup: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser', :gid => 'mygroup'})
+      end
+      it "should log numeric uid and string gid if specified" do
+        Puppet::Util::Execution.expects(:debug).with("Executing with uid=100 gid=mygroup: 'echo hello'")
+        Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 'mygroup'})
+      end
+    end
+
     describe "after execution" do
       before :each do
         stub_process_wait(0)
