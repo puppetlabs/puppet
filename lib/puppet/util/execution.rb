@@ -163,10 +163,21 @@ module Puppet::Util::Execution
       str = command
     end
 
+    user_log_s = ''
+    if options[:uid]
+      user_log_s << " uid=#{options[:uid]}"
+    end
+    if options[:gid]
+      user_log_s << " gid=#{options[:gid]}"
+    end
+    if user_log_s != ''
+      user_log_s.prepend(' with')
+    end
+
     if respond_to? :debug
-      debug "Executing '#{str}'"
+      debug "Executing#{user_log_s}: '#{str}'"
     else
-      Puppet.debug "Executing '#{str}'"
+      Puppet.debug "Executing#{user_log_s}: '#{str}'"
     end
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
