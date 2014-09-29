@@ -1,5 +1,9 @@
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CAUtils
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+disable_pe_enterprise_mcollective_agent_classes
 
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
@@ -8,22 +12,21 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   end
 
   testdirs = {}
-  step "generate tmp dirs on all hosts" do
-    hosts.each { |host| testdirs[host] = host.tmpdir('autosign_command') }
+  test_certnames = []
+
+  step "Generate tmp dirs on all hosts" do
+    hosts.each { |host| testdirs[host] = create_tmpdir_for_user(host, 'autosign_command') }
   end
 
   teardown do
-    step "Remove autosign configuration"
-    testdirs.each do |host,testdir|
-      on(host, host_command("rm -rf '#{testdir}'") )
+    step "clear test certs"
+    test_certnames.each do |cn|
+      on(master, puppet("cert", "clean", cn), :acceptable_exit_codes => [0,24])
     end
-    reset_agent_ssl
   end
 
   hostname = master.execute('facter hostname')
   fqdn = master.execute('facter fqdn')
-
-  reset_agent_ssl(false)
 
   step "Step 1: ensure autosign command can approve CSRs" do
     master_opts = {
@@ -36,14 +39,17 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       agents.each do |agent|
         next if agent == master
 
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --certname #{agent}-autosign"))
+        test_certnames << (certname = "#{agent}-autosign")
+        on(agent, puppet("agent --test",
+                  "--server #{master}",
+                  "--waitforcert 0",
+                  "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
+                  "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         assert_key_generated(agent)
         assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
       end
     end
   end
-
-  reset_agent_ssl(false)
 
   step "Step 2: ensure autosign command can reject CSRs" do
     master_opts = {
@@ -56,7 +62,12 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       agents.each do |agent|
         next if agent == master
 
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --certname #{agent}-reject"), :acceptable_exit_codes => [1])
+        test_certnames << (certname = "#{agent}-reject")
+        on(agent, puppet("agent --test",
+                        "--server #{master}",
+                        "--waitforcert 0",
+                        "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
+                        "--certname #{certname}"), :acceptable_exit_codes => [1])
         assert_key_generated(agent)
         assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
       end
@@ -106,8 +117,6 @@ custom_attributes:
     end
   end
 
-  reset_agent_ssl(false)
-
   step "Step 5: successfully obtain a cert" do
     master_opts = {
       'master' => {
@@ -120,7 +129,13 @@ custom_attributes:
         next if agent == master
 
         step "attempting to obtain cert for #{agent}"
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --csr_attributes '#{agent_csr_attributes[agent]}' --certname #{agent}-attrs"), :acceptable_exit_codes => [0])
+        test_certnames << (certname = "#{agent}-attrs")
+        on(agent, puppet("agent --test",
+                         "--server #{master}",
+                         "--waitforcert 0",
+                         "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
+                         "--csr_attributes '#{agent_csr_attributes[agent]}'",
+                         "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         assert_key_generated(agent)
       end
     end
