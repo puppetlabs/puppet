@@ -930,13 +930,8 @@ class Type
 
   # Removes this object (FROM WHERE?)
   # @todo removes if from where?
-  # @overload remove(rmdeps)
-  #   @deprecated Use remove()
-  #   @param rmdeps [Boolean] intended to indicate that all subscriptions should also be removed, ignored.
-  # @overload remove()
   # @return [void]
-  #
-  def remove(rmdeps = true)
+  def remove()
     # This is hackish (mmm, cut and paste), but it works for now, and it's
     # better than warnings.
     @parameters.each do |name, obj|
