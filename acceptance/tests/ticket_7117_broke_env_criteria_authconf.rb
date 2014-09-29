@@ -5,21 +5,37 @@ test_name "#7117 Broke the environment criteria in auth.conf"
 
 testdir = create_tmpdir_for_user master, 'env_in_auth_conf'
 
-# add to auth.conf
-add_2_authconf = %q{
+
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+File {
+  ensure => directory,
+  owner => #{master.puppet['user']},
+  group => #{master.puppet['group']},
+  mode => "0770",
+}
+
+file {
+  "#{testdir}":;
+  "#{testdir}/environments":;
+  "#{testdir}/environments/override":;
+  "#{testdir}/auth.conf":
+    ensure => file,
+    content => "
 path /
 environment override
 auth any
 allow *
+",
+    mode => "0640",
+}
+MANIFEST
+
+master_opts = {
+  'main' => { 'environmentpath' => "#{testdir}/environments" },
+  'master' => { 'rest_authconfig' => "#{testdir}/auth.conf" },
 }
 
-step "Create a temp auth.conf"
-create_remote_file master, "#{testdir}/auth.conf", add_2_authconf
-
-on master, "chmod 644 #{testdir}/auth.conf"
-on master, "chmod 777 #{testdir}"
-
-with_puppet_running_on master, {'master' => {'rest_authconfig' => "#{testdir}/auth.conf"}}, testdir do
+with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
 
     # Run test on Agents
