@@ -185,7 +185,7 @@ describe Puppet::Configurer do
     end
 
     it "should benchmark how long it takes to apply the catalog" do
-      @agent.expects(:benchmark).with(:notice, "Finished catalog run")
+      @agent.expects(:benchmark).with(:notice, instance_of(String))
 
       @agent.expects(:retrieve_catalog).returns @catalog
 
