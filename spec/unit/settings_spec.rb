@@ -261,24 +261,6 @@ describe Puppet::Settings do
       @settings.set_by_cli?(:myval).should be_false
     end
 
-    describe "setbycli" do
-      it "should generate a deprecation warning" do
-        Puppet.expects(:deprecation_warning).at_least(1)
-        @settings.setting(:myval).setbycli = true
-      end
-      it "should set the value" do
-        @settings[:myval] = "blah"
-        @settings.setting(:myval).setbycli = true
-        @settings.set_by_cli?(:myval).should be_true
-      end
-      it "should raise error if trying to unset value" do
-        @settings.handlearg("--myval", "blah")
-        expect do
-          @settings.setting(:myval).setbycli = nil
-        end.to raise_error(ArgumentError, /unset/)
-      end
-    end
-
     it "should clear the cache when setting getopt-specific values" do
       @settings.define_settings :mysection,
           :one => { :default => "whah", :desc => "yay" },
@@ -393,27 +375,6 @@ describe Puppet::Settings do
       end
     end
 
-    describe "call_on_define" do
-      [true, false].each do |val|
-        describe "to #{val}" do
-          it "should generate a deprecation warning" do
-            Puppet.expects(:deprecation_warning)
-            values = []
-            @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_on_define => val, :hook => lambda { |v| values << v }})
-          end
-
-          it "should should set call_hook" do
-            values = []
-            name = "hooker_#{val}".to_sym
-            @settings.define_settings(:section, name => {:default => "yay", :desc => "boo", :call_on_define => val, :hook => lambda { |v| values << v }})
-
-            @settings.setting(name).call_hook.should == :on_define_and_write if val
-            @settings.setting(name).call_hook.should == :on_write_only unless val
-          end
-        end
-      end
-    end
-
     it "should call passed blocks when values are set" do
       values = []
       @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
@@ -489,22 +450,6 @@ describe Puppet::Settings do
       Puppet::FileSystem.stubs(:exist?).returns true
     end
 
-    describe "call_on_define" do
-      it "should generate a deprecation warning" do
-        Puppet.expects(:deprecation_warning)
-        @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
-        @settings.setting(:hooker).call_on_define
-      end
-
-      Puppet::Settings::StringSetting.available_call_hook_values.each do |val|
-        it "should match value for call_hook => :#{val}" do
-          hook_values = []
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
-          @settings.setting(:hooker).call_on_define.should == @settings.setting(:hooker).call_hook_on_define?
-        end
-      end
-    end
-
     it "should provide a mechanism for returning set values" do
       @settings[:one] = "other"
       @settings[:one].should == "other"
@@ -575,18 +520,6 @@ describe Puppet::Settings do
           :trip_wire => { :type => :boolean, :default => false, :desc => "a trip wire" },
           :tripping => { :default => '$trip_wire', :desc => "once tripped if interpolated was false" })
       @settings[:tripping].should == "false"
-    end
-
-    describe "setbycli" do
-      it "should generate a deprecation warning" do
-        @settings.handlearg("--one", "blah")
-        Puppet.expects(:deprecation_warning)
-        @settings.setting(:one).setbycli
-      end
-      it "should be true" do
-        @settings.handlearg("--one", "blah")
-        @settings.setting(:one).setbycli.should be_true
-      end
     end
   end
 
