@@ -83,6 +83,8 @@ module Puppet
         * emerg
         * crit
         ",
+      :hook => proc {|value| Puppet::Util::Log.level = value },
+      :call_hook => :on_initialize_and_write,
     },
     :disable_warnings => {
       :default => [],
