@@ -5,9 +5,6 @@ test_name "Puppet returns only resource package declaration when querying an uni
   ensure => '(?:purged|absent)',
 \}@m
 
-  package_apply_regex = %r@Notice: Compiled catalog for .* in environment production in \d+\.\d{2} seconds(?:\e\[0m)?
-(?:\e\[m)?Notice: Finished catalog run in \d+\.\d{2} seconds@m
-
   agents.each do |agent|
 
     step "test puppet resource package" do
@@ -24,7 +21,7 @@ test_name "Puppet returns only resource package declaration when querying an uni
     agents.each do |agent|
       step "test puppet apply" do
         on(agent, puppet('apply', '-e', %Q|"package {'not-installed-on-this-host': ensure => purged }"|)) do
-          assert_match(package_apply_regex, stdout)
+          assert_no_match(/warning/i, stdout)
         end
       end
     end
