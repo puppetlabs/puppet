@@ -19,6 +19,14 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     # Translate the output to ruby.
     result = translate(request.key, output)
 
+    # If defining a new environment then we check to see if
+    # the environment exists, if it does not then we raise
+    # an error instead of falling back to the 'production'
+    # environment.
+    if result[:environment] && !Puppet.lookup(:environments).get(result[:environment])
+      raise Puppet::Environments::EnvironmentNotFound, result[:environment]
+    end
+
     # Set the requested environment if it wasn't overridden
     # If we don't do this it gets set to the local default
     result[:environment] ||= request.environment.name
