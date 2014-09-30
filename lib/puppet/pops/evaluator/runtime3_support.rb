@@ -394,6 +394,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Returns true, if the given name is the name of a resource parameter.
   #
   def is_parameter_of_resource?(scope, resource, name)
+    return false unless name.is_a?(String)
     resource.valid_parameter?(name)
   end
 

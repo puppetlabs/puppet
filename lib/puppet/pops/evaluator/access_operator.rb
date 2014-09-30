@@ -232,7 +232,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when :default
       'Default'
     else
-      actual.class.name
+      Puppet::Pops::Types::TypeCalculator.generalize!(Puppet::Pops::Types::TypeCalculator.infer(actual)).to_s
     end
   end
 
@@ -462,7 +462,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     else
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
-      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
+      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => bad_key_type_name(type_name)})
     end
 
     # type name must conform
@@ -508,18 +508,10 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.each_with_index.map do |t, i|
       unless t.is_a?(String) || t == :no_title
-        type_to_report = case t
-        when nil
-          'Undef'
-        when :default
-          'Default'
-        else
-          t.class.name
-        end
         index = keys_orig_size != keys.size ? i+1 : i
         fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
           :type => o,
-          :message => "Cannot use #{type_to_report} where String is expected"
+          :message => "Cannot use #{bad_key_type_name(t)} where a resource title String is expected"
         })
       end
 
