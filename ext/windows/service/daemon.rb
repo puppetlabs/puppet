@@ -15,7 +15,7 @@ class WindowsDaemon < Win32::Daemon
   @run_thread = nil
   @LOG_TO_FILE = false
   LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
-  LEVELS = [:debug, :info, :notice, :err]
+  LEVELS = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   LEVELS.each do |level|
     define_method("log_#{level}") do |msg|
       log(msg, level)
@@ -60,6 +60,8 @@ class WindowsDaemon < Win32::Daemon
     end
     log_debug("Using '#{puppet}'")
 
+    cmdline_debug = argsv.index('--debug') ? :debug : nil
+    @loglevel = parse_log_level(puppet, cmdline_debug)
     log_notice('Service started')
 
     service = self
@@ -167,6 +169,21 @@ class WindowsDaemon < Win32::Daemon
     end
 
     runinterval
+  end
+
+  def parse_log_level(puppet_path,cmdline_debug)
+    begin
+      loglevel = %x{ "#{puppet_path}" agent --configprint log_level}.chomp
+      unless loglevel
+        loglevel = :notice
+        log_err("Failed to determine loglevel, defaulting to #{loglevel}")
+      end
+    rescue Exception => e
+      log_exception(e)
+      loglevel = :notice
+    end
+
+    LEVELS.index(cmdline_debug ? cmdline_debug : loglevel.to_sym)
   end
 end
 
