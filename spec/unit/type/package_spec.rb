@@ -6,6 +6,10 @@ describe Puppet::Type.type(:package) do
     Puppet::Util::Storage.stubs(:store)
   end
 
+  it "should have a :reinstallable feature that requires the :reinstall method" do
+    Puppet::Type.type(:package).provider_feature(:reinstallable).methods.should == [:reinstall]
+  end
+
   it "should have an :installable feature that requires the :install method" do
     Puppet::Type.type(:package).provider_feature(:installable).methods.should == [:install]
   end
@@ -36,7 +40,7 @@ describe Puppet::Type.type(:package) do
   end
 
   describe "when validating attributes" do
-    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :allow_virtual].each do |param|
+    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :allow_virtual, :hasreinstall].each do |param|
       it "should have a #{param} parameter" do
         Puppet::Type.type(:package).attrtype(param).should == :param
       end
@@ -317,6 +321,59 @@ describe Puppet::Type.type(:package) do
             @provider.expects(:install).never
             @catalog.apply
           end
+        end
+      end
+    end
+
+    describe Puppet::Type.type(:package), "when responding to refresh" do
+      include PackageEvaluationTesting
+
+      it "should support :true as a value to :hasreinstall" do
+        srv = Puppet::Type.type(:package).new(:name => "yay", :hasreinstall => :true)
+        srv[:hasreinstall].should == :true
+      end
+
+      it "should support :false as a value to :hasreinstall" do
+        srv = Puppet::Type.type(:package).new(:name => "yay", :hasreinstall => :false)
+        srv[:hasreinstall].should == :false
+      end
+
+      it "should specify :false as the default value of :hasreinstall" do
+        srv = Puppet::Type.type(:package).new(:name => "yay")
+        srv[:hasreinstall].should == :false
+      end
+
+      [:latest, :present, :installed].each do |state|
+        it "should reinstall if it should be #{state.to_s} and hasreinstall is true" do
+          @package[:ensure] = state
+          @package[:hasreinstall] = :true
+          @provider.stubs(:reinstallable?).returns(true)
+          @provider.expects(:reinstall).once
+          @package.refresh
+        end
+
+        it "should reinstall if it should be #{state.to_s} and hasreinstall is false" do
+          @package[:ensure] = state
+          @package[:hasreinstall] = :false
+          @provider.stubs(:reinstallable?).returns(true)
+          @provider.expects(:reinstall).never
+          @package.refresh
+        end
+      end
+
+      [:purged, :absent, :held].each do |state|
+        it "should not reinstall if it should be #{state.to_s} and hasreinstall is true" do
+          @package[:ensure] = state
+          @provider.stubs(:reinstallable?).returns(true)
+          @provider.expects(:reinstall).never
+          @package.refresh
+        end
+
+        it "should not reinstall if it should be #{state.to_s} and hasreinstall is false" do
+          @package[:ensure] = state
+          @provider.stubs(:reinstallable?).returns(true)
+          @provider.expects(:reinstall).never
+          @package.refresh
         end
       end
     end

@@ -21,6 +21,10 @@ describe provider do
     provider.should be_versionable
   end
 
+  it "is reinstallable" do
+    provider.should be_reinstallable
+  end
+
   it "uses :emerge to install packages" do
     @provider.expects(:emerge)
     

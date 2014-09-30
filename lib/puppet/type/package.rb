@@ -24,6 +24,8 @@ module Puppet
       package's `adminfile`, `responsefile`, or `source`, the package
       resource will autorequire those files."
 
+    feature :reinstallable, "The provider can reinstall packages.",
+      :methods => [:reinstall]
     feature :installable, "The provider can install packages.",
       :methods => [:install]
     feature :uninstallable, "The provider can uninstall packages.",
@@ -461,6 +463,32 @@ module Puppet
 
     def present?(current_values)
       super && current_values[:ensure] != :purged
+    end
+
+    # This parameter exists to ensure backwards compatibility is preserved.
+    # See https://github.com/puppetlabs/puppet/pull/2614 for discussion.
+    # If/when a metaparameter for controlling how arbitrary resources respond
+    # to refreshing is created, that will supersede this, and this will be
+    # deprecated.
+    newparam(:hasreinstall) do
+      desc "Specify that this package should respond to refresh events.
+
+        Defaults to false."
+      newvalues(:true, :false)
+
+      defaultto :false
+    end
+
+    # Basically just a synonym for reinstalling.  Used to respond to events.
+    def refresh
+      if provider.reinstallable? &&
+        @parameters[:hasreinstall].value == :true &&
+        @parameters[:ensure].value != :purged &&
+        @parameters[:ensure].value != :absent &&
+        @parameters[:ensure].value != :held
+
+        provider.reinstall
+      end
     end
   end
 end

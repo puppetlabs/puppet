@@ -4,7 +4,7 @@ require 'fileutils'
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
   desc "Provides packaging support for Gentoo's portage system."
 
-  has_feature :versionable
+  has_features :versionable, :reinstallable
 
   {
     :emerge => "/usr/bin/emerge",
@@ -71,6 +71,10 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def uninstall
     emerge "--unmerge", package_name
+  end
+
+  def reinstall
+    self.install
   end
 
   def update
