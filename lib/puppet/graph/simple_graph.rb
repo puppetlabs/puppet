@@ -457,13 +457,6 @@ class Puppet::Graph::SimpleGraph
   # Output the dot format as a string
   def to_dot (params={}) to_dot_graph(params).to_s; end
 
-  # Call +dotty+ for the graph which is written to the file 'graph.dot'
-  # in the # current directory.
-  def dotty (params = {}, dotfile = 'graph.dot')
-    File.open(dotfile, 'w') {|f| f << to_dot(params) }
-    system('dotty', dotfile)
-  end
-
   # Produce the graph files if requested.
   def write_graph(name)
     return unless Puppet[:graph]
