@@ -63,6 +63,11 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
       srv.should(:enable).should == :false
     end
 
+    it "should support :mask as a value" do
+      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :mask)
+      srv.should(:enable).should == :mask
+    end
+
     it "should support :manual as a value on Windows" do
       Puppet.features.stubs(:microsoft_windows?).returns true
 
