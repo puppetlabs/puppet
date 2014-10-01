@@ -42,6 +42,9 @@ module Puppet
 
     feature :flaggable, "The provider can pass flags to the service."
 
+    feature :maskable, "The provider can 'mask' the service.",
+      :methods => [:mask]
+
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
         This property behaves quite differently depending on the platform;
@@ -58,6 +61,12 @@ module Puppet
 
       newvalue(:manual, :event => :service_manual_start) do
         provider.manual_start
+      end
+
+      # This only makes sense on systemd systems. Otherwise, it just defaults
+      # to disable.
+      newvalue(:mask, :event => :service_disabled, :required_features => :maskable) do
+        provider.mask
       end
 
       def retrieve
