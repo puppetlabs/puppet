@@ -111,7 +111,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       resource[:password] = 'plaintext'
       provider.user.expects(:password_is?).with('plaintext').returns false
 
-      provider.password.should == :absent
+      provider.password.should be_nil
     end
 
     it 'should not create a user if a group by the same name exists' do

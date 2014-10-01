@@ -71,7 +71,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def password
-    user.password_is?( @resource[:password] ) ? @resource[:password] : :absent
+    user.password_is?( @resource[:password] ) ? @resource[:password] : nil
   end
 
   def password=(value)
