@@ -1,7 +1,10 @@
-gem_source = ENV['GEM_SOURCE'] ||
-  ENV['OUTSIDE_PUPPETLABS'] ?
-  'https://rubygems.org' :
-  'http://rubygems.delivery.puppetlabs.net'
+gem_source = ENV['GEM_SOURCE']
+if gem_source.nil? || gem_source.empty?
+  default = ENV['OUTSIDE_PUPPETLABS'] ?
+    'https://rubygems.org' :
+    'http://rubygems.delivery.puppetlabs.net'
+  gem_source = default
+end
 source gem_source
 
 gem (ENV['BEAKER_GEM'] || "beaker"), "~> 1.17"
