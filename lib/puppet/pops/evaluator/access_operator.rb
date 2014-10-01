@@ -232,7 +232,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when :default
       'Default'
     else
-      Puppet::Pops::Types::TypeCalculator.infer(actual).to_s
+      Puppet::Pops::Types::TypeCalculator.generalize!(Puppet::Pops::Types::TypeCalculator.infer(actual)).to_s
     end
   end
 
@@ -462,7 +462,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     else
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
-      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
+      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => bad_key_type_name(type_name)})
     end
 
     # type name must conform
