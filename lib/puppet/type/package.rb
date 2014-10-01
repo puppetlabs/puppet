@@ -465,22 +465,24 @@ module Puppet
       super && current_values[:ensure] != :purged
     end
 
-    # Whether this resource should respond to refresh events (via subscribe,
-    # notify, or the ~> arrow) by reinstalling the package. Only works for
-    # providers that support the reinstallable feature.
-    #
-    # This is useful for source-based distributions, where you may want to
-    # recompile a package if the build options change.
-    #
-    # If you use this, be careful of notifying classes when you want to restart
-    # services. If the class also contains a refreshable package, doing so could
-    # cause unnecessary re-installs.
-    #
-    # Defaults to false
+    # This parameter exists to ensure backwards compatibility is preserved.
+    # See https://github.com/puppetlabs/puppet/pull/2614 for discussion.
+    # If/when a metaparameter for controlling how arbitrary resources respond
+    # to refreshing is created, that will supersede this, and this will be
+    # deprecated.
     newparam(:reinstall_on_refresh) do
-      desc "Specify that this package should respond to refresh events.
+      desc "Whether this resource should respond to refresh events (via `subscribe`,
+        `notify`, or the `~>` arrow) by reinstalling the package. Only works for
+        providers that support the `reinstallable` feature.
 
-        Defaults to false."
+        This is useful for source-based distributions, where you may want to
+        recompile a package if the build options change.
+
+        If you use this, be careful of notifying classes when you want to restart
+        services. If the class also contains a refreshable package, doing so could
+        cause unnecessary re-installs.
+
+        Defaults to `false`."
       newvalues(:true, :false)
 
       defaultto :false
