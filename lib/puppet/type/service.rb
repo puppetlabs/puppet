@@ -60,6 +60,16 @@ module Puppet
         provider.manual_start
       end
 
+      # This only makes sense on systemd systems. Otherwise, it just defaults
+      # to disable.
+      newvalue(:mask, :event => :service_disabled) do
+        if provider.respond_to?(:mask)
+          provider.mask
+        else
+          provider.disable
+        end
+      end
+
       def retrieve
         provider.enabled?
       end
