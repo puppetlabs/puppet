@@ -18,7 +18,8 @@ all_tests_passed = false
 ###############################################################################
 
 # create some vars to point to the directories that we're going to point the master/agents at
-master_module_dir = "master_modules"
+environments_dir = "environments"
+master_module_dir = "#{environments_dir}/production/modules"
 agent_lib_dir = "agent_lib"
 
 app_name = "superbogus"
@@ -73,9 +74,8 @@ begin
     end
 
     master_opts = {
-      'master' => {
-        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
-        'node_terminus' => 'plain',
+      'main' => {
+        'environmentpath' => "#{get_test_file_path(master, environments_dir)}",
       }
     }
     step "start the master" do

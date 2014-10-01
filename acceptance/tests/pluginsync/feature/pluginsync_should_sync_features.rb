@@ -24,7 +24,8 @@ all_tests_passed = false
 
 # create some vars to point to the directories that we're going to point the master/agents at
 test_identifier = "pluginsync_should_sync_features"
-master_module_dir = "master_modules"
+environments_dir = "environments"
+master_module_dir = "#{environments_dir}/production/modules"
 agent_lib_dir = "agent_lib"
 
 module_name = "superbogus"
@@ -67,7 +68,7 @@ HERE
 
 
 # manifest file for the master, does nothing but instantiate our custom type
-master_manifest_dir = "master_manifest"
+master_manifest_dir = "#{environments_dir}/production/manifests"
 master_manifest_file = "#{master_manifest_dir}/site.pp"
 master_manifest_content = <<HERE
 #{module_name} { "This is the title of the #{module_name} type instance in site.pp":
@@ -118,11 +119,9 @@ begin
   step "start the master" do
 
     master_opts = {
-      'master' => {
-        'manifest' => "#{get_test_file_path(master, master_manifest_file)}",
-        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
-        'node_terminus' => 'plain',
-      }
+      'main' => {
+        'environmentpath' => "#{get_test_file_path(master, environments_dir)}",
+      },
     }
 
     with_puppet_running_on master, master_opts do
@@ -191,5 +190,3 @@ ensure
     remove_temp_dirs()
   end
 end
-
-

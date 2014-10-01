@@ -1,14 +1,27 @@
-begin test_name "Lookup data using the hiera parser function"
+test_name "Lookup data using the hiera_hash parser function"
 
 testdir = master.tmpdir('hiera')
 
 step 'Setup'
-on master, "mkdir -p #{testdir}/hieradata"
-on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['puppetpath']}/hiera.yaml #{master['puppetpath']}/hiera.yaml.bak; fi"
 
-apply_manifest_on master, <<-PP
+apply_manifest_on(master, <<-PP, :catch_failures => true)
+File {
+  ensure => directory,
+  mode => "0750",
+  owner => #{master.puppet['user']},
+  group => #{master.puppet['group']},
+}
+file {
+  '#{testdir}':;
+  '#{testdir}/hieradata':;
+  '#{testdir}/environments':;
+  '#{testdir}/environments/production':;
+  '#{testdir}/environments/production/manifests':;
+  '#{testdir}/environments/production/modules':;
+}
+
 file { '#{testdir}/hiera.yaml':
-  ensure  => present,
+  ensure  => file,
   content => '---
     :backends:
       - "yaml"
@@ -20,86 +33,70 @@ file { '#{testdir}/hiera.yaml':
 
     :yaml:
       :datadir: "#{testdir}/hieradata"
-  '
+  ',
+  mode => "0640";
 }
 
-file { '#{testdir}/hieradata':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
-}
-PP
-
-apply_manifest_on master, <<-PP
 file { '#{testdir}/hieradata/global.yaml':
-  ensure  => present,
+  ensure  => file,
   content => "---
     database_user:
       name: postgres
       uid: 500
       gid: 500
-  "
+  ",
+  mode => "0640";
 }
 
 file { '#{testdir}/hieradata/production.yaml':
-  ensure  => present,
+  ensure  => file,
   content => "---
     database_user:
       shell: '/bin/bash'
-  "
+  ",
+  mode => "0640";
 }
 
-PP
+file {
+  '#{testdir}/environments/production/modules/ntp/':;
+  '#{testdir}/environments/production/modules/ntp/manifests':;
+}
 
-on master, "mkdir -p #{testdir}/modules/ntp/manifests"
+file { '#{testdir}/environments/production/modules/ntp/manifests/init.pp':
+  ensure => file,
+  content => 'class ntp {
+    $database_user = hiera_hash("database_user")
 
-agent_names = agents.map { |agent| "'#{agent.to_s}'" }.join(', ')
-create_remote_file(master, "#{testdir}/site.pp", <<-PP)
-node default {
-  include ntp
+    notify { "the database user":
+      message => "name: ${database_user["name"]} shell: ${database_user["shell"]}"
+    }
+  }',
+  mode => "0640";
+}
+
+file { '#{testdir}/environments/production/manifests/site.pp':
+  ensure => file,
+  content => "
+    node default {
+      include ntp
+    }",
+  mode => "0640";
 }
 PP
-
-create_remote_file(master, "#{testdir}/modules/ntp/manifests/init.pp", <<-PP)
-class ntp {
-  $database_user = hiera_hash('database_user')
-
-  notify { "the database user":
-    message => "name: ${database_user['name']} shell: ${database_user['shell']}"
-  }
-}
-PP
-
-on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
-on master, "chmod -R g+rwX #{testdir}"
-on master, "cat #{testdir}/hiera.yaml > #{master['puppetpath']}/hiera.yaml"
-
 
 step "Try to lookup hash data"
 
 master_opts = {
-  'master' => {
-    'manifest' => "#{testdir}/site.pp",
-    'modulepath' => "#{testdir}/modules",
-    'node_terminus' => 'plain',
-  }
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+    'hiera_config' => "#{testdir}/hiera.yaml",
+  },
 }
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet('agent', "--no-daemonize --onetime --verbose --server #{master}"))
+    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2])
 
     assert_match("name: postgres shell: /bin/bash", stdout)
   end
-end
-
-
-ensure step "Teardown"
-
-on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then " +
-             "cat #{master['puppetpath']}/hiera.conf.bak > #{master['puppetpath']}/hiera.yaml; " +
-             "rm -rf #{master['puppetpath']}/hiera.yaml.bak; " +
-           "fi"
-
 end

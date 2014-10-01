@@ -1,10 +1,21 @@
-source ENV['GEM_SOURCE'] || "https://rubygems.org"
+gem_source = ENV['GEM_SOURCE'] ||
+  ENV['OUTSIDE_PUPPETLABS'] ?
+  'https://rubygems.org' :
+  'http://rubygems.delivery.puppetlabs.net'
+source gem_source
 
-gem "beaker", "~> 1.17"
-gem 'rake', "~> 10.1.0"
+gem (ENV['BEAKER_GEM'] || "beaker"), "~> 1.17"
+gem "rake", "~> 10.1"
+gem "httparty", :require => false
+gem 'uuidtools', :require => false
+
+# qa utils that live only in our testing environment.
+if !ENV['OUTSIDE_PUPPETLABS']
+  gem 'sqa-utils'
+end
 
 group(:test) do
-  gem "rspec", "~> 2.11.0", :require => false
+  gem "rspec", "~> 2.14.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
 end
 

@@ -59,7 +59,7 @@ describe 'EnvironmentUtils' do
     testcase.safely_shadow_directory_contents_and_yield(host, '/etc/puppet', '/tmp/dir') do
       ran_code = true
     end
-    expect(ran_code).to be_true
+    expect(ran_code).to be true
     expect(host.did).to eq([
       "ls /etc/puppet",
       "ls /tmp/dir",

@@ -10,8 +10,8 @@ testdir = master.tmpdir("concurrent")
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
     ensure => directory,
-    owner => #{master['user']},
-    group => #{master['group']},
+    owner => #{master.puppet['user']},
+    group => #{master.puppet['group']},
     mode => '750',
   }
 
@@ -33,8 +33,10 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
     content => "Something more else to read",
   }
 
-  file { '#{testdir}/manifests': }
-  file { '#{testdir}/manifests/site.pp':
+  file { '#{testdir}/environments': }
+  file { '#{testdir}/environments/production': }
+  file { '#{testdir}/environments/production/manifests': }
+  file { '#{testdir}/environments/production/manifests/site.pp':
     ensure => file,
     content => '
       $foo = inline_template("
@@ -57,7 +59,7 @@ MANIFEST
 step "start master"
 master_opts = {
   'main' => {
-    'manifest' => "#{testdir}/manifests/site.pp",
+    'environmentpath' => "#{testdir}/environments",
   }
 }
 with_puppet_running_on(master, master_opts, testdir) do

@@ -2,6 +2,11 @@ test_name "Commandline modulepath and manifest settings override environment"
 
 skip_test "CLI-master tests are not applicable" if @options[:is_puppetserver]
 
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
+
 testdir = create_tmpdir_for_user master, 'cmdline_and_environment'
 environmentpath = "#{testdir}/environments"
 modulepath = "#{testdir}/modules"
@@ -291,6 +296,9 @@ step "CASE 5: puppet master with explicit dynamic environment settings and empty
   MANIFEST
 
   master_opts = {
+    'main' => {
+      'environmentpath' => '',
+    },
     'master' => {
       'manifest' => "#{environmentpath}/$environment/manifests",
       'modulepath' => "#{environmentpath}/$environment/modules:#{other_modulepath}",

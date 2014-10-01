@@ -4,7 +4,7 @@ success_message = "node_name_value setting was correctly used as the node name"
 in_testdir = master.tmpdir('nodenamevalue')
 
 authfile = "#{in_testdir}/auth.conf"
-create_remote_file master, authfile, <<AUTHCONF
+authconf = <<-AUTHCONF
 path /catalog/specified_node_name
 auth yes
 allow *
@@ -18,8 +18,8 @@ auth yes
 allow *
 AUTHCONF
 
-manifest_file = "#{in_testdir}/manifest.pp"
-create_remote_file master, manifest_file, <<MANIFEST
+manifest_file = "#{in_testdir}/environments/production/manifests/manifest.pp"
+manifest = <<-MANIFEST
   Exec { path => "/usr/bin:/bin" }
   node default {
     notify { "false": }
@@ -29,15 +29,40 @@ create_remote_file master, manifest_file, <<MANIFEST
   }
 MANIFEST
 
-on master, "chmod 644 #{authfile} #{manifest_file}"
-on master, "chmod 777 #{in_testdir}"
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => '0777',
+  }
+
+  file {
+    '#{in_testdir}':;
+    '#{in_testdir}/environments':;
+    '#{in_testdir}/environments/production':;
+    '#{in_testdir}/environments/production/manifests':;
+  }
+
+  file { '#{manifest_file}':
+    ensure => file,
+    mode => '0644',
+    content => '#{manifest}',
+  }
+
+  file { '#{authfile}':
+    ensure => file,
+    mode => '0644',
+    content => '#{authconf}',
+  }
+MANIFEST
 
 with_these_opts = {
+  'main' => {
+    'environmentpath' => "#{in_testdir}/environments",
+  },
   'master' => {
     'rest_authconfig' => "#{in_testdir}/auth.conf",
     'node_terminus'   => 'plain',
-    'manifest'        => manifest_file,
-  }
+  },
 }
 
 with_puppet_running_on master, with_these_opts, in_testdir do

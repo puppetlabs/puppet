@@ -1,6 +1,10 @@
 test_name "legacy environments"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
+require 'puppet/acceptance/classifier_utils'
+extend Puppet::Acceptance::ClassifierUtils
+
+classify_nodes_as_agent_specified_if_classifer_present
 
 step "setup environments"
 
@@ -20,12 +24,19 @@ step "[ Run Tests ]"
 existing_legacy_scenario = "Test a specific, existing legacy environment configuration"
 step existing_legacy_scenario
 master_opts = {
+  'main' => {
+    'environmentpath' => '',
+  },
   'testing' => {
     'manifest' => "$confdir/testing-manifests",
     'modulepath' => "$confdir/testing-modules",
     'config_version' => "$confdir/static-version.sh",
   },
 }
+if master.is_pe?
+  master_opts['testing']['modulepath'] << ":#{master['sitemoduledir']}"
+end
+
 results[existing_legacy_scenario] = use_an_environment("testing", "legacy testing", master_opts, testdir, puppet_conf_backup_dir)
 
 default_environment_scenario = "Test behavior of default environment"
@@ -46,7 +57,7 @@ review[existing_legacy_scenario] = review_results(results[existing_legacy_scenar
   :puppet_config => {
     :exit_code => 0,
     :matches => [%r{manifest.*#{confdir}/testing-manifests$},
-                 %r{modulepath.*#{confdir}/testing-modules$},
+                 %r{modulepath.*#{confdir}/testing-modules(?::#{master['sitemoduledir']})?$},
                  %r{config_version.*#{confdir}/static-version.sh$}]
   },
   :puppet_module_install => {

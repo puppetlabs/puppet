@@ -11,42 +11,53 @@ YAML
 END
 on master, "chmod 755 #{testdir}/enc.rb"
 
-on master, "mkdir -p #{testdir}/modules"
-# Create a plugin file on the master
-on master, "mkdir -p #{testdir}/special/amod/files"
-create_remote_file(master, "#{testdir}/special/amod/files/testy", "special_environment")
-
-on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
-on master, "chmod -R g+rwX #{testdir}"
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => 770,
+    owner => #{master.puppet['user']},
+    group => #{master.puppet['group']},
+  }
+  file {
+    '#{testdir}/environments':;
+    '#{testdir}/environments/production':;
+    '#{testdir}/environments/special/':;
+    '#{testdir}/environments/special/manifests':;
+    '#{testdir}/environments/special/modules':;
+    '#{testdir}/environments/special/modules/amod':;
+    '#{testdir}/environments/special/modules/amod/files':;
+  }
+  file { '#{testdir}/environments/special/modules/amod/files/testy':
+    ensure => file,
+    mode => 640,
+    content => 'special_environment',
+  }
+MANIFEST
 
 master_opts = {
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+  },
   'master' => {
     'node_terminus' => 'exec',
     'external_nodes' => "#{testdir}/enc.rb",
     'filetimeout' => 1
   },
-  'special' => {
-    'modulepath' => "#{testdir}/special",
-    'manifest' => "#{testdir}/different.pp"
-  }
 }
-if master.is_pe?
-  master_opts['special']['modulepath'] << ":#{master['sitemoduledir']}"
-end
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     atmp = agent.tmpdir('respect_enc_test')
     logger.debug "agent: #{agent} \tagent.tmpdir => #{atmp}"
 
-    create_remote_file master, "#{testdir}/different.pp", <<END
+    create_remote_file master, "#{testdir}/environments/special/manifests/different.pp", <<END
 file { "#{atmp}/special_testy":
   source => "puppet:///modules/amod/testy",
 }
 
 notify { "mytemp is ${::mytemp}": }
 END
-    on master, "chmod 644 #{testdir}/different.pp"
+    on master, "chmod 644 #{testdir}/environments/special/manifests/different.pp"
 
     sleep 2 # Make sure the master has time to reload the file
 
