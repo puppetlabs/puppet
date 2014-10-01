@@ -241,6 +241,15 @@ module Util
   end
   module_function :absolute_path?
 
+  def absolute_expanded_path?(path, platform=nil)
+    begin
+      absolute_path?(File.expand_path(path), platform)
+    rescue ArgumentError
+      false
+    end
+  end
+  module_function :absolute_expanded_path?
+
   # Convert a path to a file URI
   def path_to_uri(path)
     return unless path

@@ -112,6 +112,26 @@ describe Puppet::Util do
     end
   end
 
+  describe "#absolute_expanded_path?" do
+    describe "when file is expanded to absolute path" do
+      it "should return true" do
+        # Catch all previous calls
+        File.stubs(:expand_path)
+        File.expects(:expand_path).with("~foo/.bar").returns("/home/foo/.bar")
+        Puppet::Util.should be_absolute_expanded_path("~foo/.bar", :posix)
+      end
+    end
+
+    describe "when expanding path raises an exception" do
+      it "should return false" do
+        # Catch all previous calls
+        File.stubs(:expand_path)
+        File.expects(:expand_path).with("~foo/.bar").raises(ArgumentError, "user foo doesn't exist")
+        Puppet::Util.should_not be_absolute_expanded_path("~foo/.bar", :posix)
+      end
+    end
+  end
+
   describe "#path_to_uri" do
     %w[. .. foo foo/bar foo/../bar].each do |path|
       it "should reject relative path: #{path}" do
