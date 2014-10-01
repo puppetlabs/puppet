@@ -6,12 +6,12 @@ require 'puppet/ssl'
 # @api private
 module Puppet::SSL::CertificateFactory
 
-  # Create, add extensions to, and sign a new X509 certificate.
+  # Create a new X509 certificate and add any needed extensions to the cert.
   #
   # @param cert_type [Symbol] The certificate type to create, which specifies
   #   what extensions are added to the certificate.
   #   One of (:ca, :terminalsubca, :server, :ocsp, :client)
-  # @param csr [OpenSSL::X509::Request] The signing request associated with
+  # @param csr [Puppet::SSL::CertificateRequest] The signing request associated with
   #   the certificate being created.
   # @param issuer [OpenSSL::X509::Certificate, OpenSSL::X509::Request] An X509 CSR
   #   if this is a self signed certificate, or the X509 certificate of the CA if
