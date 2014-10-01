@@ -16,7 +16,7 @@ build_gem: TRUE
 build_dmg: TRUE
 build_msi:
   puppet_for_the_win:
-    ref: 'c61dda253b09bd855488f7b6dd7332fdf84d3039'
+    ref: 'b29b02cb734defd84e2b009df05e8bd83668e1e6'
     repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
   facter:
     ref: 'refs/tags/2.2.0'
