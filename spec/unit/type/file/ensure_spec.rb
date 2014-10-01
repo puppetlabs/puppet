@@ -88,7 +88,7 @@ describe Puppet::Type::File::Ensure do
       end
 
       it "should accept octal mode as fixnum" do
-        resource[:mode] = 0700
+        resource[:mode] = '0700'
         resource.expects(:property_fix)
         Dir.expects(:mkdir).with(path, 0700)
 

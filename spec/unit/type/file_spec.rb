@@ -1219,7 +1219,7 @@ describe Puppet::Type.type(:file) do
 
   describe "#property_fix" do
     {
-      :mode     => 0777,
+      :mode     => '0777',
       :owner    => 'joeuser',
       :group    => 'joeusers',
       :seluser  => 'seluser',

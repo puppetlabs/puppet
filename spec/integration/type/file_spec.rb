@@ -145,7 +145,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         let(:target) { tmpdir('dir_mode') }
 
         it "should set executable bits for newly created directories" do
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0600)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => '0600')
 
           catalog.apply
 
@@ -163,7 +163,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
         it "should not set executable bits for unreadable directories" do
           begin
-            catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0300)
+            catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => '0300')
 
             catalog.apply
 
@@ -175,7 +175,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
 
         it "should set user, group, and other executable bits" do
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0664)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => '0664')
 
           catalog.apply
 
@@ -186,7 +186,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           target_path = tmpfile_with_contents('executable', '')
           set_mode(0444, target_path)
 
-          catalog.add_resource described_class.new(:path => target_path, :ensure => :directory, :mode => 0666, :backup => false)
+          catalog.add_resource described_class.new(:path => target_path, :ensure => :directory, :mode => '0666', :backup => false)
           catalog.apply
 
           (get_mode(target_path) & 07777).should == 0777
@@ -196,7 +196,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       describe "for files" do
         it "should not set executable bits" do
-          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666)
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => '0666')
           catalog.apply
 
           (get_mode(path) & 07777).should == 0666
@@ -229,7 +229,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           it "should not set the executable bit on the link nor the target" do
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
 
             catalog.apply
 
@@ -240,7 +240,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           it "should ignore dangling symlinks (#6856)" do
             File.delete(link_target)
 
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
             catalog.apply
 
             Puppet::FileSystem.exist?(link).should be_false
@@ -265,7 +265,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             Puppet::FileSystem.symlink(target, link)
             File.delete(target)
 
-            catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+            catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
             catalog.apply
           end
 
@@ -284,7 +284,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             describe "that is readable" do
               it "should set the executable bits when creating the destination (#10315)" do
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -294,7 +294,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               it "should set the executable bits when overwriting the destination (#10315)" do
                 FileUtils.touch(path)
 
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow, :backup => false)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow, :backup => false)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -313,7 +313,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               end
 
               it "should set executable bits when creating the destination (#10315)" do
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -323,7 +323,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               it "should set executable bits when overwriting the destination" do
                 FileUtils.touch(path)
 
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow, :backup => false)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow, :backup => false)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -342,7 +342,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             end
 
             it "should create the file, not a symlink (#2817, #10315)" do
-              catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+              catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               catalog.apply
 
               File.should be_file(path)
@@ -352,7 +352,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             it "should overwrite the file" do
               FileUtils.touch(path)
 
-              catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+              catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               catalog.apply
 
               File.should be_file(path)
@@ -378,7 +378,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             describe "when following all links" do
               it "should create the destination and apply executable bits (#10315)" do
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -388,7 +388,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               it "should overwrite the destination and apply executable bits" do
                 FileUtils.mkdir(path)
 
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
                 catalog.apply
 
                 File.should be_directory(path)
@@ -536,7 +536,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     it "should be able to recurse over a nonexistent file" do
       @file = described_class.new(
         :name    => path,
-        :mode    => 0644,
+        :mode    => '0644',
         :recurse => true,
         :backup  => false
       )
@@ -553,7 +553,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       file = described_class.new(
         :name    => path,
-        :mode    => 0644,
+        :mode    => '0644',
         :recurse => true,
         :backup  => false
       )
@@ -648,18 +648,17 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
       managed      = File.join(path, "file")
       generated    = File.join(path, "file_with_a_name_starting_with_the_word_file")
-      managed_mode = 0700
 
       FileUtils.mkdir_p(path)
       FileUtils.touch(managed)
       FileUtils.touch(generated)
 
-      catalog.add_resource described_class.new(:name => path,    :recurse => true, :backup => false, :mode => managed_mode)
+      catalog.add_resource described_class.new(:name => path,    :recurse => true, :backup => false, :mode => '0700')
       catalog.add_resource described_class.new(:name => managed, :recurse => true, :backup => false, :mode => "644")
 
       catalog.apply
 
-      (get_mode(generated) & 007777).should == managed_mode
+      (get_mode(generated) & 007777).should == 0700
     end
 
     describe "when recursing remote directories" do
@@ -981,7 +980,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
          :ensure => :file,
          :source => source,
          :backup => false,
-         :mode => 0440
+         :mode => '0440'
        )
 
       catalog.add_resource file
