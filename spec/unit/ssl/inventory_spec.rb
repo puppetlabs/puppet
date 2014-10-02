@@ -111,31 +111,8 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
       end
     end
 
-    it "should be able to find a given host's serial number" do
-      @inventory.should respond_to(:serial)
-    end
-
-    describe "and finding a serial number" do
-      it "should return nil if the inventory file is missing" do
-        Puppet::FileSystem.expects(:exist?).with(cert_inventory).returns false
-        @inventory.serial(:whatever).should be_nil
-      end
-
-      it "should return the serial number from the line matching the provided name" do
-        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
-
-        @inventory.serial("me").should == 15
-      end
-
-      it "should return the number as an integer" do
-        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
-
-        @inventory.serial("me").should == 15
-      end
-    end
-
-    describe "and finding all serial numbers" do
-      it "should return nil if the inventory file is missing" do
+    describe "and finding serial numbers" do
+      it "should return an empty array if the inventory file is missing" do
         Puppet::FileSystem.expects(:exist?).with(cert_inventory).returns false
         @inventory.serials(:whatever).should be_empty
       end

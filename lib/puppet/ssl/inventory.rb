@@ -35,13 +35,6 @@ class Puppet::SSL::Inventory
     end
   end
 
-  # Find the serial number for a given certificate.
-  def serial(name)
-    Puppet.deprecation_warning 'Inventory#serial is deprecated, use Inventory#serials instead.'
-    return nil unless Puppet::FileSystem.exist?(@path)
-    serials(name).first
-  end
-
   # Find all serial numbers for a given certificate. If none can be found, returns
   # an empty array.
   def serials(name)
