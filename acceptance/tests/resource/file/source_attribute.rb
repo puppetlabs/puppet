@@ -15,22 +15,22 @@ teardown do
 end
 
 step "Setup - create environment and test module"
-  # set directories
-  testdir = master.tmpdir('file_source_attr')
-  env_dir = "#{testdir}/environments"
-  prod_dir = "#{env_dir}/production"
-  manifest_dir = "#{prod_dir}/manifests"
-  manifest_file = "#{prod_dir}/manifests/site.pp"
-  module_dir = "#{prod_dir}/modules"
-  test_module_dir = "#{module_dir}/source_test_module"
-  test_module_manifests_dir = "#{test_module_dir}/manifests"
-  test_module_files_dir = "#{test_module_dir}/files"
-  mod_manifest_file = "#{test_module_manifests_dir}/init.pp"
-  mod_source_file = "#{test_module_files_dir}/source_file"
+# set directories
+testdir = master.tmpdir('file_source_attr')
+env_dir = "#{testdir}/environments"
+prod_dir = "#{env_dir}/production"
+manifest_dir = "#{prod_dir}/manifests"
+manifest_file = "#{prod_dir}/manifests/site.pp"
+module_dir = "#{prod_dir}/modules"
+test_module_dir = "#{module_dir}/source_test_module"
+test_module_manifests_dir = "#{test_module_dir}/manifests"
+test_module_files_dir = "#{test_module_dir}/files"
+mod_manifest_file = "#{test_module_manifests_dir}/init.pp"
+mod_source_file = "#{test_module_files_dir}/source_file"
 
-  mod_source = ' the content is present'
+mod_source = ' the content is present'
 
-  mod_manifest = <<EOF
+mod_manifest = <<EOF
 class source_test_module {
   $target_file = $::kernel ? {
     \\'windows\\' => \\'#{target_file_on_windows}\\',
@@ -44,7 +44,7 @@ class source_test_module {
 }
 EOF
 
-  env_manifest = <<EOF
+env_manifest = <<EOF
 filebucket { \\'main\\':
   server => \\'#{master}\\',
   path   => false,
@@ -57,42 +57,42 @@ node default {
 }
 EOF
 
-  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-    File {
-      ensure => directory,
-      mode => '0755',
-    }
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => '0755',
+  }
 
-    file {
-      '#{testdir}':;
-      '#{env_dir}':;
-      '#{prod_dir}':;
-      '#{manifest_dir}':;
-      '#{module_dir}':;
-      '#{test_module_dir}':;
-      '#{test_module_manifests_dir}':;
-      '#{test_module_files_dir}':;
-    }
+  file {
+    '#{testdir}':;
+    '#{env_dir}':;
+    '#{prod_dir}':;
+    '#{manifest_dir}':;
+    '#{module_dir}':;
+    '#{test_module_dir}':;
+    '#{test_module_manifests_dir}':;
+    '#{test_module_files_dir}':;
+  }
 
-    file { '#{mod_manifest_file}':
-      ensure => file,
-      mode => '0644',
-      content => '#{mod_manifest}',
-    }
-    file { '#{mod_source_file}':
-      ensure => file,
-      mode => '0644',
-      content => '#{mod_source}',
-    }
+  file { '#{mod_manifest_file}':
+    ensure => file,
+    mode => '0644',
+    content => '#{mod_manifest}',
+  }
+  file { '#{mod_source_file}':
+    ensure => file,
+    mode => '0644',
+    content => '#{mod_source}',
+  }
 
-    file { '#{manifest_file}':
-      ensure => file,
-      mode => '0644',
-      content => '#{env_manifest}',
-    }
+  file { '#{manifest_file}':
+    ensure => file,
+    mode => '0644',
+    content => '#{env_manifest}',
+  }
 MANIFEST
 
-step "when using a puppet:/// URI with a master/agent setup" do
+step "when using a puppet:/// URI with a master/agent setup"
 master_opts = {
   'main' => {
     'environmentpath' => "#{env_dir}",
@@ -109,37 +109,31 @@ with_puppet_running_on(master, master_opts, testdir) do
     end
   end
 end
-end
-
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
 step "when using a puppet://$server/ URI with a master/agent setup"
 agents.each do |agent|
   step "Setup testing local file sources"
-    a_testdir = agent.tmpdir('local_source_file_test')
+  a_testdir = agent.tmpdir('local_source_file_test')
 
-    source = "#{a_testdir}/source_mod/files/source"
-    target = "#{a_testdir}/target"
+  source = "#{a_testdir}/source_mod/files/source"
+  target = "#{a_testdir}/target"
 
-    on agent, "mkdir -p #{File.dirname(source)}"
-    create_remote_file agent, source, 'Yay, this is the local file.'
-
+  on agent, "mkdir -p #{File.dirname(source)}"
+  create_remote_file agent, source, 'Yay, this is the local file.'
 
   step "Using a local file path"
-
-    apply_manifest_on agent, "file { '#{target}': source => '#{source}', ensure => present }"
-    on agent, "cat #{target}" do
-      assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
-    end
-
+  apply_manifest_on agent, "file { '#{target}': source => '#{source}', ensure => present }"
+  on agent, "cat #{target}" do
+    assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+  end
 
   step "Using a puppet:/// URI with puppet apply"
-    on agent, "rm -rf #{target}"
+  on agent, "rm -rf #{target}"
 
-    manifest = %{"file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => 'present' }"}
-    on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
-    on agent, "cat #{target}" do
-      assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
-    end
-
+  manifest = %{"file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => 'present' }"}
+  on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
+  on agent, "cat #{target}" do
+    assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+  end
 end
