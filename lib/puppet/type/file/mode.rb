@@ -66,8 +66,7 @@ module Puppet
 
     validate do |value|
       if !value.is_a?(String)
-        Puppet.deprecation_warning("Non-string values for the file mode property are deprecated. It must be a string, " \
-          "either a symbolic mode like 'o+w,a+r' or an octal representation like '0644' or '755'.")
+        raise Puppet::Error, "The file mode specification must be a string, not '#{value.class.name}'"
       end
       unless value.nil? or valid_symbolic_mode?(value)
         raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"

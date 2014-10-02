@@ -249,14 +249,14 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
         @resource[:owner] = 1
         @resource[:group] = 2
-        @resource[:mode] = 3
+        @resource[:mode] = '173'
         @resource[:content] = "foobar"
 
         @source.copy_source_values
 
         @resource[:owner].must == 1
         @resource[:group].must == 2
-        @resource[:mode].must == "3"
+        @resource[:mode].must == '173'
         @resource[:content].should_not == @metadata.checksum
       end
 

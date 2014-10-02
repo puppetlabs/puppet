@@ -10,8 +10,10 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   let(:mode) { resource.property(:mode) }
 
   describe "#validate" do
-    it "should accept values specified as integers" do
-      expect { mode.value = 0755 }.not_to raise_error
+    it "should reject non-string values" do
+      expect {
+        mode.value = 0755
+      }.to raise_error(Puppet::Error, /The file mode specification must be a string, not 'Fixnum'/)
     end
 
     it "should accept values specified as octal numbers in strings" do

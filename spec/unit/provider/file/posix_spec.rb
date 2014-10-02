@@ -6,7 +6,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
   include PuppetSpec::Files
 
   let(:path) { tmpfile('posix_file_spec') }
-  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => 0777, :provider => described_class.name }
+  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => '0777', :provider => described_class.name }
   let(:provider) { resource.provider }
 
   describe "#mode" do
