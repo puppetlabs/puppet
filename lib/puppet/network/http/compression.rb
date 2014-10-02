@@ -46,11 +46,7 @@ module Puppet::Network::HTTP::Compression
     end
 
     def add_accept_encoding(headers={})
-      if Puppet.settings[:http_compression]
-        headers['accept-encoding'] = 'gzip; q=1.0, deflate; q=1.0; identity'
-      else
-        headers['accept-encoding'] = 'identity'
-      end
+      headers['accept-encoding'] = 'gzip; q=1.0, deflate; q=1.0; identity'
       headers
     end
 

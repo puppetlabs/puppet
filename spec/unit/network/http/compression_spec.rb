@@ -36,7 +36,7 @@ describe "http compression" do
     end
   end
 
-  describe "when zlib is available", :if => Puppet.features.zlib? do
+  describe "when zlib is available" do
     before(:each) do
       Puppet.features.stubs(:zlib?).returns true
 
@@ -52,18 +52,12 @@ describe "http compression" do
       Puppet::Network::HTTP::Compression.module.should == Puppet::Network::HTTP::Compression::Active
     end
 
-    it "should add an Accept-Encoding header when http compression is available" do
-      Puppet[:http_compression] = true
+    it "should add an Accept-Encoding header supporting compression" do
       headers = @uncompressor.add_accept_encoding({})
       headers.should have_key('accept-encoding')
       headers['accept-encoding'].should =~ /gzip/
       headers['accept-encoding'].should =~ /deflate/
       headers['accept-encoding'].should =~ /identity/
-    end
-
-    it "should add an Accept-Encoding 'identity' header if http compression is disabled" do
-      Puppet[:http_compression] = false
-      @uncompressor.add_accept_encoding({}).should == {'accept-encoding' => 'identity'}
     end
 
     describe "when uncompressing response body" do
