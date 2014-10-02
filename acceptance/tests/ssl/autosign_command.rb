@@ -15,7 +15,16 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   test_certnames = []
 
   step "Generate tmp dirs on all hosts" do
-    hosts.each { |host| testdirs[host] = create_tmpdir_for_user(host, 'autosign_command') }
+    hosts.each do |host|
+      testdirs[host] = host.tmpdir('autosign_command')
+      apply_manifest_on(host, <<-MANIFEST, :catch_failures => true)
+        file { '#{testdirs[host]}':
+          ensure => directory,
+          owner => #{host.puppet['user']},
+          mode => "0770",
+        }
+      MANIFEST
+    end 
   end
 
   teardown do

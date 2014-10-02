@@ -37,11 +37,11 @@ MANIFEST
 master_opts = {
   'main' => {
     'environmentpath' => "#{testdir}/environments",
+    'environment_timeout' => 0,
   },
   'master' => {
     'node_terminus' => 'exec',
     'external_nodes' => "#{testdir}/enc.rb",
-    'filetimeout' => 1
   },
 }
 
@@ -58,8 +58,6 @@ file { "#{atmp}/special_testy":
 notify { "mytemp is ${::mytemp}": }
 END
     on master, "chmod 644 #{testdir}/environments/special/manifests/different.pp"
-
-    sleep 2 # Make sure the master has time to reload the file
 
     run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --trace")
 
