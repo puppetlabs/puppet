@@ -5,10 +5,6 @@ require 'puppet/util/http_proxy'
 require 'puppet/forge'
 require 'puppet/forge/errors'
 
-if Puppet.features.zlib? && Puppet[:zlib]
-  require 'zlib'
-end
-
 class Puppet::Forge
   # = Repository
   #
@@ -32,7 +28,7 @@ class Puppet::Forge
       SocketError,
     ]
 
-    if Puppet.features.zlib? && Puppet[:zlib]
+    if Puppet.features.zlib?
       NET_HTTP_EXCEPTIONS << Zlib::GzipFile::Error
     end
 
@@ -65,7 +61,7 @@ class Puppet::Forge
         "User-Agent" => user_agent,
       }
 
-      if Puppet.features.zlib? && Puppet[:zlib] && RUBY_VERSION >= "1.9"
+      if Puppet.features.zlib? && RUBY_VERSION >= "1.9"
         headers = headers.merge({
           "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
         })
@@ -98,7 +94,7 @@ class Puppet::Forge
       http_object.start do |http|
         response = http.request(request)
 
-        if Puppet.features.zlib? && Puppet[:zlib]
+        if Puppet.features.zlib?
           if response && response.key?("content-encoding")
             case response["content-encoding"]
             when "gzip"

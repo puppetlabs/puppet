@@ -469,11 +469,6 @@ module Puppet
       http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :deprecated => :allowed_on_commandline,
     },
-    :zlib => {
-        :default  => true,
-        :type     => :boolean,
-        :desc     => "Boolean; whether to use the zlib library",
-    },
     :prerun_command => {
       :default    => "",
       :desc       => "A command to run before every agent run.  If this command returns a non-zero

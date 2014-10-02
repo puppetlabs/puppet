@@ -193,33 +193,27 @@ describe "Puppet Network Format" do
       YAML.load(Zlib::Inflate.inflate(Base64.decode64(output))).should == "foo"
     end
 
-    describe "when zlib is disabled" do
-      before do
-        Puppet[:zlib] = false
-      end
-
-      it "use_zlib? should return false" do
-        @yaml.use_zlib?.should == false
+    describe "when zlib is not installed" do
+      before :each do
+        Puppet.features.stubs(:zlib?).returns(false)
       end
 
       it "should refuse to encode" do
-        expect { @yaml.render("foo") }.to raise_error(Puppet::Error, /zlib library is not installed/)
+        expect {
+          @yaml.render("foo")
+        }.to raise_error(Puppet::Error, /zlib library is not installed/)
       end
 
       it "should refuse to decode" do
-        expect { @yaml.intern(String, "foo") }.to raise_error(Puppet::Error, /zlib library is not installed/)
+        expect {
+          @yaml.intern(String, "foo")
+        }.to raise_error(Puppet::Error, /zlib library is not installed/)
       end
-    end
 
-    describe "when zlib is not installed" do
       it "use_zlib? should return false" do
-        Puppet[:zlib] = true
-        Puppet.features.expects(:zlib?).returns(false)
-
-        @yaml.use_zlib?.should == false
+        expect(@yaml).to_not be_use_zlib
       end
     end
-
   end
 
   describe "plaintext" do
