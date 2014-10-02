@@ -57,6 +57,7 @@ module PuppetSpec::Files
     dir_contained_in(tmpdir(name), contents_hash)
   end
 
+  def dir_contained_in(dir, contents_hash) PuppetSpec::Files.dir_contained_in(dir, contents_hash) end
   def self.dir_contained_in(dir, contents_hash)
     contents_hash.each do |k,v|
       if v.is_a?(Hash)
