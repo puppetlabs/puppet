@@ -92,10 +92,6 @@ begin
 
     with_puppet_running_on master, master_opts do
 
-      on(master, <<-CMD
-curl -k -H 'Accept: text/pson' --cert `puppet agent --configprint hostcert` --key `puppet agent --configprint hostprivkey` --cacert `puppet agent --configprint localcacert` https://localhost:8140/v2.0/environments | python -mjson.tool
-      CMD
-      )
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
         agents.each do |agent|
