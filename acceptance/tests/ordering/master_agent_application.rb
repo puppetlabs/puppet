@@ -5,7 +5,7 @@ testdir = master.tmpdir('application_order')
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
     ensure => directory,
-    mode => 750,
+    mode => "0750",
     owner => #{master.puppet['user']},
     group => #{master.puppet['group']},
   }
@@ -16,7 +16,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
     '#{testdir}/environments/production/manifests':;
     '#{testdir}/environments/production/manifests/site.pp':
       ensure => file,
-      mode => 640,
+      mode => "0640",
       content => '
 notify { "first": }
 notify { "second": }

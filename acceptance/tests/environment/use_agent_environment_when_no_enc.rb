@@ -9,7 +9,7 @@ testdir = create_tmpdir_for_user master, 'use_agent_env'
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
     ensure => directory,
-    mode => 770,
+    mode => "0770",
     owner => #{master.puppet['user']},
     group => #{master.puppet['group']},
   }
@@ -22,12 +22,12 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   }
   file { '#{testdir}/environments/production/manifests/site.pp':
     ensure => file,
-    mode => 640,
+    mode => "0640",
     content => 'notify { "production environment": }',
   }
   file { '#{testdir}/environments/more_different/manifests/more_different.pp':
     ensure => file,
-    mode => 640,
+    mode => "0640",
     content => 'notify { "more_different_string": }',
   }
 MANIFEST

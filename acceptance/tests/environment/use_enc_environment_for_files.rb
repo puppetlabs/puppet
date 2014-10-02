@@ -14,7 +14,7 @@ on master, "chmod 755 #{testdir}/enc.rb"
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
     ensure => directory,
-    mode => 770,
+    mode => "0770",
     owner => #{master.puppet['user']},
     group => #{master.puppet['group']},
   }
@@ -29,7 +29,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   }
   file { '#{testdir}/environments/special/modules/amod/files/testy':
     ensure => file,
-    mode => 640,
+    mode => "0640",
     content => 'special_environment',
   }
 MANIFEST
