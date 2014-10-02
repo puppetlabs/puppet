@@ -86,7 +86,7 @@ syntactic_statements
 #
 syntactic_statement
   : assignment                             =LOW { result = val[0] }
-  | syntactic_statement COMMA assignment   =LOW { result = aryfy(val[0]).push val[2] }
+  | syntactic_statement COMMA assignment   =LOW { result = aryfy(val[0]).push(val[1]).push(val[2]) }
 
 # Assignment (is right recursive since assignment is right associative)
 assignment
