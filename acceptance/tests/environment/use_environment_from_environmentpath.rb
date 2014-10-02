@@ -33,7 +33,7 @@ def generate_module_content(module_name, options = {})
 
   "#{path_to_module}/#{module_name}/manifests/init.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => 'class #{module_name} {
       notify { "template-#{module_name}": message => template("#{module_name}/our_template.erb") }
       file { "$agent_file_location/file-#{module_info}": source => "puppet:///modules/#{module_name}/data" }
@@ -41,17 +41,17 @@ def generate_module_content(module_name, options = {})
   ;
   "#{path_to_module}/#{module_name}/lib/facter/environment_fact_#{module_name}.rb":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => "Facter.add(:environment_fact_#{module_name}) { setcode { 'environment fact from #{module_info}' } }"
   ;
   "#{path_to_module}/#{module_name}/files/data":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => "data file from #{module_info}"
   ;
   "#{path_to_module}/#{module_name}/templates/our_template.erb":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => "<%= @environment_fact_#{module_name} %>"
   ;
   EOS
@@ -61,7 +61,7 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   manifest_content = <<-EOS
   "#{path_to_manifest}/site.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => "#{modules_to_include.map { |m| "include #{m}" }.join("\n")}"
   ;
   EOS
@@ -73,7 +73,7 @@ File {
   ensure => directory,
   owner => #{master_user},
   group => #{master['group']},
-  mode => 0770,
+  mode => "0770",
 }
 
 file {

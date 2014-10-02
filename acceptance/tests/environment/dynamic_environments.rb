@@ -24,17 +24,17 @@ file {
 
 file { "#{envdir}/#{env}/hiera/#{env}.yaml":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => 'foo: foo-#{env}',
 }
 file { "#{envdir}/#{env}/hiera/common.yaml":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => 'foo: foo-common',
 }
 file { "#{envdir}/#{env}/manifests/site.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     notify { "#{env}-site.pp": }
     notify { "hiera":
@@ -45,7 +45,7 @@ file { "#{envdir}/#{env}/manifests/site.pp":
 }
 file { "#{envdir}/#{env}/modules/amod/manifests/init.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     class amod {
       notify { "#{env}-amod": }
@@ -60,7 +60,7 @@ File {
   ensure => directory,
   owner => #{master['user']},
   group => #{master['group']},
-  mode => 0750,
+  mode => "0750",
 }
 
 file {
@@ -70,7 +70,7 @@ file {
 
 file { "#{testdir}/hiera.yaml":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
 ---
 :backends: yaml

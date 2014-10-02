@@ -38,7 +38,7 @@ PROVIDER
   # becasue windows inspects the PATHEXT environment variable in 1.9.3 and later.
   file { "#{dir}/must_exist.exe":
     ensure => file,
-    mode => 0755,
+    mode => "0755",
   }
 MANIFEST
 

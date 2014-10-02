@@ -32,7 +32,7 @@ File {
   ensure => directory,
   owner => #{master_user},
   group => #{master['group']},
-  mode => 0770,
+  mode => "0770",
 }
 
 file {

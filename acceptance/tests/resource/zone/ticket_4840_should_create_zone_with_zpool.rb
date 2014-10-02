@@ -21,7 +21,7 @@ agents.each do |agent|
     }
     file { "/ztstpool/mnt":
       ensure => directory,
-      mode => 0700,
+      mode => "0700",
       require => Zfs["tstpool/tstfs"],
     }
     zone { tstzone:

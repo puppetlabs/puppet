@@ -23,7 +23,7 @@ File {
   ensure => directory,
   owner => #{master['user']},
   group => #{master['group']},
-  mode => 0750,
+  mode => "0750",
 }
 
 ##############################################
@@ -40,7 +40,7 @@ file {
 
 file { "#{environmentpath}/production/modules/amod/manifests/init.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => 'class amod {
     notify { "amod from production environment": }
   }'
@@ -48,7 +48,7 @@ file { "#{environmentpath}/production/modules/amod/manifests/init.pp":
 
 file { "#{environmentpath}/production/manifests/production.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     notify { "in production.pp": }
     include amod
@@ -65,7 +65,7 @@ file {
 
 file { "#{modulepath}/amod/manifests/init.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => 'class amod {
     notify { "amod from modulepath": }
   }'
@@ -74,7 +74,7 @@ file { "#{modulepath}/amod/manifests/init.pp":
 file { "#{manifests}": }
 file { "#{sitepp}":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     notify { "in site.pp": }
     include amod
@@ -84,7 +84,7 @@ file { "#{sitepp}":
 file { "#{other_manifestdir}": }
 file { "#{other_sitepp}":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     notify { "in other manifestdir site.pp": }
     include amod
@@ -101,7 +101,7 @@ file {
 
 file { "#{other_modulepath}/amod/manifests/init.pp":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => 'class amod {
     notify { "amod from commandline modulepath": }
   }'
@@ -109,7 +109,7 @@ file { "#{other_modulepath}/amod/manifests/init.pp":
 
 file { "#{cmdline_manifest}":
   ensure => file,
-  mode => 0640,
+  mode => "0640",
   content => '
     notify { "in cmdline.pp": }
     include amod
@@ -266,7 +266,7 @@ step "CASE 5: puppet master with explicit dynamic environment settings and empty
     ensure => directory,
     owner => #{master['user']},
     group => #{master['group']},
-    mode => 0750,
+    mode => "0750",
   }
 
   # A second module in another modules dir
@@ -278,7 +278,7 @@ step "CASE 5: puppet master with explicit dynamic environment settings and empty
 
   file { "#{other_modulepath}/bmod/manifests/init.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => 'class bmod {
       notify { "bmod from other modulepath": }
     }'
@@ -286,7 +286,7 @@ step "CASE 5: puppet master with explicit dynamic environment settings and empty
 
   file { "#{environmentpath}/production/manifests/production.pp":
     ensure => file,
-    mode => 0640,
+    mode => "0640",
     content => '
       notify { "in production.pp": }
       include amod
