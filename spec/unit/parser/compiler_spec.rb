@@ -422,6 +422,36 @@ describe Puppet::Parser::Compiler do
       @compiler.catalog.should be_vertex(resource)
     end
 
+    context 'and evaluating classes declared from an ENC' do
+      # Expected sequence of class evaluation
+      let(:seq) { sequence('partitioned_node_classes') }
+      # class { [c1, c0]: p1 => v1 }
+      let(:param_classes) do
+        { 'c1' => { 'p1' => 'v1' }, 'c0' => { 'p1' => 'v1' } }
+      end
+      # include 'c2'
+      let(:plain_classes) { { 'c2' => {} } }
+
+      let(:classes) { param_classes.merge(plain_classes) }
+
+      before :each do
+        # Stub _except_ evaluate_node_classes
+        compile_stub(:evaluate_node_classes)
+      end
+
+      it 'then evaluates classes declared with parameters before plain classes' do
+        @node.stubs(:classes).returns(classes)
+
+        [param_classes, plain_classes.keys].each do |partition|
+          @compiler.expects(:evaluate_classes).
+            with(partition, @compiler.topscope).
+            in_sequence(seq)
+        end
+
+        @compiler.compile
+      end
+    end
+
     it "should fail to add resources that conflict with existing resources" do
       path = make_absolute("/foo")
       file1 = resource(:file, path)
