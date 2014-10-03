@@ -59,24 +59,6 @@ module Puppet
         end
       end
 
-      # @api private
-      # @deprecated
-      def self.available_subcommands
-        Puppet.deprecation_warning('Puppet::Util::CommandLine.available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.')
-        Puppet::Application.available_application_names
-      end
-
-      # available_subcommands was previously an instance method, not a class
-      # method, and we have an unknown number of user-implemented applications
-      # that depend on that behaviour.  Forwarding allows us to preserve a
-      # backward compatible API. --daniel 2011-04-11
-      # @api private
-      # @deprecated
-      def available_subcommands
-        Puppet.deprecation_warning('Puppet::Util::CommandLine#available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.')
-        Puppet::Application.available_application_names
-      end
-
       # Run the puppet subcommand. If the subcommand is determined to be an
       # external executable, this method will never return and the current
       # process will be replaced via {Kernel#exec}.
