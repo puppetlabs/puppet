@@ -60,6 +60,16 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       subject.name_to_sid('SYSTEM').should == sid
     end
 
+    it "should return a SID for a passed user or group name" do
+      subject.expects(:name_to_sid_object).with('testers').returns 'S-1-5-32-547'
+      subject.name_to_sid('testers').should == 'S-1-5-32-547'
+    end
+
+    it "should return a SID for a passed fully-qualified user or group name" do
+      subject.expects(:name_to_sid_object).with('MACHINE\testers').returns 'S-1-5-32-547'
+      subject.name_to_sid('MACHINE\testers').should == 'S-1-5-32-547'
+    end
+
     it "should be case-insensitive" do
       subject.name_to_sid('SYSTEM').should == subject.name_to_sid('system')
     end
