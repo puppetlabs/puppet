@@ -845,6 +845,11 @@ describe 'The type calculator' do
         calculator.assignable?(enum_t('a', 'b'), enum_t('c')).should == false
       end
 
+      it 'non parameterized enum accepts any other enum but not the reverse' do
+        calculator.assignable?(enum_t(), enum_t('a')).should == true
+        calculator.assignable?(enum_t('a'), enum_t()).should == false
+      end
+
       it 'enum should accept a variant where all variants are acceptable' do
         enum = enum_t('a', 'b')
         calculator.assignable?(enum, variant_t(string_t('a'), string_t('b'))).should == true

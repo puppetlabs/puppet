@@ -1159,7 +1159,9 @@ class Puppet::Pops::Types::TypeCalculator
     when Types::PVariantType
       t2.types.all? {|variant_t| assignable_PEnumType(t, variant_t) }
     when Types::PEnumType
-      t2.values.all? { |s| t.values.any? {|e| e == s }}
+      # empty means any enum
+      return true if t.values.empty?
+      !t2.values.empty? && t2.values.all? { |s| t.values.any? {|e| e == s }}
     else
       false
     end
