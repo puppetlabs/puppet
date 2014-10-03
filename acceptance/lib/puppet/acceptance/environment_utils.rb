@@ -28,7 +28,7 @@ module Puppet
             "#{manifestpath}":;
             "#{manifestpath}/site.pp":
               ensure => file,
-              mode => 0640,
+              mode => "0640",
               content => '
                 notify { "in #{env_name} site.pp": }
                 include testing_mod
@@ -47,7 +47,7 @@ module Puppet
 
             "#{modulepath}/#{module_name}/manifests/init.pp":
               ensure => file,
-              mode => 0640,
+              mode => "0640",
               content => 'class #{module_name} {
                 notify { "include #{env_name} #{module_name}": }
               }'
@@ -67,7 +67,7 @@ module Puppet
             ensure => directory,
             owner => #{master['user']},
             group => #{master['group']},
-            mode => 0750,
+            mode => "0750",
           }
 
           file { "#{testdir}": }
@@ -113,7 +113,7 @@ module Puppet
 
           file { "#{testdir}/environments/testing_environment_conf/environment.conf":
             ensure => file,
-            mode => 0640,
+            mode => "0640",
             content => '
               modulepath = nonstandard-modules:$basemodulepath
               manifest = nonstandard-manifests
@@ -124,7 +124,7 @@ module Puppet
           file {
             "#{testdir}/environments/testing_environment_conf/local-version.sh":
               ensure => file,
-              mode => 0640,
+              mode => "0640",
               content => '#! /usr/bin/env bash
               echo "local testing_environment_conf"'
             ;
@@ -147,7 +147,7 @@ module Puppet
           file {
             "#{testdir}/static-version.sh":
               ensure => file,
-              mode => 0640,
+              mode => "0640",
               content => '#! /usr/bin/env bash
               echo "static"'
             ;
