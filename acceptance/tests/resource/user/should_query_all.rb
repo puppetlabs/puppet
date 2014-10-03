@@ -1,6 +1,8 @@
 test_name "should query all users"
 
 agents.each do |agent|
+  next if agent == master
+
   step "query natively"
   users = agent.user_list
 

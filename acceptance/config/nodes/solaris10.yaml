@@ -3,9 +3,9 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: solaris-10-x86_64
+    platform: ubuntu-trusty-x86_64
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/solaris-10-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1404-x86_64
   agent:
     roles:
       - agent

@@ -22,16 +22,38 @@ PACKAGES = {
   :debian_ruby18 => [
     'libjson-ruby',
   ],
-  :solaris => [
+  :solaris_11 => [
     ['git', 'developer/versioning/git'],
     ['ruby', 'runtime/ruby-18'],
     # there isn't a package for json, so it is installed later via gems
+  ],
+  :solaris_10 => [
+    'coreutils',
+    'curl', # update curl to fix "CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!" issue
+    'git',
+    'ruby18',
+    'ruby18_dev',
+    'gcc4core',
+    'ruby18_gcc4',
   ],
   :windows => [
     'git',
     # there isn't a need for json on windows because it is bundled in ruby 1.9
   ],
 }
+
+hosts.each do |host|
+  case host['platform']
+  when  /solaris-10/
+    on host, 'mkdir -p /var/lib'
+    on host, 'ln -sf /opt/csw/bin/pkgutil /usr/bin/pkgutil'
+    on host, 'ln -sf /opt/csw/bin/gem18 /usr/bin/gem'
+    on host, 'ln -sf /opt/csw/bin/git /usr/bin/git'
+    on host, 'ln -sf /opt/csw/bin/ruby18 /usr/bin/ruby'
+    on host, 'ln -sf /opt/csw/bin/gstat /usr/bin/stat'
+    on host, 'ln -sf /opt/csw/bin/greadlink /usr/bin/readlink'
+  end
+end
 
 install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
@@ -60,7 +82,10 @@ hosts.each do |host|
     on host, 'cd /; icacls bin /reset /T'
     on host, 'ruby --version'
     on host, 'cmd /c gem list'
-  when /solaris/
+  when /solaris-10/
+    step "#{host} Install json from rubygems"
+    on host, 'gem install json_pure'
+  when /solaris-11/
     step "#{host} Install json from rubygems"
     on host, 'gem install json'
   end
