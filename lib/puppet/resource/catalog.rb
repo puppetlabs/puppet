@@ -61,8 +61,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def title_key_for_ref( ref )
-    ref =~ /^([-\w:]+)\[(.*)\]$/m
-    [$1, $2]
+    s = ref.index('[')
+    e = ref.index(']')
+    if s && e && e > s
+      a = [ref[0, s], ref[s+1, e-s-1]]
+    else
+      a = [nil, nil]
+    end
+    return a
   end
 
   def add_resource(*resources)

@@ -298,8 +298,11 @@ class Puppet::Graph::SimpleGraph
     @downstream_from.clear
     add_vertex(e.source)
     add_vertex(e.target)
-    @in_to[   e.target][e.source] ||= []; @in_to[   e.target][e.source] |= [e]
-    @out_from[e.source][e.target] ||= []; @out_from[e.source][e.target] |= [e]
+    # Avoid multiple lookups here. This code is performance critical
+    arr = (@in_to[e.target][e.source] ||= [])
+    arr << e unless arr.include?(e)
+    arr = (@out_from[e.source][e.target] ||= [])
+    arr << e unless arr.include?(e)
   end
 
   def add_relationship(source, target, label = nil)

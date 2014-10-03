@@ -1,7 +1,7 @@
 require 'puppet/util/tag_set'
 
 module Puppet::Util::Tagging
-  ValidTagRegex = /^\w[-\w:.]*$/
+  ValidTagRegex = /^[0-9A-Za-z_][0-9A-Za-z_:.-]*$/
 
   # Add a tag to the current tag set.
   # When a tag set is used for a scope, these tags will be added to all of
@@ -12,13 +12,37 @@ module Puppet::Util::Tagging
 
     ary.flatten.each do |tag|
       name = tag.to_s.downcase
-      if name =~ ValidTagRegex
-        @tags << name
-        name.split("::").each do |section|
-          @tags << section
+      # Add the tag before testing if it's valid since this means that
+      # we never need to test the same valid tag twice. This speeds things
+      # up since we get a lot of duplicates and rarely fail on bad tags
+      if @tags.add?(name)
+        # not seen before, so now we test if it is valid
+        if name =~ ValidTagRegex
+          # avoid adding twice by first testing if the string contains '::'
+          @tags.merge(name.split('::')) if name.include?('::')
+        else
+          @tags.delete(name)
+          fail(Puppet::ParseError, "Invalid tag '#{name}'")
         end
-      else
-        fail(Puppet::ParseError, "Invalid tag '#{name}'")
+      end
+    end
+  end
+
+  # Add a name to the current tag set. Silently ignore names that does not
+  # represent valid tags.
+  # 
+  # Use this method instead of doing this:
+  #
+  #  tag(name) if is_valid?(name)
+  #
+  # since that results in testing the same string twice
+  #
+  def tag_if_valid(name)
+    if name.is_a?(String) and name =~ ValidTagRegex
+      name = name.downcase
+      @tags ||= new_tags
+      if @tags.add?(name) and name.include?('::')
+        @tags.merge(name.split('::'))
       end
     end
   end
@@ -26,6 +50,11 @@ module Puppet::Util::Tagging
   # Is the receiver tagged with the given tags?
   def tagged?(*tags)
     not ( self.tags & tags.flatten.collect { |t| t.to_s } ).empty?
+  end
+
+  # Only use this method when copying known tags from one Tagging instance to another
+  def set_tags(tag_source)
+    @tags = tag_source.tags
   end
 
   # Return a copy of the tag list, so someone can't ask for our tags
@@ -41,14 +70,10 @@ module Puppet::Util::Tagging
     return if tags.nil? or tags == ""
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
-    tags.each {|t| tag(t) }
+    tag(*tags)
   end
 
   private
-
-  def valid_tag?(tag)
-    tag.is_a?(String) and tag =~ ValidTagRegex
-  end
 
   def new_tags
     Puppet::Util::TagSet.new
