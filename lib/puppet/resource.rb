@@ -223,7 +223,7 @@ class Puppet::Resource
     end
 
     tag(self.type)
-    tag(self.title) if valid_tag?(self.title)
+    tag_if_valid(self.title)
 
     if strict? and ! resource_type
       if self.class?
@@ -423,7 +423,7 @@ class Puppet::Resource
     result.line = self.line
     result.exported = self.exported
     result.virtual = self.virtual
-    result.tag(*self.tags)
+    result.set_tags(self)
     result.environment = environment
     result.instance_variable_set(:@rstype, resource_type)
 
