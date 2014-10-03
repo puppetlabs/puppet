@@ -12,7 +12,7 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
   include PuppetSpec::Files
 
   let(:path) { tmpfile('windows_file_spec') }
-  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => 0777, :provider => described_class.name }
+  let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => '0777', :provider => described_class.name }
   let(:provider) { resource.provider }
   let(:sid)      { 'S-1-1-50' }
   let(:account)  { 'quinn' }
@@ -135,7 +135,7 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
   end
 
   describe "when validating" do
-    {:owner => 'foo', :group => 'foo', :mode => 0777}.each do |k,v|
+    {:owner => 'foo', :group => 'foo', :mode => '0777'}.each do |k,v|
       it "should fail if the filesystem doesn't support ACLs and we're managing #{k}" do
         described_class.any_instance.stubs(:supports_acl?).returns false
 

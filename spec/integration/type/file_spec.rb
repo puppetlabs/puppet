@@ -1121,7 +1121,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             before :each do
               @file[:owner] = @sids[:users]
               @file[:group] = @sids[:system]
-              @file[:mode] = 0644
+              @file[:mode] = '0644'
 
               catalog.apply
             end
@@ -1218,7 +1218,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             before :each do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
-              @directory[:mode] = 0444
+              @directory[:mode] = '0444'
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
@@ -1241,7 +1241,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               before :each do
                 @directory[:owner] = @sids[:users]
                 @directory[:group] = @sids[:system]
-                @directory[:mode] = 0644
+                @directory[:mode] = '0644'
 
                 catalog.apply
               end
