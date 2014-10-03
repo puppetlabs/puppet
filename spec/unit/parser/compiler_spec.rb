@@ -1,6 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 class CompilerTestResource
   attr_accessor :builtin, :virtual, :evaluated, :type, :title
@@ -53,6 +53,7 @@ end
 
 describe Puppet::Parser::Compiler do
   include PuppetSpec::Files
+  include Matchers::Resource
 
   def resource(type, title)
     Puppet::Parser::Resource.new(type, title, :scope => @scope)
@@ -420,36 +421,6 @@ describe Puppet::Parser::Compiler do
       @compiler.add_resource(@scope, resource)
 
       @compiler.catalog.should be_vertex(resource)
-    end
-
-    context 'and evaluating classes declared from an ENC' do
-      # Expected sequence of class evaluation
-      let(:seq) { sequence('partitioned_node_classes') }
-      # class { [c1, c0]: p1 => v1 }
-      let(:param_classes) do
-        { 'c1' => { 'p1' => 'v1' }, 'c0' => { 'p1' => 'v1' } }
-      end
-      # include 'c2'
-      let(:plain_classes) { { 'c2' => {} } }
-
-      let(:classes) { param_classes.merge(plain_classes) }
-
-      before :each do
-        # Stub _except_ evaluate_node_classes
-        compile_stub(:evaluate_node_classes)
-      end
-
-      it 'then evaluates classes declared with parameters before plain classes' do
-        @node.stubs(:classes).returns(classes)
-
-        [param_classes, plain_classes.keys].each do |partition|
-          @compiler.expects(:evaluate_classes).
-            with(partition, @compiler.topscope).
-            in_sequence(seq)
-        end
-
-        @compiler.compile
-      end
     end
 
     it "should fail to add resources that conflict with existing resources" do
@@ -893,6 +864,23 @@ describe Puppet::Parser::Compiler do
 
         it "should fail if the class doesn't exist" do
           expect { compile_to_catalog('', node) }.to raise_error(Puppet::Error, /Could not find class something/)
+        end
+
+        it 'evaluates classes declared with parameters before unparameterized classes' do
+          node = Puppet::Node.new('someone', :classes => { 'app::web' => {}, 'app' => { 'port' => 8080 } })
+          manifest = <<-MANIFEST
+          class app($port = 80) { }
+
+          class app::web($port = $app::port) inherits app {
+            notify { expected: message => "$port" }
+          }
+          MANIFEST
+
+          catalog = compile_to_catalog(manifest, node)
+
+          expect(catalog).to have_resource("Class[App]").with_parameter(:port, 8080)
+          expect(catalog).to have_resource("Class[App::Web]")
+          expect(catalog).to have_resource("Notify[expected]").with_parameter(:message, "8080")
         end
       end
     end
