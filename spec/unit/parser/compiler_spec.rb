@@ -1,6 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 class CompilerTestResource
   attr_accessor :builtin, :virtual, :evaluated, :type, :title
@@ -53,6 +53,7 @@ end
 
 describe Puppet::Parser::Compiler do
   include PuppetSpec::Files
+  include Matchers::Resource
 
   def resource(type, title)
     Puppet::Parser::Resource.new(type, title, :scope => @scope)
@@ -863,6 +864,23 @@ describe Puppet::Parser::Compiler do
 
         it "should fail if the class doesn't exist" do
           expect { compile_to_catalog('', node) }.to raise_error(Puppet::Error, /Could not find class something/)
+        end
+
+        it 'evaluates classes declared with parameters before unparameterized classes' do
+          node = Puppet::Node.new('someone', :classes => { 'app::web' => {}, 'app' => { 'port' => 8080 } })
+          manifest = <<-MANIFEST
+          class app($port = 80) { }
+
+          class app::web($port = $app::port) inherits app {
+            notify { expected: message => "$port" }
+          }
+          MANIFEST
+
+          catalog = compile_to_catalog(manifest, node)
+
+          expect(catalog).to have_resource("Class[App]").with_parameter(:port, 8080)
+          expect(catalog).to have_resource("Class[App::Web]")
+          expect(catalog).to have_resource("Notify[expected]").with_parameter(:message, "8080")
         end
       end
     end
