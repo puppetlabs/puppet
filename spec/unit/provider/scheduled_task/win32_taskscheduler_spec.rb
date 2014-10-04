@@ -663,6 +663,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       provider.should_not be_triggers_same(current, desired)
     end
 
+    describe 'start_date' do
+      it "considers triggers to be equal when start_date is not specified in the 'desired' trigger" do
+        current = {'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30', 'every' => 3}
+        desired = {'schedule' => 'daily', 'start_time' => '15:30', 'every' => 3}
+
+        provider.should be_triggers_same(current, desired)
+      end
+    end
+
     describe 'comparing daily triggers' do
       it "should consider 'desired' triggers not specifying 'every' to have the same value as the 'current' trigger" do
         current = {'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30', 'every' => 3}

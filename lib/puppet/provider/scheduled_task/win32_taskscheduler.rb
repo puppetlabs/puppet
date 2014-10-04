@@ -235,7 +235,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     return false if current_trigger.has_key?('enabled') && !current_trigger['enabled']
 
     desired = desired_trigger.dup
-
+    desired['start_date']  ||= current_trigger['start_date']  if current_trigger.has_key?('start_date')
     desired['every']       ||= current_trigger['every']       if current_trigger.has_key?('every')
     desired['months']      ||= current_trigger['months']      if current_trigger.has_key?('months')
     desired['on']          ||= current_trigger['on']          if current_trigger.has_key?('on')
@@ -255,13 +255,11 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
   def dummy_time_trigger
     now = Time.now
-
     {
       'flags'                   => 0,
       'random_minutes_interval' => 0,
       'end_day'                 => 0,
       "end_year"                => 0,
-      "trigger_type"            => 0,
       "minutes_interval"        => 0,
       "end_month"               => 0,
       "minutes_duration"        => 0,
