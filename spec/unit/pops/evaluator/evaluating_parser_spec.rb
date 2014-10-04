@@ -963,6 +963,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect{parser.evaluate_string(scope, "assert_no_undef({undef => 1})")}.to_not raise_error()
       expect{parser.evaluate_string(scope, "assert_no_undef({1 => undef})")}.to_not raise_error()
     end
+
+    context 'using the 3x function api' do
+      it 'can call a 3x function' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
+        parser.evaluate_string(scope, "bazinga(42)", __FILE__).should == 42
+      end
+
+      it 'maps :undef to empty string' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
+        parser.evaluate_string(scope, "$a = {} bazinga($a[nope])", __FILE__).should == ''
+        parser.evaluate_string(scope, "bazinga(undef)", __FILE__).should == ''
+      end
+
+      it 'does not map :undef to empty string in arrays' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0][0] }
+        parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__).should == :undef
+        parser.evaluate_string(scope, "bazinga([undef])", __FILE__).should == :undef
+      end
+
+      it 'does not map :undef to empty string in hashes' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0]['a'] }
+        parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__).should == :undef
+        parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__).should == :undef
+      end
+    end
   end
 
   context "When evaluator performs string interpolation" do
