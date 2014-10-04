@@ -190,40 +190,80 @@ class Puppet::Resource
   # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
-    if type.is_a?(Class) && type < Puppet::Type
-      # Set the resource type to avoid an expensive `known_resource_types`
-      # lookup.
-      self.resource_type = type
-      # From this point on, the constructor behaves the same as if `type` had
-      # been passed as a symbol.
-      type = type.name
-    end
+    if type.is_a?(Puppet::Resource)
+      # Copy constructor. Let's avoid munging, extracting, tagging, etc
+      src = type
+      self.file = src.file
+      self.line = src.line
+      self.exported = src.exported
+      self.virtual = src.virtual
+      self.set_tags(src)
+      self.environment = src.environment
+      @rstype = src.resource_type
+      @type = src.type
+      @title = src.title
 
-    # Set things like strictness first.
-    attributes.each do |attr, value|
-      next if attr == :parameters
-      send(attr.to_s + "=", value)
-    end
+      src.to_hash.each do |p, v|
+        if v.is_a?(Puppet::Resource)
+          v = Puppet::Resource.new(v.type, v.title)
+        elsif v.is_a?(Array)
+          # flatten resource references arrays
+          v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
+          v = v.collect do |av|
+            av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
+            av
+          end
+        end
+  
+        if Puppet[:parser] == 'current'
+          # If the value is an array with only one value, then
+          # convert it to a single value.  This is largely so that
+          # the database interaction doesn't have to worry about
+          # whether it returns an array or a string.
+          #
+          # This behavior is not done in the future parser, but we can't issue a
+          # deprecation warning either since there isn't anything that a user can
+          # do about it.
+          v = v[0]  if v.is_a?(Array) and v.length == 1
+        end
+        self[p] = v
+      end
+    else
+      if type.is_a?(Class) && type < Puppet::Type
+        # Set the resource type to avoid an expensive `known_resource_types`
+        # lookup.
+        self.resource_type = type
+        # From this point on, the constructor behaves the same as if `type` had
+        # been passed as a symbol.
+        type = type.name
+      end
 
-    @type, @title = extract_type_and_title(type, title)
+      # Set things like strictness first.
+      attributes.each do |attr, value|
+        next if attr == :parameters
+        send(attr.to_s + "=", value)
+      end
 
-    @type = munge_type_name(@type)
+      @type, @title = extract_type_and_title(type, title)
 
-    if self.class?
-      @title = :main if @title == ""
-      @title = munge_type_name(@title)
-    end
+      @type = munge_type_name(@type)
 
-    if params = attributes[:parameters]
-      extract_parameters(params)
-    end
+      if self.class?
+        @title = :main if @title == ""
+        @title = munge_type_name(@title)
+      end
 
-    if resource_type && resource_type.respond_to?(:deprecate_params)
+      if params = attributes[:parameters]
+        extract_parameters(params)
+      end
+
+    	if resource_type && resource_type.respond_to?(:deprecate_params)
         resource_type.deprecate_params(title, attributes[:parameters])
-    end
+    	end
 
-    tag(self.type)
-    tag_if_valid(self.title)
+      tag(self.type)
+      tag_if_valid(self.title)
+    end
 
     if strict? and ! resource_type
       if self.class?
@@ -417,31 +457,7 @@ class Puppet::Resource
   end
 
   def copy_as_resource
-    result = Puppet::Resource.new(type, title)
-
-    result.file = self.file
-    result.line = self.line
-    result.exported = self.exported
-    result.virtual = self.virtual
-    result.set_tags(self)
-    result.environment = environment
-    result.instance_variable_set(:@rstype, resource_type)
-
-    to_hash.each do |p, v|
-      if v.is_a?(Puppet::Resource)
-        v = Puppet::Resource.new(v.type, v.title)
-      elsif v.is_a?(Array)
-        # flatten resource references arrays
-        v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
-        v = v.collect do |av|
-          av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
-          av
-        end
-      end
-      result[p] = v
-    end
-
-    result
+    Puppet::Resource.new(self)
   end
 
   def valid_parameter?(name)
