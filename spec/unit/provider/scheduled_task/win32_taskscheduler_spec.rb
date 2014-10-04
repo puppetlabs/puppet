@@ -142,14 +142,14 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'type'         => { 'days_interval' => 2 },
           })
 
-          resource.provider.trigger.should == {
+          resource.provider.trigger.should == [{
             'start_date' => '2011-9-12',
             'start_time' => '13:20',
             'schedule'   => 'daily',
             'every'      => '2',
             'enabled'    => true,
             'index'      => 0,
-          }
+          }]
         end
 
         it 'should handle a single weekly trigger' do
@@ -171,7 +171,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             }
           })
 
-          resource.provider.trigger.should == {
+          resource.provider.trigger.should == [{
             'start_date' => '2011-9-12',
             'start_time' => '13:20',
             'schedule'   => 'weekly',
@@ -179,7 +179,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'on'         => ['sun', 'mon', 'wed', 'fri'],
             'enabled'    => true,
             'index'      => 0,
-          }
+          }]
         end
 
         it 'should handle a single monthly date-based trigger' do
@@ -204,7 +204,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             }
           })
 
-          resource.provider.trigger.should == {
+          resource.provider.trigger.should == [{
             'start_date' => '2011-9-12',
             'start_time' => '13:20',
             'schedule'   => 'monthly',
@@ -212,7 +212,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'on'         => [1, 3, 5, 15, 'last'],
             'enabled'    => true,
             'index'      => 0,
-          }
+          }]
         end
 
         it 'should handle a single monthly day-of-week-based trigger' do
@@ -240,7 +240,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             }
           })
 
-          resource.provider.trigger.should == {
+          resource.provider.trigger.should == [{
             'start_date'       => '2011-9-12',
             'start_time'       => '13:20',
             'schedule'         => 'monthly',
@@ -249,7 +249,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'day_of_week'      => ['sun', 'mon', 'wed', 'fri'],
             'enabled'          => true,
             'index'            => 0,
-          }
+          }]
         end
 
         it 'should handle a single one-time trigger' do
@@ -263,13 +263,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'flags'        => 0,
           })
 
-          resource.provider.trigger.should == {
+          resource.provider.trigger.should == [{
             'start_date' => '2011-9-12',
             'start_time' => '13:20',
             'schedule'   => 'once',
             'enabled'    => true,
             'index'      => 0,
-          }
+          }]
         end
       end
 
@@ -536,18 +536,18 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         'index'      => 0,
       }
 
-      resource.provider.trigger.should == mock_task_trigger
-      resource.provider.trigger.should == mock_task_trigger
+      resource.provider.trigger.should == [mock_task_trigger]
+      resource.provider.trigger.should == [mock_task_trigger]
 
       resource.provider.clear_task
 
-      resource.provider.trigger.should == {
+      resource.provider.trigger.should == [{
         'start_date' => '2012-11-14',
         'start_time' => '15:22',
         'schedule'   => 'once',
         'enabled'    => true,
         'index'      => 0,
-      }
+      }]
     end
   end
 

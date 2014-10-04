@@ -105,7 +105,6 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
       @triggers << puppet_trigger
     end
-    @triggers = @triggers[0] if @triggers.length == 1
 
     @triggers
   end
