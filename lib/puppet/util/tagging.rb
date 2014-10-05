@@ -38,10 +38,10 @@ module Puppet::Util::Tagging
   # since that results in testing the same string twice
   #
   def tag_if_valid(name)
-    if name.is_a?(String) and name =~ ValidTagRegex
+    if name.is_a?(String) && name =~ ValidTagRegex
       name = name.downcase
       @tags ||= new_tags
-      if @tags.add?(name) and name.include?('::')
+      if @tags.add?(name) && name.include?('::')
         @tags.merge(name.split('::'))
       end
     end
@@ -64,10 +64,22 @@ module Puppet::Util::Tagging
     @tags.dup
   end
 
+  # Merge tags from a tagged instance with no attempts to split, downcase
+  # or verify the tags
+  def merge_tags(tag_source)
+    @tags ||= new_tags
+    tag_source.merge_into(@tags)
+  end
+
+  # Merge the tags of this instance into the provide TagSet
+  def merge_into(tag_set)
+    tag_set.merge(@tags) unless @tags.nil?
+  end
+
   def tags=(tags)
     @tags = new_tags
 
-    return if tags.nil? or tags == ""
+    return if tags.nil?
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
     tag(*tags)
