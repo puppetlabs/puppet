@@ -28,7 +28,7 @@ if [ -z "$2" ]; then
   cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
     - agent
     - master
@@ -51,14 +51,14 @@ else
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
     - agent
     - dashboard
     - database
     - master
     platform: ${platform}
-  ${2}:
+  ${2}.delivery.puppetlabs.net:
     roles:
     - agent
     platform: ${platform}
@@ -76,17 +76,17 @@ EOHOSTS
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
     - agent
     - master
     platform: ${platform}
-  ${2}:
+  ${2}.delivery.puppetlabs.net:
     roles:
     - agent
     - dashboard
     platform: ${platform}
-  ${3}:
+  ${3}.delivery.puppetlabs.net:
     roles:
     - agent
     - database
