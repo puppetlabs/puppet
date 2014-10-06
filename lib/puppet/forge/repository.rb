@@ -141,6 +141,10 @@ class Puppet::Forge
         proxy.cert_store = cert_store
       end
 
+      if Puppet[:http_debug]
+        proxy.set_debug_output($stderr)
+      end
+
       proxy
     end
 
