@@ -670,10 +670,20 @@ module Puppet
     #   representing the found keys
     def unknown_keys_in_file(keyfile)
       names = []
+      name_index = 0
       File.new(keyfile).each do |line|
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
         # the name is stored in the 4th capture of the regex
-        names << $4
+        name = $4
+        if name.empty?
+          key = $3.delete("\n")
+          # If no comment is specified for this key, generate a unique internal
+          # name. This uses the same rules as
+          # provider/ssh_authorized_key/parsed (PUP-3357)
+          name = "#{keyfile}:unnamed-#{name_index += 1}"
+        end
+        names << name
+        Puppet.debug "#{self.ref} parsed for purging Ssh_authorized_key[#{name}]"
       end
 
       names.map { |keyname|
