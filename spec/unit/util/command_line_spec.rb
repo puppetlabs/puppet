@@ -124,23 +124,6 @@ describe Puppet::Util::CommandLine do
       end
     end
 
-    describe 'when loading commands' do
-      it "should deprecate the available_subcommands instance method" do
-        Puppet::Application.expects(:available_application_names)
-        Puppet.expects(:deprecation_warning).with("Puppet::Util::CommandLine#available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.")
-
-        command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp })
-        command_line.available_subcommands
-      end
-
-      it "should deprecate the available_subcommands class method" do
-        Puppet::Application.expects(:available_application_names)
-        Puppet.expects(:deprecation_warning).with("Puppet::Util::CommandLine.available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.")
-
-        Puppet::Util::CommandLine.available_subcommands
-      end
-    end
-
     describe 'when setting process priority' do
       let(:command_line) do
         Puppet::Util::CommandLine.new("puppet", %w{ agent })
