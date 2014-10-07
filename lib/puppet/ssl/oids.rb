@@ -43,6 +43,40 @@ module Puppet::SSL::Oids
     OpenSSL::ASN1::ObjectId.register(*oid_defn)
   end
 
+  # Parse and load custom OID mapping file that enables custom OIDs to be resolved
+  # into user-friendly names.
+  #
+  # @param f_map [String] File to obtain custom OIDs mapping from
+  # @param mp_key [String] Hash key in which custom OIDs mapping is stored
+  #
+  # @example Custom OID mapping file
+  #   ---
+  #   oid_mapping:
+  #      - ['1.3.6.1.4.1.34380.1.2.1.1', 'myshortname', 'Long name'] 
+  #      - ['1.3.6.1.4.1.34380.1.2.1.2', 'myothershortname', 'Other Long name'] 
+  def self.load_custom_oid_file(f_map, mp_key='oid_mapping')
+    if File.exists?(f_map) and File.readable?(f_map)
+      mapping = nil
+      begin
+        mapping = YAML.load_file(f_map)
+      rescue => err
+        raise ParseError, "Error loading ssl custom OIDs mapping file from '#{f_map}': #{err}", err.backtrace
+      end
+
+      unless mapping.has_key?(mp_key)
+        raise ParseError, "Error loading ssl custom OIDs mapping file from '#{f_map}': no such index '#{mp_key}'"
+      end
+
+      begin
+        mapping[mp_key].each do |oid_defn|
+          OpenSSL::ASN1::ObjectId.register(*oid_defn)
+        end
+      rescue => err
+        raise ArgumentError, "Error registering ssl custom OIDs mapping from file '#{f_map}': #{err}", err.backtrace
+      end
+    end
+  end
+
   # Determine if the first OID contains the second OID
   #
   # @param first [String] The containing OID, in dotted form or as the short name
