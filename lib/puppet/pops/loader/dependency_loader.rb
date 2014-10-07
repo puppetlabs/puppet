@@ -48,6 +48,13 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
     end
   end
 
+  # Adds a dependency loader to the set of already configured loaders.
+  # @api private - this method is private to the loaders subsystem
+  #
+  def add_loader(loader)
+    @dependency_loaders << loader
+  end
+
   def to_s()
     "(DependencyLoader '#{@loader_name}' [" + @dependency_loaders.map {|loader| loader.to_s }.join(' ,') + "])"
   end
