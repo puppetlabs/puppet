@@ -1,4 +1,6 @@
 test_name "ENC node information is used when store configs enabled (#16698)"
+require 'puppet/acceptance/classifier_utils.rb'
+extend Puppet::Acceptance::ClassifierUtils
 
 confine :to, :platform => ['debian', 'ubuntu']
 confine :except, :platform => 'lucid'
@@ -6,6 +8,34 @@ confine :except, :platform => 'lucid'
 skip_test "Test not supported on jvm" if @options[:is_puppetserver]
 
 testdir = master.tmpdir('use_enc')
+
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    mode => "0770",
+    owner => #{master.puppet['user']},
+    group => #{master.puppet['group']},
+  }
+  file {
+    '#{testdir}':;
+    '#{testdir}/environments':;
+    '#{testdir}/environments/production':;
+    '#{testdir}/environments/production/manifests':;
+    '#{testdir}/environments/production/manifests/site.pp':
+      ensure => file,
+      mode => "0640",
+      content => 'notify { $data: }';
+  }
+MANIFEST
+
+if master.is_pe?
+  group = {
+    'name' => 'Data',
+    'description' => 'A group to test that data is passed from the enc',
+    'variables' => { :data => 'data from enc' }
+  }
+  create_group_for_nodes(agents, group)
+else
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
 #!#{master['puppetbindir']}/ruby
@@ -18,11 +48,6 @@ puts({
      }.to_yaml)
 END
 on master, "chmod 755 #{testdir}/enc.rb"
-
-create_remote_file(master, "#{testdir}/site.pp", 'notify { $data: }')
-
-on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
-on master, "chmod -R g+rwX #{testdir}"
 
 create_remote_file master, "#{testdir}/setup.pp", <<END
 
@@ -104,16 +129,20 @@ END
 on master, puppet_apply("#{testdir}/setup.pp")
 on master, puppet_apply("#{testdir}/setup_sqlite_gem.pp")
 
+end
+
 master_opts = {
-  'master' => {
-    'node_terminus' => 'exec',
-    'external_nodes' => "#{testdir}/enc.rb",
-    'storeconfigs' => true,
-    'dbadapter' => 'sqlite3',
-    'dblocation' => "#{testdir}/store_configs.sqlite3",
-    'manifest' => "#{testdir}/site.pp"
-  }
+  'main' => {
+    'environmentpath' => "#{testdir}/environments",
+  },
 }
+master_opts['master'] = {
+  'node_terminus' => 'exec',
+  'external_nodes' => "#{testdir}/enc.rb",
+  'storeconfigs' => true,
+  'dbadapter' => 'sqlite3',
+  'dblocation' => "#{testdir}/store_configs.sqlite3",
+} if !master.is_pe?
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|

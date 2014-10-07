@@ -14,8 +14,8 @@ exit 1
 fi
 
 if [ -z "$platform" ]; then
-  echo "'platform' not set: assuming 'el-6-x86_64'"
-  platform="el-6-x86_64"
+  echo "'platform' not set: should be 'el-6-x86_64' or 'ubuntu-1204-i386' or some other platform string acceptable to Beaker"
+  exit 1
 fi
 
 if [ -z "$1" ]; then
