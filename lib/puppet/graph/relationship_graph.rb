@@ -173,7 +173,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
           if edge?(edge.target, edge.source)
             vertex.debug "Skipping automatic relationship with #{edge.source}"
           else
-            vertex.debug "Forming automation relationshipf of type #{rel_type} with #{edge.source}"
+            vertex.debug "Forming automation relationship of type #{rel_type} with #{edge.source}"
             if rel_type == :require
               edge.event = :NONE
             else
@@ -193,7 +193,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
           if edge?(edge.source, edge.target)
             vertex.debug "Skipping automatic relationship with #{edge.target}"
           else
-            vertex.debug "Forming automation relationshipf of type #{rel_type} with #{edge.target}"
+            vertex.debug "Forming automation relationship of type #{rel_type} with #{edge.target}"
             if rel_type == :before
               edge.event = :NONE
             else
