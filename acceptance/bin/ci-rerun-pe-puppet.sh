@@ -78,18 +78,17 @@ EOHOSTS
 HOSTS:
   ${1}.delivery.puppetlabs.net:
     roles:
-    - agent
     - master
+    - dashboard
+    - database
     platform: ${platform}
   ${2}.delivery.puppetlabs.net:
     roles:
     - agent
-    - dashboard
     platform: ${platform}
   ${3}.delivery.puppetlabs.net:
     roles:
     - agent
-    - database
     platform: ${platform}
 CONFIG:
   nfs_server: none
