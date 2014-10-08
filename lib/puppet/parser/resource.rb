@@ -143,14 +143,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  # This only mattered for clients < 0.25, which we don't support any longer.
-  # ...but, since this hasn't been deprecated, and at least some functions
-  # used it, deprecate now rather than just eliminate. --daniel 2012-07-15
-  def metaparam_compatibility_mode?
-    Puppet.deprecation_warning "metaparam_compatibility_mode? is obsolete since < 0.25 clients are really, really not supported any more"
-    false
-  end
-
   def name
     self[:name] || self.title
   end
