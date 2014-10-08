@@ -76,14 +76,9 @@ class Puppet::Node
 
   def environment=(env)
     if env.is_a?(String) or env.is_a?(Symbol)
-      if !Puppet.lookup(:environments).get(env)
-        raise Puppet::Environments::EnvironmentNotFound, env
-      end
-      @environment = Puppet.lookup(:environments).get(env)
-    elsif env.is_a?(Puppet::Node::Environment)
-      @environment = env
+      @environment = Puppet.lookup(:environments).get!(env)
     else
-        raise Puppet::Environments::EnvironmentNotFound, env
+      @environment = env
     end
   end
 
