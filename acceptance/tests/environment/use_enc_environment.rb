@@ -1,6 +1,18 @@
 test_name "Agent should use environment given by ENC"
+require 'puppet/acceptance/classifier_utils.rb'
+extend Puppet::Acceptance::ClassifierUtils
 
 testdir = create_tmpdir_for_user master, 'use_enc_env'
+
+if master.is_pe?
+  group = {
+    'name' => 'Special Environment',
+    'description' => 'Classify our test agent nodes in the special environment.',
+    'environment' => 'special',
+    'environment_trumps' => true,
+  }
+  create_group_for_nodes(agents, group)
+else
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
 #!#{master['puppetbindir']}/ruby
@@ -10,6 +22,8 @@ environment: special
 YAML
 END
 on master, "chmod 755 #{testdir}/enc.rb"
+
+end
 
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
@@ -41,11 +55,11 @@ master_opts = {
   'main' => {
     'environmentpath' => "#{testdir}/environments",
   },
-  'master' => {
-    'node_terminus' => 'exec',
-    'external_nodes' => "#{testdir}/enc.rb",
-  },
 }
+master_opts['master'] = {
+  'node_terminus' => 'exec',
+  'external_nodes' => "#{testdir}/enc.rb",
+} if !master.is_pe?
 
 with_puppet_running_on master, master_opts, testdir do
 

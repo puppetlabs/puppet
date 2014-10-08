@@ -14,8 +14,8 @@ exit 1
 fi
 
 if [ -z "$platform" ]; then
-  echo "'platform' not set: assuming 'el-6-x86_64'"
-  platform="el-6-x86_64"
+  echo "'platform' not set: should be 'el-6-x86_64' or 'ubuntu-1204-i386' or some other platform string acceptable to Beaker"
+  exit 1
 fi
 
 if [ -z "$1" ]; then
@@ -28,7 +28,7 @@ if [ -z "$2" ]; then
   cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
     - agent
     - master
@@ -51,14 +51,14 @@ else
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
     - agent
     - dashboard
     - database
     - master
     platform: ${platform}
-  ${2}:
+  ${2}.delivery.puppetlabs.net:
     roles:
     - agent
     platform: ${platform}
@@ -76,20 +76,19 @@ EOHOSTS
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}:
+  ${1}.delivery.puppetlabs.net:
     roles:
-    - agent
     - master
-    platform: ${platform}
-  ${2}:
-    roles:
-    - agent
     - dashboard
+    - database
     platform: ${platform}
-  ${3}:
+  ${2}.delivery.puppetlabs.net:
     roles:
     - agent
-    - database
+    platform: ${platform}
+  ${3}.delivery.puppetlabs.net:
+    roles:
+    - agent
     platform: ${platform}
 CONFIG:
   nfs_server: none
