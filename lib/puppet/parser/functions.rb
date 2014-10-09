@@ -33,9 +33,7 @@ module Puppet::Parser::Functions
   #
   # @api private
   def self.autoloader
-    @autoloader ||= Puppet::Util::Autoload.new(
-      self, "puppet/parser/functions", :wrap => false
-    )
+    @autoloader ||= Puppet::Util::Autoload.new(self, "puppet/parser/functions")
   end
 
   # Get the module that functions are mixed into corresponding to an

@@ -10,11 +10,7 @@ class Puppet::Util::NetworkDevice::Base
   def initialize(url, options = {})
     @url = URI.parse(url)
 
-    @autoloader = Puppet::Util::Autoload.new(
-      self,
-      "puppet/util/network_device/transport",
-      :wrap => false
-    )
+    @autoloader = Puppet::Util::Autoload.new(self, "puppet/util/network_device/transport")
 
     if @autoloader.load(@url.scheme)
       @transport = Puppet::Util::NetworkDevice::Transport.const_get(@url.scheme.capitalize).new(options[:debug])
