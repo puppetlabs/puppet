@@ -181,23 +181,6 @@ class Application
       result
     end
 
-    SHOULD_PARSE_CONFIG_DEPRECATION_MSG = "is no longer supported; config file parsing " +
-        "is now controlled by the puppet engine, rather than by individual applications.  This " +
-        "method will be removed in a future version of puppet."
-
-    def should_parse_config
-      Puppet.deprecation_warning("should_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
-    end
-
-    def should_not_parse_config
-      Puppet.deprecation_warning("should_not_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
-    end
-
-    def should_parse_config?
-      Puppet.deprecation_warning("should_parse_config? " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
-      true
-    end
-
     # used to declare code that handle an option
     def option(*options, &block)
       long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).gsub('-','_')
