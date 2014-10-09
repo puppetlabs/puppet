@@ -172,13 +172,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           resource.provider.trigger.should == [{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'weekly',
-            'every'      => '2',
-            'on'         => ['sun', 'mon', 'wed', 'fri'],
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'  => '2011-9-12',
+            'start_time'  => '13:20',
+            'schedule'    => 'weekly',
+            'every'       => '2',
+            'day_of_week' => ['sun', 'mon', 'wed', 'fri'],
+            'enabled'     => true,
+            'index'       => 0,
           }]
         end
 
