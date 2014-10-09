@@ -680,12 +680,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'abc'[x]"                    => "The value 'x' cannot be converted to Numeric",
       "'abc'[1.0]"                  => "A String[] cannot use Float where Integer is expected",
       "'abc'[1,2,3]"                => "String supports [] with one or two arguments. Got 3",
-      "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Fixnum',
-      "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Fixnum where String is expected',
-      "File[0]"                     => 'Error creating type specialization of a File-Type, Cannot use Fixnum where String is expected',
+      "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Integer',
+      "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Integer where a resource title String is expected',
+      "File[0]"                     => 'Error creating type specialization of a File-Type, Cannot use Integer where a resource title String is expected',
       "String[a]"                   => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String",
-      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Fixnum where String or Regexp or Pattern-Type or Regexp-Type is expected',
-      "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Fixnum where String or Regexp is expected',
+      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Integer where String or Regexp or Pattern-Type or Regexp-Type is expected',
+      "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Integer where String or Regexp is expected',
       "Regexp[a,b]"                 => 'A Regexp-Type[] accepts 1 argument. Got 2',
       "true[0]"                     => "Operator '[]' is not applicable to a Boolean",
       "1[0]"                        => "Operator '[]' is not applicable to an Integer",
@@ -962,6 +962,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect{parser.evaluate_string(scope, "assert_no_undef([undef])")}.to_not raise_error()
       expect{parser.evaluate_string(scope, "assert_no_undef({undef => 1})")}.to_not raise_error()
       expect{parser.evaluate_string(scope, "assert_no_undef({1 => undef})")}.to_not raise_error()
+    end
+
+    context 'using the 3x function api' do
+      it 'can call a 3x function' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
+        parser.evaluate_string(scope, "bazinga(42)", __FILE__).should == 42
+      end
+
+      it 'maps :undef to empty string' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
+        parser.evaluate_string(scope, "$a = {} bazinga($a[nope])", __FILE__).should == ''
+        parser.evaluate_string(scope, "bazinga(undef)", __FILE__).should == ''
+      end
+
+      it 'does not map :undef to empty string in arrays' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0][0] }
+        parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__).should == :undef
+        parser.evaluate_string(scope, "bazinga([undef])", __FILE__).should == :undef
+      end
+
+      it 'does not map :undef to empty string in hashes' do
+        Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0]['a'] }
+        parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__).should == :undef
+        parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__).should == :undef
+      end
     end
   end
 

@@ -785,6 +785,14 @@ class Puppet::Pops::Model::Factory
     STATEMENT_CALLS[name]
   end
 
+  class ArgsToNonCallError < RuntimeError
+    attr_reader :args, :name_expr
+    def initialize(args, name_expr)
+      @args = args
+      @name_expr = name_expr
+    end
+  end
+
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list.
   #
@@ -793,7 +801,12 @@ class Puppet::Pops::Model::Factory
       expr = expr.current if expr.is_a?(Puppet::Pops::Model::Factory)
       name = memo[-1]
       if name.is_a?(Model::QualifiedName) && STATEMENT_CALLS[name.value]
-        the_call = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+        if expr.is_a?(Array)
+          expr = expr.reject {|e| e.is_a?(Puppet::Pops::Parser::LexerSupport::TokenValue) }
+        else
+          expr = [expr]
+        end
+        the_call = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr)
         # last positioned is last arg if there are several
         record_position(the_call, name, expr.is_a?(Array) ? expr[-1]  : expr)
         memo[-1] = the_call
@@ -803,6 +816,8 @@ class Puppet::Pops::Model::Factory
           # an argument to the name to call transform above.
           expr.rval_required = true
         end
+      elsif expr.is_a?(Array)
+        raise ArgsToNonCallError.new(expr, name)
       else
         memo << expr
         if expr.is_a?(Model::CallNamedFunctionExpression)
