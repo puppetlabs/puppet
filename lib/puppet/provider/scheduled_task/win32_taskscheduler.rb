@@ -83,9 +83,9 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
         puppet_trigger['schedule'] = 'daily'
         puppet_trigger['every']    = trigger['type']['days_interval'].to_s
       when Win32::TaskScheduler::TASK_TIME_TRIGGER_WEEKLY
-        puppet_trigger['schedule'] = 'weekly'
-        puppet_trigger['every']    = trigger['type']['weeks_interval'].to_s
-        puppet_trigger['on']       = days_of_week_from_bitfield(trigger['type']['days_of_week'])
+        puppet_trigger['schedule']    = 'weekly'
+        puppet_trigger['every']       = trigger['type']['weeks_interval'].to_s
+        puppet_trigger['day_of_week'] = days_of_week_from_bitfield(trigger['type']['days_of_week'])
       when Win32::TaskScheduler::TASK_TIME_TRIGGER_MONTHLYDATE
         puppet_trigger['schedule'] = 'monthly'
         puppet_trigger['months']   = months_from_bitfield(trigger['type']['months'])
