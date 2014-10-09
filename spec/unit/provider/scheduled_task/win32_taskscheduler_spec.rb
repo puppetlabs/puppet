@@ -635,6 +635,16 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   describe '#triggers_same?' do
     let(:provider) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
+    it "should not mutate triggers" do
+      current = {'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30', 'every' => 3}
+      current.freeze
+
+      desired = {'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30'}
+      desired.freeze
+
+      expect(provider).to be_triggers_same(current, desired)
+    end
+
     it "ignores 'index' in current trigger" do
       current = {'index' => 0, 'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30', 'every' => 3}
       desired = {'schedule' => 'daily', 'start_date' => '2011-09-12', 'start_time' => '15:30', 'every' => 3}
