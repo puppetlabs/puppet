@@ -56,7 +56,7 @@ class Puppet::Util::Autoload
       return false unless file
       begin
         mark_loaded(name, file)
-        Kernel.load file, @wrap
+        Kernel.load file
         return true
       rescue SystemExit,NoMemoryError
         raise
@@ -171,7 +171,7 @@ class Puppet::Util::Autoload
     end
   end
 
-  attr_accessor :object, :path, :objwarn, :wrap
+  attr_accessor :object, :path
 
   def initialize(obj, path, options = {})
     @path = path.to_s
@@ -179,8 +179,6 @@ class Puppet::Util::Autoload
     @object = obj
 
     set_options(options)
-
-    @wrap = true unless defined?(@wrap)
   end
 
   def load(name, env = nil)
