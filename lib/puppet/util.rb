@@ -300,17 +300,6 @@ module Util
   end
   module_function :safe_posix_fork
 
-  def memory
-    unless defined?(@pmap)
-      @pmap = which('pmap')
-    end
-    if @pmap
-      %x{#{@pmap} #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
-    else
-      0
-    end
-  end
-
   def symbolizehash(hash)
     newhash = {}
     hash.each do |name, val|
@@ -330,7 +319,7 @@ module Util
     seconds
   end
 
-  module_function :memory, :thinmark
+  module_function :thinmark
 
   # Because IO#binread is only available in 1.9
   def binread(file)
