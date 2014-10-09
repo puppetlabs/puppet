@@ -111,29 +111,6 @@ module Util
     }
   end
 
-  # Proxy a bunch of methods to another object.
-  def self.classproxy(klass, objmethod, *methods)
-    classobj = class << klass; self; end
-    methods.each do |method|
-      classobj.send(:define_method, method) do |*args|
-        obj = self.send(objmethod)
-
-        obj.send(method, *args)
-      end
-    end
-  end
-
-  # Proxy a bunch of methods to another object.
-  def self.proxy(klass, objmethod, *methods)
-    methods.each do |method|
-      klass.send(:define_method, method) do |*args|
-        obj = self.send(objmethod)
-
-        obj.send(method, *args)
-      end
-    end
-  end
-
   def benchmark(*args)
     msg = args.pop
     level = args.pop
