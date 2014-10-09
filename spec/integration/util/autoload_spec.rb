@@ -48,11 +48,6 @@ describe Puppet::Util::Autoload do
     AutoloadIntegrator.clear
   end
 
-  it "should make instances available by the loading class" do
-    loader = Puppet::Util::Autoload.new("foo", "bar")
-    Puppet::Util::Autoload["foo"].should == loader
-  end
-
   it "should not fail when asked to load a missing file" do
     Puppet::Util::Autoload.new("foo", "bar").load(:eh).should be_false
   end
