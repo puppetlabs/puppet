@@ -274,9 +274,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def translate_hash_to_trigger(puppet_trigger)
     trigger = dummy_time_trigger
 
-    puppet_trigger.delete('index')
-
-    if puppet_trigger.delete('enabled') == false
+    if puppet_trigger['enabled'] == false
       trigger['flags'] |= Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED
     else
       trigger['flags'] &= ~Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED
