@@ -1155,11 +1155,13 @@ class Puppet::Pops::Types::TypeCalculator
     case t2
     when Types::PStringType
       # if the set of strings are all found in the set of enums
-      t2.values.all? { |s| t.values.any? { |e| e == s }}
+      !t2.values.empty?() && t2.values.all? { |s| t.values.any? { |e| e == s }}
     when Types::PVariantType
       t2.types.all? {|variant_t| assignable_PEnumType(t, variant_t) }
     when Types::PEnumType
-      t2.values.all? { |s| t.values.any? {|e| e == s }}
+      # empty means any enum
+      return true if t.values.empty?
+      !t2.values.empty? && t2.values.all? { |s| t.values.any? {|e| e == s }}
     else
       false
     end
@@ -1184,7 +1186,7 @@ class Puppet::Pops::Types::TypeCalculator
         assignable_PIntegerType(size_t, @collection_default_size_t)
 
       when Types::PEnumType
-        if t2.values
+        if t2.values && !t2.values.empty?
           # true if all enum values are within range
           min, max = t2.values.map(&:size).minmax
           trange =  from_to_ordered(size_t.from, size_t.to)
@@ -1192,8 +1194,9 @@ class Puppet::Pops::Types::TypeCalculator
           # If t2 min and max are within the range of t
           trange[0] <= t2range[0] && trange[1] >= t2range[1]
         else
-          # no string can match this enum anyway since it does not accept anything
-          false
+          # enum represents all enums, and thus all strings, a sized constrained string can thus not
+          # be assigned any enum (unless it is max size).
+          assignable_PIntegerType(size_t, @collection_default_size_t)
         end
       else
         # no other type matches string
@@ -1538,8 +1541,6 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # translate to string, and skip Unit types
     types = t.param_types.types.map {|t2| string(t2) unless t2.class == Types::PUnitType }.compact
-
-    params_part= types.join(', ')
 
     s = "Callable[" << types.join(', ')
     unless range.empty?

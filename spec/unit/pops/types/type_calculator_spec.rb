@@ -10,6 +10,9 @@ describe 'The type calculator' do
    t.to = to
    t
   end
+  def constrained_t(t, from, to)
+    Puppet::Pops::Types::TypeFactory.constrain_size(t, from, to)
+  end
 
   def pattern_t(*patterns)
     Puppet::Pops::Types::TypeFactory.pattern(*patterns)
@@ -842,9 +845,37 @@ describe 'The type calculator' do
         calculator.assignable?(enum_t('a', 'b'), enum_t('c')).should == false
       end
 
+      it 'non parameterized enum accepts any other enum but not the reverse' do
+        calculator.assignable?(enum_t(), enum_t('a')).should == true
+        calculator.assignable?(enum_t('a'), enum_t()).should == false
+      end
+
       it 'enum should accept a variant where all variants are acceptable' do
         enum = enum_t('a', 'b')
         calculator.assignable?(enum, variant_t(string_t('a'), string_t('b'))).should == true
+      end
+    end
+
+    context 'when dealing with string and enum combinations' do
+      it 'should accept assigning any enum to unrestricted string' do
+        calculator.assignable?(string_t(), enum_t('blue')).should == true
+        calculator.assignable?(string_t(), enum_t('blue', 'red')).should == true
+      end
+
+      it 'should not accept assigning longer enum value to size restricted string' do
+        calculator.assignable?(constrained_t(string_t(),2,2), enum_t('a','blue')).should == false
+      end
+
+      it 'should accept assigning any string to empty enum' do
+        calculator.assignable?(enum_t(), string_t()).should == true
+      end
+
+      it 'should accept assigning empty enum to any string' do
+        calculator.assignable?(string_t(), enum_t()).should == true
+      end
+
+      it 'should not accept assigning empty enum to size constrained string' do
+        calculator.assignable?(constrained_t(string_t(),2,2), enum_t()).should == false
       end
     end
 
