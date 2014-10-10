@@ -364,6 +364,28 @@ config_version=$vardir/random/scripts
     end
   end
 
+
+  describe "cached loaders" do
+    let(:cached1) { Puppet::Node::Environment.create(:cached1, []) }
+    let(:cached2) { Puppet::Node::Environment.create(:cached2, []) }
+    let(:static_loader) { Puppet::Environments::Static.new(cached1, cached2) }
+    let(:loader) { Puppet::Environments::Cached.new(static_loader) }
+
+    it "gets an environment" do
+      expect(loader.get(:cached2)).to eq(cached2)
+    end
+
+    it "returns nil if env not found" do
+      expect(loader.get(:doesnotexist)).to be_nil
+    end
+
+    it "raises error if environment is not found" do
+      expect do
+        loader.get!(:doesnotexist)
+      end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+    end
+  end
+
   RSpec::Matchers.define :environment do |name|
     match do |env|
       env.name == name &&
