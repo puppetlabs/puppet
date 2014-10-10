@@ -329,14 +329,6 @@ module Puppet::Environments
       end
     end
 
-    # @!macro loader_get_or_fail
-    def get!(name)
-      if !environment = get(name)
-        raise EnvironmentNotFound, name
-      end
-      environment
-    end
-
     # Clears the cache of the environment with the given name.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
