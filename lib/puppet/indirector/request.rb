@@ -95,8 +95,7 @@ class Puppet::Indirector::Request
     elsif (current_environment = Puppet.lookup(:current_environment)).name == env
       current_environment
     else
-      Puppet.lookup(:environments).get(env) ||
-      raise(Puppet::Environments::EnvironmentNotFound, env)
+      Puppet.lookup(:environments).get!(env)
     end
   end
 

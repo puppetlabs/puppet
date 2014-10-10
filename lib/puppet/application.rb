@@ -360,10 +360,7 @@ class Application
     #
     configured_environment_name = Puppet[:environment]
     if self.class.run_mode.name != :agent
-      configured_environment = Puppet.lookup(:environments).get(configured_environment_name)
-      if configured_environment.nil?
-        fail(Puppet::Environments::EnvironmentNotFound, configured_environment_name)
-      end
+      configured_environment = Puppet.lookup(:environments).get!(configured_environment_name)
     else
       configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
     end
