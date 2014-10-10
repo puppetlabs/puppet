@@ -67,7 +67,7 @@ class Puppet::Node
         # for a node when it has not specified its environment
         # Tt will be used to establish what the current environment is.
         #
-        self.environment = Puppet.lookup(:environments).get(Puppet[:environment])
+        self.environment = Puppet.lookup(:environments).get!(Puppet[:environment])
       end
 
       @environment
@@ -76,7 +76,7 @@ class Puppet::Node
 
   def environment=(env)
     if env.is_a?(String) or env.is_a?(Symbol)
-      @environment = Puppet.lookup(:environments).get(env)
+      @environment = Puppet.lookup(:environments).get!(env)
     else
       @environment = env
     end

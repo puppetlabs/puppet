@@ -106,6 +106,17 @@ describe Puppet::Environments do
       end
     end
 
+    it "raises error if an environment can't be found" do
+      directory_tree = FS::MemoryFile.a_directory("envdir", [])
+
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree) do |loader|
+        expect do
+          loader.get!("env_not_in_this_list")
+        end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
     context "with an environment.conf" do
       let(:envdir) do
         FS::MemoryFile.a_directory(File.expand_path("envdir"), [
@@ -313,6 +324,12 @@ config_version=$vardir/random/scripts
 
     it "returns nil if env not found" do
       expect(loader.get(:doesnotexist)).to be_nil
+    end
+
+    it "raises error if environment is not found" do
+      expect do
+        loader.get!(:doesnotexist)
+      end.to raise_error(Puppet::Environments::EnvironmentNotFound)
     end
 
     it "gets a basic conf" do
