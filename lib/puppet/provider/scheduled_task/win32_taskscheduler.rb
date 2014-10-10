@@ -105,7 +105,6 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
       @triggers << puppet_trigger
     end
-    @triggers = @triggers[0] if @triggers.length == 1
 
     @triggers
   end
@@ -235,7 +234,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     return false if current_trigger.has_key?('enabled') && !current_trigger['enabled']
 
     desired = desired_trigger.dup
-
+    desired['start_date']  ||= current_trigger['start_date']  if current_trigger.has_key?('start_date')
     desired['every']       ||= current_trigger['every']       if current_trigger.has_key?('every')
     desired['months']      ||= current_trigger['months']      if current_trigger.has_key?('months')
     desired['on']          ||= current_trigger['on']          if current_trigger.has_key?('on')
@@ -255,13 +254,11 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
   def dummy_time_trigger
     now = Time.now
-
     {
       'flags'                   => 0,
       'random_minutes_interval' => 0,
       'end_day'                 => 0,
       "end_year"                => 0,
-      "trigger_type"            => 0,
       "minutes_interval"        => 0,
       "end_month"               => 0,
       "minutes_duration"        => 0,
@@ -274,22 +271,16 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     }
   end
 
-  def translate_hash_to_trigger(puppet_trigger, user_provided_input=false)
+  def translate_hash_to_trigger(puppet_trigger)
     trigger = dummy_time_trigger
 
-    if user_provided_input
-      self.fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)." if puppet_trigger.has_key?('enabled')
-      self.fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."   if puppet_trigger.has_key?('index')
-    end
-    puppet_trigger.delete('index')
-
-    if puppet_trigger.delete('enabled') == false
+    if puppet_trigger['enabled'] == false
       trigger['flags'] |= Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED
     else
       trigger['flags'] &= ~Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED
     end
 
-    extra_keys = puppet_trigger.keys.sort - ['schedule', 'start_date', 'start_time', 'every', 'months', 'on', 'which_occurrence', 'day_of_week']
+    extra_keys = puppet_trigger.keys.sort - ['index', 'enabled', 'schedule', 'start_date', 'start_time', 'every', 'months', 'on', 'which_occurrence', 'day_of_week']
     self.fail "Unknown trigger option(s): #{Puppet::Parameter.format_value_for_display(extra_keys)}" unless extra_keys.empty?
     self.fail "Must specify 'start_time' when defining a trigger" unless puppet_trigger['start_time']
 
@@ -361,9 +352,17 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def validate_trigger(value)
     value = [value] unless value.is_a?(Array)
 
-    # translate_hash_to_trigger handles the same validation that we
-    # would be doing here at the individual trigger level.
-    value.each {|t| translate_hash_to_trigger(t, true)}
+    value.each do |t|
+      if t.has_key?('index')
+        self.fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."
+      end
+
+      if t.has_key?('enabled')
+        self.fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)."
+      end
+
+      translate_hash_to_trigger(t)
+    end
 
     true
   end

@@ -163,7 +163,25 @@ class Puppet::Pops::Parser::Parser
   # expression, or expression list
   #
   def transform_calls(expressions)
-    Factory.transform_calls(expressions)
+    # Factory transform raises an error if a non qualified name is followed by an argument list
+    # since there is no way that that can be transformed back to sanity. This occurs in situations like this:
+    #
+    #  $a = 10, notice hello
+    #
+    # where the "10, notice" forms an argument list. The parser builds an Array with the expressions and includes
+    # the comma tokens to enable the error to be reported against the first comma.
+    #
+    begin
+      Factory.transform_calls(expressions)
+    rescue Puppet::Pops::Model::Factory::ArgsToNonCallError => e
+      # e.args[1] is the first comma token in the list
+      # e.name_expr is the function name expression
+      if e.name_expr.is_a?(Puppet::Pops::Model::QualifiedName)
+        error(e.args[1], "attempt to pass argument list to the function '#{e.name_expr.value}' which cannot be called without parentheses")
+      else
+        error(e.args[1], "illegal comma separated argument list")
+      end
+    end
   end
 
   # Transforms a LEFT followed by the result of attribute_operations, this may be a call or an invalid sequence

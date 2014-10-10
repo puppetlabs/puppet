@@ -126,7 +126,18 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
   # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
-    lst = pkg(:list, "-Hn", @resource[:name]).split("\n").map{|l|self.class.parse_line(l)}
+    lines = pkg(:list, "-Hn", @resource[:name]).split("\n")
+
+    # remove certificate expiration warnings from the output, but report them
+    # Note: we'd like to use select! here to modify the lines array and avoid
+    #       the second select further down. But Solaris 11 comes with ruby 1.8.7
+    #       which doesn't support select!, so do this as two selects.
+    cert_warnings = lines.select { |line| line =~ /^Certificate/ }
+    if cert_warnings
+      Puppet.warning("pkg warning: #{cert_warnings}")
+    end
+
+    lst = lines.select { |line| line !~ /^Certificate/ }.map { |line| self.class.parse_line(line) }
 
     # Now we know there is a newer version. But is that installable? (i.e are there any constraints?)
     # return the first known we find. The only way that is currently available is to do a dry run of

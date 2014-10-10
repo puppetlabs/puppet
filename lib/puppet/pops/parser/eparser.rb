@@ -1296,7 +1296,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 87)
 
 module_eval(<<'.,.,', 'egrammar.ra', 88)
   def _reduce_9(val, _values, result)
-     result = aryfy(val[0]).push val[2] 
+     result = aryfy(val[0]).push(val[1]).push(val[2]) 
     result
   end
 .,.,

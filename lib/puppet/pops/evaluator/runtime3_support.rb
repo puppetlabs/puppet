@@ -394,6 +394,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Returns true, if the given name is the name of a resource parameter.
   #
   def is_parameter_of_resource?(scope, resource, name)
+    return false unless name.is_a?(String)
     resource.valid_parameter?(name)
   end
 
@@ -425,6 +426,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def initialize
     @@convert_visitor   ||= Puppet::Pops::Visitor.new(self, "convert", 2, 2)
+    @@convert2_visitor   ||= Puppet::Pops::Visitor.new(self, "convert2", 2, 2)
   end
 
   # Converts 4x supported values to 3x values. This is required because
@@ -436,35 +438,53 @@ module Puppet::Pops::Evaluator::Runtime3Support
     @@convert_visitor.visit_this_2(self, o, scope, undef_value)
   end
 
+  # Converts nested 4x supported values to 3x values. This is required because
+  # resources and other objects do not know about the new type system, and does not support
+  # regular expressions. Unfortunately this has to be done for array and hash as well.
+  # A complication is that catalog types needs to be resolved against the scope.
+  #
+  def convert2(o, scope, undef_value)
+    @@convert2_visitor.visit_this_2(self, o, scope, undef_value)
+  end
+
 
   def convert_NilClass(o, scope, undef_value)
     undef_value
+  end
+
+  def convert2_NilClass(o, scope, undef_value)
+    :undef
   end
 
   def convert_String(o, scope, undef_value)
     # although wasteful, needed because user code may mutate these strings in Resources
     o.frozen? ? o.dup : o
   end
+  alias convert2_String :convert_String
 
   def convert_Object(o, scope, undef_value)
     o
   end
+  alias :convert2_Object :convert_Object
 
   def convert_Array(o, scope, undef_value)
-    o.map {|x| convert(x, scope, undef_value) }
+    o.map {|x| convert2(x, scope, undef_value) }
   end
+  alias :convert2_Array :convert_Array
 
   def convert_Hash(o, scope, undef_value)
     result = {}
-    o.each {|k,v| result[convert(k, scope, undef_value)] = convert(v, scope, undef_value) }
+    o.each {|k,v| result[convert2(k, scope, undef_value)] = convert2(v, scope, undef_value) }
     result
   end
+  alias :convert2_Hash :convert_Hash
 
   def convert_Regexp(o, scope, undef_value)
     # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
     # source form
     o.inspect
   end
+  alias :convert2_Regexp :convert_Regexp
 
   def convert_Symbol(o, scope, undef_value)
     case o
@@ -476,9 +496,15 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
+  # The :undef symbol should not be converted when nested in arrays or hashes
+  def convert2_Symbol(o, scope, undef_value)
+    o
+  end
+
   def convert_PAnyType(o, scope, undef_value)
     o
   end
+  alias :convert2_PAnyType :convert_PAnyType
 
   def convert_PCatalogEntryType(o, scope, undef_value)
     # Since 4x does not support dynamic scoping, all names are absolute and can be
@@ -489,6 +515,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     Puppet::Resource.new(*catalog_type_to_split_type_title(o))
   end
+  alias :convert2_PCatalogEntryType :convert_PCatalogEntryType
 
   private
 

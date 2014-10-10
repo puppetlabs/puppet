@@ -128,7 +128,7 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized? &&
-        env ||= Puppet.lookup(:environments).get(Puppet[:environment])
+        env ||= Puppet.lookup(:environments).get!(Puppet[:environment])
 
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         $env_module_directories[env] ||= env.modulepath.collect do |dir|

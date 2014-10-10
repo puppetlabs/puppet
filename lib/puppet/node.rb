@@ -67,7 +67,7 @@ class Puppet::Node
         # for a node when it has not specified its environment
         # Tt will be used to establish what the current environment is.
         #
-        self.environment = Puppet.lookup(:environments).get(Puppet[:environment])
+        self.environment = Puppet.lookup(:environments).get!(Puppet[:environment])
       end
 
       @environment

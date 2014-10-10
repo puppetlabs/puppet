@@ -70,6 +70,10 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
       end
+      it "should work correctly for ensure latest on solaris 11 in the presence of a certificate expiration warning" do
+        described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.certificate_warning'))
+        provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
+      end
       it "should work correctly for ensure latest on solaris 11(known UFOXI)" do
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0
