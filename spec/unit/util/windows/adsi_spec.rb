@@ -32,26 +32,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     Puppet::Util::Windows::ADSI.computer_uri('testcomputername').should == "WinNT://testcomputername"
   end
 
-  describe ".sid_for_account" do
-    it "should return nil if the account does not exist" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('foobar').returns nil
-
-      Puppet::Util::Windows::ADSI.sid_for_account('foobar').should be_nil
-    end
-
-    it "should return a SID for a passed user or group name" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('testers').returns 'S-1-5-32-547'
-
-      Puppet::Util::Windows::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
-    end
-
-    it "should return a SID for a passed fully-qualified user or group name" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('MACHINE\testers').returns 'S-1-5-32-547'
-
-      Puppet::Util::Windows::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
-    end
-  end
-
   describe ".computer_name" do
     it "should return a non-empty ComputerName string" do
       Puppet::Util::Windows::ADSI.instance_variable_set(:@computer_name, nil)
@@ -255,42 +235,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       let(:group)      { Puppet::Util::Windows::ADSI::Group.new(groupname, adsi_group) }
       let(:someone_sid){ stub(:account => 'someone', :domain => 'testcomputername')}
 
-      it "should be able to add a member (deprecated)" do
-        Puppet.expects(:deprecation_warning).with('Puppet::Util::Windows::ADSI::Group#add_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#add_member_sids')
-
-        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('someone').returns(someone_sid)
-        Puppet::Util::Windows::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
-
-        adsi_group.expects(:Add).with("WinNT://testcomputername/someone,user")
-
-        group.add_member('someone')
-      end
-
-      it "should raise when adding a member that can't resolve to a SID (deprecated)" do
-        expect {
-          group.add_member('foobar')
-        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
-      end
-
-      it "should be able to remove a member (deprecated)" do
-        Puppet.expects(:deprecation_warning).with('Puppet::Util::Windows::ADSI::Group#remove_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#remove_member_sids')
-
-        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('someone').returns(someone_sid)
-        Puppet::Util::Windows::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
-
-        adsi_group.expects(:Remove).with("WinNT://testcomputername/someone,user")
-
-        group.remove_member('someone')
-      end
-
-      it "should raise when removing a member that can't resolve to a SID (deprecated)" do
-        expect {
-          group.remove_member('foobar')
-        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
-      end
-
       describe "should be able to use SID objects" do
         let(:system)     { Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM') }
+        let(:invalid)    { Puppet::Util::Windows::SID.name_to_sid_object('foobar') }
 
         it "to add a member" do
           adsi_group.expects(:Add).with("WinNT://S-1-5-18")
@@ -298,10 +245,18 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           group.add_member_sids(system)
         end
 
+        it "and raise when passed a non-SID object to add" do
+          expect{ group.add_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID object/)
+        end
+
         it "to remove a member" do
           adsi_group.expects(:Remove).with("WinNT://S-1-5-18")
 
           group.remove_member_sids(system)
+        end
+
+        it "and raise when passed a non-SID object to remove" do
+          expect{ group.remove_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID object/)
         end
       end
 

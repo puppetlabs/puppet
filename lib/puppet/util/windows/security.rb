@@ -180,26 +180,6 @@ module Puppet::Util::Windows::Security
     supported
   end
 
-  def get_attributes(path)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.get_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')
-    FILE.get_attributes(file_name)
-  end
-
-  def add_attributes(path, flags)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.add_attributes is deprecated; please use Puppet::Util::Windows::File.add_attributes')
-    FILE.add_attributes(path, flags)
-  end
-
-  def remove_attributes(path, flags)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.remove_attributes is deprecated; please use Puppet::Util::Windows::File.remove_attributes')
-    FILE.remove_attributes(path, flags)
-  end
-
-  def set_attributes(path, flags)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.set_attributes is deprecated; please use Puppet::Util::Windows::File.set_attributes')
-    FILE.set_attributes(path, flags)
-  end
-
   MASK_TO_MODE = {
     FILE::FILE_GENERIC_READ => S_IROTH,
     FILE::FILE_GENERIC_WRITE => S_IWOTH,
@@ -546,15 +526,6 @@ module Puppet::Util::Windows::Security
     true
   end
 
-  def with_process_token(access, &block)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.with_process_token is deprecated; please use Puppet::Util::Windows::Process.with_process_token')
-    Puppet::Util::Windows::Process.with_process_token(access) do |token|
-      yield token
-    end
-
-    nil
-  end
-
   def get_security_descriptor(path)
     sd = nil
 
@@ -664,41 +635,6 @@ module Puppet::Util::Windows::Security
           end
         end
       end
-    end
-
-    def name_to_sid(name)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid is deprecated; please use Puppet::Util::Windows::SID.name_to_sid')
-      Puppet::Util::Windows::SID.name_to_sid(name)
-    end
-
-    def name_to_sid_object(name)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.name_to_sid_object')
-      Puppet::Util::Windows::SID.name_to_sid_object(name)
-    end
-
-    def octet_string_to_sid_object(bytes)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.octet_string_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.octet_string_to_sid_object')
-      Puppet::Util::Windows::SID.octet_string_to_sid_object(bytes)
-    end
-
-    def sid_to_name(value)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_to_name is deprecated; please use Puppet::Util::Windows::SID.sid_to_name')
-      Puppet::Util::Windows::SID.sid_to_name(value)
-    end
-
-    def sid_ptr_to_string(psid)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_ptr_to_string is deprecated; please use Puppet::Util::Windows::SID.sid_ptr_to_string')
-      Puppet::Util::Windows::SID.sid_ptr_to_string(psid)
-    end
-
-    def string_to_sid_ptr(string_sid, &block)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.string_to_sid_ptr is deprecated; please use Puppet::Util::Windows::SID.string_to_sid_ptr')
-      Puppet::Util::Windows::SID.string_to_sid_ptr(string_sid, &block)
-    end
-
-    def valid_sid?(string_sid)
-      Puppet.deprecation_warning('Puppet::Util::Windows::Security.valid_sid? is deprecated; please use Puppet::Util::Windows::SID.valid_sid?')
-      Puppet::Util::Windows::SID.valid_sid?(string_sid)
     end
   end
 

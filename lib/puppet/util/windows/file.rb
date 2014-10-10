@@ -91,12 +91,6 @@ module Puppet::Util::Windows::File
 
   INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
 
-  def get_file_attributes(file_name)
-    Puppet.deprecation_warning('Puppet::Util::Windows::File.get_file_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')
-    get_attributes(file_name)
-  end
-  module_function :get_file_attributes
-
   def get_attributes(file_name)
     result = GetFileAttributesW(wide_string(file_name.to_s))
     return result unless result == INVALID_FILE_ATTRIBUTES
