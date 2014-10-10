@@ -17,4 +17,5 @@ module Puppet::Network::HTTP
   require 'puppet/network/http/nocache_pool'
   require 'puppet/network/http/pool'
   require 'puppet/network/http/memory_response'
+  require 'puppet/network/http/compression'
 end

@@ -3,8 +3,6 @@ require 'uri'
 
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
-require 'puppet/network/http/api/v1'
-require 'puppet/network/http/compression'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus

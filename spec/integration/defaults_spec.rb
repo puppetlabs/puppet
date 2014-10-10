@@ -249,10 +249,6 @@ describe "Puppet defaults" do
     Puppet.settings[:certificate_revocation].should be_true
   end
 
-  it "should have an http_compression setting that defaults to false" do
-    Puppet.settings[:http_compression].should be_false
-  end
-
   describe "reportdir" do
     subject { Puppet.settings[:reportdir] }
     it { should == "#{Puppet[:vardir]}/reports" }

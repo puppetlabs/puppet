@@ -1,6 +1,8 @@
 require 'puppet/network/http'
 
 module Puppet::Network::HTTP::Compression
+  # from https://github.com/ruby/ruby/blob/v2_1_3/lib/net/http/generic_request.rb#L40
+  ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3"
 
   # this module function allows to use the right underlying
   # methods depending on zlib presence
@@ -46,11 +48,7 @@ module Puppet::Network::HTTP::Compression
     end
 
     def add_accept_encoding(headers={})
-      if Puppet.settings[:http_compression]
-        headers['accept-encoding'] = 'gzip; q=1.0, deflate; q=1.0; identity'
-      else
-        headers['accept-encoding'] = 'identity'
-      end
+      headers['accept-encoding'] = Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
       headers
     end
 

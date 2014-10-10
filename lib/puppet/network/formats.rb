@@ -69,7 +69,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   require 'base64'
 
   def use_zlib?
-    Puppet.features.zlib? && Puppet[:zlib]
+    Puppet.features.zlib?
   end
 
   def requiring_zlib
