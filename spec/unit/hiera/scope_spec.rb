@@ -83,6 +83,7 @@ describe Hiera::Scope do
 
     it "should always return true for calling_class and calling_module" do
       scope.include?("calling_class").should == true
+      scope.include?("calling_class_path").should == true
       scope.include?("calling_module").should == true
     end
   end

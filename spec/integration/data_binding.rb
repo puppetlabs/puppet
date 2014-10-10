@@ -17,13 +17,16 @@ describe "Data binding" do
     configure_hiera_for({
       "testing::binding::value" => "the value",
       "testing::binding::calling_class" => "%{calling_class}",
+      "testing::binding::calling_class_path" => "%{calling_class_path}",
       "testing::binding::calling_module" => "%{calling_module}"
+     
     })
 
     create_manifest_in_module("testing", "binding.pp",
                               <<-MANIFEST)
     class testing::binding($value,
                            $calling_class,
+                           $calling_class_path,
                            $calling_module) {}
     MANIFEST
 
@@ -32,6 +35,7 @@ describe "Data binding" do
 
     expect(resource[:value]).to eq("the value")
     expect(resource[:calling_class]).to eq("testing::binding")
+    expect(resource[:calling_class_path]).to eq("testing/binding")
     expect(resource[:calling_module]).to eq("testing")
   end
 
