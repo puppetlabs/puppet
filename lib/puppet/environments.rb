@@ -293,10 +293,12 @@ module Puppet::Environments
 
     # @!macro loader_get_or_fail
     def get!(name)
-      if !environment = get(name)
-        raise EnvironmentNotFound, name
+      @loaders.each do |loader|
+        if env = loader.get!(name)
+          return env
+        end
       end
-      environment
+      raise EnvironmentNotFound, name
     end
 
     # @!macro loader_get_conf
@@ -327,14 +329,6 @@ module Puppet::Environments
         @cache[name] = entry(result)
         result
       end
-    end
-
-    # @!macro loader_get_or_fail
-    def get!(name)
-      if !environment = get(name)
-        raise EnvironmentNotFound, name
-      end
-      environment
     end
 
     # Clears the cache of the environment with the given name.

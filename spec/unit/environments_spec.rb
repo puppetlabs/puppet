@@ -97,6 +97,17 @@ describe Puppet::Environments do
       end
     end
 
+    it "raises error when environment not found" do
+      directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [])
+
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree) do |loader|
+        expect do
+          loader.get!("does_not_exist")
+        end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
     it "returns nil if an environment can't be found" do
       directory_tree = FS::MemoryFile.a_directory("envdir", [])
 
@@ -350,6 +361,28 @@ config_version=$vardir/random/scripts
       it "lists nothing" do
         expect(loader.list).to eq([])
       end
+    end
+  end
+
+
+  describe "cached loaders" do
+    let(:cached1) { Puppet::Node::Environment.create(:cached1, []) }
+    let(:cached2) { Puppet::Node::Environment.create(:cached2, []) }
+    let(:static_loader) { Puppet::Environments::Static.new(cached1, cached2) }
+    let(:loader) { Puppet::Environments::Cached.new(static_loader) }
+
+    it "gets an environment" do
+      expect(loader.get(:cached2)).to eq(cached2)
+    end
+
+    it "returns nil if env not found" do
+      expect(loader.get(:doesnotexist)).to be_nil
+    end
+
+    it "raises error if environment is not found" do
+      expect do
+        loader.get!(:doesnotexist)
+      end.to raise_error(Puppet::Environments::EnvironmentNotFound)
     end
   end
 
