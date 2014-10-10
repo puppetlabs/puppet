@@ -344,6 +344,11 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that accepts a single URL", :metalink
     end
 
+    describe "assumeyes" do
+      it_behaves_like "a yumrepo parameter that expects a boolean parameter", :assumeyes
+      it_behaves_like "a yumrepo parameter that can be absent", :assumeyes
+    end
+
 
     describe "cost" do
       it_behaves_like "a yumrepo parameter that can be absent", :cost
