@@ -4,6 +4,7 @@ require 'uri'
 require 'puppet/util/http_proxy'
 require 'puppet/forge'
 require 'puppet/forge/errors'
+require 'puppet/network/http'
 
 class Puppet::Forge
   # = Repository
@@ -63,7 +64,7 @@ class Puppet::Forge
 
       if Puppet.features.zlib? && RUBY_VERSION >= "1.9"
         headers = headers.merge({
-          "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
+          "Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
         })
       end
 
