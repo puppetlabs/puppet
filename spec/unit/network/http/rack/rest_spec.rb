@@ -26,12 +26,14 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
     let(:minimal_certificate) do
         cert = OpenSSL::X509::Certificate.new
+        key = OpenSSL::PKey::RSA.new(512)
         cert.version = 2
         cert.serial = 0
         cert.not_before = Time.now
         cert.not_after = Time.now + 3600
-        cert.public_key = OpenSSL::PKey::RSA.new(512)
+        cert.public_key = key.public_key
         cert.subject = OpenSSL::X509::Name.parse("/CN=testing")
+        cert.sign(key, OpenSSL::Digest::SHA256.new)
         cert
     end
 
