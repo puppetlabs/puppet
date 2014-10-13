@@ -97,6 +97,17 @@ describe Puppet::Environments do
       end
     end
 
+    it "raises error when environment not found" do
+      directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [])
+
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree) do |loader|
+        expect do
+          loader.get!("does_not_exist")
+        end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
     it "returns nil if an environment can't be found" do
       directory_tree = FS::MemoryFile.a_directory("envdir", [])
 
