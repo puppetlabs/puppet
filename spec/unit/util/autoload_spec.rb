@@ -5,6 +5,7 @@ require 'puppet/util/autoload'
 
 describe Puppet::Util::Autoload do
   include PuppetSpec::Files
+
   before do
     @autoload = Puppet::Util::Autoload.new("foo", "tmp")
 
@@ -17,25 +18,38 @@ describe Puppet::Util::Autoload do
     before :each do
       ## modulepath/libdir can't be used until after app settings are initialized, so we need to simulate that:
       Puppet.settings.expects(:app_defaults_initialized?).returns(true).at_least_once
-
-      @dira = File.expand_path('/a')
-      @dirb = File.expand_path('/b')
-      @dirc = File.expand_path('/c')
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      environment = Puppet::Node::Environment.create(:foo, [@dira, @dirb, @dirc])
-      Dir.expects(:entries).with(@dira).returns %w{. .. one two}
-      Dir.expects(:entries).with(@dirb).returns %w{. .. one two}
+      dira = dir_containing('dir_a', {
+        "one" => {},
+        "two" => { "lib" => {} }
+      })
 
-      Puppet::FileSystem.expects(:directory?).with(@dira).returns true
-      Puppet::FileSystem.expects(:directory?).with(@dirb).returns true
-      Puppet::FileSystem.expects(:directory?).with(@dirc).returns false
+      dirb = dir_containing('dir_a', {
+        "one" => {},
+        "two" => { "lib" => {} }
+      })
 
-      FileTest.expects(:directory?).with(regexp_matches(%r{two/lib})).times(2).returns true
-      FileTest.expects(:directory?).with(regexp_matches(%r{one/lib})).times(2).returns false
+      environment = Puppet::Node::Environment.create(:foo, [dira, dirb, File.expand_path('does/not/exist')])
 
-      @autoload.class.module_directories(environment).should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
+      @autoload.class.module_directories(environment).should == ["#{dira}/two/lib", "#{dirb}/two/lib"]
+    end
+
+    it "ignores the configured environment when it doesn't exist" do
+      Puppet[:environment] = 'nonexistent'
+
+      Puppet.override({ :environments => Puppet::Environments::Static.new() }) do
+        @autoload.class.module_directories(nil).should be_empty
+      end
+    end
+
+    it "uses the configured environment when no environment is given" do
+      Puppet[:environment] = 'nonexistent'
+
+      Puppet.override({ :environments => Puppet::Environments::Static.new() }) do
+        @autoload.class.module_directories(nil).should be_empty
+      end
     end
 
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
