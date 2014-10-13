@@ -25,7 +25,7 @@ Find
 Get info about a specific class, defined type, or node, by name. Returns a
 single resource_type response object (see "Schema" below).
 
-    GET /:environment/resource_type/:nodename
+    GET /:environment/resource_type/:class_type_or_node_name
 
 > **Note:** Although no two classes or defined types may have the same name,
 > it's possible for a node definition to have the same name as a class or
