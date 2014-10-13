@@ -9,7 +9,6 @@ describe Puppet::Util::Autoload do
   before do
     @autoload = Puppet::Util::Autoload.new("foo", "tmp")
 
-    @autoload.stubs(:eachdir).yields make_absolute("/my/dir")
     @loaded = {}
     @autoload.class.stubs(:loaded).returns(@loaded)
   end
@@ -31,9 +30,15 @@ describe Puppet::Util::Autoload do
         "two" => { "lib" => {} }
       })
 
-      environment = Puppet::Node::Environment.create(:foo, [dira, dirb, File.expand_path('does/not/exist')])
+      environment = Puppet::Node::Environment.create(:foo, [dira, dirb])
 
       @autoload.class.module_directories(environment).should == ["#{dira}/two/lib", "#{dirb}/two/lib"]
+    end
+
+    it "ignores missing module directories" do
+      environment = Puppet::Node::Environment.create(:foo, [File.expand_path('does/not/exist')])
+
+      @autoload.class.module_directories(environment).should be_empty
     end
 
     it "ignores the configured environment when it doesn't exist" do
