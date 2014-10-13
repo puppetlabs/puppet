@@ -293,12 +293,10 @@ module Puppet::Environments
 
     # @!macro loader_get_or_fail
     def get!(name)
-      @loaders.each do |loader|
-        if env = loader.get(name)
-          return env
-        end
+      if !environment = get(name)
+        raise EnvironmentNotFound, name
       end
-      raise EnvironmentNotFound, name
+      environment
     end
 
     # @!macro loader_get_conf
