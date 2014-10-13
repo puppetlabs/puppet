@@ -127,14 +127,18 @@ class Puppet::Util::Autoload
       # now we are accomplishing that by calling the
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
-      if Puppet.settings.app_defaults_initialized? &&
+      if Puppet.settings.app_defaults_initialized?
         env ||= Puppet.lookup(:environments).get(Puppet[:environment])
 
-        # if the app defaults have been initialized then it should be safe to access the module path setting.
-        $env_module_directories[env] ||= env.modulepath.collect do |dir|
-          Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-        end.flatten.find_all do |d|
-          FileTest.directory?(d)
+        if env
+          # if the app defaults have been initialized then it should be safe to access the module path setting.
+          $env_module_directories[env] ||= env.modulepath.collect do |dir|
+            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
+          end.flatten.find_all do |d|
+            FileTest.directory?(d)
+          end
+        else
+          []
         end
       else
         # if we get here, the app defaults have not been initialized, so we basically use an empty module path.

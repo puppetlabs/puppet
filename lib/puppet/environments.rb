@@ -48,6 +48,14 @@ module Puppet::Environments
   #     we are looking up
   #   @return [Puppet::Setting::EnvironmentConf, nil] the configuration for the
   #     requested environment, or nil if not found or no configuration is available
+  #
+  # @!macro [new] loader_get_or_fail
+  #   Find a named environment or raise
+  #   Puppet::Environments::EnvironmentNotFound when the named environment is
+  #   does not exist.
+  #
+  #   @param name [String,Symbol] The name of environment to find
+  #   @return [Puppet::Node::Environment] the requested environment
 
   # A source of pre-defined environments.
   #
@@ -74,6 +82,14 @@ module Puppet::Environments
       @environments.find do |env|
         env.name == name.intern
       end
+    end
+
+    # @!macro loader_get_or_fail
+    def get!(name)
+      if !environment = get(name)
+        raise EnvironmentNotFound, name
+      end
+      environment
     end
 
     # Returns a basic environment configuration object tied to the environment's
@@ -144,6 +160,14 @@ module Puppet::Environments
       Puppet::Node::Environment.new(name)
     end
 
+    # @note Because the Legacy system cannot list out all of its environments,
+    #   this method will never fail and is only calling get directly.
+    #
+    # @!macro loader_get_or_fail
+    def get!(name)
+      get(name)
+    end
+
     # @note we could return something here, but since legacy environments
     #   are deprecated, there is no point.
     #
@@ -206,6 +230,14 @@ module Puppet::Environments
       list.find { |env| env.name == name.intern }
     end
 
+    # @!macro loader_get_or_fail
+    def get!(name)
+      if !environment = get(name)
+        raise EnvironmentNotFound, name
+      end
+      environment
+    end
+
     # @!macro loader_get_conf
     def get_conf(name)
       valid_directories.each do |envdir|
@@ -257,6 +289,16 @@ module Puppet::Environments
         end
       end
       nil
+    end
+
+    # @!macro loader_get_or_fail
+    def get!(name)
+      @loaders.each do |loader|
+        if env = loader.get(name)
+          return env
+        end
+      end
+      raise EnvironmentNotFound, name
     end
 
     # @!macro loader_get_conf
