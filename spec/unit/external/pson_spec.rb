@@ -52,4 +52,11 @@ describe PSON do
     s = '{ "foö": "bár" }'
     lambda { PSON.parse s }.should_not raise_error
   end
+
+  it 'ignores "document_type" during parsing' do
+    text = '{"data":{},"document_type":"Node"}'
+
+    expect(PSON.parse(text))
+      .to eq({"data" => {}, "document_type" => "Node"})
+  end
 end

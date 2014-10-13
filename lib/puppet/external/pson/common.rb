@@ -117,9 +117,6 @@ module PSON
   # * *allow_nan*: If set to true, allow NaN, Infinity and -Infinity in
   #   defiance of RFC 4627 to be parsed by the Parser. This option defaults
   #   to false.
-  # * *create_additions*: If set to false, the Parser doesn't create
-  #   additions even if a matching class and create_id was found. This option
-  #   defaults to true.
   def parse(source, opts = {})
     PSON.parser.new(source, opts).parse
   end
@@ -136,9 +133,6 @@ module PSON
   # * *allow_nan*: If set to true, allow NaN, Infinity, and -Infinity in
   #   defiance of RFC 4627 to be parsed by the Parser. This option defaults
   #   to true.
-  # * *create_additions*: If set to false, the Parser doesn't create
-  #   additions even if a matching class and create_id was found. This option
-  #   defaults to true.
   def parse!(source, opts = {})
     opts = {
       :max_nesting => false,
