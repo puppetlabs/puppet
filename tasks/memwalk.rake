@@ -10,6 +10,7 @@
 #
 desc "Process a diff.json of object ids, and a heap.json of a Ruby 2.1.0 ObjectSpace dump and produce a graph"
 task :memwalk, [:id] do |t, args|
+  puts "Memwalk"
   puts "Computing for #{args[:id] ? args[:id] : 'all'}"
   @single_id = args[:id] ? args[:id].to_i(16) : nil
 

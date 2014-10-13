@@ -6,10 +6,22 @@ require 'json'
 # For memory debugging - if the core_ext is not loaded, things break inside mass
 # require 'mass'
 require 'objspace'
+
+# Only runs for Ruby > 2.1.0, and must do this early since ObjectSpace.trace_object_allocations_start must be called
+# as early as possible.
+#
+RUBYVER_ARRAY = RUBY_VERSION.split(".").collect {|s| s.to_i }
+RUBYVER = (RUBYVER_ARRAY[0] << 16 | RUBYVER_ARRAY[1] << 8 | RUBYVER_ARRAY[2])
+if RUBYVER < (2 << 16 | 1 << 8 | 0)
+  puts "catalog_memory requires Ruby version >= 2.1.0 to run"
+  exit(-1)
+end
+
 ObjectSpace.trace_object_allocations_start
 
 class Benchmarker
   include FileUtils
+
 
   def initialize(target, size)
     @target = target
