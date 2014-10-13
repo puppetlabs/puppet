@@ -385,6 +385,18 @@ describe "Puppet::Parser::Compiler" do
 
         expect(catalog).to have_resource("Notify[test]").with_parameter(:message, {})
       end
+
+      it "logs but does not halt compliation of a node with a parameter 'facts'" do
+        node = node_with_facts('data' => 'value')
+        node.parameters['facts'] = { 'data' => 'will not come into scope' }
+
+        Puppet.expects(:debug).with(regexp_matches(/Node 'testing' has a parameter 'facts'.*but this is a reserved.*will not be included/))
+
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $facts[data] }
+        MANIFEST
+        expect(catalog.resource("Notify[test]")[:message]).to eq("value")
+      end
     end
 
     context 'and have not opted in to immutable_node_data' do
@@ -404,6 +416,16 @@ describe "Puppet::Parser::Compiler" do
         MANIFEST
 
         catalog.resource("Notify[test]")[:message].should == "An  space"
+      end
+
+      it "allows 'facts' to be merged into scope from the node parameters" do
+        node = Puppet::Node.new("testing", :parameters => { 'facts' => 'something set in a custom fact or classified by an enc'})
+
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $facts}
+        MANIFEST
+
+        expect(catalog.resource("Notify[test]")[:message]).to eq('something set in a custom fact or classified by an enc')
       end
     end
   end
@@ -464,6 +486,18 @@ describe "Puppet::Parser::Compiler" do
           catalog.resource("Notify[test]")[:message].should == true
         end.to raise_error(Puppet::Error, /can't modify frozen [hH]ash/)
       end
+
+      it "logs but does not halt compilation of a node with a parameter 'trusted'" do
+        node = Puppet::Node.new("testing", :parameters => { 'trusted' => { 'data' => 'will not come into scope' }})
+        node.trusted_data = { "data" => "value" }
+
+        Puppet.expects(:debug).with(regexp_matches(/Node 'testing' has a parameter 'trusted'.*but this is a reserved.*will not be included/))
+
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $trusted[data] }
+        MANIFEST
+        expect(catalog.resource("Notify[test]")[:message]).to eq("value")
+      end
     end
 
     context 'and have not opted in to trusted_node_data' do
@@ -491,6 +525,16 @@ describe "Puppet::Parser::Compiler" do
         MANIFEST
 
         catalog.resource("Notify[test]")[:message].should == true
+      end
+
+      it "allows 'trusted' to be merged into scope from the node parameters" do
+        node = Puppet::Node.new("testing", :parameters => { 'trusted' => 'something set in a custom fact or classified by an enc'})
+
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $trusted }
+        MANIFEST
+
+        expect(catalog.resource("Notify[test]")[:message]).to eq('something set in a custom fact or classified by an enc')
       end
     end
   end
