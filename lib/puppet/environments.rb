@@ -367,10 +367,12 @@ module Puppet::Environments
     end
 
     # Evicts the entry if it has expired
-    #
+    # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
       if (result = @cache[name]) && result.expired?
         @cache.delete(name)
+
+        Puppet.settings.clear_environment_settings(name)
       end
     end
 

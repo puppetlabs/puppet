@@ -205,6 +205,23 @@ class Puppet::Settings
   end
   private :unsafe_clear
 
+  # Clears all cached settings for a particular environment to ensure
+  # that changes to environment.conf are reflected in the settings if
+  # the environment timeout has expired.
+  #
+  # param [String, Symbol] environment the  name of environment to clear settings for
+  #
+  # @api private
+  def clear_environment_settings(environment)
+
+    if environment.nil?
+      return
+    end
+
+    @cache[environment.to_sym].clear
+    @values[environment.to_sym] = {}
+  end
+
   # Clear @cache, @used and the Environment.
   #
   # Whenever an object is returned by Settings, a copy is stored in @cache.
