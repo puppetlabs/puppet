@@ -57,11 +57,9 @@ describe Puppet::Util::SUIDManager do
         Puppet.features.stubs(:microsoft_windows?).returns(false)
       end
 
-      it "should set euid/egid when root" do
-        Process.stubs(:uid).returns(0)
-
-        Process.stubs(:egid).returns(51)
-        Process.stubs(:euid).returns(50)
+      it "should set euid/egid" do
+        Process.stubs(:egid).returns(51).then.returns(51).then.returns(user[:gid])
+        Process.stubs(:euid).returns(50).then.returns(50).then.returns(user[:uid])
 
         Puppet::Util::SUIDManager.stubs(:convert_xid).with(:gid, 51).returns(51)
         Puppet::Util::SUIDManager.stubs(:convert_xid).with(:uid, 50).returns(50)
@@ -145,6 +143,17 @@ describe Puppet::Util::SUIDManager do
         xids[:egid].should == 42
         xids[:gid].should == 42
       end
+      it "should not change_privilege when gid already matches" do
+        Process::GID.expects(:change_privilege).with do |gid|
+          Process.gid = 42
+          Process.egid = 42
+        end
+
+        Puppet::Util::SUIDManager.change_group(42, true)
+
+        xids[:egid].should == 42
+        xids[:gid].should == 42
+      end
     end
 
     describe "when changing temporarily" do
@@ -163,6 +172,19 @@ describe Puppet::Util::SUIDManager do
         Process::UID.expects(:change_privilege).with do |uid|
           Process.uid = uid
           Process.euid = uid
+        end
+
+        Puppet::Util::SUIDManager.expects(:initgroups).with(42)
+
+        Puppet::Util::SUIDManager.change_user(42, true)
+
+        xids[:euid].should == 42
+        xids[:uid].should == 42
+      end
+      it "should not change_privilege when uid already matches" do
+        Process::UID.expects(:change_privilege).with do |uid|
+          Process.uid = 42
+          Process.euid = 42
         end
 
         Puppet::Util::SUIDManager.expects(:initgroups).with(42)
