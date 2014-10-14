@@ -1,0 +1,5 @@
+Benchmark scenario: Runs an empty catalog and dumps the state of the memory after all runs and a diff between first and last run
+Benchmark target: catalog compilation memory consumption / leak
+Parser: Future
+Requires: Ruby 2.1.0
+
