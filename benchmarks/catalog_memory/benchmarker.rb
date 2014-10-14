@@ -13,8 +13,8 @@ require 'objspace'
 RUBYVER_ARRAY = RUBY_VERSION.split(".").collect {|s| s.to_i }
 RUBYVER = (RUBYVER_ARRAY[0] << 16 | RUBYVER_ARRAY[1] << 8 | RUBYVER_ARRAY[2])
 if RUBYVER < (2 << 16 | 1 << 8 | 0)
-  puts "catalog_memory requires Ruby version >= 2.1.0 to run"
-  exit(-1)
+  puts "catalog_memory requires Ruby version >= 2.1.0 to run. Skipping"
+  exit(0)
 end
 
 ObjectSpace.trace_object_allocations_start
