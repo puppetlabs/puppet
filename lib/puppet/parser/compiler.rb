@@ -566,7 +566,11 @@ class Puppet::Parser::Compiler
   # Set the node's parameters into the top-scope as variables.
   def set_node_parameters
     node.parameters.each do |param, value|
-      @topscope[param.to_s] = value
+      if Puppet[:immutable_node_data] && Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(param)
+        Puppet.debug("Node '#{node.name}' has a parameter '#{param}', but this is a reserved variable name and will not be included in the evaluation top scope.")
+      else
+        @topscope[param.to_s] = value
+      end
     end
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
