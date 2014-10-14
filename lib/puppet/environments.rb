@@ -211,11 +211,11 @@ module Puppet::Environments
     # @!macro loader_list
     def list
       valid_directories.collect do |envdir|
-        name = Puppet::FileSystem.basename_string(envdir)
+        name = Puppet::FileSystem.basename_string(envdir).intern
 
         setting_values = Puppet.settings.values(name, Puppet.settings.preferred_run_mode)
         env = Puppet::Node::Environment.create(
-          name.intern,
+          name,
           Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
           setting_values.interpolate(:manifest),
           setting_values.interpolate(:config_version)
