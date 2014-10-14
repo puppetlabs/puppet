@@ -1088,6 +1088,10 @@ describe 'The type calculator' do
       calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => 'Symbol'), :undef).should == true
     end
 
+    it "should consider :undef to be instance of an Optional type" do
+      calculator.instance?(Puppet::Pops::Types::POptionalType.new(), :undef).should == true
+    end
+
     it 'should not consider undef to be an instance of any other type than Any, NilType and Data' do
       types_to_test = all_types - [
         Puppet::Pops::Types::PAnyType,

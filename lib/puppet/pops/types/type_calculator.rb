@@ -453,12 +453,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_PNilType(t, o)
-    return o.nil?
+    o.nil? || o == :undef
   end
 
   def instance_of_POptionalType(t, o)
-    return true if (o.nil?)
-    instance_of(t.optional_type, o)
+    instance_of_PNilType(t, o) || instance_of(t.optional_type, o)
   end
 
   def instance_of_PVariantType(t, o)
@@ -786,7 +785,6 @@ class Puppet::Pops::Types::TypeCalculator
     case o
     when :default
       Types::PDefaultType.new()
-
     else
       infer_Object(o)
     end
