@@ -139,7 +139,8 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     options[:request] ||= request
 
     # Build a catalog suitable for the static compiler to operate on
-    catalog = Puppet::Resource::Catalog.new("#{options[:request].key}", Puppet::Node::Environment.remote(:testing))
+    environment = Puppet::Node::Environment.remote(:testing)
+    catalog = Puppet::Resource::Catalog.new("#{options[:request].key}", environment)
 
     # Mock out the fileserver, otherwise converting the catalog to a
     fake_fileserver_metadata = fileserver_metadata(options)
@@ -150,7 +151,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
       indirection.stubs(:find).with do |uri, opts|
         expect(uri).to eq options[:source].sub('puppet:///','')
         expect(opts[:links]).to eq :manage
-        expect(opts[:environment]).to eq "testing"
+        expect(opts[:environment]).to eq environment
       end.returns(fake_fileserver_metadata)
 
     # I want a resource that all the file resources require and another

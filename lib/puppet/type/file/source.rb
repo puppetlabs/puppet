@@ -170,7 +170,7 @@ module Puppet
       value.each do |source|
         begin
           options = {
-            :environment          => resource.catalog.environment,
+            :environment          => resource.catalog.environment_instance,
             :links                => resource[:links],
             :source_permissions   => resource[:source_permissions]
           }

@@ -8,8 +8,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
   before do
     # Wow that's a messy interface to the resource.
-    @environment = "myenv"
-    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false, :environment => @environment), :line => 0, :file => ''
+    @environment = Puppet::Node::Environment.remote("myenv")
+    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false, :environment_instance => @environment, :environment => @environment.name), :line => 0, :file => ''
     @foobar = make_absolute("/foo/bar baz")
     @feebooz = make_absolute("/fee/booz baz")
 
