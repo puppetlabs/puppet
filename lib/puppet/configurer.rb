@@ -156,7 +156,9 @@ class Puppet::Configurer
       unless options[:catalog]
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid,
+              :environment => Puppet::Node::Environment.remote(@environment),
+              :ignore_cache => true,
+              :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
 
             # If we have deserialized a node from a rest call, we want to set
@@ -242,7 +244,7 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
+    Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
   rescue => detail
     Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
@@ -274,7 +276,7 @@ class Puppet::Configurer
     result = nil
     @duration = thinmark do
       result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_terminus => true, :environment => @environment))
+        query_options.merge(:ignore_terminus => true, :environment => Puppet::Node::Environment.remote(@environment)))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -287,7 +289,7 @@ class Puppet::Configurer
     result = nil
     @duration = thinmark do
       result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_cache => true, :environment => @environment, :fail_on_404 => true))
+        query_options.merge(:ignore_cache => true, :environment => Puppet::Node::Environment.remote(@environment), :fail_on_404 => true))
     end
     result
   rescue SystemExit,NoMemoryError
