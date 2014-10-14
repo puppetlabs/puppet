@@ -22,10 +22,6 @@ describe Puppet::FileServing::Metadata do
     Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson)
   end
 
-  it "should support to_pson_data_hash" do
-    Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson_data_hash)
-  end
-
   it "should support deserialization" do
     Puppet::FileServing::Metadata.should respond_to(:from_data_hash)
   end
@@ -33,56 +29,52 @@ describe Puppet::FileServing::Metadata do
   describe "when serializing" do
     let(:metadata) { Puppet::FileServing::Metadata.new(foobar) }
 
-    it "should serialize as FileMetadata" do
-      metadata.to_pson_data_hash['document_type'].should == "FileMetadata"
-    end
-
     it "the data should include the path, relative_path, links, owner, group, mode, checksum, type, and destination" do
-      metadata.to_pson_data_hash['data'].keys.sort.should == %w{ path relative_path links owner group mode checksum type destination }.sort
+      metadata.to_data_hash.keys.sort.should == %w{ path relative_path links owner group mode checksum type destination }.sort
     end
 
     it "should pass the path in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['path'].should == metadata.path
+      metadata.to_data_hash['path'].should == metadata.path
     end
 
     it "should pass the relative_path in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['relative_path'].should == metadata.relative_path
+      metadata.to_data_hash['relative_path'].should == metadata.relative_path
     end
 
     it "should pass the links in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['links'].should == metadata.links
+      metadata.to_data_hash['links'].should == metadata.links
     end
 
     it "should pass the path owner in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['owner'].should == metadata.owner
+      metadata.to_data_hash['owner'].should == metadata.owner
     end
 
     it "should pass the group in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['group'].should == metadata.group
+      metadata.to_data_hash['group'].should == metadata.group
     end
 
     it "should pass the mode in the hash verbatim" do
-      metadata.to_pson_data_hash['data']['mode'].should == metadata.mode
+      metadata.to_data_hash['mode'].should == metadata.mode
     end
 
     it "should pass the ftype in the hash verbatim as the 'type'" do
-      metadata.to_pson_data_hash['data']['type'].should == metadata.ftype
+      metadata.to_data_hash['type'].should == metadata.ftype
     end
 
     it "should pass the destination verbatim" do
-      metadata.to_pson_data_hash['data']['destination'].should == metadata.destination
+      metadata.to_data_hash['destination'].should == metadata.destination
     end
 
     it "should pass the checksum in the hash as a nested hash" do
-      metadata.to_pson_data_hash['data']['checksum'].should be_is_a(Hash)
+      metadata.to_data_hash['checksum'].should be_is_a(Hash)
     end
 
     it "should pass the checksum_type in the hash verbatim as the checksum's type" do
-      metadata.to_pson_data_hash['data']['checksum']['type'].should == metadata.checksum_type
+      metadata.to_data_hash['checksum']['type'].should == metadata.checksum_type
     end
 
     it "should pass the checksum in the hash verbatim as the checksum's value" do
-      metadata.to_pson_data_hash['data']['checksum']['value'].should == metadata.checksum
+      metadata.to_data_hash['checksum']['value'].should == metadata.checksum
     end
   end
 end

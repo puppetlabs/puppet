@@ -60,9 +60,6 @@ module PSON
       # * *allow_nan*: If set to true, allow NaN, Infinity and -Infinity in
       #   defiance of RFC 4627 to be parsed by the Parser. This option defaults
       #   to false.
-      # * *create_additions*: If set to false, the Parser doesn't create
-      #   additions even if a matching class and create_id was found. This option
-      #   defaults to true.
       # * *object_class*: Defaults to Hash
       # * *array_class*: Defaults to Array
       def initialize(source, opts = {})
@@ -76,9 +73,6 @@ module PSON
           @max_nesting = 0
         end
         @allow_nan = !!opts[:allow_nan]
-        ca = true
-        ca = opts[:create_additions] if opts.key?(:create_additions)
-        @create_id = ca ? PSON.create_id : nil
         @object_class = opts[:object_class] || Hash
         @array_class = opts[:array_class] || Array
       end
@@ -299,11 +293,6 @@ module PSON
             end
           when scan(OBJECT_CLOSE)
             raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!" if delim
-            if @create_id and klassname = result[@create_id]
-              klass = PSON.deep_const_get klassname
-              break unless klass and klass.pson_creatable?
-              result = klass.pson_create(result)
-            end
             break
           when skip(IGNORE)
             ;

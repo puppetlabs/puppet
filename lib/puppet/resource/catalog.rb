@@ -1,7 +1,6 @@
 require 'puppet/node'
 require 'puppet/indirector'
 require 'puppet/transaction'
-require 'puppet/util/pson'
 require 'puppet/util/tagging'
 require 'puppet/graph'
 
@@ -20,7 +19,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   indirects :catalog, :terminus_setting => :catalog_terminus
 
   include Puppet::Util::Tagging
-  extend Puppet::Util::Pson
 
   # The host name this is a catalog for.
   attr_accessor :name
@@ -381,25 +379,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'name'      => name,
       'version'   => version,
       'environment' => environment.to_s,
-      'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
-      'edges'     => edges.   collect { |e| e.to_pson_data_hash },
+      'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
+      'edges'     => edges.   collect { |e| e.to_data_hash },
       'classes'   => classes
     }
-  end
-
-  PSON.register_document_type('Catalog',self)
-  def to_pson_data_hash
-    {
-      'document_type' => 'Catalog',
-      'data'       => to_data_hash,
-      'metadata' => {
-        'api_version' => 1
-        }
-    }
-  end
-
-  def to_pson(*args)
-    to_pson_data_hash.to_pson(*args)
   end
 
   # Convert our catalog into a RAL catalog.

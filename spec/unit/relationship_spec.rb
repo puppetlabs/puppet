@@ -204,10 +204,6 @@ describe Puppet::Relationship, "when converting from pson" do
     Puppet::Relationship.expects(:new).with { |*args| yield args }
   end
 
-  it "should be extended with the PSON utility module" do
-    Puppet::Relationship.singleton_class.ancestors.should be_include(Puppet::Util::Pson)
-  end
-
   # LAK:NOTE For all of these tests, we convert back to the edge so we can
   # trap the actual data structure then.
   it "should pass the source in as the first argument" do

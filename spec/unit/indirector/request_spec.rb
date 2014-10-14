@@ -2,16 +2,9 @@
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
-require 'puppet/util/pson'
 
 describe Puppet::Indirector::Request do
   include JSONMatchers
-
-  describe "when registering the document type" do
-    it "should register its document type with JSON" do
-      PSON.registered_document_types["IndirectorRequest"].should equal(Puppet::Indirector::Request)
-    end
-  end
 
   describe "when initializing" do
     it "should always convert the indirection name to a symbol" do
@@ -389,10 +382,6 @@ describe Puppet::Indirector::Request do
       @request = Puppet::Indirector::Request.new(:facts, :find, "foo", nil)
     end
 
-    it "should produce a hash with the document_type set to 'request'" do
-      @request.should set_json_document_type_to("IndirectorRequest")
-    end
-
     it "should set the 'key'" do
       @request.should set_json_attribute("key").to("foo")
     end
@@ -412,13 +401,13 @@ describe Puppet::Indirector::Request do
 
     it "should add all options under the 'attributes' attribute" do
       @request.options["opt"] = "value"
-      PSON.parse(@request.to_pson)["data"]['attributes']['opt'].should == "value"
+      PSON.parse(@request.to_pson)['attributes']['opt'].should == "value"
     end
 
     it "should include the instance if provided" do
       facts = Puppet::Node::Facts.new("foo")
       @request.instance = facts
-      PSON.parse(@request.to_pson)["data"]['instance'].should be_instance_of(Hash)
+      PSON.parse(@request.to_pson)['instance'].should be_instance_of(Hash)
     end
   end
 
@@ -439,7 +428,7 @@ describe Puppet::Indirector::Request do
 
     it "should fail if no key is provided" do
       json = PSON.parse(@request.to_pson)
-      json['data'].delete("key")
+      json.delete("key")
       expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
@@ -449,7 +438,7 @@ describe Puppet::Indirector::Request do
 
     it "should fail if no type is provided" do
       json = PSON.parse(@request.to_pson)
-      json['data'].delete("type")
+      json.delete("type")
       expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
@@ -459,7 +448,7 @@ describe Puppet::Indirector::Request do
 
     it "should fail if no method is provided" do
       json = PSON.parse(@request.to_pson)
-      json['data'].delete("method")
+      json.delete("method")
       expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 

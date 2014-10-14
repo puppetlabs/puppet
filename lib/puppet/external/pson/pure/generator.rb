@@ -361,6 +361,7 @@ module PSON
           # method should be used, if you want to convert raw strings to PSON
           # instead of UTF-8 strings, e.g. binary data.
           def to_pson_raw_object
+            # create_id will be ignored during deserialization
             {
               PSON.create_id  => self.class.name,
               'raw'           => self.unpack('C*'),

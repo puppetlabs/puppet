@@ -50,104 +50,98 @@ Three parameters should be provided to the POST or GET:
     Content-Type: text/pson
 
     {
-      "document_type": "Catalog",
-      "data": {
-        "tags": [
-          "settings",
-          "multi_param_class",
-          "class"
-        ],
-        "name": "elmo.mydomain.com",
-        "version": 1377473054,
-        "environment": "production",
-        "resources": [
-          {
-            "type": "Stage",
-            "title": "main",
-            "tags": [
-              "stage"
-            ],
-            "exported": false,
-            "parameters": {
-              "name": "main"
-            }
-          },
-          {
-            "type": "Class",
-            "title": "Settings",
-            "tags": [
-              "class",
-              "settings"
-            ],
-            "exported": false
-          },
-          {
-            "type": "Class",
-            "title": "main",
-            "tags": [
-              "class"
-            ],
-            "exported": false,
-            "parameters": {
-              "name": "main"
-            }
-          },
-          {
-            "type": "Class",
-            "title": "Multi_param_class",
-            "tags": [
-              "class",
-              "multi_param_class"
-            ],
-            "line": 10,
-            "exported": false,
-            "parameters": {
-              "one": "hello",
-              "two": "world"
-            }
-          },
-          {
-            "type": "Notify",
-            "title": "foo",
-            "tags": [
-              "notify",
-              "foo",
-              "class",
-              "multi_param_class"
-            ],
-            "line": 4,
-            "exported": false,
-            "parameters": {
-              "message": "One is hello, two is world"
-            }
+      "tags": [
+        "settings",
+        "multi_param_class",
+        "class"
+      ],
+      "name": "elmo.mydomain.com",
+      "version": 1377473054,
+      "environment": "production",
+      "resources": [
+        {
+          "type": "Stage",
+          "title": "main",
+          "tags": [
+            "stage"
+          ],
+          "exported": false,
+          "parameters": {
+            "name": "main"
           }
-        ],
-        "edges": [
-          {
-            "source": "Stage[main]",
-            "target": "Class[Settings]"
-          },
-          {
-            "source": "Stage[main]",
-            "target": "Class[main]"
-          },
-          {
-            "source": "Stage[main]",
-            "target": "Class[Multi_param_class]"
-          },
-          {
-            "source": "Class[Multi_param_class]",
-            "target": "Notify[foo]"
+        },
+        {
+          "type": "Class",
+          "title": "Settings",
+          "tags": [
+            "class",
+            "settings"
+          ],
+          "exported": false
+        },
+        {
+          "type": "Class",
+          "title": "main",
+          "tags": [
+            "class"
+          ],
+          "exported": false,
+          "parameters": {
+            "name": "main"
           }
-        ],
-        "classes": [
-          "settings",
-          "multi_param_class"
-        ]
-      },
-      "metadata": {
-        "api_version": 1
-      }
+        },
+        {
+          "type": "Class",
+          "title": "Multi_param_class",
+          "tags": [
+            "class",
+            "multi_param_class"
+          ],
+          "line": 10,
+          "exported": false,
+          "parameters": {
+            "one": "hello",
+            "two": "world"
+          }
+        },
+        {
+          "type": "Notify",
+          "title": "foo",
+          "tags": [
+            "notify",
+            "foo",
+            "class",
+            "multi_param_class"
+          ],
+          "line": 4,
+          "exported": false,
+          "parameters": {
+            "message": "One is hello, two is world"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "Stage[main]",
+          "target": "Class[Settings]"
+        },
+        {
+          "source": "Stage[main]",
+          "target": "Class[main]"
+        },
+        {
+          "source": "Stage[main]",
+          "target": "Class[Multi_param_class]"
+        },
+        {
+          "source": "Class[Multi_param_class]",
+          "target": "Notify[foo]"
+        }
+      ],
+      "classes": [
+        "settings",
+        "multi_param_class"
+      ]
     }
 
 Schema

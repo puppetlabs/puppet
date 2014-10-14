@@ -3,7 +3,6 @@ require 'time'
 require 'puppet/node'
 require 'puppet/indirector'
 
-require 'puppet/util/pson'
 
 # Manage a given node's facts.  This either accepts facts and stores them, or
 # returns facts for a given node.
@@ -11,7 +10,6 @@ class Puppet::Node::Facts
   # Set up indirection, so that nodes can be looked for in
   # the node sources.
   extend Puppet::Indirector
-  extend Puppet::Util::Pson
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer

@@ -4,31 +4,20 @@
     "description": "A Puppet node object",
     "type":        "object",
     "properties": {
-        "document_type": {
-            "type": "string",
-            "enum": ["Node"]
+        "environment": {
+            "type": "string"
         },
-        "data": {
-            "type": "object",
-            "properties": {
-                "environment": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "classes": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                },
-                "parameters": {
-                    "type": "object"
-                }
-            },
-            "required": ["name", "environment"],
-            "additionalProperties": false
+        "name": {
+            "type": "string"
+        },
+        "classes": {
+            "type": "array",
+            "items": { "type": "string" }
+        },
+        "parameters": {
+            "type": "object"
         }
     },
-    "required": ["document_type", "data"],
+    "required": ["name", "environment"],
     "additionalProperties": false
 }
