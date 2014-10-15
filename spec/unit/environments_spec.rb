@@ -317,6 +317,49 @@ config_version=$vardir/random/scripts
             with_config_version(File.expand_path('/some/script'))
         end
       end
+
+      it "should update environment settings if environment.conf has changed and timeout has expired" do
+        base_dir = File.expand_path("envdir")
+        original_envdir = FS::MemoryFile.a_directory(base_dir, [
+          FS::MemoryFile.a_directory("env3", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              manifest=/manifest_orig
+              modulepath=/modules_orig
+              environment_timeout=0
+            EOF
+          ]),
+        ])
+
+        FS.overlay(original_envdir) do
+          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
+          loader = Puppet::Environments::Cached.new(dir_loader)
+          Puppet.override(:environments => loader) do
+            original_env = loader.get("env3") # force the environment.conf to be read
+
+            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
+              FS::MemoryFile.a_directory("env3", [
+                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+                  manifest=/manifest_changed
+                  modulepath=/modules_changed
+                  environment_timeout=0
+                EOF
+              ]),
+            ])
+
+            FS.overlay(changed_envdir) do
+              changed_env = loader.get("env3")
+
+              expect(original_env).to environment(:env3).
+                with_manifest(File.expand_path("/manifest_orig")).
+                with_full_modulepath([File.expand_path("/modules_orig")])
+
+              expect(changed_env).to environment(:env3).
+                with_manifest(File.expand_path("/manifest_changed")).
+                with_full_modulepath([File.expand_path("/modules_changed")])
+            end
+          end
+        end
+      end
     end
   end
 
@@ -391,6 +434,7 @@ config_version=$vardir/random/scripts
       env.name == name &&
         (!@manifest || @manifest == env.manifest) &&
         (!@modulepath || @modulepath == env.modulepath) &&
+        (!@full_modulepath || @full_modulepath == env.full_modulepath) &&
         (!@config_version || @config_version == env.config_version)
     end
 
@@ -402,6 +446,10 @@ config_version=$vardir/random/scripts
       @modulepath = modulepath
     end
 
+    chain :with_full_modulepath do |full_modulepath|
+      @full_modulepath = full_modulepath
+    end
+
     chain :with_config_version do |config_version|
       @config_version = config_version
     end
@@ -410,6 +458,7 @@ config_version=$vardir/random/scripts
       "environment #{expected}" +
         (@manifest ? " with manifest #{@manifest}" : "") +
         (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "") +
+        (@full_modulepath ? " with full_modulepath [#{@full_modulepath.join(', ')}]" : "") +
         (@config_version ? " with config_version #{@config_version}" : "")
     end
 
