@@ -34,7 +34,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
     EOT
     arguments "<report>"
     examples <<-'EOT'
-      From secret_agent.rb (API example):
+      API example:
 
           # ...
           report  = Puppet::Face[:catalog, '0.0.1'].apply

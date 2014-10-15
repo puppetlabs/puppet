@@ -50,7 +50,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       $ puppet catalog apply --terminus rest
 
-      From `secret_agent.rb` (API example):
+      API example:
 
           # ...
           Puppet::Face[:catalog, '0.0.1'].download
@@ -104,7 +104,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       $ puppet catalog download
 
-      From `secret_agent.rb` (API example):
+      API example:
 
           Puppet::Face[:plugin, '0.0.1'].download
           Puppet::Face[:facts, '0.0.1'].upload
