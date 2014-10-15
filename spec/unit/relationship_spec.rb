@@ -90,7 +90,7 @@ describe Puppet::Relationship, " when matching edges with no specified event" do
   end
 
   it "should not match :ALL_EVENTS" do
-    @edge.should_not be_match(:NONE)
+    @edge.should_not be_match(:ALL_EVENTS)
   end
 
   it "should not match any other events" do
@@ -125,7 +125,7 @@ describe Puppet::Relationship, " when matching edges with :ALL as the event" do
   end
 
   it "should match :ALL_EVENTS" do
-    @edge.should be_match(:ALLEVENTS)
+    @edge.should be_match(:ALL_EVENTS)
   end
 
   it "should match all other events" do
