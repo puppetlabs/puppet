@@ -43,6 +43,57 @@ module Puppet::SSL::Oids
     OpenSSL::ASN1::ObjectId.register(*oid_defn)
   end
 
+  # Parse and load custom OID mapping file that enables custom OIDs to be resolved
+  # into user-friendly names.
+  #
+  # @param custom_oid_file [String] File to obtain custom OIDs mapping from
+  # @param map_key [String] Hash key in which custom OIDs mapping is stored
+  #
+  # @example Custom OID mapping file
+  # ---
+  # oid_mapping:
+  #  '1.3.6.1.4.1.34380.1.2.1.1':
+  #    shortname : 'myshortname'
+  #    longname  : 'Long name'
+  #  '1.3.6.1.4.1.34380.1.2.1.2':
+  #    shortname: 'myothershortname'
+  #    longname: 'Other Long name'
+  def self.load_custom_oid_file(custom_oid_file, map_key='oid_mapping')
+    if File.exists?(custom_oid_file) && File.readable?(custom_oid_file)
+      mapping = nil
+      begin
+        mapping = YAML.load_file(custom_oid_file)
+      rescue => err
+        raise ParseError, "Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': #{err}", err.backtrace
+      end
+
+      unless mapping.has_key?(map_key)
+        raise ParseError, "Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': no such index '#{map_key}'"
+      end
+
+      unless mapping[map_key].is_a?(Hash)
+        raise ParseError, "Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': data under index '#{map_key}' must be a Hash"
+      end
+
+      oid_defns = []
+      mapping[map_key].keys.each do |oid|
+        shortname, longname = mapping[map_key][oid].values_at("shortname","longname")
+        if shortname.nil? || longname.nil?
+          raise ParseError, "Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': incomplete definition of oid '#{oid}'"
+        end
+        oid_defns << [oid, shortname, longname]
+      end
+
+      begin
+        oid_defns.each do |oid_defn|
+          OpenSSL::ASN1::ObjectId.register(*oid_defn)
+        end
+      rescue => err
+        raise ArgumentError, "Error registering ssl custom OIDs mapping from file '#{custom_oid_file}': #{err}", err.backtrace
+      end
+    end
+  end
+
   # Determine if the first OID contains the second OID
   #
   # @param first [String] The containing OID, in dotted form or as the short name

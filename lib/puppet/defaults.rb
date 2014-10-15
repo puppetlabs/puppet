@@ -1078,6 +1078,11 @@ EOT
       :type       => :boolean,
       :desc       => "Whether the master should function as a certificate authority.",
     },
+    :trusted_oid_mapping_file => {
+      :default    => "$confdir/custom_trusted_oid_mapping.yaml",
+      :type       => :file,
+      :desc       => "File that provides mapping between custom SSL oids and user-friendly names"
+    },
     :basemodulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
       :type => :path,
