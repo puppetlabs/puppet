@@ -136,6 +136,21 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "prefetch_hook" do
+    let(:path) { '/path/to/keyfile' }
+    let(:input) do
+      { :type        => 'rsa',
+        :key         => 'KEYDATA',
+        :name        => '',
+        :record_type => :parsed,
+        :target      => path,
+      }
+    end
+    it "adds an indexed name to unnamed resources" do
+      @provider_class.prefetch_hook([input])[0][:name].should =~ /^#{path}:unnamed-\d+/
+    end
+  end
+
 end
 
 describe provider_class, :unless => Puppet.features.microsoft_windows? do

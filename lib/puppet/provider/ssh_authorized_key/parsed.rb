@@ -22,6 +22,8 @@ Puppet::Type.type(:ssh_authorized_key).provide(
       h[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(h[:options]) if h[:options].is_a? String
     },
     :pre_gen => proc { |h|
+      # if this name was generated, don't write it back to disk
+      h[:name] = "" if h[:unnamed]
       h[:options] = [] if h[:options].include?(:absent)
       h[:options] = h[:options].join(',')
     }
@@ -84,6 +86,20 @@ Puppet::Type.type(:ssh_authorized_key).provide(
       scanner.skip(/[ \t]*,[ \t]*/)
     end
     result
+  end
+
+  def self.prefetch_hook(records)
+    name_index = 0
+    records.each do |record|
+      if record[:record_type] == :parsed && record[:name].empty?
+        record[:unnamed] = true
+        # Generate a unique ID for unnamed keys, in case they need purging.
+        # If you change this, you have to keep
+        # Puppet::Type::User#unknown_keys_in_file in sync! (PUP-3357)
+        record[:name] = "#{record[:target]}:unnamed-#{ name_index += 1 }"
+        Puppet.debug("generating name for on-disk ssh_authorized_key #{record[:key]}: #{record[:name]}")
+      end
+    end
   end
 end
 
