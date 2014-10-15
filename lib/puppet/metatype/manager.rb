@@ -83,12 +83,6 @@ module Manager
 
     options = symbolize_options(options)
 
-
-    if options.include?(:parent) 
-      Puppet.deprecation_warning "option :parent is deprecated. It has no effect"
-      options.delete(:parent)
-    end
-
     # Then create the class.
 
     klass = genclass(
