@@ -112,9 +112,51 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   describe "when storing and retrieving" do
-    it "should add metadata to the facts" do
-      facts = Puppet::Node::Facts.new("me", "one" => "two", "three" => "four")
-      facts.values['_timestamp'].should be_instance_of(Time)
+    it "doesn't manufacture a `_timestamp` fact value" do
+      values = {"one" => "two", "three" => "four"}
+      facts = Puppet::Node::Facts.new("mynode", values)
+
+      expect(facts.values).to eq(values)
+    end
+
+    describe "when deserializing from yaml" do
+      let(:timestamp)  { Time.parse("Thu Oct 28 11:16:31 -0700 2010") }
+      let(:expiration) { Time.parse("Thu Oct 28 11:21:31 -0700 2010") }
+
+      def create_facts(values = {})
+        Puppet::Node::Facts.new('mynode', values)
+      end
+
+      def deserialize_yaml_facts(facts)
+        format = Puppet::Network::FormatHandler.format('yaml')
+        format.intern(Puppet::Node::Facts, facts.to_yaml)
+      end
+
+      it 'preserves `_timestamp` value' do
+        facts = deserialize_yaml_facts(create_facts('_timestamp' => timestamp))
+
+        expect(facts.timestamp).to eq(timestamp)
+      end
+
+      it "doesn't preserve the `_timestamp` fact" do
+        facts = deserialize_yaml_facts(create_facts('_timestamp' => timestamp))
+
+        expect(facts.values['_timestamp']).to be_nil
+      end
+
+      it 'preserves expiration time if present' do
+        old_facts = create_facts
+        old_facts.expiration = expiration
+        facts = deserialize_yaml_facts(old_facts)
+
+        expect(facts.expiration).to eq(expiration)
+      end
+
+      it 'ignores expiration time if absent' do
+        facts = deserialize_yaml_facts(create_facts)
+
+        expect(facts.expiration).to be_nil
+      end
     end
 
     describe "using pson" do
@@ -129,7 +171,8 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = format.intern(Puppet::Node::Facts,pson)
         facts.name.should == 'foo'
         facts.expiration.should == @expiration
-        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', '_timestamp' => @timestamp}
+        facts.timestamp.should == @timestamp
+        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3'}
       end
 
       it "should generate properly formatted pson" do
@@ -138,7 +181,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts.expiration = @expiration
         result = PSON.parse(facts.to_pson)
         result['name'].should == facts.name
-        result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
+        result['values'].should == facts.values
         result['timestamp'].should == facts.timestamp.iso8601(9)
         result['expiration'].should == facts.expiration.iso8601(9)
       end
