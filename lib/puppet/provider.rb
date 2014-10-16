@@ -91,11 +91,6 @@ class Puppet::Provider
     attr_writer :doc
   end
 
-  # @todo original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_, why is it
-  #   both here (instance) and at class level? Is this a different model?
-  # @return [???] model is WHAT?
-  attr_reader :model
-
   # @return [???] This resource is what? Is an instance of a provider attached to one particular Puppet::Resource?
   #
   attr_accessor :resource
