@@ -183,10 +183,10 @@ module Puppet
           end
         end
 
-        step "open permissions to 770 on all temporary files copied into working dir and set ownership" do
+        step "open permissions to 755 on all temporary files copied into working dir and set ownership" do
           file_list = new_files.keys.map { |name| "#{original_path}/#{name}" }.join(' ')
-          on(host, "chown -R #{host['user']}:#{host['group']} #{file_list}")
-          on(host, "chmod -R 770 #{file_list}")
+          on(host, "chown -R #{host.puppet['user']}:#{host.puppet['group']} #{file_list}")
+          on(host, "chmod -R 755 #{file_list}")
         end
 
         yield
