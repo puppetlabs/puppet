@@ -489,12 +489,6 @@ module Puppet
           essentially means that you can't have any code outside of a node,
           class, or definition other than in the site manifest.",
     },
-    :stringify_facts => {
-      :default => true,
-      :type    => :boolean,
-      :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or
-        hashes as fact values. (DEPRECATED) This option will be removed in Puppet 4.0.",
-    },
     :trusted_node_data => {
       :default => false,
       :type    => :boolean,

@@ -56,13 +56,6 @@ class Puppet::Node::Facts
     end
   end
 
-  # Convert all fact values into strings.
-  def stringify
-    values.each do |fact, value|
-      values[fact] = value.to_s
-    end
-  end
-
   # Sanitize fact values by converting everything not a string, boolean
   # numeric, array or hash into strings.
   def sanitize

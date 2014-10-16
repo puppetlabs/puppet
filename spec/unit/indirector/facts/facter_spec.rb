@@ -82,17 +82,7 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
-    it "should convert facts into strings when stringify_facts is true" do
-      Puppet[:stringify_facts] = true
-      facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:stringify)
-
-      @facter.find(@request)
-    end
-
-    it "should sanitize facts when stringify_facts is false" do
-      Puppet[:stringify_facts] = false
+    it "should sanitize facts" do
       facts = Puppet::Node::Facts.new("foo")
       Puppet::Node::Facts.expects(:new).returns facts
       facts.expects(:sanitize)
