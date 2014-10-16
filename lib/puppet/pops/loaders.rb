@@ -61,6 +61,34 @@ class Puppet::Pops::Loaders
     md.private_loader
   end
 
+  # Adds one Puppet::Module to the set of modules known by the loaders.
+  # Normally, all modules are configured from the environment's modulepath, and the environments
+  # ability to resolve all entries on the path into an enumeration of Puppet::Module instances.
+  # This is however not the case during testing of individual modules, where the module under test
+  # is not on the module path itself.
+  #
+  # Caling this method with a Puppet::Module has the same effect as if the module had been referenced
+  # by the environment's module path.
+  #
+  # Calls to this method should be performed as soon as possible after the loaders have been
+  # initialized by the Compiler, and before any code loading takes place.
+  #
+  # @param puppet_module [Puppet::Module] the module to add
+  #
+  def add_module(puppet_module)
+    # Register the module with the module resolver
+    md = LoaderModuleData.new(puppet_module)
+    @module_resolver[puppet_module.name] = md
+    # Create a module loader for it, parented by the same loader (the public environment loader) as
+    # all other modules get as their parent).
+    the_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(@public_environment_loader, self, md.name, md.path)
+    md.public_loader = the_loader
+
+    # The dependency loader created needs to be told about the added module as well (this enables
+    # logic in the environment to see the module).
+    @public_environment_loader.private_loader.add_loader(the_loader)
+  end
+
   private
 
   def create_puppet_system_loader()
