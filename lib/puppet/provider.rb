@@ -64,14 +64,6 @@ class Puppet::Provider
     # @return [???] The source is WHAT?
     attr_writer :source
 
-    # @todo Original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_
-    #   Is this really needed? The comment about backwards compatibility was made in 2007.
-    #
-    # @return [???] A model kept for backwards compatibility.
-    # @api private
-    # @deprecated This attribute is available for backwards compatibility reasons.
-    attr_reader :model
-
     # @todo What is this type? A reference to a Puppet::Type ?
     # @return [Puppet::Type] the resource type (that this provider is ... WHAT?)
     #
@@ -389,31 +381,6 @@ class Puppet::Provider
   # @see prefetch
   def self.instances
     raise Puppet::DevError, "Provider #{self.name} has not defined the 'instances' class method"
-  end
-
-  # Creates the methods for a given command.
-  # @api private
-  # @deprecated Use {commands}, {optional_commands}, or {has_command} instead. This was not meant to be part of a public API
-  def self.make_command_methods(name)
-    Puppet.deprecation_warning "Provider.make_command_methods is deprecated; use Provider.commands or Provider.optional_commands instead for creating command methods"
-
-    # Now define a method for that command
-    unless singleton_class.method_defined?(name)
-      meta_def(name) do |*args|
-        # This might throw an ExecutionFailure, but the system above
-        # will catch it, if so.
-        command = Puppet::Provider::Command.new(name, command(name), Puppet::Util, Puppet::Util::Execution)
-        return command.execute(*args)
-      end
-
-      # And then define an instance method that just calls the class method.
-      # We need both, so both instances and classes can easily run the commands.
-      unless method_defined?(name)
-        define_method(name) do |*args|
-          self.class.send(name, *args)
-        end
-      end
-    end
   end
 
   # Creates getter- and setter- methods for each property supported by the resource type.
