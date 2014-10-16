@@ -1,5 +1,4 @@
 require 'puppet/application'
-require 'puppet/run'
 require 'puppet/daemon'
 require 'puppet/util/pidlock'
 require 'puppet/agent'
