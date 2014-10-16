@@ -1149,7 +1149,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PEnumType(t, t2)
-    return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
+    return true if t == t2
+    if t.values.empty?
+      return true if t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType) || t2.is_a?(Types::PPatternType)
+    end
     case t2
     when Types::PStringType
       # if the set of strings are all found in the set of enums
@@ -1218,6 +1221,8 @@ class Puppet::Pops::Types::TypeCalculator
       values = t2.values
     when Types::PVariantType
       return t2.types.all? {|variant_t| assignable_PPatternType(t, variant_t) }
+    when Types::PPatternType
+      return t.patterns.empty? ? true : false
     else
       return false
     end
@@ -1227,9 +1232,10 @@ class Puppet::Pops::Types::TypeCalculator
       # (There should really always be a pattern, but better safe than sorry).
       return t.patterns.empty? ? true : false
     end
-    # all strings in String/Enum type must match one of the patterns in Pattern type
+    # all strings in String/Enum type must match one of the patterns in Pattern type,
+    # or Pattern represents all Patterns == all Strings
     regexps = t.patterns.map {|p| p.regexp }
-    t2.values.all? { |v| regexps.any? {|re| re.match(v) } }
+    regexps.empty? || t2.values.all? { |v| regexps.any? {|re| re.match(v) } }
   end
 
   # @api private
