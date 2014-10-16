@@ -253,7 +253,7 @@ module Puppet
         running as.
     EOT
 
-    defaultto :use
+    defaultto :ignore
     newvalues(:use, :use_when_creating, :ignore)
   end
 end

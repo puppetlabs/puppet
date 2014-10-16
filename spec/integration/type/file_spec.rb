@@ -887,16 +887,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     it "should be able to copy files with spaces in their names" do
       dest = tmpfile("destwith spaces")
       source = tmpfile_with_contents("filewith spaces", "foo")
-
-      expected_mode = 0755
-      Puppet::FileSystem.chmod(expected_mode, source)
-
       catalog.add_resource described_class.new(:path => dest, :source => source)
 
       catalog.apply
 
       File.read(dest).should == "foo"
-      (Puppet::FileSystem.stat(dest).mode & 007777).should == expected_mode
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
@@ -954,7 +949,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when sourcing" do
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
-    it "should apply the source metadata values" do
+    it "should ignore the source metadata values" do
       set_mode(0770, source)
 
       file = described_class.new(
@@ -967,9 +962,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       catalog.add_resource file
       catalog.apply
 
-      get_owner(path).should == get_owner(source)
-      get_group(path).should == get_group(source)
-      (get_mode(path) & 07777).should == 0770
+      target_dir = File.dirname(path)
+      expected_mode = get_mode(path) & 007777
+
+      get_owner(path).should == get_owner(target_dir)
+      get_group(path).should == get_group(target_dir)
+      (get_mode(path) & 07777).should == expected_mode
+      (get_mode(path) & 07777).should_not == 0770
     end
 
     it "should override the default metadata values" do

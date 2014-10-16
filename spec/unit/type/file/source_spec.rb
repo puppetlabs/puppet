@@ -94,7 +94,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     before do
       @metadata = stub 'metadata', :source= => nil
       @resource.stubs(:[]).with(:links).returns :manage
-      @resource.stubs(:[]).with(:source_permissions)
+      @resource.stubs(:[]).with(:source_permissions).returns :use
     end
 
     it "should return already-available metadata" do
@@ -125,7 +125,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       options = {
         :environment => @environment,
         :links => :manage,
-        :source_permissions => nil
+        :source_permissions => :use
       }
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, options).returns nil
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, options).returns metadata
@@ -235,44 +235,50 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         Puppet.features.stubs(:microsoft_windows?).returns false
       end
 
-      it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
-        @source.copy_source_values
-
-        @resource[:owner].must == 100
-        @resource[:group].must == 200
-        @resource[:mode].must == "173"
-
-        # Metadata calls it checksum, we call it content.
-        @resource[:content].must == @metadata.checksum
-      end
-
-      it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
-        @resource[:owner] = 1
-        @resource[:group] = 2
-        @resource[:mode] = '173'
-        @resource[:content] = "foobar"
-
-        @source.copy_source_values
-
-        @resource[:owner].must == 1
-        @resource[:group].must == 2
-        @resource[:mode].must == '173'
-        @resource[:content].should_not == @metadata.checksum
-      end
-
-      describe "and puppet is not running as root" do
-        before do
-          Puppet.features.stubs(:root?).returns false
+      context "when source_permissions is `use`" do
+        before :each do
+          @resource[:source_permissions] = "use"
         end
 
-        it "should not try to set the owner" do
+        it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
           @source.copy_source_values
-          @resource[:owner].should be_nil
+
+          @resource[:owner].must == 100
+          @resource[:group].must == 200
+          @resource[:mode].must == "173"
+
+          # Metadata calls it checksum, we call it content.
+          @resource[:content].must == @metadata.checksum
         end
 
-        it "should not try to set the group" do
+        it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
+          @resource[:owner] = 1
+          @resource[:group] = 2
+          @resource[:mode] = '173'
+          @resource[:content] = "foobar"
+
           @source.copy_source_values
-          @resource[:group].should be_nil
+
+          @resource[:owner].must == 1
+          @resource[:group].must == 2
+          @resource[:mode].must == '173'
+          @resource[:content].should_not == @metadata.checksum
+        end
+
+        describe "and puppet is not running as root" do
+          before do
+            Puppet.features.stubs(:root?).returns false
+          end
+
+          it "should not try to set the owner" do
+            @source.copy_source_values
+            @resource[:owner].should be_nil
+          end
+
+          it "should not try to set the group" do
+            @source.copy_source_values
+            @resource[:group].should be_nil
+          end
         end
       end
 
@@ -348,9 +354,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
       end
 
-      context "when source_permissions is `ignore`" do
+      context "when source_permissions is default" do
         before :each do
-          @resource[:source_permissions] = "ignore"
           @source.stubs(:local?).returns(false)
           Puppet.features.expects(:root?).returns true
         end
@@ -384,10 +389,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
       end
 
-      describe "on Windows" do
+      describe "on Windows when source_permissions is `use`" do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
-        end
+          @resource[:source_permissions] = "use"
+         end
         let(:deprecation_message) { "Copying owner/mode/group from the" <<
               " source file on Windows is deprecated;" <<
               " use source_permissions => ignore." }
