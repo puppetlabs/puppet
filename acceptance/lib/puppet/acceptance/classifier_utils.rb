@@ -134,16 +134,16 @@ module Puppet
       end
 
       def master_cert
-        @master_cert ||= on(master, "cat `puppet config print hostcert`").stdout
+        @master_cert ||= on(master, "cat `puppet config print hostcert`", :silent => true).stdout
       end
 
       def master_key
-        @master_key ||= on(master, "cat `puppet config print hostprivkey`").stdout
+        @master_key ||= on(master, "cat `puppet config print hostprivkey`", :silent => true).stdout
       end
 
       def master_ca_cert_file
         unless @ca_cert_file
-          ca_cert = on(master, "cat `puppet config print localcacert`").stdout
+          ca_cert = on(master, "cat `puppet config print localcacert`", :silent => true).stdout
           cert_dir = Dir.mktmpdir("pe_classifier_certs")
           Puppet::Acceptance::ClassifierUtils.tmpdirs << cert_dir
 
