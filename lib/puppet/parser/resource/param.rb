@@ -11,7 +11,7 @@ class Puppet::Parser::Resource::Param
 
   def initialize(hash)
     set_options(hash)
-    requiredopts(:name, :value)
+    requiredopts(:name)
     @name = @name.intern
   end
 
