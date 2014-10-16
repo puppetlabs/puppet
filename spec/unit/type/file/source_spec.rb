@@ -186,28 +186,24 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       Puppet.features.stubs(:root?).returns true
     end
 
-    it "should not issue a deprecation warning if the source mode value is a Numeric" do
+    it "should not issue an error - except on Windows - if the source mode value is a Numeric" do
       @metadata.stubs(:mode).returns 0173
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
+        expect { @source.copy_source_values }.to raise_error("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       else
-        Puppet.expects(:deprecation_warning).never
+        expect { @source.copy_source_values }.not_to raise_error
       end
-
-      @source.copy_source_values
     end
 
-    it "should not issue a deprecation warning if the source mode value is a String" do
+    it "should not issue an error - except on Windows - if the source mode value is a String" do
       @metadata.stubs(:mode).returns "173"
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
+        expect { @source.copy_source_values }.to raise_error("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       else
-        Puppet.expects(:deprecation_warning).never
+        expect { @source.copy_source_values }.not_to raise_error
       end
-
-      @source.copy_source_values
     end
 
     it "should fail if there is no metadata" do
@@ -395,81 +391,54 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
           @resource[:source_permissions] = "use"
-         end
-        let(:deprecation_message) { "Copying owner/mode/group from the" <<
-              " source file on Windows is deprecated;" <<
+        end
+        let(:err_message) { "Copying owner/mode/group from the" <<
+              " source file on Windows is not supported;" <<
               " use source_permissions => ignore." }
 
-        it "should copy only mode from remote sources" do
+        it "should issue error when copying from remote sources" do
           @source.stubs(:local?).returns false
 
-          @source.copy_source_values
-
-          @resource[:owner].must be_nil
-          @resource[:group].must be_nil
-          @resource[:mode].must == "173"
+          expect { @source.copy_source_values }.to raise_error(err_message)
         end
 
-        it "should copy mode from remote sources" do
-          @source.stubs(:local?).returns false
-
-          @source.copy_source_values
-
-          @resource[:mode].must == "173"
-        end
-
-        it "should copy owner and group from local sources" do
+        it "should issue error when copying from local sources" do
           @source.stubs(:local?).returns true
 
-          @source.copy_source_values
-
-          @resource[:owner].must == 100
-          @resource[:group].must == 200
-          @resource[:mode].must == "173"
+          expect { @source.copy_source_values }.to raise_error(err_message)
         end
 
-        it "should issue deprecation warning when copying metadata from remote sources when group, owner, and mode are unspecified" do
+        it "should issue error when copying metadata from remote sources if only user is unspecified" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
-
-          @source.copy_source_values
-        end
-
-        it "should issue deprecation warning when copying metadata from remote sources if only user is unspecified" do
-          @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:group] = 2
           @resource[:mode] = "0003"
 
-          @source.copy_source_values
+          expect { @source.copy_source_values }.to raise_error(err_message)
         end
 
-        it "should issue deprecation warning when copying metadata from remote sources if only group is unspecified" do
+        it "should issue error when copying metadata from remote sources if only group is unspecified" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:owner] = 1
           @resource[:mode] = "0003"
 
-          @source.copy_source_values
+          expect { @source.copy_source_values }.to raise_error(err_message)
         end
 
-        it "should issue deprecation warning when copying metadata from remote sources if only mode is unspecified" do
+        it "should issue error when copying metadata from remote sources if only mode is unspecified" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
           @resource[:owner] = 1
           @resource[:group] = 2
 
-          @source.copy_source_values
+          expect { @source.copy_source_values }.to raise_error(err_message)
         end
 
-        it "should not issue deprecation warning when copying metadata from remote sources if group, owner, and mode are all specified" do
+        it "should not issue error when copying metadata from remote sources if group, owner, and mode are all specified" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(deprecation_message).never
           @resource[:owner] = 1
           @resource[:group] = 2
           @resource[:mode] = "0003"
 
-          @source.copy_source_values
+          expect { @source.copy_source_values }.not_to raise_error
         end
       end
     end
