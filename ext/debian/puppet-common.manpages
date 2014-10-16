@@ -27,5 +27,4 @@ man/man8/puppet-plugin.8
 man/man8/puppet-report.8
 man/man8/puppet-resource.8
 man/man8/puppet-resource_type.8
-man/man8/puppet-secret_agent.8
 man/man8/puppet-status.8
