@@ -6,8 +6,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
   desc "Manipulate resources with the resource abstraction layer. Only used internally."
 
   def allow_remote_requests?
-    Puppet.deprecation_warning("Accessing resources on the network is deprecated. See http://links.puppetlabs.com/deprecate-networked-resource")
-    super
+    false
   end
 
   def find( request )

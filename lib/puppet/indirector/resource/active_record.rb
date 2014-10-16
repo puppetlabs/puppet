@@ -7,6 +7,10 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
   desc "A component of ActiveRecord storeconfigs. ActiveRecord-based storeconfigs
     and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
 
+  def allow_remote_requests?
+    false
+  end
+
   def initialize
     Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
     super

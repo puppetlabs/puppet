@@ -13,11 +13,6 @@ class Puppet::Application::Resource < Puppet::Application
   option("--edit","-e")
   option("--to_yaml","-y")
 
-  option("--host HOST","-H") do |arg|
-    Puppet.warning("Accessing resources on the network is deprecated. See http://links.puppetlabs.com/deprecate-networked-resource")
-    @host = arg
-  end
-
   option("--types", "-t") do |arg|
     types = []
     Puppet::Type.loadall
@@ -47,7 +42,7 @@ Uses the Puppet RAL to directly interact with the system.
 USAGE
 -----
 puppet resource [-h|--help] [-d|--debug] [-v|--verbose] [-e|--edit]
-  [-H|--host <host>] [-p|--param <parameter>] [-t|--types] [-y|--to_yaml] <type>
+  [-p|--param <parameter>] [-t|--types] [-y|--to_yaml] <type>
   [<name>] [<attribute>=<value> ...]
 
 
@@ -140,7 +135,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def main
     type, name, params = parse_args(command_line.args)
 
-    raise "You cannot edit a remote host" if options[:edit] and @host
     raise "Editing with Yaml output is not supported" if options[:edit] and options[:to_yaml]
 
     resources = find_or_save_resources(type, name, params)
@@ -167,12 +161,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   private
-
-  def remote_key(type, name)
-    Puppet::Resource.indirection.terminus_class = :rest
-    port = Puppet[:puppetport]
-    ["https://#{@host}:#{port}", "production", "resources", type, name].join('/')
-  end
 
   def local_key(type, name)
     [type, name].join('/')
@@ -218,7 +206,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def find_or_save_resources(type, name, params)
-    key = @host ? remote_key(type, name) : local_key(type, name)
+    key = local_key(type, name)
 
     if name
       if params.empty?
