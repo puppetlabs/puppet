@@ -332,7 +332,7 @@ describe Puppet::Interface::Action do
           option("-f")           { before_action { |_,_,_| report :f    } }
           option("--baz")        { before_action { |_,_,_| report :baz  } }
         end
-        face.script(:boo) {|options| }
+        face.action(:boo) { when_invoked { |options| } }
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
         face.reported.should == [ :foo, :bar, :quux, :f, :baz ]
@@ -346,7 +346,7 @@ describe Puppet::Interface::Action do
           option("-f")           { after_action { |_,_,_| report :f    } }
           option("--baz")        { after_action { |_,_,_| report :baz  } }
         end
-        face.script(:boo) {|options| }
+        face.action(:boo) { when_invoked { |options| } }
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
         face.reported.should == [ :foo, :bar, :quux, :f, :baz ].reverse
@@ -430,7 +430,7 @@ describe Puppet::Interface::Action do
     context "and inheritance" do
       let :parent do
         Class.new(Puppet::Interface) do
-          script(:on_parent) {|options| :on_parent }
+          action(:on_parent) { when_invoked { |options| :on_parent } }
 
           def reported; @reported; end
           def report(arg)
@@ -441,7 +441,7 @@ describe Puppet::Interface::Action do
 
       let :child do
         parent.new(:inherited_decorators, '0.0.1') do
-          script(:on_child) {|options| :on_child }
+          action(:on_child) { when_invoked { |options| :on_child } }
         end
       end
 
@@ -504,7 +504,7 @@ describe Puppet::Interface::Action do
             after_action  { |action, args, options| report :b_after  }
           end
 
-          child.script(:decorations) { |options| report :invoked }
+          child.action(:decorations) { when_invoked {  |options| report :invoked } }
 
           child
         end
@@ -553,7 +553,7 @@ describe Puppet::Interface::Action do
   context "#validate_and_clean" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
-        script :test do |options| options end
+        action(:test) { when_invoked { |options| options } }
       end
     end
 

@@ -29,18 +29,6 @@ module Puppet::Interface::ActionManager
     @actions[action.name] = action
   end
 
-  # Defines an action without using ActionBuilder. The block given is
-  # the code that will be executed when the action is invoked.
-  # @api public
-  # @deprecated
-  def script(name, &block)
-    @actions ||= {}
-    Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
-
-    # REVISIT: (#18048) it's possible to create multiple default actions
-    @actions[name] = Puppet::Interface::Action.new(self, name, :when_invoked => block)
-  end
-
   # Returns the list of available actions for this face.
   # @return [Array<Symbol>] The names of the actions for this face
   # @api private
