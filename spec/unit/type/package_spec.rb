@@ -123,25 +123,6 @@ describe Puppet::Type.type(:package) do
       end.to raise_error(Puppet::ResourceError, /Name must be a String/)
     end
 
-    it "should issue deprecation warning for default allow_virtual for a provider that supports virtual packages" do
-      Puppet.expects(:deprecation_warning).with('The package type\'s allow_virtual parameter will be changing its default value from false to true in a future release. If you do not want to allow virtual packages, please explicitly set allow_virtual to false.')
-      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum)
-    end
-
-    it "should not issue deprecation warning for allow_virtual set to false for a provider that supports virtual packages" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum, :allow_virtual => false)
-    end
-
-    it "should not issue deprecation warning for allow_virtual set to true for a provider that supports virtual packages" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum, :allow_virtual => true)
-    end
-
-    it "should not issue deprecation warning for default allow_virtual for a provider that does not support virtual packages" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet::Type.type(:package).new(:name => 'yay', :provider => :apt)
-    end
   end
 
   module PackageEvaluationTesting
@@ -376,6 +357,18 @@ describe Puppet::Type.type(:package) do
           @package.refresh
         end
       end
+    end
+  end
+
+  describe "allow_virtual" do
+    it "defaults to true on platforms that support virtual packages" do
+      pkg = Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum)
+      expect(pkg[:allow_virtual]).to eq true
+    end
+
+    it "defaults to false on platforms that do not support virtual packages" do
+      pkg = Puppet::Type.type(:package).new(:name => 'yay', :provider => :apple)
+      expect(pkg[:allow_virtual]).to be_nil
     end
   end
 end

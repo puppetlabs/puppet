@@ -280,11 +280,24 @@ describe provider_class do
       parser_test('bad data', {}, 1)
     end
 
-    it "does not log or fail if rpm returns package not found" do
-      Puppet.expects(:debug).never
-      expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format]
-      Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not installed")
-      expect(provider.query).to be_nil
+    describe "when the package is not found" do
+      before do
+        Puppet.expects(:debug).never
+        expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format]
+        Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not installed")
+      end
+
+      it "does not log or fail if allow_virtual is false" do
+        resource[:allow_virtual] = false
+        expect(provider.query).to be_nil
+      end
+
+      it "does not log or fail if allow_virtual is true" do
+        resource[:allow_virtual] = true
+        expected_args = ['/bin/rpm', '-q', resource_name, '--nosignature', '--nodigest', '--qf', nevra_format, '--whatprovides']
+        Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not provided")
+        expect(provider.query).to be_nil
+      end
     end
 
     it "parses virtual package" do
