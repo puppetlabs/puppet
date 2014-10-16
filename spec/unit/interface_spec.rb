@@ -120,11 +120,6 @@ describe Puppet::Interface do
     subject.new(:me, '0.0.1').to_s.should =~ /\bme\b/
   end
 
-  # Why?
-  it "should create a class-level autoloader" do
-    subject.autoloader.should be_instance_of(Puppet::Util::Autoload)
-  end
-
   it "should try to require faces that are not known" do
     subject::FaceCollection.expects(:load_face).with(:foo, :current)
     subject::FaceCollection.expects(:load_face).with(:foo, '0.0.1')

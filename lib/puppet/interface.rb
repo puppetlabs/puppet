@@ -31,13 +31,6 @@ class Puppet::Interface
     # This is just so we can search for actions.  We only use its
     # list of directories to search.
 
-    # @api private
-    # @deprecated
-    def autoloader
-      Puppet.deprecation_warning("Puppet::Interface.autoloader is deprecated; please use Puppet::Interface#loader instead")
-      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/face")
-    end
-
     # Lists all loaded faces
     # @return [Array<Symbol>] The names of the loaded faces
     def faces
