@@ -56,7 +56,6 @@ describe PSON do
   it 'ignores "document_type" during parsing' do
     text = '{"data":{},"document_type":"Node"}'
 
-    expect(PSON.parse(text))
-      .to eq({"data" => {}, "document_type" => "Node"})
+    expect(PSON.parse(text)).to eq({"data" => {}, "document_type" => "Node"})
   end
 end
