@@ -216,14 +216,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def check_master_version response
-    if !response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] &&
-       (Puppet[:legacy_query_parameter_serialization] == false || Puppet[:report_serialization_format] != "yaml")
-      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
-      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
-      Puppet.notice "to Puppet 3.3 or newer."
-      Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
-      Puppet[:legacy_query_parameter_serialization] = true
-      Puppet[:report_serialization_format] = "yaml"
+    if !response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] || Puppet[:report_serialization_format] != "pson"
+      raise Puppet::Error, "Use of unsafe yaml on the network is no longer supported - see http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
     end
   end
 

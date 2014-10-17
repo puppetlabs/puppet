@@ -9,22 +9,18 @@ HTTP_ERROR_CODES = [300, 400, 500]
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
   describe "when talking to an older master" do
-    it "should set backward compatibility settings" do
+    it "should raise error instead of setting backward compatibility settings" do
       response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns nil
-
-      terminus.send(terminus_method, request)
-      Puppet[:report_serialization_format].should == 'yaml'
-      Puppet[:legacy_query_parameter_serialization].should == true
+      expect { terminus.send(terminus_method, request)}.to raise_error(/.*unsafe yaml/)
     end
   end
 
-  describe "when talking to a 3.3.1 master" do
-    it "should not set backward compatibility settings" do
+  describe "when talking to a 3.3.1 (or later) master" do
+    it "should not set backward compatibility settings and default to pson" do
       response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns "3.3.1"
 
       terminus.send(terminus_method, request)
       Puppet[:report_serialization_format].should == 'pson'
-      Puppet[:legacy_query_parameter_serialization].should == false
     end
   end
 
