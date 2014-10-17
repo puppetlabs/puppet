@@ -138,19 +138,6 @@ describe Puppet::Provider do
     end
   end
 
-  it "makes command methods on demand (deprecated)" do
-    Puppet::Util.expects(:which).with("/not/a/command").returns("/not/a/command")
-    Puppet::Util::Execution.expects(:execute).with(["/not/a/command"], {})
-
-    provider = provider_of do
-      @commands[:echo] = "/not/a/command"
-    end
-    provider.stubs(:which).with("/not/a/command").returns("/not/a/command")
-
-    provider.make_command_methods(:echo)
-    provider.echo
-  end
-
   it "should have a specifity class method" do
     Puppet::Provider.should respond_to(:specificity)
   end
