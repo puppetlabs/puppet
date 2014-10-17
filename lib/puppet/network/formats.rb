@@ -62,59 +62,6 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   end
 end
 
-# This is a "special" format which is used for the moment only when sending facts
-# as REST GET parameters (see Puppet::Configurer::FactHandler).
-# This format combines a yaml serialization, then zlib compression and base64 encoding.
-Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
-  require 'base64'
-
-  def use_zlib?
-    Puppet.features.zlib?
-  end
-
-  def requiring_zlib
-    if use_zlib?
-      yield
-    else
-      raise Puppet::Error, "the zlib library is not installed or is disabled."
-    end
-  end
-
-  def intern(klass, text)
-    requiring_zlib do
-      Puppet::Network::FormatHandler.format(:yaml).intern(klass, decode(text))
-    end
-  end
-
-  def intern_multiple(klass, text)
-    requiring_zlib do
-      Puppet::Network::FormatHandler.format(:yaml).intern_multiple(klass, decode(text))
-    end
-  end
-
-  def render(instance)
-    encode(instance.to_yaml)
-  end
-
-  def render_multiple(instances)
-    encode(instances.to_yaml)
-  end
-
-  def supported?(klass)
-    true
-  end
-
-  def decode(data)
-    Zlib::Inflate.inflate(Base64.decode64(data))
-  end
-
-  def encode(text)
-    requiring_zlib do
-      Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
-    end
-  end
-end
-
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
 # A very low-weight format so it'll never get chosen automatically.

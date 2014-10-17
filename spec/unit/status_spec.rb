@@ -36,12 +36,6 @@ describe Puppet::Status do
     Puppet::Status.new.name = "status"
   end
 
-  it "can do a round-trip serialization via YAML" do
-    status = Puppet::Status.new
-    new_status = Puppet::Status.convert_from('yaml', status.render('yaml'))
-    new_status.should equal_attributes_of(status)
-  end
-
   it "serializes to PSON that conforms to the status schema" do
     status = Puppet::Status.new
     status.version = Puppet.version

@@ -18,7 +18,7 @@ describe Puppet::Network::HTTP::API::V1 do
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/yaml", },
+        'content-type' => "text/pson", },
       :method => "HEAD",
       :path => "/production/#{indirection.name}/#{data.value}",
       :params => {},
@@ -29,11 +29,11 @@ describe Puppet::Network::HTTP::API::V1 do
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => request[:content_type_header] || "text/yaml", },
+        'content-type' => request[:content_type_header] || "text/pson", },
       :method => "PUT",
       :path => "/production/#{indirection.name}/#{data.value}",
       :params => {},
-      :body => request[:body] || data.render("text/yaml")
+      :body => request[:body].nil? ? data.render("pson") : request[:body].to_pson()
     })
   end
 
@@ -41,7 +41,7 @@ describe Puppet::Network::HTTP::API::V1 do
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/yaml", },
+        'content-type' => "text/pson", },
       :method => "DELETE",
       :path => "/production/#{indirection.name}/#{data.value}",
       :params => {},
@@ -53,7 +53,7 @@ describe Puppet::Network::HTTP::API::V1 do
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/yaml", },
+        'content-type' => "text/pson", },
       :method => "GET",
       :path => "/production/#{indirection.name}/#{data.value}",
       :params => {},
@@ -65,7 +65,7 @@ describe Puppet::Network::HTTP::API::V1 do
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/yaml", },
+        'content-type' => "text/pson", },
       :method => "GET",
       :path => "/production/#{indirection.name}s/#{key}",
       :params => {},
@@ -112,7 +112,7 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should return the environment as a Puppet::Node::Environment" do
-      handler.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should be_a Puppet::Node::Environment
+      handler.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should be_a(Puppet::Node::Environment)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
@@ -282,7 +282,7 @@ describe Puppet::Network::HTTP::API::V1 do
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
+      request = a_request_that_finds(data, :accept_header => "unknown, pson")
 
       handler.call(request, response)
 
@@ -313,7 +313,7 @@ describe Puppet::Network::HTTP::API::V1 do
     it "should pass the result through without rendering it if the result is a string" do
       data = Puppet::IndirectorTesting.new("my data")
       data_string = "my data string"
-      request = a_request_that_finds(data, :accept_header => "pson")
+      request = a_request_that_finds(data, :accept_header => "text/pson")
       indirection.expects(:find).returns(data_string)
 
       handler.call(request, response)
@@ -324,7 +324,7 @@ describe Puppet::Network::HTTP::API::V1 do
 
     it "should return a not_found_code when no model instance can be found" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
+      request = a_request_that_finds(data, :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
       expect(response.code).to eq(not_found_code)
@@ -335,7 +335,7 @@ describe Puppet::Network::HTTP::API::V1 do
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_searches("my", :accept_header => "unknown, pson, yaml")
+      request = a_request_that_searches("my", :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 
@@ -344,7 +344,7 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should return [] when searching returns an empty array" do
-      request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
+      request = a_request_that_searches("nothing", :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 
@@ -353,7 +353,7 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should return a not_found_code when searching returns nil" do
-      request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
+      request = a_request_that_searches("nothing", :accept_header => "unknown, text/pson")
       indirection.expects(:search).returns(nil)
 
       handler.call(request, response)
@@ -373,21 +373,21 @@ describe Puppet::Network::HTTP::API::V1 do
       Puppet::IndirectorTesting.indirection.find("my data").should be_nil
     end
 
-    it "responds with yaml when no Accept header is given" do
+    it "responds with pson when no Accept header is given" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_destroys(data, :accept_header => nil)
 
       handler.call(request, response)
 
-      expect(response.body).to eq(data.render(:yaml))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:yaml))
+      expect(response.body).to eq(data.render(:pson))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
     end
 
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_destroys(data, :accept_header => "unknown, pson, yaml")
+      request = a_request_that_destroys(data, :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 
@@ -424,6 +424,11 @@ describe Puppet::Network::HTTP::API::V1 do
 
       handler.call(request, response)
 
+      # PUP-3272 this test fails when yaml is removed and pson is used. Instead of returning an
+      # empty string, the a string '""' is returned - Don't know what the expecation is, if this is
+      # corrent or not.
+      # (helindbe)
+      #
       Puppet::IndirectorTesting.indirection.find("test").name.should == ''
     end
 
@@ -437,19 +442,19 @@ describe Puppet::Network::HTTP::API::V1 do
       expect(saved.name).to eq(data.name)
     end
 
-    it "responds with yaml when no Accept header is given" do
+    it "responds with pson when no Accept header is given" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => nil)
 
       handler.call(request, response)
 
-      expect(response.body).to eq(data.render(:yaml))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:yaml))
+      expect(response.body).to eq(data.render(:pson))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
     end
 
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_submits(data, :accept_header => "unknown, pson, yaml")
+      request = a_request_that_submits(data, :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 

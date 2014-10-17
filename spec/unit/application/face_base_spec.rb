@@ -59,7 +59,7 @@ describe Puppet::Application::FaceBase do
     it "should stop if the first thing found is not an action" do
       app.command_line.stubs(:args).returns %w{banana count_args}
 
-      expect { app.run }.to exit_with 1
+      expect { app.run }.to exit_with(1)
 
       @logs.map(&:message).should == ["'basetest' has no 'banana' action.  See `puppet help basetest`."]
     end
@@ -88,7 +88,7 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{bar}
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
       app.stubs(:main)
-      expect { app.run }.to exit_with 1
+      expect { app.run }.to exit_with(1)
       @logs.first.message.should =~ /has no 'bar' action./
     end
 
@@ -98,7 +98,7 @@ describe Puppet::Application::FaceBase do
         app.command_line.stubs(:args).returns input
         Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
         app.stubs(:main)
-        expect { app.run }.to exit_with 1
+        expect { app.run }.to exit_with(1)
         @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
       end
     end
@@ -109,7 +109,7 @@ describe Puppet::Application::FaceBase do
         app.command_line.stubs(:args).returns input
         Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
         app.stubs(:main)
-        expect { app.run }.to exit_with 1
+        expect { app.run }.to exit_with(1)
         @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
       end
     end
@@ -117,25 +117,25 @@ describe Puppet::Application::FaceBase do
     it "should report a sensible error when options with = fail" do
       app.command_line.stubs(:args).returns %w{--action=bar foo}
       expect { app.preinit; app.parse_options }.
-        to raise_error OptionParser::InvalidOption, /invalid option: --action/
+        to raise_error(OptionParser::InvalidOption, /invalid option: --action/)
     end
 
     it "should fail if an action option is before the action" do
       app.command_line.stubs(:args).returns %w{--action foo}
       expect { app.preinit; app.parse_options }.
-        to raise_error OptionParser::InvalidOption, /invalid option: --action/
+        to raise_error(OptionParser::InvalidOption, /invalid option: --action/)
     end
 
     it "should fail if an unknown option is before the action" do
       app.command_line.stubs(:args).returns %w{--bar foo}
       expect { app.preinit; app.parse_options }.
-        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+        to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "should fail if an unknown option is after the action" do
       app.command_line.stubs(:args).returns %w{foo --bar}
       expect { app.preinit; app.parse_options }.
-        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+        to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "should accept --bar as an argument to a mandatory option after action" do
@@ -157,7 +157,7 @@ describe Puppet::Application::FaceBase do
     it "should not skip when --foo=bar is given" do
       app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
       expect { app.preinit; app.parse_options }.
-        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+        to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "does not skip when a puppet global setting is given as one item" do
@@ -238,18 +238,18 @@ describe Puppet::Application::FaceBase do
 
     it "should send the specified verb and name to the face" do
       app.face.expects(:foo).with(*app.arguments)
-      expect { app.main }.to exit_with 0
+      expect { app.main }.to exit_with(0)
     end
 
     it "should lookup help when it cannot do anything else" do
       app.action = nil
       Puppet::Face[:help, :current].expects(:help).with(:basetest)
-      expect { app.main }.to exit_with 1
+      expect { app.main }.to exit_with(1)
     end
 
     it "should use its render method to render any result" do
       app.expects(:render).with(app.arguments.length + 1, ["myname", "myarg"])
-      expect { app.main }.to exit_with 0
+      expect { app.main }.to exit_with(0)
     end
   end
 
@@ -264,27 +264,27 @@ describe Puppet::Application::FaceBase do
 
     it "should exit 0 when the action returns true" do
       app.action    = app.face.get_action :return_true
-      expect { app.main }.to exit_with 0
+      expect { app.main }.to exit_with(0)
     end
 
     it "should exit 0 when the action returns false" do
       app.action = app.face.get_action :return_false
-      expect { app.main }.to exit_with 0
+      expect { app.main }.to exit_with(0)
     end
 
     it "should exit 0 when the action returns nil" do
       app.action = app.face.get_action :return_nil
-      expect { app.main }.to exit_with 0
+      expect { app.main }.to exit_with(0)
     end
 
     it "should exit non-0 when the action raises" do
       app.action = app.face.get_action :return_raise
-      expect { app.main }.not_to exit_with 0
+      expect { app.main }.not_to exit_with(0)
     end
 
     it "should use the exit code set by the action" do
       app.action = app.face.get_action :with_specific_exit_code
-      expect { app.main }.to exit_with 5
+      expect { app.main }.to exit_with(5)
     end
   end
 
@@ -386,22 +386,21 @@ EOT
 
       Puppet.expects(:err).with("Could not parse application options: I don't know how to render 'interpretive-dance'")
 
-      expect { app.run }.to exit_with 1
-
+      expect { app.run }.to exit_with(1)
     end
 
     it "should work if asked to render a NetworkHandler format" do
-      app.command_line.stubs(:args).returns %w{count_args a b c --render-as yaml}
+      app.command_line.stubs(:args).returns %w{count_args a b c --render-as pson}
       expect {
-        expect { app.run }.to exit_with 0
-      }.to have_printed(/--- 3/)
+        expect { app.run }.to exit_with(0)
+      }.to have_printed(/3/)
     end
 
     it "should invoke when_rendering hook 's' when asked to render-as 's'" do
       app.command_line.stubs(:args).returns %w{with_s_rendering_hook --render-as s}
       app.action = app.face.get_action(:with_s_rendering_hook)
       expect {
-        expect { app.run }.to exit_with 0
+        expect { app.run }.to exit_with(0)
       }.to have_printed(/you invoked the 's' rendering hook/)
     end
   end

@@ -16,7 +16,7 @@ describe Puppet::Network::HTTP::Handler do
   def a_request(method = "HEAD", path = "/production/#{indirection.name}/unknown")
     {
       :accept_header => "pson",
-      :content_type_header => "text/yaml",
+      :content_type_header => "text/pson",
       :http_method => method,
       :path => path,
       :params => {},
@@ -139,21 +139,18 @@ describe Puppet::Network::HTTP::Handler do
       request.format.should == "s"
     end
 
-    it "should deserialize YAML parameters" do
-      params = {'my_param' => [1,2,3].to_yaml}
-
-      decoded_params = handler.send(:decode_params, params)
-
-      decoded_params.should == {:my_param => [1,2,3]}
-    end
-
-    it "should ignore tags on YAML parameters" do
-      params = {'my_param' => "--- !ruby/object:Array {}"}
-
-      decoded_params = handler.send(:decode_params, params)
-
-      decoded_params[:my_param].should be_a(Hash)
-    end
+    # PUP-3272
+    # This used to be for YAML, and doing a to_yaml on an array.
+    # The result with to_pson is something different, the result is a string
+    # Which seems correct. Looks like this was some kind of nesting option "yaml inside yaml" ?
+    # Removing the test
+#    it "should deserialize PSON parameters" do
+#      params = {'my_param' => [1,2,3].to_pson}
+#
+#      decoded_params = handler.send(:decode_params, params)
+#
+#      decoded_params.should == {:my_param => [1,2,3]}
+#    end
   end
 
 

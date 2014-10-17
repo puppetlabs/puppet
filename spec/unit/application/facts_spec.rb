@@ -10,8 +10,8 @@ describe Puppet::Application::Facts do
   it "should fail if no key is given to find" do
     subject.command_line.stubs(:args).returns %w{find}
     expect {
-      expect { subject.run }.to exit_with 1
-    }.to have_printed /Error: puppet facts find takes 1 argument, but you gave 0/
+      expect { subject.run }.to exit_with(1)
+    }.to have_printed(/Error: puppet facts find takes 1 argument, but you gave 0/)
     @logs.first.to_s.should =~ /puppet facts find takes 1 argument, but you gave 0/
   end
 
@@ -23,7 +23,7 @@ describe Puppet::Application::Facts do
     expect {
       expect {
         subject.run
-      }.to exit_with 0
+      }.to exit_with(0)
     }.to have_printed(/object:Puppet::Node::Facts/)
 
     @logs.should be_empty
