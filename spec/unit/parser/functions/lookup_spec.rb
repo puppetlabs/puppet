@@ -8,6 +8,7 @@ describe "lookup function" do
 
   before(:each) do
     Puppet[:binder] = true
+    Puppet[:parser] = 'future'
   end
 
   it "must be called with at least a name to lookup" do
@@ -46,9 +47,9 @@ describe "lookup function" do
     expect(scope.function_lookup(['a_value'])).to eq('from_hiera')
   end
 
-  it "returns :undef when the requested value is not bound and undef is accepted" do
+  it "returns nil when the requested value is not bound and undef is accepted" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
-    expect(scope.function_lookup(['not_bound_value',{'accept_undef' => true}])).to eq(:undef)
+    expect(scope.function_lookup(['not_bound_value',{'accept_undef' => true}])).to eq(nil)
   end
 
   it "fails if the requested value is not bound and undef is not allowed" do
@@ -84,35 +85,35 @@ describe "lookup function" do
 
   it "yields to a given lambda and returns the result" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
-    expect(scope.function_lookup(['a_value', ast_lambda('|$x|{something_else}')])).to eq('something_else')
+    expect(scope.function_lookup(['a_value', ast_lambda(scope, '|$x|{something_else}')])).to eq('something_else')
   end
 
   it "fails if given lambda produces undef" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
     expect do
-      scope.function_lookup(['a_value', ast_lambda('|$x|{undef}')])
+      scope.function_lookup(['a_value', ast_lambda(scope, '|$x|{undef}')])
     end.to raise_error(/did not find a value for the name 'a_value'/)
   end
 
   it "yields name and result to a given lambda" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
-    expect(scope.function_lookup(['a_value', ast_lambda('|$name, $result|{[$name, $result]}')])).to eq(['a_value', 'something'])
+    expect(scope.function_lookup(['a_value', ast_lambda(scope, '|$name, $result|{[$name, $result]}')])).to eq(['a_value', 'something'])
   end
 
   it "yields name and result and default to a given lambda" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
     expect(scope.function_lookup(['a_value', {'default' => 'cigar'}, 
-      ast_lambda('|$name, $result, $d|{[$name, $result, $d]}')])).to eq(['a_value', 'something', 'cigar'])
+      ast_lambda(scope, '|$name, $result, $d|{[$name, $result, $d]}')])).to eq(['a_value', 'something', 'cigar'])
   end
 
   it "yields to a given lambda and returns the result when giving name and type" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
-    expect(scope.function_lookup(['a_value', 'String', ast_lambda('|$x|{something_else}')])).to eq('something_else')
+    expect(scope.function_lookup(['a_value', 'String', ast_lambda(scope, '|$x|{something_else}')])).to eq('something_else')
   end
 
   it "yields :undef when value is not found and using a lambda" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
-    expect(scope.function_lookup(['not_bound_value', ast_lambda('|$x|{ if $x == undef {good} else {bad}}')])).to eq('good')
+    expect(scope.function_lookup(['not_bound_value', ast_lambda(scope, '|$x|{ if $x == undef {good} else {bad}}')])).to eq('good')
   end
 
   def scope_with_injections_from(binder)
@@ -137,10 +138,10 @@ describe "lookup function" do
     Puppet::Pops::Binder::Binder.new(layered_bindings)
   end
 
-  def ast_lambda(puppet_source)
+  def ast_lambda(scope, puppet_source)
     puppet_source = "fake_func() " + puppet_source
-    model = Puppet::Pops::Parser::EvaluatingParser.new().parse_string(puppet_source, __FILE__).current
-    model = model.body.lambda
-    Puppet::Pops::Model::AstTransformer.new(@file_source, nil).transform(model)
+    evaluator = Puppet::Pops::Parser::EvaluatingParser.new()
+    model = evaluator.parse_string(puppet_source, __FILE__).current
+    evaluator.closure(model.body.lambda, scope)
   end
 end

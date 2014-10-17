@@ -255,8 +255,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
-      # Here we must convert nil values to :undef for the 3x logic to work
-      :value  => convert(value, scope, :undef), # converted to 3x since 4x supports additional objects / types
+      :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
       :add    => operator == :'+>'
     )

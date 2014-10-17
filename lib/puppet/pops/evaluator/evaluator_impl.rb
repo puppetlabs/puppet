@@ -706,7 +706,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           if param_memo.include? p.name
             fail(Puppet::Pops::Issues::DUPLICATE_ATTRIBUTE, o, {:attribute => p.name})
           end
-          param_memo[p.name] = p 
+          param_memo[p.name] = p
         end
         param_memo
       end
