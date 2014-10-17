@@ -1320,10 +1320,6 @@ EOT
       :desc       => "Boolean; whether to generate the default schedule resources. Setting this to
       false is useful for keeping external report processors clean of skipped schedule resources.",
     },
-    :puppetport => {
-      :default    => 8139,
-      :desc       => "Which port puppet agent listens on.",
-    },
     :noop => {
       :default    => false,
       :type       => :boolean,
@@ -1356,15 +1352,6 @@ EOT
           Note that a runinterval of 0 means \"run continuously\" rather than
           \"never run.\" If you want puppet agent to never run, you should start
           it with the `--no-client` option. #{AS_DURATION}",
-    },
-    :listen => {
-      :default    => false,
-      :type       => :boolean,
-      :desc       => "Whether puppet agent should listen for
-      connections.  If this is true, then puppet agent will accept incoming
-      REST API requests, subject to the default ACLs and the ACLs set in
-      the `rest_authconfig` file. Puppet agent can respond usefully to
-      requests on the `run`, `certificate`, and `resource` endpoints.",
     },
     :ca_server => {
       :default    => "$server",
