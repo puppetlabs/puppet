@@ -1,6 +1,5 @@
 require 'optparse'
 require 'puppet/util/command_line'
-require 'puppet/util/plugins'
 require 'puppet/util/constant_inflector'
 require 'puppet/error'
 
@@ -328,12 +327,10 @@ class Application
   def run
 
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
-    # names, and make deprecated aliases.  Also, Daniel suggests that we can probably get rid of this "plugin_hook"
-    # pattern, but we need to check with PE and the community first.  --cprice 2012-03-16
-    #
+    # names, and make deprecated aliases.  --cprice 2012-03-16
 
     exit_on_fail("get application-specific default settings") do
-      plugin_hook('initialize_app_defaults') { initialize_app_defaults }
+      initialize_app_defaults
     end
 
     Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{self.class.run_mode})")
@@ -353,12 +350,12 @@ class Application
     Puppet.push_context({ :current_environment => configured_environment },
                     "Update current environment from application's configuration")
 
-    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
-    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
-    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
+    exit_on_fail("initialize")                                   { preinit }
+    exit_on_fail("parse application options")                    { parse_options }
+    exit_on_fail("prepare for execution")                        { setup }
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
     exit_on_fail("log runtime debug info")                       { log_runtime_environment }
-    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+    exit_on_fail("run")                                          { run_command }
   end
 
   def main
@@ -479,15 +476,5 @@ class Application
   def help
     "No help available for puppet #{name}"
   end
-
-
-
-  def plugin_hook(step,&block)
-    Puppet::Plugins.send("before_application_#{step}",:application_object => self)
-    x = yield
-    Puppet::Plugins.send("after_application_#{step}",:application_object => self, :return_value => x)
-    x
-  end
-  private :plugin_hook
 end
 end
