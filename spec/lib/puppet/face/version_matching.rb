@@ -7,6 +7,6 @@ require 'puppet/face'
     copyright "Puppet Labs", 2011
     license   "Apache 2 license; see COPYING"
     summary "version matching face #{version}"
-    script :version do |options| version end
+    action(:version) { when_invoked { |options| version } }
   end
 end

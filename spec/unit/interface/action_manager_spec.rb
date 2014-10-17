@@ -17,12 +17,6 @@ describe Puppet::Interface::ActionManager do
       end
     end
 
-    it "should be able to define a 'script' style action" do
-      subject.script :bar do |options|
-        "a bar is where beer is found"
-      end
-    end
-
     it "should be able to list defined actions" do
       subject.action(:foo) do
         when_invoked { |options| "something" }
@@ -34,31 +28,12 @@ describe Puppet::Interface::ActionManager do
       subject.actions.should =~ [:foo, :bar]
     end
 
-    it "should list 'script' actions" do
-      subject.script :foo do |options| "foo" end
-      subject.actions.should =~ [:foo]
-    end
-
-    it "should list both script and normal actions" do
-      subject.action :foo do
-        when_invoked do |options| "foo" end
-      end
-      subject.script :bar do |options| "a bar is where beer is found" end
-
-      subject.actions.should =~ [:foo, :bar]
-    end
-
     it "should be able to indicate when an action is defined" do
       subject.action(:foo) do
         when_invoked { |options| "something" }
       end
 
       subject.should be_action(:foo)
-    end
-
-    it "should indicate an action is defined for script actions" do
-      subject.script :foo do |options| "foo" end
-      subject.should be_action :foo
     end
 
     it "should correctly treat action names specified as strings" do
