@@ -427,11 +427,7 @@ module Puppet
     newparam(:allow_virtual, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :virtual_packages) do
       desc 'Specifies if virtual package names are allowed for install and uninstall.'
 
-      # In a future release, this should be defaulted to true and the below deprecation warning removed
-      defaultto do
-        Puppet.deprecation_warning('The package type\'s allow_virtual parameter will be changing its default value from false to true in a future release. If you do not want to allow virtual packages, please explicitly set allow_virtual to false.') unless value
-        false
-      end
+      defaultto true
     end
 
     autorequire(:file) do

@@ -183,7 +183,6 @@ describe provider_class do
 
     it 'should call yum install for :installed' do
       resource.stubs(:should).with(:ensure).returns :installed
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
       provider.install
     end
@@ -196,7 +195,6 @@ describe provider_class do
     it 'should be able to set version' do
       version = '1.2'
       resource[:ensure] = version
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}")
       provider.stubs(:query).returns :ensure => version
       provider.install
@@ -222,7 +220,6 @@ describe provider_class do
       resource[:ensure] = :installed
       resource[:install_options] = ['-t', {'-x' => 'expackage'}]
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :list, name)
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, name)
       provider.install
     end
