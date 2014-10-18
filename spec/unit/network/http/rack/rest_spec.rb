@@ -193,11 +193,10 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         result[:foo].should == 1.5
       end
 
-      it "should YAML-load and CGI-decode values that are YAML-encoded" do
+      it "should error when presented with YAML-load and CGI-decode values that are YAML-encoded" do
         escaping = CGI.escape(YAML.dump(%w{one two}))
         req = mk_req("/?foo=#{escaping}")
-        result = @handler.params(req)
-        result[:foo].should == %w{one two}
+        expect { @handler.params(req)}.to raise_error(/YAML in network requests is not supported/)
       end
 
       it "should not allow the client to set the node via the query string" do

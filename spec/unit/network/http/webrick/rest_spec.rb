@@ -160,20 +160,14 @@ describe Puppet::Network::HTTP::WEBrickREST do
         result[:foo].should == [true, false, 1, 1.2]
       end
 
-      it "should YAML-load values that are YAML-encoded" do
+      it "should error on YAML-load values that are YAML-encoded" do
         request = a_request_querying('foo' => YAML.dump(%w{one two}))
-
-        result = @handler.params(request)
-
-        result[:foo].should == %w{one two}
+        expect { @handler.params(request)}.to raise_error(/YAML in network requests is not supported/)
       end
 
-      it "should YAML-load that are YAML-encoded" do
+      it "should error when presented with YAML-load that are YAML-encoded" do
         request = a_request_querying('foo' => YAML.dump(%w{one two}))
-
-        result = @handler.params(request)
-
-        result[:foo].should == %w{one two}
+        expect { @handler.params(request)}.to raise_error(/YAML in network requests is not supported/)
       end
 
       it "should not allow clients to set the node via the request parameters" do
