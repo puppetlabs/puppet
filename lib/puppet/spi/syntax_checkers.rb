@@ -1,4 +1,14 @@
-module Puppetx::Puppet
+module Puppet::Spi; module SyntaxCheckers
+  # The lookup **key** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
+  SPI_SYNTAX_CHECKERS       = 'puppet::syntaxcheckers'
+
+  # The lookup **type** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
+  SYNTAX_CHECKERS_TYPE  = 'Puppet::Spi::SyntaxCheckers::SyntaxChecker'
+
   # SyntaxChecker is a Puppet Extension Point for the purpose of extending Puppet with syntax checkers.
   # The intended use is to create a class derived from this class and then register it with the
   # Puppet Binder.
@@ -88,4 +98,5 @@ module Puppetx::Puppet
       raise NotImplementedError, "The class #{self.class.name} should have implemented the method check()"
     end
   end
-end
+
+end; end

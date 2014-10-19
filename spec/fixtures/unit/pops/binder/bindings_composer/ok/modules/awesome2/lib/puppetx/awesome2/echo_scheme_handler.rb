@@ -1,4 +1,4 @@
-require 'puppetx/puppet/bindings_scheme_handler'
+require 'puppet/spi/binding_schemes'
 
 module Puppetx
   module Awesome2
@@ -6,7 +6,7 @@ module Puppetx
     # 'echo:/quick/brown/fox' becomes key '::quick::brown::fox' => 'echo: quick brown fox'.
     # (silly class for testing loading of extension)
     #
-    class EchoSchemeHandler < Puppetx::Puppet::BindingsSchemeHandler
+    class EchoSchemeHandler < Puppet::Spi::BindingSchemes::BindingsSchemeHandler
       def contributed_bindings(uri, scope, composer)
         factory = ::Puppet::Pops::Binder::BindingsFactory
         bindings = factory.named_bindings("echo")
