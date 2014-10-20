@@ -111,7 +111,7 @@ describe "Puppet Network Format" do
     end
 
     it "should deserialize symbols as strings" do
-      @yaml.intern(String, YAML.dump(:foo)).should == "foo"
+      expect { @yaml.intern(String, YAML.dump(:foo))}.to raise_error(Puppet::Network::FormatHandler::FormatError)
     end
 
     it "should load from yaml when deserializing an array" do
@@ -137,88 +137,6 @@ describe "Puppet Network Format" do
       end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)
     end
   end
-
-#  describe "base64 compressed yaml", :if => Puppet.features.zlib? do
-#    before do
-#      @yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
-#    end
-#
-#    it "should have its mime type set to text/b64_zlib_yaml" do
-#      @yaml.mime.should == "text/b64_zlib_yaml"
-#    end
-#
-#    it "should render by calling 'to_yaml' on the instance" do
-#      instance = mock 'instance'
-#      instance.expects(:to_yaml).returns "foo"
-#      @yaml.render(instance)
-#    end
-#
-#    it "should encode generated yaml on render" do
-#      instance = mock 'instance', :to_yaml => "foo"
-#
-#      @yaml.expects(:encode).with("foo").returns "bar"
-#
-#      @yaml.render(instance).should == "bar"
-#    end
-#
-#    it "should render multiple instances by calling 'to_yaml' on the array" do
-#      instances = [mock('instance')]
-#      instances.expects(:to_yaml).returns "foo"
-#      @yaml.render_multiple(instances)
-#    end
-#
-#    it "should encode generated yaml on render" do
-#      instances = [mock('instance')]
-#      instances.stubs(:to_yaml).returns "foo"
-#
-#      @yaml.expects(:encode).with("foo").returns "bar"
-#
-#      @yaml.render(instances).should == "bar"
-#    end
-#
-#    it "should round trip data" do
-#      @yaml.intern(String, @yaml.encode("foo")).should == "foo"
-#    end
-#
-#    it "should round trip multiple data elements" do
-#      data = @yaml.render_multiple(["foo", "bar"])
-#      @yaml.intern_multiple(String, data).should == ["foo", "bar"]
-#    end
-#
-#    it "should intern by base64 decoding, uncompressing and safely Yaml loading" do
-#      input = Base64.encode64(Zlib::Deflate.deflate(YAML.dump("data in")))
-#
-#      @yaml.intern(String, input).should == "data in"
-#    end
-#
-#    it "should render by compressing and base64 encoding" do
-#      output = @yaml.render("foo")
-#
-#      YAML.load(Zlib::Inflate.inflate(Base64.decode64(output))).should == "foo"
-#    end
-#
-#    describe "when zlib is not installed" do
-#      before :each do
-#        Puppet.features.stubs(:zlib?).returns(false)
-#      end
-#
-#      it "should refuse to encode" do
-#        expect {
-#          @yaml.render("foo")
-#        }.to raise_error(Puppet::Error, /zlib library is not installed/)
-#      end
-#
-#      it "should refuse to decode" do
-#        expect {
-#          @yaml.intern(String, "foo")
-#        }.to raise_error(Puppet::Error, /zlib library is not installed/)
-#      end
-#
-#      it "use_zlib? should return false" do
-#        expect(@yaml).to_not be_use_zlib
-#      end
-#    end
-#  end
 
   describe "plaintext" do
     before do

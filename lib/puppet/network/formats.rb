@@ -23,7 +23,7 @@ end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   def intern(klass, text)
-    data = YAML.load(text, :safe => true, :deserialize_symbols => true)
+    data = YAML.load(text)
     data_to_instance(klass, data)
   end
 
