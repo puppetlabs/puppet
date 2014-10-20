@@ -33,7 +33,7 @@ describe Puppet::Network::HTTP::API::V1 do
       :method => "PUT",
       :path => "/production/#{indirection.name}/#{data.value}",
       :params => {},
-      :body => request[:body].nil? ? data.render("pson") : request[:body].to_pson()
+      :body => request[:body].nil? ? data.render("pson") : request[:body]
     })
   end
 
