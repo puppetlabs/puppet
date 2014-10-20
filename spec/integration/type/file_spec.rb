@@ -1029,7 +1029,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :path   => path,
           :ensure => :file,
           :source => source,
-          :backup => false
+          :backup => false,
+          :source_permissions => :use
         )
 
         catalog.add_resource file
@@ -1065,10 +1066,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when source permissions are ignored" do
-            before :each do
-              @file[:source_permissions] = :ignore
-            end
-
             it "preserves the inherited SYSTEM ACE" do
               catalog.apply
 
@@ -1097,6 +1094,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             before :each do
               @file[:owner] = 'None'
               @file[:group] = 'None'
+              @file[:source_permissions] = :use
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing file" do
@@ -1182,10 +1180,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when source permissions are ignored" do
-            before :each do
-              @directory[:source_permissions] = :ignore
-            end
-
             it "preserves the inherited SYSTEM ACE" do
               catalog.apply
 
