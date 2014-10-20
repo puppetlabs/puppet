@@ -251,7 +251,15 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should reject SSLv2" do
-      server.setup_ssl[:SSLOptions].should == OpenSSL::SSL::OP_NO_SSLv2
+      options = server.setup_ssl[:SSLOptions]
+
+      expect(options & OpenSSL::SSL::OP_NO_SSLv2).to eq(OpenSSL::SSL::OP_NO_SSLv2)
+    end
+
+    it "should reject SSLv3" do
+      options = server.setup_ssl[:SSLOptions]
+
+      expect(options & OpenSSL::SSL::OP_NO_SSLv3).to eq(OpenSSL::SSL::OP_NO_SSLv3)
     end
 
     it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'" do

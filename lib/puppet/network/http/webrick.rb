@@ -96,7 +96,7 @@ class Puppet::Network::HTTP::WEBrick
     results[:SSLCertificate] = host.certificate.content
     results[:SSLStartImmediately] = true
     results[:SSLEnable] = true
-    results[:SSLOptions] = OpenSSL::SSL::OP_NO_SSLv2
+    results[:SSLOptions] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
 
     raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
 
