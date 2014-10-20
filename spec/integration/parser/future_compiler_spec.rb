@@ -440,6 +440,16 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource("Foo[test]").with_parameter(:x, 'say friend')
       end
 
+      it 'accepts undef as the default for an Optional argument' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(Optional[String] $x = undef) {
+            notify { "expected": message => $x == undef }
+          }
+          foo { 'test': }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[expected]").with_parameter(:message, true)
+      end
+
       it 'accepts anything when parameters are untyped' do
         expect do
           catalog = compile_to_catalog(<<-MANIFEST)
@@ -458,6 +468,15 @@ describe "Puppet::Parser::Compiler" do
         end.to raise_error(/type Integer, got String/)
       end
 
+      it 'denies undef for a non-optional type' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x) { }
+            foo { 'test': x => undef }
+          MANIFEST
+        end.to raise_error(/type Integer, got Undef/)
+      end
+
       it 'denies non type compliant default argument' do
         expect do
           catalog = compile_to_catalog(<<-MANIFEST)
@@ -465,6 +484,15 @@ describe "Puppet::Parser::Compiler" do
             foo { 'test':  }
           MANIFEST
         end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies undef as the default for a non-optional type' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x = undef) { }
+            foo { 'test':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got Undef/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -489,6 +517,16 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource("Class[Foo]").with_parameter(:x, 'say friend')
       end
 
+      it 'accepts undef as the default for an Optional argument' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          class foo(Optional[String] $x = undef) {
+            notify { "expected": message => $x == undef }
+          }
+          class { 'foo': }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[expected]").with_parameter(:message, true)
+      end
+
       it 'accepts anything when parameters are untyped' do
         expect do
           catalog = compile_to_catalog(<<-MANIFEST)
@@ -507,6 +545,15 @@ describe "Puppet::Parser::Compiler" do
         end.to raise_error(/type Integer, got String/)
       end
 
+      it 'denies undef for a non-optional type' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x) { }
+            class { 'foo': x => undef }
+          MANIFEST
+        end.to raise_error(/type Integer, got Undef/)
+      end
+
       it 'denies non type compliant default argument' do
         expect do
           catalog = compile_to_catalog(<<-MANIFEST)
@@ -514,6 +561,15 @@ describe "Puppet::Parser::Compiler" do
             class { 'foo':  }
           MANIFEST
         end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies undef as the default for a non-optional type' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x = undef) { }
+            class { 'foo':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got Undef/)
       end
 
       it 'accepts a Resource as a Type' do

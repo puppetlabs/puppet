@@ -830,6 +830,21 @@ describe 'The type calculator' do
         calculator.assignable?(pattern, variant_t(string_t('a'), string_t('b'))).should == true
       end
 
+      it 'pattern representing all patterns should accept any pattern' do
+        calculator.assignable?(pattern_t(), pattern_t('a')).should == true
+        calculator.assignable?(pattern_t(), pattern_t()).should == true
+      end
+
+      it 'pattern representing all patterns should accept any enum' do
+        calculator.assignable?(pattern_t(), enum_t('a')).should == true
+        calculator.assignable?(pattern_t(), enum_t()).should == true
+      end
+
+      it 'pattern representing all patterns should accept any string' do
+        calculator.assignable?(pattern_t(), string_t('a')).should == true
+        calculator.assignable?(pattern_t(), string_t()).should == true
+      end
+
     end
 
     context 'when dealing with enums' do
@@ -876,6 +891,17 @@ describe 'The type calculator' do
 
       it 'should not accept assigning empty enum to size constrained string' do
         calculator.assignable?(constrained_t(string_t(),2,2), enum_t()).should == false
+      end
+    end
+
+    context 'when dealing with string/pattern/enum combinations' do
+      it 'any string is equal to any enum is equal to any pattern' do
+        calculator.assignable?(string_t(), enum_t()).should == true
+        calculator.assignable?(string_t(), pattern_t()).should == true
+        calculator.assignable?(enum_t(), string_t()).should == true
+        calculator.assignable?(enum_t(), pattern_t()).should == true
+        calculator.assignable?(pattern_t(), string_t()).should == true
+        calculator.assignable?(pattern_t(), enum_t()).should == true
       end
     end
 
@@ -1086,6 +1112,10 @@ describe 'The type calculator' do
 
     it "should consider :undef to be instance of Runtime['ruby', 'Symbol]" do
       calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => 'Symbol'), :undef).should == true
+    end
+
+    it "should consider :undef to be instance of an Optional type" do
+      calculator.instance?(Puppet::Pops::Types::POptionalType.new(), :undef).should == true
     end
 
     it 'should not consider undef to be an instance of any other type than Any, NilType and Data' do

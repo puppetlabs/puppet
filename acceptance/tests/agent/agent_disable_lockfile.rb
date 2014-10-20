@@ -23,6 +23,9 @@ teardown do
   if @all_tests_passed then
     remove_temp_dirs()
   end
+  agents.each do |agent|
+    on(agent, puppet('agent', "--enable"))
+  end
 end
 
 tuples = [

@@ -55,13 +55,6 @@ class Puppet::Parser::AST::PopsBridge
     end
   end
 
-  class NilAsUndefExpression < Expression
-    def evaluate(scope)
-      result = super
-      result.nil? ? :undef : result
-    end
-  end
-
   # Bridges the top level "Program" produced by the pops parser.
   # Its main purpose is to give one point where all definitions are instantiated (actually defined since the
   # Puppet 3x terminology is somewhat misleading - the definitions are instantiated, but instances of the created types
@@ -113,11 +106,8 @@ class Puppet::Parser::AST::PopsBridge
 
     def instantiate_Parameter(o)
       # 3x needs parameters as an array of `[name]` or `[name, value_expr]`
-      # One problem is that the parameter evaluation takes place in the wrong context in 3x (the caller's and
-      # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
-      # expression since the Pops side can not control the evaluation
       if o.value
-        [o.name, NilAsUndefExpression.new(:value => o.value)]
+        [o.name, Expression.new(:value => o.value)]
       else
         [o.name]
       end

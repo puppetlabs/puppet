@@ -561,10 +561,6 @@ describe Puppet::Parser::Resource do
       @resource["foo"].should == "bar"
     end
 
-    it "should fail when provided a parameter name but no value" do
-      expect { @resource.set_parameter("myparam") }.to raise_error(ArgumentError)
-    end
-
     it "should allow parameters to be set to 'false'" do
       @resource.set_parameter("myparam", false)
       @resource["myparam"].should be_false

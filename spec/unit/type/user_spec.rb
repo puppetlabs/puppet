@@ -501,6 +501,11 @@ describe Puppet::Type.type(:user) do
           names = resources.collect { |res| res.name }
           names.should_not include("keyname3")
         end
+        it "should generate names for unnamed keys" do
+          names = resources.collect { |res| res.name }
+          fixture_path = File.join(my_fixture_dir, 'authorized_keys')
+          names.should include("#{fixture_path}:unnamed-1")
+        end
         it "should each have a value for the user property" do
           resources.map { |res|
             res[:user]

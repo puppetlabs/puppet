@@ -154,12 +154,10 @@ class Puppet::Parser::Resource < Puppet::Resource
   # if we ever receive a parameter named 'tag', set
   # the resource tags with its value.
   def set_parameter(param, value = nil)
-    if ! value.nil?
+    if ! param.is_a?(Puppet::Parser::Resource::Param)
       param = Puppet::Parser::Resource::Param.new(
         :name => param, :value => value, :source => self.source
       )
-    elsif ! param.is_a?(Puppet::Parser::Resource::Param)
-      raise ArgumentError, "Received incomplete information - no value provided for parameter #{param}"
     end
 
     tag(*param.value) if param.name == :tag

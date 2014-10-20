@@ -211,11 +211,11 @@ module Puppet::Environments
     # @!macro loader_list
     def list
       valid_directories.collect do |envdir|
-        name = Puppet::FileSystem.basename_string(envdir)
+        name = Puppet::FileSystem.basename_string(envdir).intern
 
         setting_values = Puppet.settings.values(name, Puppet.settings.preferred_run_mode)
         env = Puppet::Node::Environment.create(
-          name.intern,
+          name,
           Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
           setting_values.interpolate(:manifest),
           setting_values.interpolate(:config_version)
@@ -367,10 +367,12 @@ module Puppet::Environments
     end
 
     # Evicts the entry if it has expired
-    #
+    # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
       if (result = @cache[name]) && result.expired?
         @cache.delete(name)
+
+        Puppet.settings.clear_environment_settings(name)
       end
     end
 
