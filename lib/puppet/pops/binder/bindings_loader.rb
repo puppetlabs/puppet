@@ -44,7 +44,7 @@ class Puppet::Pops::Binder::BindingsLoader
   def self.loader()
     unless Puppet.settings[:confdir] == @confdir
       @confdir = Puppet.settings[:confdir] == @confdir
-      @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings", :wrap => false)
+      @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings")
     end
     @autoloader
   end

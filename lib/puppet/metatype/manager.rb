@@ -168,7 +168,7 @@ module Manager
   # @api private
   def typeloader
     unless defined?(@typeloader)
-      @typeloader = Puppet::Util::Autoload.new(self, "puppet/type", :wrap => false)
+      @typeloader = Puppet::Util::Autoload.new(self, "puppet/type")
     end
 
     @typeloader

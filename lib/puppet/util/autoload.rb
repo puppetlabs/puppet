@@ -7,13 +7,10 @@ require 'puppet/util/methodhelper'
 class Puppet::Util::Autoload
   include Puppet::Util::MethodHelper
 
-  @autoloaders = {}
   @loaded = {}
 
   class << self
-    attr_reader :autoloaders
     attr_accessor :loaded
-    private :autoloaders, :loaded
 
     def gem_source
       @gem_source ||= Puppet::Util::RubyGems::Source.new
@@ -59,7 +56,7 @@ class Puppet::Util::Autoload
       return false unless file
       begin
         mark_loaded(name, file)
-        Kernel.load file, @wrap
+        Kernel.load file
         return true
       rescue SystemExit,NoMemoryError
         raise
@@ -178,21 +175,14 @@ class Puppet::Util::Autoload
     end
   end
 
-  # Send [] and []= to the @autoloaders hash
-  Puppet::Util.classproxy self, :autoloaders, "[]", "[]="
-
-  attr_accessor :object, :path, :objwarn, :wrap
+  attr_accessor :object, :path
 
   def initialize(obj, path, options = {})
     @path = path.to_s
     raise ArgumentError, "Autoload paths cannot be fully qualified" if Puppet::Util.absolute_path?(@path)
     @object = obj
 
-    self.class[obj] = self
-
     set_options(options)
-
-    @wrap = true unless defined?(@wrap)
   end
 
   def load(name, env = nil)
