@@ -134,6 +134,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  def app_defaults
+    super.merge({
+      :default_file_terminus => :file_server,
+    })
+  end
+
   def main
     type, name, params = parse_args(command_line.args)
 
