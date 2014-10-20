@@ -1560,10 +1560,12 @@ EOT
       Allowed values are `title-hash`, `manifest`, and `random`. This
       setting affects puppet agent and puppet apply, but not puppet master.
 
-      * `title-hash` (the default) will order resources randomly, but will use
-        the same order across runs and across nodes.
-      * `manifest` will use the order in which the resources were declared in
-        their manifest files.
+      * `manifest` (the default) will use the order in which the resources were
+        declared in their manifest files.
+      * `title-hash` (the default in 3.x) will order resources randomly, but
+        will use the same order across runs and across nodes. It is only of
+        value if you're migrating from 3.x and have errors running with
+        `manifest`.
       * `random` will order resources randomly and change their order with each
         run. This can work like a fuzzer for shaking out undeclared dependencies.
 
