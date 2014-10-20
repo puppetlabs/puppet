@@ -8,18 +8,15 @@ require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/configuration'
 
 class Puppet::Network::HTTP::WEBrick
+  CIPHERS = "EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:+CAMELLIA256:+AES256:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA256-SHA:AES256-SHA:CAMELLIA128-SHA:AES128-SHA"
+
   def initialize
     @listening = false
   end
 
   def listen(address, port)
-    arguments = {:BindAddress => address, :Port => port, :DoNotReverseLookup => true}
-    arguments.merge!(setup_logger)
-    arguments.merge!(setup_ssl)
+    @server = create_server(address, port)
 
-    BasicSocket.do_not_reverse_lookup = true
-
-    @server = WEBrick::HTTPServer.new(arguments)
     @server.listeners.each { |l| l.start_immediately = false }
 
     @server.mount('/', Puppet::Network::HTTP::WEBrickREST)
@@ -53,6 +50,19 @@ class Puppet::Network::HTTP::WEBrick
 
   def wait_for_shutdown
     @thread.join
+  end
+
+  # @api private
+  def create_server(address, port)
+    arguments = {:BindAddress => address, :Port => port, :DoNotReverseLookup => true}
+    arguments.merge!(setup_logger)
+    arguments.merge!(setup_ssl)
+
+    BasicSocket.do_not_reverse_lookup = true
+
+    server = WEBrick::HTTPServer.new(arguments)
+    server.ssl_context.ciphers = CIPHERS
+    server
   end
 
   # Configure our http log file.
