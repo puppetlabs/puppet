@@ -188,6 +188,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should not issue a deprecation warning if the source mode value is a Numeric" do
       @metadata.stubs(:mode).returns 0173
+      @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
         Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
       else
@@ -199,6 +200,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should not issue a deprecation warning if the source mode value is a String" do
       @metadata.stubs(:mode).returns "173"
+      @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
         Puppet.expects(:deprecation_warning).with(regexp_matches(/Copying owner\/mode\/group from the source file on Windows is deprecated/)).at_least_once
       else
