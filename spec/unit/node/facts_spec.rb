@@ -10,12 +10,6 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts = Puppet::Node::Facts.new("me")
   end
 
-  it "should be able to convert all fact values to strings" do
-    @facts.values["one"] = 1
-    @facts.stringify
-    @facts.values["one"].should == "1"
-  end
-
   describe "adding local facts" do
     it "should add the node's certificate name as the 'clientcert' fact" do
       @facts.add_local_facts

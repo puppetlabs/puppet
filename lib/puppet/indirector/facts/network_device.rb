@@ -13,8 +13,7 @@ class Puppet::Node::Facts::NetworkDevice < Puppet::Indirector::Code
     result = Puppet::Node::Facts.new(request.key, Puppet::Util::NetworkDevice.current.facts)
 
     result.add_local_facts
-    Puppet[:stringify_facts] ? result.stringify : result.sanitize
-
+    result.sanitize
     result
   end
 
