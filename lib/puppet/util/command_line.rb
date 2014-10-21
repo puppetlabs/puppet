@@ -11,7 +11,6 @@ end
 
 require 'puppet'
 require 'puppet/util'
-require "puppet/util/plugins"
 require "puppet/util/rubygems"
 require "puppet/util/limits"
 require 'puppet/util/colors'
@@ -32,7 +31,6 @@ module Puppet
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @command = File.basename(zero, '.rb')
         @argv = argv
-        Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
       # @return [String] name of the subcommand is being executed
@@ -123,8 +121,6 @@ module Puppet
           end
 
           app = Puppet::Application.find(@subcommand_name).new(@command_line)
-          Puppet::Plugins.on_application_initialization(:application_object => @command_line)
-
           app.run
         end
       end
