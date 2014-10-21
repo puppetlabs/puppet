@@ -177,14 +177,17 @@ describe Puppet::Util::SELinux do
 
     it "should return the user type when called with :seluser" do
       parse_selinux_context(:seluser, "user_u:role_r:type_t:s0").should == "user_u"
+      parse_selinux_context(:seluser, "user-withdash_u:role_r:type_t:s0").should == "user-withdash_u"
     end
 
     it "should return the role type when called with :selrole" do
       parse_selinux_context(:selrole, "user_u:role_r:type_t:s0").should == "role_r"
+      parse_selinux_context(:selrole, "user_u:role-withdash_r:type_t:s0").should == "role-withdash_r"
     end
 
     it "should return the type type when called with :seltype" do
       parse_selinux_context(:seltype, "user_u:role_r:type_t:s0").should == "type_t"
+      parse_selinux_context(:seltype, "user_u:role_r:type-withdash_t:s0").should == "type-withdash_t"
     end
 
     it "should return nil for :selrange when no range is returned" do
@@ -193,6 +196,7 @@ describe Puppet::Util::SELinux do
 
     it "should return the range type when called with :selrange" do
       parse_selinux_context(:selrange, "user_u:role_r:type_t:s0").should == "s0"
+      parse_selinux_context(:selrange, "user_u:role_r:type-withdash_t:s0").should == "s0"
     end
 
     describe "with a variety of SELinux range formats" do
