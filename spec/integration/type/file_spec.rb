@@ -968,7 +968,23 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       get_owner(path).should == get_owner(target_dir)
       get_group(path).should == get_group(target_dir)
       (get_mode(path) & 07777).should == expected_mode
-      (get_mode(path) & 07777).should_not == 0770
+    end
+
+    it "should not override existing target metadata" do
+      FileUtils.touch(path)
+      set_mode(0766, path)
+
+      file = described_class.new(
+        :path   => path,
+        :ensure => :file,
+        :source => source,
+        :backup => false
+      )
+
+      catalog.add_resource file
+      catalog.apply
+
+      (get_mode(path) & 07777).should == 0766
     end
 
     it "should override the default metadata values" do
@@ -1193,6 +1209,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
               source_dir = tmpdir('source_dir')
               @directory[:source] = source_dir
+              @directory[:source_permissions] = :use
 
               sd = Puppet::Util::Windows::Security.get_security_descriptor(source_dir)
               sd.protect = true
