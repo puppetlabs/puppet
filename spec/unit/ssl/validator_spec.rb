@@ -9,7 +9,6 @@ describe Puppet::SSL::Validator::DefaultValidator do
   let(:ssl_configuration) do
     Puppet::SSL::Configuration.new(
       Puppet[:localcacert],
-      :ca_chain_file => Puppet[:ssl_client_ca_chain],
       :ca_auth_file  => Puppet[:ssl_client_ca_auth])
   end
 

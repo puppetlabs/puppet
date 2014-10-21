@@ -123,7 +123,6 @@ class Puppet::Network::HTTP::WEBrick
   def ssl_configuration
     @ssl_configuration ||= Puppet::SSL::Configuration.new(
       Puppet[:localcacert],
-      :ca_chain_file => Puppet[:ssl_server_ca_chain],
       :ca_auth_file  => Puppet[:ssl_server_ca_auth])
   end
 end
