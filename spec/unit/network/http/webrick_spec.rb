@@ -22,6 +22,10 @@ describe Puppet::Network::HTTP::WEBrick do
     s
   end
 
+  let(:mock_ssl_context) do
+    stub('ssl_context', :ciphers= => nil)
+  end
+
   let(:mock_webrick) do
     stub('webrick',
          :[] => {},
@@ -29,7 +33,8 @@ describe Puppet::Network::HTTP::WEBrick do
          :status => :Running,
          :mount => nil,
          :start => nil,
-         :shutdown => nil)
+         :shutdown => nil,
+         :ssl_context => mock_ssl_context)
   end
 
   before :each do
@@ -251,7 +256,15 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should reject SSLv2" do
-      server.setup_ssl[:SSLOptions].should == OpenSSL::SSL::OP_NO_SSLv2
+      options = server.setup_ssl[:SSLOptions]
+
+      expect(options & OpenSSL::SSL::OP_NO_SSLv2).to eq(OpenSSL::SSL::OP_NO_SSLv2)
+    end
+
+    it "should reject SSLv3" do
+      options = server.setup_ssl[:SSLOptions]
+
+      expect(options & OpenSSL::SSL::OP_NO_SSLv3).to eq(OpenSSL::SSL::OP_NO_SSLv3)
     end
 
     it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'" do
@@ -266,6 +279,12 @@ describe Puppet::Network::HTTP::WEBrick do
 
     it "should set the certificate name to 'nil'" do
       server.setup_ssl[:SSLCertName].should be_nil
+    end
+
+    it "specifies the allowable ciphers" do
+      mock_ssl_context.expects(:ciphers=).with(server.class::CIPHERS)
+
+      server.create_server('localhost', '8888')
     end
   end
 end
