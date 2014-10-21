@@ -171,9 +171,9 @@ end
 require 'openssl'
 class OpenSSL::SSL::SSLContext
   if DEFAULT_PARAMS[:options]
-    DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2
+    DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
   else
-    DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2
+    DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
   end
   DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
 
