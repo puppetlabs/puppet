@@ -101,6 +101,8 @@ module Puppet::Util::SUIDManager
     gid = convert_xid(:gid, group)
     raise Puppet::Error, "No such group #{group}" unless gid
 
+    return if Process.egid == gid
+
     if permanently
       Process::GID.change_privilege(gid)
     else
@@ -114,6 +116,8 @@ module Puppet::Util::SUIDManager
   def change_user(user, permanently=false)
     uid = convert_xid(:uid, user)
     raise Puppet::Error, "No such user #{user}" unless uid
+
+    return if Process.euid == uid
 
     if permanently
       # If changing uid, we must be root. So initgroups first here.
