@@ -3,10 +3,8 @@ require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
 
-  it "is deprecated on the network, but still allows requests" do
-    Puppet.expects(:deprecation_warning)
-
-    expect(Puppet::Resource::Ral.new.allow_remote_requests?).to eq(true)
+  it "disallows remote requests" do
+    expect(Puppet::Resource::Ral.new.allow_remote_requests?).to eq(false)
   end
 
   describe "find" do

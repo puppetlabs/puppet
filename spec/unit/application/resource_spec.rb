@@ -8,7 +8,6 @@ describe Puppet::Application::Resource do
   before :each do
     @resource_app = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Resource.indirection.stubs(:terminus_class=)
   end
 
   describe "in preinit" do
@@ -24,11 +23,6 @@ describe Puppet::Application::Resource do
         @resource_app.options.expects(:[]=).with(option, 'arg')
         @resource_app.send("handle_#{option}".to_sym, 'arg')
       end
-    end
-
-    it "should set options[:host] to given host" do
-      @resource_app.handle_host(:whatever)
-      @resource_app.host.should == :whatever
     end
 
     it "should load a display all types with types option" do
@@ -95,18 +89,17 @@ describe Puppet::Application::Resource do
       @res = stub_everything "resource"
       @res.stubs(:prune_parameters).returns(@res)
       @report = stub_everything "report"
+
+      @resource_app.stubs(:puts)
+
+      Puppet::Resource.indirection.stubs(:find  ).never
+      Puppet::Resource.indirection.stubs(:search).never
+      Puppet::Resource.indirection.stubs(:save  ).never
     end
 
     it "should raise an error if no type is given" do
       @resource_app.command_line.stubs(:args).returns([])
       lambda { @resource_app.main }.should raise_error(RuntimeError, "You must specify the type to display")
-    end
-
-    it "should raise an error when editing a remote host" do
-      @resource_app.options.stubs(:[]).with(:edit).returns(true)
-      @resource_app.host = 'host'
-
-      lambda { @resource_app.main }.should raise_error(RuntimeError, "You cannot edit a remote host")
     end
 
     it "should raise an error if the type is not found" do
@@ -115,69 +108,24 @@ describe Puppet::Application::Resource do
       lambda { @resource_app.main }.should raise_error(RuntimeError, 'Could not find type mytype')
     end
 
-    describe "with a host" do
-      before :each do
-        @resource_app.stubs(:puts)
-        @resource_app.host = 'host'
-
-        Puppet::Resource.indirection.stubs(:find  ).never
-        Puppet::Resource.indirection.stubs(:search).never
-        Puppet::Resource.indirection.stubs(:save  ).never
-      end
-
-      it "should search for resources" do
-        @resource_app.command_line.stubs(:args).returns(['type'])
-        Puppet::Resource.indirection.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
-        @resource_app.main
-      end
-
-      it "should describe the given resource" do
-        @resource_app.command_line.stubs(:args).returns(['type', 'name'])
-        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(@res)
-        @resource_app.main
-      end
-
-      it "should add given parameters to the object" do
-        @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
-
-        Puppet::Resource.indirection.expects(:save).
-          with(@res, 'https://host:8139/production/resources/type/name').
-          returns([@res, @report])
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
-
-        @resource_app.main
-      end
+    it "should search for resources" do
+      Puppet::Resource.indirection.expects(:search).with('mytype/', {}).returns([])
+      @resource_app.main
     end
 
-    describe "without a host" do
-      before :each do
-        @resource_app.stubs(:puts)
-        @resource_app.host = nil
+    it "should describe the given resource" do
+      @resource_app.command_line.stubs(:args).returns(['type','name'])
+      Puppet::Resource.indirection.expects(:find).with('type/name').returns(@res)
+      @resource_app.main
+    end
 
-        Puppet::Resource.indirection.stubs(:find  ).never
-        Puppet::Resource.indirection.stubs(:search).never
-        Puppet::Resource.indirection.stubs(:save  ).never
-      end
+    it "should add given parameters to the object" do
+      @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-      it "should search for resources" do
-        Puppet::Resource.indirection.expects(:search).with('mytype/', {}).returns([])
-        @resource_app.main
-      end
+      Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns([@res, @report])
+      Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
-      it "should describe the given resource" do
-        @resource_app.command_line.stubs(:args).returns(['type','name'])
-        Puppet::Resource.indirection.expects(:find).with('type/name').returns(@res)
-        @resource_app.main
-      end
-
-      it "should add given parameters to the object" do
-        @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
-
-        Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns([@res, @report])
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
-
-        @resource_app.main
-      end
+      @resource_app.main
     end
   end
 

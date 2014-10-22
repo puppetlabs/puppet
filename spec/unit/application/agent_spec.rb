@@ -64,12 +64,6 @@ describe Puppet::Application::Agent do
       @puppetd.preinit
     end
 
-    it "should init client to true" do
-      @puppetd.preinit
-
-      @puppetd.options[:client].should be_true
-    end
-
     it "should init fqdn to nil" do
       @puppetd.preinit
 
@@ -130,12 +124,6 @@ describe Puppet::Application::Agent do
 
         @puppetd.options[:disable_message].should == 'message'
       end
-    end
-
-    it "should set client to false with --no-client" do
-      @puppetd.handle_no_client(nil)
-
-      @puppetd.options[:client].should be_false
     end
 
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
@@ -410,14 +398,6 @@ describe Puppet::Application::Agent do
       @daemon.agent.should == @agent
     end
 
-    it "should not inform the daemon about our agent if :client is set to 'false'" do
-      @puppetd.options[:client] = false
-
-      execute_agent
-
-      @daemon.agent.should be_nil
-    end
-
     it "should daemonize if needed" do
       Puppet.features.stubs(:microsoft_windows?).returns false
       Puppet[:daemonize] = true
@@ -447,43 +427,6 @@ describe Puppet::Application::Agent do
       @puppetd.expects(:puts).with('ABCDE')
 
       execute_agent
-    end
-
-    describe "when setting up listen" do
-      before :each do
-        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(true)
-        @puppetd.options[:serve] = []
-        @server = stub_everything 'server'
-        Puppet::Network::Server.stubs(:new).returns(@server)
-      end
-
-
-      it "should exit if no authorization file" do
-        Puppet[:listen] = true
-        Puppet.stubs(:err)
-        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(false)
-
-        expect do
-          execute_agent
-        end.to exit_with 14
-      end
-
-      it "should use puppet default port" do
-        Puppet[:puppetport] = 32768
-        Puppet[:listen] = true
-
-        Puppet::Network::Server.expects(:new).with(anything, 32768)
-
-        execute_agent
-      end
-
-      it "should issue a warning that listen is deprecated" do
-        Puppet[:listen] = true
-
-        Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
-
-        execute_agent
-      end
     end
 
     describe "when setting up for fingerprint" do
@@ -560,14 +503,6 @@ describe Puppet::Application::Agent do
         @puppetd.options[:detailed_exitcodes] = false
       end
 
-      it "should exit if no defined --client" do
-        @puppetd.options[:client] = nil
-
-        Puppet.expects(:err).with('onetime is specified but there is no client')
-
-        expect { execute_agent }.to exit_with 43
-      end
-
       it "should setup traps" do
         @daemon.expects(:set_signal_traps)
 
@@ -637,7 +572,6 @@ describe Puppet::Application::Agent do
     describe "without --onetime and --fingerprint" do
       before :each do
         Puppet.stubs(:notice)
-        @puppetd.options[:client] = nil
       end
 
       it "should start our daemon" do
