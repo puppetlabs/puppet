@@ -240,17 +240,17 @@ module Puppet
       specified. (In all cases, explicit permissions will take precedence.)
       Valid values are `use`, `use_when_creating`, and `ignore`:
 
-      * `use` (the default) will cause Puppet to apply the owner, group,
+      * `ignore` (the default) will never apply the owner, group, or mode from
+        the `source` when managing a file. When creating new files without explicit
+        permissions, the permissions they receive will depend on platform-specific
+        behavior. On POSIX, Puppet will use the umask of the user it is running as.
+        On Windows, Puppet will use the default DACL associated with the user it is
+        running as.
+      * `use` will cause Puppet to apply the owner, group,
         and mode from the `source` to any files it is managing.
       * `use_when_creating` will only apply the owner, group, and mode from the
         `source` when creating a file; existing files will not have their permissions
         overwritten.
-      * `ignore` will never apply the owner, group, or mode from the `source` when
-        managing a file. When creating new files without explicit permissions,
-        the permissions they receive will depend on platform-specific behavior.
-        On POSIX, Puppet will use the umask of the user it is running as. On
-        Windows, Puppet will use the default DACL associated with the user it is
-        running as.
     EOT
 
     defaultto :ignore
