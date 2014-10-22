@@ -98,20 +98,6 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
           FileUtils.touch(path)
         end
 
-        it "should set the owner to the file's current owner" do
-          metadata.owner.should == owner
-        end
-
-        it "should set the group to the file's current group" do
-          metadata.group.should == group
-        end
-
-        it "should set the mode to the file's masked mode" do
-          set_mode(33261, path)
-
-          metadata.mode.should == 0755
-        end
-
         describe "checksumming" do
           with_digest_algorithms do
             before :each do
@@ -191,17 +177,13 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       path = tmpfile('bar')
       FileUtils.touch(path)
 
-      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_owner).with(path, :use).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_group).with(path, :use).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_mode).with(path, :use).raises(invalid_error)
 
       stat = Puppet::FileSystem.stat(path)
 
-      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
-
-      expect { win_stat.owner }.to raise_error(ArgumentError)
-      expect { win_stat.group }.to raise_error(ArgumentError)
-      expect { win_stat.mode }.to raise_error(ArgumentError)
+      expect { Puppet::FileServing::Metadata::WindowsStat.new(stat, path, :use) }.to raise_error("Unsupported Windows source permissions option use")
     end
   end
 
@@ -280,6 +262,34 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       File::Stat.any_instance.stubs(:gid).returns group
     end
 
+    describe "when collecting attributes when managing files" do
+      let(:metadata) do
+        data = described_class.new(path)
+        data.collect
+        data
+      end
+
+      let(:path) { tmpfile('file_serving_metadata') }
+
+      before :each do
+        FileUtils.touch(path)
+      end
+
+      it "should set the owner to the Process's current owner" do
+        metadata.owner.should == Process.euid
+      end
+
+      it "should set the group to the Process's current group" do
+        metadata.group.should == Process.egid
+      end
+
+      it "should set the mode to the default mode" do
+        set_mode(33261, path)
+
+        metadata.mode.should == 0644
+      end
+    end
+
     it_should_behave_like "metadata collector"
     it_should_behave_like "metadata collector symlinks"
 
@@ -296,6 +306,34 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       require 'puppet/util/windows/security'
       Puppet::Util::Windows::Security.stubs(:get_owner).returns owner
       Puppet::Util::Windows::Security.stubs(:get_group).returns group
+    end
+
+    describe "when collecting attributes when managing files" do
+      let(:metadata) do
+        data = described_class.new(path)
+        data.collect
+        data
+      end
+
+      let(:path) { tmpfile('file_serving_metadata') }
+
+      before :each do
+        FileUtils.touch(path)
+      end
+
+      it "should set the owner to the Process's current owner" do
+        metadata.owner.should == "S-1-5-32-544"
+      end
+
+      it "should set the group to the Process's current group" do
+        metadata.group.should == "S-1-0-0"
+      end
+
+      it "should set the mode to the default mode" do
+        set_mode(33261, path)
+
+        metadata.mode.should == 0644
+      end
     end
 
     it_should_behave_like "metadata collector"
