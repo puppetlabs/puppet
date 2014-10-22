@@ -949,26 +949,23 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when sourcing" do
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
-    it "should ignore the source metadata values" do
+    it "should apply the source metadata values" do
       set_mode(0770, source)
 
       file = described_class.new(
         :path   => path,
         :ensure => :file,
         :source => source,
+        :source_permissions => :use,
         :backup => false
       )
 
       catalog.add_resource file
       catalog.apply
 
-      target_dir = File.dirname(path)
-      expected_mode = get_mode(path) & 007777
-
-      get_owner(path).should == get_owner(target_dir)
-      get_group(path).should == get_group(target_dir)
-      (get_mode(path) & 07777).should == expected_mode
-      (get_mode(path) & 07777).should_not == 0770
+      get_owner(path).should == get_owner(source)
+      get_group(path).should == get_group(source)
+      (get_mode(path) & 07777).should == 0770
     end
 
     it "should override the default metadata values" do
@@ -978,6 +975,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
          :path   => path,
          :ensure => :file,
          :source => source,
+         :source_permissions => :use,
          :backup => false,
          :mode => '0440'
        )
@@ -1074,6 +1072,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when permissions are insync?" do
+            before :each do
+              @file[:source_permissions] = :use
+            end
+
             it "preserves the explicit SYSTEM ACE" do
               FileUtils.touch(path)
 
@@ -1119,6 +1121,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               @file[:owner] = @sids[:users]
               @file[:group] = @sids[:system]
               @file[:mode] = '0644'
+              @file[:source_permissions] = :use
 
               catalog.apply
             end
@@ -1188,6 +1191,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when permissions are insync?" do
+            before :each do
+              @directory[:source_permissions] = :use
+            end
+
             it "preserves the explicit SYSTEM ACE" do
               Dir.mkdir(dir)
 
@@ -1212,6 +1219,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
               @directory[:mode] = '0444'
+              @directory[:source_permissions] = :use
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
