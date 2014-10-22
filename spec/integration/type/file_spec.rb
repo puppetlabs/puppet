@@ -949,26 +949,23 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when sourcing" do
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
-    it "should ignore the source metadata values" do
+    it "should apply the source metadata values" do
       set_mode(0770, source)
 
       file = described_class.new(
         :path   => path,
         :ensure => :file,
         :source => source,
+        :source_permissions => :use,
         :backup => false
       )
 
       catalog.add_resource file
       catalog.apply
 
-      target_dir = File.dirname(path)
-      expected_mode = get_mode(path) & 007777
-
-      get_owner(path).should == get_owner(target_dir)
-      get_group(path).should == get_group(target_dir)
-      (get_mode(path) & 07777).should == expected_mode
-      (get_mode(path) & 07777).should_not == 0770
+      get_owner(path).should == get_owner(source)
+      get_group(path).should == get_group(source)
+      (get_mode(path) & 07777).should == 0770
     end
 
     it "should override the default metadata values" do
