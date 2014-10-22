@@ -975,6 +975,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
          :path   => path,
          :ensure => :file,
          :source => source,
+         :source_permissions => :use,
          :backup => false,
          :mode => '0440'
        )
@@ -1071,6 +1072,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when permissions are insync?" do
+            before :each do
+              @file[:source_permissions] = :use
+            end
+
             it "preserves the explicit SYSTEM ACE" do
               FileUtils.touch(path)
 
@@ -1116,6 +1121,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               @file[:owner] = @sids[:users]
               @file[:group] = @sids[:system]
               @file[:mode] = '0644'
+              @file[:source_permissions] = :use
 
               catalog.apply
             end
@@ -1185,6 +1191,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           end
 
           describe "when permissions are insync?" do
+            before :each do
+              @directory[:source_permissions] = :use
+            end
+
             it "preserves the explicit SYSTEM ACE" do
               Dir.mkdir(dir)
 
@@ -1209,6 +1219,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
               @directory[:mode] = '0444'
+              @directory[:source_permissions] = :use
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
