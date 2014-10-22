@@ -435,19 +435,19 @@ class Puppet::Graph::SimpleGraph
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
     vertices.each do |v|
-      name = v.to_s
+      name = v.ref
       params = {'name'     => '"'+name+'"',
         'fontsize' => fontsize,
         'label'    => name}
-      v_label = v.to_s
+      v_label = v.ref
       params.merge!(v_label) if v_label and v_label.kind_of? Hash
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
-      params = {'from'     => '"'+ e.source.to_s + '"',
-        'to'       => '"'+ e.target.to_s + '"',
+      params = {'from'     => '"'+ e.source.ref + '"',
+        'to'       => '"'+ e.target.ref + '"',
         'fontsize' => fontsize }
-      e_label = e.to_s
+      e_label = e.ref
       params.merge!(e_label) if e_label and e_label.kind_of? Hash
       graph << edge_klass.new(params)
     end
