@@ -407,7 +407,9 @@ describe Puppet::Transaction::Report do
     expect(error_report.render).to validate_against('api/schemas/report.json')
   end
 
-  it "can make a round trip through yaml" do
+  # Test does not run on Ruby 1.8.7 since the functionality requires Psych
+  # Which was introduced in Ruby 1.9 and we do not want to maintain a fix for Ruby 1.8.7
+  it "can make a round trip through yaml", :unless => RUBY_VERSION >= '1.8.7' do
     Puppet[:report_serialization_format] = "yaml"
     report = generate_report
 
