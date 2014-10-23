@@ -196,8 +196,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   #
   # @param resource [Puppet::Resource]
   def store_content(resource)
-    @summer ||= Object.new
-    @summer.extend(Puppet::Util::Checksums)
+    @summer ||= Puppet::Util::Checksums
 
     type = @summer.sumtype(resource[:content])
     sum = @summer.sumdata(resource[:content])

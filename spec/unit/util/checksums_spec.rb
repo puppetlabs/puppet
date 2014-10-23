@@ -7,8 +7,7 @@ describe Puppet::Util::Checksums do
   include PuppetSpec::Files
 
   before do
-    @summer = Object.new
-    @summer.extend(Puppet::Util::Checksums)
+    @summer = Puppet::Util::Checksums
   end
 
   content_sums = [:md5, :md5lite, :sha1, :sha1lite, :sha256, :sha256lite]

@@ -17,7 +17,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
   def checksum_type=(type)
-    raise(ArgumentError, "Unsupported checksum type #{type}") unless respond_to?("#{type}_file")
+    raise(ArgumentError, "Unsupported checksum type #{type}") unless Puppet::Util::Checksums.respond_to?("#{type}_file")
 
     @checksum_type = type
   end
