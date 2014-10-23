@@ -917,22 +917,6 @@ describe Puppet::Settings do
       values.should == ["setval"]
     end
 
-    it "should pass the environment-specific value to the hook when one is available" do
-      values = []
-      @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
-      @settings.define_settings :section, :environment => { :default => "yay", :desc => "a" }
-      @settings.define_settings :section, :environments => { :default => "yay,foo", :desc => "a" }
-
-      text = "[main]
-      mysetting = setval
-      [yay]
-      mysetting = other
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      values.should == ["other"]
-    end
-
     it "should pass the interpolated value to the hook when one is available" do
       values = []
       @settings.define_settings :section, :base => {:default => "yay", :desc => "a", :hook => proc { |v| values << v }}

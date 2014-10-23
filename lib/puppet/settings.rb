@@ -568,16 +568,9 @@ class Puppet::Settings
     # And now we can repopulate with the values from our last parsing of the config files.
     @configuration_file = data
 
-    # Determine our environment, if we have one.
-    if @config[:environment]
-      env = self.value(:environment).to_sym
-    else
-      env = "none"
-    end
-
     # Call any hooks we should be calling.
     @config.values.select(&:has_hook?).each do |setting|
-      value_sets_for(env, self.preferred_run_mode).each do |source|
+      value_sets_for(nil, self.preferred_run_mode).each do |source|
         if source.include?(setting.name)
           # We still have to use value to retrieve the value, since
           # we want the fully interpolated value, not $vardir/lib or whatever.
@@ -587,7 +580,7 @@ class Puppet::Settings
           if setting.call_hook_on_initialize?
             @hooks_to_call_on_application_initialization << setting
           else
-            setting.handle(self.value(setting.name, env))
+            setting.handle(self.value(setting.name))
           end
           break
         end
@@ -1203,9 +1196,10 @@ Generated on #{Time.now}.
           if section = @configuration_file.sections[name]
             values_from_section = ValuesFromSection.new(name, section)
           end
-        end
-        if values_from_section.nil? && global_defaults_initialized?
-          values_from_section = ValuesFromEnvironmentConf.new(name)
+          if values_from_section.nil?
+            raise(SettingsError, "Cannot obtain environment settings for the '#{name}' directory environment prior to initialization of settings.") if !global_defaults_initialized?
+            values_from_section = ValuesFromEnvironmentConf.new(name)
+          end
         end
         values_from_section
       end

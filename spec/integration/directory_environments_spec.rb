@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe "directory environments" do
+  let(:confdir) { Puppet[:confdir] }
   let(:args) { ['--configprint', 'modulepath', '--environment', 'direnv'] }
   let(:puppet) do
     app = Puppet::Application[:apply]
@@ -11,7 +12,9 @@ describe "directory environments" do
   context "with a single directory environmentpath" do
     before(:each) do
       environmentdir = PuppetSpec::Files.tmpdir('envpath')
-      Puppet[:environmentpath] = environmentdir
+      set_puppet_conf(confdir, <<-EOF)
+      environmentpath = #{environmentdir}
+      EOF
       FileUtils.mkdir_p(environmentdir + "/direnv/modules")
     end
 
@@ -37,7 +40,9 @@ describe "directory environments" do
     before(:each) do
       envdir1 = File.join(Puppet[:confdir], 'env1')
       envdir2 = File.join(Puppet[:confdir], 'env2')
-      Puppet[:environmentpath] = [envdir1, envdir2].join(File::PATH_SEPARATOR)
+      set_puppet_conf(confdir, <<-EOF)
+      environmentpath = #{[envdir1, envdir2].join(File::PATH_SEPARATOR)}
+      EOF
       FileUtils.mkdir_p(envdir2 + "/otherdirenv/modules")
     end
 
@@ -46,6 +51,17 @@ describe "directory environments" do
       expect do
         expect { puppet.run }.to exit_with(0)
       end.to have_printed('otherdirenv/modules')
+    end
+  end
+
+  def set_puppet_conf(confdir, settings)
+    FileUtils.mkdir_p(confdir)
+    write_file(File.join(confdir, "puppet.conf"), settings)
+  end
+
+  def write_file(file, contents)
+    File.open(file, "w") do |f|
+      f.puts(contents)
     end
   end
 end
