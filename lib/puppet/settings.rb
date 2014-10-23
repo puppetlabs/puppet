@@ -1196,9 +1196,10 @@ Generated on #{Time.now}.
           if section = @configuration_file.sections[name]
             values_from_section = ValuesFromSection.new(name, section)
           end
-        end
-        if values_from_section.nil? && global_defaults_initialized?
-          values_from_section = ValuesFromEnvironmentConf.new(name)
+          if values_from_section.nil?
+            raise(SettingsError, "Cannot obtain environment settings for the '#{name}' directory environment prior to initialization of settings.") if !global_defaults_initialized?
+            values_from_section = ValuesFromEnvironmentConf.new(name)
+          end
         end
         values_from_section
       end
