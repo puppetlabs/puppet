@@ -1,4 +1,7 @@
 test_name "Master should produce error if enc specifies a nonexistent environment"
+require 'puppet/acceptance/classifier_utils.rb'
+extend Puppet::Acceptance::ClassifierUtils
+
 testdir = create_tmpdir_for_user master, 'nonexistent_env'
 
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
@@ -6,7 +9,7 @@ File {
   ensure => directory,
   owner  => #{master.puppet['user']},
   group  => #{master.puppet['group']},
-  mode   => '0770',
+  mode   => '0755',
 }
 
 file {
@@ -18,27 +21,42 @@ file {
     ensure  => file,
     mode => '0644',
     content => 'notify { "In the production environment": }';
-
-  "#{testdir}/enc.rb":
-    ensure  => file,
-    mode    => '0775',
-    content => '#!#{master['puppetbindir']}/ruby
-      puts "environment: doesnotexist"
-    ';
 }
 MANIFEST
 
+if master.is_pe?
+  group = {
+    'name' => 'Environment Does Not Exist',
+    'description' => 'Classify our test agent nodes in an environment that does not exist.',
+    'environment' => 'doesnotexist',
+    'environment_trumps' => true,
+  }
+  create_group_for_nodes(agents, group)
+else
+  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+    file { "#{testdir}/enc.rb":
+      ensure  => file,
+      mode    => '0775',
+      content => '#!#{master['puppetbindir']}/ruby
+        puts "environment: doesnotexist"
+      ';
+    }
+  MANIFEST
+end
+
 master_opts = {
   'main' => {
-    'node_terminus' => 'exec',
-    'external_nodes' => "#{testdir}/enc.rb",
     'environmentpath' => "#{testdir}/environments",
   }
 }
+master_opts['master'] = {
+  'node_terminus' => 'exec',
+  'external_nodes' => "#{testdir}/enc.rb",
+} if !master.is_pe?
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet("agent --no-daemonize --onetime --server #{master} --verbose")) do
+    on(agent, puppet("agent -t --server #{master} --verbose"), :acceptable_exit_codes => [1]) do
       assert_match(/Could not find a directory environment named 'doesnotexist'/, stderr, "Errors when nonexistant environment is specified")
       assert_not_match(/In the production environment/, stdout, "Executed manifest from production environment")
     end
