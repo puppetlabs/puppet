@@ -273,9 +273,6 @@ How to store cached catalogs\. Valid values are \'json\', \'msgpack\' and \'yaml
 \fIDefault\fR:
 
 .
-.SS "catalog_format"
-(Deprecated for \'preferred_serialization_format\') What format to use to dump the catalog\. Only supports \'marshal\' and \'yaml\'\. Only matters on the client, since it asks the server for a specific format\.
-.
 .SS "catalog_terminus"
 Where to get node catalogs\. This is useful to change if, for instance, you\'d like to pre\-compile catalogs and store them in memcached or some other easily\-accessed store\.
 .
@@ -666,14 +663,6 @@ Whether to document all resources when using \fBpuppet doc\fR to generate manife
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
-.
-.IP "" 0
-.
-.SS "dynamicfacts"
-(Deprecated) Facts that are dynamic; these facts will be ignored when deciding whether changed facts should result in a recompile\. Multiple facts should be comma\-separated\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: memorysize,memoryfree,swapsize,swapfree
 .
 .IP "" 0
 .

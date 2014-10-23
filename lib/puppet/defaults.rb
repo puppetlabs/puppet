@@ -1376,18 +1376,6 @@ EOT
       :default    => "$masterport",
       :desc       => "The port to use for the certificate authority.",
     },
-    :catalog_format => {
-      :default => "",
-      :desc => "(Deprecated for 'preferred_serialization_format') What format to
-        use to dump the catalog.  Only supports 'marshal' and 'yaml'.  Only
-        matters on the client, since it asks the server for a specific format.",
-      :hook => proc { |value|
-        if value
-          Puppet.deprecation_warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
-          Puppet.settings.override_default(:preferred_serialization_format, value)
-        end
-      }
-    },
     :preferred_serialization_format => {
       :default    => "pson",
       :desc       => "The preferred means of serializing
@@ -1467,17 +1455,6 @@ EOT
         useful for testing new configurations, where the local cache may in
         fact be stale even if the timestamps are up to date - if the facts
         change or if the server changes.",
-    },
-    :dynamicfacts => {
-      :default    => "memorysize,memoryfree,swapsize,swapfree",
-      :desc       => "(Deprecated) Facts that are dynamic; these facts will be ignored when deciding whether
-        changed facts should result in a recompile.  Multiple facts should be
-        comma-separated.",
-      :hook => proc { |value|
-        if value
-          Puppet.deprecation_warning "The dynamicfacts setting is deprecated and will be ignored."
-        end
-      }
     },
     :splaylimit => {
       :default    => "$runinterval",
