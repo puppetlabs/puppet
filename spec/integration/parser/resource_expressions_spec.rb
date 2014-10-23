@@ -206,6 +206,19 @@ describe "Puppet resource expressions" do
         "@@notify { example: } realize(Notify[example])" => "defined(Notify[example])",
         "@@notify { exported: message => set } notify { real: message => Notify[exported][message] }" => "Notify[real][message] == 'set'")
     end
+
+    context "explicit undefs" do
+      # PUP-3505
+      produces("
+        $x = 10
+        define foo($x = undef) {
+          notify { example:
+            message => \"'$x'\"
+          }
+        }
+        foo {'blah': x => undef }
+      " => "Notify[example][message] == \"''\"")
+    end
   end
 
   describe "current parser" do
