@@ -7,8 +7,6 @@ require 'puppet/network/resolver'
 # Indirection call, and as a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
-  # FormatSupport for serialization methods
-  include Puppet::Network::FormatSupport
 
   attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
 
@@ -19,51 +17,6 @@ class Puppet::Indirector::Request
   # trusted_information is specifically left out because we can't serialize it
   # and keep it "trusted"
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
-
-  def self.from_data_hash(data)
-    raise ArgumentError, "No indirection name provided in data" unless indirection_name = data['type']
-    raise ArgumentError, "No method name provided in data" unless method = data['method']
-    raise ArgumentError, "No key provided in data" unless key = data['key']
-
-    request = new(indirection_name, method, key, nil, data['attributes'])
-
-    if instance = data['instance']
-      klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
-      if instance.is_a?(klass)
-        request.instance = instance
-      else
-        request.instance = klass.from_data_hash(instance)
-      end
-    end
-
-    request
-  end
-
-  def self.from_pson(json)
-    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(json)
-  end
-
-  def to_data_hash
-    result = {
-      'type' => indirection_name,
-      'method' => method,
-      'key' => key
-    }
-    attributes = {}
-    OPTION_ATTRIBUTES.each do |key|
-      next unless value = send(key)
-      attributes[key] = value
-    end
-
-    options.each do |opt, value|
-      attributes[opt] = value
-    end
-
-    result['attributes'] = attributes unless attributes.empty?
-    result['instance'] = instance if instance
-    result
-  end
 
   # Is this an authenticated request?
   def authenticated?
