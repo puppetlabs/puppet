@@ -100,6 +100,7 @@ module Puppet
       require 'puppet/pops/evaluator/evaluator_impl'
       require 'puppet/pops/evaluator/epp_evaluator'
       require 'puppet/pops/evaluator/callable_mismatch_describer'
+      require 'puppet/pops/evaluator/collector_transformer'
     end
 
     # Subsystem for puppet functions defined in ruby.

@@ -573,15 +573,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # that are either used as a predicate filter, or given to an indirection terminus (such as the Puppet DB
     # resource terminus). Unfortunately, the 3x implementation has many inconsistencies that the implementation
     # below carries forward.
-    #
-    collect_3x = Puppet::Pops::Model::AstTransformer.new().transform(o)
-    collected = collect_3x.evaluate(scope)
+
+
     # the 3x returns an instance of Parser::Collector (but it is only registered with the compiler at this
     # point and does not contain any valuable information (like the result)
     # Dilemma: If this object is returned, it is a first class value in the Puppet Language and we
     # need to be able to perform operations on it. We can forbid it from leaking by making CollectExpression
     # a non R-value. This makes it possible for the evaluator logic to make use of the Collector.
-    collected
+    Puppet::Pops::Evaluator::CollectorTransformer.new().transform(o,scope)
   end
 
   def eval_ParenthesizedExpression(o, scope)
