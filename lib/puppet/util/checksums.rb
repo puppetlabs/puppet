@@ -4,10 +4,7 @@ require 'digest/sha1'
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
-  # @deprecated
-  # In Puppet 4 we should switch this to `module_function` to make these methods
-  # private when this class is included.
-  extend self
+  module_function
 
   # It's not a good idea to use some of these in some contexts: for example, I
   # wouldn't try bucketing a file using the :none checksum type.
@@ -70,8 +67,13 @@ module Puppet::Util::Checksums
     64
   end
 
-  alias :sha256lite_stream :sha256_stream
-  alias :sha256lite_hex_length :sha256_hex_length
+  def sha256lite_stream(&block)
+    sha256_stream(&block)
+  end
+
+  def sha256lite_hex_length
+    sha256_hex_length
+  end
 
   # Calculate a checksum using Digest::MD5.
   def md5(content)
@@ -104,8 +106,13 @@ module Puppet::Util::Checksums
     32
   end
 
-  alias :md5lite_stream :md5_stream
-  alias :md5lite_hex_length :md5_hex_length
+  def md5lite_stream(&block)
+    md5_stream(&block)
+  end
+
+  def md5lite_hex_length
+    md5_hex_length
+  end
 
   # Return the :mtime timestamp of a file.
   def mtime_file(filename)
@@ -114,7 +121,7 @@ module Puppet::Util::Checksums
 
   # by definition this doesn't exist
   # but we still need to execute the block given
-  def mtime_stream
+  def mtime_stream(&block)
     noop_digest = FakeChecksum.new
     yield noop_digest
     nil
@@ -145,7 +152,7 @@ module Puppet::Util::Checksums
     sha1_file(filename, true)
   end
 
-  def sha1_stream
+  def sha1_stream(&block)
     digest = Digest::SHA1.new
     yield digest
     digest.hexdigest
@@ -155,15 +162,22 @@ module Puppet::Util::Checksums
     40
   end
 
-  alias :sha1lite_stream :sha1_stream
-  alias :sha1lite_hex_length :sha1_hex_length
+  def sha1lite_stream(&block)
+    sha1_stream(&block)
+  end
+
+  def sha1lite_hex_length
+    sha1_hex_length
+  end
 
   # Return the :ctime of a file.
   def ctime_file(filename)
     Puppet::FileSystem.stat(filename).send(:ctime)
   end
 
-  alias :ctime_stream :mtime_stream
+  def ctime_stream(&block)
+    mtime_stream(&block)
+  end
 
   def ctime(content)
     ""
@@ -184,7 +198,7 @@ module Puppet::Util::Checksums
     ""
   end
 
-  private
+  private_class_method
 
   # Perform an incremental checksum on a file.
   def checksum_file(digest, filename, lite = false)

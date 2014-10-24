@@ -29,8 +29,7 @@ Puppet::Face.define(:file, '0.0.1') do
         pathname = Puppet::FileSystem.pathname(content.full_path())
         file = Puppet::FileBucket::File.new(pathname)
       else
-        tester = Object.new
-        tester.extend(Puppet::Util::Checksums)
+        tester = Puppet::Util::Checksums
 
         type    = tester.sumtype(sum)
         sumdata = tester.sumdata(sum)
