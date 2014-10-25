@@ -17,10 +17,10 @@ Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile
 
   text_line :comment, :match => /^#/
   text_line :blank, :match => /^\s*$/
-
+  hosts_pattern = '^([0-9a-f:]\S+)\s+([^#\s+]\S+)\s*(.*?)?(?:\s*#\s*(.*))?$'
   record_line :parsed, :fields => %w{ip name host_aliases comment},
     :optional => %w{host_aliases comment},
-    :match    => /^(\S+)\s+(\S+)\s*(.*?)?(?:\s*#\s*(.*))?$/,
+    :match    => /#{hosts_pattern}/,
     :post_parse => proc { |hash|
       # An absent comment should match "comment => ''"
       hash[:comment] = '' if hash[:comment].nil? or hash[:comment] == :absent
@@ -41,4 +41,6 @@ Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile
       end
       str
     }
+
+  text_line :incomplete, :match => /(?! (#{hosts_pattern}))/
 end

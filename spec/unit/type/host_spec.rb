@@ -602,16 +602,32 @@ describe host do
       end
     end
 
+    it "should not accept newlines in resourcename" do
+      expect { @class.new(:name => "fo\no", :ip => '127.0.0.1' ) }.to  raise_error(Puppet::ResourceError, /Hostname cannot include newline/)
+    end
+
+    it "should not accept newlines in ipaddress" do
+      expect { @class.new(:name => "foo", :ip => "127.0.0.1\n") }.to raise_error(Puppet::ResourceError, /Invalid IP address/)
+    end
+
+    it "should not accept newlines in host_aliases" do
+      expect { @class.new(:name => "foo", :ip => '127.0.0.1', :host_aliases => [ 'well_formed', "thisalias\nhavenewline" ] ) }.to raise_error(Puppet::ResourceError, /Host aliases cannot include whitespace/)
+    end
+
+    it "should not accept newlines in comment" do
+      expect { @class.new(:name => "foo", :ip => '127.0.0.1', :comment => "Test of comment blah blah \n test 123" ) }.to raise_error(Puppet::ResourceError, /Comment cannot include newline/)
+    end
+
     it "should not accept spaces in resourcename" do
-      proc { @class.new(:name => "foo bar") }.should raise_error
+      expect { @class.new(:name => "foo bar") }.to raise_error(Puppet::ResourceError, /Invalid host name/)
     end
 
     it "should not accept host_aliases with spaces" do
-      proc { @class.new(:name => "foo", :host_aliases => [ 'well_formed', 'not wellformed' ]) }.should raise_error
+      expect { @class.new(:name => "foo", :host_aliases => [ 'well_formed', 'not wellformed' ]) }.to raise_error(Puppet::ResourceError, /Host aliases cannot include whitespace/)
     end
 
     it "should not accept empty host_aliases" do
-      proc { @class.new(:name => "foo", :host_aliases => ['alias1','']) }.should raise_error
+      expect { @class.new(:name => "foo", :host_aliases => ['alias1','']) }.to raise_error(Puppet::ResourceError, /Host aliases cannot be an empty string/)
     end
   end
 
