@@ -182,8 +182,10 @@ module Puppet
     modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environments.empty?
+      puts "########### USING LEGACY ENVIRONMENTS"
       loaders = [Puppet::Environments::Legacy.new]
     else
+      puts "########### USING DIRECTORY ENVIRONMENTS"
       loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
       # in case the configured environment (used for the default sometimes)
       # doesn't exist
@@ -196,6 +198,7 @@ module Puppet
       end
     end
 
+    puts "########### CREATING CACHED ENVIRONMENTS MAP"
     {
       :environments => Puppet::Environments::Cached.new(*loaders),
       :http_pool => proc {
