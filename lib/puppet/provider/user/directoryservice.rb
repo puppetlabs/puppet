@@ -141,20 +141,16 @@ Puppet::Type.type(:user).provide :directoryservice do
     ################################
     # Get Password/Salt/Iterations #
     ################################
-    if (Puppet::Util::Package.versioncmp(get_os_version, '10.7') == -1)
-      attribute_hash[:password] = get_sha1(attribute_hash[:guid])
+    if attribute_hash[:shadowhashdata].empty?
+      attribute_hash[:password] = '*'
     else
-      if attribute_hash[:shadowhashdata].empty?
-        attribute_hash[:password] = '*'
+      embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
+      if embedded_binary_plist['SALTED-SHA512']
+        attribute_hash[:password] = get_salted_sha512(embedded_binary_plist)
       else
-        embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
-        if embedded_binary_plist['SALTED-SHA512']
-          attribute_hash[:password] = get_salted_sha512(embedded_binary_plist)
-        else
-          attribute_hash[:password]   = get_salted_sha512_pbkdf2('entropy', embedded_binary_plist)
-          attribute_hash[:salt]       = get_salted_sha512_pbkdf2('salt', embedded_binary_plist)
-          attribute_hash[:iterations] = get_salted_sha512_pbkdf2('iterations', embedded_binary_plist)
-        end
+        attribute_hash[:password]   = get_salted_sha512_pbkdf2('entropy', embedded_binary_plist)
+        attribute_hash[:salt]       = get_salted_sha512_pbkdf2('salt', embedded_binary_plist)
+        attribute_hash[:iterations] = get_salted_sha512_pbkdf2('iterations', embedded_binary_plist)
       end
     end
 
@@ -359,46 +355,42 @@ Puppet::Type.type(:user).provide :directoryservice do
   # method revolve around dscl. Any time you directly modify a user's plist,
   # you need to flush the cache that dscl maintains.
   def password=(value)
-    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') == -1)
-      write_sha1_hash(value)
+    if self.class.get_os_version == '10.7'
+      if value.length != 136
+        raise Puppet::Error, "OS X 10.7 requires a Salted SHA512 hash password of 136 characters.  Please check your password and try again."
+      end
     else
-      if self.class.get_os_version == '10.7'
-        if value.length != 136
-          raise Puppet::Error, "OS X 10.7 requires a Salted SHA512 hash password of 136 characters.  Please check your password and try again."
-        end
-      else
-        if value.length != 256
-           raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
-        end
-
-        assert_full_pbkdf2_password
+      if value.length != 256
+         raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
       end
 
-      # Methods around setting the password on OS X are the ONLY methods that
-      # cannot use dscl (because the only way to set it via dscl is by passing
-      # a plaintext password - which is bad). Because of this, we have to change
-      # the user's plist directly. DSCL has its own caching mechanism, which
-      # means that every time we call dscl in this provider we're not directly
-      # changing values on disk (instead, those calls are cached and written
-      # to disk according to Apple's prioritization algorithms). When Puppet
-      # needs to set the password property on OS X > 10.6, the provider has to
-      # tell dscl to write its cache to disk before modifying the user's
-      # plist. The 'dscacheutil -flushcache' command does this. Another issue
-      # is how fast Puppet makes calls to dscl and how long it takes dscl to
-      # enter those calls into its cache. We have to sleep for 2 seconds before
-      # flushing the dscl cache to allow all dscl calls to get INTO the cache
-      # first. This could be made faster (and avoid a sleep call) by finding
-      # a way to enter calls into the dscl cache faster. A sleep time of 1
-      # second would intermittantly require a second Puppet run to set
-      # properties, so 2 seconds seems to be the minimum working value.
-      sleep 2
-      flush_dscl_cache
-      write_password_to_users_plist(value)
-
-      # Since we just modified the user's plist, we need to flush the ds cache
-      # again so dscl can pick up on the changes we made.
-      flush_dscl_cache
+      assert_full_pbkdf2_password
     end
+
+    # Methods around setting the password on OS X are the ONLY methods that
+    # cannot use dscl (because the only way to set it via dscl is by passing
+    # a plaintext password - which is bad). Because of this, we have to change
+    # the user's plist directly. DSCL has its own caching mechanism, which
+    # means that every time we call dscl in this provider we're not directly
+    # changing values on disk (instead, those calls are cached and written
+    # to disk according to Apple's prioritization algorithms). When Puppet
+    # needs to set the password property on OS X > 10.6, the provider has to
+    # tell dscl to write its cache to disk before modifying the user's
+    # plist. The 'dscacheutil -flushcache' command does this. Another issue
+    # is how fast Puppet makes calls to dscl and how long it takes dscl to
+    # enter those calls into its cache. We have to sleep for 2 seconds before
+    # flushing the dscl cache to allow all dscl calls to get INTO the cache
+    # first. This could be made faster (and avoid a sleep call) by finding
+    # a way to enter calls into the dscl cache faster. A sleep time of 1
+    # second would intermittantly require a second Puppet run to set
+    # properties, so 2 seconds seems to be the minimum working value.
+    sleep 2
+    flush_dscl_cache
+    write_password_to_users_plist(value)
+
+    # Since we just modified the user's plist, we need to flush the ds cache
+    # again so dscl can pick up on the changes we made.
+    flush_dscl_cache
   end
 
   # The iterations and salt properties, like the password property, can only
@@ -659,27 +651,5 @@ Puppet::Type.type(:user).provide :directoryservice do
     rescue Errno::EACCES => detail
       raise Puppet::Error, "Could not write to file #{filename}: #{detail}", detail.backtrace
     end
-  end
-
-  def write_sha1_hash(value)
-    users_guid = self.class.get_attribute_from_dscl('Users', @resource.name, 'GeneratedUID')['dsAttrTypeStandard:GeneratedUID'][0]
-    password_hash_file = "#{self.class.password_hash_dir}/#{users_guid}"
-    write_to_file(password_hash_file, value)
-
-    # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
-    # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
-    # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
-    # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
-    # we can do this with the merge command. This allows people to continue to
-    # use other custom AuthenticationAuthority attributes without stomping on them.
-    #
-    # There is a potential problem here in that we're only doing this when setting
-    # the password, and the attribute could get modified at other times while the
-    # hash doesn't change and so this doesn't get called at all... but
-    # without switching all the other attributes to merge instead of create I can't
-    # see a simple enough solution for this that doesn't modify the user record
-    # every single time. This should be a rather rare edge case. (famous last words)
-
-    merge_attribute_with_dscl('Users', @resource.name, 'AuthenticationAuthority', ';ShadowHash;')
   end
 end

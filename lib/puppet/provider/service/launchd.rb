@@ -42,7 +42,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   include Puppet::Util::Warnings
 
   commands :launchctl => "/bin/launchctl"
-  commands :sw_vers   => "/usr/bin/sw_vers"
   commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
@@ -176,18 +175,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @job_list
   end
 
-  # Launchd implemented plist overrides in version 10.6.
-  # This method checks the major_version of OS X and returns true if
-  # it is 10.6 or greater. This allows us to implement different plist
-  # behavior for versions >= 10.6
-  def has_macosx_plist_overrides?
-    @product_version ||= self.class.get_macosx_version_major
-    # (#11593) Remove support for OS X 10.4 & earlier
-    # leaving this as is because 10.5 still didn't have plist support
-    return true unless /^10\.[0-5]/.match(@product_version)
-    return false
-  end
-
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
@@ -209,20 +196,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
     @property_hash[:ensure] != :absent
   end
-
-  def self.get_macosx_version_major
-    return @macosx_version_major if @macosx_version_major
-    begin
-      product_version_major = Facter.value(:macosx_productversion_major)
-
-      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
-      @macosx_version_major = product_version_major
-      return @macosx_version_major
-    rescue Puppet::ExecutionFailure => detail
-      self.fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
-    end
-  end
-
 
   # finds the path for a given label and returns the path and parsed plist
   # as an array of [path, plist]. Note plist is really a Hash here.
@@ -302,11 +275,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_path, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if has_macosx_plist_overrides?
-      if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
-        if overrides.has_key?(resource[:name])
-          overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
-        end
+    if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
+      if overrides.has_key?(resource[:name])
+        overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
       end
     end
 
@@ -323,31 +294,15 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # Starting in 10.6 we need to write out a disabled key to the global
-  # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
-    if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(self.class.launchd_overrides)
-      overrides[resource[:name]] = { "Disabled" => false }
-      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
-    else
-      job_path, job_plist = plist_from_label(resource[:name])
-      if self.enabled? == :false
-        job_plist.delete("Disabled")
-        Plist::Emit.save_plist(job_plist, job_path)
-      end
-    end
+    overrides = self.class.read_plist(self.class.launchd_overrides)
+    overrides[resource[:name]] = { "Disabled" => false }
+    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
   end
 
   def disable
-    if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(self.class.launchd_overrides)
-      overrides[resource[:name]] = { "Disabled" => true }
-      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
-    else
-      job_path, job_plist = plist_from_label(resource[:name])
-      job_plist["Disabled"] = true
-      Plist::Emit.save_plist(job_plist, job_path)
-    end
+    job_path, job_plist = plist_from_label(resource[:name])
+    job_plist["Disabled"] = true
+    Plist::Emit.save_plist(job_plist, job_path)
   end
 end
