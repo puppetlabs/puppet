@@ -78,7 +78,7 @@ Style/RedundantSelf:
   Enabled: false
 
 # DISABLED - not useful
-Style/MethodLength:
+Metrics/MethodLength:
   Enabled: false
 
 # DISABLED - not useful
@@ -158,7 +158,7 @@ Style/AlignHash:
 Style/AlignParameters:
   Enabled: false
 
-Style/BlockNesting:
+Metrics/BlockNesting:
   Enabled: false
 
 Style/AsciiComments:
@@ -191,7 +191,7 @@ Style/ClassAndModuleChildren:
 Style/ClassCheck:
   Enabled: false
 
-Style/ClassLength:
+Metrics/ClassLength:
   Enabled: false
 
 Style/ClassMethods:
@@ -281,7 +281,7 @@ Style/ColonMethodCall:
 Style/CommentAnnotation:
   Enabled: false
 
-Style/CyclomaticComplexity:
+Metrics/CyclomaticComplexity:
   Enabled: false
 
 Style/ConstantName:
@@ -333,7 +333,7 @@ Style/EmptyLinesAroundBody:
 Style/EmptyLiteral:
   Enabled: false
 
-Style/LineLength:
+Metrics/LineLength:
   Enabled: false
 
 Style/MethodCallParentheses:
@@ -472,7 +472,6 @@ Style/RedundantException:
 Style/SelfAssignment:
   Enabled: false
 
-
 Style/Proc:
   Enabled: false
 
@@ -491,7 +490,7 @@ Style/RegexpLiteral:
 Lint/UnderscorePrefixedVariableName:
   Enabled: false
 
-Style/ParameterLists:
+Metrics/ParameterLists:
   Enabled: false
 
 Lint/RequireParentheses:
@@ -510,4 +509,25 @@ Style/IfWithSemicolon:
   Enabled: false
 
 Style/Encoding:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Style/SymbolProc:
+  Enabled: false
+
+Style/SpaceInsideRangeLiteral:
+  Enabled: false
+
+Style/InfiniteLoop:
+  Enabled: false
+
+Style/BarePercentLiterals:
+  Enabled: false
+
+Style/PercentQLiterals:
+  Enabled: false
+
+Style/MultilineBlockLayout:
   Enabled: false
