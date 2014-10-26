@@ -47,6 +47,7 @@ describe Puppet::FileServing::Mount::File do
       FileTest.stubs(:directory?).returns(true)
       FileTest.stubs(:readable?).returns(true)
       @mount = Puppet::FileServing::Mount::File.new("test")
+      @environment = "production"
       @host = "host.domain.com"
     end
 
@@ -56,28 +57,33 @@ describe Puppet::FileServing::Mount::File do
 
     it "should replace incidences of %h in the path with the client's short name" do
       @mount.path = "/dir/%h/yay"
-      @mount.path(@host).should == "/dir/host/yay"
+      @mount.path(@host, @environment).should == "/dir/host/yay"
     end
 
     it "should replace incidences of %H in the path with the client's fully qualified name" do
       @mount.path = "/dir/%H/yay"
-      @mount.path(@host).should == "/dir/host.domain.com/yay"
+      @mount.path(@host, @environment).should == "/dir/host.domain.com/yay"
     end
 
     it "should replace incidences of %d in the path with the client's domain name" do
       @mount.path = "/dir/%d/yay"
-      @mount.path(@host).should == "/dir/domain.com/yay"
+      @mount.path(@host, @environment).should == "/dir/domain.com/yay"
+    end
+
+    it "should replace incidences of %e in the path with the client's environment" do
+      @mount.path = "/dir/%e/yay"
+      @mount.path(@host, @environment).should == "/dir/production/yay"
     end
 
     it "should perform all necessary replacements" do
-      @mount.path = "/%h/%d/%H"
-      @mount.path(@host).should == "/host/domain.com/host.domain.com"
+      @mount.path = "/%e/%h/%d/%H"
+      @mount.path(@host, @environment).should == "/production/host/domain.com/host.domain.com"
     end
 
     it "should use local host information if no client data is provided" do
       stub_facter("myhost.mydomain.com")
-      @mount.path = "/%h/%d/%H"
-      @mount.path.should == "/myhost/mydomain.com/myhost.mydomain.com"
+      @mount.path = "/%e/%h/%d/%H"
+      @mount.path.should == "/production/myhost/mydomain.com/myhost.mydomain.com"
     end
   end
 
@@ -91,12 +97,13 @@ describe Puppet::FileServing::Mount::File do
       @mount = Puppet::FileServing::Mount::File.new("test")
       @mount.path = "/mount"
       stub_facter("myhost.mydomain.com")
+      @environment  = "production"
       @host = "host.domain.com"
     end
 
     it "should return nil if the file is absent" do
       Puppet::FileSystem.stubs(:exist?).returns(false)
-      @mount.complete_path("/my/path", nil).should be_nil
+      @mount.complete_path("/my/path", nil, nil).should be_nil
     end
 
     it "should write a log message if the file is absent" do
@@ -104,36 +111,36 @@ describe Puppet::FileServing::Mount::File do
 
       Puppet.expects(:info).with("File does not exist or is not accessible: /mount/my/path")
 
-      @mount.complete_path("/my/path", nil)
+      @mount.complete_path("/my/path", nil, nil)
     end
 
     it "should return the file path if the file is present" do
       Puppet::FileSystem.stubs(:exist?).with("/my/path").returns(true)
-      @mount.complete_path("/my/path", nil).should == "/mount/my/path"
+      @mount.complete_path("/my/path", nil, nil).should == "/mount/my/path"
     end
 
     it "should treat a nil file name as the path to the mount itself" do
       Puppet::FileSystem.stubs(:exist?).returns(true)
-      @mount.complete_path(nil, nil).should == "/mount"
+      @mount.complete_path(nil, nil, nil).should == "/mount"
     end
 
     it "should use the client host name if provided in the options" do
       @mount.path = "/mount/%h"
-      @mount.complete_path("/my/path", @host).should == "/mount/host/my/path"
+      @mount.complete_path("/my/path", @host, @environment).should == "/mount/host/my/path"
     end
 
     it "should perform replacements on the base path" do
       @mount.path = "/blah/%h"
-      @mount.complete_path("/my/stuff", @host).should == "/blah/host/my/stuff"
+      @mount.complete_path("/my/stuff", @host, @environment).should == "/blah/host/my/stuff"
     end
 
     it "should not perform replacements on the per-file path" do
       @mount.path = "/blah"
-      @mount.complete_path("/%h/stuff", @host).should == "/blah/%h/stuff"
+      @mount.complete_path("/%h/stuff", @host, @environment).should == "/blah/%h/stuff"
     end
 
     it "should look for files relative to its base directory" do
-      @mount.complete_path("/my/stuff", @host).should == "/mount/my/stuff"
+      @mount.complete_path("/my/stuff", @host, @environment).should == "/mount/my/stuff"
     end
   end
 
@@ -149,12 +156,12 @@ describe Puppet::FileServing::Mount::File do
       stub_facter("myhost.mydomain.com")
       @host = "host.domain.com"
 
-      @request = stub 'request', :node => "foo"
+      @request = stub 'request', :node => "foo", :environment => "production"
     end
 
     it "should return the results of the complete file path" do
       Puppet::FileSystem.stubs(:exist?).returns(false)
-      @mount.expects(:complete_path).with("/my/path", "foo").returns "eh"
+      @mount.expects(:complete_path).with("/my/path", "foo", "production").returns "eh"
       @mount.find("/my/path", @request).should == "eh"
     end
   end
@@ -171,18 +178,18 @@ describe Puppet::FileServing::Mount::File do
       stub_facter("myhost.mydomain.com")
       @host = "host.domain.com"
 
-      @request = stub 'request', :node => "foo"
+      @request = stub 'request', :node => "foo", :environment => "production"
     end
 
     it "should return the results of the complete file path as an array" do
       Puppet::FileSystem.stubs(:exist?).returns(false)
-      @mount.expects(:complete_path).with("/my/path", "foo").returns "eh"
+      @mount.expects(:complete_path).with("/my/path", "foo", "production").returns "eh"
       @mount.search("/my/path", @request).should == ["eh"]
     end
 
     it "should return nil if the complete path is nil" do
       Puppet::FileSystem.stubs(:exist?).returns(false)
-      @mount.expects(:complete_path).with("/my/path", "foo").returns nil
+      @mount.expects(:complete_path).with("/my/path", "foo", "production").returns nil
       @mount.search("/my/path", @request).should be_nil
     end
   end
