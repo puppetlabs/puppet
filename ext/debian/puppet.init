@@ -12,6 +12,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/puppet
 DAEMON_OPTS=""
 NAME="agent"
+PROCNAME="puppet"
 DESC="puppet agent"
 PIDFILE="/var/run/puppet/${NAME}.pid"
 
@@ -30,7 +31,7 @@ is_true() {
 }
 
 reload_puppet_agent() {
-    start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE
+    start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE --name $PROCNAME
 }
 
 start_puppet_agent() {
@@ -44,7 +45,8 @@ start_puppet_agent() {
 }
 
 stop_puppet_agent() {
-    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile $PIDFILE
+    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile $PIDFILE --name $PROCNAME
+    rm -f "$PIDFILE"
 }
 
 status_puppet_agent() {
