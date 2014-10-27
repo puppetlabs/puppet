@@ -366,8 +366,8 @@ class Puppet::Resource
 
   def missing_arguments
     resource_type.arguments.select do |param, default|
-      param = param.to_sym
-      parameters[param].nil? || parameters[param].value == :undef
+      the_param = parameters[param.to_sym]
+      the_param.nil? || the_param.value.nil? || the_param.value == :undef
     end
   end
   private :missing_arguments
