@@ -7,11 +7,6 @@ require 'puppet/parameter'
 #
 # @api public
 class Puppet::Resource
-  # This stub class is only needed for serialization compatibility with 0.25.x.
-  # Specifically, it exists to provide a compatibility API when using YAML
-  # serialized objects loaded from StoreConfigs.
-  Reference = Puppet::Resource
-
   include Puppet::Util::Tagging
 
   include Enumerable
@@ -235,7 +230,6 @@ class Puppet::Resource
     tag(self.type)
     tag(self.title) if valid_tag?(self.title)
 
-    @reference = self # for serialization compatibility with 0.25.x
     if strict? and ! resource_type
       if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
