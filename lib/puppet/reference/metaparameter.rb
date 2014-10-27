@@ -1,13 +1,4 @@
 Puppet::Util::Reference.newreference :metaparameter, :doc => "All Puppet metaparameters and all their details" do
-  types = {}
-  Puppet::Type.loadall
-
-  Puppet::Type.eachtype { |type|
-    next if type.name == :puppet
-    next if type.name == :component
-    types[type.name] = type
-  }
-
   str = %{
 
 Metaparameters are attributes that work with any resource type, including custom
