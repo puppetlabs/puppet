@@ -50,7 +50,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
 
   def assert_supported_format(format)
     if format.name == :yaml || format.name == :b64_zlib_yaml
-      raise Puppet::Error, "YAML in network requests are not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
+      raise Puppet::Error, "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
     end
   end
 end
