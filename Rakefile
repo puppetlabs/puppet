@@ -72,9 +72,10 @@ task(:rubocop) do
   if RUBY_VERSION !~ /1.8/
     require 'rubocop'
     cli = RuboCop::CLI.new
-    cli.run(%w(-D -f s))
+    exit_code = cli.run(%w(--display-cop-names --format simple))
+    raise "RuboCop detected offenses" if exit_code != 0
   else
-    puts "Rubocop is disabled in ruby 1.8"
+    raise "Rubocop is disabled in ruby 1.8"
   end
 end
 
