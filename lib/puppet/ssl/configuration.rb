@@ -4,7 +4,6 @@ module Puppet
 module SSL
   # Puppet::SSL::Configuration is intended to separate out the following concerns:
   # * CA certificates that authenticate peers (ca_auth_file)
-  # * CA certificates that build trust but do not authenticate (ca_chain_file)
   # * Who clients trust as distinct from who servers trust.  We should not
   #   assume one single self signed CA cert for everyone.
 class Configuration
@@ -13,8 +12,7 @@ class Configuration
     @ca_auth_file = options[:ca_auth_file]
   end
 
-  # The ca_chain_file method is intended to return the PEM bundle of CA certs
-  # establishing trust but not used for peer authentication.
+  # @deprecated Use {#ca_auth_file} instead.
   def ca_chain_file
     ca_auth_file
   end

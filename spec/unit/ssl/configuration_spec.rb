@@ -17,9 +17,11 @@ describe Puppet::SSL::Configuration do
     subject do
       described_class.new(localcacert)
     end
+
     it "#ca_chain_file == localcacert" do
       subject.ca_chain_file.should == localcacert
     end
+
     it "#ca_auth_file == localcacert" do
       subject.ca_auth_file.should == localcacert
     end
@@ -36,9 +38,11 @@ describe Puppet::SSL::Configuration do
     it "#ca_chain_file == ssl_server_ca_chain" do
       subject.ca_chain_file.should == ssl_server_ca_auth
     end
+
     it "#ca_auth_file == ssl_server_ca_auth" do
       subject.ca_auth_file.should == ssl_server_ca_auth
     end
+
     it "#ca_auth_certificates returns an Array<OpenSSL::X509::Certificate>" do
       subject.stubs(:read_file).returns(master_ca_pem + root_ca_pem)
 
@@ -52,6 +56,7 @@ describe Puppet::SSL::Configuration do
       subject do
         described_class.new(localcacert, { :ca_auth_file => ssl_server_ca_auth })
       end
+
       it "should use ca_auth_file" do
         subject.ca_chain_file.should == ssl_server_ca_auth
       end
