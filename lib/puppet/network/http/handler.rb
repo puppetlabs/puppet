@@ -144,11 +144,7 @@ module Puppet::Network::HTTP::Handler
   end
 
   def parse_parameter_value(param, value)
-    case value
-#    when /^---/
-#      Puppet.debug("Found YAML while processing request parameter #{param} (value: <#{value}>)")
-#      raise Puppet::Error, "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
-    when Array
+    if value.is_a?(Array)
       value.collect { |v| parse_primitive_parameter_value(v) }
     else
       parse_primitive_parameter_value(value)
