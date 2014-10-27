@@ -949,23 +949,25 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when sourcing" do
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
-    it "should apply the source metadata values" do
-      set_mode(0770, source)
+    describe "on POSIX systems", :if => Puppet.features.posix? do
+      it "should apply the source metadata values" do
+        set_mode(0770, source)
 
-      file = described_class.new(
-        :path   => path,
-        :ensure => :file,
-        :source => source,
-        :source_permissions => :use,
-        :backup => false
-      )
+        file = described_class.new(
+          :path   => path,
+          :ensure => :file,
+          :source => source,
+          :source_permissions => :use,
+          :backup => false
+        )
 
-      catalog.add_resource file
-      catalog.apply
+        catalog.add_resource file
+        catalog.apply
 
-      get_owner(path).should == get_owner(source)
-      get_group(path).should == get_group(source)
-      (get_mode(path) & 07777).should == 0770
+        get_owner(path).should == get_owner(source)
+        get_group(path).should == get_group(source)
+        (get_mode(path) & 07777).should == 0770
+      end
     end
 
     it "should override the default metadata values" do
@@ -975,7 +977,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
          :path   => path,
          :ensure => :file,
          :source => source,
-         :source_permissions => :use,
          :backup => false,
          :mode => '0440'
        )
@@ -1019,26 +1020,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expects_at_least_one_inherited_ace_grants_full_access(path, @sids[:system])
       end
 
-      it "should provide valid default values when ACLs are not supported" do
-        Puppet::Util::Windows::Security.stubs(:supports_acl?).returns(false)
-        Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
-
-        file = described_class.new(
-          :path   => path,
-          :ensure => :file,
-          :source => source,
-          :backup => false,
-          :source_permissions => :use
-        )
-
-        catalog.add_resource file
-        catalog.apply
-
-        get_owner(path).should =~ /^S\-1\-5\-.*$/
-        get_group(path).should =~ /^S\-1\-0\-0.*$/
-        get_mode(path).should == 0644
-      end
-
       describe "when processing SYSTEM ACEs" do
         before do
           @sids = {
@@ -1063,56 +1044,26 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource @file
           end
 
-          describe "when source permissions are ignored" do
-            it "preserves the inherited SYSTEM ACE" do
-              catalog.apply
-
-              expects_at_least_one_inherited_system_ace_grants_full_access(path)
-            end
-          end
-
-          describe "when permissions are insync?" do
-            before :each do
-              @file[:source_permissions] = :use
-            end
-
-            it "preserves the explicit SYSTEM ACE" do
-              FileUtils.touch(path)
-
-              sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
-              sd.protect = true
-              sd.owner = @sids[:none]
-              sd.group = @sids[:none]
-              Puppet::Util::Windows::Security.set_security_descriptor(source, sd)
-              Puppet::Util::Windows::Security.set_security_descriptor(path, sd)
-
-              catalog.apply
-
-              expects_system_granted_full_access_explicitly(path)
-            end
-          end
-
           describe "when permissions are not insync?" do
             before :each do
               @file[:owner] = 'None'
               @file[:group] = 'None'
-              @file[:source_permissions] = :use
             end
 
-            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing file" do
+            it "preserves the inherited SYSTEM ACE for an existing file" do
               FileUtils.touch(path)
 
               expects_at_least_one_inherited_system_ace_grants_full_access(path)
 
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(path)
+              expects_at_least_one_inherited_system_ace_grants_full_access(path)
             end
 
-            it "replaces inherited SYSTEM ACEs for a new file with an uninherited one" do
+            it "applies the inherited SYSTEM ACEs for a new file" do
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(path)
+              expects_at_least_one_inherited_system_ace_grants_full_access(path)
             end
           end
 
@@ -1121,7 +1072,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               @file[:owner] = @sids[:users]
               @file[:group] = @sids[:system]
               @file[:mode] = '0644'
-              @file[:source_permissions] = :use
 
               catalog.apply
             end
@@ -1182,60 +1132,26 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             grant_everyone_full_access(dir)
           end
 
-          describe "when source permissions are ignored" do
-            it "preserves the inherited SYSTEM ACE" do
-              catalog.apply
-
-              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
-            end
-          end
-
-          describe "when permissions are insync?" do
-            before :each do
-              @directory[:source_permissions] = :use
-            end
-
-            it "preserves the explicit SYSTEM ACE" do
-              Dir.mkdir(dir)
-
-              source_dir = tmpdir('source_dir')
-              @directory[:source] = source_dir
-
-              sd = Puppet::Util::Windows::Security.get_security_descriptor(source_dir)
-              sd.protect = true
-              sd.owner = @sids[:none]
-              sd.group = @sids[:none]
-              Puppet::Util::Windows::Security.set_security_descriptor(source_dir, sd)
-              Puppet::Util::Windows::Security.set_security_descriptor(dir, sd)
-
-              catalog.apply
-
-              expects_system_granted_full_access_explicitly(dir)
-            end
-          end
-
           describe "when permissions are not insync?" do
             before :each do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
-              @directory[:mode] = '0444'
-              @directory[:source_permissions] = :use
             end
 
-            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
+            it "preserves the inherited SYSTEM ACEs for an existing directory" do
               FileUtils.mkdir(dir)
 
               expects_at_least_one_inherited_system_ace_grants_full_access(dir)
 
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(dir)
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
             end
 
-            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
+            it "applies the inherited SYSTEM ACEs for a new directory" do
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(dir)
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
             end
 
             describe "created with SYSTEM as the group" do

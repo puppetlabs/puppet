@@ -127,11 +127,10 @@ module Puppet
           if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
             (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
 
-            warning = "Copying %s from the source" <<
-                      " file on Windows is deprecated;" <<
+            err_msg = "Copying %s from the source" <<
+                      " file on Windows is not supported;" <<
                       " use source_permissions => ignore."
-            Puppet.deprecation_warning(warning % 'owner/mode/group')
-            resource.debug(warning % metadata_method.to_s)
+            self.fail Puppet::Error, err_msg % 'owner/mode/group'
           end
           # But never try to copy remote owner/group on Windows
           next if [:owner, :group].include?(metadata_method) && !local?
