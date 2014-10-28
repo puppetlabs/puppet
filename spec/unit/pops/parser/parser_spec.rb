@@ -39,9 +39,9 @@ describe Puppet::Pops::Parser::Parser do
     rescue Puppet::ParseError => e
       the_error = e
     end
-    the_error.is_a?(Puppet::ParseError).should == true
-    the_error.file.should == 'fakefile.pp'
-    the_error.line.should == 1
-    the_error.pos.should == 6
+    expect(the_error).to be_a(Puppet::ParseError)
+    expect(the_error.file).to eq('fakefile.pp')
+    expect(the_error.line).to eq(1)
+    expect(the_error.pos).to eq(6)
   end
 end

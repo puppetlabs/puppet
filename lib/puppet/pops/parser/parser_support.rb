@@ -49,7 +49,7 @@ class Puppet::Pops::Parser::Parser
   # Raises a Parse error with location information. Information about file is always obtained from the
   # lexer. Line and position is produced if the given semantic is a Positioned object and have been given an offset.
   #
-  def error(semantic, message, options = {})
+  def error(semantic, message)
     semantic = semantic.current() if semantic.is_a?(Puppet::Pops::Model::Factory)
     # Adapt the model so it is possible to get location information.
     # The model may not have been added to the source tree, so give it the lexer's locator
