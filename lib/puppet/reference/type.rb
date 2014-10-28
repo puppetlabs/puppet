@@ -3,7 +3,6 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   Puppet::Type.loadall
 
   Puppet::Type.eachtype { |type|
-    next if type.name == :puppet
     next if type.name == :component
     next if type.name == :whit
     types[type.name] = type
