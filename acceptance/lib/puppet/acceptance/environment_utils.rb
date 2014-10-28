@@ -183,10 +183,21 @@ module Puppet
           end
         end
 
+        new_file_list = new_files.keys.map { |name| "#{original_path}/#{name}" }.join(' ')
         step "open permissions to 755 on all temporary files copied into working dir and set ownership" do
-          file_list = new_files.keys.map { |name| "#{original_path}/#{name}" }.join(' ')
-          on(host, "chown -R #{host.puppet['user']}:#{host.puppet['group']} #{file_list}")
-          on(host, "chmod -R 755 #{file_list}")
+          on(host, "chown -R #{host.puppet['user']}:#{host.puppet['group']} #{new_file_list}")
+          on(host, "chmod -R 755 #{new_file_list}")
+        end
+
+        if host.check_for_command("selinuxenabled")
+          result = on(host, "selinuxenabled", :acceptable_exit_codes => [0,1])
+
+          if result.exit_code == 0
+            step "mirror selinux contexts" do
+              context = on(host, "matchpathcon #{original_path}").stdout.chomp.split(' ')[1]
+              on(host, "chcon -R #{context} #{new_file_list}")
+            end
+          end
         end
 
         yield
