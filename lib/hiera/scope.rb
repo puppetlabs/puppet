@@ -1,6 +1,7 @@
 class Hiera
   class Scope
     CALLING_CLASS = "calling_class"
+    CALLING_CLASS_PATH = "calling_class_path"
     CALLING_MODULE = "calling_module"
     MODULE_NAME = "module_name"
 
@@ -13,6 +14,8 @@ class Hiera
     def [](key)
       if key == CALLING_CLASS
         ans = find_hostclass(@real)
+      elsif key == CALLING_CLASS_PATH
+        ans = find_hostclass(@real).gsub(/::/, '/')
       elsif key == CALLING_MODULE
         ans = @real.lookupvar(MODULE_NAME)
       else
@@ -27,7 +30,7 @@ class Hiera
     end
 
     def include?(key)
-      if key == CALLING_CLASS or key == CALLING_MODULE
+      if [CALLING_CLASS, CALLING_CLASS_PATH, CALLING_MODULE].include? key
         true
       else
         @real.lookupvar(key) != ""
