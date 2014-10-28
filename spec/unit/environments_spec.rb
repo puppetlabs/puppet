@@ -429,6 +429,44 @@ config_version=$vardir/random/scripts
     end
   end
 
+  describe "TTL cached entry factory" do
+    let(:times) { [Time.now, Time.now + 30, Time.now + 60, Time.now + (60*60*24) ] }
+    let(:current_time_method) { times.method(:shift) }
+
+    context "with timeout set to unlimited" do
+      it "doesn't expire entries" do
+        Puppet[:environment_timeout] = 'unlimited'
+        factory = Puppet::Environments::Cached::TTLEntryFactory.new(current_time_method)
+        entry = factory.create_entry("foo", nil)
+        expect(entry.expired?).to eq(false)
+        expect(entry.expired?).to eq(false)
+        expect(entry.expired?).to eq(false)
+      end
+    end
+
+    context "with timeout set to 0" do
+      it "doesn't cache entries" do
+        Puppet[:environment_timeout] = 0
+        factory = Puppet::Environments::Cached::TTLEntryFactory.new(current_time_method)
+        entry = factory.create_entry("foo", nil)
+        expect(entry.expired?).to eq(true)
+        expect(entry.expired?).to eq(true)
+        expect(entry.expired?).to eq(true)
+      end
+    end
+
+    context "with timeout set to a finite value" do
+      it "cache entries until the interval has elapsed" do
+        Puppet[:environment_timeout] = "2m"
+        factory = Puppet::Environments::Cached::TTLEntryFactory.new(current_time_method)
+        entry = factory.create_entry("foo", nil)
+        expect(entry.expired?).to eq(false)
+        expect(entry.expired?).to eq(false)
+        expect(entry.expired?).to eq(true)
+      end
+    end
+  end
+
   RSpec::Matchers.define :environment do |name|
     match do |env|
       env.name == name &&

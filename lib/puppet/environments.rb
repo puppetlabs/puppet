@@ -316,9 +316,36 @@ module Puppet::Environments
   class Cached < Combined
     INFINITY = 1.0 / 0.0
 
+    class TTLEntryFactory
+      def initialize(current_time_method = Time.method(:now))
+        @current_time_method = current_time_method
+      end
+
+      def create_entry(env, conf)
+        ttl = conf ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
+        case ttl
+          when 0
+            NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
+          when INFINITY
+            Entry.new(env)              # Entry that never expires (avoids syscall to get time)
+          else
+            TTLEntry.new(env, @current_time_method, ttl)
+        end
+      end
+    end
+
+    def self.cache_entry_factory_class
+      @cache_entry_factory_class || TTLEntryFactory
+    end
+
+    def self.cache_entry_factory_class=(klass)
+      @cache_entry_factory_class = klass
+    end
+
     def initialize(*loaders)
       super
       @cache = {}
+      @cache_entry_factory = self.class.cache_entry_factory_class.new
     end
 
     def get(name)
@@ -355,15 +382,7 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
-      case ttl
-      when 0
-        NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
-      when INFINITY
-        Entry.new(env)              # Entry that never expires (avoids syscall to get time)
-      else
-        TTLEntry.new(env, ttl)
-      end
+      @cache_entry_factory.create_entry(env, get_conf(env.name))
     end
 
     # Evicts the entry if it has expired
@@ -398,13 +417,14 @@ module Puppet::Environments
 
     # Time to Live eviction policy entry
     class TTLEntry < Entry
-      def initialize(value, ttl_seconds)
+      def initialize(value, current_time_method, ttl_seconds)
         super value
-        @ttl = Time.now + ttl_seconds
+        @current_time_method = current_time_method
+        @ttl = @current_time_method.call + ttl_seconds
       end
 
       def expired?
-        Time.now > @ttl
+        @current_time_method.call > @ttl
       end
     end
   end
