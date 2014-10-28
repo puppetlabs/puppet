@@ -118,6 +118,10 @@ describe Puppet::SSL::CertificateRevocationList do
       expects_time_close_to_five_years(nextUpdate)
     end
 
+    it "has an expiration corresponding to its next update time" do
+      @crl.generate(@cert, @key).next_update.should == @crl.expiration
+    end
+
     it "should verify using the CA public_key" do
       @crl.generate(@cert, @key).verify(@key.public_key).should be_true
     end
