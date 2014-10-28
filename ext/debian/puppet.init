@@ -10,8 +10,8 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/puppet
-DAEMON_OPTS="agent"
-NAME=agent
+DAEMON_OPTS=""
+NAME="agent"
 DESC="puppet agent"
 PIDFILE="/var/run/puppet/${NAME}.pid"
 
