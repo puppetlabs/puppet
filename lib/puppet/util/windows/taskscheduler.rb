@@ -555,27 +555,6 @@ module Win32
       count
     end
 
-    # Returns a string that describes the current trigger at the specified
-    # index for the active task.
-    #
-    # Example: "At 7:14 AM every day, starting 4/11/2009"
-    #
-    def trigger_string(index)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
-      raise TypeError unless index.is_a?(Numeric)
-
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        @pITask.GetTriggerString(index, ptr)
-
-        ptr.read_com_memory_pointer do |str_ptr|
-          trigger = str_ptr.read_arbitrary_wide_string_up_to(256)
-        end
-      end
-
-      trigger
-    end
-
     # Deletes the trigger at the specified index.
     #
     def delete_trigger(index)
