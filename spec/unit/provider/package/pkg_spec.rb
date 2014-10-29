@@ -92,6 +92,21 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.known'))
         provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
       end
+
+      it "issues a warning when the certificate has expired" do
+        warning = "Certificate '/var/pkg/ssl/871b4ed0ade09926e6adf95f86bf17535f987684' for publisher 'solarisstudio', needed to access 'https://pkg.oracle.com/solarisstudio/release/', will expire in '29' days."
+        Puppet.expects(:warning).with("pkg warning: [\"#{warning}\"]")
+
+        described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.certificate_warning'))
+        provider.latest
+      end
+
+      it "doesn't issue a warning when the certificate hasn't expired" do
+        Puppet.expects(:warning).with(/pkg warning/).never
+
+        described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
+        provider.latest
+      end
     end
     context ":instances" do
       it "should correctly parse lines with preferred publisher" do
