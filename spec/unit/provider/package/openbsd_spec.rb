@@ -275,6 +275,40 @@ describe provider_class do
     end
   end
 
+  context "#get_full_name" do
+    it "should return the full unversioned package name when updating with a flavor" do
+      provider.resource[:ensure] = 'latest'
+      provider.resource[:flavor] = 'static'
+      provider.get_full_name.should == 'bash--static'
+    end
+
+    it "should return the full unversioned package name when updating without a flavor" do
+        provider.resource[:name] = 'puppet'
+        provider.resource[:ensure] = 'latest'
+        provider.get_full_name.should == 'puppet'
+    end
+
+    it "should use the ensure parameter if it is numeric" do
+      provider.resource[:name] = 'zsh'
+      provider.resource[:ensure] = '1.0'
+      provider.get_full_name.should == 'zsh-1.0'
+    end
+
+    it "should lookup the correct version" do
+      output = 'bash-3.1.17         GNU Bourne Again Shell'
+      provider.expects(:execpipe).with(%w{/bin/pkg_info -I bash}).yields(output)
+      provider.get_full_name.should == 'bash-3.1.17'
+    end
+
+    it "should lookup the correction version with flavors" do
+      provider.resource[:name] = 'fossil'
+      provider.resource[:flavor] = 'static'
+      output = 'fossil-1.29v0-static simple distributed software configuration management'
+      provider.expects(:execpipe).with(%w{/bin/pkg_info -I fossil}).yields(output)
+      provider.get_full_name.should == 'fossil-1.29v0-static'
+    end
+  end
+
   context "#get_version" do
     it "should return nil if execution fails" do
       provider.expects(:execpipe).raises(Puppet::ExecutionFailure, 'wawawa')
