@@ -35,7 +35,7 @@ master_opts = {
 with_puppet_running_on master, master_opts, testdir do
   # Run test on Agents
   step "Agent: agent --test"
-  on agents, puppet('agent', "-t --server #{master}")
+  on(agents, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0,2])
 
   # Create a new site.pp
   step "Master: create basic site.pp file"
