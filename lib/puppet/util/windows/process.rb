@@ -9,7 +9,12 @@ module Puppet::Util::Windows::Process
   WAIT_TIMEOUT = 0x102
 
   def execute(command, arguments, stdin, stdout, stderr)
-    Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
+    begin
+      Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
+    rescue SystemCallError => detail
+      raise Puppet::Util::Windows::Error.new("Unable to create a process with the command - `#{command}`", detail)
+    end
+
   end
   module_function :execute
 
