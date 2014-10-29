@@ -88,7 +88,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     # This map should probably be moved into a method.
     map = nil
 
-    if node
+    if node and environment
       map = clientmap(node, environment)
     else
       Puppet.notice "No client; expanding '#{path}' with local host"
