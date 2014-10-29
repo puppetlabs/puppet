@@ -95,7 +95,7 @@ module Puppet
       metadata && metadata.checksum
     end
 
-    # Look up (if necessary) and return remote content.
+    # Look up (if necessary) and return local content.
     def content
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
