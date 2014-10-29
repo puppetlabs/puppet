@@ -329,7 +329,7 @@ class Puppet::Pops::Parser::Lexer2
       emit(TOKEN_COMMA, before)
 
     when '['
-      if (before == 0 || scn.string[before-1,1] =~ /[[:blank:]\r\n]+/)
+      if (before == 0 || scn.string[locator.char_offset(before)-1,1] =~ /[[:blank:]\r\n]+/)
         emit(TOKEN_LISTSTART, before)
       else
         emit(TOKEN_LBRACK, before)
