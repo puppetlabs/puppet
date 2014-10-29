@@ -25,6 +25,33 @@ shared_examples_for "a normal interface method" do
   end
 end
 
+shared_examples_for "a destructive interface method" do
+  it "calls the method on the CA for each host specified if an array was provided" do
+    @ca.expects(@method).with("host1")
+    @ca.expects(@method).with("host2")
+
+    @applier = Puppet::SSL::CertificateAuthority::Interface.new(@method, :to => %w{host1 host2})
+
+    @applier.apply(@ca)
+  end
+
+  it "raises an error if :all was provided" do
+    @applier = Puppet::SSL::CertificateAuthority::Interface.new(@method, :to => :all)
+
+    expect {
+      @applier.apply(@ca)
+    }.to raise_error(ArgumentError, /Refusing to #{@method} all certs/)
+  end
+
+  it "raises an error if :signed was provided" do
+    @applier = Puppet::SSL::CertificateAuthority::Interface.new(@method, :to => :signed)
+
+    expect {
+      @applier.apply(@ca)
+    }.to raise_error(ArgumentError, /Refusing to #{@method} all signed certs/)
+  end
+end
+
 describe Puppet::SSL::CertificateAuthority::Interface do
   before do
     @class = Puppet::SSL::CertificateAuthority::Interface
@@ -120,12 +147,12 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
     describe ":destroy" do
       before { @method = :destroy }
-      it_should_behave_like "a normal interface method"
+      it_should_behave_like "a destructive interface method"
     end
 
     describe ":revoke" do
       before { @method = :revoke }
-      it_should_behave_like "a normal interface method"
+      it_should_behave_like "a destructive interface method"
     end
 
     describe ":sign" do

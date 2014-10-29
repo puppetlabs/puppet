@@ -5,7 +5,7 @@ module Puppet
       # CA.  Its job is to provide a CLI-like interface to the CA class.
       class Interface
         INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify, :fingerprint, :reinventory]
-
+        DESTRUCTIVE_METHODS = [:destroy, :revoke]
         SUBJECTLESS_METHODS = [:list, :reinventory]
 
         class InterfaceError < ArgumentError; end
@@ -16,6 +16,12 @@ module Puppet
         def apply(ca)
           unless subjects || SUBJECTLESS_METHODS.include?(method)
             raise ArgumentError, "You must provide hosts or --all when using #{method}"
+          end
+
+          destructive_subjects = [:signed, :all].include?(subjects)
+          if DESTRUCTIVE_METHODS.include?(method) && destructive_subjects
+            subject_text = (subjects == :all ? subjects : "all signed")
+            raise ArgumentError, "Refusing to #{method} #{subject_text} certs, provide an explicit list of certs to #{method}"
           end
 
           # if the interface implements the method, use it instead of the ca's method
