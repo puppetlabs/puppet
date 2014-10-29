@@ -6,10 +6,16 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
   include PuppetSpec::Files
 
+  around :each do |example|
+    Puppet.override(:environments => Puppet::Environments::Static.new) do
+      example.run
+    end
+  end
+
   before do
     # Wow that's a messy interface to the resource.
-    @environment = "myenv"
-    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false, :environment => @environment), :line => 0, :file => ''
+    @environment = Puppet::Node::Environment.remote("myenv")
+    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => Puppet::Resource::Catalog.new(nil, @environment), :line => 0, :file => ''
     @foobar = make_absolute("/foo/bar baz")
     @feebooz = make_absolute("/fee/booz baz")
 

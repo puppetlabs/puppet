@@ -70,6 +70,12 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
+  around :each do |example|
+    Puppet.override(:environments => Puppet::Environments::Static.new) do
+      example.run
+    end
+  end
+
   before do
     # stub this to not try to create state.yaml
     Puppet::Util::Storage.stubs(:store)
