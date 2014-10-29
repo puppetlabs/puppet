@@ -133,7 +133,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     #       the second select further down. But Solaris 11 comes with ruby 1.8.7
     #       which doesn't support select!, so do this as two selects.
     cert_warnings = lines.select { |line| line =~ /^Certificate/ }
-    if cert_warnings
+    unless cert_warnings.empty?
       Puppet.warning("pkg warning: #{cert_warnings}")
     end
 
