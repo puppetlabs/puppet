@@ -46,13 +46,25 @@ class Puppet::Pops::Parser::Parser
     [namespace, name].join('::').sub(/^::/, '')
   end
 
-  # Raises a Parse error.
-  def error(value, message, options = {})
+  # Raises a Parse error with location information. Information about file is always obtained from the
+  # lexer. Line and position is produced if the given semantic is a Positioned object and have been given an offset.
+  #
+  def error(semantic, message)
+    semantic = semantic.current() if semantic.is_a?(Puppet::Pops::Model::Factory)
+    # Adapt the model so it is possible to get location information.
+    # The model may not have been added to the source tree, so give it the lexer's locator
+    # directly instead of searching for the root Program where the locator is normally stored.
+    #
+    if semantic.is_a?(Puppet::Pops::Model::Positioned)
+      adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(semantic)
+      adapter.locator = @lexer.locator
+    else
+      adapter = nil
+    end
     except = Puppet::ParseError.new(message)
-    except.line = options[:line] || value[:line]
-    except.file = options[:file] || value[:file]
-    except.pos = options[:pos]   || value[:pos]
-
+    except.file = @lexer.locator.file
+    except.line = adapter.line if adapter
+    except.pos = adapter.pos if adapter
     raise except
   end
 
@@ -114,10 +126,9 @@ class Puppet::Pops::Parser::Parser
   end
 
   # Parses a String of pp DSL code.
-  # @todo make it possible to pass a given origin
   #
-  def parse_string(code)
-    @lexer.string = code
+  def parse_string(code, path = '')
+    @lexer.lex_string(code, path)
     _parse()
   end
 
