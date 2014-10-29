@@ -23,12 +23,14 @@ echo "Must provide the hostname: got '$1'"
 exit 1
 fi
 
+domain=${domain:-delivery.puppetlabs.net}
+
 if [ -z "$2" ]; then
 
   cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}.delivery.puppetlabs.net:
+  ${1}.${domain}:
     roles:
     - agent
     - master
@@ -51,14 +53,14 @@ else
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}.delivery.puppetlabs.net:
+  ${1}.${domain}:
     roles:
     - agent
     - dashboard
     - database
     - master
     platform: ${platform}
-  ${2}.delivery.puppetlabs.net:
+  ${2}.${domain}:
     roles:
     - agent
     platform: ${platform}
@@ -76,17 +78,17 @@ EOHOSTS
     cat > hosts-immediate.cfg << EOHOSTS
 ---
 HOSTS:
-  ${1}.delivery.puppetlabs.net:
+  ${1}.${domain}:
     roles:
     - master
     - dashboard
     - database
     platform: ${platform}
-  ${2}.delivery.puppetlabs.net:
+  ${2}.${domain}:
     roles:
     - agent
     platform: ${platform}
-  ${3}.delivery.puppetlabs.net:
+  ${3}.${domain}:
     roles:
     - agent
     platform: ${platform}
@@ -116,7 +118,8 @@ bundle exec beaker           \
   --root-keys \
   --helper lib/helper.rb \
   --preserve-hosts onfail \
-  --no-color
+  --no-color \
+  --no-validate
 
 RESULT=$?
 
