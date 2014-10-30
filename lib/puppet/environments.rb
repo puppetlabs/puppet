@@ -316,9 +316,30 @@ module Puppet::Environments
   class Cached < Combined
     INFINITY = 1.0 / 0.0
 
+    class DefaultCacheExpirationService
+      def created(env)
+      end
+
+      def expired?(env_name)
+        false
+      end
+
+      def evicted(env_name)
+      end
+    end
+
+    def self.cache_expiration_service_class=(klass)
+      @cache_expiration_service_class = klass
+    end
+
+    def self.cache_expiration_service_class
+      @cache_expiration_service_class || DefaultCacheExpirationService
+    end
+
     def initialize(*loaders)
       super
       @cache = {}
+      @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service_class.new
     end
 
     def get(name)
@@ -355,6 +376,7 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
+      @cache_expiration_service.created(env)
       ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
       case ttl
       when 0
@@ -369,8 +391,9 @@ module Puppet::Environments
     # Evicts the entry if it has expired
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
-      if (result = @cache[name]) && result.expired?
+      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
         @cache.delete(name)
+        @cache_expiration_service.evicted(name)
 
         Puppet.settings.clear_environment_settings(name)
       end
