@@ -3,14 +3,12 @@ end
 
 require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
-require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'puppet/util/profiler'
 require 'puppet/util/profiler/aggregate'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler
-  include Puppet::Network::Authentication
   include Puppet::Network::HTTP::Issues
 
   # These shouldn't be allowed to be set by clients
