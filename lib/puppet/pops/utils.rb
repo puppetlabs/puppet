@@ -30,7 +30,18 @@ module Puppet::Pops::Utils
           nil
         elsif match[5].to_s.length > 0
           # Use default radix (default is decimal == 10) for floats
-          match[1] == '-' ? [-Float(match[2]), 10] : [Float(match[2]), 10]
+          # Do not convert a value that is 0 raised to 10^somevalue to float - the value is always 0
+          # i.e. 0000.0e1, 0e1, 0.0000e1
+          if Integer(match[4]) == 0 && match[5] =~ /\A\.?0*[eE].*\z/
+            nil
+          else
+            fp_value = Float(match[2])
+            if fp_value != Puppet::Pops::Types::TypeCalculator::TheInfinity
+              match[1] == '-' ? [-fp_value, 10] : [fp_value, 10]
+            else
+              nil
+            end
+          end
         else
           # Set radix (default is decimal == 10)
           radix = 10
@@ -73,7 +84,12 @@ module Puppet::Pops::Utils
           if Integer(match[4]) == 0 && match[5] =~ /\A\.?0*[eE].*\z/
             nil
           else
-            match[1] == '-' ? -Float(match[2]) : Float(match[2])
+            fp_value = Float(match[2])
+            if fp_value != Puppet::Pops::Types::TypeCalculator::TheInfinity
+              match[1] == '-' ? -fp_value : fp_value
+            else
+              nil
+            end
           end
         else
           match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
