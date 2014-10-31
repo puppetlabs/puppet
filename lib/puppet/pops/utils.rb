@@ -68,7 +68,13 @@ module Puppet::Pops::Utils
         if !match
           nil
         elsif match[5].to_s.length > 0
-          match[1] == '-' ? -Float(match[2]) : Float(match[2])
+          # Do not convert a value that is 0 raised to 10^somevalue to float - the value is always 0
+          # i.e. 0000.0e1, 0e1, 0.0000e1
+          if Integer(match[4]) == 0 && match[5] =~ /\A\.?0*[eE].*\z/
+            nil
+          else
+            match[1] == '-' ? -Float(match[2]) : Float(match[2])
+          end
         else
           match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
         end
