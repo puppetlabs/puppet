@@ -216,6 +216,11 @@ class Puppet::Configurer
         Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
         report.environment = @environment
+
+        query_options = get_facts(options)
+        query_options ||= {}
+        query_options[:transaction_uuid] = @transaction_uuid
+
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
       end
