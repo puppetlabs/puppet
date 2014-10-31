@@ -19,12 +19,12 @@ describe 'pops utils' do
       expect(Puppet::Pops::Utils.to_n_with_radix("0.0")).to eq([0.0, 10])
     end
 
-    it 'should convert "0.01e1" to 0.0' do
+    it 'should convert "0.01e1" to 0.01e1' do
       expect(Puppet::Pops::Utils.to_n("0.01e1")).to eq(0.01e1)
       expect(Puppet::Pops::Utils.to_n("0.01E1")).to eq(0.01e1)
     end
 
-    it 'should convert "0.01e1" to 0.0 with radix' do
+    it 'should convert "0.01e1" to 0.01e1 with radix' do
       expect(Puppet::Pops::Utils.to_n_with_radix("0.01e1")).to eq([0.01e1, 10])
       expect(Puppet::Pops::Utils.to_n_with_radix("0.01E1")).to eq([0.01e1, 10])
     end
