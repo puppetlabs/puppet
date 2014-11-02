@@ -41,7 +41,7 @@ module Puppet
       end
       # queue an empty (ie deny all) right for every other path
       # actually this is not strictly necessary as the rights system
-      # denies not explicitely allowed paths
+      # denies not explicitly allowed paths
       unless rights["/"]
         rights.newright("/").restrict_authenticated(:any)
       end

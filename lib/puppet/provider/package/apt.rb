@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
       preseed response
     else
-      self.info "No responsefile specified or non existant, not preseeding anything"
+      self.info "No responsefile specified or non existent, not preseeding anything"
     end
   end
 

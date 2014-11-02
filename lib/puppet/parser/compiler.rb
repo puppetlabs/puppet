@@ -535,7 +535,7 @@ class Puppet::Parser::Compiler
     @topscope = Puppet::Parser::Scope.new(self)
 
     # Need to compute overrides here, and remember them, because we are about to
-    # enter the magic zone of known_resource_types and intial import.
+    # enter the magic zone of known_resource_types and initial import.
     # Expensive entries in the context are bound lazily.
     @context_overrides = context_overrides()
 

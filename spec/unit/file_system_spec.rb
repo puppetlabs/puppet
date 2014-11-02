@@ -45,7 +45,7 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
-    it "times out if the lock cannot be aquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
+    it "times out if the lock cannot be acquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
       file = tmpfile("file_to_update")
 
       child = spawn_process_that_locks(file)
@@ -153,7 +153,7 @@ describe "Puppet::FileSystem" do
       Puppet::FileSystem.file?(file).should be_true
     end
 
-    it "should return false for exist? on a non-existant file" do
+    it "should return false for exist? on a non-existent file" do
       Puppet::FileSystem.exist?(missing_file).should be_false
     end
 

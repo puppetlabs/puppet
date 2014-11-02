@@ -54,7 +54,7 @@ describe Puppet::Settings::ValueTranslator do
       translator["'a string'"].should == "a string"
     end
 
-    it "does not strip preceeding whitespace" do
+    it "does not strip preceding whitespace" do
       translator[" \ta string"].should == " \ta string"
     end
 
@@ -62,7 +62,7 @@ describe Puppet::Settings::ValueTranslator do
       translator["a string\t "].should == "a string"
     end
 
-    it "leaves leading quote that is preceeded by whitespace" do
+    it "leaves leading quote that is preceded by whitespace" do
       translator[" 'a string'"].should == " 'a string"
     end
 

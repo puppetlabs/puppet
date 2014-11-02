@@ -21,7 +21,7 @@ describe "puppet module search" do
     before { Puppet::Util::Terminal.stubs(:width).returns(100) }
 
     it 'should output nothing when receiving an empty dataset' do
-      subject.render({:answers => [], :result => :sucess}, ['apache', {}]).should == "No results found for 'apache'."
+      subject.render({:answers => [], :result => :success}, ['apache', {}]).should == "No results found for 'apache'."
     end
 
     it 'should return error and exit when error returned' do

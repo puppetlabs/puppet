@@ -473,7 +473,7 @@ describe Puppet::Module, "when finding matching manifests" do
     @mod.match_manifests(@pq_glob_with_extension).should == %w{a b}
   end
 
-  it "should match the glob pattern plus '.{pp,rb}' if no extention is specified" do
+  it "should match the glob pattern plus '.{pp,rb}' if no extension is specified" do
     Dir.expects(:glob).with("/a/manifests/yay/foo.{pp,rb}").returns(%w{yay})
 
     @mod.match_manifests("yay/foo").should == %w{yay}

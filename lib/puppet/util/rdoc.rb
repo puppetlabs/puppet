@@ -61,7 +61,7 @@ module Puppet::Util::RDoc
     end
   end
 
-  # Ouputs to the console the documentation
+  # Outputs to the console the documentation
   # of a manifest
   def output(file, ast)
     astobj = []

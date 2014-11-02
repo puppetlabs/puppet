@@ -61,7 +61,7 @@ class Puppet::Interface::ActionBuilder
   # code to do so.  One or more strings are given, in the style of
   # OptionParser (see example). These strings are parsed to derive a
   # name for the option. Any `-` characters within the option name (ie
-  # excluding the intial `-` or `--` for an option) will be translated
+  # excluding the initial `-` or `--` for an option) will be translated
   # to `_`.The first long option will be used as the name, and the rest
   # are retained as aliases. The original form of the option is used
   # when invoking the face, the translated form is used internally.

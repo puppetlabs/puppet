@@ -133,7 +133,7 @@ If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hos
 
 to clean them up sooner and free resources.
 
-There also may be scenarios where you want to specify the host(s) to relase. E.g. you may want to relase a subset of the hosts you've created. Or, if a test run terminates early, ci:release_hosts may not be able to derive the name of the vm to delete. In such cases you can specify host(s) to be deleted using the HOST_NAMES environment variable. E.g.
+There also may be scenarios where you want to specify the host(s) to release. E.g. you may want to release a subset of the hosts you've created. Or, if a test run terminates early, ci:release_hosts may not be able to derive the name of the vm to delete. In such cases you can specify host(s) to be deleted using the HOST_NAMES environment variable. E.g.
 
     HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:release_hosts
     HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:release_hosts
@@ -188,7 +188,7 @@ Since we have only provided a CentOS box, we don't have anywhere to run windows 
 That means we want to pass beaker a --tests argument that contains every directory and file in the `tests` directory besides the one called `windows`.
 We could pass this option on the command line, but it will be gigantic, so instead let's create a `local_options.rb` file that beaker will automatically read in.
 This file should contain a ruby hash of beaker's command-line flags to the corresponding flag arguments.
-Our hash will only contain the `tests` key, and its value will be a comma-seperated list of the other files and directories in `tests`.
+Our hash will only contain the `tests` key, and its value will be a comma-separated list of the other files and directories in `tests`.
 Here's an easy way to generate this file:
 ```sh
 echo "{tests: \"$(echo tests/* | sed -e 's| *tests/windows *||' -e 's/ /,/g')\"}" > local_options.rb"
@@ -236,4 +236,4 @@ After the testing finishes, you'll either see this line
 ```
 systest completed successfully, thanks.
 ```
-near the end of the output, indicating that all tests completed succesfully, or you'll see the end of a stack trace, indicating failed tests further up.
+near the end of the output, indicating that all tests completed successfully, or you'll see the end of a stack trace, indicating failed tests further up.

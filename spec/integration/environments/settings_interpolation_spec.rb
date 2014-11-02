@@ -65,7 +65,7 @@ describe "interpolating $environment" do
 
       it_behaves_like "a setting that does not interpolate $environment"
 
-      it "logs a single warning for multiple instaces of $environment in the setting" do
+      it "logs a single warning for multiple instances of $environment in the setting" do
         set_puppet_conf(confdir, <<-EOF)
           environmentpath=$confdir/environments
           #{setting}=#{value}

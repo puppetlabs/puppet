@@ -29,7 +29,7 @@ describe Puppet::Util::Watcher do
       watcher
     end
 
-    it "is intially unchanged" do
+    it "is initially unchanged" do
       expect(after_reading_the_sequence(ctime(20))).to_not be_changed
     end
 

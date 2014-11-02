@@ -483,7 +483,7 @@ module Puppet::Pops::Model
   class EppExpression < Expression
     # EPP can be specified without giving any parameter specification.
     # However, the parameters of the lambda in that case are the empty
-    # array, which is the same as when the parameters are explicity
+    # array, which is the same as when the parameters are explicitly
     # specified as empty. This attribute tracks that difference.
     has_attr 'parameters_specified', Boolean
     contains_one_uni 'body', Expression

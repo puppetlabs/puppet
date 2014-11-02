@@ -151,7 +151,7 @@ describe Puppet::Network::AuthConfig do
     end
 
     it "should deny non-matching host" do
-      add_rule("allow inexistant")
+      add_rule("allow inexistent")
 
       @auth.should_not allow(request)
     end

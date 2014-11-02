@@ -204,7 +204,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro') }.to_not raise_error
       end
 
-      it "should support muliple options as a comma separated list" do
+      it "should support multiple options as a comma separated list" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro,rsize=4096') }.to_not raise_error
       end
 

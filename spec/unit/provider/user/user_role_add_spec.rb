@@ -185,7 +185,7 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
   end
 
   describe "#build_keys_cmd" do
-    it "should build cmd array with keypairs seperated by -K ending with user" do
+    it "should build cmd array with keypairs separated by -K ending with user" do
       provider.build_keys_cmd({"foo" => "bar", "baz" => "boo"}).should.eql? ["-K", "foo=bar", "-K", "baz=boo"]
     end
   end

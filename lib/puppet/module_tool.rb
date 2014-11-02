@@ -136,7 +136,7 @@ module Puppet
     # Given a hash of options, we should discover or create a
     # {Puppet::Node::Environment} instance that reflects the provided options.
     #
-    # Generally speaking, the `:modulepath` parameter should supercede all
+    # Generally speaking, the `:modulepath` parameter should supersede all
     # others, the `:environment` parameter should follow after that, and we
     # should default to Puppet's current environment.
     #

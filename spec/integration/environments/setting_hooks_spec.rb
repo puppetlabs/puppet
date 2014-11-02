@@ -11,7 +11,7 @@ describe "setting hooks" do
       FileUtils.mkdir_p(productiondir)
     end
 
-    it "accesses correct directory environment settings after intializing a setting with an on_write hook" do
+    it "accesses correct directory environment settings after initializing a setting with an on_write hook" do
       expect(Puppet.settings.setting(:certname).call_hook).to eq(:on_write_only) 
 
       File.open(File.join(confdir, "puppet.conf"), "w") do |f|

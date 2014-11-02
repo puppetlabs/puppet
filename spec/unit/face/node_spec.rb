@@ -243,7 +243,7 @@ describe Puppet::Face[:node, '0.0.1'] do
             end
           end
 
-          it "should not unexport the resource of an unkown type" do
+          it "should not unexport the resource of an unknown type" do
             Puppet::Type.stubs(:type).returns(nil)
             Puppet::Resource::TypeCollection.any_instance.expects(:find_definition).with('', "File").returns(nil)
             Puppet::Rails::ParamName.expects(:find_or_create_by_name).never

@@ -312,7 +312,7 @@ class Puppet::Pops::Binder::Binder
     def bind_LayeredBindings(o)
       o.layers.each do |layer|
         processor = LayerProcessor.new(binder, key_factory)
-        # All except abstract (==error) are transfered to injector_entries
+        # All except abstract (==error) are transferred to injector_entries
 
         processor.bind(layer).each do |k, v|
           entry = binder.injector_entries[k]
