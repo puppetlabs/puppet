@@ -50,6 +50,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.create
     end
 
+    it "should use -G to set groups" do
+      resource[:ensure] = :present
+      resource[:groups] = ['group1', 'group2']
+      provider.expects(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', 'myuser'], kind_of(Hash))
+      provider.create
+    end
+
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
       provider.expects(:execute).with(includes('-o'), kind_of(Hash))
