@@ -29,14 +29,6 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     resource_type = scope.find_resource_type(type)
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    form =
-      case o.query
-      when Puppet::Pops::Model::VirtualQuery
-        :virtual
-      when Puppet::Pops::Model::ExportedQuery
-        :exported
-      end
-
     if o.query.expr.nil? || o.query.expr.is_a?(Puppet::Pops::Model::Nop)
       code = nil
       match = nil
@@ -44,9 +36,6 @@ class Puppet::Pops::Evaluator::CollectorTransformer
       code = query(o.query.expr, scope)
       match = match(o.query.expr, scope)
     end
-
-    newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, match, code, form)
-    scope.compiler.add_collection(newcoll)
 
     adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
     line_num = adapter.line
@@ -56,14 +45,23 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     # overrides if any
     # Evaluate all of the specified params.
     if !o.operations.empty?
-      newcoll.add_override(
+      overrides = {
         :parameters => o.operations.map{ |x| to_3x_param(x).evaluate(scope)},
         :file       => file_path,
         :line       => [line_num, position],
         :source     => scope.source,
         :scope      => scope
-      )
+      }
     end
+
+    case o.query
+    when Puppet::Pops::Model::VirtualQuery
+      newcoll = Puppet::Pops::Evaluator::Collectors::CatalogCollector.new(scope, resource_type.name, code, overrides)
+    when Puppet::Pops::Model::ExportedQuery
+      newcoll = Puppet::Pops::Evaluator::Collectors::ExportedCollector.new(scope, resource_type.name, match, code, overrides)
+    end
+
+    scope.compiler.add_collection(newcoll)
 
     newcoll
   end

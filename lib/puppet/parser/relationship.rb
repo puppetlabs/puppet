@@ -4,13 +4,28 @@ class Puppet::Parser::Relationship
   PARAM_MAP = {:relationship => :before, :subscription => :notify}
 
   def arrayify(resources)
-    case resources
-    when Puppet::Parser::Collector
-      resources.collected.values
-    when Array
-      resources
+    # This if statement is needed because the 3x parser cannot load
+    # Puppet::Pops. This logic can be removed for 4.0 when the 3x AST
+    # is removed (when Pops is always used).
+    if !(Puppet[:parser] == 'future')
+      case resources
+      when Puppet::Parser::Collector
+        resources.collected.values
+      when Array
+        resources
+      else
+        [resources]
+      end
     else
-      [resources]
+      require 'puppet/pops'
+      case resources
+      when Puppet::Pops::Evaluator::Collectors::AbstractCollector
+        resources.collected.values
+      when Array
+        resources
+      else
+        [resources]
+      end
     end
   end
 
