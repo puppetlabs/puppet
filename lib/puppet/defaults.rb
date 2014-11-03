@@ -1221,13 +1221,6 @@ EOT
         end
       end
     },
-    :localconfig => {
-      :default => "$statedir/localconfig",
-      :type => :file,
-      :owner => "root",
-      :mode => "0660",
-      :desc => "Where puppet agent caches the local configuration.  An
-        extension indicating the cache format is added automatically."},
     :statefile => {
       :default => "$statedir/state.yaml",
       :type => :file,
