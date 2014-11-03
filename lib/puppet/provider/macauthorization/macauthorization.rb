@@ -10,20 +10,8 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   "
 
   commands :security => "/usr/bin/security"
-  commands :sw_vers => "/usr/bin/sw_vers"
 
   confine :operatingsystem => :darwin
-
-  # This should be confined based on macosx_productversion
-  # but puppet resource doesn't make the facts available and
-  # that interface is heavily used with this provider.
-  if Puppet::FileSystem.exist?("/usr/bin/sw_vers")
-    product_version = sw_vers "-productVersion"
-
-    confine :true => unless /^10\.[0-4]/.match(product_version)
-      true
-    end
-  end
 
   defaultfor :operatingsystem => :darwin
 

@@ -37,48 +37,6 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
   end
 
-  describe "when checking whether the service is enabled on OS X 10.5" do
-    it "should return true in if the job plist says disabled is false" do
-      subject.expects(:has_macosx_plist_overrides?).returns(false)
-      subject.expects(:plist_from_label).with(joblabel).returns(["foo", {"Disabled" => false}])
-      subject.enabled?.should == :true
-    end
-    it "should return true in if the job plist has no disabled key" do
-      subject.expects(:has_macosx_plist_overrides?).returns(false)
-      subject.expects(:plist_from_label).returns(["foo", {}])
-      subject.enabled?.should == :true
-    end
-    it "should return false in if the job plist says disabled is true" do
-      subject.expects(:has_macosx_plist_overrides?).returns(false)
-      subject.expects(:plist_from_label).returns(["foo", {"Disabled" => true}])
-      subject.enabled?.should == :false
-    end
-  end
-
-  describe "when checking whether the service is enabled on OS X 10.6" do
-    it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
-      provider.expects(:get_macosx_version_major).returns("10.6")
-      subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
-      provider.expects(:read_plist).returns({joblabel => {"Disabled" => false}})
-      FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.enabled?.should == :true
-    end
-    it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
-      provider.expects(:get_macosx_version_major).returns("10.6")
-      subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
-      provider.expects(:read_plist).returns({joblabel => {"Disabled" => true}})
-      FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.enabled?.should == :false
-    end
-    it "should return true if the job plist and the global overrides have no disabled keys" do
-      provider.expects(:get_macosx_version_major).returns("10.6")
-      subject.expects(:plist_from_label).returns([joblabel, {}])
-      provider.expects(:read_plist).returns({})
-      FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.enabled?.should == :true
-    end
-  end
-
   describe "when starting the service" do
     it "should call any explicit 'start' command" do
       resource[:start] = "/bin/false"
@@ -189,20 +147,18 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
   end
 
-  describe "when enabling the service on OS X 10.6" do
+  describe "when enabling the service" do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = true
-      provider.expects(:get_macosx_version_major).returns("10.6")
       provider.expects(:read_plist).returns({})
       Plist::Emit.expects(:save_plist).once
       subject.enable
     end
   end
 
-  describe "when disabling the service on OS X 10.6" do
+  describe "when disabling the service" do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = false
-      provider.stubs(:get_macosx_version_major).returns("10.6")
       provider.stubs(:read_plist).returns({})
       Plist::Emit.expects(:save_plist).once
       subject.enable

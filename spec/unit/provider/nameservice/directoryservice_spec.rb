@@ -37,16 +37,7 @@ require 'spec_helper'
 end
 
 describe 'DirectoryService.single_report' do
-  it 'should fail on OS X < 10.5' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
-
-    expect {
-      Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
-    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
-  end
-
-  it 'should use plist data on >= 10.5' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.5")
+  it 'should use plist data' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
     Puppet::Provider::NameService::DirectoryService.stubs(:list_all_present).returns(
       ['root', 'user1', 'user2', 'resource_name']
@@ -60,16 +51,7 @@ describe 'DirectoryService.single_report' do
 end
 
 describe 'DirectoryService.get_exec_preamble' do
-  it 'should fail on OS X < 10.5' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
-
-    expect {
-      Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list')
-    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
-  end
-
-  it 'should use plist data on >= 10.5' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.5")
+  it 'should use plist data' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
 
     Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list').should include("-plist")
@@ -104,11 +86,7 @@ describe 'DirectoryService password behavior' do
     Puppet::Provider::NameService::DirectoryService
   end
 
-  before :each do
-    subject.expects(:get_macosx_version_major).returns("10.7")
-  end
-
-  it 'should execute convert_binary_to_xml once when getting the password on >= 10.7' do
+  it 'should execute convert_binary_to_xml once when getting the password' do
     subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
     Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
     Plist.expects(:parse_xml).returns(shadow_hash_data)
@@ -117,7 +95,7 @@ describe 'DirectoryService password behavior' do
     subject.get_password('uid', 'jeff')
   end
 
-  it 'should fail if a salted-SHA512 password hash is not passed in >= 10.7' do
+  it 'should fail if a salted-SHA512 password hash is not passed in' do
     expect {
       subject.set_password('jeff', 'uid', 'badpassword')
     }.to raise_error(RuntimeError, /OS X 10.7 requires a Salted SHA512 hash password of 136 characters./)
