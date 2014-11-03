@@ -47,21 +47,12 @@ class Puppet::Provider::Exec < Puppet::Provider
           end
         end
 
-        if Puppet.features.microsoft_windows?
-          exec_user = resource[:user]
-        # Etc.getpwuid() returns nil on Windows
-        elsif resource.current_username == resource[:user]
-          exec_user = nil
-        else
-          exec_user = resource[:user]
-        end
-
         Timeout::timeout(resource[:timeout]) do
           # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
           # default/system locale will be respected.  Callers may override this behavior by setting locale-related
           # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
           output = Puppet::Util::Execution.execute(command, :failonfail => false, :combine => true,
-                                  :uid => exec_user, :gid => resource[:group],
+                                  :uid => resource[:user], :gid => resource[:group],
                                   :override_locale => false,
                                   :custom_environment => environment)
         end
