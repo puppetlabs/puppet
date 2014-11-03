@@ -7,6 +7,15 @@ Puppet::Type.newtype(:resources) do
     so you can purge umanaged resources but set `noop` to true so the
     purging is only logged and does not actually happen."
 
+  # Make sure all types are loaded first
+  Puppet::Type.loadall
+  Puppet::Type.eachtype do |type|
+    resources_params = type.resources_params || {}
+    resources_params.each do |n, h|
+      b = h[:block]
+      newparam(n, h[:options], &b) unless parameters.include? n
+    end
+  end
 
   newparam(:name) do
     desc "The name of the type to be managed."
@@ -37,61 +46,12 @@ Puppet::Type.newtype(:resources) do
     end
   end
 
-  newparam(:unless_system_user) do
-    desc "This keeps system users from being purged.  By default, it
-      does not purge users whose UIDs are less than the minimum UID for the system (typically 500 or 1000), but you can specify
-      a different UID as the inclusive limit."
-
-    newvalues(:true, :false, /^\d+$/)
-
-    munge do |value|
-      case value
-      when /^\d+/
-        Integer(value)
-      when :true, true
-        @resource.class.system_users_max_uid
-      when :false, false
-        false
-      when Integer; value
-      else
-        raise ArgumentError, "Invalid value #{value.inspect}"
-      end
-    end
-
-    defaultto {
-      if @resource[:name] == "user"
-        @resource.class.system_users_max_uid
-      else
-        nil
-      end
-    }
-  end
-
-  newparam(:unless_uid) do
-    desc 'This keeps specific uids or ranges of uids from being purged when purge is true.
-      Accepts integers, integer strings, and arrays of integers or integer strings.
-      To specify a range of uids, consider using the range() function from stdlib.'
-
-    munge do |value|
-      value = [value] unless value.is_a? Array
-      value.flatten.collect do |v|
-        case v
-          when Integer
-            v
-          when String
-            Integer(v)
-          else
-            raise ArgumentError, "Invalid value #{v.inspect}."
-        end
-      end
-    end
-  end
-
   def check(resource)
+    t = Puppet::Type.type(self[:name].to_s)
     @checkmethod ||= "#{self[:name]}_check"
-    @hascheck ||= respond_to?(@checkmethod)
+    @hascheck ||= t.respond_to?(@checkmethod)
     if @hascheck
-      return send(@checkmethod, resource)
+      return t.send(@checkmethod, resource, self)
     else
       return true
     end
@@ -134,47 +94,4 @@ Puppet::Type.newtype(:resources) do
     @resource_type
   end
 
-  # Make sure we don't purge users with specific uids
-  def user_check(resource)
-    return true unless self[:name] == "user"
-    return true unless self[:unless_system_user]
-    resource[:audit] = :uid
-    current_values = resource.retrieve_resource
-    current_uid = current_values[resource.property(:uid)]
-    unless_uids = self[:unless_uid]
-
-    return false if system_users.include?(resource[:name])
-    return false if unless_uids && unless_uids.include?(current_uid)
-
-    current_uid > self[:unless_system_user]
-  end
-
-  def system_users
-    %w{root nobody bin noaccess daemon sys}
-  end
-
-  def self.system_users_max_uid
-    return @system_users_max_uid if @system_users_max_uid
-
-    # First try to read the minimum user id from login.defs
-    if Puppet::FileSystem.exist?('/etc/login.defs')
-      @system_users_max_uid = Puppet::FileSystem.each_line '/etc/login.defs' do |line|
-        break $1.to_i - 1 if line =~ /^\s*UID_MIN\s+(\d+)(\s*#.*)?$/
-      end
-    end
-
-    # Otherwise, use a sensible default based on the OS family
-    @system_users_max_uid ||= case Facter.value(:osfamily)
-      when 'OpenBSD', 'FreeBSD'
-        999
-      else
-        499
-    end
-
-    @system_users_max_uid
-  end
-
-  def self.reset_system_users_max_uid!
-    @system_users_max_uid = nil
-  end
 end
