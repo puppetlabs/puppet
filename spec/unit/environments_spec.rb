@@ -360,6 +360,59 @@ config_version=$vardir/random/scripts
           end
         end
       end
+
+      context "custom cache expiration service" do
+        let(:envs_created) { Set.new }
+        let(:envs_expired) { Set.new }
+        let(:envs_evicted) { Set.new }
+
+        it "should support registering a custom cache expiration service" do
+
+          class CustomExpirationService
+            def initialize(envs_created, envs_expired, envs_evicted)
+              @envs_created = envs_created
+              @envs_expired = envs_expired
+              @envs_evicted = envs_evicted
+            end
+
+            def created(env)
+              @envs_created << env.name
+            end
+            def expired?(env_name)
+              @envs_expired << env_name
+              true
+            end
+            def evicted(env_name)
+              @envs_evicted << env_name
+            end
+          end
+
+          Puppet[:environment_timeout] = "unlimited"
+          directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+              FS::MemoryFile.a_directory("static1", [
+                  FS::MemoryFile.a_missing_file("environment.conf"),
+              ]),
+          ])
+
+          loader_from(:filesystem => [directory_tree],
+                      :directory => directory_tree) do |loader|
+            begin
+              orig_svc = Puppet::Environments::Cached.cache_expiration_service
+              Puppet::Environments::Cached.cache_expiration_service =
+                  CustomExpirationService.new(envs_created, envs_expired, envs_evicted)
+              cached = Puppet::Environments::Cached.new(loader)
+              cached.get(:static1)
+              cached.get(:static1)
+
+              expect(envs_created.include?(:static1)).to eq(true)
+              expect(envs_expired.include?(:static1)).to eq(true)
+              expect(envs_evicted.include?(:static1)).to eq(true)
+            ensure
+              Puppet::Environments::Cached.cache_expiration_service = orig_svc
+            end
+          end
+        end
+      end
     end
   end
 

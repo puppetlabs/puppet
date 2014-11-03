@@ -14,6 +14,26 @@ module Puppet::Pops::Utils
     end
   end
 
+  # Convert a match from Puppet::Pops::Patterns::NUMERIC to floating point value if
+  # possible
+  def self.match_to_fp(match)
+    if match[5].to_s.length > 0
+      # Use default radix (default is decimal == 10) for floats
+      # Do not convert a value that is 0 raised to 10^somevalue to float - the value is always 0
+      # i.e. 0000.0e1, 0e1, 0.0000e1
+      if Integer(match[4]) == 0 && match[5] =~ /\A\.?0*[eE].*\z/
+        nil
+      else
+        fp_value = Float(match[2])
+        if fp_value != Puppet::Pops::Types::TypeCalculator::TheInfinity
+          match[1] == '-' ? -fp_value : fp_value
+        else
+          nil
+        end
+      end
+    end
+  end
+
   # To Numeric with radix, or nil if not a number.
   # If the value is already Numeric it is returned verbatim with a radix of 10.
   # @param o [String, Number] a string containing a number in octal, hex, integer (decimal) or floating point form
@@ -29,8 +49,8 @@ module Puppet::Pops::Utils
         if !match
           nil
         elsif match[5].to_s.length > 0
-          # Use default radix (default is decimal == 10) for floats
-          match[1] == '-' ? [-Float(match[2]), 10] : [Float(match[2]), 10]
+          fp_value = match_to_fp(match)
+          fp_value.nil? ? nil : [fp_value, 10]
         else
           # Set radix (default is decimal == 10)
           radix = 10
@@ -68,7 +88,7 @@ module Puppet::Pops::Utils
         if !match
           nil
         elsif match[5].to_s.length > 0
-          match[1] == '-' ? -Float(match[2]) : Float(match[2])
+          match_to_fp(match)
         else
           match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
         end

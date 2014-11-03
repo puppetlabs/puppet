@@ -339,10 +339,10 @@ class Application
     # has not been made from the command line.
     #
     configured_environment_name = Puppet[:environment]
-    if self.class.run_mode.name != :agent
-      configured_environment = Puppet.lookup(:environments).get!(configured_environment_name)
-    else
+    if self.class.run_mode.name == :agent
       configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
+    else
+      configured_environment = Puppet.lookup(:environments).get!(configured_environment_name)
     end
     configured_environment = configured_environment.override_from_commandline(Puppet.settings)
 

@@ -351,16 +351,32 @@ describe 'Lexer2' do
     end
   end
 
-  it 'should support unicode characters' do
-    code = <<-CODE
-    "x\\u2713y"
-    CODE
-    if Puppet::Pops::Parser::Locator::RUBYVER < Puppet::Pops::Parser::Locator::RUBY_1_9_3
-      # Ruby 1.8.7 reports the multibyte char as several octal characters
-      tokens_scanned_from(code).should match_tokens2([:STRING, "x\342\234\223y"])
-    else
-      # >= Ruby 1.9.3 reports \u
-      tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
+  context 'when dealing with multi byte characters' do
+    it 'should support unicode characters' do
+      code = <<-CODE
+      "x\\u2713y"
+      CODE
+      if Puppet::Pops::Parser::Locator::RUBYVER < Puppet::Pops::Parser::Locator::RUBY_1_9_3
+        # Ruby 1.8.7 reports the multibyte char as several octal characters
+        tokens_scanned_from(code).should match_tokens2([:STRING, "x\342\234\223y"])
+      else
+        # >= Ruby 1.9.3 reports \u
+        tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
+      end
+    end
+
+    it 'should not select LISTSTART token when preceded by multibyte chars' do
+      # This test is sensitive to the number of multibyte characters and position of the expressions
+      # within the string - it is designed to fail if the position is calculated on the byte offset of the '['
+      # instead of the char offset.
+      #
+      code = "$a = '\u00f6\u00fc\u00fc\u00fc\u00fc\u00e4\u00e4\u00f6\u00e4'\nnotify {'x': message => B['dkda'] }\n"
+      tokens_scanned_from(code).should match_tokens2(
+        :VARIABLE, :EQUALS, :STRING,
+        [:NAME, 'notify'], :LBRACE,
+        [:STRING, 'x'], :COLON, 
+        :NAME, :FARROW, :CLASSREF, :LBRACK, :STRING, :RBRACK,
+        :RBRACE)
     end
   end
 

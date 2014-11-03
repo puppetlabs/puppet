@@ -3,6 +3,29 @@ test_name "Report submission"
 if master.is_pe?
   require "time"
 
+  def puppetdb
+    puppetdb = hosts.detect { |h| h['roles'].include?('database') }
+  end
+
+  def sleep_until_queue_empty(timeout=60)
+    metric = "org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands"
+    queue_size = nil
+
+    begin
+      Timeout.timeout(timeout) do
+        until queue_size == 0
+          result = on(puppetdb, %Q{curl http://localhost:8080/v3/metrics/mbean/#{CGI.escape(metric)}})
+          if md = /"?QueueSize"?\s*:\s*(\d+)/.match(result.stdout.chomp)
+            queue_size = Integer(md[1])
+          end
+          sleep 1
+        end
+      end
+    rescue Timeout::Error => e
+      raise "Queue took longer than allowed #{timeout} seconds to empty"
+    end
+  end
+
   def query_last_report_time_on(agent)
     time_query_script = <<-EOS
       require "net/http"
@@ -14,7 +37,6 @@ if master.is_pe?
       json = JSON.load(result)
       puts json.first["receive-time"]
     EOS
-    puppetdb = hosts.detect { |h| h['roles'].include?('database') }
     on(puppetdb, "#{master[:puppetbindir]}/ruby -e '#{time_query_script}'").output.chomp
   end
 
@@ -27,6 +49,8 @@ if master.is_pe?
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
       on(agent, puppet('agent', "-t --server #{master}"))
+
+      sleep_until_queue_empty
 
       current_time = Time.parse(query_last_report_time_on(agent))
       last_time = Time.parse(last_times[agent])

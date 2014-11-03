@@ -30,4 +30,18 @@ describe Puppet::Pops::Parser::Parser do
     expect(adapter.offset).to eq(10)
     expect(adapter.length).to eq(0)
   end
+
+  it "should raise an error with position information when error is raised from within parser" do
+    parser = Puppet::Pops::Parser::Parser.new()
+    the_error = nil
+    begin
+      parser.parse_string("File [1] { }", 'fakefile.pp')
+    rescue Puppet::ParseError => e
+      the_error = e
+    end
+    expect(the_error).to be_a(Puppet::ParseError)
+    expect(the_error.file).to eq('fakefile.pp')
+    expect(the_error.line).to eq(1)
+    expect(the_error.pos).to eq(6)
+  end
 end
