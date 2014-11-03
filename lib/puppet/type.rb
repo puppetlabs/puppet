@@ -1423,8 +1423,7 @@ class Type
 
       Tags are useful for things like applying a subset of a host's configuration
       with [the `tags` setting](/references/latest/configuration.html#tags)
-      (e.g. `puppet agent --test --tags bootstrap`) or filtering alerts with
-      [the `tagmail` report processor](http://docs.puppetlabs.com/references/latest/report.html#tagmail)."
+      (e.g. `puppet agent --test --tags bootstrap`)."
 
     munge do |tags|
       tags = [tags] unless tags.is_a? Array
