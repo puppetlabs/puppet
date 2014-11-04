@@ -13,8 +13,8 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     expect(Puppet::FileBucket::File.default_format).to eq(:s)
   end
 
-  it "accepts s and pson" do
-    expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
+  it "accepts s" do
+    expect(Puppet::FileBucket::File.supported_formats).to include(:s)
   end
 
   describe "making round trips through network formats" do
@@ -22,12 +22,6 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
       it "can make a round trip through `s`" do
         file = Puppet::FileBucket::File.new(plaintext)
         tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
-        expect(tripped.contents).to eq(plaintext)
-      end
-
-      it "can make a round trip through `pson`" do
-        file = Puppet::FileBucket::File.new(plaintext)
-        tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
         expect(tripped.contents).to eq(plaintext)
       end
     end
@@ -62,15 +56,5 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     it "should have a :save instance method" do
       Puppet::FileBucket::File.indirection.should respond_to(:save)
     end
-  end
-
-  it "should convert the contents to PSON" do
-    Puppet.expects(:deprecation_warning).with('Serializing Puppet::FileBucket::File objects to pson is deprecated.')
-    Puppet::FileBucket::File.new("file contents").to_pson.should == '{"contents":"file contents"}'
-  end
-
-  it "should load from PSON" do
-    Puppet.expects(:deprecation_warning).with('Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.')
-    Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
   end
 end
