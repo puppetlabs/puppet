@@ -1,5 +1,7 @@
 begin
   require 'beaker/dsl/install_utils'
+  require 'puppet/acceptance/git_utils'
+  extend Puppet::Acceptance::GitUtils
 end
 
 test_name "Install packages and repositories on target machines..." do
@@ -11,13 +13,25 @@ test_name "Install packages and repositories on target machines..." do
 
   tmp_repositories = []
   options[:install].each do |uri|
-    raise(ArgumentError, "#{uri} is not recognized.") unless(uri =~ GitURI)
-    tmp_repositories << extract_repo_info_from(uri)
+    if uri !~ GitURI
+      # Build up project git urls based on git server and SHA env variables or defaults
+      sha = ENV['SHA']
+      facter_sha = ENV['FACTER_SHA']
+      hiera_sha = ENV['HIERA_SHA']
+      uri += '#' + sha if sha && uri =~ /^puppet/
+      uri.gsub!(/#stable/, facter_sha) if facter_sha && uri =~ /^facter/
+      uri.gsub!(/#stable/, hiera_sha) if hiera_sha && uri =~ /^hiera/
+      project = uri.split('#')
+      newURI = "#{build_giturl(project[0])}#{newURI}##{project[1]}"
+      tmp_repositories << extract_repo_info_from(newURI)
+    else  # URI probably built up by rakefile
+      raise(ArgumentError, "#{uri} is not recognized.") unless(uri =~ GitURI)
+      tmp_repositories << extract_repo_info_from(uri)
+    end
   end
 
   repositories = order_packages(tmp_repositories)
 
-  versions = {}
   hosts.each_with_index do |host, index|
     on host, "echo #{GitHubSig} >> $HOME/.ssh/known_hosts"
 
@@ -32,12 +46,6 @@ test_name "Install packages and repositories on target machines..." do
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
         install_from_git host, SourcePath, repository
-      end
-
-      if index == 1
-        versions[repository[:name]] = find_git_repo_versions(host,
-                                                             SourcePath,
-                                                             repository)
       end
     end
   end
