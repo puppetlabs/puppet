@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'puppet'
 require 'puppet/util/log'
 require 'puppet/util/metric'
@@ -104,6 +105,15 @@ class Type
     # @return [Array<Puppet::Property>] The list of declared properties for the resource type.
     # The returned lists contains instances if Puppet::Property or its subclasses.
     attr_reader :properties
+  end
+
+  # Allow declaring that a type is actually a capability
+  class << self
+    attr_accessor :is_capability
+
+    def is_capability?
+      is_capability
+    end
   end
 
   # Returns all the attribute names of the type in the appropriate order.
