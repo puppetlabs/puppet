@@ -87,14 +87,16 @@ class Puppet::Configurer
       download_plugins(remote_environment_for_plugins)
     end
 
+    facts_hash = {}
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,
       # and we need to know which format they're encoded in.  Thus, we
       # get a hash with both of these pieces of information.
       #
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
-      return facts_for_uploading
+      facts_hash = facts_for_uploading
     end
+    facts_hash
   end
 
   def prepare_and_retrieve_catalog(options, query_options)
@@ -195,9 +197,6 @@ class Puppet::Configurer
       Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
-
-      # get_facts returns nil during puppet apply
-      query_options ||= {}
       query_options[:transaction_uuid] = @transaction_uuid
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
@@ -218,7 +217,6 @@ class Puppet::Configurer
         report.environment = @environment
 
         query_options = get_facts(options)
-        query_options ||= {}
         query_options[:transaction_uuid] = @transaction_uuid
 
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
