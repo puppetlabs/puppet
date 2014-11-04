@@ -129,7 +129,7 @@ class WindowsDaemon < Win32::Daemon
       case level
         when :debug, :info, :notice
           report_windows_event(EVENTLOG_INFORMATION_TYPE,0x01,msg.to_s)
-        when :err
+        when :err, :alert, :emerg, :crit
           report_windows_event(EVENTLOG_ERROR_TYPE,0x03,msg.to_s)
         else
           report_windows_event(EVENTLOG_WARNING_TYPE,0x02,msg.to_s)
