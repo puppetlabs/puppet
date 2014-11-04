@@ -1,5 +1,5 @@
 test_name "Package:IPS query"
-confine :to, :platform => 'solaris'
+confine :to, :platform => 'solaris-11'
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::IPSUtils
