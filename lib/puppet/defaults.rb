@@ -1145,7 +1145,7 @@ EOT
       :default    => "store",
       :desc       => "The list of report handlers to use. When using multiple report handlers,
         their names should be comma-separated, with whitespace allowed. (For example,
-        `reports = http, tagmail`.)
+        `reports = http, store`.)
 
         This setting is relevant to puppet master and puppet apply. The puppet
         master will call these report handlers with the reports it receives from
@@ -1592,39 +1592,6 @@ EOT
         paths = value.split(File::PATH_SEPARATOR)
         Facter.search(*paths)
       end
-    }
-  )
-
-
-    define_settings(
-    :tagmail,
-    :tagmap => {
-      :default    => "$confdir/tagmail.conf",
-      :desc       => "The mapping between reporting tags and email addresses.",
-    },
-    :sendmail => {
-      :default    => which('sendmail') || '',
-      :desc       => "Where to find the sendmail binary with which to send email.",
-    },
-
-    :reportfrom => {
-        :default  => lambda { "report@#{Puppet::Settings.default_certname.downcase}" },
-        :desc     => "The 'from' email address for the reports.",
-    },
-
-    :smtpserver => {
-        :default  => "none",
-        :desc     => "The server through which to send email reports.",
-    },
-    :smtpport => {
-        :default  => 25,
-        :desc     => "The TCP port through which to send email reports.",
-    },
-    :smtphelo => {
-        :default  => lambda { Facter.value 'fqdn' },
-        :desc     => "The name by which we identify ourselves in SMTP HELO for reports.
-          If you send to a smtpserver which does strict HELO checking (as with Postfix's
-          `smtpd_helo_restrictions` access controls), you may need to ensure this resolves.",
     }
   )
 
