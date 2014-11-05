@@ -73,14 +73,6 @@ describe "Puppet Network Format" do
     end
   end
 
-#  it "should not include a yaml format" do
-#    Puppet::Network::FormatHandler.format(:yaml).should be_nil
-#  end
-#
-#  it "should not include a b64_zlib_yaml format" do
-#    Puppet::Network::FormatHandler.format(:b64_zlib_yaml).should be_nil
-#  end
-
   describe "yaml" do
     before do
       @yaml = Puppet::Network::FormatHandler.format(:yaml)

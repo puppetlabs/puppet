@@ -57,7 +57,7 @@ describe Puppet::Transaction::Report::Rest do
 
     it "deserializes the response as an array of report processor names" do
       processors = ["store", "http"]
-      body = processors.to_pson() # YAML.dump(processors)
+      body = processors.to_pson()
       response = mock_response('200', body, 'text/pson')
       connection.expects(:put).returns response
 
