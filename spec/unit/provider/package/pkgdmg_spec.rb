@@ -68,7 +68,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         Dir.expects(:mktmpdir).returns tmpdir
         Dir.stubs(:entries).returns ["foo.pkg"]
         described_class.expects(:curl).with do |*args|
-          args[0] == "-o" and args[1].include? tmpdir and args.include? "--fail"
+          args[0] == "-o" && args[1].include?(tmpdir) && args.include?("--fail") && ! args.include?("-k")
         end
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installpkg)
