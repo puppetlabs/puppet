@@ -387,7 +387,6 @@ describe Puppet::Transaction::Report do
   end
 
   it "can make a round trip through pson" do
-    Puppet[:report_serialization_format] = "pson"
     report = generate_report
 
     tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
@@ -396,28 +395,13 @@ describe Puppet::Transaction::Report do
   end
 
   it "generates pson which validates against the report schema" do
-    Puppet[:report_serialization_format] = "pson"
     report = generate_report
     expect(report.render).to validate_against('api/schemas/report.json')
   end
 
   it "generates pson for error report which validates against the report schema" do
-    Puppet[:report_serialization_format] = "pson"
     error_report = generate_report_with_error
     expect(error_report.render).to validate_against('api/schemas/report.json')
-  end
-
-  # Test does not run on Ruby 1.8.7 since the functionality requires Psych
-  # Which was introduced in Ruby 1.9 and we do not want to maintain a fix for Ruby 1.8.7
-  it "can make a round trip through yaml", :unless => RUBY_VERSION >= '1.8.7' do
-    Puppet[:report_serialization_format] = "yaml"
-    report = generate_report
-
-    yaml_output = report.render
-    tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
-
-    yaml_output.should =~ /^--- /
-    expect_equivalent_reports(tripped, report)
   end
 
   def expect_equivalent_reports(tripped, report)

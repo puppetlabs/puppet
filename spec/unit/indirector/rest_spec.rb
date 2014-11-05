@@ -8,14 +8,6 @@ HTTP_ERROR_CODES = [300, 400, 500]
 
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
-  describe "when talking to a 3.3.1 (or later) master" do
-    it "should not set backward compatibility settings and default to pson" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns "3.3.1"
-
-      terminus.send(terminus_method, request)
-      Puppet[:report_serialization_format].should == 'pson'
-    end
-  end
 
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
