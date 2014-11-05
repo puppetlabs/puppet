@@ -1,0 +1,8 @@
+ca_root_nss 3.15.3.1 security/ca_root_nss
+curl 7.33.0 ftp/curl
+gnupg 2.0.22 security/gnupg
+mcollective 2.2.4 sysutils/mcollective
+nmap 6.40 security/nmap
+pkg 1.2.4_1 ports-mgmt/pkg
+zsh 5.0.2_1 shells/zsh
+tac_plus F4.0.4.27a net/tac_plus4
