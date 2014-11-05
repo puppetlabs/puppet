@@ -103,11 +103,6 @@ class Puppet::Transaction::Report
     obj
   end
 
-  def self.from_pson(data)
-    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
-  end
-
   def as_logging_destination(&block)
     Puppet::Util::Log.with_destination(self, &block)
   end
