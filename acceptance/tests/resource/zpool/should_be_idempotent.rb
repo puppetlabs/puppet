@@ -1,6 +1,5 @@
 test_name "ZPool: configuration"
 confine :to, :platform => 'solaris'
-skip_test "not enough drive space on our solaris10 machines" if agent['platform'] =~ /solaris-10/
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZPoolUtils
@@ -14,6 +13,7 @@ end
 
 
 agents.each do |agent|
+  skip_test "not enough drive space on our solaris10 machines" if agent['platform'] =~ /solaris-10/
   step "ZPool: setup"
   setup agent
   #-----------------------------------
