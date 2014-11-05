@@ -319,6 +319,7 @@ class Puppet::Resource::Type
   # Set any arguments passed by the resource as variables in the scope.
   def set_resource_parameters(resource, scope)
     set = {}
+    resource.add_parameters_from_consume
     resource.to_hash.each do |param, value|
       param = param.to_sym
       fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)

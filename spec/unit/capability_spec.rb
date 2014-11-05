@@ -10,6 +10,13 @@ describe "Capability types" do
   # no really elegant way to do this
   include ParserRspecHelper
 
+  def make_cap_type
+    Puppet::Type.newtype :cap, :is_capability => true do
+      newparam :name
+      newparam :host
+    end
+  end
+
   before :each do
     with_app_management(true)
   end
@@ -146,10 +153,7 @@ describe "Capability types" do
 
   describe "exporting a capability" do
     before(:each) do
-      Puppet::Type.newtype(:cap) do
-        newparam :name
-        newparam :host
-      end
+      make_cap_type
     end
 
     after :each do
@@ -170,7 +174,7 @@ test { one: hostname => "ahost" }
     MANIFEST
       catalog = compile_to_catalog(manifest)
       expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
-      expect(catalog.resource_keys.find { |type, title| type == "Cap" }).to be_nil
+      expect(catalog.resource_keys.find { |type, _| type == "Cap" }).to be_nil
     end
 
     it "adds produced resources that are exported" do
@@ -193,7 +197,7 @@ test { one: hostname => "ahost", export => Cap[two] }
       catalog = compile_to_catalog(manifest)
       expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
 
-      caps = catalog.resource_keys.select { |type, title| type == "Cap" }
+      caps = catalog.resource_keys.select { |type, _| type == "Cap" }
       expect(caps.size).to eq(1)
 
       cap = catalog.resource("Cap[two]")
@@ -202,6 +206,67 @@ test { one: hostname => "ahost", export => Cap[two] }
       expect(cap["host"]).to eq("ahost")
       expect(cap.resource_type).to eq(Puppet::Type::Cap)
       expect(cap.tags.any? { |t| t == "producer:production" }).to eq(true)
+    end
+  end
+
+  describe "consuming a capability" do
+    before(:each) do
+      make_cap_type
+    end
+
+    after :each do
+      Puppet::Type.rmtype(:cap)
+    end
+
+    def make_catalog(instance)
+      manifest = <<-MANIFEST
+define test($hostname = nohost) {
+  notify { "hostname ${hostname}":}
+}
+
+Test consumes Cap {
+  hostname => $host
+}
+    MANIFEST
+      compile_to_catalog(manifest + instance)
+    end
+
+    def mock_cap_finding
+      cap = Puppet::Resource.new("Cap", "two")
+      cap["host"] = "ahost"
+      Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+      cap
+    end
+
+    it "does not fetch a consumed resource when consume metaparam not set" do
+      Puppet::Resource::CapabilityFinder.expects(:find).never
+      catalog = make_catalog("test { one: }")
+      expect(catalog.resource_keys.find { |type, _| type == "Cap" }).to be_nil
+      expect(catalog.resource("Test", "one")["hostname"]).to eq("nohost")
+    end
+
+    it "sets hostname from consumed capability" do
+      cap = mock_cap_finding
+      catalog = make_catalog("test { one: consume => Cap[two] }")
+      expect(catalog.resource("Cap[two]")).to eq(cap)
+      expect(catalog.resource("Cap[two]")["host"]).to eq("ahost")
+      expect(catalog.resource("Test", "one")["hostname"]).to eq("ahost")
+    end
+
+    it "does not override explicit hostname property when consuming" do
+      cap = mock_cap_finding
+      catalog = make_catalog("test { one: hostname => other_host, consume => Cap[two] }")
+      expect(catalog.resource("Cap[two]")).to eq(cap)
+      expect(catalog.resource("Cap[two]")["host"]).to eq("ahost")
+      expect(catalog.resource("Test", "one")["hostname"]).to eq("other_host")
+    end
+
+    it "fetches required capability" do
+      cap = mock_cap_finding
+      catalog = make_catalog("test { one: require => Cap[two] }")
+      expect(catalog.resource("Cap[two]")).to eq(cap)
+      expect(catalog.resource("Cap[two]")["host"]).to eq("ahost")
+      expect(catalog.resource("Test", "one")["hostname"]).to eq("nohost")
     end
   end
 end
