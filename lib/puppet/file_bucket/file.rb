@@ -14,7 +14,7 @@ class Puppet::FileBucket::File
   attr :bucket_path
 
   def self.supported_formats
-    [:s, :pson]
+    [:s]
   end
 
   def self.default_format
@@ -86,18 +86,6 @@ class Puppet::FileBucket::File
 
   def self.from_data_hash(data)
     self.new(data["contents"])
-  end
-
-  def to_pson
-    Puppet.deprecation_warning("Serializing Puppet::FileBucket::File objects to pson is deprecated.")
-    to_data_hash.to_pson
-  end
-
-  # This method is deprecated, but cannot be removed for awhile, otherwise
-  # older agents sending pson couldn't backup to filebuckets on newer masters
-  def self.from_pson(pson)
-    Puppet.deprecation_warning("Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.")
-    self.from_data_hash(pson)
   end
 
   private

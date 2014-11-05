@@ -52,9 +52,6 @@ GET, HEAD, PUT
 
 s or text/plain (a string of the raw file contents)
 
-Puppet also understands `pson` and `text/pson`, but their use is
-deprecated and support will be removed in a future version.
-
 ### Parameters
 
 None
@@ -98,4 +95,4 @@ Schema
 ------
 
 A `file_bucket_file` response body is not structured data according to any standard scheme such as
-json/pson/yaml, so no schema is applicable.
+json/yaml, so no schema is applicable.
