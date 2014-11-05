@@ -15,11 +15,6 @@ class Puppet::Util::Metric
     metric
   end
 
-  def self.from_pson(data)
-    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
-  end
-
   def to_data_hash
     {
       'name' => @name,

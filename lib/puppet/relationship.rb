@@ -28,11 +28,6 @@ class Puppet::Relationship
     new(source, target, args)
   end
 
-  def self.from_pson(pson)
-    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(pson)
-  end
-
   def event=(event)
     raise ArgumentError, "You must pass a callback for non-NONE events" if event != :NONE and ! callback
     @event = event

@@ -239,11 +239,6 @@ class Puppet::Util::Log
     obj
   end
 
-  def self.from_pson(data)
-    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
-  end
-
   attr_accessor :time, :remote, :file, :line, :source
   attr_reader :level, :message
 
