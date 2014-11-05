@@ -143,6 +143,7 @@ describe Puppet::Util::SUIDManager do
         xids[:egid].should == 42
         xids[:gid].should == 42
       end
+
       it "should not change_privilege when gid already matches" do
         Process::GID.expects(:change_privilege).with do |gid|
           Process.gid = 42

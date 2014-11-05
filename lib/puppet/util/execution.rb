@@ -115,8 +115,10 @@ module Puppet::Util::Execution
   # @param options [Hash] a Hash of options
   # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
-  # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as
-  # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as
+  # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as. Will be ignored if the
+  #   user id matches the effective user id of the current process.
+  # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as. Will be ignored if the
+  #   group id matches the effective group id of the current process.
   # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output
   # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
   #   supported.

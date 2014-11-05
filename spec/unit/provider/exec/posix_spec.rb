@@ -90,16 +90,6 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
     end
 
-    it "does not override the user when it is already the requested user" do
-      Etc.stubs(:getpwuid).returns(Struct::Passwd.new('testing'))
-      provider.resource[:user] = 'testing'
-      command = make_exe
-
-      Puppet::Util::Execution.expects(:execute).with(anything(), has_entry(:uid, nil)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
-
-      provider.run(command)
-    end
-
     it "should execute the command if the command given includes arguments or subcommands" do
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
