@@ -96,7 +96,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
-      check_master_version(response)
       content_type, body = parse_response(response)
       result = deserialize_find(content_type, body)
       result.name = request.key if result.respond_to?(:name=)
@@ -125,7 +124,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
-      check_master_version(response)
       true
     else
       false
@@ -138,7 +136,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
-      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_search(content_type, body) || []
     else
@@ -154,7 +151,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
-      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_destroy(content_type, body)
     else
@@ -170,7 +166,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
-      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_save(content_type, body)
     else
@@ -213,12 +208,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def convert_to_http_error(response)
     message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
     Net::HTTPError.new(message, response)
-  end
-
-  def check_master_version response
-    if !response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] || Puppet[:report_serialization_format] != "pson"
-      raise Puppet::Error, "Use of unsafe yaml on the network is no longer supported - see http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
-    end
   end
 
   # Returns the content_type, stripping any appended charset, and the
