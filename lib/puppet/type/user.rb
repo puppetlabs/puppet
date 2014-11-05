@@ -370,6 +370,102 @@ module Puppet
       autos
     end
 
+    newresourcesparam(:unless_system_user) do
+      desc "This keeps system users from being purged.  By default, it
+      does not purge users whose UIDs are less than the minimum UID for the system (typically 500 or 1000), but you can specify
+      a different UID as the inclusive limit."
+
+      newvalues(:true, :false, /^\d+$/)
+
+      munge do |value|
+        case value
+        when /^\d+/
+          Integer(value)
+        when :true, true
+          Puppet::Type.type(:user).system_users_max_uid
+        when :false, false
+          false
+        when Integer; value
+        else
+          raise ArgumentError, "Invalid value #{value.inspect}"
+        end
+      end
+
+      defaultto {
+        if @resource[:name] == "user"
+          Puppet::Type.type(:user).system_users_max_uid
+        else
+          nil
+        end
+      }
+    end
+
+    newresourcesparam(:unless_uid) do
+      desc 'This keeps specific uids or ranges of uids from being purged when purge is true.
+      Accepts integers, integer strings, and arrays of integers or integer strings.
+      To specify a range of uids, consider using the range() function from stdlib.'
+
+      munge do |value|
+        value = [value] unless value.is_a? Array
+        value.flatten.collect do |v|
+          case v
+          when Integer
+            v
+          when String
+            Integer(v)
+          else
+            raise ArgumentError, "Invalid value #{v.inspect}."
+          end
+        end
+      end
+    end
+
+  # Make sure we don't purge users with specific uids
+  def self.user_check(resource, resources_type)
+    #return true unless resource.parameters[:name] == "user"
+    #return true unless resource.parameters[:unless_system_user]
+    resource[:audit] = :uid
+    current_values = resource.retrieve_resource
+    current_uid = current_values[resource.property(:uid)]
+
+    unless_uids = resources_type[:unless_uid]
+
+    return false if system_users.include?(resource[:name])
+    return false if unless_uids && unless_uids.include?(current_uid)
+
+
+    current_uid > resources_type[:unless_system_user]
+  end
+
+  def self.system_users
+    %w{root nobody bin noaccess daemon sys}
+  end
+
+  def self.system_users_max_uid
+    return @system_users_max_uid if @system_users_max_uid
+
+    # First try to read the minimum user id from login.defs
+    if Puppet::FileSystem.exist?('/etc/login.defs')
+      @system_users_max_uid = Puppet::FileSystem.each_line '/etc/login.defs' do |line|
+        break $1.to_i - 1 if line =~ /^\s*UID_MIN\s+(\d+)(\s*#.*)?$/
+      end
+    end
+
+    # Otherwise, use a sensible default based on the OS family
+    @system_users_max_uid ||= case Facter.value(:osfamily)
+      when 'OpenBSD', 'FreeBSD'
+        999
+      else
+        499
+    end
+
+    @system_users_max_uid
+  end
+
+  def self.reset_system_users_max_uid!
+    @system_users_max_uid = nil
+  end
+
     # This method has been exposed for puppet to manage users and groups of
     # files in its settings and should not be considered available outside of
     # puppet.

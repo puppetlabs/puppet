@@ -104,6 +104,7 @@ class Type
     # @return [Array<Puppet::Property>] The list of declared properties for the resource type.
     # The returned lists contains instances if Puppet::Property or its subclasses.
     attr_reader :properties
+    attr_accessor :resources_params
   end
 
   # Returns all the attribute names of the type in the appropriate order.
@@ -453,6 +454,30 @@ class Type
     param.isnamevar if options[:namevar]
 
     param
+  end
+
+
+  # Declares a new resources parameter
+  # @param name [Symbol] the name of the parameter
+  # @param options [Hash] a hash with options.
+  # @option options [Class<inherits Puppet::Parameter>] :parent (Puppet::Parameter) the super class of this parameter
+  # @option options [Hash{String => Object}] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Boolean] :boolean (false) specifies if this is a boolean parameter
+  # @option options [Boolean] :namevar  (false) specifies if this parameter is the namevar
+  # @option options [Symbol, Array<Symbol>] :required_features  specifies required provider features by name
+  # @return [Hash] the new hash of resources parameters
+  # @yield [ ] a required block that is evaluated in the scope of the new parameter
+  # @api public
+  # @dsl type
+  #
+  def self.newresourcesparam(name, options = {}, &block)
+    @resources_params ||= {}
+    @resources_params[name] = {
+      :options => options,
+      :block   => block
+    }
   end
 
   # Creates a new property.
