@@ -1039,7 +1039,7 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure) and ensure_prop.is_a?(Puppet::Property))
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
