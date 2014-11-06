@@ -439,7 +439,7 @@ describe Puppet::Parser::Scope do
         @scope.ephemeral_level.should == 2
       end
 
-      it "should not check presence of an ephemeral variable accross multiple levels" do
+      it "should not check presence of an ephemeral variable across multiple levels" do
         # This test was testing that scope actuallys screwed up - making values from earlier matches show as if they
         # where true for latest match - insanity !
         @scope.new_ephemeral

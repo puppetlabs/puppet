@@ -43,7 +43,7 @@ describe Puppet::Parser::AST::Collection do
     collection.evaluate(@scope)
   end
 
-  it "should evaluate overriden paramaters" do
+  it "should evaluate overriden parameters" do
     collector = stub_everything 'collector'
     collection = Puppet::Parser::AST::Collection.new :form => :virtual, :type => "mytype", :override => @overrides
     Puppet::Parser::Collector.stubs(:new).returns(collector)

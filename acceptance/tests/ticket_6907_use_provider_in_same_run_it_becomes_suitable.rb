@@ -15,7 +15,7 @@ TYPE
   on agent, "cat > #{dir}/lib/puppet/provider/test6907/only.rb", :stdin => <<PROVIDER
 Puppet::Type.type(:test6907).provide(:only) do
   # The name of the file is chosen to be *.exe so it works on windows and *nix
-  # becasue windows inspects the PATHEXT environment variable in 1.9.3 and later.
+  # because windows inspects the PATHEXT environment variable in 1.9.3 and later.
   commands :anything => "#{dir}/must_exist.exe"
   require 'fileutils'
 
@@ -35,7 +35,7 @@ PROVIDER
   }
 
   # The name of the file is chosen to be *.exe so it works on windows and *nix
-  # becasue windows inspects the PATHEXT environment variable in 1.9.3 and later.
+  # because windows inspects the PATHEXT environment variable in 1.9.3 and later.
   file { "#{dir}/must_exist.exe":
     ensure => file,
     mode => "0755",

@@ -33,7 +33,7 @@ describe Puppet::Util::SSL do
       })
     end
 
-    it "parses a DN with a single part preceeded by a slash" do
+    it "parses a DN with a single part preceded by a slash" do
       parse('/CN=client.example.org').should be_a_subject_with({
         'CN' => 'client.example.org'
       })

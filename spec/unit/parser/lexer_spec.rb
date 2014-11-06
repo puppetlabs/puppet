@@ -37,7 +37,7 @@ describe Puppet::Parser::Lexer do
       @lexer.line.should == 10
     end
 
-    it "should not think the terminator is escaped, when preceeded by an even number of backslashes" do
+    it "should not think the terminator is escaped, when preceded by an even number of backslashes" do
       @lexer.line = 10
       @lexer.string = "here\nis\nthe\nstring\\\\'with\nextra\njunk"
       @lexer.slurpstring("'")

@@ -15,7 +15,7 @@ module Puppet
     end
 
     newparam(:persistent) do
-      desc "If set true, SELinux booleans will be written to disk and persist accross reboots.
+      desc "If set true, SELinux booleans will be written to disk and persist across reboots.
         The default is `false`."
 
       defaultto :false

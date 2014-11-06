@@ -94,7 +94,7 @@ module Puppet::FileSystem
   # access using flock. This means that if the file is on a filesystem that
   # does not support flock, this method will provide no protection.
   #
-  # While polling to aquire the lock the process will wait ever increasing
+  # While polling to acquire the lock the process will wait ever increasing
   # amounts of time in order to prevent multiple processes from wasting
   # resources.
   #

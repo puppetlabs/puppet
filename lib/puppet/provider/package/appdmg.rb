@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
         cached_source = File.join(tmpdir, name)
         begin
           curl "-o", cached_source, "-C", "-", "-L", "-s", "--url", source
-          Puppet.debug "Success: curl transfered [#{name}]"
+          Puppet.debug "Success: curl transferred [#{name}]"
         rescue Puppet::ExecutionFailure
           Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
           cached_source = source

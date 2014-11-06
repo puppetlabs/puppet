@@ -368,7 +368,7 @@ describe Puppet::Parser::AST::Regex do
       @regex.evaluate_match("value", @scope)
     end
 
-    it "should not downcase the paramater value" do
+    it "should not downcase the parameter value" do
       @value.expects(:match).with("VaLuE")
 
       @regex.evaluate_match("VaLuE", @scope)

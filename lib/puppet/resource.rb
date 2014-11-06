@@ -284,7 +284,7 @@ class Puppet::Resource
   end
 
   def uniqueness_key
-    # Temporary kludge to deal with inconsistant use patters
+    # Temporary kludge to deal with inconsistent use patters
     h = self.to_hash
     h[namevar] ||= h[:name]
     h[:name]   ||= h[namevar]

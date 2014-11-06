@@ -57,7 +57,7 @@ name = value
 
   it "updates existing names and values in place" do
     config_fh = a_config_file_containing(<<-CONFIG)
-    # this is the preceeding comment
+    # this is the preceding comment
      [section]
     name = original value
     # this is the trailing comment
@@ -68,7 +68,7 @@ name = value
     end
 
     expect(config_fh.string).to eq <<-CONFIG
-    # this is the preceeding comment
+    # this is the preceding comment
      [section]
     name = changed value
     # this is the trailing comment

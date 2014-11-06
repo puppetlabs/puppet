@@ -194,7 +194,7 @@ class Puppet::Parameter::ValueCollection
   # @todo This looks odd, asking for an instance that matches a symbol, or an instance that has
   #   a regexp. What is the intention here? Marking as api private...
   #
-  # @return [Puppet::Parameter::Value] a valid valud matcher
+  # @return [Puppet::Parameter::Value] a valid value matcher
   # @api private
   #
   def value(name)

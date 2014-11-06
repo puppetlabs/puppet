@@ -4,7 +4,7 @@
 # of this file for the Ruby interpreter.  It must be on the first or second
 # line of the file if an interpreter is in use.  In Ruby 1.9 and later, the
 # source encoding determines the encoding of String and Regexp objects created
-# from this source file.  This explicit encoding is important becuase otherwise
+# from this source file.  This explicit encoding is important because otherwise
 # Ruby will pick an encoding based on LANG or LC_CTYPE environment variables.
 # These may be different from site to site so it's important for us to
 # establish a consistent behavior.  For more information on M17n please see:

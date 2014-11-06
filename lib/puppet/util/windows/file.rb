@@ -228,7 +228,7 @@ module Puppet::Util::Windows::File
   module_function :readlink
 
   def stat(file_name)
-    file_name = file_name.to_s # accomodate PathName or String
+    file_name = file_name.to_s # accommodate PathName or String
     stat = File.stat(file_name)
     singleton_class = class << stat; self; end
     target_path = file_name
@@ -252,7 +252,7 @@ module Puppet::Util::Windows::File
   module_function :stat
 
   def lstat(file_name)
-    file_name = file_name.to_s # accomodate PathName or String
+    file_name = file_name.to_s # accommodate PathName or String
     # monkey'ing around!
     stat = File.lstat(file_name)
 

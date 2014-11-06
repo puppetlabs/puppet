@@ -329,7 +329,7 @@ module Puppet::Functions
       @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
-    # Specifies the min and max occurance of arguments (of the specified types)
+    # Specifies the min and max occurrence of arguments (of the specified types)
     # if something other than the exact count from the number of specified
     # types). The max value may be specified as :default if an infinite number of
     # arguments are supported. When max is > than the number of specified

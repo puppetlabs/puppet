@@ -52,7 +52,7 @@ describe Puppet::Type.type(:group) do
     group.parameter(:ensure).sync
   end
 
-  it "delegates the existance check to its provider" do
+  it "delegates the existence check to its provider" do
     provider = @class.provide(:testing) {}
     provider_instance = provider.new
     provider_instance.expects(:exists?).returns true

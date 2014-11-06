@@ -114,7 +114,7 @@ describe provider_class do
     end
 
     # The above test covers this, but given the consequences of
-    # accidently deleting a user's home directory it seems better to
+    # accidentally deleting a user's home directory it seems better to
     # have an explicit test.
     it "should not use -r when managehome is not set" do
       provider = resource.provider

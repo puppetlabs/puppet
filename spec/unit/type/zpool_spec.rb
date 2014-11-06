@@ -45,7 +45,7 @@ describe vdev_property do
     @property.safe_insync?(["dev2 dev1"]).must be_false
   end
 
-  it "should be insync if the devices are the same and the should values are comma seperated" do
+  it "should be insync if the devices are the same and the should values are comma separated" do
     @property.should = ["dev1", "dev2"]
     @property.safe_insync?(["dev2 dev1"]).must be_true
   end

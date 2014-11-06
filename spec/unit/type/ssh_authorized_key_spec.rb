@@ -245,7 +245,7 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
 
   describe "when calling validate" do
 
-    it "doesn't crash on a non-existant user" do
+    it "doesn't crash on a non-existent user" do
       resource = described_class.new(
         :name   => "Test",
         :user   => "ihopesuchuserdoesnotexist"

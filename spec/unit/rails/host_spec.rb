@@ -112,7 +112,7 @@ describe "Puppet::Rails::Host", :if => can_use_scratch_database? do
       @host.merge_resources(@resources)
     end
 
-    it "should find all paramaters and tags for those database resources" do
+    it "should find all parameters and tags for those database resources" do
       @host.expects(:find_resources_parameters_tags).with(@dbresources)
 
       @host.merge_resources(@resources)

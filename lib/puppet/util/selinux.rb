@@ -105,7 +105,7 @@ module Puppet::Util::SELinux
         when :selrange
           context[3] = value
         else
-          raise ArguementError, "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
+          raise ArgumentError, "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
       end
       context = context.join(':')
     else

@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'facter/util/plist'
 
 describe Puppet::Type.type(:user).provider(:directoryservice) do
-  let(:username) { 'nonexistant_user' }
+  let(:username) { 'nonexistent_user' }
   let(:user_path) { "/Users/#{username}" }
   let(:resource) do
     Puppet::Type.type(:user).new(
@@ -25,11 +25,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     <dict>
             <key>dsAttrTypeStandard:NFSHomeDirectory</key>
             <array>
-            <string>/Users/nonexistant_user</string>
+            <string>/Users/nonexistent_user</string>
             </array>
             <key>dsAttrTypeStandard:RealName</key>
             <array>
-            <string>nonexistant_user</string>
+            <string>nonexistent_user</string>
             </array>
             <key>dsAttrTypeStandard:PrimaryGroupID</key>
             <array>
@@ -41,7 +41,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
             </array>
             <key>dsAttrTypeStandard:RecordName</key>
             <array>
-            <string>nonexistant_user</string>
+            <string>nonexistent_user</string>
             </array>
     </dict>
     </plist>'
@@ -152,15 +152,15 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   # This lets us check the behavior of all the methods necessary to return a
   # user's groups property by controlling the data provided by dscl
   let(:testuser_hash) do
-    [{"dsAttrTypeStandard:RecordName"             =>["nonexistant_user"],
+    [{"dsAttrTypeStandard:RecordName"             =>["nonexistent_user"],
       "dsAttrTypeStandard:UniqueID"               =>["1000"],
       "dsAttrTypeStandard:AuthenticationAuthority"=>
        [";Kerberosv5;;testuser@LKDC:SHA1.4383E152D9D394AA32D13AE98F6F6E1FE8D00F81;LKDC:SHA1.4383E152D9D394AA32D13AE98F6F6E1FE8D00F81",
         ";ShadowHash;HASHLIST:<SALTED-SHA512>"],
       "dsAttrTypeStandard:AppleMetaNodeLocation"  =>["/Local/Default"],
-      "dsAttrTypeStandard:NFSHomeDirectory"       =>["/Users/nonexistant_user"],
+      "dsAttrTypeStandard:NFSHomeDirectory"       =>["/Users/nonexistent_user"],
       "dsAttrTypeStandard:RecordType"             =>["dsRecTypeStandard:Users"],
-      "dsAttrTypeStandard:RealName"               =>["nonexistant_user"],
+      "dsAttrTypeStandard:RealName"               =>["nonexistent_user"],
       "dsAttrTypeStandard:Password"               =>["********"],
       "dsAttrTypeStandard:PrimaryGroupID"         =>["22"],
       "dsAttrTypeStandard:GeneratedUID"           =>["0A7D5B63-3AD4-4CA7-B03E-85876F1D1FB3"],
@@ -478,10 +478,10 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should call dscl to add necessary groups' do
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
-      provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistant_user']})
+      provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistent_user']})
       provider.expects(:groups).returns('two,three')
-      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembership', 'nonexistant_user')
-      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembers', 'guidnonexistant_user')
+      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembership', 'nonexistent_user')
+      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembers', 'guidnonexistent_user')
       provider.class.prefetch({})
       provider.groups= 'one,two,three'
     end
@@ -893,8 +893,8 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
   describe '#write_users_plist_to_disk' do
     it 'should save the passed plist to disk and convert it to a binary plist' do
-      Plist::Emit.expects(:save_plist).with(user_plist_xml, "#{users_plist_dir}/nonexistant_user.plist")
-      provider.expects(:plutil).with('-convert', 'binary1', "#{users_plist_dir}/nonexistant_user.plist")
+      Plist::Emit.expects(:save_plist).with(user_plist_xml, "#{users_plist_dir}/nonexistent_user.plist")
+      provider.expects(:plutil).with('-convert', 'binary1', "#{users_plist_dir}/nonexistent_user.plist")
       provider.write_users_plist_to_disk(user_plist_xml)
     end
   end
