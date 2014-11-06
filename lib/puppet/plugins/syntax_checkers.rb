@@ -1,4 +1,5 @@
-module Puppet::Spi; module SyntaxCheckers
+require 'puppet/plugins'
+module Puppet::Plugins::SyntaxCheckers
   # The lookup **key** for the multibind containing syntax checkers used to syntax check embedded string in non
   # puppet DSL syntax.
   # @api public
@@ -7,7 +8,7 @@ module Puppet::Spi; module SyntaxCheckers
   # The lookup **type** for the multibind containing syntax checkers used to syntax check embedded string in non
   # puppet DSL syntax.
   # @api public
-  SYNTAX_CHECKERS_TYPE  = 'Puppet::Spi::SyntaxCheckers::SyntaxChecker'
+  SYNTAX_CHECKERS_TYPE  = 'Puppet::Plugins::SyntaxCheckers::SyntaxChecker'
 
   # SyntaxChecker is a Puppet Extension Point for the purpose of extending Puppet with syntax checkers.
   # The intended use is to create a class derived from this class and then register it with the
@@ -99,4 +100,4 @@ module Puppet::Spi; module SyntaxCheckers
     end
   end
 
-end; end
+end

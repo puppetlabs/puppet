@@ -1,16 +1,17 @@
-# Configures the Puppet Service Programming Inteterface SPI, by registering extension points
+# Configures the Puppet Plugins, by registering extension points
 # and default implementations.
 #
 # See the respective configured services for more information.
 #
 # @api private
 #
+require 'puppet/plugins'
 
-module Puppet::Spi::Configuration
+module Puppet::Plugins::Configuration
     # TODO: This should always be true in Puppet 4.0 (the way it is done now does not allow toggling)
     return unless ::Puppet[:binder] || ::Puppet[:parser] == 'future'
-    require 'puppet/spi/binding_schemes'
-    require 'puppet/spi/syntax_checkers'
+    require 'puppet/plugins/binding_schemes'
+    require 'puppet/plugins/syntax_checkers'
 
     # Extension-points are registered here:
     #
@@ -20,11 +21,11 @@ module Puppet::Spi::Configuration
     # - If the extension is a multibind, it can be registered here; either with a required
     #   class or a class reference in string form.
 
-    checkers_name = Puppet::Spi::SyntaxCheckers::SPI_SYNTAX_CHECKERS
-    checkers_type = Puppet::Spi::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
+    checkers_name = Puppet::Plugins::SyntaxCheckers::SPI_SYNTAX_CHECKERS
+    checkers_type = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
 
-    schemes_name = Puppet::Spi::BindingSchemes::SPI_BINDINGS_SCHEMES
-    schemes_type = Puppet::Spi::BindingSchemes::BINDINGS_SCHEMES_TYPE
+    schemes_name = Puppet::Plugins::BindingSchemes::SPI_BINDINGS_SCHEMES
+    schemes_type = Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_TYPE
 
     # Register extension points
     # -------------------------
@@ -63,5 +64,4 @@ module Puppet::Spi::Configuration
       in_multibind(checkers_name)
       to_instance('Puppet::SyntaxCheckers::Json')
     end
-
 end

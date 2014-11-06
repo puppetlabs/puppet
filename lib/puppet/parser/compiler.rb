@@ -296,7 +296,7 @@ class Puppet::Parser::Compiler
       @@binder_loaded ||= false
       unless @@binder_loaded
         require 'puppet/pops'
-        require 'puppet/spi'
+        require 'puppet/plugins/configuration'
         @@binder_loaded = true
       end
     end

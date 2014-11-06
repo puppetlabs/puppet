@@ -439,8 +439,8 @@ actual:
         # about selection of parser and evaluator
         #
         Puppet[:parser] = 'future'
-        # Spi Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
-        require 'puppet/spi'
+        # Plugins Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
+        require 'puppet/plugins'
       end
 
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }

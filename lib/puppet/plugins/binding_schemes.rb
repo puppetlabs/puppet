@@ -1,4 +1,5 @@
-module Puppet::Spi; module BindingSchemes
+require 'puppet/plugins'
+module Puppet::Plugins::BindingSchemes
 
   # The lookup **key** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
   # @api public
@@ -6,7 +7,7 @@ module Puppet::Spi; module BindingSchemes
 
   # The lookup **type** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
   # @api public
-  BINDINGS_SCHEMES_TYPE = 'Puppet::Spi::BindingSchemes::BindingsSchemeHandler'
+  BINDINGS_SCHEMES_TYPE = 'Puppet::Plugins::BindingSchemes::BindingsSchemeHandler'
 
   # BindingsSchemeHandler is a Puppet Extension Point for the purpose of extending Puppet with a
   # handler of a URI scheme used in the Puppet Bindings / Injector system.
@@ -136,4 +137,4 @@ module Puppet::Spi; module BindingSchemes
     end
   end
 
-end; end
+end

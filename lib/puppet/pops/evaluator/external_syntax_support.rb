@@ -1,12 +1,12 @@
 # This module is an integral part of the evaluator. It deals with the concern of validating
 # external syntax in text produced by heredoc and templates.
 #
-require 'puppet/spi/syntax_checkers'
+require 'puppet/plugins/syntax_checkers'
 module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   # TODO: This can be simplified if the Factory directly supported hash_of/type_of
   TYPES = Puppet::Pops::Types::TypeFactory
-  SERVICE_TYPE = Puppet::Spi::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
-  SERVICE_NAME = Puppet::Spi::SyntaxCheckers::SPI_SYNTAX_CHECKERS
+  SERVICE_TYPE = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
+  SERVICE_NAME = Puppet::Plugins::SyntaxCheckers::SPI_SYNTAX_CHECKERS
 
   def assert_external_syntax(scope, result, syntax, reference_expr)
     @@HASH_OF_SYNTAX_CHECKERS ||= TYPES.hash_of(TYPES.type_of(SERVICE_TYPE))

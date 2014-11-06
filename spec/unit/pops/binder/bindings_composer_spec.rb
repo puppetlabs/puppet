@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/pops'
+require 'puppet/plugins'
 
 describe 'BinderComposer' do
   include PuppetSpec::Pops
