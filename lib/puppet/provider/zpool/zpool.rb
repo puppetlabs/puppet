@@ -84,7 +84,8 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     if disk = @resource[:disk]
       disk.collect { |d| d.split(' ') }.flatten
     elsif mirror = @resource[:mirror]
-      ["mirror"] +  mirror
+      mirror_ref=mirror.map{|x| ["mirror"] + x.split(" ")}
+      mirror_ref.flatten
     elsif raidz = @resource[:raidz]
       [raidzarity] + raidz
     end

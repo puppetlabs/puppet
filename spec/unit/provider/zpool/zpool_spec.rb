@@ -186,6 +186,15 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
       provider.expects(:zpool).with(:create, name, 'disk1', 'spare', 'value1', 'log', 'value2')
       provider.create
     end
+
+    it  "should call create 2 mirrors with 2 disks each" do
+     resource[:mirror] = ["disk1 disk2", "disk3 disk4"]
+     resource[:disk] = nil
+     provider.expects(:zpool).with(:create, name, 'mirror disk1 disk2 mirror disk3 disk4')
+     provider.create
+    end
+
+    
   end
 
   context '#delete' do
