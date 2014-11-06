@@ -555,37 +555,6 @@ module Puppet
 
         Defaults to the node's fully qualified domain name.",
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-    :certdnsnames => {
-      :default => '',
-      :hook    => proc do |value|
-        unless value.nil? or value == '' then
-          Puppet.warning <<WARN
-The `certdnsnames` setting is no longer functional,
-after CVE-2011-3872. We ignore the value completely.
-
-For your own certificate request you can set `dns_alt_names` in the
-configuration and it will apply locally.  There is no configuration option to
-set DNS alt names, or any other `subjectAltName` value, for another nodes
-certificate.
-
-Alternately you can use the `--dns_alt_names` command line option to set the
-labels added while generating your own CSR.
-WARN
-        end
-      end,
-      :desc    => <<EOT
-The `certdnsnames` setting is no longer functional,
-after CVE-2011-3872. We ignore the value completely.
-
-For your own certificate request you can set `dns_alt_names` in the
-configuration and it will apply locally.  There is no configuration option to
-set DNS alt names, or any other `subjectAltName` value, for another nodes
-certificate.
-
-Alternately you can use the `--dns_alt_names` command line option to set the
-labels added while generating your own CSR.
-EOT
-    },
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,

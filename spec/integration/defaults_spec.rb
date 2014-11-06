@@ -61,17 +61,6 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "when :certdnsnames is set" do
-    it "should not fail" do
-      expect { Puppet[:certdnsnames] = 'fred:wilma' }.to_not raise_error
-    end
-
-    it "should warn the value is ignored" do
-      Puppet.expects(:warning).with {|msg| msg =~ /CVE-2011-3872/ }
-      Puppet[:certdnsnames] = 'fred:wilma'
-    end
-  end
-
   it "should have a clientyamldir setting" do
     Puppet.settings[:clientyamldir].should_not be_nil
   end
