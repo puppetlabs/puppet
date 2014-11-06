@@ -39,6 +39,15 @@ PACKAGES = {
   ],
 }
 
+hosts.each do |host|
+  case host['platform']
+  when  /osx/
+    on host, 'ln -sf /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/bin/puppet /usr/bin/puppet'
+    on host, 'ln -sf /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/bin/facter /usr/bin/facter'
+    on host, 'ln -sf /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/bin/hiera /usr/bin/hiera'
+  end
+end
+
 install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
 hosts.each do |host|

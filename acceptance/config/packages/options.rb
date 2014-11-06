@@ -1,4 +1,6 @@
 {
+  :load_path => './lib/',
+  :add_el_extras => true,
   :type => 'foss-packages',
   :pre_suite => [
     'setup/packages/pre-suite/010_Install.rb',

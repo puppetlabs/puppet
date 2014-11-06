@@ -3,15 +3,15 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: fedora-18-x86_64
+    platform: osx-109-x86_64
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/fedora-18-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/osx-109-x86_64
   agent:
     roles:
       - agent
-    platform: fedora-18-i386
+    platform: osx-109-x86_64
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/fedora-18-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/osx-109-x86_64
 CONFIG:
   filecount: 12
   datastore: instance0
