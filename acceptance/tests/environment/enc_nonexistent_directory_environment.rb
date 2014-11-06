@@ -38,8 +38,8 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet("agent --no-daemonize --onetime --server #{master} --verbose")) do
-      assert_match(/Could not find a directory environment named 'doesnotexist'/, stderr, "Errors when nonexistant environment is specified")
+    on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [1]) do
+      assert_match(/Could not find a directory environment named 'doesnotexist'/, stderr, "Errors when nonexistent environment is specified")
       assert_not_match(/In the production environment/, stdout, "Executed manifest from production environment")
     end
   end
