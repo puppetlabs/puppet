@@ -149,18 +149,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if @resource[:source][-1,1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
-      # In case of a real update (i.e., the package already exists) then
-      # pkg_add(8) can handle the flavors. However, if we're actually
-      # installing with 'latest', we do need to handle the flavors.
-      # So we always need to handle flavors ourselves as to not break installs.
-      if latest and resource[:flavor]
-        full_name = "#{resource[:name]}--#{resource[:flavor]}"
-      elsif latest
-        # Don't depend on get_version for updates.
-        full_name = @resource[:name]
-      else
-        full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
-      end
+      full_name = get_full_name(latest)
     else
       e_vars = {}
       full_name = @resource[:source]
@@ -174,6 +163,31 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
 
     Puppet::Util.withenv(e_vars) { pkgadd cmd.flatten.compact }
+  end
+
+  def get_full_name(latest = false)
+    # In case of a real update (i.e., the package already exists) then
+    # pkg_add(8) can handle the flavors. However, if we're actually
+    # installing with 'latest', we do need to handle the flavors. This is
+    # done so we can feed pkg_add(8) the full package name to install to
+    # prevent ambiguity.
+    if latest && resource[:flavor]
+      "#{resource[:name]}--#{resource[:flavor]}"
+    elsif latest
+      # Don't depend on get_version for updates.
+      @resource[:name]
+    else
+      # If :ensure contains a version, use that instead of looking it up.
+      # This allows for installing packages with the same stem, but multiple
+      # version such as openldap-server.
+      if /(\d[^-]*)$/.match(@resource[:ensure].to_s)
+        use_version = @resource[:ensure]
+      else
+        use_version = get_version
+      end
+
+      [ @resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+    end
   end
 
   def get_version
