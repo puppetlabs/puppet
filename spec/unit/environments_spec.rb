@@ -362,53 +362,54 @@ config_version=$vardir/random/scripts
       end
 
       context "custom cache expiration service" do
-        let(:envs_created) { Set.new }
-        let(:envs_expired) { Set.new }
-        let(:envs_evicted) { Set.new }
+        class AlwaysExpiredService
+          attr_reader :created_envs, :expired_envs, :evicted_envs
 
-        it "should support registering a custom cache expiration service" do
-
-          class CustomExpirationService
-            def initialize(envs_created, envs_expired, envs_evicted)
-              @envs_created = envs_created
-              @envs_expired = envs_expired
-              @envs_evicted = envs_evicted
-            end
-
-            def created(env)
-              @envs_created << env.name
-            end
-            def expired?(env_name)
-              @envs_expired << env_name
-              true
-            end
-            def evicted(env_name)
-              @envs_evicted << env_name
-            end
+          def initialize
+            @created_envs = []
+            @expired_envs = []
+            @evicted_envs = []
           end
 
-          Puppet[:environment_timeout] = "unlimited"
-          directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-              FS::MemoryFile.a_directory("static1", [
-                  FS::MemoryFile.a_missing_file("environment.conf"),
-              ]),
-          ])
+          def created(env)
+            @created_envs << env.name
+          end
 
+          def expired?(env_name)
+            @expired_envs << env_name
+            true
+          end
+
+          def evicted(env_name)
+            @evicted_envs << env_name
+          end
+        end
+
+        before(:each) do
+          Puppet[:environment_timeout] = "unlimited"
+        end
+
+        let(:directory_tree) do
+          FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+            FS::MemoryFile.a_directory("static1", [
+              FS::MemoryFile.a_missing_file("environment.conf"),
+            ]),
+          ])
+        end
+
+        it "consults the custom service to expire the cache" do
           loader_from(:filesystem => [directory_tree],
                       :directory => directory_tree) do |loader|
-            begin
-              orig_svc = Puppet::Environments::Cached.cache_expiration_service
-              Puppet::Environments::Cached.cache_expiration_service =
-                  CustomExpirationService.new(envs_created, envs_expired, envs_evicted)
+            service = AlwaysExpiredService.new
+            using_expiration_service(service) do
+
               cached = Puppet::Environments::Cached.new(loader)
               cached.get(:static1)
               cached.get(:static1)
 
-              expect(envs_created.include?(:static1)).to eq(true)
-              expect(envs_expired.include?(:static1)).to eq(true)
-              expect(envs_evicted.include?(:static1)).to eq(true)
-            ensure
-              Puppet::Environments::Cached.cache_expiration_service = orig_svc
+              expect(service.created_envs).to include(:static1)
+              expect(service.expired_envs).to include(:static1)
+              expect(service.evicted_envs).to include(:static1)
             end
           end
         end
@@ -529,6 +530,16 @@ config_version=$vardir/random/scripts
       Puppet.override(:environments => environments) do
         yield environments
       end
+    end
+  end
+
+  def using_expiration_service(service)
+    begin
+      orig_svc = Puppet::Environments::Cached.cache_expiration_service
+      Puppet::Environments::Cached.cache_expiration_service = service
+      yield
+    ensure
+      Puppet::Environments::Cached.cache_expiration_service = orig_svc
     end
   end
 end
