@@ -106,7 +106,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
       it "issues a warning when the certificate has expired" do
         warning = "Certificate '/var/pkg/ssl/871b4ed0ade09926e6adf95f86bf17535f987684' for publisher 'solarisstudio', needed to access 'https://pkg.oracle.com/solarisstudio/release/', will expire in '29' days."
-        Puppet.expects(:warning).with("pkg warning: [\"#{warning}\"]")
+        Puppet.expects(:warning).with("pkg warning: #{warning}")
 
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.certificate_warning'))
         provider.latest

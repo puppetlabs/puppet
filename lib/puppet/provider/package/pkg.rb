@@ -134,7 +134,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     #       which doesn't support select!, so do this as two selects.
     cert_warnings = lines.select { |line| line =~ /^Certificate/ }
     unless cert_warnings.empty?
-      Puppet.warning("pkg warning: #{cert_warnings}")
+      Puppet.warning("pkg warning: #{cert_warnings.join(', ')}")
     end
 
     lst = lines.select { |line| line !~ /^Certificate/ }.map { |line| self.class.parse_line(line) }
