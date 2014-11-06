@@ -193,8 +193,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
      provider.expects(:zpool).with(:create, name, 'mirror disk1 disk2 mirror disk3 disk4')
      provider.create
     end
-
-    
+ 
   end
 
   context '#delete' do
