@@ -1,10 +1,17 @@
 class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
+  # Creates a FixedSetCollector using the AbstractCollector constructor
+  # to set the scope. It is not possible for a collection to have
+  # overrides in this case, since we have a fixed set of resources
+  #
+  # @param [Array] resources the fixed set of resources we want to realize
   def initialize(scope, resources)
     super(scope)
     @resources = resources.is_a?(Array)? resources.dup : [resources]
   end
 
+  # Collects a fixed set of resources and realizes them. Used
+  # by the realize function
   def collect
     resolved = []
     result = @resources.reduce([]) do |memo, ref|
@@ -18,8 +25,6 @@ class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Eva
 
     @resources = @resources - resolved
 
-    # If there are no more resources to find, delete this from the list
-    # of collections.
     @scope.compiler.delete_collection(self) if @resources.empty?
 
     result

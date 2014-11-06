@@ -8,11 +8,11 @@ class Puppet::Pops::Evaluator::CollectorTransformer
   end
 
   def query(o, scope)
-    @@query_visitor.visit_this(self, o, scope)
+    @@query_visitor.visit_this_1(self, o, scope)
   end
 
   def match(o, scope)
-    @@match_visitor.visit_this(self, o, scope)
+    @@match_visitor.visit_this_1(self, o, scope)
   end
 
   def transform(o, scope)
@@ -20,7 +20,6 @@ class Puppet::Pops::Evaluator::CollectorTransformer
 
     raise "LHS is not a type" unless o.type_expr.is_a? Puppet::Pops::Model::QualifiedReference
     type = o.type_expr.value().downcase()
-    args = { :type => type }
 
     if type == 'class'
       fail "Classes cannot be collected"
@@ -29,21 +28,11 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     resource_type = scope.find_resource_type(type)
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    if o.query.expr.nil? || o.query.expr.is_a?(Puppet::Pops::Model::Nop)
-      code = nil
-      match = nil
-    else
-      code = query(o.query.expr, scope)
-      match = match(o.query.expr, scope)
-    end
-
     adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
     line_num = adapter.line
     position = adapter.pos
     file_path = adapter.locator.file
 
-    # overrides if any
-    # Evaluate all of the specified params.
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| to_3x_param(x).evaluate(scope)},
@@ -54,16 +43,31 @@ class Puppet::Pops::Evaluator::CollectorTransformer
       }
     end
 
+    code = query_unless_nop(o.query, scope)
+
     case o.query
     when Puppet::Pops::Model::VirtualQuery
       newcoll = Puppet::Pops::Evaluator::Collectors::CatalogCollector.new(scope, resource_type.name, code, overrides)
     when Puppet::Pops::Model::ExportedQuery
+      match = match_unless_nop(o.query, scope)
       newcoll = Puppet::Pops::Evaluator::Collectors::ExportedCollector.new(scope, resource_type.name, match, code, overrides)
     end
 
     scope.compiler.add_collection(newcoll)
 
     newcoll
+  end
+
+  def query_unless_nop(query, scope)
+    unless query.expr.nil? || query.expr.is_a?(Puppet::Pops::Model::Nop)
+      query(query.expr, scope)
+    end
+  end
+
+  def match_unless_nop(query, scope)
+    unless query.expr.nil? || query.expr.is_a?(Puppet::Pops::Model::Nop)
+      match(query.expr, scope)
+    end
   end
 
   def query_AndExpression(o, scope)
@@ -86,19 +90,23 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     left_code = query(o.left_expr, scope)
     right_code = query(o.right_expr, scope)
 
-    proc do |resource|
-      case o.operator
-      when :'=='
-        if left_code == "tag"
+    case o.operator
+    when :'=='
+      if left_code == "tag"
+        proc do |resource|
           resource.tagged?(right_code)
-        else
-          if resource[left_code].is_a?(Array)
-            @@compare_operator.include?(resource[left_code], right_code, scope)
+        end
+      else
+        proc do |resource|
+          if (tmp = resource[left_code]).is_a?(Array)
+            @@compare_operator.include?(tmp, right_code, scope)
           else
-            @@compare_operator.equals(resource[left_code], right_code)
+            @@compare_operator.equals(tmp, right_code)
           end
         end
-      when :'!='
+      end
+    when :'!='
+      proc do |resource|
         !@@compare_operator.equals(resource[left_code], right_code)
       end
     end
