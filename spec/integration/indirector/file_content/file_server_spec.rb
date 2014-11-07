@@ -61,26 +61,28 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     Puppet::FileSystem.stubs(:exist?).returns true
     Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
 
-    @path = tmpfile("file_server_testing")
+    path = tmpfile("file_server_testing")
 
-    Dir.mkdir(@path)
-    subdir = File.join(@path, "mynode")
+    Dir.mkdir(path)
+    subdir = File.join(path, "mynode")
     Dir.mkdir(subdir)
     File.open(File.join(subdir, "myfile"), "wb") { |f| f.write "1\r\n" }
 
     # Use a real mount, so the integration is a bit deeper.
-    @mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
-    @mount1.stubs(:allowed?).returns true
-    @mount1.path = File.join(@path, "%h")
+    mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+    mount1.stubs(:allowed?).returns true
+    mount1.path = File.join(path, "%h")
 
-    @parser = stub 'parser', :changed? => false
-    @parser.stubs(:parse).returns("one" => @mount1)
+    parser = stub 'parser', :changed? => false
+    parser.stubs(:parse).returns("one" => mount1)
 
-    Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
+    Puppet::FileServing::Configuration::Parser.stubs(:new).returns(parser)
 
-    path = File.join(@path, "myfile")
+    path = File.join(path, "myfile")
 
-    result = Puppet::FileServing::Content.indirection.find("one/myfile", :environment => "foo", :node => "mynode")
+    env = Puppet::Node::Environment.create(:foo, [])
+
+    result = Puppet::FileServing::Content.indirection.find("one/myfile", :environment => env, :node => "mynode")
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)

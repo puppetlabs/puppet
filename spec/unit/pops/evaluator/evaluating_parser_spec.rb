@@ -23,14 +23,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     #
     @parser  = Puppet::Pops::Parser::EvaluatingParser.new
     @node = Puppet::Node.new('node.example.com')
-    @node.environment = Puppet::Node::Environment.create(:testing, [])
+    @node.environment = environment
     @compiler = Puppet::Parser::Compiler.new(@node)
     @scope = Puppet::Parser::Scope.new(@compiler)
     @scope.source = Puppet::Resource::Type.new(:node, 'node.example.com')
     @scope.parent = @compiler.topscope
   end
 
-  let(:parser) {  @parser }
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+  let(:parser) { @parser }
   let(:scope) { @scope }
   types = Puppet::Pops::Types::TypeFactory
 
@@ -713,7 +714,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         adapted_parser = Puppet::Parser::E4ParserAdapter.new
         adapted_parser.file = __FILE__
         ast = adapted_parser.parse(source)
-        Puppet.override({:global_scope => scope}, "test") do
+        Puppet.override({:global_scope => scope,
+                         :environments => Puppet::Environments::Static.new(@node.environment)
+        }, "gets class parameter test") do
           scope.known_resource_types.import_ast(ast, '')
           ast.code.safeevaluate(scope).should == 'chocolate'
         end
