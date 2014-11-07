@@ -45,7 +45,7 @@ cat > local_options.rb <<-EOF
 {
   :hosts_file => 'config/nodes/${platform}.yaml',
   :ssh => {
-    :keys => ["${HOME}/.ssh/id_rsa-old.private"],
+    :keys => ["${HOME}/.ssh/id_rsa-acceptance"],
   },
 ${repo_proxy}
 }
