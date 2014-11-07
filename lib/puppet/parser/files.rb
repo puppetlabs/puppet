@@ -1,5 +1,3 @@
-require 'puppet/module'
-
 module Puppet::Parser::Files
 
   module_function
@@ -7,22 +5,20 @@ module Puppet::Parser::Files
   # Return a list of manifests as absolute filenames matching the given
   # pattern.
   #
-  # @param pattern [String] A reference for a file in a module. It is the format "<modulename>/<file glob>"
+  # @param pattern [String] A reference for a file in a module. It is the
+  #   format "<modulename>/<file glob>"
   # @param environment [Puppet::Node::Environment] the environment of modules
   #
   # @return [Array(String, Array<String>)] the module name and the list of files found
   # @api private
   def find_manifests_in_modules(pattern, environment)
     module_name, file_pattern = split_file_path(pattern)
-    begin
-      if mod = environment.module(module_name)
-        return [mod.name, mod.match_manifests(file_pattern)]
-      end
-    rescue Puppet::Module::InvalidName
-      # one of the modules being loaded might have an invalid name and so
-      # looking for one might blow up since we load them lazily.
+
+    if mod = environment.module(module_name)
+      [mod.name, mod.match_manifests(file_pattern)]
+    else
+      [nil, []]
     end
-    [nil, []]
   end
 
   # Find the path to the given file selector. Files can be selected in

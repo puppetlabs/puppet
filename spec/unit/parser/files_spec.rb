@@ -127,17 +127,6 @@ describe Puppet::Parser::Files do
     end
   end
 
-  describe "when searching for manifests" do
-    it "should ignore invalid modules" do
-      mod = mock 'module'
-      environment.expects(:module).with("mymod").raises(Puppet::Module::InvalidName, "name is invalid")
-      Puppet.expects(:value).with(:modulepath).never
-      Dir.stubs(:glob).returns %w{foo}
-
-      Puppet::Parser::Files.find_manifests_in_modules("mymod/init.pp", environment)
-    end
-  end
-
   describe "when searching for manifests in a module" do
     def a_module_in_environment(env, name)
       mod = Puppet::Module.new(name, "/one/#{name}", env)
