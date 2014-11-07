@@ -1,0 +1,7 @@
+<% size.times do |i| %>
+  @notify { "name<%= i %>":}
+<% end %>
+
+<% size.times do |i| %>
+  Notify <| title == "name<%= i %>" |>
+<% end %>

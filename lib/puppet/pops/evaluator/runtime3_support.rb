@@ -194,7 +194,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
     #
-    if source.is_a?(Puppet::Parser::Collector)
+    if source.is_a?(Puppet::Parser::Collector) || source.is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
       # use verbatim - behavior defined by 3x
       source_resource = source
     else
@@ -202,7 +202,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
       type, title = catalog_type_to_split_type_title(source)
       source_resource = Puppet::Resource.new(type, title)
     end
-    if target.is_a?(Puppet::Parser::Collector)
+    if target.is_a?(Puppet::Parser::Collector) || target.is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
       # use verbatim - behavior defined by 3x
       target_resource = target
     else
