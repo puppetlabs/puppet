@@ -37,17 +37,8 @@ module Puppet::Parser::Files
   #
   # @api private
   def find_file(file, environment)
-    if Puppet::Util.absolute_path?(file)
-      file
-    else
-      path, module_file = split_file_path(file)
-      mod = environment.module(path)
-
-      if module_file && mod
-        mod.file(module_file)
-      else
-        nil
-      end
+    find_in_module(file, environment) do |mod,module_file|
+      mod.file(module_file)
     end
   end
 
@@ -67,22 +58,24 @@ module Puppet::Parser::Files
   #
   # @api private
   def find_template(template, environment)
-    if Puppet::Util.absolute_path?(template)
-      template
-    else
-      find_template_in_module(template, environment)
+    find_in_module(template, environment) do |mod,template_file|
+      mod.template(template_file)
     end
   end
 
   # @api private
-  def find_template_in_module(template, environment)
-    path, file = split_file_path(template)
-    mod = environment.module(path)
-
-    if file && mod
-      mod.template(file)
+  def find_in_module(reference, environment)
+    if Puppet::Util.absolute_path?(reference)
+      reference
     else
-      nil
+      path, file = split_file_path(reference)
+      mod = environment.module(path)
+
+      if file && mod
+        yield(mod, file)
+      else
+        nil
+      end
     end
   end
 
