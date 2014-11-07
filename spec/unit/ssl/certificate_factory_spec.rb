@@ -80,7 +80,9 @@ describe Puppet::SSL::CertificateFactory do
       cert = subject.build(:server, csr, issuer, serial)
       cert.extensions.map {|x| x.to_h }.find {|x| x["oid"] == "nsComment" }.should ==
         { "oid"      => "nsComment",
-          "value"    => "Puppet Ruby/OpenSSL Internal Certificate",
+          # Note that this output is due to a bug in OpenSSL::X509::Extensions
+          # where the values of some extensions are not properly decoded
+          "value"    => ".(Puppet Ruby/OpenSSL Internal Certificate",
           "critical" => false }
     end
 
@@ -140,12 +142,15 @@ describe Puppet::SSL::CertificateFactory do
       ])
 
       cert = subject.build(:client, csr, issuer, serial)
+      wrapped_cert = Puppet::SSL::Certificate.from_instance cert
 
-      priv_ext = cert.extensions.find {|ext| ext.oid == '1.3.6.1.4.1.34380.1.2.1'}
-      uuid_ext = cert.extensions.find {|ext| ext.oid == 'pp_uuid'}
+      priv_ext = wrapped_cert.custom_extensions.find {|ext| ext['oid'] == '1.3.6.1.4.1.34380.1.2.1'}
+      uuid_ext = wrapped_cert.custom_extensions.find {|ext| ext['oid'] == 'pp_uuid'}
 
-      expect(priv_ext.value).to eq 'some-value'
-      expect(uuid_ext.value).to eq 'some-uuid'
+      # The expected results should be DER encoded, the Puppet cert wrapper will turn
+      # these into normal strings.
+      expect(priv_ext['value']).to eq 'some-value'
+      expect(uuid_ext['value']).to eq 'some-uuid'
     end
 
     # Can't check the CA here, since that requires way more infrastructure
