@@ -53,6 +53,10 @@ class Puppet::Node::Environment
     obj
   end
 
+  # A remote subclass to make it easier to trace instances when debugging.
+  # @api private
+  class Remote < Puppet::Node::Environment; end
+
   # A "reference" to a remote environment. The created environment instance
   # isn't expected to exist on the local system, but is instead a reference to
   # environment information on a remote system. For instance when a catalog is
@@ -65,7 +69,7 @@ class Puppet::Node::Environment
   # @param name [Symbol] The name of the remote environment
   #
   def self.remote(name)
-    create(name, [], NO_MANIFEST)
+    Remote.create(name, [], NO_MANIFEST)
   end
 
   # Instantiate a new environment
@@ -398,6 +402,11 @@ class Puppet::Node::Environment
     name.to_s
   end
 
+  # @api public
+  def inspect
+    %Q{<#{self.class}:#{self.object_id} @name="#{name}" @manifest="#{manifest}" @modulepath="#{full_modulepath.join(":")}" >}
+  end
+
   # @return [Symbol] The `name` value, cast to a string, then cast to a symbol.
   #
   # @api public
@@ -502,9 +511,13 @@ class Puppet::Node::Environment
     return Puppet::Parser::AST::Hostclass.new('')
   end
 
+  # A None subclass to make it easier to trace the NONE environment when debugging.
+  # @api private
+  class None < Puppet::Node::Environment; end
+
   # A special "null" environment
   #
   # This environment should be used when there is no specific environment in
   # effect.
-  NONE = create(:none, [])
+  NONE = None.create(:none, [])
 end
