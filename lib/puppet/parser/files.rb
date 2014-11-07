@@ -52,10 +52,8 @@ module Puppet::Parser::Files
   end
 
   # Find the path to the given template selector. Templates can be selected in
-  # a number of ways:
+  # a couple of ways:
   #   * absolute path: the path is simply returned
-  #   * path relative to the templatepath setting: a file is found and the path
-  #     is returned
   #   * modulename/filename selector: a file is found in the template directory
   #     of the named module.
   #
@@ -72,29 +70,7 @@ module Puppet::Parser::Files
     if Puppet::Util.absolute_path?(template)
       template
     else
-      in_templatepath = find_template_in_templatepath(template, environment)
-      if in_templatepath
-        in_templatepath
-      else
-        find_template_in_module(template, environment)
-      end
-    end
-  end
-
-  # Templatepaths are deprecated functionality, this will be going away in
-  # Puppet 4.
-  #
-  # @api private
-  def find_template_in_templatepath(template, environment)
-    template_paths = templatepath(environment)
-    if template_paths
-      template_paths.collect do |path|
-        File::join(path, template)
-      end.find do |f|
-        Puppet::FileSystem.exist?(f)
-      end
-    else
-      nil
+      find_template_in_module(template, environment)
     end
   end
 
@@ -107,16 +83,6 @@ module Puppet::Parser::Files
       mod.template(file)
     else
       nil
-    end
-  end
-
-  # Return an array of paths by splitting the +templatedir+ config
-  # parameter.
-  # @api private
-  def templatepath(environment)
-    dirs = Puppet.settings.value(:templatedir, environment.to_s).split(File::PATH_SEPARATOR)
-    dirs.select do |p|
-      File::directory?(p)
     end
   end
 
