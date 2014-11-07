@@ -73,7 +73,7 @@ class Puppet::Pops::Binder::BindingsComposer
         bind do
           name(scheme)
           instance_of(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_TYPE)
-          in_multibind(Puppet::Plugins::BindingSchemes::SPI_BINDINGS_SCHEMES)
+          in_multibind(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_KEY)
           to_instance(class_name)
           end
       end
@@ -170,7 +170,7 @@ class Puppet::Pops::Binder::BindingsComposer
     end
 
     def load_schemes
-      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_HANDLER, Puppet::Plugins::BindingSchemes::SPI_BINDINGS_SCHEMES) || {}
+      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_HANDLER, Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_KEY) || {}
     end
   end
 

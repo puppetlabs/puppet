@@ -3,7 +3,7 @@ module Puppet::Plugins::SyntaxCheckers
   # The lookup **key** for the multibind containing syntax checkers used to syntax check embedded string in non
   # puppet DSL syntax.
   # @api public
-  SPI_SYNTAX_CHECKERS       = 'puppet::syntaxcheckers'
+  SYNTAX_CHECKERS_KEY       = 'puppet::syntaxcheckers'
 
   # The lookup **type** for the multibind containing syntax checkers used to syntax check embedded string in non
   # puppet DSL syntax.
@@ -76,7 +76,7 @@ module Puppet::Plugins::SyntaxCheckers
   #
   # Use in Puppet DSL
   # -----------------
-  # The Puppet DSL Heredoc support and Puppet Templates makes use of the syntax checker extension. A user of a
+  # The Puppet DSL Heredoc support makes use of the syntax checker extension. A user of a
   # heredoc can specify the syntax in the heredoc tag, e.g.`@(END:userdata+json)`.
   #
   #
