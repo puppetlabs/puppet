@@ -26,7 +26,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       if format.nil?
         raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support"
       else
-        report_if_deprecated(format)
+        assert_supported_format(format)
         return format.name.to_s if format.suitable?
       end
     end
@@ -43,14 +43,14 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
         raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new("No supported formats are acceptable (Accept: #{accepted_formats})", Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
       end
 
-      report_if_deprecated(formatter)
+      assert_supported_format(formatter)
 
       formatter
   end
 
-  def report_if_deprecated(format)
+  def assert_supported_format(format)
     if format.name == :yaml || format.name == :b64_zlib_yaml
-      Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
+      raise Puppet::Error, "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
     end
   end
 end

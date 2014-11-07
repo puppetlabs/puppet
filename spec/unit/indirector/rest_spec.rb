@@ -8,25 +8,6 @@ HTTP_ERROR_CODES = [300, 400, 500]
 
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
-  describe "when talking to an older master" do
-    it "should set backward compatibility settings" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns nil
-
-      terminus.send(terminus_method, request)
-      Puppet[:report_serialization_format].should == 'yaml'
-      Puppet[:legacy_query_parameter_serialization].should == true
-    end
-  end
-
-  describe "when talking to a 3.3.1 master" do
-    it "should not set backward compatibility settings" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns "3.3.1"
-
-      terminus.send(terminus_method, request)
-      Puppet[:report_serialization_format].should == 'pson'
-      Puppet[:legacy_query_parameter_serialization].should == false
-    end
-  end
 
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do

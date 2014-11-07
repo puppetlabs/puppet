@@ -594,11 +594,21 @@ describe Puppet::Resource do
       @resource["two"] = "other"
     end
 
+    # PUP-3272, needs to work becuse serialization is not only to network
+    #
     it "should produce an equivalent yaml object" do
       text = @resource.render('yaml')
 
       newresource = Puppet::Resource.convert_from('yaml', text)
-      newresource.should equal_resource_attributes_of @resource
+      newresource.should equal_resource_attributes_of(@resource)
+    end
+
+    # PUP-3272, since serialization to network is done in pson, not yaml
+    it "should produce an equivalent pson object" do
+      text = @resource.render('pson')
+
+      newresource = Puppet::Resource.convert_from('pson', text)
+      newresource.should equal_resource_attributes_of(@resource)
     end
   end
 
@@ -614,14 +624,14 @@ describe Puppet::Resource do
     end
 
     it "doesn't include transient instance variables (#4506)" do
-      expect(@resource.to_yaml_properties).to_not include :@rstype
+      expect(@resource.to_yaml_properties).to_not include(:@rstype)
     end
 
-    it "produces an equivalent yaml object" do
-      text = @resource.render('yaml')
+    it "produces an equivalent pson object" do
+      text = @resource.render('pson')
 
-      newresource = Puppet::Resource.convert_from('yaml', text)
-      newresource.should equal_resource_attributes_of @resource
+      newresource = Puppet::Resource.convert_from('pson', text)
+      newresource.should equal_resource_attributes_of(@resource)
     end
   end
 

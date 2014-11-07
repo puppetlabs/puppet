@@ -319,7 +319,7 @@ class Puppet::Transaction::Report
   end
 
   def self.default_format
-    Puppet[:report_serialization_format].intern
+    :pson
   end
 
   private

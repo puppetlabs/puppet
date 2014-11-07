@@ -2,11 +2,14 @@ require 'time'
 
 require 'puppet/node'
 require 'puppet/indirector'
+require 'puppet/util/psych_support'
 
 
 # Manage a given node's facts.  This either accepts facts and stores them, or
 # returns facts for a given node.
 class Puppet::Node::Facts
+  include Puppet::Util::PsychSupport
+
   # Set up indirection, so that nodes can be looked for in
   # the node sources.
   extend Puppet::Indirector

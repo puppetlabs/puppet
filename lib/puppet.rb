@@ -159,10 +159,6 @@ module Puppet
   require "puppet/vendor"
   Puppet::Vendor.load_vendored
 
-  # Set default for YAML.load to unsafe so we don't affect programs
-  # requiring puppet -- in puppet we will call safe explicitly
-  SafeYAML::OPTIONS[:default_mode] = :unsafe
-
   # The bindings used for initialization of puppet
   # @api private
   def self.base_context(settings)

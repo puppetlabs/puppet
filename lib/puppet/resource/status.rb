@@ -1,5 +1,6 @@
 require 'time'
 require 'puppet/network/format_support'
+require 'puppet/util/psych_support'
 
 module Puppet
   class Resource
@@ -13,6 +14,7 @@ module Puppet
     class Status
       include Puppet::Util::Tagging
       include Puppet::Network::FormatSupport
+      include Puppet::Util::PsychSupport
 
       # @!attribute [rw] file
       #   @return [String] The file where `@real_resource` was defined.
@@ -88,7 +90,6 @@ module Puppet
                            @changed @resource_type @title @skipped @failed
                            @containment_path}.
         map(&:to_sym)
-
 
       def self.from_data_hash(data)
         obj = self.allocate
