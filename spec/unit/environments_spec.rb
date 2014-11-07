@@ -391,23 +391,58 @@ config_version=$vardir/random/scripts
 
 
   describe "cached loaders" do
-    let(:cached1) { Puppet::Node::Environment.create(:cached1, []) }
-    let(:cached2) { Puppet::Node::Environment.create(:cached2, []) }
-    let(:static_loader) { Puppet::Environments::Static.new(cached1, cached2) }
-    let(:loader) { Puppet::Environments::Cached.new(static_loader) }
+    context "#get" do
+      it "gets an environment" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get(:an_environment)).to environment(:an_environment)
+        end
+      end
 
-    it "gets an environment" do
-      expect(loader.get(:cached2)).to eq(cached2)
+      it "does not reload the environment if it isn't expired" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = mock('loader')
+        mocked_loader.expects(:get).with(:cached).returns(env).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get(:cached)
+        cached.get(:cached)
+      end
+
+      it "returns nil if env not found" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get(:doesnotexist)).to be_nil
+        end
+      end
     end
 
-    it "returns nil if env not found" do
-      expect(loader.get(:doesnotexist)).to be_nil
-    end
+    context "#get!" do
+      it "gets an environment" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get!(:an_environment)).to environment(:an_environment)
+        end
+      end
 
-    it "raises error if environment is not found" do
-      expect do
-        loader.get!(:doesnotexist)
-      end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      it "does not reload the environment if it isn't expired" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = mock('loader')
+        mocked_loader.expects(:get).with(:cached).returns(env).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get!(:cached)
+        cached.get!(:cached)
+      end
+
+      it "raises error if environment is not found" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect do
+            Puppet::Environments::Cached.new(loader).get!(:doesnotexist)
+          end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+        end
+      end
     end
   end
 
