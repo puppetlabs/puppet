@@ -10,7 +10,6 @@ class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Eval
 
     @query = query
 
-    #TODO: Can this be refactored?
     @type = Puppet::Resource.new(type, "whatever").type
   end
 

@@ -1,13 +1,15 @@
 class Puppet::Pops::Evaluator::Collectors::AbstractCollector
   attr_reader :scope
+
   # The collector's hash of overrides {:parameters => params}
   attr_reader :overrides
+
   # The set of collected resources
   attr_reader :collected
 
   # An empty array which will be returned by the unresolved_resources
   # method unless we have a FixSetCollector
-  EMPTY_RESOURCES = [].frozen
+  EMPTY_RESOURCES = [].freeze
 
   # Initialized the instance variables needed by the base
   # collector class to perform evaluation

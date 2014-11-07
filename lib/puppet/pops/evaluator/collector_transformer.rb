@@ -7,14 +7,6 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     @@compare_operator ||= Puppet::Pops::Evaluator::CompareOperator.new()
   end
 
-  def query(o, scope)
-    @@query_visitor.visit_this_1(self, o, scope)
-  end
-
-  def match(o, scope)
-    @@match_visitor.visit_this_1(self, o, scope)
-  end
-
   def transform(o, scope)
     raise ArgumentError, "Expected CollectExpression" unless o.is_a? Puppet::Pops::Model::CollectExpression
 
@@ -56,6 +48,16 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     scope.compiler.add_collection(newcoll)
 
     newcoll
+  end
+
+protected
+
+  def query(o, scope)
+    @@query_visitor.visit_this_1(self, o, scope)
+  end
+
+  def match(o, scope)
+    @@match_visitor.visit_this_1(self, o, scope)
   end
 
   def query_unless_nop(query, scope)
@@ -190,7 +192,6 @@ class Puppet::Pops::Evaluator::CollectorTransformer
   def to_3x_param(o)
     bridge = Puppet::Parser::AST::PopsBridge::Expression.new(:value => o.value_expr)
     args = { :value => bridge }
-    #TODO: May delete this line later
     args[:add] = true if o.operator == :'+>'
     args[:param] = o.attribute_name
     args= Puppet::Pops::Model::AstTransformer.new().merge_location(args, o)

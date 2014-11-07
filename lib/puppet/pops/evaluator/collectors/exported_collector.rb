@@ -12,7 +12,6 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
     @equery = equery
     @cquery = cquery
 
-    # Canonize the type
     @type = Puppet::Resource.new(type, "whatever").type
   end
 
