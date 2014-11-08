@@ -76,6 +76,10 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     o
   end
 
+  def transform_AbstractCollector(o, scope)
+    o
+  end
+
   # Array content needs to be transformed
   def transform_Array(o, scope)
     o.map{|x| transform(x, scope) }

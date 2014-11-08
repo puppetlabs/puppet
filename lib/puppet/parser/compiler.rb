@@ -443,7 +443,11 @@ class Puppet::Parser::Compiler
   # look for resources, because we want to consider those to be
   # parse errors.
   def fail_on_unevaluated_resource_collections
-    remaining = @collections.collect(&:resources).flatten.compact
+    if Puppet[:parser] == 'future'
+      remaining = @collections.collect(&:unresolved_resources).flatten.compact
+    else
+      remaining = @collections.collect(&:resources).flatten.compact
+    end
 
     if !remaining.empty?
       raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"

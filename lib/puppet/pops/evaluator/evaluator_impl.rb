@@ -562,26 +562,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
-  # Evaluates a CollectExpression by transforming it into a 3x AST::Collection and then evaluating that.
-  # This is done because of the complex API between compiler, indirector, backends, and difference between
-  # collecting virtual resources and exported resources.
+  # Evaluates a CollectExpression by creating a collector transformer. The transformer
+  # will evaulate the collection, create the appropriate collector, and hand it off
+  # to the compiler to collect the resources specified by the query.
   #
   def eval_CollectExpression o, scope
-    # The Collect Expression and its contained query expressions are implemented in such a way in
-    # 3x that it is almost impossible to do anything about them (the AST objects are lazily evaluated,
-    # and the built structure consists of both higher order functions and arrays with query expressions
-    # that are either used as a predicate filter, or given to an indirection terminus (such as the Puppet DB
-    # resource terminus). Unfortunately, the 3x implementation has many inconsistencies that the implementation
-    # below carries forward.
-    #
-    collect_3x = Puppet::Pops::Model::AstTransformer.new().transform(o)
-    collected = collect_3x.evaluate(scope)
-    # the 3x returns an instance of Parser::Collector (but it is only registered with the compiler at this
-    # point and does not contain any valuable information (like the result)
-    # Dilemma: If this object is returned, it is a first class value in the Puppet Language and we
-    # need to be able to perform operations on it. We can forbid it from leaking by making CollectExpression
-    # a non R-value. This makes it possible for the evaluator logic to make use of the Collector.
-    collected
+    Puppet::Pops::Evaluator::CollectorTransformer.new().transform(o,scope)
   end
 
   def eval_ParenthesizedExpression(o, scope)
