@@ -190,14 +190,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "2 >= 1"         => true,
       "1 == 1.0 "      => true,
       "1 < 1.1  "      => true,
-      "'1' < 1.1"      => true,
       "1.0 == 1 "      => true,
       "1.0 < 2  "      => true,
-      "1.0 < 'a'"      => true,
-      "'1.0' < 1.1"    => true,
       "'1.0' < 'a'"    => true,
-      "'1.0' < '' "    => true,
-      "'1.0' < ' '"    => true,
+      "'1.0' < '' "    => false,
+      "'1.0' < ' '"    => false,
       "'a' > '1.0'"    => true,
       "/.*/ == /.*/ "  => true,
       "/.*/ != /a.*/"  => true,
@@ -209,6 +206,21 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           parser.evaluate_string(scope, source, __FILE__).should == result
         end
       end
+
+   {
+     "a > 1" => /String > Integer/,
+     "a >= 1" => /String >= Integer/,
+     "a < 1" => /String < Integer/,
+     "a <= 1" => /String <= Integer/,
+     "1 > a" => /Integer > String/,
+     "1 >= a" => /Integer >= String/,
+     "1 < a" => /Integer < String/,
+     "1 <= a" => /Integer <= String/,
+   }.each do | source, error|
+     it "should not allow comparison of String and Number '#{source}'" do
+       expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error)
+     end
+   end
 
    {
       "'a' =~ /.*/"                     => true,
@@ -271,8 +283,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "/xxx/ in {'aaaxxxbbb'=>1}"     => true,
       "/yyy/ in {'aaaxxxbbb'=>1}"     => false,
       "15 in [1, 0xf]"                => true,
-      "15 in [1, '0xf']"              => true,
-      "'15' in [1, 0xf]"              => true,
+      "15 in [1, '0xf']"              => false,
+      "'15' in [1, 0xf]"              => false,
       "15 in [1, 115]"                => false,
       "1 in [11, '111']"              => false,
       "'1' in [11, '111']"            => false,
