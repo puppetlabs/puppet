@@ -11,7 +11,11 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
   describe "when receiving a request" do
     before do
-      @request     = stub('webrick http request', :query => {}, :peeraddr => %w{eh boo host ip}, :client_cert => nil)
+      @request     = stub('webrick http request', :query => {},
+                          :query_string => 'environment=production',
+                          :peeraddr => %w{eh boo host ip},
+                          :request_method => 'GET',
+                          :client_cert => nil)
       @response    = mock('webrick http response')
       @model_class = stub('indirected model class')
       @webrick     = stub('webrick http server', :mount => true, :[] => {})
@@ -50,6 +54,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should return the request body as the body" do
+        @request.stubs(:request_method).returns "POST"
         @request.expects(:body).returns "my body"
         @handler.body(@request).should == "my body"
       end
@@ -110,6 +115,12 @@ describe Puppet::Network::HTTP::WEBrickREST do
         result = @handler.params(@request)
 
         result.keys.sort.should == only_server_side_information
+      end
+
+      it "should prefer duplicate params from the body over the query string" do
+        @request.stubs(:request_method).returns "PUT"
+        @request.stubs(:query).returns(WEBrick::HTTPUtils.parse_query("foo=bar&environment=posted_env"))
+        @handler.params(@request)[:environment].should == "posted_env"
       end
 
       it "should include the HTTP request parameters, with the keys as symbols" do
