@@ -399,12 +399,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      if Puppet[:parser] == 'future'
         throw :undefined_variable
-      else
-        reason_msg = reason.nil? ? '' : "; #{reason}"
-        raise Puppet::ParseError, "Undefined variable #{name.inspect}#{reason_msg}"
-      end
     else
       nil
     end
