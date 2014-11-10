@@ -9,55 +9,42 @@ describe Puppet::Environments do
 
   FS = Puppet::FileSystem
 
-  describe "directories loader" do
-    before(:each) do
-      Puppet.settings.initialize_global_settings
-    end
+  before(:each) do
+    Puppet.settings.initialize_global_settings
+    Puppet[:environment_timeout] = "unlimited"
+  end
 
+  let(:directory_tree) do
+    FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+      FS::MemoryFile.a_regular_file_containing("ignored_file", ''),
+      FS::MemoryFile.a_directory("an_environment", [
+        FS::MemoryFile.a_missing_file("environment.conf"),
+        FS::MemoryFile.a_directory("modules"),
+        FS::MemoryFile.a_directory("manifests"),
+      ]),
+      FS::MemoryFile.a_directory("another_environment", [
+        FS::MemoryFile.a_missing_file("environment.conf"),
+      ]),
+    ])
+  end
+
+  describe "directories loader" do
     it "lists environments" do
       global_path_1_location = File.expand_path("global_path_1")
       global_path_2_location = File.expand_path("global_path_2")
       global_path_1 = FS::MemoryFile.a_directory(global_path_1_location)
       global_path_2 = FS::MemoryFile.a_directory(global_path_2_location)
 
-      envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-        FS::MemoryFile.a_directory("env1", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-          FS::MemoryFile.a_directory("modules"),
-          FS::MemoryFile.a_directory("manifests"),
-        ]),
-        FS::MemoryFile.a_directory("env2", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-        ]),
-      ])
-
-      loader_from(:filesystem => [envdir, global_path_1, global_path_2],
-                  :directory => envdir,
+      loader_from(:filesystem => [directory_tree, global_path_1, global_path_2],
+                  :directory => directory_tree,
                   :modulepath => [global_path_1_location, global_path_2_location]) do |loader|
         expect(loader.list).to include_in_any_order(
-          environment(:env1).
-            with_manifest("#{FS.path_string(envdir)}/env1/manifests").
-            with_modulepath(["#{FS.path_string(envdir)}/env1/modules",
+          environment(:an_environment).
+            with_manifest("#{FS.path_string(directory_tree)}/an_environment/manifests").
+            with_modulepath(["#{FS.path_string(directory_tree)}/an_environment/modules",
                              global_path_1_location,
                              global_path_2_location]),
-          environment(:env2))
-      end
-    end
-
-    it "does not list files" do
-      envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-        FS::MemoryFile.a_regular_file_containing("foo", ''),
-        FS::MemoryFile.a_directory("env1", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-        ]),
-        FS::MemoryFile.a_directory("env2", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-        ]),
-      ])
-
-      loader_from(:filesystem => [envdir],
-                  :directory => envdir) do |loader|
-        expect(loader.list).to include_in_any_order(environment(:env1), environment(:env2))
+          environment(:another_environment))
       end
     end
 
@@ -82,24 +69,13 @@ describe Puppet::Environments do
     end
 
     it "gets a particular environment" do
-      directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-        FS::MemoryFile.a_directory("env1", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-        ]),
-        FS::MemoryFile.a_directory("env2", [
-          FS::MemoryFile.a_missing_file("environment.conf"),
-        ]),
-      ])
-
       loader_from(:filesystem => [directory_tree],
                   :directory => directory_tree) do |loader|
-        expect(loader.get("env1")).to environment(:env1)
+        expect(loader.get("an_environment")).to environment(:an_environment)
       end
     end
 
     it "raises error when environment not found" do
-      directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [])
-
       loader_from(:filesystem => [directory_tree],
                   :directory => directory_tree) do |loader|
         expect do
@@ -109,22 +85,9 @@ describe Puppet::Environments do
     end
 
     it "returns nil if an environment can't be found" do
-      directory_tree = FS::MemoryFile.a_directory("envdir", [])
-
       loader_from(:filesystem => [directory_tree],
                   :directory => directory_tree) do |loader|
         expect(loader.get("env_not_in_this_list")).to be_nil
-      end
-    end
-
-    it "raises error if an environment can't be found" do
-      directory_tree = FS::MemoryFile.a_directory("envdir", [])
-
-      loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree) do |loader|
-        expect do
-          loader.get!("env_not_in_this_list")
-        end.to raise_error(Puppet::Environments::EnvironmentNotFound)
       end
     end
 
@@ -362,53 +325,19 @@ config_version=$vardir/random/scripts
       end
 
       context "custom cache expiration service" do
-        let(:envs_created) { Set.new }
-        let(:envs_expired) { Set.new }
-        let(:envs_evicted) { Set.new }
-
-        it "should support registering a custom cache expiration service" do
-
-          class CustomExpirationService
-            def initialize(envs_created, envs_expired, envs_evicted)
-              @envs_created = envs_created
-              @envs_expired = envs_expired
-              @envs_evicted = envs_evicted
-            end
-
-            def created(env)
-              @envs_created << env.name
-            end
-            def expired?(env_name)
-              @envs_expired << env_name
-              true
-            end
-            def evicted(env_name)
-              @envs_evicted << env_name
-            end
-          end
-
-          Puppet[:environment_timeout] = "unlimited"
-          directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-              FS::MemoryFile.a_directory("static1", [
-                  FS::MemoryFile.a_missing_file("environment.conf"),
-              ]),
-          ])
-
+        it "consults the custom service to expire the cache" do
           loader_from(:filesystem => [directory_tree],
                       :directory => directory_tree) do |loader|
-            begin
-              orig_svc = Puppet::Environments::Cached.cache_expiration_service
-              Puppet::Environments::Cached.cache_expiration_service =
-                  CustomExpirationService.new(envs_created, envs_expired, envs_evicted)
-              cached = Puppet::Environments::Cached.new(loader)
-              cached.get(:static1)
-              cached.get(:static1)
+            service = ReplayExpirationService.new([true])
+            using_expiration_service(service) do
 
-              expect(envs_created.include?(:static1)).to eq(true)
-              expect(envs_expired.include?(:static1)).to eq(true)
-              expect(envs_evicted.include?(:static1)).to eq(true)
-            ensure
-              Puppet::Environments::Cached.cache_expiration_service = orig_svc
+              cached = Puppet::Environments::Cached.new(loader)
+              cached.get(:an_environment)
+              cached.get(:an_environment)
+
+              expect(service.created_envs).to include(:an_environment)
+              expect(service.expired_envs).to include(:an_environment)
+              expect(service.evicted_envs).to include(:an_environment)
             end
           end
         end
@@ -462,23 +391,58 @@ config_version=$vardir/random/scripts
 
 
   describe "cached loaders" do
-    let(:cached1) { Puppet::Node::Environment.create(:cached1, []) }
-    let(:cached2) { Puppet::Node::Environment.create(:cached2, []) }
-    let(:static_loader) { Puppet::Environments::Static.new(cached1, cached2) }
-    let(:loader) { Puppet::Environments::Cached.new(static_loader) }
+    context "#get" do
+      it "gets an environment" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get(:an_environment)).to environment(:an_environment)
+        end
+      end
 
-    it "gets an environment" do
-      expect(loader.get(:cached2)).to eq(cached2)
+      it "does not reload the environment if it isn't expired" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = mock('loader')
+        mocked_loader.expects(:get).with(:cached).returns(env).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get(:cached)
+        cached.get(:cached)
+      end
+
+      it "returns nil if env not found" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get(:doesnotexist)).to be_nil
+        end
+      end
     end
 
-    it "returns nil if env not found" do
-      expect(loader.get(:doesnotexist)).to be_nil
-    end
+    context "#get!" do
+      it "gets an environment" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect(Puppet::Environments::Cached.new(loader).get!(:an_environment)).to environment(:an_environment)
+        end
+      end
 
-    it "raises error if environment is not found" do
-      expect do
-        loader.get!(:doesnotexist)
-      end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      it "does not reload the environment if it isn't expired" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = mock('loader')
+        mocked_loader.expects(:get).with(:cached).returns(env).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get!(:cached)
+        cached.get!(:cached)
+      end
+
+      it "raises error if environment is not found" do
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+          expect do
+            Puppet::Environments::Cached.new(loader).get!(:doesnotexist)
+          end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+        end
+      end
     end
   end
 
@@ -531,5 +495,40 @@ config_version=$vardir/random/scripts
       end
     end
   end
+
+  def using_expiration_service(service)
+    begin
+      orig_svc = Puppet::Environments::Cached.cache_expiration_service
+      Puppet::Environments::Cached.cache_expiration_service = service
+      yield
+    ensure
+      Puppet::Environments::Cached.cache_expiration_service = orig_svc
+    end
+  end
+
+  class ReplayExpirationService
+    attr_reader :created_envs, :expired_envs, :evicted_envs
+
+    def initialize(expiration_sequence)
+      @created_envs = []
+      @expired_envs = []
+      @evicted_envs = []
+      @expiration_sequence = expiration_sequence
+    end
+
+    def created(env)
+      @created_envs << env.name
+    end
+
+    def expired?(env_name)
+      @expired_envs << env_name
+      @expiration_sequence.pop
+    end
+
+    def evicted(env_name)
+      @evicted_envs << env_name
+    end
+  end
+
 end
 end
