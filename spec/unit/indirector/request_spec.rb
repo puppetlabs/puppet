@@ -277,12 +277,6 @@ describe Puppet::Indirector::Request do
       request.query_string.should == ""
     end
 
-    it "should prefix the query string with '?'" do
-      request = a_request_with_options(:one => "two")
-
-      request.query_string.should =~ /^\?/
-    end
-
     it "should include all options in the query string, separated by '&'" do
       request = a_request_with_options(:one => "two", :three => "four")
 
