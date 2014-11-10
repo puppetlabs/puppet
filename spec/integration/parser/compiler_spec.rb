@@ -59,6 +59,8 @@ describe Puppet::Parser::Compiler do
     Puppet::Parser::Resource.new(type, title, :scope => @scope)
   end
 
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+
   before :each do
     # Push me faster, I wanna go back in time!  (Specifically, freeze time
     # across the test since we have a bunch of version == timestamp code
@@ -67,7 +69,6 @@ describe Puppet::Parser::Compiler do
     now = Time.now
     Time.stubs(:now).returns(now)
 
-    environment = Puppet::Node::Environment.create(:testing, [])
     @node = Puppet::Node.new("testnode",
                              :facts => Puppet::Node::Facts.new("facts", {}),
                              :environment => environment)
@@ -572,6 +573,15 @@ describe Puppet::Parser::Compiler do
       @scope.stubs(:find_hostclass).with("myclass", {:assume_fqname => false}).returns(@class)
 
       @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
+    end
+
+    around do |example|
+      Puppet.override(
+        :environments => Puppet::Environments::Static.new(environment),
+        :description => "Static loader for specs"
+      ) do
+        example.run
+      end
     end
 
     it "should evaluate each class" do

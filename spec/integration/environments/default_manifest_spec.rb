@@ -199,6 +199,7 @@ describe "default manifests" do
 
         File.open(File.join(confdir, "puppet.conf"), "w") do |f|
           f.puts(<<-EOF)
+  environmentpath=
   default_manifest=#{manifestsdir}
   disable_per_environment_manifest=true
   manifest=#{legacy_manifestsdir}
@@ -223,7 +224,6 @@ describe "default manifests" do
       end
     end
   end
-
 
   RSpec::Matchers.define :include_resource do |expected|
     match do |actual|

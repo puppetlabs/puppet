@@ -109,6 +109,7 @@ describe "interpolating $environment" do
 
   def assert_does_interpolate_environment(setting, value, expected_interpolation)
     set_puppet_conf(confdir, <<-EOF)
+      environmentpath=
       #{setting}=#{value}
     EOF
 
@@ -123,26 +124,6 @@ describe "interpolating $environment" do
       value = "/some/script $environment"
       expect = "/some/script production"
       assert_does_interpolate_environment("config_version", value, expect)
-    end
-
-    it "does interpolate $environment in basemodulepath" do
-      value = "$confdir/environments/$environment/modules:$confdir/environments/$environment/other_modules"
-      expected = "#{confdir}/environments/production/modules:#{confdir}/environments/production/other_modules"
-      assert_does_interpolate_environment("basemodulepath", value, expected)
-    end
-
-    it "does interpolate $environment in default_manifest, which is fine, because this setting isn't used" do
-      value = "$confdir/manifests/$environment"
-      expected = "#{confdir}/manifests/production"
-
-      assert_does_interpolate_environment("default_manifest", value, expected)
-    end
-
-    it "raises something" do
-      value = expected = "whatareyouthinking$environment"
-      expect {
-        assert_does_interpolate_environment("environment", value, expected)
-      }.to raise_error(SystemStackError, /stack level too deep/)
     end
   end
 

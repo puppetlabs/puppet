@@ -150,8 +150,8 @@ class Puppet::Node::Environment
                       env_params[:config_version] || config_version)
   end
 
-  # Creates a new Puppet::Node::Environment instance, overriding manfiest
-  # modulepath, or :config_version from the passed settings if they were
+  # Creates a new Puppet::Node::Environment instance, overriding :manifest,
+  # :modulepath, or :config_version from the passed settings if they were
   # originally set from the commandline, or returns self if there is nothing to
   # override.
   #
@@ -169,8 +169,7 @@ class Puppet::Node::Environment
       overrides[:config_version] = settings.value(:config_version)
     end
 
-    if settings.set_by_cli?(:manifest) ||
-      (settings.set_by_cli?(:manifestdir) && settings.value(:manifest).start_with?(settings.value(:manifestdir)))
+    if settings.set_by_cli?(:manifest)
       overrides[:manifest] = settings.value(:manifest)
     end
 
@@ -531,15 +530,15 @@ class Puppet::Node::Environment
   #
   # There are two sources that can be used for the initial parse:
   #
-  #   1. The value of `Puppet.settings[:code]`: Puppet can take a string from
+  #   1. The value of `Puppet[:code]`: Puppet can take a string from
   #     its settings and parse that as a manifest. This is used by various
   #     Puppet applications to read in a manifest and pass it to the
   #     environment as a side effect. This is attempted first.
-  #   2. The contents of `Puppet.settings[:manifest]`: Puppet will try to load
-  #     the environment manifest. By default this is `$manifestdir/site.pp`
+  #   2. The contents of this environment's +manifest+ attribute: Puppet will
+  #     try to load the environment manifest.
   #
   # @note This method will return an empty hostclass if
-  #   `Puppet.settings[:ignoreimport]` is set to true.
+  #   `Puppet[:ignoreimport]` is set to true.
   #
   # @return [Puppet::Parser::AST::Hostclass] The AST hostclass object
   #   representing the 'main' hostclass
@@ -552,8 +551,8 @@ class Puppet::Node::Environment
       parser.parse
     else
       file = self.manifest
-      # if the manifest file is a reference to a directory, parse and combine all .pp files in that
-      # directory
+      # if the manifest file is a reference to a directory, parse and combine
+      # all .pp files in that directory
       if file == NO_MANIFEST
         Puppet::Parser::AST::Hostclass.new('')
       elsif File.directory?(file)

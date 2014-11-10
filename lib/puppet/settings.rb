@@ -910,7 +910,6 @@ class Puppet::Settings
 
     catalog = Puppet::Resource::Catalog.new("Settings", Puppet::Node::Environment::NONE)
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
-      next if (key == :manifestdir && should_skip_manifestdir?())
       file = @config[key]
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
@@ -926,13 +925,6 @@ class Puppet::Settings
 
     catalog
   end
-
-  def should_skip_manifestdir?()
-    setting = @config[:environmentpath]
-    !(setting.nil? || setting.value.nil? || setting.value.empty?)
-  end
-
-  private :should_skip_manifestdir?
 
   # Convert our list of config settings into a configuration file.
   def to_config
@@ -1096,7 +1088,7 @@ Generated on #{Time.now}.
   private
 
   DEPRECATION_REFS = {
-    [:manifest, :modulepath, :config_version, :templatedir, :manifestdir] =>
+    [:manifest, :modulepath, :config_version] =>
       "See http://links.puppetlabs.com/env-settings-deprecations"
   }.freeze
 
@@ -1363,8 +1355,6 @@ Generated on #{Time.now}.
     end
 
     def ok_to_interpolate_environment(setting_name)
-      return true if Puppet.settings.value(:environmentpath, nil, true).empty?
-
       ENVIRONMENT_INTERPOLATION_ALLOWED.include?(setting_name.to_s)
     end
   end

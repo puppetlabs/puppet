@@ -261,7 +261,7 @@ module Puppet
           this provides the default environment for nodes we know nothing about."
     },
     :environmentpath => {
-      :default => "",
+      :default => "$confdir/environments",
       :desc    => "A search path for directory environments, as a list of directories
         separated by the system path separator character. (The POSIX path separator
         is ':', and the Windows path separator is ';'.)
@@ -477,9 +477,11 @@ module Puppet
       version is determined.  The output of this script will be added to every log message in the
       reports, allowing you to correlate changes on your hosts to the source version on the server.
 
-      Setting a global value for config_version in puppet.conf is deprecated. Please set a
+      Setting a global value for config_version in puppet.conf is not allowed
+      (but it can be overridden from the commandline). Please set a
       per-environment value in environment.conf instead. For more info, see
       http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        # XXX_ENV what does this become? VVV
       :deprecated => :allowed_on_commandline,
     },
     :prerun_command => {
@@ -929,26 +931,20 @@ EOT
       :default    => "puppet",
       :desc       => "The group puppet master should run as.",
     },
-    :manifestdir => {
-      :default    => "$confdir/manifests",
-      :type       => :directory,
-      :desc       => "Used to build the default value of the `manifest` setting. Has no other purpose.
-
-        This setting is deprecated.",
-      :deprecated => :completely,
-    },
     :manifest => {
-      :default    => "$manifestdir/site.pp",
+      :default    => "/dev/null",
       :type       => :file_or_directory,
       :desc       => "The entry-point manifest for puppet master. This can be one file
         or a directory of manifests to be evaluated in alphabetical order. Puppet manages
         this path as a directory if one exists or if the path ends with a / or \\.
 
-        Setting a global value for `manifest` in puppet.conf is deprecated. Please use
+        Setting a global value for `manifest` in puppet.conf is not allowed
+        (but it can be overridden from them commandline). Please use
         directory environments instead. If you need to use something other than the
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        # XXX_ENV what does this become? VVV
       :deprecated => :allowed_on_commandline,
     },
     :default_manifest => {
@@ -1047,26 +1043,25 @@ EOT
         list of directories separated by the system path separator character. (The
         POSIX path separator is ':', and the Windows path separator is ';'.)
 
-        If you are using directory environments, these are the modules that will
-        be used by _all_ environments. Note that the `modules` directory of the active
-        environment will have priority over any global directories. For more info, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html
-
-        This setting also provides the default value for the deprecated `modulepath`
-        setting, which is used when directory environments are disabled.",
+        These are the modules that will be used by _all_ environments. Note that
+        the `modules` directory of the active environment will have priority over
+        any global directories. For more info, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :modulepath => {
-      :default => "$basemodulepath",
+      :default => "",
       :type => :path,
       :desc => "The search path for modules, as a list of directories separated by the system
         path separator character. (The POSIX path separator is ':', and the
         Windows path separator is ';'.)
 
-        Setting a global value for `modulepath` in puppet.conf is deprecated. Please use
+        Setting a global value for `modulepath` in puppet.conf is not allowed
+        (but it can be overridden from the commandline). Please use
         directory environments instead. If you need to use something other than the
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        # XXX_ENV what does this become? VVV
       :deprecated => :allowed_on_commandline,
     },
     :ssl_client_header => {
@@ -1680,16 +1675,6 @@ EOT
   )
 
   define_settings(:parser,
-    :templatedir => {
-        :default  => "$vardir/templates",
-        :type     => :directory,
-        :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
-          directories.
-
-          This setting is deprecated. Please put your templates in modules instead.",
-        :deprecated => :completely,
-    },
-
     :allow_variables_with_dashes => {
       :default => false,
       :desc    => <<-'EOT'
