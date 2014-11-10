@@ -206,7 +206,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"
       content = Puppet::FileServing::Content.indirection.find(resource[:source])
-      file = Puppet::FileBucket::File.new(content.content)
+      environment = Puppet.lookup(:current_environment)
+      file = Puppet::FileBucket::File.new(environment.name, content.content)
       Puppet::FileBucket::File.indirection.save(file)
     end
   end

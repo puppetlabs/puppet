@@ -21,7 +21,7 @@ module Puppet::FileBucketFile
           return `diff #{Puppet::FileSystem.path_string(contents_file).inspect} #{Puppet::FileSystem.path_string(other_contents_file).inspect}`
         else
           Puppet.info "FileBucket read #{checksum}"
-          model.new(Puppet::FileSystem.binread(contents_file))
+          model.new(request.environment.name, Puppet::FileSystem.binread(contents_file))
         end
       else
         nil
@@ -45,7 +45,7 @@ module Puppet::FileBucketFile
       save_to_disk(instance, files_original_path, contents_file, paths_file)
 
       # don't echo the request content back to the agent
-      model.new('')
+      model.new(request.environment, '')
     end
 
     def validate_key(request)

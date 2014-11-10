@@ -11,20 +11,20 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
     include PuppetSpec::Files
 
     def save_bucket_file(contents, path = "/who_cares")
-      bucket_file = Puppet::FileBucket::File.new(contents)
+      bucket_file = Puppet::FileBucket::File.new('environment', contents)
       Puppet::FileBucket::File.indirection.save(bucket_file, "#{bucket_file.name}#{path}")
       bucket_file.checksum_data
     end
 
     describe "when servicing a save request" do
       it "should return a result whose content is empty" do
-        bucket_file = Puppet::FileBucket::File.new('stuff')
+        bucket_file = Puppet::FileBucket::File.new('environment', 'stuff')
         result = Puppet::FileBucket::File.indirection.save(bucket_file, "md5/c13d88cb4cb02003daedb8a84e5d272a")
         result.contents.should be_empty
       end
 
       it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
-        bucket_file = Puppet::FileBucket::File.new("contents")
+        bucket_file = Puppet::FileBucket::File.new('environment',"contents")
 
         children = []
         5.times do |count|
@@ -271,7 +271,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
                   key += "//path/to/file"
                 end
 
-                file_instance = Puppet::FileBucket::File.new(plaintext, options)
+                file_instance = Puppet::FileBucket::File.new('environment', plaintext, options)
                 request = Puppet::Indirector::Request.new(:indirection_name, :save, key, file_instance)
 
                 @store.save(request)
