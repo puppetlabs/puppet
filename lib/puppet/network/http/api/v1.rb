@@ -56,12 +56,33 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def uri2indirection(http_method, uri, params)
-    environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
+    indirection, key = uri.split("/", 3)[1..-1] # the first field is always nil because of the leading slash
 
-    raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'" unless Puppet::Node::Environment.valid_name?(environment)
     raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'" unless indirection =~ /^\w+$/
 
     method = indirection_method(http_method, indirection)
+
+    if method == :save
+      # In the case of a PUT request which maps to a `save` indirection, the HTTP
+      # specification doesn't allow a query string, so we can't put the environment
+      # there.  It would need to go in the request body.  However, since the
+      # indirector hides the deserialization of the body behind the 'model' object
+      # for each different indirection, we don't have access to the body yet either.
+      #
+      # After discussion, it sounds like the only two 'save' indirections that come
+      # through this HTTP layer are 'report' and 'file_bucket', and looking at the
+      # implementations for those, they don't reference the environment from the
+      # indirector request at all, so it seems safe to just set it to 'production'
+      # for those types of requests.  We should find a way to not have to
+      # special-case this in the long run (e.g. maybe just getting rid of the 'save'
+      # functionality in the HTTP layer of the indirector?  Replacing it with new
+      # endpoints that explicitly handle PUT requests?)
+      environment = "production"
+    else
+      environment = params.delete(:environment)
+    end
+
+    raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'" unless Puppet::Node::Environment.valid_name?(environment)
 
     configured_environment = Puppet.lookup(:environments).get(environment)
     if configured_environment.nil?
@@ -191,12 +212,17 @@ class Puppet::Network::HTTP::API::V1
 
   def self.indirection2uri(request)
     indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
+    "/#{indirection}/#{request.escaped_key}?#{request.query_string}"
+  end
+
+  def self.request_to_uri_with_env(request)
+    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
+    "/#{indirection}/#{request.escaped_key}?environment=#{request.environment.to_s}&#{request.query_string}"
   end
 
   def self.request_to_uri_and_body(request)
     indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}", request.query_string.sub(/^\?/,'')]
+    ["/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.to_s}&#{request.query_string}"]
   end
 
   def self.pluralize(indirection)
