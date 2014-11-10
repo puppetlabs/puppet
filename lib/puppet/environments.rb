@@ -378,6 +378,7 @@ module Puppet::Environments
     def entry(env)
       @cache_expiration_service.created(env)
       ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
+      Puppet.debug("Caching environment '#{name}' (cache ttl: #{ttl})")
       case ttl
       when 0
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
@@ -392,6 +393,7 @@ module Puppet::Environments
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
       if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
+        Puppet.debug("Evicting cache entry for environment '#{name}'")
         @cache.delete(name)
         @cache_expiration_service.evicted(name)
 
