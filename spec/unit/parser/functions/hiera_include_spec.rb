@@ -22,7 +22,7 @@ describe 'Puppet::Parser::Functions#hiera_include' do
 
   it 'should use the array resolution_type' do
     HieraPuppet.expects(:lookup).with() { |*args| args[4].should be(:array) }.returns(['someclass'])
-    expect { scope.function_hiera_include(['key']) }.to raise_error(Puppet::Error, /Could not find class someclass/)
+    expect { scope.function_hiera_include(['key']) }.to raise_error(Puppet::Error, /Could not find class ::someclass/)
   end
 
   it 'should call the `include` function with the classes' do

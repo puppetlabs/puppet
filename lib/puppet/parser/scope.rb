@@ -835,41 +835,34 @@ class Puppet::Parser::Scope
   # Transforms references to classes to the form suitable for
   # lookup in the compiler.
   #
-  # Makes names passed in the names array absolute if they are relative
-  # Names are now made absolute if Puppet[:parser] == 'future', this will
-  # be the default behavior in Puppet 4.0
+  # Makes names passed in the names array absolute if they are relative.
   #
-  # Transforms Class[] and Resource[] type referenes to class name
+  # Transforms Class[] and Resource[] type references to class name
   # or raises an error if a Class[] is unspecific, if a Resource is not
   # a 'class' resource, or if unspecific (no title).
   #
-  # TODO: Change this for 4.0 to always make names absolute
   #
   # @param names [Array<String>] names to (optionally) make absolute
   # @return [Array<String>] names after transformation
   #
   def transform_and_assert_classnames(names)
-    if Puppet[:parser] == 'future'
-      names.map do |name|
-        case name
-        when String
-          name.sub(/^([^:]{1,2})/, '::\1')
+    names.map do |name|
+      case name
+      when String
+        name.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Resource
-          assert_class_and_title(name.type, name.title)
-          name.title.sub(/^([^:]{1,2})/, '::\1')
+      when Puppet::Resource
+        assert_class_and_title(name.type, name.title)
+        name.title.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Pops::Types::PHostClassType
-          raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
-          name.class_name.sub(/^([^:]{1,2})/, '::\1')
+      when Puppet::Pops::Types::PHostClassType
+        raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
+        name.class_name.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Pops::Types::PResourceType
-          assert_class_and_title(name.type_name, name.title)
-          name.title.sub(/^([^:]{1,2})/, '::\1')
-        end
+      when Puppet::Pops::Types::PResourceType
+        assert_class_and_title(name.type_name, name.title)
+        name.title.sub(/^([^:]{1,2})/, '::\1')
       end
-    else
-      names
     end
   end
 

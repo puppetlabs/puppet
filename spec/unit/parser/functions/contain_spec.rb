@@ -49,7 +49,7 @@ describe 'The "contain" function' do
     catalog = compile_to_catalog(<<-MANIFEST)
       class outer {
         class named { }
-        contain named
+        contain outer::named
       }
 
       class named { }

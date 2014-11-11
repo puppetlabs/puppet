@@ -27,7 +27,7 @@ describe "the require function" do
   end
 
   it "should delegate to the 'include' puppet function" do
-    @scope.compiler.expects(:evaluate_classes).with(["myclass"], @scope, false)
+    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
 
     @scope.function_require(["myclass"])
   end
@@ -43,7 +43,7 @@ describe "the require function" do
   it "should lookup the absolute class path" do
     @scope.compiler.stubs(:evaluate_classes)
 
-    @scope.expects(:find_hostclass).with("myclass").returns(@klass)
+    @scope.expects(:find_hostclass).with("::myclass").returns(@klass)
     @klass.expects(:name).returns("myclass")
 
     @scope.function_require(["myclass"])
