@@ -331,9 +331,7 @@ class Puppet::Resource::Type
   #
   def set_argument_types(name_to_type_hash)
     @argument_types = {}
-    # Stop here if not running under future parser, the rest requires pops to be initialized
-    # and that the type system is available
-    return unless Puppet[:parser] == 'future' && name_to_type_hash
+    return unless name_to_type_hash
     name_to_type_hash.each do |name, t|
       # catch internal errors
       unless @arguments.include?(name)
