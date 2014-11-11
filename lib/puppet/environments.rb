@@ -338,6 +338,17 @@ module Puppet::Environments
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
     end
 
+    # @!macro loader_list
+    def list
+      @loader.list
+    end
+
+    # @!macro loader_search_paths
+    def search_paths
+      @loader.search_paths
+    end
+
+    # @!macro loader_get
     def get(name)
       evict_if_expired(name)
       if result = @cache[name]
@@ -360,10 +371,14 @@ module Puppet::Environments
       @cache = {}
     end
 
-    # This implementation evicts the cache, and always gets the current configuration of the environment
-    # TODO: While this is wasteful since it needs to go on a search for the conf, it is too disruptive to optimize
+    # This implementation evicts the cache, and always gets the current
+    # configuration of the environment
+    #
+    # TODO: While this is wasteful since it
+    # needs to go on a search for the conf, it is too disruptive to optimize
     # this.
     #
+    # @!macro loader_get_conf
     def get_conf(name)
       evict_if_expired(name)
       @loader.get_conf(name)
