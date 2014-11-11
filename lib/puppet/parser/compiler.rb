@@ -5,6 +5,7 @@ require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
+require 'puppet/loaders'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -145,19 +146,12 @@ class Puppet::Parser::Compiler
 
   # Constructs the overrides for the context
   def context_overrides()
-    if Puppet[:parser] == 'future'
-      require 'puppet/loaders'
-      {
-        :current_environment => environment,
-        :global_scope => @topscope,             # 4x placeholder for new global scope
-        :loaders  => lambda {|| loaders() },    # 4x loaders
-        :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
-      }
-    else
-      {
-        :current_environment => environment,
-      }
-    end
+    {
+      :current_environment => environment,
+      :global_scope => @topscope,             # 4x placeholder for new global scope
+      :loaders  => lambda {|| loaders() },    # 4x loaders
+      :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
+    }
   end
 
   def_delegator :@collections, :delete, :delete_collection
