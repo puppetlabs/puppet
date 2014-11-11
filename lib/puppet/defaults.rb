@@ -1781,7 +1781,7 @@ EOT
       EOT
     },
     :parser => {
-      :default => "current",
+      :default => "future",
       :desc => <<-'EOT'
         Selects the parser to use for parsing puppet manifests (in puppet DSL
         language/'.pp' files). Available choices are `current` (the default)

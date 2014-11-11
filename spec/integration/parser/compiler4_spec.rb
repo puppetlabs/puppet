@@ -7,14 +7,9 @@ require 'puppet_spec/scope'
 require 'matchers/resource'
 require 'rgen/metamodel_builder'
 
-# Test compilation using the future evaluator
 describe "Puppet::Parser::Compiler" do
   include PuppetSpec::Compiler
   include Matchers::Resource
-
-  before :each do
-    Puppet[:parser] = 'future'
-  end
 
   describe "the compiler when using future parser and evaluator" do
     it "should be able to determine the configuration version from a local version control repository" do

@@ -21,8 +21,8 @@ describe "Parameter passing" do
 
   it "overrides the default when a value is given" do
     expect_the_message_to_be('2') do <<-MANIFEST
-      define a($x=1) { notify { 'something': message => $x }}
-      a {'a': x => 2}
+      define a($x='1') { notify { 'something': message => $x }}
+      a {'a': x => '2'}
       MANIFEST
     end
   end
@@ -55,7 +55,7 @@ describe "Parameter passing" do
 
   it "uses the default when 'undef' is given'" do
     expect_the_message_to_be('1') do <<-MANIFEST
-        define a($x=1) { notify { 'something': message => $x }}
+        define a($x='1') { notify { 'something': message => $x }}
         a {'a': x => undef}
       MANIFEST
     end
@@ -63,7 +63,7 @@ describe "Parameter passing" do
 
   it "uses the default when no parameter is provided" do
     expect_the_message_to_be('1') do <<-MANIFEST
-        define a($x=1) { notify { 'something': message => $x }}
+        define a($x='1') { notify { 'something': message => $x }}
         a {'a': }
       MANIFEST
     end
