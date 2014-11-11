@@ -171,20 +171,57 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
   end
 
   context '#create' do
-    before do
-      resource[:disk] = "disk1"
+    context "when creating disks for a zpool" do
+      before do
+        resource[:disk] = "disk1"
+      end
+
+      it "should call create with the build_vdevs value" do
+        provider.expects(:zpool).with(:create, name, 'disk1')
+        provider.create
+      end
+
+      it "should call create with the 'spares' and 'log' values" do
+        resource[:spare] = ['value1']
+        resource[:log] = ['value2']
+        provider.expects(:zpool).with(:create, name, 'disk1', 'spare', 'value1', 'log', 'value2')
+        provider.create
+      end
     end
 
-    it "should call create with the build_vdevs value" do
-      provider.expects(:zpool).with(:create, name, 'disk1')
-      provider.create
+    context "when creating mirrors for a zpool" do
+      it "executes 'create' for a single group of mirrored devices" do
+        resource[:mirror] = ["disk1 disk2"]
+        provider.expects(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2')
+        provider.create
+      end
+
+      it "repeats the 'mirror' keyword between groups of mirrored devices" do
+        resource[:mirror] = ["disk1 disk2", "disk3 disk4"]
+        provider.expects(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2', 'mirror', 'disk3', 'disk4')
+        provider.create
+      end
     end
 
-    it "should call create with the 'spares' and 'log' values" do
-      resource[:spare] = ['value1']
-      resource[:log] = ['value2']
-      provider.expects(:zpool).with(:create, name, 'disk1', 'spare', 'value1', 'log', 'value2')
-      provider.create
+    describe "when creating raidz for a zpool" do
+      it "executes 'create' for a single raidz group" do
+        resource[:raidz] = ["disk1 disk2"]
+        provider.expects(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2')
+        provider.create
+      end
+
+      it "execute 'create' for a single raidz2 group" do
+        resource[:raidz] = ["disk1 disk2"]
+        resource[:raid_parity] = 'raidz2'
+        provider.expects(:zpool).with(:create, name, 'raidz2', 'disk1', 'disk2')
+        provider.create
+      end
+
+      it "repeats the 'raidz1' keyword between each group of raidz devices" do
+        resource[:raidz] = ["disk1 disk2", "disk3 disk4"]
+        provider.expects(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2', 'raidz1', 'disk3', 'disk4')
+        provider.create
+      end
     end
   end
 
