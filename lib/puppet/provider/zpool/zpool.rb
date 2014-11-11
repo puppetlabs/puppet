@@ -79,14 +79,19 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     @resource[:raid_parity] ? @resource[:raid_parity] : "raidz1"
   end
 
+  #handle mirror or raid
+  def handle_multi_arrays(prefix, array)
+    array.collect{ |a| [prefix] +  a.split(' ') }.flatten
+  end
+
   #builds up the vdevs for create command
   def build_vdevs
     if disk = @resource[:disk]
       disk.collect { |d| d.split(' ') }.flatten
     elsif mirror = @resource[:mirror]
-      ["mirror"] +  mirror
+      handle_multi_arrays("mirror", mirror)
     elsif raidz = @resource[:raidz]
-      [raidzarity] + raidz
+      handle_multi_arrays(raidzarity, raidz)
     end
   end
 
