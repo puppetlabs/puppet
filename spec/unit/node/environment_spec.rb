@@ -16,7 +16,7 @@ describe Puppet::Node::Environment do
     Puppet::Node::Environment.clear
   end
 
-  shared_examples_for 'the environment' do
+  context 'the environment' do
     it "should convert an environment to string when converting to YAML" do
       env.to_yaml.should match(/--- testing/)
     end
@@ -576,20 +576,6 @@ describe Puppet::Node::Environment do
         env.known_resource_types.require_reparse?.should be_true
       end
     end
-  end
-
-  describe 'with classic parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-    it_behaves_like 'the environment'
-  end
-
-  describe 'with future parser' do
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like 'the environment'
   end
 
   describe '#current' do

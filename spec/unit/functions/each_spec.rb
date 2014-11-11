@@ -7,10 +7,6 @@ require 'shared_behaviours/iterative_functions'
 describe 'the each method' do
   include PuppetSpec::Compiler
 
-  before :each do
-    Puppet[:parser] = 'future'
-  end
-
   context "should be callable as" do
     it 'each on an array selecting each value' do
       catalog = compile_to_catalog(<<-MANIFEST)

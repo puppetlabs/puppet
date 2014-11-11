@@ -9,10 +9,6 @@ describe 'the map method' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  before :each do
-    Puppet[:parser] = "future"
-  end
-
   context "using future parser" do
     it 'map on an array (multiplying each value by 2)' do
       catalog = compile_to_catalog(<<-MANIFEST)

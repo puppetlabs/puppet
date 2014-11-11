@@ -3,7 +3,7 @@ require 'spec_helper'
 module EnvironmentsDefaultManifestsSpec
 describe "default manifests" do
 
-  shared_examples_for "puppet with default_manifest settings" do
+  context "puppet with default_manifest settings" do
     let(:confdir) { Puppet[:confdir] }
     let(:environmentpath) { File.expand_path("envdir", confdir) }
 
@@ -224,19 +224,6 @@ describe "default manifests" do
     end
   end
 
-  describe 'using future parser' do
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like 'puppet with default_manifest settings'
-  end
-
-  describe 'using current parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-    it_behaves_like 'puppet with default_manifest settings'
-  end
 
   RSpec::Matchers.define :include_resource do |expected|
     match do |actual|

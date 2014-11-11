@@ -17,11 +17,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   before(:each) do
     Puppet[:strict_variables] = true
 
-    # These must be set since the 3x logic switches some behaviors on these even if the tests explicitly
-    # use the 4x parser and evaluator.
-    #
-    Puppet[:parser] = 'future'
-
     # Plugins Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
     require 'puppet/plugins'
 

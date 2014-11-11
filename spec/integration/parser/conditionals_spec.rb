@@ -6,7 +6,7 @@ describe "Evaluation of Conditionals" do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  shared_examples_for "a catalog built with conditionals" do
+  context "a catalog built with conditionals" do
     it "evaluates an if block correctly" do
       catalog = compile_to_catalog(<<-CODE)
       if( 1 == 1) {
@@ -76,32 +76,6 @@ describe "Evaluation of Conditionals" do
       CODE
       expect(catalog).to have_resource("Notify[undef]")
     end
-  end
-
-  context "current parser" do
-    before(:each) do
-      Puppet[:parser] = 'current'
-    end
-
-    it_behaves_like "a catalog built with conditionals"
-
-    it "evaluates empty string as false" do
-      catalog = compile_to_catalog(<<-CODE)
-      if '' {
-        notify { 'true': }
-      } else {
-        notify { 'empty': }
-      }
-      CODE
-      expect(catalog).to have_resource("Notify[empty]")
-    end
-  end
-
-  context "future parser" do
-    before(:each) do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like "a catalog built with conditionals"
 
     it "evaluates empty string as true" do
       catalog = compile_to_catalog(<<-CODE)
@@ -114,4 +88,5 @@ describe "Evaluation of Conditionals" do
       expect(catalog).to have_resource("Notify[true]")
     end
   end
+
 end

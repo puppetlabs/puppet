@@ -13,13 +13,6 @@ require 'puppet/parser/e4_parser_adapter'
 describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
-  before(:each) do
-
-    # These must be set since the is 3x logic that triggers on these even if the tests are explicit
-    # about selection of parser and evaluator
-    #
-    Puppet[:parser] = 'future'
-  end
 
   let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
