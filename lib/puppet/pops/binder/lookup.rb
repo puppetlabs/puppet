@@ -43,7 +43,7 @@ class Puppet::Pops::Binder::Lookup
   def self.to_symbolic_hash(input)
     names = [:name, :type, :default, :accept_undef, :extra, :override]
     options = {}
-    names.each {|n| options[n] = undef_as_nil(input[n.to_s] || input[n]) }
+    names.each {|n| options[n] = input[n.to_s] || input[n] }
     options
   end
 
@@ -104,14 +104,6 @@ class Puppet::Pops::Binder::Lookup
 
   end
 
-  def self.nil_as_undef(x)
-    x.nil? ? :undef : x
-  end
-
-  def self.undef_as_nil(x)
-    is_nil_or_undef?(x) ? nil : x
-  end
-
   def self.is_nil_or_undef?(x)
     x.nil? || x == :undef
   end
@@ -159,23 +151,19 @@ class Puppet::Pops::Binder::Lookup
       result_with_name[1]
     end
 
-    # If a block is given it is called with :undef passed as 'nil' since the lookup function
-    # is available from 3x with --binder turned on, and the evaluation is always 4x.
-    # TODO PUPPET4: Simply pass the value
-    #
     result = if pblock = options[:pblock]
       result2 = case pblock.parameter_count
       when 1
-        pblock.call(scope, undef_as_nil(result))
+        pblock.call(scope, result)
       when 2
-        pblock.call(scope, result_with_name[ 0 ], undef_as_nil(result))
+        pblock.call(scope, result_with_name[ 0 ], result)
       else
-        pblock.call(scope, result_with_name[ 0 ], undef_as_nil(result), undef_as_nil(options[ :default ]))
+        pblock.call(scope, result_with_name[ 0 ], result, options[ :default ])
       end
 
       # if the given result was returned, there is no need to type-check it again
       if !result2.equal?(result)
-        t = type_calculator.infer(undef_as_nil(result2))
+        t = type_calculator.infer(result2)
         if !type_calculator.assignable?(type, t)
           fail "the value produced by the given code block #{type_mismatch(type_calculator, type, t)}"
         end
@@ -189,11 +177,7 @@ class Puppet::Pops::Binder::Lookup
     if is_nil_or_undef?(result) && !options[:accept_undef]
       fail_lookup(names)
     else
-      # Since the function may be used without future parser being in effect, nil is not handled in a good
-      # way, and should instead be turned into :undef.
-      # TODO PUPPET4: Simply return the result
-      #
-      Puppet[:parser] == 'future' ? result : nil_as_undef(result)
+      result
     end
   end
 end
