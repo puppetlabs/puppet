@@ -9,20 +9,16 @@ module Puppet::Parser
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
-      if Puppet[:parser] == 'future'
-        evaluating_parser(environment)
-      else
-        classic_parser(environment)
-      end
+      evaluating_parser(environment)
     end
 
-    # Creates an instance of the classic parser.
-    #
-    def self.classic_parser(environment)
-      # avoid expensive require if already loaded
-      require 'puppet/parser' unless defined? Puppet::Parser::Parser
-      Puppet::Parser::Parser.new(environment)
-    end
+#    # Creates an instance of the classic parser.
+#    #
+#    def self.classic_parser(environment)
+#      # avoid expensive require if already loaded
+#      require 'puppet/parser' unless defined? Puppet::Parser::Parser
+#      Puppet::Parser::Parser.new(environment)
+#    end
 
     # Creates an instance of an E4ParserAdapter that adapts an
     # EvaluatingParser to the 3x way of parsing.
@@ -66,11 +62,7 @@ module Puppet::Parser
     end
 
     def self.code_merger
-      if Puppet[:parser] == 'future'
         Puppet::Pops::Parser::CodeMerger.new
-      else
-        Puppet::Parser::CodeMerger.new
-      end
     end
   end
 end
