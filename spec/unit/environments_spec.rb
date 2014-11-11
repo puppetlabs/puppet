@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'puppet/environments'
 require 'puppet/file_system'
 require 'matchers/include'
+require 'matchers/include_in_order'
 
 module PuppetEnvironments
 describe Puppet::Environments do
@@ -45,6 +46,13 @@ describe Puppet::Environments do
                              global_path_1_location,
                              global_path_2_location]),
           environment(:another_environment))
+      end
+    end
+
+    it "has search_paths" do
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree) do |loader|
+        expect(loader.search_paths).to eq(["file://#{directory_tree}"])
       end
     end
 
@@ -354,6 +362,10 @@ config_version=$vardir/random/scripts
       expect(loader.list).to eq([static1, static2])
     end
 
+    it "has search_paths" do
+      expect(loader.search_paths).to eq(["data:text/plain,internal"])
+    end
+
     it "gets an environment" do
       expect(loader.get(:static2)).to eq(static2)
     end
@@ -389,8 +401,80 @@ config_version=$vardir/random/scripts
     end
   end
 
+  describe "combined loaders" do
+    let(:static1) { Puppet::Node::Environment.create(:static1, []) }
+    let(:static2) { Puppet::Node::Environment.create(:static2, []) }
+    let(:static_loader) { Puppet::Environments::Static.new(static1, static2) }
+    let(:directory_tree) do
+      FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+        FS::MemoryFile.a_directory("an_environment", [
+          FS::MemoryFile.a_missing_file("environment.conf"),
+          FS::MemoryFile.a_directory("modules"),
+          FS::MemoryFile.a_directory("manifests"),
+        ]),
+      ])
+    end
+
+    it "lists environments" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        envs = Puppet::Environments::Combined.new(loader, static_loader).list
+        expect(envs[0]).to environment(:an_environment)
+        expect(envs[1]).to environment(:static1)
+        expect(envs[2]).to environment(:static2)
+      end
+    end
+
+    it "has search_paths" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Combined.new(loader, static_loader).search_paths).to eq(["file://#{directory_tree}","data:text/plain,internal"])
+      end
+    end
+
+    it "gets an environment" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Combined.new(loader, static_loader).get(:an_environment)).to environment(:an_environment)
+        expect(Puppet::Environments::Combined.new(loader, static_loader).get(:static2)).to environment(:static2)
+      end
+    end
+
+    it "returns nil if env not found" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Combined.new(loader, static_loader).get(:env_does_not_exist)).to be_nil
+      end
+    end
+
+    it "raises an error if environment is not found" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect do
+          Puppet::Environments::Combined.new(loader, static_loader).get!(:env_does_not_exist)
+        end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
+    it "gets an environment.conf" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Combined.new(loader, static_loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
+          with_env_path(directory_tree).
+          with_global_module_path([])
+      end
+    end
+  end
 
   describe "cached loaders" do
+    it "lists environments" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Cached.new(loader).list).to include_in_any_order(
+          environment(:an_environment),
+          environment(:another_environment))
+      end
+    end
+
+    it "has search_paths" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Cached.new(loader).search_paths).to eq(["file://#{directory_tree}"])
+      end
+    end
+
     context "#get" do
       it "gets an environment" do
         loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
@@ -444,6 +528,14 @@ config_version=$vardir/random/scripts
         end
       end
     end
+
+    it "gets an environment.conf" do
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
+          with_env_path(directory_tree).
+          with_global_module_path([])
+      end
+    end
   end
 
   RSpec::Matchers.define :environment do |name|
@@ -481,6 +573,32 @@ config_version=$vardir/random/scripts
 
     failure_message_for_should do |env|
       "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
+    end
+  end
+
+  RSpec::Matchers.define :match_environment_conf do |env_name|
+    match do |env_conf|
+      env_conf.path_to_env =~ /#{env_name}$/ &&
+        (!@env_path || File.join(@env_path,env_name.to_s) == env_conf.path_to_env) &&
+        (!@global_modulepath || @global_module_path == env_conf.global_module_path)
+    end
+
+    chain :with_env_path do |env_path|
+      @env_path = env_path.to_s
+    end
+
+    chain :with_global_module_path do |global_module_path|
+      @global_module_path = global_module_path
+    end
+
+    description do
+      "EnvironmentConf #{expected}" +
+        " with path_to_env: #{@env_path ? @env_path : "*"}/#{env_name}" +
+        (@global_module_path ? " with global_module_path [#{@global_module_path.join(', ')}]" : "")
+    end
+
+    failure_message_for_should do |env_conf|
+      "expected #{env_conf.inspect} to be #{description}"
     end
   end
 
