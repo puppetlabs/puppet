@@ -303,6 +303,15 @@ class Application
       Puppet.push_context({:current_environment => configured_environment},
                           "Update current environment from application's configuration")
     end
+
+    def configure_indirector_routes(application_name)
+      route_file = Puppet[:route_file]
+      if Puppet::FileSystem.exist?(route_file)
+        routes = YAML.load_file(route_file)
+        application_routes = routes[application_name]
+        Puppet::Indirector.configure_routes(application_routes) if application_routes
+      end
+    end
   end
 
   attr_reader :options, :command_line
@@ -402,12 +411,7 @@ class Application
   end
 
   def configure_indirector_routes
-    route_file = Puppet[:route_file]
-    if Puppet::FileSystem.exist?(route_file)
-      routes = YAML.load_file(route_file)
-      application_routes = routes[name.to_s]
-      Puppet::Indirector.configure_routes(application_routes) if application_routes
-    end
+    Puppet::Application.configure_indirector_routes(name.to_s)
   end
 
   # Output basic information about the runtime environment for debugging
