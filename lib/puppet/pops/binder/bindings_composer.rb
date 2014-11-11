@@ -9,6 +9,8 @@
 # TODO: If same config is loaded in a higher layer, skip it in the lower (since it is meaningless to load it again with lower
 #       precedence. (Optimization, or possibly an error, should produce a warning).
 #
+require 'puppet/plugins/binding_schemes'
+
 class Puppet::Pops::Binder::BindingsComposer
 
   # The BindingsConfig instance holding the read and parsed, but not evaluated configuration
@@ -70,8 +72,8 @@ class Puppet::Pops::Binder::BindingsComposer
         # do this in category 'extensions' to allow them to override the 'default'
         bind do
           name(scheme)
-          instance_of(::Puppetx::BINDINGS_SCHEMES_TYPE)
-          in_multibind(::Puppetx::BINDINGS_SCHEMES)
+          instance_of(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_TYPE)
+          in_multibind(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_KEY)
           to_instance(class_name)
           end
       end
@@ -157,7 +159,7 @@ class Puppet::Pops::Binder::BindingsComposer
 
   class SchemeHandlerHelper
     T = Puppet::Pops::Types::TypeFactory
-    HASH_OF_HANDLER = T.hash_of(T.type_of('Puppetx::Puppet::BindingsSchemeHandler'))
+    HASH_OF_HANDLER = T.hash_of(T.type_of(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_TYPE))
     def initialize(scope)
       @scope = scope
       @cache = nil
@@ -168,7 +170,7 @@ class Puppet::Pops::Binder::BindingsComposer
     end
 
     def load_schemes
-      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_HANDLER, Puppetx::BINDINGS_SCHEMES) || {}
+      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_HANDLER, Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_KEY) || {}
     end
   end
 

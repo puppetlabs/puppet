@@ -36,7 +36,7 @@ describe Puppet::Application do
       Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
       expect {
         @app.run
-      }.to exit_with 1
+      }.to exit_with(1)
     end
   end
 

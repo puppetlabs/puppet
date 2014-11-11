@@ -1,4 +1,14 @@
-module Puppetx::Puppet
+require 'puppet/plugins'
+module Puppet::Plugins::BindingSchemes
+
+  # The lookup **key** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
+  # @api public
+  BINDINGS_SCHEMES_KEY  = 'puppet::binding::schemes'
+
+  # The lookup **type** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
+  # @api public
+  BINDINGS_SCHEMES_TYPE = 'Puppet::Plugins::BindingSchemes::BindingsSchemeHandler'
+
   # BindingsSchemeHandler is a Puppet Extension Point for the purpose of extending Puppet with a
   # handler of a URI scheme used in the Puppet Bindings / Injector system.
   # The intended use is to create a class derived from this class and then register it with the
@@ -9,7 +19,7 @@ module Puppetx::Puppet
   # As an example, a class for getting LDAP data and transforming into bindings based on an LDAP URI scheme (such as RFC 2255, 4516)
   # may be authored in say a puppet module called 'exampleorg/ldap'. The name of the class should start with `Puppetx::<user>::<module>`,
   # e.g. 'Puppetx::Exampleorg::Ldap::LdapBindingsSchemeHandler" and
-  # be located in `lib/puppetx/exampleorg/Ldap/LdapBindingsSchemeHandler.rb`. (These rules are not enforced, but it make the class
+  # be located in `lib/puppetx/exampleorg/Ldap/LdapBindingsSchemeHandler.rb`. (These rules are not enforced, but it makes the class
   # both auto-loadable, and guaranteed to not have a name that clashes with some other LdapBindingsSchemeHandler from some other
   # author/organization.
   #
@@ -29,7 +39,7 @@ module Puppetx::Puppet
   #
   # The expand_included method
   # --------------------------
-  # This method is given a URI (as entred by a user in a bindings configuration) and the handler's first task is to
+  # This method is given a URI (as entered by a user in a bindings configuration) and the handler's first task is to
   # perform checking, transformation, and possible expansion into multiple URIs for loading. The result is always an array
   # of URIs. This method allows users to enter wild-cards, or to represent something symbolic that is transformed into one or
   # more "real URIs" to load. (It is allowed to change scheme!).
@@ -71,7 +81,6 @@ module Puppetx::Puppet
   # @api public
   #
   class BindingsSchemeHandler
-
     # Produces the bindings contributed to the binding system based on the given URI.
     # @param uri [URI] the URI to load bindings from
     # @param scope [Puppet::Pops::Parser::Scope] access to scope and the rest of the environment
@@ -127,4 +136,5 @@ module Puppetx::Puppet
       (query = uri.query) && query == '' || query == 'optional'
     end
   end
+
 end

@@ -6,7 +6,7 @@
 # @abstract
 # @api public
 #
-class Puppet::Pops::Binder::SchemeHandler::SymbolicScheme < Puppetx::Puppet::BindingsSchemeHandler
+class Puppet::Pops::Binder::SchemeHandler::SymbolicScheme < Puppet::Plugins::BindingSchemes::BindingsSchemeHandler
 
   # Shared implementation for module: and confdir: since the distinction is only in checks if a symbolic name
   # exists as a loadable file or not. Once this method is called it is assumed that the name is relative

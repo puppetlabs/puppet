@@ -1,4 +1,15 @@
-module Puppetx::Puppet
+require 'puppet/plugins'
+module Puppet::Plugins::SyntaxCheckers
+  # The lookup **key** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
+  SYNTAX_CHECKERS_KEY       = 'puppet::syntaxcheckers'
+
+  # The lookup **type** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
+  SYNTAX_CHECKERS_TYPE  = 'Puppet::Plugins::SyntaxCheckers::SyntaxChecker'
+
   # SyntaxChecker is a Puppet Extension Point for the purpose of extending Puppet with syntax checkers.
   # The intended use is to create a class derived from this class and then register it with the
   # Puppet Binder.
@@ -65,7 +76,7 @@ module Puppetx::Puppet
   #
   # Use in Puppet DSL
   # -----------------
-  # The Puppet DSL Heredoc support and Puppet Templates makes use of the syntax checker extension. A user of a
+  # The Puppet DSL Heredoc support makes use of the syntax checker extension. A user of a
   # heredoc can specify the syntax in the heredoc tag, e.g.`@(END:userdata+json)`.
   #
   #
@@ -88,4 +99,5 @@ module Puppetx::Puppet
       raise NotImplementedError, "The class #{self.class.name} should have implemented the method check()"
     end
   end
+
 end

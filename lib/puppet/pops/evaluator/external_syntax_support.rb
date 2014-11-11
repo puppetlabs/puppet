@@ -1,12 +1,15 @@
 # This module is an integral part of the evaluator. It deals with the concern of validating
 # external syntax in text produced by heredoc and templates.
 #
+require 'puppet/plugins/syntax_checkers'
 module Puppet::Pops::Evaluator::ExternalSyntaxSupport
-  # TODO: This can be simplified if the Factory directly supporteded hash_of/type_of
+  # TODO: This can be simplified if the Factory directly supported hash_of/type_of
   TYPES = Puppet::Pops::Types::TypeFactory
+  SERVICE_TYPE = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
+  SERVICE_NAME = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_KEY
 
   def assert_external_syntax(scope, result, syntax, reference_expr)
-    @@HASH_OF_SYNTAX_CHECKERS ||= TYPES.hash_of(TYPES.type_of(::Puppetx::SYNTAX_CHECKERS_TYPE))
+    @@HASH_OF_SYNTAX_CHECKERS ||= TYPES.hash_of(TYPES.type_of(SERVICE_TYPE))
     # ignore 'unspecified syntax'
     return if syntax.nil? || syntax == ''
 
@@ -31,7 +34,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   # Returns nil if there is no registered checker.
   #
   def checker_for_syntax(scope, syntax)
-    checkers_hash = scope.compiler.injector.lookup(scope, @@HASH_OF_SYNTAX_CHECKERS, ::Puppetx::SYNTAX_CHECKERS) || {}
+    checkers_hash = scope.compiler.injector.lookup(scope, @@HASH_OF_SYNTAX_CHECKERS, SERVICE_NAME) || {}
     checkers_hash[lookup_keys_for_syntax(syntax).find {|x| checkers_hash[x] }]
   end
 
