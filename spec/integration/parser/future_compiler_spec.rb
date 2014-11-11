@@ -270,7 +270,7 @@ describe "Puppet::Parser::Compiler" do
       end
 
       it "between collection expressions" do
-        assert_creates_relationships("File <| mode == 0644 |> -> File <| mode == 0755 |>",
+        assert_creates_relationships("File <| mode == '0644' |> -> File <| mode == '0755' |>",
                                      :relationships => [['a', 'd'],
                                                         ['b', 'd'],
                                                         ['c', 'd'],

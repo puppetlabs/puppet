@@ -71,15 +71,21 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     context "of mixed value types" do
       it "1 == 1.0  == true"   do; evaluate(literal(1)     == literal(1.0)).should == true   ; end
       it "1 < 1.1   == true"   do; evaluate(literal(1)     <  literal(1.1)).should == true   ; end
-      it "'1' < 1.1 == true"   do; evaluate(literal('1')   <  literal(1.1)).should == true   ; end
       it "1.0 == 1  == true"   do; evaluate(literal(1.0)   == literal(1)).should == true     ; end
       it "1.0 < 2   == true"   do; evaluate(literal(1.0)   <  literal(2)).should == true     ; end
-      it "'1.0' < 1.1 == true" do; evaluate(literal('1.0') <  literal(1.1)).should == true   ; end
-
       it "'1.0' < 'a' == true" do; evaluate(literal('1.0') <  literal('a')).should == true   ; end
-      it "'1.0' < ''  == true" do; evaluate(literal('1.0') <  literal('')).should == true    ; end
-      it "'1.0' < ' ' == true" do; evaluate(literal('1.0') <  literal(' ')).should == true   ; end
+      it "'1.0' < ''  == true" do; evaluate(literal('1.0') <  literal('')).should == false   ; end
+      it "'1.0' < ' ' == true" do; evaluate(literal('1.0') <  literal(' ')).should == false   ; end
       it "'a' > '1.0' == true" do; evaluate(literal('a')   >  literal('1.0')).should == true ; end
+    end
+
+    context "of unsupported mixed value types" do
+      it "'1' < 1.1 == true"   do
+        expect{ evaluate(literal('1') <  literal(1.1))}.to raise_error(/String < Float/)
+      end
+      it "'1.0' < 1.1 == true" do
+        expect{evaluate(literal('1.0') <  literal(1.1))}.to raise_error(/String < Float/)
+      end
     end
 
     context "of regular expressions" do
@@ -235,9 +241,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       evaluate(literal(15).in(literal([1,0xf,2]))).should == true
     end
 
-    it "should find numbers as strings" do
-      evaluate(literal(15).in(literal([1, '0xf',2]))).should == true
-      evaluate(literal('15').in(literal([1, 0xf,2]))).should == true
+    it "should not find numbers as strings" do
+      evaluate(literal(15).in(literal([1, '0xf',2]))).should == false
+      evaluate(literal('15').in(literal([1, 0xf,2]))).should == false
     end
 
     it "should not find numbers embedded in strings, nor digits in numbers" do
