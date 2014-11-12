@@ -55,7 +55,6 @@ module Puppet::Test
       Puppet.push_context(Puppet.base_context({
         :environmentpath => @environmentpath,
         :basemodulepath => "",
-        :manifest => "/dev/null"
       }), "Initial for specs")
       Puppet::Parser::Functions.reset
 

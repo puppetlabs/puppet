@@ -19,15 +19,15 @@ describe "directory environments" do
       Puppet.settings.initialize_global_settings(args)
       expect do
         expect { puppet.run }.to exit_with(0)
-      end.to have_printed('direnv/modules')
+      end.to have_printed('/direnv/modules')
     end
 
     it "config prints the cli --modulepath despite environment" do
-      args << '--modulepath' << 'completely/different'
+      args << '--modulepath' << '/completely/different'
       Puppet.settings.initialize_global_settings(args)
       expect do
         expect { puppet.run }.to exit_with(0)
-      end.to have_printed('completely/different')
+      end.to have_printed('/completely/different')
     end
   end
 

@@ -12,6 +12,11 @@ describe Puppet::Node::Environment do
   let(:env) { Puppet::Node::Environment.new("testing") }
 
   include PuppetSpec::Files
+
+  before(:each) do
+    Puppet[:manifest] = "/this/will/be/removed/soon"
+  end
+
   after do
     Puppet::Node::Environment.clear
   end
@@ -275,6 +280,7 @@ describe Puppet::Node::Environment do
       it "should ask the Puppet settings instance for the setting qualified with the environment name" do
         Puppet.settings.parse_config(<<-CONF)
         [testing]
+        manifest = /this/too/shall/be/removed/shortly
         server = myval
         CONF
 

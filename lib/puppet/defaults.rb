@@ -932,7 +932,7 @@ EOT
       :desc       => "The group puppet master should run as.",
     },
     :manifest => {
-      :default    => "/dev/null",
+      :default    => nil,
       :type       => :file_or_directory,
       :desc       => "The entry-point manifest for puppet master. This can be one file
         or a directory of manifests to be evaluated in alphabetical order. Puppet manages

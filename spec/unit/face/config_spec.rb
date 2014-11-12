@@ -113,10 +113,6 @@ basemodulepath = #{File.expand_path("/some/base")}
   end
 
   context "when printing environment settings" do
-    before(:each) do
-      Puppet.settings.stubs(:global_defaults_initialized?).returns(:true)
-    end
-
     context "from main section" do
       before(:each) do
         Puppet.settings.parse_config(<<-CONF)
@@ -137,7 +133,6 @@ basemodulepath = #{File.expand_path("/some/base")}
         environmentpath=$confdir/environments
         basemodulepath=/some/base
         CONF
-        Puppet.settings.stubs(:global_defaults_initialized?).returns(:true)
       end
 
       it_behaves_like :config_printing_a_section, :master

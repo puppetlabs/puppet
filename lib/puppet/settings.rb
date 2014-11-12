@@ -911,6 +911,7 @@ class Puppet::Settings
     catalog = Puppet::Resource::Catalog.new("Settings", Puppet::Node::Environment::NONE)
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
+      next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
@@ -1201,7 +1202,7 @@ Generated on #{Time.now}.
             values_from_section = ValuesFromSection.new(name, section)
           end
         end
-        if values_from_section.nil? && global_defaults_initialized?
+        if values_from_section.nil?
           values_from_section = ValuesFromEnvironmentConf.new(name)
         end
         values_from_section
