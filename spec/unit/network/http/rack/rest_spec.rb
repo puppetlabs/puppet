@@ -196,7 +196,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should treat YAML encoded parameters like it was any string" do
         escaping = CGI.escape(YAML.dump(%w{one two}))
         req = mk_req("/?foo=#{escaping}")
-        @handler.params(req)[:foo].should == "--- \n  - one\n  - two"
+        @handler.params(req)[:foo].should == "---\n- one\n- two\n"
       end
 
       it "should not allow the client to set the node via the query string" do

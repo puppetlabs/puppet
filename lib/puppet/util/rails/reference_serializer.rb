@@ -2,7 +2,9 @@
 module Puppet::Util::ReferenceSerializer
   def unserialize_value(val)
     case val
-    when /^--- /
+    # Different YAML serializers will format headers differently. If we see a
+    # line that begins with '---' we will assume that it is YAML.
+    when /^---/
       YAML.load(val)
     when "true"
       true

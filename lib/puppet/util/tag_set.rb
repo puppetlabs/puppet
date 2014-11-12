@@ -24,12 +24,6 @@ class Puppet::Util::TagSet < Set
     to_data_hash.to_pson
   end
 
-  # this makes puppet serialize it as an array for backwards
-  # compatibility
-  def to_zaml(z)
-    to_data_hash.to_zaml(z)
-  end
-
   def join(*args)
     to_a.join(*args)
   end

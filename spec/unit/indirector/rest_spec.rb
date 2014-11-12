@@ -3,6 +3,7 @@ require 'spec_helper'
 require 'puppet/indirector'
 require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
+require 'puppet/util/psych_support'
 
 HTTP_ERROR_CODES = [300, 400, 500]
 
@@ -74,6 +75,7 @@ end
 describe Puppet::Indirector::REST do
   before :all do
     class Puppet::TestModel
+      include Puppet::Util::PsychSupport
       extend Puppet::Indirector
       indirects :test_model
       attr_accessor :name, :data

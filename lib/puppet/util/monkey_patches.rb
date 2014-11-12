@@ -20,7 +20,6 @@ end
 
 
 require "yaml"
-require "puppet/util/zaml.rb"
 
 class Symbol
   def <=> (other)
@@ -30,18 +29,6 @@ class Symbol
   def intern
     self
   end unless method_defined? 'intern'
-end
-
-[Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
-  cls.class_eval do
-    def to_yaml(ignored=nil)
-      ZAML.dump(self)
-    end
-  end
-}
-
-def YAML.dump(*args)
-  ZAML.dump(*args)
 end
 
 #

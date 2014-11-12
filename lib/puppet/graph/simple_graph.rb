@@ -492,7 +492,7 @@ class Puppet::Graph::SimpleGraph
     end
   end
 
-  # instance_variable_get is used by Object.to_zaml to get instance
+  # instance_variable_get is used by YAML.dump to get instance
   # variables.  Override it so that we can simulate the presence of
   # instance variables @edges and @vertices for serialization.
   def instance_variable_get(v)

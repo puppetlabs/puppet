@@ -488,17 +488,6 @@ class Puppet::Node::Environment
     to_s.to_sym
   end
 
-  # Return only the environment name when serializing.
-  #
-  # The only thing we care about when serializing an environment is its
-  # identity; everything else is ephemeral and should not be stored or
-  # transmitted.
-  #
-  # @api public
-  def to_zaml(z)
-    self.to_s.to_zaml(z)
-  end
-
   def self.split_path(path_string)
     path_string.split(File::PATH_SEPARATOR)
   end

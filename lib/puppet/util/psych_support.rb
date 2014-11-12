@@ -21,4 +21,12 @@ module Puppet::Util::PsychSupport
     initialize_from_hash(psych_coder.map)
   end
 
+  def encode_with(psych_encoder)
+    tag = Psych.dump_tags[self.class]
+    unless tag
+      klass = self.class == Object ? nil : self.class.name
+      tag   = ['!ruby/object', klass].compact.join(':')
+    end
+    psych_encoder.represent_map(tag, to_data_hash)
+  end
 end
