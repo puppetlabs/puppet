@@ -59,4 +59,11 @@ describe Puppet::Util::RetryAction do
       end
     end
   end
+
+  it "doesn't mutate caller's arguments" do
+    options = { :retries => 1 }.freeze
+
+    Puppet::Util::RetryAction.retry_action(options) do
+    end
+  end
 end
