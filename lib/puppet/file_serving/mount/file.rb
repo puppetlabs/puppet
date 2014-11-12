@@ -3,6 +3,7 @@ require 'puppet/file_serving/mount'
 class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def self.localmap
     @localmap ||= {
+      "e" => Puppet.settings[:environment],
       "h" => Facter.value("hostname"),
       "H" => [
                Facter.value("hostname"),
@@ -12,8 +13,8 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     }
   end
 
-  def complete_path(relative_path, node)
-    full_path = path(node)
+  def complete_path(relative_path, node, environment)
+    full_path = path(node, environment)
 
     raise ArgumentError.new("Mounts without paths are not usable") unless full_path
 
@@ -32,13 +33,13 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
   # Return an instance of the appropriate class.
   def find(short_file, request)
-    complete_path(short_file, request.node)
+    complete_path(short_file, request.node, request.environment)
   end
 
   # Return the path as appropriate, expanding as necessary.
-  def path(node = nil)
+  def path(node = nil, environment = nil)
     if expandable?
-      return expand(@path, node)
+      return expand(@path, node, environment)
     else
       return @path
     end
@@ -60,7 +61,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   end
 
   def search(path, request)
-    return nil unless path = complete_path(path, request.node)
+    return nil unless path = complete_path(path, request.node, request.environment)
     [path]
   end
 
@@ -73,8 +74,9 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   private
 
   # Create a map for a specific node.
-  def clientmap(node)
+  def clientmap(node, environment)
     {
+      "e" => environment,
       "h" => node.sub(/\..*$/, ""),
       "H" => node,
       "d" => node.sub(/[^.]+\./, "") # domain name
@@ -82,12 +84,12 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   end
 
   # Replace % patterns as appropriate.
-  def expand(path, node = nil)
+  def expand(path, node = nil, environment = nil)
     # This map should probably be moved into a method.
     map = nil
 
-    if node
-      map = clientmap(node)
+    if node and environment
+      map = clientmap(node, environment)
     else
       Puppet.notice "No client; expanding '#{path}' with local host"
       # Else, use the local information
