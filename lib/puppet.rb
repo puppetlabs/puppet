@@ -148,15 +148,18 @@ module Puppet
   Puppet::Vendor.load_vendored
 
   # The bindings used for initialization of puppet
+  #
+  # @param settings [Puppet::Settings,Hash<Symbol,String>] either a Puppet::Settings instance
+  #   or a Hash of settings key/value pairs.
   # @api private
   def self.base_context(settings)
-    environments = settings[:environmentpath]
-    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
+    environmentpath = settings[:environmentpath]
+    basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
-    if environments.empty?
-      loaders = [Puppet::Environments::Legacy.new]
+    if environmentpath.nil? || environmentpath.empty?
+      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
     else
-      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+      loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
       # doesn't exist
       default_environment = Puppet[:environment].to_sym
