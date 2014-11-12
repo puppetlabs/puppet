@@ -509,7 +509,7 @@ describe Puppet::Parser::Compiler do
 
     it "should not fail when there are unevaluated resource collections that do not refer to specific resources" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns(nil)
+      coll.expects(:unresolved_resources).returns(nil)
 
       @compiler.add_collection(coll)
 
@@ -518,20 +518,20 @@ describe Puppet::Parser::Compiler do
 
     it "should fail when there are unevaluated resource collections that refer to a specific resource" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns(:something)
+      coll.expects(:unresolved_resources).returns(:something)
 
       @compiler.add_collection(coll)
 
-      lambda { @compiler.compile }.should raise_error Puppet::ParseError, 'Failed to realize virtual resources something'
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, 'Failed to realize virtual resources something')
     end
 
     it "should fail when there are unevaluated resource collections that refer to multiple specific resources" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns([:one, :two])
+      coll.expects(:unresolved_resources).returns([:one, :two])
 
       @compiler.add_collection(coll)
 
-      lambda { @compiler.compile }.should raise_error Puppet::ParseError, 'Failed to realize virtual resources one, two'
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, 'Failed to realize virtual resources one, two')
     end
   end
 
