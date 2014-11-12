@@ -7,7 +7,7 @@
 
 module Puppet
 
-  newtype(:service) do
+  Type.newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
       widely by platform --- some platforms have very little if any concept of a
       running service, and some have a very codified and powerful concept.

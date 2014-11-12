@@ -38,4 +38,11 @@ describe Puppet do
     $LOAD_PATH.should_not include one
     $LOAD_PATH.should include two
   end
+
+  context "newtype" do
+    it "should issue a deprecation warning" do
+      subject.expects(:deprecation_warning).with("Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+      subject.newtype("sometype")
+    end
+  end
 end

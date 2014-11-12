@@ -7,7 +7,7 @@ require 'puppet/parameter/package_options'
 require 'puppet/parameter/boolean'
 
 module Puppet
-  newtype(:package) do
+  Type.newtype(:package) do
     @doc = "Manage packages.  There is a basic dichotomy in package
       support right now:  Some package types (e.g., yum and apt) can
       retrieve their own package files, while others (e.g., rpm and sun)

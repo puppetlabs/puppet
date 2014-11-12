@@ -952,7 +952,7 @@ describe Puppet::Resource do
 
   describe "#prune_parameters" do
     before do
-      Puppet.newtype('blond') do
+      Puppet::Type.newtype('blond') do
         newproperty(:ensure)
         newproperty(:height)
         newproperty(:weight)

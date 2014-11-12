@@ -1,5 +1,5 @@
 module Puppet
-  newtype(:zfs) do
+  Type.newtype(:zfs) do
     @doc = "Manage zfs. Create destroy and set properties on zfs instances.
 
 **Autorequires:** If Puppet is managing the zpool at the root of this zfs

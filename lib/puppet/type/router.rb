@@ -3,7 +3,7 @@
 
 
 module Puppet
-  newtype(:router) do
+  Type.newtype(:router) do
     @doc = "Manages connected router."
 
     newparam(:url) do

@@ -6,7 +6,7 @@ require 'puppet/property/ordered_list'
 require 'puppet/property/keyvalue'
 
 module Puppet
-  newtype(:user) do
+  Type.newtype(:user) do
     @doc = "Manage users.  This type is mostly built to manage system
       users, so it is lacking some features useful for managing normal
       users.

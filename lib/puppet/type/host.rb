@@ -1,7 +1,7 @@
 require 'puppet/property/ordered_list'
 
 module Puppet
-  newtype(:host) do
+  Type.newtype(:host) do
     ensurable
 
     newproperty(:ip) do
