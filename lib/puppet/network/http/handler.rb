@@ -67,7 +67,7 @@ module Puppet::Network::HTTP::Handler
   rescue Puppet::Network::HTTP::Error::HTTPError => e
     Puppet.info(e.message)
     new_response.respond_with(e.status, "application/json", e.to_json)
-  rescue Exception => e
+  rescue StandardError => e
     http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e)
     Puppet.err(http_e.message)
     new_response.respond_with(http_e.status, "application/json", http_e.to_json)

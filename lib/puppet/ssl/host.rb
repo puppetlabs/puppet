@@ -321,9 +321,7 @@ ERROR_STRING
       return if certificate
       generate
       return if certificate
-    rescue SystemExit,NoMemoryError
-      raise
-    rescue Exception => detail
+    rescue StandardError => detail
       Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
       if time < 1
         puts "Exiting; failed to retrieve certificate and waitforcert is disabled"

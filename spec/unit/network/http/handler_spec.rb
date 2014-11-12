@@ -73,7 +73,7 @@ describe Puppet::Network::HTTP::Handler do
 
     it "returns a structured error response with a stacktrace when the server encounters an internal error" do
       handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise Exception.new("the sky is falling!")}))
+        Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise StandardError.new("the sky is falling!")}))
 
       req = a_request("GET", "/vtest/foo")
       res = {}

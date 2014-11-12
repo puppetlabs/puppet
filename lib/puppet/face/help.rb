@@ -162,9 +162,8 @@ Detail: "#{detail.message}"
           return md[1]
         end
       end
-    rescue Exception
-      # Damn, but I hate this: we just ignore errors here, no matter what
-      # class they are.  Meh.
+    rescue StandardError
+      result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
     end
     return ''
   end
