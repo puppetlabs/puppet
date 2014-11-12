@@ -12,14 +12,6 @@ module Puppet::Parser
       evaluating_parser(environment)
     end
 
-#    # Creates an instance of the classic parser.
-#    #
-#    def self.classic_parser(environment)
-#      # avoid expensive require if already loaded
-#      require 'puppet/parser' unless defined? Puppet::Parser::Parser
-#      Puppet::Parser::Parser.new(environment)
-#    end
-
     # Creates an instance of an E4ParserAdapter that adapts an
     # EvaluatingParser to the 3x way of parsing.
     #
