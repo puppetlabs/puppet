@@ -291,6 +291,9 @@ module Puppet::Pops::Model
   class ResourceTypeDefinition < NamedDefinition
   end
 
+  class Application < NamedDefinition
+  end
+
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
   # a parent node (also using a String or Regular expression).
   #

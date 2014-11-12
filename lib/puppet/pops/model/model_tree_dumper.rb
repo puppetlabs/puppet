@@ -32,6 +32,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     do_dump(o.current)
   end
 
+  def dump_Application o
+    ["application", o.name, do_dump(o.parameters), do_dump(o.body)]
+  end
+
   def dump_ArithmeticExpression o
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
   end
