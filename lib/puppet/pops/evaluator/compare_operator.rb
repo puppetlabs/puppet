@@ -39,47 +39,27 @@ class Puppet::Pops::Evaluator::CompareOperator
   protected
 
   def cmp_String(a, b)
-    # if both are numerics in string form, compare as number
-    n1 = Puppet::Pops::Utils.to_n(a)
-    n2 = Puppet::Pops::Utils.to_n(b)
-
-    # Numeric is always lexically smaller than a string, even if the string is empty.
-    return n1 <=> n2    if n1 && n2
-    return -1           if n1 && b.is_a?(String)
-    return 1            if n2
     return a.casecmp(b) if b.is_a?(String)
-
-    raise ArgumentError.new("A String is not comparable to a non String or Number")
+    raise ArgumentError.new("A String is not comparable to a non String")
   end
 
   # Equality is case independent.
   def equals_String(a, b)
-    if n1 = Puppet::Pops::Utils.to_n(a)
-      if n2 = Puppet::Pops::Utils.to_n(b)
-        n1 == n2
-      else
-        false
-      end
-    else
-      return false unless b.is_a?(String)
-      a.casecmp(b) == 0
-    end
+    return false unless b.is_a?(String)
+    a.casecmp(b) == 0
   end
 
   def cmp_Numeric(a, b)
-    if n2 = Puppet::Pops::Utils.to_n(b)
-      a <=> n2
-    elsif b.kind_of?(String)
-      # Numeric is always lexiographically smaller than a string, even if the string is empty.
-      -1
+    if b.is_a?(Numeric)
+      a <=> b
     else
-      raise ArgumentError.new("A Numeric is not comparable to non Numeric or String")
+      raise ArgumentError.new("A Numeric is not comparable to non Numeric")
     end
   end
 
   def equals_Numeric(a, b)
-    if n2 = Puppet::Pops::Utils.to_n(b)
-      a == n2
+    if b.is_a?(Numeric)
+      a == b
     else
       false
     end

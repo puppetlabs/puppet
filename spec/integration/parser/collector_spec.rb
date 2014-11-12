@@ -154,6 +154,18 @@ describe Puppet::Parser::Collector do
       end.to raise_error(/Classes cannot be collected/)
     end
 
+    it "does not collect resources that don't exist" do
+      node = Puppet::Node.new('the node')
+      expect do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          class theclass {
+            @notify { "testing": message => "good message" }
+          }
+          SomeResource <|  |>
+        MANIFEST
+      end.to raise_error(/Resource type someresource doesn't exist/)
+    end
+
     context "overrides" do
       it "modifies an existing array" do
         expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)

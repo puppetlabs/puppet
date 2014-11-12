@@ -37,11 +37,11 @@ class Puppet::Settings::EnvironmentConf
   # Configuration values are exactly those returned by the environment object,
   # without interpolation.  This is a special case for the default configured
   # environment returned by the Puppet::Environments::StaticPrivate loader.
-  def self.static_for(environment)
-    Static.new(environment)
+  def self.static_for(environment, environment_timeout = 0)
+    Static.new(environment, environment_timeout)
   end
 
-  attr_reader :section
+  attr_reader :section, :path_to_env, :global_modulepath
 
   # Create through EnvironmentConf.load_from()
   def initialize(path_to_env, section, global_module_path)
@@ -151,8 +151,11 @@ class Puppet::Settings::EnvironmentConf
   #
   # @api private
   class Static
-    def initialize(environment)
+    attr_reader :environment_timeout
+
+    def initialize(environment, environment_timeout)
       @environment = environment
+      @environment_timeout = environment_timeout
     end
 
     def manifest
@@ -165,10 +168,6 @@ class Puppet::Settings::EnvironmentConf
 
     def config_version
       @environment.config_version
-    end
-
-    def environment_timeout
-      0
     end
   end
 
