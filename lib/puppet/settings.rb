@@ -1362,6 +1362,8 @@ Generated on #{Time.now}.
   class Values
     extend Forwardable
 
+    attr_reader :name
+
     def initialize(name, defaults)
       @name = name
       @values = {}
@@ -1385,9 +1387,15 @@ Generated on #{Time.now}.
 
       @values[name] = value
     end
+
+    def inspect
+      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}
+    end
   end
 
   class ValuesFromSection
+    attr_reader :name
+
     def initialize(name, section)
       @name = name
       @section = section
@@ -1403,12 +1411,20 @@ Generated on #{Time.now}.
         setting.value
       end
     end
+
+    def inspect
+      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">}
+    end
   end
 
   # @api private
   class ValuesFromEnvironmentConf
     def initialize(environment_name)
       @environment_name = environment_name
+    end
+
+    def name
+      @environment_name
     end
 
     def include?(name)
@@ -1427,6 +1443,10 @@ Generated on #{Time.now}.
       @conf ||= if environments = Puppet.lookup(:environments)
                   environments.get_conf(@environment_name)
                 end
+    end
+
+    def inspect
+      %Q{<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">}
     end
   end
 end
