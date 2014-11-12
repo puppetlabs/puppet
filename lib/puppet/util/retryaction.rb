@@ -21,7 +21,7 @@ module Puppet::Util::RetryAction
 
     begin
       yield
-    rescue Exception => e
+    rescue => e
       # If we were given exceptions to catch,
       # catch the excptions we care about and retry.
       # All others fail hard

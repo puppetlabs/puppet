@@ -6,6 +6,22 @@ require 'puppet/util/retryaction'
 describe Puppet::Util::RetryAction do
   let (:exceptions) {{ Puppet::Error => 'Puppet Error Exception' }}
 
+  it "doesn't retry SystemExit" do
+    expect do
+      Puppet::Util::RetryAction.retry_action( :retries => 0 ) do
+        raise SystemExit
+      end
+    end.to exit_with(0)
+  end
+
+  it "doesn't retry NoMemoryError" do
+    expect do
+      Puppet::Util::RetryAction.retry_action( :retries => 0 ) do
+        raise NoMemoryError, "OOM"
+      end
+    end.to raise_error(NoMemoryError, /OOM/)
+  end
+
   it 'should retry on any exception if no acceptable exceptions given' do
     Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 1) -1) * 0.1) )
     Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 2) -1) * 0.1) )
