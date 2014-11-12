@@ -39,7 +39,7 @@ describe 'BinderComposer' do
       Puppet.override(:environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [File.join(config_directory, 'modules')]))) do
         # this ensure the binder is active at the right time
         # (issues with getting a /dev/null path for "confdir" / "libdir")
-        raise "Binder not active" unless scope.compiler.is_binder_active?
+        raise "Binder not active" unless scope.compiler.activate_binder
 
         diagnostics = diag
         composer = Puppet::Pops::Binder::BindingsComposer.new()

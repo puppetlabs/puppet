@@ -122,11 +122,11 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      if is_binder_active?
-        # create injector, if not already created - this is for 3x that does not trigger
-        # lazy loading of injector via context
-        Puppet::Util::Profiler.profile("Compile: Created injector", [:compiler, :create_injector]) { injector }
-      end
+      activate_binder
+#        # create injector, if not already created - this is for 3x that does not trigger
+#        # lazy loading of injector via context
+#        Puppet::Util::Profiler.profile("Compile: Created injector", [:compiler, :create_injector]) { injector }
+#      end
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
@@ -282,19 +282,16 @@ class Puppet::Parser::Compiler
 
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
   # @return [Boolean] true if the Puppet Binder should be activated
-  def is_binder_active?
-    should_be_active = Puppet[:binder] || Puppet[:parser] == 'future'
-    if should_be_active
-      # TODO: this should be in a central place, not just for ParserFactory anymore...
-      Puppet::Parser::ParserFactory.assert_rgen_installed()
-      @@binder_loaded ||= false
-      unless @@binder_loaded
-        require 'puppet/pops'
-        require 'puppet/plugins/configuration'
-        @@binder_loaded = true
-      end
+  def activate_binder
+    # TODO: this should be in a central place
+    Puppet::Parser::ParserFactory.assert_rgen_installed()
+    @@binder_loaded ||= false
+    unless @@binder_loaded
+      require 'puppet/pops'
+      require 'puppet/plugins/configuration'
+      @@binder_loaded = true
     end
-    should_be_active
+    true
   end
 
   private
@@ -611,7 +608,7 @@ class Puppet::Parser::Compiler
   end
 
   def assert_binder_active
-    unless is_binder_active?
+    unless activate_binder()
       raise ArgumentError, "The Puppet Binder is only available when either '--binder true' or '--parser future' is used"
     end
   end
