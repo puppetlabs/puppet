@@ -13,7 +13,7 @@ module Puppet
     # modes. The configuration is overridden with options from the command line
     # before being set in a pushed Puppet Context.
     #
-    # @param run_mode [String] Puppet's current Run Mode.
+    # @param run_mode [Puppet::Util::RunMode] Puppet's current Run Mode.
     # @return [void]
     # @api private
     def self.push_application_context(run_mode)
@@ -35,6 +35,15 @@ module Puppet
                           "Update current environment from application's configuration")
     end
 
+    # Reads the routes YAML settings from the file specified by Puppet[:route_file]
+    # and resets indirector terminii for the current application class if listed.
+    #
+    # For instance, PE uses this to set the master facts terminus
+    # to 'puppetdb' and its cache terminus to 'yaml'.
+    #
+    # @param application_name [String] The name of the current application.
+    # @return [void]
+    # @api private
     def self.configure_indirector_routes(application_name)
       route_file = Puppet[:route_file]
       if Puppet::FileSystem.exist?(route_file)
