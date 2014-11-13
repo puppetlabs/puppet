@@ -375,59 +375,28 @@ describe "Puppet::Parser::Compiler" do
     end
 
     context 'when working with the trusted data hash' do
-      context 'and have opted in to hashed_node_data' do
-        before :each do
-          Puppet[:trusted_node_data] = true
-        end
 
-        it 'should make $trusted available' do
-          node = Puppet::Node.new("testing")
-          node.trusted_data = { "data" => "value" }
+      it 'should make $trusted available' do
+        node = Puppet::Node.new("testing")
+        node.trusted_data = { "data" => "value" }
 
-          catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => $trusted[data] }
-          MANIFEST
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $trusted[data] }
+        MANIFEST
 
-          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "value")
-        end
-
-        it 'should not allow assignment to $trusted' do
-          node = Puppet::Node.new("testing")
-          node.trusted_data = { "data" => "value" }
-
-          expect do
-            compile_to_catalog(<<-MANIFEST, node)
-              $trusted = 'changed'
-              notify { 'test': message => $trusted == 'changed' }
-            MANIFEST
-          end.to raise_error(Puppet::Error, /Attempt to assign to a reserved variable name: 'trusted'/)
-        end
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "value")
       end
 
-      context 'and have not opted in to hashed_node_data' do
-        before :each do
-          Puppet[:trusted_node_data] = false
-        end
+      it 'should not allow assignment to $trusted' do
+        node = Puppet::Node.new("testing")
+        node.trusted_data = { "data" => "value" }
 
-        it 'should not make $trusted available' do
-          node = Puppet::Node.new("testing")
-          node.trusted_data = { "data" => "value" }
-
-          catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => ($trusted == undef) }
-          MANIFEST
-
-          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-        end
-
-        it 'should allow assignment to $trusted' do
-          catalog = compile_to_catalog(<<-MANIFEST)
+        expect do
+          compile_to_catalog(<<-MANIFEST, node)
             $trusted = 'changed'
             notify { 'test': message => $trusted == 'changed' }
           MANIFEST
-
-          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-        end
+        end.to raise_error(Puppet::Error, /Attempt to assign to a reserved variable name: 'trusted'/)
       end
     end
 

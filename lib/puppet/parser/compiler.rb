@@ -574,13 +574,9 @@ class Puppet::Parser::Compiler
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]
-    if Puppet[:trusted_node_data]
-      @topscope.set_trusted(node.trusted_data)
-    end
-    if(Puppet[:immutable_node_data])
-      facts_hash = node.facts.nil? ? {} : node.facts.values
-      @topscope.set_facts(facts_hash)
-    end
+    @topscope.set_trusted(node.trusted_data)
+    facts_hash = node.facts.nil? ? {} : node.facts.values
+    @topscope.set_facts(facts_hash)
   end
 
   def create_settings_scope

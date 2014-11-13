@@ -240,7 +240,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::SSL::Host.ca_location = :none
     end
-    Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file]) if Puppet[:trusted_node_data]
+    Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
   end
 
   # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
