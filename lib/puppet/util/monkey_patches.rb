@@ -109,14 +109,6 @@ class IO
     include Puppet::Util::MonkeyPatches::Lines
   end
 
-  def self.binread(name, length = nil, offset = 0)
-    Puppet.deprecation_warning("This is a monkey-patched implementation of IO.binread on ruby 1.8 and is deprecated. Read the file without this method as it will be removed in a future version.")
-    File.open(name, 'rb') do |f|
-      f.seek(offset) if offset > 0
-      f.read(length)
-    end
-  end unless singleton_methods.include?(:binread)
-
   def self.binwrite(name, string, offset = nil)
     # Determine if we should truncate or not.  Since the truncate method on a
     # file handle isn't implemented on all platforms, safer to do this in what
