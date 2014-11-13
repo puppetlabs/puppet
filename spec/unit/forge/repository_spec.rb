@@ -213,6 +213,9 @@ describe Puppet::Forge::Repository do
     Net::HTTP.expects(:Proxy).with(*proxy_args).returns(proxy_class)
     proxy_class.expects(:new).with("fake.com", port).returns(proxy)
 
+    proxy.expects(:open_timeout=)
+    proxy.expects(:read_timeout=)
+
     proxy.expects(:start).yields(http).returns(result)
     yield http
 
