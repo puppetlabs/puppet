@@ -135,7 +135,6 @@ module Puppet::Test
         "Context for specs")
 
       Puppet::Parser::Functions.reset
-      Puppet::Node::Environment.clear
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 

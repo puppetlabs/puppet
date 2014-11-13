@@ -419,11 +419,6 @@ describe Puppet::Settings do
       @settings[:myval].should == "memarg"
     end
 
-    it "should clear the list of environments" do
-      Puppet::Node::Environment.expects(:clear).at_least(1)
-      @settings[:myval] = "memarg"
-    end
-
     it "should raise an error if we try to set a setting that hasn't been defined'" do
       lambda{
         @settings[:why_so_serious] = "foo"

@@ -26,56 +26,20 @@ class Puppet::Node::Environment
 
   NO_MANIFEST = :no_manifest
 
+  # The create() factory method should be used instead.
+  #
   # @api private
-  def self.seen
-    @seen ||= {}
+  def self.new(*args)
+    create(*args)
   end
-
-  # Create a new environment with the given name, or return an existing one
-  #
-  # The environment class memoizes instances so that attempts to instantiate an
-  # environment with the same name with an existing environment will return the
-  # existing environment.
-  #
-  # @overload self.new(environment)
-  #   @param environment [Puppet::Node::Environment]
-  #   @return [Puppet::Node::Environment] the environment passed as the param,
-  #     this is implemented so that a calling class can use strings or
-  #     environments interchangeably.
-  #
-  # @overload self.new(string)
-  #   @param string [String, Symbol]
-  #   @return [Puppet::Node::Environment] An existing environment if it exists,
-  #     else a new environment with that name
-  #
-  # @overload self.new()
-  #   @return [Puppet::Node::Environment] The environment as set by
-  #     Puppet.settings[:environment]
-  #
-  # @api public
-  def self.new(name = nil)
-    return name if name.is_a?(self)
-    name ||= Puppet.settings.value(:environment)
-
-    raise ArgumentError, "Environment name must be specified" unless name
-
-    symbol = name.to_sym
-
-    return seen[symbol] if seen[symbol]
-
-    obj = self.create(symbol,
-             split_path(Puppet.settings.value(:modulepath, symbol)),
-             Puppet.settings.value(:manifest, symbol),
-             Puppet.settings.value(:config_version, symbol))
-    seen[symbol] = obj
-  end
+  private_class_method :new
 
   # Create a new environment with the given name
   #
-  # @param name [Symbol] the name of the
+  # @param name [Symbol] the name of the environment
   # @param modulepath [Array<String>] the list of paths from which to load modules
   # @param manifest [String] the path to the manifest for the environment or
-  # the constant Puppet::Node::Environment::NO_MANIFEST if there is none.
+  #   the constant Puppet::Node::Environment::NO_MANIFEST if there is none.
   # @param config_version [String] path to a script whose output will be added
   #   to report logs (optional)
   # @return [Puppet::Node::Environment]
@@ -84,7 +48,7 @@ class Puppet::Node::Environment
   def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
     obj = self.allocate
     obj.send(:initialize,
-             name,
+             name.intern,
              expand_dirs(extralibs() + modulepath),
              manifest == NO_MANIFEST ? manifest : File.expand_path(manifest),
              config_version)
@@ -108,9 +72,10 @@ class Puppet::Node::Environment
 
   # Instantiate a new environment
   #
-  # @note {Puppet::Node::Environment.new} is overridden to return memoized
-  #   objects, so this will not be invoked with the normal Ruby initialization
-  #   semantics.
+  # @note {Puppet::Node::Environment.new} is private for historical reasons, as
+  #   previously it had been overridden to return memoized objects and was
+  #   replaced with {Puppet::Node::Environment.create}, so this will not be
+  #   invoked with the normal Ruby initialization semantics.
   #
   # @param name [Symbol] The environment name
   def initialize(name, modulepath, manifest, config_version)
@@ -198,13 +163,6 @@ class Puppet::Node::Environment
     !!name.match(/\A\w+\Z/)
   end
 
-  # Clear all memoized environments and the 'current' environment
-  #
-  # @api private
-  def self.clear
-    seen.clear
-  end
-
   # @!attribute [r] name
   #   @api public
   #   @return [Symbol] the human readable environment name that serves as the
@@ -251,7 +209,7 @@ class Puppet::Node::Environment
   #   Puppet[:default_manifest].
   # @api private 
   def conflicting_manifest_settings?
-    return false if Puppet[:environmentpath].empty? || !Puppet[:disable_per_environment_manifest]
+    return false if !Puppet[:disable_per_environment_manifest]
     environment_conf = Puppet.lookup(:environments).get_conf(name)
     original_manifest = environment_conf.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
@@ -554,7 +512,7 @@ class Puppet::Node::Environment
       # if the manifest file is a reference to a directory, parse and combine
       # all .pp files in that directory
       if file == NO_MANIFEST
-        Puppet::Parser::AST::Hostclass.new('')
+        empty_parse_result
       elsif File.directory?(file)
         parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort.map do | file_to_parse |
           parser.file = file_to_parse
