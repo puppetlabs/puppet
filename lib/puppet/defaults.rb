@@ -1387,8 +1387,14 @@ EOT
       :default  => "2m",
       :type     => :duration,
       :desc     => "How long the client should wait for the configuration to be retrieved
-        before considering it a failure.  This can help reduce flapping if too
-        many clients contact the server at one time. #{AS_DURATION}",
+        before considering it a failure. This setting is deprecated and has been replaced
+        by http_connect_timeout and http_read_timeout.
+        #{AS_DURATION}",
+      :deprecated => :completely,
+      :hook       => proc do |value|
+        Puppet[:http_connect_timeout] = value
+        Puppet[:http_read_timeout]    = value
+      end
     },
     :report_server => {
       :default  => "$server",
