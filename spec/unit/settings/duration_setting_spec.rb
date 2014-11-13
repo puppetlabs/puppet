@@ -12,11 +12,15 @@ describe Puppet::Settings::DurationSetting do
       subject.munge(5).should == 5
     end
 
+    it "should return the same value if given nil" do
+      subject.munge(nil).should be_nil
+    end
+
     it "should return an integer if given a decimal string" do
       subject.munge("12").should == 12
     end
 
-    it "should fail if given anything but a well-formed string or integer" do
+    it "should fail if given anything but a well-formed string, integer, or nil" do
       [ '', 'foo', '2 d', '2d ', true, Time.now, 8.3, [] ].each do |value|
         expect { subject.munge(value) }.to raise_error(Puppet::Settings::ValidationError)
       end

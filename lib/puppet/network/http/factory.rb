@@ -31,9 +31,8 @@ class Puppet::Network::HTTP::Factory
 
     http = Net::HTTP.new(*args)
     http.use_ssl = site.use_ssl?
-    # Use configured timeout (#1176)
-    http.read_timeout = Puppet[:configtimeout]
-    http.open_timeout = Puppet[:configtimeout]
+    http.read_timeout = Puppet[:http_read_timeout]
+    http.open_timeout = Puppet[:http_connect_timeout]
 
     if Puppet[:http_debug]
       http.set_debug_output($stderr)

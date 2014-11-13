@@ -432,6 +432,19 @@ module Puppet
       :type       => :boolean,
       :desc       => "Whether to write HTTP request and responses to stderr. This should never be used in a production environment."
     },
+    :http_connect_timeout => {
+      :default => "2m",
+      :type    => :duration,
+      :desc    => "The maximum amount of time to wait when establishing an HTTP connection. The default
+      value is 2 minutes.
+      #{AS_DURATION}",
+    },
+    :http_read_timeout => {
+      :type    => :duration,
+      :desc    => "The time to wait for one block to be read from an HTTP connection. If nothing is
+      read after the elapsed interval then the connection will be closed. The default value is unlimited.
+      #{AS_DURATION}",
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,
