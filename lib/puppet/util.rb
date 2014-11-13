@@ -298,13 +298,6 @@ module Util
 
   module_function :thinmark
 
-  # Because IO#binread is only available in 1.9
-  def binread(file)
-    Puppet.deprecation_warning("Puppet::Util.binread is deprecated. Read the file without this method as it will be removed in a future version.")
-    File.open(file, 'rb') { |f| f.read }
-  end
-  module_function :binread
-
   # utility method to get the current call stack and format it to a human-readable string (which some IDEs/editors
   # will recognize as links to the line numbers in the trace)
   def self.pretty_backtrace(backtrace = caller(1))
