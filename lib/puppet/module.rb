@@ -307,6 +307,13 @@ class Puppet::Module
     raise IncompatibleModule, "Module #{self.name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
   end
 
+  def ==(other)
+    self.name == other.name &&
+    self.version == other.version &&
+    self.path == other.path &&
+    self.environment == other.environment
+  end
+
   private
 
   def wanted_manifests_from(pattern)
@@ -328,12 +335,5 @@ class Puppet::Module
 
   def assert_validity
     raise InvalidName, "Invalid module name #{name}; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
-  end
-
-  def ==(other)
-    self.name == other.name &&
-    self.version == other.version &&
-    self.path == other.path &&
-    self.environment == other.environment
   end
 end
