@@ -185,12 +185,10 @@ module Puppet::Functions
   # @api private
   def self.min_max_param(method)
     result = {:req => 0, :opt => 0, :rest => 0 }
-    # TODO: Optimize into one map iteration that produces names map, and sets
-    # count as side effect
-    method.parameters.each { |p| result[p[0]] += 1 }
+    # count per parameter kind, and get array of names
+    names = method.parameters.map { |p| result[p[0]] += 1 ; p[1].to_s }
     from = result[:req]
     to = result[:rest] > 0 ? :default : from + result[:opt]
-    names = method.parameters.map {|p| p[1].to_s }
     [from, to, names]
   end
 
