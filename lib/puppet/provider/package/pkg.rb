@@ -155,14 +155,16 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     should = @resource[:ensure]
     # always unhold if explicitly told to install/update
     self.unhold
+    is = self.query
+    if is[:ensure].to_sym == :absent
+      command = 'install'
+    else
+      command = 'update'
+    end
     unless should.is_a? Symbol
       name += "@#{should}"
-      is = self.query
-      unless is[:ensure].to_sym == :absent
-        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
-      end
     end
-    r = exec_cmd(command(:pkg), 'install', '--accept', name)
+    r = exec_cmd(command(:pkg), command, '--accept', name)
     return r if nofail
     raise Puppet::Error, "Unable to update #{r[:out]}" if r[:exit] != 0
   end

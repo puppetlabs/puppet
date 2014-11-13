@@ -212,6 +212,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
     context ":install" do
       it "should accept all licenses" do
+        provider.expects(:query).with().returns({:ensure => :absent})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0
@@ -224,7 +225,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns 'dummy       0.0.6  installed -----'
-        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
         provider.install
       end
 
@@ -232,23 +233,23 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         resource[:ensure] = '0.0.8'
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns 'dummy       0.0.7  installed -----'
-        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.8'], {:failonfail => false, :combine => true}).returns ''
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '--accept', 'dummy@0.0.8'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.install
       end
 
-      it "should install specific version(3)" do
+      it "should downgrade to specific version" do
         resource[:ensure] = '0.0.7'
         provider.expects(:query).with().returns({:ensure => '0.0.8'})
-        provider.expects(:uninstall).with()
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
-        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
         provider.install
       end
 
       it "should install any if version is not specified" do
         resource[:ensure] = :present
+        provider.expects(:query).with().returns({:ensure => :absent})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         $CHILD_STATUS.stubs(:exitstatus).returns 0
