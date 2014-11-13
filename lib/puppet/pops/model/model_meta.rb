@@ -537,6 +537,14 @@ module Puppet::Pops::Model
     contains_many_uni 'bodies', ResourceBody
   end
 
+  class CapabilityMapping < Definition
+    # 'produces' or 'consumes'
+    has_attr 'kind', String, :lowerBound => 1
+    has_attr 'resource', String, :lowerBound => 1
+    has_attr 'capability', String, :lowerBound => 1
+    contains_many_uni 'mappings', AttributeOperation
+  end
+
   # A resource defaults sets defaults for a resource type. This class inherits from AbstractResource
   # but does only support the :regular form (this is intentional to be able to produce better error messages
   # when illegal forms are applied to a model.

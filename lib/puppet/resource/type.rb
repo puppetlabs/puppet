@@ -26,8 +26,19 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
+  EMPTY_ARRAY = [].freeze
+
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
+
+  # The attributes 'produces' and 'consumes' are arrays of the blueprints
+  # of capabilities this type can produce/consume. The entries in the array
+  # are a fairly direct representation of what goes into produces/consumes
+  # clauses. Each entry is a hash with attributes
+  #   :capability  - the type name of the capres produced/consumed
+  #   :mappings    - a hash of attribute_name => Expression
+  # These two attributes are populated in
+  # PopsBridge::instantiate_CapabilityMaping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
@@ -141,6 +152,24 @@ class Puppet::Resource::Type
     @match = nil
 
     @module_name = options[:module_name]
+  end
+
+  def produces
+    @produces || EMPTY_ARRAY
+  end
+
+  def consumes
+    @consumes || EMPTY_ARRAY
+  end
+
+  def add_produces(blueprint)
+    @produces ||= []
+    @produces << blueprint
+  end
+
+  def add_consumes(blueprint)
+    @consumes ||= []
+    @consumes << blueprint
   end
 
   # This is only used for node names, and really only when the node name

@@ -228,6 +228,31 @@ describe "validating 4x" do
     end
   end
 
+  context "capability annotations" do
+    before(:all) do
+      with_app_management(true)
+    end
+
+    after(:all) do
+      with_app_management(false)
+    end
+
+    ['produces', 'consumes'].each do |word|
+      it "rejects illegal resource types in #{word} clauses" do
+        expect(validate(parse("foo produces Bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
+      end
+
+      it "accepts legal resource and capability types in #{word} clauses" do
+        expect(validate(parse("Foo produces Bar {}"))).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
+        expect(validate(parse("Mod::Foo produces ::Mod2::Bar {}"))).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
+      end
+
+      it "rejects illegal capability types in #{word} clauses" do
+        expect(validate(parse("Foo produces bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
+      end
+    end
+  end
+
   def parse(source)
     Puppet::Pops::Parser::Parser.new().parse_string(source)
   end

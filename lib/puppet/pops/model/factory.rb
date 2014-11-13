@@ -239,6 +239,14 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_CapabilityMapping(o, kind, resource, capability, mappings)
+    o.kind = kind
+    o.resource   = resource
+    o.capability = capability
+    o.mappings = mappings.map { |m| build(m) }
+    o
+  end
+
   # @param o [Model::NodeDefinition]
   # @param hosts [Array<Expression>] host matches
   # @param parent [Expression] parent node matcher
@@ -761,6 +769,10 @@ class Puppet::Pops::Model::Factory
 
   def self.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
+  end
+
+  def self.CAPABILITY_MAPPING(kind, rsrc_name, cap_name, mappings)
+    new(Model::CapabilityMapping, kind, rsrc_name, cap_name, mappings)
   end
 
   def self.APPLICATION(name, parameters, body)

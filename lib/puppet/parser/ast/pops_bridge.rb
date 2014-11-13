@@ -73,6 +73,9 @@ class Puppet::Parser::AST::PopsBridge
     def initialize(program_model, context = {})
       @program_model = program_model
       @context = context
+      # @todo lutter 2015-03-10: we maintain a list of definitions we
+      # instantiated so that we can attach CapabilityMappings to them
+      @types = {}
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])
       @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser.new()
     end
@@ -88,6 +91,8 @@ class Puppet::Parser::AST::PopsBridge
           instantiate_HostClassDefinition(d, modname)
         when Puppet::Pops::Model::ResourceTypeDefinition
           instantiate_ResourceTypeDefinition(d, modname)
+        when Puppet::Pops::Model::CapabilityMapping
+          instantiate_CapabilityMapping(d, modname)
         when Puppet::Pops::Model::NodeDefinition
           instantiate_NodeDefinition(d, modname)
         when Puppet::Pops::Model::FunctionDefinition
@@ -179,7 +184,32 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def instantiate_ResourceTypeDefinition(o, modname)
-      Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
+      # @todo lutter 2015-07-29: we need to go from the name of the
+      # definition (like 'db') to the name used in references ('Db') There
+      # must be a better way than calling 'capitalize'
+      @types[o.name.capitalize] = Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
+    end
+
+    def instantiate_CapabilityMapping(o, modname)
+      # @todo lutter 2015-07-27: the error message needs to include source location
+      type = @types[o.resource] or
+        raise Puppet::ParseError, "Capability mapping error: #{o.kind} clause references nonexistent type #{o.resource}"
+      blueprint = {
+        :capability => o.capability,
+        :mappings   => o.mappings.inject({}) do |memo, mapping|
+          memo[mapping.attribute_name] =
+            Expression.new(:value => mapping.value_expr)
+          memo
+        end
+      }
+      if o.kind == 'produces'
+        type.add_produces(blueprint)
+      elsif o.kind = 'consumes'
+        type.add_consumes(blueprint)
+      else
+        raise Puppet::ParseError, "Internal Error: capability mapping is neither a 'produces' nor 'consumes', but a #{o.kind}"
+      end
+      nil
     end
 
     def instantiate_NodeDefinition(o, modname)
