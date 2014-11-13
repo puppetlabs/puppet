@@ -184,26 +184,13 @@ module Puppet::Functions
 
   # @api private
   def self.min_max_param(method)
-    # Ruby 1.8.7 does not have support for details about parameters
-    if method.respond_to?(:parameters)
-      result = {:req => 0, :opt => 0, :rest => 0 }
-      # TODO: Optimize into one map iteration that produces names map, and sets
-      # count as side effect
-      method.parameters.each { |p| result[p[0]] += 1 }
-      from = result[:req]
-      to = result[:rest] > 0 ? :default : from + result[:opt]
-      names = method.parameters.map {|p| p[1].to_s }
-    else
-      # Cannot correctly compute the signature in Ruby 1.8.7 because arity for
-      # optional values is screwed up (there is no way to get the upper limit),
-      # an optional looks the same as a varargs In this case - the failure will
-      # simply come later when the call fails
-      #
-      arity = method.arity
-      from = arity >= 0 ? arity : -arity -1
-      to = arity >= 0 ? arity : :default  # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
-      names = [] # no names available
-    end
+    result = {:req => 0, :opt => 0, :rest => 0 }
+    # TODO: Optimize into one map iteration that produces names map, and sets
+    # count as side effect
+    method.parameters.each { |p| result[p[0]] += 1 }
+    from = result[:req]
+    to = result[:rest] > 0 ? :default : from + result[:opt]
+    names = method.parameters.map {|p| p[1].to_s }
     [from, to, names]
   end
 
