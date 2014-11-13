@@ -8,6 +8,14 @@ require 'puppet/indirector'
 module Puppet
   module ApplicationSupport
 
+    # Pushes a Puppet Context configured with a remote environment for an agent
+    # (one that exists at the master end), and a regular environment for other
+    # modes. The configuration is overridden with options from the command line
+    # before being set in a pushed Puppet Context.
+    #
+    # @param run_mode [String] Puppet's current Run Mode.
+    # @return [void]
+    # @api private
     def self.push_application_context(run_mode)
       Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
       # This use of configured environment is correct, this is used to establish
