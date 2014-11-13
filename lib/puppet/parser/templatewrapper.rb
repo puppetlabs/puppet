@@ -63,9 +63,6 @@ class Puppet::Parser::TemplateWrapper
     unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
       raise Puppet::ParseError, "Could not find template '#{filename}'"
     end
-
-    # We'll only ever not have a parser in testing, but, eh.
-    scope.known_resource_types.watch_file(@__file__)
   end
 
   # @api private

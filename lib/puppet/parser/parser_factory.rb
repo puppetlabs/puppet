@@ -8,21 +8,21 @@ module Puppet::Parser
   #
   class ParserFactory
     # Produces a parser instance for the given environment
-    def self.parser(environment)
-      evaluating_parser(environment)
+    def self.parser
+      evaluating_parser
     end
 
     # Creates an instance of an E4ParserAdapter that adapts an
     # EvaluatingParser to the 3x way of parsing.
     #
-    def self.evaluating_parser(file_watcher)
+    def self.evaluating_parser
       # Since RGen is optional, test that it is installed
       assert_rgen_installed()
       unless defined?(Puppet::Pops::Parser::E4ParserAdapter)
         require 'puppet/parser/e4_parser_adapter'
         require 'puppet/pops/parser/code_merger'
       end
-      E4ParserAdapter.new(file_watcher)
+      E4ParserAdapter.new
     end
 
     # Asserts that RGen >= 0.6.6 is installed by checking that certain behavior is available.

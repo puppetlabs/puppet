@@ -108,21 +108,6 @@ describe Puppet::Node::Environment do
       end
     end
 
-    describe "watching a file" do
-      let(:filename) { "filename" }
-
-      it "accepts a File" do
-        file = tmpfile(filename)
-        env.known_resource_types.expects(:watch_file).with(file.to_s)
-        env.watch_file(file)
-      end
-
-      it "accepts a String" do
-        env.known_resource_types.expects(:watch_file).with(filename)
-        env.watch_file(filename)
-      end
-    end
-
     describe "when managing known resource types" do
       before do
         env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))

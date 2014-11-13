@@ -180,19 +180,19 @@ describe Puppet::Parser::TypeLoader do
   end
 
   describe "when parsing a file" do
-    it "should create a new parser instance for each file using the current environment" do
+    it "requests a new parser instance for each file" do
       parser = stub 'Parser', :file= => nil, :parse => empty_hostclass
 
-      Puppet::Parser::ParserFactory.expects(:parser).twice.with(loader.environment).returns(parser)
+      Puppet::Parser::ParserFactory.expects(:parser).twice.returns(parser)
 
       loader.parse_file("/my/file")
       loader.parse_file("/my/other_file")
     end
 
-    it "should assign the parser its file and parse" do
+    it "assigns the parser its file and then parses" do
       parser = mock 'parser'
 
-      Puppet::Parser::ParserFactory.expects(:parser).with(loader.environment).returns(parser)
+      Puppet::Parser::ParserFactory.expects(:parser).returns(parser)
       parser.expects(:file=).with("/my/file")
       parser.expects(:parse).returns(empty_hostclass)
 
