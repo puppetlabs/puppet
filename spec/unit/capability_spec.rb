@@ -15,7 +15,6 @@ describe "Capability types" do
   end
 
   after :each do
-    Puppet::Type.rmtype(:cap)
     with_app_management(false)
   end
 
@@ -142,6 +141,67 @@ describe "Capability types" do
         }.to raise_error(Puppet::Error,
                          /#{kw} clause references nonexistent type Test/)
       end
+    end
+  end
+
+  describe "exporting a capability" do
+    before(:each) do
+      Puppet::Type.newtype(:cap) do
+        newparam :name
+        newparam :host
+      end
+    end
+
+    after :each do
+      Puppet::Type.rmtype(:cap)
+    end
+
+    it "does not add produced resources that are not exported" do
+      manifest = <<-MANIFEST
+define test($hostname) {
+  notify { "hostname ${hostname}":}
+}
+
+Test produces Cap {
+  host => $hostname
+}
+
+test { one: hostname => "ahost" }
+    MANIFEST
+      catalog = compile_to_catalog(manifest)
+      expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
+      expect(catalog.resource_keys.find { |type, title| type == "Cap" }).to be_nil
+    end
+
+    it "adds produced resources that are exported" do
+      manifest = <<-MANIFEST
+define test($hostname) {
+  notify { "hostname ${hostname}":}
+}
+
+# The $hostname in the produces clause does not refer to this variable,
+# instead, it referes to the hostname property of the Test resource
+# that is producing the Cap
+$hostname = "other_host"
+
+Test produces Cap {
+  host => $hostname
+}
+
+test { one: hostname => "ahost", export => Cap[two] }
+    MANIFEST
+      catalog = compile_to_catalog(manifest)
+      expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
+
+      caps = catalog.resource_keys.select { |type, title| type == "Cap" }
+      expect(caps.size).to eq(1)
+
+      cap = catalog.resource("Cap[two]")
+      expect(cap).to be_instance_of(Puppet::Resource)
+      expect(cap["require"]).to eq("Test[one]")
+      expect(cap["host"]).to eq("ahost")
+      expect(cap.resource_type).to eq(Puppet::Type::Cap)
+      expect(cap.tags.any? { |t| t == "producer:production" }).to eq(true)
     end
   end
 end
