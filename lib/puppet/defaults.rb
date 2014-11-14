@@ -1478,7 +1478,7 @@ EOT
       server.",
     },
     :pluginsource => {
-      :default    => "puppet://$server/plugins",
+      :default    => "puppet:///plugins",
       :desc       => "From where to retrieve plugins.  The standard Puppet `file` type
       is used for retrieval, so anything that is a valid file source can
       be used here.",
@@ -1489,7 +1489,7 @@ EOT
       :desc     => "Where Puppet should store external facts that are being handled by pluginsync",
     },
     :pluginfactsource => {
-      :default  => "puppet://$server/pluginfacts",
+      :default  => "puppet:///pluginfacts",
       :desc     => "Where to retrieve external facts for pluginsync",
     },
     :pluginsync => {
