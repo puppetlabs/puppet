@@ -240,6 +240,11 @@ describe Puppet::Resource::Type do
   end
 
   describe "when setting its parameters in the scope" do
+    def variable_expression(name)
+      varexpr = Puppet::Pops::Model::Factory.QNAME(name).var().current
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => varexpr)
+    end
+
     before do
       @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
@@ -250,8 +255,7 @@ describe Puppet::Resource::Type do
     ['module_name', 'name', 'title'].each do |variable|
       it "should allow #{variable} to be evaluated as param default" do
         @type.instance_eval { @module_name = "bar" }
-        var = Puppet::Parser::AST::Variable.new({'value' => variable})
-        @type.set_arguments :foo => var
+        @type.set_arguments :foo => variable_expression(variable)
         @type.set_resource_parameters(@resource, @scope)
         @scope['foo'].should == 'bar'
       end
@@ -263,8 +267,7 @@ describe Puppet::Resource::Type do
     it "should allow the resource to override defaults" do
       @type.set_arguments :name => nil
       @resource[:name] = 'foobar'
-      var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
-      @type.set_arguments :foo => var
+      @type.set_arguments :foo => variable_expression('name')
       @type.set_resource_parameters(@resource, @scope)
       @scope['foo'].should == 'foobar'
     end
@@ -297,13 +300,13 @@ describe Puppet::Resource::Type do
     end
 
     it "should evaluate and set its default values as variables for parameters not provided by the resource" do
-      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::Leaf.new(:value => "something")
       @type.set_resource_parameters(@resource, @scope)
       @scope['foo'].should == "something"
     end
 
     it "should set all default values as parameters in the resource" do
-      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::Leaf.new(:value => "something")
 
       @type.set_resource_parameters(@resource, @scope)
 
