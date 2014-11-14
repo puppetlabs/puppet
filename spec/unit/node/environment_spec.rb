@@ -331,16 +331,16 @@ describe Puppet::Node::Environment do
           end
 
           it "should ignore modules with invalid names" do
-            FileUtils.mkdir_p(File.join(@first, 'foo'))
-            FileUtils.mkdir_p(File.join(@first, 'foo2'))
-            FileUtils.mkdir_p(File.join(@first, 'foo-bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo_bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo=bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo.bar'))
-            FileUtils.mkdir_p(File.join(@first, '-foo'))
-            FileUtils.mkdir_p(File.join(@first, 'foo-'))
-            FileUtils.mkdir_p(File.join(@first, 'foo--bar'))
+            PuppetSpec::Modules.generate_files('foo', @first)
+            PuppetSpec::Modules.generate_files('foo2', @first)
+            PuppetSpec::Modules.generate_files('foo-bar', @first)
+            PuppetSpec::Modules.generate_files('foo_bar', @first)
+            PuppetSpec::Modules.generate_files('foo=bar', @first)
+            PuppetSpec::Modules.generate_files('foo bar', @first)
+            PuppetSpec::Modules.generate_files('foo.bar', @first)
+            PuppetSpec::Modules.generate_files('-foo', @first)
+            PuppetSpec::Modules.generate_files('foo-', @first)
+            PuppetSpec::Modules.generate_files('foo--bar', @first)
 
             env.modules_by_path[@first].collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
           end
@@ -446,37 +446,52 @@ describe Puppet::Node::Environment do
 
           it "should return a module named for every directory in each module path" do
             %w{foo bar}.each do |mod_name|
-              FileUtils.mkdir_p(File.join(@first, mod_name))
+              PuppetSpec::Modules.generate_files(mod_name, @first)
             end
             %w{bee baz}.each do |mod_name|
-              FileUtils.mkdir_p(File.join(@second, mod_name))
+              PuppetSpec::Modules.generate_files(mod_name, @second)
             end
             env.modules.collect{|mod| mod.name}.sort.should == %w{foo bar bee baz}.sort
           end
 
           it "should remove duplicates" do
-            FileUtils.mkdir_p(File.join(@first,  'foo'))
-            FileUtils.mkdir_p(File.join(@second, 'foo'))
+            PuppetSpec::Modules.generate_files('foo', @first)
+            PuppetSpec::Modules.generate_files('foo', @second)
 
             env.modules.collect{|mod| mod.name}.sort.should == %w{foo}
           end
 
           it "should ignore modules with invalid names" do
-            FileUtils.mkdir_p(File.join(@first, 'foo'))
-            FileUtils.mkdir_p(File.join(@first, 'foo2'))
-            FileUtils.mkdir_p(File.join(@first, 'foo-bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo_bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo=bar'))
-            FileUtils.mkdir_p(File.join(@first, 'foo bar'))
+            PuppetSpec::Modules.generate_files('foo', @first)
+            PuppetSpec::Modules.generate_files('foo2', @first)
+            PuppetSpec::Modules.generate_files('foo-bar', @first)
+            PuppetSpec::Modules.generate_files('foo_bar', @first)
+            PuppetSpec::Modules.generate_files('foo=bar', @first)
+            PuppetSpec::Modules.generate_files('foo bar', @first)
 
             env.modules.collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
           end
 
           it "should create modules with the correct environment" do
-            FileUtils.mkdir_p(File.join(@first, 'foo'))
+            PuppetSpec::Modules.generate_files('foo', @first)
+
             env.modules.each {|mod| mod.environment.should == env }
           end
 
+          it "should log an exception if a module contains invalid metadata" do
+            PuppetSpec::Modules.generate_files(
+              'foo',
+              @first,
+              :metadata => {
+                :author       => 'puppetlabs'
+                # missing source, version, etc
+              }
+            )
+
+            Puppet.expects(:log_exception).with(is_a(Puppet::Module::MissingMetadata))
+
+            env.modules
+          end
         end
       end
     end

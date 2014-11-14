@@ -343,8 +343,8 @@ class Puppet::Node::Environment
     seen_modules = {}
     modulepath.each do |path|
       Dir.entries(path).each do |name|
+        next if name == "." || name == ".."
         warn_about_mistaken_path(path, name)
-        next if module_references.include?(name)
         if not seen_modules[name]
           module_references << {:name => name, :path => File.join(path, name)}
           seen_modules[name] = true
@@ -355,7 +355,8 @@ class Puppet::Node::Environment
     module_references.collect do |reference|
       begin
         Puppet::Module.new(reference[:name], reference[:path], self)
-      rescue Puppet::Module::Error
+      rescue Puppet::Module::Error => e
+        Puppet.log_exception(e)
         nil
       end
     end.compact
