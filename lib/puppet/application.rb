@@ -2,6 +2,7 @@ require 'optparse'
 require 'puppet/util/command_line'
 require 'puppet/util/constant_inflector'
 require 'puppet/error'
+require 'puppet/application_support'
 
 module Puppet
 
@@ -333,22 +334,7 @@ class Application
       initialize_app_defaults
     end
 
-    Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{self.class.run_mode})")
-    # This use of configured environment is correct, this is used to establish
-    # the defaults for an application that does not override, or where an override
-    # has not been made from the command line.
-    #
-    configured_environment_name = Puppet[:environment]
-    if self.class.run_mode.name == :agent
-      configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
-    else
-      configured_environment = Puppet.lookup(:environments).get!(configured_environment_name)
-    end
-    configured_environment = configured_environment.override_from_commandline(Puppet.settings)
-
-    # Setup a new context using the app's configuration
-    Puppet.push_context({ :current_environment => configured_environment },
-                    "Update current environment from application's configuration")
+    Puppet::ApplicationSupport.push_application_context(self.class.run_mode)
 
     exit_on_fail("initialize")                                   { preinit }
     exit_on_fail("parse application options")                    { parse_options }
@@ -398,12 +384,7 @@ class Application
   end
 
   def configure_indirector_routes
-    route_file = Puppet[:route_file]
-    if Puppet::FileSystem.exist?(route_file)
-      routes = YAML.load_file(route_file)
-      application_routes = routes[name.to_s]
-      Puppet::Indirector.configure_routes(application_routes) if application_routes
-    end
+    Puppet::ApplicationSupport.configure_indirector_routes(name.to_s)
   end
 
   # Output basic information about the runtime environment for debugging
