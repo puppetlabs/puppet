@@ -352,13 +352,6 @@ module Puppet
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
-    :binder => {
-      :default => false,
-      :desc    => "Turns the binding system on or off. This includes bindings in modules.
-        The binding system aggregates data from modules and other locations and makes them available for lookup.
-        The binding system is experimental and any or all of it may change.",
-      :type    => :boolean,
-    },
     :binder_config => {
       :default => nil,
       :desc    => "The binder configuration file. Puppet reads this file on each request to configure the bindings system.

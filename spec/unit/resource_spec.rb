@@ -326,10 +326,6 @@ describe Puppet::Resource do
       end
 
       context "when no value is provided" do
-        before(:each) do
-          Puppet[:binder] = true
-        end
-
         let(:resource) do
           Puppet::Parser::Resource.new("class", "apache", :scope => scope)
         end
@@ -383,8 +379,6 @@ describe Puppet::Resource do
         end
 
         it "should not query the injector" do
-          # enable the injector
-          Puppet[:binder] = true
           compiler.injector.expects(:find).never
           resource.set_default_parameters(scope)
         end
