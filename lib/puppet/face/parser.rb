@@ -2,7 +2,7 @@ require 'puppet/face'
 require 'puppet/parser'
 
 Puppet::Face.define(:parser, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Labs", 2014
   license   "Apache 2 license; see COPYING"
 
   summary "Interact directly with the parser."
@@ -16,10 +16,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       syncing any resources. If no manifest files are provided, it will
       validate the default site manifest.
 
-      When validating with --parser current, the validation stops after the first
-      encountered issue.
-
-      When validating with --parser future, multiple issues per file are reported up
+      When validating multiple issues per file are reported up
       to the settings of max_error, and max_warnings. The processing stops
       after having reported issues for the first encountered file with errors.
     EOT
@@ -71,13 +68,14 @@ Puppet::Face.define(:parser, '0.0.1') do
     returns "A dump of the resulting AST model unless there are syntax or validation errors."
     description <<-'EOT'
       This action parses and validates the Puppet DSL syntax without compiling a catalog
-      or syncing any resources. It automatically turns on the future parser for the parsing.
+      or syncing any resources.
 
       The command accepts one or more manifests (.pp) files, or an -e followed by the puppet
       source text.
       If no arguments are given, the stdin is read (unless it is attached to a terminal)
 
-      The output format of the dumped tree is not API, it may change from time to time.
+      The output format of the dumped tree is intended for debugging purposes and is
+      not API, it may change from time to time.
     EOT
 
     option "--e <source>" do
