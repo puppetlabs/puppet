@@ -429,16 +429,12 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Make sure we don't have any remaining collections that specifically
-  # look for resources, because we want to consider those to be
-  # parse errors.
+  # Make sure there are no remaining collections that are waiting for
+  # resources that have not yet been instantiated. If this occurs it
+  # is an error (missing resourcei - it could not be realized).
+  #
   def fail_on_unevaluated_resource_collections
-    if Puppet[:parser] == 'future'
-      remaining = @collections.collect(&:unresolved_resources).flatten.compact
-    else
-      remaining = @collections.collect(&:resources).flatten.compact
-    end
-
+    remaining = @collections.collect(&:unresolved_resources).flatten.compact
     if !remaining.empty?
       raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
     end
