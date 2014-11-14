@@ -10,10 +10,6 @@ describe Puppet::Parser::AST::Leaf do
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
 
-#  it "should have an evaluate_match method" do
-#    Puppet::Parser::AST::Leaf.new(:value => "value").should respond_to(:evaluate_match)
-#  end
-
   describe "when converting to string" do
     it "should transform its value to string" do
       value = stub 'value', :is_a? => true
