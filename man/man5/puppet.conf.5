@@ -916,14 +916,6 @@ Boolean; whether puppet agent should ignore schedules\. This is useful for initi
 .
 .IP "" 0
 .
-.SS "immutable_node_data"
-When true, also prevents $trusted and $facts from being overridden in any scope
-.
-.IP "\(bu" 4
-\fIDefault\fR: $trusted_node_data
-.
-.IP "" 0
-.
 .SS "keylength"
 The bit length of keys\.
 .
@@ -1808,14 +1800,6 @@ Boolean; whether Puppet should store only facts and exported resources in the st
 .
 .SS "trace"
 Whether to print stack traces on some errors
-.
-.IP "\(bu" 4
-\fIDefault\fR: false
-.
-.IP "" 0
-.
-.SS "trusted_node_data"
-Stores trusted node data in a hash called $trusted\. When true also prevents $trusted from being overridden in any scope\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: false

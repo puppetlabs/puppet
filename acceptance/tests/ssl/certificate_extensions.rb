@@ -30,7 +30,6 @@ test_name "certificate extensions available as trusted data" do
     'master' => {
       'autosign' => '/bin/true',
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-      'trusted_node_data' => true,
     }
   }
 
