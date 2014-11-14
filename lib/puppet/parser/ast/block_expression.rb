@@ -18,17 +18,6 @@ class Puppet::Parser::AST
       @children[index]
     end
 
-    def push(*ary)
-      ary.each { |child|
-        #Puppet.debug "adding %s(%s) of type %s to %s" %
-        #    [child, child.object_id, child.class.to_s.sub(/.+::/,''),
-        #    self.object_id]
-        @children.push(child)
-      }
-
-      self
-    end
-
     def sequence_with(other)
       Puppet::Parser::AST::BlockExpression.new(:children => self.children + other.children)
     end

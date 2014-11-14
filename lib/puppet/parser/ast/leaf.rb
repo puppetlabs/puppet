@@ -19,7 +19,6 @@ class Puppet::Parser::AST
     end
   end
 
-
   # Host names, either fully qualified or just the short name, or even a regex
   class HostName < AST::Leaf
     def initialize(hash)
