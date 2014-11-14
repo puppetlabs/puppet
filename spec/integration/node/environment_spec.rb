@@ -80,7 +80,7 @@ describe Puppet::Node::Environment do
     end
   end
 
-  shared_examples_for "the environment's initial import in the future" do |settings|
+  shared_examples_for "the environment's initial import in 4x" do |settings|
     it "a manifest referring to a directory invokes recursive parsing of all its files in sorted order" do
       settings.each do |name, value|
         Puppet[name] = value
@@ -104,22 +104,19 @@ describe Puppet::Node::Environment do
     end
   end
 
-  describe 'using classic parser' do
+  describe 'using 4x parser' do
     it_behaves_like "the environment's initial import",
-      :parser => 'current',
       # fixture uses variables that are set in a particular order (this ensures
       # that files are parsed and combined in the right order or an error will
       # be raised if 'b' is evaluated before 'a').
       :strict_variables => true
   end
 
-  describe 'using future parser' do
-    it_behaves_like "the environment's initial import",
-      :parser    => 'future',
-      # Turned off because currently future parser turns on the binder which
-      # causes lookup of facts that are uninitialized and it will fail with
-      # errors for 'osfamily' etc.  This can be turned back on when the binder
-      # is taken out of the equation.
-      :strict_variables => false
+  describe 'using 4x parser' do
+    it_behaves_like "the environment's initial import in 4x",
+      # fixture uses variables that are set in a particular order (this ensures
+      # that files are parsed and combined in the right order or an error will
+      # be raised if 'b' is evaluated before 'a').
+      :strict_variables => true
   end
 end
