@@ -1,5 +1,3 @@
-require 'puppet/parser/ast/top_level_construct'
-
 class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
   attr_accessor :names, :context
 
@@ -14,8 +12,6 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
   end
 
   def instantiate(modname)
-    @names.map do |name|
-      Puppet::Resource::Type.new(:node, name, @context.merge(:module_name => modname))
-    end
+    @names.map { |name| Puppet::Resource::Type.new(:node, name, @context.merge(:module_name => modname)) }
   end
 end
