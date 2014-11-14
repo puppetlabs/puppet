@@ -25,18 +25,6 @@ class Puppet::Parser::AST
   def evaluate(*options)
   end
 
-  # Throw a parse error.
-  def parsefail(message)
-    self.fail(Puppet::ParseError, message)
-  end
-
-  # Wrap a statemp in a reusable way so we always throw a parse error.
-  def parsewrap
-    exceptwrap :type => Puppet::ParseError do
-      yield
-    end
-  end
-
   # The version of the evaluate method that should be called, because it
   # correctly handles errors.  It is critical to use this method because
   # it can enable you to catch the error where it happens, rather than
