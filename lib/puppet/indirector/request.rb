@@ -109,7 +109,7 @@ class Puppet::Indirector::Request
   # Create the query string, if options are present.
   def query_string
     return "" if options.nil? || options.empty?
-    "?" + encode_params(expand_into_parameters(options.to_a))
+    encode_params(expand_into_parameters(options.to_a))
   end
 
   def expand_into_parameters(data)
