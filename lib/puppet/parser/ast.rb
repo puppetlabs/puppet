@@ -1,18 +1,16 @@
-# the parent class for all of our syntactical objects
-
 require 'puppet'
 require 'puppet/util/autoload'
 
-# The base class for all of the objects that make up the parse trees.
+# The base class for the 3x "parse tree", now only used by the top level
+# constructs and the compiler.
 # Handles things like file name, line #, and also does the initialization
 # for all of the parameters of all of the child objects.
+#
 class Puppet::Parser::AST
-  # Do this so I don't have to type the full path in all of the subclasses
   AST = Puppet::Parser::AST
 
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
-  include Puppet::Util::Docs
 
   attr_accessor :parent, :scope, :file, :line, :pos
 
@@ -55,7 +53,6 @@ class Puppet::Parser::AST
 end
 
 # And include all of the AST subclasses.
-require 'puppet/parser/ast/astarray'
 require 'puppet/parser/ast/block_expression'
 require 'puppet/parser/ast/hostclass' # PUP-3274 cannot remove until environment uses a different representation
 require 'puppet/parser/ast/leaf'
