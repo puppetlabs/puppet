@@ -81,7 +81,7 @@ The above Rake tasks were run from the root of a Puppet checkout.  They are quot
 
 A finished pipeline will have repository information available at http://builds.puppetlabs.lan/puppet/  So you can also browse this list and select a recent sha which has repo_configs/ available.
 
-When executing the ci:test:packages task, you must set the SHA, and also set CONFIG to point to a valid Beaker hosts_file.  Configurations used in the Jenkins jobs are available under config/nodes
+The ci:test:packages task depends on having a local installation of `wget`. When executing the ci:test:packages task, you must set the SHA, and also set CONFIG to point to a valid Beaker hosts_file.  Configurations used in the Jenkins jobs are available under config/nodes
 
 ```sh
 bundle exec rake ci:test:packages SHA=abcdef CONFIG=config/nodes/rhel.yaml
