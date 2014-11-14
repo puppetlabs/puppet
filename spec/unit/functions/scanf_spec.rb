@@ -7,10 +7,6 @@ describe 'the scanf function' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  before :each do
-    Puppet[:parser] = 'future'
-  end
-
   it 'scans a value and returns an array' do
     expect(compile_to_catalog("$x = '42'.scanf('%i')[0] + 1; notify { \"test$x\": }")).to have_resource('Notify[test43]')
   end
