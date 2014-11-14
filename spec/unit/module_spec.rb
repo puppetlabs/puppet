@@ -95,6 +95,33 @@ describe Puppet::Module do
       Puppet.settings[:modulepath] = @modpath
     end
 
+    it "should resolve module dependencies using forge names" do
+      parent = PuppetSpec::Modules.create(
+        'parent',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => [{
+            "name" => "foo/child"
+          }]
+        },
+        :environment => env
+      )
+      child = PuppetSpec::Modules.create(
+        'child',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => []
+        },
+        :environment => env
+      )
+
+      env.expects(:module_by_forge_name).with('foo/child').returns(child)
+
+      expect(parent.unmet_dependencies).to eq([])
+    end
+
     it "should list modules that are missing" do
       metadata_file = "#{@modpath}/needy/metadata.json"
       Puppet::FileSystem.expects(:exist?).with(metadata_file).returns true

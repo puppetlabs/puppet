@@ -242,7 +242,8 @@ class Puppet::Module
     return unmet_dependencies unless dependencies
 
     dependencies.each do |dependency|
-      forge_name = dependency['name']
+      name = dependency['name']
+      forge_name = name.tr('-', '/')
       version_string = dependency['version_requirement'] || '>= 0.0.0'
 
       dep_mod = begin
@@ -252,7 +253,7 @@ class Puppet::Module
       end
 
       error_details = {
-        :name => forge_name,
+        :name => name,
         :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
         :parent => {
           :name => self.forge_name,
