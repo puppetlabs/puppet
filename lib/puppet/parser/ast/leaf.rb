@@ -64,15 +64,6 @@ class Puppet::Parser::AST
       self
     end
 
-    def evaluate_match(value, scope, options = {})
-      value = value == :undef ? '' : value.to_s
-
-      if matched = @value.match(value)
-        scope.ephemeral_from(matched, options[:file], options[:line])
-      end
-      matched
-    end
-
     def match(value)
       @value.match(value)
     end

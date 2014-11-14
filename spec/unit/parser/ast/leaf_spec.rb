@@ -10,9 +10,9 @@ describe Puppet::Parser::AST::Leaf do
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
 
-  it "should have an evaluate_match method" do
-    Puppet::Parser::AST::Leaf.new(:value => "value").should respond_to(:evaluate_match)
-  end
+#  it "should have an evaluate_match method" do
+#    Puppet::Parser::AST::Leaf.new(:value => "value").should respond_to(:evaluate_match)
+#  end
 
   describe "when converting to string" do
     it "should transform its value to string" do
@@ -62,55 +62,6 @@ describe Puppet::Parser::AST::Regex do
 
       val.evaluate(@scope).should === val
     end
-  end
-
-  describe "when evaluate_match" do
-    before :each do
-      @value = stub 'regex'
-      @value.stubs(:match).with("value").returns(true)
-      Regexp.stubs(:new).returns(@value)
-      @regex = Puppet::Parser::AST::Regex.new :value => "/ab/"
-    end
-
-    it "should issue the regexp match" do
-      @value.expects(:match).with("value")
-
-      @regex.evaluate_match("value", @scope)
-    end
-
-    it "should not downcase the parameter value" do
-      @value.expects(:match).with("VaLuE")
-
-      @regex.evaluate_match("VaLuE", @scope)
-    end
-
-    it "should set ephemeral scope vars if there is a match" do
-      @scope.expects(:ephemeral_from).with(true, nil, nil)
-
-      @regex.evaluate_match("value", @scope)
-    end
-
-    it "should return the match to the caller" do
-      @value.stubs(:match).with("value").returns(:match)
-      @scope.stubs(:ephemeral_from)
-
-      @regex.evaluate_match("value", @scope)
-    end
-  end
-
-  it "should match undef to the empty string" do
-    regex = Puppet::Parser::AST::Regex.new(:value => "^$")
-    regex.evaluate_match(:undef, @scope).should be_true
-  end
-
-  it "should not match undef to a non-empty string" do
-    regex = Puppet::Parser::AST::Regex.new(:value => '\w')
-    regex.evaluate_match(:undef, @scope).should be_false
-  end
-
-  it "should match a string against a string" do
-    regex = Puppet::Parser::AST::Regex.new(:value => '\w')
-    regex.evaluate_match('foo', @scope).should be_true
   end
 
   it "should return the regex source with to_s" do
