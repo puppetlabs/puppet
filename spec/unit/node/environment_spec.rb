@@ -477,6 +477,20 @@ describe Puppet::Node::Environment do
             env.modules.each {|mod| mod.environment.should == env }
           end
 
+          it "should log an exception if a module contains invalid metadata" do
+            PuppetSpec::Modules.generate_files(
+              'foo',
+              @first,
+              :metadata => {
+                :author       => 'puppetlabs'
+                # missing source, version, etc
+              }
+            )
+
+            Puppet.expects(:log_exception).with(is_a(Puppet::Module::MissingMetadata))
+
+            env.modules
+          end
         end
       end
     end
