@@ -37,10 +37,6 @@ describe Puppet::Util::Profiler::Aggregate do
     logger.output.should =~ /compiler: .*\(2 calls\)\ncompiler ->.*\(1 calls\)/
   end
 
-  it "tolerates calls to `profile` that don't include a metric id" do
-    profiler_mgr.profile("yo") {}
-  end
-
   it "supports both symbols and strings as components of a metric id" do
     profiler_mgr.profile("yo", [:foo, "bar"]) {}
   end

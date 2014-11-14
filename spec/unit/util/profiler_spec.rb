@@ -29,14 +29,6 @@ describe Puppet::Util::Profiler do
     profiler.description.should == "hi"
   end
 
-  it "supports profiling without a metric id" do
-    subject.add_profiler(profiler)
-    subject.profile("hi") {}
-    profiler.context[:metric_id].should == nil
-    profiler.context[:description].should == "hi"
-    profiler.description.should == "hi"
-  end
-
   class TestProfiler
     attr_accessor :context, :metric, :description
 
