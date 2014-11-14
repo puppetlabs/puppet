@@ -20,19 +20,6 @@ class Puppet::Parser::AST
     "( #{self.class} #{self.to_s} #{@children.inspect} )"
   end
 
-  # don't fetch lexer comment by default
-  def use_docs
-    self.class.use_docs
-  end
-
-  # allow our subclass to specify they want documentation
-  class << self
-    attr_accessor :use_docs
-    def associates_doc
-      self.use_docs = true
-    end
-  end
-
   # Evaluate the current object.  Just a stub method, since the subclass
   # should override this method.
   def evaluate(*options)

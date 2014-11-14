@@ -3,8 +3,6 @@
 class Puppet::Parser::AST
 class Resource < AST::Branch
 
-  associates_doc
-
   attr_accessor :type, :instances, :exported, :virtual
 
   # Does not actually return an object; instead sets an object

@@ -1,7 +1,6 @@
 require 'puppet/parser'
 require 'puppet/util/warnings'
 require 'puppet/util/errors'
-require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
@@ -14,7 +13,6 @@ require 'puppet/parser/ast/leaf'
 # @api public
 class Puppet::Resource::Type
   Puppet::ResourceType = self
-  include Puppet::Util::InlineDocs
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
