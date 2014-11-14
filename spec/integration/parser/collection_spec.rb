@@ -2,9 +2,7 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-require 'puppet/parser/collector'
-
-describe Puppet::Parser::Collector do
+describe 'collectors' do
   include PuppetSpec::Compiler
 
   def expect_the_message_to_be(expected_messages, code, node = Puppet::Node.new('the node'))

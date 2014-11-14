@@ -1,7 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/parser/ast/block_expression'
 
-describe Puppet::Parser::AST::BlockExpression do
+describe 'Puppet::Parser::AST::BlockExpression' do
   class StackDepthAST < Puppet::Parser::AST
     attr_reader :call_depth
     def evaluate(*options)

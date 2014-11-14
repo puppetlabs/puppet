@@ -41,7 +41,6 @@ module Puppet
     module Model
       require 'puppet/pops/model/tree_dumper'
       require 'puppet/pops/model/ast_transformer'
-      require 'puppet/pops/model/ast_tree_dumper'
       require 'puppet/pops/model/factory'
       require 'puppet/pops/model/model_tree_dumper'
       require 'puppet/pops/model/model_label_provider'

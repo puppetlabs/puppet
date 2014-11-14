@@ -1,5 +1,3 @@
-require 'puppet/parser/ast/resource_reference'
-
 # Any normal puppet resource declaration.  Can point to a definition or a
 # builtin type.
 class Puppet::Parser::AST

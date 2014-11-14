@@ -3,7 +3,6 @@ require 'puppet/util/warnings'
 require 'puppet/util/errors'
 require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
-require 'puppet/parser/ast/block_expression'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #
@@ -179,7 +178,6 @@ class Puppet::Resource::Type
     end
 
     self.code = Puppet::Parser::ParserFactory.code_merger.concatenate([self, other])
-#    self.code = self.code.sequence_with(other.code)
   end
 
   # Make an instance of the resource type, and place it in the catalog
