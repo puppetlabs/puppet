@@ -47,7 +47,7 @@ class Puppet::Util::Profiler::AroundProfiler
   # @param metric_id [Array] A list of strings making up the ID of a metric to profile
   # @param block [Block] The segment of code to profile
   # @api private
-  def profile(message, metric_id = nil)
+  def profile(message, metric_id)
     retval = nil
     contexts = {}
     @profilers.each do |profiler|
