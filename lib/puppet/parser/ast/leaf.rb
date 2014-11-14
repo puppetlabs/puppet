@@ -37,8 +37,7 @@ class Puppet::Parser::AST
     # implementing eql? and hash so that when an HostName is stored
     # in a hash it has the same hashing properties as the underlying value
     def eql?(value)
-      value = value.value if value.is_a?(HostName)
-      @value.eql?(value)
+      @value.eql?(value.is_a?(HostName) ? value.value : value)
     end
 
     def hash
@@ -49,6 +48,7 @@ class Puppet::Parser::AST
   class Regex < AST::Leaf
     def initialize(hash)
       super
+      # transform value from hash options unless it is already a regular expression
       @value = Regexp.new(@value) unless @value.is_a?(Regexp)
     end
 
