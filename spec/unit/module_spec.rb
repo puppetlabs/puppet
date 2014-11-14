@@ -133,8 +133,12 @@ describe Puppet::Module do
             "version_requirement" => ">= 2.2.0",
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
+
+      env.expects(:module_by_forge_name).with('baz/foobar').returns(nil)
+
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :name   => "baz/foobar",
@@ -155,8 +159,12 @@ describe Puppet::Module do
             "version_requirement" => ">= 2.2.0",
             "name" => "baz/foobar=bar"
           }]
-        }
+        },
+        :environment => env
       )
+
+      env.expects(:module_by_forge_name).with('baz/foobar=bar').returns(nil)
+
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :name   => "baz/foobar=bar",
