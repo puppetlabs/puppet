@@ -25,22 +25,22 @@ describe 'Puppet::Parser::AST::ASTArray' do
   end
 
   it "should not flatten children coming from children ASTArray" do
-    item = Puppet::Parser::AST::String.new :value => 'foo'
+    item = Puppet::Parser::AST::Leaf.new :value => 'foo'
     inner_array = Puppet::Parser::AST::ASTArray.new :children => [item, item]
     operator = Puppet::Parser::AST::ASTArray.new :children => [inner_array, inner_array]
     operator.evaluate(@scope).should == [['foo', 'foo'], ['foo', 'foo']]
   end
 
   it "should not flatten the results of children evaluation" do
-    item = Puppet::Parser::AST::String.new :value => 'foo'
+    item = Puppet::Parser::AST::Leaf.new :value => 'foo'
     item.stubs(:evaluate).returns(['foo'])
     operator = Puppet::Parser::AST::ASTArray.new :children => [item, item]
     operator.evaluate(@scope).should == [['foo'], ['foo']]
   end
 
   it "should discard nil results from children evaluation" do
-    item1 = Puppet::Parser::AST::String.new :value => 'foo'
-    item2 = Puppet::Parser::AST::String.new :value => 'foo'
+    item1 = Puppet::Parser::AST::Leaf.new :value => 'foo'
+    item2 = Puppet::Parser::AST::Leaf.new :value => 'foo'
     item2.stubs(:evaluate).returns(nil)
     operator = Puppet::Parser::AST::ASTArray.new :children => [item1, item2]
     operator.evaluate(@scope).should == ['foo']

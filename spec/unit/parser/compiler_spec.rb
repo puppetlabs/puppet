@@ -586,7 +586,7 @@ describe Puppet::Parser::Compiler do
     describe "and the classes are specified as a hash with parameters" do
       before do
         @node.classes = {}
-        @ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
+        @ast_obj = Puppet::Parser::AST::Leaf.new(:value => 'foo')
       end
 
       # Define the given class with default parameters
@@ -629,7 +629,7 @@ describe Puppet::Parser::Compiler do
       it "should ensure each node class is in catalog and has appropriate tags" do
         klasses = ['bar::foo']
         @node.classes = klasses
-        ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
+        ast_obj = Puppet::Parser::AST::Leaf.new(:value => 'foo')
         klasses.each do |name|
           klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => ast_obj, 'p2' => ast_obj})
           @compiler.topscope.known_resource_types.add klass

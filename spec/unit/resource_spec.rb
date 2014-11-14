@@ -275,7 +275,7 @@ describe Puppet::Resource do
     let(:scope)    { Puppet::Parser::Scope.new(compiler) }
 
     def ast_string(value)
-      Puppet::Parser::AST::String.new({:value => value})
+      Puppet::Parser::AST::Leaf.new({:value => value})
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
@@ -314,7 +314,7 @@ describe Puppet::Resource do
     describe "when the resource type is :hostclass" do
       let(:environment_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }
-      let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
+      let(:port) { Puppet::Parser::AST::Leaf.new(:value => '80') }
       let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
 
       before do
