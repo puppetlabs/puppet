@@ -26,7 +26,8 @@
 #       $x[0]
 #     }
 #
-# @since 3.7.4
+# @since 4.0.0
+#
 Puppet::Functions.create_function(:scanf) do
   require 'scanf'
 

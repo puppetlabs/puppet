@@ -323,7 +323,7 @@ class Puppet::Resource::Type
 
   # Sets the argument name to Puppet Type hash used for type checking.
   # Names must correspond to available arguments (they must be defined first).
-  # Arguments not mentioned will not be type-checked. Only supported when parser == "future"
+  # Arguments not mentioned will not be type-checked.
   #
   def set_argument_types(name_to_type_hash)
     @argument_types = {}

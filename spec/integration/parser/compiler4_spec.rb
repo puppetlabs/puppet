@@ -11,7 +11,7 @@ describe "Puppet::Parser::Compiler" do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  describe "the compiler when using future parser and evaluator" do
+  describe "the compiler" do
     it "should be able to determine the configuration version from a local version control repository" do
       pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows", :if => Puppet.features.microsoft_windows?) do
         # This should always work, because we should always be
@@ -56,7 +56,7 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "evoe")
     end
 
-    it 'Applies defaults from dynamic scopes (3x and future with reverted PUP-867)' do
+    it 'Applies defaults from dynamic scopes (3x and 4x with reverted PUP-867)' do
       catalog = compile_to_catalog(<<-CODE)
       class a {
         Notify { message => "defaulted" }

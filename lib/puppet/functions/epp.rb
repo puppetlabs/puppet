@@ -37,8 +37,8 @@
 # scope where the `epp` function is called from.
 #
 # @see function inline_epp for examples of EPP
-# @since 3.5
-# @note Requires Future Parser
+# @since 4.0.0
+#
 Puppet::Functions.create_function(:epp, Puppet::Functions::InternalFunction) do
 
   dispatch :epp do

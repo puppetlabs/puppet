@@ -192,7 +192,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     # Propagates a found Function to the appropriate loader.
-    # This is for 4x future-evaluator/loader
+    # This is for 4x evaluator/loader
     #
     def instantiate_FunctionDefinition(function_definition, modname)
       loaders = (Puppet.lookup(:loaders) { nil })

@@ -57,9 +57,7 @@
 #       Integer[1,4].reduce |$memo, $x| { $memo + $x }
 #       #=> 10
 #
-# @since 3.2 for Array and Hash
-# @since 3.5 for additional enumerable types
-# @note requires `parser = future`.
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:reduce) do
 

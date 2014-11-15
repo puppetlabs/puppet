@@ -19,11 +19,13 @@ where they are declared. For that, see the `contain` function. It also
 does not create a dependency relationship between the declared class and the
 surrounding class; for that, see the `require` function.
 
-When the future parser is used, you must use the class's full name;
-relative names are no longer allowed. In addition to names in string form,
+You must use the class's full name;
+relative names are not allowed. In addition to names in string form,
 you may also directly use Class and Resource Type values that are produced by
 the future parser's resource and relationship expressions.
 
+- Since < 3.0.0
+- Since 4.0.0 support for class and resource type values, absolute names
 ") do |vals|
 
   # Unify call patterns (if called with nested arrays), make names absolute if

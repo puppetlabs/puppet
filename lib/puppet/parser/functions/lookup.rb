@@ -113,7 +113,7 @@ Using a lambda to process the looked up result - asserting that it starts with a
 
 Including the name in the error
 
-    # only with parser future
+    # only since 4.0.0 or with 3x parser future,
     lookup('the_size', Integer[1,100]) |$name, $result| {
       if $large_value_allowed and $result > 10
         { error 'The bound value for '${name}' can not be larger than 10 in this configuration'}
@@ -135,6 +135,7 @@ If you want to make lookup return undef when no value was found instead of raisi
      $are_you_there = lookup('peekaboo', { accept_undef => true} )
      $are_you_there = lookup('peekaboo', { accept_undef => true}) |$result| { $result }
 
+- Since 4.0.0
 ENDHEREDOC
 
   Puppet::Pops::Binder::Lookup.lookup(self, args)

@@ -34,9 +34,7 @@ Example Using map with two arguments
      # Turns hash into array of keys
      $a.map |$key,$val|{ $key }
 
-- since 3.4 for Array and Hash
-- since 3.5 for other enumerables, and support for blocks with 2 parameters
-- note requires `parser = future`
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["map() is only available when parser/evaluator future is in effect"])

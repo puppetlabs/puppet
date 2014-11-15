@@ -1,11 +1,12 @@
 # Test whether a given class or definition is defined
-Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2, :doc => "Determine whether
+Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
+  :doc => "Determine whether
   a given class or resource type is defined. This function can also determine whether a
   specific resource has been defined, or whether a variable has been assigned a value
-  (including undef...as opposed to never having been assigned anything). Returns `true`
+  (including `undef` - as opposed to never having been assigned anything). Returns `true`
   or `false`. Accepts class names, type names, resource references, and variable
-  reference strings of the form `'$name'`.  When more than one argument is
-  supplied, defined() returns `true` if any are defined.
+  reference strings of the form `'$name'`. When more than one argument is
+  supplied, `defined()` returns `true` if any are defined.
 
   The `defined` function checks both native and defined types, including types
   provided as plugins via modules. Types and classes are both checked using their names:
@@ -39,7 +40,8 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
       defined(Class[\'foo\'])
 
  - Since 2.7.0
- - Since 3.6.0 variable reference and future parser types") do |vals|
+ - Since 3.6.0 variable reference and future parser types
+ - Since 4.0.0") do |vals|
   vals = [vals] unless vals.is_a?(Array)
   vals.any? do |val|
     case val

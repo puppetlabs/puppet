@@ -13,8 +13,7 @@ Example:
      # notices the array [1, 2, 'foo']
      with(1, 2, 'foo') |$x, $y, $z| { notice [$x, $y, $z] }
 
-- since 3.7.0
-- note requires future parser
+- since 4.0.0
 DOC
 ) do |args|
   function_fail(["with() is only available when parser/evaluator future is in effect"])

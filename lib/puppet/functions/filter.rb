@@ -31,9 +31,7 @@
 #      $a = {"raspberry"=>0, "blueberry"=>1, "orange"=>1}
 #      $a.filter |$key, $x| { $x =~ /berry$/ and $x >= 1 } # blueberry
 #
-# @since 3.4 for Array and Hash
-# @since 3.5 for other enumerables
-# @note requires `parser = future`
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:filter) do
   dispatch :filter_Hash_2 do

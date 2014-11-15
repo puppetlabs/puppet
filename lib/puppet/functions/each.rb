@@ -34,9 +34,7 @@
 #       "hello".each |$char| { ... }                      # 'h', 'e', 'l', 'l', 'o'
 #       3.each |$number| { ... }                          # 0, 1, 2
 #
-# @since 3.2 for Array and Hash
-# @since 3.5 for other enumerables
-# @note requires `parser = future`
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:each) do
   dispatch :foreach_Hash_2 do

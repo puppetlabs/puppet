@@ -62,7 +62,7 @@ describe "the 'defined' function" do
     end
   end
 
-  it "is true when a future resource type reference is provided, and the resource is in the catalog" do
+  it "is true when a resource type reference is provided, and the resource is in the catalog" do
     resource = Puppet::Resource.new("file", "/my/file")
     @compiler.add_resource(@scope, resource)
 
@@ -91,7 +91,7 @@ describe "the 'defined' function" do
     expect(@scope.function_defined([resource_type])).to be_false
   end
 
-  it "is true when a future class reference type is provided" do
+  it "is true when a class type is provided" do
     @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "cowabunga")
 
     class_type = Puppet::Pops::Types::TypeFactory.host_class("cowabunga")

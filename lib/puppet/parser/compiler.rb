@@ -605,7 +605,7 @@ class Puppet::Parser::Compiler
 
   def assert_binder_active
     unless activate_binder()
-      raise ArgumentError, "The Puppet Binder is only available when either '--binder true' or '--parser future' is used"
+      raise Puppet::DevError, "The Puppet Binder was not activated"
     end
   end
 end
