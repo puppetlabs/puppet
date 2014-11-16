@@ -185,17 +185,20 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       facts.name = Puppet[:node_name_value]
     end
 
-    configured_environment = Puppet.lookup(:current_environment)
+    # Find our Node
+    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+      raise "Could not find node #{Puppet[:node_name_value]}"
+    end
+
+    configured_environment = node.environment || Puppet.lookup(:current_environment)
+
     apply_environment = manifest ?
       configured_environment.override_with(:manifest => manifest) :
       configured_environment
 
-    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
-      # Find our Node
-      unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-        raise "Could not find node #{Puppet[:node_name_value]}"
-      end
+    node.environment = apply_environment
 
+    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
       # Merge in the facts.
       node.merge(facts.values) if facts
 
