@@ -24,17 +24,16 @@ PACKAGES = {
   ],
   :solaris_11 => [
     ['git', 'developer/versioning/git'],
-    ['ruby', 'runtime/ruby-18'],
+    ['ruby', 'runtime/ruby-19'],
     # there isn't a package for json, so it is installed later via gems
   ],
   :solaris_10 => [
     'coreutils',
     'curl', # update curl to fix "CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!" issue
     'git',
-    'ruby18',
-    'ruby18_dev',
+    'ruby19',
+    'ruby19_dev',
     'gcc4core',
-    'ruby18_gcc4',
   ],
   :windows => [
     'git',
@@ -47,9 +46,9 @@ hosts.each do |host|
   when  /solaris-10/
     on host, 'mkdir -p /var/lib'
     on host, 'ln -sf /opt/csw/bin/pkgutil /usr/bin/pkgutil'
-    on host, 'ln -sf /opt/csw/bin/gem18 /usr/bin/gem'
+    on host, 'ln -sf /opt/csw/bin/gem19 /usr/bin/gem'
     on host, 'ln -sf /opt/csw/bin/git /usr/bin/git'
-    on host, 'ln -sf /opt/csw/bin/ruby18 /usr/bin/ruby'
+    on host, 'ln -sf /opt/csw/bin/ruby19 /usr/bin/ruby'
     on host, 'ln -sf /opt/csw/bin/gstat /usr/bin/stat'
     on host, 'ln -sf /opt/csw/bin/greadlink /usr/bin/readlink'
   end
