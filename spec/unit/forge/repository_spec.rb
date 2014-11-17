@@ -104,29 +104,18 @@ describe Puppet::Forge::Repository do
     end
 
     def performs_an_http_request(result = nil, &block)
-      http = mock("http client")
-      yield http
-
-      proxy_class = mock("http proxy class")
-      proxy = mock("http proxy")
-      proxy_class.expects(:new).with("fake.com", 80).returns(proxy)
-      proxy.expects(:start).yields(http).returns(result)
-      Net::HTTP.expects(:Proxy).with("proxy", 1234, nil, nil).returns(proxy_class)
+      proxy_args = ["proxy", 1234, nil, nil]
+      mock_proxy(80, proxy_args, result, &block)
     end
 
     def performs_an_https_request(result = nil, &block)
-      http = mock("http client")
-      yield http
-
-      proxy_class = mock("http proxy class")
-      proxy = mock("http proxy")
-      proxy_class.expects(:new).with("fake.com", 443).returns(proxy)
-      proxy.expects(:start).yields(http).returns(result)
+      proxy_args = ["proxy", 1234, nil, nil]
+      proxy = mock_proxy(443, proxy_args, result, &block)
       proxy.expects(:use_ssl=).with(true)
       proxy.expects(:cert_store=)
       proxy.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-      Net::HTTP.expects(:Proxy).with("proxy", 1234, nil, nil).returns(proxy_class)
     end
+
   end
 
   describe "making a request against an authentiated proxy" do
@@ -191,28 +180,16 @@ describe Puppet::Forge::Repository do
     end
 
     def performs_an_authenticated_http_request(result = nil, &block)
-      http = mock("http client")
-      yield http
-
-      proxy_class = mock("http proxy class")
-      proxy = mock("http proxy")
-      proxy_class.expects(:new).with("fake.com", 80).returns(proxy)
-      proxy.expects(:start).yields(http).returns(result)
-      Net::HTTP.expects(:Proxy).with("proxy", 1234, "user1", "password").returns(proxy_class)
+      proxy_args = ["proxy", 1234, 'user1', 'password']
+      mock_proxy(80, proxy_args, result, &block)
     end
 
     def performs_an_authenticated_https_request(result = nil, &block)
-      http = mock("http client")
-      yield http
-
-      proxy_class = mock("http proxy class")
-      proxy = mock("http proxy")
-      proxy_class.expects(:new).with("fake.com", 443).returns(proxy)
-      proxy.expects(:start).yields(http).returns(result)
+      proxy_args = ["proxy", 1234, 'user1', 'password']
+      proxy = mock_proxy(443, proxy_args, result, &block)
       proxy.expects(:use_ssl=).with(true)
       proxy.expects(:cert_store=)
       proxy.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-      Net::HTTP.expects(:Proxy).with("proxy", 1234, "user1", "password").returns(proxy_class)
     end
   end
 
@@ -226,5 +203,22 @@ describe Puppet::Forge::Repository do
     Puppet[:http_proxy_port] = port
     Puppet[:http_proxy_user] = user
     Puppet[:http_proxy_password] = password
+  end
+
+  def mock_proxy(port, proxy_args, result, &block)
+    http = mock("http client")
+    proxy = mock("http proxy")
+    proxy_class = mock("http proxy class")
+
+    Net::HTTP.expects(:Proxy).with(*proxy_args).returns(proxy_class)
+    proxy_class.expects(:new).with("fake.com", port).returns(proxy)
+
+    proxy.expects(:open_timeout=)
+    proxy.expects(:read_timeout=)
+
+    proxy.expects(:start).yields(http).returns(result)
+    yield http
+
+    proxy
   end
 end

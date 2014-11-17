@@ -21,7 +21,7 @@ class Puppet::Settings::DurationSetting < Puppet::Settings::BaseSetting
   # Convert the value to an integer, parsing numeric string with units if necessary.
   def munge(value)
     case
-    when value.is_a?(Integer)
+    when value.is_a?(Integer) || value.nil?
       value
     when (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']

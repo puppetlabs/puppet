@@ -146,6 +146,9 @@ class Puppet::Forge
         proxy.set_debug_output($stderr)
       end
 
+      proxy.open_timeout = Puppet[:http_connect_timeout]
+      proxy.read_timeout = Puppet[:http_read_timeout]
+
       proxy
     end
 

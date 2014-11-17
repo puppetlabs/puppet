@@ -62,20 +62,18 @@ describe Puppet::Network::HTTP::Factory do
     end
 
     context 'socket timeouts' do
-      let(:timeout) { 5 }
-
       it 'sets open timeout' do
-        Puppet[:configtimeout] = timeout
+        Puppet[:http_connect_timeout] = "10s"
         conn = create_connection(site)
 
-        expect(conn.open_timeout).to eq(timeout)
+        expect(conn.open_timeout).to eq(10)
       end
 
       it 'sets read timeout' do
-        Puppet[:configtimeout] = timeout
+        Puppet[:http_read_timeout] = "2m"
         conn = create_connection(site)
 
-        expect(conn.read_timeout).to eq(timeout)
+        expect(conn.read_timeout).to eq(120)
       end
     end
   end

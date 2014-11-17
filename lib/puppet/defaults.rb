@@ -432,6 +432,19 @@ module Puppet
       :type       => :boolean,
       :desc       => "Whether to write HTTP request and responses to stderr. This should never be used in a production environment."
     },
+    :http_connect_timeout => {
+      :default => "2m",
+      :type    => :duration,
+      :desc    => "The maximum amount of time to wait when establishing an HTTP connection. The default
+      value is 2 minutes.
+      #{AS_DURATION}",
+    },
+    :http_read_timeout => {
+      :type    => :duration,
+      :desc    => "The time to wait for one block to be read from an HTTP connection. If nothing is
+      read after the elapsed interval then the connection will be closed. The default value is unlimited.
+      #{AS_DURATION}",
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,
@@ -1374,8 +1387,14 @@ EOT
       :default  => "2m",
       :type     => :duration,
       :desc     => "How long the client should wait for the configuration to be retrieved
-        before considering it a failure.  This can help reduce flapping if too
-        many clients contact the server at one time. #{AS_DURATION}",
+        before considering it a failure. This setting is deprecated and has been replaced
+        by http_connect_timeout and http_read_timeout.
+        #{AS_DURATION}",
+      :deprecated => :completely,
+      :hook       => proc do |value|
+        Puppet[:http_connect_timeout] = value
+        Puppet[:http_read_timeout]    = value
+      end
     },
     :report_server => {
       :default  => "$server",
