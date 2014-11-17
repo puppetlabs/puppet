@@ -41,10 +41,15 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured and specifies an environment",
+     :if => !Puppet.features.microsoft_windows? do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     site_manifest = file_containing("site_manifest.pp", "notice('the site manifest was applied instead')")
-    enc = file_containing("enc_script", "#!/bin/sh\necho 'classes: []'")
+    enc = file_containing("enc_script", <<-ENC)
+                                        #!/bin/sh
+                                        echo 'classes: []'
+                                        echo 'environment: special'
+                                        ENC
     File.chmod(0755, enc)
 
     special = Puppet::Node::Environment.create(:special, [])
