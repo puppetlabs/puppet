@@ -27,6 +27,9 @@ module Puppet
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
           raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
           CFacter.initialize
+
+          # Setup Facter's logging again now that native facter is initialized
+          Puppet::Util::Logging.setup_facter_logging!
         end
     }
   )

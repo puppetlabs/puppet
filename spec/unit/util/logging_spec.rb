@@ -272,5 +272,51 @@ original
         Puppet[:trace] = false
       end
     end
+
+    describe 'does not support on_message' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:on_message).returns false
+        Facter.stubs(:on_message).never
+      end
+
+      it 'does not call Facter.on_message' do
+        Puppet::Util::Logging::setup_facter_logging!.should be_false
+      end
+    end
+
+    describe 'does support on_message' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:on_message).returns true
+      end
+
+      def setup(level, message)
+        Facter.stubs(:on_message).yields level, message
+
+        # Transform from Facter level to Puppet level
+        case level
+        when :trace
+          level = :debug
+        when :warn
+          level = :warning
+        when :error
+          level = :err
+        when :fatal
+          level = :crit
+        end
+
+        Puppet::Util::Log.stubs(:create).with do |options|
+          options[:level].should eq(level)
+          options[:message].should eq(message)
+          options[:source].should eq('Facter')
+        end.once
+      end
+
+      [:trace, :debug, :info, :warn, :error, :fatal].each do |level|
+        it "calls Facter.on_message and handles #{level} messages" do
+          setup(level, "#{level} message")
+          Puppet::Util::Logging::setup_facter_logging!.should be_true
+        end
+      end
+    end
   end
 end

@@ -61,8 +61,10 @@ module Puppet
   end
 
   require 'puppet/util/logging'
-
   extend Puppet::Util::Logging
+
+  # Setup facter's logging
+  Puppet::Util::Logging.setup_facter_logging!
 
   # The feature collection
   @features = Puppet::Util::Feature.new('puppet/feature')
