@@ -4,14 +4,6 @@
 #
 # @api private
 module Puppet::Util::SSL
-  NO_NAME = OpenSSL::X509::Name.new
-
-  DN_PARSERS = [
-    OpenSSL::X509::Name.method(:parse_rfc2253),
-    OpenSSL::X509::Name.method(:parse_openssl),
-    lambda { |dn| NO_NAME }
-  ]
-
   # Given a DN string, parse it into an OpenSSL certificate subject.  This
   # method will flexibly handle both OpenSSl and RFC2253 formats, as given by
   # nginx and Apache, respectively.
@@ -20,15 +12,23 @@ module Puppet::Util::SSL
   #
   # @return [OpenSSL::X509::Name] the certificate subject
   def self.subject_from_dn(dn)
+    no_name = OpenSSL::X509::Name.new
+
+    dn_parsers = [
+        OpenSSL::X509::Name.method(:parse_rfc2253),
+        OpenSSL::X509::Name.method(:parse_openssl),
+        lambda { |dn| no_name }
+    ]
+
     if is_possibly_valid_dn?(dn)
-      DN_PARSERS.each do |parser|
+      dn_parsers.each do |parser|
         begin
           return parser.call(dn)
         rescue OpenSSL::X509::NameError
         end
       end
     else
-      NO_NAME
+      no_name
     end
   end
 
