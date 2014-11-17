@@ -497,15 +497,6 @@ describe Puppet::Settings do
       @settings[:two].should == "one TWO"
     end
 
-    it "should not cache values such that information from one environment is returned for another environment" do
-      text = "[env1]\none = oneval\n[env2]\none = twoval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-
-      @settings.value(:one, "env1").should == "oneval"
-      @settings.value(:one, "env2").should == "twoval"
-    end
-
     it "should have a run_mode that defaults to user" do
       @settings.preferred_run_mode.should == :user
     end
@@ -558,32 +549,10 @@ describe Puppet::Settings do
       @settings[:one].should == "ONE"
     end
 
-    it "should return values in a specified environment" do
-      text = "[env]\none = envval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      @settings.value(:one, "env").should == "envval"
-    end
-
     it 'should use the current environment for $environment' do
       @settings.define_settings :main, :config_version => { :default => "$environment/foo", :desc => "mydocs" }
 
       @settings.value(:config_version, "myenv").should == "myenv/foo"
-    end
-
-    it "should interpolate found values using the current environment" do
-      text = "[main]\none = mainval\n[myname]\none = nameval\ntwo = $one/two\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-
-      @settings.value(:two, "myname").should == "nameval/two"
-    end
-
-    it "should return values in a specified environment before values in the main or name sections" do
-      text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      @settings.value(:one, "env").should == "envval"
     end
   end
 
@@ -810,22 +779,6 @@ describe Puppet::Settings do
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       values.should == ["setval"]
-    end
-
-    it "should pass the environment-specific value to the hook when one is available" do
-      values = []
-      @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
-      @settings.define_settings :section, :environment => { :default => "yay", :desc => "a" }
-      @settings.define_settings :section, :environments => { :default => "yay,foo", :desc => "a" }
-
-      text = "[main]
-      mysetting = setval
-      [yay]
-      mysetting = other
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      values.should == ["other"]
     end
 
     it "should pass the interpolated value to the hook when one is available" do

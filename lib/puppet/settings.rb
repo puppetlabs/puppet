@@ -652,9 +652,8 @@ class Puppet::Settings
     # because multiple sections could set the same value
     # and I'm too lazy to only set the metadata once.
     if @configuration_file
-      searchpath.reverse.each do |source|
-        source = preferred_run_mode if source == :run_mode
-        if section = @configuration_file.sections[source]
+      searchpath(nil, preferred_run_mode).reverse.each do |source|
+        if source.type == :section && section = @configuration_file.sections[source.name]
           apply_metadata_from_section(section)
         end
       end
@@ -766,9 +765,24 @@ class Puppet::Settings
     self.use(*new)
   end
 
+  class SearchPathElement < Struct.new(:name, :type); end
+
   # The order in which to search for values.
-  def searchpath(environment = nil)
-    [:memory, :cli, environment, :run_mode, :main, :application_defaults, :overridden_defaults].compact
+  #
+  # @param environment [String,Symbol] symbolic reference to an environment name
+  # @param run_mode [Symbol] symbolic reference to a Puppet run mode
+  # @return [Array<SearchPathElement>]
+  # @api private
+  def searchpath(environment = nil, run_mode = preferred_run_mode)
+    searchpath = [
+      SearchPathElement.new(:memory, :values),
+      SearchPathElement.new(:cli, :values),
+    ]
+    searchpath << SearchPathElement.new(environment.intern, :environment) if environment
+    searchpath << SearchPathElement.new(run_mode, :section) if run_mode
+    searchpath << SearchPathElement.new(:main, :section)
+    searchpath << SearchPathElement.new(:application_defaults, :values)
+    searchpath << SearchPathElement.new(:overridden_defaults, :values)
   end
 
   # Get a list of objects per section
@@ -1177,28 +1191,18 @@ Generated on #{Time.now}.
 
   # Yield each search source in turn.
   def value_sets_for(environment, mode)
-    searchpath(environment).collect do |name|
-      case name
-      when :cli, :memory, :application_defaults, :overridden_defaults
-        @value_sets[name]
-      when :run_mode
-        if @configuration_file
-          section = @configuration_file.sections[mode]
-          if section
-            ValuesFromSection.new(mode, section)
-          end
+    searchpath(environment, mode).collect do |source|
+      case source.type
+      when :values
+        @value_sets[source.name]
+      when :section
+        if @configuration_file && section = @configuration_file.sections[source.name]
+          ValuesFromSection.new(source.name, section)
         end
+      when :environment
+        ValuesFromEnvironmentConf.new(source.name)
       else
-        values_from_section = nil
-        if @configuration_file
-          if section = @configuration_file.sections[name]
-            values_from_section = ValuesFromSection.new(name, section)
-          end
-        end
-        if values_from_section.nil?
-          values_from_section = ValuesFromEnvironmentConf.new(name)
-        end
-        values_from_section
+        raise(Puppet::DevError, "Unknown searchpath case: #{source.type} for the #{source} settings path element.")
       end
     end.compact
   end

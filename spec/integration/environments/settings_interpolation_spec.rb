@@ -1,8 +1,11 @@
 require 'pp'
 require 'spec_helper'
+require 'puppet_spec/settings'
 
 module SettingsInterpolationSpec
 describe "interpolating $environment" do
+  include PuppetSpec::Settings
+
   let(:confdir) { Puppet[:confdir] }
   let(:cmdline_args) { ['--confdir', confdir, '--vardir', Puppet[:vardir], '--hiera_config', Puppet[:hiera_config]] }
 
@@ -102,22 +105,6 @@ describe "interpolating $environment" do
     Puppet.initialize_settings(cmdline_args)
     expect(Puppet[setting.intern]).to eq(expected)
     expect(@logs).to have_matching_log(/cannot interpolate \$environment within '#{setting}'/)
-  end
-
-  def set_puppet_conf(confdir, settings)
-    write_file(File.join(confdir, "puppet.conf"), settings)
-  end
-
-  def set_environment_conf(environmentpath, environment, settings)
-    envdir = File.join(environmentpath, environment)
-    FileUtils.mkdir_p(envdir)
-    write_file(File.join(envdir, 'environment.conf'), settings)
-  end
-
-  def write_file(file, contents)
-    File.open(file, "w") do |f|
-      f.puts(contents)
-    end
   end
 end
 end
