@@ -124,6 +124,10 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to print stack traces on some errors",
+        :hook     => proc do |value|
+          # Enable or disable Facter's trace option too
+          Facter.trace(value) if Facter.respond_to? :trace
+        end
     },
     :profile => {
         :default  => false,

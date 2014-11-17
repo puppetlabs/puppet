@@ -241,5 +241,36 @@ original
         Puppet::Util::Log.level = :info
       end
     end
+
+    describe 'does not support trace' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:trace).returns false
+        Facter.stubs(:trace).never
+      end
+
+      it 'does not enable Facter trace when enabled' do
+        Puppet[:trace] = true
+      end
+
+      it 'does not enable Facter trace when disabled' do
+        Puppet[:trace] = false
+      end
+    end
+
+    describe 'does support trace' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:trace).returns true
+      end
+
+      it 'enables Facter trace when enabled' do
+        Facter.stubs(:trace).with(true)
+        Puppet[:trace] = true
+      end
+
+      it 'disables Facter trace when disabled' do
+        Facter.stubs(:trace).with(false)
+        Puppet[:trace] = false
+      end
+    end
   end
 end
