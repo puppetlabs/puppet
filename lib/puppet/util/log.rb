@@ -1,6 +1,7 @@
 require 'puppet/util/tagging'
 require 'puppet/util/classgen'
 require 'puppet/network/format_support'
+require 'facter'
 
 # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
 # expected that that will be the most common log destination.  Supports
@@ -105,6 +106,9 @@ class Puppet::Util::Log
     raise Puppet::DevError, "Invalid loglevel #{level}" unless @levels.include?(level)
 
     @loglevel = @levels.index(level)
+
+    # Enable or disable Facter debugging
+    Facter.debugging(level == :debug) if Facter.respond_to? :debugging
   end
 
   def Log.levels

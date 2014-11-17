@@ -202,4 +202,44 @@ original
 .*3\.rb:1/
     end
   end
+
+  describe 'when Facter' do
+    after :each do
+      # Unstub these calls as there is global code run after
+      # each spec that may reset the log level to debug
+      Facter.unstub(:respond_to?)
+      Facter.unstub(:debugging)
+    end
+
+    describe 'does not support debugging' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:debugging).returns false
+        Facter.stubs(:debugging).never
+      end
+
+      it 'does not enable Facter debugging for debug level' do
+        Puppet::Util::Log.level = :debug
+      end
+
+      it 'does not enable Facter debugging non-debug level' do
+        Puppet::Util::Log.level = :info
+      end
+    end
+
+    describe 'does support debugging' do
+      before :each do
+        Facter.stubs(:respond_to?).with(:debugging).returns true
+      end
+
+      it 'enables Facter debugging when debug level' do
+        Facter.stubs(:debugging).with(true)
+        Puppet::Util::Log.level = :debug
+      end
+
+      it 'disables Facter debugging when not debug level' do
+        Facter.stubs(:debugging).with(false)
+        Puppet::Util::Log.level = :info
+      end
+    end
+  end
 end
