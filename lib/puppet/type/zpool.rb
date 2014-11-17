@@ -29,7 +29,7 @@ module Puppet
     end
   end
 
-  newtype(:zpool) do
+  Type.newtype(:zpool) do
     @doc = "Manage zpools. Create and delete zpools. The provider WILL NOT SYNC, only report differences.
 
       Supports vdevs with mirrors, raidz, logs and spares."

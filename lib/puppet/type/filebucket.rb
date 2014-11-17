@@ -1,7 +1,7 @@
 module Puppet
   require 'puppet/file_bucket/dipper'
 
-  newtype(:filebucket) do
+  Type.newtype(:filebucket) do
     @doc = <<-EOT
       A repository for storing and retrieving file content by MD5 checksum. Can
       be local to each agent node, or centralized on a puppet master server. All

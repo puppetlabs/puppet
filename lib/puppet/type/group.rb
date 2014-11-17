@@ -4,7 +4,7 @@ require 'puppet/property/keyvalue'
 require 'puppet/parameter/boolean'
 
 module Puppet
-  newtype(:group) do
+  Type.newtype(:group) do
     @doc = "Manage groups. On most platforms this can only create groups.
       Group membership must be managed on individual users.
 

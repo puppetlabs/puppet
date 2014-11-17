@@ -36,7 +36,7 @@ agent_module_type_file = "#{agent_lib_dir}/puppet/type/#{module_name}.rb"
 master_module_type_file = "#{master_module_dir}/#{module_name}/lib/puppet/type/#{module_name}.rb"
 master_module_type_content = <<HERE
 module Puppet
-  newtype(:#{module_name}) do
+  Type.newtype(:#{module_name}) do
     newparam(:name) do
       isnamevar
     end

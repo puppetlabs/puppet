@@ -1,5 +1,5 @@
 module Puppet
-  newtype(:schedule) do
+  Type.newtype(:schedule) do
     @doc = <<-'EOT'
       Define schedules for Puppet. Resources can be limited to a schedule by using the
       [`schedule`](http://docs.puppetlabs.com/references/latest/metaparameter.html#schedule)

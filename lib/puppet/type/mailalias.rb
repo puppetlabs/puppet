@@ -1,5 +1,5 @@
 module Puppet
-  newtype(:mailalias) do
+  Type.newtype(:mailalias) do
     @doc = "Creates an email alias in the local alias database."
 
     ensurable

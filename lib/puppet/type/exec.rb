@@ -1,5 +1,5 @@
 module Puppet
-  newtype(:exec) do
+  Type.newtype(:exec) do
     include Puppet::Util::Execution
     require 'timeout'
 

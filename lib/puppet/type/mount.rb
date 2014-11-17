@@ -2,7 +2,7 @@ require 'puppet/property/boolean'
 
 module Puppet
   # We want the mount to refresh when it changes.
-  newtype(:mount, :self_refresh => true) do
+  Type.newtype(:mount, :self_refresh => true) do
     @doc = "Manages mounted filesystems, including putting mount
       information into the mount table. The actual behavior depends
       on the value of the 'ensure' parameter.

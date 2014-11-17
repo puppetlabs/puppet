@@ -1,5 +1,5 @@
 module Puppet
-  newtype(:ssh_authorized_key) do
+  Type.newtype(:ssh_authorized_key) do
     @doc = "Manages SSH authorized keys. Currently only type 2 keys are supported.
 
       In their native habitat, SSH keys usually appear as a single long line. This
