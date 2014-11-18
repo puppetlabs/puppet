@@ -556,6 +556,11 @@ class Puppet::Settings
     # previous settings that may have come from config files.
     unsafe_clear(false, false)
 
+    # Screen settings which have been deprecated and removed from puppet.conf
+    # but are still valid on the command line and/or in environment.conf
+    screen_non_puppet_conf_settings(data)
+
+    # Make note of deprecated settings we will warn about later in initialization
     record_deprecations_from_puppet_conf(data)
 
     # And now we can repopulate with the values from our last parsing of the config files.
@@ -1096,9 +1101,16 @@ Generated on #{Time.now}.
   private
 
   DEPRECATION_REFS = {
-    [:manifest, :modulepath, :config_version] =>
-      "See http://links.puppetlabs.com/env-settings-deprecations"
+    # intentionally empty. This could be repopulated if we deprecate more settings
+    # and have reference links to associate with them 
   }.freeze
+
+  def screen_non_puppet_conf_settings(puppet_conf)
+    puppet_conf.sections.values.each do |section|
+      forbidden = section.settings.select { |setting| Puppet::Settings::EnvironmentConf::ENVIRONMENT_CONF_ONLY_SETTINGS.include?(setting.name) }
+      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") if !forbidden.empty?
+    end
+  end
 
   # Record that we want to issue a deprecation warning later in the application
   # initialization cycle when we have settings bootstrapped to the point where

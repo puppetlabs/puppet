@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet_spec/settings'
 
-describe "accessing environment.conf settings" do
+describe "environment settings" do
   include PuppetSpec::Settings
 
   let(:confdir) { Puppet[:confdir] }
@@ -11,32 +11,90 @@ describe "accessing environment.conf settings" do
 
   before(:each) do
     FileUtils.mkdir_p(testingdir)
+  end
+
+  def init_puppet_conf(settings = {})
     set_puppet_conf(confdir, <<-EOF)
       environmentpath=#{environmentpath}
+      #{settings.map { |k,v| "#{k}=#{v}" }.join("\n")}
     EOF
     Puppet.initialize_settings
   end
 
-  context "when given environment name" do
-    it "reads manifest from environment.conf defaults" do
-      expect(Puppet.settings.value(:manifest, :testing)).to eq(File.join(testingdir, "manifests"))
+  it "raises an error if you set manifest in puppet.conf" do
+    expect { init_puppet_conf("manifest" => "/something") }.to raise_error(Puppet::Settings::SettingsError, /Cannot set manifest.*in puppet.conf/)
+  end
+
+  it "raises an error if you set modulepath in puppet.conf" do
+    expect { init_puppet_conf("modulepath" => "/something") }.to raise_error(Puppet::Settings::SettingsError, /Cannot set modulepath.*in puppet.conf/)
+  end
+
+  it "raises an error if you set config_version in puppet.conf" do
+    expect { init_puppet_conf("config_version" => "/something") }.to raise_error(Puppet::Settings::SettingsError, /Cannot set config_version.*in puppet.conf/)
+  end
+
+  context "when given an environment" do
+    before(:each) do
+      init_puppet_conf
     end
 
-    it "reads modulepath from environment.conf defaults" do
-      expect(Puppet.settings.value(:modulepath, :testing)).to match(/#{File.join(testingdir, "modules")}/)
+    context "without an environment.conf" do
+      it "reads manifest from environment.conf defaults" do
+        expect(Puppet.settings.value(:manifest, :testing)).to eq(File.join(testingdir, "manifests"))
+      end
+
+      it "reads modulepath from environment.conf defaults" do
+        expect(Puppet.settings.value(:modulepath, :testing)).to match(/#{File.join(testingdir, "modules")}/)
+      end
+
+      it "reads config_version from environment.conf defaults" do
+        expect(Puppet.settings.value(:config_version, :testing)).to eq('')
+      end
     end
 
-    it "reads config_version from environment.conf defaults" do
-      expect(Puppet.settings.value(:config_version, :testing)).to eq('')
+    context "with an environment.conf" do
+      before(:each) do
+        set_environment_conf(environmentpath, 'testing', <<-EOF)
+          manifest=/special/manifest
+          modulepath=/special/modulepath
+          config_version=/special/config_version
+        EOF
+      end
+
+      it "reads the configured manifest" do
+        expect(Puppet.settings.value(:manifest, :testing)).to eq('/special/manifest')
+      end
+
+      it "reads the configured modulepath" do
+        expect(Puppet.settings.value(:modulepath, :testing)).to eq('/special/modulepath')
+      end
+
+      it "reads the configured config_version" do
+        expect(Puppet.settings.value(:config_version, :testing)).to eq('/special/config_version')
+      end
+    end
+
+    context "when environment name collides with a puppet.conf section" do
+      let(:testingdir) { File.join(environmentpath, "main") }
+
+      it "reads manifest from environment.conf defaults" do
+        expect(Puppet.settings.value(:environmentpath)).to eq(environmentpath)
+        expect(Puppet.settings.value(:manifest, :main)).to eq(File.join(testingdir, "manifests"))
+      end
+
+      context "and an environment.conf" do
+        before(:each) do
+          set_environment_conf(environmentpath, 'main', <<-EOF)
+            manifest=/special/manifest
+          EOF
+        end
+
+        it "reads manifest from environment.conf settings" do
+          expect(Puppet.settings.value(:environmentpath)).to eq(environmentpath)
+          expect(Puppet.settings.value(:manifest, :main)).to eq("/special/manifest")
+        end
+      end
     end
   end
 
-  context "when environment name collides with a puppet.conf section" do
-    let(:testingdir) { File.join(environmentpath, "main") }
-
-    it "reads manifest from environment.conf defaults" do
-      expect(Puppet.settings.value(:environmentpath)).to eq(environmentpath)
-      expect(Puppet.settings.value(:manifest, :main)).to eq(File.join(testingdir, "manifests"))
-    end
-  end
 end

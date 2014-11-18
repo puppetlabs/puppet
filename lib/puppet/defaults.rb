@@ -470,20 +470,6 @@ module Puppet
       Other environment data providers may be registered in modules on the module path. For such
       custom data providers see the respective module documentation."
     },
-    :config_version => {
-      :default    => "",
-      :desc       => "How to determine the configuration version.  By default, it will be the
-      time that the configuration is parsed, but you can provide a shell script to override how the
-      version is determined.  The output of this script will be added to every log message in the
-      reports, allowing you to correlate changes on your hosts to the source version on the server.
-
-      Setting a global value for config_version in puppet.conf is not allowed
-      (but it can be overridden from the commandline). Please set a
-      per-environment value in environment.conf instead. For more info, see
-      http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
-        # XXX_ENV what does this become? VVV
-      :deprecated => :allowed_on_commandline,
-    },
     :prerun_command => {
       :default    => "",
       :desc       => "A command to run before every agent run.  If this command returns a non-zero
@@ -922,15 +908,7 @@ EOT
       }
   )
 
-  define_settings(:master,
-    :user => {
-      :default    => "puppet",
-      :desc       => "The user puppet master should run as.",
-    },
-    :group => {
-      :default    => "puppet",
-      :desc       => "The group puppet master should run as.",
-    },
+  define_settings(:environment,
     :manifest => {
       :default    => nil,
       :type       => :file_or_directory,
@@ -944,8 +922,43 @@ EOT
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
-        # XXX_ENV what does this become? VVV
-      :deprecated => :allowed_on_commandline,
+    },
+    :modulepath => {
+      :default => "",
+      :type => :path,
+      :desc => "The search path for modules, as a list of directories separated by the system
+        path separator character. (The POSIX path separator is ':', and the
+        Windows path separator is ';'.)
+
+        Setting a global value for `modulepath` in puppet.conf is not allowed
+        (but it can be overridden from the commandline). Please use
+        directory environments instead. If you need to use something other than the
+        default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
+        you can set `modulepath` in environment.conf. For more info, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+    },
+    :config_version => {
+      :default    => "",
+      :desc       => "How to determine the configuration version.  By default, it will be the
+      time that the configuration is parsed, but you can provide a shell script to override how the
+      version is determined.  The output of this script will be added to every log message in the
+      reports, allowing you to correlate changes on your hosts to the source version on the server.
+
+      Setting a global value for config_version in puppet.conf is not allowed
+      (but it can be overridden from the commandline). Please set a
+      per-environment value in environment.conf instead. For more info, see
+      http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+    },
+  )
+
+  define_settings(:master,
+    :user => {
+      :default    => "puppet",
+      :desc       => "The user puppet master should run as.",
+    },
+    :group => {
+      :default    => "puppet",
+      :desc       => "The group puppet master should run as.",
     },
     :default_manifest => {
       :default    => "./manifests",
@@ -1047,22 +1060,6 @@ EOT
         the `modules` directory of the active environment will have priority over
         any global directories. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
-    },
-    :modulepath => {
-      :default => "",
-      :type => :path,
-      :desc => "The search path for modules, as a list of directories separated by the system
-        path separator character. (The POSIX path separator is ':', and the
-        Windows path separator is ';'.)
-
-        Setting a global value for `modulepath` in puppet.conf is not allowed
-        (but it can be overridden from the commandline). Please use
-        directory environments instead. If you need to use something other than the
-        default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
-        you can set `modulepath` in environment.conf. For more info, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
-        # XXX_ENV what does this become? VVV
-      :deprecated => :allowed_on_commandline,
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
