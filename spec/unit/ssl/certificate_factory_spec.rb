@@ -3,6 +3,8 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_factory'
 
+Puppet::SSL::Oids.register_puppet_oids
+
 describe Puppet::SSL::CertificateFactory do
   let :serial    do OpenSSL::BN.new('12') end
   let :name      do "example.local" end

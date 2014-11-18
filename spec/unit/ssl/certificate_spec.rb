@@ -3,6 +3,8 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate'
 
+Puppet::SSL::Oids.register_puppet_oids
+
 describe Puppet::SSL::Certificate do
   before do
     @class = Puppet::SSL::Certificate

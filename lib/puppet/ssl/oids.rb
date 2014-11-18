@@ -39,8 +39,13 @@ module Puppet::SSL::Oids
     ["1.3.6.1.4.1.34380.1.2", 'ppPrivCertExt', 'Puppet Private Certificate Extension'],
   ]
 
-  PUPPET_OIDS.each do |oid_defn|
-    OpenSSL::ASN1::ObjectId.register(*oid_defn)
+  # Register our custom Puppet OIDs with OpenSSL so they can be used as CSR
+  # extensions. Without registering these OIDs, OpenSSL will fail when it
+  # encounters such an extension in a CSR.
+  def self.register_puppet_oids()
+    PUPPET_OIDS.each do |oid_defn|
+      OpenSSL::ASN1::ObjectId.register(*oid_defn)
+    end
   end
 
   # Parse and load custom OID mapping file that enables custom OIDs to be resolved
