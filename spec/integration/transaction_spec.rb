@@ -16,10 +16,6 @@ describe Puppet::Transaction do
     catalog
   end
 
-  def touch_path
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin"
-  end
-
   def usr_bin_touch(path)
     Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32/cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
   end
@@ -266,68 +262,56 @@ describe Puppet::Transaction do
     Puppet::FileSystem.exist?(newfile).should be_true
   end
 
-  describe "skipping resources" do
-    let(:fname) { tmpfile("exec") }
+  it "should still trigger skipped resources" do
+    catalog = mk_catalog
+    catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 
-    let(:file) do
-      Puppet::Type.type(:file).new(
-        :name => tmpfile("file"),
-        :ensure => "file",
-        :backup => false
-      )
-    end
+    Puppet[:ignoreschedules] = false
 
-    let(:exec) do
-      Puppet::Type.type(:exec).new(
-        :name => touch(fname),
-        :path => touch_path,
-        :subscribe => Puppet::Resource.new("file", file.name)
-      )
-    end
+    file = Puppet::Type.type(:file).new(
+      :name => tmpfile("file"),
+      :ensure => "file",
+      :backup => false
+    )
 
-    it "does not trigger unscheduled resources" do
-      catalog = mk_catalog
-      catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
+    fname = tmpfile("exec")
 
-      Puppet[:ignoreschedules] = false
+    exec = Puppet::Type.type(:exec).new(
+      :name => touch(fname),
+      :path => Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin",
+      :schedule => "monthly",
+      :subscribe => Puppet::Resource.new("file", file.name)
+    )
 
-      exec[:schedule] = "monthly"
+    catalog.add_resource(file, exec)
 
-      catalog.add_resource(file, exec)
+    # Run it once
+    catalog.apply
+    Puppet::FileSystem.exist?(fname).should be_true
 
-      # Run it once so further runs don't schedule the resource
-      catalog.apply
-      expect(Puppet::FileSystem.exist?(fname)).to be_true
+    # Now remove it, so it can get created again
+    Puppet::FileSystem.unlink(fname)
 
-      # Now remove it, so it can get created again
-      Puppet::FileSystem.unlink(fname)
+    file[:content] = "some content"
 
-      file[:content] = "some content"
+    catalog.apply
+    Puppet::FileSystem.exist?(fname).should be_true
 
-      catalog.apply
-      expect(Puppet::FileSystem.exist?(fname)).to be_false
-    end
+    # Now remove it, so it can get created again
+    Puppet::FileSystem.unlink(fname)
 
-    it "does not trigger untagged resources" do
-      catalog = mk_catalog
+    # And tag our exec
+    exec.tag("testrun")
 
-      Puppet[:tags] = "runonly"
-      file.tag("runonly")
+    # And our file, so it runs
+    file.tag("norun")
 
-      catalog.add_resource(file, exec)
-      catalog.apply
-      expect(Puppet::FileSystem.exist?(fname)).to be_false
-    end
+    Puppet[:tags] = "norun"
 
-    it "does not trigger resources with failed dependencies" do
-      catalog = mk_catalog
-      file[:path] = make_absolute("/foo/bar/baz")
+    file[:content] = "totally different content"
 
-      catalog.add_resource(file, exec)
-      catalog.apply
-
-      expect(Puppet::FileSystem.exist?(fname)).to be_false
-    end
+    catalog.apply
+    Puppet::FileSystem.exist?(fname).should be_true
   end
 
   it "should not attempt to evaluate resources with failed dependencies" do

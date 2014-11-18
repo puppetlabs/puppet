@@ -116,20 +116,6 @@ describe Puppet::Transaction do
         transaction.evaluate
         transaction.resource_status(resource).should be_skipped
       end
-
-      it "does not process any scheduled events" do
-        transaction = transaction_with_resource(resource)
-        transaction.expects(:skip?).with(resource).returns true
-        transaction.event_manager.expects(:process_events).with(resource).never
-        transaction.evaluate
-      end
-
-      it "dequeues all events scheduled on that resource" do
-        transaction = transaction_with_resource(resource)
-        transaction.expects(:skip?).with(resource).returns true
-        transaction.event_manager.expects(:dequeue_all_events_for_resource).with(resource)
-        transaction.evaluate
-      end
     end
   end
 
