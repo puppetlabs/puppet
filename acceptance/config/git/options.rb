@@ -1,4 +1,5 @@
 {
+  :type => 'git',
   :install => [
     'facter#stable',
     'hiera#stable',
