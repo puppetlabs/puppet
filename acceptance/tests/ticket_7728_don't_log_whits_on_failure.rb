@@ -13,6 +13,6 @@ manifest = %Q{
 
 apply_manifest_on(agents, manifest) do
   assert_match(Regexp.new(Regexp.quote('/Stage[main]/Foo/Notify[after]: Dependency Exec[test] has failures: true')), stdout, "the after dependency must be reported")
-  assert_no_match(Regexp.new(Regexp.quote('Class[Foo]')), stdout, 'the class should not be mentioned')
-  assert_no_match(Regexp.new(Regexp.quote('Stage[Main]')), stdout, 'the class should not be mentioned')
+  assert_no_match(Regexp.new(Regexp.quote('Class[Bar]: Dependency Exec[test] has failures: true')), stdout, 'the class should not be mentioned')
+  assert_no_match(Regexp.new(Regexp.quote('Stage[main]: Dependency Exec[test] has failures: true')), stdout, 'the stage should not be mentioned')
 end
