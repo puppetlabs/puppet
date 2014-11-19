@@ -471,6 +471,12 @@ class Puppet::Node::Environment
     end
   end
 
+  # @return [String] The YAML interpretation of the object
+  # Return the name of the environment as a string interpretation of the object
+  def to_yaml
+    to_s.to_yaml
+  end
+
   # @return [String] The stringified value of the `name` instance variable
   # @api public
   def to_s

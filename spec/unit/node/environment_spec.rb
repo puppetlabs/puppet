@@ -17,6 +17,10 @@ describe Puppet::Node::Environment do
   end
 
   shared_examples_for 'the environment' do
+    it "should convert an environment to string when converting to YAML" do
+      env.to_yaml.should match(/--- testing/)
+    end
+
     it "should use the filetimeout for the ttl for the module list" do
       Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
     end
