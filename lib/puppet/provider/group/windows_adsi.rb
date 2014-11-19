@@ -22,7 +22,14 @@ Puppet::Type.type(:group).provide :windows_adsi do
     return false if current.empty? != should_empty
 
     # dupes automatically weeded out when hashes built
-    Puppet::Util::Windows::ADSI::Group.name_sid_hash(current) == Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
+    current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
+    specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
+
+    if @resource[:auth_membership]
+      current_users == specified_users
+    else
+      (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
+    end
   end
 
   def members_to_s(users)
@@ -49,7 +56,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def members=(members)
-    group.set_members(members)
+    group.set_members(members, @resource[:auth_membership])
   end
 
   def create
