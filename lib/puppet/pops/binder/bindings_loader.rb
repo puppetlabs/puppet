@@ -42,11 +42,11 @@ class Puppet::Pops::Binder::BindingsLoader
   private
 
   def self.loader()
-    unless Puppet.settings[:confdir] == @confdir
-      @confdir = Puppet.settings[:confdir] == @confdir
-      @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings")
-    end
-    @autoloader
+    @autoloader ||= Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings")
+#    unless Puppet.settings[:confdir] == @confdir
+#      @confdir = Puppet.settings[:confdir] == @confdir
+#    end
+#    @autoloader
   end
 
   def self.provide_from_string(scope, name)
@@ -71,7 +71,7 @@ class Puppet::Pops::Binder::BindingsLoader
   end
 
   def self.paths_for_name(fq_name)
-    [de_camel(fq_name), downcased_path(fq_name)]
+    [de_camel(fq_name), downcased_path(fq_name)].uniq
   end
 
   def self.downcased_path(fq_name)

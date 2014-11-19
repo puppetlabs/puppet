@@ -389,6 +389,10 @@ module Puppet::Pops::Binder::BindingsFactory
       else
         raise ArgumentError, "to_instance accepts String (a class name), or a Class.*args got: #{type.class}."
       end
+
+      # Help by setting the type - since if an to_instance is bound, the type is know. This avoids having
+      # to specify the same thing twice.
+      self.instance_of(type)
       model.producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(class_name, *args)
     end
 

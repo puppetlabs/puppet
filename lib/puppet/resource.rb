@@ -1,6 +1,7 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/parameter'
+require 'puppet/data_providers'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -375,7 +376,15 @@ class Puppet::Resource
     return nil unless resource_type.type == :hostclass
 
     name = "#{resource_type.name}::#{param}"
-    lookup_with_databinding(name, scope)
+    in_global = lambda { lookup_with_databinding(name, scope) }
+    in_env = lambda { lookup_in_environment(name, scope) }
+    in_module = lambda { lookup_in_module(name, scope) }
+    search(in_global, in_env, in_module)
+  end
+
+  def search(*search_functions)
+    search_functions.each {|f| x = f.call(); return x unless x.nil? }
+    nil
   end
 
   private :lookup_external_default_for
@@ -390,8 +399,17 @@ class Puppet::Resource
       raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
     end
   end
-
   private :lookup_with_databinding
+
+  def lookup_in_environment(name, scope)
+    Puppet::DataProviders.lookup_in_environment(name, scope)
+  end
+  private :lookup_in_environment
+
+  def lookup_in_module(name, scope)
+    Puppet::DataProviders.lookup_in_module(name, scope)
+  end
+  private :lookup_in_module
 
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
