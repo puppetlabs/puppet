@@ -49,7 +49,7 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
       if m = /^\$(.+)$/.match(val)
         exist?(m[1])
       else
-        find_resource_type(val) || find_definition(val) or find_hostclass(val)
+        find_resource_type(val) || find_definition(val) || find_hostclass(val)
       end
     when Puppet::Resource
       compiler.findresource(val.type, val.title)
