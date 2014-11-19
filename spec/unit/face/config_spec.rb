@@ -25,11 +25,11 @@ syslogfacility = file
 
   it "prints the setting from the selected section" do
     Puppet.settings.parse_config(<<-CONF)
-    [other]
+    [user]
     syslogfacility = file
     CONF
 
-    expect { subject.print("syslogfacility", :section => "other") }.to have_printed('file')
+    expect { subject.print("syslogfacility", :section => "user") }.to have_printed('file')
   end
 
   it "defaults to all when no arguments are given" do

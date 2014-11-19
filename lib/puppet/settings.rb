@@ -34,8 +34,12 @@ class Puppet::Settings
   attr_accessor :files
   attr_reader :timer
 
-  # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
+  # These are the settings that every app is required to specify; there are
+  # reasonable defaults defined in application.rb.
   REQUIRED_APP_SETTINGS = [:logdir, :confdir, :vardir]
+
+  # The acceptable sections of the puppet.conf configuration file.
+  ALLOWED_SECTION_NAMES = ['main', 'master', 'agent', 'user'].freeze
 
   # This method is intended for puppet internal use only; it is a convenience method that
   # returns reasonable application default settings values for a given run_mode.
@@ -543,7 +547,7 @@ class Puppet::Settings
 
   def parse_config(text, file = "text")
     begin
-      data = @config_file_parser.parse_file(file, text)
+      data = @config_file_parser.parse_file(file, text, ALLOWED_SECTION_NAMES)
     rescue => detail
       Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
       return
@@ -1094,8 +1098,8 @@ Generated on #{Time.now}.
   # @param file [String] absolute path to the configuration file
   # @return [Puppet::Settings::ConfigFile::Conf]
   # @api private
-  def parse_file(file)
-    @config_file_parser.parse_file(file, read_file(file))
+  def parse_file(file, allowed_sections = [])
+    @config_file_parser.parse_file(file, read_file(file), allowed_sections)
   end
 
   private
@@ -1119,12 +1123,7 @@ Generated on #{Time.now}.
   # We are only recording warnings applicable to settings set in puppet.conf
   # itself.
   def record_deprecations_from_puppet_conf(puppet_conf)
-    conf_sections = puppet_conf.sections.inject([]) do |accum,entry|
-      accum << entry[1] if [:main, :master, :agent, :user].include?(entry[0])
-      accum
-    end
-
-    conf_sections.each do |section|
+    puppet_conf.sections.values.each do |section|
       section.settings.each do |conf_setting|
         if setting = self.setting(conf_setting.name)
           @deprecated_settings_that_have_been_configured << setting if setting.deprecated?
