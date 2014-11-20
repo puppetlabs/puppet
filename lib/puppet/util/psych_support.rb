@@ -21,6 +21,12 @@ module Puppet::Util::PsychSupport
     initialize_from_hash(psych_coder.map)
   end
 
+  # This method is called from the Psych Yaml serializer
+  # The serializer will call this method to create a hash that will be serialized to YAML.
+  # Instead of using the object itself during the mapping process we use what is
+  # returned by calling `to_data_hash` on the object itself since some of the
+  # objects we manage have asymmetrical serialization and deserialization.
+  #
   def encode_with(psych_encoder)
     tag = Psych.dump_tags[self.class]
     unless tag
