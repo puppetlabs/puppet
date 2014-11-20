@@ -28,19 +28,6 @@ end
 #  - Revocation disabled on the agent `certificate_revocation = false`
 #  - CA disabled on the master `ca = false`
 #
-# SUPPORT NOTES
-#
-# * If the x509 alt names extension is used when issuing SSL server certificates
-#   for the Puppet master, then the client SSL certificate issued by an external
-#   CA must posses the DNS common name in the alternate name field.  This is
-#   due to a bug in Ruby.  If the CN is not duplicated in the Alt Names, then
-#   the following error will appear on the agent with MRI 1.8.7:
-#
-#   Warning: Server hostname 'master1.example.org' did not match server
-#   certificate; expected one of master1.example.org, DNS:puppet,
-#   DNS:master-ca.example.org
-#
-#   See: https://bugs.ruby-lang.org/issues/6493
 test_name "Puppet agent works with Apache, both configured with externally issued certificates from independent intermediate CA's"
 
 step "Copy certificates and configuration files to the master..."
