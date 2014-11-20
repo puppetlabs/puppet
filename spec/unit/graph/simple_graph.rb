@@ -570,7 +570,7 @@ describe Puppet::Graph::SimpleGraph do
     def graph_to_yaml(graph, which_format)
       previous_use_new_yaml_format = Puppet::Graph::SimpleGraph.use_new_yaml_format
       Puppet::Graph::SimpleGraph.use_new_yaml_format = (which_format == :new)
-      ZAML.dump(graph)
+      YAML.dump(graph)
     ensure
       Puppet::Graph::SimpleGraph.use_new_yaml_format = previous_use_new_yaml_format
     end

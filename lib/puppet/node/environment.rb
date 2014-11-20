@@ -471,6 +471,12 @@ class Puppet::Node::Environment
     end
   end
 
+  # @return [String] The YAML interpretation of the object
+  # Return the name of the environment as a string interpretation of the object
+  def to_yaml
+    to_s.to_yaml
+  end
+
   # @return [String] The stringified value of the `name` instance variable
   # @api public
   def to_s
@@ -486,17 +492,6 @@ class Puppet::Node::Environment
   #   create an object that needs to be garbage collected
   def to_sym
     to_s.to_sym
-  end
-
-  # Return only the environment name when serializing.
-  #
-  # The only thing we care about when serializing an environment is its
-  # identity; everything else is ephemeral and should not be stored or
-  # transmitted.
-  #
-  # @api public
-  def to_zaml(z)
-    self.to_s.to_zaml(z)
   end
 
   def self.split_path(path_string)

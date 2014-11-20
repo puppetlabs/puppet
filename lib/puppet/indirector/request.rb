@@ -2,11 +2,13 @@ require 'cgi'
 require 'uri'
 require 'puppet/indirector'
 require 'puppet/network/resolver'
+require 'puppet/util/psych_support'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
+  include Puppet::Util::PsychSupport
 
   attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
 
@@ -145,6 +147,22 @@ class Puppet::Indirector::Request
     params.collect do |key, value|
       "#{key}=#{CGI.escape(value.to_s)}"
     end.join("&")
+  end
+
+  def initialize_from_hash(hash)
+    @indirection_name = hash['indirection_name'].to_sym
+    @method = hash['method'].to_sym
+    @key = hash['key']
+    @instance = hash['instance']
+    @options = hash['options']
+  end
+
+  def to_data_hash
+    { 'indirection_name' => @indirection_name.to_s,
+      'method' => @method.to_s,
+      'key' => @key,
+      'instance' => @instance,
+      'options' => @options }
   end
 
   def to_hash

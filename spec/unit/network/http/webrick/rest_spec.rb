@@ -162,7 +162,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
       it "should treat YAML-load values that are YAML-encoded as any other String" do
         request = a_request_querying('foo' => YAML.dump(%w{one two}))
-        @handler.params(request)[:foo].should == "--- \n  - one\n  - two"
+        @handler.params(request)[:foo].should == "---\n- one\n- two\n"
       end
 
       it "should not allow clients to set the node via the request parameters" do
