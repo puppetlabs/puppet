@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require_relative 'pops/parser/parser_rspec_helper'
+require 'puppet/parser/environment_compiler'
 
 describe "Application instantiation" do
   include PuppetSpec::Compiler
@@ -9,6 +10,13 @@ describe "Application instantiation" do
   # since that has to root around in the guts of the Pops parser, there's
   # no really elegant way to do this
   include ParserRspecHelper
+
+  def compile_to_env_catalog(string)
+    Puppet[:code] = string
+    env = Puppet::Node::Environment.create("test", ["/dev/null"])
+    Puppet::Parser::EnvironmentCompiler.compile(env).filter { |r| r.virtual? }
+  end
+
 
   before :each do
     with_app_management(true)
@@ -74,6 +82,28 @@ EOS
         expect(catalog.resource(res)).not_to be_nil
       end
       expect(catalog.resource("Prod[one]")).to be_nil
+    end
+  end
+
+  describe "in the environment catalog" do
+    it "includes components and capability resources" do
+      catalog = compile_to_env_catalog(MANIFEST).to_resource
+      apps = catalog.resources.select do |res|
+        res.resource_type && res.resource_type.application?
+      end
+      expect(apps.size).to eq(1)
+      app = apps.first
+      expect(app["nodes"]).not_to be_nil
+      comps = catalog.direct_dependents_of(app).map(&:ref).sort
+      expect(comps).to eq(["Cons[two]", "Prod[one]"])
+
+      prod = catalog.resource("Prod[one]")
+      expect(prod).not_to be_nil
+      expect(prod.export.map(&:ref)).to eq(["Cap[cap]"])
+
+      cons = catalog.resource("Cons[two]")
+      expect(cons).not_to be_nil
+      expect(cons[:consume].ref).to eq("Cap[cap]")
     end
   end
 end
