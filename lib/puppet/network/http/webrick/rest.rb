@@ -79,6 +79,9 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
       response.body = result
       response["content-length"] = result.stat.size if result.is_a?(File)
     end
+    if RUBY_VERSION[0,3] == "1.8"
+      response["connection"] = 'close'
+    end
   end
 
   # Retrieve node/cert/ip information from the request object.
