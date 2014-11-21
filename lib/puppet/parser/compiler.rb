@@ -123,10 +123,6 @@ class Puppet::Parser::Compiler
       Puppet::Util::Profiler.profile("Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
       activate_binder
-#        # create injector, if not already created - this is for 3x that does not trigger
-#        # lazy loading of injector via context
-#        Puppet::Util::Profiler.profile("Compile: Created injector", [:compiler, :create_injector]) { injector }
-#      end
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
