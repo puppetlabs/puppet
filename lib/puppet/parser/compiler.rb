@@ -431,7 +431,7 @@ class Puppet::Parser::Compiler
 
   # Make sure there are no remaining collections that are waiting for
   # resources that have not yet been instantiated. If this occurs it
-  # is an error (missing resourcei - it could not be realized).
+  # is an error (missing resource - it could not be realized).
   #
   def fail_on_unevaluated_resource_collections
     remaining = @collections.collect(&:unresolved_resources).flatten.compact
