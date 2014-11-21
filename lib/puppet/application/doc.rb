@@ -79,10 +79,6 @@ the manifests that are in 'manifestdir' and 'modulepath' configuration
 directives. The generated documentation directory is doc by default but
 can be changed with the 'outputdir' option.
 
-If the command is run with the name of a manifest file as an argument,
-puppet doc will output a single manifest's documentation on stdout.
-
-
 OPTIONS
 -------
 * --all:
@@ -128,7 +124,7 @@ EXAMPLE
 
 or
 
-    $ puppet doc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
+    $ puppet doc --outputdir /tmp/rdoc --mode rdoc --modulepath /path/to/modules
 
 or
 
