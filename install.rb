@@ -166,7 +166,7 @@ end
 # Prepare the file installation.
 #
 def prepare_installation
-  $operatingsystem = Facter["operatingsystem"].value
+  $operatingsystem = Facter.value :operatingsystem
 
   InstallOptions.configs = true
 
