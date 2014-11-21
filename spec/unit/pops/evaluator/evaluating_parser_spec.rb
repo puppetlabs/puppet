@@ -17,9 +17,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   before(:each) do
     Puppet[:strict_variables] = true
 
-    # Plugins Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
-    require 'puppet/plugins'
-
     # Tests needs a known configuration of node/scope/compiler since it parses and evaluates
     # snippets as the compiler will evaluate them, butwithout the overhead of compiling a complete
     # catalog for each tested expression.
