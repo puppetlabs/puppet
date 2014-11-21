@@ -274,13 +274,13 @@ describe Puppet::Resource do
     let(:compiler) { Puppet::Parser::Compiler.new(foo_node) }
     let(:scope)    { Puppet::Parser::Scope.new(compiler) }
 
-    def ast_string(value)
+    def ast_leaf(value)
       Puppet::Parser::AST::Leaf.new({:value => value})
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
       environment.known_resource_types.add(
-      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("default")})
+      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("default")})
       )
       resource = Puppet::Resource.new("default_param", "name", :environment => environment)
       lambda { resource.set_default_parameters(scope) }.should raise_error(Puppet::DevError)
@@ -288,7 +288,7 @@ describe Puppet::Resource do
 
     it "should evaluate and set any default values when no value is provided" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
       resource.set_default_parameters(scope)
@@ -297,7 +297,7 @@ describe Puppet::Resource do
 
     it "should skip attributes with no default value" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => scope)
       lambda { resource.set_default_parameters(scope) }.should_not raise_error
@@ -305,7 +305,7 @@ describe Puppet::Resource do
 
     it "should return the list of default parameters set" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
       resource.set_default_parameters(scope).should == ["a"]
