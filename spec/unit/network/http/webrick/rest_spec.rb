@@ -62,6 +62,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
       it "should set the status and body on the response when setting the response for a successful query" do
         @response.expects(:status=).with 200
         @response.expects(:body=).with "mybody"
+        @response.expects(:[]=).with('connection', 'close') if RUBY_VERSION[0,3] == '1.8'
 
         @handler.set_response(@response, "mybody", 200)
       end
@@ -74,6 +75,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
         @response.expects(:[]=).with('content-length', 100)
         @response.expects(:status=).with 200
         @response.expects(:body=).with @file
+        @response.expects(:[]=).with('connection', 'close') if RUBY_VERSION[0,3] == '1.8'
 
         @handler.set_response(@response, @file, 200)
       end
@@ -81,8 +83,25 @@ describe Puppet::Network::HTTP::WEBrickREST do
       it "should set the status and message on the response when setting the response for a failed query" do
         @response.expects(:status=).with 400
         @response.expects(:body=).with "mybody"
+        @response.expects(:[]=).with('connection', 'close') if RUBY_VERSION[0,3] == '1.8'
 
         @handler.set_response(@response, "mybody", 400)
+      end
+
+      it "omits the 'Connection: close' header on ruby 1.9 and up", :if => RUBY_VERSION[0,3] != '1.8' do
+        @response.expects(:status=).with 200
+        @response.expects(:body=).with "mybody"
+        @response.expects(:[]=).with('connection', 'close').never
+
+        @handler.set_response(@response, "mybody", 200)
+      end
+
+      it "closes the connection on ruby 1.8", :if => RUBY_VERSION[0,3] == '1.8' do
+        @response.expects(:status=).with 200
+        @response.expects(:body=).with "mybody"
+        @response.expects(:[]=).with('connection', 'close')
+
+        @handler.set_response(@response, "mybody", 200)
       end
     end
 

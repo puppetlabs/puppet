@@ -71,6 +71,36 @@ describe "egrammar parsing heredoc" do
     ].join("\n")
   end
 
+  it "parses with escaped newlines without preceding whitespace" do
+    src = <<-CODE
+    @(END/L)
+    First Line\\
+     Second Line
+    |- END
+    CODE
+    parse(src)
+    dump(parse(src)).should == [
+      "(@()",
+      "  (sublocated 'First Line Second Line')",
+      ")"
+    ].join("\n")
+  end
+
+  it "parses with escaped newlines with proper margin" do
+    src = <<-CODE
+    @(END/L)
+     First Line\\
+      Second Line
+    |- END
+    CODE
+    parse(src)
+    dump(parse(src)).should == [
+      "(@()",
+      "  (sublocated ' First Line  Second Line')",
+      ")"
+    ].join("\n")
+  end
+
   it "parses interpolated heredoc expression with false start on $" do
     src = <<-CODE
     @("END")
