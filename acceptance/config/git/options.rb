@@ -12,7 +12,7 @@
     'setup/git/pre-suite/030_PuppetMasterSanity.rb',
     'setup/common/pre-suite/040_ValidateSignCert.rb',
     'setup/git/pre-suite/060_InstallModules.rb',
-    'setup/git/pre-suite/070_InstalCACerts.rb',
+    'setup/common/pre-suite/070_InstallCACerts.rb',
     'setup/common/pre-suite/100_SetParser.rb',
   ],
 }
