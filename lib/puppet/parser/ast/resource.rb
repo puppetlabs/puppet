@@ -19,7 +19,7 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
     # First level of implicit iteration: build a resource for each
     # instance.  This handles things like:
     # file { '/foo': owner => blah; '/bar': owner => blah }
-    @instances.collect do |instance|
+    @instances.map do |instance|
 
       # Evaluate all of the specified params.
       paramobjects = instance.parameters.map { |param| param.safeevaluate(scope) }
