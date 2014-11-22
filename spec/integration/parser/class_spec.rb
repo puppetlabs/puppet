@@ -4,10 +4,6 @@ require 'puppet_spec/language'
 describe "Class expressions" do
   extend PuppetSpec::Language
 
-  before :each do
-    Puppet[:parser] = 'future'
-  end
-
   produces(
     "class hi { }"                                       => '!defined(Class[Hi])',
 

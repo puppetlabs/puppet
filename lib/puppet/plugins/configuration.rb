@@ -8,8 +8,6 @@
 require 'puppet/plugins'
 
 module Puppet::Plugins::Configuration
-    # TODO: This should always be true in Puppet 4.0 (the way it is done here does not allow toggling)
-    return unless ::Puppet[:binder] || ::Puppet[:parser] == 'future'
     require 'puppet/plugins/binding_schemes'
     require 'puppet/plugins/syntax_checkers'
 

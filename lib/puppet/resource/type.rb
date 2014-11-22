@@ -1,9 +1,7 @@
 require 'puppet/parser'
 require 'puppet/util/warnings'
 require 'puppet/util/errors'
-require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
-require 'puppet/parser/ast/block_expression'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #
@@ -15,7 +13,6 @@ require 'puppet/parser/ast/block_expression'
 # @api public
 class Puppet::Resource::Type
   Puppet::ResourceType = self
-  include Puppet::Util::InlineDocs
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
@@ -179,7 +176,6 @@ class Puppet::Resource::Type
     end
 
     self.code = Puppet::Parser::ParserFactory.code_merger.concatenate([self, other])
-#    self.code = self.code.sequence_with(other.code)
   end
 
   # Make an instance of the resource type, and place it in the catalog
@@ -327,13 +323,11 @@ class Puppet::Resource::Type
 
   # Sets the argument name to Puppet Type hash used for type checking.
   # Names must correspond to available arguments (they must be defined first).
-  # Arguments not mentioned will not be type-checked. Only supported when parser == "future"
+  # Arguments not mentioned will not be type-checked.
   #
   def set_argument_types(name_to_type_hash)
     @argument_types = {}
-    # Stop here if not running under future parser, the rest requires pops to be initialized
-    # and that the type system is available
-    return unless Puppet[:parser] == 'future' && name_to_type_hash
+    return unless name_to_type_hash
     name_to_type_hash.each do |name, t|
       # catch internal errors
       unless @arguments.include?(name)

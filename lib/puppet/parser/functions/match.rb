@@ -20,8 +20,7 @@ Example matching:
 
 See the documentation for "The Puppet Type System" for more information about types.
 
-- since 3.7.0
-- note requires future parser
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["match() is only available when parser/evaluator future is in effect"])

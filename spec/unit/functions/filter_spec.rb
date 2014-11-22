@@ -9,10 +9,6 @@ describe 'the filter method' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  before :each do
-    Puppet[:parser] = 'future'
-  end
-
   it 'should filter on an array (all berries)' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = ['strawberry','blueberry','orange']

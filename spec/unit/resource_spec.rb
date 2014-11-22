@@ -274,13 +274,13 @@ describe Puppet::Resource do
     let(:compiler) { Puppet::Parser::Compiler.new(foo_node) }
     let(:scope)    { Puppet::Parser::Scope.new(compiler) }
 
-    def ast_string(value)
-      Puppet::Parser::AST::String.new({:value => value})
+    def ast_leaf(value)
+      Puppet::Parser::AST::Leaf.new({:value => value})
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
       environment.known_resource_types.add(
-      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("default")})
+      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("default")})
       )
       resource = Puppet::Resource.new("default_param", "name", :environment => environment)
       lambda { resource.set_default_parameters(scope) }.should raise_error(Puppet::DevError)
@@ -288,7 +288,7 @@ describe Puppet::Resource do
 
     it "should evaluate and set any default values when no value is provided" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
       resource.set_default_parameters(scope)
@@ -297,7 +297,7 @@ describe Puppet::Resource do
 
     it "should skip attributes with no default value" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => scope)
       lambda { resource.set_default_parameters(scope) }.should_not raise_error
@@ -305,7 +305,7 @@ describe Puppet::Resource do
 
     it "should return the list of default parameters set" do
       environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
       resource.set_default_parameters(scope).should == ["a"]
@@ -314,7 +314,7 @@ describe Puppet::Resource do
     describe "when the resource type is :hostclass" do
       let(:environment_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }
-      let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
+      let(:port) { Puppet::Parser::AST::Leaf.new(:value => '80') }
       let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
 
       before do
@@ -326,10 +326,6 @@ describe Puppet::Resource do
       end
 
       context "when no value is provided" do
-        before(:each) do
-          Puppet[:binder] = true
-        end
-
         let(:resource) do
           Puppet::Parser::Resource.new("class", "apache", :scope => scope)
         end
@@ -383,8 +379,6 @@ describe Puppet::Resource do
         end
 
         it "should not query the injector" do
-          # enable the injector
-          Puppet[:binder] = true
           compiler.injector.expects(:find).never
           resource.set_default_parameters(scope)
         end

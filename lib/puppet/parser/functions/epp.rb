@@ -38,8 +38,7 @@ Template parameters shadow variables in outer scopes. File based epp does never 
 scope where the `epp` function is called from.
 
 - See function inline_epp for examples of EPP
-- Since 3.5
-- Requires Future Parser") do |args|
+- Since 4.0.0") do |args|
 
   function_fail(["epp() is only available when parser/evaluator future is in effect"])
 end

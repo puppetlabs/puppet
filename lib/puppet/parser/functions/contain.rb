@@ -12,10 +12,12 @@ comma-separated list of class names.
 A contained class will not be applied before the containing class is
 begun, and will be finished before the containing class is finished.
 
-When the future parser is used, you must use the class's full name;
-relative names are no longer allowed. In addition to names in string form,
+You must use the class's full name;
+relative names are not allowed. In addition to names in string form,
 you may also directly use Class and Resource Type values that are produced by
-the future parser's resource and relationship expressions.
+evaluating resource and relationship expressions.
+
+- Since 4.0.0 support for Class and Resource Type values, absolute names
 "
 ) do |classes|
   scope = self

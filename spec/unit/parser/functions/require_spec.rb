@@ -1,11 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'unit/parser/functions/shared'
+require 'puppet_spec/compiler'
 
 describe "the require function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
+  include PuppetSpec::Compiler
+#  before :all do
+#    Puppet::Parser::Functions.autoloader.loadall
+#  end
 
   before :each do
     @catalog = stub 'catalog'
@@ -27,7 +29,7 @@ describe "the require function" do
   end
 
   it "should delegate to the 'include' puppet function" do
-    @scope.compiler.expects(:evaluate_classes).with(["myclass"], @scope, false)
+    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
 
     @scope.function_require(["myclass"])
   end
@@ -43,7 +45,7 @@ describe "the require function" do
   it "should lookup the absolute class path" do
     @scope.compiler.stubs(:evaluate_classes)
 
-    @scope.expects(:find_hostclass).with("myclass").returns(@klass)
+    @scope.expects(:find_hostclass).with("::myclass").returns(@klass)
     @klass.expects(:name).returns("myclass")
 
     @scope.function_require(["myclass"])
@@ -60,16 +62,7 @@ describe "the require function" do
     @resource[:require].detect { |r| r.to_s == "Class[Myclass]" }.should be_instance_of(Puppet::Resource)
   end
 
-  describe "When the future parser is in use" do
-    require 'puppet/pops'
-    require 'puppet_spec/compiler'
-    include PuppetSpec::Compiler
+  it_should_behave_like 'all functions transforming relative to absolute names', :function_require
+  it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :require
 
-    before(:each) do
-      Puppet[:parser] = 'future'
-    end
-
-    it_should_behave_like 'all functions transforming relative to absolute names', :function_require
-    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :require
-  end
 end

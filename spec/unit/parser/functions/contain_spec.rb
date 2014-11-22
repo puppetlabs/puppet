@@ -13,6 +13,11 @@ describe 'The "contain" function' do
   include ContainmentMatchers
   include Matchers::Resource
 
+  before(:each) do
+    compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope = Puppet::Parser::Scope.new(compiler)
+  end
+
   it "includes the class" do
     catalog = compile_to_catalog(<<-MANIFEST)
       class contained {
@@ -49,7 +54,7 @@ describe 'The "contain" function' do
     catalog = compile_to_catalog(<<-MANIFEST)
       class outer {
         class named { }
-        contain named
+        contain outer::named
       }
 
       class named { }
@@ -222,15 +227,7 @@ describe 'The "contain" function' do
     end
   end
 
-  describe "When the future parser is in use" do
-    require 'puppet/pops'
-    before(:each) do
-      Puppet[:parser] = 'future'
-      compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-      @scope = Puppet::Parser::Scope.new(compiler)
-    end
+  it_should_behave_like 'all functions transforming relative to absolute names', :function_contain
+  it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
 
-    it_should_behave_like 'all functions transforming relative to absolute names', :function_contain
-    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
-  end
 end

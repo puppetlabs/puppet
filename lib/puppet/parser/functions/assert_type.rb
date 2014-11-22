@@ -24,8 +24,7 @@ Example, using a warning and a default:
   }
 
 See the documentation for 'The Puppet Type System' for more information about types.
-- since Puppet 3.7
-- requires future parser/evaluator
+- Since 4.0.0
 ") do |args|
   function_fail(["assert_type() is only available when parser/evaluator future is in effect"])
 end

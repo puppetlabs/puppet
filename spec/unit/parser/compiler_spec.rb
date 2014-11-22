@@ -509,7 +509,7 @@ describe Puppet::Parser::Compiler do
 
     it "should not fail when there are unevaluated resource collections that do not refer to specific resources" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns(nil)
+      coll.expects(:unresolved_resources).returns(nil)
 
       @compiler.add_collection(coll)
 
@@ -518,20 +518,20 @@ describe Puppet::Parser::Compiler do
 
     it "should fail when there are unevaluated resource collections that refer to a specific resource" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns(:something)
+      coll.expects(:unresolved_resources).returns(:something)
 
       @compiler.add_collection(coll)
 
-      lambda { @compiler.compile }.should raise_error Puppet::ParseError, 'Failed to realize virtual resources something'
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, 'Failed to realize virtual resources something')
     end
 
     it "should fail when there are unevaluated resource collections that refer to multiple specific resources" do
       coll = stub 'coll', :evaluate => false
-      coll.expects(:resources).returns([:one, :two])
+      coll.expects(:unresolved_resources).returns([:one, :two])
 
       @compiler.add_collection(coll)
 
-      lambda { @compiler.compile }.should raise_error Puppet::ParseError, 'Failed to realize virtual resources one, two'
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, 'Failed to realize virtual resources one, two')
     end
   end
 
@@ -586,7 +586,7 @@ describe Puppet::Parser::Compiler do
     describe "and the classes are specified as a hash with parameters" do
       before do
         @node.classes = {}
-        @ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
+        @ast_obj = Puppet::Parser::AST::Leaf.new(:value => 'foo')
       end
 
       # Define the given class with default parameters
@@ -629,7 +629,7 @@ describe Puppet::Parser::Compiler do
       it "should ensure each node class is in catalog and has appropriate tags" do
         klasses = ['bar::foo']
         @node.classes = klasses
-        ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
+        ast_obj = Puppet::Parser::AST::Leaf.new(:value => 'foo')
         klasses.each do |name|
           klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => ast_obj, 'p2' => ast_obj})
           @compiler.topscope.known_resource_types.add klass

@@ -35,9 +35,7 @@ Example Using filter with two parameters
      $a = {"raspberry"=>0, "blueberry"=>1, "orange"=>1}
      $a.filter |$key, $x| { $x =~ /berry$/ and $x >= 1 } # blueberry
 
-- since 3.4 for Array and Hash
-- since 3.5 for other enumerables
-- note requires `parser = future`
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["filter() is only available when parser/evaluator future is in effect"])

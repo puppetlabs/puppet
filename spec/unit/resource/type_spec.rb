@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/resource/type'
-
+require 'puppet/pops'
 require 'matchers/json'
 
 describe Puppet::Resource::Type do
@@ -240,6 +240,11 @@ describe Puppet::Resource::Type do
   end
 
   describe "when setting its parameters in the scope" do
+    def variable_expression(name)
+      varexpr = Puppet::Pops::Model::Factory.QNAME(name).var().current
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => varexpr)
+    end
+
     before do
       @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
@@ -250,8 +255,7 @@ describe Puppet::Resource::Type do
     ['module_name', 'name', 'title'].each do |variable|
       it "should allow #{variable} to be evaluated as param default" do
         @type.instance_eval { @module_name = "bar" }
-        var = Puppet::Parser::AST::Variable.new({'value' => variable})
-        @type.set_arguments :foo => var
+        @type.set_arguments :foo => variable_expression(variable)
         @type.set_resource_parameters(@resource, @scope)
         @scope['foo'].should == 'bar'
       end
@@ -263,8 +267,7 @@ describe Puppet::Resource::Type do
     it "should allow the resource to override defaults" do
       @type.set_arguments :name => nil
       @resource[:name] = 'foobar'
-      var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
-      @type.set_arguments :foo => var
+      @type.set_arguments :foo => variable_expression('name')
       @type.set_resource_parameters(@resource, @scope)
       @scope['foo'].should == 'foobar'
     end
@@ -297,13 +300,13 @@ describe Puppet::Resource::Type do
     end
 
     it "should evaluate and set its default values as variables for parameters not provided by the resource" do
-      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::Leaf.new(:value => "something")
       @type.set_resource_parameters(@resource, @scope)
       @scope['foo'].should == "something"
     end
 
     it "should set all default values as parameters in the resource" do
-      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::Leaf.new(:value => "something")
 
       @type.set_resource_parameters(@resource, @scope)
 
@@ -686,7 +689,7 @@ describe Puppet::Resource::Type do
 
   describe "when merging code from another instance" do
     def code(str)
-      Puppet::Parser::AST::Leaf.new :value => str
+      factory = Puppet::Pops::Model::Factory.literal(str)
     end
 
     it "should fail unless it is a class" do
@@ -752,6 +755,11 @@ describe Puppet::Resource::Type do
     end
 
     it "should append the other class's code to its code if it has any" do
+      # PUP-3274, the code merging at the top still uses AST::BlockExpression
+      # But does not do mutating changes to code blocks, instead a new block is created
+      # with references to the two original blocks.
+      # TODO: fix this when the code merging is changed at the very top in 4x.
+      #
       dcode = Puppet::Parser::AST::BlockExpression.new(:children => [code("dest")])
       dest = Puppet::Resource::Type.new(:hostclass, "bar", :code => dcode)
 
@@ -759,8 +767,7 @@ describe Puppet::Resource::Type do
       source = Puppet::Resource::Type.new(:hostclass, "foo", :code => scode)
 
       dest.merge(source)
-
-      dest.code.children.collect { |l| l.value }.should == %w{dest source}
+      dest.code.children.collect { |l| l.children[0].value }.should == %w{dest source}
     end
   end
 end

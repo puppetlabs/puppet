@@ -17,14 +17,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   before(:each) do
     Puppet[:strict_variables] = true
 
-    # These must be set since the 3x logic switches some behaviors on these even if the tests explicitly
-    # use the 4x parser and evaluator.
-    #
-    Puppet[:parser] = 'future'
-
-    # Plugins Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
-    require 'puppet/plugins'
-
     # Tests needs a known configuration of node/scope/compiler since it parses and evaluates
     # snippets as the compiler will evaluate them, butwithout the overhead of compiling a complete
     # catalog for each tested expression.
@@ -921,7 +913,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           required_block_param
         end
         def test(count, block)
-          block.call({}, *[].fill(10, 0, count))
+          block.call(*[].fill(10, 0, count))
         end
       end
       the_func = fc.new({}, env_loader)
@@ -938,7 +930,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           required_block_param
         end
         def test(lambda_arg, block)
-          block.call({}, lambda_arg)
+          block.call(lambda_arg)
         end
       end
       the_func = fc.new({}, env_loader)

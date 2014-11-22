@@ -19,10 +19,6 @@ describe 'BinderComposer' do
   let(:parser)      { Puppet::Pops::Parser::Parser.new() }
   let(:factory)     { Puppet::Pops::Binder::BindingsFactory }
 
-  before(:each) do
-    Puppet[:binder] = true
-  end
-
   it 'should load default config if no config file exists' do
     diagnostics = diag
     composer = Puppet::Pops::Binder::BindingsComposer.new()
@@ -39,7 +35,7 @@ describe 'BinderComposer' do
       Puppet.override(:environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [File.join(config_directory, 'modules')]))) do
         # this ensure the binder is active at the right time
         # (issues with getting a /dev/null path for "confdir" / "libdir")
-        raise "Binder not active" unless scope.compiler.is_binder_active?
+        raise "Binder not active" unless scope.compiler.activate_binder
 
         diagnostics = diag
         composer = Puppet::Pops::Binder::BindingsComposer.new()

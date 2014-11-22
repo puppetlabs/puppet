@@ -71,23 +71,5 @@ describe Puppet::Parser::Relationship do
       @source[:before].should be_include(@extra_resource)
       @source[:before].should be_include(@extra_resource2)
     end
-
-    it "should use the collected retargets if the target is a Collector" do
-      orig_target = @target
-      @target = Puppet::Parser::Collector.new(stub("scope"), :file, "equery", "vquery", :virtual)
-      @target.collected[:foo] = @target
-      @dep.evaluate(@catalog)
-
-      @source[:before].should be_include("Mytype[target]")
-    end
-
-    it "should use the collected resources if the source is a Collector" do
-      orig_source = @source
-      @source = Puppet::Parser::Collector.new(stub("scope"), :file, "equery", "vquery", :virtual)
-      @source.collected[:foo] = @source
-      @dep.evaluate(@catalog)
-
-      orig_source[:before].should be_include("Mytype[target]")
-    end
   end
 end

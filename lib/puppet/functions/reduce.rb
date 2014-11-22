@@ -57,9 +57,7 @@
 #       Integer[1,4].reduce |$memo, $x| { $memo + $x }
 #       #=> 10
 #
-# @since 3.2 for Array and Hash
-# @since 3.5 for additional enumerable types
-# @note requires `parser = future`.
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:reduce) do
 
@@ -76,12 +74,12 @@ Puppet::Functions.create_function(:reduce) do
 
   def reduce_without_memo(enumerable, pblock)
     enum = asserted_enumerable(enumerable)
-    enum.reduce {|memo, x| pblock.call(nil, memo, x) }
+    enum.reduce {|memo, x| pblock.call(memo, x) }
   end
 
   def reduce_with_memo(enumerable, given_memo, pblock)
     enum = asserted_enumerable(enumerable)
-    enum.reduce(given_memo) {|memo, x| pblock.call(nil, memo, x) }
+    enum.reduce(given_memo) {|memo, x| pblock.call(memo, x) }
   end
 
   def asserted_enumerable(obj)

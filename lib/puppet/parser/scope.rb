@@ -399,12 +399,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      if Puppet[:parser] == 'future'
         throw :undefined_variable
-      else
-        reason_msg = reason.nil? ? '' : "; #{reason}"
-        raise Puppet::ParseError, "Undefined variable #{name.inspect}#{reason_msg}"
-      end
     else
       nil
     end
@@ -526,46 +521,12 @@ class Puppet::Parser::Scope
   # by default) including the values defined in parent. Local values
   # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
   #
-  # This is currently a wrapper for to_hash_legacy or to_hash_future.
-  #
-  # @see to_hash_future
-  #
-  # @see to_hash_legacy
   def to_hash(recursive = true)
-    @parser ||= Puppet[:parser]
-    if @parser == 'future'
-      to_hash_future(recursive)
-    else
-      to_hash_legacy(recursive)
-    end
-  end
-
-  # Fixed version of to_hash that implements scoping correctly (i.e., with
-  # dynamic scoping disabled #28200 / PUP-1220
-  #
-  # @see to_hash
-  def to_hash_future(recursive)
     if recursive and has_enclosing_scope?
-      target = enclosing_scope.to_hash_future(recursive)
+      target = enclosing_scope.to_hash(recursive)
       if !(inherited = inherited_scope).nil?
-        target.merge!(inherited.to_hash_future(recursive))
+        target.merge!(inherited.to_hash(recursive))
       end
-    else
-      target = Hash.new
-    end
-
-    # add all local scopes
-    @ephemeral.last.add_entries_to(target)
-    target
-  end
-
-  # The old broken implementation of to_hash that retains the dynamic scoping
-  # semantics
-  #
-  # @see to_hash
-  def to_hash_legacy(recursive = true)
-    if recursive and parent
-      target = parent.to_hash_legacy(recursive)
     else
       target = Hash.new
     end
@@ -840,41 +801,34 @@ class Puppet::Parser::Scope
   # Transforms references to classes to the form suitable for
   # lookup in the compiler.
   #
-  # Makes names passed in the names array absolute if they are relative
-  # Names are now made absolute if Puppet[:parser] == 'future', this will
-  # be the default behavior in Puppet 4.0
+  # Makes names passed in the names array absolute if they are relative.
   #
-  # Transforms Class[] and Resource[] type referenes to class name
+  # Transforms Class[] and Resource[] type references to class name
   # or raises an error if a Class[] is unspecific, if a Resource is not
   # a 'class' resource, or if unspecific (no title).
   #
-  # TODO: Change this for 4.0 to always make names absolute
   #
   # @param names [Array<String>] names to (optionally) make absolute
   # @return [Array<String>] names after transformation
   #
   def transform_and_assert_classnames(names)
-    if Puppet[:parser] == 'future'
-      names.map do |name|
-        case name
-        when String
-          name.sub(/^([^:]{1,2})/, '::\1')
+    names.map do |name|
+      case name
+      when String
+        name.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Resource
-          assert_class_and_title(name.type, name.title)
-          name.title.sub(/^([^:]{1,2})/, '::\1')
+      when Puppet::Resource
+        assert_class_and_title(name.type, name.title)
+        name.title.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Pops::Types::PHostClassType
-          raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
-          name.class_name.sub(/^([^:]{1,2})/, '::\1')
+      when Puppet::Pops::Types::PHostClassType
+        raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
+        name.class_name.sub(/^([^:]{1,2})/, '::\1')
 
-        when Puppet::Pops::Types::PResourceType
-          assert_class_and_title(name.type_name, name.title)
-          name.title.sub(/^([^:]{1,2})/, '::\1')
-        end
+      when Puppet::Pops::Types::PResourceType
+        assert_class_and_title(name.type_name, name.title)
+        name.title.sub(/^([^:]{1,2})/, '::\1')
       end
-    else
-      names
     end
   end
 

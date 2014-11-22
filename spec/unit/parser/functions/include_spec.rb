@@ -1,11 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'unit/parser/functions/shared'
+require 'puppet_spec/compiler'
 
 describe "the 'include' function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
+  include PuppetSpec::Compiler
 
   before :each do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
@@ -17,25 +16,25 @@ describe "the 'include' function" do
   end
 
   it "should include a single class" do
-    inc = "foo"
+    inc = "::foo"
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == [inc]}.returns([inc])
     @scope.function_include(["foo"])
   end
 
   it "should include multiple classes" do
-    inc = ["foo","bar"]
+    inc = ["::foo","::bar"]
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == inc}.returns(inc)
     @scope.function_include(["foo","bar"])
   end
 
   it "should include multiple classes passed in an array" do
-    inc = ["foo","bar"]
+    inc = ["::foo","::bar"]
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == inc}.returns(inc)
     @scope.function_include([["foo","bar"]])
   end
 
   it "should flatten nested arrays" do
-    inc = ["foo","bar","baz"]
+    inc = ["::foo","::bar","::baz"]
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == inc}.returns(inc)
     @scope.function_include([["foo","bar"],"baz"])
   end
@@ -50,16 +49,7 @@ describe "the 'include' function" do
     expect { @scope.function_include(["nosuchclass"]) }.to raise_error(Puppet::Error)
   end
 
-  describe "When the future parser is in use" do
-    require 'puppet/pops'
-    require 'puppet_spec/compiler'
-    include PuppetSpec::Compiler
+  it_should_behave_like 'all functions transforming relative to absolute names', :function_include
+  it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :include
 
-    before(:each) do
-      Puppet[:parser] = 'future'
-    end
-
-    it_should_behave_like 'all functions transforming relative to absolute names', :function_include
-    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :include
-  end
 end

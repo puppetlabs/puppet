@@ -5,15 +5,10 @@ require 'matchers/resource'
 
 require 'shared_behaviours/iterative_functions'
 
-describe 'the map method' do
+describe 'the map method can' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  before :each do
-    Puppet[:parser] = "future"
-  end
-
-  context "using future parser" do
     it 'map on an array (multiplying each value by 2)' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
@@ -165,5 +160,4 @@ describe 'the map method' do
 
   it_should_behave_like 'all iterative functions argument checks', 'map'
   it_should_behave_like 'all iterative functions hash handling', 'map'
-  end
 end

@@ -39,9 +39,7 @@ Example Using slice without a block
     slice(4,2)              # produces [[0,1], [2,3]]
     slice('hello',2)        # produces [[h, e], [l, l], [o]]
 
-- since 3.2 for Array and Hash
-- since 3.5 for additional enumerable types
-- note requires `parser = future`.
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["slice() is only available when parser/evaluator future is in effect"])

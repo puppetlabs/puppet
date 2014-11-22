@@ -274,12 +274,12 @@ describe Puppet::Parser::Scope do
         Puppet[:strict_variables] = true
       end
 
-      it "should raise an error when unknown variable is looked up" do
-        expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+      it "should throw a symbol when unknown variable is looked up" do
+        expect { @scope['john_doe'] }.to throw_symbol(:undefined_variable)
       end
 
-      it "should raise an error when unknown qualified variable is looked up" do
-        expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
+      it "should throw a symbol when unknown qualified variable is looked up" do
+        expect { @scope['nowhere::john_doe'] }.to throw_symbol(:undefined_variable)
       end
     end
   end

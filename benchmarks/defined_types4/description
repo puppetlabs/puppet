@@ -1,4 +1,0 @@
-Benchmark scenario: heavy use of defined types future parser
-Benchmark target: catalog compilation
-Parser: Future
-

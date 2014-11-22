@@ -27,8 +27,7 @@ the result
         $x[0]
       }
 
-- since 3.7.4
-- note requires `parser = future`
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["scanf() is only available when parser/evaluator future is in effect"])

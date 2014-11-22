@@ -14,7 +14,7 @@
 #   "abc123".match(/([a-z]+)([1-9]+)/)  # => ["abc", "123"]
 #
 # See the documentation for "The Puppet Type System" for more information about types.
-# @since 3.7.0
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:match) do
   dispatch :match do

@@ -5,6 +5,7 @@ require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
+require 'puppet/loaders'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -121,11 +122,7 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      if is_binder_active?
-        # create injector, if not already created - this is for 3x that does not trigger
-        # lazy loading of injector via context
-        Puppet::Util::Profiler.profile("Compile: Created injector", [:compiler, :create_injector]) { injector }
-      end
+      activate_binder
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
@@ -145,19 +142,12 @@ class Puppet::Parser::Compiler
 
   # Constructs the overrides for the context
   def context_overrides()
-    if Puppet[:parser] == 'future'
-      require 'puppet/loaders'
-      {
-        :current_environment => environment,
-        :global_scope => @topscope,             # 4x placeholder for new global scope
-        :loaders  => lambda {|| loaders() },    # 4x loaders
-        :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
-      }
-    else
-      {
-        :current_environment => environment,
-      }
-    end
+    {
+      :current_environment => environment,
+      :global_scope => @topscope,             # 4x placeholder for new global scope
+      :loaders  => lambda {|| loaders() },    # 4x loaders
+      :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
+    }
   end
 
   def_delegator :@collections, :delete, :delete_collection
@@ -288,19 +278,16 @@ class Puppet::Parser::Compiler
 
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
   # @return [Boolean] true if the Puppet Binder should be activated
-  def is_binder_active?
-    should_be_active = Puppet[:binder] || Puppet[:parser] == 'future'
-    if should_be_active
-      # TODO: this should be in a central place, not just for ParserFactory anymore...
-      Puppet::Parser::ParserFactory.assert_rgen_installed()
-      @@binder_loaded ||= false
-      unless @@binder_loaded
-        require 'puppet/pops'
-        require 'puppet/plugins/configuration'
-        @@binder_loaded = true
-      end
+  def activate_binder
+    # TODO: this should be in a central place
+    Puppet::Parser::ParserFactory.assert_rgen_installed()
+    @@binder_loaded ||= false
+    unless @@binder_loaded
+      require 'puppet/pops'
+      require 'puppet/plugins/configuration'
+      @@binder_loaded = true
     end
-    should_be_active
+    true
   end
 
   private
@@ -438,16 +425,12 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Make sure we don't have any remaining collections that specifically
-  # look for resources, because we want to consider those to be
-  # parse errors.
+  # Make sure there are no remaining collections that are waiting for
+  # resources that have not yet been instantiated. If this occurs it
+  # is an error (missing resource - it could not be realized).
+  #
   def fail_on_unevaluated_resource_collections
-    if Puppet[:parser] == 'future'
-      remaining = @collections.collect(&:unresolved_resources).flatten.compact
-    else
-      remaining = @collections.collect(&:resources).flatten.compact
-    end
-
+    remaining = @collections.collect(&:unresolved_resources).flatten.compact
     if !remaining.empty?
       raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
     end
@@ -617,8 +600,8 @@ class Puppet::Parser::Compiler
   end
 
   def assert_binder_active
-    unless is_binder_active?
-      raise ArgumentError, "The Puppet Binder is only available when either '--binder true' or '--parser future' is used"
+    unless activate_binder()
+      raise Puppet::DevError, "The Puppet Binder was not activated"
     end
   end
 end

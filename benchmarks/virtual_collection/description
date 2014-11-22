@@ -1,4 +1,4 @@
-Benchmark scenario: heavy use of virual collection with future parser
+Benchmark scenario: heavy use of virtual collection
 Benchmark target: catalog compilation
 Parser: Future
 

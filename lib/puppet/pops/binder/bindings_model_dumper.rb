@@ -45,14 +45,6 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     o.collect {|e| do_dump(e) }
   end
 
-  def dump_ASTArray o
-    ["[]"] + o.children.collect {|x| do_dump(x)}
-  end
-
-  def dump_ASTHash o
-    ["{}"] + o.value.sort_by{|k,v| k.to_s}.collect {|x| [do_dump(x[0]), do_dump(x[1])]}
-  end
-
   def dump_Integer o
     o.to_s
   end

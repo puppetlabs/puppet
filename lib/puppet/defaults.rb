@@ -352,13 +352,6 @@ module Puppet
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
-    :binder => {
-      :default => false,
-      :desc    => "Turns the binding system on or off. This includes bindings in modules.
-        The binding system aggregates data from modules and other locations and makes them available for lookup.
-        The binding system is experimental and any or all of it may change.",
-      :type    => :boolean,
-    },
     :binder_config => {
       :default => nil,
       :desc    => "The binder configuration file. Puppet reads this file on each request to configure the bindings system.
@@ -1778,23 +1771,6 @@ EOT
         apologize for the inconvenience --- you can temporarily set this to `true`
         in order to upgrade, and can rename your variables at your leisure. Please
         revert it to `false` after you have renamed all affected variables.
-      EOT
-    },
-    :parser => {
-      :default => "current",
-      :desc => <<-'EOT'
-        Selects the parser to use for parsing puppet manifests (in puppet DSL
-        language/'.pp' files). Available choices are `current` (the default)
-        and `future`.
-
-        The `current` parser means that the released version of the parser should
-        be used.
-
-        The `future` parser is a "time travel to the future" allowing early
-        exposure to new language features. What these features are will vary from
-        release to release and they may be invididually configurable.
-
-        Available Since Puppet 3.2.
       EOT
     },
    :max_errors => {

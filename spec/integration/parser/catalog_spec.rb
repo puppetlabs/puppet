@@ -6,7 +6,7 @@ require 'puppet/indirector/catalog/compiler'
 describe "A catalog" do
   include PuppetSpec::Compiler
 
-  shared_examples_for "when compiled" do
+  context "when compiled" do
     context "when transmitted to the agent" do
 
       it "preserves the order in which the resources are added to the catalog" do
@@ -74,37 +74,6 @@ describe "A catalog" do
         expect(resources_in(master_catalog)).to_not include(*exported_resources)
         expect(resources_in(agent_catalog)).to_not include(*exported_resources)
       end
-    end
-  end
-
-  describe 'using classic parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-    it_behaves_like 'when compiled' do
-    end
-
-    it "compiles resource creation from appended array as two separate resources" do
-      # moved here from acceptance test "jeff_append_to_array.rb"
-      master_catalog = master_catalog_for(<<-EOM)
-        class parent {
-          $arr1 = [ "parent array element" ]
-        }
-        class parent::child inherits parent {
-          $arr1 += ["child array element"]
-          notify { $arr1: }
-        }
-        include parent::child
-      EOM
-      expect(resources_in(master_catalog)).to include('Notify[parent array element]', 'Notify[child array element]')
-    end
-  end
-
-  describe 'using future parser' do
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like 'when compiled' do
     end
   end
 

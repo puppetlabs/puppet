@@ -8,7 +8,7 @@
 #     # notices the array [1, 2, 'foo']
 #     with(1, 2, 'foo') |$x, $y, $z| { notice [$x, $y, $z] }
 #
-# @since 3.7.0
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:with) do
   dispatch :with do
@@ -18,6 +18,6 @@ Puppet::Functions.create_function(:with) do
   end
 
   def with(*args)
-    args[-1].call({}, *args[0..-2])
+    args[-1].call(*args[0..-2])
   end
 end

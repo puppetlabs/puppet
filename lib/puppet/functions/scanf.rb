@@ -26,7 +26,8 @@
 #       $x[0]
 #     }
 #
-# @since 3.7.4
+# @since 4.0.0
+#
 Puppet::Functions.create_function(:scanf) do
   require 'scanf'
 
@@ -39,7 +40,7 @@ Puppet::Functions.create_function(:scanf) do
   def scanf(data, format, block=nil)
     result = data.scanf(format)
     if !block.nil?
-      result = block.call({}, result)
+      result = block.call(result)
     end
     result
   end

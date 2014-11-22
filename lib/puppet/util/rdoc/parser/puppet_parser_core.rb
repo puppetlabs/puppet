@@ -8,7 +8,7 @@ module RDoc::PuppetParserCore
       attr_accessor :input_file_name, :top_level
 
       # parser registration into RDoc
-      parse_files_matching(/\.(rb|pp)$/)
+      parse_files_matching(/\.(rb)$/)
     end
   end
 
@@ -25,18 +25,6 @@ module RDoc::PuppetParserCore
   # main entry point
   def scan
     environment = Puppet.lookup(:current_environment)
-    known_resource_types = environment.known_resource_types
-    unless known_resource_types.watching_file?(@input_file_name)
-      Puppet.info "rdoc: scanning #{@input_file_name}"
-      if @input_file_name =~ /\.pp$/
-        @parser = Puppet::Parser::Parser.new(environment)
-        @parser.file = @input_file_name
-        @parser.parse.instantiate('').each do |type|
-          known_resource_types.add type
-        end
-      end
-    end
-
     scan_top_level(@top_level, environment)
     @top_level
   end
@@ -80,7 +68,7 @@ module RDoc::PuppetParserCore
     # find a module
     fullpath = File.expand_path(path)
     Puppet.debug "rdoc: testing #{fullpath}"
-    if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(pp|rb)$/
+    if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(rb)$/
       modpath = $1
       name = $2
       Puppet.debug "rdoc: module #{name} into #{modpath} ?"
@@ -91,7 +79,7 @@ module RDoc::PuppetParserCore
         end
       end
     end
-    if fullpath =~ /\.(pp|rb)$/
+    if fullpath =~ /\.(rb)$/
       # there can be paths we don't want to scan under modules
       # imagine a ruby or manifest that would be distributed as part as a module
       # but we don't want those to be hosted under <site>
@@ -125,6 +113,7 @@ module RDoc::PuppetParserCore
     if name.nil?
       # skip .pp files that are not in manifests directories as we can't guarantee they're part
       # of a module or the global configuration.
+      # PUP-3638, keeping this while it should have no effect since no .pp files are now processed
       container.document_self = false
       return
     end
@@ -139,216 +128,8 @@ module RDoc::PuppetParserCore
     mod.record_location(@top_level)
     mod.add_comment(comment, @input_file_name)
 
-    if @input_file_name =~ /\.pp$/
-      parse_elements(mod, environment.known_resource_types)
-    elsif @input_file_name =~ /\.rb$/
+    if @input_file_name =~ /\.rb$/
       parse_plugins(mod)
-    end
-  end
-
-  # create documentation for include statements we can find in +code+
-  # and associate it with +container+
-  def scan_for_include_or_require(container, code)
-    code = [code] unless code.is_a?(Array)
-    code.each do |stmt|
-      scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
-
-      if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
-        stmt.arguments.each do |included|
-          Puppet.debug "found #{stmt.name}: #{included}"
-          container.send("add_#{stmt.name}", RDoc::Include.new(included.to_s, stmt.doc))
-        end
-      end
-    end
-  end
-
-  # create documentation for realize statements we can find in +code+
-  # and associate it with +container+
-  def scan_for_realize(container, code)
-    code = [code] unless code.is_a?(Array)
-    code.each do |stmt|
-      scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
-
-      if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == 'realize'
-        stmt.arguments.each do |realized|
-          Puppet.debug "found #{stmt.name}: #{realized}"
-          container.add_realize( RDoc::Include.new(realized.to_s, stmt.doc))
-        end
-      end
-    end
-  end
-
-  # create documentation for global variables assignements we can find in +code+
-  # and associate it with +container+
-  def scan_for_vardef(container, code)
-    code = [code] unless code.is_a?(Array)
-    code.each do |stmt|
-      scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
-
-      if stmt.is_a?(Puppet::Parser::AST::VarDef)
-        Puppet.debug "rdoc: found constant: #{stmt.name} = #{stmt.value}"
-        container.add_constant(RDoc::Constant.new(stmt.name.to_s, stmt.value.to_s, stmt.doc))
-      end
-    end
-  end
-
-  # create documentation for resources we can find in +code+
-  # and associate it with +container+
-  def scan_for_resource(container, code)
-    code = [code] unless code.is_a?(Array)
-    code.each do |stmt|
-      scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
-
-      if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
-        begin
-          type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-          stmt.instances.each do |inst|
-            title = inst.title.is_a?(Puppet::Parser::AST::ASTArray) ? inst.title.to_s.gsub(/\[(.*)\]/,'\1') : inst.title.to_s
-            Puppet.debug "rdoc: found resource: #{type}[#{title}]"
-
-            param = []
-            inst.parameters.children.each do |p|
-              res = {}
-              res["name"] = p.param
-              res["value"] = "#{p.value.to_s}" unless p.value.nil?
-
-              param << res
-            end
-
-            container.add_resource(RDoc::PuppetResource.new(type, title, stmt.doc, param))
-          end
-        rescue => detail
-          raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}", detail.backtrace
-        end
-      end
-    end
-  end
-
-  # create documentation for a class named +name+
-  def document_class(name, klass, container)
-    Puppet.debug "rdoc: found new class #{name}"
-    container, name = get_class_or_module(container, name)
-
-    superclass = klass.parent
-    superclass = "" if superclass.nil? or superclass.empty?
-
-    comment = klass.doc
-    look_for_directives_in(container, comment) unless comment.empty?
-    cls = container.add_class(RDoc::PuppetClass, name, superclass)
-    # it is possible we already encountered this class, while parsing some namespaces
-    # from other classes of other files. But at that time we couldn't know this class superclass
-    # so, now we know it and force it.
-    cls.superclass = superclass
-    cls.record_location(@top_level)
-
-    # scan class code for include
-    code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::BlockExpression)
-    code ||= klass.code
-    unless code.nil?
-      scan_for_include_or_require(cls, code)
-      scan_for_realize(cls, code)
-      scan_for_resource(cls, code) if Puppet.settings[:document_all]
-    end
-
-    cls.add_comment(comment, klass.file)
-  rescue => detail
-    raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}", detail.backtrace
-  end
-
-  # create documentation for a node
-  def document_node(name, node, container)
-    Puppet.debug "rdoc: found new node #{name}"
-    superclass = node.parent
-    superclass = "" if superclass.nil? or superclass.empty?
-
-    comment = node.doc
-    look_for_directives_in(container, comment) unless comment.empty?
-    n = container.add_node(name, superclass)
-    n.record_location(@top_level)
-
-    code = node.code.children if node.code.is_a?(Puppet::Parser::AST::BlockExpression)
-    code ||= node.code
-    unless code.nil?
-      scan_for_include_or_require(n, code)
-      scan_for_realize(n, code)
-      scan_for_vardef(n, code)
-      scan_for_resource(n, code) if Puppet.settings[:document_all]
-    end
-
-    n.add_comment(comment, node.file)
-  rescue => detail
-    raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}", detail.backtrace
-  end
-
-  # create documentation for a define
-  def document_define(name, define, container)
-    Puppet.debug "rdoc: found new definition #{name}"
-    # find superclas if any
-
-    # find the parent
-    # split define name by :: to find the complete module hierarchy
-    container, name = get_class_or_module(container,name)
-
-    # build up declaration
-    declaration = ""
-    define.arguments.each do |arg,value|
-      declaration << "\$#{arg}"
-      unless value.nil?
-        declaration << " => "
-        case value
-        when Puppet::Parser::AST::Leaf
-          declaration << "'#{value.value}'"
-        when Puppet::Parser::AST::BlockExpression
-          declaration << "[#{value.children.collect { |v| "'#{v}'" }.join(", ")}]"
-        else
-          declaration << "#{value.to_s}"
-        end
-      end
-      declaration << ", "
-    end
-    declaration.chop!.chop! if declaration.size > 1
-
-    # register method into the container
-    meth =  RDoc::AnyMethod.new(declaration, name)
-    meth.comment = define.doc
-    container.add_method(meth)
-    look_for_directives_in(container, meth.comment) unless meth.comment.empty?
-    meth.params = "( #{declaration} )"
-    meth.visibility = :public
-    meth.document_self = true
-    meth.singleton = false
-  rescue => detail
-    raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}", detail.backtrace
-  end
-
-  # Traverse the AST tree and produce code-objects node
-  # that contains the documentation
-  def parse_elements(container, known_resource_types)
-    Puppet.debug "rdoc: scanning manifest"
-
-    known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
-      name = klass.name
-      if klass.file == @input_file_name
-        unless name.empty?
-          document_class(name,klass,container)
-        else # on main class document vardefs
-          code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::BlockExpression)
-          code ||= klass.code
-          scan_for_vardef(container, code) unless code.nil?
-        end
-      end
-    end
-
-    known_resource_types.definitions.each do |name, define|
-      if define.file == @input_file_name
-        document_define(name,define,container)
-      end
-    end
-
-    known_resource_types.nodes.each do |name, node|
-      if node.file == @input_file_name
-        document_node(name.to_s,node,container)
-      end
     end
   end
 

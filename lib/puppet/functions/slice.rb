@@ -34,9 +34,7 @@
 #     slice(4,2)              # produces [[0,1], [2,3]]
 #     slice('hello',2)        # produces [[h, e], [l, l], [o]]
 #
-# @since 3.2 for Array and Hash
-# @since 3.5 for additional enumerable types
-# @note requires `parser = future`.
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:slice) do
   dispatch :slice_Hash do
@@ -71,7 +69,7 @@ Puppet::Functions.create_function(:slice) do
       begin
         if pblock
           loop do
-            pblock.call(nil, enumerator.next)
+            pblock.call(enumerator.next)
           end
         else
           loop do
@@ -87,7 +85,7 @@ Puppet::Functions.create_function(:slice) do
           if a.size < serving_size
             a = a.dup.fill(filler, a.length...serving_size)
           end
-          pblock.call(nil, *a)
+          pblock.call(*a)
         end
       rescue StopIteration
       end

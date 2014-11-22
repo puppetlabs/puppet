@@ -29,9 +29,7 @@
 #      # Turns hash into array of keys
 #      $a.map |$key,$val|{ $key }
 #
-# @since 3.4 for Array and Hash
-# @since 3.5 for other enumerables, and support for blocks with 2 parameters
-# @note requires `parser = future`
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:map) do
   dispatch :map_Hash_2 do
@@ -55,11 +53,11 @@ Puppet::Functions.create_function(:map) do
   end
 
   def map_Hash_1(hash, pblock)
-    hash.map {|x, y| pblock.call(nil, [x, y]) }
+    hash.map {|x, y| pblock.call([x, y]) }
   end
 
   def map_Hash_2(hash, pblock)
-      hash.map {|x, y| pblock.call(nil, x, y) }
+      hash.map {|x, y| pblock.call(x, y) }
   end
 
   def map_Enumerable_1(enumerable, pblock)
@@ -67,7 +65,7 @@ Puppet::Functions.create_function(:map) do
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
-      loop { result << pblock.call(nil, enum.next) }
+      loop { result << pblock.call(enum.next) }
     rescue StopIteration
     end
     result
@@ -79,7 +77,7 @@ Puppet::Functions.create_function(:map) do
     enum = asserted_enumerable(enumerable)
     begin
       loop do
-        result << pblock.call(nil, index, enum.next)
+        result << pblock.call(index, enum.next)
         index = index +1
       end
     rescue StopIteration

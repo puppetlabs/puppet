@@ -434,13 +434,6 @@ actual:
 
       before(:each) do
         Puppet[:strict_variables] = true
-
-        # These must be set since the is 3x logic that triggers on these even if the tests are explicit
-        # about selection of parser and evaluator
-        #
-        Puppet[:parser] = 'future'
-        # Plugins Configuration cannot be loaded until the correct parser has been set (injector is turned off otherwise)
-        require 'puppet/plugins'
       end
 
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
@@ -457,7 +450,7 @@ actual:
           end
           def test(x, block)
             # call the block with x
-            block.call(closure_scope, x)
+            block.call(x)
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)

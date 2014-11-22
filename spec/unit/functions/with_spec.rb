@@ -7,10 +7,6 @@ describe 'the with function' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  before :each do
-    Puppet[:parser] = 'future'
-  end
-
   it 'calls a lambda passing no arguments' do
     expect(compile_to_catalog("with() || { notify { testing: } }")).to have_resource('Notify[testing]')
   end

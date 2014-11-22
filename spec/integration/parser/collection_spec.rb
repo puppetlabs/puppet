@@ -2,9 +2,7 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-require 'puppet/parser/collector'
-
-describe Puppet::Parser::Collector do
+describe 'collectors' do
   include PuppetSpec::Compiler
 
   def expect_the_message_to_be(expected_messages, code, node = Puppet::Node.new('the node'))
@@ -14,7 +12,7 @@ describe Puppet::Parser::Collector do
     messages.should include(*expected_messages)
   end
 
-  shared_examples_for "virtual resource collection" do
+  context "virtual resource collection" do
     it "matches everything when no query given" do
       expect_the_message_to_be(["the other message", "the message"], <<-MANIFEST)
         @notify { "testing": message => "the message" }
@@ -270,19 +268,4 @@ describe Puppet::Parser::Collector do
     end
   end
 
-  describe "in the current parser" do
-    before :each do
-      Puppet[:parser] = 'current'
-    end
-
-    it_behaves_like "virtual resource collection"
-  end
-
-  describe "in the future parser" do
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-
-    it_behaves_like "virtual resource collection"
-  end
 end

@@ -6,11 +6,6 @@ require 'puppet_spec/scope'
 describe "lookup function" do
   include PuppetSpec::Scope
 
-  before(:each) do
-    Puppet[:binder] = true
-    Puppet[:parser] = 'future'
-  end
-
   it "must be called with at least a name to lookup" do
     scope = scope_with_injections_from(bound(bindings))
 

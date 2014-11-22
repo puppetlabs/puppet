@@ -50,7 +50,7 @@ describe Puppet::Face[:parser, :current] do
           expect { parser.validate(manifest) }.to exit_with(1)
         end
 
-        expect(@logs.join).to match(/environment special.*Syntax error at '\{'/)
+        expect(@logs.join).to match(/environment special.*Syntax error at end of file/)
       end
 
     end
