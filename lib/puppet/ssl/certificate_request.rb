@@ -107,6 +107,12 @@ DOC
     @content
   end
 
+  # The environment isn't really relevant for CSRs, but in order to comply with the
+  # indirector's HTTP magic, we need to expose a getter for the environment here.
+  def environment
+    Puppet.lookup(:current_environment).name
+  end
+
   # Return the set of extensions requested on this CSR, in a form designed to
   # be useful to Ruby: an array of hashes.  Which, not coincidentally, you can pass
   # successfully to the OpenSSL constructor later, if you want.

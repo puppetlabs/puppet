@@ -56,7 +56,7 @@ describe Puppet::FileBucket::File do
       let(:binary) { "\xD1\xF2\r\n\x81NuSc\x00".force_encoding(Encoding::ASCII_8BIT) }
 
       it "does not error when the same contents are saved twice" do
-        bucket_file = Puppet::FileBucket::File.new(binary)
+        bucket_file = Puppet::FileBucket::File.new("production", binary)
         Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
         Puppet::FileBucket::File.indirection.save(bucket_file, bucket_file.name)
       end

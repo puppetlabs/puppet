@@ -34,10 +34,11 @@ class Puppet::FileBucket::Dipper
 
   # Backs up a file to the file bucket
   def backup(file)
+    environment = Puppet.lookup(:current_environment)
     file_handle = Puppet::FileSystem.pathname(file)
     raise(ArgumentError, "File #{file} does not exist") unless Puppet::FileSystem.exist?(file_handle)
     begin
-      file_bucket_file = Puppet::FileBucket::File.new(file_handle, :bucket_path => @local_path)
+      file_bucket_file = Puppet::FileBucket::File.new(environment, file_handle, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
       dest_path = "#{@rest_path}#{file_bucket_file.name}/#{files_original_path}"
       file_bucket_path = "#{@rest_path}#{file_bucket_file.checksum_type}/#{file_bucket_file.checksum_data}/#{files_original_path}"
@@ -75,7 +76,9 @@ class Puppet::FileBucket::Dipper
     restore = true
     file_handle = Puppet::FileSystem.pathname(file)
     if Puppet::FileSystem.exist?(file_handle)
-      cursum = Puppet::FileBucket::File.new(file_handle).checksum_data()
+      cursum = Puppet::FileBucket::File.new(
+          Puppet.lookup(:current_environment).name,
+          file_handle).checksum_data()
 
       # if the checksum has changed...
       # this might be extra effort

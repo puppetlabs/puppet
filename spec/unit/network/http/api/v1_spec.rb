@@ -88,98 +88,112 @@ describe Puppet::Network::HTTP::API::V1 do
       handler.stubs(:handler).returns "foo"
     end
 
-    it "should require the http method, the URI, and the query parameters" do
-      # Not a terribly useful test, but an important statement for the spec
-      lambda { handler.uri2indirection("/foo") }.should raise_error(ArgumentError)
-    end
-
     it "should get the environment from a query parameter" do
-      handler.uri2indirection("GET", "/foo/bar", params)[3][:environment].to_s.should == "env"
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/bar")
+      handler.uri2indirection(request)[3][:environment].to_s.should == "env"
     end
 
     it "should fail if the environment is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "/foo/bar", {:environment => "env ness"}) }.should raise_error(ArgumentError)
+      request = Puppet::Network::HTTP::Request.new({},
+                                                   {:environment => "env ness"},
+                                                   "GET", "/node/bar")
+      lambda { handler.uri2indirection(request) }.should raise_error(ArgumentError)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
-      handler.uri2indirection("GET", "/foo/bar", { :environment => "env", :bucket_path => "/malicious/path" })[3].should_not include({ :bucket_path => "/malicious/path" })
+      request = Puppet::Network::HTTP::Request.new({},
+                                                   {:environment => "env",
+                                                    :bucket_path => "/malicious/path" },
+                                                   "GET", "/node/bar")
+      handler.uri2indirection(request)[3].should_not include({ :bucket_path => "/malicious/path" })
     end
 
     it "should pass allowed parameters through" do
-      handler.uri2indirection("GET", "/foo/bar", { :environment => "env", :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
+      request = Puppet::Network::HTTP::Request.new({},
+                                                   {:environment => "env",
+                                                    :allowed_param => "value" },
+                                                   "GET", "/node/bar")
+      handler.uri2indirection(request)[3].should include({ :allowed_param => "value" })
     end
 
     it "should return the environment as a Puppet::Node::Environment" do
-      handler.uri2indirection("GET", "/foo/bar", params)[3][:environment].should be_a(Puppet::Node::Environment)
-    end
-
-    it "should pass allowed parameters through" do
-      handler.uri2indirection("GET", "/foo/bar", { :environment => "env", :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/bar")
+      handler.uri2indirection(request)[3][:environment].should be_a(Puppet::Node::Environment)
     end
 
     it "should use the first field of the URI as the indirection name" do
-      handler.uri2indirection("GET", "/foo/bar", params)[0].should == "foo"
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/bar")
+      handler.uri2indirection(request)[0].name.should == :node
     end
 
     it "should fail if the indirection name is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "/foo ness/bar", params) }.should raise_error(ArgumentError)
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/foo ness/bar")
+      lambda { handler.uri2indirection(request) }.should raise_error(ArgumentError)
     end
 
     it "should use the remainder of the URI as the indirection key" do
-      handler.uri2indirection("GET", "/foo/bar", params)[2].should == "bar"
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/bar")
+      handler.uri2indirection(request)[2].should == "bar"
     end
 
     it "should support the indirection key being a /-separated file path" do
-      handler.uri2indirection("GET", "/foo/bee/baz/bomb", params)[2].should == "bee/baz/bomb"
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/bee/baz/bomb")
+      handler.uri2indirection(request)[2].should == "bee/baz/bomb"
     end
 
     it "should fail if no indirection key is specified" do
-      lambda { handler.uri2indirection("GET", "/foo/", params) }.should raise_error(ArgumentError)
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/")
+      lambda { handler.uri2indirection(request) }.should raise_error(ArgumentError)
     end
 
     it "should fail if no indirection key is specified" do
-      lambda { handler.uri2indirection("GET", "/foo", params) }.should raise_error(ArgumentError)
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node")
+      lambda { handler.uri2indirection(request) }.should raise_error(ArgumentError)
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
-      handler.uri2indirection("GET", "/foo/bar", params)[1].should == :find
+      handler.send(:indirection_method, "GET", "foo").should == :find
     end
 
     it "should choose 'find' as the indirection method if the http method is a POST and the indirection name is singular" do
-      handler.uri2indirection("POST", "/foo/bar", params)[1].should == :find
+      handler.send(:indirection_method, "POST", "foo").should == :find
     end
 
     it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
-      handler.uri2indirection("HEAD", "/foo/bar", params)[1].should == :head
+      handler.send(:indirection_method, "HEAD", "foo").should == :head
     end
 
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
-      handler.uri2indirection("GET", "/foos/bar", params)[1].should == :search
+      handler.send(:indirection_method, "GET", "foos").should == :search
     end
 
     it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
-      handler.uri2indirection("GET", "/statuses/bar", params)[0].should == 'status'
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/statuses/bar")
+      handler.uri2indirection(request)[0].name.should == :status
     end
 
-    it "should change indirection name to 'probe' if the http method is a GET and the indirection name is probes" do
-      handler.uri2indirection("GET", "/probes/bar", params)[0].should == 'probe'
+    it "should change indirection name to 'node' if the http method is a GET and the indirection name is nodes" do
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/nodes/bar")
+      handler.uri2indirection(request)[0].name.should == :node
     end
 
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
-      handler.uri2indirection("DELETE", "/foo/bar", params)[1].should == :destroy
+      handler.send(:indirection_method, "DELETE", "foo").should == :destroy
     end
 
     it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is singular" do
-      handler.uri2indirection("PUT", "/foo/bar", params)[1].should == :save
+      handler.send(:indirection_method, "PUT", "foo").should == :save
     end
 
     it "should fail if an indirection method cannot be picked" do
-      lambda { handler.uri2indirection("UPDATE", "/foo/bar", params) }.should raise_error(ArgumentError)
+      request = Puppet::Network::HTTP::Request.new({}, params, "UPDATE", "/node/bar")
+      lambda { handler.uri2indirection(request) }.should raise_error(ArgumentError)
     end
 
     it "should URI unescape the indirection key" do
       escaped = URI.escape("foo bar")
-      indirection_name, method, key, final_params = handler.uri2indirection("GET", "/foo/#{escaped}", params)
+      request = Puppet::Network::HTTP::Request.new({}, params, "GET", "/node/#{escaped}")
+      indirection, method, key, final_params = handler.uri2indirection(request)
       key.should == "foo bar"
     end
   end
