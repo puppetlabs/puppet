@@ -29,7 +29,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # compatible with 3x AST::Lambda
   # @api public
-  def call(scope, *args)
+  def call(*args)
     variable_bindings = combine_values_with_parameters(args)
 
     tc = Puppet::Pops::Types::TypeCalculator

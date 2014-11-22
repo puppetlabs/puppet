@@ -464,7 +464,7 @@ actual:
           end
           def test(x, block)
             # call the block with x
-            block.call(closure_scope, x)
+            block.call(x)
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)

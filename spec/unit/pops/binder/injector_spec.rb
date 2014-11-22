@@ -752,7 +752,7 @@ describe 'Injector' do
       end
 
       it "should be possible to post process lookup with a ruby proc" do
-        transformer = lambda {|scope, value| value + 1 }
+        transformer = lambda {|value| value + 1 }
         bindings.bind.name('an_int').to(42).producer_options( :transformer => transformer)
         injector(lbinder).lookup(scope, 'an_int').should == 43
       end

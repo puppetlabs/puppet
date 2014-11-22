@@ -71,7 +71,7 @@ Puppet::Functions.create_function(:slice) do
       begin
         if pblock
           loop do
-            pblock.call(nil, enumerator.next)
+            pblock.call(enumerator.next)
           end
         else
           loop do
@@ -87,7 +87,7 @@ Puppet::Functions.create_function(:slice) do
           if a.size < serving_size
             a = a.dup.fill(filler, a.length...serving_size)
           end
-          pblock.call(nil, *a)
+          pblock.call(*a)
         end
       rescue StopIteration
       end

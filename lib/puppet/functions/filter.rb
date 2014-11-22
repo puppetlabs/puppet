@@ -57,14 +57,14 @@ Puppet::Functions.create_function(:filter) do
   end
 
   def filter_Hash_1(hash, pblock)
-    result = hash.select {|x, y| pblock.call(self, [x, y]) }
+    result = hash.select {|x, y| pblock.call([x, y]) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
   def filter_Hash_2(hash, pblock)
-    result = hash.select {|x, y| pblock.call(self, x, y) }
+    result = hash.select {|x, y| pblock.call(x, y) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
@@ -77,7 +77,7 @@ Puppet::Functions.create_function(:filter) do
     begin
       loop do
         it = enum.next
-        if pblock.call(nil, it) == true
+        if pblock.call(it) == true
           result << it
         end
       end
@@ -93,7 +93,7 @@ Puppet::Functions.create_function(:filter) do
     begin
       loop do
         it = enum.next
-        if pblock.call(nil, index, it) == true
+        if pblock.call(index, it) == true
           result << it
         end
         index += 1

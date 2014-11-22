@@ -921,7 +921,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           required_block_param
         end
         def test(count, block)
-          block.call({}, *[].fill(10, 0, count))
+          block.call(*[].fill(10, 0, count))
         end
       end
       the_func = fc.new({}, env_loader)
@@ -938,7 +938,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           required_block_param
         end
         def test(lambda_arg, block)
-          block.call({}, lambda_arg)
+          block.call(lambda_arg)
         end
       end
       the_func = fc.new({}, env_loader)
