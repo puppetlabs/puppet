@@ -40,7 +40,7 @@ Puppet::Functions.create_function(:scanf) do
   def scanf(data, format, block=nil)
     result = data.scanf(format)
     if !block.nil?
-      result = block.call({}, result)
+      result = block.call(result)
     end
     result
   end

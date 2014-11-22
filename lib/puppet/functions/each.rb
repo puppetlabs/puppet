@@ -60,7 +60,7 @@ Puppet::Functions.create_function(:each) do
   def foreach_Hash_1(hash, pblock)
     enumerator = hash.each_pair
     hash.size.times do
-      pblock.call(nil, enumerator.next)
+      pblock.call(enumerator.next)
     end
     # produces the receiver
     hash
@@ -69,7 +69,7 @@ Puppet::Functions.create_function(:each) do
   def foreach_Hash_2(hash, pblock)
     enumerator = hash.each_pair
     hash.size.times do
-      pblock.call(nil, *enumerator.next)
+      pblock.call(*enumerator.next)
     end
     # produces the receiver
     hash
@@ -78,7 +78,7 @@ Puppet::Functions.create_function(:each) do
   def foreach_Enumerable_1(enumerable, pblock)
     enum = asserted_enumerable(enumerable)
       begin
-        loop { pblock.call(nil, enum.next) }
+        loop { pblock.call(enum.next) }
       rescue StopIteration
       end
     # produces the receiver
@@ -90,7 +90,7 @@ Puppet::Functions.create_function(:each) do
     index = 0
     begin
       loop do
-        pblock.call(nil, index, enum.next)
+        pblock.call(index, enum.next)
         index += 1
       end
     rescue StopIteration

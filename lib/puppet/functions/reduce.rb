@@ -74,12 +74,12 @@ Puppet::Functions.create_function(:reduce) do
 
   def reduce_without_memo(enumerable, pblock)
     enum = asserted_enumerable(enumerable)
-    enum.reduce {|memo, x| pblock.call(nil, memo, x) }
+    enum.reduce {|memo, x| pblock.call(memo, x) }
   end
 
   def reduce_with_memo(enumerable, given_memo, pblock)
     enum = asserted_enumerable(enumerable)
-    enum.reduce(given_memo) {|memo, x| pblock.call(nil, memo, x) }
+    enum.reduce(given_memo) {|memo, x| pblock.call(memo, x) }
   end
 
   def asserted_enumerable(obj)

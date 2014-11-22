@@ -154,11 +154,11 @@ class Puppet::Pops::Binder::Lookup
     result = if pblock = options[:pblock]
       result2 = case pblock.parameter_count
       when 1
-        pblock.call(scope, result)
+        pblock.call(result)
       when 2
-        pblock.call(scope, result_with_name[ 0 ], result)
+        pblock.call(result_with_name[ 0 ], result)
       else
-        pblock.call(scope, result_with_name[ 0 ], result, options[ :default ])
+        pblock.call(result_with_name[ 0 ], result, options[ :default ])
       end
 
       # if the given result was returned, there is no need to type-check it again
