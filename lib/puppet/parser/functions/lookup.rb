@@ -92,19 +92,18 @@ When called with two arguments; **the name**, and **the expected type**, it
 returns the bound value with the given name after having asserted it has the given data
 type ('String' in the example):
 
-    lookup('the_name', 'String') # 3.x
-    lookup('the_name', String)   # parser future
+    lookup('the_name', 'String')
+    lookup('the_name', String)
 
 When called with three arguments, **the name**, the **expected type**, and a **default**, it
 returns the bound value with the given name, or the default after having asserted the value
 has the given data type (`String` in the example above):
 
-    lookup('the_name', 'String', 'Fred') # 3x
-    lookup('the_name', String, 'Fred')   # parser future
+    lookup('the_name', 'String', 'Fred')
+    lookup('the_name', String, 'Fred')
 
 Using a lambda to process the looked up result - asserting that it starts with an upper case letter:
 
-    # only with parser future
     lookup('the_size', Integer[1,100]) |$result| {
       if $large_value_allowed and $result > 10
         { error 'Values larger than 10 are not allowed'}
@@ -113,7 +112,6 @@ Using a lambda to process the looked up result - asserting that it starts with a
 
 Including the name in the error
 
-    # only since 4.0.0 or with 3x parser future,
     lookup('the_size', Integer[1,100]) |$name, $result| {
       if $large_value_allowed and $result > 10
         { error 'The bound value for '${name}' can not be larger than 10 in this configuration'}
