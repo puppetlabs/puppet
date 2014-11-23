@@ -282,6 +282,10 @@ module Puppet::Pops::Model
     contains_one_uni 'body', Expression
   end
 
+  # A function written in the Puppet Langauge
+  class FunctionDefinition < NamedDefinition
+  end
+
   # A resource type definition (a 'define' in the DSL).
   #
   class ResourceTypeDefinition < NamedDefinition

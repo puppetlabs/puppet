@@ -15,7 +15,8 @@ module Puppet::Pops::Loader::LoaderPaths
     result =
     case type
     when :function
-        [FunctionPath4x.new(loader)]
+        [FunctionPath4x.new(loader), FunctionPathPP.new(loader)]
+        # When wanted also add FunctionPath3x to load 3x functions
     else
       # unknown types, simply produce an empty result; no paths to check, nothing to find... move along...
       []
@@ -74,6 +75,20 @@ module Puppet::Pops::Loader::LoaderPaths
     end
   end
 
+  class PuppetSmartPath < SmartPath
+    def extension
+      ".pp"
+    end
+
+    # Duplication of extension information, but avoids one call
+    def effective_path(typed_name, start_index_in_name)
+      # Puppet name to path always skips the name-space as that is part of the generic path
+      # i.e. <module>/mumodule/functions/foo.pp is the function mymodule::foo
+      "#{File.join(generic_path, typed_name.name_parts[ 1..-1 ])}.pp"
+#      "#{File.join(generic_path, typed_name.name_parts)}.pp"
+    end
+  end
+
   class FunctionPath4x < RubySmartPath
     FUNCTION_PATH_4X = File.join('puppet', 'functions')
 
@@ -83,6 +98,30 @@ module Puppet::Pops::Loader::LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::RubyFunctionInstantiator
+    end
+  end
+
+  class FunctionPath3x < RubySmartPath
+    FUNCTION_PATH_3X = File.join('puppet', 'parser', 'functions')
+
+    def relative_path
+      FUNCTION_PATH_3X
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
+    end
+  end
+
+  class FunctionPathPP < PuppetSmartPath
+    FUNCTION_PATH_PP = 'functions'
+
+    def relative_path
+      FUNCTION_PATH_PP
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::PuppetFunctionInstantiator
     end
   end
 
