@@ -103,16 +103,21 @@ describe "apply" do
     end
   end
 
-  context "with a module" do
-    let(:modulepath) { tmpdir('modulepath') }
+  context "with a module in an environment" do
+    let(:envdir) { tmpdir('environments') }
+    let(:modulepath) { File.join(envdir, 'spec', 'modules') }
     let(:execute) { 'include amod' }
     let(:args) { ['-e', execute, '--modulepath', modulepath] }
 
     before(:each) do
-      dir_contained_in(modulepath, {
-        "amod" => {
-          "manifests" => {
-            "init.pp" => "class amod{ notice('amod class included') }"
+      dir_contained_in(envdir, {
+        "spec" => {
+          "modules" => {
+            "amod" => {
+              "manifests" => {
+                "init.pp" => "class amod{ notice('amod class included') }"
+              }
+            }
           }
         }
       })
