@@ -27,8 +27,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     true
   end
 
-  # TODO-3274 does not have to be compatible? the scope is not used since lambdas are evaluated in their closure
-  # compatible with 3x AST::Lambda
+  # Evaluates a closure in its enclosing scope after having matched given arguments with parameters (from left to right)
   # @api public
   def call(*args)
     variable_bindings = combine_values_with_parameters(args)
