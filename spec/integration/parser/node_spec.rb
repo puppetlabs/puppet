@@ -124,7 +124,7 @@ describe 'node statements' do
     it 'is unable to parse a name that is an invalid number' do
       expect do
         compile_to_catalog('node 5name {} ')
-      end.to raise_error(Puppet::Error, /Illegal number/)
+      end.to raise_error(Puppet::Error, /Illegal number '5name'/)
     end
 
     it 'parses a node name that is dotted numbers' do

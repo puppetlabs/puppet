@@ -141,6 +141,7 @@ class Puppet::Pops::Parser::Lexer2
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
+  PATTERN_NON_WS    = %r{\w+\b?}
 
   # The single line comment includes the line ending.
   PATTERN_COMMENT   = %r{#.*\r?}
@@ -574,8 +575,9 @@ class Puppet::Pops::Parser::Lexer2
         emit_completed([:NUMBER, value.freeze, length], before)
       else
         # move to faulty position ([0-9] was ok)
-        scn.pos = scn.pos + 1
-        lex_error("Illegal number")
+        invalid_number = scn.scan_until(PATTERN_NON_WS)
+        scn.pos = before + 1
+        lex_error("Illegal number '#{invalid_number}'")
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
