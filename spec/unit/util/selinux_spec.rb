@@ -190,6 +190,24 @@ describe Puppet::Util::SELinux do
       parse_selinux_context(:seltype, "user_u:role_r:type-withdash_t:s0").should == "type-withdash_t"
     end
 
+    describe "with spaces in the components" do
+      it "should raise when user contains a space" do
+        expect{parse_selinux_context(:seluser, "user with space_u:role_r:type_t:s0")}.to raise_error Puppet::Error
+      end
+
+      it "should raise when role contains a space" do
+        expect{parse_selinux_context(:selrole, "user_u:role with space_r:type_t:s0")}.to raise_error Puppet::Error
+      end
+
+      it "should raise when type contains a space" do
+        expect{parse_selinux_context(:seltype, "user_u:role_r:type with space_t:s0")}.to raise_error Puppet::Error
+      end
+
+      it "should return the range when range contains a space" do
+        parse_selinux_context(:selrange, "user_u:role_r:type_t:s0 s1").should == "s0 s1"
+      end
+    end
+
     it "should return nil for :selrange when no range is returned" do
       parse_selinux_context(:selrange, "user_u:role_r:type_t").should be_nil
     end

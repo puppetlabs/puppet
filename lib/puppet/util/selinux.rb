@@ -62,7 +62,7 @@ module Puppet::Util::SELinux
     if context.nil? or context == "unlabeled"
       return nil
     end
-    unless context =~ /^([^:]+):([^:]+):([^:]+)(?::([a-zA-Z0-9:,._-]+))?/
+    unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
       raise Puppet::Error, "Invalid context to parse: #{context}"
     end
     ret = {
