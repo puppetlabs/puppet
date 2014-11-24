@@ -241,6 +241,37 @@ module Puppet
       end
     end
 
+    # We call providify here so that we can set provider as a namevar.
+    # Normally this method is called after newtype finishes constructing this
+    # Type class.
+    providify
+    paramclass(:provider).isnamevar
+
+    # We have more than one namevar, so we need title_patterns. However, we
+    # cheat and set the patterns to map to name only and completely ignore
+    # provider. So far, the logic that determines uniqueness appears to just
+    # "Do The Right Thing™" when the provider is explicitly set by the user.
+    #
+    # The following resources will be seen as uniqe by puppet:
+    #
+    #     # Uniqueness Key: ['mysql', nil]
+    #     package{'mysql': }
+    #
+    #     # Uniqueness Key: ['mysql', 'gem']
+    #     package{'gem-mysql':
+    #       name     => 'mysql,
+    #       provider => gem
+    #     }
+    #
+    # This does not handle the case where providers like 'yum' and 'rpm' should
+    # clash. Also, declarations that implicitly use the default provider will
+    # clash with those that explicitly use the default.
+    def self.title_patterns
+      # This is the default title pattern for all types, except hard-wired to
+      # set only name.
+      [ [ /(.*)/m, [ [:name] ] ] ]
+    end
+
     newproperty(:package_settings, :required_features=>:package_settings) do
       desc "Settings that can change the contents or configuration of a package.
 

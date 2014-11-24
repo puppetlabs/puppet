@@ -284,10 +284,11 @@ class Puppet::Resource
   end
 
   def uniqueness_key
-    # Temporary kludge to deal with inconsistent use patters
+    # Temporary kludge to deal with inconsistent use patterns; ensure we don't return nil for namevar/:name
     h = self.to_hash
-    h[namevar] ||= h[:name]
-    h[:name]   ||= h[namevar]
+    name = h[namevar] || h[:name] || self.name
+    h[namevar] ||= name
+    h[:name]   ||= name
     h.values_at(*key_attributes.sort_by { |k| k.to_s })
   end
 
