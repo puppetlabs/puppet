@@ -84,17 +84,18 @@ describe "apply" do
         }
       })
 
-      Puppet[:environmentpath] = dir_containing("environments", { Puppet[:environment] => {} })
+      Puppet[:environmentpath] = envdir
+    end
+
+    def init_cli_args_and_apply_app(args, execute)
+      Puppet.initialize_settings(args)
+      puppet = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => args))
+      puppet.options[:code] = execute
+      return puppet
     end
 
     context "given the --modulepath option" do
       let(:args) { ['-e', execute, '--modulepath', modulepath] }
-      def init_cli_args_and_apply_app(args, execute)
-        Puppet.initialize_settings(args)
-        puppet = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => args))
-        puppet.options[:code] = execute
-        return puppet
-      end
 
       it "looks in --modulepath even when the default directory environment exists" do
         apply = init_cli_args_and_apply_app(args, execute)
@@ -122,6 +123,46 @@ describe "apply" do
         end.to have_printed('amod class included')
       end
     end
+
+    # When executing an ENC script, output cannot be captured using
+    # expect { }.to have_printed(...)
+    # External node script execution will fail, likely due to the tempering
+    # with the basic file descriptors.
+    # Workaround: Define a log destination and merely inspect logs.
+    context "with an ENC",
+        :if => !Puppet.features.microsoft_windows? do
+      let(:logdest) { tmpfile('logdest') }
+      let(:args) { ['-e', execute, '--logdest', logdest ] }
+      let(:enc) do
+        result = file_containing("enc_script", <<-ENC)
+          #!/bin/sh
+          echo 'environment: spec'
+          ENC
+        File.chmod(0755, result)
+        result
+      end
+
+      before :each do
+        Puppet[:node_terminus] = 'exec'
+        Puppet[:external_nodes] = enc
+      end
+
+      it "should use the environment that the ENC mandates" do
+        apply = init_cli_args_and_apply_app(args, execute)
+        expect { apply.run }.to exit_with(0)
+        expect(@logs.map(&:to_s)).to include('amod class included')
+      end
+
+      it "should prefer the ENC environment over the configured one and emit a warning" do
+        apply = init_cli_args_and_apply_app(args + [ '--environment', 'production' ], execute)
+        expect { apply.run }.to exit_with(0)
+        logs = @logs.map(&:to_s)
+        expect(logs).to include('amod class included')
+        expect(logs * "\n").to match /doesn't match server specified environment/
+      end
+
+    end
+
   end
 
 end
