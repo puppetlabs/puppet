@@ -1,8 +1,3 @@
-desc "Generate the 3.x 'current' parser"
-task :gen_parser do
-  %x{racc -olib/puppet/parser/parser.rb lib/puppet/parser/grammar.ra}
-end
-
 desc "Generate the 4.x 'future' parser"
 task :gen_eparser do
   %x{racc -olib/puppet/pops/parser/eparser.rb lib/puppet/pops/parser/egrammar.ra}
