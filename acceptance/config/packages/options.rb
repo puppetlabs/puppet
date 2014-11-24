@@ -7,6 +7,5 @@
     'setup/common/pre-suite/040_ValidateSignCert.rb',
     'setup/packages/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
     'setup/common/pre-suite/070_InstallCACerts.rb',
-    'setup/common/pre-suite/100_SetParser.rb',
   ],
 }
