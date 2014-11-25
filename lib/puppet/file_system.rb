@@ -6,10 +6,7 @@ module Puppet::FileSystem
   require 'puppet/file_system/uniquefile'
 
   # create instance of the file system implementation to use for the current platform
-  @impl = if RUBY_VERSION =~ /^1\.8/
-           require 'puppet/file_system/file18'
-           Puppet::FileSystem::File18
-         elsif Puppet::Util::Platform.windows?
+  @impl = if Puppet::Util::Platform.windows?
            require 'puppet/file_system/file19windows'
            Puppet::FileSystem::File19Windows
          else
