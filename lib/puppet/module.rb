@@ -150,8 +150,11 @@ class Puppet::Module
     end
 
     # (#4220) Always ensure init.pp in case class is defined there.
-    init_manifests = [manifest("init.pp")].compact
-    (init_manifests + searched_manifests).uniq
+    init_manifest = manifest("init.pp")
+    if !init_manifest.nil? && !searched_manifests.include?(init_manifest)
+      searched_manifests.unshift(init_manifest)
+    end
+    searched_manifests
   end
 
   def all_manifests
