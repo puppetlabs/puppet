@@ -4,16 +4,12 @@
 #
 # @api private
 module Puppet::Util::SSL
-  NO_NAME = OpenSSL::X509::Name.new
 
-  DN_PARSERS = [
-    OpenSSL::X509::Name.method(:parse_rfc2253),
-    OpenSSL::X509::Name.method(:parse_openssl),
-    lambda { |dn| NO_NAME }
-  ]
+  @@dn_parsers = nil
+  @@no_name = nil
 
   # Given a DN string, parse it into an OpenSSL certificate subject.  This
-  # method will flexibly handle both OpenSSl and RFC2253 formats, as given by
+  # method will flexibly handle both OpenSSL and RFC2253 formats, as given by
   # nginx and Apache, respectively.
   #
   # @param [String] dn the x.509 Distinguished Name (DN) string.
@@ -21,19 +17,23 @@ module Puppet::Util::SSL
   # @return [OpenSSL::X509::Name] the certificate subject
   def self.subject_from_dn(dn)
     if is_possibly_valid_dn?(dn)
-      DN_PARSERS.each do |parser|
+      parsers = @@dn_parsers ||= [
+            OpenSSL::X509::Name.method(:parse_rfc2253),
+            OpenSSL::X509::Name.method(:parse_openssl)
+        ]
+      parsers.each do |parser|
         begin
           return parser.call(dn)
         rescue OpenSSL::X509::NameError
         end
       end
-    else
-      NO_NAME
     end
+
+    @@no_name ||= OpenSSL::X509::Name.new
   end
 
   ##
-  # cn_from_subject extracts the CN from the given OpenSSL certtificate
+  # cn_from_subject extracts the CN from the given OpenSSL certificate
   # subject.
   #
   # @api private
