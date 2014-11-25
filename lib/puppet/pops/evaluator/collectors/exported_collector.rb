@@ -1,6 +1,6 @@
 class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
-  # Creates an ExportedCollector using the AbstractCollector's 
+  # Creates an ExportedCollector using the AbstractCollector's
   # constructor to set the scope and overrides
   #
   # param [Symbol] type the resource type to be collected
@@ -35,8 +35,8 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
       t = @type
       q = @cquery
 
-      scope.compiler.resources.find_all do |resource|
-        resource.type == t && resource.exported? && q.call(resource)
+      resources = scope.compiler.resources.find_all do |resource|
+        resource.type == t && resource.exported? && (q.nil? || q.call(resource))
       end
 
       found = Puppet::Resource.indirection.
