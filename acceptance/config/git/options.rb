@@ -13,6 +13,5 @@
     'setup/common/pre-suite/040_ValidateSignCert.rb',
     'setup/git/pre-suite/060_InstallModules.rb',
     'setup/common/pre-suite/070_InstallCACerts.rb',
-    'setup/common/pre-suite/100_SetParser.rb',
   ],
 }
