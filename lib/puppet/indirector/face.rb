@@ -67,8 +67,17 @@ class Puppet::Indirector::Face < Puppet::Face
 
   action :find do
     summary "Retrieve an object by name."
-    arguments "<key>"
-    when_invoked {|key, options| call_indirection_method :find, key, options[:extra] }
+    arguments "[<key>]"
+    when_invoked do |*args|
+      # Default the key to Puppet[:certname] if none is supplied
+      if args.length == 1
+        key = Puppet[:certname]
+        options = args.last
+      else
+        key, options = *args
+      end
+      call_indirection_method :find, key, options[:extra]
+    end
   end
 
   action :save do

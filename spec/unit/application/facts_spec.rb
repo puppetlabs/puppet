@@ -7,14 +7,6 @@ describe Puppet::Application::Facts do
     subject.command_line.stubs(:subcommand_name).returns 'facts'
   end
 
-  it "should fail if no key is given to find" do
-    subject.command_line.stubs(:args).returns %w{find}
-    expect {
-      expect { subject.run }.to exit_with(1)
-    }.to have_printed(/Error: puppet facts find takes 1 argument, but you gave 0/)
-    @logs.first.to_s.should =~ /puppet facts find takes 1 argument, but you gave 0/
-  end
-
   it "should return facts if a key is given to find" do
     Puppet::Node::Facts.indirection.reset_terminus_class
     Puppet::Node::Facts.indirection.expects(:find).returns(Puppet::Node::Facts.new('whatever', {}))
