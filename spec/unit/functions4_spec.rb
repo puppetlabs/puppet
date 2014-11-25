@@ -351,13 +351,10 @@ actual:
         expect(signature.type.class).to be(Puppet::Pops::Types::PCallableType)
       end
 
-      # conditional on Ruby 1.8.7 which does not do parameter introspection
-      if Method.method_defined?(:parameters)
-        it 'about parameter names obtained from ruby introspection' do
-          fc = create_min_function_class
-          signature = fc.signatures[0]
-          expect(signature.parameter_names).to eql(['x', 'y'])
-        end
+      it 'about parameter names obtained from ruby introspection' do
+        fc = create_min_function_class
+        signature = fc.signatures[0]
+        expect(signature.parameter_names).to eql(['x', 'y'])
       end
 
       it 'about parameter names specified with dispatch' do
