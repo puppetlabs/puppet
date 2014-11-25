@@ -10,10 +10,9 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
     node parameters (exposed in the parser as top-scope variables), and classes.
   EOT
 
-  get_action(:destroy).summary "Invalid for this subcommand."
-  get_action(:search).summary "Invalid for this subcommand."
-  get_action(:save).summary "Invalid for this subcommand."
-  get_action(:save).description "Invalid for this subcommand."
+  deactivate_action(:destroy)
+  deactivate_action(:search)
+  deactivate_action(:save)
 
   find = get_action(:find)
   find.summary "Retrieve a node object."
