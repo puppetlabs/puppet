@@ -375,21 +375,21 @@ describe provider_class do
 
     it "passes repos to enable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-        expect(args).to eq %w[/usr/bin/yum check-update -e updates -e centosplus]
+        expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=updates --enablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
       described_class.check_updates(%w[updates centosplus], [])
     end
 
     it "passes repos to disable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-        expect(args).to eq %w[/usr/bin/yum check-update -d updates -d centosplus]
+        expect(args).to eq %w[/usr/bin/yum check-update --disablerepo=updates --disablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
       described_class.check_updates([],%w[updates centosplus])
     end
 
     it "passes a combination of repos to enable and disable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-        expect(args).to eq %w[/usr/bin/yum check-update -e os -e contrib -d updates -d centosplus]
+        expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=os --enablerepo=contrib --disablerepo=updates --disablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
       described_class.check_updates(%w[os contrib], %w[updates centosplus])
     end
