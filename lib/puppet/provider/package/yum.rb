@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   has_feature :install_options, :versionable, :virtual_packages
 
-  commands :yum => "yum", :rpm => "rpm", :python => "python"
+  commands :yum => "yum", :rpm => "rpm"
 
   if command('rpm')
     confine :true => begin
