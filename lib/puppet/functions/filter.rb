@@ -55,17 +55,11 @@ Puppet::Functions.create_function(:filter) do
   end
 
   def filter_Hash_1(hash, pblock)
-    result = hash.select {|x, y| pblock.call([x, y]) }
-    # Ruby 1.8.7 returns Array
-    result = Hash[result] unless result.is_a? Hash
-    result
+    hash.select {|x, y| pblock.call([x, y]) }
   end
 
   def filter_Hash_2(hash, pblock)
-    result = hash.select {|x, y| pblock.call(x, y) }
-    # Ruby 1.8.7 returns Array
-    result = Hash[result] unless result.is_a? Hash
-    result
+    hash.select {|x, y| pblock.call(x, y) }
   end
 
   def filter_Enumerable_1(enumerable, pblock)
