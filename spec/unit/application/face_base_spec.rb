@@ -420,4 +420,18 @@ EOT
       }.to have_printed(/you invoked the 's' rendering hook/)
     end
   end
+
+  describe "#help" do
+    it "should generate help for --help" do
+      app.command_line.stubs(:args).returns %w{--help}
+      Puppet::Face[:help, :current].expects(:help)
+      expect { app.run }.to exit_with(0)
+    end
+
+    it "should generate help for -h" do
+      app.command_line.stubs(:args).returns %w{-h}
+      Puppet::Face[:help, :current].expects(:help)
+      expect { app.run }.to exit_with(0)
+    end
+  end
 end
