@@ -140,7 +140,7 @@ class Puppet::Module
   end
 
   # Return the list of manifests matching the given glob pattern,
-  # defaulting to 'init.{pp,rb}' for empty modules.
+  # defaulting to 'init.pp' for empty modules.
   def match_manifests(rest)
     if rest
       wanted_manifests = wanted_manifests_from(rest)
@@ -150,14 +150,14 @@ class Puppet::Module
     end
 
     # (#4220) Always ensure init.pp in case class is defined there.
-    init_manifests = [manifest("init.pp"), manifest("init.rb")].compact
+    init_manifests = [manifest("init.pp")].compact
     (init_manifests + searched_manifests).uniq
   end
 
   def all_manifests
     return [] unless Puppet::FileSystem.exist?(manifests)
 
-    Dir.glob(File.join(manifests, '**', '*.{rb,pp}'))
+    Dir.glob(File.join(manifests, '**', '*.pp'))
   end
 
   def metadata_file
@@ -318,7 +318,7 @@ class Puppet::Module
 
   def wanted_manifests_from(pattern)
     begin
-      extended = File.extname(pattern).empty? ? "#{pattern}.{pp,rb}" : pattern
+      extended = File.extname(pattern).empty? ? "#{pattern}.pp" : pattern
       relative_pattern = Puppet::FileSystem::PathPattern.relative(extended)
     rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
       raise Puppet::Module::InvalidFilePattern.new(
