@@ -99,18 +99,7 @@ module Puppet::ModuleTool
     def to_json
       data = @data.dup.merge('dependencies' => dependencies)
 
-      # This is used to simulate an ordered hash.  In particular, some keys
-      # are promoted to the top of the serialized hash (while others are
-      # demoted) for human-friendliness.
-      #
-      # This particularly works around the lack of ordered hashes in 1.8.7.
-      promoted_keys = %w[ name version author summary license source ]
-      demoted_keys = %w[ dependencies ]
-      keys = data.keys
-      keys -= promoted_keys
-      keys -= demoted_keys
-
-      contents = (promoted_keys + keys + demoted_keys).map do |k|
+      contents = data.keys.map do |k|
         value = (JSON.pretty_generate(data[k]) rescue data[k].to_json)
         "#{k.to_json}: #{value}"
       end
