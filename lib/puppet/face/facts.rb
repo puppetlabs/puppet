@@ -31,6 +31,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
     $ puppet facts find
   EOT
+  find.default = true
 
   deactivate_action(:destroy)
   deactivate_action(:search)
