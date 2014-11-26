@@ -6,9 +6,6 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
 
   summary "Create, display, and submit reports."
 
-  get_action(:find).summary "Invalid for this face."
-  get_action(:search).summary "Invalid for this face."
-  get_action(:destroy).summary "Invalid for this face."
   save = get_action(:save)
   save.summary "API only: submit a report."
   save.arguments "<report>"
@@ -51,4 +48,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
       end
     end
   end
+  deactivate_action(:find)
+  deactivate_action(:search)
+  deactivate_action(:destroy)
 end

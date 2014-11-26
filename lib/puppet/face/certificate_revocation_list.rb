@@ -52,7 +52,6 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
     requires a dummy argument; this is a known bug.
   EOT
 
-  get_action(:search).summary "Invalid for this subcommand."
-  get_action(:save).summary "Invalid for this subcommand."
-  get_action(:save).description "Invalid for this subcommand."
+  deactivate_action(:search)
+  deactivate_action(:save)
 end

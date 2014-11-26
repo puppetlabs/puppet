@@ -6,10 +6,9 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
 
   summary "View puppet server status."
 
-  get_action(:destroy).summary "Invalid for this subcommand."
-  get_action(:save).summary "Invalid for this subcommand."
-  get_action(:save).description "Invalid for this subcommand."
-  get_action(:search).summary "Invalid for this subcommand."
+  deactivate_action(:destroy)
+  deactivate_action(:save)
+  deactivate_action(:search)
 
   find = get_action(:find)
   find.default = true

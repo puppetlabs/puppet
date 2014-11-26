@@ -44,7 +44,7 @@ module Puppet::Interface::ActionManager
     # We need to uniq the result, because we duplicate actions when they are
     # fetched to ensure that they have the correct bindings; they shadow the
     # parent, and uniq implements that. --daniel 2011-06-01
-    result.uniq.sort
+    (result - @deactivated_actions.to_a).uniq.sort
   end
 
   # Retrieves a named action
@@ -80,6 +80,14 @@ module Puppet::Interface::ActionManager
       raise "The actions #{default.map(&:name).join(", ")} cannot all be default"
     end
     default.first
+  end
+
+  # Deactivate a named action
+  # @return [Puppet::Interface::Action]
+  # @api public
+  def deactivate_action(name)
+    @deactivated_actions ||= Set.new
+    @deactivated_actions.add name.to_sym
   end
 
   # @api private

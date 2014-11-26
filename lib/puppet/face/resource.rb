@@ -10,7 +10,7 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
     puppet resource subcommand.
   EOT
 
-  get_action(:destroy).summary "Invalid for this subcommand."
+  deactivate_action(:destroy)
 
   search = get_action(:search)
   search.summary "API only: get all resources of a single type."

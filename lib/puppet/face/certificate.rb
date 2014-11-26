@@ -154,7 +154,6 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     Deletes a certificate. This action currently only works on the local CA.
   EOT
 
-  get_action(:search).summary "Invalid for this subcommand."
-  get_action(:save).summary "Invalid for this subcommand."
-  get_action(:save).description "Invalid for this subcommand."
+  deactivate_action(:search)
+  deactivate_action(:save)
 end

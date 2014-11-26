@@ -9,8 +9,7 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
     This subcommand retrieves and submits certificate signing requests (CSRs).
   EOT
 
-  # Per-action doc overrides
-  get_action(:destroy).summary "Invalid for this subcommand."
+  deactivate_action(:destroy)
 
   find = get_action(:find)
   find.summary "Retrieve a single CSR."

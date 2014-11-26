@@ -28,10 +28,8 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
     * `doc`       (a string)
   EOT
 
-  # Action documentation overrides:
-  get_action(:save).summary = "Invalid for this subcommand."
-  get_action(:save).description "Invalid for this subcommand."
-  get_action(:destroy).summary = "Invalid for this subcommand."
+  deactivate_action(:save)
+  deactivate_action(:destroy)
 
   find = get_action(:find)
   find.summary "Retrieve info about a resource collection."

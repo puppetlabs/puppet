@@ -40,8 +40,8 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
     $ puppet file find md5/9aedba7f413c97dc65895b1cd9421f2c --render-as s
   EOT
 
-  get_action(:search).summary "Invalid for this subcommand."
-  get_action(:destroy).summary "Invalid for this subcommand."
+  deactivate_action(:search)
+  deactivate_action(:destroy)
 
   set_indirection_name :file_bucket_file
 end
