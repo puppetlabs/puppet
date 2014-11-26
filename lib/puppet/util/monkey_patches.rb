@@ -37,29 +37,6 @@ class Object
   end
 end
 
-class Symbol
-  # So, it turns out that one of the biggest memory allocation hot-spots in our
-  # code was using symbol-to-proc - because it allocated a new instance every
-  # time it was called, rather than caching (in Ruby 1.8.7 and earlier).
-  #
-  # In Ruby 1.9.3 and later Symbol#to_proc does implement a cache so we skip
-  # our monkey patch.
-  #
-  # Changing this means we can see XX memory reduction...
-  if RUBY_VERSION < "1.9.3"
-    if method_defined? :to_proc
-      alias __original_to_proc to_proc
-      def to_proc
-        @my_proc ||= __original_to_proc
-      end
-    else
-      def to_proc
-        @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
-      end
-    end
-  end
-end
-
 require 'fcntl'
 class IO
   def self.binwrite(name, string, offset = nil)
