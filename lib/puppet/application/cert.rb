@@ -34,7 +34,8 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   option("--debug", "-d") do |arg|
-    Puppet::Util::Log.level = :debug
+    options[:debug] = true
+    set_log_level
   end
 
   option("--list", "-l") do |arg|
@@ -74,7 +75,8 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   option("--verbose", "-v") do |arg|
-    Puppet::Util::Log.level = :info
+    options[:verbose] = true
+    set_log_level
   end
 
   def help

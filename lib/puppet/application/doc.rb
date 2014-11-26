@@ -255,14 +255,9 @@ HELP
   end
 
   def setup_logging
-  # Handle the logging settings.
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    else
-      Puppet::Util::Log.level = :warning
-    end
+    Puppet::Util::Log.level = :warning
+
+    set_log_level
 
     Puppet::Util::Log.newdestination(:console)
   end
