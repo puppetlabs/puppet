@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   has_feature :install_options, :versionable, :virtual_packages
 
-  commands :yum => "yum", :rpm => "rpm", :python => "python"
+  commands :yum => "yum", :rpm => "rpm"
 
   if command('rpm')
     confine :true => begin
@@ -66,8 +66,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   #   found with a list of found versions for each package.
   def self.check_updates(enablerepo, disablerepo)
     args = [command(:yum), 'check-update']
-    args.concat(enablerepo.map { |repo| ['-e', repo] }.flatten)
-    args.concat(disablerepo.map { |repo| ['-d', repo] }.flatten)
+    args.concat(enablerepo.map { |repo| ["--enablerepo=#{repo}"] }.flatten)
+    args.concat(disablerepo.map { |repo| ["--disablerepo=#{repo}"] }.flatten)
 
     output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
 
