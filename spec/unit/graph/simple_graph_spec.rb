@@ -455,17 +455,9 @@ describe Puppet::Graph::SimpleGraph do
     before do
       @graph = Puppet::Graph::SimpleGraph.new
 
-      # The Ruby 1.8 semantics for String#[] are that treating it like an
-      # array and asking for `"a"[:whatever]` returns `nil`.  Ruby 1.9
-      # enforces that your index has to be numeric.
-      #
-      # Now, the real object here, a resource, implements [] and does
-      # something sane, but we don't care about any of the things that get
-      # asked for.  Right now, anyway.
-      #
-      # So, in 1.8 we could just pass a string and it worked.  For 1.9 we can
-      # fake it well enough by stubbing out the operator to return nil no
-      # matter what input we give. --daniel 2012-03-11
+      # Resource is a String here although not for realz. Stub [] to always return nil
+      # because indexing a String with a non-Integer throws an exception (and none of
+      # these tests need anything meaningful from []).
       resource = "a"
       resource.stubs(:[])
       @event = Puppet::Transaction::Event.new(:name => :yay, :resource => resource)
