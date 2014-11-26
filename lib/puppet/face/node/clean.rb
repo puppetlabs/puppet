@@ -62,7 +62,6 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_cached_facts(node)
     clean_cached_node(node)
     clean_reports(node)
-    clean_storeconfigs(node, unexport)
   end
 
   # clean signed cert for +host+
@@ -92,27 +91,6 @@ Puppet::Face.define(:node, '0.0.1') do
   def clean_reports(node)
     Puppet::Transaction::Report.indirection.destroy(node)
     Puppet.info "#{node}'s reports removed"
-  end
-
-  # clean storeconfig for +node+
-  def clean_storeconfigs(node, do_unexport=false)
-    return unless Puppet[:storeconfigs] && Puppet.features.rails?
-    require 'puppet/rails'
-    Puppet::Rails.connect
-    unless rails_node = Puppet::Rails::Host.find_by_name(node)
-      Puppet.notice "No entries found for #{node} in storedconfigs."
-      return
-    end
-
-    if do_unexport
-      unexport(rails_node)
-      Puppet.notice "Force #{node}'s exported resources to absent"
-      Puppet.warning "Please wait until all other hosts have checked out their configuration before finishing the cleanup with:"
-      Puppet.warning "$ puppet node clean #{node}"
-    else
-      rails_node.destroy
-      Puppet.notice "#{node} storeconfigs removed"
-    end
   end
 
   def unexport(node)
