@@ -22,7 +22,14 @@ describe Puppet::Graph::SimpleGraph do
 
   it "should be able to produce a dot graph" do
     @graph = Puppet::Graph::SimpleGraph.new
-    @graph.add_edge(:one, :two)
+    class FauxVertex
+      def ref
+        "never mind"
+      end
+    end
+    v1 = FauxVertex.new
+    v2 = FauxVertex.new
+    @graph.add_edge(v1, v2)
 
     expect { @graph.to_dot_graph }.to_not raise_error
   end
