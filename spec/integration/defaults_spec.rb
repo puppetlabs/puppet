@@ -2,7 +2,6 @@
 require 'spec_helper'
 
 require 'puppet/defaults'
-require 'puppet/rails'
 
 describe "Puppet defaults" do
 
@@ -130,56 +129,11 @@ describe "Puppet defaults" do
     Puppet.settings.value(:preferred_serialization_format).should == "pson"
   end
 
-  describe "when enabling storeconfigs" do
-    before do
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
-      Puppet::Node.indirection.stubs(:cache_class=)
-
-      Puppet.features.stubs(:rails?).returns true
-    end
-
-    it "should set the Catalog cache class to :store_configs" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:store_configs)
-      Puppet.settings[:storeconfigs] = true
-    end
-
-    it "should set the Facts cache class to :store_configs" do
-      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:store_configs)
-      Puppet.settings[:storeconfigs] = true
-    end
-
-    it "does not change the Node cache" do
-      Puppet::Node.indirection.expects(:cache_class=).never
-      Puppet.settings[:storeconfigs] = true
-    end
-  end
-
-  describe "when enabling asynchronous storeconfigs" do
-    before do
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
-      Puppet::Node.indirection.stubs(:cache_class=)
-      Puppet.features.stubs(:rails?).returns true
-    end
-
-    it "should set the Facts cache class to :store_configs" do
-      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:store_configs)
-      Puppet.settings[:storeconfigs] = true
-    end
-
-    it "does not change the Node cache" do
-      Puppet::Node.indirection.expects(:cache_class=).never
-      Puppet.settings[:storeconfigs] = true
-    end
-  end
-
   describe "when enabling thin storeconfigs" do
     before do
       Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
       Puppet::Node::Facts.indirection.stubs(:cache_class=)
       Puppet::Node.indirection.stubs(:cache_class=)
-      Puppet.features.stubs(:rails?).returns true
     end
 
     it "should set storeconfigs to true" do
