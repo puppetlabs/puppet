@@ -18,7 +18,7 @@ agents.each do |agent|
   step "Zone: statemachine - create zone and make it running"
   step "progress would be logged to agent:/var/log/zones/zoneadm.<date>.<zonename>.install"
   step "install log would be at agent:/system/volatile/install.<id>/install_log"
-  apply_manifest_on(agent, "zone {tstzone : ensure=>running, iptype=>shared, path=>'/tstzones/mnt' }") do
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>running, iptype=>shared, path=>"/tstzones/mnt" }') do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
 
