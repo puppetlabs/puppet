@@ -207,7 +207,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def add_scope_tags
     if scope_resource = scope.resource
-      tag(*scope_resource.tags)
+      merge_tags(scope_resource)
     end
   end
 
