@@ -22,7 +22,6 @@ master_opts = {
   },
   'master' => {
     'environmentpath' => '$confdir/environments',
-    'config_version' => '$confdir/static-version.sh',
   }
 }
 env = 'testing'
