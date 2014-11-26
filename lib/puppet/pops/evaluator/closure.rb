@@ -1,13 +1,15 @@
-
 # A Closure represents logic bound to a particular scope.
-# As long as the runtime (basically the scope implementation) has the behaviour of Puppet 3x it is not
-# safe to use this closure when the scope given to it when initialized goes "out of scope".
+# As long as the runtime (basically the scope implementation) has the behavior of Puppet 3x it is not
+# safe to return and later use this closure.
 #
-# Note that the implementation is backwards compatible in that the call method accepts a scope, but this
-# scope is not used.
+# The 3x scope is essentially a named scope with an additional internal local/ephemeral nested scope state.
+# In 3x there is no way to directly refer to the nested scopes, instead, the named scope must be in a particular
+# state. Specifically, closures that require a local/ephemeral scope to exist at a later point will fail.
+# It is safe to call a closure (even with 3x scope) from the very same place it was defined, but not
+# returning it and expecting the closure to reference the scope's state at the point it was created.
 #
 # Note that this class is a CallableSignature, and the methods defined there should be used
-# as the API for obtaining information in a callable implementation agnostic way.
+# as the API for obtaining information in a callable-implementation agnostic way.
 #
 class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignature
   attr_reader :evaluator
@@ -49,7 +51,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   end
 
   # Call closure with argument assignment by name
-  def call_by_name(scope, args_hash, enforce_parameters)
+  def call_by_name(args_hash, enforce_parameters)
     if enforce_parameters
       if args_hash.size > parameters.size
         raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}"
@@ -155,7 +157,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
           #
           if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
-            value = @evaluator.evaluate(default_expression, scope)
+            value = @evaluator.evaluate(default_expression, @enclosing_scope)
             # and ensure it is an array
             value = [value] unless value.is_a?(Array)
           end

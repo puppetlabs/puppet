@@ -71,7 +71,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
       closure_scope =  use_global_scope_only ? scope.find_global_scope : scope
       enforce_parameters = true
     end
-    evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, enforce_parameters)
+    evaluated_result = parser.closure(body, closure_scope).call_by_name(template_args, enforce_parameters)
     evaluated_result
   end
 
