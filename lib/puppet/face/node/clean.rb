@@ -1,8 +1,5 @@
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
-    option "--[no-]unexport" do
-      summary "Whether to remove this node's exported resources from other nodes"
-    end
 
     summary "Clean up everything a puppetmaster knows about a node."
     arguments "<host1> [<host2> ...]"
@@ -20,13 +17,6 @@ Puppet::Face.define(:node, '0.0.1') do
 
       <Reports> - ($vardir/reports/node.domain)
 
-      <Stored configs> - (in database) The clean action can either remove all
-      data from a host in your storeconfigs database, or, with the
-      <--unexport> option, turn every exported resource supporting ensure to
-      absent so that any other host that collected those resources can remove
-      them. Without unexporting, a removed node's exported resources become
-      unmanaged by Puppet, and may linger as cruft unless you are purging
-      that resource type.
     EOT
 
     when_invoked do |*args|
@@ -53,11 +43,11 @@ Puppet::Face.define(:node, '0.0.1') do
       Puppet::Node.indirection.terminus_class = :yaml
       Puppet::Node.indirection.cache_class = :yaml
 
-      nodes.each { |node| cleanup(node.downcase, options[:unexport]) }
+      nodes.each { |node| cleanup(node.downcase) }
     end
   end
 
-  def cleanup(node, unexport)
+  def cleanup(node)
     clean_cert(node)
     clean_cached_facts(node)
     clean_cached_node(node)
@@ -91,34 +81,6 @@ Puppet::Face.define(:node, '0.0.1') do
   def clean_reports(node)
     Puppet::Transaction::Report.indirection.destroy(node)
     Puppet.info "#{node}'s reports removed"
-  end
-
-  def unexport(node)
-    # fetch all exported resource
-    query = {:include => {:param_values => :param_name}}
-    query[:conditions] = [ "exported=? AND host_id=?", true, node.id ]
-    Puppet::Rails::Resource.find(:all, query).each do |resource|
-      if type_is_ensurable(resource)
-        line = 0
-        param_name = Puppet::Rails::ParamName.find_or_create_by_name("ensure")
-
-        if ensure_param = resource.param_values.find(
-          :first,
-          :conditions => [ 'param_name_id = ?', param_name.id ]
-        )
-          line = ensure_param.line.to_i
-          Puppet::Rails::ParamValue.delete(ensure_param.id);
-        end
-
-        # force ensure parameter to "absent"
-        resource.param_values.create(
-          :value => "absent",
-          :line => line,
-          :param_name => param_name
-        )
-        Puppet.info("#{resource.name} has been marked as \"absent\"")
-      end
-    end
   end
 
   def environment

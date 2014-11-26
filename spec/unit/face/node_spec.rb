@@ -15,7 +15,7 @@ describe Puppet::Face[:node, '0.0.1'] do
         "cached_node"  => ['hostname'],
         "reports"      => ['hostname'],
       }.each { |k, v| subject.expects("clean_#{k}".to_sym).with(*v) }
-      subject.cleanup('hostname', :unexport)
+      subject.cleanup('hostname')
     end
   end
 
@@ -60,14 +60,8 @@ describe Puppet::Face[:node, '0.0.1'] do
       end.to_not raise_error
 
       expect do
-        subject.clean('hostname', 'hostname2', 'hostname3', { :unexport => true })
+        subject.clean('hostname', 'hostname2', 'hostname3')
       end.to_not raise_error
-    end
-
-    it "should accept the option --unexport" do
-      expect {
-        subject.clean('hostname', :unexport => true)
-      }.to_not raise_error
     end
 
     context "clean action" do
