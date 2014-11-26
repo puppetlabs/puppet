@@ -4,6 +4,10 @@ test_name "puppet module install (with modulepath)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 module_author = "pmtacceptance"
 module_name   = "nginx"
 module_dependencies = []

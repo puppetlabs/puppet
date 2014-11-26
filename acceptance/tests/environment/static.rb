@@ -4,6 +4,10 @@ extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 step "setup environments"

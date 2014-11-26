@@ -1,5 +1,9 @@
 test_name "puppet module uninstall (with multiple modules installed)"
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 if master.is_pe?
   skip_test
 end
