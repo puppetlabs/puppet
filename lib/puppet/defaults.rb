@@ -14,7 +14,6 @@ module Puppet
   ############################################################################################
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
-  STORECONFIGS_ONLY = %q{This setting is only used by the ActiveRecord storeconfigs and inventory backends, which are deprecated.}
 
   # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
   define_settings(:main,
@@ -1664,11 +1663,10 @@ EOT
       :default  => false,
       :type     => :boolean,
       :desc     => "Whether to store each client's configuration, including catalogs, facts,
-        and related data.  This also enables the import and export of resources in
+        and related data. This also enables the import and export of resources in
         the Puppet language - a mechanism for exchange resources between nodes.
 
-        By default this uses ActiveRecord and an SQL database to store and query
-        the data; this, in turn, will depend on Rails being available.
+        By default this uses the 'puppetdb' backend.
 
         You can adjust the backend using the storeconfigs_backend setting.",
       # Call our hook with the default value, so we always get the libdir set.
@@ -1686,10 +1684,10 @@ EOT
     },
     :storeconfigs_backend => {
       :type => :terminus,
-      :default => "active_record",
+      :default => "puppetdb",
       :desc => "Configure the backend terminus used for StoreConfigs.
-        By default, this uses the ActiveRecord store, which directly talks to the
-        database from within the Puppet Master process."
+        By default, this uses the PuppetDB store, which must be installed
+        and configured before turning on StoreConfigs."
     }
   )
 

@@ -129,19 +129,6 @@ describe "Puppet defaults" do
     Puppet.settings.value(:preferred_serialization_format).should == "pson"
   end
 
-  describe "when enabling thin storeconfigs" do
-    before do
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
-      Puppet::Node.indirection.stubs(:cache_class=)
-    end
-
-    it "should set storeconfigs to true" do
-      Puppet.settings[:thin_storeconfigs] = true
-      Puppet.settings[:storeconfigs].should be_true
-    end
-  end
-
   it "should have a setting for determining the configuration version and should default to an empty string" do
     Puppet.settings[:config_version].should == ""
   end
