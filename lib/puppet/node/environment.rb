@@ -1,5 +1,4 @@
 require 'puppet/util'
-require 'puppet/util/cacher'
 require 'monitor'
 require 'puppet/parser/parser_factory'
 
@@ -22,7 +21,6 @@ end
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
-  include Puppet::Util::Cacher
 
   NO_MANIFEST = :no_manifest
 
@@ -252,41 +250,42 @@ class Puppet::Node::Environment
       nil
   end
 
-  # @!attribute [r] modules
-  #   Return all modules for this environment in the order they appear in the
-  #   modulepath.
-  #   @note If multiple modules with the same name are present they will
-  #     both be added, but methods like {#module} and {#module_by_forge_name}
-  #     will return the first matching entry in this list.
-  #   @note This value is cached so that the filesystem doesn't have to be
-  #     re-enumerated every time this method is invoked, since that
-  #     enumeration could be a costly operation and this method is called
-  #     frequently. The cache expiry is determined by `Puppet[:filetimeout]`.
-  #   @see Puppet::Util::Cacher.cached_attr
-  #   @api public
-  #   @return [Array<Puppet::Module>] All modules for this environment
-  cached_attr(:modules, Puppet[:filetimeout]) do
-    module_references = []
-    seen_modules = {}
-    modulepath.each do |path|
-      Dir.entries(path).each do |name|
-        next if name == "." || name == ".."
-        warn_about_mistaken_path(path, name)
-        if not seen_modules[name]
-          module_references << {:name => name, :path => File.join(path, name)}
-          seen_modules[name] = true
+  # Return all modules for this environment in the order they appear in the
+  # modulepath.
+  # @note If multiple modules with the same name are present they will
+  #   both be added, but methods like {#module} and {#module_by_forge_name}
+  #   will return the first matching entry in this list.
+  # @note This value is cached so that the filesystem doesn't have to be
+  #   re-enumerated every time this method is invoked, since that
+  #   enumeration could be a costly operation and this method is called
+  #   frequently. The cache expiry is determined by `Puppet[:filetimeout]`.
+  # @api public
+  # @return [Array<Puppet::Module>] All modules for this environment
+  def modules
+    if @modules.nil?
+      module_references = []
+      seen_modules = {}
+      modulepath.each do |path|
+        Dir.entries(path).each do |name|
+          next if name == "." || name == ".."
+          warn_about_mistaken_path(path, name)
+          if not seen_modules[name]
+            module_references << {:name => name, :path => File.join(path, name)}
+            seen_modules[name] = true
+          end
         end
       end
-    end
 
-    module_references.collect do |reference|
-      begin
-        Puppet::Module.new(reference[:name], reference[:path], self)
-      rescue Puppet::Module::Error => e
-        Puppet.log_exception(e)
-        nil
-      end
-    end.compact
+      @modules = module_references.collect do |reference|
+        begin
+          Puppet::Module.new(reference[:name], reference[:path], self)
+        rescue Puppet::Module::Error => e
+          Puppet.log_exception(e)
+          nil
+        end
+      end.compact
+    end
+    @modules
   end
 
   # Generate a warning if the given directory in a module path entry is named `lib`.

@@ -18,10 +18,6 @@ describe Puppet::Node::Environment do
       env.to_yaml.should match(/--- testing/)
     end
 
-    it "uses the filetimeout for the ttl for the module list" do
-      expect(Puppet::Node::Environment.attr_ttl(:modules)).to eq(Integer(Puppet[:filetimeout]))
-    end
-
     describe ".create" do
       it "creates equivalent environments whether specifying name as a symbol or a string" do
         expect(Puppet::Node::Environment.create(:one, [])).to eq(Puppet::Node::Environment.create("one", []))
