@@ -2,11 +2,9 @@
 require 'spec_helper'
 
 require 'puppet/indirector/catalog/compiler'
-require 'puppet/rails'
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
-    Puppet::Rails.stubs(:init)
     Facter.stubs(:to_hash).returns({})
   end
 
