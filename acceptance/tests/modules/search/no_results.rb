@@ -1,5 +1,9 @@
 test_name 'puppet module search should print a reasonable message for no results'
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 module_name   = "module_not_appearing_in_this_forge"
 
 step 'Setup'

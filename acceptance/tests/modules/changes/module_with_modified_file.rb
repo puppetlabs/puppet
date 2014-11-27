@@ -1,5 +1,9 @@
 test_name 'puppet module changes (on a module with a modified file)'
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 step 'Setup'
 
 stub_forge_on(master)

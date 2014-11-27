@@ -2,6 +2,10 @@ test_name 'puppet module list (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
+end
+
 tmpdir = master.tmpdir('environmentpath')
 
 step 'Setup'
