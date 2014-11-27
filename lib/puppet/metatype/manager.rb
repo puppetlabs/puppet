@@ -113,7 +113,7 @@ module Manager
     klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name.to_s}")
 
     # We have to load everything so that we can figure out the default provider.
-    klass.providerloader.loadall
+    klass.providerloader.loadall Puppet.lookup(:current_environment)
     klass.providify unless klass.providers.empty?
 
     klass

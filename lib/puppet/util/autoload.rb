@@ -67,11 +67,11 @@ class Puppet::Util::Autoload
       end
     end
 
-    def loadall(path)
+    def loadall(path, env = nil)
       # Load every instance of everything we can find.
-      files_to_load(path).each do |file|
+      files_to_load(path, env).each do |file|
         name = file.chomp(".rb")
-        load_file(name, nil) unless loaded?(name)
+        load_file(name, env) unless loaded?(name)
       end
     end
 
@@ -87,8 +87,8 @@ class Puppet::Util::Autoload
       path and File.join(path, name)
     end
 
-    def files_to_load(path)
-      search_directories(nil).map {|dir| files_in_dir(dir, path) }.flatten.uniq
+    def files_to_load(path, env = nil)
+      search_directories(env).map {|dir| files_in_dir(dir, path) }.flatten.uniq
     end
 
     def files_in_dir(dir, path)
@@ -199,8 +199,8 @@ class Puppet::Util::Autoload
   #
   # This uses require, rather than load, so that already-loaded files don't get
   # reloaded unnecessarily.
-  def loadall
-    self.class.loadall(@path)
+  def loadall(env = nil)
+    self.class.loadall(@path, env)
   end
 
   def loaded?(name)
