@@ -41,14 +41,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @param package [String] The name of the package to query
   # @param enablerepo [Array<String>] A list of repositories to enable for this query
   # @param disablerepo [Array<String>] A list of repositories to disable for this query
+  # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
   # @return [Hash<Symbol, String>]
-  def self.latest_package_version(package, enablerepo, disablerepo)
+  def self.latest_package_version(package, enablerepo, disablerepo, disableexcludes)
 
-    key = [enablerepo, disablerepo]
+    key = [enablerepo, disablerepo, disableexcludes]
 
     @latest_versions ||= {}
     if @latest_versions[key].nil?
-      @latest_versions[key] = check_updates(enablerepo, disablerepo)
+      @latest_versions[key] = check_updates(enablerepo, disablerepo, disableexcludes)
     end
 
     if @latest_versions[key][package]
@@ -62,12 +63,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @api private
   # @param enablerepo [Array<String>] A list of repositories to enable for this query
   # @param disablerepo [Array<String>] A list of repositories to disable for this query
+  # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
   # @return [Hash<String, Array<Hash<String, String>>>] All packages that were
   #   found with a list of found versions for each package.
-  def self.check_updates(enablerepo, disablerepo)
+  def self.check_updates(enablerepo, disablerepo, disableexcludes)
     args = [command(:yum), 'check-update']
     args.concat(enablerepo.map { |repo| ["--enablerepo=#{repo}"] }.flatten)
     args.concat(disablerepo.map { |repo| ["--disablerepo=#{repo}"] }.flatten)
+    args.concat(disableexcludes.map { |repo| ["--disableexcludes=#{repo}"] }.flatten)
 
     output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
 
@@ -166,7 +169,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   # What's the latest package version available?
   def latest
-    upd = self.class.latest_package_version(@resource[:name], enablerepo, disablerepo)
+    upd = self.class.latest_package_version(@resource[:name], enablerepo, disablerepo, disableexcludes)
     unless upd.nil?
       # FIXME: there could be more than one update for a package
       # because of multiarch
@@ -262,6 +265,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   def disablerepo
     scan_options(resource[:install_options], '--disablerepo')
+  end
+
+  def disableexcludes
+    scan_options(resource[:install_options], '--disableexcludes')
   end
 
   # Scan a structure that looks like the package type 'install_options'

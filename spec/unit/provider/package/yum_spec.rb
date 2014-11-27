@@ -253,7 +253,7 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [])
+      described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [], [])
       provider.latest
     end
 
@@ -264,13 +264,24 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'])
+      described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'], [])
+      provider.latest
+    end
+
+    it "passes the value of disableexcludes install_options when querying" do
+      resource[:install_options] = [
+        {'--disableexcludes' => 'main'},
+        {'--disableexcludes' => 'centosplus'},
+      ]
+      provider.stubs(:properties).returns({:ensure => '3.4.5'})
+
+      described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'])
       provider.latest
     end
 
     describe 'and a newer version is not available' do
       before :each do
-        described_class.stubs(:latest_package_version).with(name, [], []).returns nil
+        described_class.stubs(:latest_package_version).with(name, [], [], []).returns nil
       end
 
       it 'raises an error the package is not installed' do
@@ -298,7 +309,7 @@ describe provider_class do
       end
 
       it 'includes the epoch in the version string' do
-        described_class.stubs(:latest_package_version).with(name, [], []).returns(latest_version)
+        described_class.stubs(:latest_package_version).with(name, [], [], []).returns(latest_version)
         provider.latest.should == '1:2.3.4-5'
       end
     end
@@ -332,37 +343,37 @@ describe provider_class do
     let(:enabled_versions) { {name => [mypackage_newerversion]} }
 
     it "returns the version hash if the package was found" do
-      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
-      version = described_class.latest_package_version(name, [], [])
+      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      version = described_class.latest_package_version(name, [], [], [])
       expect(version).to eq(mypackage_version)
     end
 
     it "is nil if the package was not found in the query" do
-      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
-      version = described_class.latest_package_version('nopackage', [], [])
+      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      version = described_class.latest_package_version('nopackage', [], [], [])
       expect(version).to be_nil
     end
 
     it "caches the package list and reuses that for subsequent queries" do
-      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
 
       2.times {
-        version = described_class.latest_package_version(name, [], [])
+        version = described_class.latest_package_version(name, [], [], [])
         expect(version).to eq mypackage_version
       }
     end
 
-    it "caches separate lists for each combination of 'enablerepo' and 'disablerepo'" do
-      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
-      described_class.expects(:check_updates).with(['enabled'], ['disabled']).once.returns(enabled_versions)
+    it "caches separate lists for each combination of 'enablerepo' and 'disablerepo' and 'disableexcludes'" do
+      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with(['enabled'], ['disabled'], ['disableexcludes']).once.returns(enabled_versions)
 
       2.times {
-        version = described_class.latest_package_version(name, [], [])
+        version = described_class.latest_package_version(name, [], [], [])
         expect(version).to eq mypackage_version
       }
 
       2.times {
-        version = described_class.latest_package_version(name, ['enabled'], ['disabled'])
+        version = described_class.latest_package_version(name, ['enabled'], ['disabled'], ['disableexcludes'])
         expect(version).to eq(mypackage_newerversion)
       }
     end
@@ -377,39 +388,54 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
         expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=updates --enablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
-      described_class.check_updates(%w[updates centosplus], [])
+      described_class.check_updates(%w[updates centosplus], [], [])
     end
 
     it "passes repos to disable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
         expect(args).to eq %w[/usr/bin/yum check-update --disablerepo=updates --disablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
-      described_class.check_updates([],%w[updates centosplus])
+      described_class.check_updates([],%w[updates centosplus], [])
     end
 
     it "passes a combination of repos to enable and disable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
         expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=os --enablerepo=contrib --disablerepo=updates --disablerepo=centosplus]
       end.returns(stub(:exitstatus => 0))
-      described_class.check_updates(%w[os contrib], %w[updates centosplus])
+      described_class.check_updates(%w[os contrib], %w[updates centosplus], [])
+    end
+
+    it "passes disableexcludes to 'yum check-update'" do
+      Puppet::Util::Execution.expects(:execute).with do |args, *rest|
+        expect(args).to eq %w[/usr/bin/yum check-update --disableexcludes=main --disableexcludes=centosplus]
+      end.returns(stub(:exitstatus => 0))
+      described_class.check_updates([], [], %w[main centosplus])
+    end
+
+    it "passes all options to 'yum check-update'" do
+      Puppet::Util::Execution.expects(:execute).with do |args, *rest|
+        expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=a --enablerepo=b --disablerepo=c
+                              --disablerepo=d --disableexcludes=e --disableexcludes=f]
+      end.returns(stub(:exitstatus => 0))
+      described_class.check_updates(%w[a b], %w[c d], %w[e f])
     end
 
     it "returns an empty hash if 'yum check-update' returned 0" do
       Puppet::Util::Execution.expects(:execute).returns(stub :exitstatus => 0)
-      expect(described_class.check_updates([], [])).to be_empty
+      expect(described_class.check_updates([], [], [])).to be_empty
     end
 
     it "returns a populated hash if 'yum check-update returned 100'" do
       output = stub(:exitstatus => 100)
       Puppet::Util::Execution.expects(:execute).returns(output)
       described_class.expects(:parse_updates).with(output).returns({:has => :updates})
-      expect(described_class.check_updates([], [])).to eq({:has => :updates})
+      expect(described_class.check_updates([], [], [])).to eq({:has => :updates})
     end
 
     it "returns an empty hash if 'yum check-update' returned an exit code that was not 0 or 100" do
       Puppet::Util::Execution.expects(:execute).returns(stub(:exitstatus => 1))
       described_class.expects(:warn)
-      expect(described_class.check_updates([], [])).to eq({})
+      expect(described_class.check_updates([], [], [])).to eq({})
     end
   end
 
