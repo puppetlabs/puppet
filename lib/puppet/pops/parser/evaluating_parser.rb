@@ -37,8 +37,8 @@ class Puppet::Pops::Parser::EvaluatingParser
     evaluate(scope, parse_string(s, file_source))
   end
 
-  def evaluate_file(file)
-    evaluate(parse_file(file))
+  def evaluate_file(scope, file)
+    evaluate(scope, parse_file(file))
   end
 
   def clear()
