@@ -77,7 +77,6 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
       if !missing_files.empty?
         raise Puppet::Error, "One or more file(s) specified did not exist:\n" + missing_files.map { |f| "   #{f}" }.join("\n")
-        exit(1)
       else
         # Exit with 1 if there were errors
         exit(1) unless status
