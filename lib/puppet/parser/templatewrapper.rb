@@ -58,30 +58,6 @@ class Puppet::Parser::TemplateWrapper
     scope.catalog.tags
   end
 
-  # Ruby treats variables like methods, so we used to expose variables
-  # within scope to the ERB code via method_missing.  As per RedMine #1427,
-  # though, this means that conflicts between methods in our inheritance
-  # tree (Kernel#fork) and variable names (fork => "yes/no") could arise.
-  #
-  # Worse, /new/ conflicts could pop up when a new kernel or object method
-  # was added to Ruby, causing templates to suddenly fail mysteriously when
-  # Ruby was upgraded.
-  #
-  # To ensure that legacy templates using unqualified names work we retain
-  # the missing_method definition here until we declare the syntax finally
-  # dead.
-  def method_missing(name, *args)
-    line_number = script_line
-    if scope.include?(name.to_s)
-      Puppet.deprecation_warning("Variable access via '#{name}' is deprecated. Use '@#{name}' instead. #{to_s}:#{line_number}")
-      return scope[name.to_s, { :file => @__file__, :line => line_number }]
-    else
-      # Just throw an error immediately, instead of searching for
-      # other missingmethod things or whatever.
-      raise Puppet::ParseError.new("Could not find value for '#{name}'", @__file__, line_number)
-    end
-  end
-
   # @api private
   def file=(filename)
     unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
