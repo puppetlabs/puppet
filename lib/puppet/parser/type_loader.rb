@@ -5,6 +5,8 @@ require 'puppet/parser/parser_factory'
 class Puppet::Parser::TypeLoader
   extend  Forwardable
 
+  class TypeLoaderError < StandardError; end
+
   # Import manifest files that match a given file glob pattern.
   #
   # @param pattern [String] the file glob to apply when determining which files
@@ -70,7 +72,7 @@ class Puppet::Parser::TypeLoader
           Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
           return result
         end
-      rescue Puppet::ImportError => detail
+      rescue TypeLoaderError => detail
         # I'm not convienced we should just drop these errors, but this
         # preserves existing behaviours.
       end
@@ -98,7 +100,7 @@ class Puppet::Parser::TypeLoader
   end
 
   def raise_no_files_found(pattern)
-    raise Puppet::ImportError, "No file(s) found for import of '#{pattern}'"
+    raise TypeLoaderError, "No file(s) found for import of '#{pattern}'"
   end
 
   def load_files(modname, files)

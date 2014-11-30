@@ -46,14 +46,12 @@ describe Puppet::Resource::TypeCollection do
     it "should load the module's init file first" do
       name = "simple"
       mk_module(name, :init => [name])
-
       @code.find_hostclass("", name).name.should == name
     end
 
     it "should load the module's init file even when searching from a different namespace" do
       name = "simple"
       mk_module(name, :init => [name])
-
       @code.find_hostclass("other::ns", name).name.should == name
     end
 
@@ -67,15 +65,14 @@ describe Puppet::Resource::TypeCollection do
       modname = "both"
       name = "sub"
       mk_module(modname, :init => %w{both both::sub})
-
-      @code.find_hostclass("both", name).name.should == "both::sub"
+      @code.find_hostclass([], "both::sub").name.should == "both::sub"
     end
 
     it "should be able load classes from a separate file" do
       modname = "separate"
       name = "sub"
       mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
-      @code.find_hostclass("separate", name).name.should == "separate::sub"
+      @code.find_hostclass([], "separate::sub").name.should == "separate::sub"
     end
 
     it "should not fail when loading from a separate file if there is no module file" do

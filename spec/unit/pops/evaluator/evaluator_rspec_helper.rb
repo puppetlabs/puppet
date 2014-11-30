@@ -28,8 +28,8 @@ module EvaluatorRspecHelper
     evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new
     result = evaluator.evaluate(in_top_scope.current, top_scope)
     if in_named_scope
-      other_scope = Puppet::Parser::Scope.new(compiler)
-      other_scope.add_namespace(scopename)
+      other_scope = Puppet::Parser::Scope.new(compiler, :namespace => scopename)
+#      other_scope.add_namespace(scopename)
       result = evaluator.evaluate(in_named_scope.current, other_scope)
     end
     if in_top_scope_again

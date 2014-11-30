@@ -224,16 +224,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Add to our list of namespaces.
-  def add_namespace(ns)
-    return false if @namespaces.include?(ns)
-    if @namespaces == [""]
-      @namespaces = [ns]
-    else
-      @namespaces << ns
-    end
-  end
-
   def find_hostclass(name, options = {})
     known_resource_types.find_hostclass(namespaces, name, options)
   end
@@ -270,9 +260,9 @@ class Puppet::Parser::Scope
     end
 
     if n = options.delete(:namespace)
-      @namespaces = [n]
+      @namespaces = [n.freeze].freeze
     else
-      @namespaces = [""]
+      @namespaces = ["".freeze].freeze
     end
 
     raise Puppet::DevError, "compiler passed in options" if options.include? :compiler
@@ -537,7 +527,7 @@ class Puppet::Parser::Scope
   end
 
   def namespaces
-    @namespaces.dup
+    @namespaces
   end
 
   # Create a new scope and set these options.

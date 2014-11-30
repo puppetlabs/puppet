@@ -553,18 +553,6 @@ describe Puppet::Parser::Scope do
     end
   end
 
-  it "should use its namespaces to find hostclasses" do
-    klass = @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "a::b::c")
-    @scope.add_namespace "a::b"
-    @scope.find_hostclass("c").should equal(klass)
-  end
-
-  it "should use its namespaces to find definitions" do
-    define = @scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "a::b::c")
-    @scope.add_namespace "a::b"
-    @scope.find_definition("c").should equal(define)
-  end
-
   describe "when managing defaults" do
     it "should be able to set and lookup defaults" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
