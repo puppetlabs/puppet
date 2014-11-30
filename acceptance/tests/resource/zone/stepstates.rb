@@ -16,7 +16,7 @@ agents.each do |agent|
   step "Zone: steps - setup"
   setup agent
   step "Zone: steps - create"
-  apply_manifest_on(agent, "zone {tstzone : ensure=>configured, iptype=>shared, path=>'/tstzones/mnt' }" ) do
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }' ) do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
   step "Zone: steps - verify (create)"
