@@ -1,4 +1,5 @@
 require 'puppet/network/http/handler'
+require 'puppet/network/http/api/v3'
 require 'resolv'
 require 'webrick'
 require 'webrick/httputils'
@@ -14,7 +15,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   def initialize(server)
     raise ArgumentError, "server is required" unless server
-    register([Puppet::Network::HTTP::API::V2.routes, Puppet::Network::HTTP::API::V1.routes])
+    register([Puppet::Network::HTTP::API::V3.routes, Puppet::Network::HTTP::API::V2.routes])
     super(server)
   end
 

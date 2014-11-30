@@ -6,22 +6,23 @@ module Puppet
     attr_accessor :rights
 
     DEFAULT_ACL = [
-      { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
-      { :acl => "~ ^\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
-      # this one will allow all file access, and thus delegate
-      # to fileserver.conf
-      { :acl => "/file" },
-      { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-      { :acl => "~ ^\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
-      # These allow `auth any`, because if you can do them anonymously you
-      # should probably also be able to do them when trusted.
-      { :acl => "/certificate/ca", :method => :find, :authenticated => :any },
-      { :acl => "/certificate/", :method => :find, :authenticated => :any },
-      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => :any },
-      { :acl => "/status", :method => [:find], :authenticated => true },
-
       # API V2.0
       { :acl => "/v2.0/environments", :method => :find, :allow => '*', :authenticated => true },
+
+      # API V3
+      { :acl => "~ ^\/v3\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^\/v3\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      # this one will allow all file access, and thus delegate
+      # to fileserver.conf
+      { :acl => "/v3/file" },
+      { :acl => "/v3/certificate_revocation_list/ca", :method => :find, :authenticated => true },
+      { :acl => "~ ^\/v3\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
+      # These allow `auth any`, because if you can do them anonymously you
+      # should probably also be able to do them when trusted.
+      { :acl => "/v3/certificate/ca", :method => :find, :authenticated => :any },
+      { :acl => "/v3/certificate/", :method => :find, :authenticated => :any },
+      { :acl => "/v3/certificate_request", :method => [:find, :save], :authenticated => :any },
+      { :acl => "/v3/status", :method => [:find], :authenticated => true },
     ]
 
     # Just proxy the setting methods to our rights stuff

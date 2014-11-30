@@ -21,7 +21,7 @@ describe Puppet::Network::HTTP::API::V3 do
         'accept' => request[:accept_header],
         'content-type' => "text/pson", },
       :method => "HEAD",
-      :path => "/#{indirection.name}/#{data.value}",
+      :path => "/v3/#{indirection.name}/#{data.value}",
       :params => params,
     })
   end
@@ -32,7 +32,7 @@ describe Puppet::Network::HTTP::API::V3 do
         'accept' => request[:accept_header],
         'content-type' => request[:content_type_header] || "text/pson", },
       :method => "PUT",
-      :path => "/#{indirection.name}/#{data.value}",
+      :path => "/v3/#{indirection.name}/#{data.value}",
       :params => params,
       :body => request[:body].nil? ? data.render("pson") : request[:body]
     })
@@ -44,7 +44,7 @@ describe Puppet::Network::HTTP::API::V3 do
         'accept' => request[:accept_header],
         'content-type' => "text/pson", },
       :method => "DELETE",
-      :path => "/#{indirection.name}/#{data.value}",
+      :path => "/v3/#{indirection.name}/#{data.value}",
       :params => params,
       :body => ''
     })
@@ -56,7 +56,7 @@ describe Puppet::Network::HTTP::API::V3 do
         'accept' => request[:accept_header],
         'content-type' => "text/pson", },
       :method => "GET",
-      :path => "/#{indirection.name}/#{data.value}",
+      :path => "/v3/#{indirection.name}/#{data.value}",
       :params => params,
       :body => ''
     })
@@ -68,7 +68,7 @@ describe Puppet::Network::HTTP::API::V3 do
         'accept' => request[:accept_header],
         'content-type' => "text/pson", },
       :method => "GET",
-      :path => "/#{indirection.name}s/#{key}",
+      :path => "/v3/#{indirection.name}s/#{key}",
       :params => params,
       :body => ''
     })
@@ -98,86 +98,86 @@ describe Puppet::Network::HTTP::API::V3 do
     end
 
     it "should get the environment from a query parameter" do
-      handler.uri2indirection("GET", "/foo/bar", params)[3][:environment].to_s.should == "env"
+      handler.uri2indirection("GET", "/v3/foo/bar", params)[3][:environment].to_s.should == "env"
     end
 
     it "should fail if the environment is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "/foo/bar", {:environment => "env ness"}) }.should raise_error(ArgumentError)
+      lambda { handler.uri2indirection("GET", "/v3/foo/bar", {:environment => "env ness"}) }.should raise_error(ArgumentError)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
-      handler.uri2indirection("GET", "/foo/bar", { :environment => "env",
-                                                   :bucket_path => "/malicious/path" })[3].should_not include({ :bucket_path => "/malicious/path" })
+      handler.uri2indirection("GET", "/v3/foo/bar", { :environment => "env",
+                                                      :bucket_path => "/malicious/path" })[3].should_not include({ :bucket_path => "/malicious/path" })
     end
 
     it "should pass allowed parameters through" do
-      handler.uri2indirection("GET", "/foo/bar", { :environment => "env",
-                                                   :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
+      handler.uri2indirection("GET", "/v3/foo/bar", { :environment => "env",
+                                                      :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
     end
 
     it "should return the environment as a Puppet::Node::Environment" do
-      handler.uri2indirection("GET", "/foo/bar", params)[3][:environment].should be_a(Puppet::Node::Environment)
+      handler.uri2indirection("GET", "/v3/foo/bar", params)[3][:environment].should be_a(Puppet::Node::Environment)
     end
 
     it "should use the first field of the URI as the indirection name" do
-      handler.uri2indirection("GET", "/foo/bar", params)[0].should == "foo"
+      handler.uri2indirection("GET", "/v3/foo/bar", params)[0].should == "foo"
     end
 
     it "should fail if the indirection name is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "/foo ness/bar", params) }.should raise_error(ArgumentError)
+      lambda { handler.uri2indirection("GET", "/v3/foo ness/bar", params) }.should raise_error(ArgumentError)
     end
 
     it "should use the remainder of the URI as the indirection key" do
-      handler.uri2indirection("GET", "/foo/bar", params)[2].should == "bar"
+      handler.uri2indirection("GET", "/v3/foo/bar", params)[2].should == "bar"
     end
 
     it "should support the indirection key being a /-separated file path" do
-      handler.uri2indirection("GET", "/foo/bee/baz/bomb", params)[2].should == "bee/baz/bomb"
+      handler.uri2indirection("GET", "/v3/foo/bee/baz/bomb", params)[2].should == "bee/baz/bomb"
     end
 
     it "should fail if no indirection key is specified" do
-      lambda { handler.uri2indirection("GET", "/foo", params) }.should raise_error(ArgumentError)
+      lambda { handler.uri2indirection("GET", "/v3/foo", params) }.should raise_error(ArgumentError)
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
-      handler.uri2indirection("GET", "/foo/bar", params)[1].should == :find
+      handler.uri2indirection("GET", "/v3/foo/bar", params)[1].should == :find
     end
 
     it "should choose 'find' as the indirection method if the http method is a POST and the indirection name is singular" do
-      handler.uri2indirection("POST", "/foo/bar", params)[1].should == :find
+      handler.uri2indirection("POST", "/v3/foo/bar", params)[1].should == :find
     end
 
     it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
-      handler.uri2indirection("HEAD", "/foo/bar", params)[1].should == :head
+      handler.uri2indirection("HEAD", "/v3/foo/bar", params)[1].should == :head
     end
 
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
-      handler.uri2indirection("GET", "/foos/bar", params)[1].should == :search
+      handler.uri2indirection("GET", "/v3/foos/bar", params)[1].should == :search
     end
 
     it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
-      handler.uri2indirection("GET", "/statuses/bar", params)[0].should == "status"
+      handler.uri2indirection("GET", "/v3/statuses/bar", params)[0].should == "status"
     end
 
     it "should change indirection name to 'node' if the http method is a GET and the indirection name is nodes" do
-      handler.uri2indirection("GET", "/nodes/bar", params)[0].should == "node"
+      handler.uri2indirection("GET", "/v3/nodes/bar", params)[0].should == "node"
     end
 
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
-      handler.uri2indirection("DELETE", "/foo/bar", params)[1].should == :destroy
+      handler.uri2indirection("DELETE", "/v3/foo/bar", params)[1].should == :destroy
     end
 
     it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is singular" do
-      handler.uri2indirection("PUT", "/foo/bar", params)[1].should == :save
+      handler.uri2indirection("PUT", "/v3/foo/bar", params)[1].should == :save
     end
 
     it "should fail if an indirection method cannot be picked" do
-      lambda { handler.uri2indirection("UPDATE", "/node/bar", params) }.should raise_error(ArgumentError)
+      lambda { handler.uri2indirection("UPDATE", "/v3/node/bar", params) }.should raise_error(ArgumentError)
     end
 
     it "should URI unescape the indirection key" do
       escaped = URI.escape("foo bar")
-      indirection, method, key, final_params = handler.uri2indirection("GET", "/node/#{escaped}", params)
+      indirection, method, key, final_params = handler.uri2indirection("GET", "/v3/node/#{escaped}", params)
       key.should == "foo bar"
     end
   end
@@ -191,12 +191,12 @@ describe Puppet::Network::HTTP::API::V3 do
     end
 
     it "should include the environment in the query string of the URI" do
-      handler.class.request_to_uri(request).should == "/foo/with%20spaces?environment=myenv&foo=bar"
+      handler.class.request_to_uri(request).should == "/v3/foo/with%20spaces?environment=myenv&foo=bar"
     end
 
     it "should pluralize the indirection name if the method is 'search'" do
       request.stubs(:method).returns :search
-      handler.class.request_to_uri(request).split("/")[1].should == "foos"
+      handler.class.request_to_uri(request).split("/")[2].should == "foos"
     end
 
     it "should add the query string to the URI" do
@@ -210,16 +210,16 @@ describe Puppet::Network::HTTP::API::V3 do
     let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
 
     it "should use the indirection as the first field of the URI" do
-      handler.class.request_to_uri_and_body(request).first.split("/")[1].should == "foo"
+      handler.class.request_to_uri_and_body(request).first.split("/")[2].should == "foo"
     end
 
     it "should use the escaped key as the remainder of the URI" do
       escaped = URI.escape("with spaces")
-      handler.class.request_to_uri_and_body(request).first.split("/")[2].sub(/\?.+/, '').should == escaped
+      handler.class.request_to_uri_and_body(request).first.split("/")[3].sub(/\?.+/, '').should == escaped
     end
 
     it "should return the URI and body separately" do
-      handler.class.request_to_uri_and_body(request).should == ["/foo/with%20spaces", "environment=myenv&foo=bar"]
+      handler.class.request_to_uri_and_body(request).should == ["/v3/foo/with%20spaces", "environment=myenv&foo=bar"]
     end
   end
 
