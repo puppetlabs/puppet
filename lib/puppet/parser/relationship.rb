@@ -31,21 +31,13 @@ class Puppet::Parser::Relationship
   end
 
   def mk_relationship(source, target, catalog)
-    # REVISIT: In Ruby 1.8 we applied `to_s` to source and target, rather than
-    # `join` without an argument.  In 1.9 the behaviour of Array#to_s changed,
-    # and it gives a different representation than just concat the stringified
-    # elements.
-    #
-    # This restores the behaviour, but doesn't address the underlying question
-    # of what would happen when more than one item was passed in that array.
-    # (Hint: this will not end well.)
-    #
-    # See http://projects.puppetlabs.com/issues/12076 for the ticket tracking
-    # the fact that we should dig out the sane version of this behaviour, then
-    # implement it - where we don't risk breaking a stable release series.
-    # --daniel 2012-01-21
-    source = source.is_a?(Array) ? source.join : source.to_s
-    target = target.is_a?(Array) ? target.join : target.to_s
+    # There was once an assumption that this could be an array. These raise
+    # assertions are here as a sanity check for 4.0 and can be removed after
+    # a release or two
+    raise ArgumentError, "source shouldn't be an array" if source.is_a?(Array)
+    raise ArgumentError, "target shouldn't be an array" if target.is_a?(Array)
+    source = source.to_s
+    target = target.to_s
 
     unless source_resource = catalog.resource(source)
       raise ArgumentError, "Could not find resource '#{source}' for relationship on '#{target}'"
