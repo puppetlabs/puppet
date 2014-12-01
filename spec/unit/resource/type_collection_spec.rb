@@ -96,48 +96,48 @@ describe Puppet::Resource::TypeCollection do
     it "should not attempt to import anything when the type is already defined" do
       @code.add @type
       @code.loader.expects(:import).never
-      @code.find_hostclass([], "ns::klass").should equal(@type)
+      @code.find_hostclass("ns::klass").should equal(@type)
     end
 
     describe "that need to be loaded" do
       it "should use the loader to load the files" do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
-        @code.find_hostclass([], "klass")
+        @code.find_hostclass("klass")
       end
       it "should use the loader to load the files" do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
-        @code.find_hostclass([], "ns::klass")
+        @code.find_hostclass("ns::klass")
       end
 
       it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
-        @code.find_hostclass([], "ns::klass")
+        @code.find_hostclass("ns::klass")
       end
 
       it "should use the class returned by the loader" do
         @code.loader.expects(:try_load_fqname).returns(:klass)
         @code.expects(:hostclass).with("ns::klass").returns(false)
-        @code.find_hostclass([], "ns::klass").should == :klass
+        @code.find_hostclass("ns::klass").should == :klass
       end
 
       it "should return nil if the name isn't found" do
         @code.loader.stubs(:try_load_fqname).returns(nil)
-        @code.find_hostclass([], "Ns::Klass").should be_nil
+        @code.find_hostclass("Ns::Klass").should be_nil
       end
 
       it "already-loaded names at broader scopes should not shadow autoloaded names" do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
         @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
-        @code.find_hostclass([], "foo::bar").should == :foobar
+        @code.find_hostclass("foo::bar").should == :foobar
       end
 
       it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
         Puppet[:ignoremissingtypes] = true
         @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
-        @code.find_hostclass([], "ns::klass").should be_nil
+        @code.find_hostclass("ns::klass").should be_nil
 
         Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
-        @code.find_hostclass([], "ns::klass").should be_nil
+        @code.find_hostclass("ns::klass").should be_nil
       end
     end
   end
@@ -172,33 +172,33 @@ describe Puppet::Resource::TypeCollection do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find_hostclass("namespace", "::foo::bar").should equal(instance)
+      loader.find_hostclass("::foo::bar").should equal(instance)
     end
 
     it "should return nil if the instance name is fully qualified and no such instance exists" do
       loader = Puppet::Resource::TypeCollection.new(environment)
-      loader.find_hostclass("namespace", "::foo::bar").should be_nil
+      loader.find_hostclass("::foo::bar").should be_nil
     end
 
     it "should be able to find classes in the base namespace" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo")
       loader.add instance
-      loader.find_hostclass("", "foo").should equal(instance)
+      loader.find_hostclass("foo").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in a provided namespace" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find_hostclass([], "foo::bar").should equal(instance)
+      loader.find_hostclass("foo::bar").should equal(instance)
     end
 
     it "should return nil if the object cannot be found" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find_hostclass([], "foo::bar::eh").should be_nil
+      loader.find_hostclass("foo::bar::eh").should be_nil
     end
 
     describe "when topscope has a class that has the same name as a local class" do
@@ -210,10 +210,10 @@ describe Puppet::Resource::TypeCollection do
       end
 
       it "looks up the given name, no more, no less" do
-        @loader.find_hostclass([], "bar").name.should == 'bar'
-        @loader.find_hostclass([], "::bar").name.should == 'bar'
-        @loader.find_hostclass([], "foo::bar").name.should == 'foo::bar'
-        @loader.find_hostclass([], "::foo::bar").name.should == 'foo::bar'
+        @loader.find_hostclass("bar").name.should == 'bar'
+        @loader.find_hostclass("::bar").name.should == 'bar'
+        @loader.find_hostclass("foo::bar").name.should == 'foo::bar'
+        @loader.find_hostclass("::foo::bar").name.should == 'foo::bar'
       end
     end
 
@@ -221,7 +221,7 @@ describe Puppet::Resource::TypeCollection do
         @loader = Puppet::Resource::TypeCollection.new(environment)
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
 
-        @loader.find_hostclass("foo", "::bar").should == nil
+        @loader.find_hostclass("::bar").should == nil
     end
 
   end
@@ -230,7 +230,7 @@ describe Puppet::Resource::TypeCollection do
     node = Puppet::Resource::Type.new(:node, "bar")
     loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add(node)
-    loader.find_node(stub("ignored"), "bar").should == node
+    loader.find_node("bar").should == node
   end
 
   it "should indicate whether any nodes are defined" do

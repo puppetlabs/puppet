@@ -108,16 +108,16 @@ class Puppet::Resource::TypeCollection
     @definitions[munge_name(name)]
   end
 
-  def find_node(namespaces, name)
+  def find_node(name)
     @nodes[munge_name(name)]
   end
 
-  def find_hostclass(namespaces, name, options = {})
-    find_or_load(namespaces, name, :hostclass, options)
+  def find_hostclass(name)
+    find_or_load(name, :hostclass)
   end
 
-  def find_definition(namespaces, name)
-    find_or_load(namespaces, name, :definition)
+  def find_definition(name)
+    find_or_load(name, :definition)
   end
 
   [:hostclasses, :nodes, :definitions].each do |m|
@@ -150,7 +150,7 @@ class Puppet::Resource::TypeCollection
 
   # Resolve namespaces and find the given object.  Autoload it if
   # necessary.
-  def find_or_load(namespaces, name, type, options = {})
+  def find_or_load(name, type)
     # Name is always absolute, but may start with :: which must be removed
     fqname = (name[0,2] == COLON_COLON ? name[2..-1] : name)
 

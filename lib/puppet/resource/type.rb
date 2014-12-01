@@ -245,7 +245,7 @@ class Puppet::Resource::Type
   #
   # def parent_type
   #   @parent_type ||= parent && (
-  #     resource_type_collection.find_or_load([name],parent,type.to_sym) ||
+  #     resource_type_collection.find_or_load(parent,type.to_sym) ||
   #     fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{resource_type_collection.environment}"
   #   )
   # end
@@ -255,9 +255,12 @@ class Puppet::Resource::Type
   def parent_type(scope = nil)
     return nil unless parent
 
+#    @parent_type ||= parent && (scope.environment.known_resource_types.find_or_load(parent, type.to_sym) ||
+#      fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"))
+#
     unless @parent_type
       raise "Must pass scope to parent_type when called first time" unless scope
-      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", [name], parent)
+      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", parent)
         fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"
       end
     end

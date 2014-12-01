@@ -224,12 +224,12 @@ class Puppet::Parser::Scope
     end
   end
 
-  def find_hostclass(name, options = {})
-    known_resource_types.find_hostclass(namespaces, name, options)
+  def find_hostclass(name)
+    known_resource_types.find_hostclass(name)
   end
 
   def find_definition(name)
-    known_resource_types.find_definition(namespaces, name)
+    known_resource_types.find_definition(name)
   end
 
   def find_global_scope()
@@ -342,7 +342,8 @@ class Puppet::Parser::Scope
 
   # Look up a defined type.
   def lookuptype(name)
-    find_definition(name) || find_hostclass(name)
+    known_resource_types.find_definition(name) || known_resource_types.find_hostclass(name)
+#    find_definition(name) || find_hostclass(name)
   end
 
   def undef_as(x,v)
@@ -749,7 +750,7 @@ class Puppet::Parser::Scope
   end
 
   def find_defined_resource_type(type)
-    known_resource_types.find_definition(namespaces, type.to_s.downcase)
+    known_resource_types.find_definition(type.to_s.downcase)
   end
 
 

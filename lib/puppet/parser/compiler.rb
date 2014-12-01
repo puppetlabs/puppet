@@ -202,7 +202,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name, :assume_fqname => fqname) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      scope.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
     end
 
     if class_parameters
@@ -397,7 +397,7 @@ class Puppet::Parser::Compiler
 
   # Find and evaluate our main object, if possible.
   def evaluate_main
-    @main = known_resource_types.find_hostclass([""], "") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
+    @main = known_resource_types.find_hostclass("") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
     @topscope.source = @main
     @main_resource = Puppet::Parser::Resource.new("class", :main, :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource
