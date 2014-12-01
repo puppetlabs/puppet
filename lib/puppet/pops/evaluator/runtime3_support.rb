@@ -299,7 +299,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
           resource.resource_type.instantiate_resource(scope, resource)
         end
         scope.compiler.add_resource(scope, resource)
-        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == CLASS_STRING
+        scope.compiler.evaluate_classes([resource_title], scope, false) if fully_qualified_type == CLASS_STRING
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
         resource_to_ptype(resource)

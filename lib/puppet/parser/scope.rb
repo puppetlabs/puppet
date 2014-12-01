@@ -342,8 +342,8 @@ class Puppet::Parser::Scope
 
   # Look up a defined type.
   def lookuptype(name)
+    # This happens a lot, avoid making a call to make a call
     known_resource_types.find_definition(name) || known_resource_types.find_hostclass(name)
-#    find_definition(name) || find_hostclass(name)
   end
 
   def undef_as(x,v)
