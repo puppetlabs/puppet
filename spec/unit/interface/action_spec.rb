@@ -15,9 +15,6 @@ describe Puppet::Interface::Action do
 
   describe "#when_invoked=" do
     it "should fail if the block has arity 0" do
-      pending "Ruby 1.8 (painfully) treats argument-free blocks as arity -1" if
-        RUBY_VERSION =~ /^1\.8/
-
       expect {
         Puppet::Interface.new(:action_when_invoked, '1.0.0') do
           action :foo do
