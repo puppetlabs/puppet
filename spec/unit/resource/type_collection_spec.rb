@@ -131,13 +131,24 @@ describe Puppet::Resource::TypeCollection do
         @code.find_hostclass("foo::bar").should == :foobar
       end
 
-      it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
-        Puppet[:ignoremissingtypes] = true
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
-        @code.find_hostclass("ns::klass").should be_nil
+      context 'when debugging' do
+        # This test requires that debugging is on, it will otherwise not make a call to debug,
+        # which is the easiest way to detect that that a certain path has been taken.
+        before(:each) do
+          Puppet.debug = true
+        end
 
-        Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
-        @code.find_hostclass("ns::klass").should be_nil
+        after (:each) do
+          Puppet.debug = false
+        end
+
+        it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
+          Puppet[:ignoremissingtypes] = true
+          @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
+          @code.find_hostclass("ns::klass").should be_nil
+          Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
+          @code.find_hostclass("ns::klass").should be_nil
+        end
       end
     end
   end

@@ -159,7 +159,10 @@ class Puppet::Resource::TypeCollection
       if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
         # do not try to autoload if we already tried and it wasn't conclusive
         # as this is a time consuming operation. Warn the user.
-        debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+        # Check first if debugging is on since the call to debug_once is expensive
+        if Puppet[:debug]
+          debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+        end
       else
         result = loader.try_load_fqname(type, fqname)
         @notfound[ fqname ] = result.nil?

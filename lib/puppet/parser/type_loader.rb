@@ -69,7 +69,7 @@ class Puppet::Parser::TypeLoader
       begin
         imported_types = import_from_modules(filename)
         if result = imported_types.find { |t| t.type == type and t.name == fqname }
-          Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
+          Puppet.debug {"Automatically imported #{fqname} from #{filename} into #{environment}"}
           return result
         end
       rescue TypeLoaderError => detail
