@@ -1001,6 +1001,15 @@ EOT
       this is the port to listen on; for puppet agent, this is the port
       to make requests on. Both applications use this setting to get the port.",
     },
+    :master_url_prefix => {
+        :default => "/puppet",
+        :desc    => "The prefix at which the puppet master API is mounted.",
+        :hook    => proc do |value|
+          if !value.start_with?("/")
+            Puppet[:master_url_prefix] = "/#{value}"
+          end
+        end
+    },
     :node_name => {
       :default    => "cert",
       :desc       => "How the puppet master determines the client's identity

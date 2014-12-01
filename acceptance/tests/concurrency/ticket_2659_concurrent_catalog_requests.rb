@@ -82,7 +82,7 @@ with_puppet_running_on(master, master_opts, testdir) do
         (
           sleep_for="0.$(( $RANDOM % 49 ))"
           sleep $sleep_for
-          url='https://#{master}:8140/v3/catalog/#{agent_cert}?environment=production'
+          url='https://#{master}:8140/puppet/v3/catalog/#{agent_cert}?environment=production'
           echo "Curling: $url"
           curl --tlsv1 -v -# -H 'Accept: text/pson' --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} $url
           echo "$PPID Completed"

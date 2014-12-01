@@ -50,10 +50,13 @@ class Puppet::Network::HTTP::API::V3::IndirectedRoutes
     return do_exception(response, e)
   end
 
+  def self.url_prefix
+    "#{Puppet[:master_url_prefix]}/v3"
+  end
+
   def uri2indirection(http_method, uri, params)
     # the first field is always nil because of the leading slash,
-    # and we also want to strip off the leading /v3.
-    indirection_name, key = uri.split("/", 4)[2..-1]
+    indirection_name, key = uri.split("/", 5)[3..-1]
     environment = params.delete(:environment)
 
     if indirection_name !~ /^\w+$/
@@ -61,7 +64,7 @@ class Puppet::Network::HTTP::API::V3::IndirectedRoutes
     end
 
     method = indirection_method(http_method, indirection_name)
-    check_authorization(method, "/v3/#{indirection_name}/#{key}", params)
+    check_authorization(method, "#{self.class.url_prefix}/#{indirection_name}/#{key}", params)
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     if !indirection
@@ -212,7 +215,7 @@ class Puppet::Network::HTTP::API::V3::IndirectedRoutes
 
   def self.request_to_uri_and_body(request)
     indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["/v3/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.name}&#{request.query_string}"]
+    ["#{url_prefix}/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.name}&#{request.query_string}"]
   end
 
   def self.pluralize(indirection)

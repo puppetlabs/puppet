@@ -14,15 +14,15 @@ node_names.uniq!
 authfile = "#{testdir}/auth.conf"
 authconf = node_names.map do |node_name|
   %Q[
-path /v3/catalog/#{node_name}
+path /puppet/v3/catalog/#{node_name}
 auth yes
 allow *
 
-path /v3/node/#{node_name}
+path /puppet/v3/node/#{node_name}
 auth yes
 allow *
 
-path /v3/report/#{node_name}
+path /puppet/v3/report/#{node_name}
 auth yes
 allow *
 ]

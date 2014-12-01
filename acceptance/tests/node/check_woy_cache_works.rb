@@ -7,15 +7,15 @@ test_name "ticket #16753 node data should be cached in yaml to allow it to be qu
 
 node_name = "woy_node_#{SecureRandom.hex}"
 auth_contents = <<AUTHCONF
-path /v3/catalog/#{node_name}
+path /puppet/v3/catalog/#{node_name}
 auth yes
 allow *
 
-path /v3/node/#{node_name}
+path /puppet/v3/node/#{node_name}
 auth yes
 allow *
 
-path /v3/report/#{node_name}
+path /puppet/v3/report/#{node_name}
 auth yes
 allow *
 AUTHCONF
