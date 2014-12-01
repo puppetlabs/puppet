@@ -52,7 +52,7 @@ module Puppet::ModuleTool
       process_name(data) if data['name']
       process_version(data) if data['version']
       process_source(data) if data['source']
-      merge_dependencies(data) if data['dependencies']
+      process_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
       return self
@@ -65,8 +65,13 @@ module Puppet::ModuleTool
       validate_name(name)
       validate_version_range(version_requirement) if version_requirement
 
-      if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
-        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json or the Modulefile."
+      duplicates = @data['dependencies'].select { |d| d.full_module_name == name }
+      unless duplicates.empty?
+        duplicates.each do |dup|
+          if dup.version_requirement != version_requirement
+            raise Puppet::ModuleTool::Errors::DuplicateDependencyError.new(name, :original => dup.version_requirement, :dupe => version_requirement, :source => 'metadata.json')
+          end
+        end
       end
 
       dep = Dependency.new(name, version_requirement, repository)
@@ -111,7 +116,11 @@ module Puppet::ModuleTool
       keys -= demoted_keys
 
       contents = (promoted_keys + keys + demoted_keys).map do |k|
-        value = (JSON.pretty_generate(data[k]) rescue data[k].to_json)
+        if k == 'dependencies'
+          value = @data[k].to_a.to_json
+        else
+          value = (JSON.pretty_generate(@data[k]) rescue @data[k].to_json)
+        end
         "#{k.to_json}: #{value}"
       end
 
@@ -161,7 +170,7 @@ module Puppet::ModuleTool
     end
 
     # Validates and parses the dependencies.
-    def merge_dependencies(data)
+    def process_dependencies(data)
       data['dependencies'].each do |dep|
         add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
       end

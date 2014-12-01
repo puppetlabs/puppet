@@ -43,6 +43,8 @@ module Puppet::ModuleTool
     # string). Optional. Can be called multiple times to add many dependencies.
     def dependency(name, version_requirement = nil, repository = nil)
       @metadata.add_dependency(name, version_requirement, repository)
+    rescue Puppet::ModuleTool::Errors::DuplicateDependencyError => e
+      raise Puppet::ModuleTool::Errors::DuplicateDependencyError.new(e.name, :original => e.original, :dupe => e.dupe, :source => "Modulefile")
     end
 
     # Set the source
