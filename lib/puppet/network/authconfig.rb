@@ -23,6 +23,7 @@ module Puppet
       { :acl => "/v3/certificate/", :method => :find, :authenticated => :any },
       { :acl => "/v3/certificate_request", :method => [:find, :save], :authenticated => :any },
       { :acl => "/v3/status", :method => [:find], :authenticated => true },
+      { :acl => "/v3/environments", :method => :find, :allow => '*', :authenticated => true },
     ]
 
     # Just proxy the setting methods to our rights stuff

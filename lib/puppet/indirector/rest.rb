@@ -2,12 +2,14 @@ require 'net/http'
 require 'uri'
 
 require 'puppet/network/http'
-require 'puppet/network/http/api/v3'
+require 'puppet/network/http/api/v3/indirected_routes'
 require 'puppet/network/http_pool'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   include Puppet::Network::HTTP::Compression.module
+
+  IndirectedRoutes = Puppet::Network::HTTP::API::V3::IndirectedRoutes
 
   class << self
     attr_reader :server_setting, :port_setting
@@ -83,7 +85,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    uri, body = Puppet::Network::HTTP::API::V3.request_to_uri_and_body(request)
+    uri, body = IndirectedRoutes.request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
 
     response = do_request(request) do |req|
@@ -121,7 +123,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def head(request)
     response = do_request(request) do |req|
-      http_head(req, Puppet::Network::HTTP::API::V3.request_to_uri(req), headers)
+      http_head(req, IndirectedRoutes.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -133,7 +135,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def search(request)
     response = do_request(request) do |req|
-      http_get(req, Puppet::Network::HTTP::API::V3.request_to_uri(req), headers)
+      http_get(req, IndirectedRoutes.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -148,7 +150,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
     response = do_request(request) do |req|
-      http_delete(req, Puppet::Network::HTTP::API::V3.request_to_uri(req), headers)
+      http_delete(req, IndirectedRoutes.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -163,7 +165,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
 
     response = do_request(request) do |req|
-      http_put(req, Puppet::Network::HTTP::API::V3.request_to_uri(req), req.instance.render, headers.merge({ "Content-Type" => req.instance.mime }))
+      http_put(req, IndirectedRoutes.request_to_uri(req), req.instance.render, headers.merge({ "Content-Type" => req.instance.mime }))
     end
 
     if is_http_200?(response)
