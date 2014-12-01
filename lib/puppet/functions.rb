@@ -1,5 +1,3 @@
-# @note WARNING: This new function API is still under development and may change at any time
-#
 # Functions in the puppet language can be written in Ruby and distributed in
 # puppet modules. The function is written by creating a file in the module's
 # `lib/puppet/functions/<modulename>` directory, where `<modulename>` is
@@ -255,14 +253,18 @@ module Puppet::Functions
     #
     # @api public
     def param(type, name)
-      if type.is_a?(String)
-        @types << type
-        @names << name
-        # mark what should be picked for this position when dispatching
-        @weaving << @names.size()-1
-      else
+      unless type.is_a?(String)
         raise ArgumentError, "Type signature argument must be a String reference to a Puppet Data Type. Got #{type.class}"
       end
+
+      unless name.is_a?(Symbol)
+        raise ArgumentError, "Parameter name argument must be a Symbol. Got #{type.class}"
+      end
+
+      @types << type
+      @names << name
+      # mark what should be picked for this position when dispatching
+      @weaving << @names.size()-1
     end
 
     # Defines one required block parameter that may appear last. If type and name is missing the
@@ -275,7 +277,7 @@ module Puppet::Functions
       when 0
         # the type must be an independent instance since it will be contained in another type
         type = @all_callables.copy
-        name = 'block'
+        name = :block
       when 1
         # the type must be an independent instance since it will be contained in another type
         type = @all_callables.copy
@@ -291,8 +293,8 @@ module Puppet::Functions
         raise ArgumentError, "Expected PCallableType or PVariantType thereof, got #{type.class}"
       end
 
-      unless name.is_a?(String) || name.is_a?(Symbol)
-        raise ArgumentError, "Expected block_param name to be a String or Symbol, got #{name.class}"
+      unless name.is_a?(Symbol)
+        raise ArgumentError, "Expected block_param name to be a Symbol, got #{name.class}"
       end
 
       if @block_type.nil?

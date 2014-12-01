@@ -66,8 +66,8 @@ actual:
   def create_callable_2_args_unit()
     Puppet::Functions.create_function(:func) do
       dispatch :func do
-        param 'Type', 'expected'
-        param 'Type', 'actual'
+        param 'Type', :expected
+        param 'Type', :actual
       end
 
       def func(expected, actual)
