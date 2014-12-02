@@ -12,11 +12,11 @@ describe "when using function data provider" do
     # Initialize settings to get a full compile as close as possible to a real
     # environment load
     Puppet.settings.initialize_global_settings
-    # Initialize loaders based on the environmentpath (it does not work to
-    # just set the setting environmentpath for some reason - this achieves the same;
+    # Initialize loaders based on the environmentpath. It does not work to
+    # just set the setting environmentpath for some reason - this achieves the same:
     # - first a loader is created, loading directory environments from the fixture (there is
-    # one such environment; 'production', which will be loaded since the node references this
-    # environment by name.
+    # one such environment, 'production', which will be loaded since the node references this
+    # environment by name).
     # - secondly, the created env loader is set as 'environments' in the puppet context.
     #
     loader = Puppet::Environments::Directories.new(environmentpath, [])

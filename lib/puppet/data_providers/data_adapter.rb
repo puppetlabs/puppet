@@ -37,7 +37,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def initialize_module_provider(module_name)
-    # Support running tests without an injector being configure == using a null imlementation
+    # Support running tests without an injector being configured == using a null implementation
     unless injector = Puppet.lookup(:injector) { nil }
       return Puppet::Plugins::DataProviders::ModuleDataProvider.new()
     end
@@ -72,7 +72,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     service_name = Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
-    # Support running tests without an injector being configure == using a null imlementation
+    # Support running tests without an injector being configured == using a null implementation
     unless injector = Puppet.lookup(:injector) { nil }
       return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new()
     end

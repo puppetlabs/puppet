@@ -39,5 +39,4 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
       loaders.private_environment_loader
     end
   end
-
 end
