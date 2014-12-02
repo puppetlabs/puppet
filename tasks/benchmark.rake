@@ -36,14 +36,9 @@ namespace :benchmark do
 
       desc "Run the #{name} scenario."
       task :run, [*run_args] =>  :generate do |_, args|
-        format = if RUBY_VERSION =~ /^1\.8/
-                   Benchmark::FMTSTR
-                 else
-                   Benchmark::FORMAT
-                 end
         report = []
         details = []
-        Benchmark.benchmark(Benchmark::CAPTION, 10, format, "> total:", "> avg:") do |b|
+        Benchmark.benchmark(Benchmark::CAPTION, 10, Benchmark::FORMAT, "> total:", "> avg:") do |b|
           times = []
           ENV['ITERATIONS'].to_i.times do |i|
             start_time = Time.now.to_i
