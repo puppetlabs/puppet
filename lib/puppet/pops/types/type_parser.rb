@@ -230,9 +230,6 @@ class Puppet::Pops::Types::TypeParser
 
     when "hash"
       result = case parameters.size
-      when 1
-        assert_type(parameters[0])
-        TYPES.hash_of(parameters[0])
       when 2
         assert_type(parameters[0])
         assert_type(parameters[1])
@@ -256,7 +253,7 @@ class Puppet::Pops::Types::TypeParser
         assert_type(parameters[1])
         TYPES.hash_of(parameters[1], parameters[0])
       else
-        raise_invalid_parameters_error("Hash", "1 to 4", parameters.size)
+        raise_invalid_parameters_error("Hash", "2 to 4", parameters.size)
       end
       result.size_type = size_type if size_type
       result

@@ -63,7 +63,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
-    expect(parser.parse("Hash[Integer]")).to be_the_type(types.hash_of(types.integer))
+    expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
   end
 
   it "parses a parameterized type into the type object" do
@@ -129,7 +129,7 @@ describe Puppet::Pops::Types::TypeParser do
 
   it "rejects an collection spec with the wrong number of parameters" do
     expect { parser.parse("Array[Integer, 1,2,3]") }.to raise_the_parameter_error("Array", "1 to 3", 4)
-    expect { parser.parse("Hash[Integer, Integer, 1,2,3]") }.to raise_the_parameter_error("Hash", "1 to 4", 5)
+    expect { parser.parse("Hash[Integer, Integer, 1,2,3]") }.to raise_the_parameter_error("Hash", "2 to 4", 5)
   end
 
   it "interprets anything that is not a built in type to be a resource type" do

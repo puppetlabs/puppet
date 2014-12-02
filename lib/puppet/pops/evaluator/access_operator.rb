@@ -330,11 +330,6 @@ class Puppet::Pops::Evaluator::AccessOperator
       end
     end
     case keys.size
-    when 1
-      result = Puppet::Pops::Types::PHashType.new()
-      result.key_type = o.key_type.copy
-      result.element_type = keys[0]
-      result
     when 2
       result = Puppet::Pops::Types::PHashType.new()
       result.key_type = keys[0]
@@ -354,7 +349,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       result
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
-        :base_type => 'Hash-Type', :min => 1, :max => 4, :actual => keys.size
+        :base_type => 'Hash-Type', :min => 2, :max => 4, :actual => keys.size
       })
     end
     result.size_type = size_t if size_t
