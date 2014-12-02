@@ -116,7 +116,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   def insync?(is)
     # this is called after the generic version matching logic (insync? for the
-    # type), so we only get here if should != is, and both are version numbers.
+    # type), so we only get here if should != is, and 'should' is a version
+    # number. 'is' might not be, though.
     should = @resource[:ensure]
     # NB: it is apparently possible for repository administrators to publish
     # packages which do not include build or branch versions, but component
@@ -148,7 +149,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         warning("Implicit version #{should} has #{n} possible matches")
       end
       potential_matches.each{ |p|
-        status = exec_cmd(command(:pkg), 'update', '-n', "#{name}@#{p[:ensure]}")[:exit]
+        command = is == :absent ? 'install' : 'update'
+        status = exec_cmd(command(:pkg), command, '-n', "#{name}@#{p[:ensure]}")[:exit]
         case status
         when 4
           # if the first installable match would cause no changes, we're in sync
