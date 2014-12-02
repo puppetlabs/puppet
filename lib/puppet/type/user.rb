@@ -57,6 +57,9 @@ module Puppet
     feature :manages_shell,
       "The provider allows for setting shell and validates if possible"
 
+    feature :manages_loginclass,
+      "The provider can manage the login class for a user."
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -635,6 +638,16 @@ module Puppet
           entry.gsub!(/^~\//, "#{home}/")
           entry.gsub!(/^%h\//, "#{home}/")
           entry
+        end
+      end
+    end
+
+    newproperty(:loginclass, :required_features => :manages_loginclass) do
+      desc "The name of login class to which the user belongs."
+
+      validate do |value|
+        if value =~ /^\d+$/
+          raise ArgumentError, "Class name must be provided."
         end
       end
     end
