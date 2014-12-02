@@ -47,3 +47,6 @@ AGENT_PACKAGES = {
 
 install_packages_on(master, MASTER_PACKAGES)
 install_packages_on(agents, AGENT_PACKAGES)
+
+configure_gem_mirror(hosts)
+

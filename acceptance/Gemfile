@@ -1,21 +1,11 @@
-gem_source = ENV['GEM_SOURCE']
-if gem_source.nil? || gem_source.empty?
-  default = ENV['OUTSIDE_PUPPETLABS'] ?
-    'https://rubygems.org' :
-    'http://rubygems.delivery.puppetlabs.net'
-  gem_source = default
-end
-source gem_source
+# Specifies a gem mirror; duplicated in acceptance setup
+# to ensure a similar environment on acceptance hosts.
+source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
 gem (ENV['BEAKER_GEM'] || "beaker"), "~> 1.17"
 gem "rake", "~> 10.1"
 gem "httparty", :require => false
 gem 'uuidtools', :require => false
-
-# qa utils that live only in our testing environment.
-if !ENV['OUTSIDE_PUPPETLABS']
-  gem 'sqa-utils'
-end
 
 group(:test) do
   gem "rspec", "~> 2.14.0", :require => false

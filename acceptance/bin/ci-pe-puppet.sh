@@ -15,6 +15,8 @@ if [[ -z "$BEAKER_GEM" || -z "$tests" || -z "$platform" || -z "$layout" || -z "$
     'layout'      (to '64mcda' or '32mcda' or '32m-32d-32c-32a' or '64mdc-32a' for various cpu & master/database/console node combinations)
     'tests'       (to the comma separated list of tests or directory of tests to execute)
     'BEAKER_GEM'  (to either 'beaker' or 'pe-beaker' which is holding some temporary puppetserver related changes)
+    The gem 'sqa-utils' is also required, but not part of the Gemfile as it's internal to Puppet Labs.
+    The script will add sqa-utils to Gemfile.local.
 "
   exit 1
 fi
@@ -23,11 +25,17 @@ cd acceptance
 
 rm -f Gemfile.lock
 
+if ! grep -qs sqa-utils Gemfile.local; then
+  echo "gem 'sqa-utils'" >> Gemfile.local
+fi
+
 bundle install --path=./.bundle/gems
 
 #export pe_version=${pe_version_override:-$pe_version}
 #export pe_family=3.4
-bundle exec genconfig ${platform}-${layout} > hosts.cfg
+if bundle exec genconfig ${platform}-${layout} > hosts.cfg
+then; else echo "Usage: ensure Gemfile.local exists requiring sqa-utils"
+fi
 
 export forge_host=api-forge-aio01-petest.puppetlabs.com
 

@@ -49,39 +49,6 @@ hosts.each do |host|
     on host, 'ln -sf /opt/csw/bin/ruby19 /usr/bin/ruby'
     on host, 'ln -sf /opt/csw/bin/gstat /usr/bin/stat'
     on host, 'ln -sf /opt/csw/bin/greadlink /usr/bin/readlink'
-  end
-end
-
-install_packages_on(hosts, PACKAGES, :check_if_exists => true)
-
-hosts.each do |host|
-  case host['platform']
-  when /windows/
-    arch = host[:ruby_arch] || 'x86'
-    step "#{host} Selected architecture #{arch}"
-
-    revision = if arch == 'x64'
-                 '2.0.0-x64'
-               else
-                 '1.9.3-x86'
-               end
-
-    step "#{host} Install ruby from git using revision #{revision}"
-    # TODO remove this step once we are installing puppet from msi packages
-    install_from_git(host, "/opt/puppet-git-repos",
-                     :name => 'puppet-win32-ruby',
-                     :path => build_giturl('puppet-win32-ruby'),
-                     :rev  => revision)
-    on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
-    on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
-    on host, 'cd /lib; icacls ruby /reset /T'
-    on host, 'cd /; icacls bin /grant "Everyone:(OI)(CI)(RX)"'
-    on host, 'cd /; icacls bin /reset /T'
-    on host, 'ruby --version'
-    on host, 'cmd /c gem list'
-  when /solaris-10/
-    step "#{host} Install json from rubygems"
-    on host, 'gem install json_pure'
   when /solaris-11/
     step "#{host} jump through hoops to install ruby19; switch back to runtime/ruby-19 after template upgrade to sol11.2"
     create_remote_file host, "/root/shutupsolaris", <<END
@@ -112,6 +79,39 @@ END
     on host, '/opt/csw/bin/pkgutil -i -y ruby19'
     on host, 'ln -sf /opt/csw/bin/gem19 /usr/bin/gem'
     on host, 'ln -sf /opt/csw/bin/ruby19 /usr/bin/ruby'
+  end
+end
+
+install_packages_on(hosts, PACKAGES, :check_if_exists => true)
+
+configure_gem_mirror(hosts)
+
+hosts.each do |host|
+  case host['platform']
+  when /windows/
+    arch = host[:ruby_arch] || 'x86'
+    step "#{host} Selected architecture #{arch}"
+
+    revision = if arch == 'x64'
+                 '2.0.0-x64'
+               else
+                 '1.9.3-x86'
+               end
+
+    step "#{host} Install ruby from git using revision #{revision}"
+    # TODO remove this step once we are installing puppet from msi packages
+    install_from_git(host, "/opt/puppet-git-repos",
+                     :name => 'puppet-win32-ruby',
+                     :path => build_giturl('puppet-win32-ruby'),
+                     :rev  => revision)
+    on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
+    on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
+    on host, 'cd /lib; icacls ruby /reset /T'
+    on host, 'cd /; icacls bin /grant "Everyone:(OI)(CI)(RX)"'
+    on host, 'cd /; icacls bin /reset /T'
+    on host, 'ruby --version'
+    on host, 'cmd /c gem list'
+  when /solaris/
     step "#{host} Install json from rubygems"
     on host, 'gem install json_pure'
   end
