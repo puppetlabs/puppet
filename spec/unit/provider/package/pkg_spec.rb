@@ -248,6 +248,53 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.install
       end
+
+      it "installs the latest matching version when given implicit version, and none are installed" do
+        resource[:ensure] = '1.0-0.151006'
+        is = :absent
+        provider.expects(:query).with().returns({:ensure => is})
+        described_class.expects(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').returns File.read(my_fixture('dummy_implicit_version'))
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        provider.expects(:unhold).with()
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        provider.insync?(is)
+        provider.install
+      end
+
+      it "updates to the latest matching version when given implicit version" do
+        resource[:ensure] = '1.0-0.151006'
+        is = '1.0,5.11-0.151006:20140219T191204Z'
+        provider.expects(:query).with().returns({:ensure => is})
+        described_class.expects(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').returns File.read(my_fixture('dummy_implicit_version'))
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        provider.expects(:unhold).with()
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '--accept', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        provider.insync?(is)
+        provider.install
+      end
+
+      it "issues a warning when an implicit version number is used, and in sync" do
+        resource[:ensure] = '1.0-0.151006'
+        is = '1.0,5.11-0.151006:20140220T084443Z'
+        provider.expects(:warning).with("Implicit version 1.0-0.151006 has 3 possible matches")
+        described_class.expects(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').returns File.read(my_fixture('dummy_implicit_version'))
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        $CHILD_STATUS.stubs(:exitstatus).returns 4
+        provider.insync?(is)
+      end
+
+      it "issues a warning when choosing a version number for an implicit match" do
+        resource[:ensure] = '1.0-0.151006'
+        is = :absent
+        provider.expects(:warning).with("Implicit version 1.0-0.151006 has 3 possible matches")
+        provider.expects(:warning).with("Selecting version '1.0,5.11-0.151006:20140220T084443Z' for implicit '1.0-0.151006'")
+        described_class.expects(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').returns File.read(my_fixture('dummy_implicit_version'))
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        provider.insync?(is)
+      end
     end
 
     context ":update" do
