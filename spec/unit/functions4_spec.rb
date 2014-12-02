@@ -82,11 +82,7 @@ actual:
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
-    signature = if RUBY_VERSION =~ /^1\.8/
-      'Any{2}'
-    else
-      'Any x, Any y'
-    end
+    signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
     end.to raise_error(ArgumentError, "function 'min' called with mis-matched arguments
@@ -101,11 +97,7 @@ actual:
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
-    signature = if RUBY_VERSION =~ /^1\.8/
-      'Any{2}'
-    else
-      'Any x, Any y'
-    end
+    signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
@@ -161,11 +153,7 @@ actual:
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_true
-      signature = if RUBY_VERSION =~ /^1\.8/
-        'Any{2,}'
-      else
-        'Any x, Any y, Any a?, Any b?, Any c{0,}'
-      end
+      signature = 'Any x, Any y, Any a?, Any b?, Any c{0,}'
       expect do
         func.call({}, 10)
       end.to raise_error(ArgumentError,
