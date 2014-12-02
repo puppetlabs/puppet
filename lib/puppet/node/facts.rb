@@ -67,6 +67,10 @@ class Puppet::Node::Facts
     end
   end
 
+  def delete_trusted_facts
+    values.delete(:trusted)
+  end
+
   def ==(other)
     return false unless self.name == other.name
     values == other.values
