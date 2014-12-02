@@ -14,11 +14,7 @@ def run_comp(cmd)
         putc c
         line << c
         if c == ?\n
-          results << if RUBY_VERSION >= "1.9" then
-                       line.join
-                     else
-                       line.pack "c*"
-                     end
+          results << line.join
           line.clear
         end
       end
