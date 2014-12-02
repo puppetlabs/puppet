@@ -1,6 +1,5 @@
 test_name "Zone:statemachine single states"
 confine :to, :platform => 'solaris'
-
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
 
@@ -11,12 +10,15 @@ teardown do
   end
 end
 
-
+config_inherit_string = ""
 agents.each do |agent|
+  #inherit /sbin on solaris10 until PUP-3722
+  config_inherit_string = "inherit=>'/sbin'" if agent['platform'] =~ /solaris-10/
+
   step "Zone: steps - setup"
   setup agent
   step "Zone: steps - create"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }' ) do
+  apply_manifest_on(agent, "zone {tstzone : ensure=>configured, iptype=>shared, path=>'/tstzones/mnt', #{config_inherit_string} }" ) do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
   step "Zone: steps - verify (create)"

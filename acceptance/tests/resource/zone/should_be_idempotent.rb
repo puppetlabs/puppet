@@ -12,17 +12,20 @@ teardown do
   end
 end
 
-
+config_inherit_string = ""
 agents.each do |agent|
+  #inherit /sbin on solaris10 until PUP-3722
+  config_inherit_string = "inherit=>'/sbin'" if agent['platform'] =~ /solaris-10/
+
   step "Zone: idempotency - setup"
   setup agent
   #-----------------------------------
   step "Zone: idempotency - make it configured"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent, "zone {tstzone : ensure=>configured, path=>'/tstzones/mnt', #{config_inherit_string} }") do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
   step "Zone: idempotency, should not create again."
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent, "zone {tstzone : ensure=>configured, path=>'/tstzones/mnt', #{config_inherit_string} }") do
     assert_no_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
   step "Zone: idempotency - make it installed"

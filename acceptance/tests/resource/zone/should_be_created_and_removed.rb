@@ -12,8 +12,11 @@ teardown do
   end
 end
 
-
+config_inherit_string = ""
 agents.each do |agent|
+  #inherit /sbin on solaris10 until PUP-3722
+  config_inherit_string = "inherit=>'/sbin'" if agent['platform'] =~ /solaris-10/
+  
   step "Zone: setup"
   setup agent
   #-----------------------------------
@@ -21,7 +24,7 @@ agents.each do |agent|
   step "progress would be logged to agent:/var/log/zones/zoneadm.<date>.<zonename>.install"
   step "install log would be at agent:/system/volatile/install.<id>/install_log"
 
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>running, path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent, "zone {tstzone : ensure=>running, path=>'/tstzones/mnt', #{config_inherit_string} }") do
     assert_match( /created/, result.stdout, "err: #{agent}")
   end
   on(agent, "zoneadm list -cp") do
