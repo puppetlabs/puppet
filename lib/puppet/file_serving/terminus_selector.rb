@@ -12,6 +12,11 @@ module Puppet::FileServing::TerminusSelector
       return :file
     end
 
+    # http URLs are escaped
+    if request.key =~ /^url=/
+      return :http
+    end
+
     case request.protocol
     when "file"
       :file
@@ -21,6 +26,8 @@ module Puppet::FileServing::TerminusSelector
       else
         Puppet[:default_file_terminus]
       end
+   when "http","https"
+     :http
     when nil
       :file_server
     else

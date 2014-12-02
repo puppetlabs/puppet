@@ -63,7 +63,7 @@ module Puppet
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
         self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet}.include?(uri.scheme)
+        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet http}.include?(uri.scheme)
       end
     end
 
@@ -174,6 +174,12 @@ module Puppet
             :checksum_type        => resource[:checksum],
             :source_permissions   => resource[:source_permissions]
           }
+
+          # escape http URLs so that the indirector does not
+          # try and apply special handling
+          if source =~ /^http:/
+            source = "url=#{source}"
+          end
 
           if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             @metadata = data
