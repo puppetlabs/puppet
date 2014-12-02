@@ -22,9 +22,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/Concat/Delete' do
     end
 
     it 'concatenates a hash by converting it to array' do
-      # use match_array here since a hash does not have specified order and this
-      # hash has different order on Ruby 1.8.7, and 1.9.3.
-      expect(evaluate(literal([1,2,3]) + literal({'a' => 1, 'b'=>2}))).to match_array([1,2,3,['a',1],['b',2]])
+      expect(evaluate(literal([1,2,3]) + literal({'a' => 1, 'b'=>2}))).to eql([1,2,3,['a',1],['b',2]])
     end
 
     it 'concatenates a non array value with +' do

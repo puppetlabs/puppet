@@ -575,7 +575,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any of its subtypes' do
-        t = Puppet::Pops::Types::PScalarType.new() 
+        t = Puppet::Pops::Types::PScalarType.new()
         types_to_test = scalar_types - [Puppet::Pops::Types::PScalarType]
         types_to_test.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -1473,9 +1473,7 @@ describe 'The type calculator' do
 
     it 'should yield \'Struct\' and details for PStructType' do
       struct_t = struct_t({'a'=>Integer, 'b'=>String})
-      s = calculator.string(struct_t)
-      # Ruby 1.8.7 - noone likes you...
-      (s == "Struct[{'a'=>Integer, 'b'=>String}]" || s == "Struct[{'b'=>String, 'a'=>Integer}]").should == true
+      calculator.string(struct_t).should == "Struct[{'a'=>Integer, 'b'=>String}]"
       struct_t = struct_t({})
       calculator.string(struct_t).should == "Struct"
     end
