@@ -25,7 +25,7 @@ module Puppet::Pops::Utils
         nil
       else
         fp_value = Float(match[2])
-        if fp_value != Puppet::Pops::Types::TypeCalculator::TheInfinity
+        if fp_value != Float::INFINITY
           match[1] == '-' ? -fp_value : fp_value
         else
           nil

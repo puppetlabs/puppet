@@ -142,18 +142,15 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
-  # Ruby does not have an infinity constant.  TODO: Consider having one constant in Puppet. Now it is in several places.
-  INFINITY = 1.0 / 0.0
-
   def access_PEnumType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, String)
+    assert_keys(keys, o, 1, Float::INFINITY, String)
     Puppet::Pops::Types::TypeFactory.enum(*keys)
   end
 
   def access_PVariantType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
+    assert_keys(keys, o, 1, Float::INFINITY, Puppet::Pops::Types::PAnyType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
   end
 
@@ -166,7 +163,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       size_type = TYPEFACTORY.range(keys[-1], :default)
       keys = keys[0, keys.size - 1]
     end
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
+    assert_keys(keys, o, 1, Float::INFINITY, Puppet::Pops::Types::PAnyType)
     t = Puppet::Pops::Types::TypeFactory.tuple(*keys)
     # set size type, or nil for default (exactly 1)
     t.size_type = size_type
@@ -201,13 +198,13 @@ class Puppet::Pops::Evaluator::AccessOperator
   # @param keys [Array<Object>] the evaluated keys
   # @param o [Object] evaluated LHS reported as :base_type
   # @param min [Integer] the minimum number of keys (typically 1)
-  # @param max [Numeric] the maximum number of keys (use same as min, specific number, or INFINITY)
+  # @param max [Numeric] the maximum number of keys (use same as min, specific number, or Float::INFINITY)
   # @param allowed_classes [Class] a variable number of classes that each key must be an instance of (any)
   # @api private
   #
   def assert_keys(keys, o, min, max, *allowed_classes)
     size = keys.size
-    unless size.between?(min, max || INFINITY)
+    unless size.between?(min, max || Float::INFINITY)
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
     end
     keys.each_with_index do |k, i|
@@ -247,7 +244,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PPatternType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, String, Regexp, Puppet::Pops::Types::PPatternType, Puppet::Pops::Types::PRegexpType)
+    assert_keys(keys, o, 1, Float::INFINITY, String, Regexp, Puppet::Pops::Types::PPatternType, Puppet::Pops::Types::PRegexpType)
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 

@@ -3,8 +3,6 @@
 # to live in seconds, and the symbolic entry 'unlimited' is an infinite amount of time.
 #
 class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
-  INFINITY = 1.0 / 0.0
-
   # How we convert from various units to seconds.
   UNITMAP = {
     # 365 days isn't technically a year, but is sufficient for most purposes
@@ -37,7 +35,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       value
 
     when value == 'unlimited'
-      INFINITY
+      Float::INFINITY
 
     when (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']

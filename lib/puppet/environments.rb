@@ -310,8 +310,6 @@ module Puppet::Environments
   class Cached
     include EnvironmentLoader
 
-    INFINITY = 1.0 / 0.0
-
     class DefaultCacheExpirationService
       def created(env)
       end
@@ -393,7 +391,7 @@ module Puppet::Environments
       case ttl
       when 0
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
-      when INFINITY
+      when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
         TTLEntry.new(env, ttl)

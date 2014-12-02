@@ -380,7 +380,7 @@ module Puppet::Pops::Issues
 
   BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
     base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
-    if max == -1 || max == 1.0 / 0.0 # Infinity
+    if max == -1 || max == Float::INFINITY
       "#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}"
     elsif max && max != min
       "#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}"

@@ -320,7 +320,7 @@ actual:
       it 'about optional and required parameters' do
         fc = create_function_with_optionals_and_varargs
         signature = fc.signatures[0]
-        expect(signature.args_range).to eql( [2, Puppet::Pops::Types::INFINITY ] )
+        expect(signature.args_range).to eql( [2, Float::INFINITY ] )
         expect(signature.infinity?(signature.args_range[1])).to be_true
       end
 

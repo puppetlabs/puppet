@@ -68,7 +68,7 @@ class Puppet::Pops::Evaluator::CallableSignature
   end
 
   # Returns the range of required/optional argument values as an array of [min, max], where an infinite
-  # end is given as INFINITY. To test against infinity, use the infinity? method.
+  # end is given as Float::INFINITY. To test against infinity, use the infinity? method.
   #
   # @return [Array[Integer, Numeric]] - an Array with [min, max]
   #
@@ -95,6 +95,6 @@ class Puppet::Pops::Evaluator::CallableSignature
   # @api public
   #
   def infinity?(x)
-    x == Puppet::Pops::Types::INFINITY
+    x == Float::INFINITY
   end
 end

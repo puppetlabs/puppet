@@ -157,14 +157,14 @@ module Puppet::Pops::Evaluator::CallableMismatchDescriber
   #   * from and to are equal => `{from}`
   #   * from and to are both and 1 and squelch_one == true => `''`
   #   * from is 0 and to is 1 => `'?'`
-  #   * to is INFINITY => `{from, }`
+  #   * to is Float::INFINITY => `{from, }`
   #
   # @api private
   def self.range_string(size_range, squelch_one = true)
     from, to = size_range
     if from == to
       (squelch_one && from == 1) ? '' : "{#{from}}"
-    elsif to == Puppet::Pops::Types::INFINITY
+    elsif to == Float::INFINITY
       "{#{from},}"
     elsif from == 0 && to == 1
       '?'

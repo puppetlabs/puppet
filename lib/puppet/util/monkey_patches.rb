@@ -67,10 +67,6 @@ class IO
   end unless singleton_methods.include?(:binwrite)
 end
 
-class Float
-  INFINITY = (1.0/0.0) if defined?(Float::INFINITY).nil?
-end
-
 class Range
   def intersection(other)
     raise ArgumentError, 'value must be a Range' unless other.kind_of?(Range)
