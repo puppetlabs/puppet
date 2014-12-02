@@ -107,7 +107,7 @@ module Puppet
       alias :should_to_s :is_to_s
     end
 
-    newparam(:auth_membership) do
+    newparam(:auth_membership, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "whether the provider is authoritative for group membership."
       defaultto true
     end
