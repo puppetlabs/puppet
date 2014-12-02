@@ -69,13 +69,9 @@ end
 
 desc 'run static analysis with rubocop'
 task(:rubocop) do
-  if RUBY_VERSION !~ /1.8/
-    require 'rubocop'
-    cli = RuboCop::CLI.new
-    exit_code = cli.run(%w(--display-cop-names --format simple))
-    raise "RuboCop detected offenses" if exit_code != 0
-  else
-    raise "Rubocop is disabled in ruby 1.8"
-  end
+  require 'rubocop'
+  cli = RuboCop::CLI.new
+  exit_code = cli.run(%w(--display-cop-names --format simple))
+  raise "RuboCop detected offenses" if exit_code != 0
 end
 
