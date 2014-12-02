@@ -577,7 +577,7 @@ describe Puppet::Graph::SimpleGraph do
     # Test serialization of graph to YAML.
     [:old, :new].each do |which_format|
       all_test_graphs.each do |graph_to_test|
-        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)", :if => (RUBY_VERSION[0,3] == '1.8' or YAML::ENGINE.syck?) do
+        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)" do
           graph = Puppet::Graph::SimpleGraph.new
           send(graph_to_test, graph)
           yaml_form = graph_to_yaml(graph, which_format)
@@ -592,34 +592,31 @@ describe Puppet::Graph::SimpleGraph do
           # Check that the object contains instance variables @edges and
           # @vertices only.  @reversal is also permitted, but we don't
           # check it, because it is going to be phased out.
-          serialized_object.type_id.should == 'object:Puppet::Graph::SimpleGraph'
-          serialized_object.value.keys.reject { |x| x == 'reversal' }.sort.should == ['edges', 'vertices']
+          serialized_object.keys.reject { |x| x == 'reversal' }.sort.should == ['edges', 'vertices']
 
           # Check edges by forming a set of tuples (source, target,
           # callback, event) based on the graph and the YAML and make sure
           # they match.
-          edges = serialized_object.value['edges']
+          edges = serialized_object['edges']
           edges.should be_a(Array)
           expected_edge_tuples = graph.edges.collect { |edge| [edge.source, edge.target, edge.callback, edge.event] }
           actual_edge_tuples = edges.collect do |edge|
-            edge.type_id.should == 'object:Puppet::Relationship'
-            %w{source target}.each { |x| edge.value.keys.should include(x) }
-            edge.value.keys.each { |x| ['source', 'target', 'callback', 'event'].should include(x) }
-            %w{source target callback event}.collect { |x| edge.value[x] }
+            %w{source target}.each { |x| edge.keys.should include(x) }
+            edge.keys.each { |x| ['source', 'target', 'callback', 'event'].should include(x) }
+            %w{source target callback event}.collect { |x| edge[x] }
           end
           Set.new(actual_edge_tuples).should == Set.new(expected_edge_tuples)
           actual_edge_tuples.length.should == expected_edge_tuples.length
 
           # Check vertices one by one.
-          vertices = serialized_object.value['vertices']
+          vertices = serialized_object['vertices']
           if which_format == :old
             vertices.should be_a(Hash)
             Set.new(vertices.keys).should == Set.new(graph.vertices)
             vertices.each do |key, value|
-              value.type_id.should == 'object:Puppet::Graph::SimpleGraph::VertexWrapper'
-              value.value.keys.sort.should == %w{adjacencies vertex}
-              value.value['vertex'].should equal(key)
-              adjacencies = value.value['adjacencies']
+              value.keys.sort.should == %w{adjacencies vertex}
+              value['vertex'].should equal(key)
+              adjacencies = value['adjacencies']
               adjacencies.should be_a(Hash)
               Set.new(adjacencies.keys).should == Set.new([:in, :out])
               [:in, :out].each do |direction|
@@ -632,7 +629,7 @@ describe Puppet::Graph::SimpleGraph do
                   desired_source = direction == :in ? adj_key : key
                   desired_target = direction == :in ? key : adj_key
                   expected_edges = edges.select do |edge|
-                    edge.value['source'] == desired_source && edge.value['target'] == desired_target
+                    edge['source'] == desired_source && edge['target'] == desired_target
                   end
                   adj_value.should be_a(Set)
                   if object_ids(adj_value) != object_ids(expected_edges)
