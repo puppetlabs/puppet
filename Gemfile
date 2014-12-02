@@ -46,6 +46,8 @@ group(:development, :test) do
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
   gem "rubocop", "~> 0.26.1", :platforms => [:ruby] unless RUBY_VERSION =~ /^1.8/
+
+  gem 'rdoc', "~> 4.1", :platforms => [:ruby] unless RUBY_VERSION =~ /^1.8/
 end
 
 group(:development) do
