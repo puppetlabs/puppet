@@ -408,6 +408,14 @@ describe Puppet::Application do
       @app.setup
     end
 
+    it "does not downgrade the loglevel when --verbose is specified" do
+      Puppet[:log_level] = :debug
+      @app.options.stubs(:[]).with(:verbose).returns(true)
+      @app.setup_logs
+
+      Puppet::Util::Log.level.should == :debug
+    end
+
   end
 
   describe "when configuring routes" do

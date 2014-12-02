@@ -369,7 +369,7 @@ class Application
   def set_log_level
     if options[:debug]
       Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
+    elsif options[:verbose] && !Puppet::Util::Log.sendlevel?(:info)
       Puppet::Util::Log.level = :info
     end
   end
