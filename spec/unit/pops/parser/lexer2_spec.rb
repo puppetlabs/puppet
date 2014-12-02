@@ -356,13 +356,8 @@ describe 'Lexer2' do
       code = <<-CODE
       "x\\u2713y"
       CODE
-      if Puppet::Pops::Parser::Locator::RUBYVER < Puppet::Pops::Parser::Locator::RUBY_1_9_3
-        # Ruby 1.8.7 reports the multibyte char as several octal characters
-        tokens_scanned_from(code).should match_tokens2([:STRING, "x\342\234\223y"])
-      else
-        # >= Ruby 1.9.3 reports \u
-        tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
-      end
+      # >= Ruby 1.9.3 reports \u
+       tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
     end
 
     it 'should not select LISTSTART token when preceded by multibyte chars' do
@@ -374,7 +369,7 @@ describe 'Lexer2' do
       tokens_scanned_from(code).should match_tokens2(
         :VARIABLE, :EQUALS, :STRING,
         [:NAME, 'notify'], :LBRACE,
-        [:STRING, 'x'], :COLON, 
+        [:STRING, 'x'], :COLON,
         :NAME, :FARROW, :CLASSREF, :LBRACK, :STRING, :RBRACK,
         :RBRACE)
     end
