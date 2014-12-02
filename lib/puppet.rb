@@ -165,8 +165,8 @@ module Puppet
       default_environment = Puppet[:environment].to_sym
       if default_environment == :production
         loaders << Puppet::Environments::StaticPrivate.new(
-          Puppet::Node::Environment.create(Puppet[:environment].to_sym,
-                                           [],
+          Puppet::Node::Environment.create(default_environment,
+                                           basemodulepath,
                                            Puppet::Node::Environment::NO_MANIFEST))
       end
     end
