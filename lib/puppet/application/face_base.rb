@@ -5,13 +5,11 @@ require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
   option("--debug", "-d") do |arg|
-    options[:debug] = true
-    set_log_level
+    set_log_level(:debug => true)
   end
 
   option("--verbose", "-v") do |_|
-    options[:verbose] = true
-    set_log_level
+    set_log_level(:verbose => true)
   end
 
   option("--render-as FORMAT") do |format|

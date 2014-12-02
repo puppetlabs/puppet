@@ -176,6 +176,22 @@ describe Puppet::Application::FaceBase do
       app.options.should == {}
     end
 
+    it "should not add :debug to the application-level options" do
+      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --debug}
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
+    end
+
+    it "should not add :verbose to the application-level options" do
+      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --verbose}
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
+    end
+
     { "boolean options before" => %w{--trace foo},
       "boolean options after"  => %w{foo --trace}
     }.each do |name, args|
