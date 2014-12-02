@@ -484,7 +484,6 @@ class Puppet::Provider
   # Clears this provider instance to allow GC to clean up.
   def clear
     @resource = nil
-    @model = nil
   end
 
   # (see command)
@@ -516,8 +515,6 @@ class Puppet::Provider
       @property_hash = resource
     elsif resource
       @resource = resource
-      # LAK 2007-05-09: Keep the model stuff around for backward compatibility
-      @model = resource
       @property_hash = {}
     else
       @property_hash = {}
