@@ -163,4 +163,13 @@ describe provider_class do
       bash_comp_latest_version.should == "2.1_3"
     end
   end
+
+  describe "confine" do
+    context "on FreeBSD" do
+      it "should be the default provider" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :freebsd
+        expect(provider_class).to be_default
+      end
+    end
+  end
 end
