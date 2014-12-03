@@ -242,7 +242,6 @@ end
     desc "The list of directories that the zone inherits from the global
       zone.  All directories must be fully qualified."
 
-    defaultto "/sbin"
     def should
       @should
     end
