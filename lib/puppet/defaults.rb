@@ -463,6 +463,14 @@ module Puppet
       This setting can also be set to `unlimited`, which causes the environment to
       be cached until the master is restarted."
     },
+    :environment_data_provider => {
+      :default    => "none",
+      :desc       => "The name of a registered environment data provider. The two built in
+      and registered providers are 'none' (no environment specific data), and 'function'
+      (environment specific data obtained by calling the function 'environment::data()').
+      Other environment data providers may be registered in modules on the module path. For such
+      custom data providers see the respective module documentation."
+    },
     :thin_storeconfigs => {
       :default  => false,
       :type     => :boolean,

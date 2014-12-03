@@ -123,3 +123,4 @@ module Puppet
   require 'puppet/bindings'
   require 'puppet/functions'
 end
+require 'puppet/plugins/data_providers'

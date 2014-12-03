@@ -1670,6 +1670,11 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # Debugging to_s to reduce the amount of output
+  def to_s
+    '[a TypeCalculator]'
+  end
+
   private
 
   NAME_SEGMENT_SEPARATOR = '::'.freeze

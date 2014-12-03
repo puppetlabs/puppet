@@ -55,6 +55,13 @@ class Puppet::Pops::Parser::EvaluatingParser
     evaluator.evaluate(model, scope)
   end
 
+  # Evaluates the given expression in a local scope with the given variable bindings
+  # set in this local scope, returns what the expression returns.
+  #
+  def evaluate_expression_with_bindings(scope, variable_bindings, expression)
+    evaluator.evaluate_block_with_bindings(scope, variable_bindings, expression)
+  end
+
   def evaluator
     @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
     @@evaluator

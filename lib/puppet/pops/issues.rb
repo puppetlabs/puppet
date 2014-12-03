@@ -545,4 +545,8 @@ module Puppet::Pops::Issues
   MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
     "Unfolding of attributes from Hash can only be used once per resource body"
   end
+
+  ILLEGAL_CATALOG_RELATED_EXPRESSION = hard_issue :ILLEGAL_CATALOG_RELATED_EXPRESSION do
+    "This #{label.label(semantic)} appears in a context where catalog related expressions are not allowed"
+  end
 end
