@@ -366,10 +366,11 @@ class Application
     Puppet::Util::Log.setup_default unless options[:setdest]
   end
 
-  def set_log_level
-    if options[:debug]
+  def set_log_level(opts = nil)
+    opts ||= options
+    if opts[:debug]
       Puppet::Util::Log.level = :debug
-    elsif options[:verbose] && !Puppet::Util::Log.sendlevel?(:info)
+    elsif opts[:verbose] && !Puppet::Util::Log.sendlevel?(:info)
       Puppet::Util::Log.level = :info
     end
   end

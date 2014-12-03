@@ -416,6 +416,11 @@ describe Puppet::Application do
       Puppet::Util::Log.level.should == :debug
     end
 
+    it "allows the loglevel to be specified as an argument" do
+      @app.set_log_level(:debug => true)
+
+      Puppet::Util::Log.level.should == :debug
+    end
   end
 
   describe "when configuring routes" do
