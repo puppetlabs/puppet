@@ -24,6 +24,8 @@ PACKAGES = {
   ],
   :solaris_11 => [
     ['git', 'developer/versioning/git'],
+    ['ruby', 'runtime/ruby-19'],
+    # there isn't a package for json, so it is installed later via gems
   ],
   :solaris_10 => [
     'coreutils',
@@ -83,36 +85,7 @@ hosts.each do |host|
     step "#{host} Install json from rubygems"
     on host, 'gem install json_pure'
   when /solaris-11/
-    step "#{host} jump through hoops to install ruby19; switch back to runtime/ruby-19 after template upgrade to sol11.2"
-    create_remote_file host, "/root/shutupsolaris", <<END
-mail=
-# Overwrite already installed instances
-instance=overwrite
-# Do not bother checking for partially installed packages
-partial=nocheck
-# Do not bother checking the runlevel
-runlevel=nocheck
-# Do not bother checking package dependencies (We take care of this)
-idepend=nocheck
-rdepend=nocheck
-# DO check for available free space and abort if there isn't enough
-space=quit
-# Do not check for setuid files.
-setuid=nocheck
-# Do not check if files conflict with other packages
-conflict=nocheck
-# We have no action scripts.  Do not check for them.
-action=nocheck
-# Install to the default base directory.
-basedir=default
-END
-    on host, 'pkgadd -a /root/shutupsolaris -d http://get.opencsw.org/now all'
-    on host, '/opt/csw/bin/pkgutil -U all'
-    on host, '/opt/csw/bin/pkgutil -i -y ruby19_dev'
-    on host, '/opt/csw/bin/pkgutil -i -y ruby19'
-    on host, 'ln -sf /opt/csw/bin/gem19 /usr/bin/gem'
-    on host, 'ln -sf /opt/csw/bin/ruby19 /usr/bin/ruby'
     step "#{host} Install json from rubygems"
-    on host, 'gem install json_pure'
+    on host, 'gem install json'
   end
 end
