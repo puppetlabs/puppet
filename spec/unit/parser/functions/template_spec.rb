@@ -36,12 +36,12 @@ describe "the template function" do
     it "raises an error when accessing an undefined variable" do
       expect {
         eval_template("template <%= deprecated %>")
-      }.to raise_error(Puppet::ParseError, /Could not find value for 'deprecated'/)
+      }.to raise_error(Puppet::ParseError, /undefined local variable or method `deprecated'/)
     end
 
     it "looks up the value from the scope" do
       scope["deprecated"] = "deprecated value"
-      eval_template("template <%= deprecated %>").should == "template deprecated value"
+      expect { eval_template("template <%= deprecated %>")}.to raise_error(/undefined local variable or method `deprecated'/)
     end
 
     it "still has access to Kernel methods" do
@@ -78,7 +78,7 @@ describe "the template function" do
   it "does not have direct access to Scope#lookupvar" do
     expect {
       eval_template("<%= lookupvar('myvar') %>")
-    }.to raise_error(Puppet::ParseError, /Could not find value for 'lookupvar'/)
+    }.to raise_error(Puppet::ParseError, /undefined method `lookupvar'/)
   end
 
   def eval_template(content)

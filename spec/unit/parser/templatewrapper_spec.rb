@@ -70,19 +70,9 @@ describe Puppet::Parser::TemplateWrapper do
     tw.tags.should == ["tag1","tag2"]
   end
 
-  it "warns about deprecated access to in-scope variables via method calls" do
-    Puppet.expects(:deprecation_warning).with("Variable access via 'in_scope_variable' is deprecated. Use '@in_scope_variable' instead. template[inline]:1")
+  it "raises error on access to removed in-scope variables via method calls" do
     scope["in_scope_variable"] = "is good"
-    tw.result("<%= in_scope_variable %>")
-  end
-
-  it "provides access to in-scope variables via method calls" do
-    scope["in_scope_variable"] = "is good"
-    tw.result("<%= in_scope_variable %>").should == "is good"
-  end
-
-  it "errors if accessing via method call a variable that does not exist" do
-    expect { tw.result("<%= does_not_exist %>") }.to raise_error(Puppet::ParseError)
+    expect { tw.result("<%= in_scope_variable %>") }.to raise_error(/undefined local variable or method `in_scope_variable'/ )
   end
 
   it "reports that variable is available when it is in scope" do
