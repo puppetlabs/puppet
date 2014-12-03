@@ -242,7 +242,7 @@ module Puppet
           is in Ruby's search path\n",
       :call_hook => :on_initialize_and_write,
       :hook             => proc do |value|
-        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) and $LOAD_PATH.include?(@oldlibdir)
+        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) && $LOAD_PATH.include?(@oldlibdir)
         @oldlibdir = value
         $LOAD_PATH << value
       end
