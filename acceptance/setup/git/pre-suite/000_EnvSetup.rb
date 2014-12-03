@@ -86,6 +86,6 @@ hosts.each do |host|
     on host, 'gem install json_pure'
   when /solaris-11/
     step "#{host} Install json from rubygems"
-    on host, 'gem install json'
+    on host, 'gem install json_pure'
   end
 end
