@@ -2,13 +2,13 @@ test_name 'puppet module uninstall (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-tmpdir = master.tmpdir('environmentpath')
+tmpdir = master.tmpdir('module-uninstall-with-environment')
 
 step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
+puppet_conf = generate_base_directory_environments(tmpdir)
 
 crakorn_metadata = <<-EOS
 {
@@ -25,15 +25,10 @@ EOS
 apply_manifest_on master, %Q{
   file {
     [
-      '#{tmpdir}/legacyenv/modules/crakorn',
       '#{tmpdir}/environments/direnv/modules',
       '#{tmpdir}/environments/direnv/modules/crakorn',
     ]:
       ensure => directory,
-  }
-  file {
-    '#{tmpdir}/legacyenv/modules/crakorn/metadata.json':
-      content => '#{crakorn_metadata}',
   }
   file {
     '#{tmpdir}/environments/direnv/modules/crakorn/metadata.json':
@@ -41,27 +36,13 @@ apply_manifest_on master, %Q{
   }
 }
 
-check_module_uninstall_in = lambda do |environment, environment_path|
-  on master, "puppet module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=#{environment}" do
+step 'Uninstall a module from a non default directory environment' do
+  environment_path = "#{tmpdir}/environments/direnv/modules"
+  on master, "puppet module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=direnv" do
     assert_equal <<-OUTPUT, stdout
 \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
 Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}
     OUTPUT
   end
-  on master, "[ ! -d #{environment_path}/crakorn ]"
-end
-
-step 'Uninstall a module from a non default legacy environment' do
-  check_module_uninstall_in.call('legacyenv', "#{tmpdir}/legacyenv/modules")
-end
-
-step 'Enable directory environments' do
-  on master, puppet("config", "set",
-                    "environmentpath", "#{tmpdir}/environments",
-                    "--section", "main",
-                    "--config", puppet_conf)
-end
-
-step 'Uninstall a module from a non default directory environment' do
-  check_module_uninstall_in.call('direnv', "#{tmpdir}/environments/direnv/modules")
+  on master, "[ ! -d #{environment_path}/crackorn ]"
 end

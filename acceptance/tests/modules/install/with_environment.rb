@@ -6,7 +6,7 @@ hosts.each do |host|
   skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
 end
 
-tmpdir = master.tmpdir('environmentpath')
+tmpdir = master.tmpdir('module-install-with-environment')
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
@@ -20,7 +20,7 @@ step 'Setup'
 
 stub_forge_on(master)
 
-puppet_conf = generate_base_legacy_and_directory_environments(tmpdir)
+puppet_conf = generate_base_directory_environments(tmpdir)
 
 check_module_install_in = lambda do |environment_path, module_install_args|
   on master, "puppet module install #{module_author}-#{module_name} --config=#{puppet_conf} #{module_install_args}" do
@@ -29,18 +29,6 @@ check_module_install_in = lambda do |environment_path, module_install_args|
           "Notice of non default install path was not displayed")
   end
   assert_module_installed_on_disk(master, module_name, environment_path)
-end
-
-step 'Install a module into a non default legacy environment' do
-  check_module_install_in.call("#{tmpdir}/legacyenv/modules",
-                               "--environment=legacyenv")
-end
-
-step 'Enable directory environments' do
-  on master, puppet("config", "set",
-                    "environmentpath", "#{tmpdir}/environments",
-                    "--section", "main",
-                    "--config", puppet_conf)
 end
 
 step 'Install a module into a non default directory environment' do
