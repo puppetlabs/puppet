@@ -16,7 +16,7 @@ shared_examples_for "a restorable file" do
       it "should restore the file" do
         request = nil
 
-        klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
+        klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new("production", plaintext))
 
         dipper.restore(dest, checksum).should == checksum
         digest(Puppet::FileSystem.binread(dest)).should == checksum
@@ -34,7 +34,7 @@ shared_examples_for "a restorable file" do
       end
 
       it "should overwrite existing file if it has different checksum" do
-        klass.any_instance.expects(:find).returns(Puppet::FileBucket::File.new(plaintext))
+        klass.any_instance.expects(:find).returns(Puppet::FileBucket::File.new("production", plaintext))
 
         File.open(dest, 'wb') {|f| f.print('other contents') }
 
@@ -102,7 +102,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         request = nil
 
-        Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new(plaintext))
+        Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new("production", plaintext))
 
         @dipper.getfile(checksum).should == plaintext
 
@@ -139,7 +139,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         request = nil
 
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new("production", plaintext))
 
         @dipper.getfile(checksum).should == plaintext
 

@@ -120,7 +120,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def head(request)
     response = do_request(request) do |request|
-      http_head(request, Puppet::Network::HTTP::API::V1.indirection2uri(request), headers)
+      http_head(request, Puppet::Network::HTTP::API::V1.request_to_uri_with_env(request), headers)
     end
 
     if is_http_200?(response)
@@ -132,7 +132,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def search(request)
     response = do_request(request) do |request|
-      http_get(request, Puppet::Network::HTTP::API::V1.indirection2uri(request), headers)
+      http_get(request, Puppet::Network::HTTP::API::V1.request_to_uri_with_env(request), headers)
     end
 
     if is_http_200?(response)
@@ -147,7 +147,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
     response = do_request(request) do |request|
-      http_delete(request, Puppet::Network::HTTP::API::V1.indirection2uri(request), headers)
+      http_delete(request, Puppet::Network::HTTP::API::V1.request_to_uri_with_env(request), headers)
     end
 
     if is_http_200?(response)
