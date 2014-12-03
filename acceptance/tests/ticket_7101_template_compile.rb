@@ -4,15 +4,15 @@ agents.each do |agent|
   template = agent.tmpfile('template_7101.erb')
   target = agent.tmpfile('file_7101.erb')
 
-  manifest = %Q{
-$bar = 'test 7101'
-file { '#{target}':
-  content => template("#{template}")
-}
-}
+  manifest = <<-EOF
+  $bar = 'test 7101'
+  file { '#{target}':
+    content => template("#{template}")
+  }
+  EOF
 
   step "Agents: Create template file"
-  create_remote_file(agent, template, %w{<%= bar %>} )
+  create_remote_file(agent, template, "<%= @bar %>" )
 
   step "Run manifest referencing template file"
   apply_manifest_on(agent, manifest)
