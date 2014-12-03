@@ -13,7 +13,6 @@ end
 
 
 agents.each do |agent|
-  skip_test "not enough drive space on our solaris10 machines" if agent['platform'] =~ /solaris-10/
   step "ZPool: setup"
   setup agent
   #-----------------------------------
