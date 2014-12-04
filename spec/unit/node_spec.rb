@@ -10,7 +10,7 @@ describe Puppet::Node do
 
   describe "when managing its environment" do
 
-    it "supports providing an actual environment instance" do
+    it "provides an environment instance" do
       expect(Puppet::Node.new("foo", :environment => environment).environment.name).to eq(:bar)
     end
 
