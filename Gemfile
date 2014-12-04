@@ -68,7 +68,6 @@ group(:extra) do
   gem "tzinfo", :require => false
   case RUBY_PLATFORM
   when 'java'
-    gem "jdbc-sqlite3", :require => false
     gem "msgpack-jruby", :require => false
   else
     gem "msgpack", :require => false
