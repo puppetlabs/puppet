@@ -1,7 +1,7 @@
-require 'puppet/file_system/file19'
+require 'puppet/file_system/posix'
 require 'puppet/util/windows'
 
-class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
+class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
   def exist?(path)
     if ! Puppet.features.manages_symlinks?

@@ -7,11 +7,11 @@ module Puppet::FileSystem
 
   # create instance of the file system implementation to use for the current platform
   @impl = if Puppet::Util::Platform.windows?
-           require 'puppet/file_system/file19windows'
-           Puppet::FileSystem::File19Windows
+           require 'puppet/file_system/windows'
+           Puppet::FileSystem::Windows
          else
-           require 'puppet/file_system/file19'
-           Puppet::FileSystem::File19
+           require 'puppet/file_system/posix'
+           Puppet::FileSystem::Posix
          end.new()
 
   # Allows overriding the filesystem for the duration of the given block.
