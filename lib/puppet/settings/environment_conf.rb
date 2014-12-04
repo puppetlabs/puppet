@@ -157,11 +157,12 @@ class Puppet::Settings::EnvironmentConf
   #
   # @api private
   class Static
-    attr_reader :environment_timeout
+    attr_reader :environment_timeout, :environment_data_provider
 
-    def initialize(environment, environment_timeout)
+    def initialize(environment, environment_timeout, environment_data_provider = 'none')
       @environment = environment
       @environment_timeout = environment_timeout
+      @environment_data_provider = environment_data_provider
     end
 
     def manifest

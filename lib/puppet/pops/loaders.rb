@@ -86,7 +86,7 @@ class Puppet::Pops::Loaders
     # The environment is not a namespace, so give it a nil "module_name"
     module_name = nil
     loader_name = "environment:#{environment.name}"
-    env_conf = Puppet.lookup(:environments).get_conf('production')
+    env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     if env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf)
       # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
       loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
