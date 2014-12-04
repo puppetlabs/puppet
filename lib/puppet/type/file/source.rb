@@ -100,7 +100,7 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment, :links => resource[:links])
+      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
         self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
