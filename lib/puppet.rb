@@ -1,5 +1,9 @@
 require 'puppet/version'
 
+if RUBY_VERSION < "1.9.3"
+  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
+end
+
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
 #
