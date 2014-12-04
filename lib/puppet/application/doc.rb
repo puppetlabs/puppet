@@ -64,7 +64,7 @@ USAGE
 -----
 puppet doc [-a|--all] [-h|--help] [-l|--list] [-o|--outputdir <rdoc-outputdir>]
   [-m|--mode text|pdf|rdoc] [-r|--reference <reference-name>]
-  [--charset <charset>] [<manifest-file>]
+  [--charset <charset>]
 
 
 DESCRIPTION
@@ -125,10 +125,6 @@ EXAMPLE
 or
 
     $ puppet doc --outputdir /tmp/rdoc --mode rdoc --modulepath /path/to/modules
-
-or
-
-    $ puppet doc /etc/puppet/manifests/site.pp
 
 or
 
