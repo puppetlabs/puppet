@@ -402,7 +402,7 @@ class Application
       'ruby_version'   => RUBY_VERSION,
       'run_mode'       => self.class.run_mode.name,
     }
-    runtime_info['default_encoding'] = Encoding.default_external if RUBY_VERSION >= '1.9.3'
+    runtime_info['default_encoding'] = Encoding.default_external
     runtime_info.merge!(extra_info) unless extra_info.nil?
 
     Puppet.debug 'Runtime environment: ' + runtime_info.map{|k,v| k + '=' + v.to_s}.join(', ')

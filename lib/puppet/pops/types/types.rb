@@ -13,10 +13,6 @@ module Puppet::Pops
 
   # Mix in implementation part of the Bindings Module
   module Types
-    # Used as end in a range
-    INFINITY = 1.0 / 0.0
-    NEGATIVE_INFINITY = -INFINITY
-
     class TypeModelObject < RGen::MetamodelBuilder::MMBase
       include Puppet::Pops::Visitable
       include Puppet::Pops::Adaptable
@@ -100,15 +96,15 @@ module Puppet::Pops
 
         # Returns Float.Infinity if one end of the range is unbound
         def size
-          return INFINITY if from.nil? || to.nil?
+          return Float::INFINITY if from.nil? || to.nil?
           1+(to-from).abs
         end
 
         # Returns the range as an array ordered so the smaller number is always first.
         # The number may be Infinity or -Infinity.
         def range
-          f = from || NEGATIVE_INFINITY
-          t = to || INFINITY
+          f = from || -Float::INFINITY
+          t = to || Float::INFINITY
           if f < t
             [f, t]
           else
@@ -197,9 +193,9 @@ module Puppet::Pops
       module ClassModule
         # Returns an array with from (min) size to (max) size
         def size_range
-          return [0, INFINITY] if size_type.nil?
+          return [0, Float::INFINITY] if size_type.nil?
           f = size_type.from || 0
-          t = size_type.to || INFINITY
+          t = size_type.to || Float::INFINITY
           if f < t
             [f, t]
           else
@@ -355,7 +351,7 @@ module Puppet::Pops
         end
 
         def ==(o)
-          self.class == o.class && runtime == o.runtime && runtime_type_name == o.runtime_type_name 
+          self.class == o.class && runtime == o.runtime && runtime_type_name == o.runtime_type_name
         end
       end
     end

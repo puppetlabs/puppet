@@ -1,29 +1,6 @@
 # Helper class that keeps track of where line breaks are located and can answer questions about positions.
 #
 class Puppet::Pops::Parser::Locator
-
-  RUBY_1_9_3 = (1 << 16 | 9 << 8 | 3)
-  RUBY_2_0_0 = (2 << 16 | 0 << 8 | 0)
-  RUBYVER_ARRAY = RUBY_VERSION.split(".").collect {|s| s.to_i }
-  RUBYVER = (RUBYVER_ARRAY[0] << 16 | RUBYVER_ARRAY[1] << 8 | RUBYVER_ARRAY[2])
-
-  # Computes a symbol representing which ruby runtime this is running on
-  # This implementation will fail if there are more than 255 minor or micro versions of ruby
-  #
-  def self.locator_version
-    if RUBYVER >= RUBY_2_0_0
-      :ruby20
-    elsif RUBYVER >= RUBY_1_9_3
-      :ruby19
-    else
-      :ruby18
-    end
-  end
-  LOCATOR_VERSION = locator_version
-
-  # Constant set to true if multibyte is supported (includes multibyte extended regular expressions)
-  MULTIBYTE = !!(LOCATOR_VERSION == :ruby19 || LOCATOR_VERSION == :ruby20)
-
   # Creates, or recreates a Locator. A Locator is created if index is not given (a scan is then
   # performed of the given source string.
   #
@@ -31,12 +8,7 @@ class Puppet::Pops::Parser::Locator
     if(char_offsets)
       LocatorForChars.new(string, file, index);
     else
-      case LOCATOR_VERSION
-      when :ruby20, :ruby19
-        Locator19.new(string, file, index)
-      else
-        LocatorForChars.new(string, file, index)
-      end
+      Locator19.new(string, file, index)
     end
   end
 

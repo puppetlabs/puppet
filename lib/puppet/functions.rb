@@ -164,7 +164,7 @@ module Puppet::Functions
     if the_class.dispatcher.empty?
       simple_name = func_name.split(/::/)[-1]
       type, names = default_dispatcher(the_class, simple_name)
-      last_captures_rest = (type.size_range[1] == Puppet::Pops::Types::INFINITY)
+      last_captures_rest = (type.size_range[1] == Float::INFINITY)
       the_class.dispatcher.add_dispatch(type, simple_name, names, nil, nil, nil, last_captures_rest)
     end
 

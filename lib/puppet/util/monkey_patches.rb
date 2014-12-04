@@ -18,9 +18,6 @@ module RDoc
   end
 end
 
-
-require "yaml"
-
 class Symbol
   def <=> (other)
     self.to_s <=> other.to_s
@@ -29,19 +26,6 @@ class Symbol
   def intern
     self
   end unless method_defined? 'intern'
-end
-
-#
-# Workaround for bug in MRI 1.8.7, see
-#     http://redmine.ruby-lang.org/issues/show/2708
-# for details
-#
-if RUBY_VERSION == '1.8.7'
-  class NilClass
-    def closed?
-      true
-    end
-  end
 end
 
 class Object
@@ -53,49 +37,8 @@ class Object
   end
 end
 
-class Symbol
-  # So, it turns out that one of the biggest memory allocation hot-spots in our
-  # code was using symbol-to-proc - because it allocated a new instance every
-  # time it was called, rather than caching (in Ruby 1.8.7 and earlier).
-  #
-  # In Ruby 1.9.3 and later Symbol#to_proc does implement a cache so we skip
-  # our monkey patch.
-  #
-  # Changing this means we can see XX memory reduction...
-  if RUBY_VERSION < "1.9.3"
-    if method_defined? :to_proc
-      alias __original_to_proc to_proc
-      def to_proc
-        @my_proc ||= __original_to_proc
-      end
-    else
-      def to_proc
-        @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
-      end
-    end
-  end
-
-  # Defined in 1.9, absent in 1.8, and used for compatibility in various
-  # places, typically in third party gems.
-  def intern
-    return self
-  end unless method_defined? :intern
-end
-
-class String
-  unless method_defined? :lines
-    require 'puppet/util/monkey_patches/lines'
-    include Puppet::Util::MonkeyPatches::Lines
-  end
-end
-
 require 'fcntl'
 class IO
-  unless method_defined? :lines
-    require 'puppet/util/monkey_patches/lines'
-    include Puppet::Util::MonkeyPatches::Lines
-  end
-
   def self.binwrite(name, string, offset = nil)
     # Determine if we should truncate or not.  Since the truncate method on a
     # file handle isn't implemented on all platforms, safer to do this in what
@@ -122,10 +65,6 @@ class IO
       f.syswrite(string)
     end
   end unless singleton_methods.include?(:binwrite)
-end
-
-class Float
-  INFINITY = (1.0/0.0) if defined?(Float::INFINITY).nil?
 end
 
 class Range
@@ -190,15 +129,4 @@ if Puppet::Util::Platform.windows?
       __original_set_default_paths
     end
   end
-end
-
-# Older versions of SecureRandom (e.g. in 1.8.7) don't have the uuid method
-module SecureRandom
-  def self.uuid
-    # Copied from the 1.9.1 stdlib implementation of uuid
-    ary = self.random_bytes(16).unpack("NnnnnN")
-    ary[2] = (ary[2] & 0x0fff) | 0x4000
-    ary[3] = (ary[3] & 0x3fff) | 0x8000
-    "%08x-%04x-%04x-%04x-%04x%08x" % ary
-  end unless singleton_methods.include?(:uuid)
 end

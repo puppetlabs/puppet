@@ -62,7 +62,7 @@ class Puppet::Forge
         "User-Agent" => user_agent,
       }
 
-      if Puppet.features.zlib? && RUBY_VERSION >= "1.9"
+      if Puppet.features.zlib?
         headers = headers.merge({
           "Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
         })

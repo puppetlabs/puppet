@@ -60,11 +60,6 @@ class Puppet::FileSystem::MemoryFile
     to_path
   end
 
-  # Used by Ruby 1.8.7 file system abstractions when operating on Pathname like things.
-  def to_str
-    to_path
-  end
-
   def inspect
     "<Puppet::FileSystem::MemoryFile:#{to_s}>"
   end

@@ -99,7 +99,6 @@
 class Puppet::Pops::Types::TypeCalculator
 
   Types = Puppet::Pops::Types
-  TheInfinity = 1.0 / 0.0 # because the Infinity symbol is not defined
 
   # @api public
   def self.assignable?(t1, t2)
@@ -560,8 +559,8 @@ class Puppet::Pops::Types::TypeCalculator
       t = Types::PIntegerType.new()
       from = [t1range[0], t2range[0]].min
       to = [t1range[1], t2range[1]].max
-      t.from = from unless from == TheInfinity
-      t.to = to unless to == TheInfinity
+      t.from = from unless from == Float::INFINITY
+      t.to = to unless to == Float::INFINITY
       return t
     end
 
@@ -572,8 +571,8 @@ class Puppet::Pops::Types::TypeCalculator
       t = Types::PFloatType.new()
       from = [t1range[0], t2range[0]].min
       to = [t1range[1], t2range[1]].max
-      t.from = from unless from == TheInfinity
-      t.to = to unless to == TheInfinity
+      t.from = from unless from == Float::INFINITY
+      t.to = to unless to == Float::INFINITY
       return t
     end
 
@@ -952,7 +951,7 @@ class Puppet::Pops::Types::TypeCalculator
     from = range.from
     to = range.to
     x = from.nil? ? 1 : from
-    y = to.nil? ? TheInfinity : to
+    y = to.nil? ? Float::INFINITY : to
     if x < y
       [x, y]
     else
@@ -962,8 +961,8 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def from_to_ordered(from, to)
-    x = (from.nil? || from == :default) ? -TheInfinity : from
-    y = (to.nil? || to == :default) ? TheInfinity : to
+    x = (from.nil? || from == :default) ? -Float::INFINITY : from
+    y = (to.nil? || to == :default) ? Float::INFINITY : to
     if x < y
       [x, y]
     else
@@ -1308,7 +1307,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Array is assignable if t2 is an Array and t2's element type is assignable, or if t2 is a Tuple
-  # where 
   # @api private
   def assignable_PArrayType(t, t2)
     if t2.is_a?(Types::PArrayType)
@@ -1651,7 +1649,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def enumerable_PIntegerType(t)
     # Not enumerable if representing an infinite range
-    return nil if t.size == TheInfinity
+    return nil if t.size == Float::INFINITY
     t
   end
 

@@ -212,7 +212,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       range[1] += param_range[1]
     end
 
-    if range[1] == Puppet::Pops::Types::INFINITY
+    if range[1] == Float::INFINITY
       range[1] = :default
     end
 
@@ -224,7 +224,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     [ self ]
   end
 
-  ANY_NUMBER_RANGE = [0, Puppet::Pops::Types::INFINITY]
+  ANY_NUMBER_RANGE = [0, Float::INFINITY]
   OPTIONAL_SINGLE_RANGE = [0, 1]
   REQUIRED_SINGLE_RANGE = [1, 1]
 end

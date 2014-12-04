@@ -15,7 +15,7 @@ class Puppet::Pops::Types::Enumeration
     case o
     when String
       x = o.chars
-      # Ruby 1.8.7 returns Enumerable::Enumerator, Ruby 1.8.9 Enumerator, and 2.0.0 an Array
+      # Ruby 1.9.3 returns an Enumerator, and 2.0.0 an Array
       x.is_a?(Array) ? x.each : x
     when Integer
       o.times

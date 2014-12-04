@@ -1,9 +1,9 @@
 # UTF-8 Handling #
 
-As Ruby 1.9 becomes more commonly used with Puppet, developers should be aware
-of major changes to the way Strings and Regexp objects are handled.
-Specifically, every instance of these two classes will have an encoding
-attribute determined in a number of ways.
+Now that Puppet only supports Ruby 1.9+, developers should be aware
+of how Ruby handles Strings and Regexp objects. Specifically, every 
+instance of these two classes will have an encoding attribute determined
+in a number of ways.
 
  * If the source file has an encoding specified in the magic comment at the
    top, the instance will take on that encoding.
@@ -11,24 +11,18 @@ attribute determined in a number of ways.
    environment variables.
  * Otherwise, the encoding will default to ASCII-8BIT
 
-## References ##
-
-Excellent information about the differences between encodings in Ruby 1.8 and
-Ruby 1.9 is published in this blog series:
-[Understanding M17n](http://links.puppetlabs.com/understanding_m17n)
-
 ## Encodings of Regexp and String instances ##
 
-In general, please be aware that Ruby 1.9 regular expressions need to be
+In general, please be aware that Ruby regular expressions need to be
 compatible with the encoding of a string being used to match them.  If they are
-not compatible you can expect to receive and error such as:
+not compatible you can expect to receive an error such as:
 
     Encoding::CompatibilityError: incompatible encoding regexp match (ASCII-8BIT
     regexp with UTF-8 string)
 
-In addition, some escape sequences were valid in Ruby 1.8 are no longer valid
-in 1.9 if the regular expression is not marked as an ASCII-8BIT object.  You
-may expect errors like this in this situation:
+In addition, some escape sequences are only valid if the regular expression is
+marked as an ASCII-8BIT object. If the regular expression is not marked as
+ASCII-8BIT, you can get an error such as:
 
     SyntaxError: (irb):7: invalid multibyte escape: /\xFF/
 
@@ -43,14 +37,3 @@ an array of characters, common when escaping a string, you should work with
 everything in ASCII-8BIT.  Changing the encoding will not change the data
 itself and allow the Regexp and the String to deal with bytes rather than
 characters.
-
-Puppet provides a monkey patch to String which returns an encoding suitable for
-byte manipulations:
-
-    # Example of how to escape non ASCII printable characters for YAML.
-    >> snowman = "☃"
-    >> snowman.to_ascii8bit.gsub(/([\x80-\xFF])/n) { |x| "\\x#{x.unpack("C")[0].to_s(16)} }
-    => "\\xe2\\x98\\x83"
-
-If the Regexp is not marked as ASCII-8BIT using /n, then you can expect the
-SyntaxError, invalid multibyte escape as mentioned above.

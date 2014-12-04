@@ -170,8 +170,7 @@ class Puppet::Transaction::ResourceHarness
   # For audit purposes, this code special cases this comparison, and compares
   # the two objects by their second and microsecond components. tv_sec is the
   # number of seconds since the epoch, and tv_usec is only the microsecond
-  # portion of time.  This compare satisfies compatibility requirements for
-  # Ruby 1.8.7, where to_r does not exist on the Time class.
+  # portion of time.
   def are_audited_values_equal(a, b)
     a == b || (a.is_a?(Time) && b.is_a?(Time) && a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec)
   end

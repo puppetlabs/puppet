@@ -129,9 +129,6 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     lines = pkg(:list, "-Hn", @resource[:name]).split("\n")
 
     # remove certificate expiration warnings from the output, but report them
-    # Note: we'd like to use select! here to modify the lines array and avoid
-    #       the second select further down. But Solaris 11 comes with ruby 1.8.7
-    #       which doesn't support select!, so do this as two selects.
     cert_warnings = lines.select { |line| line =~ /^Certificate/ }
     unless cert_warnings.empty?
       Puppet.warning("pkg warning: #{cert_warnings.join(', ')}")

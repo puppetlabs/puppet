@@ -143,18 +143,10 @@ module Puppet::Util::ClassGen
     klass
   end
 
-  # const_defined? in Ruby 1.9 behaves differently in terms
-  # of which class hierarchy it polls for nested namespaces
-  #
-  # See http://redmine.ruby-lang.org/issues/show/1915
   # @api private
   #
   def is_constant_defined?(const)
-    if ::RUBY_VERSION =~ /^1\.8/
-      const_defined?(const)
-    else
-      const_defined?(const, false)
-    end
+    const_defined?(const, false)
   end
 
   # Handle the setting and/or removing of the associated constant.

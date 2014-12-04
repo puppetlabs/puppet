@@ -132,17 +132,13 @@ describe Puppet::Node::Facts, "when indirecting" do
         format.intern(Puppet::Node::Facts, facts.to_yaml)
       end
 
-      # Facts use assymetric serialization/deserialization which requires psych support not
-      # available in 1.8.7. Puppet >= 4.0.0 does not behave correctly on Ruby 1.8.7
-      it 'preserves `_timestamp` value', :unless => RUBY_VERSION >= '1.8.7'  do
+      it 'preserves `_timestamp` value' do
         facts = deserialize_yaml_facts(create_facts('_timestamp' => timestamp))
 
         expect(facts.timestamp).to eq(timestamp)
       end
 
-      # Facts use assymetric serialization/deserialization which requires psych support not
-      # available in 1.8.7. Puppet >= 4.0.0 does not behave correctly on Ruby 1.8.7
-      it "doesn't preserve the `_timestamp` fact", :unless => RUBY_VERSION >= '1.8.7' do
+      it "doesn't preserve the `_timestamp` fact" do
         facts = deserialize_yaml_facts(create_facts('_timestamp' => timestamp))
 
         expect(facts.values['_timestamp']).to be_nil

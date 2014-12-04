@@ -75,9 +75,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     reposdir = find_conf_value('reposdir', conf)
     dirs << reposdir if reposdir
 
-    # We can't use the below due to Ruby 1.8.7
-    # dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
-    dirs.delete_if { |dir| ! Puppet::FileSystem.exist?(dir)  }
+    dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
     if dirs.empty?
       Puppet.debug('No yum directories were found on the local filesystem')
     end

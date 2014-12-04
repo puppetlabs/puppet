@@ -34,7 +34,7 @@ describe Puppet::Network::HTTP::API::V2::Environments do
 
   it "the response conforms to the environments schema for unlimited timeout" do
     conf_stub = stub 'conf_stub'
-    conf_stub.expects(:environment_timeout).returns(1.0 / 0.0)
+    conf_stub.expects(:environment_timeout).returns(Float::INFINITY)
     environment = Puppet::Node::Environment.create(:production, [])
     env_loader = Puppet::Environments::Static.new(environment)
     env_loader.expects(:get_conf).with(:production).returns(conf_stub)

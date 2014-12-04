@@ -83,19 +83,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3,3,2,4,2,3] - [2,3]"                       => [1,4],
       "[1,2,3,['a',1],['b',2]] - {'a' => 1, 'b'=>2}"    => [1,2,3],
       "[1,2,3,{'a'=>1,'b'=>2}] - [{'a' => 1, 'b'=>2}]"  => [1,2,3],
-    }.each do |source, result|
-        it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
-        end
-      end
-
-    {
       "[1,2,3] + {'a' => 1, 'b'=>2}"                    => [1,2,3,['a',1],['b',2]],
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          # This test must be done with match_array since the order of the hash
-          # is undefined and Ruby 1.8.7 and 1.9.3 produce different results.
-          expect(parser.evaluate_string(scope, source, __FILE__)).to match_array(result)
+          parser.evaluate_string(scope, source, __FILE__).should == result
         end
       end
 

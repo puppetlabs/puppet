@@ -306,14 +306,13 @@ class Puppet::Pops::Parser::Lexer2
     la = scn.peek(3)
     return nil if la.empty?
 
-    # Ruby 1.8.7 requires using offset and length (or integers are returned.
     # PERFORMANCE NOTE.
     # It is slightly faster to use these local variables than accessing la[0], la[1] etc. in ruby 1.9.3
     # But not big enough to warrant two completely different implementations.
     #
-    la0 = la[0,1]
-    la1 = la[1,1]
-    la2 = la[2,1]
+    la0 = la[0]
+    la1 = la[1]
+    la2 = la[2]
 
     # PERFORMANCE NOTE:
     # A case when, where all the cases are literal values is the fastest way to map from data to code.

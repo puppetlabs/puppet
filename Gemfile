@@ -45,19 +45,14 @@ group(:development, :test) do
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
-  gem "rubocop", "~> 0.26.1", :platforms => [:ruby] unless RUBY_VERSION =~ /^1.8/
+  gem "rubocop", "~> 0.26.1", :platforms => [:ruby]
 
-  gem 'rdoc', "~> 4.1", :platforms => [:ruby] unless RUBY_VERSION =~ /^1.8/
+  gem 'rdoc', "~> 4.1", :platforms => [:ruby]
 end
 
 group(:development) do
   if RUBY_PLATFORM != 'java'
-    case RUBY_VERSION
-    when /^1.8/
-      gem 'ruby-prof', "~> 0.13.1", :require => false
-    else
-      gem 'ruby-prof', :require => false
-    end
+    gem 'ruby-prof', :require => false
   end
 end
 

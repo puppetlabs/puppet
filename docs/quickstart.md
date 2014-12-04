@@ -16,10 +16,8 @@ this.
 
 ## Ruby versions
 
-Puppet needs to work across a variety of ruby versions. At a minimum you need
-to try any changes you make on both ruby 1.8.7 and ruby 1.9.3. Ruby 2.0.0 and
-2.1.0 are also supported, but they have small enough differences from 1.9.3
-that they are not as important to always check while developing.
+Puppet needs to work across a variety of ruby versions, including ruby
+1.9.3, 2.0.0 and 2.1.0.
 
 Popular ways of making sure you have access to the various versions of ruby are
 to use either [rbenv](https://github.com/sstephenson/rbenv) or

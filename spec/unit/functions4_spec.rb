@@ -82,11 +82,7 @@ actual:
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
-    signature = if RUBY_VERSION =~ /^1\.8/
-      'Any{2}'
-    else
-      'Any x, Any y'
-    end
+    signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
     end.to raise_error(ArgumentError, "function 'min' called with mis-matched arguments
@@ -101,11 +97,7 @@ actual:
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
-    signature = if RUBY_VERSION =~ /^1\.8/
-      'Any{2}'
-    else
-      'Any x, Any y'
-    end
+    signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
@@ -161,11 +153,7 @@ actual:
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_true
-      signature = if RUBY_VERSION =~ /^1\.8/
-        'Any{2,}'
-      else
-        'Any x, Any y, Any a?, Any b?, Any c{0,}'
-      end
+      signature = 'Any x, Any y, Any a?, Any b?, Any c{0,}'
       expect do
         func.call({}, 10)
       end.to raise_error(ArgumentError,
@@ -320,7 +308,7 @@ actual:
       it 'about optional and required parameters' do
         fc = create_function_with_optionals_and_varargs
         signature = fc.signatures[0]
-        expect(signature.args_range).to eql( [2, Puppet::Pops::Types::INFINITY ] )
+        expect(signature.args_range).to eql( [2, Float::INFINITY ] )
         expect(signature.infinity?(signature.args_range[1])).to be_true
       end
 
@@ -351,13 +339,10 @@ actual:
         expect(signature.type.class).to be(Puppet::Pops::Types::PCallableType)
       end
 
-      # conditional on Ruby 1.8.7 which does not do parameter introspection
-      if Method.method_defined?(:parameters)
-        it 'about parameter names obtained from ruby introspection' do
-          fc = create_min_function_class
-          signature = fc.signatures[0]
-          expect(signature.parameter_names).to eql(['x', 'y'])
-        end
+      it 'about parameter names obtained from ruby introspection' do
+        fc = create_min_function_class
+        signature = fc.signatures[0]
+        expect(signature.parameter_names).to eql(['x', 'y'])
       end
 
       it 'about parameter names specified with dispatch' do
