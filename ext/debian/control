@@ -139,7 +139,7 @@ Description: syntax highlighting for puppet manifests in emacs
 
 Package: puppet-testsuite
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, rails (>= 1.2.3-2), rdoc, ruby-ldap | libldap-ruby1.8, ruby-rspec | librspec-ruby, git-core, ruby-mocha | libmocha-ruby1.8
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, rdoc, ruby-ldap | libldap-ruby1.8, ruby-rspec | librspec-ruby, git-core, ruby-mocha | libmocha-ruby1.8
 Recommends: cron
 Description: Centralized configuration management - test suite
  This package provides all the tests from the upstream puppet source code.
