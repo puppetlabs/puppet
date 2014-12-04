@@ -38,7 +38,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
 
     it "should fail if the URI is not a local file, file URI, or puppet URI" do
-      expect(lambda { resource[:source] = %w{http://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'http' as source for fileserving/)
+      expect(lambda { resource[:source] = %w{ftp://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
     end
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
@@ -520,13 +520,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end
     end
 
-      describe "for remote sources" do
+    %w{puppet http}.each do |scheme|
+      describe "for remote (#{scheme}) sources" do
         let(:sourcepath) { "/path/to/source" }
-        let(:uri) { URI::Generic.build(:scheme => 'puppet', :host => 'server', :port => 8192, :path => sourcepath).to_s }
+        let(:uri) { URI::Generic.build(:scheme => scheme, :host => 'server', :port => 8192, :path => sourcepath).to_s }
 
         before(:each) do
           metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
           #metadata = stub('remote', :ftype => "file", :source => uri)
+          Puppet::FileServing::Metadata.indirection.stubs(:find).
+            with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
           Puppet::FileServing::Metadata.indirection.stubs(:find).
             with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
           resource[:source] = uri
@@ -548,6 +551,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           expect(resource.parameter(:source).port).to eq(8192)
         end
 
+        if scheme == 'puppet'
           describe "which don't specify server or port" do
             let(:uri) { "puppet:///path/to/source" }
 
@@ -561,6 +565,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
               expect(resource.parameter(:source).port).to eq(1234)
             end
           end
+        end
       end
+    end
   end
 end
