@@ -38,7 +38,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
 
     it "should fail if the URI is not a local file, file URI, or puppet URI" do
-      expect(lambda { resource[:source] = %w{http://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'http' as source for fileserving/)
+      expect(lambda { resource[:source] = %w{ftp://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
     end
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
