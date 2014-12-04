@@ -14,29 +14,19 @@ module Puppet::Util::RetryAction
       raise RetryException::NoRetriesGiven
     end
 
-    retry_exceptions = options[:retry_exceptions] || Hash.new
+    retry_exceptions = options[:retry_exceptions] || [StandardError]
     retries = options[:retries]
 
     failures = 0
 
     begin
       yield
-    rescue => e
-      # If we were given exceptions to catch,
-      # catch the excptions we care about and retry.
-      # All others fail hard
-
+    rescue *retry_exceptions => e
       if retries == 0
         raise RetryException::RetriesExceeded, "#{retries} exceeded", e.backtrace
       end
 
-      if retry_exceptions.keys.include?(e.class)
-        Puppet.info("Caught exception #{e.class}:#{e}")
-        Puppet.info(retry_exceptions[e.class])
-      elsif !retry_exceptions.keys.empty?
-        # If the exceptions is not in the list of retry_exceptions re-raise.
-        raise e
-      end
+      Puppet.info("Caught exception #{e.class}:#{e} retrying")
 
       failures += 1
       retries -= 1

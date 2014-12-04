@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/util/retryaction'
 
 describe Puppet::Util::RetryAction do
-  let (:exceptions) {{ Puppet::Error => 'Puppet Error Exception' }}
+  let (:exceptions) { [ Puppet::Error, NameError ] }
 
   it "doesn't retry SystemExit" do
     expect do
