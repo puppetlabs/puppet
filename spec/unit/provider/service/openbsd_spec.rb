@@ -144,6 +144,29 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "#running?" do
+    it "should run rcctl check to check the service" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
+      provider.running?.should be_true
+    end
+
+    it "should return true if the service is running" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
+      provider.running?.should be_true
+    end
+
+    it "should return nil if the service is not running" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(failed)')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(failed)')
+      provider.running?.should be_nil
+    end
+  end
+
   describe "#flags" do
     it "should return flags when set" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))

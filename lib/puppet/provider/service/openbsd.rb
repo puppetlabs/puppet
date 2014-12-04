@@ -77,6 +77,12 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
     rcctl(:disable, @resource[:name])
   end
 
+  def running?
+    output = execute([command(:rcctl), "check", @resource[:name]],
+                     :failonfail => false, :combine => false, :squelch => false).chomp
+    return true if output.match(/\(ok\)/)
+  end
+
   # Uses the wrapper to prevent failure when the service is not running;
   # rcctl(8) return non-zero in that case.
   def flags
@@ -89,5 +95,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   def flags=(value)
     self.debug("Changing flags from #{flags} to #{value}")
     rcctl(:enable, @resource[:name], :flags, value)
+    # If the service is already running, force a restart as the flags have been changed.
+    rcctl(:restart, @resource[:name]) if running?
   end
 end
