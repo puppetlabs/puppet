@@ -470,18 +470,6 @@ module Puppet
       Other environment data providers may be registered in modules on the module path. For such
       custom data providers see the respective module documentation."
     },
-    :thin_storeconfigs => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     =>
-    "Boolean; whether Puppet should store only facts and exported resources in the storeconfigs
-    database. This will improve the performance of exported resources with the older
-    `active_record` backend, but will disable external tools that search the storeconfigs database.
-    Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
-      :hook     => proc do |value|
-        Puppet.settings.override_default(:storeconfigs, true) if value
-        end
-      },
     :config_version => {
       :default    => "",
       :desc       => "How to determine the configuration version.  By default, it will be the
