@@ -14,7 +14,6 @@ module Puppet
   ############################################################################################
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
-  STORECONFIGS_ONLY = %q{This setting is only used by the ActiveRecord storeconfigs and inventory backends, which are deprecated.}
 
   # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
   define_settings(:main,
@@ -471,18 +470,6 @@ module Puppet
       Other environment data providers may be registered in modules on the module path. For such
       custom data providers see the respective module documentation."
     },
-    :thin_storeconfigs => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     =>
-    "Boolean; whether Puppet should store only facts and exported resources in the storeconfigs
-    database. This will improve the performance of exported resources with the older
-    `active_record` backend, but will disable external tools that search the storeconfigs database.
-    Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
-      :hook     => proc do |value|
-        Puppet.settings.override_default(:storeconfigs, true) if value
-        end
-      },
     :config_version => {
       :default    => "",
       :desc       => "How to determine the configuration version.  By default, it will be the
@@ -1553,76 +1540,6 @@ EOT
     }
   )
 
-    define_settings(
-    :rails,
-    :dblocation => {
-      :default  => "$statedir/clientconfigs.sqlite3",
-      :type     => :file,
-      :mode     => "0660",
-      :owner    => "service",
-      :group    => "service",
-      :desc     => "The sqlite database file. #{STORECONFIGS_ONLY}"
-    },
-    :dbadapter => {
-      :default  => "sqlite3",
-      :desc     => "The type of database to use. #{STORECONFIGS_ONLY}",
-    },
-    :dbmigrate => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to automatically migrate the database. #{STORECONFIGS_ONLY}",
-    },
-    :dbname => {
-      :default  => "puppet",
-      :desc     => "The name of the database to use. #{STORECONFIGS_ONLY}",
-    },
-    :dbserver => {
-      :default  => "localhost",
-      :desc     => "The database server for caching. Only
-      used when networked databases are used.",
-    },
-    :dbport => {
-      :default  => "",
-      :desc     => "The database password for caching. Only
-        used when networked databases are used. #{STORECONFIGS_ONLY}",
-    },
-    :dbuser => {
-      :default  => "puppet",
-      :desc     => "The database user for caching. Only
-        used when networked databases are used. #{STORECONFIGS_ONLY}",
-    },
-    :dbpassword => {
-      :default  => "puppet",
-      :desc     => "The database password for caching. Only
-        used when networked databases are used. #{STORECONFIGS_ONLY}",
-    },
-    :dbconnections => {
-      :default  => '',
-      :desc     => "The number of database connections for networked
-        databases.  Will be ignored unless the value is a positive integer. #{STORECONFIGS_ONLY}",
-    },
-    :dbsocket => {
-      :default  => "",
-      :desc     => "The database socket location. Only used when networked
-        databases are used.  Will be ignored if the value is an empty string. #{STORECONFIGS_ONLY}",
-    },
-    :railslog => {
-      :default  => "$logdir/rails.log",
-      :type     => :file,
-      :mode     => "0600",
-      :owner    => "service",
-      :group    => "service",
-      :desc     => "Where Rails-specific logs are sent. #{STORECONFIGS_ONLY}"
-    },
-
-    :rails_loglevel => {
-        :default  => "info",
-        :desc     => "The log level for Rails connections.  The value must be
-          a valid log level within Rails.  Production environments normally use `info`
-          and other environments normally use `debug`. #{STORECONFIGS_ONLY}",
-    }
-  )
-
   define_settings(
     :transaction,
     :tags => {
@@ -1734,11 +1651,10 @@ EOT
       :default  => false,
       :type     => :boolean,
       :desc     => "Whether to store each client's configuration, including catalogs, facts,
-        and related data.  This also enables the import and export of resources in
+        and related data. This also enables the import and export of resources in
         the Puppet language - a mechanism for exchange resources between nodes.
 
-        By default this uses ActiveRecord and an SQL database to store and query
-        the data; this, in turn, will depend on Rails being available.
+        By default this uses the 'puppetdb' backend.
 
         You can adjust the backend using the storeconfigs_backend setting.",
       # Call our hook with the default value, so we always get the libdir set.
@@ -1756,10 +1672,10 @@ EOT
     },
     :storeconfigs_backend => {
       :type => :terminus,
-      :default => "active_record",
+      :default => "puppetdb",
       :desc => "Configure the backend terminus used for StoreConfigs.
-        By default, this uses the ActiveRecord store, which directly talks to the
-        database from within the Puppet Master process."
+        By default, this uses the PuppetDB store, which must be installed
+        and configured before turning on StoreConfigs."
     }
   )
 

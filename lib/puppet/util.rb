@@ -23,15 +23,6 @@ module Util
 
   extend Puppet::Util::SymbolicFileMode
 
-  def self.activerecord_version
-    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
-      ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
-    else
-      0
-    end
-  end
-
-
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
   def self.withenv(hash)
