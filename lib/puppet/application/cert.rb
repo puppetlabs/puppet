@@ -229,6 +229,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'puppet/ssl/certificate_authority'
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
+    Puppet::SSL::Oids.register_puppet_oids
+
     Puppet::Util::Log.newdestination :console
 
     if [:generate, :destroy].include? subcommand

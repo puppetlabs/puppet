@@ -240,6 +240,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::SSL::Host.ca_location = :none
     end
+    Puppet::SSL::Oids.register_puppet_oids
     Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
   end
 

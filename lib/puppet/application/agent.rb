@@ -3,6 +3,7 @@ require 'puppet/daemon'
 require 'puppet/util/pidlock'
 require 'puppet/agent'
 require 'puppet/configurer'
+require 'puppet/ssl/oids'
 
 class Puppet::Application::Agent < Puppet::Application
 
@@ -371,6 +372,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     setup_logs
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    Puppet::SSL::Oids.register_puppet_oids
 
     if options[:fqdn]
       Puppet[:certname] = options[:fqdn]
