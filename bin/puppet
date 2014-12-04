@@ -5,4 +5,5 @@ begin
   Puppet::Util::CommandLine.new.execute
 rescue LoadError => e
   $stderr.puts e.message
+  exit(1)
 end
