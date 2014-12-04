@@ -342,8 +342,8 @@ describe Puppet::Configurer do
     end
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
-      @catalog.stubs(:environment).returns("second_env")
-      @agent.expects(:retrieve_catalog).returns(@catalog).twice
+      catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+      @agent.expects(:retrieve_catalog).returns(catalog).twice
 
       @agent.run
     end

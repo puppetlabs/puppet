@@ -1,7 +1,8 @@
 # Configuration settings for a single directory Environment.
 # @api private
 class Puppet::Settings::EnvironmentConf
-  VALID_SETTINGS = [:modulepath, :manifest, :config_version, :environment_timeout, :environment_data_provider].freeze
+  ENVIRONMENT_CONF_ONLY_SETTINGS = [:modulepath, :manifest, :config_version].freeze
+  VALID_SETTINGS = (ENVIRONMENT_CONF_ONLY_SETTINGS + [:environment_timeout, :environment_data_provider]).freeze
 
   # Given a path to a directory environment, attempts to load and parse an
   # environment.conf in ini format, and return an EnvironmentConf instance.
@@ -157,11 +158,12 @@ class Puppet::Settings::EnvironmentConf
   #
   # @api private
   class Static
-    attr_reader :environment_timeout
+    attr_reader :environment_timeout, :environment_data_provider
 
-    def initialize(environment, environment_timeout)
+    def initialize(environment, environment_timeout, environment_data_provider = 'none')
       @environment = environment
       @environment_timeout = environment_timeout
+      @environment_data_provider = environment_data_provider
     end
 
     def manifest

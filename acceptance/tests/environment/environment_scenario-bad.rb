@@ -19,7 +19,6 @@ step  "Test"
 master_opts = {
   'main' => {
     'environmentpath' => '/doesnotexist',
-    'config_version' => '$confdir/static-version.sh',
   }
 }
 general = [ master_opts, testdir, puppet_conf_backup_dir, { :directory_environments => true } ]

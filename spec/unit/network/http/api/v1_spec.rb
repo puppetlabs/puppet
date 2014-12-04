@@ -82,8 +82,17 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   describe "when converting a URI into a request" do
+    let(:environment) { Puppet::Node::Environment.create(:env, []) }
+    let(:env_loaders) { Puppet::Environments::Static.new(environment) }
+
     before do
       handler.stubs(:handler).returns "foo"
+    end
+
+    around do |example|
+      Puppet.override(:environments => env_loaders) do
+        example.run
+      end
     end
 
     it "should require the http method, the URI, and the query parameters" do
@@ -188,7 +197,12 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   describe "when converting a request into a URI" do
-    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => "myenv") }
+    let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
+    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
+
+    before do
+      handler.stubs(:handler).returns "foo"
+    end
 
     it "should use the environment as the first field of the URI" do
       handler.class.indirection2uri(request).split("/")[1].should == "myenv"
@@ -215,7 +229,8 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   describe "when converting a request into a URI with body" do
-    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => "myenv") }
+    let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
+    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
 
     it "should use the environment as the first field of the URI" do
       handler.class.request_to_uri_and_body(request).first.split("/")[1].should == "myenv"

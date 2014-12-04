@@ -8,14 +8,19 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
   include PuppetSpec::Files
 
   let(:filename) { tmpfile('testfile') }
-
-  let(:catalog) { Puppet::Resource::Catalog.new }
-
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+  let(:catalog) { Puppet::Resource::Catalog.new(:test, environment) }
   let(:resource) { Puppet::Type.type(:file).new :path => filename, :catalog => catalog }
 
   before do
     File.open(filename, 'w') {|f| f.write "initial file content"}
     described_class.stubs(:standalone?).returns(false)
+  end
+
+  around do |example|
+    Puppet.override(:environments => Puppet::Environments::Static.new(environment)) do
+      example.run
+    end
   end
 
   describe "when determining the checksum type" do
@@ -400,7 +405,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
 
         conn.unstub(:request_get)
-        conn.expects(:request_get).with('/none/file_content/test/foo%20bar', anything).yields(response)
+        conn.expects(:request_get).with('/testing/file_content/test/foo%20bar', anything).yields(response)
 
         resource.write(source)
       end

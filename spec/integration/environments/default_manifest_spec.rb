@@ -188,42 +188,7 @@ describe "default manifests" do
         expect { Puppet.initialize_settings }.to raise_error(Puppet::Settings::ValidationError, /default_manifest.*must be.*absolute.*when.*disable_per_environment_manifest.*true/)
       end
     end
-
-    context "in legacy environments" do
-      let(:environmentpath) { '' }
-      let(:manifestsdir) { File.expand_path("default_manifests", confdir) }
-      let(:legacy_manifestsdir) { File.expand_path('manifests', confdir) }
-
-      before(:each) do
-        FileUtils.mkdir_p(manifestsdir)
-
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
-          f.puts(<<-EOF)
-  default_manifest=#{manifestsdir}
-  disable_per_environment_manifest=true
-  manifest=#{legacy_manifestsdir}
-          EOF
-        end
-
-        File.open(File.join(manifestsdir, "site.pp"), "w") do |f|
-          f.puts("notify { 'ManifestFromAbsoluteDefaultManifest': }")
-        end
-      end
-
-      it "has no effect on compilation" do
-        FileUtils.mkdir_p(legacy_manifestsdir)
-
-        File.open(File.join(legacy_manifestsdir, "site.pp"), "w") do |f|
-          f.puts("notify { 'ManifestFromLegacy': }")
-        end
-
-        expect(a_catalog_compiled_for_environment('testing')).to(
-          include_resource('Notify[ManifestFromLegacy]')
-        )
-      end
-    end
   end
-
 
   RSpec::Matchers.define :include_resource do |expected|
     match do |actual|

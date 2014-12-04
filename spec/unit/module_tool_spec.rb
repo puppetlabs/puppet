@@ -176,10 +176,7 @@ TREE
     end
 
     around do |example|
-      envs = Puppet::Environments::Combined.new(
-        Puppet::Environments::Static.new(environment),
-        Puppet::Environments::Legacy.new
-      )
+      envs = Puppet::Environments::Static.new(environment)
 
       Puppet.override(:environments => envs) do
         example.run

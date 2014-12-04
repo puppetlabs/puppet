@@ -47,9 +47,10 @@ master_opts = {
 with_puppet_running_on master, master_opts, testdir do
 
   agents.each do |agent|
+    agent_vardir = agent.puppet['vardir']
     run_agent_on(agent, "--no-daemonize --onetime --server #{master}")
-    on agent, "cat \"#{agent.puppet['vardir']}/lib/puppet/foo.rb\""
+    on agent, "cat \"#{agent_vardir}/lib/puppet/foo.rb\""
     assert_match(/#special_version/, stdout, "The plugin from environment 'special' was not synced")
-    on agent, "rm -rf \"#{agent.puppet['vardir']}/lib\""
+    on agent, "rm -rf \"#{agent_vardir}/lib\""
   end
 end

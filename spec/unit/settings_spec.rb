@@ -419,11 +419,6 @@ describe Puppet::Settings do
       @settings[:myval].should == "memarg"
     end
 
-    it "should clear the list of environments" do
-      Puppet::Node::Environment.expects(:clear).at_least(1)
-      @settings[:myval] = "memarg"
-    end
-
     it "should raise an error if we try to set a setting that hasn't been defined'" do
       lambda{
         @settings[:why_so_serious] = "foo"
@@ -502,15 +497,6 @@ describe Puppet::Settings do
       @settings[:two].should == "one TWO"
     end
 
-    it "should not cache values such that information from one environment is returned for another environment" do
-      text = "[env1]\none = oneval\n[env2]\none = twoval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-
-      @settings.value(:one, "env1").should == "oneval"
-      @settings.value(:one, "env2").should == "twoval"
-    end
-
     it "should have a run_mode that defaults to user" do
       @settings.preferred_run_mode.should == :user
     end
@@ -563,67 +549,12 @@ describe Puppet::Settings do
       @settings[:one].should == "ONE"
     end
 
-    it "should return values in a specified environment" do
-      text = "[env]\none = envval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      @settings.value(:one, "env").should == "envval"
-    end
-
     it 'should use the current environment for $environment' do
-      @settings.define_settings :main, :myval => { :default => "$environment/foo", :desc => "mydocs" }
+      @settings.define_settings :main, :config_version => { :default => "$environment/foo", :desc => "mydocs" }
 
-      @settings.value(:myval, "myenv").should == "myenv/foo"
-    end
-
-    it "should interpolate found values using the current environment" do
-      text = "[main]\none = mainval\n[myname]\none = nameval\ntwo = $one/two\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-
-      @settings.value(:two, "myname").should == "nameval/two"
-    end
-
-    it "should return values in a specified environment before values in the main or name sections" do
-      text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
-      @settings.stubs(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      @settings.value(:one, "env").should == "envval"
-    end
-
-    context "when interpolating a dynamic environments setting" do
-      let(:dynamic_manifestdir) { "manifestdir=/somewhere/$environment/manifests" }
-      let(:environment) { "environment=anenv" }
-
-      before(:each) do
-        @settings.define_settings :main,
-          :manifestdir => { :default => "/manifests", :desc => "manifestdir setting" },
-          :environment => { :default => "production", :desc => "environment setting" }
-      end
-
-      it "interpolates default environment when no environment specified" do
-        text = <<-EOF
-[main]
-#{dynamic_manifestdir}
-        EOF
-        @settings.stubs(:read_file).returns(text)
-        @settings.send(:parse_config_files)
-        expect(@settings.value(:manifestdir)).to eq("/somewhere/production/manifests")
-      end
-
-      it "interpolates the set environment when no environment specified" do
-        text = <<-EOF
-[main]
-#{dynamic_manifestdir}
-#{environment}
-        EOF
-        @settings.stubs(:read_file).returns(text)
-        @settings.send(:parse_config_files)
-        expect(@settings.value(:manifestdir)).to eq("/somewhere/anenv/manifests")
-      end
+      @settings.value(:config_version, "myenv").should == "myenv/foo"
     end
   end
-
 
   describe "when locating config files" do
     before do
@@ -850,22 +781,6 @@ describe Puppet::Settings do
       values.should == ["setval"]
     end
 
-    it "should pass the environment-specific value to the hook when one is available" do
-      values = []
-      @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
-      @settings.define_settings :section, :environment => { :default => "yay", :desc => "a" }
-      @settings.define_settings :section, :environments => { :default => "yay,foo", :desc => "a" }
-
-      text = "[main]
-      mysetting = setval
-      [yay]
-      mysetting = other
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
-      values.should == ["other"]
-    end
-
     it "should pass the interpolated value to the hook when one is available" do
       values = []
       @settings.define_settings :section, :base => {:default => "yay", :desc => "a", :hook => proc { |v| values << v }}
@@ -949,8 +864,8 @@ describe Puppet::Settings do
       }
 
       def assert_accessing_setting_is_deprecated(settings, setting)
-        Puppet.expects(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
-        Puppet.expects(:deprecation_warning).with("Modifying '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+        Puppet.expects(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated.")
+        Puppet.expects(:deprecation_warning).with("Modifying '#{setting}' as a setting is deprecated.")
         settings[setting.intern] = apath = File.expand_path('foo')
         expect(settings[setting.intern]).to eq(apath)
       end
@@ -966,7 +881,7 @@ describe Puppet::Settings do
       context "complete" do
         let(:completely_deprecated_settings) do
           settings.define_settings(:main, {
-            :manifestdir => {
+            :completely_deprecated_setting => {
               :default => 'foo',
               :desc    => 'a deprecated setting',
               :deprecated => :completely,
@@ -976,31 +891,31 @@ describe Puppet::Settings do
         end
 
         it "warns when set in puppet.conf" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/manifestdir is deprecated\./), 'setting-manifestdir')
+          Puppet.expects(:deprecation_warning).with(regexp_matches(/completely_deprecated_setting is deprecated\./), 'setting-completely_deprecated_setting')
 
           completely_deprecated_settings.parse_config(<<-CONF)
-            manifestdir='should warn'
+            completely_deprecated_setting='should warn'
           CONF
           completely_deprecated_settings.initialize_app_defaults(app_defaults)
         end
 
         it "warns when set on the commandline" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/manifestdir is deprecated\./), 'setting-manifestdir')
+          Puppet.expects(:deprecation_warning).with(regexp_matches(/completely_deprecated_setting is deprecated\./), 'setting-completely_deprecated_setting')
 
-          args = ["--manifestdir", "/some/value"]
+          args = ["--completely_deprecated_setting", "/some/value"]
           completely_deprecated_settings.send(:parse_global_options, args)
           completely_deprecated_settings.initialize_app_defaults(app_defaults)
         end
 
         it "warns when set in code" do
-          assert_accessing_setting_is_deprecated(completely_deprecated_settings, 'manifestdir')
+          assert_accessing_setting_is_deprecated(completely_deprecated_settings, 'completely_deprecated_setting')
         end
       end
 
       context "partial" do
         let(:partially_deprecated_settings) do
           settings.define_settings(:main, {
-            :modulepath => {
+            :partially_deprecated_setting => {
               :default => 'foo',
               :desc    => 'a partially deprecated setting',
               :deprecated => :allowed_on_commandline,
@@ -1010,9 +925,9 @@ describe Puppet::Settings do
         end
 
         it "warns for a deprecated setting allowed on the command line set in puppet.conf" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/modulepath is deprecated in puppet\.conf/), 'puppet-conf-setting-modulepath')
+          Puppet.expects(:deprecation_warning).with(regexp_matches(/partially_deprecated_setting is deprecated in puppet\.conf/), 'puppet-conf-setting-partially_deprecated_setting')
           partially_deprecated_settings.parse_config(<<-CONF)
-            modulepath='should warn'
+            partially_deprecated_setting='should warn'
           CONF
           partially_deprecated_settings.initialize_app_defaults(app_defaults)
         end
@@ -1020,13 +935,13 @@ describe Puppet::Settings do
         it "does not warn when manifest is set on command line" do
           Puppet.expects(:deprecation_warning).never
 
-          args = ["--modulepath", "/some/value"]
+          args = ["--partially_deprecated_setting", "/some/value"]
           partially_deprecated_settings.send(:parse_global_options, args)
           partially_deprecated_settings.initialize_app_defaults(app_defaults)
         end
 
         it "warns when set in code" do
-          assert_accessing_setting_is_deprecated(partially_deprecated_settings, 'modulepath')
+          assert_accessing_setting_is_deprecated(partially_deprecated_settings, 'partially_deprecated_setting')
         end
       end
     end
@@ -1272,16 +1187,6 @@ describe Puppet::Settings do
 
       Puppet::Resource::Catalog.any_instance.expects(:add_resource).never
       @settings.to_catalog
-    end
-
-    it "should ignore manifestdir if environmentpath is set" do
-      @settings.define_settings :main,
-        :manifestdir => { :type => :directory, :default => @prefix+"/manifestdir", :desc => "a" },
-        :environmentpath => { :type => :path, :default => @prefix+"/envs", :desc => "a" }
-
-      catalog = @settings.to_catalog(:main)
-
-      expect(catalog).to_not have_resource("File[#{@prefix}/manifestdir]")
     end
 
     describe "on Microsoft Windows" do

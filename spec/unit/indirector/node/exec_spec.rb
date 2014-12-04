@@ -24,6 +24,9 @@ describe Puppet::Node::Exec do
   end
 
   describe "when handling the results of the command" do
+    let(:testing_env) { Puppet::Node::Environment.create(:testing, []) }
+    let(:other_env) { Puppet::Node::Environment.create(:other, []) }
+
     before do
       @name = "yay"
       @node = Puppet::Node.new(@name)
@@ -37,6 +40,14 @@ describe Puppet::Node::Exec do
       end
 
       @request = Puppet::Indirector::Request.new(:node, :find, @name, nil)
+    end
+
+    around do |example|
+      envs = Puppet::Environments::Static.new(testing_env, other_env)
+
+      Puppet.override(:environments => envs) do
+        example.run
+      end
     end
 
     it "should translate the YAML into a Node instance" do
@@ -62,15 +73,15 @@ describe Puppet::Node::Exec do
     end
 
     it "should set the node's environment if one is provided" do
-      @result[:environment] = "yay"
+      @result[:environment] = "testing"
       @searcher.find(@request)
-      @node.environment.to_s.should == 'yay'
+      expect(@node.environment.name).to eq(:testing)
     end
 
     it "should set the node's environment based on the request if not otherwise provided" do
-      @request.environment = "boo"
+      @request.environment = "other"
       @searcher.find(@request)
-      @node.environment.to_s.should == 'boo'
+      expect(@node.environment.name).to eq(:other)
     end
   end
 end

@@ -7,20 +7,26 @@ require 'puppet/settings/ini_file'
 #
 class Puppet::Settings::ConfigFile
 
-  ALLOWED_SECTION_NAMES = ['main', 'master', 'agent', 'user'].freeze
-
   ##
   # @param value_converter [Proc] a function that will convert strings into ruby types
-  #
   def initialize(value_converter)
     @value_converter = value_converter
   end
 
-  def parse_file(file, text)
+  # @param file [String, File] pointer to the file whose text we are parsing
+  # @param text [String] the actual text of the inifile to be parsed
+  # @param allowed_section_names [Array] an optional array of accepted section
+  #   names; if this list is non-empty, sections outside of it will raise an
+  #   error.
+  # @return A Struct with a +sections+ array representing each configuration section
+  def parse_file(file, text, allowed_section_names = [])
     result = Conf.new
+    if !allowed_section_names.empty?
+      allowed_section_names << 'main' unless allowed_section_names.include?('main')
+    end
 
     ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
-    unique_sections_in(ini, file).each do |section_name|
+    unique_sections_in(ini, file, allowed_section_names).each do |section_name|
       section = Section.new(section_name.to_sym)
       result.with_section(section)
 
@@ -73,13 +79,10 @@ class Puppet::Settings::ConfigFile
 
 private
 
-  def unique_sections_in(ini, file)
+  def unique_sections_in(ini, file, allowed_section_names)
     ini.section_lines.collect do |section|
-      if section.name == "application_defaults" || section.name == "global_defaults"
-        raise Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}"
-      end
-      if !ALLOWED_SECTION_NAMES.include?(section.name)
-        Puppet.deprecation_warning("Sections other than #{ALLOWED_SECTION_NAMES.join(', ')} are deprecated in puppet.conf. Please use the directory environments feature to specify environments. (See http://docs.puppetlabs.com/puppet/latest/reference/environments.html)")
+      if !allowed_section_names.empty? && !allowed_section_names.include?(section.name)
+        raise(Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}. The only valid puppet.conf sections are: [#{allowed_section_names.join(", ")}]. Please use the directory environments feature to specify environments. (See http://docs.puppetlabs.com/puppet/latest/reference/environments.html)")
       end
       section.name
     end.uniq

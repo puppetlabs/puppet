@@ -579,18 +579,17 @@ describe Puppet::Resource::Type do
 
   describe "when creating a resource" do
     before do
-      @node = Puppet::Node.new("foo", :environment => 'env')
+      env = Puppet::Node::Environment.create('env', [])
+      @node = Puppet::Node.new("foo", :environment => env)
       @compiler = Puppet::Parser::Compiler.new(@node)
       @scope = Puppet::Parser::Scope.new(@compiler)
 
       @top = Puppet::Resource::Type.new :hostclass, "top"
       @middle = Puppet::Resource::Type.new :hostclass, "middle", :parent => "top"
 
-      @code = Puppet::Resource::TypeCollection.new("env")
+      @code = env.known_resource_types
       @code.add @top
       @code.add @middle
-
-      @node.environment.stubs(:known_resource_types).returns(@code)
     end
 
     it "should create a resource instance" do

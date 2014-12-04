@@ -12,7 +12,6 @@ class Puppet::Resource::TypeCollection
     @hostclasses.clear
     @definitions.clear
     @nodes.clear
-    @watched_files.clear
     @notfound.clear
   end
 
@@ -25,8 +24,6 @@ class Puppet::Resource::TypeCollection
 
     # So we can keep a list and match the first-defined regex
     @node_list = []
-
-    @watched_files = Puppet::Util::FileWatcher.new
   end
 
   def import_ast(ast, modname)
@@ -129,12 +126,8 @@ class Puppet::Resource::TypeCollection
     end
   end
 
-  def require_reparse?
-    @parse_failed || stale?
-  end
-
-  def stale?
-    @watched_files.changed?
+  def parse_failed?
+    @parse_failed
   end
 
   def version
@@ -149,14 +142,6 @@ class Puppet::Resource::TypeCollection
     @version
   rescue Puppet::ExecutionFailure => e
     raise Puppet::ParseError, "Execution of config_version command `#{environment.config_version}` failed: #{e.message}", e.backtrace
-  end
-
-  def watch_file(filename)
-    @watched_files.watch(filename)
-  end
-
-  def watching_file?(filename)
-    @watched_files.watching?(filename)
   end
 
   private

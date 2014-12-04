@@ -228,15 +228,6 @@ describe Puppet::Application::Doc do
           @doc.unknown_args[0][:arg].should == File.expand_path('path')
         end
 
-        it "should expand --manifestdir if any" do
-          @doc.unknown_args = [ { :opt => "--manifestdir", :arg => "path" } ]
-          Puppet.settings.stubs(:handlearg)
-
-          @doc.setup_rdoc
-
-          @doc.unknown_args[0][:arg].should == File.expand_path('path')
-        end
-
         it "should give them to Puppet.settings" do
           @doc.unknown_args = [ { :opt => :option, :arg => :argument } ]
           Puppet.settings.expects(:handlearg).with(:option,:argument)
@@ -267,7 +258,7 @@ describe Puppet::Application::Doc do
         Puppet.stubs(:info)
         Puppet[:trace] = false
         Puppet[:modulepath] = modules
-        Puppet[:manifestdir] = manifests
+        Puppet[:manifest] = manifests
         @doc.options[:all] = false
         @doc.options[:outputdir] = 'doc'
         @doc.options[:charset] = nil
@@ -314,7 +305,7 @@ describe Puppet::Application::Doc do
         expect { @doc.rdoc }.to exit_with(0)
       end
 
-      it "should get modulepath and manifestdir values from the environment" do
+      it "should get modulepath and manifest values from the environment" do
         FileUtils.mkdir_p(modules)
         FileUtils.mkdir_p(modules2)
         env = Puppet::Node::Environment.create(Puppet[:environment].to_sym,

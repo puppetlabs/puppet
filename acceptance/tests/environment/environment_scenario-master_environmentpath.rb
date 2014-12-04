@@ -17,12 +17,8 @@ apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true
 
 step  "Test"
 master_opts = {
-  'main' => {
-    'environmentpath' => '',
-  },
   'master' => {
     'environmentpath' => '$confdir/environments',
-    'config_version' => '$confdir/static-version.sh',
   }
 }
 env = 'testing'

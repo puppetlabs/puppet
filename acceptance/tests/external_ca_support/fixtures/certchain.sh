@@ -392,7 +392,9 @@ HTTPD_CONF
 set_up_puppetmaster() {
     local apachedir="${B}/apache"
     local masterdir="${B}/puppetmaster"
-    mkdir -p "${masterdir}/conf" "${masterdir}/var" "${masterdir}/manifests" 
+    local confdir="${masterdir}/conf"
+    local environmentdir="${confdir}/environments/production"
+    mkdir -p "${confdir}" "${masterdir}/var" "${environmentdir}/manifests"
     dedent > "${apachedir}/puppetmaster/config.ru" <<CONFIG_RU
         \$0 = "master"
         ARGV << "--rack"
@@ -412,9 +414,8 @@ CONFIG_RU
         ca = false
         ssl_client_header = SSL_CLIENT_S_DN
         ssl_client_verify_header = SSL_CLIENT_VERIFY
-        manifestdir = ${masterdir}/manifests
 PUPPET_CONF
-    dedent > "${masterdir}/manifests/site.pp" <<SITE_PP
+    dedent > "${environmentdir}/manifests/site.pp" <<SITE_PP
         node /client.*.example.org/ {
             file { "${B}/i_was_here":
                 content => "yes I was"

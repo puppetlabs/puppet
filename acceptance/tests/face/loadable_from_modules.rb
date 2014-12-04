@@ -8,14 +8,13 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
 
 agents.each do |agent|
-  dev_modulepath = get_test_file_path(agent, 'dev/modules')
-  user_modulepath = get_test_file_path(agent, 'user/modules')
+  environmentpath = get_test_file_path(agent, 'environments')
+  dev_modulepath = "#{environmentpath}/dev/modules"
 
   # make sure that we use the modulepath from the dev environment
   puppetconf = get_test_file_path(agent, 'puppet.conf')
+  on agent, puppet("config", "set", "environmentpath", environmentpath, "--section", "main", "--config", puppetconf)
   on agent, puppet("config", "set", "environment", "dev", "--section", "user", "--config", puppetconf)
-  on agent, puppet("config", "set", "modulepath", user_modulepath, "--section", "user", "--config", puppetconf)
-  on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
 
   on agent, 'rm -rf helloworld'
   on agent, puppet("module", "generate", "puppetlabs-helloworld", "--skip-interview")

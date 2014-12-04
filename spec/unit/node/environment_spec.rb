@@ -9,42 +9,36 @@ require 'puppet_spec/modules'
 require 'puppet/parser/parser_factory'
 
 describe Puppet::Node::Environment do
-  let(:env) { Puppet::Node::Environment.new("testing") }
+  let(:env) { Puppet::Node::Environment.create("testing", []) }
 
   include PuppetSpec::Files
-  after do
-    Puppet::Node::Environment.clear
-  end
 
   context 'the environment' do
-    it "should convert an environment to string when converting to YAML" do
+    it "converts an environment to string when converting to YAML" do
       env.to_yaml.should match(/--- testing/)
     end
 
-    it "should use the filetimeout for the ttl for the module list" do
-      Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
+    describe ".create" do
+      it "creates equivalent environments whether specifying name as a symbol or a string" do
+        expect(Puppet::Node::Environment.create(:one, [])).to eq(Puppet::Node::Environment.create("one", []))
+      end
+
+      it "interns name" do
+        expect(Puppet::Node::Environment.create("one", []).name).to equal(:one)
+      end
+      it "does not produce environment singletons" do
+        expect(Puppet::Node::Environment.create("one", [])).to_not equal(Puppet::Node::Environment.create("one", []))
+      end
     end
 
-    it "should use the default environment if no name is provided while initializing an environment" do
-      Puppet[:environment] = "one"
-      Puppet::Node::Environment.new.name.should == :one
+    it "returns its name when converted to a string" do
+      expect(env.to_s).to eq("testing")
     end
 
-    it "should treat environment instances as singletons" do
-      Puppet::Node::Environment.new("one").should equal(Puppet::Node::Environment.new("one"))
-    end
-
-    it "should treat an environment specified as names or strings as equivalent" do
-      Puppet::Node::Environment.new(:one).should equal(Puppet::Node::Environment.new("one"))
-    end
-
-    it "should return its name when converted to a string" do
-      Puppet::Node::Environment.new(:one).to_s.should == "one"
-    end
-
-    it "should just return any provided environment if an environment is provided as the name" do
-      one = Puppet::Node::Environment.new(:one)
-      Puppet::Node::Environment.new(one).should equal(one)
+    it "has an inspect method for debugging" do
+      e = Puppet::Node::Environment.create(:test, ['/modules/path', '/other/modules'], '/manifests/path')
+      expect("a #{e} env").to eq("a test env")
+      expect(e.inspect).to match(%r{<Puppet::Node::Environment:\w* @name="test" @manifest="/manifests/path" @modulepath="/modules/path:/other/modules" >})
     end
 
     describe "equality" do
@@ -116,88 +110,59 @@ describe Puppet::Node::Environment do
       end
     end
 
-    describe "watching a file" do
-      let(:filename) { "filename" }
-
-      it "accepts a File" do
-        file = tmpfile(filename)
-        env.known_resource_types.expects(:watch_file).with(file.to_s)
-        env.watch_file(file)
-      end
-
-      it "accepts a String" do
-        env.known_resource_types.expects(:watch_file).with(filename)
-        env.watch_file(filename)
-      end
-    end
-
     describe "when managing known resource types" do
       before do
-        @collection = Puppet::Resource::TypeCollection.new(env)
         env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
       end
 
-      it "should create a resource type collection if none exists" do
-        Puppet::Resource::TypeCollection.expects(:new).with(env).returns @collection
-        env.known_resource_types.should equal(@collection)
+      it "creates a resource type collection if none exists" do
+        expect(env.known_resource_types).to be_kind_of(Puppet::Resource::TypeCollection)
       end
 
-      it "should reuse any existing resource type collection" do
-        env.known_resource_types.should equal(env.known_resource_types)
+      it "memoizes resource type collection" do
+        expect(env.known_resource_types).to equal(env.known_resource_types)
       end
 
-      it "should perform the initial import when creating a new collection" do
+      it "performs the initial import when creating a new collection" do
         env.expects(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
         env.known_resource_types
       end
 
-      it "should return the same collection even if stale if it's the same thread" do
-        Puppet::Resource::TypeCollection.stubs(:new).returns @collection
-        env.known_resource_types.stubs(:stale?).returns true
-
-        env.known_resource_types.should equal(@collection)
-      end
-
-      it "should generate a new TypeCollection if the current one requires reparsing" do
+      it "generates a new TypeCollection if the current one requires reparsing" do
         old_type_collection = env.known_resource_types
-        old_type_collection.stubs(:require_reparse?).returns true
+        old_type_collection.stubs(:parse_failed?).returns true
 
         env.check_for_reparse
 
         new_type_collection = env.known_resource_types
-        new_type_collection.should be_a Puppet::Resource::TypeCollection
-        new_type_collection.should_not equal(old_type_collection)
+        expect(new_type_collection).to be_a Puppet::Resource::TypeCollection
+        expect(new_type_collection).to_not equal(old_type_collection)
       end
     end
 
-    it "should validate the modulepath directories" do
+    it "validates the modulepath directories" do
       real_file = tmpdir('moduledir')
-      path = %W[/one /two #{real_file}].join(File::PATH_SEPARATOR)
+      path = ['/one', '/two', real_file]
 
-      Puppet[:modulepath] = path
+      env = Puppet::Node::Environment.create(:test, path)
 
-      env.modulepath.should == [real_file]
+      expect(env.modulepath).to eq([real_file])
     end
 
-    it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
+    it "prefixes the value of the 'PUPPETLIB' environment variable to the module path if present" do
       first_puppetlib = tmpdir('puppetlib1')
       second_puppetlib = tmpdir('puppetlib2')
       first_moduledir = tmpdir('moduledir1')
       second_moduledir = tmpdir('moduledir2')
       Puppet::Util.withenv("PUPPETLIB" => [first_puppetlib, second_puppetlib].join(File::PATH_SEPARATOR)) do
-        Puppet[:modulepath] = [first_moduledir, second_moduledir].join(File::PATH_SEPARATOR)
+        env = Puppet::Node::Environment.create(:testing, [first_moduledir, second_moduledir])
 
-        env.modulepath.should == [first_puppetlib, second_puppetlib, first_moduledir, second_moduledir]
+        expect(env.modulepath).to eq([first_puppetlib, second_puppetlib, first_moduledir, second_moduledir])
       end
     end
 
-    it "does not register validation_errors when not using directory environments" do
-      expect(Puppet::Node::Environment.create(:directory, [], '/some/non/default/manifest.pp').validation_errors).to be_empty
-    end
-
-    describe "when operating in the context of directory environments" do
+    describe "validating manifest settings" do
       before(:each) do
-        Puppet[:environmentpath] = "$confdir/environments"
         Puppet[:default_manifest] = "/default/manifests/site.pp"
       end
 
@@ -250,112 +215,71 @@ describe Puppet::Node::Environment do
     end
 
     describe "when modeling a specific environment" do
-      it "should have a method for returning the environment name" do
-        Puppet::Node::Environment.new("testing").name.should == :testing
-      end
-
-      it "should provide an array-like accessor method for returning any environment-specific setting" do
-        env.should respond_to(:[])
-      end
-
-      it "obtains its core values from the puppet settings instance as a legacy env" do
-        Puppet.settings.parse_config(<<-CONF)
-        [testing]
-        manifest = /some/manifest
-        modulepath = /some/modulepath
-        config_version = /some/script
-        CONF
-
-        env = Puppet::Node::Environment.new("testing")
-        expect(env.full_modulepath).to eq([File.expand_path('/some/modulepath')])
-        expect(env.manifest).to eq(File.expand_path('/some/manifest'))
-        expect(env.config_version).to eq('/some/script')
-      end
-
-      it "should ask the Puppet settings instance for the setting qualified with the environment name" do
-        Puppet.settings.parse_config(<<-CONF)
-        [testing]
-        server = myval
-        CONF
-
-        env[:server].should == "myval"
-      end
-
-      it "should be able to return an individual module that exists in its module path" do
-        env.stubs(:modules).returns [Puppet::Module.new('one', "/one", mock("env"))]
-
-        mod = env.module('one')
-        mod.should be_a(Puppet::Module)
-        mod.name.should == 'one'
-      end
-
-      it "should not return a module if the module doesn't exist" do
-        env.stubs(:modules).returns [Puppet::Module.new('one', "/one", mock("env"))]
-
-        env.module('two').should be_nil
-      end
-
-      it "should return nil if asked for a module that does not exist in its path" do
-        modpath = tmpdir('modpath')
-        env = Puppet::Node::Environment.create(:testing, [modpath])
-
-        env.module("one").should be_nil
-      end
+      let(:first_modulepath) { tmpdir('firstmodules') }
+      let(:second_modulepath) { tmpdir('secondmodules') }
+      let(:env) { Puppet::Node::Environment.create(:modules_test, [first_modulepath, second_modulepath]) }
+      let(:module_options) {
+        {
+          :environment => env,
+          :metadata => {
+            :author       => 'puppetlabs',
+          },
+        }
+      }
 
       describe "module data" do
-        before do
-          dir = tmpdir("deep_path")
+        describe ".module" do
 
-          @first = File.join(dir, "first")
-          @second = File.join(dir, "second")
-          Puppet[:modulepath] = "#{@first}#{File::PATH_SEPARATOR}#{@second}"
+          it "returns an individual module that exists in its module path" do
+            one = PuppetSpec::Modules.create('one', first_modulepath, module_options)
+            expect(env.module('one')).to eq(one)
+          end
 
-          FileUtils.mkdir_p(@first)
-          FileUtils.mkdir_p(@second)
+          it "returns nil if asked for a module that does not exist in its path" do
+            expect(env.module("doesnotexist")).to be_nil
+          end
         end
 
         describe "#modules_by_path" do
-          it "should return an empty list if there are no modules" do
-            env.modules_by_path.should == {
-              @first  => [],
-              @second => []
-            }
+          it "returns an empty list if there are no modules" do
+            expect(env.modules_by_path).to eq({
+              first_modulepath => [],
+              second_modulepath => []
+            })
           end
 
-          it "should include modules even if they exist in multiple dirs in the modulepath" do
-            modpath1 = File.join(@first, "foo")
-            FileUtils.mkdir_p(modpath1)
-            modpath2 = File.join(@second, "foo")
-            FileUtils.mkdir_p(modpath2)
+          it "includes modules even if they exist in multiple dirs in the modulepath" do
+            one = PuppetSpec::Modules.create('one', first_modulepath, module_options)
+            two = PuppetSpec::Modules.create('two', second_modulepath, module_options)
 
-            env.modules_by_path.should == {
-              @first  => [Puppet::Module.new('foo', modpath1, env)],
-              @second => [Puppet::Module.new('foo', modpath2, env)]
-            }
+            expect(env.modules_by_path).to eq({
+              first_modulepath  => [one],
+              second_modulepath => [two],
+            })
           end
 
-          it "should ignore modules with invalid names" do
-            PuppetSpec::Modules.generate_files('foo', @first)
-            PuppetSpec::Modules.generate_files('foo2', @first)
-            PuppetSpec::Modules.generate_files('foo-bar', @first)
-            PuppetSpec::Modules.generate_files('foo_bar', @first)
-            PuppetSpec::Modules.generate_files('foo=bar', @first)
-            PuppetSpec::Modules.generate_files('foo bar', @first)
-            PuppetSpec::Modules.generate_files('foo.bar', @first)
-            PuppetSpec::Modules.generate_files('-foo', @first)
-            PuppetSpec::Modules.generate_files('foo-', @first)
-            PuppetSpec::Modules.generate_files('foo--bar', @first)
+          it "ignores modules with invalid names" do
+            PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo2', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo.bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('-foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo-', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo--bar', first_modulepath)
 
-            env.modules_by_path[@first].collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
+            expect(env.modules_by_path[first_modulepath].collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
           end
 
         end
 
         describe "#module_requirements" do
-          it "should return a list of what modules depend on other modules" do
+          it "returns a list of what modules depend on other modules" do
             PuppetSpec::Modules.create(
               'foo',
-              @first,
+              first_modulepath,
               :metadata => {
                 :author       => 'puppetlabs',
                 :dependencies => [{ 'name' => 'puppetlabs/bar', "version_requirement" => ">= 1.0.0" }]
@@ -363,7 +287,7 @@ describe Puppet::Node::Environment do
             )
             PuppetSpec::Modules.create(
               'bar',
-              @second,
+              second_modulepath,
               :metadata => {
                 :author       => 'puppetlabs',
                 :dependencies => [{ 'name' => 'puppetlabs/foo', "version_requirement" => "<= 2.0.0" }]
@@ -371,7 +295,7 @@ describe Puppet::Node::Environment do
             )
             PuppetSpec::Modules.create(
               'baz',
-              @first,
+              first_modulepath,
               :metadata => {
                 :author       => 'puppetlabs',
                 :dependencies => [{ 'name' => 'puppetlabs-bar', "version_requirement" => "3.0.0" }]
@@ -379,14 +303,14 @@ describe Puppet::Node::Environment do
             )
             PuppetSpec::Modules.create(
               'alpha',
-              @first,
+              first_modulepath,
               :metadata => {
                 :author       => 'puppetlabs',
                 :dependencies => [{ 'name' => 'puppetlabs/bar', "version_requirement" => "~3.0.0" }]
               }
             )
 
-            env.module_requirements.should == {
+            expect(env.module_requirements).to eq({
               'puppetlabs/alpha' => [],
               'puppetlabs/foo' => [
                 {
@@ -413,79 +337,80 @@ describe Puppet::Node::Environment do
                 }
               ],
               'puppetlabs/baz' => []
-            }
+            })
           end
         end
 
         describe ".module_by_forge_name" do
-          it "should find modules by forge_name" do
+          it "finds modules by forge_name" do
             mod = PuppetSpec::Modules.create(
               'baz',
-              @first,
-              :metadata => {:author => 'puppetlabs'},
-              :environment => env
+              first_modulepath,
+              module_options,
             )
-            env.module_by_forge_name('puppetlabs/baz').should == mod
+            expect(env.module_by_forge_name('puppetlabs/baz')).to eq(mod)
           end
 
-          it "should not find modules with same name by the wrong author" do
+          it "does not find modules with same name by the wrong author" do
             mod = PuppetSpec::Modules.create(
               'baz',
-              @first,
+              first_modulepath,
               :metadata => {:author => 'sneakylabs'},
               :environment => env
             )
-            env.module_by_forge_name('puppetlabs/baz').should == nil
+            expect(env.module_by_forge_name('puppetlabs/baz')).to eq(nil)
           end
 
-          it "should return nil when the module can't be found" do
-            env.module_by_forge_name('ima/nothere').should be_nil
+          it "returns nil when the module can't be found" do
+            expect(env.module_by_forge_name('ima/nothere')).to be_nil
           end
         end
 
         describe ".modules" do
-          it "should return an empty list if there are no modules" do
-            env.modules.should == []
+          it "returns an empty list if there are no modules" do
+            expect(env.modules).to eq([])
           end
 
-          it "should return a module named for every directory in each module path" do
+          it "returns a module named for every directory in each module path" do
             %w{foo bar}.each do |mod_name|
-              PuppetSpec::Modules.generate_files(mod_name, @first)
+              PuppetSpec::Modules.generate_files(mod_name, first_modulepath)
             end
             %w{bee baz}.each do |mod_name|
-              PuppetSpec::Modules.generate_files(mod_name, @second)
+              PuppetSpec::Modules.generate_files(mod_name, second_modulepath)
             end
-            env.modules.collect{|mod| mod.name}.sort.should == %w{foo bar bee baz}.sort
+            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo bar bee baz}.sort)
           end
 
-          it "should remove duplicates" do
-            PuppetSpec::Modules.generate_files('foo', @first)
-            PuppetSpec::Modules.generate_files('foo', @second)
+          it "removes duplicates" do
+            PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo', second_modulepath)
 
-            env.modules.collect{|mod| mod.name}.sort.should == %w{foo}
+            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo})
           end
 
-          it "should ignore modules with invalid names" do
-            PuppetSpec::Modules.generate_files('foo', @first)
-            PuppetSpec::Modules.generate_files('foo2', @first)
-            PuppetSpec::Modules.generate_files('foo-bar', @first)
-            PuppetSpec::Modules.generate_files('foo_bar', @first)
-            PuppetSpec::Modules.generate_files('foo=bar', @first)
-            PuppetSpec::Modules.generate_files('foo bar', @first)
+          it "ignores modules with invalid names" do
+            PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo2', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
+            PuppetSpec::Modules.generate_files('foo bar', first_modulepath)
 
-            env.modules.collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
+            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
           end
 
-          it "should create modules with the correct environment" do
-            PuppetSpec::Modules.generate_files('foo', @first)
+          it "creates modules with the correct environment" do
+            PuppetSpec::Modules.generate_files('foo', first_modulepath)
 
-            env.modules.each {|mod| mod.environment.should == env }
+            env.modules.each do |mod| 
+              expect(mod.environment).to eq(env)
+            end
           end
 
-          it "should log an exception if a module contains invalid metadata" do
+          it "logs an exception if a module contains invalid metadata" do
             PuppetSpec::Modules.generate_files(
               'foo',
-              @first,
+              first_modulepath,
               :metadata => {
                 :author       => 'puppetlabs'
                 # missing source, version, etc
@@ -501,89 +426,62 @@ describe Puppet::Node::Environment do
     end
 
     describe "when performing initial import" do
-      def parser_and_environment(name)
-        env = Puppet::Node::Environment.new(name)
-        parser = Puppet::Parser::ParserFactory.parser(env)
-        Puppet::Parser::ParserFactory.stubs(:parser).returns(parser)
-
-        [parser, env]
+      it "loads from Puppet[:code]" do
+        Puppet[:code] = "define foo {}"
+        krt = env.known_resource_types
+        expect(krt.find_definition('', 'foo')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "should set the parser's string to the 'code' setting and parse if code is available" do
-        Puppet[:code] = "my code"
-        parser, env = parser_and_environment('testing')
-
-        parser.expects(:string=).with "my code"
-        parser.expects(:parse)
-
-        env.instance_eval { perform_initial_import }
+      it "parses from the the environment's manifests if Puppet[:code] is not set" do
+        filename = tmpfile('a_manifest.pp')
+        File.open(filename, 'w') do |f|
+          f.puts("define from_manifest {}")
+        end
+        env = Puppet::Node::Environment.create(:testing, [], filename)
+        krt = env.known_resource_types
+        expect(krt.find_definition('', 'from_manifest')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
-        filename = tmpfile('myfile')
-        Puppet[:manifest] = filename
-        parser, env = parser_and_environment('testing')
-
-        parser.expects(:file=).with filename
-        parser.expects(:parse)
-
-        env.instance_eval { perform_initial_import }
+      it "prefers Puppet[:code] over manifest files" do
+        Puppet[:code] = "define from_code_setting {}"
+        filename = tmpfile('a_manifest.pp')
+        File.open(filename, 'w') do |f|
+          f.puts("define from_manifest {}")
+        end
+        env = Puppet::Node::Environment.create(:testing, [], filename)
+        krt = env.known_resource_types
+        expect(krt.find_definition('', 'from_code_setting')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "should pass the manifest file to the parser even if it does not exist on disk" do
-        filename = tmpfile('myfile')
-        Puppet[:code] = ""
-        Puppet[:manifest] = filename
-        parser, env = parser_and_environment('testing')
-
-        parser.expects(:file=).with(filename).once
-        parser.expects(:parse).once
-
-        env.instance_eval { perform_initial_import }
+      it "initial import proceeds even if manifest file does not exist on disk" do
+        filename = tmpfile('a_manifest.pp')
+        env = Puppet::Node::Environment.create(:testing, [], filename)
+        expect(env.known_resource_types).to be_kind_of(Puppet::Resource::TypeCollection)
       end
 
-      it "should fail helpfully if there is an error importing" do
-        Puppet::FileSystem.stubs(:exist?).returns true
-        parser, env = parser_and_environment('testing')
+      it "returns an empty TypeCollection if neither code nor manifests is present" do
+        expect(env.known_resource_types).to be_kind_of(Puppet::Resource::TypeCollection)
+      end
 
-        parser.expects(:file=).once
-        parser.expects(:parse).raises ArgumentError
-
+      it "fails helpfully if there is an error importing" do
+        Puppet[:code] = "oops {"
         expect do
           env.known_resource_types
-        end.to raise_error(Puppet::Error)
+        end.to raise_error(Puppet::Error, /Could not parse for environment #{env.name}/)
       end
 
-      it "should not do anything if the ignore_import settings is set" do
+      it "does not do anything if the ignore_import settings is set" do
         Puppet[:ignoreimport] = true
-        parser, env = parser_and_environment('testing')
-
-        parser.expects(:string=).never
-        parser.expects(:file=).never
-        parser.expects(:parse).never
-
-        env.instance_eval { perform_initial_import }
+        expect(env.known_resource_types).to be_kind_of(Puppet::Resource::TypeCollection)
       end
 
       it "should mark the type collection as needing a reparse when there is an error parsing" do
-        parser, env = parser_and_environment('testing')
-
-        parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
-
+        Puppet[:code] = "oops {"
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)
-        env.known_resource_types.require_reparse?.should be_true
+        expect(env.known_resource_types.parse_failed?).to be_true
       end
-    end
-  end
-
-  describe '#current' do
-    it 'should return the current context' do
-      env = Puppet::Node::Environment.new(:test)
-      Puppet::Context.any_instance.expects(:lookup).with(:current_environment).returns(env)
-      Puppet.expects(:deprecation_warning).once
-      Puppet::Node::Environment.current.should equal(env)
     end
   end
 

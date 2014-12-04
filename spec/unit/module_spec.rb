@@ -462,7 +462,6 @@ describe Puppet::Module, "when finding matching manifests" do
 
   it "should default to the 'init' file if no glob pattern is specified" do
     Puppet::FileSystem.expects(:exist?).with("/a/manifests/init.pp").returns(true)
-    Puppet::FileSystem.expects(:exist?).with("/a/manifests/init.rb").returns(false)
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
@@ -473,8 +472,8 @@ describe Puppet::Module, "when finding matching manifests" do
     @mod.match_manifests(@pq_glob_with_extension).should == %w{a b}
   end
 
-  it "should match the glob pattern plus '.{pp,rb}' if no extension is specified" do
-    Dir.expects(:glob).with("/a/manifests/yay/foo.{pp,rb}").returns(%w{yay})
+  it "should match the glob pattern plus '.pp' if no extension is specified" do
+    Dir.expects(:glob).with("/a/manifests/yay/foo.pp").returns(%w{yay})
 
     @mod.match_manifests("yay/foo").should == %w{yay}
   end

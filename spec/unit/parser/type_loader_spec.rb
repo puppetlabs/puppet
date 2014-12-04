@@ -12,6 +12,15 @@ describe Puppet::Parser::TypeLoader do
 
   let(:empty_hostclass) { Puppet::Parser::AST::Hostclass.new('') }
   let(:loader) { Puppet::Parser::TypeLoader.new(:myenv) }
+  let(:my_env) { Puppet::Node::Environment.create(:myenv, []) }
+
+  around do |example|
+    envs = Puppet::Environments::Static.new(my_env)
+
+    Puppet.override(:environments => envs) do
+      example.run
+    end
+  end
 
   it "should support an environment" do
     loader = Puppet::Parser::TypeLoader.new(:myenv)
@@ -88,16 +97,15 @@ describe Puppet::Parser::TypeLoader do
   end
 
   describe "when importing all" do
+    let(:base) { tmpdir("base") }
+    let(:modulebase1) { File.join(base, "first") }
+    let(:modulebase2) { File.join(base, "second") }
+    let(:my_env) { Puppet::Node::Environment.create(:myenv, [modulebase1, modulebase2]) }
+
     before do
-      @base = tmpdir("base")
-
       # Create two module path directories
-      @modulebase1 = File.join(@base, "first")
-      FileUtils.mkdir_p(@modulebase1)
-      @modulebase2 = File.join(@base, "second")
-      FileUtils.mkdir_p(@modulebase2)
-
-      Puppet[:modulepath] = "#{@modulebase1}#{File::PATH_SEPARATOR}#{@modulebase2}"
+      FileUtils.mkdir_p(modulebase1)
+      FileUtils.mkdir_p(modulebase2)
     end
 
     def mk_module(basedir, name)
@@ -119,11 +127,11 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should load all puppet manifests from all modules in the specified environment" do
-      @module1 = mk_module(@modulebase1, "one")
-      @module2 = mk_module(@modulebase2, "two")
+      module1 = mk_module(modulebase1, "one")
+      module2 = mk_module(modulebase2, "two")
 
-      mk_manifests(@modulebase1, @module1, %w{a b})
-      mk_manifests(@modulebase2, @module2, %w{c d})
+      mk_manifests(modulebase1, module1, %w{a b})
+      mk_manifests(modulebase2, module2, %w{c d})
 
       loader.import_all
 
@@ -134,13 +142,13 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should not load manifests from duplicate modules later in the module path" do
-      @module1 = mk_module(@modulebase1, "one")
+      module1 = mk_module(modulebase1, "one")
 
       # duplicate
-      @module2 = mk_module(@modulebase2, "one")
+      module2 = mk_module(modulebase2, "one")
 
-      mk_manifests(@modulebase1, @module1, %w{a})
-      mk_manifests(@modulebase2, @module2, %w{c})
+      mk_manifests(modulebase1, module1, %w{a})
+      mk_manifests(modulebase2, module2, %w{c})
 
       loader.import_all
 
@@ -148,9 +156,9 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should load manifests from subdirectories" do
-      @module1 = mk_module(@modulebase1, "one")
+      module1 = mk_module(modulebase1, "one")
 
-      mk_manifests(@modulebase1, @module1, %w{a a/b a/b/c})
+      mk_manifests(modulebase1, module1, %w{a a/b a/b/c})
 
       loader.import_all
 
@@ -159,9 +167,9 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should skip modules that don't have manifests" do
-      @module1 = mk_module(@modulebase1, "one")
-      @module2 = mk_module(@modulebase2, "two")
-      mk_manifests(@modulebase2, @module2, %w{c d})
+      module1 = mk_module(modulebase1, "one")
+      module2 = mk_module(modulebase2, "two")
+      mk_manifests(modulebase2, module2, %w{c d})
 
       loader.import_all
 
@@ -172,19 +180,19 @@ describe Puppet::Parser::TypeLoader do
   end
 
   describe "when parsing a file" do
-    it "should create a new parser instance for each file using the current environment" do
+    it "requests a new parser instance for each file" do
       parser = stub 'Parser', :file= => nil, :parse => empty_hostclass
 
-      Puppet::Parser::ParserFactory.expects(:parser).twice.with(loader.environment).returns(parser)
+      Puppet::Parser::ParserFactory.expects(:parser).twice.returns(parser)
 
       loader.parse_file("/my/file")
       loader.parse_file("/my/other_file")
     end
 
-    it "should assign the parser its file and parse" do
+    it "assigns the parser its file and then parses" do
       parser = mock 'parser'
 
-      Puppet::Parser::ParserFactory.expects(:parser).with(loader.environment).returns(parser)
+      Puppet::Parser::ParserFactory.expects(:parser).returns(parser)
       parser.expects(:file=).with("/my/file")
       parser.expects(:parse).returns(empty_hostclass)
 

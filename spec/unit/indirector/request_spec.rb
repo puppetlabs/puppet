@@ -84,6 +84,14 @@ describe Puppet::Indirector::Request do
 
     describe "and the request key is a URI" do
       let(:file) { File.expand_path("/my/file with spaces") }
+      let(:an_environment) { Puppet::Node::Environment.create(:an_environment, []) }
+      let(:env_loaders) { Puppet::Environments::Static.new(an_environment) }
+
+      around(:each) do |example|
+        Puppet.override({ :environments => env_loaders }, "Static environment loader for specs") do
+          example.run
+        end
+      end
 
       describe "and the URI is a 'file' URI" do
         before do
@@ -108,32 +116,32 @@ describe Puppet::Indirector::Request do
       end
 
       it "should set the protocol to the URI scheme" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff", nil).protocol.should == "http"
+        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).protocol.should == "http"
       end
 
       it "should set the server if a server is provided" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff", nil).server.should == "host"
+        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).server.should == "host"
       end
 
       it "should set the server and port if both are provided" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host:543/stuff", nil).port.should == 543
+        Puppet::Indirector::Request.new(:ind, :method, "http://host:543/an_environment", nil).port.should == 543
       end
 
       it "should default to the masterport if the URI scheme is 'puppet'" do
         Puppet[:masterport] = "321"
-        Puppet::Indirector::Request.new(:ind, :method, "puppet://host/stuff", nil).port.should == 321
+        Puppet::Indirector::Request.new(:ind, :method, "puppet://host/an_environment", nil).port.should == 321
       end
 
       it "should use the provided port if the URI scheme is not 'puppet'" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff", nil).port.should == 80
+        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).port.should == 80
       end
 
       it "should set the request key to the unescaped key part path from the URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/environment/terminus/stuff with spaces", nil).key.should == "stuff with spaces"
+        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment/terminus/stuff with spaces", nil).key.should == "stuff with spaces"
       end
 
       it "should set the :uri attribute to the full URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "http:///stu ff", nil).uri.should == 'http:///stu ff'
+        Puppet::Indirector::Request.new(:ind, :method, "http:///an_environment/stu ff", nil).uri.should == 'http:///an_environment/stu ff'
       end
 
       it "should not parse relative URI" do
@@ -200,7 +208,14 @@ describe Puppet::Indirector::Request do
   end
 
   it "should use its uri, if it has one, as its string representation" do
-    Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).to_s.should == "foo://bar/baz"
+    Puppet.override({
+      :environments => Puppet::Environments::Static.new(
+        Puppet::Node::Environment.create(:baz, [])
+      )},
+      "Static loader for spec") do
+
+      Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).to_s.should == "foo://bar/baz"
+    end
   end
 
   it "should use its indirection name and key, if it has no uri, as its string representation" do

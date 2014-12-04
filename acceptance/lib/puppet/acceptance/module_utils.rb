@@ -229,51 +229,42 @@ module Puppet
         end
       end
 
-      # Create a simple legacy and directory environment at :path_to_environments.
+      # Create a simple directory environment and puppet.conf at :tmpdir.
       #
       # @note Also registers a teardown block to remove generated files.
       #
-      # @param path_to_environments [String] directory to contain all the
+      # @param tmpdir [String] directory to contain all the
       #   generated environment files
       # @return [String] path to the new puppet configuration file defining the
       #   environments
-      def generate_base_legacy_and_directory_environments(path_to_environments)
-        puppet_conf = "#{path_to_environments}/puppet2.conf"
-        legacy_env = "#{path_to_environments}/legacyenv"
-        dir_envs = "#{path_to_environments}/environments"
+      def generate_base_directory_environments(tmpdir)
+        puppet_conf = "#{tmpdir}/puppet2.conf"
+        dir_envs = "#{tmpdir}/environments"
 
-        step "ensure we don't have left over bad state from another, possibly failed run"
-        on master, "rm -rf #{legacy_env} #{dir_envs} #{puppet_conf}"
-
-        # and register to clean up afterwords
-        teardown do
-          on master, "rm -rf #{legacy_env} #{dir_envs} #{puppet_conf}"
-        end
-
-        step 'Configure a non-default legacy and directory environment'
+        step 'Configure a the direnv directory environment'
         apply_manifest_on master, %Q{
+          File {
+            ensure => directory,
+            owner => #{master.puppet['user']},
+            group => #{master.puppet['group']},
+            mode => "0750",
+          }
           file {
             [
-              '#{legacy_env}',
-              '#{legacy_env}/modules',
               '#{dir_envs}',
               '#{dir_envs}/direnv',
             ]:
-              ensure => directory,
           }
+
           file {
             '#{puppet_conf}':
-              source => $settings::config,
+              ensure => file,
+              content => "
+                [main]
+                environmentpath=#{dir_envs}
+              "
           }
         }
-
-        # remove environmentpath entry from config
-        on master, "sed '/environmentpath/d' #{puppet_conf} > #{path_to_environments}/tmp && mv #{path_to_environments}/tmp #{puppet_conf}"
-
-        on master, puppet("config", "set",
-                          "modulepath", "#{legacy_env}/modules",
-                          "--section", "legacyenv",
-                          "--config", puppet_conf)
 
         return puppet_conf
       end

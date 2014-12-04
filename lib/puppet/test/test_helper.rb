@@ -49,13 +49,20 @@ module Puppet::Test
       #
       @@reentry_count ||= 0
 
+      @environmentpath = Dir.mktmpdir('environments')
+      Dir.mkdir("#{@environmentpath}/production")
       owner = Process.pid
       Puppet.push_context(Puppet.base_context({
-        :environmentpath => "",
+        :environmentpath => @environmentpath,
         :basemodulepath => "",
-        :manifest => "/dev/null"
       }), "Initial for specs")
       Puppet::Parser::Functions.reset
+
+      ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
+        if Process.pid == owner
+          FileUtils.rm_rf(@environmentpath)
+        end
+      })
     end
 
     # Call this method once, when beginning a test run--prior to running
@@ -128,7 +135,6 @@ module Puppet::Test
         "Context for specs")
 
       Puppet::Parser::Functions.reset
-      Puppet::Node::Environment.clear
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 

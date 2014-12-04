@@ -36,11 +36,11 @@ describe Puppet::Settings::ConfigFile do
   end
 
   it "places an entry after a section header in that section" do
-    result = the_parse_of("[section]", "var = value")
+    result = the_parse_of("[agent]", "var = value")
 
     expect(result).to eq(Conf.new.
                          with_section(Section.new(:main)).
-                         with_section(Section.new(:section).
+                         with_section(Section.new(:agent).
                                       with_setting(:var, "value", NO_META)))
   end
 
@@ -112,45 +112,18 @@ badline
       to raise_error ArgumentError, "Could not parse 'value { mode }'"
   end
 
-  it "errors when an application_defaults section is created" do
-    expect { the_parse_of("[application_defaults]") }.
+  it "may specify legal sections" do
+    text = <<-EOF
+      [legal]
+      a = 'b'
+      [illegal]
+      one = 'e'
+      two = 'f'
+    EOF
+
+    expect { config.parse_file(filename, text, [:legal]) }.
       to raise_error Puppet::Error,
-        "Illegal section 'application_defaults' in config file #{filename} at line 1"
-  end
-
-  it "errors when a global_defaults section is created" do
-    expect { the_parse_of("[main]\n[global_defaults]") }.
-      to raise_error Puppet::Error,
-        "Illegal section 'global_defaults' in config file #{filename} at line 2"
-  end
-
-  it "issues a single deprecation warning when any section other than main, master, agent or user is parsed" do
-    text = "[legacy]
-    one = 'e'
-    two = 'f'
-    [also_deprecated]
-    one = 'g'
-    "
-
-    config.parse_file(filename, text)
-
-    expect(@logs.map(&:message).grep(/Sections other than/)).to have_exactly(1).item
-  end
-
-  it "does not issue a deprecation warning for main, master, agent or user sections" do
-    text = "[main]
-    one = 'a'
-    [master]
-    one = 'b'
-    [agent]
-    one = 'c'
-    [user]
-    one = 'd'
-    "
-
-    Puppet.expects(:deprecation_warning).never
-
-    config.parse_file(filename, text)
+        /Illegal section 'legal' in config file #{filename} at line 1/
   end
 
   it "transforms values with the given function" do

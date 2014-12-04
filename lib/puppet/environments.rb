@@ -130,61 +130,6 @@ module Puppet::Environments
     end
   end
 
-  # Old-style environments that come either from explicit stanzas in
-  # puppet.conf or from dynamic environments created from use of `$environment`
-  # in puppet.conf.
-  #
-  # @example Explicit Stanza
-  #   [environment_name]
-  #   modulepath=/var/my_env/modules
-  #
-  # @example Dynamic Environments
-  #   [master]
-  #   modulepath=/var/$environment/modules
-  #
-  # @api private
-  class Legacy
-    include EnvironmentCreator
-
-    # @!macro loader_search_paths
-    def search_paths
-      ["file://#{Puppet[:config]}"]
-    end
-
-    # @note The list of environments for the Legacy environments is always
-    #   empty.
-    #
-    # @!macro loader_list
-    def list
-      []
-    end
-
-    # @note Because the Legacy system cannot list out all of its environments,
-    #   get is able to return environments that are not returned by a call to
-    #   {#list}.
-    #
-    # @!macro loader_get
-    def get(name)
-      Puppet::Node::Environment.new(name)
-    end
-
-    # @note Because the Legacy system cannot list out all of its environments,
-    #   this method will never fail and is only calling get directly.
-    #
-    # @!macro loader_get_or_fail
-    def get!(name)
-      get(name)
-    end
-
-    # @note we could return something here, but since legacy environments
-    #   are deprecated, there is no point.
-    #
-    # @!macro loader_get_conf
-    def get_conf(name)
-      nil
-    end
-  end
-
   # Reads environments from a directory on disk. Each environment is
   # represented as a sub-directory. The environment's manifest setting is the
   # `manifest` directory of the environment directory. The environment's
@@ -230,7 +175,6 @@ module Puppet::Environments
           setting_values.interpolate(:manifest),
           setting_values.interpolate(:config_version)
         )
-        env.watching = false
         env
       end
     end

@@ -35,10 +35,10 @@ agents.each do |agent|
   # Setting user/group ensures that when puppet apply's Configurer use()'s the
   # settings, that it doesn't default to owning them as root, which can have an
   # impact on following tests.
+  on agent, puppet("config", "set", "environmentpath", envs_path, "--section", "main", "--config", puppetconf)
   on agent, puppet("config", "set", "user", user, "--section", "main", "--config", puppetconf)
   on agent, puppet("config", "set", "group", group, "--section", "main", "--config", puppetconf)
   on agent, puppet("config", "set", "environment", "dev", "--section", "user", "--config", puppetconf)
-  on agent, puppet("config", "set", "environmentpath", envs_path, "--section", "main", "--config", puppetconf)
 
   # Where the functions in the written modules should go
   helloworld_functions = 'helloworld/lib/puppet/functions/helloworld'

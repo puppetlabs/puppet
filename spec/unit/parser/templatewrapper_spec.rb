@@ -12,13 +12,6 @@ describe Puppet::Parser::TemplateWrapper do
 
   let(:tw) { Puppet::Parser::TemplateWrapper.new(scope) }
 
-  it "marks the file for watching" do
-    full_file_name = given_a_template_file("fake_template", "content")
-
-    known_resource_types.expects(:watch_file).with(full_file_name)
-    tw.file = "fake_template"
-  end
-
   it "fails if a template cannot be found" do
     Puppet::Parser::Files.expects(:find_template).returns nil
 

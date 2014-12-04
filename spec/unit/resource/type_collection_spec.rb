@@ -81,14 +81,11 @@ describe Puppet::Resource::TypeCollection do
     loader.add Puppet::Resource::Type.new(:hostclass, "class")
     loader.add Puppet::Resource::Type.new(:definition, "define")
     loader.add Puppet::Resource::Type.new(:node, "node")
-    watched_file = tmpfile('watched_file')
-    loader.watch_file(watched_file)
 
     loader.clear
     loader.hostclass("class").should be_nil
     loader.definition("define").should be_nil
     loader.node("node").should be_nil
-    loader.should_not be_watching_file(watched_file)
   end
 
   describe "when resolving namespaces" do
@@ -344,47 +341,6 @@ describe Puppet::Resource::TypeCollection do
       @loader << node1 << node2
 
       @loader.node("foo").should equal(node2)
-    end
-  end
-
-  describe "when managing files" do
-    before do
-      @loader = Puppet::Resource::TypeCollection.new(environment)
-      Puppet::Util::WatchedFile.stubs(:new).returns stub("watched_file")
-    end
-
-    it "should have a method for specifying a file should be watched" do
-      @loader.should respond_to(:watch_file)
-    end
-
-    it "should have a method for determining if a file is being watched" do
-      @loader.watch_file("/foo/bar")
-      @loader.should be_watching_file("/foo/bar")
-    end
-
-    it "should use WatchedFile to watch files" do
-      Puppet::Util::WatchedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
-      @loader.watch_file("/foo/bar")
-    end
-
-    it "should be considered stale if any files have changed" do
-      file1 = stub 'file1', :changed? => false
-      file2 = stub 'file2', :changed? => true
-      Puppet::Util::WatchedFile.expects(:new).times(2).returns(file1).then.returns(file2)
-      @loader.watch_file("/foo/bar")
-      @loader.watch_file("/other/bar")
-
-      @loader.should be_stale
-    end
-
-    it "should not be considered stable if no files have changed" do
-      file1 = stub 'file1', :changed? => false
-      file2 = stub 'file2', :changed? => false
-      Puppet::Util::WatchedFile.expects(:new).times(2).returns(file1).then.returns(file2)
-      @loader.watch_file("/foo/bar")
-      @loader.watch_file("/other/bar")
-
-      @loader.should_not be_stale
     end
   end
 
