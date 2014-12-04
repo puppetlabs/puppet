@@ -596,6 +596,28 @@ describe provider_class do
       @provider.execute_changes.should == :executed
     end
 
+    describe "touch command" do
+      it "should clear missing path" do
+        @resource[:changes] = "touch Jar/Jar"
+        @resource[:context] = "/foo/"
+        @augeas.expects(:match).with("/foo/Jar/Jar").returns([])
+        @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
+        @augeas.expects(:save).returns(true)
+        @augeas.expects(:close)
+        @provider.execute_changes.should == :executed
+      end
+
+      it "should not change on existing path" do
+        @resource[:changes] = "touch Jar/Jar"
+        @resource[:context] = "/foo/"
+        @augeas.expects(:match).with("/foo/Jar/Jar").returns(["/foo/Jar/Jar"])
+        @augeas.expects(:clear).never
+        @augeas.expects(:save).returns(true)
+        @augeas.expects(:close)
+        @provider.execute_changes.should == :executed
+      end
+    end
+
     it "should handle ins commands with before" do
       @resource[:changes] = "ins Binks before Jar/Jar"
       @resource[:context] = "/foo"

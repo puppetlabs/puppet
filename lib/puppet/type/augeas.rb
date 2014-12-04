@@ -104,6 +104,7 @@ Puppet::Type.newtype(:augeas) do
     * `remove <PATH>` --- Synonym for `rm`
     * `clear <PATH>` --- Sets the node at `PATH` to `NULL`, creating it if needed
     * `clearm <PATH> <SUB>` --- Sets multiple nodes (matching `SUB` relative to `PATH`) to `NULL`
+    * `touch <PATH>` --- Creates `PATH` with the value `NULL` if it does not exist
     * `ins <LABEL> (before|after) <PATH>` --- Inserts an empty node `LABEL` either before or after `PATH`.
     * `insert <LABEL> <WHERE> <PATH>` --- Synonym for `ins`
     * `mv <PATH> <OTHER PATH>` --- Moves a node at `PATH` to the new location `OTHER PATH`
