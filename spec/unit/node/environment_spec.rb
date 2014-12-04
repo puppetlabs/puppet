@@ -130,7 +130,7 @@ describe Puppet::Node::Environment do
 
       it "generates a new TypeCollection if the current one requires reparsing" do
         old_type_collection = env.known_resource_types
-        old_type_collection.stubs(:require_reparse?).returns true
+        old_type_collection.stubs(:parse_failed?).returns true
 
         env.check_for_reparse
 
@@ -480,7 +480,7 @@ describe Puppet::Node::Environment do
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)
-        expect(env.known_resource_types.require_reparse?).to be_true
+        expect(env.known_resource_types.parse_failed?).to be_true
       end
     end
   end

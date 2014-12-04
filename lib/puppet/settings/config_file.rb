@@ -13,7 +13,7 @@ class Puppet::Settings::ConfigFile
     @value_converter = value_converter
   end
 
-  # @param file [String,File] pointer to the file whose text we are parsing
+  # @param file [String, File] pointer to the file whose text we are parsing
   # @param text [String] the actual text of the inifile to be parsed
   # @param allowed_section_names [Array] an optional array of accepted section
   #   names; if this list is non-empty, sections outside of it will raise an

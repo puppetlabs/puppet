@@ -126,7 +126,7 @@ class Puppet::Resource::TypeCollection
     end
   end
 
-  def require_reparse?
+  def parse_failed?
     @parse_failed
   end
 

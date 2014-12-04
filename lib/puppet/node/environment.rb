@@ -384,7 +384,7 @@ class Puppet::Node::Environment
   # Checks if a reparse is required (cache of files is stale).
   #
   def check_for_reparse
-    if (Puppet[:code] != @parsed_code || @known_resource_types.require_reparse?)
+    if (Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?)
       @parsed_code = nil
       @known_resource_types = nil
     end
