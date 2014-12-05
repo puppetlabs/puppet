@@ -13,7 +13,12 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::Plain
     connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
 
     response = connection.head(uri.path)
-    Puppet::FileServing::HttpMetadata.new(response)
+
+    Puppet.debug("HTTP HEAD request to #{uri} returned #{response.code} #{response.message}")
+
+    if response.is_a?(Net::HTTPSuccess)
+      Puppet::FileServing::HttpMetadata.new(response)
+    end
   end
 
   def search(request)
