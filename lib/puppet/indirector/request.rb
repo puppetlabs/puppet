@@ -36,8 +36,6 @@ class Puppet::Indirector::Request
     @environment =
     if env.is_a?(Puppet::Node::Environment)
       env
-    elsif (current_environment = Puppet.lookup(:current_environment)).name == env
-      current_environment
     else
       Puppet.lookup(:environments).get!(env)
     end
