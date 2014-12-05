@@ -42,12 +42,17 @@ test_name "Install packages and repositories on target machines..." do
     end
   end
 
-  step "Agents: create basic puppet.conf" do
-    agents.each do |agent|
-      puppetconf = File.join(agent['puppetpath'], 'puppet.conf')
+  step "Hosts: create basic puppet.conf" do
+    hosts.each do |host|
+      on host, "mkdir -p #{host['puppetpath']}"
+      puppetconf = File.join(host['puppetpath'], 'puppet.conf')
 
-      on agent, "echo '[agent]' > #{puppetconf} && " +
-                "echo server=#{master} >> #{puppetconf}"
+      if host['roles'].include?('agent')
+        on host, "echo '[agent]' > #{puppetconf} && " +
+                 "echo server=#{master} >> #{puppetconf}"
+      else
+        on host, "touch #{puppetconf}"
+      end
     end
   end
 end
