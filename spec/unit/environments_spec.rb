@@ -26,6 +26,7 @@ describe Puppet::Environments do
       FS::MemoryFile.a_directory("another_environment", [
         FS::MemoryFile.a_missing_file("environment.conf"),
       ]),
+      FS::MemoryFile.a_missing_file("doesnotexist"),
     ])
   end
 
@@ -87,7 +88,7 @@ describe Puppet::Environments do
       loader_from(:filesystem => [directory_tree],
                   :directory => directory_tree) do |loader|
         expect do
-          loader.get!("does_not_exist")
+          loader.get!("doesnotexist")
         end.to raise_error(Puppet::Environments::EnvironmentNotFound)
       end
     end
@@ -95,7 +96,7 @@ describe Puppet::Environments do
     it "returns nil if an environment can't be found" do
       loader_from(:filesystem => [directory_tree],
                   :directory => directory_tree) do |loader|
-        expect(loader.get("env_not_in_this_list")).to be_nil
+        expect(loader.get("doesnotexist")).to be_nil
       end
     end
 
@@ -412,6 +413,8 @@ config_version=$vardir/random/scripts
           FS::MemoryFile.a_directory("modules"),
           FS::MemoryFile.a_directory("manifests"),
         ]),
+        FS::MemoryFile.a_missing_file("env_does_not_exist"),
+        FS::MemoryFile.a_missing_file("static2"),
       ])
     end
 
@@ -572,7 +575,7 @@ config_version=$vardir/random/scripts
     end
 
     failure_message_for_should do |env|
-      "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
+      "expected <#{env.name}: modulepath = [#{env.full_modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
     end
   end
 
