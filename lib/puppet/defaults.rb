@@ -388,13 +388,6 @@ module Puppet
       retrieved using the `server` setting. When running `apply` the default
       is `file_server`, causing requests to be filled locally."
     },
-    :httplog => {
-        :default  => "$logdir/http.log",
-        :type     => :file,
-        :owner    => "root",
-        :mode     => "0640",
-        :desc     => "Where the puppet agent web server logs.",
-    },
     :http_proxy_host => {
       :default    => "none",
       :desc       => "The HTTP proxy host to use for outgoing connections.  Note: You

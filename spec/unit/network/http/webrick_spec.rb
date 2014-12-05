@@ -132,20 +132,9 @@ describe Puppet::Network::HTTP::WEBrick do
       server.setup_logger
     end
 
-    it "should use the masterhttplog if the run_mode is master" do
-      Puppet.run_mode.stubs(:master?).returns(true)
+    it "should use the masterhttplog" do
       log = make_absolute("/master/log")
       Puppet[:masterhttplog] = log
-
-      File.expects(:open).with(log, "a+").returns @filehandle
-
-      server.setup_logger
-    end
-
-    it "should use the httplog if the run_mode is not master" do
-      Puppet.run_mode.stubs(:master?).returns(false)
-      log = make_absolute("/other/log")
-      Puppet[:httplog] = log
 
       File.expects(:open).with(log, "a+").returns @filehandle
 

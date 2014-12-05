@@ -70,11 +70,7 @@ class Puppet::Network::HTTP::WEBrick
     # Make sure the settings are all ready for us.
     Puppet.settings.use(:main, :ssl, :application)
 
-    if Puppet.run_mode.master?
-      file = Puppet[:masterhttplog]
-    else
-      file = Puppet[:httplog]
-    end
+    file = Puppet[:masterhttplog]
 
     # open the log manually to prevent file descriptor leak
     file_io = ::File.open(file, "a+")
