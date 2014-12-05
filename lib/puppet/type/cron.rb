@@ -290,7 +290,11 @@ Puppet::Type.newtype(:cron) do
 
   newproperty(:month, :parent => CronParam) do
     def alpha
-      %w{january february march april may june july
+      # The ___placeholder accounts for the fact that month is unique among
+      # "nameable" crontab entries in that it does not use 0-based indexing.
+      # Padding the array with a placeholder introduces the appropriate shift
+      # in indices.
+      %w{___placeholder january february march april may june july
         august september october november december}
     end
     self.boundaries = [1, 12]

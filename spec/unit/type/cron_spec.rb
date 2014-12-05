@@ -307,33 +307,33 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should support valid months as words" do
-        expect { described_class.new(:name => 'foo', :month => 'January') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'February') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'March') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'April') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'May') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'June') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'July') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'August') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'September') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'October') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'November') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'December') }.to_not raise_error
+        expect( described_class.new(:name => 'foo', :month => 'January')[:month]   ).to eq(['1'])
+        expect( described_class.new(:name => 'foo', :month => 'February')[:month]  ).to eq(['2'])
+        expect( described_class.new(:name => 'foo', :month => 'March')[:month]     ).to eq(['3'])
+        expect( described_class.new(:name => 'foo', :month => 'April')[:month]     ).to eq(['4'])
+        expect( described_class.new(:name => 'foo', :month => 'May')[:month]       ).to eq(['5'])
+        expect( described_class.new(:name => 'foo', :month => 'June')[:month]      ).to eq(['6'])
+        expect( described_class.new(:name => 'foo', :month => 'July')[:month]      ).to eq(['7'])
+        expect( described_class.new(:name => 'foo', :month => 'August')[:month]    ).to eq(['8'])
+        expect( described_class.new(:name => 'foo', :month => 'September')[:month] ).to eq(['9'])
+        expect( described_class.new(:name => 'foo', :month => 'October')[:month]   ).to eq(['10'])
+        expect( described_class.new(:name => 'foo', :month => 'November')[:month]  ).to eq(['11'])
+        expect( described_class.new(:name => 'foo', :month => 'December')[:month]  ).to eq(['12'])
       end
 
       it "should support valid months as words (3 character short version)" do
-        expect { described_class.new(:name => 'foo', :month => 'Jan') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Feb') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Mar') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Apr') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'May') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Jun') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Jul') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Aug') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Sep') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Oct') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Nov') }.to_not raise_error
-        expect { described_class.new(:name => 'foo', :month => 'Dec') }.to_not raise_error
+        expect( described_class.new(:name => 'foo', :month => 'Jan')[:month] ).to eq(['1'])
+        expect( described_class.new(:name => 'foo', :month => 'Feb')[:month] ).to eq(['2'])
+        expect( described_class.new(:name => 'foo', :month => 'Mar')[:month] ).to eq(['3'])
+        expect( described_class.new(:name => 'foo', :month => 'Apr')[:month] ).to eq(['4'])
+        expect( described_class.new(:name => 'foo', :month => 'May')[:month] ).to eq(['5'])
+        expect( described_class.new(:name => 'foo', :month => 'Jun')[:month] ).to eq(['6'])
+        expect( described_class.new(:name => 'foo', :month => 'Jul')[:month] ).to eq(['7'])
+        expect( described_class.new(:name => 'foo', :month => 'Aug')[:month] ).to eq(['8'])
+        expect( described_class.new(:name => 'foo', :month => 'Sep')[:month] ).to eq(['9'])
+        expect( described_class.new(:name => 'foo', :month => 'Oct')[:month] ).to eq(['10'])
+        expect( described_class.new(:name => 'foo', :month => 'Nov')[:month] ).to eq(['11'])
+        expect( described_class.new(:name => 'foo', :month => 'Dec')[:month] ).to eq(['12'])
       end
 
       it "should not support numeric values out of range" do
