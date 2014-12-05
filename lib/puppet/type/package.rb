@@ -335,10 +335,14 @@ module Puppet
 
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
-        This is currently only used on Solaris.  The value will be
-        validated according to system rules, which in the case of
-        Solaris means that it should either be a fully qualified path
-        or it should be in `/var/sadm/install/admin`."
+
+        This attribute is only used on Solaris. Its value should be a path to a
+        local file stored on the target system. Solaris's package tools expect
+        either an absolute file path or a relative path to a file in
+        `/var/sadm/install/admin`.
+
+        The value of `adminfile` will be passed directly to the `pkgadd` or
+        `pkgrm` command with the `-a <ADMINFILE>` option."
     end
 
     newparam(:responsefile) do
