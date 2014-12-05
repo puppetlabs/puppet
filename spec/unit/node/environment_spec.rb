@@ -38,7 +38,7 @@ describe Puppet::Node::Environment do
     it "has an inspect method for debugging" do
       e = Puppet::Node::Environment.create(:test, ['/modules/path', '/other/modules'], '/manifests/path')
       expect("a #{e} env").to eq("a test env")
-      expect(e.inspect).to match(%r{<Puppet::Node::Environment:\w* @name="test" @manifest="/manifests/path" @modulepath="/modules/path:/other/modules" >})
+      expect(e.inspect).to match(%r{<Puppet::Node::Environment:\w* @name="test" @manifest="#{File.expand_path('/manifests/path')}" @modulepath="#{File.expand_path('/modules/path')}:#{File.expand_path('/other/modules')}" >})
     end
 
     describe "equality" do
