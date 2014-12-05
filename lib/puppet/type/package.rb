@@ -306,10 +306,19 @@ module Puppet
     end
 
     newparam(:source) do
-      desc "Where to find the actual package. This must be a local file
-        (or on a network file system) or a URL that your specific
-        packaging type understands; Puppet will not retrieve files for you,
-        although you can manage packages as `file` resources."
+      desc "Where to find the package file. This is only used by providers that don't
+        automatically download packages from a central repository. (For example:
+        the `yum` and `apt` providers ignore this attribute, but the `rpm` and
+        `dpkg` providers require it.)
+
+        Different providers accept different values for `source`. Most providers
+        accept paths to local files stored on the target system. Some providers
+        may also accept URLs or network drive paths. Puppet will not
+        automatically retrieve source files for you, and usually just passes the
+        value of `source` to the package installation command.
+
+        You can use a `file` resource if you need to manually copy package files
+        to the target system."
 
       validate do |value|
         provider.validate_source(value)
