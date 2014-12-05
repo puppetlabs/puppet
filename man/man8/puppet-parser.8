@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-PARSER" "8" "November 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-PARSER" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-parser\fR \- Interact directly with the parser\.
@@ -40,13 +40,13 @@ puppet parser dump [\-\-e \fIsource\fR] [\-\-[no\-]validate] \-e \fIsource\fR| [
 \fBDESCRIPTION\fR
 .
 .IP
-This action parses and validates the Puppet DSL syntax without compiling a catalog or syncing any resources\. It automatically turns on the future parser for the parsing\.
+This action parses and validates the Puppet DSL syntax without compiling a catalog or syncing any resources\.
 .
 .IP
 The command accepts one or more manifests (\.pp) files, or an \-e followed by the puppet source text\. If no arguments are given, the stdin is read (unless it is attached to a terminal)
 .
 .IP
-The output format of the dumped tree is not API, it may change from time to time\.
+The output format of the dumped tree is intended for debugging purposes and is not API, it may change from time to time\.
 .
 .IP
 \fBOPTIONS\fR \fI\-\-e <source\fR> \- dump one source expression given on the command line\.
@@ -74,10 +74,7 @@ puppet parser validate [\fImanifest\fR] [\fImanifest\fR \.\.\.]
 This action validates Puppet DSL syntax without compiling a catalog or syncing any resources\. If no manifest files are provided, it will validate the default site manifest\.
 .
 .IP
-When validating with \-\-parser current, the validation stops after the first encountered issue\.
-.
-.IP
-When validating with \-\-parser future, multiple issues per file are reported up to the settings of max_error, and max_warnings\. The processing stops after having reported issues for the first encountered file with errors\.
+When validating multiple issues per file are reported up to the settings of max_error, and max_warnings\. The processing stops after having reported issues for the first encountered file with errors\.
 .
 .IP
 \fBRETURNS\fR
@@ -107,4 +104,4 @@ Validate from STDIN:
 $ cat init\.pp | puppet parser validate
 .
 .SH "COPYRIGHT AND LICENSE"
-Copyright 2011 by Puppet Labs Apache 2 license; see COPYING
+Copyright 2014 by Puppet Labs Apache 2 license; see COPYING
