@@ -18,7 +18,7 @@ module Puppet
       Windows mapped drives). This attribute is mutually exclusive with
       `content` and `target`.
 
-      The available URI schemes are *puppet* and *file*. *Puppet*
+      The available URI schemes are *puppet*, *http(s)* and *file*. *Puppet*
       URIs will retrieve files from Puppet's built-in file server, and are
       usually formatted as:
 
@@ -33,6 +33,11 @@ module Puppet
       directories if the `recurse` attribute is set to `true` or `remote`. If
       a source directory contains symlinks, use the `links` attribute to
       specify whether to recreate links or follow them.
+
+      *HTTP* URIs cannot be used to recursively synchronize whole directory
+      trees. It is also not possible to use `source_permissions` values other
+      than `ignore`. That's because HTTP servers do not transfer any metadata
+      that translates to ownership or permission details.
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
@@ -63,7 +68,9 @@ module Puppet
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
         self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet http}.include?(uri.scheme)
+        unless %w{file puppet http https}.include?(uri.scheme)
+          self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving"
+        end
       end
     end
 
@@ -177,7 +184,7 @@ module Puppet
 
           # escape http URLs so that the indirector does not
           # try and apply special handling
-          if source =~ /^http:/
+          if source =~ /^https?:/
             source = "url=#{source}"
           end
 
