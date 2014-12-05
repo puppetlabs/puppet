@@ -4,21 +4,21 @@ HOSTS:
       - master
       - agent
     platform: ubuntu-12.04-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-i386
+    template: ubuntu-1204-i386
     hypervisor: vcloud
   ubuntu-1204-i386-dashboard:
     roles:
       - dashboard
       - agent
     platform: ubuntu-12.04-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-i386
+    template: ubuntu-1204-i386
     hypervisor: vcloud
   ubuntu-1204-i386-database:
     roles:
       - database
       - agent
     platform: ubuntu-12.04-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-i386
+    template: ubuntu-1204-i386
     hypervisor: vcloud
 CONFIG:
   nfs_server: none
