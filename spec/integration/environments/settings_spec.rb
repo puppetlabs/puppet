@@ -62,15 +62,15 @@ describe "environment settings" do
       end
 
       it "reads the configured manifest" do
-        expect(Puppet.settings.value(:manifest, :testing)).to eq('/special/manifest')
+        expect(Puppet.settings.value(:manifest, :testing)).to eq(File.expand_path('/special/manifest'))
       end
 
       it "reads the configured modulepath" do
-        expect(Puppet.settings.value(:modulepath, :testing)).to eq('/special/modulepath')
+        expect(Puppet.settings.value(:modulepath, :testing)).to eq(File.expand_path('/special/modulepath'))
       end
 
       it "reads the configured config_version" do
-        expect(Puppet.settings.value(:config_version, :testing)).to eq('/special/config_version')
+        expect(Puppet.settings.value(:config_version, :testing)).to eq(File.expand_path('/special/config_version'))
       end
     end
 
@@ -91,7 +91,7 @@ describe "environment settings" do
 
         it "reads manifest from environment.conf settings" do
           expect(Puppet.settings.value(:environmentpath)).to eq(environmentpath)
-          expect(Puppet.settings.value(:manifest, :main)).to eq("/special/manifest")
+          expect(Puppet.settings.value(:manifest, :main)).to eq(File.expand_path("/special/manifest"))
         end
       end
     end
