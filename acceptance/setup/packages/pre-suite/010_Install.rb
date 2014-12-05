@@ -46,7 +46,10 @@ AGENT_PACKAGES = {
 }
 
 install_packages_on(master, MASTER_PACKAGES)
-install_packages_on(agents, AGENT_PACKAGES)
+if ENV['AIO_AGENT_INSTALL']
+  install_aio_on(agents)
+else
+  install_packages_on(agents, AGENT_PACKAGES)
+end
 
 configure_gem_mirror(hosts)
-
