@@ -168,41 +168,49 @@ module Puppet::Environments
       valid_directories.collect do |envdir|
         name = Puppet::FileSystem.basename_string(envdir).intern
 
-        setting_values = Puppet.settings.values(name, Puppet.settings.preferred_run_mode)
-        env = Puppet::Node::Environment.create(
-          name,
-          Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
-          setting_values.interpolate(:manifest),
-          setting_values.interpolate(:config_version)
-        )
-        env
+        create_environment(name)
       end
     end
 
     # @!macro loader_get
     def get(name)
-      list.find { |env| env.name == name.intern }
+      if valid_directory?(File.join(@environment_dir, name.to_s))
+        create_environment(name)
+      end
     end
 
     # @!macro loader_get_conf
     def get_conf(name)
-      valid_directories.each do |envdir|
-        envname = Puppet::FileSystem.basename_string(envdir)
-        if envname == name.to_s
-          return Puppet::Settings::EnvironmentConf.load_from(envdir, @global_module_path)
-        end
+      envdir = File.join(@environment_dir, name.to_s)
+      if valid_directory?(envdir)
+        return Puppet::Settings::EnvironmentConf.load_from(envdir, @global_module_path)
       end
       nil
     end
 
     private
 
+    def create_environment(name, setting_values = nil)
+      env_symbol = name.intern
+      setting_values = Puppet.settings.values(env_symbol, Puppet.settings.preferred_run_mode)
+      Puppet::Node::Environment.create(
+        env_symbol,
+        Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
+        setting_values.interpolate(:manifest),
+        setting_values.interpolate(:config_version)
+      )
+    end
+
+    def valid_directory?(envdir)
+      name = Puppet::FileSystem.basename_string(envdir)
+      Puppet::FileSystem.directory?(envdir) &&
+         Puppet::Node::Environment.valid_name?(name)
+    end
+
     def valid_directories
       if Puppet::FileSystem.directory?(@environment_dir)
         Puppet::FileSystem.children(@environment_dir).select do |child|
-          name = Puppet::FileSystem.basename_string(child)
-          Puppet::FileSystem.directory?(child) &&
-             Puppet::Node::Environment.valid_name?(name)
+          valid_directory?(child)
         end
       else
         []
