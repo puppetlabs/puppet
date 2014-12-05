@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: el-6-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-i386
+    template: oracle-6-i386
     hypervisor: vcloud
   oracle-6-i386-agent:
     roles:
       - agent
     platform: el-6-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-i386
+    template: oracle-6-i386
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

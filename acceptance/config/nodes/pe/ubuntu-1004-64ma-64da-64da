@@ -4,21 +4,21 @@ HOSTS:
       - master
       - agent
     platform: ubuntu-10.04-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
+    template: ubuntu-1004-x86_64
     hypervisor: vcloud
   ubuntu-1004-amd64-dashboard:
     roles:
       - dashboard
       - agent
     platform: ubuntu-10.04-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
+    template: ubuntu-1004-x86_64
     hypervisor: vcloud
   ubuntu-1004-amd64-database:
     roles:
       - database
       - agent
     platform: ubuntu-10.04-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
+    template: ubuntu-1004-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

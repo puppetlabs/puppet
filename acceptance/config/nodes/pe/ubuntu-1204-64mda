@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: ubuntu-12.04-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-x86_64
+    template: ubuntu-1204-x86_64
     hypervisor: vcloud
   ubuntu-1204-agent:
     roles:
       - agent
     platform: ubuntu-12.04-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-x86_64
+    template: ubuntu-1204-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

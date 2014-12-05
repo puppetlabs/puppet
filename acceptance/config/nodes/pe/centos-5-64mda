@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: el-5-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/centos-5-x86_64
+    template: centos-5-x86_64
     hypervisor: vcloud
   centos-5-x86_64-agent:
     roles:
       - agent
     platform: el-5-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/centos-5-x86_64
+    template: centos-5-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

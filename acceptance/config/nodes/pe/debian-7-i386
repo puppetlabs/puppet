@@ -6,7 +6,7 @@ HOSTS:
       - database
       - agent
     platform: debian-7-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-7-i386
+    template: debian-7-i386
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

@@ -7,7 +7,7 @@ HOSTS:
       - dashboard
     platform: el-6-i386
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
+    template: redhat-6-i386
   win2003r2-ruby193-2:
     roles:
       - agent
@@ -20,4 +20,4 @@ CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
   folder: Delivery/Quality Assurance/FOSS/Dynamic
-  pooling_api: http://vcloud.delivery.puppetlabs.net/
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/

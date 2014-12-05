@@ -4,21 +4,21 @@ HOSTS:
       - master
       - agent
     platform: sles-11-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/sles-11-i386
+    template: sles-11-i386
     hypervisor: vcloud
   sles-11-i386-dashboard:
     roles:
       - dashboard
       - agent
     platform: sles-11-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/sles-11-i386
+    template: sles-11-i386
     hypervisor: vcloud
   sles-11-i386-database:
     roles:
       - database
       - agent
     platform: sles-11-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/sles-11-i386
+    template: sles-11-i386
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

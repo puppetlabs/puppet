@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/centos-6-x86_64
+    template: centos-6-x86_64
     hypervisor: vcloud
   solaris-10-x86_64-agent:
     roles:
       - agent
     platform: solaris-10-i386
-    template: Delivery/Quality Assurance/Templates/vCloud/solaris-10-x86_64
+    template: solaris-10-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none
