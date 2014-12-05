@@ -5,16 +5,16 @@ HOSTS:
       - agent
     platform: el-6-i386
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
+    template: redhat-6-i386
   agent-2003r2-i386:
     roles:
       - agent
     platform: windows-2003r2-32
     ruby_arch: x86
     hypervisor: vcloud
-    template: Delivery/Quality Assurance/Templates/vCloud/win-2003r2-i386
+    template: win-2003r2-i386
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
   folder: Delivery/Quality Assurance/FOSS/Dynamic
-  pooling_api: http://vcloud.delivery.puppetlabs.net/
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/

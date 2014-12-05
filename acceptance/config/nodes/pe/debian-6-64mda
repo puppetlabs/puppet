@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: debian-6-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-6-x86_64
+    template: debian-6-x86_64
     hypervisor: vcloud
   debian-6-amd64-agent:
     roles:
       - agent
     platform: debian-6-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-6-x86_64
+    template: debian-6-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

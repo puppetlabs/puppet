@@ -4,21 +4,21 @@ HOSTS:
       - master
       - agent
     platform: debian-7-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-7-x86_64
+    template: debian-7-x86_64
     hypervisor: vcloud
   debian-7-amd64-dashboard:
     roles:
       - dashboard
       - agent
     platform: debian-7-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-7-x86_64
+    template: debian-7-x86_64
     hypervisor: vcloud
   debian-7-amd64-database:
     roles:
       - database
       - agent
     platform: debian-7-amd64
-    template: Delivery/Quality Assurance/Templates/vCloud/debian-7-x86_64
+    template: debian-7-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

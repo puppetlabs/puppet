@@ -6,13 +6,13 @@ HOSTS:
       - database
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/scientific-6-x86_64
+    template: scientific-6-x86_64
     hypervisor: vcloud
   scientific-6-x86_64-agent:
     roles:
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/scientific-6-x86_64
+    template: scientific-6-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none

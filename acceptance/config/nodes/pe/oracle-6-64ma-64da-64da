@@ -4,21 +4,21 @@ HOSTS:
       - master
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-x86_64
+    template: oracle-6-x86_64
     hypervisor: vcloud
   oracle-6-x86_64-dashboard:
     roles:
       - dashboard
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-x86_64
+    template: oracle-6-x86_64
     hypervisor: vcloud
   oracle-6-x86_64-database:
     roles:
       - database
       - agent
     platform: el-6-x86_64
-    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-x86_64
+    template: oracle-6-x86_64
     hypervisor: vcloud
 CONFIG:
   nfs_server: none
