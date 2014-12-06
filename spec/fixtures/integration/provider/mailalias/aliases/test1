@@ -26,3 +26,6 @@ decode:     root
 # Other tests
 anothertest: "|/path/to/rt-mailgate --queue 'another test' --action correspond --url http://my.com/"
 test: "|/path/to/rt-mailgate --queue 'test' --action correspond --url http://my.com/"
+
+# Included file
+incfile: :include: /tmp/somefile
