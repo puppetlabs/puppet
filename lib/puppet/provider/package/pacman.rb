@@ -55,42 +55,22 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # If a group removes packages over time, nothing will happen. This is intended.
   def self.instances
     instances = []
+
+    # Get the installed packages
     installed_packages = get_installed_packages
-    installed_packages.sort_by { |k, _| k }.each do |(pkgname, pkgver)|
-      hash = {
-        :name => pkgname,
-        :ensure => pkgver,
-        :provider => self.name,
-      }
-      instances << new(hash)
+    installed_packages.sort_by { |k, _| k }.each do |package, version|
+      instances << new(to_resource_hash(package, version))
     end
 
-    # Get list of groupnames that have at least one package installed and add them to instances
-    begin
-      execpipe([command(:pacman), "-Qg"]) do |process|
-        # pacman -Qg output is 'groupname packagename'
-        # Groups need to be deduplicated
-        group_names = Set[]
-
-        process.each_line do |line|
-          group_names.add(line.split[0])
-        end
-
-        group_names.each do |group|
-          group_version, fully_installed = get_virtual_group_version(group, installed_packages)
-          if fully_installed
-            instances << new({ :name => group, :ensure => group_version, :provider => self.name })
-          end
-        end
-      end
-    rescue Puppet::ExecutionFailure
-      fail("Error getting groupnames of installed packages")
+    # Get the installed groups
+    get_installed_groups(installed_packages).each do |group, version|
+      instances << new(to_resource_hash(group, version))
     end
 
     instances
   end
 
-  # returns a hash pkgname => pkgversion of installed packages
+  # returns a hash package => version of installed packages
   def self.get_installed_packages
     begin
       packages = {}
@@ -111,31 +91,34 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
   end
 
-  # Generates a virtual version for a group - a line in the format "<pkgname> <pkgversion>" per package.
-  # For missing packages the pkgversion is skipped. This should trigger a group install when this string is compared
-  # to the output of latest (which will have package versions given for all packages).
-  # Needs to be passed a groupname and a hash pkgname => pkgversion of installed packages.
-  # Returns a tuple of the generated version and a boolean indicating if the group is fully installed.
-  def self.get_virtual_group_version group, package_versions
+  # returns a hash of group => version of installed groups
+  def self.get_installed_groups(installed_packages, filter = nil)
+    groups = {}
     begin
-      fully_installed = true
-      group_version = "\n" # the leading newline is just to make Puppet's output look nicer
-      group_pkgs = []
-      execpipe([command(:pacman), "-Sg", group]) do |process|
+      # Build a hash of group name => list of packages
+      command = [command(:pacman), "-Sgg"]
+      command << filter if filter
+      execpipe(command) do |process|
         process.each_line do |line|
-          group_pkg = line.split[1]
-          # if a package is missing, the group should be considered to be present
-          fully_installed = false unless package_versions[group_pkg]
-          group_pkgs << group_pkg
+          name, package = line.split
+          packages = (groups[name] ||= [])
+          packages << package
         end
       end
-      # sort packages by name
-      group_pkgs.sort.each do |group_pkg|
-        group_version += "#{group_pkg} #{package_versions[group_pkg]}\n"
+
+      # Remove any group that doesn't have all its packages installed
+      groups.delete_if do |_, packages|
+        !packages.all? { |package| installed_packages[package] }
       end
-      [group_version, fully_installed]
+
+      # Replace the list of packages with a version string consisting of packages that make up the group
+      groups.each do |name, packages|
+        groups[name] = packages.sort.map {|package| "#{package} #{installed_packages[package]}"}.join ', '
+      end
+
+      groups
     rescue Puppet::ExecutionFailure
-      fail("Error while getting virtual group version for '#{@resource[:name]}'")
+      fail("Error while getting installed groups")
     end
   end
 
@@ -148,19 +131,23 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
   def latest
+    # Synchronize the database
     pacman "-Sy"
-    # If target is a group, construct the virtual group version
-    if self.class.group?(@resource[:name])
-      output = pacman("-Sp", "--print-format", "%n %v", @resource[:name])
-      return "\n" + output.lines.sort.join
-    end
-    pacman_check = true   # Query the main repos first
+
+    resource_name = @resource[:name]
+
+    # If target is a group, construct the group version
+    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map{ |line| line.chomp }.sort.join(', ') if self.class.group?(resource_name)
+
+    # Start by querying with pacman first
+    # If that fails, retry using yaourt against the AUR
+    pacman_check = true
     begin
       if pacman_check
-        output = pacman "-Sp", "--print-format", "%v", @resource[:name]
+        output = pacman "-Sp", "--print-format", "%v", resource_name
         return output.chomp
       else
-        output = yaourt "-Qma", @resource[:name]
+        output = yaourt "-Qma", resource_name
         output.split("\n").each do |line|
           return line.split[1].chomp if line =~ /^aur/
         end
@@ -175,41 +162,35 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
   end
 
-  # Querys an installed package for information
+  # Querys information for a package or package group
   def query
     installed_packages = self.class.get_installed_packages
+    resource_name = @resource[:name]
 
-    # generate the virtual group version of the target is a group
-    if self.class.group?(@resource[:name])
+    # Check for the resource being a group
+    version = self.class.get_installed_groups(installed_packages, resource_name)[resource_name]
+
+    if version
       unless @resource.allow_virtual?
-        warning("#{@resource[:name]} is a group, but allow_virtual is false.")
+        warning("#{resource_name} is a group, but allow_virtual is false.")
         return nil
       end
-      group_version, fully_installed = self.class.get_virtual_group_version(@resource[:name], installed_packages)
-      if group_version && fully_installed
-        return { :ensure => group_version }
-      else
-        return {
-          :ensure => :absent,
-          :status => 'missing',
-          :name => @resource[:name],
-          :error => 'ok',
-        }
-      end
+    else
+      version = installed_packages[resource_name]
     end
 
-    # return the version if the package is installed
-    if pkgversion = installed_packages[@resource[:name]]
-      return { :ensure => pkgversion }
-    else
-      # report package missing if it is not installed
-      return {
-        :ensure => :absent,
-        :status => 'missing',
-        :name => @resource[:name],
-        :error => 'ok',
-      }
-    end
+    # Return nil if no package or group found
+    return nil unless version
+
+    self.class.to_resource_hash(resource_name, version)
+  end
+
+  def self.to_resource_hash(name, version)
+    {
+      :name     => name,
+      :ensure   => version,
+      :provider => self.name
+    }
   end
 
   # Removes a package from the system.

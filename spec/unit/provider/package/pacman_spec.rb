@@ -176,6 +176,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
   describe "when querying" do
     it "should query pacman" do
       executor.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
+      executor.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg', 'package'])
       provider.query
     end
 
@@ -187,18 +188,14 @@ otherpackage 1.2.3.4
 package 1.01.3-2
 yetanotherpackage 1.2.3.4
 EOF
+      executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).yields('')
 
-      expect(provider.query).to eq({ :ensure => "1.01.3-2" })
+      expect(provider.query).to eq({ :name => 'package', :ensure => '1.01.3-2', :provider => :pacman,  })
     end
 
     it "should return a hash indicating that the package is missing" do
-      executor.expects(:execpipe).yields("")
-      expect(provider.query).to eq({
-        :ensure => :absent,
-        :status => 'missing',
-        :name => resource[:name],
-        :error => 'ok',
-      })
+      executor.expects(:execpipe).twice.yields("")
+      expect(provider.query).to be_nil
     end
 
     it "should raise an error if execpipe fails" do
@@ -207,33 +204,36 @@ EOF
       expect { provider.query }.to raise_error(RuntimeError)
     end
 
-    it "should warn when querying a group and allow_virtual is false" do
-      described_class.stubs(:group?).returns(true)
-      resource.stubs(:allow_virtual?).returns(false)
-      executor.stubs(:execpipe).yields("")
-      provider.expects(:warning)
-      provider.query
-    end
+    describe 'when querying a group' do
+      before :each do
+        executor.expects(:execpipe).with(['/usr/bin/pacman', '-Q']).yields('foo 1.2.3')
+        executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).yields('package foo')
+      end
 
-    it "should not warn when querying a group and allow_virtual is true" do
-      described_class.stubs(:group?).returns(true)
-      resource.stubs(:allow_virtual?).returns(true)
-      executor.stubs(:execpipe).yields("")
-      described_class.expects(:warning).never
-      provider.query
+      it 'should warn when allow_virtual is false' do
+        resource.stubs(:allow_virtual?).returns(false)
+        provider.expects(:warning)
+        provider.query
+      end
+
+      it 'should not warn allow_virtual is true' do
+        resource.stubs(:allow_virtual?).returns(true)
+        described_class.expects(:warning).never
+        provider.query
+      end
     end
   end
 
   describe "when determining instances" do
     it "should retrieve installed packages and groups" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg'])
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'])
       described_class.instances
     end
 
     it "should return installed packages" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields("")
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields("")
       instances = described_class.instances
 
       expect(instances.length).to eq(2)
@@ -256,13 +256,7 @@ EOF
 package1 1.00
 package2 1.00
 EOF
-      # -Qg: What is currently installed
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields(<<EOF)
-group1 package1
-group1 package2
-EOF
-      # -Sg: All packages belonging to a group. group1 is completly installed
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -282,7 +276,7 @@ EOF
       })
       expect(instances[2].properties).to eq({
         :provider => :pacman,
-        :ensure   => "\npackage1 1.00\npackage2 1.00\n",
+        :ensure   => 'package1 1.00, package2 1.00',
         :name     => 'group1'
       })
     end
@@ -291,12 +285,7 @@ EOF
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(<<EOF)
 package1 1.00
 EOF
-      # -Qg: What is currently installed
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields(<<EOF)
-group1 package1
-EOF
-      # -Sg: All packages belonging to a group. group1 is completly installed
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -311,8 +300,8 @@ EOF
       })
     end
 
-    it "should sort package names in virtual group versions" do
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+    it 'should sort package names for installed groups' do
+      described_class.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'group1']).yields(<<EOF)
 group1 aa
 group1 b
 group1 a
@@ -323,8 +312,8 @@ EOF
         'b' => '1',
       }
 
-      virtual_group_version = described_class.get_virtual_group_version("group1", package_versions)
-      expect(virtual_group_version).to eq(["\na 1\naa 1\nb 1\n", true])
+      virtual_group_version = described_class.get_installed_groups(package_versions, 'group1')
+      expect(virtual_group_version).to eq({ 'group1' => 'a 1, aa 1, b 1' })
     end
 
     it "should return nil on error" do
@@ -395,12 +384,7 @@ EOF
 package2 1.0.1
 package1 1.0.0
 EOF
-      # The virtual group version is the package list prepended with \n and sorted in format <package> <version>
-      expect(provider.latest).to eq(<<EOF)
-
-package1 1.0.0
-package2 1.0.1
-EOF
+      expect(provider.latest).to eq('package1 1.0.0, package2 1.0.1')
     end
   end
 end
