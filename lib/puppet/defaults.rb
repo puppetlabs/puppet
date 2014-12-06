@@ -1003,7 +1003,6 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0660",
-      :create => true,
       :desc => "Where the puppet master web server saves its access log. This is
         only used when running a WEBrick puppet master. When puppet master is
         running under a Rack server like Passenger, that web server will have
