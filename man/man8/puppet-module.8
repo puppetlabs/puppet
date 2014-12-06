@@ -1,13 +1,13 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-MODULE" "8" "November 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-MODULE" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-module\fR \- Creates, installs and searches for modules on the Puppet Forge\.
 .
 .SH "SYNOPSIS"
-puppet module \fIaction\fR [\-\-environment production ] [\-\-modulepath $basemodulepath ]
+puppet module \fIaction\fR [\-\-environment production ] [\-\-modulepath ]
 .
 .SH "DESCRIPTION"
 This subcommand can find, install, and manage modules from the Puppet Forge, a repository of user\-contributed Puppet code\. It can also generate empty modules, and prepare locally developed modules for release on the Forge\.
@@ -35,11 +35,11 @@ Whether to log debug information\.
 The environment Puppet is running in\. For clients (e\.g\., \fBpuppet agent\fR) this determines the environment itself, which is used to find modules and much more\. For servers (i\.e\., \fBpuppet master\fR) this provides the default environment for nodes we know nothing about\.
 .
 .TP
-\-\-modulepath $basemodulepath
+\-\-modulepath
 The search path for modules, as a list of directories separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .IP
-Setting a global value for \fBmodulepath\fR in puppet\.conf is deprecated\. Please use directory environments instead\. If you need to use something other than the default modulepath of \fB<ACTIVE ENVIRONMENT\'S MODULES DIR>:$basemodulepath\fR, you can set \fBmodulepath\fR in environment\.conf\. For more info, see http://docs\.puppetlabs\.com/puppet/latest/reference/environments\.html
+Setting a global value for \fBmodulepath\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the default modulepath of \fB<ACTIVE ENVIRONMENT\'S MODULES DIR>:$basemodulepath\fR, you can set \fBmodulepath\fR in environment\.conf\. For more info, see http://docs\.puppetlabs\.com/puppet/latest/reference/environments\.html
 .
 .SH "ACTIONS"
 .

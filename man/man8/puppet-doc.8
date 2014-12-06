@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-DOC" "8" "November 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-DOC" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-doc\fR \- Generate Puppet documentation and references
@@ -10,16 +10,13 @@
 Generates a reference for all Puppet types\. Largely meant for internal Puppet Labs use\.
 .
 .SH "USAGE"
-puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-l|\-\-list] [\-o|\-\-outputdir \fIrdoc\-outputdir\fR] [\-m|\-\-mode text|pdf|rdoc] [\-r|\-\-reference \fIreference\-name\fR] [\-\-charset \fIcharset\fR] [\fImanifest\-file\fR]
+puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-l|\-\-list] [\-o|\-\-outputdir \fIrdoc\-outputdir\fR] [\-m|\-\-mode text|pdf|rdoc] [\-r|\-\-reference \fIreference\-name\fR] [\-\-charset \fIcharset\fR]
 .
 .SH "DESCRIPTION"
 If mode is not \'rdoc\', then this command generates a Markdown document describing all installed Puppet types or all allowable arguments to puppet executables\. It is largely meant for internal use and is used to generate the reference document available on the Puppet Labs web site\.
 .
 .P
-In \'rdoc\' mode, this command generates an html RDoc hierarchy describing the manifests that are in \'manifestdir\' and \'modulepath\' configuration directives\. The generated documentation directory is doc by default but can be changed with the \'outputdir\' option\.
-.
-.P
-If the command is run with the name of a manifest file as an argument, puppet doc will output a single manifest\'s documentation on stdout\.
+In \'rdoc\' mode, this command generates an html RDoc hierarchy describing the manifests that are in \'manifest\' and \'modulepath\' configuration directives\. The generated documentation directory is doc by default but can be changed with the \'outputdir\' option\.
 .
 .SH "OPTIONS"
 .
@@ -48,16 +45,12 @@ Build a particular reference\. Get a list of references by running \'puppet doc 
 Used only in \'rdoc\' mode\. It sets the charset used in the html files produced\.
 .
 .TP
-\-\-manifestdir
-Used only in \'rdoc\' mode\. The directory to scan for stand\-alone manifests\. If not supplied, puppet doc will use the manifestdir from puppet\.conf\.
-.
-.TP
 \-\-modulepath
-Used only in \'rdoc\' mode\. The directory or directories to scan for modules\. If not supplied, puppet doc will use the modulepath from puppet\.conf\.
+Used only in \'rdoc\' mode\. The directory or directories to scan for modules\. May be used in place of \-\-environment\. If both settings are provided, \-\-modulepath will take precedence\.
 .
 .TP
 \-\-environment
-Used only in \'rdoc\' mode\. The configuration environment from which to read the modulepath and manifestdir settings, when reading said settings from puppet\.conf\.
+Used only in \'rdoc\' mode\. The configuration environment from which to read the modulepath setting\.
 .
 .SH "EXAMPLE"
 .
@@ -74,20 +67,7 @@ or
 .
 .nf
 
-$ puppet doc \-\-outputdir /tmp/rdoc \-\-mode rdoc /path/to/manifests
-.
-.fi
-.
-.IP "" 0
-.
-.P
-or
-.
-.IP "" 4
-.
-.nf
-
-$ puppet doc /etc/puppet/manifests/site\.pp
+$ puppet doc \-\-outputdir /tmp/rdoc \-\-mode rdoc \-\-modulepath /path/to/modules
 .
 .fi
 .

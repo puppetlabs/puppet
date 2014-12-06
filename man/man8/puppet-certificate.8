@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CERTIFICATE" "8" "November 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-CERTIFICATE" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-certificate\fR \- Provide access to the CA for certificate management\.
@@ -162,32 +162,6 @@ List all certificate signing requests\.
 .
 .IP
 An array of #inspect output from CSR objects\. This output is currently messy, but does contain the names of nodes requesting certificates\. This action returns #inspect strings even when used from the Ruby API\.
-.
-.TP
-\fBsave\fR \- Invalid for this subcommand\.
-\fBSYNOPSIS\fR
-.
-.IP
-puppet certificate save [\-\-terminus TERMINUS] [\-\-extra HASH] \fI\-\-ca\-location LOCATION\fR \fIkey\fR
-.
-.IP
-\fBDESCRIPTION\fR
-.
-.IP
-Invalid for this subcommand\.
-.
-.TP
-\fBsearch\fR \- Invalid for this subcommand\.
-\fBSYNOPSIS\fR
-.
-.IP
-puppet certificate search [\-\-terminus TERMINUS] [\-\-extra HASH] \fI\-\-ca\-location LOCATION\fR \fIquery\fR
-.
-.IP
-\fBDESCRIPTION\fR
-.
-.IP
-Invalid for this subcommand\.
 .
 .TP
 \fBsign\fR \- Sign a certificate signing request for HOST\.

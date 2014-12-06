@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-NODE" "8" "November 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-NODE" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-node\fR \- View and manage node definitions\.
@@ -47,20 +47,17 @@ The terminus for an action is often determined by context, but occasionally need
 .SH "ACTIONS"
 .
 .TP
-\fBclean\fR \- Clean up everything a puppetmaster knows about a node\.
+\fBclean\fR \- Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster
 \fBSYNOPSIS\fR
 .
 .IP
-puppet node clean [\-\-terminus TERMINUS] [\-\-extra HASH] [\-\-[no\-]unexport] \fIhost1\fR [\fIhost2\fR \.\.\.]
+puppet node clean [\-\-terminus TERMINUS] [\-\-extra HASH] \fIhost1\fR [\fIhost2\fR \.\.\.]
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Clean up everything a puppet master knows about a node, including certificates and storeconfigs data\.
-.
-.IP
-The full list of info cleaned by this action is:
+Cleans up the following information a puppet master knows about a node:
 .
 .IP
 \fISigned certificates\fR \- ($vardir/ssl/ca/signed/node\.domain\.pem)
@@ -73,25 +70,6 @@ The full list of info cleaned by this action is:
 .
 .IP
 \fIReports\fR \- ($vardir/reports/node\.domain)
-.
-.IP
-\fIStored configs\fR \- (in database) The clean action can either remove all data from a host in your storeconfigs database, or, with the \fI\-\-unexport\fR option, turn every exported resource supporting ensure to absent so that any other host that collected those resources can remove them\. Without unexporting, a removed node\'s exported resources become unmanaged by Puppet, and may linger as cruft unless you are purging that resource type\.
-.
-.IP
-\fBOPTIONS\fR \fI\-\-[no\-]unexport\fR \- Whether to remove this node\'s exported resources from other nodes
-.
-.TP
-\fBdestroy\fR \- Invalid for this subcommand\.
-\fBSYNOPSIS\fR
-.
-.IP
-puppet node destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
-.
-.IP
-\fBDESCRIPTION\fR
-.
-.IP
-Invalid for this subcommand\.
 .
 .TP
 \fBfind\fR \- Retrieve a node object\.
@@ -128,32 +106,6 @@ puppet node info [\-\-terminus TERMINUS] [\-\-extra HASH]
 .IP
 Prints the default terminus class for this subcommand\. Note that different run modes may have different default termini; when in doubt, specify the run mode with the \'\-\-run_mode\' option\.
 .
-.TP
-\fBsave\fR \- Invalid for this subcommand\.
-\fBSYNOPSIS\fR
-.
-.IP
-puppet node save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
-.
-.IP
-\fBDESCRIPTION\fR
-.
-.IP
-Invalid for this subcommand\.
-.
-.TP
-\fBsearch\fR \- Invalid for this subcommand\.
-\fBSYNOPSIS\fR
-.
-.IP
-puppet node search [\-\-terminus TERMINUS] [\-\-extra HASH] \fIquery\fR
-.
-.IP
-\fBDESCRIPTION\fR
-.
-.IP
-Invalid for this subcommand\.
-.
 .SH "EXAMPLES"
 \fBfind\fR
 .
@@ -177,9 +129,6 @@ $ puppet node find somenode\.puppetlabs\.lan \-\-terminus rest \-\-render\-as ya
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:
-.
-.IP "\(bu" 4
-\fBactive_record\fR
 .
 .IP "\(bu" 4
 \fBexec\fR
