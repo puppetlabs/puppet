@@ -16,6 +16,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     described_class.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     resolver.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
     described_class.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
+    provider.stubs(:group?).returns(false)
   end
 
   describe "when installing" do
@@ -26,24 +27,40 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call pacman to install the right package quietly when yaourt is not installed" do
-      provider.stubs(:yaourt?).returns(false)
-      args = ['--noconfirm', '--noprogressbar', '-Sy', resource[:name]]
+      described_class.stubs(:yaourt?).returns(false)
+      args = ['--noconfirm', '--needed', '--noprogressbar', '-Sy', resource[:name]]
       provider.expects(:pacman).at_least_once.with(*args).returns ''
       provider.install
     end
 
     it "should call yaourt to install the right package quietly when yaourt is installed" do
-      provider.stubs(:yaourt?).returns(true)
-      args = ['--noconfirm', '-S', resource[:name]]
+      described_class.stubs(:yaourt?).returns(true)
+      args = ['--noconfirm', '--needed', '-S', resource[:name]]
       provider.expects(:yaourt).at_least_once.with(*args).returns ''
       provider.install
     end
 
-    it "should raise an ExecutionFailure if the installation failed" do
+    it "should raise a Puppet:Error if the installation failed" do
       executor.stubs(:execute).returns("")
       provider.expects(:query).returns(nil)
 
-      lambda { provider.install }.should raise_exception(Puppet::ExecutionFailure)
+      lambda { provider.install }.should raise_error(Puppet::Error)
+    end
+
+    it "should raise an Puppet::Error when trying to install a group and allow_virtual is false" do
+      provider.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(false)
+      described_class.stubs(:yaourt?).returns(false)
+      lambda { provider.install }.should raise_error(Puppet::Error)
+    end
+
+    it "should not raise an Puppet::Error when trying to install a group and allow_virtual is true" do
+      provider.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(true)
+      described_class.stubs(:yaourt?).returns(false)
+      executor.stubs(:execute).returns("")
+      # should not raise error
+      provider.install
     end
 
     describe "and install_options are given" do
@@ -52,15 +69,15 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       end
 
       it "should call pacman to install the right package quietly when yaourt is not installed" do
-        provider.stubs(:yaourt?).returns(false)
-        args = ['--noconfirm', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
+        described_class.stubs(:yaourt?).returns(false)
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
         provider.expects(:pacman).at_least_once.with(*args).returns ''
         provider.install
       end
 
       it "should call yaourt to install the right package quietly when yaourt is installed" do
-        provider.stubs(:yaourt?).returns(true)
-        args = ['--noconfirm', '-x', '--arg=value', '-S', resource[:name]]
+        described_class.stubs(:yaourt?).returns(true)
+        args = ['--noconfirm', '--needed', '-x', '--arg=value', '-S', resource[:name]]
         provider.expects(:yaourt).at_least_once.with(*args).returns ''
         provider.install
       end
@@ -163,111 +180,164 @@ describe Puppet::Type.type(:package).provider(:pacman) do
   end
 
   describe "when querying" do
-    it "should query pacman" do
-      executor.
-        expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", resource[:name]], no_extra_options)
-      provider.query
-    end
 
     it "should return the version" do
-      query_output = <<EOF
-Name           : package
-Version        : 1.01.3-2
-URL            : http://www.archlinux.org/pacman/
-Licenses       : GPL
-Groups         : base
-Provides       : None
-Depends On     : bash  libarchive>=2.7.1  libfetch>=2.25  pacman-mirrorlist
-Optional Deps  : fakeroot: for makepkg usage as normal user
-                 curl: for rankmirrors usage
-Required By    : None
-Conflicts With : None
-Replaces       : None
-Installed Size : 2352.00 K
-Packager       : Dan McGee <dan@archlinux.org>
-Architecture   : i686
-Build Date     : Sat 22 Jan 2011 03:56:41 PM EST
-Install Date   : Thu 27 Jan 2011 06:45:49 AM EST
-Install Reason : Explicitly installed
-Install Script : Yes
-Description    : A library-based package manager with dependency support
+      executor.
+        expects(:execpipe).
+        with(["/usr/bin/pacman", "-Q"]).yields(<<EOF)
+otherpackage 1.2.3.4
+package 1.01.3-2
+yetanotherpackage 1.2.3.4
 EOF
 
-      executor.expects(:execute).returns(query_output)
-      provider.query.should == {:ensure => "1.01.3-2"}
+      provider.query.should == { :ensure => "1.01.3-2" }
     end
 
-    it "should return a nil if the package isn't found" do
-      executor.expects(:execute).returns("")
-      provider.query.should be_nil
-    end
-
-    it "should return a hash indicating that the package is missing on error" do
-      executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
+    it "should return a hash indicating that the package is missing" do
+      executor.expects(:execpipe).yields("")
       provider.query.should == {
-        :ensure => :purged,
+        :ensure => :absent,
         :status => 'missing',
         :name => resource[:name],
         :error => 'ok',
       }
     end
+
+    it "should return a hash indicating that the package is missing on error" do
+      executor.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
+
+      lambda { provider.query }.should raise_error(RuntimeError)
+    end
+
+    it "should warn when querying a group and allow_virtual is false" do
+      provider.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(false)
+      executor.stubs(:execpipe).yields("")
+      provider.expects(:warning)
+      provider.query
+    end
+
+    it "should not warn when querying a group and allow_virtual is true" do
+      provider.stubs(:group?).returns(true)
+      resource.stubs(:allow_virtual?).returns(false)
+      executor.stubs(:execpipe).yields("")
+      described_class.expects(:warning).never
+      provider.query
+    end
   end
 
-
-
-  describe "when fetching a package list" do
-    it "should retrieve installed packages" do
+  describe "when determining instances" do
+    it "should retrieve installed packages and groups" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      described_class.installedpkgs
-    end
-
-    it "should retrieve installed package groups" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg'])
-      described_class.installedgroups
+      described_class.instances
     end
 
-    it "should return installed packages with their versions" do
-      described_class.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      packages = described_class.installedpkgs
+    it "should return installed packages" do
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields("")
+      instances = described_class.instances
 
-      packages.length.should == 2
+      instances.length.should == 2
 
-      packages[0].properties.should == {
+      instances[0].properties.should == {
         :provider => :pacman,
         :ensure => '1.23-4',
         :name => 'package1'
       }
 
-      packages[1].properties.should == {
+      instances[1].properties.should == {
         :provider => :pacman,
         :ensure => '2.00',
         :name => 'package2'
       }
     end
 
-    it "should return installed groups with a dummy version" do
-      described_class.expects(:execpipe).yields(StringIO.new("group1 pkg1\ngroup1 pkg2"))
-      groups = described_class.installedgroups
+    it "should return completely installed groups with a virtual version together with packages" do
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(<<EOF)
+package1 1.00
+package2 1.00
+EOF
+      # -Qg: What is currently installed
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields(<<EOF)
+group1 package1
+group1 package2
+EOF
+      # -Sg: All packages belonging to a group. group1 is completly installed
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+group1 package1
+group1 package2
+EOF
+      instances = described_class.instances
 
-      groups.length.should == 1
+      instances.length.should == 3
 
-      groups[0].properties.should == {
+      instances[0].properties.should == {
         :provider => :pacman,
-        :ensure   => '1',
+        :ensure   => '1.00',
+        :name     => 'package1'
+      }
+      instances[1].properties.should == {
+        :provider => :pacman,
+        :ensure   => '1.00',
+        :name     => 'package2'
+      }
+      instances[2].properties.should == {
+        :provider => :pacman,
+        :ensure   => "\npackage1 1.00\npackage2 1.00\n",
         :name     => 'group1'
       }
     end
 
+    it "should not return partially installed packages" do
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(<<EOF)
+package1 1.00
+EOF
+      # -Qg: What is currently installed
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg']).yields(<<EOF)
+group1 package1
+EOF
+      # -Sg: All packages belonging to a group. group1 is completly installed
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+group1 package1
+group1 package2
+EOF
+      instances = described_class.instances
+
+      instances.length.should == 1
+
+      instances[0].properties.should == {
+        :provider => :pacman,
+        :ensure   => '1.00',
+        :name     => 'package1'
+      }
+    end
+
+    it "should sort package names in virtual group versions" do
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sg', 'group1']).yields(<<EOF)
+group1 aa
+group1 b
+group1 a
+EOF
+      package_versions= {
+        'a' => '1',
+        'aa' => '1',
+        'b' => '1',
+      }
+
+      virtual_group_version = described_class.get_virtual_group_version("group1", package_versions)
+      virtual_group_version.should == ["\na 1\naa 1\nb 1\n", true]
+    end
+
     it "should return nil on error" do
-      described_class.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
-      described_class.instances.should be_nil
+      described_class.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      lambda { described_class.instances }.should raise_error(RuntimeError)
     end
 
     it "should warn on invalid input" do
-      described_class.expects(:execpipe).yields(StringIO.new("blah"))
-      described_class.expects(:warning).with("Failed to match line blah")
-      described_class.installedpkgs == []
+      described_class.expects(:execpipe).twice.yields(StringIO.new("blah"))
+      described_class.expects(:warning).with("Failed to match line 'blah'")
+      described_class.instances.should == []
     end
   end
 
@@ -309,6 +379,30 @@ EOF
         returns("1.00.2-3\n")
 
       provider.latest.should == "1.00.2-3"
+    end
+
+    it "should return a virtual group version when resource is a package group" do
+      provider.stubs(:group?).returns(true)
+      get_latest_version = sequence("get_latest_version")
+      executor.
+        stubs(:execute).
+        with(['/usr/bin/pacman', '-Sy'], no_extra_options).
+        in_sequence(get_latest_version)
+
+      executor.
+        expects(:execute).
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%n %v', resource[:name]], no_extra_options).
+        returns(<<EOF)
+package2 1.0.1
+package1 1.0.0
+EOF
+      # The virtual group version is the package list prepended with \n and sorted in format <package> <version>
+      provider.latest.should == <<EOF
+
+package1 1.0.0
+package2 1.0.1
+EOF
     end
   end
 end
