@@ -34,7 +34,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
     it "should call yaourt to install the right package quietly when yaourt is installed" do
       described_class.stubs(:yaourt?).returns(true)
-      args = ['--noconfirm', '--needed', '-S', resource[:name]]
+      args = ['--noconfirm', '--needed', '--noprogressbar', '-Sy', resource[:name]]
       provider.expects(:yaourt).at_least_once.with(*args).returns ''
       provider.install
     end
@@ -71,7 +71,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
       it "should call yaourt to install the right package quietly when yaourt is installed" do
         described_class.stubs(:yaourt?).returns(true)
-        args = ['--noconfirm', '--needed', '-x', '--arg=value', '-S', resource[:name]]
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
         provider.expects(:yaourt).at_least_once.with(*args).returns ''
         provider.install
       end
@@ -165,9 +165,23 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       provider.uninstall
     end
 
+    it "should call yaourt to remove the right package quietly" do
+      described_class.stubs(:yaourt?).returns(true)
+      args = ["--noconfirm", "--noprogressbar", "-R", resource[:name]]
+      provider.expects(:yaourt).with(*args)
+      provider.uninstall
+    end
+
     it "adds any uninstall_options" do
       resource[:uninstall_options] = ['-x', {'--arg' => 'value'}]
       args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-x", "--arg=value", "-R", resource[:name]]
+      executor.expects(:execute).with(args, no_extra_options).returns ""
+      provider.uninstall
+    end
+
+    it "should recursively remove packages when given a package group" do
+      described_class.stubs(:group?).returns(true)
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", "-s", resource[:name]]
       executor.expects(:execute).with(args, no_extra_options).returns ""
       provider.uninstall
     end

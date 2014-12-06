@@ -195,10 +195,23 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Removes a package from the system.
   def uninstall
+    resource_name = @resource[:name]
+
+    is_group = self.class.group?(resource_name)
+
+    fail("Refusing to uninstall package group #{resource_name}, because allow_virtual is false.") if is_group && !@resource.allow_virtual?
+
     cmd = %w{--noconfirm --noprogressbar}
     cmd += uninstall_options if @resource[:uninstall_options]
-    cmd << "-R" << @resource[:name]
-    pacman *cmd
+    cmd << "-R"
+    cmd << '-s' if is_group
+    cmd << resource_name
+
+    if self.class.yaourt?
+      yaourt *cmd
+    else
+      pacman *cmd
+    end
   end
 
   private
@@ -239,15 +252,13 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     # Refuse to install if not allowing virtual packages and the resource is a group
     fail("Refusing to install package group #{resource_name}, because allow_virtual is false.") if self.class.group?(resource_name) && !@resource.allow_virtual?
 
+    cmd = %w{--noconfirm --needed --noprogressbar}
+    cmd += install_options if @resource[:install_options]
+    cmd << "-Sy" << resource_name
+
     if self.class.yaourt?
-      cmd = %w{--noconfirm --needed}
-      cmd += install_options if @resource[:install_options]
-      cmd << "-S" << resource_name
       yaourt *cmd
     else
-      cmd = %w{--noconfirm  --needed --noprogressbar}
-      cmd += install_options if @resource[:install_options]
-      cmd << "-Sy" << resource_name
       pacman *cmd
     end
   end
