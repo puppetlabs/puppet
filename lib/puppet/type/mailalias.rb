@@ -10,7 +10,8 @@ module Puppet
 
     newproperty(:recipient, :array_matching => :all) do
       desc "Where email should be sent.  Multiple values
-        should be specified as an array."
+        should be specified as an array.  The file and the
+        recipient entries are mutually exclusive."
 
       def is_to_s(value)
         if value.include?(:absent)
@@ -30,6 +31,21 @@ module Puppet
         else
           value.join(",")
         end
+      end
+    end
+
+    newproperty(:file) do
+      desc "A file containing the alias's contents.  The file and the
+        recipient entries are mutually exclusive."
+
+      validate do |value|
+	unless Puppet::Util.absolute_path?(value)
+	  fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+	end
+      end
+
+      def should
+        @should
       end
     end
 
