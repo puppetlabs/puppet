@@ -1,4 +1,5 @@
 require 'puppet/file_serving/http_metadata'
+require 'puppet/indirector/plain'
 require 'puppet/indirector/file_metadata'
 require 'net/http'
 require 'puppet/network/http_pool'
