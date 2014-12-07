@@ -1,5 +1,6 @@
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
+require 'puppet/file_serving/terminus_helper'
 
 module Puppet
   # Copy files from a local or remote source.  This state *only* does any work
