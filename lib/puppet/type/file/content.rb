@@ -210,13 +210,29 @@ module Puppet
       end
     end
 
-    def get_from_source(source_or_content, &block)
+    def get_from_puppet_source(source_or_content, &block)
       source = source_or_content.metadata.source
       request = Puppet::Indirector::Request.new(:file_content, :find, source, nil, :environment => resource.catalog.environment_instance)
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
         connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "binary"}), &block)
+      end
+    end
+
+    def get_from_http_source(source, &block)
+      uri = URI(source)
+      use_ssl = uri.scheme == 'https'
+      connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
+      connection.request_get(uri.path, add_accept_encoding({"Accept" => "raw"}), &block)
+    end
+
+    def get_from_source(source_or_content, &block)
+      source = source_or_content.metadata.source
+      if source =~ /^https?:/
+        get_from_http_source(source, &block)
+      else
+        get_from_puppet_source(source_or_content, &block)
       end
     end
 
