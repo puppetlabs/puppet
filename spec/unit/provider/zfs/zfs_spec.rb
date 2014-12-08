@@ -71,13 +71,13 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
   context "#exists?" do
     it "should return true if the resource exists" do
       #return stuff because we have to slice and dice it
-      provider.expects(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\nmyzfs 100K 27.4M /myzfs")
+      provider.expects(:zfs).with(:list, name)
 
       provider.should be_exists
     end
 
     it "should return false if returned values don't match the name" do
-      provider.expects(:zfs).with(:list).returns("no soup for you")
+      provider.expects(:zfs).with(:list, name).raises(Puppet::ExecutionFailure, "Failed")
 
       provider.should_not be_exists
     end

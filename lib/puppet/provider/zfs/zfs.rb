@@ -30,9 +30,10 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   end
 
   def exists?
-    if zfs(:list).split("\n").detect { |line| line.split("\s")[0] == @resource[:name] }
+    begin
+      zfs(:list, @resource[:name])
       true
-    else
+    rescue Puppet::ExecutionFailure
       false
     end
   end
