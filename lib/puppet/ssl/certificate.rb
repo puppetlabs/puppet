@@ -63,7 +63,7 @@ DOC
   # Extract the extensions sequence from the wrapped certificate's raw ASN.1 form
   def exts_seq
     @exts_seq ||= OpenSSL::ASN1.decode(content.to_der).value[0].find do |data|
-      data.tag == 3
+      (data.tag == 3) && (data.tag_class == :CONTEXT_SPECIFIC)
     end.value[0]
   end
 
