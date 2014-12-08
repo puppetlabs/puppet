@@ -1,5 +1,6 @@
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
+require 'puppet/file_serving/terminus_helper'
 
 module Puppet
   # Copy files from a local or remote source.  This state *only* does any work
@@ -107,7 +108,8 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(escape_url(metadata.source), :environment => resource.catalog.environment_instance, :links => resource[:links])
+      safe_source = Puppet::FileServing::TerminusHelper.escape_url(metadata.source)
+      unless tmp = Puppet::FileServing::Content.indirection.find(safe_source, :environment => resource.catalog.environment_instance, :links => resource[:links])
         self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -182,7 +184,8 @@ module Puppet
             :source_permissions   => resource[:source_permissions]
           }
 
-          if data = Puppet::FileServing::Metadata.indirection.find(escape_url(source), options)
+          safe_source = Puppet::FileServing::TerminusHelper.escape_url(source)
+          if data = Puppet::FileServing::Metadata.indirection.find(safe_source, options)
             @metadata = data
             @metadata.source = source
             break
@@ -193,14 +196,6 @@ module Puppet
       end
       self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
-    end
-
-    def escape_url(source)
-      if source =~ /^https?:/
-        "url=#{source}"
-      else
-        source
-      end
     end
 
     def local?

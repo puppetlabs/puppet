@@ -6,8 +6,10 @@ require 'puppet/network/http_pool'
 class Puppet::Indirector::FileContent::Http < Puppet::Indirector::Plain
   desc "Retrieve file contents from a remote HTTP server."
 
+  include Puppet::FileServing::TerminusHelper
+
   def find(request)
-    uri = URI( request.to_s.sub(%r{^/file_content/url=},'') )
+    uri = URI( unescape_url(request.to_s) )
 
     use_ssl = uri.scheme == 'https'
     connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
