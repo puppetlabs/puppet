@@ -5,9 +5,7 @@ class Puppet::Pops::Binder::Lookup
 
   def self.parse_lookup_args(args)
     options = {}
-    pblock = if args[-1].respond_to?(:puppet_lambda)
-      args.pop
-    end
+    pblock = args.pop if Puppet::Pops::Types::TypeCalculator.infer(args[-1]).is_a?(Puppet::Pops::Types::PCallableType)
 
     case args.size
     when 1
