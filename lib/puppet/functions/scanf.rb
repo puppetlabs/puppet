@@ -32,8 +32,8 @@ Puppet::Functions.create_function(:scanf) do
   require 'scanf'
 
   dispatch :scanf do
-    param 'String', 'data'
-    param 'String', 'format'
+    param 'String', :data
+    param 'String', :format
     optional_block_param
   end
 

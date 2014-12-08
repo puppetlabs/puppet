@@ -903,7 +903,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
-          param 'Integer', 'count'
+          param 'Integer', :count
           required_block_param
         end
         def test(count, block)
@@ -920,7 +920,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
-          param 'Any', 'lambda_arg'
+          param 'Any', :lambda_arg
           required_block_param
         end
         def test(lambda_arg, block)
@@ -937,7 +937,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:assert_no_undef) do
         dispatch :assert_no_undef do
-          param 'Any', 'x'
+          param 'Any', :x
         end
 
         def assert_no_undef(x)
