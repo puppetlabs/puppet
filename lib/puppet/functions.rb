@@ -246,7 +246,7 @@ module Puppet::Functions
     # Defines a positional parameter with type and name
     #
     # @param type [String] The type specification for the parameter.
-    # @param name [String] The name of the parameter. This is primarily used
+    # @param name [Symbol] The name of the parameter. This is primarily used
     #   for error message output and does not have to match the name of the
     #   parameter on the implementation method.
     # @return [Void]
