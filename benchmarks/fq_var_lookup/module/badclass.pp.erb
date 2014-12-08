@@ -1,0 +1,29 @@
+class tst_generate::badclass {
+  include tst_generate::params
+
+  group { "${tst_generate::params::ugroup}":
+    ensure => present,
+  }
+
+  user { "${tst_generate::params::user}":
+    ensure => present,
+    gid    => $tst_generate::params::ugroup,
+  }
+
+  file { "${tst_generate::params::basedir}":
+    ensure  => directory,
+    owner   => $tst_generate::params::user,
+    group   => $tst_generate::params::ugroup,
+  }
+
+<% (1..500).to_a.each do |i| %>
+  file{ "${tst_generate::params::basedir}/file_<%= i %>":
+    ensure  => file,
+    content => "This is a test file.\n",
+    owner   => $tst_generate::params::user,
+    group   => $tst_generate::params::ugroup,
+    require => File["${tst_generate::params::basedir}"],
+  }
+
+<% end %>
+}
