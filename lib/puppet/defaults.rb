@@ -246,13 +246,6 @@ module Puppet
         $LOAD_PATH << value
       end
     },
-    :ignoreimport => {
-        :default  => false,
-        :type     => :boolean,
-        :desc     => "If true, allows the parser to continue without requiring
-          all files referenced with `import` statements to exist. This setting was primarily
-          designed for use with commit hooks for parse-checking.",
-    },
     :environment => {
         :default  => "production",
         :desc     => "The environment Puppet is running in.  For clients

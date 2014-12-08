@@ -11,11 +11,6 @@ describe Puppet::Util::RDoc do
       RDoc::RDoc.stubs(:new).returns(@rdoc)
     end
 
-    it "should tell the parser to ignore import" do
-      Puppet.expects(:[]=).with(:ignoreimport, true)
-      Puppet::Util::RDoc.rdoc("output", [])
-    end
-
     it "should tell RDoc to generate documentation using the Puppet generator" do
       @rdoc.expects(:document).with { |args| args.include?("--fmt") and args.include?("puppet") }
 

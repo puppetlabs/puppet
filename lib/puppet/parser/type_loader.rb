@@ -13,8 +13,6 @@ class Puppet::Parser::TypeLoader
   #   found in a module
   # @api private
   def import(pattern, dir)
-    return if Puppet[:ignoreimport]
-
     modname, files = Puppet::Parser::Files.find_manifests_in_modules(pattern, environment)
     if files.empty?
       abspat = File.expand_path(pattern, dir)
