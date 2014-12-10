@@ -3,9 +3,9 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: solaris-11-x86_64
+    platform: el-6-i386
     hypervisor: vcloud
-    template: solaris-11-x86_64
+    template: redhat-6-i386
   agent:
     roles:
       - agent
