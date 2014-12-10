@@ -5,7 +5,6 @@ module Puppet::Util::RDoc
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-    Puppet[:ignoreimport] = true
 
     # then rdoc
     require 'rdoc/rdoc'

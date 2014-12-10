@@ -381,10 +381,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.use :main, :agent, :ssl
 
-    # Always ignoreimport for agent. It really shouldn't even try to import,
-    # but this is just a temporary band-aid.
-    Puppet[:ignoreimport] = true
-
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml

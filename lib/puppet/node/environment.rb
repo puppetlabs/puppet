@@ -462,13 +462,9 @@ class Puppet::Node::Environment
   #   2. The contents of this environment's +manifest+ attribute: Puppet will
   #     try to load the environment manifest.
   #
-  # @note This method will return an empty hostclass if
-  #   `Puppet[:ignoreimport]` is set to true.
-  #
   # @return [Puppet::Parser::AST::Hostclass] The AST hostclass object
   #   representing the 'main' hostclass
   def perform_initial_import
-    return empty_parse_result if Puppet[:ignoreimport]
     parser = Puppet::Parser::ParserFactory.parser
     @parsed_code = Puppet[:code]
     if @parsed_code != ""
@@ -502,9 +498,6 @@ class Puppet::Node::Environment
   end
 
   # Return an empty toplevel hostclass to indicate that no file was loaded
-  #
-  # This is used as the return value of {#perform_initial_import} when
-  # `Puppet.settings[:ignoreimport]` is true.
   #
   # @return [Puppet::Parser::AST::Hostclass]
   def empty_parse_result

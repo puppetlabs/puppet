@@ -470,11 +470,6 @@ describe Puppet::Node::Environment do
         end.to raise_error(Puppet::Error, /Could not parse for environment #{env.name}/)
       end
 
-      it "does not do anything if the ignore_import settings is set" do
-        Puppet[:ignoreimport] = true
-        expect(env.known_resource_types).to be_kind_of(Puppet::Resource::TypeCollection)
-      end
-
       it "should mark the type collection as needing a reparse when there is an error parsing" do
         Puppet[:code] = "oops {"
         expect do
