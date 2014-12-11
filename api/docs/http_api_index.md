@@ -36,7 +36,6 @@ These services all provide extra information that can be used to understand how
 the Puppet Master will be providing configuration management information to
 Puppet Agents.
 
-* {file:api/docs/http_facts.md Facts}
 * {file:api/docs/http_node.md Node}
 * {file:api/docs/http_resource_type.md Resource Type}
 * {file:api/docs/http_status.md Status}
