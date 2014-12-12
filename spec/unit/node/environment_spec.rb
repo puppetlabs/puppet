@@ -346,7 +346,7 @@ describe Puppet::Node::Environment do
             mod = PuppetSpec::Modules.create(
               'baz',
               first_modulepath,
-              module_options
+              module_options,
             )
             expect(env.module_by_forge_name('puppetlabs/baz')).to eq(mod)
           end
@@ -429,7 +429,7 @@ describe Puppet::Node::Environment do
       it "loads from Puppet[:code]" do
         Puppet[:code] = "define foo {}"
         krt = env.known_resource_types
-        expect(krt.find_definition('foo')).to be_kind_of(Puppet::Resource::Type)
+        expect(krt.find_definition('', 'foo')).to be_kind_of(Puppet::Resource::Type)
       end
 
       it "parses from the the environment's manifests if Puppet[:code] is not set" do
@@ -439,7 +439,7 @@ describe Puppet::Node::Environment do
         end
         env = Puppet::Node::Environment.create(:testing, [], filename)
         krt = env.known_resource_types
-        expect(krt.find_definition('from_manifest')).to be_kind_of(Puppet::Resource::Type)
+        expect(krt.find_definition('', 'from_manifest')).to be_kind_of(Puppet::Resource::Type)
       end
 
       it "prefers Puppet[:code] over manifest files" do
@@ -450,7 +450,7 @@ describe Puppet::Node::Environment do
         end
         env = Puppet::Node::Environment.create(:testing, [], filename)
         krt = env.known_resource_types
-        expect(krt.find_definition('from_code_setting')).to be_kind_of(Puppet::Resource::Type)
+        expect(krt.find_definition('', 'from_code_setting')).to be_kind_of(Puppet::Resource::Type)
       end
 
       it "initial import proceeds even if manifest file does not exist on disk" do

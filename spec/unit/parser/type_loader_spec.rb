@@ -71,7 +71,7 @@ describe Puppet::Parser::TypeLoader do
 
     it "should fail if no files are found" do
       Puppet::Parser::Files.expects(:find_manifests_in_modules).returns [nil, []]
-      lambda { loader.import("myfile", "/path") }.should raise_error(/No file\(s\) found for import/)
+      lambda { loader.import("myfile", "/path") }.should raise_error(Puppet::ImportError)
     end
 
     it "should parse each found file" do
