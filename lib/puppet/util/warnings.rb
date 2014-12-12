@@ -7,7 +7,6 @@ module Puppet::Util::Warnings
   end
 
   def debug_once(msg)
-    return nil unless Puppet[:debug]
     Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.debug msg }
   end
 

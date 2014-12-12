@@ -88,7 +88,7 @@ Puppet::Face.define(:node, '0.0.1') do
     if (type = Puppet::Type.type(resource.restype)) && type.validattr?(:ensure)
       return true
     else
-      type = environment.known_resource_types.find_definition(resource.restype)
+      type = environment.known_resource_types.find_definition('', resource.restype)
       return true if type && type.arguments.keys.include?('ensure')
     end
     return false

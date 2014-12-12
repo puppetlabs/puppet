@@ -5,8 +5,6 @@ require 'puppet/parser/parser_factory'
 class Puppet::Parser::TypeLoader
   extend  Forwardable
 
-  class TypeLoaderError < StandardError; end
-
   # Import manifest files that match a given file glob pattern.
   #
   # @param pattern [String] the file glob to apply when determining which files
@@ -67,10 +65,10 @@ class Puppet::Parser::TypeLoader
       begin
         imported_types = import_from_modules(filename)
         if result = imported_types.find { |t| t.type == type and t.name == fqname }
-          Puppet.debug {"Automatically imported #{fqname} from #{filename} into #{environment}"}
+          Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
           return result
         end
-      rescue TypeLoaderError => detail
+      rescue Puppet::ImportError => detail
         # I'm not convienced we should just drop these errors, but this
         # preserves existing behaviours.
       end
@@ -98,22 +96,24 @@ class Puppet::Parser::TypeLoader
   end
 
   def raise_no_files_found(pattern)
-    raise TypeLoaderError, "No file(s) found for import of '#{pattern}'"
+    raise Puppet::ImportError, "No file(s) found for import of '#{pattern}'"
   end
 
   def load_files(modname, files)
     @loaded ||= {}
     loaded_asts = []
     files.reject { |file| @loaded[file] }.each do |file|
-    # The squelch_parse_errors use case is for parsing for the purpose of searching
-    # for information and it should not abort.
-    # There is currently one user in indirector/resourcetype/parser
-    #
+      # NOTE: This ugly implementation will be replaced in Puppet 3.5.
+      # The implementation now makes use of a global variable because the context support is
+      # not available until Puppet 3.5.
+      # The use case is that parsing for the purpose of searching for information
+      # should not abort. There is currently one such use case in indirector/resourcetype/parser
+      #
     if Puppet.lookup(:squelch_parse_errors) {|| false }
         begin
           loaded_asts << parse_file(file)
         rescue => e
-          # Resume from errors so that all parseable files may
+          # Resume from errors so that all parseable files would
           # still be parsed. Mark this file as loaded so that
           # it would not be parsed next time (handle it as if
           # it was successfully parsed).

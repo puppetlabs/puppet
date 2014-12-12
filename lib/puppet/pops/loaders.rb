@@ -220,7 +220,7 @@ class Puppet::Pops::Loaders
     private
 
     def create_loader_with_all_modules_visible(from_module_data)
-      Puppet.debug{"ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible"}
+      Puppet.debug("ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible")
 
       Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, all_module_loaders())
     end

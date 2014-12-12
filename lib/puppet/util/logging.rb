@@ -11,30 +11,9 @@ module Puppet::Util::Logging
 
   # Create a method for each log level.
   Puppet::Util::Log.eachlevel do |level|
-    # handle debug a special way for performance reasons
-    next if level == :debug
     define_method(level) do |args|
       args = args.join(" ") if args.is_a?(Array)
       send_log(level, args)
-    end
-  end
-
-  # Output a debug log message if debugging is on (but only then)
-  # If the output is anything except a static string, give the debug
-  # a block - it will be called with all other arguments, and is expected
-  # to return the single string result.
-  #
-  # Use a block at all times for increased performance.
-  #
-  # @example This takes 40% of the time compared to not using a block
-  #  Puppet.debug { "This is a string that interpolated #{x} and #{y} }"
-  #
-  def debug(*args)
-    return nil unless Puppet::Util::Log.level == :debug
-    if block_given?
-      send_log(:debug, yield(*args))
-    else
-      send_log(:debug, args.join(" "))
     end
   end
 

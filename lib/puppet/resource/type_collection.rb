@@ -108,16 +108,16 @@ class Puppet::Resource::TypeCollection
     @definitions[munge_name(name)]
   end
 
-  def find_node(name)
+  def find_node(namespaces, name)
     @nodes[munge_name(name)]
   end
 
-  def find_hostclass(name)
-    find_or_load(name, :hostclass)
+  def find_hostclass(namespaces, name, options = {})
+    find_or_load(namespaces, name, :hostclass, options)
   end
 
-  def find_definition(name)
-    find_or_load(name, :definition)
+  def find_definition(namespaces, name)
+    find_or_load(namespaces, name, :definition)
   end
 
   [:hostclasses, :nodes, :definitions].each do |m|
@@ -146,29 +146,61 @@ class Puppet::Resource::TypeCollection
 
   private
 
-  COLON_COLON = "::".freeze
+  # Return a list of all possible fully-qualified names that might be
+  # meant by the given name, in the context of namespaces.
+  def resolve_namespaces(namespaces, name)
+    name      = name.downcase
+    if name =~ /^::/
+      # name is explicitly fully qualified, so just return it, sans
+      # initial "::".
+      return [name.sub(/^::/, '')]
+    end
+    if name == ""
+      # The name "" has special meaning--it always refers to a "main"
+      # hostclass which contains all toplevel resources.
+      return [""]
+    end
+
+    namespaces = [namespaces] unless namespaces.is_a?(Array)
+    namespaces = namespaces.collect { |ns| ns.downcase }
+
+    result = []
+    namespaces.each do |namespace|
+      ary = namespace.split("::")
+
+      # Search each namespace nesting in innermost-to-outermost order.
+      while ary.length > 0
+        result << "#{ary.join("::")}::#{name}"
+        ary.pop
+      end
+
+      # Finally, search the toplevel namespace.
+      result << name
+    end
+
+    return result.uniq
+  end
 
   # Resolve namespaces and find the given object.  Autoload it if
   # necessary.
-  def find_or_load(name, type)
-    # Name is always absolute, but may start with :: which must be removed
-    fqname = (name[0,2] == COLON_COLON ? name[2..-1] : name)
-
-    result = send(type, fqname)
-    unless result
-      if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
-        # do not try to autoload if we already tried and it wasn't conclusive
-        # as this is a time consuming operation. Warn the user.
-        # Check first if debugging is on since the call to debug_once is expensive
-        if Puppet[:debug]
+  def find_or_load(namespaces, name, type, options = {})
+    searchspace = options[:assume_fqname] ? [name].flatten : resolve_namespaces(namespaces, name)
+    searchspace.each do |fqname|
+      result = send(type, fqname)
+      unless result
+        if @notfound[fqname] and Puppet[:ignoremissingtypes]
+          # do not try to autoload if we already tried and it wasn't conclusive
+          # as this is a time consuming operation. Warn the user.
           debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+        else
+          result = loader.try_load_fqname(type, fqname)
+          @notfound[fqname] = result.nil?
         end
-      else
-        result = loader.try_load_fqname(type, fqname)
-        @notfound[ fqname ] = result.nil?
       end
+      return result if result
     end
-    result
+
+    return nil
   end
 
   def munge_name(name)
