@@ -2,7 +2,6 @@ HOSTS:
   master:
     roles:
       - master
-      - agent
     platform: el-6-i386
     hypervisor: vcloud
     template: redhat-6-i386
