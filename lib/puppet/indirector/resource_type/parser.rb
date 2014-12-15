@@ -31,7 +31,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
         # We have to us 'find_<type>' here because it will
         # load any missing types from disk, whereas the plain
         # '<type>' method only returns from memory.
-        if r = krt.send("find_#{type}", [""], request.key)
+        if r = krt.send("find_#{type}", request.key)
           return r
         end
       end

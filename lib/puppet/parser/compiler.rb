@@ -180,18 +180,12 @@ class Puppet::Parser::Compiler
     evaluate_classes(classes_without_params, @node_scope || topscope)
   end
 
-  # Evaluate each specified class in turn.  If there are any classes we can't
-  # find, raise an error.  This method really just creates resource objects
+  # Evaluates each specified class in turn. If there are any classes that 
+  # can't be found, an error is raised. This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
   # evaluated later in the process.
   #
-  # Sometimes we evaluate classes with a fully qualified name already, in which
-  # case, we tell scope.find_hostclass we've pre-qualified the name so it
-  # doesn't need to search its namespaces again.  This gets around a weird
-  # edge case of duplicate class names, one at top scope and one nested in our
-  # namespace and the wrong one (or both!) getting selected. See ticket #13349
-  # for more detail.  --jeffweiss 26 apr 2012
-  def evaluate_classes(classes, scope, lazy_evaluate = true, fqname = false)
+  def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
     class_parameters = nil
     # if we are a param class, save the classes hash
@@ -202,7 +196,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name, :assume_fqname => fqname) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      scope.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
     end
 
     if class_parameters
@@ -397,7 +391,7 @@ class Puppet::Parser::Compiler
 
   # Find and evaluate our main object, if possible.
   def evaluate_main
-    @main = known_resource_types.find_hostclass([""], "") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
+    @main = known_resource_types.find_hostclass("") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
     @topscope.source = @main
     @main_resource = Puppet::Parser::Resource.new("class", :main, :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource

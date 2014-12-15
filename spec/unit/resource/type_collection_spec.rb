@@ -88,88 +88,67 @@ describe Puppet::Resource::TypeCollection do
     loader.node("node").should be_nil
   end
 
-  describe "when resolving namespaces" do
-    [ ['',               '::foo', ['foo']],
-      ['a',              '::foo', ['foo']],
-      ['a::b',           '::foo', ['foo']],
-      [['a::b'],         '::foo', ['foo']],
-      [['a::b', 'c'],    '::foo', ['foo']],
-      [['A::B', 'C'],    '::Foo', ['foo']],
-      ['',               '',      ['']],
-      ['a',              '',      ['']],
-      ['a::b',           '',      ['']],
-      [['a::b'],         '',      ['']],
-      [['a::b', 'c'],    '',      ['']],
-      [['A::B', 'C'],    '',      ['']],
-      ['',               'foo',   ['foo']],
-      ['a',              'foo',   ['a::foo', 'foo']],
-      ['a::b',           'foo',   ['a::b::foo', 'a::foo', 'foo']],
-      ['A::B',           'Foo',   ['a::b::foo', 'a::foo', 'foo']],
-      [['a::b'],         'foo',   ['a::b::foo', 'a::foo', 'foo']],
-      [['a', 'b'],       'foo',   ['a::foo', 'foo', 'b::foo']],
-      [['a::b', 'c::d'], 'foo',   ['a::b::foo', 'a::foo', 'foo', 'c::d::foo', 'c::foo']],
-      [['a::b', 'a::c'], 'foo',   ['a::b::foo', 'a::foo', 'foo', 'a::c::foo']],
-    ].each do |namespaces, name, expected_result|
-      it "should resolve #{name.inspect} in namespaces #{namespaces.inspect} correctly" do
-        @code.instance_eval { resolve_namespaces(namespaces, name) }.should == expected_result
-      end
-    end
-  end
-
   describe "when looking up names" do
     before do
       @type = Puppet::Resource::Type.new(:hostclass, "ns::klass")
     end
 
-    it "should support looking up with multiple namespaces" do
-      @code.add @type
-      @code.find_hostclass(%w{boo baz ns}, "klass").should equal(@type)
-    end
-
     it "should not attempt to import anything when the type is already defined" do
       @code.add @type
       @code.loader.expects(:import).never
-      @code.find_hostclass(%w{ns}, "klass").should equal(@type)
+      @code.find_hostclass("ns::klass").should equal(@type)
     end
 
     describe "that need to be loaded" do
       it "should use the loader to load the files" do
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
         @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
-        @code.find_hostclass(["ns"], "klass")
+        @code.find_hostclass("klass")
+      end
+      it "should use the loader to load the files" do
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        @code.find_hostclass("ns::klass")
       end
 
       it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
-        @code.find_hostclass("Ns", "Klass")
+        @code.find_hostclass("ns::klass")
       end
 
       it "should use the class returned by the loader" do
         @code.loader.expects(:try_load_fqname).returns(:klass)
         @code.expects(:hostclass).with("ns::klass").returns(false)
-        @code.find_hostclass("ns", "klass").should == :klass
+        @code.find_hostclass("ns::klass").should == :klass
       end
 
       it "should return nil if the name isn't found" do
         @code.loader.stubs(:try_load_fqname).returns(nil)
-        @code.find_hostclass("Ns", "Klass").should be_nil
+        @code.find_hostclass("Ns::Klass").should be_nil
       end
 
       it "already-loaded names at broader scopes should not shadow autoloaded names" do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
         @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
-        @code.find_hostclass("foo", "bar").should == :foobar
+        @code.find_hostclass("foo::bar").should == :foobar
       end
 
-      it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
-        Puppet[:ignoremissingtypes] = true
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass").returns(nil)
-        @code.find_hostclass("Ns", "Klass").should be_nil
+      context 'when debugging' do
+        # This test requires that debugging is on, it will otherwise not make a call to debug,
+        # which is the easiest way to detect that that a certain path has been taken.
+        before(:each) do
+          Puppet.debug = true
+        end
 
-        Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
-        @code.find_hostclass("Ns", "Klass").should be_nil
+        after (:each) do
+          Puppet.debug = false
+        end
+
+        it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
+          Puppet[:ignoremissingtypes] = true
+          @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
+          @code.find_hostclass("ns::klass").should be_nil
+          Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
+          @code.find_hostclass("ns::klass").should be_nil
+        end
       end
     end
   end
@@ -204,68 +183,33 @@ describe Puppet::Resource::TypeCollection do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find_hostclass("namespace", "::foo::bar").should equal(instance)
+      loader.find_hostclass("::foo::bar").should equal(instance)
     end
 
     it "should return nil if the instance name is fully qualified and no such instance exists" do
       loader = Puppet::Resource::TypeCollection.new(environment)
-      loader.find_hostclass("namespace", "::foo::bar").should be_nil
+      loader.find_hostclass("::foo::bar").should be_nil
     end
 
     it "should be able to find classes in the base namespace" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo")
       loader.add instance
-      loader.find_hostclass("", "foo").should equal(instance)
-    end
-
-    it "should return the partially qualified object if it exists in a provided namespace" do
-      loader = Puppet::Resource::TypeCollection.new(environment)
-      instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
-      loader.add instance
-      loader.find_hostclass("foo", "bar::baz").should equal(instance)
-    end
-
-    it "should be able to find partially qualified objects in any of the provided namespaces" do
-      loader = Puppet::Resource::TypeCollection.new(environment)
-      instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
-      loader.add instance
-      loader.find_hostclass(["nons", "foo", "otherns"], "bar::baz").should equal(instance)
+      loader.find_hostclass("foo").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in a provided namespace" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find_hostclass("foo", "bar").should equal(instance)
-    end
-
-    it "should return the unqualified object if it exists in the parent namespace" do
-      loader = Puppet::Resource::TypeCollection.new(environment)
-      instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
-      loader.add instance
-      loader.find_hostclass("foo::bar::baz", "bar").should equal(instance)
-    end
-
-    it "should should return the partially qualified object if it exists in the parent namespace" do
-      loader = Puppet::Resource::TypeCollection.new(environment)
-      instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
-      loader.add instance
-      loader.find_hostclass("foo::bar", "bar::baz").should equal(instance)
-    end
-
-    it "should return the qualified object if it exists in the root namespace" do
-      loader = Puppet::Resource::TypeCollection.new(environment)
-      instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
-      loader.add instance
-      loader.find_hostclass("foo::bar", "foo::bar::baz").should equal(instance)
+      loader.find_hostclass("foo::bar").should equal(instance)
     end
 
     it "should return nil if the object cannot be found" do
       loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find_hostclass("foo::bar", "eh").should be_nil
+      loader.find_hostclass("foo::bar::eh").should be_nil
     end
 
     describe "when topscope has a class that has the same name as a local class" do
@@ -276,16 +220,11 @@ describe Puppet::Resource::TypeCollection do
         end
       end
 
-      it "should favor the local class, if the name is unqualified" do
-        @loader.find_hostclass("foo", "bar").name.should == 'foo::bar'
-      end
-
-      it "should only look in the topclass, if the name is qualified" do
-        @loader.find_hostclass("foo", "::bar").name.should == 'bar'
-      end
-
-      it "should only look in the topclass, if we assume the name is fully qualified" do
-        @loader.find_hostclass("foo", "bar", :assume_fqname => true).name.should == 'bar'
+      it "looks up the given name, no more, no less" do
+        @loader.find_hostclass("bar").name.should == 'bar'
+        @loader.find_hostclass("::bar").name.should == 'bar'
+        @loader.find_hostclass("foo::bar").name.should == 'foo::bar'
+        @loader.find_hostclass("::foo::bar").name.should == 'foo::bar'
       end
     end
 
@@ -293,7 +232,7 @@ describe Puppet::Resource::TypeCollection do
         @loader = Puppet::Resource::TypeCollection.new(environment)
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
 
-        @loader.find_hostclass("foo", "::bar").should == nil
+        @loader.find_hostclass("::bar").should == nil
     end
 
   end
@@ -302,7 +241,7 @@ describe Puppet::Resource::TypeCollection do
     node = Puppet::Resource::Type.new(:node, "bar")
     loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add(node)
-    loader.find_node(stub("ignored"), "bar").should == node
+    loader.find_node("bar").should == node
   end
 
   it "should indicate whether any nodes are defined" do

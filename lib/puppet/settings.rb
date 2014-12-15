@@ -932,7 +932,7 @@ class Puppet::Settings
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
 
-      Puppet.debug("Using settings: adding file resource '#{key}': '#{resource.inspect}'")
+      Puppet.debug {"Using settings: adding file resource '#{key}': '#{resource.inspect}'"}
 
       catalog.add_resource(resource)
     end

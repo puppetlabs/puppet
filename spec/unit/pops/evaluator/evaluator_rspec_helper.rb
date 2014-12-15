@@ -18,9 +18,6 @@ module EvaluatorRspecHelper
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
 
-    # Compiler must create the top scope
-#    compiler.send(:evaluate_main)
-
     # compiler creates the top scope if one is not present
     top_scope = compiler.topscope()
     # top_scope = Puppet::Parser::Scope.new(compiler)
@@ -28,8 +25,7 @@ module EvaluatorRspecHelper
     evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new
     result = evaluator.evaluate(in_top_scope.current, top_scope)
     if in_named_scope
-      other_scope = Puppet::Parser::Scope.new(compiler)
-      other_scope.add_namespace(scopename)
+      other_scope = Puppet::Parser::Scope.new(compiler, :namespace => scopename)
       result = evaluator.evaluate(in_named_scope.current, other_scope)
     end
     if in_top_scope_again
