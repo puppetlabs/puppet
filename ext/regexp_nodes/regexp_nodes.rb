@@ -152,7 +152,7 @@ class ExternalNode
         patternlist <<  pattern
         log("appending [#{pattern}] to patternlist for [#{filepath}]")
       }
-    rescue Exception
+    rescue StandardError
       log("Problem reading #{filepath}: #{$!}",:err)
       exit(1)
     end

@@ -367,9 +367,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "get"; return_value = process_get(cmd_array)
           when "match"; return_value = process_match(cmd_array)
           end
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => e
+        rescue StandardError => e
           fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
         end
       end
@@ -499,9 +497,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           else fail("Command '#{command}' is not supported")
         end
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue Exception => e
+      rescue StandardError => e
         fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}")
       end
     end

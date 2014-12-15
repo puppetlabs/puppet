@@ -51,7 +51,7 @@ class Puppet::Network::HTTP::API::V1
     end
   rescue Puppet::Network::HTTP::Error::HTTPError => e
     return do_http_control_exception(response, e)
-  rescue Exception => e
+  rescue StandardError => e
     return do_exception(response, e)
   end
 

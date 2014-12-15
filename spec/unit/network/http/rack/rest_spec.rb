@@ -129,7 +129,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         req = mk_req('/production/report/foo')
         req.body.expects(:read).with(1)
 
-        @handler.stubs(:headers).raises(Exception)
+        @handler.stubs(:headers).raises(StandardError)
 
         @handler.process(req, @response)
       end

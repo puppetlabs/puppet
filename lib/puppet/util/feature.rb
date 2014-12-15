@@ -17,7 +17,7 @@ class Puppet::Util::Feature
     if block_given?
       begin
         result = yield
-      rescue Exception => detail
+      rescue StandardError,ScriptError => detail
         warn "Failed to load feature test for #{name}: #{detail}"
         result = false
       end
@@ -86,9 +86,7 @@ class Puppet::Util::Feature
 
     begin
       require lib
-    rescue SystemExit,NoMemoryError
-      raise
-    rescue Exception
+    rescue ScriptError
       Puppet.debug "Failed to load library '#{lib}' for feature '#{name}'"
       return false
     end

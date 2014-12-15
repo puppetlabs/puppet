@@ -45,9 +45,7 @@ class Puppet::Agent
           begin
             client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
             lock { client.run(client_args) }
-          rescue SystemExit,NoMemoryError
-            raise
-          rescue Exception => detail
+          rescue StandardError => detail
             Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
           end
         end
@@ -108,9 +106,7 @@ class Puppet::Agent
   def with_client
     begin
       @client = client_class.new
-    rescue SystemExit,NoMemoryError
-      raise
-    rescue Exception => detail
+    rescue StandardError => detail
       Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
       return
     end

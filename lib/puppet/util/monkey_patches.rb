@@ -3,7 +3,7 @@ end
 
 begin
   Process.maxgroups = 1024
-rescue Exception
+rescue NotImplementedError
   # Actually, I just want to ignore it, since various platforms - JRuby,
   # Windows, and so forth - don't support it, but only because it isn't a
   # meaningful or implementable concept there.

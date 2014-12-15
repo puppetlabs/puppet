@@ -176,9 +176,7 @@ class Puppet::Configurer
               query_options = nil
             end
           end
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
+        rescue StandardError => detail
           Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
           Puppet.warning(detail)
         end
@@ -295,9 +293,7 @@ class Puppet::Configurer
         query_options.merge(:ignore_cache => true, :environment => Puppet::Node::Environment.remote(@environment), :fail_on_404 => true))
     end
     result
-  rescue SystemExit,NoMemoryError
-    raise
-  rescue Exception => detail
+  rescue StandardError => detail
     Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
   end
