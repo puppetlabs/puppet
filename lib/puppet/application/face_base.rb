@@ -121,9 +121,9 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # Now we can interact with the default option code to build behaviour
     # around the full set of options we now know we support.
-    @action.options.each do |option|
-      option = @action.get_option(option) # make it the object.
-      self.class.option(*option.optparse) # ...and make the CLI parse it.
+    @action.options.each do |o|
+      o = @action.get_option(o) # make it the object.
+      self.class.option(*o.optparse) # ...and make the CLI parse it.
     end
 
     # ...and invoke our parent to parse all the command line options.

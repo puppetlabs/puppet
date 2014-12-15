@@ -83,9 +83,9 @@ class Puppet::Resource::TypeCollection
       return node
     end
 
-    @node_list.each do |node|
-      next unless node.name_is_regex?
-      return node if node.match(name)
+    @node_list.each do |n|
+      next unless n.name_is_regex?
+      return n if n.match(name)
     end
     nil
   end

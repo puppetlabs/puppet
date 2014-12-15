@@ -354,8 +354,8 @@ private
   end
 
   def write_script_to(file, text)
-    Puppet::Util.replace_file(file, 0644) do |file|
-      file.write(text)
+    Puppet::Util.replace_file(file, 0644) do |f|
+      f.write(text)
     end
   end
 end

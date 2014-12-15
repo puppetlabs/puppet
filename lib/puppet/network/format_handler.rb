@@ -77,16 +77,16 @@ module Puppet::Network::FormatHandler
   # @return [Puppet::Network::Format, nil] the most suitable format
   # @api private
   def self.most_suitable_format_for(accepted, supported)
-    format_name = accepted.collect do |accepted|
-      accepted.to_s.sub(/;q=.*$/, '')
-    end.collect do |accepted|
-      if accepted == ALL_MEDIA_TYPES
+    format_name = accepted.collect do |format|
+      format.to_s.sub(/;q=.*$/, '')
+    end.collect do |format|
+      if format == ALL_MEDIA_TYPES
         supported.first
       else
-        format_to_canonical_name_or_nil(accepted)
+        format_to_canonical_name_or_nil(format)
       end
-    end.find do |accepted|
-      supported.include?(accepted)
+    end.find do |format|
+      supported.include?(format)
     end
 
     if format_name

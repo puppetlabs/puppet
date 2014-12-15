@@ -122,8 +122,8 @@ class Puppet::Transaction::Report
   def add_metric(name, hash)
     metric = Puppet::Util::Metric.new(name)
 
-    hash.each do |name, value|
-      metric.newvalue(name, value)
+    hash.each do |metric_name, value|
+      metric.newvalue(metric_name, value)
     end
 
     @metrics[metric.name] = metric
@@ -281,8 +281,8 @@ class Puppet::Transaction::Report
     @metrics.each do |name, metric|
       key = metric.name.to_s
       report[key] = {}
-      metric.values.each do |name, label, value|
-        report[key][name.to_s] = value
+      metric.values.each do |metric_name, label, value|
+        report[key][metric_name.to_s] = value
       end
       report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
     end

@@ -27,8 +27,8 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
   #
   def find(typed_name)
     if typed_name.qualified
-      if loader = index()[typed_name.name_parts[0]]
-        loader.load_typed(typed_name)
+      if l = index()[typed_name.name_parts[0]]
+        l.load_typed(typed_name)
       else
         # no module entered as dependency with name matching first segment of wanted name
         nil

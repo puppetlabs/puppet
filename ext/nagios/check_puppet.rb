@@ -16,7 +16,7 @@ class CheckPuppet
     :interval  => 30,
   }
 
-  o = OptionParser.new do |o|
+  OptionParser.new do |o|
     o.set_summary_indent('  ')
     o.banner =    "Usage: #{script_name} [OPTIONS]"
     o.define_head "The check_puppet Nagios plug-in checks that specified Puppet process is running and the state file is no older than specified interval."

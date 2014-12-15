@@ -446,8 +446,8 @@ class Puppet::Settings
         val = val.inspect if val == ""
         hash[name] = val
       end
-      hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, val|
-        puts "#{name} = #{val}"
+      hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, v|
+        puts "#{name} = #{v}"
       end
     else
       val.split(/\s*,\s*/).sort.each do |v|
@@ -1106,7 +1106,7 @@ Generated on #{Time.now}.
 
   DEPRECATION_REFS = {
     # intentionally empty. This could be repopulated if we deprecate more settings
-    # and have reference links to associate with them 
+    # and have reference links to associate with them
   }.freeze
 
   def screen_non_puppet_conf_settings(puppet_conf)
@@ -1281,8 +1281,8 @@ Generated on #{Time.now}.
     # @return [Object] The configuration setting value or nil if the setting is not known
     # @api public
     def lookup(name)
-      set = @value_sets.find do |set|
-        set.include?(name)
+      set = @value_sets.find do |value_set|
+        value_set.include?(name)
       end
       if set
         value = set.lookup(name)

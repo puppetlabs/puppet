@@ -42,9 +42,9 @@ module Puppet::ModuleTool
           end
         end
 
-        type_names.each do |type_name|
-          if type = Puppet::Type.type(type_name.to_sym)
-            type_hash = {:name => type_name, :doc => type.doc}
+        type_names.each do |name|
+          if type = Puppet::Type.type(name.to_sym)
+            type_hash = {:name => name, :doc => type.doc}
             type_hash[:properties] = attr_doc(type, :property)
             type_hash[:parameters] = attr_doc(type, :param)
             if type.providers.size > 0
@@ -52,7 +52,7 @@ module Puppet::ModuleTool
             end
             @data << type_hash
           else
-            Puppet.warning "Could not find/load type: #{type_name}"
+            Puppet.warning "Could not find/load type: #{name}"
           end
         end
       end

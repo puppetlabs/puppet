@@ -49,8 +49,8 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       channel.send_channel_request("shell") do |ch, success|
         raise "failed to open ssh shell channel" unless success
 
-        ch.on_data { |ch,data| @buf << data }
-        ch.on_extended_data { |ch,type,data|  @buf << data if type == 1 }
+        ch.on_data { |_,data| @buf << data }
+        ch.on_extended_data { |_,type,data|  @buf << data if type == 1 }
         ch.on_close { @eof = true }
 
         @channel = ch
