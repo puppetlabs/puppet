@@ -71,7 +71,7 @@ file { '#{testdir}/environments/production/modules/ntp/manifests/init.pp':
         notify { "ntpserver ${server}": }
       }
 
-      print { $ntpservers: }
+      ntp::print { $ntpservers: }
     }',
   mode => "0640";
 }

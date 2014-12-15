@@ -235,34 +235,11 @@ class Puppet::Resource::Type
     end
   end
 
-  # MQR TODO:
-  #
-  # The change(s) introduced by the fix for #4270 are mostly silly & should be
-  # removed, though we didn't realize it at the time.  If it can be established/
-  # ensured that nodes never call parent_type and that resource_types are always
-  # (as they should be) members of exactly one resource_type_collection the
-  # following method could / should be replaced with:
-  #
-  # def parent_type
-  #   @parent_type ||= parent && (
-  #     resource_type_collection.find_or_load([name],parent,type.to_sym) ||
-  #     fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{resource_type_collection.environment}"
-  #   )
-  # end
-  #
-  # ...and then the rest of the changes around passing in scope reverted.
-  #
   def parent_type(scope = nil)
     return nil unless parent
 
-    unless @parent_type
-      raise "Must pass scope to parent_type when called first time" unless scope
-      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", [name], parent)
-        fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"
-      end
-    end
-
-    @parent_type
+    @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
+      fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}")
   end
 
   # Set any arguments passed by the resource as variables in the scope.

@@ -224,22 +224,12 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Add to our list of namespaces.
-  def add_namespace(ns)
-    return false if @namespaces.include?(ns)
-    if @namespaces == [""]
-      @namespaces = [ns]
-    else
-      @namespaces << ns
-    end
-  end
-
-  def find_hostclass(name, options = {})
-    known_resource_types.find_hostclass(namespaces, name, options)
+  def find_hostclass(name)
+    known_resource_types.find_hostclass(name)
   end
 
   def find_definition(name)
-    known_resource_types.find_definition(namespaces, name)
+    known_resource_types.find_definition(name)
   end
 
   def find_global_scope()
@@ -270,9 +260,9 @@ class Puppet::Parser::Scope
     end
 
     if n = options.delete(:namespace)
-      @namespaces = [n]
+      @namespaces = [n.freeze].freeze
     else
-      @namespaces = [""]
+      @namespaces = ["".freeze].freeze
     end
 
     raise Puppet::DevError, "compiler passed in options" if options.include? :compiler
@@ -352,7 +342,8 @@ class Puppet::Parser::Scope
 
   # Look up a defined type.
   def lookuptype(name)
-    find_definition(name) || find_hostclass(name)
+    # This happens a lot, avoid making a call to make a call
+    known_resource_types.find_definition(name) || known_resource_types.find_hostclass(name)
   end
 
   def undef_as(x,v)
@@ -537,7 +528,7 @@ class Puppet::Parser::Scope
   end
 
   def namespaces
-    @namespaces.dup
+    @namespaces
   end
 
   # Create a new scope and set these options.
@@ -759,7 +750,7 @@ class Puppet::Parser::Scope
   end
 
   def find_defined_resource_type(type)
-    known_resource_types.find_definition(namespaces, type.to_s.downcase)
+    known_resource_types.find_definition(type.to_s.downcase)
   end
 
 
