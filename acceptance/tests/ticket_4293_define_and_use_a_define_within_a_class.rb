@@ -11,7 +11,7 @@ class foo {
   define do_notify($msg) {
     notify { "Message for $name: $msg": }
   }
-  do_notify { "test_one": msg => "a_message_for_you" }
+  foo::do_notify { "test_one": msg => "a_message_for_you" }
 }
 include foo
 PP
