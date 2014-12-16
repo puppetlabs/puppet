@@ -4,16 +4,16 @@ confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
 
 
-hosts.each do |host|
+agents.each do |agent|
   step "list running services and make sure ssh reports running"
 
-  on host, 'puppet resource service'
+  on agent, 'puppet resource service'
   assert_match /service { 'ssh[^']*':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is not running"
   expected_output = stdout
 
   step "make sure nothing on the system was changed and ssh is still running"
 
-  on host, 'puppet resource service'
+  on agent, 'puppet resource service'
 
   # It's possible that `puppet resource service` changed the system before
   # printing output the *first* time, so in addition to comparing the output,
