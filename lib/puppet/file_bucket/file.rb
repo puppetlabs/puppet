@@ -14,19 +14,14 @@ class Puppet::FileBucket::File
   attr :bucket_path
 
   def self.supported_formats
-    [:s]
+    [:pson]
   end
 
   def self.default_format
-    # This should really be :raw, like is done for Puppet::FileServing::Content
-    # but this class hasn't historically supported `from_raw`, so switching
-    # would break compatibility between newer 3.x agents talking to older 3.x
-    # masters. However, to/from_s has been supported and achieves the desired
-    # result without breaking compatibility.
-    :s
+    :pson
   end
 
-  def initialize(contents, options = {})
+  def initialize(environment, contents, options = {})
     case contents
     when String
       @contents = StringContents.new(contents)
@@ -36,9 +31,14 @@ class Puppet::FileBucket::File
       raise ArgumentError.new("contents must be a String or Pathname, got a #{contents.class}")
     end
 
+    @environment = environment
     @bucket_path = options.delete(:bucket_path)
     @checksum_type = Puppet[:digest_algorithm].to_sym
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
+  end
+
+  def environment
+    @environment
   end
 
   # @return [Num] The size of the contents
@@ -75,17 +75,14 @@ class Puppet::FileBucket::File
     "#{checksum_type}/#{checksum_data}"
   end
 
-  def self.from_s(contents)
-    self.new(contents)
-  end
-
   def to_data_hash
     # Note that this serializes the entire data to a string and places it in a hash.
-    { "contents" => contents.to_s }
+    { "environment_name" => environment.name,
+      "contents" => contents.to_s }
   end
 
   def self.from_data_hash(data)
-    self.new(data["contents"])
+    self.new(data["environment_name"], data["contents"])
   end
 
   private

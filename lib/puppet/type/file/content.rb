@@ -212,7 +212,7 @@ module Puppet
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        connection.request_get(Puppet::Network::HTTP::API::V1.indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
+        connection.request_get(Puppet::Network::HTTP::API::V1.request_to_uri_with_env(req), add_accept_encoding({"Accept" => "raw"}), &block)
       end
     end
 
