@@ -53,6 +53,13 @@ describe Puppet::Util::Log.desttypes[:file] do
       let (:relpath) { 'log' }
 
       it_behaves_like "file destination"
+
+      it "logs an error if it can't chown the file owner & group" do
+        FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).raises(Errno::EPERM)
+        Puppet.expects(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
+
+        @class.new(abspath)
+      end
     end
 
     describe "on Windows systems", :as_platform => :windows do
