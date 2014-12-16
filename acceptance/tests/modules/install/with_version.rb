@@ -23,7 +23,10 @@ agents.each do |agent|
   step "  install module '#{module_author}-#{module_name}'"
 
   opts ||= Hash.new
-  opts['ENV']=Command::DEFAULT_GIT_ENV
+  #backwards compatability with beaker 1.x
+  if defined? Command::DEFAULT_GIT_ENV
+    opts['ENV']=Command::DEFAULT_GIT_ENV
+  end
   command = agent['platform'] =~ /windows/ ?
     Command.new("'puppet module install --version \"<#{module_version}\" #{module_author}-#{module_name}'", [], opts) :
     puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")

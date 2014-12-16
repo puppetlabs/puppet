@@ -1,9 +1,7 @@
 test_name "file resource: symbolic modes"
 
-require 'test/unit/assertions'
-
 module FileModeAssertions
-  include Test::Unit::Assertions
+  include Beaker::DSL::Assertions
 
   def assert_create(agent, manifest, path, expected_mode)
     testcase.apply_manifest_on(agent, manifest) do
