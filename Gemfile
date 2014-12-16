@@ -23,9 +23,7 @@ platforms :ruby do
   #gem 'ruby-augeas', :group => :development
 end
 
-if !ENV['PUPPET_LOADED']
-  gem "puppet", :path => File.dirname(__FILE__), :require => false
-end
+gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 1.6', '< 3'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
 gem "rake", "10.1.1", :require => false
