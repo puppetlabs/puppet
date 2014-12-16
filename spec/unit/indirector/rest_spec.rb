@@ -238,10 +238,12 @@ describe Puppet::Indirector::REST do
         # to avoid a failure.
         params.delete('ip')
 
+        params["environment"] = "production"
+
         request = find_request('whoa', params)
 
         connection.expects(:post).with do |uri, body|
-          body.split("&").sort == params.map {|key,value| "#{key}=#{value}"}.sort
+            body.split("&").sort == params.map {|key,value| "#{key}=#{value}"}.sort
         end.returns(mock_response(200, 'body'))
 
         terminus.find(request)
@@ -252,7 +254,7 @@ describe Puppet::Indirector::REST do
       it "calls get on the connection" do
         request = find_request('foo bar')
 
-        connection.expects(:get).with('/production/test_model/foo%20bar?', anything).returns(mock_response('200', 'response body'))
+        connection.expects(:get).with('/test_model/foo%20bar?environment=production&', anything).returns(mock_response('200', 'response body'))
 
         terminus.find(request).should == model.new('foo bar', 'response body')
       end
@@ -283,7 +285,7 @@ describe Puppet::Indirector::REST do
           terminus.find(request)
         end.to raise_error(
           Puppet::Error,
-          'Find /production/test_model/foo?fail_on_404=true resulted in 404 with the message: this is the notfound you are looking for')
+          'Find /test_model/foo?environment=production&fail_on_404=true resulted in 404 with the message: this is the notfound you are looking for')
       end
 
       it 'truncates the URI when it is very long' do
@@ -295,7 +297,7 @@ describe Puppet::Indirector::REST do
           terminus.find(request)
         end.to raise_error(
           Puppet::Error,
-          /\/production\/test_model\/foo.*long_param=A+\.\.\..*resulted in 404 with the message/)
+          /\/test_model\/foo.*\?environment=production&.*long_param=A+\.\.\..*resulted in 404 with the message/)
       end
 
       it 'does not truncate the URI when logging debug information' do
@@ -308,7 +310,7 @@ describe Puppet::Indirector::REST do
           terminus.find(request)
         end.to raise_error(
           Puppet::Error,
-          /\/production\/test_model\/foo.*long_param=A+B.*resulted in 404 with the message/)
+          /\/test_model\/foo.*\?environment=production&.*long_param=A+B.*resulted in 404 with the message/)
       end
     end
 
@@ -409,7 +411,7 @@ describe Puppet::Indirector::REST do
     it_behaves_like 'a deserializing terminus method', :search
 
     it "should call the GET http method on a network connection" do
-      connection.expects(:get).with('/production/test_models/foo', has_key('Accept')).returns mock_response(200, 'data3, data4')
+      connection.expects(:get).with('/test_models/foo?environment=production&', has_key('Accept')).returns mock_response(200, 'data3, data4')
 
       terminus.search(request)
     end
@@ -454,7 +456,7 @@ describe Puppet::Indirector::REST do
     it_behaves_like 'a deserializing terminus method', :destroy
 
     it "should call the DELETE http method on a network connection" do
-      connection.expects(:delete).with('/production/test_model/foo', has_key('Accept')).returns(response)
+      connection.expects(:delete).with('/test_model/foo?environment=production&', has_key('Accept')).returns(response)
 
       terminus.destroy(request)
     end
@@ -501,7 +503,7 @@ describe Puppet::Indirector::REST do
     it_behaves_like 'a REST terminus method', :save
 
     it "should call the PUT http method on a network connection" do
-      connection.expects(:put).with('/production/test_model/the%20thing', anything, has_key("Content-Type")).returns response
+      connection.expects(:put).with('/test_model/the%20thing?environment=production&', anything, has_key("Content-Type")).returns response
 
       terminus.save(request)
     end
