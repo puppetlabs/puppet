@@ -9,7 +9,7 @@ end
 module_author = "pmtacceptance"
 module_name = "java"
 module_version = "1.7.0"
-module_dependencies   = []
+module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
@@ -20,16 +20,12 @@ agents.each do |agent|
   step 'setup'
   stub_forge_on(agent)
 
-  step "  install module '#{module_author}-#{module_name}'"
-
+  step "install module '#{module_author}-#{module_name}'"
   opts ||= Hash.new
-  opts['ENV']=Command::DEFAULT_GIT_ENV
-  command = agent['platform'] =~ /windows/ ?
-    Command.new("'puppet module install --version \"<#{module_version}\" #{module_author}-#{module_name}'", [], opts) :
-    puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")
-
-  on(agent, command) do
+  opts['ENV'] = Command::DEFAULT_GIT_ENV
+  on(agent, puppet("module install --version #{module_version} #{module_author}-#{module_name}")) do
     assert_module_installed_ui(stdout, module_author, module_name, module_version, '<')
+    assert_module_installed_on_disk(agent, module_name)
   end
-  assert_module_installed_on_disk(agent, module_name)
 end
+
