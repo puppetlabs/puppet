@@ -1379,7 +1379,7 @@ class Type
           }
 
           File['sshdconfig'] {
-            mode => 644,
+            mode => '0644',
           }
 
       There's no way here for the Puppet parser to know that these two stanzas
@@ -1417,7 +1417,7 @@ class Type
           file {'/etc/hosts':
             ensure => file,
             source => 'puppet:///modules/site/hosts',
-            mode   => 0644,
+            mode   => '0644',
             tag    => ['bootstrap', 'minimumrun', 'mediumrun'],
           }
 
