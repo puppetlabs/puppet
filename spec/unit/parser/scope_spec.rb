@@ -153,6 +153,15 @@ describe Puppet::Parser::Scope do
       @scope["var"].should be_nil
     end
 
+    it "answers exist? with boolean false for non existing variables" do
+      expect(@scope.exist?("var")).to be(false)
+    end
+
+    it "answers exist? with boolean false for non existing variables" do
+      @scope["var"] = "yep"
+      expect(@scope.exist?("var")).to be(true)
+    end
+
     it "should be able to look up values" do
       @scope["var"] = "yep"
       @scope["var"].should == "yep"

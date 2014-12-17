@@ -52,6 +52,15 @@ describe "the 'defined' function" do
       expect(@scope.function_defined(['$x'])).to be_true
     end
 
+    it "is true when absolute referenced variable exists in scope" do
+      @compiler.topscope['x'] = 'something'
+      # Without this magic linking, scope cannot find the global scope via the name ''
+      # which is the name of "topscope". (This is one of many problems with the scope impl)
+      # When running real code, scopes are always linked up this way.
+      @scope.class_set('', @compiler.topscope)
+      expect(@scope.function_defined(['$::x'])).to be_true
+    end
+
     it "is true when at least one variable exists in scope" do
       @scope['x'] = 'something'
       expect(@scope.function_defined(['$y', '$x', '$z'])).to be_true
