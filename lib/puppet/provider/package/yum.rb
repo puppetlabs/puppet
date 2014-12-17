@@ -188,7 +188,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def purge
-    yum "-y", :erase, @resource[:name]
+    wanted = @resource[:name]
+    args = ["-q", wanted].compact
+    if :rpm *args
+      yum "-y", :erase, @resource[:name]
+    end
   end
 
   # parse a yum "version" specification
