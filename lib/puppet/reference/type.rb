@@ -20,9 +20,9 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   In the following code:
 
       file { "/etc/passwd":
-        owner => root,
-        group => root,
-        mode  => 644
+        owner => "root",
+        group => "root",
+        mode  => "0644"
       }
 
   `/etc/passwd` is considered the title of the file object (used for things like
