@@ -1,24 +1,22 @@
-test_name "`puppet resource service` should list running services without changing the system"
+test_name "`puppet resource service` should list running services without calling dangerous init scripts"
 
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
 
-
 agents.each do |agent|
   step "list running services and make sure ssh reports running"
-
-  on agent, 'puppet resource service'
+  on(agent, puppet('resource service'))
   assert_match /service { 'ssh[^']*':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is not running"
-  expected_output = stdout
 
-  step "make sure nothing on the system was changed and ssh is still running"
+  step "list running services again and make sure ssh is still running"
+  on(agent, puppet('resource service'))
 
-  on agent, 'puppet resource service'
-
-  # It's possible that `puppet resource service` changed the system before
-  # printing output the *first* time, so in addition to comparing the output,
-  # we also want to check that a known service is in a good state. We use ssh
-  # because our tests run over ssh, so it must be present.
+  # For each script in /etc/init.d, the init service provider will call
+  # the script with the `status` argument, except for blacklisted
+  # scripts that are known to be dangerous, e.g. /etc/init.d/reboot.sh
+  # The first execution of `puppet resource service` will enumerate
+  # all services, and we want to check that puppet enumerates at
+  # least one service. We use ssh because our tests run over ssh, so it
+  # must be present.
   assert_match /service { 'ssh[^']*':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is no longer running"
-  assert_equal expected_output, stdout, "`puppet resource service` changed the state of the system"
 end
