@@ -11,6 +11,7 @@ test_name "Install packages and repositories on target machines..." do
 
   tmp_repositories = []
   options[:install].each do |uri|
+    raise(ArgumentError, "Missing GitURI argument. URI is nil.") if uri.nil?
     raise(ArgumentError, "#{uri} is not recognized.") unless(uri =~ GitURI)
     tmp_repositories << extract_repo_info_from(uri)
   end
