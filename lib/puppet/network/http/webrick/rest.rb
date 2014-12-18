@@ -1,6 +1,7 @@
 require 'puppet/network/http/handler'
 require 'resolv'
 require 'webrick'
+require 'webrick/httputils'
 require 'puppet/util/ssl'
 
 class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
@@ -19,7 +20,16 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   # Retrieve the request parameters, including authentication information.
   def params(request)
-    params = request.query || {}
+    query = request.query || {}
+    params =
+        if request.request_method == "PUT"
+          # webrick doesn't look at the query string for PUT requests, it only
+          # looks at the body, and then only if the body has a content type that
+          # looks like url-encoded form data.  We need the query string data as well.
+          WEBrick::HTTPUtils.parse_query(request.query_string).merge(query)
+        else
+          query
+        end
 
     params = Hash[params.collect do |key, value|
       all_values = value.list

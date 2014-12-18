@@ -36,7 +36,9 @@ class Puppet::Network::HTTP::API::V1
     check_authorization(method, "/#{indirection_name}/#{key}", params)
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
+    if !indirection
+      raise ArgumentError, "Could not find indirection '#{indirection_name}'"
+    end
 
     if !indirection.allow_remote_requests?
       # TODO: should we tell the user we found an indirection but it doesn't
@@ -56,16 +58,24 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def uri2indirection(http_method, uri, params)
-    environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
+    indirection, key = uri.split("/", 3)[1..-1] # the first field is always nil because of the leading slash
+    environment = params.delete(:environment)
 
-    raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'" unless Puppet::Node::Environment.valid_name?(environment)
-    raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'" unless indirection =~ /^\w+$/
+    if ! Puppet::Node::Environment.valid_name?(environment)
+      raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'"
+    end
+
+    if indirection !~ /^\w+$/
+      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'"
+    end
 
     method = indirection_method(http_method, indirection)
 
     configured_environment = Puppet.lookup(:environments).get(environment)
     if configured_environment.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("Could not find environment '#{environment}'", Puppet::Network::HTTP::Issues::ENVIRONMENT_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
+                "Could not find environment '#{environment}'",
+                Puppet::Network::HTTP::Issues::ENVIRONMENT_NOT_FOUND)
     else
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
@@ -73,7 +83,9 @@ class Puppet::Network::HTTP::API::V1
 
     params.delete(:bucket_path)
 
-    raise ArgumentError, "No request key specified in #{uri}" if key == "" or key.nil?
+    if key == "" or key.nil?
+      raise ArgumentError, "No request key specified in #{uri}"
+    end
 
     key = URI.unescape(key)
 
@@ -189,14 +201,14 @@ class Puppet::Network::HTTP::API::V1
     method
   end
 
-  def self.indirection2uri(request)
-    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
+  def self.request_to_uri(request)
+    uri, body = request_to_uri_and_body(request)
+    "#{uri}?#{body}"
   end
 
   def self.request_to_uri_and_body(request)
     indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}", request.query_string.sub(/^\?/,'')]
+    ["/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.name}&#{request.query_string}"]
   end
 
   def self.pluralize(indirection)
