@@ -38,12 +38,6 @@ module Puppet
       desc "A file containing the alias's contents.  The file and the
         recipient entries are mutually exclusive."
 
-      validate do |value|
-	unless Puppet::Util.absolute_path?(value)
-	  fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
-	end
-      end
-
       def should
         @should
       end
