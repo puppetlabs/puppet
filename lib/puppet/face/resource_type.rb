@@ -55,6 +55,11 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
 
     $ puppet resource_type find ntp --terminus rest
   EOT
+  # For this face we don't want to default to the certname like other indirector
+  # based faces. Instead we want the user to always supply a argument.
+  find.when_invoked = Proc.new do |key, options|
+    call_indirection_method :find, key, options[:extra]
+  end
 
   search = get_action(:search)
   search.summary "Search for collections matching a regular expression."
