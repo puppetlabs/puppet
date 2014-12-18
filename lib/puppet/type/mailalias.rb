@@ -60,5 +60,11 @@ module Puppet
         end
       }
     end
+
+    validate do
+      if self[:recipient] && self[:file]
+	self.fail "You cannot specify both a recipient and a file"
+      end
+    end
   end
 end
