@@ -12,24 +12,21 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
 
   find = get_action(:find)
   find.summary "Retrieve the certificate revocation list."
-  find.arguments "<dummy_text>"
   find.render_as = :s
   find.returns <<-EOT
     The certificate revocation list. When used from the Ruby API: returns an
     OpenSSL::X509::CRL object.
   EOT
   find.short_description <<-EOT
-    Retrieves the certificate revocation list. Due to a known bug, this action
-    requires a dummy argument, the content of which is irrelevant.
+    Retrieves the certificate revocation list.
   EOT
   find.notes <<-EOT
-    Although this action always returns the CRL from the specified terminus, it
-    requires a dummy argument; this is a known bug.
+    Although this action always returns the CRL from the specified terminus.
   EOT
   find.examples <<-EXAMPLES
     Retrieve a copy of the puppet master's CRL:
 
-    $ puppet certificate_revocation_list find crl --terminus rest
+    $ puppet certificate_revocation_list find --terminus rest
   EXAMPLES
 
   destroy = get_action(:destroy)

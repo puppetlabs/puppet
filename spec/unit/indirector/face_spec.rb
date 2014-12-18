@@ -54,6 +54,11 @@ describe Puppet::Indirector::Face do
     end
   end
 
+  it "should default key to certname for find action" do
+    subject.indirection.expects(:find).with(Puppet[:certname], {'one'=>'1'})
+    subject.send(:find, :extra => {'one'=>'1'})
+  end
+
   it "should be able to override its indirection name" do
     subject.set_indirection_name :foo
     subject.indirection_name.should == :foo

@@ -14,7 +14,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
   find = get_action(:find)
   find.summary "Retrieve a node's facts."
-  find.arguments "<node_certname>"
+  find.arguments "[<node_certname>]"
   find.returns <<-'EOT'
     A hash containing some metadata and (under the "values" key) the set
     of facts for the requested node. When used from the Ruby API: A
@@ -29,8 +29,9 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
   find.examples <<-'EOT'
     Get facts from the local system:
 
-    $ puppet facts find x
+    $ puppet facts find
   EOT
+  find.default = true
 
   deactivate_action(:destroy)
   deactivate_action(:search)
