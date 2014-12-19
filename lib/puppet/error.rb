@@ -59,4 +59,8 @@ module Puppet
   class DevError < Puppet::Error
     include ExternalFileError
   end
+
+  class MissingCommand < Puppet::Error
+  end
+
 end
