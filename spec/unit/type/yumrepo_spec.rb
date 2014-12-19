@@ -388,5 +388,15 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that can be absent", :mirrorlist_expire
       it_behaves_like "a yumrepo parameter that expects a natural value", :mirrorlist_expire
     end
+
+    describe "deltarpm_percentage" do
+      it_behaves_like "a yumrepo parameter that can be absent", :deltarpm_percentage
+      it_behaves_like "a yumrepo parameter that expects a natural value", :deltarpm_percentage
+    end
+
+    describe "deltarpm_metadata_percentage" do
+      it_behaves_like "a yumrepo parameter that can be absent", :deltarpm_metadata_percentage
+      it_behaves_like "a yumrepo parameter that expects a natural value", :deltarpm_metadata_percentage
+    end
   end
 end
