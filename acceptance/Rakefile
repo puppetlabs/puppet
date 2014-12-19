@@ -86,6 +86,8 @@ def beaker_test(mode = :packages, options = {})
       elsif md = /^(\w+)$/.match(install)
         project = md[1]
         "#{build_giturl(project)}##{sha}"
+      else
+        install
       end
     end
   end
