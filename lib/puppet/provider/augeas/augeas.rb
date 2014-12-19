@@ -39,6 +39,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "rm" => [ :path ],
     "clear" => [ :path ],
     "clearm" => [ :path, :string ],
+    "touch" => [ :path ],
     "mv" => [ :path, :path ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
@@ -470,6 +471,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
               fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
             else
               fail("command '#{command}' not supported in installed version of ruby-augeas")
+            end
+          when "touch"
+            debug("sending command '#{command}' (match, set) with params #{cmd_array.inspect}")
+            if aug.match(cmd_array[0]).empty?
+              rv = aug.clear(cmd_array[0])
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
             end
           when "insert", "ins"
             label = cmd_array[0]
