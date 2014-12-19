@@ -30,15 +30,8 @@ class Puppet::Network::HTTP::API::V3::IndirectedRoutes
 
   # handle an HTTP request
   def call(request, response)
-    indirection_name, method, key, params = uri2indirection(request.method, request.path, request.params)
+    indirection, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
-
-    check_authorization(method, "/v3/#{indirection_name}/#{key}", params)
-
-    indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-    if !indirection
-      raise ArgumentError, "Could not find indirection '#{indirection_name}'"
-    end
 
     if !indirection.allow_remote_requests?
       # TODO: should we tell the user we found an indirection but it doesn't
@@ -60,24 +53,33 @@ class Puppet::Network::HTTP::API::V3::IndirectedRoutes
   def uri2indirection(http_method, uri, params)
     # the first field is always nil because of the leading slash,
     # and we also want to strip off the leading /v3.
-    indirection, key = uri.split("/", 4)[2..-1]
+    indirection_name, key = uri.split("/", 4)[2..-1]
     environment = params.delete(:environment)
+
+    if indirection_name !~ /^\w+$/
+      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection_name}'"
+    end
+
+    method = indirection_method(http_method, indirection_name)
+    check_authorization(method, "/v3/#{indirection_name}/#{key}", params)
+
+    indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+    if !indirection
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
+        "Could not find indirection '#{indirection_name}'", Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
+    end
+
+    if !environment
+      raise ArgumentError, "An environment parameter must be specified"
+    end
 
     if ! Puppet::Node::Environment.valid_name?(environment)
       raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'"
     end
 
-    if indirection !~ /^\w+$/
-      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'"
-    end
-
-    method = indirection_method(http_method, indirection)
-
     configured_environment = Puppet.lookup(:environments).get(environment)
     if configured_environment.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-                "Could not find environment '#{environment}'",
-                Puppet::Network::HTTP::Issues::ENVIRONMENT_NOT_FOUND)
+      raise ArgumentError, "Could not find environment '#{environment}'"
     else
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
