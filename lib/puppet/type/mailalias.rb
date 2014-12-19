@@ -21,10 +21,6 @@ module Puppet
         end
       end
 
-      def should
-        @should
-      end
-
       def should_to_s(value)
         if value.include?(:absent)
           super
