@@ -29,7 +29,7 @@ describe Puppet::Type.type(:mailalias) do
 
   it "should try and set the included file when it does the sync" do
     file_resource.retrieve_resource[:file].should == :absent
-    file_resource.property(:file).expects(:set).with(["/tmp/afile"])
+    file_resource.property(:file).expects(:set).with("/tmp/afile")
     file_resource.property(:file).sync
   end
 

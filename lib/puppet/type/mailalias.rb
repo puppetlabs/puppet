@@ -37,10 +37,6 @@ module Puppet
     newproperty(:file) do
       desc "A file containing the alias's contents.  The file and the
         recipient entries are mutually exclusive."
-
-      def should
-        @should
-      end
     end
 
     newproperty(:target) do
