@@ -37,9 +37,8 @@ Lint/HandleExceptions:
 Lint/LiteralInCondition:
   Enabled: false
 
-# MAYBE useful - but too many instances
 Lint/ShadowingOuterLocalVariable:
-  Enabled: false
+  Enabled: true
 
 # Can catch complicated strings.
 Lint/LiteralInInterpolation:

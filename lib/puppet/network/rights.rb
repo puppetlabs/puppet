@@ -20,8 +20,8 @@ class Rights
                        else
                          [method]
                        end
-    authorization_failure_exceptions = methods_to_check.map do |method|
-      is_forbidden_and_why?(path, params.merge({:method => method}))
+    authorization_failure_exceptions = methods_to_check.map do |m|
+      is_forbidden_and_why?(path, params.merge({:method => m}))
     end
     if authorization_failure_exceptions.include? nil
       # One of the methods we checked is ok, therefore this request is ok.

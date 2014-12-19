@@ -294,7 +294,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     results = hash.select {
         |k,v| should_include?(k, managed_keys)
       }.inject({}) {
-        |hash, array| hash[array[0]] = array[1]; hash
+        |h, array| h[array[0]] = array[1]; h
       }
     results
   end

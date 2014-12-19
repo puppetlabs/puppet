@@ -31,8 +31,8 @@ module Puppet::Network::Resolver
       # for the specific service.
       each_srv_record(domain, :puppet, &block)
     else
-      each_priority(records) do |priority, records|
-        while next_rr = records.delete(find_weighted_server(records))
+      each_priority(records) do |priority, recs|
+        while next_rr = recs.delete(find_weighted_server(recs))
           Puppet.debug "Yielding next server of #{next_rr.target.to_s}:#{next_rr.port}"
           yield next_rr.target.to_s, next_rr.port
         end

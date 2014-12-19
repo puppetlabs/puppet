@@ -52,10 +52,10 @@ module RDoc::PuppetParserCore
     names = name.split('::')
 
     final_name = names.pop
-    names.each do |name|
+    names.each do |n|
       prev_container = container
-      container = find_object_named(container, name)
-      container ||= prev_container.add_class(RDoc::PuppetClass, name, nil)
+      container = find_object_named(container, n)
+      container ||= prev_container.add_class(RDoc::PuppetClass, n, nil)
     end
     [container, final_name]
   end

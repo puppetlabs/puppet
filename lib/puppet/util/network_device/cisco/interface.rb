@@ -68,8 +68,8 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
       command(prefix + COMMANDS[property][1] % value)
     when Proc
       value = [value] unless value.is_a?(Array)
-      value.each do |value|
-        command(prefix + COMMANDS[property][1].call(*value))
+      value.each do |v|
+        command(prefix + COMMANDS[property][1].call(*v))
       end
     end
   end

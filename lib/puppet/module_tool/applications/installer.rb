@@ -57,11 +57,11 @@ module Puppet::ModuleTool
         results = { :action => :install, :module_name => name, :module_version => version }
 
         begin
-          if mod = installed_modules[name]
+          if installed_module = installed_modules[name]
             unless forced?
-              if Semantic::VersionRange.parse(version).include? mod.version
+              if Semantic::VersionRange.parse(version).include? installed_module.version
                 results[:result] = :noop
-                results[:version] = mod.version
+                results[:version] = installed_module.version
                 return results
               else
                 changes = Checksummer.run(installed_modules[name].mod.path) rescue []
@@ -135,8 +135,8 @@ module Puppet::ModuleTool
           unless forced?
             # Check for module name conflicts.
             releases.each do |rel|
-              if mod = installed_modules_source.by_name[rel.name.split('-').last]
-                next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
+              if installed_module = installed_modules_source.by_name[rel.name.split('-').last]
+                next if installed_module.has_metadata? && installed_module.forge_name.tr('/', '-') == rel.name
 
                 if rel.name != name
                   dependency = {
@@ -149,8 +149,8 @@ module Puppet::ModuleTool
                   :requested_module  => name,
                   :requested_version => options[:version] || 'latest',
                   :dependency        => dependency,
-                  :directory         => mod.path,
-                  :metadata          => mod.metadata
+                  :directory         => installed_module.path,
+                  :metadata          => installed_module.metadata
               end
             end
           end

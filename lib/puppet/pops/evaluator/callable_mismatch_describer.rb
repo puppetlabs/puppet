@@ -17,9 +17,9 @@ module Puppet::Pops::Evaluator::CallableMismatchDescriber
       result << "expected:\n  #{name}(#{signature_string(signature)}) - #{arg_count_string(signature.type)}"
     else
       result << "expected one of:\n"
-      result << supported_signatures.map do |signature|
-        params_type = signature.type.param_types
-        "  #{name}(#{signature_string(signature)}) - #{arg_count_string(signature.type)}"
+      result << supported_signatures.map do |sig|
+        params_type = sig.type.param_types
+        "  #{name}(#{signature_string(sig)}) - #{arg_count_string(sig.type)}"
       end.join("\n")
     end
 

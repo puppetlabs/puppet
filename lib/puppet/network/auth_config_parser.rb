@@ -40,8 +40,8 @@ class AuthConfigParser
     # Verify each of the rights are valid.
     # We let the check raise an error, so that it can raise an error
     # pointing to the specific problem.
-    rights.each { |name, right|
-      right.valid?
+    rights.each { |name, r|
+      r.valid?
     }
     rights
   end

@@ -85,13 +85,13 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     uri, body = Puppet::Network::HTTP::API::V1.request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
 
-    response = do_request(request) do |request|
+    response = do_request(request) do |req|
       # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
       # http://redmine.ruby-lang.org/issues/show/3991
       if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
-        http_post(request, uri, body, headers)
+        http_post(req, uri, body, headers)
       else
-        http_get(request, uri_with_query_string, headers)
+        http_get(req, uri_with_query_string, headers)
       end
     end
 
@@ -119,8 +119,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def head(request)
-    response = do_request(request) do |request|
-      http_head(request, Puppet::Network::HTTP::API::V1.request_to_uri(request), headers)
+    response = do_request(request) do |req|
+      http_head(req, Puppet::Network::HTTP::API::V1.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -131,8 +131,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    response = do_request(request) do |request|
-      http_get(request, Puppet::Network::HTTP::API::V1.request_to_uri(request), headers)
+    response = do_request(request) do |req|
+      http_get(req, Puppet::Network::HTTP::API::V1.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -146,8 +146,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
-    response = do_request(request) do |request|
-      http_delete(request, Puppet::Network::HTTP::API::V1.request_to_uri(request), headers)
+    response = do_request(request) do |req|
+      http_delete(req, Puppet::Network::HTTP::API::V1.request_to_uri(req), headers)
     end
 
     if is_http_200?(response)
@@ -161,8 +161,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
 
-    response = do_request(request) do |request|
-      http_put(request, Puppet::Network::HTTP::API::V1.request_to_uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    response = do_request(request) do |req|
+      http_put(req, Puppet::Network::HTTP::API::V1.request_to_uri(req), req.instance.render, headers.merge({ "Content-Type" => req.instance.mime }))
     end
 
     if is_http_200?(response)
@@ -180,7 +180,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # to request.do_request from here, thus if we change what we pass or how we
   # get it, we only need to change it here.
   def do_request(request)
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |req| yield(req) }
   end
 
   def validate_key(request)

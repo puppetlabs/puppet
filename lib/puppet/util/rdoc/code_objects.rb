@@ -151,10 +151,10 @@ module RDoc
           if result
             last_name = ""
             previous = nil
-            modules.each do |module_name|
+            modules.each do |mod|
               previous = result
-              last_name = module_name
-              result = result.find_module_named(module_name)
+              last_name = mod
+              result = result.find_module_named(mod)
               break unless result
             end
             unless result

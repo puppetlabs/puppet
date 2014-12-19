@@ -283,8 +283,8 @@ class Nagios::Base
     oc.sub!(/Nagios/,'nagios')
     oc.sub!(/::/,'')
     ocs.push oc
-    ocs.each { |oc|
-      str += "objectclass: #{oc}\n"
+    ocs.each { |objclass|
+      str += "objectclass: #{objclass}\n"
     }
     @parameters.each { |name,value|
       next if self.class.suppress.include?(name)

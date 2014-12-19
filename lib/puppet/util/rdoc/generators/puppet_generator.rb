@@ -416,7 +416,7 @@ module Generators
       @values["resources"] = rl unless rl.empty?
 
       @context.sections.each do |section|
-        secdata = @values["sections"].select { |secdata| secdata["secsequence"] == section.sequence }
+        secdata = @values["sections"].select { |s| s["secsequence"] == section.sequence }
         if secdata.size == 1
           secdata = secdata[0]
 

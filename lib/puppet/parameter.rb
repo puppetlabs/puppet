@@ -108,8 +108,8 @@ class Puppet::Parameter
           @doc << "\n\n#{vals}"
         end
 
-        if f = self.required_features
-          @doc << "\n\nRequires features #{f.flatten.collect { |f| f.to_s }.join(" ")}."
+        if features = self.required_features
+          @doc << "\n\nRequires features #{features.flatten.collect { |f| f.to_s }.join(" ")}."
         end
         @addeddocvals = true
       end
@@ -542,7 +542,7 @@ class Puppet::Parameter
   #
   def self.format_value_for_display(value)
     if value.is_a? Array
-      formatted_values = value.collect {|value| format_value_for_display(value)}.join(', ')
+      formatted_values = value.collect {|v| format_value_for_display(v)}.join(', ')
       "[#{formatted_values}]"
     elsif value.is_a? Hash
       # Sorting the hash keys for display is largely for having stable

@@ -284,7 +284,7 @@ class Puppet::Transaction
 
   def resources_by_provider(type_name, provider_name)
     unless @resources_by_provider
-      @resources_by_provider = Hash.new { |h, k| h[k] = Hash.new { |h, k| h[k] = {} } }
+      @resources_by_provider = Hash.new { |h, k| h[k] = Hash.new { |h1, k1| h1[k1] = {} } }
 
       @catalog.vertices.each do |resource|
         if resource.class.attrclass(:provider)

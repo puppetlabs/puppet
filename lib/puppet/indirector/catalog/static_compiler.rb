@@ -140,10 +140,10 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     source = resource[:source]
 
     # This is largely a copy of recurse_remote in File
-    total = file[:source].collect do |source|
-      next unless result = file.perform_recursion(source)
+    total = file[:source].collect do |src|
+      next unless result = file.perform_recursion(src)
       return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
-      result.each { |data| data.source = "#{source}/#{data.relative_path}" }
+      result.each { |data| data.source = "#{src}/#{data.relative_path}" }
       break result if result and ! result.empty? and sourceselect == :first
       result
     end.flatten.compact

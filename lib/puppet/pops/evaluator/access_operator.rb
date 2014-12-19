@@ -89,11 +89,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 0
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      k = coerce_numeric(keys[0], @semantic.keys[0], scope)
-      unless k.is_a?(Integer)
-        bad_access_key_type(o, 0, k, Integer)
+      key = coerce_numeric(keys[0], @semantic.keys[0], scope)
+      unless key.is_a?(Integer)
+        bad_access_key_type(o, 0, key, Integer)
       end
-      o[k]
+      o[key]
     when 2
       # A slice [from, to] with support for -1 to mean start, or end respectively.
       k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)

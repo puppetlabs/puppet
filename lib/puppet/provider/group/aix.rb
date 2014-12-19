@@ -111,7 +111,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
         |k,v| !self.class.attribute_mapping_from.include?(k) and
                 !self.class.attribute_ignore.include?(k)
       }.inject({}) {
-        |hash, array| hash[array[0]] = array[1]; hash
+        |h, array| h[array[0]] = array[1]; h
       }
   end
 

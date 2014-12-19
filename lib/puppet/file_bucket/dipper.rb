@@ -94,10 +94,9 @@ class Puppet::FileBucket::Dipper
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
           of.binmode
-          source_stream = newcontents.stream do |source_stream|
+          newcontents.stream do |source_stream|
             FileUtils.copy_stream(source_stream, of)
           end
-          #of.print(newcontents)
         }
         ::File.chmod(changed, file) if changed
       else

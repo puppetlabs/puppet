@@ -126,9 +126,9 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
         if made_progress
           enqueue(*deferred_resources)
         else
-          deferred_resources.each do |resource|
-            overly_deferred_resource_handler.call(resource)
-            finish(resource)
+          deferred_resources.each do |res|
+            overly_deferred_resource_handler.call(res)
+            finish(res)
           end
         end
 

@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def latest
-    package = parse_pkgsearch_line.detect{ |package| package[:status] == '<' }
+    package = parse_pkgsearch_line.detect{ |p| p[:status] == '<' }
     return properties[:ensure] if not package
     return package[:ensure]
   end

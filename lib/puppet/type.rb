@@ -1006,15 +1006,15 @@ class Type
       end
     end
 
-    properties.each { |property|
-      unless is.include? property
+    properties.each { |prop|
+      unless is.include? prop
         raise Puppet::DevError,
-          "The is value is not in the is array for '#{property.name}'"
+          "The is value is not in the is array for '#{prop.name}'"
       end
 
-      propis = is[property]
-      unless property.safe_insync?(propis)
-        property.debug("Not in sync: #{propis.inspect} vs #{property.should.inspect}")
+      propis = is[prop]
+      unless prop.safe_insync?(propis)
+        prop.debug("Not in sync: #{propis.inspect} vs #{prop.should.inspect}")
         insync = false
       #else
       #    property.debug("In sync")
