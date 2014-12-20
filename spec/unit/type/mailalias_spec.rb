@@ -33,6 +33,12 @@ describe Puppet::Type.type(:mailalias) do
     file_resource.property(:file).sync
   end
 
+  it "should fail when file is not an absolute path" do
+    expect {
+      Puppet::Type.type(:mailalias).new(:name => 'x', :file => 'afile')
+    }.to raise_error Puppet::Error, /File paths must be fully qualified/
+  end
+
   it "should fail when both file and recipient are specified" do
     expect {
       Puppet::Type.type(:mailalias).new(:name => 'x', :file => '/tmp/afile',
