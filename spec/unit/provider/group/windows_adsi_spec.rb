@@ -51,12 +51,6 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         provider.members_insync?(['user1'], nil).should be_false
       end
 
-      it "should return false for differing lists of members" do
-        provider.members_insync?(['user1'], ['user2']).should be_false
-        provider.members_insync?(['user1'], []).should be_false
-        provider.members_insync?([], ['user2']).should be_false
-      end
-
       it "should return true for same lists of members" do
         provider.members_insync?(['user1', 'user2'], ['user1', 'user2']).should be_true
       end
@@ -71,8 +65,19 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       context "when auth_membership => true" do
         before :each do
-          # this is also the default
           resource[:auth_membership] = true
+        end
+
+        it "should return false when current contains different users than should" do
+          provider.members_insync?(['user1'], ['user2']).should be_false
+        end
+
+        it "should return false when current contains members and should is empty" do
+          provider.members_insync?(['user1'], []).should be_false
+        end
+
+        it "should return false when current is empty and should contains members" do
+          provider.members_insync?([], ['user2']).should be_false
         end
 
         it "should return false when should user(s) are not the only items in the current" do
@@ -82,7 +87,20 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       context "when auth_membership => false" do
         before :each do
+          # this is also the default
           resource[:auth_membership] = false
+        end
+
+        it "should return false when current contains different users than should" do
+          provider.members_insync?(['user1'], ['user2']).should be_false
+        end
+
+        it "should return true when current contains members and should is empty" do
+          provider.members_insync?(['user1'], []).should be_true
+        end
+
+        it "should return false when current is empty and should contains members" do
+          provider.members_insync?([], ['user2']).should be_false
         end
 
         it "should return true when current user(s) contains at least the should list" do
@@ -115,6 +133,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   end
 
   describe "when managing members" do
+    before :each do
+      resource[:auth_membership] = true
+    end
+
     it "should be able to provide a list of members" do
       provider.group.stubs(:members).returns ['user1', 'user2', 'user3']
 
@@ -151,7 +173,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       create = sequence('create')
       group.expects(:commit).in_sequence(create)
-      group.expects(:set_members).with(['user1', 'user2'], true).in_sequence(create)
+      # due to PUP-1967, defaultto false will set the default to nil
+      group.expects(:set_members).with(['user1', 'user2'], nil).in_sequence(create)
 
       provider.create
     end
