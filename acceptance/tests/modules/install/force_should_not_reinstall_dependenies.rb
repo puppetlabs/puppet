@@ -2,6 +2,10 @@ test_name "puppet module install with force should not reinstall dependencies"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+hosts.each do |host|
+  skip_test "skip tests requiring forge certs on solaris" if host['platform'] =~ /solaris/
+end
+
 module_author = "pmtacceptance"
 module_name   = "java"
 module_dependencies   = ["stdlub"]
@@ -24,9 +28,9 @@ on master, puppet("module install #{module_author}-#{module_name}") do
     assert_module_installed_ui(stdout, module_author, dependency)
   end
 end
-assert_module_installed_on_disk(master, default_moduledir, module_name)
+assert_module_installed_on_disk(master, module_name, default_moduledir)
 module_dependencies.each do |dependency|
-  assert_module_installed_on_disk(master, default_moduledir, dependency)
+  assert_module_installed_on_disk(master, dependency, default_moduledir)
 end
 
 step "Install a module with dependencies with force"
