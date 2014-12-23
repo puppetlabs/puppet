@@ -22,12 +22,12 @@ agents.each do |agent|
   end
 
   step "ZPool: query one"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure *=> *'present'/, result.stdout, "err: #{agent}")
   end
 
   step "ZPool: query all"
-  on agent, "puppet resource zpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/tstpool'/, result.stdout, "err: #{agent}")
   end
 end

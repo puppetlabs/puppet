@@ -23,11 +23,11 @@ agents.each do |agent|
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
 
-  on agent, "puppet resource package mypkg" do
+  on(agent, puppet("resource package mypkg")) do
     assert_match( /0.0.1/, result.stdout, "err: #{agent}")
   end
 
-  on agent, "puppet resource package" do
+  on(agent, puppet("resource package")) do
     assert_match( /0.0.1/, result.stdout, "err: #{agent}")
   end
 end

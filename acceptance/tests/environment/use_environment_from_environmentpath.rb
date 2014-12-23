@@ -67,7 +67,7 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   EOS
 end
 
-master_user = on(master, "puppet master --configprint user").stdout.strip
+master_user = on(master, puppet("master --configprint user")).stdout.strip
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,

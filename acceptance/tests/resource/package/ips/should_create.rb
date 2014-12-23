@@ -25,7 +25,7 @@ agents.each do |agent|
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
   step "IPS: check it was created"
-  on agent, "puppet resource package mypkg" do
+  on(agent, puppet("resource package mypkg")) do
     assert_match( /ensure => '0\.0\.1,.*'/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list -v mypkg" do
