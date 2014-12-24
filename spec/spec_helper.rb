@@ -17,6 +17,7 @@ require 'puppet'
 gem 'rspec', '>=3.1.0'
 require 'rspec/expectations'
 require 'rspec/its'
+require 'rspec/collection_matchers'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
