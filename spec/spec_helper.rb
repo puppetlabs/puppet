@@ -14,8 +14,9 @@ rescue LoadError
 end
 
 require 'puppet'
-gem 'rspec', '>=2.0.0'
+gem 'rspec', '>=3.1.0'
 require 'rspec/expectations'
+require 'rspec/its'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
