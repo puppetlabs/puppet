@@ -10,13 +10,13 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
       # this is a bit of a lame duck test since it requires running user to be admin
       # a better integration test would create a new user with the privilege and verify
       Puppet::Util::Windows::User.should be_admin
-      Puppet::Util::Windows::Process.process_privilege_symlink?.should be_true
+      Puppet::Util::Windows::Process.process_privilege_symlink?.should be_truthy
     end
 
     it "should not have the SeCreateSymbolicLinkPrivilege necessary to create symlinks on 2003 and earlier",
       :if => Facter.value(:kernelmajversion).to_f < 6.0 && Puppet.features.microsoft_windows? do
       Puppet::Util::Windows::User.should be_admin
-      Puppet::Util::Windows::Process.process_privilege_symlink?.should be_false
+      Puppet::Util::Windows::Process.process_privilege_symlink?.should be_falsey
     end
 
     it "should be able to lookup a standard Windows process privilege" do

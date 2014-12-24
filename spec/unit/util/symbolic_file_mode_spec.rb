@@ -17,13 +17,13 @@ describe Puppet::Util::SymbolicFileMode do
          755 0755
     }.each do |input|
       it "should treat #{input.inspect} as valid" do
-        valid_symbolic_mode?(input).should be_true
+        valid_symbolic_mode?(input).should be_truthy
       end
     end
 
     [0000, 0111, 0640, 0755, 0777].each do |input|
       it "should treat the int #{input.to_s(8)} as value" do
-        valid_symbolic_mode?(input).should be_true
+        valid_symbolic_mode?(input).should be_truthy
       end
     end
 
@@ -33,7 +33,7 @@ describe Puppet::Util::SymbolicFileMode do
          u g o a ug uo ua ag
     }.each do |input|
       it "should treat #{input.inspect} as invalid" do
-        valid_symbolic_mode?(input).should be_false
+        valid_symbolic_mode?(input).should be_falsey
       end
     end
   end

@@ -237,11 +237,11 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should start ssl immediately" do
-      server.setup_ssl[:SSLStartImmediately].should be_true
+      server.setup_ssl[:SSLStartImmediately].should be_truthy
     end
 
     it "should enable ssl" do
-      server.setup_ssl[:SSLEnable].should be_true
+      server.setup_ssl[:SSLEnable].should be_truthy
     end
 
     it "should reject SSLv2" do

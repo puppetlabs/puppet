@@ -58,7 +58,7 @@ describe Puppet::Settings do
 
     it "should consider defined parameters to be valid" do
       @settings.define_settings(:section, :myvalue => { :default => "defaultval", :desc => "my description" })
-      @settings.valid?(:myvalue).should be_true
+      @settings.valid?(:myvalue).should be_truthy
     end
 
     it "should require a description when defaults are specified with a hash" do
@@ -263,17 +263,17 @@ describe Puppet::Settings do
 
     it "should flag string settings from the CLI" do
       @settings.handlearg("--myval", "12")
-      @settings.set_by_cli?(:myval).should be_true
+      @settings.set_by_cli?(:myval).should be_truthy
     end
 
     it "should flag bool settings from the CLI" do
       @settings.handlearg("--bool")
-      @settings.set_by_cli?(:bool).should be_true
+      @settings.set_by_cli?(:bool).should be_truthy
     end
 
     it "should not flag settings memory as from CLI" do
       @settings[:myval] = "12"
-      @settings.set_by_cli?(:myval).should be_false
+      @settings.set_by_cli?(:myval).should be_falsey
     end
 
     it "should clear the cache when setting getopt-specific values" do
@@ -628,7 +628,7 @@ describe Puppet::Settings do
       Puppet::FileSystem.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
-      @settings[:report].should be_true
+      @settings[:report].should be_truthy
     end
 
     it "should use its current ':config' value for the file to parse" do
@@ -828,11 +828,11 @@ describe Puppet::Settings do
       @settings.stubs(:read_file).returns(text)
       @settings.initialize_global_settings
 
-      hook_invoked.should be_false
+      hook_invoked.should be_falsey
 
       @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
 
-      hook_invoked.should be_true
+      hook_invoked.should be_truthy
       @settings[:deferred].should eq(File.expand_path('/path/to/confdir/goose'))
     end
 
@@ -1468,22 +1468,22 @@ describe Puppet::Settings do
 
     describe "when checking print_config?" do
       it "should return false when the :configprint, :genconfig and :genmanifest are not set" do
-        @settings.print_configs?.should be_false
+        @settings.print_configs?.should be_falsey
       end
 
       it "should return true when :configprint has a value" do
         @settings.stubs(:value).with(:configprint).returns("something")
-        @settings.print_configs?.should be_true
+        @settings.print_configs?.should be_truthy
       end
 
       it "should return true when :genconfig has a value" do
         @settings.stubs(:value).with(:genconfig).returns(true)
-        @settings.print_configs?.should be_true
+        @settings.print_configs?.should be_truthy
       end
 
       it "should return true when :genmanifest has a value" do
         @settings.stubs(:value).with(:genmanifest).returns(true)
-        @settings.print_configs?.should be_true
+        @settings.print_configs?.should be_truthy
       end
     end
 
@@ -1528,14 +1528,14 @@ describe Puppet::Settings do
           @settings.stubs(:include?).with("something").returns(true)
           @settings.stubs(:value).with("something", nil).returns("foo")
           @settings.stubs(:puts).with("foo")
-          @settings.print_configs.should be_true
+          @settings.print_configs.should be_truthy
         end
 
         it "should return false if a config param is not found" do
           @settings.stubs :puts
           @settings.stubs(:value).with(:configprint).returns("something")
           @settings.stubs(:include?).with("something").returns(false)
-          @settings.print_configs.should be_false
+          @settings.print_configs.should be_falsey
         end
       end
 
@@ -1553,7 +1553,7 @@ describe Puppet::Settings do
         it "should return true from print_configs" do
           @settings.stubs(:value).with(:genconfig).returns(true)
           @settings.stubs(:to_config)
-          @settings.print_configs.should be_true
+          @settings.print_configs.should be_truthy
         end
       end
 
@@ -1571,7 +1571,7 @@ describe Puppet::Settings do
         it "should return true from print_configs" do
           @settings.stubs(:value).with(:genmanifest).returns(true)
           @settings.stubs(:to_manifest)
-          @settings.print_configs.should be_true
+          @settings.print_configs.should be_truthy
         end
       end
     end

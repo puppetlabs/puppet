@@ -229,7 +229,7 @@ describe Puppet::Agent do
     describe "on Windows", :if => Puppet.features.microsoft_windows? do
       it "should never fork" do
         agent = Puppet::Agent.new(AgentTestClient, true)
-        expect(agent.should_fork).to be_false
+        expect(agent.should_fork).to be_falsey
       end
     end
   end
@@ -282,11 +282,11 @@ describe Puppet::Agent do
       end
 
       it 'should be false for :stopping?' do
-        @agent.stopping?.should be_false
+        @agent.stopping?.should be_falsey
       end
 
       it 'should be false for :needing_restart?' do
-        @agent.needing_restart?.should be_false
+        @agent.needing_restart?.should be_falsey
       end
     end
 
@@ -299,11 +299,11 @@ describe Puppet::Agent do
       end
 
       it 'should be true for :stopping?' do
-        @agent.stopping?.should be_true
+        @agent.stopping?.should be_truthy
       end
 
       it 'should be false for :needing_restart?' do
-        @agent.needing_restart?.should be_false
+        @agent.needing_restart?.should be_falsey
       end
     end
 
@@ -316,11 +316,11 @@ describe Puppet::Agent do
       end
 
       it 'should be false for :stopping?' do
-        @agent.stopping?.should be_false
+        @agent.stopping?.should be_falsey
       end
 
       it 'should be true for :needing_restart?' do
-        @agent.needing_restart?.should be_true
+        @agent.needing_restart?.should be_truthy
       end
     end
   end

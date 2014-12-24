@@ -103,15 +103,15 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
-        Puppet::Util::Windows::User.password_is?(username, bad_password).should be_false
+        Puppet::Util::Windows::User.password_is?(username, bad_password).should be_falsey
       end
 
       it "should return false given an incorrect username and nil password" do
-        Puppet::Util::Windows::User.password_is?(username, nil).should be_false
+        Puppet::Util::Windows::User.password_is?(username, nil).should be_falsey
       end
 
       it "should return false given a nil username and an incorrect password" do
-        Puppet::Util::Windows::User.password_is?(nil, bad_password).should be_false
+        Puppet::Util::Windows::User.password_is?(nil, bad_password).should be_falsey
       end
     end
 

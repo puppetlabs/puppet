@@ -55,7 +55,7 @@ describe Puppet::Util::Storage do
     it "should cache by converting to a string" do
       data = Puppet::Util::Storage.cache(42)
       data[:yay] = true
-      Puppet::Util::Storage.cache("42")[:yay].should be_true
+      Puppet::Util::Storage.cache("42")[:yay].should be_truthy
     end
   end
 
@@ -77,7 +77,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should not fail to load" do
-        Puppet::FileSystem.exist?(@path).should be_false
+        Puppet::FileSystem.exist?(@path).should be_falsey
         Puppet[:statedir] = @path
         Puppet::Util::Storage.load
         Puppet[:statefile] = @path
@@ -85,7 +85,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should not lose its internal state when load() is called" do
-        Puppet::FileSystem.exist?(@path).should be_false
+        Puppet::FileSystem.exist?(@path).should be_falsey
 
         Puppet::Util::Storage.cache(:yayness)
         Puppet::Util::Storage.state.should == {:yayness=>{}}
@@ -176,12 +176,12 @@ describe Puppet::Util::Storage do
     end
 
     it "should create the state file if it does not exist" do
-      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_false
+      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_falsey
       Puppet::Util::Storage.cache(:yayness)
 
       Puppet::Util::Storage.store
 
-      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_true
+      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_truthy
     end
 
     it "should raise an exception if the state file is not a regular file" do

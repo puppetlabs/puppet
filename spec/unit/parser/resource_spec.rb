@@ -65,17 +65,17 @@ describe Puppet::Parser::Resource do
 
   it "should be isomorphic if it is builtin and models an isomorphic type" do
     Puppet::Type.type(:file).expects(:isomorphic?).returns(true)
-    @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
+    @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_truthy
   end
 
   it "should not be isomorphic if it is builtin and models a non-isomorphic type" do
     Puppet::Type.type(:file).expects(:isomorphic?).returns(false)
-    @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_false
+    @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_falsey
   end
 
   it "should be isomorphic if it is not builtin" do
     newdefine "whatever"
-    @resource = Puppet::Parser::Resource.new("whatever", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
+    @resource = Puppet::Parser::Resource.new("whatever", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_truthy
   end
 
   it "should have an array-indexing method for retrieving parameter values" do
@@ -167,7 +167,7 @@ describe Puppet::Parser::Resource do
 
       resource.evaluate
 
-      @compiler.catalog.edge?(other_stage, resource).should be_true
+      @compiler.catalog.edge?(other_stage, resource).should be_truthy
     end
 
     it "should fail if an unknown stage is specified" do
@@ -432,7 +432,7 @@ describe Puppet::Parser::Resource do
 
       @resource.merge(@override)
 
-      @resource.tagged?("testing").should be_true
+      @resource.tagged?("testing").should be_truthy
     end
 
   end
@@ -487,12 +487,12 @@ describe Puppet::Parser::Resource do
 
     it "should copy over the 'exported' value" do
       @parser_resource.exported = true
-      @parser_resource.copy_as_resource.exported.should be_true
+      @parser_resource.copy_as_resource.exported.should be_truthy
     end
 
     it "should copy over the 'virtual' value" do
       @parser_resource.virtual = true
-      @parser_resource.copy_as_resource.virtual.should be_true
+      @parser_resource.copy_as_resource.virtual.should be_truthy
     end
 
     it "should convert any parser resource references to Puppet::Resource instances" do
@@ -563,7 +563,7 @@ describe Puppet::Parser::Resource do
 
     it "should allow parameters to be set to 'false'" do
       @resource.set_parameter("myparam", false)
-      @resource["myparam"].should be_false
+      @resource["myparam"].should be_falsey
     end
 
     it "should use its source when provided a parameter name and value" do

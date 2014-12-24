@@ -470,11 +470,11 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "is true if a section with the given name is defined" do
-      expect(subject.include?('sect_a1')).to be_true
+      expect(subject.include?('sect_a1')).to be_truthy
     end
 
     it "is false if a section with the given name can't be found" do
-      expect(subject.include?('nonexistent')).to be_false
+      expect(subject.include?('nonexistent')).to be_falsey
     end
   end
 

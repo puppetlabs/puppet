@@ -134,13 +134,13 @@ describe Puppet::Type.type(:file) do
 
   describe "the recurse parameter" do
     it "should default to recursion being disabled" do
-      file[:recurse].should be_false
+      file[:recurse].should be_falsey
     end
 
     [true, "true", "remote"].each do |value|
       it "should consider #{value} to enable recursion" do
         file[:recurse] = value
-        file[:recurse].should be_true
+        file[:recurse].should be_truthy
       end
     end
 
@@ -152,7 +152,7 @@ describe Puppet::Type.type(:file) do
     [false, "false"].each do |value|
       it "should consider #{value} to disable recursion" do
         file[:recurse] = value
-        file[:recurse].should be_false
+        file[:recurse].should be_falsey
       end
     end
   end
@@ -179,14 +179,14 @@ describe Puppet::Type.type(:file) do
     [true, :true, :yes].each do |value|
       it "should consider #{value} to be true" do
         file[:replace] = value
-        file[:replace].should be_true
+        file[:replace].should be_truthy
       end
     end
 
     [false, :false, :no].each do |value|
       it "should consider #{value} to be false" do
         file[:replace] = value
-        file[:replace].should be_false
+        file[:replace].should be_falsey
       end
     end
   end
@@ -1203,17 +1203,17 @@ describe Puppet::Type.type(:file) do
     it "should be true if the file has specified content" do
       file[:content] = 'some content'
 
-      file.send(:write_temporary_file?).should be_true
+      file.send(:write_temporary_file?).should be_truthy
     end
 
     it "should be true if the file has specified source" do
       file[:source] = File.expand_path('/tmp/foo')
 
-      file.send(:write_temporary_file?).should be_true
+      file.send(:write_temporary_file?).should be_truthy
     end
 
     it "should be false if the file has neither content nor source" do
-      file.send(:write_temporary_file?).should be_false
+      file.send(:write_temporary_file?).should be_falsey
     end
   end
 
@@ -1468,7 +1468,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      Puppet::FileSystem.exist?(path).should be_true
+      Puppet::FileSystem.exist?(path).should be_truthy
       @logs.should_not be_any {|l| l.level != :notice }
     end
   end

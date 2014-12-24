@@ -75,19 +75,19 @@ describe Puppet::Interface::FaceCollection do
         subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
         file == 'puppet/face/bar'
       end
-      subject["bar", '0.0.1'].should be_true
+      subject["bar", '0.0.1'].should be_truthy
     end
 
     it "should return false if the face is not registered" do
       subject.stubs(:require).returns(true)
-      subject["bar", '0.0.1'].should be_false
+      subject["bar", '0.0.1'].should be_falsey
     end
 
     it "should return false if the face file itself is missing" do
       subject.stubs(:require).
         raises(LoadError, 'no such file to load -- puppet/face/bar').then.
         raises(LoadError, 'no such file to load -- puppet/face/0.0.1/bar')
-      subject["bar", '0.0.1'].should be_false
+      subject["bar", '0.0.1'].should be_falsey
     end
 
     it "should register the version loaded by `:current` as `:current`" do
@@ -109,12 +109,12 @@ describe Puppet::Interface::FaceCollection do
       it "should index :current when the code was pre-required" do
         subject.instance_variable_get("@faces")[:huzzah].should_not be_key :current
         require 'puppet/face/huzzah'
-        subject[:huzzah, :current].should be_true
+        subject[:huzzah, :current].should be_truthy
       end
     end
 
     it "should not cause an invalid face to be enumerated later" do
-      subject[:there_is_no_face, :current].should be_false
+      subject[:there_is_no_face, :current].should be_falsey
       subject.faces.should_not include :there_is_no_face
     end
   end

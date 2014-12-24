@@ -725,13 +725,13 @@ describe Puppet::Resource do
       resource = Puppet::Resource.new("File", "/foo")
       resource.exported = true
 
-      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_true
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_truthy
     end
 
     it "should set 'exported' to false if no value is set" do
       resource = Puppet::Resource.new("File", "/foo")
 
-      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_false
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_falsey
     end
 
     it "should set all of its parameters as the 'parameters' entry" do
@@ -798,11 +798,11 @@ describe Puppet::Resource do
 
     it "should 'exported' to true if set in the pson data" do
       @data['exported'] = true
-      Puppet::Resource.from_data_hash(@data).exported.should be_true
+      Puppet::Resource.from_data_hash(@data).exported.should be_truthy
     end
 
     it "should 'exported' to false if not set in the pson data" do
-      Puppet::Resource.from_data_hash(@data).exported.should be_false
+      Puppet::Resource.from_data_hash(@data).exported.should be_falsey
     end
 
     it "should fail if no title is provided" do

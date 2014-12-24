@@ -20,12 +20,12 @@ describe Puppet::Util::SELinux do
     end
     it "should return :true if this system has SELinux enabled" do
       Selinux.expects(:is_selinux_enabled).returns 1
-      selinux_support?.should be_true
+      selinux_support?.should be_truthy
     end
 
     it "should return :false if this system lacks SELinux" do
       Selinux.expects(:is_selinux_enabled).returns 0
-      selinux_support?.should be_false
+      selinux_support?.should be_falsey
     end
 
     it "should return nil if /proc/mounts does not exist" do
@@ -70,11 +70,11 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return true for a capable filesystem" do
-      selinux_label_support?('/etc/puppet/testfile').should be_true
+      selinux_label_support?('/etc/puppet/testfile').should be_truthy
     end
 
     it "should return false for a noncapable filesystem" do
-      selinux_label_support?('/mnt/nfs/testfile').should be_false
+      selinux_label_support?('/mnt/nfs/testfile').should be_falsey
     end
 
     it "(#8714) don't follow symlinks when determining file systems", :unless => Puppet.features.microsoft_windows? do
@@ -86,12 +86,12 @@ describe Puppet::Util::SELinux do
         })
 
       (scratch + 'foo').make_symlink('nfs/bar')
-      selinux_label_support?(scratch + 'foo').should be_true
+      selinux_label_support?(scratch + 'foo').should be_truthy
     end
 
     it "should handle files that don't exist" do
       scratch = Pathname(PuppetSpec::Files.tmpdir('selinux'))
-      selinux_label_support?(scratch + 'nonesuch').should be_true
+      selinux_label_support?(scratch + 'nonesuch').should be_truthy
     end
   end
 
@@ -251,35 +251,35 @@ describe Puppet::Util::SELinux do
     it "should use lsetfilecon to set a context" do
       self.expects(:selinux_support?).returns true
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
-      set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_true
+      set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_truthy
     end
 
     it "should use lsetfilecon to set user_u user context" do
       self.expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "foo:role_r:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
-      set_selinux_context("/foo", "user_u", :seluser).should be_true
+      set_selinux_context("/foo", "user_u", :seluser).should be_truthy
     end
 
     it "should use lsetfilecon to set role_r role context" do
       self.expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:foo:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
-      set_selinux_context("/foo", "role_r", :selrole).should be_true
+      set_selinux_context("/foo", "role_r", :selrole).should be_truthy
     end
 
     it "should use lsetfilecon to set type_t type context" do
       self.expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:role_r:foo:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
-      set_selinux_context("/foo", "type_t", :seltype).should be_true
+      set_selinux_context("/foo", "type_t", :seltype).should be_truthy
     end
 
     it "should use lsetfilecon to set s0:c3,c5 range context" do
       self.expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:role_r:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0:c3,c5").returns 0
-      set_selinux_context("/foo", "s0:c3,c5", :selrange).should be_true
+      set_selinux_context("/foo", "s0:c3,c5", :selrange).should be_truthy
     end
   end
 

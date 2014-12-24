@@ -253,7 +253,7 @@ describe Puppet::Type.type(:package) do
       [:purged, :absent].each do |state|
         it "should install if it is #{state.to_s}" do
           @provider.stubs(:properties).returns(:ensure => state)
-          @package.property(:ensure).insync?(state).should be_false
+          @package.property(:ensure).insync?(state).should be_falsey
           @provider.expects(:install)
           @catalog.apply
         end
@@ -261,14 +261,14 @@ describe Puppet::Type.type(:package) do
 
       it "should do nothing if the current version is equal to the desired version" do
         @provider.stubs(:properties).returns(:ensure => "1.0")
-        @package.property(:ensure).insync?('1.0').should be_true
+        @package.property(:ensure).insync?('1.0').should be_truthy
         @provider.expects(:install).never
         @catalog.apply
       end
 
       it "should install if the current version is not equal to the specified version" do
         @provider.stubs(:properties).returns(:ensure => "2.0")
-        @package.property(:ensure).insync?('2.0').should be_false
+        @package.property(:ensure).insync?('2.0').should be_falsey
         @provider.expects(:install)
         @catalog.apply
       end
@@ -282,14 +282,14 @@ describe Puppet::Type.type(:package) do
 
         it "should install if value not in the array" do
           @package[:ensure] = "1.5"
-          @package.property(:ensure).insync?(installed_versions).should be_false
+          @package.property(:ensure).insync?(installed_versions).should be_falsey
           @provider.expects(:install)
           @catalog.apply
         end
 
         it "should not install if value is in the array" do
           @package[:ensure] = "2.0"
-          @package.property(:ensure).insync?(installed_versions).should be_true
+          @package.property(:ensure).insync?(installed_versions).should be_truthy
           @provider.expects(:install).never
           @catalog.apply
         end
@@ -298,7 +298,7 @@ describe Puppet::Type.type(:package) do
           it "should not install if the value is in the array" do
             @provider.expects(:latest).returns("3.0")
             @package[:ensure] = "latest"
-            @package.property(:ensure).insync?(installed_versions).should be_true
+            @package.property(:ensure).insync?(installed_versions).should be_truthy
             @provider.expects(:install).never
             @catalog.apply
           end

@@ -69,21 +69,21 @@ describe Puppet::Util::Colors do
 
   context "on Windows in Ruby 1.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^1./ do
     it "should define WideConsole" do
-      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_true
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_truthy
     end
 
     it "should define WideIO" do
-      expect(defined?(Puppet::Util::Colors::WideIO)).to be_true
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_truthy
     end
   end
 
   context "on Windows in Ruby 2.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^2./ do
     it "should not define WideConsole" do
-      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_false
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_falsey
     end
 
     it "should not define WideIO" do
-      expect(defined?(Puppet::Util::Colors::WideIO)).to be_false
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_falsey
     end
   end
 end

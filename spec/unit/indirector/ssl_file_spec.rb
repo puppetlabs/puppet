@@ -260,7 +260,7 @@ describe Puppet::Indirector::SslFile do
         end
 
         it "should return false" do
-          @searcher.destroy(@request).should be_false
+          @searcher.destroy(@request).should be_falsey
         end
       end
 

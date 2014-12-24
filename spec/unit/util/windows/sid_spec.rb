@@ -157,11 +157,11 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
   context "#valid_sid?" do
     it "should return true for a valid SID" do
-      subject.valid_sid?(sid).should be_true
+      subject.valid_sid?(sid).should be_truthy
     end
 
     it "should return false for an invalid SID" do
-      subject.valid_sid?(invalid_sid).should be_false
+      subject.valid_sid?(invalid_sid).should be_falsey
     end
 
     it "should raise if the conversion fails" do

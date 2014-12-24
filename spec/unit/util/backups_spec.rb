@@ -86,7 +86,7 @@ describe Puppet::Util::Backups do
         FileUtils.expects(:cp_r).with(path, backup, :preserve => true)
         Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
 
-        file.perform_backup.should be_true
+        file.perform_backup.should be_truthy
       end
 
       it "should propagate exceptions if no backup can be created" do

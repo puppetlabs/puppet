@@ -7,7 +7,7 @@ require 'puppet/loaders'
 describe 'loader helper classes' do
   it 'NamedEntry holds values and is frozen' do
     ne = Puppet::Pops::Loader::Loader::NamedEntry.new('name', 'value', 'origin')
-    expect(ne.frozen?).to be_true
+    expect(ne.frozen?).to be_truthy
     expect(ne.typed_name).to eql('name')
     expect(ne.origin).to eq('origin')
     expect(ne.value).to eq('value')
@@ -15,11 +15,11 @@ describe 'loader helper classes' do
 
   it 'TypedName holds values and is frozen' do
     tn = Puppet::Pops::Loader::Loader::TypedName.new(:function, '::foo::bar')
-    expect(tn.frozen?).to be_true
+    expect(tn.frozen?).to be_truthy
     expect(tn.type).to eq(:function)
     expect(tn.name_parts).to eq(['foo', 'bar'])
     expect(tn.name).to eq('foo::bar')
-    expect(tn.qualified).to be_true
+    expect(tn.qualified).to be_truthy
   end
 end
 

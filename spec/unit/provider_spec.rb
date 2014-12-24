@@ -396,10 +396,10 @@ describe Puppet::Provider do
       command = Puppet::Util.which('sh') || Puppet::Util.which('cmd.exe')
       parent.commands :sh => command
 
-      Puppet::FileSystem.exist?(parent.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(parent.command(:sh)).should be_truthy
       parent.command(:sh).should =~ /#{Regexp.escape(command)}$/
 
-      Puppet::FileSystem.exist?(child.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(child.command(:sh)).should be_truthy
       child.command(:sh).should =~ /#{Regexp.escape(command)}$/
     end
 

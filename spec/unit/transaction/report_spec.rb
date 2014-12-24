@@ -76,8 +76,8 @@ describe Puppet::Transaction::Report do
     catalog.apply(:report => report)
     report.finalize_report
 
-    report.resource_statuses.values.any? {|res| res.resource_type =~ /whit/i}.should be_false
-    report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}.should be_false
+    report.resource_statuses.values.any? {|res| res.resource_type =~ /whit/i}.should be_falsey
+    report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}.should be_falsey
   end
 
   describe "when accepting logs" do

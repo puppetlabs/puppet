@@ -21,7 +21,7 @@ describe Puppet::Resource::Type do
 
   [:hostclass, :node, :definition].each do |type|
     it "should know when it is a #{type}" do
-      Puppet::Resource::Type.new(type, "foo").send("#{type}?").should be_true
+      Puppet::Resource::Type.new(type, "foo").send("#{type}?").should be_truthy
     end
   end
 
@@ -108,7 +108,7 @@ describe Puppet::Resource::Type do
       name = Puppet::Parser::AST::HostName.new(:value => regex)
       node = Puppet::Resource::Type.new(:node, name)
 
-      node.match("foo").should be_true
+      node.match("foo").should be_truthy
     end
 
     it "should return the value of the hostname if provided a string-form AST::HostName instance as the name" do
@@ -148,27 +148,27 @@ describe Puppet::Resource::Type do
       end
 
       it "should return true when its regex matches the provided name" do
-        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_true
+        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_truthy
       end
 
       it "should return true when its regex matches the provided name" do
-        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_true
+        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_truthy
       end
 
       it "should return false when its regex does not match the provided name" do
-        (!!Puppet::Resource::Type.new(:node, /\d/).match("foo")).should be_false
+        (!!Puppet::Resource::Type.new(:node, /\d/).match("foo")).should be_falsey
       end
 
       it "should return true when its name, as a string, is matched against an equal string" do
-        Puppet::Resource::Type.new(:node, "foo").match("foo").should be_true
+        Puppet::Resource::Type.new(:node, "foo").match("foo").should be_truthy
       end
 
       it "should return false when its name is matched against an unequal string" do
-        Puppet::Resource::Type.new(:node, "foo").match("bar").should be_false
+        Puppet::Resource::Type.new(:node, "foo").match("bar").should be_falsey
       end
 
       it "should match names insensitive to case" do
-        Puppet::Resource::Type.new(:node, "fOo").match("foO").should be_true
+        Puppet::Resource::Type.new(:node, "fOo").match("foO").should be_truthy
       end
     end
   end

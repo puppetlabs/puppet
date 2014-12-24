@@ -87,7 +87,7 @@ describe Puppet::SSL::CertificateRequest do
   describe "when generating" do
     it "should use the content of the provided key if the key is a Puppet::SSL::Key instance" do
       request.generate(key)
-      request.content.verify(key.content.public_key).should be_true
+      request.content.verify(key.content.public_key).should be_truthy
     end
 
     it "should set the subject to [CN, name]" do
@@ -255,7 +255,7 @@ describe Puppet::SSL::CertificateRequest do
       it "defines the extensions as non-critical" do
         request.generate(key, :extension_requests => extension_data)
         request.request_extensions.each do |ext|
-          ext['critical'].should be_false
+          ext['critical'].should be_falsey
         end
       end
 
@@ -293,7 +293,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should sign the csr with the provided key" do
       request.generate(key)
-      request.content.verify(key.content.public_key).should be_true
+      request.content.verify(key.content.public_key).should be_truthy
     end
 
     it "should verify the generated request using the public key" do
@@ -333,7 +333,7 @@ describe Puppet::SSL::CertificateRequest do
       OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(true)
       signer = Puppet::SSL::CertificateSigner.new
       signer.sign(csr, key.content)
-      csr.verify(key.content).should be_true
+      csr.verify(key.content).should be_truthy
     end
 
     it "should raise an error if neither SHA256 nor SHA1 are available" do

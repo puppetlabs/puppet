@@ -70,7 +70,7 @@ describe Puppet::Type.type(:group) do
 
     it "insync? calls members_insync?" do
       provider_instance.expects(:members_insync?).with(['user1'], ['user1']).returns true
-      type.property(:members).insync?(['user1']).should be_true
+      type.property(:members).insync?(['user1']).should be_truthy
     end
 
     it "is_to_s and should_to_s call members_to_s" do

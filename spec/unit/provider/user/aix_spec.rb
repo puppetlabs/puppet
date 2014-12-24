@@ -77,7 +77,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       it "should convert the keys to symbols" do
         keys = @provider.managed_attribute_keys(existing_attributes)
         all_symbols = keys.all? {|k| k.is_a? Symbol}
-        all_symbols.should be_true
+        all_symbols.should be_truthy
       end
     end
 
@@ -94,7 +94,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       it "should convert the keys to symbols" do
         keys = @provider.managed_attribute_keys(existing_attributes)
         all_symbols = keys.all? {|k| k.is_a? Symbol}
-        all_symbols.should be_true
+        all_symbols.should be_truthy
       end
     end
   end
@@ -104,28 +104,28 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(true)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      @provider.should_include?(:rlogin, managed_keys).should be_falsey
     end
 
     it "should exclude keys explicitly ignored" do
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([:rlogin])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      @provider.should_include?(:rlogin, managed_keys).should be_falsey
     end
 
     it "should exclude keys not specified in manifest" do
       managed_keys = [:su]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      @provider.should_include?(:rlogin, managed_keys).should be_falsey
     end
 
     it "should include keys specified in manifest if not translated or ignored" do
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_true
+      @provider.should_include?(:rlogin, managed_keys).should be_truthy
     end
   end
   describe "when handling passwords" do

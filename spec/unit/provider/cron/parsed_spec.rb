@@ -325,7 +325,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       }.each_pair do |field, new_value|
         it "should not match a record when #{field} does not match" do
           record[field] = new_value
-          described_class.match(record,{resource[:name] => resource}).must be_false
+          described_class.match(record,{resource[:name] => resource}).must be_falsey
         end
       end
     end
@@ -342,7 +342,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       }.each_pair do |field, new_value|
         it "should not match a record when #{field} does not match" do
           record_special[field] = new_value
-          described_class.match(record_special,{resource_special[:name] => resource_special}).must be_false
+          described_class.match(record_special,{resource_special[:name] => resource_special}).must be_falsey
         end
       end
     end

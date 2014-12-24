@@ -456,7 +456,7 @@ describe Puppet::Parser::Scope do
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
         @scope.new_ephemeral
-        @scope.include?("1").should be_false
+        @scope.include?("1").should be_falsey
       end
 
       it "should return false when an ephemeral variable doesn't exist in any ephemeral scope" do
@@ -465,14 +465,14 @@ describe Puppet::Parser::Scope do
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
         @scope.new_ephemeral
-        @scope.include?("2").should be_false
+        @scope.include?("2").should be_falsey
       end
 
       it "should not get ephemeral values from earlier scope when not in later" do
         @scope.set_match_data({1 => :value1})
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
-        @scope.include?("1").should be_false
+        @scope.include?("1").should be_falsey
       end
 
       describe "when calling unset_ephemeral_var with a level" do

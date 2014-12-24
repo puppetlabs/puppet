@@ -55,19 +55,19 @@ describe Puppet::Configurer::Downloader do
     it "should always recurse" do
       file = generate_file_resource
 
-      expect(file[:recurse]).to be_true
+      expect(file[:recurse]).to be_truthy
     end
 
     it "should always purge" do
       file = generate_file_resource
 
-      expect(file[:purge]).to be_true
+      expect(file[:purge]).to be_truthy
     end
 
     it "should never be in noop" do
       file = generate_file_resource
 
-      expect(file[:noop]).to be_false
+      expect(file[:noop]).to be_falsey
     end
 
     it "should set source_permissions to ignore by default" do
@@ -115,13 +115,13 @@ describe Puppet::Configurer::Downloader do
     it "should always force the download" do
       file = generate_file_resource
 
-      expect(file[:force]).to be_true
+      expect(file[:force]).to be_truthy
     end
 
     it "should never back up when downloading" do
       file = generate_file_resource
 
-      expect(file[:backup]).to be_false
+      expect(file[:backup]).to be_falsey
     end
 
     it "should support providing an 'ignore' parameter" do
@@ -169,7 +169,7 @@ describe Puppet::Configurer::Downloader do
       Puppet[:tags] = 'maytag'
       @dler.evaluate
 
-      Puppet::FileSystem.exist?(@dl_name).should be_true
+      Puppet::FileSystem.exist?(@dl_name).should be_truthy
     end
 
     it "should log that it is downloading" do

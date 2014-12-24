@@ -104,7 +104,7 @@ describe Puppet::Indirector::Ldap do
 
     it "should return true if an entry is found" do
       @connection.expects(:search).yields("result")
-      @searcher.ldapsearch("whatever") { |r| }.should be_true
+      @searcher.ldapsearch("whatever") { |r| }.should be_truthy
     end
   end
 

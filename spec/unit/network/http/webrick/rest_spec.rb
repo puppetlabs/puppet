@@ -197,12 +197,12 @@ describe Puppet::Network::HTTP::WEBrickREST do
       it "should set 'authenticated' to true if a certificate is present" do
         cert = stub 'cert', :subject => [%w{CN host.domain.com}]
         @request.stubs(:client_cert).returns cert
-        @handler.params(@request)[:authenticated].should be_true
+        @handler.params(@request)[:authenticated].should be_truthy
       end
 
       it "should set 'authenticated' to false if no certificate is present" do
         @request.stubs(:client_cert).returns nil
-        @handler.params(@request)[:authenticated].should be_false
+        @handler.params(@request)[:authenticated].should be_falsey
       end
 
       it "should pass the client's certificate name to model method if a certificate is present" do

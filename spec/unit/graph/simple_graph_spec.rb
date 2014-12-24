@@ -11,13 +11,13 @@ describe Puppet::Graph::SimpleGraph do
   end
 
   it "should consider itself a directed graph" do
-    Puppet::Graph::SimpleGraph.new.directed?.should be_true
+    Puppet::Graph::SimpleGraph.new.directed?.should be_truthy
   end
 
   it "should provide a method for reversing the graph" do
     @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_edge(:one, :two)
-    @graph.reversal.edge?(:two, :one).should be_true
+    @graph.reversal.edge?(:two, :one).should be_truthy
   end
 
   it "should be able to produce a dot graph" do
@@ -41,7 +41,7 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should provide a method to add a vertex" do
       @graph.add_vertex(:test)
-      @graph.vertex?(:test).should be_true
+      @graph.vertex?(:test).should be_truthy
     end
 
     it "should reset its reversed graph when vertices are added" do
@@ -57,11 +57,11 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should return true when asked if a vertex is present" do
       @graph.add_vertex(:test)
-      @graph.vertex?(:test).should be_true
+      @graph.vertex?(:test).should be_truthy
     end
 
     it "should return false when asked if a non-vertex is present" do
-      @graph.vertex?(:test).should be_false
+      @graph.vertex?(:test).should be_falsey
     end
 
     it "should return all set vertices when asked" do
@@ -75,7 +75,7 @@ describe Puppet::Graph::SimpleGraph do
     it "should remove a given vertex when asked" do
       @graph.add_vertex(:one)
       @graph.remove_vertex!(:one)
-      @graph.vertex?(:one).should be_false
+      @graph.vertex?(:one).should be_falsey
     end
 
     it "should do nothing when a non-vertex is asked to be removed" do
@@ -101,17 +101,17 @@ describe Puppet::Graph::SimpleGraph do
     it "should provide a method to add an edge as an instance of the edge class" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.edge?(:one, :two).should be_true
+      @graph.edge?(:one, :two).should be_truthy
     end
 
     it "should provide a method to add an edge by specifying the two vertices" do
       @graph.add_edge(:one, :two)
-      @graph.edge?(:one, :two).should be_true
+      @graph.edge?(:one, :two).should be_truthy
     end
 
     it "should provide a method to add an edge by specifying the two vertices and a label" do
       @graph.add_edge(:one, :two, :callback => :awesome)
-      @graph.edge?(:one, :two).should be_true
+      @graph.edge?(:one, :two).should be_truthy
     end
 
     describe "when retrieving edges between two nodes" do
@@ -144,13 +144,13 @@ describe Puppet::Graph::SimpleGraph do
     it "should add the edge source as a vertex if it is not already" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.vertex?(:one).should be_true
+      @graph.vertex?(:one).should be_truthy
     end
 
     it "should add the edge target as a vertex if it is not already" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.vertex?(:two).should be_true
+      @graph.vertex?(:two).should be_truthy
     end
 
     it "should return all edges as edge instances when asked" do
@@ -169,7 +169,7 @@ describe Puppet::Graph::SimpleGraph do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
       @graph.remove_edge!(edge)
-      @graph.edge?(edge.source, edge.target).should be_false
+      @graph.edge?(edge.source, edge.target).should be_falsey
     end
 
     it "should remove all related edges when a vertex is removed" do
@@ -178,8 +178,8 @@ describe Puppet::Graph::SimpleGraph do
       @graph.add_edge(one)
       @graph.add_edge(two)
       @graph.remove_vertex!(:two)
-      @graph.edge?(:one, :two).should be_false
-      @graph.edge?(:two, :three).should be_false
+      @graph.edge?(:one, :two).should be_falsey
+      @graph.edge?(:two, :three).should be_falsey
       @graph.edges.length.should == 0
     end
   end
@@ -254,13 +254,13 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should provide a method for reversing the graph" do
       @graph.add_edge(:one, :two)
-      @graph.reversal.edge?(:two, :one).should be_true
+      @graph.reversal.edge?(:two, :one).should be_truthy
     end
 
     it "should add all vertices to the reversed graph" do
       @graph.add_edge(:one, :two)
-      @graph.vertex?(:one).should be_true
-      @graph.vertex?(:two).should be_true
+      @graph.vertex?(:one).should be_truthy
+      @graph.vertex?(:two).should be_truthy
     end
 
     it "should retain labels on edges" do

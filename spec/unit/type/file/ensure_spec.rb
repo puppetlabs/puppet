@@ -32,7 +32,7 @@ describe Puppet::Type::File::Ensure do
     it "should always be in sync if replace is 'false' unless the file is missing" do
       property.should = :file
       resource.expects(:replace?).returns false
-      property.safe_insync?(:link).should be_true
+      property.safe_insync?(:link).should be_truthy
     end
 
     it "should be in sync if :ensure is set to :absent and the file does not exist" do

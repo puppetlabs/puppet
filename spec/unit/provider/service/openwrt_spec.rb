@@ -41,7 +41,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
   operatingsystem = 'openwrt'
   it "should be the default provider on #{operatingsystem}" do
     Facter.expects(:value).with(:operatingsystem).returns(operatingsystem)
-    described_class.default?.should be_true
+    described_class.default?.should be_truthy
   end
 
   # test self.instances

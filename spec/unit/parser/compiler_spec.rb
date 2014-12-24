@@ -113,12 +113,12 @@ describe Puppet::Parser::Compiler do
       @compiler.node.should equal(@node)
     end
     it "should detect when ast nodes are absent" do
-      @compiler.ast_nodes?.should be_false
+      @compiler.ast_nodes?.should be_falsey
     end
 
     it "should detect when ast nodes are present" do
       @known_resource_types.expects(:nodes?).returns true
-      @compiler.ast_nodes?.should be_true
+      @compiler.ast_nodes?.should be_truthy
     end
 
     it "should copy the known_resource_types version to the catalog" do
@@ -221,7 +221,7 @@ describe Puppet::Parser::Compiler do
       (stage = @compiler.catalog.resource(:stage, "main")).should be_instance_of(Puppet::Parser::Resource)
       (klass = @compiler.catalog.resource(:class, "")).should be_instance_of(Puppet::Parser::Resource)
 
-      @compiler.catalog.edge?(stage, klass).should be_true
+      @compiler.catalog.edge?(stage, klass).should be_truthy
     end
 
     it "should evaluate all added collections" do
@@ -329,7 +329,7 @@ describe Puppet::Parser::Compiler do
         resource1 = add_resource("meh", main)
 
         @compiler.send(:finish)
-        resource1[:noop].should be_true
+        resource1[:noop].should be_truthy
       end
 
       it "should add metaparams recursively" do
@@ -340,7 +340,7 @@ describe Puppet::Parser::Compiler do
         resource2 = add_resource("foo", resource1)
 
         @compiler.send(:finish)
-        resource2[:noop].should be_true
+        resource2[:noop].should be_truthy
       end
 
       it "should prefer metaparams from immediate parents" do
@@ -353,7 +353,7 @@ describe Puppet::Parser::Compiler do
         resource1[:noop] = false
 
         @compiler.send(:finish)
-        resource2[:noop].should be_false
+        resource2[:noop].should be_falsey
       end
 
       it "should merge tags downward" do
@@ -377,7 +377,7 @@ describe Puppet::Parser::Compiler do
         resource2 = add_resource("foo", resource1)
 
         @compiler.send(:finish)
-        resource2[:noop].should be_true
+        resource2[:noop].should be_truthy
       end
     end
 
@@ -427,7 +427,7 @@ describe Puppet::Parser::Compiler do
 
       @scope.resource = resource(:class, "foo")
 
-      @compiler.catalog.edge?(@scope.resource, stage).should be_false
+      @compiler.catalog.edge?(@scope.resource, stage).should be_falsey
     end
 
     it "should not attempt to add stages to other stages" do
@@ -438,7 +438,7 @@ describe Puppet::Parser::Compiler do
 
       second_stage[:stage] = "other"
 
-      @compiler.catalog.edge?(other_stage, second_stage).should be_false
+      @compiler.catalog.edge?(other_stage, second_stage).should be_falsey
     end
 
     it "should have a method for looking up resources" do

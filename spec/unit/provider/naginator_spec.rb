@@ -26,7 +26,7 @@ describe Puppet::Provider::Naginator do
 
     nagios_type.expects(:parameters).returns [:foo, :bar]
 
-    @class.valid_attr?(:test, :foo).should be_true
+    @class.valid_attr?(:test, :foo).should be_truthy
   end
 
   it "should use Naginator to parse configuration snippets" do

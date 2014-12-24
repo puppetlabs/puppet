@@ -191,12 +191,12 @@ describe Puppet::Provider::Ldap do
 
     it "should indicate when the ldap entry already exists" do
       @instance = @class.new(:ensure => :present)
-      @instance.exists?.should be_true
+      @instance.exists?.should be_truthy
     end
 
     it "should indicate when the ldap entry does not exist" do
       @instance = @class.new(:ensure => :absent)
-      @instance.exists?.should be_false
+      @instance.exists?.should be_falsey
     end
 
     describe "is being flushed" do

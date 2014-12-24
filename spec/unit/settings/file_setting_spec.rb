@@ -268,7 +268,7 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should set the backup to false" do
-      @file.to_resource[:backup].should be_false
+      @file.to_resource[:backup].should be_falsey
     end
 
     it "should tag the resource with the settings section" do

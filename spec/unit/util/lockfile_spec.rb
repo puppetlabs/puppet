@@ -41,18 +41,18 @@ describe Puppet::Util::Lockfile do
 
   describe "#lock" do
     it "should return true if it successfully locked" do
-      @lock.lock.should be_true
+      @lock.lock.should be_truthy
     end
 
     it "should return false if already locked" do
       @lock.lock
-      @lock.lock.should be_false
+      @lock.lock.should be_falsey
     end
 
     it "should create a lock file" do
       @lock.lock
 
-      Puppet::FileSystem.exist?(@lockfile).should be_true
+      Puppet::FileSystem.exist?(@lockfile).should be_truthy
     end
 
     # We test simultaneous locks using fork which isn't supported on Windows.
@@ -81,17 +81,17 @@ describe Puppet::Util::Lockfile do
   describe "#unlock" do
     it "should return true when unlocking" do
       @lock.lock
-      @lock.unlock.should be_true
+      @lock.unlock.should be_truthy
     end
 
     it "should return false when not locked" do
-      @lock.unlock.should be_false
+      @lock.unlock.should be_falsey
     end
 
     it "should clear the lock file" do
       File.open(@lockfile, 'w') { |fd| fd.print("locked") }
       @lock.unlock
-      Puppet::FileSystem.exist?(@lockfile).should be_false
+      Puppet::FileSystem.exist?(@lockfile).should be_falsey
     end
   end
 

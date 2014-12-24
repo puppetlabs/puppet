@@ -119,7 +119,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should verify using the CA public_key" do
-      @crl.generate(@cert, @key).verify(@key.public_key).should be_true
+      @crl.generate(@cert, @key).verify(@key.public_key).should be_truthy
     end
 
     it "should set the content to the generated crl" do

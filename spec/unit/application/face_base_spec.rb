@@ -200,7 +200,7 @@ describe Puppet::Application::FaceBase do
         Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
-        Puppet[:trace].should be_true
+        Puppet[:trace].should be_truthy
       end
     end
 

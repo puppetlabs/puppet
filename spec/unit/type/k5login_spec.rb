@@ -46,7 +46,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
       it "should create the file when synced" do
         resource(:ensure => 'present').parameter(:ensure).sync
-        Puppet::FileSystem.exist?(path).should be_true
+        Puppet::FileSystem.exist?(path).should be_truthy
       end
     end
 
@@ -83,7 +83,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
       it "should remove the file ensure is absent" do
         resource(:ensure => 'absent').property(:ensure).sync
-        Puppet::FileSystem.exist?(path).should be_false
+        Puppet::FileSystem.exist?(path).should be_falsey
       end
 
       it "should write one principal to the file" do

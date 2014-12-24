@@ -178,7 +178,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # so we only care that we have at least one of these
           system_aces.any? do |ace|
             ace.mask == klass::FILE_ALL_ACCESS
-          end.should be_true
+          end.should be_truthy
 
           # changing the owner/group will no longer make the SD protected
           winsec.set_group(sids[:power_users], path)
@@ -227,7 +227,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # so we only care that we have at least one of these
             system_aces.any? do |ace|
               ace.mask == klass::FILE_ALL_ACCESS
-            end.should be_true
+            end.should be_truthy
 
             # changing the mode will make the SD protected
             winsec.set_group(sids[:none], path)
@@ -277,7 +277,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               # SYSTEM full access will be restored
               system_aces.any? do |ace|
                 ace.mask == klass::FILE_ALL_ACCESS
-              end.should be_true
+              end.should be_truthy
             end
           end
 
@@ -785,7 +785,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
       aces = winsec.get_security_descriptor(path).dacl.to_a
       aces.map(&:sid).should == sids_in_dacl
-      aces.map(&:mask).all? { |mask| mask == read_execute }.should be_true
+      aces.map(&:mask).all? { |mask| mask == read_execute }.should be_truthy
     end
 
     it "changes the sid for all aces that were assigned to the old owner" do

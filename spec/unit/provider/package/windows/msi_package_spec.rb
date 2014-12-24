@@ -53,21 +53,21 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     }.each_pair do |k, arr|
       it "should accept '#{k}' with value '#{arr[0]}'" do
         values[k] = arr[0]
-        subject.valid?(productcode, values).should be_true
+        subject.valid?(productcode, values).should be_truthy
       end
 
       it "should reject '#{k}' with value '#{arr[1]}'" do
         values[k] = arr[1]
-        subject.valid?(productcode, values).should be_false
+        subject.valid?(productcode, values).should be_falsey
       end
     end
 
     it 'should reject packages whose name is not a productcode' do
-     subject.valid?('AddressBook', values).should be_false
+     subject.valid?('AddressBook', values).should be_falsey
    end
 
    it 'should accept packages whose name is a productcode' do
-     subject.valid?(productcode, values).should be_true
+     subject.valid?(productcode, values).should be_truthy
    end
   end
 
@@ -75,25 +75,25 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     it 'should match package codes case-insensitively' do
       pkg = subject.new(name, version, productcode, packagecode.upcase)
 
-      pkg.match?({:name => packagecode.downcase}).should be_true
+      pkg.match?({:name => packagecode.downcase}).should be_truthy
     end
 
     it 'should match product codes case-insensitively' do
       pkg = subject.new(name, version, productcode.upcase, packagecode)
 
-      pkg.match?({:name => productcode.downcase}).should be_true
+      pkg.match?({:name => productcode.downcase}).should be_truthy
     end
 
     it 'should match product name' do
       pkg = subject.new(name, version, productcode, packagecode)
 
-      pkg.match?({:name => name}).should be_true
+      pkg.match?({:name => name}).should be_truthy
     end
 
     it 'should return false otherwise' do
       pkg = subject.new(name, version, productcode, packagecode)
 
-      pkg.match?({:name => 'not going to find it'}).should be_false
+      pkg.match?({:name => 'not going to find it'}).should be_falsey
     end
   end
 

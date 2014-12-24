@@ -57,12 +57,12 @@ describe Puppet::FileServing::Base do
 
   it "should correctly indicate if the file is present" do
     Puppet::FileSystem.expects(:lstat).with(file).returns stub('stat')
-    Puppet::FileServing::Base.new(file).exist?.should be_true
+    Puppet::FileServing::Base.new(file).exist?.should be_truthy
   end
 
   it "should correctly indicate if the file is absent" do
     Puppet::FileSystem.expects(:lstat).with(file).raises RuntimeError
-    Puppet::FileServing::Base.new(file).exist?.should be_false
+    Puppet::FileServing::Base.new(file).exist?.should be_falsey
   end
 
   describe "when setting the relative path" do

@@ -27,12 +27,12 @@ describe Puppet::Type.type(:file).attrclass(:noop) do
 
     it "should prefer true values from the attribute" do
       @file[:noop] = true
-      @file.noop.should be_true
+      @file.noop.should be_truthy
     end
 
     it "should prefer false values from the attribute" do
       @file[:noop] = false
-      @file.noop.should be_false
+      @file.noop.should be_falsey
     end
   end
 end

@@ -172,13 +172,13 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should convert the string 'true' to the boolean" do
         req = mk_req("/?foo=true")
         result = @handler.params(req)
-        result[:foo].should be_true
+        result[:foo].should be_truthy
       end
 
       it "should convert the string 'false' to the boolean" do
         req = mk_req("/?foo=false")
         result = @handler.params(req)
-        result[:foo].should be_false
+        result[:foo].should be_falsey
       end
 
       it "should convert integer arguments to Integers" do
@@ -216,7 +216,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
       it "should set 'authenticated' to false if no certificate is present" do
         req = mk_req('/')
-        @handler.params(req)[:authenticated].should be_false
+        @handler.params(req)[:authenticated].should be_falsey
       end
     end
 
@@ -243,21 +243,21 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => "SUCCESS", "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_true
+        @handler.params(req)[:authenticated].should be_truthy
       end
 
       it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => "whatever", "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_false
+        @handler.params(req)[:authenticated].should be_falsey
       end
 
       it "should consider the host unauthenticated if no certificate information is present" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => nil, "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_false
+        @handler.params(req)[:authenticated].should be_falsey
       end
 
       it "should resolve the node name with an ip address look-up if no certificate is present" do
@@ -281,7 +281,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
         @handler.expects(:resolve_node).returns("host.domain.com")
 
-        @handler.params(req)[:authenticated].should be_false
+        @handler.params(req)[:authenticated].should be_falsey
       end
     end
   end

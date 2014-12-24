@@ -77,20 +77,20 @@ describe Puppet::Util::SUIDManager do
 
         # It's possible asuser could simply not yield, so the assertions in the
         # block wouldn't fail. So verify those actually got checked.
-        yielded.should be_true
+        yielded.should be_truthy
       end
 
       it "should just yield if user and group are nil" do
         yielded = false
         Puppet::Util::SUIDManager.asuser(nil, nil) { yielded = true }
-        yielded.should be_true
+        yielded.should be_truthy
         xids.should == {}
       end
 
       it "should just change group if only group is given" do
         yielded = false
         Puppet::Util::SUIDManager.asuser(nil, 42) { yielded = true }
-        yielded.should be_true
+        yielded.should be_truthy
         xids.should == { :egid => 42 }
       end
 
@@ -99,7 +99,7 @@ describe Puppet::Util::SUIDManager do
 
         yielded = false
         Puppet::Util::SUIDManager.asuser(42) { yielded = true }
-        yielded.should be_true
+        yielded.should be_truthy
         xids.should == { :euid => 42, :egid => 42 }
       end
 
@@ -117,7 +117,7 @@ describe Puppet::Util::SUIDManager do
 
         yielded = false
         Puppet::Util::SUIDManager.asuser(42, 43) { yielded = true }
-        yielded.should be_true
+        yielded.should be_truthy
       end
     end
 

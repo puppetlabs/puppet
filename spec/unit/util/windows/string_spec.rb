@@ -24,7 +24,7 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
     end
 
     it "should return valid encoding" do
-      wide_string("bob").valid_encoding?.should be_true
+      wide_string("bob").valid_encoding?.should be_truthy
     end
 
     it "should convert an ASCII string" do

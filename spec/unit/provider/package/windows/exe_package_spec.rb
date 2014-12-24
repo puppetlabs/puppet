@@ -43,21 +43,21 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     }.each_pair do |k, arr|
       it "should accept '#{k}' with value '#{arr[0]}'" do
         values[k] = arr[0]
-        subject.valid?(name, values).should be_true
+        subject.valid?(name, values).should be_truthy
       end
 
       it "should reject '#{k}' with value '#{arr[1]}'" do
         values[k] = arr[1]
-        subject.valid?(name, values).should be_false
+        subject.valid?(name, values).should be_falsey
       end
     end
 
     it 'should reject packages whose name starts with "KBXXXXXX"' do
-      subject.valid?('KB890830', values).should be_false
+      subject.valid?('KB890830', values).should be_falsey
     end
 
     it 'should accept packages whose name does not start with "KBXXXXXX"' do
-      subject.valid?('My Update (KB890830)', values).should be_true
+      subject.valid?('My Update (KB890830)', values).should be_truthy
     end
   end
 
@@ -65,11 +65,11 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     let(:pkg) { subject.new(name, version, uninstall) }
 
     it 'should match product name' do
-      pkg.match?({:name => name}).should be_true
+      pkg.match?({:name => name}).should be_truthy
     end
 
     it 'should return false otherwise' do
-      pkg.match?({:name => 'not going to find it'}).should be_false
+      pkg.match?({:name => 'not going to find it'}).should be_falsey
     end
   end
 

@@ -49,7 +49,7 @@ describe "Defaults" do
     end
 
     it 'should default to false' do
-      Puppet.settings[:cfacter].should be_false
+      Puppet.settings[:cfacter].should be_falsey
     end
 
     it 'should raise an error if cfacter is not installed' do

@@ -85,7 +85,7 @@ describe Puppet::Application::Agent do
     it "should not fingerprint by default" do
       @puppetd.preinit
 
-      @puppetd.options[:fingerprint].should be_false
+      @puppetd.options[:fingerprint].should be_falsey
     end
 
     it "should init waitforcert to nil" do

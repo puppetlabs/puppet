@@ -411,13 +411,13 @@ describe Puppet::Module do
     it "should consider #{filetype} to be present if their base directory exists" do
       module_file = File.join(path, dirname)
       Puppet::FileSystem.expects(:exist?).with(module_file).returns true
-      mod.send(filetype.to_s + "?").should be_true
+      mod.send(filetype.to_s + "?").should be_truthy
     end
 
     it "should consider #{filetype} to be absent if their base directory does not exist" do
       module_file = File.join(path, dirname)
       Puppet::FileSystem.expects(:exist?).with(module_file).returns false
-      mod.send(filetype.to_s + "?").should be_false
+      mod.send(filetype.to_s + "?").should be_falsey
     end
 
     it "should return nil if asked to return individual #{filetype} that don't exist" do
@@ -565,7 +565,7 @@ describe Puppet::Module do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns(my_fixture('trailing-comma.json'))
 
-    @module.has_metadata?.should be_false
+    @module.has_metadata?.should be_falsey
   end
 
   def a_module_with_metadata(data)
@@ -663,10 +663,10 @@ describe Puppet::Module do
     foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
 
     IO.binwrite(foo_path, 'notfoo')
-    Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
+    expect(Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path)).not_to eq(foo_checksum)
 
     IO.binwrite(foo_path, 'foo')
-    Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
+    expect(Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path)).not_to eq(foo_checksum)
   end
 
   it "should know what other modules require it" do

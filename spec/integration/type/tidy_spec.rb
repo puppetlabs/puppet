@@ -29,6 +29,6 @@ describe Puppet::Type.type(:tidy) do
 
     catalog.apply
 
-    Puppet::FileSystem.symlink?(link).should be_false
+    Puppet::FileSystem.symlink?(link).should be_falsey
   end
 end

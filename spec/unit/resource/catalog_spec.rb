@@ -174,7 +174,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should duplicate the original edges" do
       @original.edges.each do |edge|
-        @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
+        @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_truthy
       end
     end
 
@@ -388,11 +388,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should have a mechanism for removing resources" do
       @catalog.add_resource(@one)
       @catalog.resource(@one.ref).must be
-      @catalog.vertex?(@one).must be_true
+      @catalog.vertex?(@one).must be_truthy
 
       @catalog.remove_resource(@one)
       @catalog.resource(@one.ref).must be_nil
-      @catalog.vertex?(@one).must be_false
+      @catalog.vertex?(@one).must be_falsey
     end
 
     it "should have a method for creating aliases for resources" do
@@ -566,12 +566,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should default to being a host catalog" do
-      @catalog.host_config.should be_true
+      @catalog.host_config.should be_truthy
     end
 
     it "should be able to be set to a non-host_config" do
       @catalog.host_config = false
-      @catalog.host_config.should be_false
+      @catalog.host_config.should be_falsey
     end
 
     it "should pass supplied tags on to the transaction" do
@@ -711,12 +711,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should have all vertices" do
-      @newcatalog.vertex?("one").should be_true
-      @newcatalog.vertex?("two").should be_true
+      @newcatalog.vertex?("one").should be_truthy
+      @newcatalog.vertex?("two").should be_truthy
     end
 
     it "should have all edges" do
-      @newcatalog.edge?("one", "two").should be_true
+      @newcatalog.edge?("one", "two").should be_truthy
     end
   end
 end

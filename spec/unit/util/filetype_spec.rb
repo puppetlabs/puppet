@@ -155,7 +155,7 @@ describe Puppet::Util::FileType do
       end
 
       after :each do
-        Puppet::FileSystem.exist?(@tmp_cron_path).should be_false
+        Puppet::FileSystem.exist?(@tmp_cron_path).should be_falsey
       end
 
       it "should run crontab as the target user on a temporary file" do

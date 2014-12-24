@@ -51,7 +51,7 @@ describe Puppet::Parser::Functions do
     it "should return false if the function doesn't exist" do
       Puppet::Parser::Functions.autoloader.stubs(:load)
 
-      Puppet::Parser::Functions.function("name").should be_false
+      Puppet::Parser::Functions.function("name").should be_falsey
     end
 
     it "should return its name if the function exists" do
@@ -80,7 +80,7 @@ describe Puppet::Parser::Functions do
         expect(Puppet::Parser::Functions.function("other_env")).to eq("function_other_env")
       end
 
-      expect(Puppet::Parser::Functions.function("other_env")).to be_false
+      expect(Puppet::Parser::Functions.function("other_env")).to be_falsey
     end
   end
 

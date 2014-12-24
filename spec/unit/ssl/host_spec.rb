@@ -47,7 +47,7 @@ describe Puppet::SSL::Host do
   end
 
   it "should default to being a non-ca host" do
-    @host.ca?.should be_false
+    @host.ca?.should be_falsey
   end
 
   it "should be a ca host if its name matches the CA_NAME" do
@@ -364,7 +364,7 @@ describe Puppet::SSL::Host do
     it "should return true if any of the classes returned true" do
       Puppet::SSL::Certificate.indirection.expects(:destroy).with("myhost").returns true
 
-      Puppet::SSL::Host.destroy("myhost").should be_true
+      Puppet::SSL::Host.destroy("myhost").should be_truthy
     end
 
     it "should report that nothing was deleted if none of the classes returned true" do
@@ -412,7 +412,7 @@ describe Puppet::SSL::Host do
       @key.expects(:generate)
       Puppet::SSL::Key.indirection.expects(:save)
 
-      @host.generate_key.should be_true
+      @host.generate_key.should be_truthy
       @host.key.should equal(@key)
     end
 
@@ -473,7 +473,7 @@ describe Puppet::SSL::Host do
       @request.expects(:generate).with("mycontent", {})
       Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
-      @host.generate_certificate_request.should be_true
+      @host.generate_certificate_request.should be_truthy
       @host.certificate_request.should equal(@request)
     end
 

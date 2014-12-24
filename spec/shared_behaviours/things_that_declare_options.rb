@@ -176,8 +176,8 @@ shared_examples_for "things that declare options" do
       end.get_option(:foo)
 
       option.should be_has_default
-      option.default.should be_true
-      invoked.should be_true
+      option.default.should be_truthy
+      invoked.should be_truthy
     end
 
     it "should return the value of the block when asked for the default" do

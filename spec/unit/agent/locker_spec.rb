@@ -49,7 +49,7 @@ describe Puppet::Agent::Locker do
     @locker.lock do
       yielded = true
     end
-    yielded.should be_true
+    yielded.should be_truthy
   end
 
   it "should return the block result when the lock method successfully locked" do
@@ -69,7 +69,7 @@ describe Puppet::Agent::Locker do
 
     yielded = false
     @locker.lock { yielded = true }
-    yielded.should be_false
+    yielded.should be_falsey
   end
 
   it "should not unlock when a lock was not received" do

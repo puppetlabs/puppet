@@ -103,12 +103,12 @@ describe provider_class do
 
     it "should indicate when the instance already exists" do
       @instance = provider_class.new(:device, :ensure => :present)
-      @instance.exists?.should be_true
+      @instance.exists?.should be_truthy
     end
 
     it "should indicate when the instance does not exist" do
       @instance = provider_class.new(:device, :ensure => :absent)
-      @instance.exists?.should be_false
+      @instance.exists?.should be_falsey
     end
 
     describe "is being flushed" do

@@ -49,13 +49,13 @@ describe Puppet::Util::Autoload do
   end
 
   it "should not fail when asked to load a missing file" do
-    Puppet::Util::Autoload.new("foo", "bar").load(:eh).should be_false
+    Puppet::Util::Autoload.new("foo", "bar").load(:eh).should be_falsey
   end
 
   it "should load and return true when it successfully loads a file" do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:mything, dir, "mything.rb") {
-        loader.load(:mything).should be_true
+        loader.load(:mything).should be_truthy
         loader.class.should be_loaded("bar/mything")
         AutoloadIntegrator.should be_thing(:mything)
       }

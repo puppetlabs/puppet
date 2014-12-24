@@ -412,13 +412,13 @@ describe Puppet::Network::AuthStore::Declaration do
       @opaque    = Puppet::Network::AuthStore::Declaration.new(:allow,'hey_dude')
     end
     it "should consider ip addresses before host names" do
-      (@ip < @host_name).should be_true
+      (@ip < @host_name).should be_truthy
     end
     it "should consider ip addresses before opaque strings" do
-      (@ip < @opaque).should be_true
+      (@ip < @opaque).should be_truthy
     end
     it "should consider host_names before opaque strings" do
-      (@host_name < @opaque).should be_true
+      (@host_name < @opaque).should be_truthy
     end
   end
 end

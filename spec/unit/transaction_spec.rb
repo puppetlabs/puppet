@@ -500,7 +500,7 @@ describe Puppet::Transaction do
 
       transaction.prefetch_if_necessary(resource)
 
-      transaction.prefetched_providers[:sshkey][:parsed].should be_true
+      transaction.prefetched_providers[:sshkey][:parsed].should be_truthy
     end
 
     it "should prefetch resources without a provider if prefetching the default provider" do
@@ -607,7 +607,7 @@ describe Puppet::Transaction do
 
     it 'should return false for :stop_processing? if Puppet::Application.stop_requested? is false' do
       Puppet::Application.stubs(:stop_requested?).returns(false)
-      @transaction.stop_processing?.should be_false
+      @transaction.stop_processing?.should be_falsey
     end
 
     describe 'within an evaluate call' do

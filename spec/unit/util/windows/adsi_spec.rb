@@ -98,13 +98,13 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     it "should be able to check the existence of a user" do
       Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
-      Puppet::Util::Windows::ADSI::User.exists?(username).should be_true
+      Puppet::Util::Windows::ADSI::User.exists?(username).should be_truthy
     end
 
     it "should be able to check the existence of a domain user" do
       Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
-      Puppet::Util::Windows::ADSI::User.exists?(domain_username).should be_true
+      Puppet::Util::Windows::ADSI::User.exists?(domain_username).should be_truthy
     end
 
     it "should be able to confirm the existence of a user with a well-known SID" do
@@ -112,7 +112,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       system_user = Win32::Security::SID::LocalSystem
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
-      Puppet::Util::Windows::ADSI::User.exists?(system_user).should be_true
+      Puppet::Util::Windows::ADSI::User.exists?(system_user).should be_truthy
     end
 
     it "should return nil with an unknown SID" do
@@ -120,7 +120,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
-      Puppet::Util::Windows::ADSI::User.exists?(bogus_sid).should be_false
+      Puppet::Util::Windows::ADSI::User.exists?(bogus_sid).should be_falsey
     end
 
     it "should be able to delete a user" do
@@ -166,8 +166,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         Puppet::Util::Windows::ADSI::User.expects(:logon).with(username, 'pwdwrong').returns(false)
         Puppet::Util::Windows::ADSI::User.expects(:logon).with(username, 'pwdright').returns(true)
 
-        user.password_is?('pwdwrong').should be_false
-        user.password_is?('pwdright').should be_true
+        user.password_is?('pwdwrong').should be_falsey
+        user.password_is?('pwdright').should be_truthy
       end
 
       it "should be able to set a password" do
@@ -331,7 +331,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
 
-      Puppet::Util::Windows::ADSI::Group.exists?(groupname).should be_true
+      Puppet::Util::Windows::ADSI::Group.exists?(groupname).should be_truthy
     end
 
     it "should be able to confirm the existence of a group with a well-known SID" do
@@ -339,7 +339,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       service_group = Win32::Security::SID::Service
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
-      Puppet::Util::Windows::ADSI::Group.exists?(service_group).should be_true
+      Puppet::Util::Windows::ADSI::Group.exists?(service_group).should be_truthy
     end
 
     it "should return nil with an unknown SID" do
@@ -347,7 +347,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
-      Puppet::Util::Windows::ADSI::Group.exists?(bogus_sid).should be_false
+      Puppet::Util::Windows::ADSI::Group.exists?(bogus_sid).should be_falsey
     end
 
     it "should be able to delete a group" do

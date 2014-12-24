@@ -140,7 +140,7 @@ describe Puppet::Network::FormatHandler do
 
     it "should list as supported a format that reports itself supported" do
       format.expects(:supported?).returns true
-      FormatTester.new.support_format?(:foo).should be_true
+      FormatTester.new.support_format?(:foo).should be_truthy
     end
 
     it "should raise a FormatError when a rendering error is encountered" do

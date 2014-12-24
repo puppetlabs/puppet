@@ -89,7 +89,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     status = catalog.apply.report.resource_statuses["File[#{source}]"]
     status.should_not be_failed
     status.should_not be_changed
-    Puppet::FileSystem.exist?(source).should be_false
+    Puppet::FileSystem.exist?(source).should be_falsey
   end
 
   describe "when ensure is absent" do
@@ -98,14 +98,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      Puppet::FileSystem.exist?(path).should be_falsey
     end
 
     it "should do nothing if file is not present" do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      Puppet::FileSystem.exist?(path).should be_falsey
     end
 
     # issue #14599
@@ -249,7 +249,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
             catalog.apply
 
-            Puppet::FileSystem.exist?(link).should be_false
+            Puppet::FileSystem.exist?(link).should be_falsey
           end
 
           it "should create a link to the target if ensure is omitted" do
@@ -257,7 +257,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource described_class.new(:path => link, :target => link_target)
             catalog.apply
 
-            Puppet::FileSystem.exist?(link).should be_true
+            Puppet::FileSystem.exist?(link).should be_truthy
             Puppet::FileSystem.lstat(link).ftype.should == 'link'
             Puppet::FileSystem.readlink(link).should == link_target
           end
@@ -433,7 +433,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
 
         backup = file[:path] + ".bak"
-        Puppet::FileSystem.exist?(backup).should be_true
+        Puppet::FileSystem.exist?(backup).should be_truthy
         File.read(backup).should == "bar\n"
       end
 
@@ -472,7 +472,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
 
         Puppet::FileSystem.readlink(link).should == dest2
-        Puppet::FileSystem.exist?(bucket[:path]).should be_false
+        Puppet::FileSystem.exist?(bucket[:path]).should be_falsey
       end
 
       it "should backup directories to the local filesystem by copying the whole directory" do
@@ -689,8 +689,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.apply
 
             File.should be_directory(path)
-            Puppet::FileSystem.exist?(File.join(path, 'one')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'three', 'four')).should be_true
+            Puppet::FileSystem.exist?(File.join(path, 'one')).should be_falsey
+            Puppet::FileSystem.exist?(File.join(path, 'three', 'four')).should be_truthy
           end
 
           it "should recursively copy an empty directory" do
@@ -711,7 +711,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.apply
 
             File.should be_directory(path)
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_false
+            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_falsey
           end
 
           it "should only recurse one level" do
@@ -735,9 +735,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_false
+            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_truthy
+            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_falsey
+            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_falsey
           end
         end
 
@@ -834,10 +834,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource obj
             catalog.apply
 
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'z', 'y')).should be_false
+            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_truthy
+            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_falsey
+            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_truthy
+            Puppet::FileSystem.exist?(File.join(path, 'z', 'y')).should be_falsey
           end
         end
       end
@@ -949,7 +949,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     catalog.add_resource file
     catalog.apply
 
-    Puppet::FileSystem.exist?(dest).should be_false
+    Puppet::FileSystem.exist?(dest).should be_falsey
   end
 
   describe "when sourcing" do
@@ -1019,7 +1019,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         aces.any? do |ace|
           ace.mask == Puppet::Util::Windows::File::FILE_ALL_ACCESS &&
             (ace.flags & inherited_ace) == inherited_ace
-        end.should be_true
+        end.should be_truthy
       end
 
       def expects_at_least_one_inherited_system_ace_grants_full_access(path)
@@ -1252,7 +1252,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     it "should purge files that are neither remote nor otherwise managed" do
-      Puppet::FileSystem.exist?(@purgee).should be_false
+      Puppet::FileSystem.exist?(@purgee).should be_falsey
     end
   end
 
@@ -1262,7 +1262,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       Puppet::Util::Execution.expects(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).raises(Puppet::ExecutionFailure, "Failed")
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      Puppet::FileSystem.exist?(path).should be_falsey
     end
 
     it "should succeed the file resource if command succeeds" do
@@ -1270,7 +1270,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       Puppet::Util::Execution.expects(:execute).with("/usr/bin/env true", {:combine => true, :failonfail => true}).returns ''
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_true
+      Puppet::FileSystem.exist?(path).should be_truthy
     end
   end
 

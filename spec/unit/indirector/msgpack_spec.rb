@@ -130,12 +130,12 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
         with_content('hello') do
           subject.destroy(request)
         end
-        Puppet::FileSystem.exist?(file).should be_false
+        Puppet::FileSystem.exist?(file).should be_falsey
       end
 
       it "silently succeeds when files don't exist" do
         Puppet::FileSystem.unlink(file) rescue nil
-        subject.destroy(request).should be_true
+        subject.destroy(request).should be_truthy
       end
 
       it "raises an informative error for other failures" do

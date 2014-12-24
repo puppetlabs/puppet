@@ -38,7 +38,7 @@ describe Puppet::FileServing::Fileset do
     it "accepts a 'recurse' option" do
       Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
       set = Puppet::FileServing::Fileset.new(somefile, :recurse => true)
-      set.recurse.should be_true
+      set.recurse.should be_truthy
     end
 
     it "accepts a 'recurselimit' option" do

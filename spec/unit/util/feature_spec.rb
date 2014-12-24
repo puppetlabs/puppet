@@ -21,7 +21,7 @@ describe Puppet::Util::Feature do
   it "should call associated code when loading a feature" do
     $loaded_feature = false
     @features.add(:myfeature) { $loaded_feature = true}
-    $loaded_feature.should be_true
+    $loaded_feature.should be_truthy
   end
 
   it "should consider a feature absent when the feature load fails" do

@@ -280,7 +280,7 @@ original
       end
 
       it 'does not call Facter.on_message' do
-        Puppet::Util::Logging::setup_facter_logging!.should be_false
+        Puppet::Util::Logging::setup_facter_logging!.should be_falsey
       end
     end
 
@@ -314,7 +314,7 @@ original
       [:trace, :debug, :info, :warn, :error, :fatal].each do |level|
         it "calls Facter.on_message and handles #{level} messages" do
           setup(level, "#{level} message")
-          Puppet::Util::Logging::setup_facter_logging!.should be_true
+          Puppet::Util::Logging::setup_facter_logging!.should be_truthy
         end
       end
     end

@@ -186,19 +186,19 @@ describe Puppet::Application do
     end
 
     it 'should return false for restart_requested?' do
-      Puppet::Application.restart_requested?.should be_false
+      Puppet::Application.restart_requested?.should be_falsey
     end
 
     it 'should return false for stop_requested?' do
-      Puppet::Application.stop_requested?.should be_false
+      Puppet::Application.stop_requested?.should be_falsey
     end
 
     it 'should return false for interrupted?' do
-      Puppet::Application.interrupted?.should be_false
+      Puppet::Application.interrupted?.should be_falsey
     end
 
     it 'should return true for clear?' do
-      Puppet::Application.clear?.should be_true
+      Puppet::Application.clear?.should be_truthy
     end
   end
 
@@ -217,19 +217,19 @@ describe Puppet::Application do
     end
 
     it 'should return true for stop_requested?' do
-      Puppet::Application.stop_requested?.should be_true
+      Puppet::Application.stop_requested?.should be_truthy
     end
 
     it 'should return false for restart_requested?' do
-      Puppet::Application.restart_requested?.should be_false
+      Puppet::Application.restart_requested?.should be_falsey
     end
 
     it 'should return true for interrupted?' do
-      Puppet::Application.interrupted?.should be_true
+      Puppet::Application.interrupted?.should be_truthy
     end
 
     it 'should return false for clear?' do
-      Puppet::Application.clear?.should be_false
+      Puppet::Application.clear?.should be_falsey
     end
   end
 
@@ -248,19 +248,19 @@ describe Puppet::Application do
     end
 
     it 'should return true for restart_requested?' do
-      Puppet::Application.restart_requested?.should be_true
+      Puppet::Application.restart_requested?.should be_truthy
     end
 
     it 'should return false for stop_requested?' do
-      Puppet::Application.stop_requested?.should be_false
+      Puppet::Application.stop_requested?.should be_falsey
     end
 
     it 'should return true for interrupted?' do
-      Puppet::Application.interrupted?.should be_true
+      Puppet::Application.interrupted?.should be_truthy
     end
 
     it 'should return false for clear?' do
-      Puppet::Application.clear?.should be_false
+      Puppet::Application.clear?.should be_falsey
     end
   end
 
@@ -634,7 +634,7 @@ describe Puppet::Application do
     it "should set the flag that a destination is set in the options hash" do
       Puppet::Util::Log.stubs(:newdestination).with(test_arg)
       @app.handle_logdest_arg(test_arg)
-      @app.options[:setdest].should be_true
+      @app.options[:setdest].should be_truthy
     end
   end
 

@@ -55,7 +55,7 @@ describe Puppet::FileServing::Configuration do
     it "should set the mount list to the results of parsing" do
       @parser.expects(:parse).returns("one" => mock("mount"))
       config = Puppet::FileServing::Configuration.configuration
-      config.mounted?("one").should be_true
+      config.mounted?("one").should be_truthy
     end
 
     it "should not raise exceptions" do
@@ -66,12 +66,12 @@ describe Puppet::FileServing::Configuration do
     it "should replace the existing mount list with the results of reparsing" do
       @parser.expects(:parse).returns("one" => mock("mount"))
       config = Puppet::FileServing::Configuration.configuration
-      config.mounted?("one").should be_true
+      config.mounted?("one").should be_truthy
       # Now parse again
       @parser.expects(:parse).returns("two" => mock('other'))
       config.send(:readconfig, false)
-      config.mounted?("one").should be_false
-      config.mounted?("two").should be_true
+      config.mounted?("one").should be_falsey
+      config.mounted?("two").should be_truthy
     end
 
     it "should not replace the mount list until the file is entirely parsed successfully" do
@@ -80,14 +80,14 @@ describe Puppet::FileServing::Configuration do
       config = Puppet::FileServing::Configuration.configuration
       # Now parse again, so the exception gets thrown
       config.send(:readconfig, false)
-      config.mounted?("one").should be_true
+      config.mounted?("one").should be_truthy
     end
 
     it "should add modules and plugins mounts even if the file does not exist" do
       Puppet::FileSystem.expects(:exist?).returns false # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
-      config.mounted?("modules").should be_true
-      config.mounted?("plugins").should be_true
+      config.mounted?("modules").should be_truthy
+      config.mounted?("plugins").should be_truthy
     end
 
     it "should allow all access to modules and plugins if no fileserver.conf exists" do
@@ -121,8 +121,8 @@ describe Puppet::FileServing::Configuration do
       @parser.expects(:parse).returns("one" => mock("mount"))
       Puppet::FileSystem.expects(:exist?).returns true # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
-      config.mounted?("modules").should be_true
-      config.mounted?("plugins").should be_true
+      config.mounted?("modules").should be_truthy
+      config.mounted?("plugins").should be_truthy
     end
   end
 

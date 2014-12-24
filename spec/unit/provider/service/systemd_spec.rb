@@ -20,38 +20,38 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
-      described_class.default?.should be_true
+      described_class.default?.should be_truthy
     end
   end
 
   it "should be the default provider on rhel7" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("7")
-    described_class.default?.should be_true
+    described_class.default?.should be_truthy
   end
 
   it "should not be the default provider on rhel6" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("6")
-    described_class.default?.should_not be_true
+    described_class.default?.should_not be_truthy
   end
 
   it "should be the default provider on sles12" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("12")
-    described_class.default?.should be_true
+    described_class.default?.should be_truthy
   end
 
   it "should be the default provider on opensuse13" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("13")
-    described_class.default?.should be_true
+    described_class.default?.should be_truthy
   end
 
   it "should not be the default provider on sles11" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("11")
-    described_class.default?.should_not be_true
+    described_class.default?.should_not be_truthy
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|

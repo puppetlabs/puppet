@@ -29,12 +29,12 @@ describe Puppet::Confine::Feature do
 
     it "should return true if the feature is present" do
       Puppet.features.add(:myfeature) do true end
-      @confine.pass?("myfeature").should be_true
+      @confine.pass?("myfeature").should be_truthy
     end
 
     it "should return false if the value is false" do
       Puppet.features.add(:myfeature) do false end
-      @confine.pass?("myfeature").should be_false
+      @confine.pass?("myfeature").should be_falsey
     end
 
     it "should log that a feature is missing" do

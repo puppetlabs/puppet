@@ -26,17 +26,17 @@ describe Puppet::Confine::Exists do
   end
 
   it "should return false if the value is false" do
-    @confine.pass?(false).should be_false
+    @confine.pass?(false).should be_falsey
   end
 
   it "should return false if the value does not point to a file" do
     Puppet::FileSystem.expects(:exist?).with("/my/file").returns false
-    @confine.pass?("/my/file").should be_false
+    @confine.pass?("/my/file").should be_falsey
   end
 
   it "should return true if the value points to a file" do
     Puppet::FileSystem.expects(:exist?).with("/my/file").returns true
-    @confine.pass?("/my/file").should be_true
+    @confine.pass?("/my/file").should be_truthy
   end
 
   it "should produce a message saying that a file is missing" do
@@ -52,12 +52,12 @@ describe Puppet::Confine::Exists do
 
     it "should return false if no executable can be found" do
       @confine.expects(:which).with("/my/file").returns nil
-      @confine.pass?("/my/file").should be_false
+      @confine.pass?("/my/file").should be_falsey
     end
 
     it "should return true if the executable can be found" do
       @confine.expects(:which).with("/my/file").returns "/my/file"
-      @confine.pass?("/my/file").should be_true
+      @confine.pass?("/my/file").should be_truthy
     end
   end
 

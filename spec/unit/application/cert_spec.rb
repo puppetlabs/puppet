@@ -44,12 +44,12 @@ describe Puppet::Application::Cert => true do
 
   it "should set all to true for --all" do
     @cert_app.handle_all(0)
-    @cert_app.all.should be_true
+    @cert_app.all.should be_truthy
   end
 
   it "should set signed to true for --signed" do
     @cert_app.handle_signed(0)
-    @cert_app.signed.should be_true
+    @cert_app.signed.should be_truthy
   end
 
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|

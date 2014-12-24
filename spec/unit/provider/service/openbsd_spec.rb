@@ -149,14 +149,14 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
-      provider.running?.should be_true
+      provider.running?.should be_truthy
     end
 
     it "should return true if the service is running" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
-      provider.running?.should be_true
+      provider.running?.should be_truthy
     end
 
     it "should return nil if the service is not running" do

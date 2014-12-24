@@ -165,7 +165,7 @@ describe "Puppet defaults" do
   end
 
   it "should have a 'certificate_revocation' setting that defaults to true" do
-    Puppet.settings[:certificate_revocation].should be_true
+    Puppet.settings[:certificate_revocation].should be_truthy
   end
 
   describe "reportdir" do

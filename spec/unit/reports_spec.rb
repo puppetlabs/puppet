@@ -24,8 +24,8 @@ describe Puppet::Reports do
     Puppet::Reports.expects(:report).with(:two).returns(two)
 
     doc = Puppet::Reports.reportdocs
-    doc.include?("onedoc").should be_true
-    doc.include?("twodoc").should be_true
+    doc.include?("onedoc").should be_truthy
+    doc.include?("twodoc").should be_truthy
   end
 end
 

@@ -32,7 +32,7 @@ describe Puppet::Application::Describe do
     it "should set options[:parameters] to true" do
       @describe.preinit
 
-      @describe.options[:parameters].should be_true
+      @describe.options[:parameters].should be_truthy
     end
   end
 
@@ -40,7 +40,7 @@ describe Puppet::Application::Describe do
     it "should set options[:parameters] to false" do
       @describe.handle_short(nil)
 
-      @describe.options[:parameters].should be_false
+      @describe.options[:parameters].should be_falsey
     end
   end
 

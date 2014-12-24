@@ -22,7 +22,7 @@ describe Puppet::Network::HTTP::Route do
   describe "an HTTP Route" do
     it "can match a request" do
       route = Puppet::Network::HTTP::Route.path(%r{^/vtest})
-      expect(route.matches?(req)).to be_true
+      expect(route.matches?(req)).to be_truthy
     end
 
     it "will raise a Method Not Allowed error when no handler for the request's method is given" do
@@ -34,7 +34,7 @@ describe Puppet::Network::HTTP::Route do
 
     it "can match any HTTP method" do
       route = Puppet::Network::HTTP::Route.path(%r{^/vtest/foo}).any(respond("used"))
-      expect(route.matches?(req)).to be_true
+      expect(route.matches?(req)).to be_truthy
 
       route.process(req, res)
 
@@ -75,7 +75,7 @@ describe Puppet::Network::HTTP::Route do
       expect do
         route.process(req, res)
       end.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError)
-      expect(ignored_called).to be_false
+      expect(ignored_called).to be_falsey
     end
 
     it "chains to other routes after calling its handlers" do

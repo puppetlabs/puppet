@@ -22,7 +22,7 @@ describe "apply" do
 
       puppet.apply
 
-      expect(Puppet::FileSystem.exist?(file_to_create)).to be_true
+      expect(Puppet::FileSystem.exist?(file_to_create)).to be_truthy
       expect(File.read(file_to_create)).to eq("my stuff")
     end
   end

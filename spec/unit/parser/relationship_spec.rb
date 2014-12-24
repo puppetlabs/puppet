@@ -50,7 +50,7 @@ describe Puppet::Parser::Relationship do
       @dep.evaluate(@catalog)
       # this test did not work before. It was appending the resources
       # together as a string
-      (@source[:before].class == Array).should be_true
+      (@source[:before].class == Array).should be_truthy
       @source[:before].should be_include("Mytype[target]")
       @source[:before].should be_include("File[/bar]")
     end
@@ -58,7 +58,7 @@ describe Puppet::Parser::Relationship do
     it "should supplement rather than clobber existing resource relationships" do
       @source[:before] = @extra_resource
       @dep.evaluate(@catalog)
-      (@source[:before].class == Array).should be_true
+      (@source[:before].class == Array).should be_truthy
       @source[:before].should be_include("Mytype[target]")
       @source[:before].should be_include(@extra_resource)
     end
@@ -66,7 +66,7 @@ describe Puppet::Parser::Relationship do
     it "should supplement rather than clobber multiple existing resource relationships" do
       @source[:before] = [@extra_resource, @extra_resource2]
       @dep.evaluate(@catalog)
-      (@source[:before].class == Array).should be_true
+      (@source[:before].class == Array).should be_truthy
       @source[:before].should be_include("Mytype[target]")
       @source[:before].should be_include(@extra_resource)
       @source[:before].should be_include(@extra_resource2)

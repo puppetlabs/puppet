@@ -55,7 +55,7 @@ describe Puppet::Network::HTTP::Site do
 
     another_site = create_site(scheme, host, port)
 
-    expect(sites.include?(another_site)).to be_true
+    expect(sites.include?(another_site)).to be_truthy
   end
 
   it 'computes the same hash code for equivalent objects' do

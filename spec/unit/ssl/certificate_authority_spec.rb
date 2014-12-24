@@ -873,7 +873,7 @@ describe Puppet::SSL::CertificateAuthority do
 
           @store.expects(:verify).with("mycert").returns false
 
-          @ca.certificate_is_alive?(@cert).should be_false
+          @ca.certificate_is_alive?(@cert).should be_falsey
         end
 
         it "should return true if verification passes" do
@@ -881,7 +881,7 @@ describe Puppet::SSL::CertificateAuthority do
 
           @store.expects(:verify).with("mycert").returns true
 
-          @ca.certificate_is_alive?(@cert).should be_true
+          @ca.certificate_is_alive?(@cert).should be_truthy
         end
 
         it "should used a cached instance of the x509 store" do

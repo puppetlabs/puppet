@@ -40,11 +40,11 @@ describe Puppet::Util::Log.desttypes[:file] do
   describe "when matching" do
     shared_examples_for "file destination" do
       it "should match an absolute path" do
-        @class.match?(abspath).should be_true
+        @class.match?(abspath).should be_truthy
       end
 
       it "should not match a relative path" do
-        @class.match?(relpath).should be_false
+        @class.match?(relpath).should be_falsey
       end
     end
 
@@ -119,7 +119,7 @@ describe Puppet::Util::Log.desttypes[:syslog] do
     it "should not be a suitable log destination" do
       Puppet.features.stubs(:syslog?).returns(false)
 
-      klass.suitable?(:syslog).should be_false
+      klass.suitable?(:syslog).should be_falsey
     end
   end
 end
@@ -212,7 +212,7 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
   end
 
   it "supports the eventlog feature" do
-    expect(Puppet.features.eventlog?).to be_true
+    expect(Puppet.features.eventlog?).to be_truthy
   end
 
   it "logs to the Application event log" do

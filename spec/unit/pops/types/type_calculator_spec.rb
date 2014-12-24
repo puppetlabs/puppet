@@ -1302,9 +1302,9 @@ describe 'The type calculator' do
         params = [factory.PARAM('a')]
         the_block = factory.LAMBDA(params,factory.literal(42))
         the_closure = Puppet::Pops::Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
-        expect(calculator.instance?(all_callables_t, the_closure)).to be_true
-        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_true
-        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_false
+        expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
+        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
+        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_falsey
       end
 
       it 'a Function instance should be considered a Callable' do
@@ -1319,9 +1319,9 @@ describe 'The type calculator' do
         end
         f = fc.new(:closure_scope, :loader)
         # Any callable
-        expect(calculator.instance?(all_callables_t, f)).to be_true
+        expect(calculator.instance?(all_callables_t, f)).to be_truthy
         # Callable[String]
-        expect(calculator.instance?(callable_t(String), f)).to be_true
+        expect(calculator.instance?(callable_t(String), f)).to be_truthy
       end
     end
   end

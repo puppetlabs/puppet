@@ -30,10 +30,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns []
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(nil).should be_true
+        prop.insync?(nil).should be_truthy
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(:absent).should be_true
+        prop.insync?(:absent).should be_truthy
       end
     end
   end
@@ -43,10 +43,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns ['a','b']
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(nil).should be_false
+        prop.insync?(nil).should be_falsey
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(:absent).should be_false
+        prop.insync?(:absent).should be_falsey
       end
     end
   end
@@ -56,10 +56,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns ['a','b']
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(['b', 'a']).should be_true
+        prop.insync?(['b', 'a']).should be_truthy
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(['a']).should be_false
+        prop.insync?(['a']).should be_falsey
       end
     end
   end

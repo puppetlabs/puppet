@@ -42,12 +42,12 @@ describe Puppet::Network::AuthConfig do
 
     it "creates rights with authentication set to true by default" do
       @authconfig.mk_acl(:acl => '/')
-      @authconfig.rights['/'].authentication.should be_true
+      @authconfig.rights['/'].authentication.should be_truthy
     end
 
     it "accepts an argument to set the authentication requirement" do
       @authconfig.mk_acl(:acl => '/', :authenticated => :any)
-      @authconfig.rights['/'].authentication.should be_false
+      @authconfig.rights['/'].authentication.should be_falsey
     end
   end
 
@@ -76,7 +76,7 @@ describe Puppet::Network::AuthConfig do
 
       @authconfig.insert_default_acl
       @authconfig.rights['/'].should be_empty
-      @authconfig.rights['/'].authentication.should be_false
+      @authconfig.rights['/'].authentication.should be_falsey
     end
 
     it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do

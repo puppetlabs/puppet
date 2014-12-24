@@ -488,17 +488,17 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should match if the weekday is 'Mon'" do
       @schedule[:weekday] = "Mon"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should not match if the weekday is Tuesday" do
@@ -508,7 +508,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if weekday is ['Sun', 'Mon']" do
       @schedule[:weekday] = ["Sun", "Mon"]
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should not match if weekday is ['Sun', 'Tue']" do
@@ -518,17 +518,17 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should match if the weekday is 'Mon'" do
       @schedule[:weekday] = "Mon"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
 
     it "should not match if the weekday is Tuesday" do
@@ -538,7 +538,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if weekday is ['Sun', 'Mon']" do
       @schedule[:weekday] = ["Sun", "Mon"]
-      @schedule.match?.should be_true
+      @schedule.match?.should be_truthy
     end
   end
 

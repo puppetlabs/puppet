@@ -79,14 +79,14 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         default
       end
-      action.default.should be_true
+      action.default.should be_truthy
     end
 
     it "should not be default by, er, default. *cough*" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
         when_invoked do |options| true end
       end
-      action.default.should be_false
+      action.default.should be_falsey
     end
   end
 

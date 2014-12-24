@@ -23,11 +23,11 @@ describe Puppet::Confine::False do
     end
 
     it "should return true if the value is false" do
-      @confine.pass?(false).should be_true
+      @confine.pass?(false).should be_truthy
     end
 
     it "should return false if the value is not false" do
-      @confine.pass?("else").should be_false
+      @confine.pass?("else").should be_falsey
     end
 
     it "should produce a message that a value is true" do

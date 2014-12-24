@@ -30,15 +30,15 @@ describe Puppet::Type.type(:file).attrclass(:group) do
     end
 
     it "should use the id for comparisons, not the name" do
-      group.insync?('foos').should be_false
+      group.insync?('foos').should be_falsey
     end
 
     it "should return true if the current group is one of the desired group" do
-      group.insync?(1001).should be_true
+      group.insync?(1001).should be_truthy
     end
 
     it "should return false if the current group is not one of the desired group" do
-      group.insync?(1003).should be_false
+      group.insync?(1003).should be_falsey
     end
   end
 

@@ -144,7 +144,7 @@ describe Puppet::Property do
       collection = mock()
       collection.expects(:match?).with("foo").returns(foo)
       property.class.stubs(:value_collection).returns(collection)
-      property.event.invalidate_refreshes.should be_true
+      property.event.invalidate_refreshes.should be_truthy
     end
   end
 
@@ -496,16 +496,16 @@ describe Puppet::Property do
   describe "#property_matches?" do
     [1, "1", [1], :one].each do |input|
       it "should treat two equal objects as equal (#{input.inspect})" do
-        property.property_matches?(input, input).should be_true
+        property.property_matches?(input, input).should be_truthy
       end
     end
 
     it "should treat two objects as equal if the first argument is the stringified version of the second" do
-      property.property_matches?("1", 1).should be_true
+      property.property_matches?("1", 1).should be_truthy
     end
 
     it "should NOT treat two objects as equal if the first argument is not a string, and the second argument is a string, even if it stringifies to the first" do
-      property.property_matches?(1, "1").should be_false
+      property.property_matches?(1, "1").should be_falsey
     end
   end
 end

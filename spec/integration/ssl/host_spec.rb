@@ -68,7 +68,7 @@ describe Puppet::SSL::Host do
       @ca = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
       @ca.generate_key
 
-      Puppet::FileSystem.exist?(File.join(Puppet[:privatekeydir], "ca.pem")).should be_false
+      Puppet::FileSystem.exist?(File.join(Puppet[:privatekeydir], "ca.pem")).should be_falsey
     end
   end
 
@@ -77,6 +77,6 @@ describe Puppet::SSL::Host do
     @ca = Puppet::SSL::CertificateAuthority.new
     @ca.sign(@host.name)
 
-    @host.ssl_store.verify(@host.certificate.content).should be_true
+    @host.ssl_store.verify(@host.certificate.content).should be_truthy
   end
 end

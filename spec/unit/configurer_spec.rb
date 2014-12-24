@@ -35,7 +35,7 @@ describe Puppet::Configurer do
       Puppet.settings[:prerun_command] = "/my/command"
       Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
-      @agent.execute_prerun_command.should be_false
+      @agent.execute_prerun_command.should be_falsey
     end
   end
 
@@ -58,7 +58,7 @@ describe Puppet::Configurer do
       Puppet.settings[:postrun_command] = "/my/command"
       Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
-      @agent.execute_postrun_command.should be_false
+      @agent.execute_postrun_command.should be_falsey
     end
   end
 
@@ -482,7 +482,7 @@ describe Puppet::Configurer do
 
     it "should write the last run file" do
       @configurer.save_last_run_summary(@report)
-      Puppet::FileSystem.exist?(Puppet[:lastrunfile]).should be_true
+      Puppet::FileSystem.exist?(Puppet[:lastrunfile]).should be_truthy
     end
 
     it "should write the raw summary as yaml" do

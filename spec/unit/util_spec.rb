@@ -441,7 +441,7 @@ describe Puppet::Util do
         get_mode(fh.path).should == 0555
         yielded = true
       end
-      yielded.should be_true
+      yielded.should be_truthy
 
       Puppet::FileSystem.stat(target.path).ino.should_not == inode
       get_mode(target.path).should == 0555
@@ -449,7 +449,7 @@ describe Puppet::Util do
 
     it "should use the default permissions if the source file doesn't exist" do
       new_target = target.path + '.foo'
-      Puppet::FileSystem.exist?(new_target).should be_false
+      Puppet::FileSystem.exist?(new_target).should be_falsey
 
       begin
         subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
@@ -477,8 +477,8 @@ describe Puppet::Util do
         end
       end
 
-      yielded.should be_true
-      threw.should be_true
+      yielded.should be_truthy
+      threw.should be_truthy
 
       # ...and check the replacement was complete.
       File.read(target.path).should == "hello, world\n"
@@ -487,7 +487,7 @@ describe Puppet::Util do
     {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
       it "should support #{label} format permissions" do
         new_target = target.path + "#{mode}.foo"
-        Puppet::FileSystem.exist?(new_target).should be_false
+        Puppet::FileSystem.exist?(new_target).should be_falsey
 
         begin
           subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }

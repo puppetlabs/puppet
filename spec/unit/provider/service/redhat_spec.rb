@@ -27,7 +27,7 @@ describe provider_class, :if => Puppet.features.posix? do
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
-      provider_class.default?.should be_true
+      provider_class.default?.should be_truthy
     end
   end
 

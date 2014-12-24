@@ -88,31 +88,31 @@ describe Puppet::Network::Rights do
 
   describe "when checking ACLs existence" do
     it "should return false if there are no matching rights" do
-      @right.include?("name").should be_false
+      @right.include?("name").should be_falsey
     end
 
     it "should return true if a path right exists" do
       @right.newright("/name")
 
-      @right.include?("/name").should be_true
+      @right.include?("/name").should be_truthy
     end
 
     it "should return false if no matching path rights exist" do
       @right.newright("/name")
 
-      @right.include?("/differentname").should be_false
+      @right.include?("/differentname").should be_falsey
     end
 
     it "should return true if a regex right exists" do
       @right.newright("~ .rb$")
 
-      @right.include?(".rb$").should be_true
+      @right.include?(".rb$").should be_truthy
     end
 
     it "should return false if no matching path rights exist" do
       @right.newright("~ .rb$")
 
-      @right.include?(".pp$").should be_false
+      @right.include?(".pp$").should be_falsey
     end
   end
 
@@ -132,12 +132,12 @@ describe Puppet::Network::Rights do
 
     it "should return true if is_forbidden_and_why? returns nil" do
       @right.stubs(:is_forbidden_and_why?).returns(nil)
-      @right.allowed?("namespace", :args).should be_true
+      @right.allowed?("namespace", :args).should be_truthy
     end
 
     it "should return false if is_forbidden_and_why? returns an AuthorizationError" do
       @right.stubs(:is_forbidden_and_why?).returns(Puppet::Network::AuthorizationError.new("forbidden"))
-      @right.allowed?("namespace", :args1, :args2).should be_false
+      @right.allowed?("namespace", :args1, :args2).should be_falsey
     end
 
     it "should pass the match? return to allowed?" do
@@ -332,7 +332,7 @@ describe Puppet::Network::Rights do
     end
 
     it "should allow only authenticated request by default" do
-      @acl.authentication.should be_true
+      @acl.authentication.should be_truthy
     end
 
     it "should allow modification of the methods filters" do
@@ -367,14 +367,14 @@ describe Puppet::Network::Rights do
       it "should allow filtering on authenticated requests with '#{auth}'" do
         @acl.restrict_authenticated(auth)
 
-        @acl.authentication.should be_true
+        @acl.authentication.should be_truthy
       end
     end
 
     ["off", "no", "false", false, "all", "any", :all, :any].each do |auth|
       it "should allow filtering on authenticated or unauthenticated requests with '#{auth}'" do
         @acl.restrict_authenticated(auth)
-        @acl.authentication.should be_false
+        @acl.authentication.should be_falsey
       end
     end
 

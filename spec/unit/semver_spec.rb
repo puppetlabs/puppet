@@ -10,19 +10,19 @@ describe SemVer do
   describe '::valid?' do
     it 'should validate basic version strings' do
       %w[ 0.0.0 999.999.999 v0.0.0 v999.999.999 ].each do |vstring|
-        SemVer.valid?(vstring).should be_true
+        SemVer.valid?(vstring).should be_truthy
       end
     end
 
     it 'should validate special version strings' do
       %w[ 0.0.0-foo 999.999.999-bar v0.0.0-a v999.999.999-beta ].each do |vstring|
-        SemVer.valid?(vstring).should be_true
+        SemVer.valid?(vstring).should be_truthy
       end
     end
 
     it 'should fail to validate invalid version strings' do
       %w[ nope 0.0foo 999.999 x0.0.0 z.z.z 1.2.3beta 1.x.y ].each do |vstring|
-        SemVer.valid?(vstring).should be_false
+        SemVer.valid?(vstring).should be_falsey
       end
     end
   end

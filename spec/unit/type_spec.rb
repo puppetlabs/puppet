@@ -252,15 +252,15 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     describe "when determining if instances of the type are managed" do
       it "should not consider audit only resources to be managed" do
-        @type.new(:name => "foo", :audit => 'all').managed?.should be_false
+        @type.new(:name => "foo", :audit => 'all').managed?.should be_falsey
       end
 
       it "should not consider resources with only parameters to be managed" do
-        @type.new(:name => "foo", :foo => 'did someone say food?').managed?.should be_false
+        @type.new(:name => "foo", :foo => 'did someone say food?').managed?.should be_falsey
       end
 
       it "should consider resources with any properties set to be managed" do
-        @type.new(:name => "foo", :bar => 'Let us all go there').managed?.should be_true
+        @type.new(:name => "foo", :bar => 'Let us all go there').managed?.should be_truthy
       end
     end
 
@@ -389,7 +389,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
         dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
 
-        relationship_graph.edge?(src,dst).should be_true
+        relationship_graph.edge?(src,dst).should be_truthy
         relationship_graph.edges_between(src,dst).first.event.should == :NONE
       end
 
@@ -407,7 +407,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
         dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
 
-        relationship_graph.edge?(src,dst).should be_true
+        relationship_graph.edge?(src,dst).should be_truthy
         relationship_graph.edges_between(src,dst).first.event.should == :ALL_EVENTS
       end
 
@@ -425,7 +425,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
         dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
 
-        relationship_graph.edge?(src,dst).should be_true
+        relationship_graph.edge?(src,dst).should be_truthy
         relationship_graph.edges_between(src,dst).first.event.should == :NONE
       end
 
@@ -443,7 +443,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
         dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
 
-        relationship_graph.edge?(src,dst).should be_true
+        relationship_graph.edge?(src,dst).should be_truthy
         relationship_graph.edges_between(src,dst).first.event.should == :ALL_EVENTS
       end
     end
@@ -762,7 +762,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
       # If it's not a property it's a parameter
       type_resource.parameters[:remounts].should_not be_a(Puppet::Property)
-      type_resource.parameters[:fstype].is_a?(Puppet::Property).should be_true
+      type_resource.parameters[:fstype].is_a?(Puppet::Property).should be_truthy
 
       type_resource.property(:ensure).expects(:retrieve).returns :present
       type_resource.property(:fstype).expects(:retrieve).returns 15
@@ -1124,7 +1124,7 @@ describe Puppet::Type.metaparamclass(:audit) do
       expect { instance[:property] = true }.to_not raise_error
       expect { instance["property"] = true }.to_not raise_error
       instance.property(:property).must be
-      instance.should(:property).must be_true
+      instance.should(:property).must be_truthy
     end
 
     it "should handle proprieties correctly" do

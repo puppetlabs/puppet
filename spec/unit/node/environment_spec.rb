@@ -475,7 +475,7 @@ describe Puppet::Node::Environment do
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)
-        expect(env.known_resource_types.parse_failed?).to be_true
+        expect(env.known_resource_types.parse_failed?).to be_truthy
       end
     end
   end

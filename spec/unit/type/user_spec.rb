@@ -57,7 +57,7 @@ describe Puppet::Type.type(:user) do
     let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
 
     it "defaults to false" do
-      instance[:managehome].should be_false
+      instance[:managehome].should be_falsey
     end
 
     it "can be set to false" do

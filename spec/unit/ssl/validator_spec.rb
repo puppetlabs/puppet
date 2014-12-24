@@ -131,7 +131,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       context 'and the chain is valid' do
         it 'is true for each CA certificate in the chain' do
           (cert_chain.length - 1).times do
-            subject.call(true, ssl_context).should be_true
+            subject.call(true, ssl_context).should be_truthy
           end
         end
 
@@ -139,7 +139,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context)
           end
-          subject.call(true, ssl_context).should be_true
+          subject.call(true, ssl_context).should be_truthy
         end
       end
 
@@ -152,7 +152,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
         it 'is true for each CA certificate in the chain' do
           (cert_chain.length - 1).times do
-            subject.call(true, ssl_context).should be_true
+            subject.call(true, ssl_context).should be_truthy
           end
         end
 
@@ -160,7 +160,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context)
           end
-          subject.call(true, ssl_context).should be_false
+          subject.call(true, ssl_context).should be_falsey
         end
       end
 
@@ -170,7 +170,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
         end
 
         it 'is false' do
-          subject.call(true, ssl_context).should be_false
+          subject.call(true, ssl_context).should be_falsey
         end
 
         it 'makes the error available through #verify_errors' do
@@ -220,7 +220,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       end
 
       it 'is true' do
-        subject.valid_peer?.should be_true
+        subject.valid_peer?.should be_truthy
       end
     end
 
@@ -230,7 +230,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       end
 
       it 'is false' do
-        subject.valid_peer?.should be_false
+        subject.valid_peer?.should be_falsey
       end
 
       it 'makes a helpful error message available via #verify_errors' do
@@ -243,31 +243,31 @@ describe Puppet::SSL::Validator::DefaultValidator do
   describe '#has_authz_peer_cert' do
     context 'when the Root CA is listed as authorized' do
       it 'returns true when the SSL cert is issued by the Master CA' do
-        subject.has_authz_peer_cert(cert_chain, [root_ca_cert]).should be_true
+        subject.has_authz_peer_cert(cert_chain, [root_ca_cert]).should be_truthy
       end
 
       it 'returns true when the SSL cert is issued by the Agent CA' do
-        subject.has_authz_peer_cert(cert_chain_agent_ca, [root_ca_cert]).should be_true
+        subject.has_authz_peer_cert(cert_chain_agent_ca, [root_ca_cert]).should be_truthy
       end
     end
 
     context 'when the Master CA is listed as authorized' do
       it 'returns false when the SSL cert is issued by the Master CA' do
-        subject.has_authz_peer_cert(cert_chain, [master_ca_cert]).should be_true
+        subject.has_authz_peer_cert(cert_chain, [master_ca_cert]).should be_truthy
       end
 
       it 'returns true when the SSL cert is issued by the Agent CA' do
-        subject.has_authz_peer_cert(cert_chain_agent_ca, [master_ca_cert]).should be_false
+        subject.has_authz_peer_cert(cert_chain_agent_ca, [master_ca_cert]).should be_falsey
       end
     end
 
     context 'when the Agent CA is listed as authorized' do
       it 'returns true when the SSL cert is issued by the Master CA' do
-        subject.has_authz_peer_cert(cert_chain, [agent_ca_cert]).should be_false
+        subject.has_authz_peer_cert(cert_chain, [agent_ca_cert]).should be_falsey
       end
 
       it 'returns true when the SSL cert is issued by the Agent CA' do
-        subject.has_authz_peer_cert(cert_chain_agent_ca, [agent_ca_cert]).should be_true
+        subject.has_authz_peer_cert(cert_chain_agent_ca, [agent_ca_cert]).should be_truthy
       end
     end
   end
