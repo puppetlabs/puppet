@@ -20,7 +20,7 @@ module Matchers; module Include
       @not_matched.empty? && enumerable.empty?
     end
 
-    failure_message_for_should do |enumerable|
+    failure_message do |enumerable|
       "did not match #{@not_matched.collect(&:description).join(', ')} in #{enumerable.inspect}: <#{@not_matched.collect(&:failure_message_for_should).join('>, <')}>"
     end
   end

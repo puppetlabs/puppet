@@ -7,12 +7,12 @@ describe Puppet::Property::Boolean do
 
   [ true, :true, 'true', :yes, 'yes', 'TrUe', 'yEs' ].each do |arg|
     it "should munge #{arg.inspect} as true" do
-      subject.munge(arg).should == true
+      expect(subject.munge(arg)).to eq(true)
     end
   end
   [ false, :false, 'false', :no, 'no', 'FaLSE', 'nO' ].each do |arg|
     it "should munge #{arg.inspect} as false" do
-      subject.munge(arg).should == false
+      expect(subject.munge(arg)).to eq(false)
     end
   end
   [ nil, :undef, 'undef', '0', 0, '1', 1, 9284 ].each do |arg|

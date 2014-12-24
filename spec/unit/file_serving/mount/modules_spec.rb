@@ -35,7 +35,7 @@ describe Puppet::FileServing::Mount::Modules do
       mod = mock 'module'
       mod.expects(:file).with("bar/baz").returns "eh"
       @environment.expects(:module).with("foo").returns mod
-      @mount.find("foo/bar/baz", @request).should == "eh"
+      expect(@mount.find("foo/bar/baz", @request)).to eq("eh")
     end
   end
 
@@ -64,7 +64,7 @@ describe Puppet::FileServing::Mount::Modules do
       mod = mock 'module'
       mod.expects(:file).with("bar/baz").returns "eh"
       @environment.expects(:module).with("foo").returns mod
-      @mount.search("foo/bar/baz", @request).should == ["eh"]
+      expect(@mount.search("foo/bar/baz", @request)).to eq(["eh"])
     end
   end
 end

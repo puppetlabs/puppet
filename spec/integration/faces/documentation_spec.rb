@@ -6,8 +6,8 @@ describe "documentation of faces" do
   it "should generate global help" do
     help = nil
     expect { help = Puppet::Face[:help, :current].help }.not_to raise_error
-    help.should be_an_instance_of String
-    help.length.should be > 200
+    expect(help).to be_an_instance_of String
+    expect(help.length).to be > 200
   end
 
   ########################################################################
@@ -24,8 +24,8 @@ describe "documentation of faces" do
         it "for #{face_name}" do
           expect {
             text = help.help(face_name)
-            text.should be_an_instance_of String
-            text.length.should be > 100
+            expect(text).to be_an_instance_of String
+            expect(text.length).to be > 100
           }.not_to raise_error
         end
 
@@ -33,8 +33,8 @@ describe "documentation of faces" do
           it "for #{face_name}.#{action_name}" do
             expect {
               text = help.help(face_name, action_name)
-              text.should be_an_instance_of String
-              text.length.should be > 100
+              expect(text).to be_an_instance_of String
+              expect(text.length).to be > 100
             }.not_to raise_error
           end
         end

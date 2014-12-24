@@ -31,14 +31,14 @@ describe Puppet::Transaction do
     transaction = transaction_with_resource(resource)
     transaction.evaluate
 
-    transaction.resource_status(resource.to_s).should be_changed
+    expect(transaction.resource_status(resource.to_s)).to be_changed
   end
 
   # This will basically only ever be used during testing.
   it "should automatically create resource statuses if asked for a non-existent status" do
     resource = Puppet::Type.type(:notify).new :title => "foobar"
     transaction = transaction_with_resource(resource)
-    transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
+    expect(transaction.resource_status(resource)).to be_instance_of(Puppet::Resource::Status)
   end
 
   it "should add provided resource statuses to its report" do
@@ -47,7 +47,7 @@ describe Puppet::Transaction do
     transaction.evaluate
 
     status = transaction.resource_status(resource)
-    transaction.report.resource_statuses[resource.to_s].should equal(status)
+    expect(transaction.report.resource_statuses[resource.to_s]).to equal(status)
   end
 
   it "should not consider there to be failed resources if no statuses are marked failed" do
@@ -55,33 +55,33 @@ describe Puppet::Transaction do
     transaction = transaction_with_resource(resource)
     transaction.evaluate
 
-    transaction.should_not be_any_failed
+    expect(transaction).not_to be_any_failed
   end
 
   it "should use the provided report object" do
     report = Puppet::Transaction::Report.new("apply")
     transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, report, nil)
 
-    transaction.report.should == report
+    expect(transaction.report).to eq(report)
   end
 
   it "should create a report if none is provided" do
     transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
 
-    transaction.report.should be_kind_of Puppet::Transaction::Report
+    expect(transaction.report).to be_kind_of Puppet::Transaction::Report
   end
 
   describe "when initializing" do
     it "should create an event manager" do
       transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
-      transaction.event_manager.transaction.should equal(transaction)
+      expect(transaction.event_manager).to be_instance_of(Puppet::Transaction::EventManager)
+      expect(transaction.event_manager.transaction).to equal(transaction)
     end
 
     it "should create a resource harness" do
       transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
-      transaction.resource_harness.transaction.should equal(transaction)
+      expect(transaction.resource_harness).to be_instance_of(Puppet::Transaction::ResourceHarness)
+      expect(transaction.resource_harness.transaction).to equal(transaction)
     end
 
     it "should set retrieval time on the report" do
@@ -114,7 +114,7 @@ describe Puppet::Transaction do
         transaction.expects(:skip?).with(resource).returns true
 
         transaction.evaluate
-        transaction.resource_status(resource).should be_skipped
+        expect(transaction.resource_status(resource)).to be_skipped
       end
 
       it "does not process any scheduled events" do
@@ -152,7 +152,7 @@ describe Puppet::Transaction do
     it "should add the resulting resource status to its status list" do
       @transaction.resource_harness.stubs(:evaluate).returns(@status)
       @transaction.evaluate
-      @transaction.resource_status(@resource).should be_instance_of(Puppet::Resource::Status)
+      expect(@transaction.resource_status(@resource)).to be_instance_of(Puppet::Resource::Status)
     end
 
     it "should queue any events added to the resource status" do
@@ -165,7 +165,7 @@ describe Puppet::Transaction do
     it "should log and skip any resources that cannot be applied" do
       @resource.expects(:properties).raises ArgumentError
       @transaction.evaluate
-      @transaction.report.resource_statuses[@resource.to_s].should be_failed
+      expect(@transaction.report.resource_statuses[@resource.to_s]).to be_failed
     end
 
     it "should report any_failed if any resources failed" do
@@ -190,7 +190,7 @@ describe Puppet::Transaction do
 
       graph.unblock(resource)
 
-      graph.blockers[resource].should == 2
+      expect(graph.blockers[resource]).to eq(2)
     end
 
     it "should decrement the number of blockers if there are any" do
@@ -198,7 +198,7 @@ describe Puppet::Transaction do
 
       graph.unblock(resource)
 
-      graph.blockers[resource].should == 39
+      expect(graph.blockers[resource]).to eq(39)
     end
 
     it "should warn if there are no blockers" do
@@ -212,13 +212,13 @@ describe Puppet::Transaction do
     it "should return true if the resource is now unblocked" do
       graph.blockers[resource] = 1
 
-      graph.unblock(resource).should == true
+      expect(graph.unblock(resource)).to eq(true)
     end
 
     it "should return false if the resource is still blocked" do
       graph.blockers[resource] = 2
 
-      graph.unblock(resource).should == false
+      expect(graph.unblock(resource)).to eq(false)
     end
   end
 
@@ -238,7 +238,7 @@ describe Puppet::Transaction do
         yielded = true if res == resource
       end
 
-      yielded.should == true
+      expect(yielded).to eq(true)
     end
 
     it "should prefetch the provider if necessary" do
@@ -283,8 +283,8 @@ describe Puppet::Transaction do
       end
 
       # We should have gone on to evaluate the children
-      evaluated.should == [dependent]
-      @transaction.resource_status(resource).should be_failed
+      expect(evaluated).to eq([dependent])
+      expect(@transaction.resource_status(resource)).to be_failed
     end
   end
 
@@ -362,57 +362,57 @@ describe Puppet::Transaction do
 
     it "should skip resource with missing tags" do
       @transaction.stubs(:missing_tags?).returns(true)
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should skip unscheduled resources" do
       @transaction.stubs(:scheduled?).returns(false)
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should skip resources with failed dependencies" do
       @transaction.stubs(:failed_dependencies?).returns(true)
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should skip virtual resource" do
       @resource.stubs(:virtual?).returns true
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should skip device only resouce on normal host" do
       @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = false
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should not skip device only resouce on remote device" do
       @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = true
-      @transaction.should_not be_skip(@resource)
+      expect(@transaction).not_to be_skip(@resource)
     end
 
     it "should skip host resouce on device" do
       @resource.stubs(:appliable_to_host?).returns true
       @resource.stubs(:appliable_to_device?).returns false
       @transaction.for_network_device = true
-      @transaction.should be_skip(@resource)
+      expect(@transaction).to be_skip(@resource)
     end
 
     it "should not skip resouce available on both device and host when on device" do
       @resource.stubs(:appliable_to_host?).returns true
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = true
-      @transaction.should_not be_skip(@resource)
+      expect(@transaction).not_to be_skip(@resource)
     end
 
     it "should not skip resouce available on both device and host when on host" do
       @resource.stubs(:appliable_to_host?).returns true
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = false
-      @transaction.should_not be_skip(@resource)
+      expect(@transaction).not_to be_skip(@resource)
     end
   end
 
@@ -431,19 +431,19 @@ describe Puppet::Transaction do
 
       @resource.expects(:tagged?).never
 
-      @transaction.should_not be_missing_tags(@resource)
+      expect(@transaction).not_to be_missing_tags(@resource)
     end
 
     it "should not be missing tags if the transaction tags are empty" do
       @transaction.tags = []
       @resource.expects(:tagged?).never
-      @transaction.should_not be_missing_tags(@resource)
+      expect(@transaction).not_to be_missing_tags(@resource)
     end
 
     it "should otherwise let the resource determine if it is missing tags" do
       tags = ['one', 'two']
       @transaction.tags = tags
-      @transaction.should be_missing_tags(@resource)
+      expect(@transaction).to be_missing_tags(@resource)
     end
   end
 
@@ -460,7 +460,7 @@ describe Puppet::Transaction do
       @transaction.resource_harness.expects(:scheduled?).never
 
       @transaction.evaluate
-      @transaction.resource_status(@resource).should be_changed
+      expect(@transaction.resource_status(@resource)).to be_changed
     end
 
     it "should let the resource harness determine whether the resource should be scheduled" do
@@ -500,7 +500,7 @@ describe Puppet::Transaction do
 
       transaction.prefetch_if_necessary(resource)
 
-      transaction.prefetched_providers[:sshkey][:parsed].should be_truthy
+      expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
     end
 
     it "should prefetch resources without a provider if prefetching the default provider" do
@@ -596,18 +596,18 @@ describe Puppet::Transaction do
       end
 
       it 'should return true for :stop_processing?' do
-        @transaction.should be_stop_processing
+        expect(@transaction).to be_stop_processing
       end
 
       it 'always evaluates non-host_config catalogs' do
         @catalog.host_config = false
-        @transaction.should_not be_stop_processing
+        expect(@transaction).not_to be_stop_processing
       end
     end
 
     it 'should return false for :stop_processing? if Puppet::Application.stop_requested? is false' do
       Puppet::Application.stubs(:stop_requested?).returns(false)
-      @transaction.stop_processing?.should be_falsey
+      expect(@transaction.stop_processing?).to be_falsey
     end
 
     describe 'within an evaluate call' do
@@ -673,8 +673,8 @@ describe Puppet::Transaction do
   it "reports a changed resource with a successful run" do
     transaction = apply_compiled_manifest("notify { one: }")
 
-    transaction.report.status.should == 'changed'
-    transaction.report.resource_statuses['Notify[one]'].should be_changed
+    expect(transaction.report.status).to eq('changed')
+    expect(transaction.report.resource_statuses['Notify[one]']).to be_changed
   end
 
   describe "when interrupted" do
@@ -686,8 +686,8 @@ describe Puppet::Transaction do
         notify { b: }
       MANIFEST
 
-      transaction.report.resource_statuses['Notify[a]'].should be_skipped
-      transaction.report.resource_statuses['Notify[b]'].should be_skipped
+      expect(transaction.report.resource_statuses['Notify[a]']).to be_skipped
+      expect(transaction.report.resource_statuses['Notify[b]']).to be_skipped
     end
   end
 end
@@ -700,37 +700,37 @@ describe Puppet::Transaction, " when determining tags" do
 
   it "should default to the tags specified in the :tags setting" do
     Puppet[:tags] = "one"
-    @transaction.should be_tagged("one")
+    expect(@transaction).to be_tagged("one")
   end
 
   it "should split tags based on ','" do
     Puppet[:tags] = "one,two"
-    @transaction.should be_tagged("one")
-    @transaction.should be_tagged("two")
+    expect(@transaction).to be_tagged("one")
+    expect(@transaction).to be_tagged("two")
   end
 
   it "should use any tags set after creation" do
     Puppet[:tags] = ""
     @transaction.tags = %w{one two}
-    @transaction.should be_tagged("one")
-    @transaction.should be_tagged("two")
+    expect(@transaction).to be_tagged("one")
+    expect(@transaction).to be_tagged("two")
   end
 
   it "should always convert assigned tags to an array" do
     @transaction.tags = "one::two"
-    @transaction.should be_tagged("one::two")
+    expect(@transaction).to be_tagged("one::two")
   end
 
   it "should accept a comma-delimited string" do
     @transaction.tags = "one, two"
-    @transaction.should be_tagged("one")
-    @transaction.should be_tagged("two")
+    expect(@transaction).to be_tagged("one")
+    expect(@transaction).to be_tagged("two")
   end
 
   it "should accept an empty string" do
     @transaction.tags = "one, two"
-    @transaction.should be_tagged("one")
+    expect(@transaction).to be_tagged("one")
     @transaction.tags = ""
-    @transaction.should_not be_tagged("one")
+    expect(@transaction).not_to be_tagged("one")
   end
 end

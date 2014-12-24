@@ -15,7 +15,7 @@ describe Puppet::Node::Environment do
 
   context 'the environment' do
     it "converts an environment to string when converting to YAML" do
-      env.to_yaml.should match(/--- testing/)
+      expect(env.to_yaml).to match(/--- testing/)
     end
 
     describe ".create" do

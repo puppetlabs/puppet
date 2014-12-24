@@ -12,14 +12,14 @@ describe Puppet::ModuleTool do
       FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
         returns(true)
 
-      subject.is_module_root?(Pathname.new('/a/b/c')).should be_truthy
+      expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_truthy
     end
 
     it 'should return true if directory has a metadata.json file' do
       FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
         returns(true)
 
-      subject.is_module_root?(Pathname.new('/a/b/c')).should be_truthy
+      expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_truthy
     end
 
     it 'should return false if directory does not have a metadata.json or a Modulefile file' do
@@ -28,7 +28,7 @@ describe Puppet::ModuleTool do
       FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
         returns(false)
 
-      subject.is_module_root?(Pathname.new('/a/b/c')).should be_falsey
+      expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_falsey
     end
   end
 
@@ -39,7 +39,7 @@ describe Puppet::ModuleTool do
       Puppet::ModuleTool.expects(:is_module_root?).with(sample_path).
         returns(true)
 
-      subject.find_module_root(sample_path).should == sample_path
+      expect(subject.find_module_root(sample_path)).to eq(sample_path)
     end
 
     it 'should return a parent path as a pathname when it contains a module file' do
@@ -48,23 +48,23 @@ describe Puppet::ModuleTool do
       Puppet::ModuleTool.expects(:is_module_root?).
         with(responds_with(:to_s, File.expand_path('/a/b'))).returns(true)
 
-      subject.find_module_root(sample_path).should == Pathname.new('/a/b').expand_path
+      expect(subject.find_module_root(sample_path)).to eq(Pathname.new('/a/b').expand_path)
     end
 
     it 'should return nil when no module root can be found' do
       Puppet::ModuleTool.expects(:is_module_root?).at_least_once.returns(false)
-      subject.find_module_root(sample_path).should be_nil
+      expect(subject.find_module_root(sample_path)).to be_nil
     end
   end
 
   describe '.format_tree' do
     it 'should return an empty tree when given an empty list' do
-      subject.format_tree([]).should == ''
+      expect(subject.format_tree([])).to eq('')
     end
 
     it 'should return a shallow when given a list without dependencies' do
       list = [ { :text => 'first' }, { :text => 'second' }, { :text => 'third' } ]
-      subject.format_tree(list).should == <<-TREE
+      expect(subject.format_tree(list)).to eq <<-TREE
 ├── first
 ├── second
 └── third
@@ -85,7 +85,7 @@ TREE
           ]
         },
       ]
-      subject.format_tree(list).should == <<-TREE
+      expect(subject.format_tree(list)).to eq <<-TREE
 └─┬ first
   └─┬ second
     └── third
@@ -107,7 +107,7 @@ TREE
         },
         { :text => 'fourth' }
       ]
-      subject.format_tree(list).should == <<-TREE
+      expect(subject.format_tree(list)).to eq <<-TREE
 ├─┬ first
 │ └─┬ second
 │   └── third
@@ -130,7 +130,7 @@ TREE
           ]
         }
       ]
-      subject.format_tree(list).should == <<-TREE
+      expect(subject.format_tree(list)).to eq <<-TREE
 └─┬ first
   ├─┬ second
   │ └── third
@@ -154,7 +154,7 @@ TREE
         },
         { :text => 'fifth' }
       ]
-      subject.format_tree(list).should == <<-TREE
+      expect(subject.format_tree(list)).to eq <<-TREE
 ├─┬ first
 │ ├─┬ second
 │ │ └── third

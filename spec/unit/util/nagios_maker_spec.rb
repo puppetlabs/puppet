@@ -15,13 +15,13 @@ describe Puppet::Util::NagiosMaker do
   end
 
   it "should be able to create a new nagios type" do
-    @module.should respond_to(:create_nagios_type)
+    expect(@module).to respond_to(:create_nagios_type)
   end
 
   it "should fail if it cannot find the named Naginator type" do
     Nagios::Base.stubs(:type).returns(nil)
 
-    lambda { @module.create_nagios_type(:no_such_type) }.should raise_error(Puppet::DevError)
+    expect { @module.create_nagios_type(:no_such_type) }.to raise_error(Puppet::DevError)
   end
 
   it "should create a new RAL type with the provided name prefixed with 'nagios_'" do

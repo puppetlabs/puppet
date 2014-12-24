@@ -32,8 +32,8 @@ describe Puppet::Node::Environment do
     environment = Puppet::Node::Environment.create(:foo, dirs)
 
     environment.modules.each do |mod|
-      mod.environment.should == environment
-      mod.path.should == mods[mod.name]
+      expect(mod.environment).to eq(environment)
+      expect(mod.path).to eq(mods[mod.name])
     end
   end
 
@@ -52,8 +52,8 @@ describe Puppet::Node::Environment do
     environment = Puppet::Node::Environment.create(:foo, dirs)
 
     mods = environment.modules
-    mods.length.should == 1
-    mods[0].path.should == File.join(base, "dir1", "mod")
+    expect(mods.length).to eq(1)
+    expect(mods[0].path).to eq(File.join(base, "dir1", "mod"))
   end
 
   shared_examples_for "the environment's initial import" do |settings|

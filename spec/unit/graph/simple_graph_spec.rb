@@ -7,17 +7,17 @@ describe Puppet::Graph::SimpleGraph do
     @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_vertex("one")
     @graph.add_vertex("two")
-    @graph.size.should == 2
+    expect(@graph.size).to eq(2)
   end
 
   it "should consider itself a directed graph" do
-    Puppet::Graph::SimpleGraph.new.directed?.should be_truthy
+    expect(Puppet::Graph::SimpleGraph.new.directed?).to be_truthy
   end
 
   it "should provide a method for reversing the graph" do
     @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_edge(:one, :two)
-    @graph.reversal.edge?(:two, :one).should be_truthy
+    expect(@graph.reversal.edge?(:two, :one)).to be_truthy
   end
 
   it "should be able to produce a dot graph" do
@@ -41,13 +41,13 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should provide a method to add a vertex" do
       @graph.add_vertex(:test)
-      @graph.vertex?(:test).should be_truthy
+      expect(@graph.vertex?(:test)).to be_truthy
     end
 
     it "should reset its reversed graph when vertices are added" do
       rev = @graph.reversal
       @graph.add_vertex(:test)
-      @graph.reversal.should_not equal(rev)
+      expect(@graph.reversal).not_to equal(rev)
     end
 
     it "should ignore already-present vertices when asked to add a vertex" do
@@ -57,25 +57,25 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should return true when asked if a vertex is present" do
       @graph.add_vertex(:test)
-      @graph.vertex?(:test).should be_truthy
+      expect(@graph.vertex?(:test)).to be_truthy
     end
 
     it "should return false when asked if a non-vertex is present" do
-      @graph.vertex?(:test).should be_falsey
+      expect(@graph.vertex?(:test)).to be_falsey
     end
 
     it "should return all set vertices when asked" do
       @graph.add_vertex(:one)
       @graph.add_vertex(:two)
-      @graph.vertices.length.should == 2
-      @graph.vertices.should include(:one)
-      @graph.vertices.should include(:two)
+      expect(@graph.vertices.length).to eq(2)
+      expect(@graph.vertices).to include(:one)
+      expect(@graph.vertices).to include(:two)
     end
 
     it "should remove a given vertex when asked" do
       @graph.add_vertex(:one)
       @graph.remove_vertex!(:one)
-      @graph.vertex?(:one).should be_falsey
+      expect(@graph.vertex?(:one)).to be_falsey
     end
 
     it "should do nothing when a non-vertex is asked to be removed" do
@@ -89,47 +89,47 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should provide a method to test whether a given vertex pair is an edge" do
-      @graph.should respond_to(:edge?)
+      expect(@graph).to respond_to(:edge?)
     end
 
     it "should reset its reversed graph when edges are added" do
       rev = @graph.reversal
       @graph.add_edge(:one, :two)
-      @graph.reversal.should_not equal(rev)
+      expect(@graph.reversal).not_to equal(rev)
     end
 
     it "should provide a method to add an edge as an instance of the edge class" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.edge?(:one, :two).should be_truthy
+      expect(@graph.edge?(:one, :two)).to be_truthy
     end
 
     it "should provide a method to add an edge by specifying the two vertices" do
       @graph.add_edge(:one, :two)
-      @graph.edge?(:one, :two).should be_truthy
+      expect(@graph.edge?(:one, :two)).to be_truthy
     end
 
     it "should provide a method to add an edge by specifying the two vertices and a label" do
       @graph.add_edge(:one, :two, :callback => :awesome)
-      @graph.edge?(:one, :two).should be_truthy
+      expect(@graph.edge?(:one, :two)).to be_truthy
     end
 
     describe "when retrieving edges between two nodes" do
       it "should handle the case of nodes not in the graph" do
-        @graph.edges_between(:one, :two).should == []
+        expect(@graph.edges_between(:one, :two)).to eq([])
       end
 
       it "should handle the case of nodes with no edges between them" do
         @graph.add_vertex(:one)
         @graph.add_vertex(:two)
-        @graph.edges_between(:one, :two).should == []
+        expect(@graph.edges_between(:one, :two)).to eq([])
       end
 
       it "should handle the case of nodes connected by a single edge" do
         edge = Puppet::Relationship.new(:one, :two)
         @graph.add_edge(edge)
-        @graph.edges_between(:one, :two).length.should == 1
-        @graph.edges_between(:one, :two)[0].should equal(edge)
+        expect(@graph.edges_between(:one, :two).length).to eq(1)
+        expect(@graph.edges_between(:one, :two)[0]).to equal(edge)
       end
 
       it "should handle the case of nodes connected by multiple edges" do
@@ -137,20 +137,20 @@ describe Puppet::Graph::SimpleGraph do
         edge2 = Puppet::Relationship.new(:one, :two, :callback => :bar)
         @graph.add_edge(edge1)
         @graph.add_edge(edge2)
-        Set.new(@graph.edges_between(:one, :two)).should == Set.new([edge1, edge2])
+        expect(Set.new(@graph.edges_between(:one, :two))).to eq(Set.new([edge1, edge2]))
       end
     end
 
     it "should add the edge source as a vertex if it is not already" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.vertex?(:one).should be_truthy
+      expect(@graph.vertex?(:one)).to be_truthy
     end
 
     it "should add the edge target as a vertex if it is not already" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
-      @graph.vertex?(:two).should be_truthy
+      expect(@graph.vertex?(:two)).to be_truthy
     end
 
     it "should return all edges as edge instances when asked" do
@@ -159,17 +159,17 @@ describe Puppet::Graph::SimpleGraph do
       @graph.add_edge(one)
       @graph.add_edge(two)
       edges = @graph.edges
-      edges.should be_instance_of(Array)
-      edges.length.should == 2
-      edges.should include(one)
-      edges.should include(two)
+      expect(edges).to be_instance_of(Array)
+      expect(edges.length).to eq(2)
+      expect(edges).to include(one)
+      expect(edges).to include(two)
     end
 
     it "should remove an edge when asked" do
       edge = Puppet::Relationship.new(:one, :two)
       @graph.add_edge(edge)
       @graph.remove_edge!(edge)
-      @graph.edge?(edge.source, edge.target).should be_falsey
+      expect(@graph.edge?(edge.source, edge.target)).to be_falsey
     end
 
     it "should remove all related edges when a vertex is removed" do
@@ -178,9 +178,9 @@ describe Puppet::Graph::SimpleGraph do
       @graph.add_edge(one)
       @graph.add_edge(two)
       @graph.remove_vertex!(:two)
-      @graph.edge?(:one, :two).should be_falsey
-      @graph.edge?(:two, :three).should be_falsey
-      @graph.edges.length.should == 0
+      expect(@graph.edge?(:one, :two)).to be_falsey
+      expect(@graph.edge?(:two, :three)).to be_falsey
+      expect(@graph.edges.length).to eq(0)
     end
   end
 
@@ -197,24 +197,24 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should return adjacent vertices" do
       adj = @graph.adjacent(:one)
-      adj.should be_include(:three)
-      adj.should be_include(:two)
+      expect(adj).to be_include(:three)
+      expect(adj).to be_include(:two)
     end
 
     it "should default to finding :out vertices" do
-      @graph.adjacent(:two).should == [:three]
+      expect(@graph.adjacent(:two)).to eq([:three])
     end
 
     it "should support selecting :in vertices" do
-      @graph.adjacent(:two, :direction => :in).should == [:one]
+      expect(@graph.adjacent(:two, :direction => :in)).to eq([:one])
     end
 
     it "should default to returning the matching vertices as an array of vertices" do
-      @graph.adjacent(:two).should == [:three]
+      expect(@graph.adjacent(:two)).to eq([:three])
     end
 
     it "should support returning an array of matching edges" do
-      @graph.adjacent(:two, :type => :edges).should == [@two_three]
+      expect(@graph.adjacent(:two, :type => :edges)).to eq([@two_three])
     end
 
     # Bug #2111
@@ -223,7 +223,7 @@ describe Puppet::Graph::SimpleGraph do
       @graph.add_vertex("a")
       @graph.add_vertex("b")
       @graph.edge?("a", "b")
-      @graph.adjacent("a").should == []
+      expect(@graph.adjacent("a")).to eq([])
     end
   end
 
@@ -239,11 +239,11 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should remove all vertices" do
-      @graph.vertices.should be_empty
+      expect(@graph.vertices).to be_empty
     end
 
     it "should remove all edges" do
-      @graph.edges.should be_empty
+      expect(@graph.edges).to be_empty
     end
   end
 
@@ -254,19 +254,19 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should provide a method for reversing the graph" do
       @graph.add_edge(:one, :two)
-      @graph.reversal.edge?(:two, :one).should be_truthy
+      expect(@graph.reversal.edge?(:two, :one)).to be_truthy
     end
 
     it "should add all vertices to the reversed graph" do
       @graph.add_edge(:one, :two)
-      @graph.vertex?(:one).should be_truthy
-      @graph.vertex?(:two).should be_truthy
+      expect(@graph.vertex?(:one)).to be_truthy
+      expect(@graph.vertex?(:two)).to be_truthy
     end
 
     it "should retain labels on edges" do
       @graph.add_edge(:one, :two, :callback => :awesome)
       edge = @graph.reversal.edges_between(:two, :one)[0]
-      edge.label.should == {:callback => :awesome}
+      expect(edge.label).to eq({:callback => :awesome})
     end
   end
 
@@ -329,20 +329,20 @@ describe Puppet::Graph::SimpleGraph do
       add_edges "b" => "a"
       add_edges "b" => "c"
 
-      simplify(@graph.find_cycles_in_graph).should be == [["a", "b"]]
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([["a", "b"]])
     end
 
     it "cycle discovery handles a self-loop cycle" do
       add_edges :a => :a
 
-      simplify(@graph.find_cycles_in_graph).should be == [["a"]]
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([["a"]])
     end
 
     it "cycle discovery should handle two distinct cycles" do
       add_edges "a" => "a1", "a1" => "a"
       add_edges "b" => "b1", "b1" => "b"
 
-      simplify(@graph.find_cycles_in_graph).should be == [["a1", "a"], ["b1", "b"]]
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([["a1", "a"], ["b1", "b"]])
     end
 
     it "cycle discovery should handle two cycles in a connected graph" do
@@ -350,7 +350,7 @@ describe Puppet::Graph::SimpleGraph do
       add_edges "a" => "a1", "a1" => "a"
       add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
 
-      simplify(@graph.find_cycles_in_graph).should be == [%w{a1 a}, %w{c1 c2 c3 c}]
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([%w{a1 a}, %w{c1 c2 c3 c}])
     end
 
     it "cycle discovery should handle a complicated cycle" do
@@ -359,14 +359,14 @@ describe Puppet::Graph::SimpleGraph do
       add_edges "c" => "c1", "c1" => "a"
       add_edges "c" => "c2", "c2" => "b"
 
-      simplify(@graph.find_cycles_in_graph).should be == [%w{a b c1 c2 c}]
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([%w{a b c1 c2 c}])
     end
 
     it "cycle discovery should not fail with large data sets" do
       limit = 3000
       (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
 
-      simplify(@graph.find_cycles_in_graph).should be == []
+      expect(simplify(@graph.find_cycles_in_graph)).to eq([])
     end
 
     it "path finding should work with a simple cycle" do
@@ -374,7 +374,7 @@ describe Puppet::Graph::SimpleGraph do
 
       cycles = @graph.find_cycles_in_graph
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      simplify(paths).should be == [%w{a b c a}]
+      expect(simplify(paths)).to eq([%w{a b c a}])
     end
 
     it "path finding should work with two independent cycles" do
@@ -383,10 +383,10 @@ describe Puppet::Graph::SimpleGraph do
       add_edges "b1" => "a", "b2" => "a"
 
       cycles = @graph.find_cycles_in_graph
-      cycles.length.should be == 1
+      expect(cycles.length).to eq(1)
 
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      simplify(paths).should be == [%w{a b1 a}, %w{a b2 a}]
+      expect(simplify(paths)).to eq([%w{a b1 a}, %w{a b2 a}])
     end
 
     it "path finding should prefer shorter paths in cycles" do
@@ -394,25 +394,25 @@ describe Puppet::Graph::SimpleGraph do
       add_edges "b" => "a"
 
       cycles = @graph.find_cycles_in_graph
-      cycles.length.should be == 1
+      expect(cycles.length).to eq(1)
 
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      simplify(paths).should be == [%w{a b a}, %w{a b c a}]
+      expect(simplify(paths)).to eq([%w{a b a}, %w{a b c a}])
     end
 
     it "path finding should respect the max_path value" do
       (1..20).each do |n| add_edges "a" => "b#{n}", "b#{n}" => "a" end
 
       cycles = @graph.find_cycles_in_graph
-      cycles.length.should be == 1
+      expect(cycles.length).to eq(1)
 
       (1..20).each do |n|
         paths = @graph.paths_in_cycle(cycles.first, n)
-        paths.length.should be == n
+        expect(paths.length).to eq(n)
       end
 
       paths = @graph.paths_in_cycle(cycles.first, 21)
-      paths.length.should be == 20
+      expect(paths.length).to eq(20)
     end
   end
 
@@ -446,8 +446,8 @@ describe Puppet::Graph::SimpleGraph do
       @graph.add_edge("a", "b")
       @graph.add_vertex "c"
       @graph.clear
-      @graph.vertices.should be_empty
-      @graph.edges.should be_empty
+      expect(@graph.vertices).to be_empty
+      expect(@graph.edges).to be_empty
     end
   end
 
@@ -470,18 +470,18 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should match edges whose source matches the source of the event" do
-      @graph.matching_edges(@event).should == [@edges["a/b"]]
+      expect(@graph.matching_edges(@event)).to eq([@edges["a/b"]])
     end
 
     it "should match always match nothing when the event is :NONE" do
-      @graph.matching_edges(@none).should be_empty
+      expect(@graph.matching_edges(@none)).to be_empty
     end
 
     it "should match multiple edges" do
       @graph.add_edge(@edges["a/c"])
       edges = @graph.matching_edges(@event)
-      edges.should be_include(@edges["a/b"])
-      edges.should be_include(@edges["a/c"])
+      expect(edges).to be_include(@edges["a/b"])
+      expect(edges).to be_include(@edges["a/c"])
     end
   end
 
@@ -495,32 +495,32 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should find all dependents when they are on multiple levels" do
-      @graph.dependents("a").sort.should == %w{b c d}.sort
+      expect(@graph.dependents("a").sort).to eq(%w{b c d}.sort)
     end
 
     it "should find single dependents" do
-      @graph.dependents("b").sort.should == %w{d}.sort
+      expect(@graph.dependents("b").sort).to eq(%w{d}.sort)
     end
 
     it "should return an empty array when there are no dependents" do
-      @graph.dependents("c").sort.should == [].sort
+      expect(@graph.dependents("c").sort).to eq([].sort)
     end
 
     it "should find all dependencies when they are on multiple levels" do
-      @graph.dependencies("d").sort.should == %w{a b}
+      expect(@graph.dependencies("d").sort).to eq(%w{a b})
     end
 
     it "should find single dependencies" do
-      @graph.dependencies("c").sort.should == %w{a}
+      expect(@graph.dependencies("c").sort).to eq(%w{a})
     end
 
     it "should return an empty array when there are no dependencies" do
-      @graph.dependencies("a").sort.should == []
+      expect(@graph.dependencies("a").sort).to eq([])
     end
   end
 
   it "should serialize to YAML using the old format by default" do
-    Puppet::Graph::SimpleGraph.use_new_yaml_format.should == false
+    expect(Puppet::Graph::SimpleGraph.use_new_yaml_format).to eq(false)
   end
 
   describe "(yaml tests)" do
@@ -592,37 +592,37 @@ describe Puppet::Graph::SimpleGraph do
           # Check that the object contains instance variables @edges and
           # @vertices only.  @reversal is also permitted, but we don't
           # check it, because it is going to be phased out.
-          serialized_object.keys.reject { |x| x == 'reversal' }.sort.should == ['edges', 'vertices']
+          expect(serialized_object.keys.reject { |x| x == 'reversal' }.sort).to eq(['edges', 'vertices'])
 
           # Check edges by forming a set of tuples (source, target,
           # callback, event) based on the graph and the YAML and make sure
           # they match.
           edges = serialized_object['edges']
-          edges.should be_a(Array)
+          expect(edges).to be_a(Array)
           expected_edge_tuples = graph.edges.collect { |edge| [edge.source, edge.target, edge.callback, edge.event] }
           actual_edge_tuples = edges.collect do |edge|
-            %w{source target}.each { |x| edge.keys.should include(x) }
-            edge.keys.each { |x| ['source', 'target', 'callback', 'event'].should include(x) }
+            %w{source target}.each { |x| expect(edge.keys).to include(x) }
+            edge.keys.each { |x| expect(['source', 'target', 'callback', 'event']).to include(x) }
             %w{source target callback event}.collect { |x| edge[x] }
           end
-          Set.new(actual_edge_tuples).should == Set.new(expected_edge_tuples)
-          actual_edge_tuples.length.should == expected_edge_tuples.length
+          expect(Set.new(actual_edge_tuples)).to eq(Set.new(expected_edge_tuples))
+          expect(actual_edge_tuples.length).to eq(expected_edge_tuples.length)
 
           # Check vertices one by one.
           vertices = serialized_object['vertices']
           if which_format == :old
-            vertices.should be_a(Hash)
-            Set.new(vertices.keys).should == Set.new(graph.vertices)
+            expect(vertices).to be_a(Hash)
+            expect(Set.new(vertices.keys)).to eq(Set.new(graph.vertices))
             vertices.each do |key, value|
-              value.keys.sort.should == %w{adjacencies vertex}
-              value['vertex'].should equal(key)
+              expect(value.keys.sort).to eq(%w{adjacencies vertex})
+              expect(value['vertex']).to equal(key)
               adjacencies = value['adjacencies']
-              adjacencies.should be_a(Hash)
-              Set.new(adjacencies.keys).should == Set.new([:in, :out])
+              expect(adjacencies).to be_a(Hash)
+              expect(Set.new(adjacencies.keys)).to eq(Set.new([:in, :out]))
               [:in, :out].each do |direction|
-                adjacencies[direction].should be_a(Hash)
+                expect(adjacencies[direction]).to be_a(Hash)
                 expected_adjacent_vertices = Set.new(graph.adjacent(key, :direction => direction, :type => :vertices))
-                Set.new(adjacencies[direction].keys).should == expected_adjacent_vertices
+                expect(Set.new(adjacencies[direction].keys)).to eq(expected_adjacent_vertices)
                 adjacencies[direction].each do |adj_key, adj_value|
                   # Since we already checked edges, just check consistency
                   # with edges.
@@ -631,7 +631,7 @@ describe Puppet::Graph::SimpleGraph do
                   expected_edges = edges.select do |edge|
                     edge['source'] == desired_source && edge['target'] == desired_target
                   end
-                  adj_value.should be_a(Set)
+                  expect(adj_value).to be_a(Set)
                   if object_ids(adj_value) != object_ids(expected_edges)
                     raise "For vertex #{key.inspect}, direction #{direction.inspect}: expected adjacencies #{expected_edges.inspect} but got #{adj_value.inspect}"
                   end
@@ -639,9 +639,9 @@ describe Puppet::Graph::SimpleGraph do
               end
             end
           else
-            vertices.should be_a(Array)
-            Set.new(vertices).should == Set.new(graph.vertices)
-            vertices.length.should == graph.vertices.length
+            expect(vertices).to be_a(Array)
+            expect(Set.new(vertices)).to eq(Set.new(graph.vertices))
+            expect(vertices.length).to eq(graph.vertices.length)
           end
         end
       end
@@ -660,8 +660,8 @@ describe Puppet::Graph::SimpleGraph do
           # reference graph.
           expected_vertices = reference_graph.vertices.to_a
           recovered_vertices = recovered_graph.vertices.to_a
-          Set.new(recovered_vertices).should == Set.new(expected_vertices)
-          recovered_vertices.length.should == expected_vertices.length
+          expect(Set.new(recovered_vertices)).to eq(Set.new(expected_vertices))
+          expect(recovered_vertices.length).to eq(expected_vertices.length)
 
           # Test that the recovered edges match the edges in the
           # reference graph.
@@ -671,8 +671,8 @@ describe Puppet::Graph::SimpleGraph do
           recovered_edge_tuples = recovered_graph.edges.collect do |edge|
             [edge.source, edge.target, edge.callback, edge.event]
           end
-          Set.new(recovered_edge_tuples).should == Set.new(expected_edge_tuples)
-          recovered_edge_tuples.length.should == expected_edge_tuples.length
+          expect(Set.new(recovered_edge_tuples)).to eq(Set.new(expected_edge_tuples))
+          expect(recovered_edge_tuples.length).to eq(expected_edge_tuples.length)
 
           # We ought to test that the recovered graph is self-consistent
           # too.  But we're not going to bother with that yet because
@@ -688,13 +688,13 @@ describe Puppet::Graph::SimpleGraph do
         yaml_form = graph_to_yaml(reference_graph, which_format)
         recovered_graph = YAML.load(yaml_form)
 
-        recovered_graph.vertices.length.should == 2
+        expect(recovered_graph.vertices.length).to eq(2)
         recovered_vertex = recovered_graph.vertices.reject { |x| x.is_a?(Symbol) }[0]
-        recovered_vertex.instance_eval { @graph }.should equal(recovered_graph)
-        recovered_graph.edges.length.should == 1
+        expect(recovered_vertex.instance_eval { @graph }).to equal(recovered_graph)
+        expect(recovered_graph.edges.length).to eq(1)
         recovered_edge = recovered_graph.edges[0]
-        recovered_edge.source.should equal(recovered_vertex)
-        recovered_edge.target.should == :other_vertex
+        expect(recovered_edge.source).to equal(recovered_vertex)
+        expect(recovered_edge.target).to eq(:other_vertex)
       end
     end
 
@@ -706,12 +706,12 @@ describe Puppet::Graph::SimpleGraph do
       derived.add_edge(:a, :b)
       derived.foo = 1234
       recovered_derived = YAML.load(YAML.dump(derived))
-      recovered_derived.class.should equal(Puppet::TestDerivedClass)
-      recovered_derived.edges.length.should == 1
-      recovered_derived.edges[0].source.should == :a
-      recovered_derived.edges[0].target.should == :b
-      recovered_derived.vertices.length.should == 2
-      recovered_derived.foo.should == 1234
+      expect(recovered_derived.class).to equal(Puppet::TestDerivedClass)
+      expect(recovered_derived.edges.length).to eq(1)
+      expect(recovered_derived.edges[0].source).to eq(:a)
+      expect(recovered_derived.edges[0].target).to eq(:b)
+      expect(recovered_derived.vertices.length).to eq(2)
+      expect(recovered_derived.foo).to eq(1234)
     end
   end
 end

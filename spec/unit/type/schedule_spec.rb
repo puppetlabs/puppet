@@ -469,76 +469,76 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should raise an error if the weekday is 'Someday'" do
-      proc { @schedule[:weekday] = "Someday" }.should raise_error(Puppet::Error)
+      expect { @schedule[:weekday] = "Someday" }.to raise_error(Puppet::Error)
     end
 
     it "should raise an error if the weekday is '7'" do
-      proc { @schedule[:weekday] = "7" }.should raise_error(Puppet::Error)
+      expect { @schedule[:weekday] = "7" }.to raise_error(Puppet::Error)
     end
 
     it "should accept all full weekday names as valid values" do
-      proc { @schedule[:weekday] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
-          'Thursday', 'Friday', 'Saturday'] }.should_not raise_error
+      expect { @schedule[:weekday] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+          'Thursday', 'Friday', 'Saturday'] }.not_to raise_error
     end
 
     it "should accept all short weekday names as valid values" do
-      proc { @schedule[:weekday] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu',
-          'Fri', 'Sat'] }.should_not raise_error
+      expect { @schedule[:weekday] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu',
+          'Fri', 'Sat'] }.not_to raise_error
     end
 
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should match if the weekday is 'Mon'" do
       @schedule[:weekday] = "Mon"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should not match if the weekday is Tuesday" do
       @schedule[:weekday] = "Tuesday"
-      @schedule.should_not be_match
+      expect(@schedule).not_to be_match
     end
 
     it "should match if weekday is ['Sun', 'Mon']" do
       @schedule[:weekday] = ["Sun", "Mon"]
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should not match if weekday is ['Sun', 'Tue']" do
       @schedule[:weekday] = ["Sun", "Tue"]
-      @schedule.should_not be_match
+      expect(@schedule).not_to be_match
     end
 
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should match if the weekday is 'Mon'" do
       @schedule[:weekday] = "Mon"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
 
     it "should not match if the weekday is Tuesday" do
       @schedule[:weekday] = "Tuesday"
-      @schedule.should_not be_match
+      expect(@schedule).not_to be_match
     end
 
     it "should match if weekday is ['Sun', 'Mon']" do
       @schedule[:weekday] = ["Sun", "Mon"]
-      @schedule.match?.should be_truthy
+      expect(@schedule.match?).to be_truthy
     end
   end
 

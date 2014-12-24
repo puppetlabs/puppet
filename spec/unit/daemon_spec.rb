@@ -27,7 +27,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
+  let(:server) { double("Server", :start => nil, :wait_for_shutdown => nil) }
   let(:agent) { Puppet::Agent.new(TestClient.new, false) }
 
   let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
@@ -99,7 +99,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
       daemon.start
 
-      scheduler.jobs[0].should_not be_enabled
+      expect(scheduler.jobs[0]).not_to be_enabled
     end
 
     it "disables the agent run when there is no agent" do
@@ -108,7 +108,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
       daemon.start
 
-      scheduler.jobs[1].should_not be_enabled
+      expect(scheduler.jobs[1]).not_to be_enabled
     end
 
     it "waits for the server to shutdown when there is one" do
@@ -235,7 +235,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
     it "should fail if no argv values are available" do
       daemon.expects(:argv).returns nil
-      lambda { daemon.reexec }.should raise_error(Puppet::DevError)
+      expect { daemon.reexec }.to raise_error(Puppet::DevError)
     end
 
     it "should shut down without exiting" do

@@ -9,23 +9,23 @@ describe Puppet::SSL::Key do
   end
 
   it "should be extended with the Indirector module" do
-    @class.singleton_class.should be_include(Puppet::Indirector)
+    expect(@class.singleton_class).to be_include(Puppet::Indirector)
   end
 
   it "should indirect key" do
-    @class.indirection.name.should == :key
+    expect(@class.indirection.name).to eq(:key)
   end
 
   it "should only support the text format" do
-    @class.supported_formats.should == [:s]
+    expect(@class.supported_formats).to eq([:s])
   end
 
   it "should have a method for determining whether it's a CA key" do
-    @class.new("test").should respond_to(:ca?)
+    expect(@class.new("test")).to respond_to(:ca?)
   end
 
   it "should consider itself a ca key if its name matches the CA_NAME" do
-    @class.new(Puppet::SSL::Host.ca_name).should be_ca
+    expect(@class.new(Puppet::SSL::Host.ca_name)).to be_ca
   end
 
   describe "when initializing" do
@@ -33,18 +33,18 @@ describe Puppet::SSL::Key do
       Puppet[:capass] = File.expand_path("/ca/pass")
 
       key = Puppet::SSL::Key.new(Puppet::SSL::Host.ca_name)
-      key.password_file.should == Puppet[:capass]
+      expect(key.password_file).to eq(Puppet[:capass])
     end
 
     it "should downcase its name" do
-      @class.new("MyName").name.should == "myname"
+      expect(@class.new("MyName").name).to eq("myname")
     end
 
     it "should set its password file to the default password file if it is not the CA key" do
       Puppet[:passfile] = File.expand_path("/normal/pass")
 
       key = Puppet::SSL::Key.new("notca")
-      key.password_file.should == Puppet[:passfile]
+      expect(key.password_file).to eq(Puppet[:passfile])
     end
   end
 
@@ -54,11 +54,11 @@ describe Puppet::SSL::Key do
     end
 
     it "should have a name attribute" do
-      @key.name.should == "myname"
+      expect(@key.name).to eq("myname")
     end
 
     it "should have a content attribute" do
-      @key.should respond_to(:content)
+      expect(@key).to respond_to(:content)
     end
 
     it "should be able to read keys from disk" do
@@ -66,8 +66,8 @@ describe Puppet::SSL::Key do
       File.expects(:read).with(path).returns("my key")
       key = mock 'key'
       OpenSSL::PKey::RSA.expects(:new).returns(key)
-      @key.read(path).should equal(key)
-      @key.content.should equal(key)
+      expect(@key.read(path)).to equal(key)
+      expect(@key.content).to equal(key)
     end
 
     it "should not try to use the provided password file if the file does not exist" do
@@ -93,25 +93,25 @@ describe Puppet::SSL::Key do
 
       key = mock 'key'
       OpenSSL::PKey::RSA.expects(:new).with("my key", "my password").returns(key)
-      @key.read(path).should equal(key)
-      @key.content.should equal(key)
+      expect(@key.read(path)).to equal(key)
+      expect(@key.content).to equal(key)
     end
 
     it "should return an empty string when converted to a string with no key" do
-      @key.to_s.should == ""
+      expect(@key.to_s).to eq("")
     end
 
     it "should convert the key to pem format when converted to a string" do
       key = mock 'key', :to_pem => "pem"
       @key.content = key
-      @key.to_s.should == "pem"
+      expect(@key.to_s).to eq("pem")
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
       real_key = mock 'key'
       real_key.expects(:to_text).returns "keytext"
       @key.content = real_key
-      @key.to_text.should == "keytext"
+      expect(@key.to_text).to eq("keytext")
     end
   end
 
@@ -138,18 +138,18 @@ describe Puppet::SSL::Key do
     it "should set the content to the generated key" do
       OpenSSL::PKey::RSA.stubs(:new).returns(@key)
       @instance.generate
-      @instance.content.should equal(@key)
+      expect(@instance.content).to equal(@key)
     end
 
     it "should return the generated key" do
       OpenSSL::PKey::RSA.stubs(:new).returns(@key)
-      @instance.generate.should equal(@key)
+      expect(@instance.generate).to equal(@key)
     end
 
     it "should return the key in pem format" do
       @instance.generate
       @instance.content.expects(:to_pem).returns "my normal key"
-      @instance.to_s.should == "my normal key"
+      expect(@instance.to_s).to eq("my normal key")
     end
 
     describe "with a password file set" do
@@ -159,7 +159,7 @@ describe Puppet::SSL::Key do
 
         @instance.password_file = "/path/to/pass"
 
-        @instance.password.should be_nil
+        expect(@instance.password).to be_nil
       end
 
       it "should return the contents of the password file as its password" do
@@ -168,7 +168,7 @@ describe Puppet::SSL::Key do
 
         @instance.password_file = "/path/to/pass"
 
-        @instance.password.should == "my password"
+        expect(@instance.password).to eq("my password")
       end
 
       it "should export the private key to text using the password" do
@@ -184,7 +184,7 @@ describe Puppet::SSL::Key do
         OpenSSL::Cipher::DES.expects(:new).with(:EDE3, :CBC).returns cipher
         @key.expects(:export).with(cipher, "my password").returns "my encrypted key"
 
-        @instance.to_s.should == "my encrypted key"
+        expect(@instance.to_s).to eq("my encrypted key")
       end
     end
   end

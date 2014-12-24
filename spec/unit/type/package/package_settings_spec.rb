@@ -8,12 +8,12 @@ describe Puppet::Type.type(:package) do
   end
 
   it "should have a :package_settings feature that requires :package_settings_insync?, :package_settings and :package_settings=" do
-    described_class.provider_feature(:package_settings).methods.should == [:package_settings_insync?, :package_settings, :package_settings=]
+    expect(described_class.provider_feature(:package_settings).methods).to eq([:package_settings_insync?, :package_settings, :package_settings=])
   end
 
   context "when validating attributes" do
     it "should have a package_settings property" do
-      described_class.attrtype(:package_settings).should == :property
+      expect(described_class.attrtype(:package_settings)).to eq(:property)
     end
   end
 
@@ -36,7 +36,7 @@ describe Puppet::Type.type(:package) do
           end
           it { expect { resource }.to_not raise_error }
           it "should set package_settings to :settings" do
-            resource.value(:package_settings).should be :settings
+            expect(resource.value(:package_settings)).to be :settings
           end
         end
       end
@@ -50,7 +50,7 @@ describe Puppet::Type.type(:package) do
           end
           it { expect { resource }.to_not raise_error }
           it "should set package_settings to :valid_value" do
-            resource.value(:package_settings).should == :valid_value
+            expect(resource.value(:package_settings)).to eq(:valid_value)
           end
         end
         context "and {:package_settings => :invalid_value}" do
@@ -80,7 +80,7 @@ describe Puppet::Type.type(:package) do
             expect { resource }.to_not raise_error 
           end
           it "should set package_settings to :a" do
-            resource.value(:package_settings).should be :a
+            expect(resource.value(:package_settings)).to be :a
           end
         end
       end
@@ -104,19 +104,19 @@ describe Puppet::Type.type(:package) do
       describe "#insync?(:is)" do
         it "returns the result of provider.package_settings_insync?(:should,:is)" do
           resource.provider.expects(:package_settings_insync?).once.with(:should,:is).returns :ok1
-          resource.property(:package_settings).insync?(:is).should be :ok1
+          expect(resource.property(:package_settings).insync?(:is)).to be :ok1
         end
       end
       describe "#should_to_s(:newvalue)" do
         it "returns the result of provider.package_settings_should_to_s(:should,:newvalue)" do
           resource.provider.expects(:package_settings_should_to_s).once.with(:should,:newvalue).returns :ok2
-          resource.property(:package_settings).should_to_s(:newvalue).should be :ok2
+          expect(resource.property(:package_settings).should_to_s(:newvalue)).to be :ok2
         end
       end
       describe "#is_to_s(:currentvalue)" do
         it "returns the result of provider.package_settings_is_to_s(:should,:currentvalue)" do
           resource.provider.expects(:package_settings_is_to_s).once.with(:should,:currentvalue).returns :ok3
-          resource.property(:package_settings).is_to_s(:currentvalue).should be :ok3
+          expect(resource.property(:package_settings).is_to_s(:currentvalue)).to be :ok3
         end
       end
     end
@@ -127,7 +127,7 @@ describe Puppet::Type.type(:package) do
         end
         it "returns the result of provider.package_settings_change_to_s(:currentvalue,:newvalue)" do
           resource.provider.expects(:package_settings_change_to_s).once.with(:currentvalue,:newvalue).returns :ok4
-          resource.property(:package_settings).change_to_s(:currentvalue,:newvalue).should be :ok4
+          expect(resource.property(:package_settings).change_to_s(:currentvalue,:newvalue)).to be :ok4
         end
       end
     end

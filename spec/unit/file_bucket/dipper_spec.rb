@@ -18,19 +18,19 @@ shared_examples_for "a restorable file" do
 
         klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
 
-        dipper.restore(dest, checksum).should == checksum
-        digest(Puppet::FileSystem.binread(dest)).should == checksum
+        expect(dipper.restore(dest, checksum)).to eq(checksum)
+        expect(digest(Puppet::FileSystem.binread(dest))).to eq(checksum)
 
-        request.key.should == "#{digest_algorithm}/#{checksum}"
-        request.server.should == server
-        request.port.should == port
+        expect(request.key).to eq("#{digest_algorithm}/#{checksum}")
+        expect(request.server).to eq(server)
+        expect(request.port).to eq(port)
       end
 
       it "should skip restoring if existing file has the same checksum" do
         File.open(dest, 'wb') {|f| f.print(plaintext) }
 
         dipper.expects(:getfile).never
-        dipper.restore(dest, checksum).should be_nil
+        expect(dipper.restore(dest, checksum)).to be_nil
       end
 
       it "should overwrite existing file if it has different checksum" do
@@ -38,7 +38,7 @@ shared_examples_for "a restorable file" do
 
         File.open(dest, 'wb') {|f| f.print('other contents') }
 
-        dipper.restore(dest, checksum).should == checksum
+        expect(dipper.restore(dest, checksum)).to eq(checksum)
       end
     end
   end
@@ -59,7 +59,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     file = make_tmp_file('contents')
     Puppet::FileBucket::File.indirection.expects(:head).raises ArgumentError
 
-    lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
+    expect { @dipper.backup(file) }.to raise_error(Puppet::Error)
   end
 
   it "should fail in an informative way when there are failures backing up to the server" do
@@ -69,7 +69,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     Puppet::FileBucket::File.indirection.expects(:head).returns false
     Puppet::FileBucket::File.indirection.expects(:save).raises ArgumentError
 
-    lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
+    expect { @dipper.backup(file) }.to raise_error(Puppet::Error)
   end
 
   describe "backing up and retrieving local files" do
@@ -81,10 +81,10 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
 
         file = make_tmp_file(plaintext)
-        digest(plaintext).should == checksum
+        expect(digest(plaintext)).to eq(checksum)
 
-        @dipper.backup(file).should == checksum
-        Puppet::FileSystem.exist?("#{file_bucket}/#{bucket_dir}/contents").should == true
+        expect(@dipper.backup(file)).to eq(checksum)
+        expect(Puppet::FileSystem.exist?("#{file_bucket}/#{bucket_dir}/contents")).to eq(true)
       end
 
       it "should not backup a file that is already in the bucket" do
@@ -94,7 +94,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         Puppet::FileBucket::File.indirection.expects(:head).returns true
         Puppet::FileBucket::File.indirection.expects(:save).never
-        @dipper.backup(file).should == checksum
+        expect(@dipper.backup(file)).to eq(checksum)
       end
 
       it "should retrieve files from a local bucket" do
@@ -104,9 +104,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new(plaintext))
 
-        @dipper.getfile(checksum).should == plaintext
+        expect(@dipper.getfile(checksum)).to eq(plaintext)
 
-        request.key.should == "#{digest_algorithm}/#{checksum}"
+        expect(request.key).to eq("#{digest_algorithm}/#{checksum}")
       end
     end
   end
@@ -126,11 +126,11 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         Puppet::FileBucketFile::Rest.any_instance.expects(:head).with { |r| request1 = r }.once.returns(nil)
         Puppet::FileBucketFile::Rest.any_instance.expects(:save).with { |r| request2 = r }.once
 
-        @dipper.backup(file).should == checksum
+        expect(@dipper.backup(file)).to eq(checksum)
         [request1, request2].each do |r|
-          r.server.should == 'puppetmaster'
-          r.port.should == 31337
-          r.key.should == "#{digest_algorithm}/#{checksum}/#{real_path}"
+          expect(r.server).to eq('puppetmaster')
+          expect(r.port).to eq(31337)
+          expect(r.key).to eq("#{digest_algorithm}/#{checksum}/#{real_path}")
         end
       end
 
@@ -141,11 +141,11 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
 
-        @dipper.getfile(checksum).should == plaintext
+        expect(@dipper.getfile(checksum)).to eq(plaintext)
 
-        request.server.should == 'puppetmaster'
-        request.port.should == 31337
-        request.key.should == "#{digest_algorithm}/#{checksum}"
+        expect(request.server).to eq('puppetmaster')
+        expect(request.port).to eq(31337)
+        expect(request.key).to eq("#{digest_algorithm}/#{checksum}")
       end
     end
   end

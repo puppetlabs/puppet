@@ -36,6 +36,6 @@ shared_examples_for "Puppet::Indirector::FileServerTerminus" do
 
     path = File.join(@path, "myfile")
 
-    @terminus.find(@request).should be_instance_of(@test_class)
+    expect(@terminus.find(@request)).to be_instance_of(@test_class)
   end
 end

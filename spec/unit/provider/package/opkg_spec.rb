@@ -111,7 +111,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
   describe "when updating" do
     it "should call install" do
       provider.expects(:install).returns("install return value")
-      provider.update.should == "install return value"
+      expect(provider.update).to eq("install return value")
     end
   end
 
@@ -138,42 +138,45 @@ OPKG_OUTPUT
         described_class.expects(:execpipe).with("/bin/opkg list-installed").yields(packages)
 
         installed_packages = described_class.instances
-        installed_packages.length.should == 3
+        expect(installed_packages.length).to eq(3)
 
-        installed_packages[0].properties.should ==
+        expect(installed_packages[0].properties).to eq(
           {
             :provider => :opkg,
             :name => "dropbear",
             :ensure => "2011.54-2"
           }
-        installed_packages[1].properties.should ==
+        )
+        expect(installed_packages[1].properties).to eq(
           {
             :provider => :opkg,
             :name => "kernel",
             :ensure => "3.3.8-1-ba5cdb2523b4fc7722698b4a7ece6702"
           }
-        installed_packages[2].properties.should ==
+        )
+        expect(installed_packages[2].properties).to eq(
           {
             :provider => :opkg,
             :name => "uhttpd",
             :ensure => "2012-10-30-e57bf6d8bfa465a50eea2c30269acdfe751a46fd"
           }
+        )
       end
     end
 
     it "should return a nil if the package isn't found" do
       Puppet::Util::Execution.expects(:execute).returns("")
-      provider.query.should be_nil
+      expect(provider.query).to be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
       Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
-      provider.query.should == {
+      expect(provider.query).to eq({
         :ensure => :purged,
         :status => 'missing',
         :name => resource[:name],
         :error => 'ok',
-      }
+      })
     end
   end #end when querying
 

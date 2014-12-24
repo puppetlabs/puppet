@@ -22,49 +22,49 @@ describe provider_class do
     it "should break apart a single line into three tokens and clean up the context" do
       @resource[:context] = "/context"
       tokens = @provider.parse_commands("set Jar/Jar Binks")
-      tokens.size.should == 1
-      tokens[0].size.should == 3
-      tokens[0][0].should == "set"
-      tokens[0][1].should == "/context/Jar/Jar"
-      tokens[0][2].should == "Binks"
+      expect(tokens.size).to eq(1)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq("/context/Jar/Jar")
+      expect(tokens[0][2]).to eq("Binks")
     end
 
     it "should break apart a multiple line into six tokens" do
       tokens = @provider.parse_commands("set /Jar/Jar Binks\nrm anakin")
-      tokens.size.should == 2
-      tokens[0].size.should == 3
-      tokens[1].size.should == 2
-      tokens[0][0].should == "set"
-      tokens[0][1].should == "/Jar/Jar"
-      tokens[0][2].should == "Binks"
-      tokens[1][0].should == "rm"
-      tokens[1][1].should == "anakin"
+      expect(tokens.size).to eq(2)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[1].size).to eq(2)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq("/Jar/Jar")
+      expect(tokens[0][2]).to eq("Binks")
+      expect(tokens[1][0]).to eq("rm")
+      expect(tokens[1][1]).to eq("anakin")
     end
 
     it "should strip whitespace and ignore blank lines" do
       tokens = @provider.parse_commands("  set /Jar/Jar Binks \t\n  \n\n  rm anakin ")
-      tokens.size.should == 2
-      tokens[0].size.should == 3
-      tokens[1].size.should == 2
-      tokens[0][0].should == "set"
-      tokens[0][1].should == "/Jar/Jar"
-      tokens[0][2].should == "Binks"
-      tokens[1][0].should == "rm"
-      tokens[1][1].should == "anakin"
+      expect(tokens.size).to eq(2)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[1].size).to eq(2)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq("/Jar/Jar")
+      expect(tokens[0][2]).to eq("Binks")
+      expect(tokens[1][0]).to eq("rm")
+      expect(tokens[1][1]).to eq("anakin")
     end
 
     it "should handle arrays" do
       @resource[:context] = "/foo/"
       commands = ["set /Jar/Jar Binks", "rm anakin"]
       tokens = @provider.parse_commands(commands)
-      tokens.size.should == 2
-      tokens[0].size.should == 3
-      tokens[1].size.should == 2
-      tokens[0][0].should == "set"
-      tokens[0][1].should == "/Jar/Jar"
-      tokens[0][2].should == "Binks"
-      tokens[1][0].should == "rm"
-      tokens[1][1].should == "/foo/anakin"
+      expect(tokens.size).to eq(2)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[1].size).to eq(2)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq("/Jar/Jar")
+      expect(tokens[0][2]).to eq("Binks")
+      expect(tokens[1][0]).to eq("rm")
+      expect(tokens[1][1]).to eq("/foo/anakin")
     end
 
     # This is not supported in the new parsing class
@@ -81,89 +81,89 @@ describe provider_class do
     it "should accept spaces in the value and single ticks" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("set JarJar 'Binks is my copilot'")
-      tokens.size.should == 1
-      tokens[0].size.should == 3
-      tokens[0][0].should == "set"
-      tokens[0][1].should == "/foo/JarJar"
-      tokens[0][2].should == "Binks is my copilot"
+      expect(tokens.size).to eq(1)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq("/foo/JarJar")
+      expect(tokens[0][2]).to eq("Binks is my copilot")
     end
 
     it "should accept spaces in the value and double ticks" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands('set /JarJar "Binks is my copilot"')
-      tokens.size.should == 1
-      tokens[0].size.should == 3
-      tokens[0][0].should == "set"
-      tokens[0][1].should == '/JarJar'
-      tokens[0][2].should == 'Binks is my copilot'
+      expect(tokens.size).to eq(1)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq('/JarJar')
+      expect(tokens[0][2]).to eq('Binks is my copilot')
     end
 
     it "should accept mixed ticks" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands('set JarJar "Some \'Test\'"')
-      tokens.size.should == 1
-      tokens[0].size.should == 3
-      tokens[0][0].should == "set"
-      tokens[0][1].should == '/foo/JarJar'
-      tokens[0][2].should == "Some \'Test\'"
+      expect(tokens.size).to eq(1)
+      expect(tokens[0].size).to eq(3)
+      expect(tokens[0][0]).to eq("set")
+      expect(tokens[0][1]).to eq('/foo/JarJar')
+      expect(tokens[0][2]).to eq("Some \'Test\'")
     end
 
     it "should handle predicates with literals" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("rm */*[module='pam_console.so']")
-      tokens.should == [["rm", "/foo/*/*[module='pam_console.so']"]]
+      expect(tokens).to eq([["rm", "/foo/*/*[module='pam_console.so']"]])
     end
 
     it "should handle whitespace in predicates" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("ins 42 before /files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]")
-      tokens.should == [["ins", "42", "before","/files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]"]]
+      expect(tokens).to eq([["ins", "42", "before","/files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]"]])
     end
 
     it "should handle multiple predicates" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("clear pam.d/*/*[module = 'system-auth'][type = 'account']")
-      tokens.should == [["clear", "/foo/pam.d/*/*[module = 'system-auth'][type = 'account']"]]
+      expect(tokens).to eq([["clear", "/foo/pam.d/*/*[module = 'system-auth'][type = 'account']"]])
     end
 
     it "should handle nested predicates" do
       @resource[:context] = "/foo/"
       args = ["clear", "/foo/pam.d/*/*[module[ ../type = 'type] = 'system-auth'][type[last()] = 'account']"]
       tokens = @provider.parse_commands(args.join(" "))
-      tokens.should == [ args ]
+      expect(tokens).to eq([ args ])
     end
 
     it "should handle escaped doublequotes in doublequoted string" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("set /foo \"''\\\"''\"")
-      tokens.should == [[ "set", "/foo", "''\\\"''" ]]
+      expect(tokens).to eq([[ "set", "/foo", "''\\\"''" ]])
     end
 
     it "should allow escaped spaces and brackets in paths" do
       @resource[:context] = "/foo/"
       args = [ "set", "/white\\ space/\\[section", "value" ]
       tokens = @provider.parse_commands(args.join(" \t "))
-      tokens.should == [ args ]
+      expect(tokens).to eq([ args ])
     end
 
     it "should allow single quoted escaped spaces in paths" do
       @resource[:context] = "/foo/"
       args = [ "set", "'/white\\ space/key'", "value" ]
       tokens = @provider.parse_commands(args.join(" \t "))
-      tokens.should == [[ "set", "/white\\ space/key", "value" ]]
+      expect(tokens).to eq([[ "set", "/white\\ space/key", "value" ]])
     end
 
     it "should allow double quoted escaped spaces in paths" do
       @resource[:context] = "/foo/"
       args = [ "set", '"/white\\ space/key"', "value" ]
       tokens = @provider.parse_commands(args.join(" \t "))
-      tokens.should == [[ "set", "/white\\ space/key", "value" ]]
+      expect(tokens).to eq([[ "set", "/white\\ space/key", "value" ]])
     end
 
     it "should remove trailing slashes" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("set foo/ bar")
-      tokens.should == [[ "set", "/foo/foo", "bar" ]]
+      expect(tokens).to eq([[ "set", "/foo/foo", "bar" ]])
     end
   end
 
@@ -176,22 +176,22 @@ describe provider_class do
 
     it "should return false for a = nonmatch" do
       command = ["get", "fake value", "==", "value"]
-      @provider.process_get(command).should == true
+      expect(@provider.process_get(command)).to eq(true)
     end
 
     it "should return true for a != match" do
       command = ["get", "fake value", "!=", "value"]
-      @provider.process_get(command).should == false
+      expect(@provider.process_get(command)).to eq(false)
     end
 
     it "should return true for a =~ match" do
       command = ["get", "fake value", "=~", "val*"]
-      @provider.process_get(command).should == true
+      expect(@provider.process_get(command)).to eq(true)
     end
 
     it "should return false for a == nonmatch" do
       command = ["get", "fake value", "=~", "num*"]
-      @provider.process_get(command).should == false
+      expect(@provider.process_get(command)).to eq(false)
     end
   end
 
@@ -205,52 +205,52 @@ describe provider_class do
 
     it "should return true for size match" do
       command = ["match", "fake value", "size == 3"]
-      @provider.process_match(command).should == true
+      expect(@provider.process_match(command)).to eq(true)
     end
 
     it "should return false for a size non match" do
       command = ["match", "fake value", "size < 3"]
-      @provider.process_match(command).should == false
+      expect(@provider.process_match(command)).to eq(false)
     end
 
     it "should return true for includes match" do
       command = ["match", "fake value", "include values"]
-      @provider.process_match(command).should == true
+      expect(@provider.process_match(command)).to eq(true)
     end
 
     it "should return false for includes non match" do
       command = ["match", "fake value", "include JarJar"]
-      @provider.process_match(command).should == false
+      expect(@provider.process_match(command)).to eq(false)
     end
 
     it "should return true for includes match" do
       command = ["match", "fake value", "not_include JarJar"]
-      @provider.process_match(command).should == true
+      expect(@provider.process_match(command)).to eq(true)
     end
 
     it "should return false for includes non match" do
       command = ["match", "fake value", "not_include values"]
-      @provider.process_match(command).should == false
+      expect(@provider.process_match(command)).to eq(false)
     end
 
     it "should return true for an array match" do
       command = ["match", "fake value", "== ['set', 'of', 'values']"]
-      @provider.process_match(command).should == true
+      expect(@provider.process_match(command)).to eq(true)
     end
 
     it "should return false for an array non match" do
       command = ["match", "fake value", "== ['this', 'should', 'not', 'match']"]
-      @provider.process_match(command).should == false
+      expect(@provider.process_match(command)).to eq(false)
     end
 
     it "should return false for an array match with noteq" do
       command = ["match", "fake value", "!= ['set', 'of', 'values']"]
-      @provider.process_match(command).should == false
+      expect(@provider.process_match(command)).to eq(false)
     end
 
     it "should return true for an array non match with noteq" do
       command = ["match", "fake value", "!= ['this', 'should', 'not', 'match']"]
-      @provider.process_match(command).should == true
+      expect(@provider.process_match(command)).to eq(true)
     end
   end
 
@@ -267,86 +267,86 @@ describe provider_class do
 
     it "should handle no filters" do
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == true
+      expect(@provider.need_to_run?).to eq(true)
     end
 
     it "should return true when a get filter matches" do
       @resource[:onlyif] = "get path == value"
       @augeas.stubs("get").returns("value")
-      @provider.need_to_run?.should == true
+      expect(@provider.need_to_run?).to eq(true)
     end
 
     describe "performing numeric comparisons (#22617)" do
       it "should return true when a get string compare is true" do
         @resource[:onlyif] = "get bpath > a"
         @augeas.stubs("get").returns("b")
-        @provider.need_to_run?.should == true
+        expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return false when a get string compare is false" do
         @resource[:onlyif] = "get a19path > a2"
         @augeas.stubs("get").returns("a19")
-        @provider.need_to_run?.should == false
+        expect(@provider.need_to_run?).to eq(false)
       end
 
       it "should return true when a get int gt compare is true" do
         @resource[:onlyif] = "get path19 > 2"
         @augeas.stubs("get").returns("19")
-        @provider.need_to_run?.should == true
+        expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return true when a get int ge compare is true" do
         @resource[:onlyif] = "get path19 >= 2"
         @augeas.stubs("get").returns("19")
-        @provider.need_to_run?.should == true
+        expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return true when a get int lt compare is true" do
         @resource[:onlyif] = "get path2 < 19"
         @augeas.stubs("get").returns("2")
-        @provider.need_to_run?.should == true
+        expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return false when a get int le compare is false" do
         @resource[:onlyif] = "get path39 <= 4"
         @augeas.stubs("get").returns("39")
-        @provider.need_to_run?.should == false
+        expect(@provider.need_to_run?).to eq(false)
       end
     end
     describe "performing is_numeric checks (#22617)" do
       it "should return false for nil" do
-        @provider.is_numeric?(nil).should == false
+        expect(@provider.is_numeric?(nil)).to eq(false)
       end
       it "should return true for Fixnums" do
-        @provider.is_numeric?(9).should == true
+        expect(@provider.is_numeric?(9)).to eq(true)
       end
       it "should return true for numbers in Strings" do
-        @provider.is_numeric?('9').should == true
+        expect(@provider.is_numeric?('9')).to eq(true)
       end
       it "should return false for non-number Strings" do
-        @provider.is_numeric?('x9').should == false
+        expect(@provider.is_numeric?('x9')).to eq(false)
       end
       it "should return false for other types" do
-        @provider.is_numeric?([true]).should == false
+        expect(@provider.is_numeric?([true])).to eq(false)
       end
     end
 
     it "should return false when a get filter does not match" do
       @resource[:onlyif] = "get path == another value"
       @augeas.stubs("get").returns("value")
-      @provider.need_to_run?.should == false
+      expect(@provider.need_to_run?).to eq(false)
     end
 
     it "should return true when a match filter matches" do
       @resource[:onlyif] = "match path size == 3"
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == true
+      expect(@provider.need_to_run?).to eq(true)
     end
 
     it "should return false when a match filter does not match" do
       @resource[:onlyif] = "match path size == 2"
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == false
+      expect(@provider.need_to_run?).to eq(false)
     end
 
     # Now setting force to true
@@ -354,21 +354,21 @@ describe provider_class do
       @resource[:force] = true
       @resource[:onlyif] = "match path size == 2"
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == false
+      expect(@provider.need_to_run?).to eq(false)
     end
 
     #Ticket 5211 testing
     it "should return true when a size != the provided value" do
       @resource[:onlyif] = "match path size != 17"
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == true
+      expect(@provider.need_to_run?).to eq(true)
     end
 
     #Ticket 5211 testing
     it "should return false when a size does equal the provided value" do
       @resource[:onlyif] = "match path size != 3"
       @augeas.stubs("match").returns(["set", "of", "values"])
-      @provider.need_to_run?.should == false
+      expect(@provider.need_to_run?).to eq(false)
     end
 
     [true, false].product([true, false]) do |cfg, param|
@@ -396,15 +396,15 @@ describe provider_class do
 
         if cfg && param
           it "should display a diff" do
-            @provider.should be_need_to_run
+            expect(@provider).to be_need_to_run
 
             expect(@logs[0].message).to eq("\ndiff")
           end
         else
           it "should not display a diff" do
-            @provider.should be_need_to_run
+            expect(@provider).to be_need_to_run
 
-            @logs.should be_empty
+            expect(@logs).to be_empty
           end
         end
       end
@@ -435,7 +435,7 @@ describe provider_class do
         @augeas.expects(:set).with("/augeas/save", "newfile")
         @provider.expects("diff").with("#{file}", "#{file}.augnew").returns("diff")
 
-        @provider.should be_need_to_run
+        expect(@provider).to be_need_to_run
 
         expect(@logs[0].message).to eq("\ndiff")
         expect(@logs[0].level).to eq(:crit)
@@ -456,7 +456,7 @@ describe provider_class do
         @provider.expects(:diff).with("#{file1}", "#{file1}.augnew").returns("diff #{file1}")
         @provider.expects(:diff).with("#{file2}", "#{file2}.augnew").returns("diff #{file2}")
 
-        @provider.should be_need_to_run
+        expect(@provider).to be_need_to_run
 
         expect(@logs.collect(&:message)).to include("\ndiff #{file1}", "\ndiff #{file2}")
         expect(@logs.collect(&:level)).to eq([:notice, :notice])
@@ -477,7 +477,7 @@ describe provider_class do
           @augeas.expects(:set).with("/augeas/save", "newfile")
           @provider.expects(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").returns("diff")
 
-          @provider.should be_need_to_run
+          expect(@provider).to be_need_to_run
 
           expect(@logs[0].message).to eq("\ndiff")
           expect(@logs[0].level).to eq(:notice)
@@ -496,7 +496,7 @@ describe provider_class do
         @augeas.expects(:close)
 
         @provider.expects(:diff).never()
-        @provider.should_not be_need_to_run
+        expect(@provider).not_to be_need_to_run
       end
 
       it "should cleanup the .augnew file" do
@@ -513,7 +513,7 @@ describe provider_class do
         File.expects(:delete).with(file + ".augnew")
 
         @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("")
-        @provider.should be_need_to_run
+        expect(@provider).to be_need_to_run
       end
 
       # Workaround for Augeas bug #264 which reports filenames twice
@@ -532,7 +532,7 @@ describe provider_class do
         File.expects(:delete).with(file + ".augnew").once()
 
         @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("").once()
-        @provider.should be_need_to_run
+        expect(@provider).to be_need_to_run
       end
 
       it "should fail with an error if saving fails" do
@@ -547,7 +547,7 @@ describe provider_class do
 
         @provider.expects(:diff).never()
         @provider.expects(:print_put_errors)
-        lambda { @provider.need_to_run? }.should raise_error(Puppet::Error)
+        expect { @provider.need_to_run? }.to raise_error(Puppet::Error)
       end
     end
   end
@@ -568,7 +568,7 @@ describe provider_class do
       @augeas.expects(:set).with("/some/path/JarJar", "Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle rm commands" do
@@ -576,7 +576,7 @@ describe provider_class do
       @augeas.expects(:rm).with("/Jar/Jar")
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle remove commands" do
@@ -584,7 +584,7 @@ describe provider_class do
       @augeas.expects(:rm).with("/Jar/Jar")
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle clear commands" do
@@ -593,7 +593,7 @@ describe provider_class do
       @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     describe "touch command" do
@@ -604,7 +604,7 @@ describe provider_class do
         @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
         @augeas.expects(:save).returns(true)
         @augeas.expects(:close)
-        @provider.execute_changes.should == :executed
+        expect(@provider.execute_changes).to eq(:executed)
       end
 
       it "should not change on existing path" do
@@ -614,7 +614,7 @@ describe provider_class do
         @augeas.expects(:clear).never
         @augeas.expects(:save).returns(true)
         @augeas.expects(:close)
-        @provider.execute_changes.should == :executed
+        expect(@provider.execute_changes).to eq(:executed)
       end
     end
 
@@ -624,7 +624,7 @@ describe provider_class do
       @augeas.expects(:insert).with("/foo/Jar/Jar", "Binks", true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle ins commands with after" do
@@ -633,7 +633,7 @@ describe provider_class do
       @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle ins with no context" do
@@ -641,7 +641,7 @@ describe provider_class do
       @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle multiple commands" do
@@ -651,7 +651,7 @@ describe provider_class do
       @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle defvar commands" do
@@ -660,7 +660,7 @@ describe provider_class do
       @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should pass through augeas variables without context" do
@@ -671,7 +671,7 @@ describe provider_class do
       @augeas.expects(:set).with("$myjar/Binks", "1").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle defnode commands" do
@@ -680,7 +680,7 @@ describe provider_class do
       @augeas.expects(:defnode).with("newjar", "/foo/Jar/Jar[last()+1]", "Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle mv commands" do
@@ -689,7 +689,7 @@ describe provider_class do
       @augeas.expects(:mv).with("/foo/Jar/Jar", "/foo/Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle setm commands" do
@@ -701,7 +701,7 @@ describe provider_class do
       @augeas.expects(:setm).with("/foo/test", "Jar/Jar", "Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should throw error if setm command not supported" do
@@ -722,7 +722,7 @@ describe provider_class do
       @augeas.expects(:clearm).with("/foo/test", "Jar/Jar").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
-      @provider.execute_changes.should == :executed
+      expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should throw error if clearm command not supported" do
@@ -771,9 +771,9 @@ describe provider_class do
 
       catalog.apply
 
-      File.ftype(link).should == 'link'
-      Puppet::FileSystem.readlink(link).should == target
-      File.read(target).should =~ /PermitRootLogin no/
+      expect(File.ftype(link)).to eq('link')
+      expect(Puppet::FileSystem.readlink(link)).to eq(target)
+      expect(File.read(target)).to match(/PermitRootLogin no/)
     end
   end
 
@@ -841,16 +841,16 @@ describe provider_class do
     # Expect lenses for fstab and hosts
     it "should have loaded standard files by default" do
       aug = @provider.open_augeas
-      aug.should_not == nil
-      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
-      aug.match("/files/etc/test").should == []
+      expect(aug).not_to eq(nil)
+      expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+      expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
+      expect(aug.match("/files/etc/test")).to eq([])
     end
 
     it "should report load errors to debug only" do
       @provider.expects(:print_load_errors).with(nil)
       aug = @provider.open_augeas
-      aug.should_not == nil
+      expect(aug).not_to eq(nil)
     end
 
     # Only the file specified should be loaded
@@ -860,30 +860,30 @@ describe provider_class do
 
       @provider.expects(:print_load_errors).with('/augeas//error')
       aug = @provider.open_augeas
-      aug.should_not == nil
-      aug.match("/files/etc/fstab").should == []
-      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
-      aug.match("/files/etc/test").should == []
+      expect(aug).not_to eq(nil)
+      expect(aug.match("/files/etc/fstab")).to eq([])
+      expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
+      expect(aug.match("/files/etc/test")).to eq([])
     end
 
     it "should also load lenses from load_path" do
       @resource[:load_path] = my_fixture_dir
 
       aug = @provider.open_augeas
-      aug.should_not == nil
-      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
-      aug.match("/files/etc/test").should == ["/files/etc/test"]
+      expect(aug).not_to eq(nil)
+      expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+      expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
+      expect(aug.match("/files/etc/test")).to eq(["/files/etc/test"])
     end
 
     it "should also load lenses from pluginsync'd path" do
       Puppet[:libdir] = my_fixture_dir
 
       aug = @provider.open_augeas
-      aug.should_not == nil
-      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
-      aug.match("/files/etc/test").should == ["/files/etc/test"]
+      expect(aug).not_to eq(nil)
+      expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+      expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
+      expect(aug.match("/files/etc/test")).to eq(["/files/etc/test"])
     end
 
     # Optimisations added for Augeas 0.8.2 or higher is available, see #7285
@@ -893,9 +893,9 @@ describe provider_class do
 
         @provider.expects(:print_load_errors).with('/augeas/files/etc/fstab//error')
         aug = @provider.open_augeas
-        aug.should_not == nil
-        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-        aug.match("/files/etc/hosts").should == []
+        expect(aug).not_to eq(nil)
+        expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+        expect(aug.match("/files/etc/hosts")).to eq([])
       end
 
       it "should only load one lens from load_path if context given" do
@@ -904,10 +904,10 @@ describe provider_class do
 
         @provider.expects(:print_load_errors).with('/augeas/files/etc/test//error')
         aug = @provider.open_augeas
-        aug.should_not == nil
-        aug.match("/files/etc/fstab").should == []
-        aug.match("/files/etc/hosts").should == []
-        aug.match("/files/etc/test").should == ["/files/etc/test"]
+        expect(aug).not_to eq(nil)
+        expect(aug.match("/files/etc/fstab")).to eq([])
+        expect(aug.match("/files/etc/hosts")).to eq([])
+        expect(aug.match("/files/etc/test")).to eq(["/files/etc/test"])
       end
 
       it "should load standard files if context isn't specific" do
@@ -915,9 +915,9 @@ describe provider_class do
 
         @provider.expects(:print_load_errors).with(nil)
         aug = @provider.open_augeas
-        aug.should_not == nil
-        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+        expect(aug).not_to eq(nil)
+        expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+        expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
       end
 
       it "should not optimise if the context is a complex path" do
@@ -925,42 +925,42 @@ describe provider_class do
 
         @provider.expects(:print_load_errors).with(nil)
         aug = @provider.open_augeas
-        aug.should_not == nil
-        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
-        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+        expect(aug).not_to eq(nil)
+        expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
+        expect(aug.match("/files/etc/hosts")).to eq(["/files/etc/hosts"])
       end
     end
   end
 
   describe "get_load_path" do
     it "should offer no load_path by default" do
-      @provider.get_load_path(@resource).should == ""
+      expect(@provider.get_load_path(@resource)).to eq("")
     end
 
     it "should offer one path from load_path" do
       @resource[:load_path] = "/foo"
-      @provider.get_load_path(@resource).should == "/foo"
+      expect(@provider.get_load_path(@resource)).to eq("/foo")
     end
 
     it "should offer multiple colon-separated paths from load_path" do
       @resource[:load_path] = "/foo:/bar:/baz"
-      @provider.get_load_path(@resource).should == "/foo:/bar:/baz"
+      expect(@provider.get_load_path(@resource)).to eq("/foo:/bar:/baz")
     end
 
     it "should offer multiple paths in array from load_path" do
       @resource[:load_path] = ["/foo", "/bar", "/baz"]
-      @provider.get_load_path(@resource).should == "/foo:/bar:/baz"
+      expect(@provider.get_load_path(@resource)).to eq("/foo:/bar:/baz")
     end
 
     it "should offer pluginsync augeas/lenses subdir" do
       Puppet[:libdir] = my_fixture_dir
-      @provider.get_load_path(@resource).should == "#{my_fixture_dir}/augeas/lenses"
+      expect(@provider.get_load_path(@resource)).to eq("#{my_fixture_dir}/augeas/lenses")
     end
 
     it "should offer both pluginsync and load_path paths" do
       Puppet[:libdir] = my_fixture_dir
       @resource[:load_path] = ["/foo", "/bar", "/baz"]
-      @provider.get_load_path(@resource).should == "/foo:/bar:/baz:#{my_fixture_dir}/augeas/lenses"
+      expect(@provider.get_load_path(@resource)).to eq("/foo:/bar:/baz:#{my_fixture_dir}/augeas/lenses")
     end
   end
 end

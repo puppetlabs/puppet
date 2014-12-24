@@ -22,32 +22,32 @@ describe Puppet::Property do
 
   it "should be able to look up the modified name for a given value" do
     subclass.newvalue(:foo)
-    subclass.value_name("foo").should == :foo
+    expect(subclass.value_name("foo")).to eq(:foo)
   end
 
   it "should be able to look up the modified name for a given value matching a regex" do
     subclass.newvalue(%r{.})
-    subclass.value_name("foo").should == %r{.}
+    expect(subclass.value_name("foo")).to eq(%r{.})
   end
 
   it "should be able to look up a given value option" do
     subclass.newvalue(:foo, :event => :whatever)
-    subclass.value_option(:foo, :event).should == :whatever
+    expect(subclass.value_option(:foo, :event)).to eq(:whatever)
   end
 
   it "should be able to specify required features" do
-    subclass.should respond_to(:required_features=)
+    expect(subclass).to respond_to(:required_features=)
   end
 
   {"one" => [:one],:one => [:one],%w{a} => [:a],[:b] => [:b],%w{one two} => [:one,:two],[:a,:b] => [:a,:b]}.each { |in_value,out_value|
     it "should always convert required features into an array of symbols (e.g. #{in_value.inspect} --> #{out_value.inspect})" do
       subclass.required_features = in_value
-      subclass.required_features.should == out_value
+      expect(subclass.required_features).to eq(out_value)
     end
   }
 
   it "should return its name as a string when converted to a string" do
-    property.to_s.should == property.name.to_s
+    expect(property.to_s).to eq(property.name.to_s)
   end
 
   describe "when returning the default event name" do
@@ -62,7 +62,7 @@ describe Puppet::Property do
       property.expects(:should).returns :myval
       subclass.expects(:value_option).with(:myval, :event).returns :event_name
 
-      property.event_name.should == :event_name
+      expect(property.event_name).to eq(:event_name)
     end
 
     describe "and the property is 'ensure'" do
@@ -73,35 +73,35 @@ describe Puppet::Property do
 
       it "should use <type>_created if the 'should' value is 'present'" do
         property.expects(:should).returns :present
-        property.event_name.should == :mytype_created
+        expect(property.event_name).to eq(:mytype_created)
       end
 
       it "should use <type>_removed if the 'should' value is 'absent'" do
         property.expects(:should).returns :absent
-        property.event_name.should == :mytype_removed
+        expect(property.event_name).to eq(:mytype_removed)
       end
 
       it "should use <type>_changed if the 'should' value is not 'absent' or 'present'" do
         property.expects(:should).returns :foo
-        property.event_name.should == :mytype_changed
+        expect(property.event_name).to eq(:mytype_changed)
       end
 
       it "should use <type>_changed if the 'should value is nil" do
         property.expects(:should).returns nil
-        property.event_name.should == :mytype_changed
+        expect(property.event_name).to eq(:mytype_changed)
       end
     end
 
     it "should use <property>_changed if the property is not 'ensure'" do
       property.stubs(:name).returns :myparam
       property.expects(:should).returns :foo
-      property.event_name.should == :myparam_changed
+      expect(property.event_name).to eq(:myparam_changed)
     end
 
     it "should use <property>_changed if no 'should' value is set" do
       property.stubs(:name).returns :myparam
       property.expects(:should).returns nil
-      property.event_name.should == :myparam_changed
+      expect(property.event_name).to eq(:myparam_changed)
     end
   end
 
@@ -114,26 +114,26 @@ describe Puppet::Property do
       event = Puppet::Transaction::Event.new
       resource.expects(:event).returns event
 
-      property.event.should equal(event)
+      expect(property.event).to equal(event)
     end
 
     it "should have the default event name" do
       property.expects(:event_name).returns :my_event
-      property.event.name.should == :my_event
+      expect(property.event.name).to eq(:my_event)
     end
 
     it "should have the property's name" do
-      property.event.property.should == property.name.to_s
+      expect(property.event.property).to eq(property.name.to_s)
     end
 
     it "should have the 'should' value set" do
       property.stubs(:should).returns "foo"
-      property.event.desired_value.should == "foo"
+      expect(property.event.desired_value).to eq("foo")
     end
 
     it "should provide its path as the source description" do
       property.stubs(:path).returns "/my/param"
-      property.event.source_description.should == "/my/param"
+      expect(property.event.source_description).to eq("/my/param")
     end
 
     it "should have the 'invalidate_refreshes' value set if set on a value" do
@@ -144,7 +144,7 @@ describe Puppet::Property do
       collection = mock()
       collection.expects(:match?).with("foo").returns(foo)
       property.class.stubs(:value_collection).returns(collection)
-      property.event.invalidate_refreshes.should be_truthy
+      expect(property.event.invalidate_refreshes).to be_truthy
     end
   end
 
@@ -180,7 +180,7 @@ describe Puppet::Property do
     end
 
     it "should return any set value" do
-      (property.value = :one).should == :one
+      expect(property.value = :one).to eq(:one)
     end
   end
 
@@ -202,7 +202,7 @@ describe Puppet::Property do
     end
 
     it "should default to :first array_matching" do
-      subclass.array_matching.should == :first
+      expect(subclass.array_matching).to eq(:first)
     end
 
     it "should unmunge the returned value if :array_matching is set to :first" do
@@ -224,44 +224,44 @@ describe Puppet::Property do
 
   describe "when validating values" do
     it "should do nothing if no values or regexes have been defined" do
-      lambda { property.should = "foo" }.should_not raise_error
+      expect { property.should = "foo" }.not_to raise_error
     end
 
     it "should fail if the value is not a defined value or alias and does not match a regex" do
       subclass.newvalue(:foo)
 
-      lambda { property.should = "bar" }.should raise_error
+      expect { property.should = "bar" }.to raise_error
     end
 
     it "should succeeed if the value is one of the defined values" do
       subclass.newvalue(:foo)
 
-      lambda { property.should = :foo }.should_not raise_error
+      expect { property.should = :foo }.not_to raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a symbol and the validation uses a string" do
       subclass.newvalue(:foo)
 
-      lambda { property.should = "foo" }.should_not raise_error
+      expect { property.should = "foo" }.not_to raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a string and the validation uses a symbol" do
       subclass.newvalue("foo")
 
-      lambda { property.should = :foo }.should_not raise_error
+      expect { property.should = :foo }.not_to raise_error
     end
 
     it "should succeed if the value is one of the defined aliases" do
       subclass.newvalue("foo")
       subclass.aliasvalue("bar", "foo")
 
-      lambda { property.should = :bar }.should_not raise_error
+      expect { property.should = :bar }.not_to raise_error
     end
 
     it "should succeed if the value matches one of the regexes" do
       subclass.newvalue(/./)
 
-      lambda { property.should = "bar" }.should_not raise_error
+      expect { property.should = "bar" }.not_to raise_error
     end
 
     it "should validate that all required features are present" do
@@ -277,7 +277,7 @@ describe Puppet::Property do
 
       resource.provider.expects(:satisfies?).with([:a, :b]).returns false
 
-      lambda { property.should = :foo }.should raise_error(Puppet::Error)
+      expect { property.should = :foo }.to raise_error(Puppet::Error)
     end
 
     it "should internally raise an ArgumentError if required features are missing" do
@@ -285,7 +285,7 @@ describe Puppet::Property do
 
       resource.provider.expects(:satisfies?).with([:a, :b]).returns false
 
-      lambda { property.validate_features_per_value :foo }.should raise_error(ArgumentError)
+      expect { property.validate_features_per_value :foo }.to raise_error(ArgumentError)
     end
 
     it "should validate that all required features are present for regexes" do
@@ -307,28 +307,28 @@ describe Puppet::Property do
 
   describe "when munging values" do
     it "should do nothing if no values or regexes have been defined" do
-      property.munge("foo").should == "foo"
+      expect(property.munge("foo")).to eq("foo")
     end
 
     it "should return return any matching defined values" do
       subclass.newvalue(:foo)
-      property.munge("foo").should == :foo
+      expect(property.munge("foo")).to eq(:foo)
     end
 
     it "should return any matching aliases" do
       subclass.newvalue(:foo)
       subclass.aliasvalue(:bar, :foo)
-      property.munge("bar").should == :foo
+      expect(property.munge("bar")).to eq(:foo)
     end
 
     it "should return the value if it matches a regex" do
       subclass.newvalue(/./)
-      property.munge("bar").should == "bar"
+      expect(property.munge("bar")).to eq("bar")
     end
 
     it "should return the value if no other option is matched" do
       subclass.newvalue(:foo)
-      property.munge("bar").should == "bar"
+      expect(property.munge("bar")).to eq("bar")
     end
   end
 
@@ -344,12 +344,12 @@ describe Puppet::Property do
   describe "when setting a value" do
     it "should catch exceptions and raise Puppet::Error" do
       subclass.newvalue(:foo) { raise "eh" }
-      lambda { property.set(:foo) }.should raise_error(Puppet::Error)
+      expect { property.set(:foo) }.to raise_error(Puppet::Error)
     end
 
     it "fails when the provider does not handle the attribute" do
       subclass.name = "unknown"
-      lambda { property.set(:a_value) }.should raise_error(Puppet::Error)
+      expect { property.set(:a_value) }.to raise_error(Puppet::Error)
     end
 
     it "propogates the errors about missing methods from the provider" do
@@ -359,7 +359,7 @@ describe Puppet::Property do
       end
 
       subclass.name = :bad_method
-      lambda { property.set(:a_value) }.should raise_error(NoMethodError, /this_method_does_not_exist/)
+      expect { property.set(:a_value) }.to raise_error(NoMethodError, /this_method_does_not_exist/)
     end
 
     describe "that was defined without a block" do
@@ -387,15 +387,15 @@ describe Puppet::Property do
 
   describe "when producing a change log" do
     it "should say 'defined' when the current value is 'absent'" do
-      property.change_to_s(:absent, "foo").should =~ /^defined/
+      expect(property.change_to_s(:absent, "foo")).to match(/^defined/)
     end
 
     it "should say 'undefined' when the new value is 'absent'" do
-      property.change_to_s("foo", :absent).should =~ /^undefined/
+      expect(property.change_to_s("foo", :absent)).to match(/^undefined/)
     end
 
     it "should say 'changed' when neither value is 'absent'" do
-      property.change_to_s("foo", "bar").should =~ /changed/
+      expect(property.change_to_s("foo", "bar")).to match(/changed/)
     end
   end
 
@@ -496,16 +496,16 @@ describe Puppet::Property do
   describe "#property_matches?" do
     [1, "1", [1], :one].each do |input|
       it "should treat two equal objects as equal (#{input.inspect})" do
-        property.property_matches?(input, input).should be_truthy
+        expect(property.property_matches?(input, input)).to be_truthy
       end
     end
 
     it "should treat two objects as equal if the first argument is the stringified version of the second" do
-      property.property_matches?("1", 1).should be_truthy
+      expect(property.property_matches?("1", 1)).to be_truthy
     end
 
     it "should NOT treat two objects as equal if the first argument is not a string, and the second argument is a string, even if it stringifies to the first" do
-      property.property_matches?(1, "1").should be_falsey
+      expect(property.property_matches?(1, "1")).to be_falsey
     end
   end
 end

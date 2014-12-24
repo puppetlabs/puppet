@@ -14,7 +14,7 @@ describe "Package provider" do
         options = {:name => "nosuch#{provider.name}", :provider => provider.name}
 
         pkg = Puppet::Type.newpackage(options)
-        lambda { pkg.provider.install }.should raise_error
+        expect { pkg.provider.install }.to raise_error
       end
 
       it "should be able to get a list of existing packages" do
@@ -26,8 +26,8 @@ describe "Package provider" do
         end
 
         provider.instances.each do |package|
-          package.should be_instance_of(provider)
-          package.properties[:provider].should == provider.name
+          expect(package).to be_instance_of(provider)
+          expect(package.properties[:provider]).to eq(provider.name)
         end
       end
     end

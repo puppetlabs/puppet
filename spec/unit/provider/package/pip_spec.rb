@@ -18,15 +18,15 @@ describe provider_class do
   describe "parse" do
 
     it "should return a hash on valid input" do
-      provider_class.parse("real_package==1.2.5").should == {
+      expect(provider_class.parse("real_package==1.2.5")).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
-      }
+      })
     end
 
     it "should return nil on invalid input" do
-      provider_class.parse("foo").should == nil
+      expect(provider_class.parse("foo")).to eq(nil)
     end
 
   end
@@ -35,18 +35,18 @@ describe provider_class do
     it "should return pip-python on RedHat < 7 systems" do
       Facter.stubs(:value).with(:osfamily).returns("RedHat")
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("6")
-      provider_class.cmd.should == 'pip-python'
+      expect(provider_class.cmd).to eq('pip-python')
     end
 
     it "should return pip on RedHat >= 7 systems" do
       Facter.stubs(:value).with(:osfamily).returns("RedHat")
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-      provider_class.cmd.should == 'pip'
+      expect(provider_class.cmd).to eq('pip')
     end
 
     it "should return pip by default" do
       Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
-      provider_class.cmd.should == 'pip'
+      expect(provider_class.cmd).to eq('pip')
     end
 
   end
@@ -68,7 +68,7 @@ describe provider_class do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
         provider_class.expects(:which).with(pip_cmd).returns nil
-        provider_class.instances.should == []
+        expect(provider_class.instances).to eq([])
       end
     end
 
@@ -87,16 +87,16 @@ describe provider_class do
         :provider => :pip,
       })]
 
-      @provider.query.should == {
+      expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
-      }
+      })
     end
 
     it "should return nil when the package is missing" do
       provider_class.expects(:instances).returns []
-      @provider.query.should == nil
+      expect(@provider.query).to eq(nil)
     end
 
     it "should be case insensitive" do
@@ -108,11 +108,11 @@ describe provider_class do
         :provider => :pip,
       })]
 
-      @provider.query.should == {
+      expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
-      }
+      })
     end
 
   end
@@ -121,18 +121,18 @@ describe provider_class do
 
     it "should find a version number for real_package" do
       @resource[:name] = "real_package"
-      @provider.latest.should_not == nil
+      expect(@provider.latest).not_to eq(nil)
     end
 
     it "should not find a version number for fake_package" do
       @resource[:name] = "fake_package"
-      @provider.latest.should == nil
+      expect(@provider.latest).to eq(nil)
     end
 
     it "should handle a timeout gracefully" do
       @resource[:name] = "fake_package"
       @client.stubs(:call).raises(Timeout::Error)
-      lambda { @provider.latest }.should raise_error(Puppet::Error)
+      expect { @provider.latest }.to raise_error(Puppet::Error)
     end
 
   end

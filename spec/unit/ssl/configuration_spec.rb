@@ -10,7 +10,7 @@ describe Puppet::SSL::Configuration do
   let(:ssl_server_ca_auth) { "/path/to/certs/ssl_server_ca_auth.pem" }
 
   it "should require the localcacert argument" do
-    lambda { subject }.should raise_error ArgumentError
+    expect { subject }.to raise_error ArgumentError
   end
 
   context "Default configuration" do
@@ -19,11 +19,11 @@ describe Puppet::SSL::Configuration do
     end
 
     it "#ca_chain_file == localcacert" do
-      subject.ca_chain_file.should == localcacert
+      expect(subject.ca_chain_file).to eq(localcacert)
     end
 
     it "#ca_auth_file == localcacert" do
-      subject.ca_auth_file.should == localcacert
+      expect(subject.ca_auth_file).to eq(localcacert)
     end
   end
 
@@ -36,18 +36,18 @@ describe Puppet::SSL::Configuration do
     end
 
     it "#ca_chain_file == ssl_server_ca_chain" do
-      subject.ca_chain_file.should == ssl_server_ca_auth
+      expect(subject.ca_chain_file).to eq(ssl_server_ca_auth)
     end
 
     it "#ca_auth_file == ssl_server_ca_auth" do
-      subject.ca_auth_file.should == ssl_server_ca_auth
+      expect(subject.ca_auth_file).to eq(ssl_server_ca_auth)
     end
 
     it "#ca_auth_certificates returns an Array<OpenSSL::X509::Certificate>" do
       subject.stubs(:read_file).returns(master_ca_pem + root_ca_pem)
 
       certs = subject.ca_auth_certificates
-      certs.each { |cert| cert.should be_a_kind_of OpenSSL::X509::Certificate }
+      certs.each { |cert| expect(cert).to be_a_kind_of OpenSSL::X509::Certificate }
     end
   end
 
@@ -58,7 +58,7 @@ describe Puppet::SSL::Configuration do
       end
 
       it "should use ca_auth_file" do
-        subject.ca_chain_file.should == ssl_server_ca_auth
+        expect(subject.ca_chain_file).to eq(ssl_server_ca_auth)
       end
     end
   end

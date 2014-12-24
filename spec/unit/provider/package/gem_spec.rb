@@ -77,7 +77,7 @@ describe provider_class do
       describe "as a puppet url" do
         it "should fail" do
           resource[:source] = "puppet://my/file"
-          lambda { provider.install }.should raise_error(Puppet::Error)
+          expect { provider.install }.to raise_error(Puppet::Error)
         end
       end
       describe "as a non-file and non-puppet url" do
@@ -91,7 +91,7 @@ describe provider_class do
         it "should fail" do
           URI.expects(:parse).raises(ArgumentError)
           resource[:source] = "http:::::uppet:/:/my/file"
-          lambda { provider.install }.should raise_error(Puppet::Error)
+          expect { provider.install }.to raise_error(Puppet::Error)
         end
       end
     end
@@ -107,7 +107,7 @@ describe provider_class do
           :ensure   => ["3.0"],
           :provider => :gem,
           })
-      provider.latest.should == "3.0"
+      expect(provider.latest).to eq("3.0")
     end
 
     it "should list from the specified source repository" do
@@ -119,7 +119,7 @@ describe provider_class do
           :ensure   => ["3.0"],
           :provider => :gem,
           })
-      provider.latest.should == "3.0"
+      expect(provider.latest).to eq("3.0")
     end
   end
 
@@ -130,7 +130,7 @@ describe provider_class do
 
     it "should return an empty array when no gems installed" do
       provider_class.expects(:execute).with(%w{/my/gem list --local}).returns("\n")
-      provider_class.instances.should == []
+      expect(provider_class.instances).to eq([])
     end
 
     it "should return ensure values as an array of installed versions" do
@@ -139,10 +139,10 @@ describe provider_class do
         vagrant (0.8.7, 0.6.9)
       HEREDOC
 
-      provider_class.instances.map {|p| p.properties}.should == [
+      expect(provider_class.instances.map {|p| p.properties}).to eq([
         {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
         {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
-      ]
+      ])
     end
 
     it "should ignore platform specifications" do
@@ -151,18 +151,18 @@ describe provider_class do
         nokogiri (1.6.1 ruby java x86-mingw32 x86-mswin32-60, 1.4.4.1 x86-mswin32)
       HEREDOC
 
-      provider_class.instances.map {|p| p.properties}.should == [
+      expect(provider_class.instances.map {|p| p.properties}).to eq([
         {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
         {:ensure => ["1.6.1", "1.4.4.1"], :provider => :gem, :name => 'nokogiri'}
-      ]
+      ])
     end
 
     it "should not fail when an unmatched line is returned" do
       provider_class.expects(:execute).with(%w{/my/gem list --local}).
         returns(File.read(my_fixture('line-with-1.8.5-warning')))
 
-      provider_class.instances.map {|p| p.properties}.
-        should == [{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
+      expect(provider_class.instances.map {|p| p.properties}).
+        to eq([{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
                    {:provider=>:gem, :ensure=>["1.1.3"], :name=>"diff-lcs"},
                    {:provider=>:gem, :ensure=>["0.0.1"], :name=>"metaclass"},
                    {:provider=>:gem, :ensure=>["0.10.5"], :name=>"mocha"},
@@ -171,7 +171,7 @@ describe provider_class do
                    {:provider=>:gem, :ensure=>["2.9.1"], :name=>"rspec-expectations"},
                    {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-mocks"},
                    {:provider=>:gem, :ensure=>["0.9.0"], :name=>"rubygems-bundler"},
-                   {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}]
+                   {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}])
     end
   end
 

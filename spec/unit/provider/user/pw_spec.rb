@@ -97,7 +97,7 @@ describe provider_class do
     # (#7500) -p should not be used to set a password (it means something else)
     it "should not use -p when a password is given" do
       resource[:password] = "*"
-      provider.addcmd.should_not include("-p")
+      expect(provider.addcmd).not_to include("-p")
       provider.expects(:password=)
       provider.expects(:execute).with(Not(includes("-p")), kind_of(Hash))
       provider.create

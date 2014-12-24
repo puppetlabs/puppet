@@ -16,14 +16,14 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
   describe "#instances" do
     it "should have an instances method" do
-      described_class.should respond_to :instances
+      expect(described_class).to respond_to :instances
     end
 
     it "should list all available services" do
       described_class.stubs(:execpipe).with(['/usr/sbin/rcctl', :status]).yields File.read(my_fixture('rcctl_status'))
-      described_class.instances.map(&:name).should == [
+      expect(described_class.instances.map(&:name)).to eq([
         'accounting', 'pf', 'postgresql', 'tftpd', 'wsmoused', 'xdm',
-      ]
+      ])
     end
   end
 
@@ -68,7 +68,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 3
-      provider.status.should == :stopped
+      expect(provider.status).to eq(:stopped)
     end
 
     it "should return :running when status command returns with a zero exitcode" do
@@ -76,7 +76,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 0
-      provider.status.should == :running
+      expect(provider.status).to eq(:running)
     end
   end
 
@@ -108,14 +108,14 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with('status', 'sshd').returns('-6')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
-      provider.enabled?.should == :true
+      expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with('status', 'sshd').returns('NO')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('NO')
-      provider.enabled?.should == :false
+      expect(provider.enabled?).to eq(:false)
     end
   end
 
@@ -149,21 +149,21 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
-      provider.running?.should be_truthy
+      expect(provider.running?).to be_truthy
     end
 
     it "should return true if the service is running" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(ok)')
-      provider.running?.should be_truthy
+      expect(provider.running?).to be_truthy
     end
 
     it "should return nil if the service is not running" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(failed)')
       provider.expects(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('sshd(failed)')
-      provider.running?.should be_nil
+      expect(provider.running?).to be_nil
     end
   end
 

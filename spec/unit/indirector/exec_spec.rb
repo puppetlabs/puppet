@@ -26,12 +26,12 @@ describe Puppet::Indirector::Exec do
 
   it "should throw an exception if the command is not an array" do
     @searcher.command = path
-    proc { @searcher.find(@request) }.should raise_error(Puppet::DevError)
+    expect { @searcher.find(@request) }.to raise_error(Puppet::DevError)
   end
 
   it "should throw an exception if the command is not fully qualified" do
     @searcher.command = ["mycommand"]
-    proc { @searcher.find(@request) }.should raise_error(ArgumentError)
+    expect { @searcher.find(@request) }.to raise_error(ArgumentError)
   end
 
   it "should execute the command with the object name as the only argument" do
@@ -41,12 +41,12 @@ describe Puppet::Indirector::Exec do
 
   it "should return the output of the script" do
     @searcher.expects(:execute).with([path, 'foo'], arguments).returns("whatever")
-    @searcher.find(@request).should == "whatever"
+    expect(@searcher.find(@request)).to eq("whatever")
   end
 
   it "should return nil when the command produces no output" do
     @searcher.expects(:execute).with([path, 'foo'], arguments).returns(nil)
-    @searcher.find(@request).should be_nil
+    expect(@searcher.find(@request)).to be_nil
   end
 
   it "should raise an exception if there's an execution failure" do

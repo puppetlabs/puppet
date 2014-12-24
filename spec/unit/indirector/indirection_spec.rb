@@ -46,7 +46,7 @@ shared_examples_for "Indirection Delegator" do
 
     @indirection.expects(:select_terminus).with(request).returns nil
 
-    lambda { @indirection.send(@method, "me") }.should raise_error(ArgumentError)
+    expect { @indirection.send(@method, "me") }.to raise_error(ArgumentError)
   end
 
   it "should choose the terminus returned by the :terminus_class method if no :select_terminus method is available" do
@@ -91,7 +91,7 @@ shared_examples_for "Delegation Authorizer" do
   it "should fail if authorization returns false" do
     @terminus.expects(:authorized?).returns(false)
     @terminus.stubs(@method)
-    proc { @indirection.send(@method, "/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+    expect { @indirection.send(@method, "/my/key", :node => "mynode") }.to raise_error(ArgumentError)
   end
 
   it "should continue if authorization returns true" do
@@ -115,31 +115,31 @@ describe Puppet::Indirector::Indirection do
   describe "when initializing" do
     # (LAK) I've no idea how to test this, really.
     it "should store a reference to itself before it consumes its options" do
-      proc { @indirection = Puppet::Indirector::Indirection.new(Object.new, :testingness, :not_valid_option) }.should raise_error
-      Puppet::Indirector::Indirection.instance(:testingness).should be_instance_of(Puppet::Indirector::Indirection)
+      expect { @indirection = Puppet::Indirector::Indirection.new(Object.new, :testingness, :not_valid_option) }.to raise_error
+      expect(Puppet::Indirector::Indirection.instance(:testingness)).to be_instance_of(Puppet::Indirector::Indirection)
       Puppet::Indirector::Indirection.instance(:testingness).delete
     end
 
     it "should keep a reference to the indirecting model" do
       model = mock 'model'
       @indirection = Puppet::Indirector::Indirection.new(model, :myind)
-      @indirection.model.should equal(model)
+      expect(@indirection.model).to equal(model)
     end
 
     it "should set the name" do
       @indirection = Puppet::Indirector::Indirection.new(mock('model'), :myind)
-      @indirection.name.should == :myind
+      expect(@indirection.name).to eq(:myind)
     end
 
     it "should require indirections to have unique names" do
       @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
-      proc { Puppet::Indirector::Indirection.new(:test) }.should raise_error(ArgumentError)
+      expect { Puppet::Indirector::Indirection.new(:test) }.to raise_error(ArgumentError)
     end
 
     it "should extend itself with any specified module" do
       mod = Module.new
       @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test, :extend => mod)
-      @indirection.singleton_class.included_modules.should include(mod)
+      expect(@indirection.singleton_class.included_modules).to include(mod)
     end
 
     after do
@@ -170,23 +170,23 @@ describe Puppet::Indirector::Indirection do
 
     it "should allow setting the ttl" do
       @indirection.ttl = 300
-      @indirection.ttl.should == 300
+      expect(@indirection.ttl).to eq(300)
     end
 
     it "should default to the :runinterval setting, converted to an integer, for its ttl" do
       Puppet[:runinterval] = 1800
-      @indirection.ttl.should == 1800
+      expect(@indirection.ttl).to eq(1800)
     end
 
     it "should calculate the current expiration by adding the TTL to the current time" do
       @indirection.stubs(:ttl).returns(100)
       now = Time.now
       Time.stubs(:now).returns now
-      @indirection.expiration.should == (Time.now + 100)
+      expect(@indirection.expiration).to eq(Time.now + 100)
     end
 
     it "should have a method for creating an indirection request instance" do
-      @indirection.should respond_to(:request)
+      expect(@indirection).to respond_to(:request)
     end
 
     describe "creates a request" do
@@ -213,7 +213,7 @@ describe Puppet::Indirector::Indirection do
       it "should return the request" do
         request = mock 'request'
         Puppet::Indirector::Request.expects(:new).returns request
-        @indirection.request(:funtest, "yayness").should equal(request)
+        expect(@indirection.request(:funtest, "yayness")).to equal(request)
       end
     end
 
@@ -226,12 +226,12 @@ describe Puppet::Indirector::Indirection do
 
       it "should return the results of the delegation" do
         @terminus.expects(:find).returns(@instance)
-        @indirection.find("me").should equal(@instance)
+        expect(@indirection.find("me")).to equal(@instance)
       end
 
       it "should return false if the instance is false" do
         @terminus.expects(:find).returns(false)
-        @indirection.find("me").should equal(false)
+        expect(@indirection.find("me")).to equal(false)
       end
 
       it "should set the expiration date on any instances without one set" do
@@ -313,7 +313,7 @@ describe Puppet::Indirector::Indirection do
           @instance.stubs(:expired?).returns false
 
           @cache.stubs(:find).returns @instance
-          @indirection.find("/my/key").should equal(@instance)
+          expect(@indirection.find("/my/key")).to equal(@instance)
         end
 
         it "should not fail if the cache fails" do
@@ -321,14 +321,14 @@ describe Puppet::Indirector::Indirection do
 
           @cache.expects(:find).raises ArgumentError
           @cache.stubs(:save)
-          lambda { @indirection.find("/my/key") }.should_not raise_error
+          expect { @indirection.find("/my/key") }.not_to raise_error
         end
 
         it "should look in the main terminus if the cache fails" do
           @terminus.expects(:find).returns @instance
           @cache.expects(:find).raises ArgumentError
           @cache.stubs(:save)
-          @indirection.find("/my/key").should equal(@instance)
+          expect(@indirection.find("/my/key")).to equal(@instance)
         end
 
         it "should send a debug log if it is using the cached object" do
@@ -343,7 +343,7 @@ describe Puppet::Indirector::Indirection do
 
           @cache.stubs(:find).returns @instance
           @terminus.stubs(:find).returns nil
-          @indirection.find("/my/key").should be_nil
+          expect(@indirection.find("/my/key")).to be_nil
         end
 
         it "should send an info log if it is using the cached object" do
@@ -405,12 +405,12 @@ describe Puppet::Indirector::Indirection do
 
       it "should return true if the head method returned true" do
         @terminus.expects(:head).returns(true)
-        @indirection.head("me").should == true
+        expect(@indirection.head("me")).to eq(true)
       end
 
       it "should return false if the head method returned false" do
         @terminus.expects(:head).returns(false)
-        @indirection.head("me").should == false
+        expect(@indirection.head("me")).to eq(false)
       end
 
       describe "when caching is enabled" do
@@ -426,27 +426,27 @@ describe Puppet::Indirector::Indirection do
           @terminus.stubs(:head).never
           @cache.expects(:find).returns @instance
 
-          @indirection.head("/my/key").should == true
+          expect(@indirection.head("/my/key")).to eq(true)
         end
 
         it "should not save to the cache" do
           @cache.expects(:find).returns nil
           @cache.expects(:save).never
           @terminus.expects(:head).returns true
-          @indirection.head("/my/key").should == true
+          expect(@indirection.head("/my/key")).to eq(true)
         end
 
         it "should not fail if the cache fails" do
           @terminus.stubs(:head).returns true
 
           @cache.expects(:find).raises ArgumentError
-          lambda { @indirection.head("/my/key") }.should_not raise_error
+          expect { @indirection.head("/my/key") }.not_to raise_error
         end
 
         it "should look in the main terminus if the cache fails" do
           @terminus.expects(:head).returns true
           @cache.expects(:find).raises ArgumentError
-          @indirection.head("/my/key").should == true
+          expect(@indirection.head("/my/key")).to eq(true)
         end
 
         it "should send a debug log if it is using the cached object" do
@@ -461,7 +461,7 @@ describe Puppet::Indirector::Indirection do
 
           @cache.stubs(:find).returns @instance
           @terminus.stubs(:head).returns false
-          @indirection.head("/my/key").should == false
+          expect(@indirection.head("/my/key")).to eq(false)
         end
       end
     end
@@ -471,7 +471,7 @@ describe Puppet::Indirector::Indirection do
 
       it "should return the result of the save" do
         @terminus.stubs(:save).returns "foo"
-        @indirection.save(@instance).should == "foo"
+        expect(@indirection.save(@instance)).to eq("foo")
       end
 
       describe "when caching is enabled" do
@@ -489,7 +489,7 @@ describe Puppet::Indirector::Indirection do
 
           @cache.stubs(:save)
           @terminus.stubs(:save).returns @instance
-          @indirection.save(@instance).should equal(@instance)
+          expect(@indirection.save(@instance)).to equal(@instance)
         end
 
         it "should use a request to save the object to the cache" do
@@ -509,7 +509,7 @@ describe Puppet::Indirector::Indirection do
 
           @cache.expects(:save).never
           @terminus.expects(:save).raises "eh"
-          lambda { @indirection.save(@instance) }.should raise_error
+          expect { @indirection.save(@instance) }.to raise_error
         end
       end
     end
@@ -523,7 +523,7 @@ describe Puppet::Indirector::Indirection do
 
       it "should return the result of removing the instance" do
         @terminus.stubs(:destroy).returns "yayness"
-        @indirection.destroy("/my/key").should == "yayness"
+        expect(@indirection.destroy("/my/key")).to eq("yayness")
       end
 
       describe "when caching is enabled" do
@@ -584,7 +584,7 @@ describe Puppet::Indirector::Indirection do
 
       it "should return the results of searching in the terminus" do
         @terminus.expects(:search).returns([@instance])
-        @indirection.search("/my/key").should == [@instance]
+        expect(@indirection.search("/my/key")).to eq([@instance])
       end
     end
 
@@ -667,21 +667,21 @@ describe Puppet::Indirector::Indirection do
   describe "when managing indirection instances" do
     it "should allow an indirection to be retrieved by name" do
       @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
-      Puppet::Indirector::Indirection.instance(:test).should equal(@indirection)
+      expect(Puppet::Indirector::Indirection.instance(:test)).to equal(@indirection)
     end
 
     it "should return nil when the named indirection has not been created" do
-      Puppet::Indirector::Indirection.instance(:test).should be_nil
+      expect(Puppet::Indirector::Indirection.instance(:test)).to be_nil
     end
 
     it "should allow an indirection's model to be retrieved by name" do
       mock_model = mock('model')
       @indirection = Puppet::Indirector::Indirection.new(mock_model, :test)
-      Puppet::Indirector::Indirection.model(:test).should equal(mock_model)
+      expect(Puppet::Indirector::Indirection.model(:test)).to equal(mock_model)
     end
 
     it "should return nil when no model matches the requested name" do
-      Puppet::Indirector::Indirection.model(:test).should be_nil
+      expect(Puppet::Indirector::Indirection.model(:test)).to be_nil
     end
 
     after do
@@ -698,24 +698,24 @@ describe Puppet::Indirector::Indirection do
     end
 
     it "should fail if no terminus class can be picked" do
-      proc { @indirection.terminus_class }.should raise_error(Puppet::DevError)
+      expect { @indirection.terminus_class }.to raise_error(Puppet::DevError)
     end
 
     it "should choose the default terminus class if one is specified" do
       @indirection.terminus_class = :default
-      @indirection.terminus_class.should equal(:default)
+      expect(@indirection.terminus_class).to equal(:default)
     end
 
     it "should use the provided Puppet setting if told to do so" do
       Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :my_terminus).returns(mock("terminus_class2"))
       Puppet[:node_terminus] = :my_terminus
       @indirection.terminus_setting = :node_terminus
-      @indirection.terminus_class.should equal(:my_terminus)
+      expect(@indirection.terminus_class).to equal(:my_terminus)
     end
 
     it "should fail if the provided terminus class is not valid" do
       Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :nosuchclass).returns(nil)
-      proc { @indirection.terminus_class = :nosuchclass }.should raise_error(ArgumentError)
+      expect { @indirection.terminus_class = :nosuchclass }.to raise_error(ArgumentError)
     end
 
     after do
@@ -732,35 +732,35 @@ describe Puppet::Indirector::Indirection do
     end
 
     it "should allow specification of a terminus type" do
-      @indirection.should respond_to(:terminus_class=)
+      expect(@indirection).to respond_to(:terminus_class=)
     end
 
     it "should fail to redirect if no terminus type has been specified" do
-      proc { @indirection.find("blah") }.should raise_error(Puppet::DevError)
+      expect { @indirection.find("blah") }.to raise_error(Puppet::DevError)
     end
 
     it "should fail when the terminus class name is an empty string" do
-      proc { @indirection.terminus_class = "" }.should raise_error(ArgumentError)
+      expect { @indirection.terminus_class = "" }.to raise_error(ArgumentError)
     end
 
     it "should fail when the terminus class name is nil" do
-      proc { @indirection.terminus_class = nil }.should raise_error(ArgumentError)
+      expect { @indirection.terminus_class = nil }.to raise_error(ArgumentError)
     end
 
     it "should fail when the specified terminus class cannot be found" do
       Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
-      proc { @indirection.terminus_class = :foo }.should raise_error(ArgumentError)
+      expect { @indirection.terminus_class = :foo }.to raise_error(ArgumentError)
     end
 
     it "should select the specified terminus class if a terminus class name is provided" do
       Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(@terminus_class)
-      @indirection.terminus(:foo).should equal(@terminus)
+      expect(@indirection.terminus(:foo)).to equal(@terminus)
     end
 
     it "should use the configured terminus class if no terminus name is specified" do
       Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
       @indirection.terminus_class = :foo
-      @indirection.terminus.should equal(@terminus)
+      expect(@indirection.terminus).to equal(@terminus)
     end
 
     after do
@@ -778,14 +778,14 @@ describe Puppet::Indirector::Indirection do
 
     it "should create an instance of the chosen terminus class" do
       @terminus_class.stubs(:new).returns(@terminus)
-      @indirection.terminus(:foo).should equal(@terminus)
+      expect(@indirection.terminus(:foo)).to equal(@terminus)
     end
 
     # Make sure it caches the terminus.
     it "should return the same terminus instance each time for a given name" do
       @terminus_class.stubs(:new).returns(@terminus)
-      @indirection.terminus(:foo).should equal(@terminus)
-      @indirection.terminus(:foo).should equal(@terminus)
+      expect(@indirection.terminus(:foo)).to equal(@terminus)
+      expect(@indirection.terminus(:foo)).to equal(@terminus)
     end
 
     it "should not create a terminus instance until one is actually needed" do
@@ -809,25 +809,25 @@ describe Puppet::Indirector::Indirection do
     end
 
     it "should provide a method for setting the cache terminus class" do
-      @indirection.should respond_to(:cache_class=)
+      expect(@indirection).to respond_to(:cache_class=)
     end
 
     it "should fail to cache if no cache type has been specified" do
-      proc { @indirection.cache }.should raise_error(Puppet::DevError)
+      expect { @indirection.cache }.to raise_error(Puppet::DevError)
     end
 
     it "should fail to set the cache class when the cache class name is an empty string" do
-      proc { @indirection.cache_class = "" }.should raise_error(ArgumentError)
+      expect { @indirection.cache_class = "" }.to raise_error(ArgumentError)
     end
 
     it "should allow resetting the cache_class to nil" do
       @indirection.cache_class = nil
-      @indirection.cache_class.should be_nil
+      expect(@indirection.cache_class).to be_nil
     end
 
     it "should fail to set the cache class when the specified cache class cannot be found" do
       Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
-      proc { @indirection.cache_class = :foo }.should raise_error(ArgumentError)
+      expect { @indirection.cache_class = :foo }.to raise_error(ArgumentError)
     end
 
     after do
@@ -857,8 +857,8 @@ describe Puppet::Indirector::Indirection do
       it "should reuse the cache terminus" do
         @cache_class.expects(:new).returns(@cache)
         @indirection.cache_class = :cache_terminus
-        @indirection.cache.should equal(@cache)
-        @indirection.cache.should equal(@cache)
+        expect(@indirection.cache).to equal(@cache)
+        expect(@indirection.cache).to equal(@cache)
       end
     end
 

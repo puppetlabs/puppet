@@ -5,12 +5,12 @@ require 'puppet/indirector/key/file'
 
 describe Puppet::SSL::Key::File do
   it "should have documentation" do
-    Puppet::SSL::Key::File.doc.should be_instance_of(String)
+    expect(Puppet::SSL::Key::File.doc).to be_instance_of(String)
   end
 
   it "should use the :privatekeydir as the collection directory" do
     Puppet[:privatekeydir] = File.expand_path("/key/dir")
-    Puppet::SSL::Key::File.collection_directory.should == Puppet[:privatekeydir]
+    expect(Puppet::SSL::Key::File.collection_directory).to eq(Puppet[:privatekeydir])
   end
 
   it "should store the ca key at the :cakey location" do
@@ -18,7 +18,7 @@ describe Puppet::SSL::Key::File do
     Puppet[:cakey] = File.expand_path("/ca/key")
     file = Puppet::SSL::Key::File.new
     file.stubs(:ca?).returns true
-    file.path("whatever").should == Puppet[:cakey]
+    expect(file.path("whatever")).to eq(Puppet[:cakey])
   end
 
   describe "when choosing the path for the public key" do
@@ -28,7 +28,7 @@ describe Puppet::SSL::Key::File do
 
       @searcher = Puppet::SSL::Key::File.new
       @searcher.stubs(:ca?).returns true
-      @searcher.public_key_path("whatever").should == Puppet[:capub]
+      expect(@searcher.public_key_path("whatever")).to eq(Puppet[:capub])
     end
 
     it "should use the host name plus '.pem' in :publickeydir for normal hosts" do
@@ -38,7 +38,7 @@ describe Puppet::SSL::Key::File do
 
       @searcher = Puppet::SSL::Key::File.new
       @searcher.stubs(:ca?).returns false
-      @searcher.public_key_path("whatever").should == File.expand_path("/public/key/dir/whatever.pem")
+      expect(@searcher.public_key_path("whatever")).to eq(File.expand_path("/public/key/dir/whatever.pem"))
     end
   end
 

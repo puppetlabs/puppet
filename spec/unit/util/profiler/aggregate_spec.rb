@@ -18,23 +18,23 @@ describe Puppet::Util::Profiler::Aggregate do
     profiler_mgr.profile("looking up stuff for compilation", ["compiler", "lookup"]) { sleep 0.01 }
     profiler_mgr.profile("COMPILING ALL OF THE THINGS!", ["compiler", "compiling"]) {}
 
-    profiler.values["function"].count.should == 2
-    profiler.values["function"].time.should be > 0
-    profiler.values["function"]["hiera_lookup"].count.should == 2
-    profiler.values["function"]["hiera_lookup"]["production"].count.should == 1
-    profiler.values["function"]["hiera_lookup"]["test"].count.should == 1
-    profiler.values["function"].time.should be >= profiler.values["function"]["hiera_lookup"]["test"].time
+    expect(profiler.values["function"].count).to eq(2)
+    expect(profiler.values["function"].time).to be > 0
+    expect(profiler.values["function"]["hiera_lookup"].count).to eq(2)
+    expect(profiler.values["function"]["hiera_lookup"]["production"].count).to eq(1)
+    expect(profiler.values["function"]["hiera_lookup"]["test"].count).to eq(1)
+    expect(profiler.values["function"].time).to be >= profiler.values["function"]["hiera_lookup"]["test"].time
 
-    profiler.values["compiler"].count.should == 2
-    profiler.values["compiler"].time.should be > 0
-    profiler.values["compiler"]["lookup"].count.should == 1
-    profiler.values["compiler"]["compiling"].count.should == 1
-    profiler.values["compiler"].time.should be >= profiler.values["compiler"]["lookup"].time
+    expect(profiler.values["compiler"].count).to eq(2)
+    expect(profiler.values["compiler"].time).to be > 0
+    expect(profiler.values["compiler"]["lookup"].count).to eq(1)
+    expect(profiler.values["compiler"]["compiling"].count).to eq(1)
+    expect(profiler.values["compiler"].time).to be >= profiler.values["compiler"]["lookup"].time
 
     profiler.shutdown
 
-    logger.output.should =~ /function -> hiera_lookup: .*\(2 calls\)\nfunction -> hiera_lookup ->.*\(1 calls\)/
-    logger.output.should =~ /compiler: .*\(2 calls\)\ncompiler ->.*\(1 calls\)/
+    expect(logger.output).to match(/function -> hiera_lookup: .*\(2 calls\)\nfunction -> hiera_lookup ->.*\(1 calls\)/)
+    expect(logger.output).to match(/compiler: .*\(2 calls\)\ncompiler ->.*\(1 calls\)/)
   end
 
   it "supports both symbols and strings as components of a metric id" do

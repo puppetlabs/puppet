@@ -17,29 +17,29 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
   describe "#extractexe" do
     describe "when the command has no arguments" do
       it "should return the command if it's quoted" do
-        provider.extractexe('"foo"').should == 'foo'
+        expect(provider.extractexe('"foo"')).to eq('foo')
       end
 
       it "should return the command if it's quoted and contains spaces" do
-        provider.extractexe('"foo bar"').should == 'foo bar'
+        expect(provider.extractexe('"foo bar"')).to eq('foo bar')
       end
 
       it "should return the command if it's not quoted" do
-        provider.extractexe('foo').should == 'foo'
+        expect(provider.extractexe('foo')).to eq('foo')
       end
     end
 
     describe "when the command has arguments" do
       it "should return the command if it's quoted" do
-        provider.extractexe('"foo" bar baz').should == 'foo'
+        expect(provider.extractexe('"foo" bar baz')).to eq('foo')
       end
 
       it "should return the command if it's quoted and contains spaces" do
-        provider.extractexe('"foo bar" baz "quux quiz"').should == 'foo bar'
+        expect(provider.extractexe('"foo bar" baz "quux quiz"')).to eq('foo bar')
       end
 
       it "should return the command if it's not quoted" do
-        provider.extractexe('foo bar baz').should == 'foo'
+        expect(provider.extractexe('foo bar baz')).to eq('foo')
       end
     end
   end
@@ -50,7 +50,7 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
         command = tmpfile('command')
         FileUtils.touch(command)
 
-        provider.checkexe(command).should == nil
+        expect(provider.checkexe(command)).to eq(nil)
       end
       it "should fail if the command doesn't exist" do
         command = tmpfile('command')
@@ -95,13 +95,13 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
     end
 
     it "should not fail if the command is absolute and there is no path" do
-      provider.validatecmd('C:\foo').should == nil
+      expect(provider.validatecmd('C:\foo')).to eq(nil)
     end
 
     it "should not fail if the command is not absolute and there is a path" do
       resource[:path] = 'C:\path;C:\another_path'
 
-      provider.validatecmd('foo').should == nil
+      expect(provider.validatecmd('foo')).to eq(nil)
     end
   end
 end

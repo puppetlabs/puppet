@@ -7,7 +7,7 @@ describe Puppet::Util::RunMode do
   end
 
   it "has rundir depend on vardir" do
-    @run_mode.run_dir.should == '$vardir/run'
+    expect(@run_mode.run_dir).to eq('$vardir/run')
   end
 
   describe Puppet::Util::UnixRunMode, :unless => Puppet.features.microsoft_windows? do
@@ -17,11 +17,11 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
-        as_root { @run_mode.conf_dir.should == File.expand_path('/etc/puppet') }
+        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppet')) }
       end
 
       it "has confdir ~/.puppet when run as non-root" do
-        as_non_root { @run_mode.conf_dir.should == File.expand_path('~/.puppet') }
+        as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppet')) }
       end
 
       context "master run mode" do
@@ -29,7 +29,7 @@ describe Puppet::Util::RunMode do
           @run_mode = Puppet::Util::UnixRunMode.new('master')
         end
         it "has confdir ~/.puppet when run as non-root and master run mode (#16337)" do
-          as_non_root { @run_mode.conf_dir.should == File.expand_path('~/.puppet') }
+          as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppet')) }
         end
       end
 
@@ -44,11 +44,11 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
-        as_root { @run_mode.var_dir.should == File.expand_path('/var/lib/puppet') }
+        as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/var/lib/puppet')) }
       end
 
       it "has vardir ~/.puppet/var when run as non-root" do
-        as_non_root { @run_mode.var_dir.should == File.expand_path('~/.puppet/var') }
+        as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.puppet/var')) }
       end
 
       it "fails when asking for the var_dir as non-root and there is no $HOME" do
@@ -78,11 +78,11 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
-        as_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")) }
+        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc"))) }
       end
 
       it "has confdir in ~/.puppet when run as non-root" do
-        as_non_root { @run_mode.conf_dir.should == File.expand_path("~/.puppet") }
+        as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path("~/.puppet")) }
       end
 
       it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
@@ -100,11 +100,11 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
-        as_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")) }
+        as_root { expect(@run_mode.var_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var"))) }
       end
 
       it "has vardir in ~/.puppet/var when run as non-root" do
-        as_non_root { @run_mode.var_dir.should == File.expand_path("~/.puppet/var") }
+        as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path("~/.puppet/var")) }
       end
 
       it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do

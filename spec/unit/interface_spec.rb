@@ -40,8 +40,8 @@ describe Puppet::Interface do
       }.each do |input, expect|
         it "should match #{input.inspect} to #{expect.inspect}" do
           face = subject[:version_matching, input]
-          face.should be
-          face.version.should == expect
+          expect(face).to be
+          expect(face.version).to eq(expect)
         end
       end
 
@@ -57,7 +57,7 @@ describe Puppet::Interface do
   describe "#define" do
     it "should register the face" do
       face  = subject.define(:face_test_register, '0.0.1')
-      face.should == subject[:face_test_register, '0.0.1']
+      expect(face).to eq(subject[:face_test_register, '0.0.1'])
     end
 
     it "should load actions" do
@@ -70,8 +70,8 @@ describe Puppet::Interface do
     end
 
     it "should support summary builder and accessor methods" do
-      subject.new(:foo, '1.0.0').should respond_to(:summary).with(0).arguments
-      subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
+      expect(subject.new(:foo, '1.0.0')).to respond_to(:summary).with(0).arguments
+      expect(subject.new(:foo, '1.0.0')).to respond_to(:summary=).with(1).arguments
     end
 
     # Required documentation methods...
@@ -86,7 +86,7 @@ describe Puppet::Interface do
         face = subject.new(:builder, '1.0.0') do
           self.send(attr, value)
         end
-        face.send(attr).should == value
+        expect(face.send(attr)).to eq(value)
       end
     end
   end
@@ -108,16 +108,16 @@ describe Puppet::Interface do
         end
       end
 
-      face.something.should == "foo"
+      expect(face.something).to eq("foo")
     end
   end
 
   it "should have a name" do
-    subject.new(:me, '0.0.1').name.should == :me
+    expect(subject.new(:me, '0.0.1').name).to eq(:me)
   end
 
   it "should stringify with its own name" do
-    subject.new(:me, '0.0.1').to_s.should =~ /\bme\b/
+    expect(subject.new(:me, '0.0.1').to_s).to match(/\bme\b/)
   end
 
   it "should try to require faces that are not known" do
@@ -180,7 +180,7 @@ describe Puppet::Interface do
           option "--quux"
         end
       end
-      face.options.should =~ [:foo, :bar]
+      expect(face.options).to match_array([:foo, :bar])
     end
 
     it "should fail when a face option duplicates an action option" do
@@ -201,15 +201,15 @@ describe Puppet::Interface do
         action :bar do when_invoked {|_| true } ; option "--quux" end
       end
 
-      face.get_action(:foo).options.should =~ [:quux]
-      face.get_action(:bar).options.should =~ [:quux]
+      expect(face.get_action(:foo).options).to match_array([:quux])
+      expect(face.get_action(:bar).options).to match_array([:quux])
     end
 
     it "should only list options and not aliases" do
       face = subject.new(:face_options, '0.0.1') do
         option "--bar", "-b", "--foo-bar"
       end
-      face.options.should =~ [:bar]
+      expect(face.options).to match_array([:bar])
     end
 
   end
@@ -231,29 +231,29 @@ describe Puppet::Interface do
 
     describe "#options" do
       it "should list inherited options" do
-        face.options.should =~ [:inherited, :local]
+        expect(face.options).to match_array([:inherited, :local])
       end
 
       it "should see all options on face actions" do
-        face.get_action(:face_action).options.should =~ [:inherited, :local]
+        expect(face.get_action(:face_action).options).to match_array([:inherited, :local])
       end
 
       it "should see all options on inherited actions accessed on the subclass" do
-        face.get_action(:parent_action).options.should =~ [:inherited, :local]
+        expect(face.get_action(:parent_action).options).to match_array([:inherited, :local])
       end
 
       it "should not see subclass actions on the parent class" do
-        parent.options.should =~ [:inherited]
+        expect(parent.options).to match_array([:inherited])
       end
 
       it "should not see subclass actions on actions accessed on the parent class" do
-        parent.get_action(:parent_action).options.should =~ [:inherited]
+        expect(parent.get_action(:parent_action).options).to match_array([:inherited])
       end
     end
 
     describe "#get_option" do
       it "should return an inherited option object" do
-        face.get_option(:inherited).should be_an_instance_of subject::Option
+        expect(face.get_option(:inherited)).to be_an_instance_of subject::Option
       end
     end
   end

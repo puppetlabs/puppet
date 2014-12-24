@@ -65,12 +65,12 @@ describe 'Lexer2' do
     :PIPE => '|',
   }.each do |name, string|
     it "should lex a token named #{name.to_s}" do
-      tokens_scanned_from(string).should match_tokens2(name)
+      expect(tokens_scanned_from(string)).to match_tokens2(name)
     end
   end
 
   it "should lex [ in position after non whitespace as LBRACK" do
-    tokens_scanned_from("a[").should match_tokens2(:NAME, :LBRACK)
+    expect(tokens_scanned_from("a[")).to match_tokens2(:NAME, :LBRACK)
   end
 
   {
@@ -93,27 +93,27 @@ describe 'Lexer2' do
     "unless"   => :UNLESS,
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2(name)
+      expect(tokens_scanned_from(string)).to match_tokens2(name)
     end
   end
 
   # TODO: Complete with all edge cases
   [ 'A', 'A::B', '::A', '::A::B',].each do |string|
     it "should lex a CLASSREF on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:CLASSREF, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:CLASSREF, string])
     end
   end
 
   # TODO: Complete with all edge cases
   [ 'a', 'a::b', '::a', '::a::b',].each do |string|
     it "should lex a NAME on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NAME, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NAME, string])
     end
   end
 
   [ 'a-b', 'a--b', 'a-b-c', '_x'].each do |string|
     it "should lex a BARE WORD STRING on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:WORD, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:WORD, string])
     end
   end
 
@@ -133,43 +133,43 @@ describe 'Lexer2' do
     'a-$3' =>      [:NAME, :MINUS, :VARIABLE],
   }.each do |source, expected|
     it "should lex leading and trailing hyphens from #{source}" do
-      tokens_scanned_from(source).should match_tokens2(*expected)
+      expect(tokens_scanned_from(source)).to match_tokens2(*expected)
     end
   end
 
   { 'false'=>false, 'true'=>true}.each do |string, value|
     it "should lex a BOOLEAN on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:BOOLEAN, value])
+      expect(tokens_scanned_from(string)).to match_tokens2([:BOOLEAN, value])
     end
   end
 
   [ '0', '1', '2982383139'].each do |string|
     it "should lex a decimal integer NUMBER on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NUMBER, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, string])
     end
   end
 
   { ' 1' => '1', '1 ' => '1', ' 1 ' => '1'}.each do |string, value|
     it "should lex a NUMBER with surrounding space '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NUMBER, value])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, value])
     end
   end
 
   [ '0.0', '0.1', '0.2982383139', '29823.235', '10e23', '10e-23', '1.234e23'].each do |string|
     it "should lex a decimal floating point NUMBER on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NUMBER, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, string])
     end
   end
 
   [ '00', '01', '0123', '0777'].each do |string|
     it "should lex an octal integer NUMBER on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NUMBER, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, string])
     end
   end
 
   [ '0x0', '0x1', '0xa', '0xA', '0xabcdef', '0xABCDEF'].each do |string|
     it "should lex an hex integer NUMBER on the form '#{string}'" do
-      tokens_scanned_from(string).should match_tokens2([:NUMBER, string])
+      expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, string])
     end
   end
 
@@ -186,7 +186,7 @@ describe 'Lexer2' do
     "'a\\\\'" =>"a\\",
   }.each do |source, expected|
     it "should lex a single quoted STRING on the form #{source}" do
-      tokens_scanned_from(source).should match_tokens2([:STRING, expected])
+      expect(tokens_scanned_from(source)).to match_tokens2([:STRING, expected])
     end
   end
 
@@ -196,7 +196,7 @@ describe 'Lexer2' do
     }.each do |source, expected|
       it "should lex a single quoted STRING on the form #{source} as having length #{expected[0]}" do
        length, value = expected
-       tokens_scanned_from(source).should match_tokens2([:STRING, value, {:line => 1, :pos=>1, :length=> length}])
+       expect(tokens_scanned_from(source)).to match_tokens2([:STRING, value, {:line => 1, :pos=>1, :length=> length}])
       end
     end
 
@@ -205,7 +205,7 @@ describe 'Lexer2' do
     '"a\'b"'  => "a'b",
   }.each do |source, expected|
     it "should lex a double quoted STRING on the form #{source}" do
-      tokens_scanned_from(source).should match_tokens2([:STRING, expected])
+      expect(tokens_scanned_from(source)).to match_tokens2([:STRING, expected])
     end
   end
 
@@ -226,7 +226,7 @@ describe 'Lexer2' do
                    [:DQPOST,   '',    {:line => 1, :pos=>5, :length=>1 }]],
   }.each do |source, expected|
     it "should lex an interpolated variable 'x' from #{source}" do
-      tokens_scanned_from(source).should match_tokens2(*expected)
+      expect(tokens_scanned_from(source)).to match_tokens2(*expected)
     end
   end
 
@@ -237,25 +237,25 @@ describe 'Lexer2' do
     '"a$$%"'  => "a$$%",
   }.each do |source, expected|
     it "should lex interpolation including false starts #{source}" do
-      tokens_scanned_from(source).should match_tokens2([:STRING, expected])
+      expect(tokens_scanned_from(source)).to match_tokens2([:STRING, expected])
     end
   end
 
   it "differentiates between foo[x] and foo [x] (whitespace)" do
-    tokens_scanned_from("$a[1]").should match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
-    tokens_scanned_from("$a [1]").should match_tokens2(:VARIABLE, :LISTSTART, :NUMBER, :RBRACK)
-    tokens_scanned_from("a[1]").should match_tokens2(:NAME, :LBRACK, :NUMBER, :RBRACK)
-    tokens_scanned_from("a [1]").should match_tokens2(:NAME, :LISTSTART, :NUMBER, :RBRACK)
-    tokens_scanned_from(" if \n\r\t\nif if ").should match_tokens2(:IF, :IF, :IF)
+    expect(tokens_scanned_from("$a[1]")).to match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
+    expect(tokens_scanned_from("$a [1]")).to match_tokens2(:VARIABLE, :LISTSTART, :NUMBER, :RBRACK)
+    expect(tokens_scanned_from("a[1]")).to match_tokens2(:NAME, :LBRACK, :NUMBER, :RBRACK)
+    expect(tokens_scanned_from("a [1]")).to match_tokens2(:NAME, :LISTSTART, :NUMBER, :RBRACK)
+    expect(tokens_scanned_from(" if \n\r\t\nif if ")).to match_tokens2(:IF, :IF, :IF)
   end
 
   it "skips whitepsace" do
-    tokens_scanned_from(" if if if ").should match_tokens2(:IF, :IF, :IF)
-    tokens_scanned_from(" if \n\r\t\nif if ").should match_tokens2(:IF, :IF, :IF)
+    expect(tokens_scanned_from(" if if if ")).to match_tokens2(:IF, :IF, :IF)
+    expect(tokens_scanned_from(" if \n\r\t\nif if ")).to match_tokens2(:IF, :IF, :IF)
   end
 
   it "skips single line comments" do
-    tokens_scanned_from("if # comment\nif").should match_tokens2(:IF, :IF)
+    expect(tokens_scanned_from("if # comment\nif")).to match_tokens2(:IF, :IF)
   end
 
   ["if /* comment */\nif",
@@ -263,7 +263,7 @@ describe 'Lexer2' do
     "if /*\n comment\n */\nif",
     ].each do |source|
     it "skips multi line comments" do
-      tokens_scanned_from(source).should match_tokens2(:IF, :IF)
+      expect(tokens_scanned_from(source)).to match_tokens2(:IF, :IF)
     end
   end
 
@@ -282,12 +282,12 @@ describe 'Lexer2' do
   }.each do |token, entry|
     it "should lex regexp after '#{token}'" do
       expected = [entry[0], :REGEX].flatten
-      tokens_scanned_from(entry[1]).should match_tokens2(*expected)
+      expect(tokens_scanned_from(entry[1])).to match_tokens2(*expected)
     end
   end
 
   it "should lex a simple expression" do
-    tokens_scanned_from('1 + 1').should match_tokens2([:NUMBER, '1'], :PLUS, [:NUMBER, '1'])
+    expect(tokens_scanned_from('1 + 1')).to match_tokens2([:NUMBER, '1'], :PLUS, [:NUMBER, '1'])
   end
 
   { "1"     => ["1 /./",       [:NUMBER, :DIV, :DOT, :DIV]],
@@ -304,12 +304,12 @@ describe 'Lexer2' do
     '"a$a"'  => ['"a$a" /./',  [:DQPRE, :VARIABLE, :DQPOST, :DIV, :DOT, :DIV]],
   }.each do |token, entry|
     it "should not lex regexp after '#{token}'" do
-      tokens_scanned_from(entry[ 0 ]).should match_tokens2(*entry[ 1 ])
+      expect(tokens_scanned_from(entry[ 0 ])).to match_tokens2(*entry[ 1 ])
     end
   end
 
   it 'should lex assignment' do
-    tokens_scanned_from("$a = 10").should match_tokens2([:VARIABLE, "a"], :EQUALS, [:NUMBER, '10'])
+    expect(tokens_scanned_from("$a = 10")).to match_tokens2([:VARIABLE, "a"], :EQUALS, [:NUMBER, '10'])
   end
 
 # TODO: Tricky, and heredoc not supported yet
@@ -318,11 +318,11 @@ describe 'Lexer2' do
 #  end
 
   it "should lex regexp at beginning of input" do
-    tokens_scanned_from(" /./").should match_tokens2(:REGEX)
+    expect(tokens_scanned_from(" /./")).to match_tokens2(:REGEX)
   end
 
   it "should lex regexp right of div" do
-    tokens_scanned_from("1 / /./").should match_tokens2(:NUMBER, :DIV, :REGEX)
+    expect(tokens_scanned_from("1 / /./")).to match_tokens2(:NUMBER, :DIV, :REGEX)
   end
 
   context 'when lexer lexes heredoc' do
@@ -332,7 +332,7 @@ describe 'Lexer2' do
       Tex\\tt\\n
       |- END
       CODE
-      tokens_scanned_from(code).should match_tokens2([:HEREDOC, 'syntax'], :SUBLOCATE, [:STRING, "Tex\tt\\n"])
+      expect(tokens_scanned_from(code)).to match_tokens2([:HEREDOC, 'syntax'], :SUBLOCATE, [:STRING, "Tex\tt\\n"])
     end
 
     it 'lexes "tag", syntax and escapes, margin, right trim and interpolation' do
@@ -341,7 +341,7 @@ describe 'Lexer2' do
       Tex\\tt\\n$var After
       |- END
       CODE
-      tokens_scanned_from(code).should match_tokens2(
+      expect(tokens_scanned_from(code)).to match_tokens2(
         [:HEREDOC, 'syntax'],
         :SUBLOCATE,
         [:DQPRE, "Tex\tt\\n"],
@@ -357,7 +357,7 @@ describe 'Lexer2' do
       "x\\u2713y"
       CODE
       # >= Ruby 1.9.3 reports \u
-       tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
+       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713y"])
     end
 
     it 'should not select LISTSTART token when preceded by multibyte chars' do
@@ -366,7 +366,7 @@ describe 'Lexer2' do
       # instead of the char offset.
       #
       code = "$a = '\u00f6\u00fc\u00fc\u00fc\u00fc\u00e4\u00e4\u00f6\u00e4'\nnotify {'x': message => B['dkda'] }\n"
-      tokens_scanned_from(code).should match_tokens2(
+      expect(tokens_scanned_from(code)).to match_tokens2(
         :VARIABLE, :EQUALS, :STRING,
         [:NAME, 'notify'], :LBRACE,
         [:STRING, 'x'], :COLON,
@@ -380,14 +380,14 @@ describe 'Lexer2' do
       code = <<-CODE
       This is just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(:EPP_START, [:RENDER_STRING, "      This is just text\n"])
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(:EPP_START, [:RENDER_STRING, "      This is just text\n"])
     end
 
     it 'epp can contain text with interpolated rendered expressions' do
       code = <<-CODE
       This is <%= $x %> just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
@@ -401,7 +401,7 @@ describe 'Lexer2' do
       code = <<-CODE
       This is <%= $x -%> just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
@@ -415,7 +415,7 @@ describe 'Lexer2' do
       code = <<-CODE
       This is <% $x=10 %> just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
@@ -430,7 +430,7 @@ describe 'Lexer2' do
       This is <% $x=10 -%>
       just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
@@ -446,7 +446,7 @@ describe 'Lexer2' do
       <%# This is an epp comment -%>
       just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
@@ -461,7 +461,7 @@ describe 'Lexer2' do
       This is <% $x=10 -%>
       <%% this is escaped epp %%>
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],

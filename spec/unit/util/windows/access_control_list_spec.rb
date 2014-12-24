@@ -21,13 +21,13 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
   it "constructs an empty list" do
     acl = klass.new
 
-    acl.to_a.should be_empty
+    expect(acl.to_a).to be_empty
   end
 
   it "supports copy constructor" do
     aces = klass.new([system_ace]).to_a
 
-    aces.to_a.should == [system_ace]
+    expect(aces.to_a).to eq([system_ace])
   end
 
   context "appending" do
@@ -35,14 +35,14 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       acl = klass.new
       acl.allow(system_sid, 0x1, 0x2)
 
-      acl.first.type.should == klass::ACCESS_ALLOWED_ACE_TYPE
+      expect(acl.first.type).to eq(klass::ACCESS_ALLOWED_ACE_TYPE)
     end
 
     it "appends a deny ace" do
       acl = klass.new
       acl.deny(system_sid, 0x1, 0x2)
 
-      acl.first.type.should == klass::ACCESS_DENIED_ACE_TYPE
+      expect(acl.first.type).to eq(klass::ACCESS_DENIED_ACE_TYPE)
     end
 
     it "always appends, never overwrites an ACE" do
@@ -50,11 +50,11 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       acl.allow(admins_sid, admins_ace.mask, admins_ace.flags)
 
       aces = acl.to_a
-      aces.size.should == 2
-      aces[0].should == system_ace
-      aces[1].sid.should == admins_sid
-      aces[1].mask.should == admins_ace.mask
-      aces[1].flags.should == admins_ace.flags
+      expect(aces.size).to eq(2)
+      expect(aces[0]).to eq(system_ace)
+      expect(aces[1].sid).to eq(admins_sid)
+      expect(aces[1].mask).to eq(admins_ace.mask)
+      expect(aces[1].flags).to eq(admins_ace.flags)
     end
   end
 
@@ -65,8 +65,8 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       dacl.reassign!(system_ace.sid, admins_ace.sid)
       # we removed system, so ignore prepended ace
       ace = dacl.to_a[1]
-      ace.sid.should == admins_sid
-      ace.mask.should == system_ace.mask
+      expect(ace.sid).to eq(admins_sid)
+      expect(ace.mask).to eq(system_ace.mask)
     end
 
     it "matches multiple sids" do
@@ -75,9 +75,9 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       dacl.reassign!(system_ace.sid, admins_ace.sid)
       # we removed system, so ignore prepended ace
       aces = dacl.to_a
-      aces.size.should == 3
+      expect(aces.size).to eq(3)
       aces.to_a[1,2].each do |ace|
-        ace.sid.should == admins_ace.sid
+        expect(ace.sid).to eq(admins_ace.sid)
       end
     end
 
@@ -96,7 +96,7 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       dacl.reassign!(system_sid, none_sid)
       aces = dacl.to_a
 
-      aces[0].sid.should == system_sid
+      expect(aces[0].sid).to eq(system_sid)
     end
 
     it "prepends an explicit ace for the new sid with the same mask and basic inheritance as the inherited ace" do
@@ -112,13 +112,13 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       dacl.reassign!(system_sid, none_sid)
       aces = dacl.to_a
 
-      aces.size.should == 2
-      aces[0].sid.should == none_sid
-      aces[0].should_not be_inherited
-      aces[0].flags.should == expected_flags
+      expect(aces.size).to eq(2)
+      expect(aces[0].sid).to eq(none_sid)
+      expect(aces[0]).not_to be_inherited
+      expect(aces[0].flags).to eq(expected_flags)
 
-      aces[1].sid.should == system_sid
-      aces[1].should be_inherited
+      expect(aces[1].sid).to eq(system_sid)
+      expect(aces[1]).to be_inherited
     end
 
     it "makes a copy of the ace prior to modifying it" do
@@ -127,7 +127,7 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       acl = klass.new(arr)
       acl.reassign!(system_sid, none_sid)
 
-      arr[0].sid.should == system_sid
+      expect(arr[0].sid).to eq(system_sid)
     end
   end
 end

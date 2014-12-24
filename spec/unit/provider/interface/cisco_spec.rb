@@ -13,11 +13,11 @@ describe provider_class do
   end
 
   it "should have a parent of Puppet::Provider::Cisco" do
-    provider_class.should < Puppet::Provider::Cisco
+    expect(provider_class).to be < Puppet::Provider::Cisco
   end
 
   it "should have an instances method" do
-    provider_class.should respond_to(:instances)
+    expect(provider_class).to respond_to(:instances)
   end
 
   describe "when looking up instances at prefetch" do
@@ -32,7 +32,7 @@ describe provider_class do
 
     it "should return the given interface data" do
       @device.expects(:interface).returns({ :description => "thisone", :mode => :access})
-      provider_class.lookup(@device, "Fa0").should == {:description => "thisone", :mode => :access }
+      expect(provider_class.lookup(@device, "Fa0")).to eq({:description => "thisone", :mode => :access })
     end
 
   end

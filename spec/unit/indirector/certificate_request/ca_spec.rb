@@ -21,12 +21,12 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
   end
 
   it "should have documentation" do
-    Puppet::SSL::CertificateRequest::Ca.doc.should be_instance_of(String)
+    expect(Puppet::SSL::CertificateRequest::Ca.doc).to be_instance_of(String)
   end
 
   it "should use the :csrdir as the collection directory" do
     Puppet[:csrdir] = File.expand_path("/request/dir")
-    Puppet::SSL::CertificateRequest::Ca.collection_directory.should == Puppet[:csrdir]
+    expect(Puppet::SSL::CertificateRequest::Ca.collection_directory).to eq(Puppet[:csrdir])
   end
 
   it "should overwrite the previous certificate request if allow_duplicate_certs is true" do
@@ -37,9 +37,9 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
 
     Puppet::SSL::Host.indirection.find("foo").generate_certificate_request
 
-    Puppet::SSL::Certificate.indirection.find("foo").name.should == "foo"
-    Puppet::SSL::CertificateRequest.indirection.find("foo").name.should == "foo"
-    Puppet::SSL::Host.indirection.find("foo").state.should == "requested"
+    expect(Puppet::SSL::Certificate.indirection.find("foo").name).to eq("foo")
+    expect(Puppet::SSL::CertificateRequest.indirection.find("foo").name).to eq("foo")
+    expect(Puppet::SSL::Host.indirection.find("foo").state).to eq("requested")
   end
 
   it "should reject a new certificate request if allow_duplicate_certs is false" do
@@ -50,8 +50,8 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
 
     expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.to raise_error(/ignoring certificate request/)
 
-    Puppet::SSL::Certificate.indirection.find("bar").name.should == "bar"
-    Puppet::SSL::CertificateRequest.indirection.find("bar").should be_nil
-    Puppet::SSL::Host.indirection.find("bar").state.should == "signed"
+    expect(Puppet::SSL::Certificate.indirection.find("bar").name).to eq("bar")
+    expect(Puppet::SSL::CertificateRequest.indirection.find("bar")).to be_nil
+    expect(Puppet::SSL::Host.indirection.find("bar").state).to eq("signed")
   end
 end

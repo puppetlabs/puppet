@@ -37,28 +37,28 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   it "should have a :refreshable feature that requires the :remount method" do
-    described_class.provider_feature(:refreshable).methods.should == [:remount]
+    expect(described_class.provider_feature(:refreshable).methods).to eq([:remount])
   end
 
   it "should have no default value for :ensure" do
     mount = described_class.new(:name => "yay")
-    mount.should(:ensure).should be_nil
+    expect(mount.should(:ensure)).to be_nil
   end
 
   it "should have :name as the only keyattribut" do
-    described_class.key_attributes.should == [:name]
+    expect(described_class.key_attributes).to eq([:name])
   end
 
   describe "when validating attributes" do
     [:name, :remounts, :provider].each do |param|
       it "should have a #{param} parameter" do
-        described_class.attrtype(param).should == :param
+        expect(described_class.attrtype(param)).to eq(:param)
       end
     end
 
     [:ensure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
       it "should have a #{param} property" do
-        described_class.attrtype(param).should == :property
+        expect(described_class.attrtype(param)).to eq(:property)
       end
     end
   end
@@ -67,15 +67,15 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     describe "for name" do
       it "should allow full qualified paths" do
-        described_class.new(:name => "/mnt/foo")[:name].should == '/mnt/foo'
+        expect(described_class.new(:name => "/mnt/foo")[:name]).to eq('/mnt/foo')
       end
 
       it "should remove trailing slashes" do
-        described_class.new(:name => '/')[:name].should == '/'
-        described_class.new(:name => '//')[:name].should == '/'
-        described_class.new(:name => '/foo/')[:name].should == '/foo'
-        described_class.new(:name => '/foo/bar/')[:name].should == '/foo/bar'
-        described_class.new(:name => '/foo/bar/baz//')[:name].should == '/foo/bar/baz'
+        expect(described_class.new(:name => '/')[:name]).to eq('/')
+        expect(described_class.new(:name => '//')[:name]).to eq('/')
+        expect(described_class.new(:name => '/foo/')[:name]).to eq('/foo')
+        expect(described_class.new(:name => '/foo/bar/')[:name]).to eq('/foo/bar')
+        expect(described_class.new(:name => '/foo/bar/baz//')[:name]).to eq('/foo/bar/baz')
       end
 
       it "should not allow spaces" do
@@ -83,14 +83,14 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
 
       it "should allow pseudo mountpoints (e.g. swap)" do
-        described_class.new(:name => 'none')[:name].should == 'none'
+        expect(described_class.new(:name => 'none')[:name]).to eq('none')
       end
     end
 
     describe "for ensure" do
       it "should alias :present to :defined as a value to :ensure" do
         mount = described_class.new(:name => "yay", :ensure => :present)
-        mount.should(:ensure).should == :defined
+        expect(mount.should(:ensure)).to eq(:defined)
       end
 
       it "should support :present as a value to :ensure" do
@@ -164,22 +164,22 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
       it "should default to /dev/rdsk/DEVICE if device is /dev/dsk/DEVICE" do
         obj = described_class.new(:name => "/foo", :device => '/dev/dsk/c0d0s0')
-        obj[:blockdevice].should == '/dev/rdsk/c0d0s0'
+        expect(obj[:blockdevice]).to eq('/dev/rdsk/c0d0s0')
       end
 
       it "should default to - if it is an nfs-share" do
         obj = described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs')
-        obj[:blockdevice].should == '-'
+        expect(obj[:blockdevice]).to eq('-')
       end
 
       it "should have no default otherwise" do
-        described_class.new(:name => "/foo")[:blockdevice].should == nil
-        described_class.new(:name => "/foo", :device => "/foo")[:blockdevice].should == nil
+        expect(described_class.new(:name => "/foo")[:blockdevice]).to eq(nil)
+        expect(described_class.new(:name => "/foo", :device => "/foo")[:blockdevice]).to eq(nil)
       end
 
       it "should overwrite any default if blockdevice is explicitly set" do
-        described_class.new(:name => "/foo", :device => '/dev/dsk/c0d0s0', :blockdevice => '/foo')[:blockdevice].should == '/foo'
-        described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs', :blockdevice => '/foo')[:blockdevice].should == '/foo'
+        expect(described_class.new(:name => "/foo", :device => '/dev/dsk/c0d0s0', :blockdevice => '/foo')[:blockdevice]).to eq('/foo')
+        expect(described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs', :blockdevice => '/foo')[:blockdevice]).to eq('/foo')
       end
     end
 
@@ -229,13 +229,13 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       it "should default to 0 on non Solaris" do
         Facter.stubs(:value).with(:osfamily).returns nil
         Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
-        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == 0
+        expect(described_class.new(:name => "/foo", :ensure => :present)[:pass]).to eq(0)
       end
 
       it "should default to - on Solaris" do
         Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
         Facter.stubs(:value).with(:osfamily).returns 'Solaris'
-        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == '-'
+        expect(described_class.new(:name => "/foo", :ensure => :present)[:pass]).to eq('-')
       end
     end
 
@@ -258,7 +258,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
 
       it "should default to 0" do
-        described_class.new(:name => "/foo", :ensure => :present)[:dump].should == 0
+        expect(described_class.new(:name => "/foo", :ensure => :present)[:dump]).to eq(0)
       end
     end
 
@@ -304,7 +304,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       ensureprop.stubs(:syncothers)
       ensureprop.should = options[:to]
       ensureprop.sync
-      (!!provider.property_hash[:needs_mount]).should == (!!options[:mount])
+      expect(!!provider.property_hash[:needs_mount]).to eq(!!options[:mount])
     end
 
     it "should create itself when changing from :ghost to :present" do
@@ -354,84 +354,84 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     it "should be in sync if it is :absent and should be :absent" do
       ensureprop.should = :absent
-      ensureprop.safe_insync?(:absent).should == true
+      expect(ensureprop.safe_insync?(:absent)).to eq(true)
     end
 
     it "should be out of sync if it is :absent and should be :defined" do
       ensureprop.should = :defined
-      ensureprop.safe_insync?(:absent).should == false
+      expect(ensureprop.safe_insync?(:absent)).to eq(false)
     end
 
     it "should be out of sync if it is :absent and should be :mounted" do
       ensureprop.should = :mounted
-      ensureprop.safe_insync?(:absent).should == false
+      expect(ensureprop.safe_insync?(:absent)).to eq(false)
     end
 
     it "should be out of sync if it is :absent and should be :unmounted" do
       ensureprop.should = :unmounted
-      ensureprop.safe_insync?(:absent).should == false
+      expect(ensureprop.safe_insync?(:absent)).to eq(false)
     end
 
     it "should be out of sync if it is :mounted and should be :absent" do
       ensureprop.should = :absent
-      ensureprop.safe_insync?(:mounted).should == false
+      expect(ensureprop.safe_insync?(:mounted)).to eq(false)
     end
 
     it "should be in sync if it is :mounted and should be :defined" do
       ensureprop.should = :defined
-      ensureprop.safe_insync?(:mounted).should == true
+      expect(ensureprop.safe_insync?(:mounted)).to eq(true)
     end
 
     it "should be in sync if it is :mounted and should be :mounted" do
       ensureprop.should = :mounted
-      ensureprop.safe_insync?(:mounted).should == true
+      expect(ensureprop.safe_insync?(:mounted)).to eq(true)
     end
 
     it "should be out in sync if it is :mounted and should be :unmounted" do
       ensureprop.should = :unmounted
-      ensureprop.safe_insync?(:mounted).should == false
+      expect(ensureprop.safe_insync?(:mounted)).to eq(false)
     end
 
 
     it "should be out of sync if it is :unmounted and should be :absent" do
       ensureprop.should = :absent
-      ensureprop.safe_insync?(:unmounted).should == false
+      expect(ensureprop.safe_insync?(:unmounted)).to eq(false)
     end
 
     it "should be in sync if it is :unmounted and should be :defined" do
       ensureprop.should = :defined
-      ensureprop.safe_insync?(:unmounted).should == true
+      expect(ensureprop.safe_insync?(:unmounted)).to eq(true)
     end
 
     it "should be out of sync if it is :unmounted and should be :mounted" do
       ensureprop.should = :mounted
-      ensureprop.safe_insync?(:unmounted).should == false
+      expect(ensureprop.safe_insync?(:unmounted)).to eq(false)
     end
 
     it "should be in sync if it is :unmounted and should be :unmounted" do
       ensureprop.should = :unmounted
-      ensureprop.safe_insync?(:unmounted).should == true
+      expect(ensureprop.safe_insync?(:unmounted)).to eq(true)
     end
 
 
     it "should be out of sync if it is :ghost and should be :absent" do
       ensureprop.should = :absent
-      ensureprop.safe_insync?(:ghost).should == false
+      expect(ensureprop.safe_insync?(:ghost)).to eq(false)
     end
 
     it "should be out of sync if it is :ghost and should be :defined" do
       ensureprop.should = :defined
-      ensureprop.safe_insync?(:ghost).should == false
+      expect(ensureprop.safe_insync?(:ghost)).to eq(false)
     end
 
     it "should be out of sync if it is :ghost and should be :mounted" do
       ensureprop.should = :mounted
-      ensureprop.safe_insync?(:ghost).should == false
+      expect(ensureprop.safe_insync?(:ghost)).to eq(false)
     end
 
     it "should be out of sync if it is :ghost and should be :unmounted" do
       ensureprop.should = :unmounted
-      ensureprop.safe_insync?(:ghost).should == false
+      expect(ensureprop.safe_insync?(:ghost)).to eq(false)
     end
   end
 

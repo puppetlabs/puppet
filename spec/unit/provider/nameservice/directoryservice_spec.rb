@@ -54,7 +54,7 @@ describe 'DirectoryService.get_exec_preamble' do
   it 'should use plist data' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
 
-    Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list').should include("-plist")
+    expect(Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list')).to include("-plist")
   end
 end
 

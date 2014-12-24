@@ -10,63 +10,63 @@ describe Puppet::Util::Metric do
 
   [:type, :name, :value, :label].each do |name|
     it "should have a #{name} attribute" do
-      @metric.should respond_to(name)
-      @metric.should respond_to(name.to_s + "=")
+      expect(@metric).to respond_to(name)
+      expect(@metric).to respond_to(name.to_s + "=")
     end
   end
 
   it "should require a name at initialization" do
-    lambda { Puppet::Util::Metric.new }.should raise_error(ArgumentError)
+    expect { Puppet::Util::Metric.new }.to raise_error(ArgumentError)
   end
 
   it "should always convert its name to a string" do
-    Puppet::Util::Metric.new(:foo).name.should == "foo"
+    expect(Puppet::Util::Metric.new(:foo).name).to eq("foo")
   end
 
   it "should support a label" do
-    Puppet::Util::Metric.new("foo", "mylabel").label.should == "mylabel"
+    expect(Puppet::Util::Metric.new("foo", "mylabel").label).to eq("mylabel")
   end
 
   it "should autogenerate a label if none is provided" do
-    Puppet::Util::Metric.new("foo_bar").label.should == "Foo bar"
+    expect(Puppet::Util::Metric.new("foo_bar").label).to eq("Foo bar")
   end
 
   it "should have a method for adding values" do
-    @metric.should respond_to(:newvalue)
+    expect(@metric).to respond_to(:newvalue)
   end
 
   it "should have a method for returning values" do
-    @metric.should respond_to(:values)
+    expect(@metric).to respond_to(:values)
   end
 
   it "should require a name and value for its values" do
-    lambda { @metric.newvalue }.should raise_error(ArgumentError)
+    expect { @metric.newvalue }.to raise_error(ArgumentError)
   end
 
   it "should support a label for values" do
     @metric.newvalue("foo", 10, "label")
-    @metric.values[0][1].should == "label"
+    expect(@metric.values[0][1]).to eq("label")
   end
 
   it "should autogenerate value labels if none is provided" do
     @metric.newvalue("foo_bar", 10)
-    @metric.values[0][1].should == "Foo bar"
+    expect(@metric.values[0][1]).to eq("Foo bar")
   end
 
   it "should return its values sorted by label" do
     @metric.newvalue("foo", 10, "b")
     @metric.newvalue("bar", 10, "a")
 
-    @metric.values.should == [["bar", "a", 10], ["foo", "b", 10]]
+    expect(@metric.values).to eq([["bar", "a", 10], ["foo", "b", 10]])
   end
 
   it "should use an array indexer method to retrieve individual values" do
     @metric.newvalue("foo", 10)
-    @metric["foo"].should == 10
+    expect(@metric["foo"]).to eq(10)
   end
 
   it "should return nil if the named value cannot be found" do
-    @metric["foo"].should == 0
+    expect(@metric["foo"]).to eq(0)
   end
 
   it "should round trip through pson" do
@@ -76,8 +76,8 @@ describe Puppet::Util::Metric do
 
     tripped = Puppet::Util::Metric.from_data_hash(PSON.parse(metric.to_pson))
 
-    tripped.name.should == metric.name
-    tripped.label.should == metric.label
-    tripped.values.should == metric.values
+    expect(tripped.name).to eq(metric.name)
+    expect(tripped.label).to eq(metric.label)
+    expect(tripped.values).to eq(metric.values)
   end
 end

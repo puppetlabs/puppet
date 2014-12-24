@@ -26,7 +26,7 @@ describe Puppet::Settings::ConfigFile do
   end
 
   it "interprets an empty main section the same as an empty file" do
-    the_parse_of("").should == config.parse_file(filename, "[main]")
+    expect(the_parse_of("")).to eq(config.parse_file(filename, "[main]"))
   end
 
   it "places an entry in no section in main" do

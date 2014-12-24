@@ -18,7 +18,7 @@ describe Puppet::Indirector::ResourceType::Parser do
   end
 
   it "should be registered with the resource_type indirection" do
-    Puppet::Indirector::Terminus.terminus_class(:resource_type, :parser).should equal(Puppet::Indirector::ResourceType::Parser)
+    expect(Puppet::Indirector::Terminus.terminus_class(:resource_type, :parser)).to equal(Puppet::Indirector::ResourceType::Parser)
   end
 
   describe "when finding" do
@@ -26,7 +26,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       type = Puppet::Resource::Type.new(:hostclass, "foo")
       @request.environment.known_resource_types.add(type)
 
-      @terminus.find(@request).should == type
+      expect(@terminus.find(@request)).to eq(type)
     end
 
     it "should attempt to load the type if none is found in memory" do
@@ -42,19 +42,19 @@ describe Puppet::Indirector::ResourceType::Parser do
       File.open(File.join(manifest_path, "bar.pp"), "w") { |f| f.puts "class foo::bar {}" }
 
       result = @terminus.find(request)
-      result.should be_instance_of(Puppet::Resource::Type)
-      result.name.should == "foo::bar"
+      expect(result).to be_instance_of(Puppet::Resource::Type)
+      expect(result.name).to eq("foo::bar")
     end
 
     it "should return nil if no type can be found" do
-      @terminus.find(@request).should be_nil
+      expect(@terminus.find(@request)).to be_nil
     end
 
     it "should prefer definitions to nodes" do
       type = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
       node = @krt.add(Puppet::Resource::Type.new(:node, "foo"))
 
-      @terminus.find(@request).should == type
+      expect(@terminus.find(@request)).to eq(type)
     end
   end
 
@@ -76,9 +76,9 @@ describe Puppet::Indirector::ResourceType::Parser do
         define = @krt.add(Puppet::Resource::Type.new(:definition, "baz"))
 
         result = @terminus.search(@request)
-        result.should be_include(type)
-        result.should be_include(node)
-        result.should be_include(define)
+        expect(result).to be_include(type)
+        expect(result).to be_include(node)
+        expect(result).to be_include(define)
       end
 
       it "should return all known types" do
@@ -87,9 +87,9 @@ describe Puppet::Indirector::ResourceType::Parser do
         define = @krt.add(Puppet::Resource::Type.new(:definition, "baz"))
 
         result = @terminus.search(@request)
-        result.should be_include(type)
-        result.should be_include(node)
-        result.should be_include(define)
+        expect(result).to be_include(type)
+        expect(result).to be_include(node)
+        expect(result).to be_include(define)
       end
 
       it "should not return the 'main' class" do
@@ -98,11 +98,11 @@ describe Puppet::Indirector::ResourceType::Parser do
         # So there is a return value
         foo = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
 
-        @terminus.search(@request).should_not be_include(main)
+        expect(@terminus.search(@request)).not_to be_include(main)
       end
 
       it "should return nil if no types can be found" do
-        @terminus.search(@request).should be_nil
+        expect(@terminus.search(@request)).to be_nil
       end
 
       it "should load all resource types from all search paths" do
@@ -126,8 +126,8 @@ describe Puppet::Indirector::ResourceType::Parser do
         File.open(File.join(twopath, "twoklass.pp"), "w") { |f| f.puts "class two::twoklass {}" }
 
         result = @terminus.search(request)
-        result.find { |t| t.name == "one::oneklass" }.should be_instance_of(Puppet::Resource::Type)
-        result.find { |t| t.name == "two::twoklass" }.should be_instance_of(Puppet::Resource::Type)
+        expect(result.find { |t| t.name == "one::oneklass" }).to be_instance_of(Puppet::Resource::Type)
+        expect(result.find { |t| t.name == "two::twoklass" }).to be_instance_of(Puppet::Resource::Type)
       end
 
       context "when specifying a 'kind' parameter" do
@@ -149,27 +149,27 @@ describe Puppet::Indirector::ResourceType::Parser do
           @request.options[:kind] = "class"
 
           result = @terminus.search(@request)
-          result.should be_include(@klass)
-          result.should_not be_include(@node)
-          result.should_not be_include(@define)
+          expect(result).to be_include(@klass)
+          expect(result).not_to be_include(@node)
+          expect(result).not_to be_include(@define)
         end
 
         it "should support filtering for only node results" do
           @request.options[:kind] = "node"
 
           result = @terminus.search(@request)
-          result.should_not be_include(@klass)
-          result.should be_include(@node)
-          result.should_not be_include(@define)
+          expect(result).not_to be_include(@klass)
+          expect(result).to be_include(@node)
+          expect(result).not_to be_include(@define)
         end
 
         it "should support filtering for only definition results" do
           @request.options[:kind] = "defined_type"
 
           result = @terminus.search(@request)
-          result.should_not be_include(@klass)
-          result.should_not be_include(@node)
-          result.should be_include(@define)
+          expect(result).not_to be_include(@klass)
+          expect(result).not_to be_include(@node)
+          expect(result).to be_include(@define)
         end
       end
     end
@@ -183,9 +183,9 @@ describe Puppet::Indirector::ResourceType::Parser do
         baz = @krt.add(Puppet::Resource::Type.new(:hostclass, "baz"))
 
         result = @terminus.search(@request)
-        result.should be_include(bar)
-        result.should be_include(baz)
-        result.should_not be_include(foo)
+        expect(result).to be_include(bar)
+        expect(result).to be_include(baz)
+        expect(result).not_to be_include(foo)
       end
 
       it "should support kind filtering with a regex" do
@@ -198,10 +198,10 @@ describe Puppet::Indirector::ResourceType::Parser do
         fooball = @krt.add(Puppet::Resource::Type.new(:node, "fooball"))
 
         result = @terminus.search(@request)
-        result.should be_include(foobar)
-        result.should be_include(foobaz)
-        result.should_not be_include(foobam)
-        result.should_not be_include(fooball)
+        expect(result).to be_include(foobar)
+        expect(result).to be_include(foobaz)
+        expect(result).not_to be_include(foobam)
+        expect(result).not_to be_include(fooball)
       end
 
       it "should fail if a provided search string is not a valid regex" do
@@ -209,7 +209,7 @@ describe Puppet::Indirector::ResourceType::Parser do
 
         # Add one instance so we don't just get an empty array"
         @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
-        lambda { @terminus.search(@request) }.should raise_error(ArgumentError)
+        expect { @terminus.search(@request) }.to raise_error(ArgumentError)
       end
     end
 
@@ -219,11 +219,11 @@ describe Puppet::Indirector::ResourceType::Parser do
       # So there is a return value
       foo = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
 
-      @terminus.search(@request).should_not be_include(main)
+      expect(@terminus.search(@request)).not_to be_include(main)
     end
 
     it "should return nil if no types can be found" do
-      @terminus.search(@request).should be_nil
+      expect(@terminus.search(@request)).to be_nil
     end
 
     it "should load all resource types from all search paths" do
@@ -247,8 +247,8 @@ describe Puppet::Indirector::ResourceType::Parser do
       File.open(File.join(twopath, "twoklass.pp"), "w") { |f| f.puts "class two::twoklass {}" }
 
       result = @terminus.search(request)
-      result.find { |t| t.name == "one::oneklass" }.should be_instance_of(Puppet::Resource::Type)
-      result.find { |t| t.name == "two::twoklass" }.should be_instance_of(Puppet::Resource::Type)
+      expect(result.find { |t| t.name == "one::oneklass" }).to be_instance_of(Puppet::Resource::Type)
+      expect(result.find { |t| t.name == "two::twoklass" }).to be_instance_of(Puppet::Resource::Type)
     end
   end
 end

@@ -20,14 +20,14 @@ describe processor do
     it "should create a report directory for the client if one doesn't exist" do
       @report.process
 
-      File.should be_directory(File.join(Puppet[:reportdir], @report.host))
+      expect(File).to be_directory(File.join(Puppet[:reportdir], @report.host))
     end
 
     it "should write the report to the file in YAML" do
       Time.stubs(:now).returns(Time.utc(2011,01,06,12,00,00))
       @report.process
 
-      File.read(File.join(Puppet[:reportdir], @report.host, "201101061200.yaml")).should == @report.to_yaml
+      expect(File.read(File.join(Puppet[:reportdir], @report.host, "201101061200.yaml"))).to eq(@report.to_yaml)
     end
 
     it "rejects invalid hostnames" do

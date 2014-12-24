@@ -23,7 +23,7 @@ describe provider_class do
 
   it "should have an install method" do
     @provider = provider_class.new
-    @provider.should respond_to(:install)
+    expect(@provider).to respond_to(:install)
   end
 
   let(:bff_showres_output) {
@@ -195,21 +195,21 @@ OUTPUT
     describe "#parse_showres_output" do
       it "should be able to parse installp/BFF package listings" do
         packages = subject.send(:parse_showres_output, bff_showres_output)
-        Set.new(packages.keys).should == Set.new(['mypackage.foo'])
+        expect(Set.new(packages.keys)).to eq(Set.new(['mypackage.foo']))
         versions = packages['mypackage.foo']
         ['1.2.3.1', '1.2.3.4', '1.2.3.8'].each do |version|
-          versions.has_key?(version).should == true
-          versions[version].should == :installp
+          expect(versions.has_key?(version)).to eq(true)
+          expect(versions[version]).to eq(:installp)
         end
       end
 
       it "should be able to parse RPM package listings" do
         packages = subject.send(:parse_showres_output, rpm_showres_output)
-        Set.new(packages.keys).should == Set.new(['mypackage.foo'])
+        expect(Set.new(packages.keys)).to eq(Set.new(['mypackage.foo']))
         versions = packages['mypackage.foo']
         ['1.2.3-1', '1.2.3-4', '1.2.3-8'].each do |version|
-          versions.has_key?(version).should == true
-          versions[version].should == :rpm
+          expect(versions.has_key?(version)).to eq(true)
+          expect(versions[version]).to eq(:rpm)
         end
       end
     end
@@ -217,7 +217,7 @@ OUTPUT
     describe "#determine_latest_version" do
       context "when there are multiple versions" do
         it "should return the latest version" do
-          subject.send(:determine_latest_version, rpm_showres_output, 'mypackage.foo').should == [:rpm, '1.2.3-8']
+          expect(subject.send(:determine_latest_version, rpm_showres_output, 'mypackage.foo')).to eq([:rpm, '1.2.3-8'])
         end
       end
 
@@ -228,7 +228,7 @@ mypackage.foo                                                                ALL
  @@R:mypackage.foo-1.2.3-4 1.2.3-4
 
 END
-          subject.send(:determine_latest_version, nimclient_showres_output, 'mypackage.foo').should == [:rpm, nil]
+          expect(subject.send(:determine_latest_version, nimclient_showres_output, 'mypackage.foo')).to eq([:rpm, nil])
         end
       end
 
@@ -236,11 +236,11 @@ END
 
     describe "#determine_package_type" do
       it "should return :rpm for rpm packages" do
-        subject.send(:determine_package_type, rpm_showres_output, 'mypackage.foo', '1.2.3-4').should == :rpm
+        expect(subject.send(:determine_package_type, rpm_showres_output, 'mypackage.foo', '1.2.3-4')).to eq(:rpm)
       end
 
       it "should return :installp for installp/bff packages" do
-        subject.send(:determine_package_type, bff_showres_output, 'mypackage.foo', '1.2.3.4').should == :installp
+        expect(subject.send(:determine_package_type, bff_showres_output, 'mypackage.foo', '1.2.3.4')).to eq(:installp)
       end
     end
   end

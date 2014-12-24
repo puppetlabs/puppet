@@ -7,7 +7,7 @@ reference = Puppet::Util::Reference.reference(:providers)
 
 describe reference do
   it "should exist" do
-    reference.should_not be_nil
+    expect(reference).not_to be_nil
   end
 
   it "should be able to be rendered as markdown" do

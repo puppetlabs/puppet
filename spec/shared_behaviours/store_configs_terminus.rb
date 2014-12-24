@@ -7,7 +7,7 @@ shared_examples_for "a StoreConfigs terminus" do
   api = [:find, :search, :save, :destroy, :head]
 
   api.each do |name|
-    it { should respond_to(name) }
+    it { is_expected.to respond_to(name) }
   end
 
   it "should fail if an invalid backend is configured" do
@@ -16,6 +16,6 @@ shared_examples_for "a StoreConfigs terminus" do
   end
 
   it "should wrap the declared backend" do
-    subject.target.class.name.should == :store_configs_testing
+    expect(subject.target.class.name).to eq(:store_configs_testing)
   end
 end

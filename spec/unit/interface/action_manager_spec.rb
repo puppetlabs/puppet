@@ -25,7 +25,7 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      subject.actions.should =~ [:foo, :bar]
+      expect(subject.actions).to match_array([:foo, :bar])
     end
 
     it "should be able to indicate when an action is defined" do
@@ -33,7 +33,7 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      subject.should be_action(:foo)
+      expect(subject).to be_action(:foo)
     end
 
     it "should correctly treat action names specified as strings" do
@@ -41,7 +41,7 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      subject.should be_action("foo")
+      expect(subject).to be_action("foo")
     end
   end
 
@@ -62,13 +62,13 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      subject.actions.should include(:bar)
-      subject.actions.should include(:foo)
+      expect(subject.actions).to include(:bar)
+      expect(subject.actions).to include(:foo)
     end
 
     it "should be able to indicate when an action is defined" do
       subject.action(:foo) { when_invoked do |options| true end }
-      subject.should be_action(:foo)
+      expect(subject).to be_action(:foo)
     end
   end
 
@@ -93,7 +93,7 @@ describe Puppet::Interface::ActionManager do
       @klass.action(:foo) do
         when_invoked { |options| "something" }
       end
-      @instance.foo.should == "something"
+      expect(@instance.foo).to eq("something")
     end
 
     it "should be able to define an action at the instance level" do
@@ -106,7 +106,7 @@ describe Puppet::Interface::ActionManager do
       @instance.action(:foo) do
         when_invoked { |options| "something" }
       end
-      @instance.foo.should == "something"
+      expect(@instance.foo).to eq("something")
     end
 
     it "should be able to list actions defined at the class level" do
@@ -117,8 +117,8 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      @klass.actions.should include(:bar)
-      @klass.actions.should include(:foo)
+      expect(@klass.actions).to include(:bar)
+      expect(@klass.actions).to include(:foo)
     end
 
     it "should be able to list actions defined at the instance level" do
@@ -129,8 +129,8 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      @instance.actions.should include(:bar)
-      @instance.actions.should include(:foo)
+      expect(@instance.actions).to include(:bar)
+      expect(@instance.actions).to include(:foo)
     end
 
     it "should be able to list actions defined at both instance and class level" do
@@ -141,22 +141,22 @@ describe Puppet::Interface::ActionManager do
         when_invoked { |options| "something" }
       end
 
-      @instance.actions.should include(:bar)
-      @instance.actions.should include(:foo)
+      expect(@instance.actions).to include(:bar)
+      expect(@instance.actions).to include(:foo)
     end
 
     it "should be able to indicate when an action is defined at the class level" do
       @klass.action(:foo) do
         when_invoked { |options| "something" }
       end
-      @instance.should be_action(:foo)
+      expect(@instance).to be_action(:foo)
     end
 
     it "should be able to indicate when an action is defined at the instance level" do
       @klass.action(:foo) do
         when_invoked { |options| "something" }
       end
-      @instance.should be_action(:foo)
+      expect(@instance).to be_action(:foo)
     end
 
     context "with actions defined in superclass" do
@@ -176,31 +176,31 @@ describe Puppet::Interface::ActionManager do
       end
 
       it "should list actions defined in superclasses" do
-        @instance.should be_action(:parent)
-        @instance.should be_action(:sub)
-        @instance.should be_action(:instance)
+        expect(@instance).to be_action(:parent)
+        expect(@instance).to be_action(:sub)
+        expect(@instance).to be_action(:instance)
       end
 
       it "should list inherited actions" do
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
       end
 
       it "should not duplicate instance actions after fetching them (#7699)" do
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
         @instance.get_action(:instance)
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
       end
 
       it "should not duplicate subclass actions after fetching them (#7699)" do
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
         @instance.get_action(:sub)
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
       end
 
       it "should not duplicate superclass actions after fetching them (#7699)" do
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
         @instance.get_action(:parent)
-        @instance.actions.should =~ [:instance, :parent, :sub]
+        expect(@instance.actions).to match_array([:instance, :parent, :sub])
       end
     end
 
@@ -211,19 +211,19 @@ describe Puppet::Interface::ActionManager do
       @klass.action(:foo) do
         when_invoked { |options| "something" }
       end
-      @instance.foo.should == "something"
+      expect(@instance.foo).to eq("something")
     end
   end
 
   describe "#action" do
     it 'should add an action' do
       subject.action(:foo) { when_invoked do |options| true end }
-      subject.get_action(:foo).should be_a Puppet::Interface::Action
+      expect(subject.get_action(:foo)).to be_a Puppet::Interface::Action
     end
 
     it 'should support default actions' do
       subject.action(:foo) { when_invoked do |options| true end; default }
-      subject.get_default_action.should == subject.get_action(:foo)
+      expect(subject.get_default_action).to eq(subject.get_action(:foo))
     end
 
     it 'should not support more than one default action' do
@@ -244,12 +244,12 @@ describe Puppet::Interface::ActionManager do
     end
 
     it "should check that we can find inherited actions when we are a class" do
-      Class.new(parent_class).get_action(:foo).name.should == :foo
+      expect(Class.new(parent_class).get_action(:foo).name).to eq(:foo)
     end
 
     it "should check that we can find inherited actions when we are an instance" do
       instance = parent_class.new(:foo, '0.0.0')
-      instance.get_action(:foo).name.should == :foo
+      expect(instance.get_action(:foo).name).to eq(:foo)
     end
   end
 end

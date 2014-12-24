@@ -5,8 +5,8 @@ describe Puppet::Interface::OptionBuilder do
   let :face do Puppet::Interface.new(:option_builder_testing, '0.0.1') end
 
   it "should be able to construct an option without a block" do
-    Puppet::Interface::OptionBuilder.build(face, "--foo").
-      should be_an_instance_of Puppet::Interface::Option
+    expect(Puppet::Interface::OptionBuilder.build(face, "--foo")).
+      to be_an_instance_of Puppet::Interface::Option
   end
 
   Puppet.settings.each do |name, value|
@@ -22,7 +22,7 @@ describe Puppet::Interface::OptionBuilder do
       # This block deliberately left blank.
     end
 
-    option.should be_an_instance_of Puppet::Interface::Option
+    expect(option).to be_an_instance_of Puppet::Interface::Option
   end
 
   [:description, :summary].each do |doc|
@@ -31,8 +31,8 @@ describe Puppet::Interface::OptionBuilder do
       option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
         self.send doc, text
       end
-      option.should be_an_instance_of Puppet::Interface::Option
-      option.send(doc).should == text
+      expect(option).to be_an_instance_of Puppet::Interface::Option
+      expect(option.send(doc)).to eq(text)
     end
   end
 
@@ -41,7 +41,7 @@ describe Puppet::Interface::OptionBuilder do
       option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
         before_action do |a,b,c| :whatever end
       end
-      option.before_action.should be_an_instance_of UnboundMethod
+      expect(option.before_action).to be_an_instance_of UnboundMethod
     end
 
     it "should fail if the hook block takes too few arguments" do
@@ -72,14 +72,14 @@ describe Puppet::Interface::OptionBuilder do
       opt = Puppet::Interface::OptionBuilder.build(face, "--foo") do
         required
       end
-      opt.should be_required
+      expect(opt).to be_required
     end
 
     it "should support arguments to the required property" do
       opt = Puppet::Interface::OptionBuilder.build(face, "--foo") do
         required(false)
       end
-      opt.should_not be_required
+      expect(opt).not_to be_required
     end
     
   end

@@ -10,7 +10,7 @@ describe provider do
     end
 
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
-      provider.defpath.should == ["/etc/rc.d", "/usr/local/etc/rc.d"]
+      expect(provider.defpath).to eq(["/etc/rc.d", "/usr/local/etc/rc.d"])
     end
   end
 
@@ -20,7 +20,7 @@ describe provider do
     end
 
     it "should set its default path to include /sbin/init.d" do
-      provider.defpath.should == "/sbin/init.d"
+      expect(provider.defpath).to eq("/sbin/init.d")
     end
   end
 
@@ -30,7 +30,7 @@ describe provider do
     end
 
     it "should set its default path to include /etc/rc.d" do
-      provider.defpath.should == "/etc/rc.d"
+      expect(provider.defpath).to eq("/etc/rc.d")
     end
   end
 
@@ -40,7 +40,7 @@ describe provider do
     end
 
     it "should set its default path to include /etc/init.d" do
-      provider.defpath.should == "/etc/init.d"
+      expect(provider.defpath).to eq("/etc/init.d")
     end
   end
 end

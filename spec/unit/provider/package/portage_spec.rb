@@ -18,11 +18,11 @@ describe provider do
   end
 
   it "is versionable" do
-    provider.should be_versionable
+    expect(provider).to be_versionable
   end
 
   it "is reinstallable" do
-    provider.should be_reinstallable
+    expect(provider).to be_reinstallable
   end
 
   it "uses :emerge to install packages" do
@@ -45,11 +45,11 @@ describe provider do
   end
 
   it "eix arguments must not include --stable" do
-    @provider.class.eix_search_arguments.should_not include("--stable")
+    expect(@provider.class.eix_search_arguments).not_to include("--stable")
   end
 
   it "eix arguments must not include --exact" do
-    @provider.class.eix_search_arguments.should_not include("--exact")
+    expect(@provider.class.eix_search_arguments).not_to include("--exact")
   end
 
   it "query uses default arguments" do
@@ -64,6 +64,6 @@ describe provider do
     @provider.stubs(:update_eix)
     @provider.expects(:eix).returns(StringIO.new(@match_result))
     
-    @provider.query[:name].should eq("sl")
+    expect(@provider.query[:name]).to eq("sl")
   end
 end

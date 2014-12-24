@@ -21,15 +21,15 @@ describe ordered_list_class do
 
     describe "when adding should to current" do
       it "should add the arrays when current is an array" do
-        @property.add_should_with_current(["should"], ["current"]).should == ["should", "current"]
+        expect(@property.add_should_with_current(["should"], ["current"])).to eq(["should", "current"])
       end
 
       it "should return 'should' if current is not an array" do
-        @property.add_should_with_current(["should"], :absent).should == ["should"]
+        expect(@property.add_should_with_current(["should"], :absent)).to eq(["should"])
       end
 
       it "should return only the uniq elements leading with the order of 'should'" do
-        @property.add_should_with_current(["this", "is", "should"], ["is", "this", "current"]).should == ["this", "is", "should", "current"]
+        expect(@property.add_should_with_current(["this", "is", "should"], ["is", "this", "current"])).to eq(["this", "is", "should", "current"])
       end
     end
 

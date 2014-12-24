@@ -13,13 +13,13 @@ describe "the digest function", :uses_checksums => true do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function("digest").should == "function_digest"
+    expect(Puppet::Parser::Functions.function("digest")).to eq("function_digest")
   end
 
   with_digest_algorithms do
     it "should use the proper digest function" do
       result = @scope.function_digest([plaintext])
-      result.should(eql( checksum ))
+      expect(result).to(eql( checksum ))
     end
 
     it "should only accept one parameter" do

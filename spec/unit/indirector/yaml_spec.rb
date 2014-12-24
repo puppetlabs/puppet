@@ -39,37 +39,37 @@ describe Puppet::Indirector::Yaml do
     it "should use the server_datadir if the run_mode is master" do
       Puppet.run_mode.stubs(:master?).returns true
       Puppet[:yamldir] = serverdir
-      @store.path(:me).should =~ /^#{serverdir}/
+      expect(@store.path(:me)).to match(/^#{serverdir}/)
     end
 
     it "should use the client yamldir if the run_mode is not master" do
       Puppet.run_mode.stubs(:master?).returns false
       Puppet[:clientyamldir] = clientdir
-      @store.path(:me).should =~ /^#{clientdir}/
+      expect(@store.path(:me)).to match(/^#{clientdir}/)
     end
 
     it "should use the extension if one is specified" do
       Puppet.run_mode.stubs(:master?).returns true
       Puppet[:yamldir] = serverdir
-      @store.path(:me,'.farfignewton').should =~ %r{\.farfignewton$}
+      expect(@store.path(:me,'.farfignewton')).to match(%r{\.farfignewton$})
     end
 
     it "should assume an extension of .yaml if none is specified" do
       Puppet.run_mode.stubs(:master?).returns true
       Puppet[:yamldir] = serverdir
-      @store.path(:me).should =~ %r{\.yaml$}
+      expect(@store.path(:me)).to match(%r{\.yaml$})
     end
 
     it "should store all files in a single file root set in the Puppet defaults" do
-      @store.path(:me).should =~ %r{^#{@dir}}
+      expect(@store.path(:me)).to match(%r{^#{@dir}})
     end
 
     it "should use the terminus name for choosing the subdirectory" do
-      @store.path(:me).should =~ %r{^#{@dir}/my_yaml}
+      expect(@store.path(:me)).to match(%r{^#{@dir}/my_yaml})
     end
 
     it "should use the object's name to determine the file name" do
-      @store.path(:me).should =~ %r{me.yaml$}
+      expect(@store.path(:me)).to match(%r{me.yaml$})
     end
 
     ['../foo', '..\\foo', './../foo', '.\\..\\foo',
@@ -90,7 +90,7 @@ describe Puppet::Indirector::Yaml do
   describe "when storing objects as YAML" do
     it "should only store objects that respond to :name" do
       @request.stubs(:instance).returns Object.new
-      proc { @store.save(@request) }.should raise_error(ArgumentError)
+      expect { @store.save(@request) }.to raise_error(ArgumentError)
     end
   end
 
@@ -98,7 +98,7 @@ describe Puppet::Indirector::Yaml do
     it "should read YAML in from disk and convert it to Ruby objects" do
       @store.save(Puppet::Indirector::Request.new(:my_yaml, :save, "testing", @subject))
 
-      @store.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil)).name.should == :me
+      expect(@store.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil)).name).to eq(:me)
     end
 
     it "should fail coherently when the stored YAML is invalid" do
@@ -124,7 +124,7 @@ describe Puppet::Indirector::Yaml do
       Dir.expects(:glob).with(:glob).returns(%w{one.yaml two.yaml})
       YAML.expects(:load_file).with("one.yaml").returns @one;
       YAML.expects(:load_file).with("two.yaml").returns @two;
-      @store.search(@request).should == [@one, @two]
+      expect(@store.search(@request)).to eq([@one, @two])
     end
 
     it "should return an array containing a single instance of fact when globbing 'one*'" do
@@ -133,14 +133,14 @@ describe Puppet::Indirector::Yaml do
       @store.expects(:path).with(@request.key,'').returns :glob
       Dir.expects(:glob).with(:glob).returns(%w{one.yaml})
       YAML.expects(:load_file).with("one.yaml").returns @one;
-      @store.search(@request).should == [@one]
+      expect(@store.search(@request)).to eq([@one])
     end
 
     it "should return an empty array when the glob doesn't match anything" do
       @request = stub 'request', :key => "f*ilglobcanfail*", :instance => @subject
       @store.expects(:path).with(@request.key,'').returns :glob
       Dir.expects(:glob).with(:glob).returns []
-      @store.search(@request).should == []
+      expect(@store.search(@request)).to eq([])
     end
 
     describe "when destroying" do

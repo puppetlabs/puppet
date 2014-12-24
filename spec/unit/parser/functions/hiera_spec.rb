@@ -16,7 +16,7 @@ describe 'Puppet::Parser::Functions#hiera' do
   end
 
   it 'should use the priority resolution_type' do
-    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be(:priority) }.returns('foo_result')
-    scope.function_hiera(['key']).should == 'foo_result'
+    Hiera.any_instance.expects(:lookup).with() { |*args| expect(args[4]).to be(:priority) }.returns('foo_result')
+    expect(scope.function_hiera(['key'])).to eq('foo_result')
   end
 end

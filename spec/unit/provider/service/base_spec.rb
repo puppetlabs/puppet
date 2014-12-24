@@ -37,29 +37,29 @@ describe "base service provider" do
       Puppet::FileSystem.unlink(flag) if Puppet::FileSystem.exist?(flag)
     end
 
-    it { should be }
+    it { is_expected.to be }
 
     it "should invoke the start command if not running" do
-      File.should_not be_file(flag)
+      expect(File).not_to be_file(flag)
       subject.start
-      File.should be_file(flag)
+      expect(File).to be_file(flag)
     end
 
     it "should be stopped before being started" do
-      subject.status.should == :stopped
+      expect(subject.status).to eq(:stopped)
     end
 
     it "should be running after being started" do
       subject.start
-      subject.status.should == :running
+      expect(subject.status).to eq(:running)
     end
 
     it "should invoke the stop command when asked" do
       subject.start
-      subject.status.should == :running
+      expect(subject.status).to eq(:running)
       subject.stop
-      subject.status.should == :stopped
-      File.should_not be_file(flag)
+      expect(subject.status).to eq(:stopped)
+      expect(File).not_to be_file(flag)
     end
 
     it "should start again even if already running" do

@@ -5,31 +5,31 @@ require 'puppet/confine'
 
 describe Puppet::Confine do
   it "should require a value" do
-    lambda { Puppet::Confine.new }.should raise_error(ArgumentError)
+    expect { Puppet::Confine.new }.to raise_error(ArgumentError)
   end
 
   it "should always convert values to an array" do
-    Puppet::Confine.new("/some/file").values.should be_instance_of(Array)
+    expect(Puppet::Confine.new("/some/file").values).to be_instance_of(Array)
   end
 
   it "should have a 'true' test" do
-    Puppet::Confine.test(:true).should be_instance_of(Class)
+    expect(Puppet::Confine.test(:true)).to be_instance_of(Class)
   end
 
   it "should have a 'false' test" do
-    Puppet::Confine.test(:false).should be_instance_of(Class)
+    expect(Puppet::Confine.test(:false)).to be_instance_of(Class)
   end
 
   it "should have a 'feature' test" do
-    Puppet::Confine.test(:feature).should be_instance_of(Class)
+    expect(Puppet::Confine.test(:feature)).to be_instance_of(Class)
   end
 
   it "should have an 'exists' test" do
-    Puppet::Confine.test(:exists).should be_instance_of(Class)
+    expect(Puppet::Confine.test(:exists)).to be_instance_of(Class)
   end
 
   it "should have a 'variable' test" do
-    Puppet::Confine.test(:variable).should be_instance_of(Class)
+    expect(Puppet::Confine.test(:variable)).to be_instance_of(Class)
   end
 
   describe "when testing all values" do
@@ -41,12 +41,12 @@ describe Puppet::Confine do
     it "should be invalid if any values fail" do
       @confine.stubs(:pass?).returns true
       @confine.expects(:pass?).with("b").returns false
-      @confine.should_not be_valid
+      expect(@confine).not_to be_valid
     end
 
     it "should be valid if all values pass" do
       @confine.stubs(:pass?).returns true
-      @confine.should be_valid
+      expect(@confine).to be_valid
     end
 
     it "should short-cut at the first failing value" do
@@ -71,7 +71,7 @@ describe Puppet::Confine do
       @confine.expects(:pass?).with("b").returns false
       @confine.expects(:pass?).with("d").returns false
 
-      @confine.result.should == [true, false, true, false]
+      expect(@confine.result).to eq([true, false, true, false])
     end
   end
 end

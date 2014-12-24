@@ -20,15 +20,15 @@ describe klass do
     end
 
     it "should have a , as default delimiter" do
-      @property.delimiter.should == ";"
+      expect(@property.delimiter).to eq(";")
     end
 
     it "should have a = as default separator" do
-      @property.separator.should == "="
+      expect(@property.separator).to eq("=")
     end
 
     it "should have a :membership as default membership" do
-      @property.membership.should == :key_value_membership
+      expect(@property.membership).to eq(:key_value_membership)
     end
 
     it "should return the same value passed into should_to_s" do
@@ -39,7 +39,7 @@ describe klass do
       s = @property.is_to_s({"foo" => "baz" , "bar" => "boo"})
 
       # We can't predict the order the hash is processed in...
-      ["foo=baz;bar=boo", "bar=boo;foo=baz"].should be_include s
+      expect(["foo=baz;bar=boo", "bar=boo;foo=baz"]).to be_include s
     end
 
     describe "when calling inclusive?" do

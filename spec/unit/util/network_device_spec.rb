@@ -35,7 +35,7 @@ describe Puppet::Util::NetworkDevice do
 
     it "should raise an error if the remote device instance can't be created" do
       Puppet::Util::NetworkDevice.stubs(:require).raises("error")
-      lambda { Puppet::Util::NetworkDevice.init(@device) }.should raise_error
+      expect { Puppet::Util::NetworkDevice.init(@device) }.to raise_error
     end
 
     it "should let caller to access the singleton device" do
@@ -44,7 +44,7 @@ describe Puppet::Util::NetworkDevice do
       Puppet::Util::NetworkDevice::Test::Device.expects(:new).returns(device)
       Puppet::Util::NetworkDevice.init(@device)
 
-      Puppet::Util::NetworkDevice.current.should == device
+      expect(Puppet::Util::NetworkDevice.current).to eq(device)
     end
   end
 end

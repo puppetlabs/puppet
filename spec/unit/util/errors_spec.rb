@@ -14,24 +14,24 @@ describe Puppet::Util::Errors do
   end
 
   it "should provide a 'fail' method" do
-    @tester.should respond_to(:fail)
+    expect(@tester).to respond_to(:fail)
   end
 
   it "should provide a 'devfail' method" do
-    @tester.should respond_to(:devfail)
+    expect(@tester).to respond_to(:devfail)
   end
 
   it "should raise any provided error when failing" do
-    lambda { @tester.fail(Puppet::ParseError, "stuff") }.should raise_error(Puppet::ParseError)
+    expect { @tester.fail(Puppet::ParseError, "stuff") }.to raise_error(Puppet::ParseError)
   end
 
   it "should default to Puppet::Error when failing" do
-    lambda { @tester.fail("stuff") }.should raise_error(Puppet::Error)
+    expect { @tester.fail("stuff") }.to raise_error(Puppet::Error)
   end
 
   it "should have a method for converting error context into a string" do
     @tester.file = "/my/file"
     @tester.line = 50
-    @tester.error_context.should == " at /my/file:50"
+    expect(@tester.error_context).to eq(" at /my/file:50")
   end
 end

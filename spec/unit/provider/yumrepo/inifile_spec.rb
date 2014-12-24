@@ -239,21 +239,21 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
 
     it "returns the default directories if yum.conf doesn't contain a `reposdir` entry" do
       described_class.stubs(:find_conf_value).with('reposdir', '/etc/yum.conf')
-      described_class.reposdir('/etc/yum.conf').should == defaults
+      expect(described_class.reposdir('/etc/yum.conf')).to eq(defaults)
     end
 
     it "includes the directory specified by the yum.conf 'reposdir' entry when the directory is present" do
       Puppet::FileSystem.expects(:exist?).with("/etc/yum/extra.repos.d").returns(true)
 
       described_class.expects(:find_conf_value).with('reposdir', '/etc/yum.conf').returns "/etc/yum/extra.repos.d"
-      described_class.reposdir('/etc/yum.conf').should include("/etc/yum/extra.repos.d")
+      expect(described_class.reposdir('/etc/yum.conf')).to include("/etc/yum/extra.repos.d")
     end
 
     it "doesn't include the directory specified by the yum.conf 'reposdir' entry when the directory is absent" do
       Puppet::FileSystem.expects(:exist?).with("/etc/yum/extra.repos.d").returns(false)
 
       described_class.expects(:find_conf_value).with('reposdir', '/etc/yum.conf').returns "/etc/yum/extra.repos.d"
-      described_class.reposdir('/etc/yum.conf').should_not include("/etc/yum/extra.repos.d")
+      expect(described_class.reposdir('/etc/yum.conf')).not_to include("/etc/yum/extra.repos.d")
     end
 
     it "logs a warning and returns an empty array if none of the specified repo directories exist" do

@@ -5,12 +5,12 @@ require 'puppet/indirector/certificate/file'
 
 describe Puppet::SSL::Certificate::File do
   it "should have documentation" do
-    Puppet::SSL::Certificate::File.doc.should be_instance_of(String)
+    expect(Puppet::SSL::Certificate::File.doc).to be_instance_of(String)
   end
 
   it "should use the :certdir as the collection directory" do
     Puppet[:certdir] = File.expand_path("/cert/dir")
-    Puppet::SSL::Certificate::File.collection_directory.should == Puppet[:certdir]
+    expect(Puppet::SSL::Certificate::File.collection_directory).to eq(Puppet[:certdir])
   end
 
   it "should store the ca certificate at the :localcacert location" do
@@ -18,6 +18,6 @@ describe Puppet::SSL::Certificate::File do
     Puppet[:localcacert] = File.expand_path("/ca/cert")
     file = Puppet::SSL::Certificate::File.new
     file.stubs(:ca?).returns true
-    file.path("whatever").should == Puppet[:localcacert]
+    expect(file.path("whatever")).to eq(Puppet[:localcacert])
   end
 end

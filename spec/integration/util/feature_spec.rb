@@ -21,7 +21,7 @@ describe Puppet::Util::Feature do
       f.puts "$features.add(:able_to_load) { true }"
     end
 
-    $features.should be_able_to_load
+    expect($features).to be_able_to_load
   end
 
   # TODO: Make this a spec test or remove it.

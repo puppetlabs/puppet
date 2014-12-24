@@ -20,15 +20,15 @@ describe Puppet::Application::Device do
   end
 
   it "should operate in agent run_mode" do
-    @device.class.run_mode.name.should == :agent
+    expect(@device.class.run_mode.name).to eq(:agent)
   end
 
   it "should declare a main command" do
-    @device.should respond_to(:main)
+    expect(@device).to respond_to(:main)
   end
 
   it "should declare a preinit block" do
-    @device.should respond_to(:preinit)
+    expect(@device).to respond_to(:preinit)
   end
 
   describe "in preinit" do
@@ -45,7 +45,7 @@ describe Puppet::Application::Device do
     it "should init waitforcert to nil" do
       @device.preinit
 
-      @device.options[:waitforcert].should be_nil
+      expect(@device.options[:waitforcert]).to be_nil
     end
   end
 
@@ -56,7 +56,7 @@ describe Puppet::Application::Device do
 
     [:centrallogging, :debug, :verbose,].each do |option|
       it "should declare handle_#{option} method" do
-        @device.should respond_to("handle_#{option}".to_sym)
+        expect(@device).to respond_to("handle_#{option}".to_sym)
       end
 
       it "should store argument value when calling handle_#{option}" do
@@ -118,7 +118,7 @@ describe Puppet::Application::Device do
 
     it "should set args[:Port] with --port" do
       @device.handle_port("42")
-      @device.args[:Port].should == "42"
+      expect(@device.args[:Port]).to eq("42")
     end
 
   end
@@ -151,13 +151,13 @@ describe Puppet::Application::Device do
       it "should set log level to debug if --debug was passed" do
         @device.options.stubs(:[]).with(:debug).returns(true)
         @device.setup_logs
-        Puppet::Util::Log.level.should == :debug
+        expect(Puppet::Util::Log.level).to eq(:debug)
       end
 
       it "should set log level to info if --verbose was passed" do
         @device.options.stubs(:[]).with(:verbose).returns(true)
         @device.setup_logs
-        Puppet::Util::Log.level.should == :info
+        expect(Puppet::Util::Log.level).to eq(:info)
       end
 
       [:verbose, :debug].each do |level|
@@ -210,12 +210,12 @@ describe Puppet::Application::Device do
 
     it "should default the catalog_terminus setting to 'rest'" do
       @device.initialize_app_defaults
-      Puppet[:catalog_terminus].should ==  :rest
+      expect(Puppet[:catalog_terminus]).to eq(:rest)
     end
 
     it "should default the node_terminus setting to 'rest'" do
       @device.initialize_app_defaults
-      Puppet[:node_terminus].should ==  :rest
+      expect(Puppet[:node_terminus]).to eq(:rest)
     end
 
     it "has an application default :catalog_cache_terminus setting of 'json'" do
@@ -243,7 +243,7 @@ describe Puppet::Application::Device do
 
     it "should default the facts_terminus setting to 'network_device'" do
       @device.initialize_app_defaults
-      Puppet[:facts_terminus].should == :network_device
+      expect(Puppet[:facts_terminus]).to eq(:network_device)
     end
   end
 

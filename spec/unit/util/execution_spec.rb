@@ -16,7 +16,7 @@ describe Puppet::Util::Execution do
     let(:pid) { 5501 }
     let(:process_handle) { 0xDEADBEEF }
     let(:thread_handle) { 0xCAFEBEEF }
-    let(:proc_info_stub) { stub 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
+    let(:proc_info_stub) { double 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
     let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
 
     def stub_process_wait(exitstatus)
@@ -69,8 +69,8 @@ describe Puppet::Util::Execution do
 
         # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
         #  be a bit more explicit and laborious in the name of making the error more useful...
-        @saved_env.each_pair { |key,val| cur_env[key].should == val }
-        (cur_env.keys - @saved_env.keys).should == []
+        @saved_env.each_pair { |key,val| expect(cur_env[key]).to eq(val) }
+        expect(cur_env.keys - @saved_env.keys).to eq([])
 
       end
 
@@ -116,7 +116,7 @@ describe Puppet::Util::Execution do
       end
 
       it "should return the pid of the child process" do
-        call_exec_posix('test command', {}, @stdin, @stdout, @stderr).should == pid
+        expect(call_exec_posix('test command', {}, @stdin, @stdout, @stderr)).to eq(pid)
       end
     end
 
@@ -141,7 +141,7 @@ describe Puppet::Util::Execution do
       end
 
       it "should return the process info of the child process" do
-        call_exec_windows('test command', {}, @stdin, @stdout, @stderr).should == proc_info_stub
+        expect(call_exec_windows('test command', {}, @stdin, @stdout, @stderr)).to eq(proc_info_stub)
       end
 
       it "should quote arguments containing spaces if command is specified as an array" do
@@ -166,7 +166,7 @@ describe Puppet::Util::Execution do
         end
 
         it "should call the block on the stub" do
-          Puppet::Util::Execution.execute("/usr/bin/run_my_execute_stub").should == "execution stub output"
+          expect(Puppet::Util::Execution.execute("/usr/bin/run_my_execute_stub")).to eq("execution stub output")
         end
 
         it "should not actually execute anything" do
@@ -313,7 +313,7 @@ describe Puppet::Util::Execution do
           stub_process_wait(real_exit_status)
           $CHILD_STATUS.stubs(:exitstatus).returns(real_exit_status % 256) # The exitstatus is changed to be mod 256 so that ruby can fit it into 8 bits.
 
-          Puppet::Util::Execution.execute('test command', :failonfail => false).exitstatus.should == real_exit_status
+          expect(Puppet::Util::Execution.execute('test command', :failonfail => false).exitstatus).to eq(real_exit_status)
         end
       end
     end
@@ -334,8 +334,8 @@ describe Puppet::Util::Execution do
         cur_env = ENV.to_hash
         # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
         #  be a bit more explicit and laborious in the name of making the error more useful...
-        @saved_env.each_pair { |key,val| cur_env[key].should == val }
-        (cur_env.keys - @saved_env.keys).should == []
+        @saved_env.each_pair { |key,val| expect(cur_env[key]).to eq(val) }
+        expect(cur_env.keys - @saved_env.keys).to eq([])
       end
 
 
@@ -358,7 +358,7 @@ describe Puppet::Util::Execution do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
             expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
-            Puppet::Util::Execution.execute(get_env_var_cmd % var).strip.should == expected_value
+            expect(Puppet::Util::Execution.execute(get_env_var_cmd % var).strip).to eq(expected_value)
           end
         end
       end
@@ -370,7 +370,7 @@ describe Puppet::Util::Execution do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
             expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
-            Puppet::Util::Execution.execute(get_env_var_cmd % var, {:override_locale => true}).strip.should == expected_value
+            expect(Puppet::Util::Execution.execute(get_env_var_cmd % var, {:override_locale => true}).strip).to eq(expected_value)
           end
         end
       end
@@ -380,7 +380,7 @@ describe Puppet::Util::Execution do
         # execute is not setting them.
         Puppet::Util.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
-            Puppet::Util::Execution.execute(get_env_var_cmd % var, {:override_locale => false}).strip.should == lang_sentinel_value
+            expect(Puppet::Util::Execution.execute(get_env_var_cmd % var, {:override_locale => false}).strip).to eq(lang_sentinel_value)
           end
         end
       end
@@ -395,7 +395,7 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.execute(get_env_var_cmd % 'anything', {:override_locale => true})
         # now we check and make sure the original environment was restored
         Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
-          ENV[var].should == orig_env_vals[var]
+          expect(ENV[var]).to eq(orig_env_vals[var])
         end
 
         # now, once more... but with our sentinel values
@@ -404,7 +404,7 @@ describe Puppet::Util::Execution do
           Puppet::Util::Execution.execute(get_env_var_cmd % 'anything', {:override_locale => true})
           # now we check and make sure the original environment was restored
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
-            ENV[var].should == locale_sentinel_env[var]
+            expect(ENV[var]).to eq(locale_sentinel_env[var])
           end
         end
 
@@ -431,13 +431,13 @@ describe Puppet::Util::Execution do
           # with this environment, we loop over the vars in question
           Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
             # ensure that our temporary environment is set up as we expect
-            ENV[var].should == user_sentinel_env[var]
+            expect(ENV[var]).to eq(user_sentinel_env[var])
 
             # run an "exec" via the provider and ensure that it unsets the vars
-            Puppet::Util::Execution.execute(get_env_var_cmd % var).strip.should == ""
+            expect(Puppet::Util::Execution.execute(get_env_var_cmd % var).strip).to eq("")
 
             # ensure that after the exec, our temporary env is still intact
-            ENV[var].should == user_sentinel_env[var]
+            expect(ENV[var]).to eq(user_sentinel_env[var])
           end
 
         end
@@ -453,7 +453,7 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.execute(get_env_var_cmd % 'anything')
         # now we check and make sure the original environment was restored
         Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
-          ENV[var].should == orig_env_vals[var]
+          expect(ENV[var]).to eq(orig_env_vals[var])
         end
 
         # now, once more... but with our sentinel values
@@ -462,7 +462,7 @@ describe Puppet::Util::Execution do
           Puppet::Util::Execution.execute(get_env_var_cmd % 'anything')
           # now we check and make sure the original environment was restored
           Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
-            ENV[var].should == user_sentinel_env[var]
+            expect(ENV[var]).to eq(user_sentinel_env[var])
           end
         end
 
@@ -550,7 +550,7 @@ describe Puppet::Util::Execution do
         Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
-        Puppet::Util::Execution.execute('test command').should == "My expected command output"
+        expect(Puppet::Util::Execution.execute('test command')).to eq("My expected command output")
       end
 
       it "should not read the output if squelch is true" do
@@ -558,7 +558,7 @@ describe Puppet::Util::Execution do
         Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
-        Puppet::Util::Execution.execute('test command', :squelch => true).should == ''
+        expect(Puppet::Util::Execution.execute('test command', :squelch => true)).to eq('')
       end
 
       it "should delete the file used for output if squelch is false" do
@@ -568,7 +568,7 @@ describe Puppet::Util::Execution do
 
         Puppet::Util::Execution.execute('test command')
 
-        Puppet::FileSystem.exist?(path).should be_falsey
+        expect(Puppet::FileSystem.exist?(path)).to be_falsey
       end
 
       it "should not raise an error if the file is open" do
@@ -637,7 +637,7 @@ describe Puppet::Util::Execution do
     it "should execute a string as a string" do
       Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
       Puppet::Util::Execution.expects(:exitstatus).returns(0)
-      Puppet::Util::Execution.execpipe('echo hello').should == 'hello'
+      expect(Puppet::Util::Execution.execpipe('echo hello')).to eq('hello')
     end
 
     it "should print meaningful debug message for string argument" do
@@ -657,7 +657,7 @@ describe Puppet::Util::Execution do
     it "should execute an array by pasting together with spaces" do
       Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
       Puppet::Util::Execution.expects(:exitstatus).returns(0)
-      Puppet::Util::Execution.execpipe(['echo', 'hello']).should == 'hello'
+      expect(Puppet::Util::Execution.execpipe(['echo', 'hello'])).to eq('hello')
     end
 
     it "should fail if asked to fail, and the child does" do
@@ -669,7 +669,7 @@ describe Puppet::Util::Execution do
 
     it "should not fail if asked not to fail, and the child does" do
       Puppet::Util::Execution.stubs(:open).returns('error message')
-      Puppet::Util::Execution.execpipe('echo hello', false).should == 'error message'
+      expect(Puppet::Util::Execution.execpipe('echo hello', false)).to eq('error message')
     end
   end
 end

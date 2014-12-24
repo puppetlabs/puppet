@@ -48,35 +48,35 @@ describe provider_class do
   describe "when parsing on incomplete line" do
 
     it "should work for only ip" do
-      @provider.parse_line("127.0.0.1")[:line].should ==  "127.0.0.1"
+      expect(@provider.parse_line("127.0.0.1")[:line]).to eq("127.0.0.1")
     end
 
     it "should work for only hostname" do
-      @provider.parse_line("www.example.com")[:line].should == "www.example.com"
+      expect(@provider.parse_line("www.example.com")[:line]).to eq("www.example.com")
     end
 
     it "should work for ip and space" do
-      @provider.parse_line("127.0.0.1 ")[:line].should ==  "127.0.0.1 "
+      expect(@provider.parse_line("127.0.0.1 ")[:line]).to eq("127.0.0.1 ")
     end
 
     it "should work for hostname and space" do
-      @provider.parse_line("www.example.com ")[:line].should == "www.example.com "
+      expect(@provider.parse_line("www.example.com ")[:line]).to eq("www.example.com ")
     end
 
     it "should work for hostname and host_aliases" do
-      @provider.parse_line("www.example.com  www xyz")[:line].should == "www.example.com  www xyz"
+      expect(@provider.parse_line("www.example.com  www xyz")[:line]).to eq("www.example.com  www xyz")
     end
 
     it "should work for ip and comment" do
-      @provider.parse_line("127.0.0.1  #www xyz")[:line].should == "127.0.0.1  #www xyz"
+      expect(@provider.parse_line("127.0.0.1  #www xyz")[:line]).to eq("127.0.0.1  #www xyz")
     end
 
     it "should work for hostname and comment" do
-      @provider.parse_line("xyz  #www test123")[:line].should == "xyz  #www test123"
+      expect(@provider.parse_line("xyz  #www test123")[:line]).to eq("xyz  #www test123")
     end
 
     it "should work for crazy incomplete lines" do
-      @provider.parse_line("%th1s is a\t cr$zy    !incompl1t line")[:line].should == "%th1s is a\t cr$zy    !incompl1t line"
+      expect(@provider.parse_line("%th1s is a\t cr$zy    !incompl1t line")[:line]).to eq("%th1s is a\t cr$zy    !incompl1t line")
     end
 
   end
@@ -84,23 +84,23 @@ describe provider_class do
   describe "when parsing a line with ip and hostname" do
 
     it "should parse an ipv4 from the first field" do
-      @provider.parse_line("127.0.0.1    localhost")[:ip].should == "127.0.0.1"
+      expect(@provider.parse_line("127.0.0.1    localhost")[:ip]).to eq("127.0.0.1")
     end
 
     it "should parse an ipv6 from the first field" do
-      @provider.parse_line("::1     localhost")[:ip].should == "::1"
+      expect(@provider.parse_line("::1     localhost")[:ip]).to eq("::1")
     end
 
     it "should parse the name from the second field" do
-      @provider.parse_line("::1     localhost")[:name].should == "localhost"
+      expect(@provider.parse_line("::1     localhost")[:name]).to eq("localhost")
     end
 
     it "should set an empty comment" do
-      @provider.parse_line("::1     localhost")[:comment].should == ""
+      expect(@provider.parse_line("::1     localhost")[:comment]).to eq("")
     end
 
     it "should set host_aliases to :absent" do
-      @provider.parse_line("::1     localhost")[:host_aliases].should == :absent
+      expect(@provider.parse_line("::1     localhost")[:host_aliases]).to eq(:absent)
     end
 
   end
@@ -111,15 +111,15 @@ describe provider_class do
     end
 
     it "should parse the ip from the first field" do
-      @provider.parse_line(@testline)[:ip].should == "127.0.0.1"
+      expect(@provider.parse_line(@testline)[:ip]).to eq("127.0.0.1")
     end
 
     it "should parse the hostname from the second field" do
-      @provider.parse_line(@testline)[:name].should == "localhost"
+      expect(@provider.parse_line(@testline)[:name]).to eq("localhost")
     end
 
     it "should parse the comment after the first '#' character" do
-      @provider.parse_line(@testline)[:comment].should == 'A comment with a #-char'
+      expect(@provider.parse_line(@testline)[:comment]).to eq('A comment with a #-char')
     end
 
   end
@@ -127,13 +127,13 @@ describe provider_class do
   describe "when parsing a line with ip, hostname and aliases" do
 
     it "should parse alias from the third field" do
-      @provider.parse_line("127.0.0.1   localhost   localhost.localdomain")[:host_aliases].should == "localhost.localdomain"
+      expect(@provider.parse_line("127.0.0.1   localhost   localhost.localdomain")[:host_aliases]).to eq("localhost.localdomain")
     end
 
     it "should parse multiple aliases" do
-      @provider.parse_line("127.0.0.1 host alias1 alias2")[:host_aliases].should == 'alias1 alias2'
-      @provider.parse_line("127.0.0.1 host alias1\talias2")[:host_aliases].should == 'alias1 alias2'
-      @provider.parse_line("127.0.0.1 host alias1\talias2   alias3")[:host_aliases].should == 'alias1 alias2 alias3'
+      expect(@provider.parse_line("127.0.0.1 host alias1 alias2")[:host_aliases]).to eq('alias1 alias2')
+      expect(@provider.parse_line("127.0.0.1 host alias1\talias2")[:host_aliases]).to eq('alias1 alias2')
+      expect(@provider.parse_line("127.0.0.1 host alias1\talias2   alias3")[:host_aliases]).to eq('alias1 alias2 alias3')
     end
 
   end
@@ -146,19 +146,19 @@ describe provider_class do
     end
 
     it "should parse the ip from the first field" do
-      @provider.parse_line(@testline)[:ip].should == "127.0.0.1"
+      expect(@provider.parse_line(@testline)[:ip]).to eq("127.0.0.1")
     end
 
     it "should parse the hostname from the second field" do
-      @provider.parse_line(@testline)[:name].should == "host"
+      expect(@provider.parse_line(@testline)[:name]).to eq("host")
     end
 
     it "should parse all host_aliases from the third field" do
-      @provider.parse_line(@testline)[:host_aliases].should == 'alias1 alias2 alias3'
+      expect(@provider.parse_line(@testline)[:host_aliases]).to eq('alias1 alias2 alias3')
     end
 
     it "should parse the comment after the first '#' character" do
-      @provider.parse_line(@testline)[:comment].should == 'A comment with a #-char'
+      expect(@provider.parse_line(@testline)[:comment]).to eq('A comment with a #-char')
     end
 
   end
@@ -173,7 +173,7 @@ describe provider_class do
         :ip     => '127.0.0.1',
         :ensure => :present
       )
-      genhost(host).should == "127.0.0.1\tlocalhost\n"
+      expect(genhost(host)).to eq("127.0.0.1\tlocalhost\n")
     end
 
     it "should be able to generate an entry with one alias" do
@@ -183,7 +183,7 @@ describe provider_class do
         :host_aliases => 'localhost',
         :ensure => :present
       )
-      genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\n"
+      expect(genhost(host)).to eq("127.0.0.1\tlocalhost.localdomain\tlocalhost\n")
     end
 
     it "should be able to generate an entry with more than one alias" do
@@ -193,7 +193,7 @@ describe provider_class do
         :host_aliases => [ 'a1','a2','a3','a4' ],
         :ensure     => :present
       )
-      genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\n"
+      expect(genhost(host)).to eq("192.0.0.1\thost\ta1 a2 a3 a4\n")
     end
 
     it "should be able to generate a simple hostfile entry with comments" do
@@ -203,7 +203,7 @@ describe provider_class do
         :comment => 'Bazinga!',
         :ensure  => :present
       )
-      genhost(host).should == "127.0.0.1\tlocalhost\t# Bazinga!\n"
+      expect(genhost(host)).to eq("127.0.0.1\tlocalhost\t# Bazinga!\n")
     end
 
     it "should be able to generate an entry with one alias and a comment" do
@@ -214,7 +214,7 @@ describe provider_class do
         :comment => 'Bazinga!',
         :ensure => :present
       )
-      genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\t# Bazinga!\n"
+      expect(genhost(host)).to eq("127.0.0.1\tlocalhost.localdomain\tlocalhost\t# Bazinga!\n")
     end
 
     it "should be able to generate an entry with more than one alias and a comment" do
@@ -225,7 +225,7 @@ describe provider_class do
         :comment      => 'Bazinga!',
         :ensure       => :present
       )
-      genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\t# Bazinga!\n"
+      expect(genhost(host)).to eq("192.0.0.1\thost\ta1 a2 a3 a4\t# Bazinga!\n")
     end
 
   end

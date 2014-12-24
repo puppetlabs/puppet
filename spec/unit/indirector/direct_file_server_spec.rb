@@ -27,13 +27,13 @@ describe Puppet::Indirector::DirectFileServer do
 
     it "should return nil if the file does not exist" do
       Puppet::FileSystem.expects(:exist?).with(@path).returns false
-      @server.find(@request).should be_nil
+      expect(@server.find(@request)).to be_nil
     end
 
     it "should return a Content instance created with the full path to the file if the file exists" do
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
       @model.expects(:new).returns(:mycontent)
-      @server.find(@request).should == :mycontent
+      expect(@server.find(@request)).to eq(:mycontent)
     end
   end
 
@@ -62,7 +62,7 @@ describe Puppet::Indirector::DirectFileServer do
   describe Puppet::Indirector::DirectFileServer, "when searching for multiple files" do
     it "should return nil if the file does not exist" do
       Puppet::FileSystem.expects(:exist?).with(@path).returns false
-      @server.find(@request).should be_nil
+      expect(@server.find(@request)).to be_nil
     end
 
     it "should use :path2instances from the terminus_helper to return instances if the file exists" do

@@ -22,19 +22,19 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
   end
 
   it "should operate in master run_mode" do
-    @master.class.run_mode.name.should equal(:master)
+    expect(@master.class.run_mode.name).to equal(:master)
   end
 
   it "should declare a main command" do
-    @master.should respond_to(:main)
+    expect(@master).to respond_to(:main)
   end
 
   it "should declare a compile command" do
-    @master.should respond_to(:compile)
+    expect(@master).to respond_to(:compile)
   end
 
   it "should declare a preinit block" do
-    @master.should respond_to(:preinit)
+    expect(@master).to respond_to(:preinit)
   end
 
   describe "during preinit" do
@@ -51,7 +51,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
   [:debug,:verbose].each do |option|
     it "should declare handle_#{option} method" do
-      @master.should respond_to("handle_#{option}".to_sym)
+      expect(@master).to respond_to("handle_#{option}".to_sym)
     end
 
     it "should store argument value when calling handle_#{option}" do
@@ -91,7 +91,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       @master.preinit
       @master.parse_options
 
-      Puppet[:dns_alt_names].should == "foo,bar,baz"
+      expect(Puppet[:dns_alt_names]).to eq("foo,bar,baz")
     end
 
 
@@ -354,7 +354,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
           @master.options.stubs(:[]).with(:rack).returns(:true)
 
           app = @master.main
-          app.should equal(@app)
+          expect(app).to equal(@app)
         end
       end
     end

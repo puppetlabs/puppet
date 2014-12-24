@@ -7,19 +7,19 @@ describe Puppet::FileServing::Content do
   let(:path) { File.expand_path('/path') }
 
   it "should be a subclass of Base" do
-    Puppet::FileServing::Content.superclass.should equal(Puppet::FileServing::Base)
+    expect(Puppet::FileServing::Content.superclass).to equal(Puppet::FileServing::Base)
   end
 
   it "should indirect file_content" do
-    Puppet::FileServing::Content.indirection.name.should == :file_content
+    expect(Puppet::FileServing::Content.indirection.name).to eq(:file_content)
   end
 
   it "should only support the raw format" do
-    Puppet::FileServing::Content.supported_formats.should == [:raw]
+    expect(Puppet::FileServing::Content.supported_formats).to eq([:raw])
   end
 
   it "should have a method for collecting its attributes" do
-    Puppet::FileServing::Content.new(path).should respond_to(:collect)
+    expect(Puppet::FileServing::Content.new(path)).to respond_to(:collect)
   end
 
   it "should not retrieve and store its contents when its attributes are collected if the file is a normal file" do
@@ -30,7 +30,7 @@ describe Puppet::FileServing::Content do
     File.expects(:read).with(path).never
     content.collect
 
-    content.instance_variable_get("@content").should be_nil
+    expect(content.instance_variable_get("@content")).to be_nil
   end
 
   it "should not attempt to retrieve its contents if the file is a directory" do
@@ -41,22 +41,22 @@ describe Puppet::FileServing::Content do
     File.expects(:read).with(path).never
     content.collect
 
-    content.instance_variable_get("@content").should be_nil
+    expect(content.instance_variable_get("@content")).to be_nil
   end
 
   it "should have a method for setting its content" do
     content = Puppet::FileServing::Content.new(path)
-    content.should respond_to(:content=)
+    expect(content).to respond_to(:content=)
   end
 
   it "should make content available when set externally" do
     content = Puppet::FileServing::Content.new(path)
     content.content = "foo/bar"
-    content.content.should == "foo/bar"
+    expect(content.content).to eq("foo/bar")
   end
 
   it "should be able to create a content instance from raw file contents" do
-    Puppet::FileServing::Content.should respond_to(:from_raw)
+    expect(Puppet::FileServing::Content).to respond_to(:from_raw)
   end
 
   it "should create an instance with a fake file name and correct content when converting from raw" do
@@ -65,7 +65,7 @@ describe Puppet::FileServing::Content do
 
     instance.expects(:content=).with "foo/bar"
 
-    Puppet::FileServing::Content.from_raw("foo/bar").should equal(instance)
+    expect(Puppet::FileServing::Content.from_raw("foo/bar")).to equal(instance)
   end
 
   it "should return an opened File when converted to raw" do
@@ -73,7 +73,7 @@ describe Puppet::FileServing::Content do
 
     File.expects(:new).with(path, "rb").returns :file
 
-    content.to_raw.should == :file
+    expect(content.to_raw).to eq(:file)
   end
 end
 
@@ -84,22 +84,22 @@ describe Puppet::FileServing::Content, "when returning the contents" do
   it "should fail if the file is a symlink and links are set to :manage" do
     content.links = :manage
     Puppet::FileSystem.expects(:lstat).with(path).returns stub("stat", :ftype => "symlink")
-    proc { content.content }.should raise_error(ArgumentError)
+    expect { content.content }.to raise_error(ArgumentError)
   end
 
   it "should fail if a path is not set" do
-    proc { content.content }.should raise_error(Errno::ENOENT)
+    expect { content.content }.to raise_error(Errno::ENOENT)
   end
 
   it "should raise Errno::ENOENT if the file is absent" do
     content.path = File.expand_path("/there/is/absolutely/no/chance/that/this/path/exists")
-    proc { content.content }.should raise_error(Errno::ENOENT)
+    expect { content.content }.to raise_error(Errno::ENOENT)
   end
 
   it "should return the contents of the path if the file exists" do
     Puppet::FileSystem.expects(:stat).with(path).returns(stub('stat', :ftype => 'file'))
     Puppet::FileSystem.expects(:binread).with(path).returns(:mycontent)
-    content.content.should == :mycontent
+    expect(content.content).to eq(:mycontent)
   end
 
   it "should cache the returned contents" do

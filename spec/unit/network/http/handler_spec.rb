@@ -133,13 +133,13 @@ describe Puppet::Network::HTTP::Handler do
 
     it "should raise an error if the request is formatted in an unknown format" do
       handler.stubs(:content_type_header).returns "unknown format"
-      lambda { handler.request_format(request) }.should raise_error
+      expect { handler.request_format(request) }.to raise_error
     end
 
     it "should still find the correct format if content type contains charset information" do
       request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
                                                    {}, 'GET', '/', nil)
-      request.format.should == "s"
+      expect(request.format).to eq("s")
     end
 
     # PUP-3272
@@ -167,13 +167,13 @@ describe Puppet::Network::HTTP::Handler do
     it "should return the look-up result" do
       Resolv.stubs(:getname).with("1.2.3.4").returns("host.domain.com")
 
-      handler.resolve_node(:ip => "1.2.3.4").should == "host.domain.com"
+      expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("host.domain.com")
     end
 
     it "should return the ip address if resolving fails" do
       Resolv.stubs(:getname).with("1.2.3.4").raises(RuntimeError, "no such host")
 
-      handler.resolve_node(:ip => "1.2.3.4").should == "1.2.3.4"
+      expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("1.2.3.4")
     end
   end
 end

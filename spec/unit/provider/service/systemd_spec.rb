@@ -20,60 +20,60 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
-      described_class.default?.should be_truthy
+      expect(described_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on rhel7" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("7")
-    described_class.default?.should be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   it "should not be the default provider on rhel6" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("6")
-    described_class.default?.should_not be_truthy
+    expect(described_class.default?).not_to be_truthy
   end
 
   it "should be the default provider on sles12" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("12")
-    described_class.default?.should be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   it "should be the default provider on opensuse13" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("13")
-    described_class.default?.should be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   it "should not be the default provider on sles11" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("11")
-    described_class.default?.should_not be_truthy
+    expect(described_class.default?).not_to be_truthy
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
-      provider.should respond_to(method)
+      expect(provider).to respond_to(method)
     end
   end
 
   describe ".instances" do
     it "should have an instances method" do
-      described_class.should respond_to :instances
+      expect(described_class).to respond_to :instances
     end
 
     it "should return only services" do
       described_class.expects(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
-      described_class.instances.map(&:name).should =~ %w{
+      expect(described_class.instances.map(&:name)).to match_array(%w{
         arp-ethers.service
         auditd.service
         autovt@.service
         avahi-daemon.service
         blk-availability.service
-      }
+      })
     end
   end
 
@@ -109,13 +109,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with('is-enabled', 'sshd.service').returns 'enabled'
-      provider.enabled?.should == :true
+      expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with('is-enabled', 'sshd.service').raises Puppet::ExecutionFailure, "Execution of '/bin/systemctl is-enabled sshd.service' returned 1: disabled"
-      provider.enabled?.should == :false
+      expect(provider.enabled?).to eq(:false)
     end
   end
 
@@ -141,13 +141,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     it "should return running if active" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with('is-active', 'sshd.service').returns 'active'
-      provider.status.should == :running
+      expect(provider.status).to eq(:running)
     end
 
     it "should return stopped if inactive" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with('is-active', 'sshd.service').raises Puppet::ExecutionFailure, "Execution of '/bin/systemctl is-active sshd.service' returned 3: inactive"
-      provider.status.should == :stopped
+      expect(provider.status).to eq(:stopped)
     end
   end
 
@@ -169,8 +169,8 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   end
 
   it "(#16451) has command systemctl without being fully qualified" do
-    described_class.instance_variable_get(:@commands).
-      should include(:systemctl => 'systemctl')
+    expect(described_class.instance_variable_get(:@commands)).
+      to include(:systemctl => 'systemctl')
   end
 
 end

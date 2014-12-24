@@ -10,8 +10,8 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   def compare_crontab_text(have, want)
     # We should have four header lines, and then the text...
-    have.lines.to_a[0..3].should be_all {|x| x =~ /^# / }
-    have.lines.to_a[4..-1].join('').should == want
+    expect(have.lines.to_a[0..3]).to be_all {|x| x =~ /^# / }
+    expect(have.lines.to_a[4..-1].join('')).to eq(want)
   end
 
   context "with the simple samples" do
@@ -24,12 +24,12 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
     def compare_crontab_record(have, want)
       want.each do |param, value|
-        have.should be_key param
-        have[param].should == value
+        expect(have).to be_key param
+        expect(have[param]).to eq(value)
       end
 
       (FIELDS[have[:record_type]] - want.keys).each do |name|
-        have[name].should == :absent
+        expect(have[name]).to eq(:absent)
       end
     end
 
@@ -43,7 +43,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       end
 
       it "should reconstruct the crontab line #{name} from the record" do
-        subject.to_line(data[:record]).should == data[:text]
+        expect(subject.to_line(data[:record])).to eq(data[:text])
       end
     end
 
@@ -176,7 +176,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
     it "should not find the resource when looking up the on-disk record" do
       subject.prefetch(resources)
-      subject.resource_for_record(record, resources).should be_nil
+      expect(subject.resource_for_record(record, resources)).to be_nil
     end
   end
 

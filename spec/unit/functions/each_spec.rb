@@ -16,9 +16,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_1")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_2")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
     end
 
     it 'each on an array selecting each value - function call style' do
@@ -29,9 +29,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_1")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_2")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
     end
 
     it 'each on an array with index' do
@@ -42,9 +42,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_1")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_2")['ensure']).to eq('absent')
+      expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
     end
 
     it 'each on a hash selecting entries' do
@@ -55,9 +55,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_a")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_b")['ensure']).to eq('absent')
+      expect(catalog.resource(:file, "/file_c")['ensure']).to eq('present')
     end
 
     it 'each on a hash selecting key and value' do
@@ -68,9 +68,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_a")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_b")['ensure']).to eq('absent')
+      expect(catalog.resource(:file, "/file_c")['ensure']).to eq('present')
     end
 
     it 'each on a hash selecting key and value (using captures-last parameter)' do
@@ -81,9 +81,9 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_a")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_b")['ensure']).to eq('absent')
+      expect(catalog.resource(:file, "/file_c")['ensure']).to eq('present')
     end
   end
 
@@ -97,7 +97,7 @@ describe 'the each method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
     end
 
   end

@@ -42,7 +42,7 @@ describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
   end
 
   it "should be able to access :name" do
-    @bool[:name].should == "foo"
+    expect(@bool[:name]).to eq("foo")
   end
 
   it "should be able to access :value" do
@@ -55,12 +55,12 @@ describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
   end
 
   it "should be able to access :persistent" do
-    @bool[:persistent].should == :true
+    expect(@bool[:persistent]).to eq(:true)
   end
 
   it "should set :persistent to false" do
     @bool[:persistent] = false
-    @bool[:persistent].should == :false
+    expect(@bool[:persistent]).to eq(:false)
   end
 end
 
@@ -77,15 +77,15 @@ describe Puppet::Type.type(:selmodule), " when checking policy modules" do
   end
 
   it "should be able to access :name" do
-    @module[:name].should == "foo"
+    expect(@module[:name]).to eq("foo")
   end
 
   it "should be able to access :selmoduledir" do
-    @module[:selmoduledir].should == "/some/path"
+    expect(@module[:selmoduledir]).to eq("/some/path")
   end
 
   it "should be able to access :selmodulepath" do
-    @module[:selmodulepath].should == "/some/path/foo.pp"
+    expect(@module[:selmodulepath]).to eq("/some/path/foo.pp")
   end
 
   it "should be able to access :syncversion" do

@@ -25,12 +25,12 @@ describe Puppet::FileServing::Configuration::Parser do
 
     it "should allow comments" do
       write_config_file("# this is a comment\n")
-      proc { @parser.parse }.should_not raise_error
+      expect { @parser.parse }.not_to raise_error
     end
 
     it "should allow blank lines" do
       write_config_file("\n")
-      proc { @parser.parse }.should_not raise_error
+      expect { @parser.parse }.not_to raise_error
     end
 
     it "should create a new mount for each section in the configuration" do
@@ -51,18 +51,18 @@ describe Puppet::FileServing::Configuration::Parser do
       write_config_file "[one]\n[two]\n"
 
       result = @parser.parse
-      result["one"].should equal(mount1)
-      result["two"].should equal(mount2)
+      expect(result["one"]).to equal(mount1)
+      expect(result["two"]).to equal(mount2)
     end
 
     it "should only allow mount names that are alphanumeric plus dashes" do
       write_config_file "[a*b]\n"
-      proc { @parser.parse }.should raise_error(ArgumentError)
+      expect { @parser.parse }.to raise_error(ArgumentError)
     end
 
     it "should fail if the value for path/allow/deny starts with an equals sign" do
       write_config_file "[one]\npath = /testing"
-      proc { @parser.parse }.should raise_error(ArgumentError)
+      expect { @parser.parse }.to raise_error(ArgumentError)
     end
 
     it "should validate each created mount" do
@@ -82,13 +82,13 @@ describe Puppet::FileServing::Configuration::Parser do
 
       mount1.expects(:validate).raises RuntimeError
 
-      lambda { @parser.parse }.should raise_error(RuntimeError)
+      expect { @parser.parse }.to raise_error(RuntimeError)
     end
 
     it "should return comprehensible error message, if invalid line detected" do
       write_config_file "[one]\n\n\x01path /etc/puppet/files\n\x01allow *\n"
 
-      proc { @parser.parse }.should raise_error(ArgumentError, /Invalid line.*in.*, line 3/)
+      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid line.*in.*, line 3/)
     end
   end
 
@@ -135,7 +135,7 @@ describe Puppet::FileServing::Configuration::Parser do
     it "should return comprehensible error message, if failed on invalid attribute" do
       write_config_file "[one]\ndo something\n"
 
-      proc { @parser.parse }.should raise_error(ArgumentError, /Invalid argument 'do' in .*, line 2/)
+      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid argument 'do' in .*, line 2/)
     end
   end
 

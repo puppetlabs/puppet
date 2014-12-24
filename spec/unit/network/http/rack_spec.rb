@@ -32,7 +32,7 @@ describe "Puppet::Network::HTTP::Rack", :if => Puppet.features.rack? do
 
     it "should catch unhandled exceptions from RackREST" do
       Puppet::Network::HTTP::RackREST.any_instance.expects(:process).raises(ArgumentError, 'test error')
-      Proc.new { @linted.call(@env) }.should_not raise_error
+      expect { @linted.call(@env) }.not_to raise_error
     end
 
     it "should finish() the Response" do

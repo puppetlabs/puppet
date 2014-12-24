@@ -10,7 +10,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
   end
 
   it "should handle login through the transport" do
-    @transport.should be_handles_login
+    expect(@transport).to be_handles_login
   end
 
   it "should connect to the given host and port" do
@@ -34,7 +34,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
     @transport.host = "localhost"
     @transport.user = "user"
 
-    lambda { @transport.connect }.should raise_error Puppet::Error
+    expect { @transport.connect }.to raise_error Puppet::Error
   end
 
   describe "when connected" do
@@ -65,7 +65,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
 
     it "should raise an error if shell channel creation fails" do
       @channel.expects(:send_channel_request).with("shell").yields(@channel, false)
-      lambda { @transport.connect }.should raise_error
+      expect { @transport.connect }.to raise_error
     end
 
     it "should register an on_data and on_extended_data callback" do
@@ -80,7 +80,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
       @channel.expects(:on_data).yields(@channel, "data")
 
       @transport.connect
-      @transport.buf.should == "data"
+      expect(@transport.buf).to eq("data")
     end
 
     it "should accumulate data to the buffer on extended data" do
@@ -88,7 +88,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
       @channel.expects(:on_extended_data).yields(@channel, 1, "data")
 
       @transport.connect
-      @transport.buf.should == "data"
+      expect(@transport.buf).to eq("data")
     end
 
     it "should mark eof on close" do
@@ -96,7 +96,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
       @channel.expects(:on_close).yields(@channel)
 
       @transport.connect
-      @transport.should be_eof
+      expect(@transport).to be_eof
     end
 
     it "should expect output to conform to the default prompt" do
@@ -164,13 +164,13 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
     it "should yield the buffer output to given block" do
       @transport.expects(:expect).yields("output")
       @transport.command("data") do |out|
-        out.should == "output"
+        expect(out).to eq("output")
       end
     end
 
     it "should return buffer output" do
       @transport.expects(:expect).returns("output")
-      @transport.command("data").should == "output"
+      expect(@transport.command("data")).to eq("output")
     end
   end
 
@@ -196,14 +196,14 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
       IO.stubs(:select)
       @transport.buf = "output"
       @transport.stubs(:process_ssh)
-      @transport.expect(/output/).should == "output"
+      expect(@transport.expect(/output/)).to eq("output")
     end
 
     it "should return the output" do
       IO.stubs(:select)
       @transport.buf = "output"
       @transport.stubs(:process_ssh)
-      @transport.expect(/output/).should == "output"
+      expect(@transport.expect(/output/)).to eq("output")
     end
 
     describe "when processing the ssh loop" do

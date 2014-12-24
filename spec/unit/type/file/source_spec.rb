@@ -43,17 +43,17 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
       resource[:source] = "/foo/bar\\//"
-      resource[:source].should == %w{file:/foo/bar\\}
+      expect(resource[:source]).to eq(%w{file:/foo/bar\\})
     end
 
     it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
       resource[:source] = "X:/foo/bar\\//"
-      resource[:source].should == %w{file:/X:/foo/bar}
+      expect(resource[:source]).to eq(%w{file:/X:/foo/bar})
     end
 
     it "should accept an array of sources" do
       resource[:source] = %w{file:///foo/bar puppet://host:8140/foo/bar}
-      resource[:source].should == %w{file:///foo/bar puppet://host:8140/foo/bar}
+      expect(resource[:source]).to eq(%w{file:///foo/bar puppet://host:8140/foo/bar})
     end
 
     it "should accept file path characters that are not valid in URI" do
@@ -70,12 +70,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should accept URI authority component" do
       resource[:source] = 'file://host/foo'
-      resource[:source].should == %w{file://host/foo}
+      expect(resource[:source]).to eq(%w{file://host/foo})
     end
 
     it "should accept when URI authority is absent" do
       resource[:source] = 'file:///foo/bar'
-      resource[:source].should == %w{file:///foo/bar}
+      expect(resource[:source]).to eq(%w{file:///foo/bar})
     end
   end
 
@@ -85,13 +85,13 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should prefix file scheme to absolute paths" do
       resource[:source] = path
-      resource[:source].should == [URI.unescape(Puppet::Util.path_to_uri(path).to_s)]
+      expect(resource[:source]).to eq([URI.unescape(Puppet::Util.path_to_uri(path).to_s)])
     end
 
     %w[file puppet].each do |scheme|
       it "should not prefix valid #{scheme} URIs" do
         resource[:source] = "#{scheme}:///foo bar"
-        resource[:source].should == ["#{scheme}:///foo bar"]
+        expect(resource[:source]).to eq(["#{scheme}:///foo bar"])
       end
     end
   end
@@ -106,12 +106,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     it "should return already-available metadata" do
       @source = source.new(:resource => @resource)
       @source.metadata = "foo"
-      @source.metadata.should == "foo"
+      expect(@source.metadata).to eq("foo")
     end
 
     it "should return nil if no @should value is set and no metadata is available" do
       @source = source.new(:resource => @resource)
-      @source.metadata.should be_nil
+      expect(@source.metadata).to be_nil
     end
 
     it "should collect its metadata using the Metadata class if it is not already set" do
@@ -135,7 +135,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       }
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, options).returns nil
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, options).returns metadata
-      @source.metadata.should equal(metadata)
+      expect(@source.metadata).to equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
@@ -160,7 +160,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end.raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
-      lambda { @source.metadata }.should raise_error(ArgumentError)
+      expect { @source.metadata }.to raise_error(ArgumentError)
     end
 
     it "should fail if no specified sources can be found" do
@@ -173,7 +173,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
       @source.expects(:fail).raises RuntimeError
 
-      lambda { @source.metadata }.should raise_error(RuntimeError)
+      expect { @source.metadata }.to raise_error(RuntimeError)
     end
   end
 
@@ -215,7 +215,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     it "should fail if there is no metadata" do
       @source.stubs(:metadata).returns nil
       @source.expects(:devfail).raises ArgumentError
-      lambda { @source.copy_source_values }.should raise_error(ArgumentError)
+      expect { @source.copy_source_values }.to raise_error(ArgumentError)
     end
 
     it "should set :ensure to the file type" do
@@ -266,7 +266,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:owner].must == 1
           @resource[:group].must == 2
           @resource[:mode].must == '173'
-          @resource[:content].should_not == @metadata.checksum
+          expect(@resource[:content]).not_to eq(@metadata.checksum)
         end
 
         describe "and puppet is not running as root" do
@@ -276,12 +276,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           it "should not try to set the owner" do
             @source.copy_source_values
-            @resource[:owner].should be_nil
+            expect(@resource[:owner]).to be_nil
           end
 
           it "should not try to set the group" do
             @source.copy_source_values
-            @resource[:group].should be_nil
+            expect(@resource[:group]).to be_nil
           end
         end
       end
@@ -488,7 +488,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           it "should be able to return the metadata source full path" do
             resource[:source] = "#{prefix}#{sourcepath}"
-            resource.parameter(:source).full_path.should == sourcepath
+            expect(resource.parameter(:source).full_path).to eq(sourcepath)
           end
         end
       end
@@ -502,7 +502,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           it "should be able to return the metadata source full path" do
             resource[:source] = "#{prefix}#{sourcepath}"
-            resource.parameter(:source).full_path.should == sourcepath
+            expect(resource.parameter(:source).full_path).to eq(sourcepath)
           end
 
           it "should convert backslashes to forward slashes" do
@@ -527,19 +527,19 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end
 
       it "should not be local" do
-        resource.parameter(:source).should_not be_local
+        expect(resource.parameter(:source)).not_to be_local
       end
 
       it "should be able to return the metadata source full path" do
-        resource.parameter(:source).full_path.should == "/path/to/source"
+        expect(resource.parameter(:source).full_path).to eq("/path/to/source")
       end
 
       it "should be able to return the source server" do
-        resource.parameter(:source).server.should == "server"
+        expect(resource.parameter(:source).server).to eq("server")
       end
 
       it "should be able to return the source port" do
-        resource.parameter(:source).port.should == 8192
+        expect(resource.parameter(:source).port).to eq(8192)
       end
 
       describe "which don't specify server or port" do
@@ -547,12 +547,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         it "should return the default source server" do
           Puppet[:server] = "myserver"
-          resource.parameter(:source).server.should == "myserver"
+          expect(resource.parameter(:source).server).to eq("myserver")
         end
 
         it "should return the default source port" do
           Puppet[:masterport] = 1234
-          resource.parameter(:source).port.should == 1234
+          expect(resource.parameter(:source).port).to eq(1234)
         end
       end
     end

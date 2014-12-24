@@ -18,16 +18,16 @@ describe Puppet::Type.type(:package).provider(:windows) do
   end
 
   describe 'provider features' do
-    it { should be_installable }
-    it { should be_uninstallable }
-    it { should be_install_options }
-    it { should be_uninstall_options }
-    it { should be_versionable }
+    it { is_expected.to be_installable }
+    it { is_expected.to be_uninstallable }
+    it { is_expected.to be_install_options }
+    it { is_expected.to be_uninstall_options }
+    it { is_expected.to be_versionable }
   end
 
   describe 'on Windows', :if => Puppet.features.microsoft_windows? do
     it 'should be the default provider' do
-      Puppet::Type.type(:package).defaultprovider.should == subject.class
+      expect(Puppet::Type.type(:package).defaultprovider).to eq(subject.class)
     end
   end
 
@@ -42,20 +42,20 @@ describe Puppet::Type.type(:package).provider(:windows) do
       Puppet::Provider::Package::Windows::Package.expects(:map).multiple_yields([prov1], [prov2]).returns([prov1, prov2])
 
       providers = provider.class.instances
-      providers.count.should == 2
-      providers[0].name.should == 'pkg1'
-      providers[0].version.should == '1.0.0'
-      providers[0].package.should == pkg1
+      expect(providers.count).to eq(2)
+      expect(providers[0].name).to eq('pkg1')
+      expect(providers[0].version).to eq('1.0.0')
+      expect(providers[0].package).to eq(pkg1)
 
-      providers[1].name.should == 'pkg2'
-      providers[1].version.should be_nil
-      providers[1].package.should == pkg2
+      expect(providers[1].name).to eq('pkg2')
+      expect(providers[1].version).to be_nil
+      expect(providers[1].package).to eq(pkg2)
     end
 
     it 'should return an empty array if none found' do
       Puppet::Provider::Package::Windows::Package.expects(:map).returns([])
 
-      provider.class.instances.should == []
+      expect(provider.class.instances).to eq([])
     end
   end
 
@@ -65,7 +65,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
       pkg.expects(:match?).returns(true)
       Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
 
-      provider.query.should == { :name => 'pkg1', :ensure => :installed, :provider => :windows }
+      expect(provider.query).to eq({ :name => 'pkg1', :ensure => :installed, :provider => :windows })
     end
 
     it 'should include the version string when present' do
@@ -73,13 +73,13 @@ describe Puppet::Type.type(:package).provider(:windows) do
       pkg.expects(:match?).returns(true)
       Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
 
-      provider.query.should == { :name => 'pkg1', :ensure => '1.0.0', :provider => :windows }
+      expect(provider.query).to eq({ :name => 'pkg1', :ensure => '1.0.0', :provider => :windows })
     end
 
     it 'should return nil if no package was found' do
       Puppet::Provider::Package::Windows::Package.expects(:find)
 
-      provider.query.should be_nil
+      expect(provider.query).to be_nil
     end
   end
 
@@ -201,51 +201,51 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
   context '#install_options' do
     it 'should return nil by default' do
-      provider.install_options.should be_nil
+      expect(provider.install_options).to be_nil
     end
 
     it 'should return the options' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
 
-      provider.install_options.should == ['INSTALLDIR=C:\mysql-here']
+      expect(provider.install_options).to eq(['INSTALLDIR=C:\mysql-here'])
     end
 
     it 'should only quote if needed' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql here' }
 
-      provider.install_options.should == ['INSTALLDIR="C:\mysql here"']
+      expect(provider.install_options).to eq(['INSTALLDIR="C:\mysql here"'])
     end
 
     it 'should escape embedded quotes in install_options values with spaces' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql "here"' }
 
-      provider.install_options.should == ['INSTALLDIR="C:\mysql \"here\""']
+      expect(provider.install_options).to eq(['INSTALLDIR="C:\mysql \"here\""'])
     end
   end
 
   context '#uninstall_options' do
     it 'should return nil by default' do
-      provider.uninstall_options.should be_nil
+      expect(provider.uninstall_options).to be_nil
     end
 
     it 'should return the options' do
       resource[:uninstall_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
 
-      provider.uninstall_options.should == ['INSTALLDIR=C:\mysql-here']
+      expect(provider.uninstall_options).to eq(['INSTALLDIR=C:\mysql-here'])
     end
   end
 
   context '#join_options' do
     it 'should return nil if there are no options' do
-      provider.join_options(nil).should be_nil
+      expect(provider.join_options(nil)).to be_nil
     end
 
     it 'should sort hash keys' do
-      provider.join_options([{'b' => '2', 'a' => '1', 'c' => '3'}]).should == ['a=1', 'b=2', 'c=3']
+      expect(provider.join_options([{'b' => '2', 'a' => '1', 'c' => '3'}])).to eq(['a=1', 'b=2', 'c=3'])
     end
 
     it 'should return strings and hashes' do
-      provider.join_options([{'a' => '1'}, 'b']).should == ['a=1', 'b']
+      expect(provider.join_options([{'a' => '1'}, 'b'])).to eq(['a=1', 'b'])
     end
   end
 end

@@ -25,7 +25,7 @@ describe Puppet::Provider::ParsedFile do
 
   describe "when looking up records loaded from disk" do
     it "should return nil if no records have been loaded" do
-      provider.record?("foo").should be_nil
+      expect(provider.record?("foo")).to be_nil
     end
   end
 
@@ -44,7 +44,7 @@ describe Puppet::Provider::ParsedFile do
         provider.expects(:new).with(inst).returns(results[-1])
       end
 
-      provider.instances.should == results
+      expect(provider.instances).to eq(results)
     end
 
     it "should ignore target when retrieve fails" do
@@ -65,7 +65,7 @@ describe Puppet::Provider::ParsedFile do
       provider.expects(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present).returns 'r3'
       provider.expects(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present).returns 'r4'
 
-      provider.instances.should == %w{r1 r2 r3 r4}
+      expect(provider.instances).to eq(%w{r1 r2 r3 r4})
     end
 
     it "should skip specified records" do
@@ -90,12 +90,12 @@ describe Puppet::Provider::ParsedFile do
 
     it "returns a resource if the record name matches the resource name" do
       record = {:name => :one}
-      provider.resource_for_record(record, resources).should be first_resource
+      expect(provider.resource_for_record(record, resources)).to be first_resource
     end
 
     it "doesn't return a resource if the record name doesn't match any resource names" do
       record = {:name => :three}
-      provider.resource_for_record(record, resources).should be_nil
+      expect(provider.resource_for_record(record, resources)).to be_nil
     end
   end
 
@@ -198,8 +198,8 @@ describe "A very basic provider based on ParsedFile" do
   context "writing file contents back to disk" do
     it "should not change anything except from adding a header" do
       input_records = provider.parse(input_text)
-      provider.to_file(input_records).
-        should match provider.header + input_text
+      expect(provider.to_file(input_records)).
+        to match provider.header + input_text
     end
   end
 
@@ -212,7 +212,7 @@ describe "A very basic provider based on ParsedFile" do
     end
 
     it "should move the native header to the top" do
-      provider.to_file(input_records).should_not match /\A#{provider.header}/
+      expect(provider.to_file(input_records)).not_to match /\A#{provider.header}/
     end
 
     context "and dropping native headers found in input" do
@@ -221,7 +221,7 @@ describe "A very basic provider based on ParsedFile" do
       end
 
       it "should not include the native header in the output" do
-        provider.to_file(input_records).should_not match regex
+        expect(provider.to_file(input_records)).not_to match regex
       end
     end
   end

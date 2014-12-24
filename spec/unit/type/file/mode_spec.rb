@@ -34,19 +34,19 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   describe "#munge" do
     # This is sort of a redundant test, but its spec is important.
     it "should return the value as a string" do
-      mode.munge('0644').should be_a(String)
+      expect(mode.munge('0644')).to be_a(String)
     end
 
     it "should accept strings as arguments" do
-      mode.munge('0644').should == '644'
+      expect(mode.munge('0644')).to eq('644')
     end
 
     it "should accept symbolic strings as arguments and return them intact" do
-      mode.munge('u=rw,go=r').should == 'u=rw,go=r'
+      expect(mode.munge('u=rw,go=r')).to eq('u=rw,go=r')
     end
 
     it "should accept integers are arguments" do
-      mode.munge(0644).should == '644'
+      expect(mode.munge(0644)).to eq('644')
     end
   end
 
@@ -56,16 +56,16 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     end
 
     it "should add execute bits corresponding to read bits for directories" do
-      mode.dirmask('0644').should == '755'
+      expect(mode.dirmask('0644')).to eq('755')
     end
 
     it "should not add an execute bit when there is no read bit" do
-      mode.dirmask('0600').should == '700'
+      expect(mode.dirmask('0600')).to eq('700')
     end
 
     it "should not add execute bits for files that aren't directories" do
       resource[:path] = tmpfile('other_file')
-      mode.dirmask('0644').should == '0644'
+      expect(mode.dirmask('0644')).to eq('0644')
     end
   end
 
@@ -115,7 +115,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   describe "#retrieve" do
     it "should return absent if the resource doesn't exist" do
       resource[:path] = File.expand_path("/does/not/exist")
-      mode.retrieve.should == :absent
+      expect(mode.retrieve).to eq(:absent)
     end
 
     it "should retrieve the directory mode from the provider" do
@@ -124,7 +124,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode.expects(:dirmask).with('644').returns '755'
       resource.provider.expects(:mode).returns '755'
 
-      mode.retrieve.should == '755'
+      expect(mode.retrieve).to eq('755')
     end
 
     it "should retrieve the file mode from the provider" do
@@ -133,24 +133,24 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode.expects(:dirmask).with('644').returns '644'
       resource.provider.expects(:mode).returns '644'
 
-      mode.retrieve.should == '644'
+      expect(mode.retrieve).to eq('644')
     end
   end
 
   describe '#should_to_s' do
     describe 'with a 3-digit mode' do
       it 'returns a 4-digit mode with a leading zero' do
-        mode.should_to_s('755').should == '0755'
+        expect(mode.should_to_s('755')).to eq('0755')
       end
     end
 
     describe 'with a 4-digit mode' do
       it 'returns the 4-digit mode when the first digit is a zero' do
-        mode.should_to_s('0755').should == '0755'
+        expect(mode.should_to_s('0755')).to eq('0755')
       end
 
       it 'returns the 4-digit mode when the first digit is not a zero' do
-        mode.should_to_s('1755').should == '1755'
+        expect(mode.should_to_s('1755')).to eq('1755')
       end
     end
   end
@@ -158,23 +158,23 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   describe '#is_to_s' do
     describe 'with a 3-digit mode' do
       it 'returns a 4-digit mode with a leading zero' do
-        mode.is_to_s('755').should == '0755'
+        expect(mode.is_to_s('755')).to eq('0755')
       end
     end
 
     describe 'with a 4-digit mode' do
       it 'returns the 4-digit mode when the first digit is a zero' do
-        mode.is_to_s('0755').should == '0755'
+        expect(mode.is_to_s('0755')).to eq('0755')
       end
 
       it 'returns the 4-digit mode when the first digit is not a zero' do
-        mode.is_to_s('1755').should == '1755'
+        expect(mode.is_to_s('1755')).to eq('1755')
       end
     end
 
     describe 'when passed :absent' do
       it 'returns :absent' do
-        mode.is_to_s(:absent).should == :absent
+        expect(mode.is_to_s(:absent)).to eq(:absent)
       end
     end
   end
@@ -191,7 +191,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
 
       mode_sym.sync
       stat = Puppet::FileSystem.stat(path)
-      (stat.mode & 0777).to_s(8).should == "644"
+      expect((stat.mode & 0777).to_s(8)).to eq("644")
     end
   end
 
@@ -207,7 +207,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode_sym.sync
 
       stat = Puppet::FileSystem.stat(path)
-      (stat.mode & 0777).to_s(8).should == '664'
+      expect((stat.mode & 0777).to_s(8)).to eq('664')
     end
 
     it 'does change executable bit if an executable bit is set' do
@@ -216,7 +216,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode_sym.sync
 
       stat = Puppet::FileSystem.stat(path)
-      (stat.mode & 0777).to_s(8).should == '774'
+      expect((stat.mode & 0777).to_s(8)).to eq('774')
     end
   end
 end

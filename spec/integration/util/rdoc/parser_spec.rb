@@ -113,18 +113,18 @@ end
   end
 
   def file_exists_and_matches_content(file, *content_patterns)
-    Puppet::FileSystem.exist?(file).should(be_truthy, "Cannot find #{file}")
+    expect(Puppet::FileSystem.exist?(file)).to(be_truthy, "Cannot find #{file}")
     content_patterns.each do |pattern|
       content = File.read(file)
-      content.should match(pattern)
+      expect(content).to match(pattern)
     end
   end
 
   def some_file_exists_with_matching_content(glob, *content_patterns)
-    Dir.glob(glob).select do |f|
+    expect(Dir.glob(glob).select do |f|
       contents = File.read(f)
       content_patterns.all? { |p| p.match(contents) }
-    end.should_not(be_empty, "Could not match #{content_patterns} in any of the files found in #{glob}")
+    end).not_to(be_empty, "Could not match #{content_patterns} in any of the files found in #{glob}")
   end
 
   around(:each) do |example|

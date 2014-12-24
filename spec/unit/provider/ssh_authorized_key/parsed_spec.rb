@@ -48,7 +48,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
                 :options => [:absent]
               )
 
-    genkey(key).should == "ssh-dss AAAAfsfddsjldjgksdflgkjsfdlgkj Just_Testing\n"
+    expect(genkey(key)).to eq("ssh-dss AAAAfsfddsjldjgksdflgkjsfdlgkj Just_Testing\n")
   end
 
   it "should be able to generate an authorized_keys file with options" do
@@ -60,55 +60,55 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
                 :options => ['from="192.168.1.1"', "no-pty", "no-X11-forwarding"]
                 )
 
-    genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
+    expect(genkey(key)).to eq("from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n")
   end
 
   it "should parse comments" do
     result = [{ :record_type => :comment, :line => "# hello" }]
-    @provider_class.parse("# hello\n").should == result
+    expect(@provider_class.parse("# hello\n")).to eq(result)
   end
 
   it "should parse comments with leading whitespace" do
     result = [{ :record_type => :comment, :line => "  # hello" }]
-    @provider_class.parse("  # hello\n").should == result
+    expect(@provider_class.parse("  # hello\n")).to eq(result)
   end
 
   it "should skip over lines with only whitespace" do
     result = [{ :record_type => :comment, :line => "#before" },
               { :record_type => :blank,   :line => "  " },
               { :record_type => :comment, :line => "#after" }]
-    @provider_class.parse("#before\n  \n#after\n").should == result
+    expect(@provider_class.parse("#before\n  \n#after\n")).to eq(result)
   end
 
   it "should skip over completely empty lines" do
     result = [{ :record_type => :comment, :line => "#before"},
               { :record_type => :blank,   :line => ""},
               { :record_type => :comment, :line => "#after"}]
-    @provider_class.parse("#before\n\n#after\n").should == result
+    expect(@provider_class.parse("#before\n\n#after\n")).to eq(result)
   end
 
   it "should be able to parse name if it includes whitespace" do
-    @provider_class.parse_line('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
-    @provider_class.parse_line('from="host1.reductlivelabs.com,host.reductivelabs.com",command="/usr/local/bin/run",ssh-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
+    expect(@provider_class.parse_line('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name]).to eq('fancy user')
+    expect(@provider_class.parse_line('from="host1.reductlivelabs.com,host.reductivelabs.com",command="/usr/local/bin/run",ssh-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name]).to eq('fancy user')
   end
 
   it "should be able to parse options containing commas via its parse_options method" do
     options = %w{from="host1.reductlivelabs.com,host.reductivelabs.com" command="/usr/local/bin/run" ssh-pty}
     optionstr = options.join(", ")
 
-    @provider_class.parse_options(optionstr).should == options
+    expect(@provider_class.parse_options(optionstr)).to eq(options)
   end
 
   it "should parse quoted options" do
     line = 'command="/usr/local/bin/mybin \"$SSH_ORIGINAL_COMMAND\"" ssh-rsa xxx mykey'
 
-    @provider_class.parse(line)[0][:options][0].should == 'command="/usr/local/bin/mybin \"$SSH_ORIGINAL_COMMAND\""'
+    expect(@provider_class.parse(line)[0][:options][0]).to eq('command="/usr/local/bin/mybin \"$SSH_ORIGINAL_COMMAND\""')
   end
 
   it "should use '' as name for entries that lack a comment" do
     line = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAut8aOSxenjOqF527dlsdHWV4MNoAsX14l9M297+SQXaQ5Z3BedIxZaoQthkDALlV/25A1COELrg9J2MqJNQc8Xe9XQOIkBQWWinUlD/BXwoOTWEy8C8zSZPHZ3getMMNhGTBO+q/O+qiJx3y5cA4MTbw2zSxukfWC87qWwcZ64UUlegIM056vPsdZWFclS9hsROVEa57YUMrehQ1EGxT4Z5j6zIopufGFiAPjZigq/vqgcAqhAKP6yu4/gwO6S9tatBeEjZ8fafvj1pmvvIplZeMr96gHE7xS3pEEQqnB3nd4RY7AF6j9kFixnsytAUO7STPh/M3pLiVQBN89TvWPQ=="
 
-    @provider_class.parse(line)[0][:name].should == ""
+    expect(@provider_class.parse(line)[0][:name]).to eq("")
   end
 
   {
@@ -129,10 +129,10 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       comment = 'sample_key'
 
       record = @provider_class.parse_line("#{keytype} #{keydata} #{comment}")
-      record.should_not be_nil
-      record[:name].should == comment
-      record[:key].should == keydata
-      record[:type].should == keytype
+      expect(record).not_to be_nil
+      expect(record[:name]).to eq(comment)
+      expect(record[:key]).to eq(keydata)
+      expect(record[:type]).to eq(keytype)
     end
   end
 
@@ -147,7 +147,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       }
     end
     it "adds an indexed name to unnamed resources" do
-      @provider_class.prefetch_hook([input])[0][:name].should =~ /^#{path}:unnamed-\d+/
+      expect(@provider_class.prefetch_hook([input])[0][:name]).to match(/^#{path}:unnamed-\d+/)
     end
   end
 
@@ -261,7 +261,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
         @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :target => "/tmp/.ssh_dir/place_to_put_authorized_keys")
         @provider = provider_class.new(@resource)
 
-        proc { @provider.flush }.should raise_error
+        expect { @provider.flush }.to raise_error
       end
     end
 
@@ -269,7 +269,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       it "should catch an exception and raise a Puppet error" do
         @resource[:user] = "thisusershouldnotexist"
 
-        lambda { @provider.flush }.should raise_error(Puppet::Error)
+        expect { @provider.flush }.to raise_error(Puppet::Error)
       end
     end
   end

@@ -13,15 +13,15 @@ describe "the versioncmp function" do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function("versioncmp").should == "function_versioncmp"
+    expect(Puppet::Parser::Functions.function("versioncmp")).to eq("function_versioncmp")
   end
 
   it "should raise an ArgumentError if there is less than 2 arguments" do
-    lambda { @scope.function_versioncmp(["1.2"]) }.should raise_error(ArgumentError)
+    expect { @scope.function_versioncmp(["1.2"]) }.to raise_error(ArgumentError)
   end
 
   it "should raise an ArgumentError if there is more than 2 arguments" do
-    lambda { @scope.function_versioncmp(["1.2", "2.4.5", "3.5.6"]) }.should raise_error(ArgumentError)
+    expect { @scope.function_versioncmp(["1.2", "2.4.5", "3.5.6"]) }.to raise_error(ArgumentError)
   end
 
   it "should call Puppet::Util::Package.versioncmp (included in scope)" do

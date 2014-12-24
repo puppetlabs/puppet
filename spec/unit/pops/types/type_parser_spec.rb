@@ -212,7 +212,7 @@ describe Puppet::Pops::Types::TypeParser do
       calc.assignable?(actual, type) && calc.assignable?(type, actual)
     end
 
-    failure_message_for_should do |actual|
+    failure_message do |actual|
       "expected #{calc.string(type)}, but was #{calc.string(actual)}"
     end
   end

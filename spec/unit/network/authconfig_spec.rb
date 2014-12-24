@@ -27,27 +27,27 @@ describe Puppet::Network::AuthConfig do
 
     it "should create a new right for each default acl" do
       @authconfig.mk_acl(:acl => '/')
-      @authconfig.rights['/'].should be
+      expect(@authconfig.rights['/']).to be
     end
 
     it "allows everyone for each default right" do
       @authconfig.mk_acl(:acl => '/')
-      @authconfig.rights['/'].should be_globalallow
+      expect(@authconfig.rights['/']).to be_globalallow
     end
 
     it "accepts an argument to restrict the method" do
       @authconfig.mk_acl(:acl => '/', :method => :find)
-      @authconfig.rights['/'].methods.should == [:find]
+      expect(@authconfig.rights['/'].methods).to eq([:find])
     end
 
     it "creates rights with authentication set to true by default" do
       @authconfig.mk_acl(:acl => '/')
-      @authconfig.rights['/'].authentication.should be_truthy
+      expect(@authconfig.rights['/'].authentication).to be_truthy
     end
 
     it "accepts an argument to set the authentication requirement" do
       @authconfig.mk_acl(:acl => '/', :authenticated => :any)
-      @authconfig.rights['/'].authentication.should be_falsey
+      expect(@authconfig.rights['/'].authentication).to be_falsey
     end
   end
 
@@ -75,8 +75,8 @@ describe Puppet::Network::AuthConfig do
       @authconfig.stubs(:mk_acl)
 
       @authconfig.insert_default_acl
-      @authconfig.rights['/'].should be_empty
-      @authconfig.rights['/'].authentication.should be_falsey
+      expect(@authconfig.rights['/']).to be_empty
+      expect(@authconfig.rights['/'].authentication).to be_falsey
     end
 
     it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do

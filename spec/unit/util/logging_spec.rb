@@ -14,7 +14,7 @@ describe Puppet::Util::Logging do
 
   Puppet::Util::Log.eachlevel do |level|
     it "should have a method for sending '#{level}' logs" do
-      @logger.should respond_to(level)
+      expect(@logger).to respond_to(level)
     end
   end
 
@@ -186,7 +186,7 @@ describe Puppet::Util::Logging do
       exc1 = Puppet::Error.new("third", exc2)
       exc1.set_backtrace(["7.rb:31:in `e'","8.rb:22:in `f'","9.rb:9"])
       # whoa ugly
-      @logger.format_exception(exc1).should =~ /third
+      expect(@logger.format_exception(exc1)).to match(/third
 .*7\.rb:31:in `e'
 .*8\.rb:22:in `f'
 .*9\.rb:9
@@ -199,7 +199,7 @@ Wrapped exception:
 original
 .*1\.rb:4:in `a'
 .*2\.rb:2:in `b'
-.*3\.rb:1/
+.*3\.rb:1/)
     end
   end
 
@@ -280,7 +280,7 @@ original
       end
 
       it 'does not call Facter.on_message' do
-        Puppet::Util::Logging::setup_facter_logging!.should be_falsey
+        expect(Puppet::Util::Logging::setup_facter_logging!).to be_falsey
       end
     end
 
@@ -305,16 +305,16 @@ original
         end
 
         Puppet::Util::Log.stubs(:create).with do |options|
-          options[:level].should eq(level)
-          options[:message].should eq(message)
-          options[:source].should eq('Facter')
+          expect(options[:level]).to eq(level)
+          expect(options[:message]).to eq(message)
+          expect(options[:source]).to eq('Facter')
         end.once
       end
 
       [:trace, :debug, :info, :warn, :error, :fatal].each do |level|
         it "calls Facter.on_message and handles #{level} messages" do
           setup(level, "#{level} message")
-          Puppet::Util::Logging::setup_facter_logging!.should be_truthy
+          expect(Puppet::Util::Logging::setup_facter_logging!).to be_truthy
         end
       end
     end

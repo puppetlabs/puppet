@@ -25,7 +25,7 @@ describe "the require function" do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function("require").should == "function_require"
+    expect(Puppet::Parser::Functions.function("require")).to eq("function_require")
   end
 
   it "should delegate to the 'include' puppet function" do
@@ -38,8 +38,8 @@ describe "the require function" do
     @scope.compiler.stubs(:evaluate_classes)
     @scope.function_require(["myclass"])
 
-    @resource["require"].should be_instance_of(Array)
-    @resource["require"][0].should be_instance_of(Puppet::Resource)
+    expect(@resource["require"]).to be_instance_of(Array)
+    expect(@resource["require"][0]).to be_instance_of(Puppet::Resource)
   end
 
   it "should lookup the absolute class path" do
@@ -58,8 +58,8 @@ describe "the require function" do
     @resource[:require] = one
     @scope.function_require(["myclass"])
 
-    @resource[:require].should be_include(one)
-    @resource[:require].detect { |r| r.to_s == "Class[Myclass]" }.should be_instance_of(Puppet::Resource)
+    expect(@resource[:require]).to be_include(one)
+    expect(@resource[:require].detect { |r| r.to_s == "Class[Myclass]" }).to be_instance_of(Puppet::Resource)
   end
 
   it_should_behave_like 'all functions transforming relative to absolute names', :function_require

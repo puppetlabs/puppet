@@ -38,7 +38,7 @@ describe provider_class do
 
   describe ".instances" do
     it "should has a .instances method" do
-      provider_class.should respond_to :instances
+      expect(provider_class).to respond_to :instances
     end
 
     it "should get a list of running services" do
@@ -50,12 +50,12 @@ myservice.3:::/usr/sbin/inetd:0:0:/dev/console:/dev/console:/dev/console:-O:-Q:-
 myservice.4:::/usr/sbin/inetd:0:0:/dev/console:/dev/console:/dev/console:-O:-Q:-K:0:0:20:0:0:-d:20:tcpip:
 _EOF_
       provider_class.stubs(:lssrc).returns sample_output
-      provider_class.instances.map(&:name).should == [
+      expect(provider_class.instances.map(&:name)).to eq([
         'myservice.1',
         'myservice.2',
         'myservice.3',
         'myservice.4'
-      ]
+      ])
     end
 
   end
@@ -77,7 +77,7 @@ _EOF_
   describe "should have a set of methods" do
     [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
       it "should have a #{method} method" do
-        @provider.should respond_to(method)
+        expect(@provider).to respond_to(method)
       end
     end
   end
@@ -105,13 +105,13 @@ _EOF_
     it "should return false when lsitab returns non-zero" do
       @provider.stubs(:execute)
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
-      @provider.enabled?.should == :false
+      expect(@provider.enabled?).to eq(:false)
     end
 
     it "should return true when lsitab returns zero" do
       @provider.stubs(:execute)
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
-      @provider.enabled?.should == :true
+      expect(@provider.enabled?).to eq(:true)
     end
   end
 
@@ -124,7 +124,7 @@ _EOF_
 _EOF_
 
       @provider.expects(:execute).with(['/usr/bin/lssrc', '-s', "myservice"]).returns sample_output
-      @provider.status.should == :running
+      expect(@provider.status).to eq(:running)
     end
 
     it "should execute status and return stopped if the subsystem is inoperative" do
@@ -134,7 +134,7 @@ _EOF_
 _EOF_
 
       @provider.expects(:execute).with(['/usr/bin/lssrc', '-s', "myservice"]).returns sample_output
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
 
     it "should execute status and return nil if the status is not known" do
@@ -144,7 +144,7 @@ _EOF_
 _EOF_
 
       @provider.expects(:execute).with(['/usr/bin/lssrc', '-s', "myservice"]).returns sample_output
-      @provider.status.should == nil
+      expect(@provider.status).to eq(nil)
     end
   end
 

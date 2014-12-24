@@ -7,61 +7,61 @@ describe "the shellquote function" do
   let :scope    do Puppet::Parser::Scope.new(compiler) end
 
   it "should exist" do
-    Puppet::Parser::Functions.function("shellquote").should == "function_shellquote"
+    expect(Puppet::Parser::Functions.function("shellquote")).to eq("function_shellquote")
   end
 
   it "should handle no arguments" do
-    scope.function_shellquote([]).should == ""
+    expect(scope.function_shellquote([])).to eq("")
   end
 
   it "should handle several simple arguments" do
-    scope.function_shellquote(
+    expect(scope.function_shellquote(
       ['foo', 'bar@example.com', 'localhost:/dev/null', 'xyzzy+-4711,23']
-    ).should == 'foo bar@example.com localhost:/dev/null xyzzy+-4711,23'
+    )).to eq('foo bar@example.com localhost:/dev/null xyzzy+-4711,23')
   end
 
   it "should handle array arguments" do
-    scope.function_shellquote(
+    expect(scope.function_shellquote(
       ['foo', ['bar@example.com', 'localhost:/dev/null'],
       'xyzzy+-4711,23']
-    ).should == 'foo bar@example.com localhost:/dev/null xyzzy+-4711,23'
+    )).to eq('foo bar@example.com localhost:/dev/null xyzzy+-4711,23')
   end
 
   it "should quote unsafe characters" do
-    scope.function_shellquote(['/etc/passwd ', '(ls)', '*', '[?]', "'&'"]).
-      should == '"/etc/passwd " "(ls)" "*" "[?]" "\'&\'"'
+    expect(scope.function_shellquote(['/etc/passwd ', '(ls)', '*', '[?]', "'&'"])).
+      to eq('"/etc/passwd " "(ls)" "*" "[?]" "\'&\'"')
   end
 
   it "should deal with double quotes" do
-    scope.function_shellquote(['"foo"bar"']).should == '\'"foo"bar"\''
+    expect(scope.function_shellquote(['"foo"bar"'])).to eq('\'"foo"bar"\'')
   end
 
   it "should cope with dollar signs" do
-    scope.function_shellquote(['$PATH', 'foo$bar', '"x$"']).
-      should == "'$PATH' 'foo$bar' '\"x$\"'"
+    expect(scope.function_shellquote(['$PATH', 'foo$bar', '"x$"'])).
+      to eq("'$PATH' 'foo$bar' '\"x$\"'")
   end
 
   it "should deal with apostrophes (single quotes)" do
-    scope.function_shellquote(["'foo'bar'", "`$'EDITOR'`"]).
-      should == '"\'foo\'bar\'" "\\`\\$\'EDITOR\'\\`"'
+    expect(scope.function_shellquote(["'foo'bar'", "`$'EDITOR'`"])).
+      to eq('"\'foo\'bar\'" "\\`\\$\'EDITOR\'\\`"')
   end
 
   it "should cope with grave accents (backquotes)" do
-    scope.function_shellquote(['`echo *`', '`ls "$MAILPATH"`']).
-      should == "'`echo *`' '`ls \"$MAILPATH\"`'"
+    expect(scope.function_shellquote(['`echo *`', '`ls "$MAILPATH"`'])).
+      to eq("'`echo *`' '`ls \"$MAILPATH\"`'")
   end
 
   it "should deal with both single and double quotes" do
-    scope.function_shellquote(['\'foo"bar"xyzzy\'', '"foo\'bar\'xyzzy"']).
-      should == '"\'foo\\"bar\\"xyzzy\'" "\\"foo\'bar\'xyzzy\\""'
+    expect(scope.function_shellquote(['\'foo"bar"xyzzy\'', '"foo\'bar\'xyzzy"'])).
+      to eq('"\'foo\\"bar\\"xyzzy\'" "\\"foo\'bar\'xyzzy\\""')
   end
 
   it "should handle multiple quotes *and* dollars and backquotes" do
-    scope.function_shellquote(['\'foo"$x`bar`"xyzzy\'']).
-      should == '"\'foo\\"\\$x\\`bar\\`\\"xyzzy\'"'
+    expect(scope.function_shellquote(['\'foo"$x`bar`"xyzzy\''])).
+      to eq('"\'foo\\"\\$x\\`bar\\`\\"xyzzy\'"')
   end
 
   it "should handle linefeeds" do
-    scope.function_shellquote(["foo \n bar"]).should == "\"foo \n bar\""
+    expect(scope.function_shellquote(["foo \n bar"])).to eq("\"foo \n bar\"")
   end
 end

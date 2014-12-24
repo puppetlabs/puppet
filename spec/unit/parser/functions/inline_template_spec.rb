@@ -11,7 +11,7 @@ describe "the inline_template function" do
   let(:scope) { Puppet::Parser::Scope.new(compiler) }
 
   it "should concatenate template wrapper outputs for multiple templates" do
-    inline_template("template1", "template2").should == "template1template2"
+    expect(inline_template("template1", "template2")).to eq("template1template2")
   end
 
   it "should raise an error if the template raises an error" do
@@ -20,12 +20,12 @@ describe "the inline_template function" do
 
   it "is not interfered with by a variable called 'string' (#14093)" do
     scope['string'] = "this is a variable"
-    inline_template("this is a template").should == "this is a template"
+    expect(inline_template("this is a template")).to eq("this is a template")
   end
 
   it "has access to a variable called 'string' (#14093)" do
     scope['string'] = "this is a variable"
-    inline_template("string was: <%= @string %>").should == "string was: this is a variable"
+    expect(inline_template("string was: <%= @string %>")).to eq("string was: this is a variable")
   end
 
   def inline_template(*templates)

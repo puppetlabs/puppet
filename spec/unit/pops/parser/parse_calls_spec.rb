@@ -11,89 +11,89 @@ describe "egrammar parsing function calls" do
   context "When parsing calls as statements" do
     context "in top level scope" do
       it "foo()" do
-        dump(parse("foo()")).should == "(invoke foo)"
+        expect(dump(parse("foo()"))).to eq("(invoke foo)")
       end
 
       it "notice bar" do
-        dump(parse("notice bar")).should == "(invoke notice bar)"
+        expect(dump(parse("notice bar"))).to eq("(invoke notice bar)")
       end
 
       it "notice(bar)" do
-        dump(parse("notice bar")).should == "(invoke notice bar)"
+        expect(dump(parse("notice bar"))).to eq("(invoke notice bar)")
       end
 
       it "foo(bar)" do
-        dump(parse("foo(bar)")).should == "(invoke foo bar)"
+        expect(dump(parse("foo(bar)"))).to eq("(invoke foo bar)")
       end
 
       it "foo(bar,)" do
-        dump(parse("foo(bar,)")).should == "(invoke foo bar)"
+        expect(dump(parse("foo(bar,)"))).to eq("(invoke foo bar)")
       end
 
       it "foo(bar, fum,)" do
-        dump(parse("foo(bar,fum,)")).should == "(invoke foo bar fum)"
+        expect(dump(parse("foo(bar,fum,)"))).to eq("(invoke foo bar fum)")
       end
 
       it "notice fqdn_rand(30)" do
-        dump(parse("notice fqdn_rand(30)")).should == '(invoke notice (call fqdn_rand 30))'
+        expect(dump(parse("notice fqdn_rand(30)"))).to eq('(invoke notice (call fqdn_rand 30))')
       end
     end
 
     context "in nested scopes" do
       it "if true { foo() }" do
-        dump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"
+        expect(dump(parse("if true {foo()}"))).to eq("(if true\n  (then (invoke foo)))")
       end
 
       it "if true { notice bar}" do
-        dump(parse("if true {notice bar}")).should == "(if true\n  (then (invoke notice bar)))"
+        expect(dump(parse("if true {notice bar}"))).to eq("(if true\n  (then (invoke notice bar)))")
       end
     end
   end
 
   context "When parsing calls as expressions" do
     it "$a = foo()" do
-      dump(parse("$a = foo()")).should == "(= $a (call foo))"
+      expect(dump(parse("$a = foo()"))).to eq("(= $a (call foo))")
     end
 
     it "$a = foo(bar)" do
-      dump(parse("$a = foo()")).should == "(= $a (call foo))"
+      expect(dump(parse("$a = foo()"))).to eq("(= $a (call foo))")
     end
 
     # For egrammar where a bare word can be a "statement"
     it "$a = foo bar # illegal, must have parentheses" do
-      dump(parse("$a = foo bar")).should == "(block\n  (= $a foo)\n  bar\n)"
+      expect(dump(parse("$a = foo bar"))).to eq("(block\n  (= $a foo)\n  bar\n)")
     end
 
     context "in nested scopes" do
       it "if true { $a = foo() }" do
-        dump(parse("if true { $a = foo()}")).should == "(if true\n  (then (= $a (call foo))))"
+        expect(dump(parse("if true { $a = foo()}"))).to eq("(if true\n  (then (= $a (call foo))))")
       end
 
       it "if true { $a= foo(bar)}" do
-        dump(parse("if true {$a = foo(bar)}")).should == "(if true\n  (then (= $a (call foo bar))))"
+        expect(dump(parse("if true {$a = foo(bar)}"))).to eq("(if true\n  (then (= $a (call foo bar))))")
       end
     end
   end
 
   context "When parsing method calls" do
     it "$a.foo" do
-      dump(parse("$a.foo")).should == "(call-method (. $a foo))"
+      expect(dump(parse("$a.foo"))).to eq("(call-method (. $a foo))")
     end
 
     it "$a.foo || { }" do
-      dump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
+      expect(dump(parse("$a.foo || { }"))).to eq("(call-method (. $a foo) (lambda ()))")
     end
 
     it "$a.foo |$x| { }" do
-      dump(parse("$a.foo |$x|{ }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
+      expect(dump(parse("$a.foo |$x|{ }"))).to eq("(call-method (. $a foo) (lambda (parameters x) ()))")
     end
 
     it "$a.foo |$x|{ }" do
-      dump(parse("$a.foo |$x|{ $b = $x}")).should == [
+      expect(dump(parse("$a.foo |$x|{ $b = $x}"))).to eq([
         "(call-method (. $a foo) (lambda (parameters x) (block",
         "  (= $b $x)",
         ")))"
-        ].join("\n")
+        ].join("\n"))
     end
   end
 

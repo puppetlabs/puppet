@@ -20,25 +20,25 @@ describe Puppet::Util::NetworkDevice::Config do
     it "should skip comments" do
       write_device_config('  # comment')
 
-      config.devices.should be_empty
+      expect(config.devices).to be_empty
     end
 
     it "should increment line number even on commented lines" do
       write_device_config('  # comment','[router.puppetlabs.com]')
 
-      config.devices.should be_include('router.puppetlabs.com')
+      expect(config.devices).to be_include('router.puppetlabs.com')
     end
 
     it "should skip blank lines" do
       write_device_config('  ')
 
-      config.devices.should be_empty
+      expect(config.devices).to be_empty
     end
 
     it "should produce the correct line number" do
       write_device_config('  ', '[router.puppetlabs.com]')
 
-      config.devices['router.puppetlabs.com'].line.should == 2
+      expect(config.devices['router.puppetlabs.com'].line).to eq(2)
     end
 
     it "should throw an error if the current device already exists" do
@@ -49,37 +49,37 @@ describe Puppet::Util::NetworkDevice::Config do
     it "should accept device certname containing dashes" do
       write_device_config('[router-1.puppetlabs.com]')
 
-      config.devices.should include('router-1.puppetlabs.com')
+      expect(config.devices).to include('router-1.puppetlabs.com')
     end
 
     it "should create a new device for each found device line" do
       write_device_config('[router.puppetlabs.com]', '[swith.puppetlabs.com]')
 
-      config.devices.size.should == 2
+      expect(config.devices.size).to eq(2)
     end
 
     it "should parse the device type" do
       write_device_config('[router.puppetlabs.com]', 'type cisco')
 
-      config.devices['router.puppetlabs.com'].provider.should == 'cisco'
+      expect(config.devices['router.puppetlabs.com'].provider).to eq('cisco')
     end
 
     it "should parse the device url" do
       write_device_config('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/')
 
-      config.devices['router.puppetlabs.com'].url.should == 'ssh://test/'
+      expect(config.devices['router.puppetlabs.com'].url).to eq('ssh://test/')
     end
 
     it "should parse the debug mode" do
       write_device_config('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/', 'debug')
 
-      config.devices['router.puppetlabs.com'].options.should == { :debug => true }
+      expect(config.devices['router.puppetlabs.com'].options).to eq({ :debug => true })
     end
 
     it "should set the debug mode to false by default" do
       write_device_config('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/')
 
-      config.devices['router.puppetlabs.com'].options.should == { :debug => false }
+      expect(config.devices['router.puppetlabs.com'].options).to eq({ :debug => false })
     end
   end
 

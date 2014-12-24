@@ -20,11 +20,11 @@ describe list_class do
     end
 
     it "should have a , as default delimiter" do
-      @property.delimiter.should == ","
+      expect(@property.delimiter).to eq(",")
     end
 
     it "should have a :membership as default membership" do
-      @property.membership.should == :membership
+      expect(@property.membership).to eq(:membership)
     end
 
     it "should return the same value passed into should_to_s" do
@@ -32,24 +32,24 @@ describe list_class do
     end
 
     it "should return the passed in array values joined with the delimiter from is_to_s" do
-      @property.is_to_s(["foo","bar"]).should == "foo,bar"
+      expect(@property.is_to_s(["foo","bar"])).to eq("foo,bar")
     end
 
     it "should be able to correctly convert ':absent' to a string" do
-      @property.is_to_s(:absent).should == "absent"
+      expect(@property.is_to_s(:absent)).to eq("absent")
     end
 
     describe "when adding should to current" do
       it "should add the arrays when current is an array" do
-        @property.add_should_with_current(["foo"], ["bar"]).should == ["foo", "bar"]
+        expect(@property.add_should_with_current(["foo"], ["bar"])).to eq(["foo", "bar"])
       end
 
       it "should return should if current is not an array" do
-        @property.add_should_with_current(["foo"], :absent).should == ["foo"]
+        expect(@property.add_should_with_current(["foo"], :absent)).to eq(["foo"])
       end
 
       it "should return only the uniq elements" do
-        @property.add_should_with_current(["foo", "bar"], ["foo", "baz"]).should == ["foo", "bar", "baz"]
+        expect(@property.add_should_with_current(["foo", "bar"], ["foo", "baz"])).to eq(["foo", "bar", "baz"])
       end
     end
 

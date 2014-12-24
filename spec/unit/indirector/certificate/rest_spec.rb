@@ -9,19 +9,19 @@ describe Puppet::SSL::Certificate::Rest do
   end
 
   it "should be a sublcass of Puppet::Indirector::REST" do
-    Puppet::SSL::Certificate::Rest.superclass.should equal(Puppet::Indirector::REST)
+    expect(Puppet::SSL::Certificate::Rest.superclass).to equal(Puppet::Indirector::REST)
   end
 
   it "should set server_setting to :ca_server" do
-    Puppet::SSL::Certificate::Rest.server_setting.should == :ca_server
+    expect(Puppet::SSL::Certificate::Rest.server_setting).to eq(:ca_server)
   end
 
   it "should set port_setting to :ca_port" do
-    Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
+    expect(Puppet::SSL::Certificate::Rest.port_setting).to eq(:ca_port)
   end
 
   it "should use the :ca SRV service" do
-    Puppet::SSL::Certificate::Rest.srv_service.should == :ca
+    expect(Puppet::SSL::Certificate::Rest.srv_service).to eq(:ca)
   end
 
   it "should make sure found certificates have their names set to the search string" do
@@ -57,7 +57,7 @@ rn/G
 
     request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com", nil)
     result = terminus.find(request)
-    result.should_not be_nil
-    result.name.should == "foo.com"
+    expect(result).not_to be_nil
+    expect(result.name).to eq("foo.com")
   end
 end

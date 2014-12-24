@@ -17,6 +17,6 @@ describe Puppet::Node::Facts::Facter do
 
     cat = compile_to_catalog('notify { $downcase_test: }',
                              Puppet::Node.indirection.find('foo'))
-    cat.resource("Notify[AaBbCc]").should be
+    expect(cat.resource("Notify[AaBbCc]")).to be
   end
 end

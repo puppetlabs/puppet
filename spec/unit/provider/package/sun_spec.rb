@@ -6,15 +6,15 @@ describe Puppet::Type.type(:package).provider(:sun) do
   let(:provider) { resource.provider }
 
   describe 'provider features' do
-    it { should be_installable }
-    it { should be_uninstallable }
-    it { should be_upgradeable }
-    it { should_not be_versionable }
+    it { is_expected.to be_installable }
+    it { is_expected.to be_uninstallable }
+    it { is_expected.to be_upgradeable }
+    it { is_expected.not_to be_versionable }
   end
 
   [:install, :uninstall, :latest, :query, :update].each do |method|
     it "should have a #{method} method" do
-      provider.should respond_to(method)
+      expect(provider).to respond_to(method)
     end
   end
 
@@ -67,7 +67,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
   context '#query' do
     it "should find the package on query" do
       provider.expects(:pkginfo).with('-l', 'dummy').returns File.read(my_fixture('dummy.server'))
-      provider.query.should == {
+      expect(provider.query).to eq({
         :name     => 'SUNWdummy',
         :category=>"system",
         :platform=>"i386",
@@ -75,12 +75,12 @@ describe Puppet::Type.type(:package).provider(:sun) do
         :root=>"/",
         :description=>"Dummy server (9.6.1-P3)",
         :vendor => "Oracle Corporation",
-      }
+      })
     end
 
     it "shouldn't find the package on query if it is not present" do
       provider.expects(:pkginfo).with('-l', 'dummy').raises Puppet::ExecutionFailure, "Execution of 'pkginfo -l dummy' returned 3: ERROR: information for \"dummy\" not found."
-      provider.query.should == {:ensure => :absent}
+      expect(provider.query).to eq({:ensure => :absent})
     end
 
     it "unknown message should raise error." do
@@ -93,21 +93,21 @@ describe Puppet::Type.type(:package).provider(:sun) do
     it "should list instances when there are packages in the system" do
       described_class.expects(:pkginfo).with('-l').returns File.read(my_fixture('simple'))
       instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
-      instances.size.should == 2
-      instances[0].should == {
+      expect(instances.size).to eq(2)
+      expect(instances[0]).to eq({
         :name     => 'SUNWdummy',
         :ensure   => "11.11.0,REV=2010.10.12.04.23",
-      }
-      instances[1].should == {
+      })
+      expect(instances[1]).to eq({
         :name     => 'SUNWdummyc',
         :ensure   => "11.11.0,REV=2010.10.12.04.24",
-      }
+      })
     end
 
     it "should return empty if there were no packages" do
       described_class.expects(:pkginfo).with('-l').returns ''
       instances = provider.class.instances
-      instances.size.should == 0
+      expect(instances.size).to eq(0)
     end
 
   end

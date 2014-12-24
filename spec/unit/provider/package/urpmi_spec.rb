@@ -54,13 +54,13 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
 
     it "uses urpmq to determine the latest package" do
       Puppet::Util::Execution.expects(:execute).with(['urpmq', '-S', 'foopkg'], anything).returns urpmq_output
-      subject.latest.should == '7.8.9-1.mga2'
+      expect(subject.latest).to eq('7.8.9-1.mga2')
     end
 
     it "falls back to the current version" do
       resource[:ensure] = '5.4.3'
       Puppet::Util::Execution.expects(:execute).with(['urpmq', '-S', 'foopkg'], anything).returns ''
-      subject.latest.should == '5.4.3'
+      expect(subject.latest).to eq('5.4.3')
     end
   end
 

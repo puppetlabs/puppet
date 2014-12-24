@@ -5,8 +5,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
   let(:resource) { Puppet::Type.type(:package).new(:name => 'foo', :provider => :pkgdmg) }
   let(:provider) { described_class.new(resource) }
 
-  it { should_not be_versionable }
-  it { should_not be_uninstallable }
+  it { is_expected.not_to be_versionable }
+  it { is_expected.not_to be_uninstallable }
 
   describe "when installing it should fail when" do
     before :each do
@@ -82,8 +82,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         Dir.expects(:mktmpdir).returns tmpdir
         Dir.stubs(:entries).returns ["foo.pkg"]
         described_class.expects(:curl).with do |*args|
-          args.should be_include 'some_host:some_port'
-          args.should be_include '--proxy'
+          expect(args).to be_include 'some_host:some_port'
+          expect(args).to be_include '--proxy'
         end
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installpkg)
@@ -97,8 +97,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         Dir.expects(:mktmpdir).returns tmpdir
         Dir.stubs(:entries).returns ["foo.pkg"]
         described_class.expects(:curl).with do |*args|
-          args.should be_include 'some_host'
-          args.should be_include '--proxy'
+          expect(args).to be_include 'some_host'
+          expect(args).to be_include '--proxy'
         end
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installpkg)
@@ -133,8 +133,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
 
       it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
         described_class.expects(:curl).with do |*args|
-          args.should be_include tmpfile
-          args.should be_include remote_source
+          expect(args).to be_include tmpfile
+          expect(args).to be_include remote_source
         end
         provider.class.expects(:installpkg).with(tmpfile, 'testpkg', remote_source)
         provider.install

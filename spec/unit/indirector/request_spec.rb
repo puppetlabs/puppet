@@ -8,22 +8,22 @@ describe Puppet::Indirector::Request do
 
   describe "when initializing" do
     it "should always convert the indirection name to a symbol" do
-      Puppet::Indirector::Request.new("ind", :method, "mykey", nil).indirection_name.should == :ind
+      expect(Puppet::Indirector::Request.new("ind", :method, "mykey", nil).indirection_name).to eq(:ind)
     end
 
     it "should use provided value as the key if it is a string" do
-      Puppet::Indirector::Request.new(:ind, :method, "mykey", nil).key.should == "mykey"
+      expect(Puppet::Indirector::Request.new(:ind, :method, "mykey", nil).key).to eq("mykey")
     end
 
     it "should use provided value as the key if it is a symbol" do
-      Puppet::Indirector::Request.new(:ind, :method, :mykey, nil).key.should == :mykey
+      expect(Puppet::Indirector::Request.new(:ind, :method, :mykey, nil).key).to eq(:mykey)
     end
 
     it "should use the name of the provided instance as its key if an instance is provided as the key instead of a string" do
       instance = mock 'instance', :name => "mykey"
       request = Puppet::Indirector::Request.new(:ind, :method, nil, instance)
-      request.key.should == "mykey"
-      request.instance.should equal(instance)
+      expect(request.key).to eq("mykey")
+      expect(request.instance).to equal(instance)
     end
 
     it "should support options specified as a hash" do
@@ -39,47 +39,47 @@ describe Puppet::Indirector::Request do
     end
 
     it "should use an empty options hash if nil was provided" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil).options.should == {}
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil).options).to eq({})
     end
 
     it "should default to a nil node" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil).node.should be_nil
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil).node).to be_nil
     end
 
     it "should set its node attribute if provided in the options" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :node => "foo.com").node.should == "foo.com"
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :node => "foo.com").node).to eq("foo.com")
     end
 
     it "should default to a nil ip" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil).ip.should be_nil
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil).ip).to be_nil
     end
 
     it "should set its ip attribute if provided in the options" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ip => "192.168.0.1").ip.should == "192.168.0.1"
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ip => "192.168.0.1").ip).to eq("192.168.0.1")
     end
 
     it "should default to being unauthenticated" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil).should_not be_authenticated
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil)).not_to be_authenticated
     end
 
     it "should set be marked authenticated if configured in the options" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :authenticated => "eh").should be_authenticated
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :authenticated => "eh")).to be_authenticated
     end
 
     it "should keep its options as a hash even if a node is specified" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :node => "eh").options.should be_instance_of(Hash)
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :node => "eh").options).to be_instance_of(Hash)
     end
 
     it "should keep its options as a hash even if another option is specified" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :foo => "bar").options.should be_instance_of(Hash)
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :foo => "bar").options).to be_instance_of(Hash)
     end
 
     it "should treat options other than :ip, :node, and :authenticated as options rather than attributes" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :server => "bar").options[:server].should == "bar"
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :server => "bar").options[:server]).to eq("bar")
     end
 
     it "should normalize options to use symbols as keys" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, "foo" => "bar").options[:foo].should == "bar"
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, "foo" => "bar").options[:foo]).to eq("bar")
     end
 
     describe "and the request key is a URI" do
@@ -99,74 +99,74 @@ describe Puppet::Indirector::Request do
         end
 
         it "should set the request key to the unescaped full file path" do
-          @request.key.should == file
+          expect(@request.key).to eq(file)
         end
 
         it "should not set the protocol" do
-          @request.protocol.should be_nil
+          expect(@request.protocol).to be_nil
         end
 
         it "should not set the port" do
-          @request.port.should be_nil
+          expect(@request.port).to be_nil
         end
 
         it "should not set the server" do
-          @request.server.should be_nil
+          expect(@request.server).to be_nil
         end
       end
 
       it "should set the protocol to the URI scheme" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).protocol.should == "http"
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).protocol).to eq("http")
       end
 
       it "should set the server if a server is provided" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).server.should == "host"
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).server).to eq("host")
       end
 
       it "should set the server and port if both are provided" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host:543/an_environment", nil).port.should == 543
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host:543/an_environment", nil).port).to eq(543)
       end
 
       it "should default to the masterport if the URI scheme is 'puppet'" do
         Puppet[:masterport] = "321"
-        Puppet::Indirector::Request.new(:ind, :method, "puppet://host/an_environment", nil).port.should == 321
+        expect(Puppet::Indirector::Request.new(:ind, :method, "puppet://host/an_environment", nil).port).to eq(321)
       end
 
       it "should use the provided port if the URI scheme is not 'puppet'" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).port.should == 80
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).port).to eq(80)
       end
 
       it "should set the request key to the unescaped key part path from the URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment/terminus/stuff with spaces", nil).key.should == "stuff with spaces"
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment/terminus/stuff with spaces", nil).key).to eq("stuff with spaces")
       end
 
       it "should set the :uri attribute to the full URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "http:///an_environment/stu ff", nil).uri.should == 'http:///an_environment/stu ff'
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http:///an_environment/stu ff", nil).uri).to eq('http:///an_environment/stu ff')
       end
 
       it "should not parse relative URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "foo/bar", nil).uri.should be_nil
+        expect(Puppet::Indirector::Request.new(:ind, :method, "foo/bar", nil).uri).to be_nil
       end
 
       it "should not parse opaque URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "mailto:joe", nil).uri.should be_nil
+        expect(Puppet::Indirector::Request.new(:ind, :method, "mailto:joe", nil).uri).to be_nil
       end
     end
 
     it "should allow indication that it should not read a cached instance" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ignore_cache => true).should be_ignore_cache
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ignore_cache => true)).to be_ignore_cache
     end
 
     it "should default to not ignoring the cache" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil).should_not be_ignore_cache
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil)).not_to be_ignore_cache
     end
 
     it "should allow indication that it should not not read an instance from the terminus" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ignore_terminus => true).should be_ignore_terminus
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil, :ignore_terminus => true)).to be_ignore_terminus
     end
 
     it "should default to not ignoring the terminus" do
-      Puppet::Indirector::Request.new(:ind, :method, :key, nil).should_not be_ignore_terminus
+      expect(Puppet::Indirector::Request.new(:ind, :method, :key, nil)).not_to be_ignore_terminus
     end
   end
 
@@ -175,7 +175,7 @@ describe Puppet::Indirector::Request do
     Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns ind
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
-    request.indirection.should equal(ind)
+    expect(request.indirection).to equal(ind)
   end
 
   it "should use its indirection to look up the appropriate model" do
@@ -185,7 +185,7 @@ describe Puppet::Indirector::Request do
 
     ind.expects(:model).returns "mymodel"
 
-    request.model.should == "mymodel"
+    expect(request.model).to eq("mymodel")
   end
 
   it "should fail intelligently when asked to find a model but the indirection cannot be found" do
@@ -196,15 +196,15 @@ describe Puppet::Indirector::Request do
   end
 
   it "should have a method for determining if the request is plural or singular" do
-    Puppet::Indirector::Request.new(:myind, :method, :key, nil).should respond_to(:plural?)
+    expect(Puppet::Indirector::Request.new(:myind, :method, :key, nil)).to respond_to(:plural?)
   end
 
   it "should be considered plural if the method is 'search'" do
-    Puppet::Indirector::Request.new(:myind, :search, :key, nil).should be_plural
+    expect(Puppet::Indirector::Request.new(:myind, :search, :key, nil)).to be_plural
   end
 
   it "should not be considered plural if the method is not 'search'" do
-    Puppet::Indirector::Request.new(:myind, :find, :key, nil).should_not be_plural
+    expect(Puppet::Indirector::Request.new(:myind, :find, :key, nil)).not_to be_plural
   end
 
   it "should use its uri, if it has one, as its description" do
@@ -222,21 +222,21 @@ describe Puppet::Indirector::Request do
   end
 
   it "should be able to return the URI-escaped key" do
-    Puppet::Indirector::Request.new(:myind, :find, "my key", nil).escaped_key.should == URI.escape("my key")
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).escaped_key).to eq(URI.escape("my key"))
   end
 
   it "should set its environment to an environment instance when a string is specified as its environment" do
     env = Puppet::Node::Environment.create(:foo, [])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
-      Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :environment => "foo").environment.should == env
+      expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :environment => "foo").environment).to eq(env)
     end
   end
 
   it "should use any passed in environment instances as its environment" do
     env = Puppet::Node::Environment.create(:foo, [])
 
-    Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :environment => env).environment.should equal(env)
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :environment => env).environment).to equal(env)
   end
 
   it "should use the current environment when none is provided" do
@@ -248,11 +248,11 @@ describe Puppet::Indirector::Request do
   end
 
   it "should support converting its options to a hash" do
-    Puppet::Indirector::Request.new(:myind, :find, "my key", nil ).should respond_to(:to_hash)
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil )).to respond_to(:to_hash)
   end
 
   it "should include all of its attributes when its options are converted to a hash" do
-    Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :node => 'foo').to_hash[:node].should == 'foo'
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :node => 'foo').to_hash[:node]).to eq('foo')
   end
 
   describe "when building a query string from its options" do
@@ -267,86 +267,86 @@ describe Puppet::Indirector::Request do
     it "should return an empty query string if there are no options" do
       request = a_request_with_options(nil)
 
-      request.query_string.should == ""
+      expect(request.query_string).to eq("")
     end
 
     it "should return an empty query string if the options are empty" do
       request = a_request_with_options({})
 
-      request.query_string.should == ""
+      expect(request.query_string).to eq("")
     end
 
     it "should include all options in the query string, separated by '&'" do
       request = a_request_with_options(:one => "two", :three => "four")
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["two"],
         "three" => ["four"]
-      }
+      })
     end
 
     it "should ignore nil options" do
       request = a_request_with_options(:one => "two", :three => nil)
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["two"]
-      }
+      })
     end
 
     it "should convert 'true' option values into strings" do
       request = a_request_with_options(:one => true)
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["true"]
-      }
+      })
     end
 
     it "should convert 'false' option values into strings" do
       request = a_request_with_options(:one => false)
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["false"]
-      }
+      })
     end
 
     it "should convert to a string all option values that are integers" do
       request = a_request_with_options(:one => 50)
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["50"]
-      }
+      })
     end
 
     it "should convert to a string all option values that are floating point numbers" do
       request = a_request_with_options(:one => 1.2)
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["1.2"]
-      }
+      })
     end
 
     it "should CGI-escape all option values that are strings" do
       request = a_request_with_options(:one => "one two")
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["one two"]
-      }
+      })
     end
 
     it "should convert an array of values into multiple entries for the same key" do
       request = a_request_with_options(:one => %w{one two})
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["one", "two"]
-      }
+      })
     end
 
     it "should stringify simple data types inside an array" do
       request = a_request_with_options(:one => ['one', nil])
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["one"]
-      }
+      })
     end
 
     it "should error if an array contains another array" do
@@ -364,9 +364,9 @@ describe Puppet::Indirector::Request do
     it "should convert to a string and CGI-escape all option values that are symbols" do
       request = a_request_with_options(:one => :"sym bol")
 
-      the_parsed_query_string_from(request).should == {
+      expect(the_parsed_query_string_from(request)).to eq({
         "one" => ["sym bol"]
-      }
+      })
     end
 
     it "should fail if options other than booleans or strings are provided" do
@@ -390,13 +390,13 @@ describe Puppet::Indirector::Request do
         count = 0
         rval = @request.do_request(:puppet, 'puppet.example.com', '90210') do |got|
           count += 1
-          got.server.should == 'puppet.example.com'
-          got.port.should   == '90210'
+          expect(got.server).to eq('puppet.example.com')
+          expect(got.port).to   eq('90210')
           'Block return value'
         end
-        count.should == 1
+        expect(count).to eq(1)
 
-        rval.should == 'Block return value'
+        expect(rval).to eq('Block return value')
       end
     end
 
@@ -413,13 +413,13 @@ describe Puppet::Indirector::Request do
         count = 0
         rval = @request.do_request do |got|
           count += 1
-          got.server.should == 'puppet.example.com'
-          got.port.should   == '90210'
+          expect(got.server).to eq('puppet.example.com')
+          expect(got.port).to   eq('90210')
           'Block return value'
         end
-        count.should == 1
+        expect(count).to eq(1)
 
-        rval.should == 'Block return value'
+        expect(rval).to eq('Block return value')
       end
 
       context "when SRV returns servers" do
@@ -440,14 +440,14 @@ describe Puppet::Indirector::Request do
           count = 0
           rval = @request.do_request do |got|
             count += 1
-            got.server.should == '_x-puppet._tcp.example.com'
-            got.port.should == 7205
+            expect(got.server).to eq('_x-puppet._tcp.example.com')
+            expect(got.port).to eq(7205)
 
             @block_return
           end
-          count.should == 1
+          expect(count).to eq(1)
 
-          rval.should == @block_return
+          expect(rval).to eq(@block_return)
         end
 
         it "should fall back to the default server when the block raises a SystemCallError" do
@@ -466,11 +466,11 @@ describe Puppet::Indirector::Request do
             @block_return
           end
 
-          second_pass.server.should == 'puppet'
-          second_pass.port.should   == 8140
-          count.should == 2
+          expect(second_pass.server).to eq('puppet')
+          expect(second_pass.port).to   eq(8140)
+          expect(count).to eq(2)
 
-          rval.should == @block_return
+          expect(rval).to eq(@block_return)
         end
       end
     end
@@ -482,19 +482,19 @@ describe Puppet::Indirector::Request do
     end
 
     it "should not be unless node or ip is set" do
-      request.should_not be_remote
+      expect(request).not_to be_remote
     end
 
     it "should be remote if node is set" do
-      request(:node => 'example.com').should be_remote
+      expect(request(:node => 'example.com')).to be_remote
     end
 
     it "should be remote if ip is set" do
-      request(:ip => '127.0.0.1').should be_remote
+      expect(request(:ip => '127.0.0.1')).to be_remote
     end
 
     it "should be remote if node and ip are set" do
-      request(:node => 'example.com', :ip => '127.0.0.1').should be_remote
+      expect(request(:node => 'example.com', :ip => '127.0.0.1')).to be_remote
     end
   end
 end

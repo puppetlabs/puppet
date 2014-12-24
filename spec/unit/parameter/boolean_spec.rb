@@ -8,8 +8,9 @@ describe Puppet::Parameter::Boolean do
   describe "after initvars" do
     before { described_class.initvars }
     it "should have the correct value_collection" do
-      described_class.value_collection.values.sort.should ==
+      expect(described_class.value_collection.values.sort).to eq(
           [:true, :false, :yes, :no].sort
+      )
     end
   end
 
@@ -18,12 +19,12 @@ describe Puppet::Parameter::Boolean do
 
     [ true, :true, 'true', :yes, 'yes', 'TrUe', 'yEs' ].each do |arg|
       it "should munge #{arg.inspect} as true" do
-        subject.munge(arg).should == true
+        expect(subject.munge(arg)).to eq(true)
       end
     end
     [ false, :false, 'false', :no, 'no', 'FaLSE', 'nO' ].each do |arg|
       it "should munge #{arg.inspect} as false" do
-        subject.munge(arg).should == false
+        expect(subject.munge(arg)).to eq(false)
       end
     end
     [ nil, :undef, 'undef', '0', 0, '1', 1, 9284 ].each do |arg|

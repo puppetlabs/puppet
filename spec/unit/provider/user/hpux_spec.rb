@@ -38,7 +38,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should have feature manages_passwords" do
-      provider_class.should be_manages_passwords
+      expect(provider_class).to be_manages_passwords
     end
 
     it "should return nil if user does not exist" do

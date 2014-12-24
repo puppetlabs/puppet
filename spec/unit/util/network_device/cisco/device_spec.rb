@@ -14,38 +14,38 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
   describe "when creating the device" do
     it "should find the enable password from the url" do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password")
-      cisco.enable_password.should == "enable_password"
+      expect(cisco.enable_password).to eq("enable_password")
     end
 
     describe "decoding the enable password" do
       it "should not parse a password if no query is given" do
         cisco = described_class.new("telnet://user:password@localhost:23")
-        cisco.enable_password.should be_nil
+        expect(cisco.enable_password).to be_nil
       end
 
       it "should not parse a password if no enable param is given" do
         cisco = described_class.new("telnet://user:password@localhost:23/?notenable=notapassword")
-        cisco.enable_password.should be_nil
+        expect(cisco.enable_password).to be_nil
       end
       it "should decode sharps" do
         cisco = described_class.new("telnet://user:password@localhost:23/?enable=enable_password%23with_a_sharp")
-        cisco.enable_password.should == "enable_password#with_a_sharp"
+        expect(cisco.enable_password).to eq("enable_password#with_a_sharp")
       end
 
       it "should decode spaces" do
         cisco = described_class.new("telnet://user:password@localhost:23/?enable=enable_password%20with_a_space")
-        cisco.enable_password.should == "enable_password with_a_space"
+        expect(cisco.enable_password).to eq("enable_password with_a_space")
       end
 
       it "should only use the query parameter" do
         cisco = described_class.new("telnet://enable=:password@localhost:23/?enable=enable_password&notenable=notapassword")
-        cisco.enable_password.should == "enable_password"
+        expect(cisco.enable_password).to eq("enable_password")
       end
     end
 
     it "should find the enable password from the options" do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password", :enable_password => "mypass")
-      cisco.enable_password.should == "mypass"
+      expect(cisco.enable_password).to eq("mypass")
     end
 
     it "should find the debug mode from the options" do
@@ -133,7 +133,7 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
     describe "when entering enable password" do
       it "should raise an error if no enable password has been set" do
         @cisco.enable_password = nil
-        lambda{ @cisco.enable }.should raise_error
+        expect{ @cisco.enable }.to raise_error
       end
 
       it "should send the enable command and expect an enable prompt" do
@@ -165,7 +165,7 @@ Switch#
 eos
 
       @cisco.find_capabilities
-      @cisco.should_not be_support_vlan_brief
+      expect(@cisco).not_to be_support_vlan_brief
     end
   end
 
@@ -183,7 +183,7 @@ eos
     "VLAN99" => "VLAN99"
   }.each do |input,expected|
     it "should canonicalize #{input} to #{expected}" do
-      @cisco.canonalize_ifname(input).should == expected
+      expect(@cisco.canonalize_ifname(input)).to eq(expected)
     end
   end
 
@@ -213,27 +213,27 @@ eos
     it "should parse interface output" do
       @cisco.expects(:parse_interface).returns({ :ensure => :present })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present }
+      expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present })
     end
 
     it "should parse trunking and merge results" do
       @cisco.stubs(:parse_interface).returns({ :ensure => :present })
       @cisco.expects(:parse_trunking).returns({ :native_vlan => "100" })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present, :native_vlan => "100" }
+      expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present, :native_vlan => "100" })
     end
 
     it "should return an absent interface if parse_interface returns nothing" do
       @cisco.stubs(:parse_interface).returns({})
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :absent }
+      expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :absent })
     end
 
     it "should parse ip address information and merge results" do
       @cisco.stubs(:parse_interface).returns({ :ensure => :present })
       @cisco.expects(:parse_interface_config).returns({ :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present, :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] }
+      expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present, :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
     end
 
     it "should parse the sh interface command" do
@@ -266,7 +266,7 @@ FastEthernet0/1 is down, line protocol is down
 Switch#
 eos
 
-      @cisco.parse_interface("FastEthernet0/1").should == { :ensure => :absent, :duplex => :auto, :speed => :auto }
+      expect(@cisco.parse_interface("FastEthernet0/1")).to eq({ :ensure => :absent, :duplex => :auto, :speed => :auto })
     end
 
     it "should be able to parse the sh vlan brief command output" do
@@ -285,7 +285,7 @@ VLAN Name                             Status    Ports
 Switch#
 eos
 
-      @cisco.parse_vlans.should == {"100"=>{:status=>"active", :interfaces=>["FastEthernet0/1", "FastEthernet0/2"], :description=>"management", :name=>"100"}, "1"=>{:status=>"active", :interfaces=>["FastEthernet0/3", "FastEthernet0/4", "FastEthernet0/5", "FastEthernet0/6", "FastEthernet0/7", "FastEthernet0/8", "FastEthernet0/9", "FastEthernet0/10", "FastEthernet0/11", "FastEthernet0/12", "FastEthernet0/13", "FastEthernet0/14", "FastEthernet0/15", "FastEthernet0/16", "FastEthernet0/17", "FastEthernet0/18", "FastEthernet0/23", "FastEthernet0/24"], :description=>"default", :name=>"1"}, "10"=>{:status=>"active", :interfaces=>[], :description=>"VLAN0010", :name=>"10"}}
+      expect(@cisco.parse_vlans).to eq({"100"=>{:status=>"active", :interfaces=>["FastEthernet0/1", "FastEthernet0/2"], :description=>"management", :name=>"100"}, "1"=>{:status=>"active", :interfaces=>["FastEthernet0/3", "FastEthernet0/4", "FastEthernet0/5", "FastEthernet0/6", "FastEthernet0/7", "FastEthernet0/8", "FastEthernet0/9", "FastEthernet0/10", "FastEthernet0/11", "FastEthernet0/12", "FastEthernet0/13", "FastEthernet0/14", "FastEthernet0/15", "FastEthernet0/16", "FastEthernet0/17", "FastEthernet0/18", "FastEthernet0/23", "FastEthernet0/24"], :description=>"default", :name=>"1"}, "10"=>{:status=>"active", :interfaces=>[], :description=>"VLAN0010", :name=>"10"}})
     end
 
     it "should parse trunk switchport information" do
@@ -312,7 +312,7 @@ Self Loopback: No
 Switch#
 eos
 
-      @cisco.parse_trunking("FastEthernet0/21").should == { :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>:all, }
+      expect(@cisco.parse_trunking("FastEthernet0/21")).to eq({ :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>:all, })
     end
 
     it "should parse trunk switchport information with allowed vlans" do
@@ -350,7 +350,7 @@ Appliance trust: none
 c2960#
 eos
 
-      @cisco.parse_trunking("GigabitEthernet 0/1").should == { :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>"1,99", }
+      expect(@cisco.parse_trunking("GigabitEthernet 0/1")).to eq({ :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>"1,99", })
     end
 
     it "should parse access switchport information" do
@@ -376,7 +376,7 @@ Self Loopback: No
 Switch#
 eos
 
-      @cisco.parse_trunking("FastEthernet0/1").should == { :mode => :access, :native_vlan => "100" }
+      expect(@cisco.parse_trunking("FastEthernet0/1")).to eq({ :mode => :access, :native_vlan => "100" })
     end
 
     it "should parse ip addresses" do
@@ -407,9 +407,9 @@ end
 
 router#
 eos
-      @cisco.parse_interface_config("Vlan 1").should == {:ipaddress=>[[24, IPAddr.new('192.168.0.24'), 'secondary'],
+      expect(@cisco.parse_interface_config("Vlan 1")).to eq({:ipaddress=>[[24, IPAddr.new('192.168.0.24'), 'secondary'],
                                                                       [24, IPAddr.new('192.168.0.1'), nil],
-                                                                      [64, IPAddr.new('2001:07a8:71c1::'), "eui-64"]]}
+                                                                      [64, IPAddr.new('2001:07a8:71c1::'), "eui-64"]]})
     end
 
     it "should parse etherchannel membership" do
@@ -426,7 +426,7 @@ end
 
 c2960#
 eos
-      @cisco.parse_interface_config("Gi0/17").should == {:etherchannel=>"1"}
+      expect(@cisco.parse_interface_config("Gi0/17")).to eq({:etherchannel=>"1"})
     end
   end
 
@@ -437,7 +437,7 @@ eos
 
       facts.expects(:retrieve).returns(:facts)
 
-      @cisco.facts.should == :facts
+      expect(@cisco.facts).to eq(:facts)
     end
   end
 

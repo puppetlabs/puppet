@@ -71,7 +71,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_group(sids[:current_user], path)
       winsec.set_mode(0700, path)
 
-      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+      expect { check_delete(path) }.to raise_error(Errno::EACCES)
     end
 
     it "should deny group" do
@@ -79,7 +79,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_group(sids[:current_user], path)
       winsec.set_mode(0700, path)
 
-      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+      expect { check_delete(path) }.to raise_error(Errno::EACCES)
     end
 
     it "should deny other" do
@@ -87,7 +87,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_group(sids[:current_user], path)
       winsec.set_mode(0700, path)
 
-      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+      expect { check_delete(path) }.to raise_error(Errno::EACCES)
     end
   end
 
@@ -97,7 +97,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         it "should return nil #{p}" do
           winsec.stubs(:supports_acl?).returns false
 
-          winsec.send("get_#{p}", path).should be_nil
+          expect(winsec.send("get_#{p}", path)).to be_nil
         end
       end
     end
@@ -116,7 +116,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         describe "#supports_acl?" do
           %w[c:/ c:\\ c:/windows/system32 \\\\localhost\\C$ \\\\127.0.0.1\\C$\\foo].each do |path|
             it "should accept #{path}" do
-              winsec.should be_supports_acl(path)
+              expect(winsec).to be_supports_acl(path)
             end
           end
 
@@ -133,17 +133,17 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception when setting to a different user" do
-            lambda { winsec.set_owner(sids[:guest], path) }.should raise_error(Puppet::Error, /This security ID may not be assigned as the owner of this object./)
+            expect { winsec.set_owner(sids[:guest], path) }.to raise_error(Puppet::Error, /This security ID may not be assigned as the owner of this object./)
           end
         end
 
         describe "#owner" do
           it "it should not be empty" do
-            winsec.get_owner(path).should_not be_empty
+            expect(winsec.get_owner(path)).not_to be_empty
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.get_owner("c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_owner("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
@@ -161,32 +161,32 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         describe "#group" do
           it "should not be empty" do
-            winsec.get_group(path).should_not be_empty
+            expect(winsec.get_group(path)).not_to be_empty
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.get_group("c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_group("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
         it "should preserve inherited full control for SYSTEM when setting owner and group" do
           # new file has SYSTEM
           system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
-          system_aces.should_not be_empty
+          expect(system_aces).not_to be_empty
 
           # when running under SYSTEM account, multiple ACEs come back
           # so we only care that we have at least one of these
-          system_aces.any? do |ace|
+          expect(system_aces.any? do |ace|
             ace.mask == klass::FILE_ALL_ACCESS
-          end.should be_truthy
+          end).to be_truthy
 
           # changing the owner/group will no longer make the SD protected
           winsec.set_group(sids[:power_users], path)
           winsec.set_owner(sids[:administrators], path)
 
-          system_aces.find do |ace|
+          expect(system_aces.find do |ace|
             ace.mask == klass::FILE_ALL_ACCESS && ace.inherited?
-          end.should_not be_nil
+          end).not_to be_nil
         end
 
         describe "#mode=" do
@@ -211,7 +211,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
                     mode = (s << 9 | u << 6 | g << 3 | o << 0)
                     winsec.set_mode(mode, path)
-                    winsec.get_mode(path).to_s(8).should == mode.to_s(8)
+                    expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
                   end
                 end
               end
@@ -221,13 +221,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           it "should preserve full control for SYSTEM when setting mode" do
             # new file has SYSTEM
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
-            system_aces.should_not be_empty
+            expect(system_aces).not_to be_empty
 
             # when running under SYSTEM account, multiple ACEs come back
             # so we only care that we have at least one of these
-            system_aces.any? do |ace|
+            expect(system_aces.any? do |ace|
               ace.mask == klass::FILE_ALL_ACCESS
-            end.should be_truthy
+            end).to be_truthy
 
             # changing the mode will make the SD protected
             winsec.set_group(sids[:none], path)
@@ -236,21 +236,21 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # and should have a non-inherited SYSTEM ACE(s)
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.each do |ace|
-              ace.mask.should == klass::FILE_ALL_ACCESS && ! ace.inherited?
+              expect(ace.mask).to eq(klass::FILE_ALL_ACCESS) && ! ace.inherited?
             end
           end
 
           describe "for modes that require deny aces" do
             it "should map everyone to group and owner" do
               winsec.set_mode(0426, path)
-              winsec.get_mode(path).to_s(8).should == "666"
+              expect(winsec.get_mode(path).to_s(8)).to eq("666")
             end
 
             it "should combine user and group modes when owner and group sids are equal" do
               winsec.set_group(winsec.get_owner(path), path)
 
               winsec.set_mode(0410, path)
-              winsec.get_mode(path).to_s(8).should == "550"
+              expect(winsec.get_mode(path).to_s(8)).to eq("550")
             end
           end
 
@@ -259,30 +259,30 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               winsec.set_group(sids[:none], path)
               winsec.set_mode(0600, path)
               Puppet::Util::Windows::File.add_attributes(path, klass::FILE_ATTRIBUTE_READONLY)
-              (Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).should be_nonzero
+              expect(Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).to be_nonzero
             end
 
             it "should make them writable if any sid has write permission" do
               winsec.set_mode(WindowsSecurityTester::S_IWUSR, path)
-              (Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).should == 0
+              expect(Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).to eq(0)
             end
 
             it "should leave them read-only if no sid has write permission and should allow full access for SYSTEM" do
               winsec.set_mode(WindowsSecurityTester::S_IRUSR | WindowsSecurityTester::S_IXGRP, path)
-              (Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).should be_nonzero
+              expect(Puppet::Util::Windows::File.get_attributes(path) & klass::FILE_ATTRIBUTE_READONLY).to be_nonzero
 
               system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
 
               # when running under SYSTEM account, and set_group / set_owner hasn't been called
               # SYSTEM full access will be restored
-              system_aces.any? do |ace|
+              expect(system_aces.any? do |ace|
                 ace.mask == klass::FILE_ALL_ACCESS
-              end.should be_truthy
+              end).to be_truthy
             end
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
@@ -295,7 +295,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_security_descriptor(path, sd)
 
             mode = winsec.get_mode(path)
-            (mode & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
+            expect(mode & WindowsSecurityTester::S_IEXTRA).to eq(WindowsSecurityTester::S_IEXTRA)
           end
 
           it "should return deny aces" do
@@ -304,9 +304,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_security_descriptor(path, sd)
 
             guest_aces = winsec.get_aces_for_path_by_sid(path, sids[:guest])
-            guest_aces.find do |ace|
+            expect(guest_aces.find do |ace|
               ace.type == Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
-            end.should_not be_nil
+            end).not_to be_nil
           end
 
           it "should skip inherit-only ace" do
@@ -322,11 +322,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             )
             winsec.set_security_descriptor(path, sd)
 
-            (winsec.get_mode(path) & WindowsSecurityTester::S_IRWXO).should == 0
+            expect(winsec.get_mode(path) & WindowsSecurityTester::S_IRWXO).to eq(0)
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.get_mode("c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_mode("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
@@ -337,7 +337,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             mode = winsec.get_mode(path)
             [ WindowsSecurityTester::S_IEXTRA,
               WindowsSecurityTester::S_ISYSTEM_MISSING ].each do |flag|
-              (mode & flag).should_not == flag
+              expect(mode & flag).not_to eq(flag)
             end
           end
 
@@ -363,7 +363,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
             # unprotect child, it should inherit from parent
             winsec.set_mode(WindowsSecurityTester::S_IRWXU, path, false)
-            (winsec.get_mode(path) & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
+            expect(winsec.get_mode(path) & WindowsSecurityTester::S_IEXTRA).to eq(WindowsSecurityTester::S_IEXTRA)
           end
         end
       end
@@ -375,7 +375,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           set_group_depending_on_current_user(path)
           winsec.set_owner(sids[:guest], path)
           expected_error = RUBY_VERSION =~ /^2\./ && is_dir ? Errno::EISDIR : Errno::EACCES
-          lambda { File.open(path, 'r') }.should raise_error(expected_error)
+          expect { File.open(path, 'r') }.to raise_error(expected_error)
         end
 
         after :each do
@@ -388,32 +388,32 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         describe "#owner=" do
           it "should accept a user sid" do
             winsec.set_owner(sids[:admin], path)
-            winsec.get_owner(path).should == sids[:admin]
+            expect(winsec.get_owner(path)).to eq(sids[:admin])
           end
 
           it "should accept a group sid" do
             winsec.set_owner(sids[:power_users], path)
-            winsec.get_owner(path).should == sids[:power_users]
+            expect(winsec.get_owner(path)).to eq(sids[:power_users])
           end
 
           it "should raise an exception if an invalid sid is provided" do
-            lambda { winsec.set_owner("foobar", path) }.should raise_error(Puppet::Error, /Failed to convert string SID/)
+            expect { winsec.set_owner("foobar", path) }.to raise_error(Puppet::Error, /Failed to convert string SID/)
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
         describe "#group=" do
           it "should accept a group sid" do
             winsec.set_group(sids[:power_users], path)
-            winsec.get_group(path).should == sids[:power_users]
+            expect(winsec.get_group(path)).to eq(sids[:power_users])
           end
 
           it "should accept a user sid" do
             winsec.set_group(sids[:admin], path)
-            winsec.get_group(path).should == sids[:admin]
+            expect(winsec.get_group(path)).to eq(sids[:admin])
           end
 
           it "should combine owner and group rights when they are the same sid" do
@@ -421,21 +421,21 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_group(sids[:power_users], path)
             winsec.set_mode(0610, path)
 
-            winsec.get_owner(path).should == sids[:power_users]
-            winsec.get_group(path).should == sids[:power_users]
+            expect(winsec.get_owner(path)).to eq(sids[:power_users])
+            expect(winsec.get_group(path)).to eq(sids[:power_users])
             # note group execute permission added to user ace, and then group rwx value
             # reflected to match
 
             # Exclude missing system ace, since that's not relevant
-            (winsec.get_mode(path) & 0777).to_s(8).should == "770"
+            expect((winsec.get_mode(path) & 0777).to_s(8)).to eq("770")
           end
 
           it "should raise an exception if an invalid sid is provided" do
-            lambda { winsec.set_group("foobar", path) }.should raise_error(Puppet::Error, /Failed to convert string SID/)
+            expect { winsec.set_group("foobar", path) }.to raise_error(Puppet::Error, /Failed to convert string SID/)
           end
 
           it "should raise an exception if an invalid path is provided" do
-            lambda { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.should raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
           end
         end
 
@@ -457,8 +457,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               Puppet::Util::Windows::ADSI::User.delete(user.name)
             end
 
-            winsec.get_owner(path).should == sid
-            winsec.get_mode(path).should == WindowsSecurityTester::S_IRWXU
+            expect(winsec.get_owner(path)).to eq(sid)
+            expect(winsec.get_mode(path)).to eq(WindowsSecurityTester::S_IRWXU)
           end
 
           it "should retrieve the group sid" do
@@ -472,8 +472,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             ensure
               Puppet::Util::Windows::ADSI::Group.delete(group.name)
             end
-            winsec.get_group(path).should == sid
-            winsec.get_mode(path).should == WindowsSecurityTester::S_IRWXG
+            expect(winsec.get_group(path)).to eq(sid)
+            expect(winsec.get_mode(path)).to eq(WindowsSecurityTester::S_IRWXG)
           end
         end
 
@@ -485,7 +485,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, [], protect)
             winsec.set_security_descriptor(path, new_sd)
 
-            winsec.get_mode(path).should == WindowsSecurityTester::S_ISYSTEM_MISSING
+            expect(winsec.get_mode(path)).to eq(WindowsSecurityTester::S_ISYSTEM_MISSING)
           end
 
           # REMIND: ruby crashes when trying to set a NULL DACL
@@ -536,7 +536,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
                 winsec.set_group(sids[:current_user], path)
                 winsec.set_mode(0700, path)
 
-                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+                expect { check_delete(path) }.to raise_error(Errno::EACCES)
               end
 
               it "should deny other" do
@@ -548,7 +548,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
                 winsec.set_group(sids[:current_user], path)
                 winsec.set_mode(0700, path)
 
-                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+                expect { check_delete(path) }.to raise_error(Errno::EACCES)
               end
             end
 
@@ -642,19 +642,19 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         if (mode & WindowsSecurityTester::S_IRUSR).nonzero?
           check_read(path)
         else
-          lambda { check_read(path) }.should raise_error(Errno::EACCES)
+          expect { check_read(path) }.to raise_error(Errno::EACCES)
         end
 
         if (mode & WindowsSecurityTester::S_IWUSR).nonzero?
           check_write(path)
         else
-          lambda { check_write(path) }.should raise_error(Errno::EACCES)
+          expect { check_write(path) }.to raise_error(Errno::EACCES)
         end
 
         if (mode & WindowsSecurityTester::S_IXUSR).nonzero?
-          lambda { check_execute(path) }.should raise_error(Errno::ENOEXEC)
+          expect { check_execute(path) }.to raise_error(Errno::ENOEXEC)
         else
-          lambda { check_execute(path) }.should raise_error(Errno::EACCES)
+          expect { check_execute(path) }.to raise_error(Errno::EACCES)
         end
       end
 
@@ -679,15 +679,15 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       let (:explorer) { File.join(Dir::WINDOWS, "explorer.exe") }
 
       it "should get the owner" do
-        winsec.get_owner(explorer).should match /^S-1-5-/
+        expect(winsec.get_owner(explorer)).to match /^S-1-5-/
       end
 
       it "should get the group" do
-        winsec.get_group(explorer).should match /^S-1-5-/
+        expect(winsec.get_group(explorer)).to match /^S-1-5-/
       end
 
       it "should get the mode" do
-        winsec.get_mode(explorer).should == (WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG | WindowsSecurityTester::S_IEXTRA)
+        expect(winsec.get_mode(explorer)).to eq(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG | WindowsSecurityTester::S_IEXTRA)
       end
     end
   end
@@ -713,19 +713,19 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         if (mode & WindowsSecurityTester::S_IRUSR).nonzero?
           check_read(path)
         else
-          lambda { check_read(path) }.should raise_error(Errno::EACCES)
+          expect { check_read(path) }.to raise_error(Errno::EACCES)
         end
 
         if (mode & WindowsSecurityTester::S_IWUSR).nonzero?
           check_write(path)
         else
-          lambda { check_write(path) }.should raise_error(Errno::EACCES)
+          expect { check_write(path) }.to raise_error(Errno::EACCES)
         end
 
         if (mode & WindowsSecurityTester::S_IXUSR).nonzero?
           check_execute(path)
         else
-          lambda { check_execute(path) }.should raise_error(Errno::EACCES)
+          expect { check_execute(path) }.to raise_error(Errno::EACCES)
         end
       end
 
@@ -759,7 +759,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         [newfile, newdir].each do |p|
           mode = winsec.get_mode(p)
-          (mode & 07777).to_s(8).should == mode640.to_s(8)
+          expect((mode & 07777).to_s(8)).to eq(mode640.to_s(8))
         end
       end
     end
@@ -784,13 +784,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_security_descriptor(path, sd)
 
       aces = winsec.get_security_descriptor(path).dacl.to_a
-      aces.map(&:sid).should == sids_in_dacl
-      aces.map(&:mask).all? { |mask| mask == read_execute }.should be_truthy
+      expect(aces.map(&:sid)).to eq(sids_in_dacl)
+      expect(aces.map(&:mask).all? { |mask| mask == read_execute }).to be_truthy
     end
 
     it "changes the sid for all aces that were assigned to the old owner" do
       sd = winsec.get_security_descriptor(path)
-      sd.owner.should_not == sids[:guest]
+      expect(sd.owner).not_to eq(sids[:guest])
 
       sd.dacl.allow(sd.owner, read_execute)
       sd.dacl.allow(sd.owner, synchronize)
@@ -802,7 +802,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       aces = dacl.find_all { |ace| ace.sid == sids[:guest] }
       # only non-inherited aces will be reassigned to guest, so
       # make sure we find at least the two we added
-      aces.size.should >= 2
+      expect(aces.size).to be >= 2
     end
 
     it "preserves INHERIT_ONLY_ACEs" do
@@ -822,9 +822,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_owner(sids[:guest], dir)
 
       sd = winsec.get_security_descriptor(dir)
-      sd.dacl.find do |ace|
+      expect(sd.dacl.find do |ace|
         ace.sid == sids[:guest] && ace.inherit_only?
-      end.should_not be_nil
+      end).not_to be_nil
     end
 
     it "allows deny ACEs with inheritance" do
@@ -839,9 +839,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       winsec.set_security_descriptor(dir, sd)
 
       sd = winsec.get_security_descriptor(dir)
-      sd.dacl.find do |ace|
+      expect(sd.dacl.find do |ace|
         ace.sid == sids[:guest] && ace.flags != 0
-      end.should_not be_nil
+      end).not_to be_nil
     end
 
     context "when managing mode" do
@@ -857,7 +857,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         # make sure it's gone
         dacl = winsec.get_security_descriptor(path).dacl
         aces = dacl.find_all { |ace| ace.sid == sids[:guest] }
-        aces.should be_empty
+        expect(aces).to be_empty
       end
     end
   end

@@ -11,7 +11,7 @@ describe Puppet::Util::NetworkDevice::Transport::Telnet do
   end
 
   it "should not handle login through the transport" do
-    @transport.should_not be_handles_login
+    expect(@transport).not_to be_handles_login
   end
 
   it "should not open any files" do
@@ -59,12 +59,12 @@ describe Puppet::Util::NetworkDevice::Transport::Telnet do
 
       it "should return telnet session output" do
         @telnet.expects(:waitfor).returns("output")
-        @transport.expect(/regex/).should == "output"
+        expect(@transport.expect(/regex/)).to eq("output")
       end
 
       it "should yield telnet session output to the given block" do
         @telnet.expects(:waitfor).yields("output")
-        @transport.expect(/regex/) { |out| out.should == "output" }
+        @transport.expect(/regex/) { |out| expect(out).to eq("output") }
       end
     end
   end

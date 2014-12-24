@@ -24,7 +24,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
   it "should be the default provider on Ubuntu" do
     Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
-    described_class.default?.should be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   describe "excluding services" do
@@ -39,19 +39,19 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     it "should be able to find all instances" do
       lists_processes_as("rc stop/waiting\nssh start/running, process 712")
 
-      provider_class.instances.map {|provider| provider.name}.should =~ ["rc","ssh"]
+      expect(provider_class.instances.map {|provider| provider.name}).to match_array(["rc","ssh"])
     end
 
     it "should attach the interface name for network interfaces" do
       lists_processes_as("network-interface (eth0)")
 
-      provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
+      expect(provider_class.instances.first.name).to eq("network-interface INTERFACE=eth0")
     end
 
     it "should attach the job name for network interface security" do
       processes = "network-interface-security (network-interface/eth0)"
       provider_class.stubs(:execpipe).yields(processes)
-      provider_class.instances.first.name.should == "network-interface-security JOB=network-interface/eth0"
+      expect(provider_class.instances.first.name).to eq("network-interface-security JOB=network-interface/eth0")
     end
 
     it "should not find excluded services" do
@@ -63,7 +63,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       processes += "\nstatd-mounting stop/waiting"
       processes += "\ngssd-mounting stop/waiting"
       provider_class.stubs(:execpipe).yields(processes)
-      provider_class.instances.should be_empty
+      expect(provider_class.instances).to be_empty
     end
   end
 
@@ -75,7 +75,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
       provider = provider_class.new(resource)
 
-      provider.initscript.should == "/etc/init/foo-bar.conf"
+      expect(provider.initscript).to eq("/etc/init/foo-bar.conf")
     end
 
     it "searches for just the name of a compound named service" do
@@ -85,7 +85,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
       provider = provider_class.new(resource)
 
-      provider.initscript.should == "/etc/init/network-interface.conf"
+      expect(provider.initscript).to eq("/etc/init/network-interface.conf")
     end
   end
 
@@ -97,7 +97,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       provider.expects(:status_exec).with(["foo"]).returns("foo start/running, process 1000")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
-      provider.status.should == :running
+      expect(provider.status).to eq(:running)
     end
 
     describe "when a special status command is specifed" do
@@ -120,7 +120,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 1
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the provided status command return zero" do
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -143,7 +143,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:getpid).returns nil
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running if the pid can be found" do
@@ -153,7 +153,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:getpid).returns 2706
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -164,7 +164,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
-      provider.status.should == :stopped
+      expect(provider.status).to eq(:stopped)
     end
   end
 
@@ -183,11 +183,11 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       end
       ["start", "stop"].each do |command|
         it "should return the #{command}cmd of its parent provider" do
-          provider.send("#{command}cmd".to_sym).should == [provider.command(command.to_sym), resource.name]
+          expect(provider.send("#{command}cmd".to_sym)).to eq([provider.command(command.to_sym), resource.name])
         end
       end
       it "should return nil for the statuscmd" do
-        provider.statuscmd.should be_nil
+        expect(provider.statuscmd).to be_nil
       end
     end
   end
@@ -271,7 +271,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       [:enabled?,:enable,:disable].each do |enableable|
         it "should respond to #{enableable}" do
-          provider.should respond_to(enableable)
+          expect(provider).to respond_to(enableable)
         end
       end
 
@@ -281,7 +281,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == enabled_content
+          expect(then_contents_of(init_script)).to eq(enabled_content)
         end
 
         it "should add a 'start on' line if none exists" do
@@ -289,7 +289,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == "this is a file" + start_on_default_runlevels
+          expect(then_contents_of(init_script)).to eq("this is a file" + start_on_default_runlevels)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -297,7 +297,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled
+          expect(then_contents_of(init_script)).to eq(multiline_enabled)
         end
 
         it "should leave not 'start on' comments alone" do
@@ -305,7 +305,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled_bad
+          expect(then_contents_of(init_script)).to eq(multiline_enabled_bad)
         end
       end
 
@@ -315,7 +315,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == "#" + enabled_content
+          expect(then_contents_of(init_script)).to eq("#" + enabled_content)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -323,7 +323,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == multiline_disabled
+          expect(then_contents_of(init_script)).to eq(multiline_disabled)
         end
       end
 
@@ -331,19 +331,19 @@ describe Puppet::Type.type(:service).provider(:upstart) do
         it "should consider 'start on ...' to be enabled" do
           given_contents_of(init_script, enabled_content)
 
-          provider.enabled?.should == :true
+          expect(provider.enabled?).to eq(:true)
         end
 
         it "should consider '#start on ...' to be disabled" do
           given_contents_of(init_script, disabled_content)
 
-          provider.enabled?.should == :false
+          expect(provider.enabled?).to eq(:false)
         end
 
         it "should consider no start on line to be disabled" do
           given_contents_of(init_script, content)
 
-          provider.enabled?.should == :false
+          expect(provider.enabled?).to eq(:false)
         end
       end
       end
@@ -357,7 +357,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       [:enabled?,:enable,:disable].each do |enableable|
         it "should respond to #{enableable}" do
-          provider.should respond_to(enableable)
+          expect(provider).to respond_to(enableable)
         end
       end
 
@@ -367,7 +367,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == enabled_content
+          expect(then_contents_of(init_script)).to eq(enabled_content)
         end
 
         it "should add a 'start on' line if none exists" do
@@ -375,7 +375,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == "this is a file" + start_on_default_runlevels
+          expect(then_contents_of(init_script)).to eq("this is a file" + start_on_default_runlevels)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -383,7 +383,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled
+          expect(then_contents_of(init_script)).to eq(multiline_enabled)
         end
 
         it "should remove manual stanzas" do
@@ -391,7 +391,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled
+          expect(then_contents_of(init_script)).to eq(multiline_enabled)
         end
 
         it "should leave not 'start on' comments alone" do
@@ -399,7 +399,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled_bad
+          expect(then_contents_of(init_script)).to eq(multiline_enabled_bad)
         end
       end
 
@@ -409,7 +409,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == enabled_content + manual
+          expect(then_contents_of(init_script)).to eq(enabled_content + manual)
         end
 
         it "should remove manual stanzas before adding new ones" do
@@ -417,7 +417,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == multiline_enabled + "\n" + multiline_enabled + manual
+          expect(then_contents_of(init_script)).to eq(multiline_enabled + "\n" + multiline_enabled + manual)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -425,7 +425,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == multiline_enabled + manual
+          expect(then_contents_of(init_script)).to eq(multiline_enabled + manual)
         end
       end
 
@@ -434,19 +434,19 @@ describe Puppet::Type.type(:service).provider(:upstart) do
           it "should consider 'start on ...' to be enabled" do
             given_contents_of(init_script, enabled_content)
 
-            provider.enabled?.should == :true
+            expect(provider.enabled?).to eq(:true)
           end
 
           it "should consider '#start on ...' to be disabled" do
             given_contents_of(init_script, disabled_content)
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
 
           it "should consider no start on line to be disabled" do
             given_contents_of(init_script, content)
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
         end
 
@@ -454,13 +454,13 @@ describe Puppet::Type.type(:service).provider(:upstart) do
           it "should consider 'start on ...' to be disabled if there is a trailing manual stanza" do
             given_contents_of(init_script, enabled_content + manual + "\nother stuff")
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
 
           it "should consider two start on lines with a manual in the middle to be enabled" do
             given_contents_of(init_script, enabled_content + manual + "\n" + enabled_content)
 
-            provider.enabled?.should == :true
+            expect(provider.enabled?).to eq(:true)
           end
         end
       end
@@ -476,7 +476,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       [:enabled?,:enable,:disable].each do |enableable|
         it "should respond to #{enableable}" do
-          provider.should respond_to(enableable)
+          expect(provider).to respond_to(enableable)
         end
       end
 
@@ -486,8 +486,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == "this is a file"
-          then_contents_of(over_script).should == start_on_default_runlevels
+          expect(then_contents_of(init_script)).to eq("this is a file")
+          expect(then_contents_of(over_script)).to eq(start_on_default_runlevels)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -495,8 +495,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_disabled
-          then_contents_of(over_script).should == start_on_default_runlevels
+          expect(then_contents_of(init_script)).to eq(multiline_disabled)
+          expect(then_contents_of(over_script)).to eq(start_on_default_runlevels)
         end
 
         it "should remove any manual stanzas from the override file" do
@@ -505,8 +505,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == enabled_content
-          then_contents_of(over_script).should == ""
+          expect(then_contents_of(init_script)).to eq(enabled_content)
+          expect(then_contents_of(over_script)).to eq("")
         end
 
         it "should copy existing start on from conf file if conf file is disabled" do
@@ -514,8 +514,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_enabled_standalone + manual
-          then_contents_of(over_script).should == multiline_enabled_standalone
+          expect(then_contents_of(init_script)).to eq(multiline_enabled_standalone + manual)
+          expect(then_contents_of(over_script)).to eq(multiline_enabled_standalone)
         end
 
         it "should leave not 'start on' comments alone" do
@@ -524,8 +524,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.enable
 
-          then_contents_of(init_script).should == multiline_disabled_bad
-          then_contents_of(over_script).should == start_on_default_runlevels
+          expect(then_contents_of(init_script)).to eq(multiline_disabled_bad)
+          expect(then_contents_of(over_script)).to eq(start_on_default_runlevels)
         end
       end
 
@@ -535,8 +535,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == enabled_content
-          then_contents_of(over_script).should == manual
+          expect(then_contents_of(init_script)).to eq(enabled_content)
+          expect(then_contents_of(over_script)).to eq(manual)
         end
 
         it "should handle multiline 'start on' stanzas" do
@@ -544,8 +544,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
           provider.disable
 
-          then_contents_of(init_script).should == multiline_enabled
-          then_contents_of(over_script).should == manual
+          expect(then_contents_of(init_script)).to eq(multiline_enabled)
+          expect(then_contents_of(over_script)).to eq(manual)
         end
       end
 
@@ -554,19 +554,19 @@ describe Puppet::Type.type(:service).provider(:upstart) do
           it "should consider 'start on ...' to be enabled" do
             given_contents_of(init_script, enabled_content)
 
-            provider.enabled?.should == :true
+            expect(provider.enabled?).to eq(:true)
           end
 
           it "should consider '#start on ...' to be disabled" do
             given_contents_of(init_script, disabled_content)
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
 
           it "should consider no start on line to be disabled" do
             given_contents_of(init_script, content)
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
         end
         describe "with override file" do
@@ -574,14 +574,14 @@ describe Puppet::Type.type(:service).provider(:upstart) do
             given_contents_of(init_script, enabled_content)
             given_contents_of(over_script, manual + "\nother stuff")
 
-            provider.enabled?.should == :false
+            expect(provider.enabled?).to eq(:false)
           end
 
           it "should consider '#start on ...' to be enabled if there is a start on in the override file" do
             given_contents_of(init_script, disabled_content)
             given_contents_of(over_script, "start on stuff")
 
-            provider.enabled?.should == :true
+            expect(provider.enabled?).to eq(:true)
           end
         end
       end

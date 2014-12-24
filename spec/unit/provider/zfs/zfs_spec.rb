@@ -17,15 +17,15 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
   context ".instances" do
     it "should have an instances method" do
-      provider.class.should respond_to(:instances)
+      expect(provider.class).to respond_to(:instances)
     end
 
     it "should list instances" do
       provider.class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
       instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
-      instances.size.should == 2
-      instances[0].should == {:name => 'rpool', :ensure => :present}
-      instances[1].should == {:name => 'rpool/ROOT', :ensure => :present}
+      expect(instances.size).to eq(2)
+      expect(instances[0]).to eq({:name => 'rpool', :ensure => :present})
+      expect(instances[1]).to eq({:name => 'rpool/ROOT', :ensure => :present})
     end
   end
 
@@ -33,11 +33,11 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
     it 'should return an array of properties' do
       resource[:mountpoint] = '/foo'
 
-      provider.add_properties.should == ['-o', "mountpoint=/foo"]
+      expect(provider.add_properties).to eq(['-o', "mountpoint=/foo"])
     end
 
     it 'should return an empty array' do
-      provider.add_properties.should == []
+      expect(provider.add_properties).to eq([])
     end
   end
 
@@ -73,13 +73,13 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       #return stuff because we have to slice and dice it
       provider.expects(:zfs).with(:list, name)
 
-      provider.should be_exists
+      expect(provider).to be_exists
     end
 
     it "should return false if returned values don't match the name" do
       provider.expects(:zfs).with(:list, name).raises(Puppet::ExecutionFailure, "Failed")
 
-      provider.should_not be_exists
+      expect(provider).not_to be_exists
     end
   end
 
@@ -93,7 +93,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       it "should get #{prop}" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
 
-        provider.send(prop).should == 'value'
+        expect(provider.send(prop)).to eq('value')
       end
 
       it "should set #{prop}=value" do

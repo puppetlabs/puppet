@@ -25,7 +25,7 @@ describe 'HieraPuppet' do
           :backend => 'yaml',
           :logger  => 'puppet'
         }
-        HieraPuppet.send(:hiera_config).should == expected_results
+        expect(HieraPuppet.send(:hiera_config)).to eq(expected_results)
       end
     end
 
@@ -36,7 +36,7 @@ describe 'HieraPuppet' do
       end
 
       it "should return a configuration hash" do
-        HieraPuppet.send(:hiera_config).should == { :logger => 'puppet' }
+        expect(HieraPuppet.send(:hiera_config)).to eq({ :logger => 'puppet' })
       end
     end
   end
@@ -48,7 +48,7 @@ describe 'HieraPuppet' do
       rescue ArgumentError => detail
         raise unless detail.message =~ /unknown setting/
       end
-      HieraPuppet.send(:hiera_config_file).should be_nil
+      expect(HieraPuppet.send(:hiera_config_file)).to be_nil
     end
 
     it "should use Puppet.settings[:hiera_config] as the hiera config file" do
@@ -60,7 +60,7 @@ describe 'HieraPuppet' do
       end
 
       Puppet::FileSystem.stubs(:exist?).with(Puppet[:hiera_config]).returns(true)
-      HieraPuppet.send(:hiera_config_file).should == Puppet[:hiera_config]
+      expect(HieraPuppet.send(:hiera_config_file)).to eq(Puppet[:hiera_config])
     end
 
     it "should use Puppet.settings[:confdir] as the base directory when hiera_config is not set" do
@@ -73,7 +73,7 @@ describe 'HieraPuppet' do
       hiera_config = File.join(Puppet[:confdir], 'hiera.yaml')
       Puppet::FileSystem.stubs(:exist?).with(hiera_config).returns(true)
 
-      HieraPuppet.send(:hiera_config_file).should == hiera_config
+      expect(HieraPuppet.send(:hiera_config_file)).to eq(hiera_config)
     end
   end
 
@@ -86,13 +86,13 @@ describe 'HieraPuppet' do
 
     it "should return the value from Hiera" do
       Hiera.any_instance.stubs(:lookup).returns('8080')
-      HieraPuppet.lookup('port', nil, scope, nil, :priority).should == '8080'
+      expect(HieraPuppet.lookup('port', nil, scope, nil, :priority)).to eq('8080')
 
       Hiera.any_instance.stubs(:lookup).returns(['foo', 'bar'])
-      HieraPuppet.lookup('ntpservers', nil, scope, nil, :array).should == ['foo', 'bar']
+      expect(HieraPuppet.lookup('ntpservers', nil, scope, nil, :array)).to eq(['foo', 'bar'])
 
       Hiera.any_instance.stubs(:lookup).returns({'uid' => '1000'})
-      HieraPuppet.lookup('user', nil, scope, nil, :hash).should == {'uid' => '1000'}
+      expect(HieraPuppet.lookup('user', nil, scope, nil, :hash)).to eq({'uid' => '1000'})
     end
 
     it "should raise a useful error when the answer is nil" do
@@ -107,7 +107,7 @@ describe 'HieraPuppet' do
   describe 'HieraPuppet#parse_args' do
     it 'should return a 3 item array' do
       args = ['foo', '8080', nil, nil]
-      HieraPuppet.parse_args(args).should == ['foo', '8080', nil]
+      expect(HieraPuppet.parse_args(args)).to eq(['foo', '8080', nil])
     end
 
     it 'should raise a useful error when no key is supplied' do

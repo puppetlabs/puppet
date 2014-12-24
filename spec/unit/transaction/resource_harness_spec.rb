@@ -20,21 +20,21 @@ describe Puppet::Transaction::ResourceHarness do
 
   it "should accept a transaction at initialization" do
     harness = Puppet::Transaction::ResourceHarness.new(@transaction)
-    harness.transaction.should equal(@transaction)
+    expect(harness.transaction).to equal(@transaction)
   end
 
   it "should delegate to the transaction for its relationship graph" do
     @transaction.expects(:relationship_graph).returns "relgraph"
-    Puppet::Transaction::ResourceHarness.new(@transaction).relationship_graph.should == "relgraph"
+    expect(Puppet::Transaction::ResourceHarness.new(@transaction).relationship_graph).to eq("relgraph")
   end
 
   describe "when evaluating a resource" do
     it "produces a resource state that describes what happened with the resource" do
       status = @harness.evaluate(@resource)
 
-      status.resource.should == @resource.ref
-      status.should_not be_failed
-      status.events.should be_empty
+      expect(status.resource).to eq(@resource.ref)
+      expect(status).not_to be_failed
+      expect(status.events).to be_empty
     end
 
     it "retrieves the current state of the resource" do
@@ -49,10 +49,10 @@ describe Puppet::Transaction::ResourceHarness do
 
       status = @harness.evaluate(@resource)
 
-      status.should be_failed
-      events_to_hash(status.events).collect do |event|
+      expect(status).to be_failed
+      expect(events_to_hash(status.events).collect do |event|
         { :@status => event[:@status], :@message => event[:@message] }
-      end.should == [{ :@status => "failure", :@message => the_message }]
+      end).to eq([{ :@status => "failure", :@message => the_message }])
     end
 
     it "records the time it took to evaluate the resource" do
@@ -60,7 +60,7 @@ describe Puppet::Transaction::ResourceHarness do
       status = @harness.evaluate(@resource)
       after = Time.now
 
-      status.evaluation_time.should be <= after - before
+      expect(status.evaluation_time).to be <= after - before
     end
   end
 
@@ -233,8 +233,8 @@ describe Puppet::Transaction::ResourceHarness do
         @harness.evaluate(resource)
       end.to raise_error(Exception)
 
-      @logs.first.message.should == "change from absent to present failed: Exception"
-      @logs.first.level.should == :err
+      expect(@logs.first.message).to eq("change from absent to present failed: Exception")
+      expect(@logs.first.level).to eq(:err)
     end
 
     it "ensure succeeds means that the rest doesn't happen" do
@@ -277,13 +277,13 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "should record previous successful events" do
-      @status.events[0].property.should == 'foo'
-      @status.events[0].status.should == 'success'
+      expect(@status.events[0].property).to eq('foo')
+      expect(@status.events[0].status).to eq('success')
     end
 
     it "should record a failure event" do
-      @status.events[1].property.should == 'bar'
-      @status.events[1].status.should == 'failure'
+      expect(@status.events[1].property).to eq('bar')
+      expect(@status.events[1].status).to eq('failure')
     end
   end
 
@@ -295,9 +295,9 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "should log and pass the exception through" do
-      lambda { @harness.evaluate(@resource) }.should raise_error(Exception, /baz/)
-      @logs.first.message.should == "change from absent to 1 failed: baz"
-      @logs.first.level.should == :err
+      expect { @harness.evaluate(@resource) }.to raise_error(Exception, /baz/)
+      expect(@logs.first.message).to eq("change from absent to 1 failed: baz")
+      expect(@logs.first.level).to eq(:err)
     end
   end
 
@@ -310,9 +310,9 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should record a failure event" do
       @status = @harness.evaluate(@resource)
-      @status.events[0].name.to_s.should == 'brillig_changed'
-      @status.events[0].property.should == 'brillig'
-      @status.events[0].status.should == 'failure'
+      expect(@status.events[0].name.to_s).to eq('brillig_changed')
+      expect(@status.events[0].property).to eq('brillig')
+      expect(@status.events[0].status).to eq('failure')
     end
   end
 
@@ -324,9 +324,9 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "should log and pass the exception through" do
-      lambda { @harness.evaluate(@resource) }.should raise_error(Exception, /slithy/)
-      @logs.first.message.should == "change from absent to 1 failed: slithy"
-      @logs.first.level.should == :err
+      expect { @harness.evaluate(@resource) }.to raise_error(Exception, /slithy/)
+      expect(@logs.first.message).to eq("change from absent to 1 failed: slithy")
+      expect(@logs.first.level).to eq(:err)
     end
   end
 
@@ -349,7 +349,7 @@ describe Puppet::Transaction::ResourceHarness do
       status = @harness.evaluate(resource)
 
       status.events.each do |event|
-        event.status.should != 'failure'
+        expect(event.status).to != 'failure'
       end
     end
 
@@ -379,9 +379,9 @@ describe Puppet::Transaction::ResourceHarness do
       # there should be an audit change recorded, since the two
       # timestamps differ by at least 1 microsecond
       status = @harness.evaluate(resource)
-      status.events.should_not be_empty
+      expect(status.events).not_to be_empty
       status.events.each do |event|
-        event.message.should =~ /audit change: previously recorded/
+        expect(event.message).to match(/audit change: previously recorded/)
       end
     end
 
@@ -413,7 +413,7 @@ describe Puppet::Transaction::ResourceHarness do
       # slight difference in the two timestamps
       status = @harness.evaluate(resource)
       status.events.each do |event|
-        event.message.should_not =~ /audit change: previously recorded/
+        expect(event.message).not_to match(/audit change: previously recorded/)
       end
     end
   end
@@ -425,7 +425,7 @@ describe Puppet::Transaction::ResourceHarness do
       resource.expects(:err).never # make sure no exceptions get swallowed
       @harness.expects(:allow_changes?).with(resource).returns false
       status = @harness.evaluate(resource)
-      Puppet::FileSystem.exist?(test_file).should == false
+      expect(Puppet::FileSystem.exist?(test_file)).to eq(false)
     end
   end
 
@@ -437,31 +437,31 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should be true if the resource is not being purged" do
       @resource.expects(:purging?).returns false
-      @harness.should be_allow_changes(@resource)
+      expect(@harness).to be_allow_changes(@resource)
     end
 
     it "should be true if the resource is not being deleted" do
       @resource.expects(:deleting?).returns false
-      @harness.should be_allow_changes(@resource)
+      expect(@harness).to be_allow_changes(@resource)
     end
 
     it "should be true if the resource has no dependents" do
       @harness.relationship_graph.expects(:dependents).with(@resource).returns []
-      @harness.should be_allow_changes(@resource)
+      expect(@harness).to be_allow_changes(@resource)
     end
 
     it "should be true if all dependents are being deleted" do
       dep = stub 'dependent', :deleting? => true
       @harness.relationship_graph.expects(:dependents).with(@resource).returns [dep]
       @resource.expects(:purging?).returns true
-      @harness.should be_allow_changes(@resource)
+      expect(@harness).to be_allow_changes(@resource)
     end
 
     it "should be false if the resource's dependents are not being deleted" do
       dep = stub 'dependent', :deleting? => false, :ref => "myres"
       @resource.expects(:warning)
       @harness.relationship_graph.expects(:dependents).with(@resource).returns [dep]
-      @harness.should_not be_allow_changes(@resource)
+      expect(@harness).not_to be_allow_changes(@resource)
     end
   end
 
@@ -475,11 +475,11 @@ describe Puppet::Transaction::ResourceHarness do
       @resource.catalog = nil
       @resource.expects(:warning)
 
-      @harness.schedule(@resource).should be_nil
+      expect(@harness.schedule(@resource)).to be_nil
     end
 
     it "should return nil if the resource specifies no schedule" do
-      @harness.schedule(@resource).should be_nil
+      expect(@harness.schedule(@resource)).to be_nil
     end
 
     it "should fail if the named schedule cannot be found" do
@@ -492,7 +492,7 @@ describe Puppet::Transaction::ResourceHarness do
       sched = Puppet::Type.type(:schedule).new(:name => "sched")
       @catalog.add_resource(sched)
       @resource[:schedule] = "sched"
-      @harness.schedule(@resource).to_s.should == sched.to_s
+      expect(@harness.schedule(@resource).to_s).to eq(sched.to_s)
     end
   end
 
@@ -505,11 +505,11 @@ describe Puppet::Transaction::ResourceHarness do
     it "should return true if 'ignoreschedules' is set" do
       Puppet[:ignoreschedules] = true
       @resource[:schedule] = "meh"
-      @harness.should be_scheduled(@resource)
+      expect(@harness).to be_scheduled(@resource)
     end
 
     it "should return true if the resource has no schedule set" do
-      @harness.should be_scheduled(@resource)
+      expect(@harness).to be_scheduled(@resource)
     end
 
     it "should return the result of matching the schedule with the cached 'checked' time if a schedule is set" do
@@ -522,7 +522,7 @@ describe Puppet::Transaction::ResourceHarness do
 
       sched.expects(:match?).with(t.to_i).returns "feh"
 
-      @harness.scheduled?(@resource).should == "feh"
+      expect(@harness.scheduled?(@resource)).to eq("feh")
     end
   end
 
@@ -531,12 +531,12 @@ describe Puppet::Transaction::ResourceHarness do
     Puppet::Util::Storage.expects(:cache).with(@resource).returns data
     @harness.cache(@resource, :foo, "something")
 
-    data[:foo].should == "something"
+    expect(data[:foo]).to eq("something")
   end
 
   it "should be able to retrieve data from the cache" do
     data = {:foo => "other"}
     Puppet::Util::Storage.expects(:cache).with(@resource).returns data
-    @harness.cached(@resource, :foo).should == "other"
+    expect(@harness.cached(@resource, :foo)).to eq("other")
   end
 end

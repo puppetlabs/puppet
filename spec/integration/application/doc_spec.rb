@@ -10,6 +10,6 @@ describe Puppet::Application::Doc do
     puppetdoc = Puppet::Application[:doc]
     puppetdoc.command_line.stubs(:args).returns(['foo', '-o', 'bar'])
     puppetdoc.parse_options
-    puppetdoc.options[:outputdir].should == 'bar'
+    expect(puppetdoc.options[:outputdir]).to eq('bar')
   end
 end

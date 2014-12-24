@@ -14,21 +14,21 @@ describe Puppet::Util::Profiler::Logging do
   it "logs the explanation of the profile results" do
     profiler.profile("Testing", ["test"]) { }
 
-    logger.messages.first.should =~ /the explanation/
+    expect(logger.messages.first).to match(/the explanation/)
   end
 
   it "describes the profiled segment" do
     profiler.profile("Tested measurement", ["test"]) { }
 
-    logger.messages.first.should =~ /PROFILE \[#{identifier}\] \d Tested measurement/
+    expect(logger.messages.first).to match(/PROFILE \[#{identifier}\] \d Tested measurement/)
   end
 
   it "indicates the order in which segments are profiled" do
     profiler.profile("Measurement", ["measurement"]) { }
     profiler.profile("Another measurement", ["measurement"]) { }
 
-    logger.messages[0].should =~ /1 Measurement/
-    logger.messages[1].should =~ /2 Another measurement/
+    expect(logger.messages[0]).to match(/1 Measurement/)
+    expect(logger.messages[1]).to match(/2 Another measurement/)
   end
 
   it "indicates the nesting of profiled segments" do
@@ -39,10 +39,10 @@ describe Puppet::Util::Profiler::Logging do
       profiler.profile("Another nested measurement", ["measurement2"]) { }
     end
 
-    logger.messages[0].should =~ /1.1 Nested measurement/
-    logger.messages[1].should =~ /1 Measurement/
-    logger.messages[2].should =~ /2.1 Another nested measurement/
-    logger.messages[3].should =~ /2 Another measurement/
+    expect(logger.messages[0]).to match(/1.1 Nested measurement/)
+    expect(logger.messages[1]).to match(/1 Measurement/)
+    expect(logger.messages[2]).to match(/2.1 Another nested measurement/)
+    expect(logger.messages[3]).to match(/2 Another measurement/)
   end
 
   class TestLoggingProfiler < Puppet::Util::Profiler::Logging

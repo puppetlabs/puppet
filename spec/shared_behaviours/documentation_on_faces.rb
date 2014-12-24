@@ -10,13 +10,13 @@ shared_examples_for "documentation on faces" do
   Attrs.each do |attr|
     it "should accept a #{attr}" do
       expect { subject.send("#{attr}=", "hello") }.not_to raise_error
-      subject.send(attr).should == "hello"
+      expect(subject.send(attr)).to eq("hello")
     end
 
     it "should accept a long (single line) value for #{attr}" do
       text = "I never know when to stop with the word banana" + ("na" * 1000)
       expect { subject.send("#{attr}=", text) }.to_not raise_error
-      subject.send(attr).should == text
+      expect(subject.send(attr)).to eq(text)
     end
   end
 
@@ -25,17 +25,17 @@ shared_examples_for "documentation on faces" do
     context "#{getter}" do
       it "should strip leading whitespace on a single line" do
         subject.send(setter, "  death to whitespace")
-        subject.send(getter).should == "death to whitespace"
+        expect(subject.send(getter)).to eq("death to whitespace")
       end
 
       it "should strip trailing whitespace on a single line" do
         subject.send(setter, "death to whitespace  ")
-        subject.send(getter).should == "death to whitespace"
+        expect(subject.send(getter)).to eq("death to whitespace")
       end
 
       it "should strip whitespace at both ends at once" do
         subject.send(setter, "  death to whitespace  ")
-        subject.send(getter).should == "death to whitespace"
+        expect(subject.send(getter)).to eq("death to whitespace")
       end
 
       multiline_text = "with\nnewlines"
@@ -43,12 +43,12 @@ shared_examples_for "documentation on faces" do
         it "should not accept multiline values" do
           expect { subject.send(setter, multiline_text) }.
             to raise_error ArgumentError, /#{getter} should be a single line/
-          subject.send(getter).should be_nil
+          expect(subject.send(getter)).to be_nil
         end
       else
         it "should accept multiline values" do
           expect { subject.send(setter, multiline_text) }.not_to raise_error
-          subject.send(getter).should == multiline_text
+          expect(subject.send(getter)).to eq(multiline_text)
         end
 
         [1, 2, 4, 7, 25].each do |length|
@@ -58,20 +58,20 @@ shared_examples_for "documentation on faces" do
             it "should strip leading whitespace on multiple lines" do
               text = "this\nis\the\final\outcome"
               subject.send(setter, text.gsub(/^/, indent))
-              subject.send(getter).should == text
+              expect(subject.send(getter)).to eq(text)
             end
 
             it "should not remove formatting whitespace, only global indent" do
               text = "this\n  is\n    the\n  ultimate\ntest"
               subject.send(setter, text.gsub(/^/, indent))
-              subject.send(getter).should == text
+              expect(subject.send(getter)).to eq(text)
             end
           end
         end
 
         it "should strip whitespace with a blank line" do
           subject.send(setter, "  this\n\n  should outdent")
-          subject.send(getter).should == "this\n\nshould outdent"
+          expect(subject.send(getter)).to eq("this\n\nshould outdent")
         end
       end
     end
@@ -81,46 +81,46 @@ shared_examples_for "documentation on faces" do
     it "should return the set value if set after description" do
       subject.description = "hello\ngoodbye"
       subject.short_description = "whatever"
-      subject.short_description.should == "whatever"
+      expect(subject.short_description).to eq("whatever")
     end
 
     it "should return the set value if set before description" do
       subject.short_description = "whatever"
       subject.description = "hello\ngoodbye"
-      subject.short_description.should == "whatever"
+      expect(subject.short_description).to eq("whatever")
     end
 
     it "should return nothing if not set and no description" do
-      subject.short_description.should be_nil
+      expect(subject.short_description).to be_nil
     end
 
     it "should return the first paragraph of description if not set (where it is one line long)" do
       subject.description = "hello"
-      subject.short_description.should == subject.description
+      expect(subject.short_description).to eq(subject.description)
     end
 
     it "should return the first paragraph of description if not set (where there is no paragraph break)" do
       subject.description = "hello\ngoodbye"
-      subject.short_description.should == subject.description
+      expect(subject.short_description).to eq(subject.description)
     end
 
     it "should return the first paragraph of description if not set (where there is a paragraph break)" do
       subject.description = "hello\ngoodbye\n\nmore\ntext\nhere\n\nfinal\nparagraph"
-      subject.short_description.should == "hello\ngoodbye"
+      expect(subject.short_description).to eq("hello\ngoodbye")
     end
 
     it "should trim a very, very long first paragraph and add ellipsis" do
       line = "this is a very, very, very long long line full of text\n"
       subject.description = line * 20 + "\n\nwhatever, dude."
 
-      subject.short_description.should == (line * 5).chomp + ' [...]'
+      expect(subject.short_description).to eq((line * 5).chomp + ' [...]')
     end
 
     it "should trim a very very long only paragraph even if it is followed by a new paragraph" do
       line = "this is a very, very, very long long line full of text\n"
       subject.description = line * 20
 
-      subject.short_description.should == (line * 5).chomp + ' [...]'
+      expect(subject.short_description).to eq((line * 5).chomp + ' [...]')
     end
   end
 
@@ -131,9 +131,9 @@ shared_examples_for "documentation on faces" do
       it "should support multiple authors" do
 
         authors.each {|name| subject.author name }
-        subject.authors.should =~ authors
+        expect(subject.authors).to match_array(authors)
 
-        subject.author.should == authors.join("\n")
+        expect(subject.author).to eq(authors.join("\n"))
       end
 
       it "should reject author as an array" do
@@ -145,19 +145,19 @@ shared_examples_for "documentation on faces" do
     context "#author=" do
       it "should accept a single name" do
         subject.author = "Fred"
-        subject.author.should == "Fred"
+        expect(subject.author).to eq("Fred")
       end
 
       it "should accept an array of names" do
         subject.author = authors
-        subject.authors.should =~ authors
-        subject.author.should == authors.join("\n")
+        expect(subject.authors).to match_array(authors)
+        expect(subject.author).to eq(authors.join("\n"))
       end
 
       it "should not append when set multiple times" do
         subject.author = "Fred"
         subject.author = "John"
-        subject.author.should == "John"
+        expect(subject.author).to eq("John")
       end
 
       it "should reject arrays with embedded newlines" do
@@ -169,12 +169,12 @@ shared_examples_for "documentation on faces" do
 
   describe "#license" do
     it "should default to reserving rights" do
-      subject.license.should =~ /All Rights Reserved/
+      expect(subject.license).to match(/All Rights Reserved/)
     end
 
     it "should accept an arbitrary license string on the object" do
       subject.license = "foo"
-      subject.license.should == "foo"
+      expect(subject.license).to eq("foo")
     end
 
     it "should accept symbols to specify existing licenses..."
@@ -189,45 +189,45 @@ shared_examples_for "documentation on faces" do
     [1997, "1997"].each do |year|
       it "should accept an entity name and a #{year.class.name} year" do
         subject.copyright("me", year)
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /#{year}/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/#{year}/)
       end
 
       it "should accept multiple entity names and a #{year.class.name} year" do
         subject.copyright ["me", "you"], year
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /\byou\b/
-        subject.copyright.should =~ /#{year}/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/\byou\b/)
+        expect(subject.copyright).to match(/#{year}/)
       end
     end
 
     ["1997-2003", "1997 - 2003", 1997..2003].each do |range|
       it "should accept a #{range.class.name} range of years" do
         subject.copyright("me", range)
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /1997-2003/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/1997-2003/)
       end
 
       it "should accept a #{range.class.name} range of years" do
         subject.copyright ["me", "you"], range
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /\byou\b/
-        subject.copyright.should =~ /1997-2003/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/\byou\b/)
+        expect(subject.copyright).to match(/1997-2003/)
       end
     end
 
     [[1997, 2003], ["1997", 2003], ["1997", "2003"]].each do |input|
       it "should accept the set of years #{input.inspect} in an array" do
         subject.copyright "me", input
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /1997, 2003/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/1997, 2003/)
       end
 
       it "should accept the set of years #{input.inspect} in an array" do
         subject.copyright ["me", "you"], input
-        subject.copyright.should =~ /\bme\b/
-        subject.copyright.should =~ /\byou\b/
-        subject.copyright.should =~ /1997, 2003/
+        expect(subject.copyright).to match(/\bme\b/)
+        expect(subject.copyright).to match(/\byou\b/)
+        expect(subject.copyright).to match(/1997, 2003/)
       end
     end
 
@@ -239,8 +239,8 @@ shared_examples_for "documentation on faces" do
     it "should accept complex copyright years" do
       years = [1997, 1999, 2000..2002, 2005].reverse
       subject.copyright "me", years
-      subject.copyright.should =~ /\bme\b/
-      subject.copyright.should =~ /1997, 1999, 2000-2002, 2005/
+      expect(subject.copyright).to match(/\bme\b/)
+      expect(subject.copyright).to match(/1997, 1999, 2000-2002, 2005/)
     end
   end
 
@@ -248,15 +248,15 @@ shared_examples_for "documentation on faces" do
   [:name, :options, :synopsis].each do |attr|
     describe "##{attr}" do
       it "should not allow you to set #{attr}" do
-        subject.should_not respond_to :"#{attr}="
+        expect(subject).not_to respond_to :"#{attr}="
       end
 
       it "should have a #{attr}" do
-        subject.send(attr).should_not be_nil
+        expect(subject.send(attr)).not_to be_nil
       end
 
       it "'s #{attr} should not be empty..." do
-        subject.send(attr).should_not == ''
+        expect(subject.send(attr)).not_to eq('')
       end
     end
   end

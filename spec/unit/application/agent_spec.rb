@@ -38,23 +38,23 @@ describe Puppet::Application::Agent do
   end
 
   it "should operate in agent run_mode" do
-    @puppetd.class.run_mode.name.should == :agent
+    expect(@puppetd.class.run_mode.name).to eq(:agent)
   end
 
   it "should declare a main command" do
-    @puppetd.should respond_to(:main)
+    expect(@puppetd).to respond_to(:main)
   end
 
   it "should declare a onetime command" do
-    @puppetd.should respond_to(:onetime)
+    expect(@puppetd).to respond_to(:onetime)
   end
 
   it "should declare a fingerprint command" do
-    @puppetd.should respond_to(:fingerprint)
+    expect(@puppetd).to respond_to(:fingerprint)
   end
 
   it "should declare a preinit block" do
-    @puppetd.should respond_to(:preinit)
+    expect(@puppetd).to respond_to(:preinit)
   end
 
   describe "in preinit" do
@@ -67,31 +67,31 @@ describe Puppet::Application::Agent do
     it "should init fqdn to nil" do
       @puppetd.preinit
 
-      @puppetd.options[:fqdn].should be_nil
+      expect(@puppetd.options[:fqdn]).to be_nil
     end
 
     it "should init serve to []" do
       @puppetd.preinit
 
-      @puppetd.options[:serve].should == []
+      expect(@puppetd.options[:serve]).to eq([])
     end
 
     it "should use SHA256 as default digest algorithm" do
       @puppetd.preinit
 
-      @puppetd.options[:digest].should == 'SHA256'
+      expect(@puppetd.options[:digest]).to eq('SHA256')
     end
 
     it "should not fingerprint by default" do
       @puppetd.preinit
 
-      @puppetd.options[:fingerprint].should be_falsey
+      expect(@puppetd.options[:fingerprint]).to be_falsey
     end
 
     it "should init waitforcert to nil" do
       @puppetd.preinit
 
-      @puppetd.options[:waitforcert].should be_nil
+      expect(@puppetd.options[:waitforcert]).to be_nil
     end
   end
 
@@ -102,13 +102,13 @@ describe Puppet::Application::Agent do
 
     [:enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
-        @puppetd.should respond_to("handle_#{option}".to_sym)
+        expect(@puppetd).to respond_to("handle_#{option}".to_sym)
       end
 
       it "should store argument value when calling handle_#{option}" do
         @puppetd.send("handle_#{option}".to_sym, 'arg')
 
-        @puppetd.options[option].should == 'arg'
+        expect(@puppetd.options[option]).to eq('arg')
       end
     end
 
@@ -116,13 +116,13 @@ describe Puppet::Application::Agent do
       it "should set disable to true" do
         @puppetd.handle_disable('')
 
-        @puppetd.options[:disable].should == true
+        expect(@puppetd.options[:disable]).to eq(true)
       end
 
       it "should store disable message" do
         @puppetd.handle_disable('message')
 
-        @puppetd.options[:disable_message].should == 'message'
+        expect(@puppetd.options[:disable_message]).to eq('message')
       end
     end
 
@@ -167,7 +167,7 @@ describe Puppet::Application::Agent do
     it "should put the setdest options to true" do
       @puppetd.handle_logdest("console")
 
-      @puppetd.options[:setdest].should == true
+      expect(@puppetd.options[:setdest]).to eq(true)
     end
 
     it "should parse the log destination from the command line" do
@@ -181,7 +181,7 @@ describe Puppet::Application::Agent do
     it "should store the waitforcert options with --waitforcert" do
       @puppetd.handle_waitforcert("42")
 
-      @puppetd.options[:waitforcert].should == 42
+      expect(@puppetd.options[:waitforcert]).to eq(42)
     end
   end
 
@@ -208,17 +208,17 @@ describe Puppet::Application::Agent do
       it "should set options[:verbose] to true" do
         @puppetd.setup_test
 
-        @puppetd.options[:verbose].should == true
+        expect(@puppetd.options[:verbose]).to eq(true)
       end
       it "should set options[:onetime] to true" do
         Puppet[:onetime] = false
         @puppetd.setup_test
-        Puppet[:onetime].should == true
+        expect(Puppet[:onetime]).to eq(true)
       end
       it "should set options[:detailed_exitcodes] to true" do
         @puppetd.setup_test
 
-        @puppetd.options[:detailed_exitcodes].should == true
+        expect(@puppetd.options[:detailed_exitcodes]).to eq(true)
       end
     end
 
@@ -235,13 +235,13 @@ describe Puppet::Application::Agent do
       it "should set log level to debug if --debug was passed" do
         @puppetd.options[:debug] = true
         @puppetd.setup_logs
-        Puppet::Util::Log.level.should == :debug
+        expect(Puppet::Util::Log.level).to eq(:debug)
       end
 
       it "should set log level to info if --verbose was passed" do
         @puppetd.options[:verbose] = true
         @puppetd.setup_logs
-        Puppet::Util::Log.level.should == :info
+        expect(Puppet::Util::Log.level).to eq(:info)
       end
 
       [:verbose, :debug].each do |level|
@@ -313,12 +313,12 @@ describe Puppet::Application::Agent do
 
     it "should default catalog_terminus setting to 'rest'" do
       @puppetd.initialize_app_defaults
-      Puppet[:catalog_terminus].should ==  :rest
+      expect(Puppet[:catalog_terminus]).to eq(:rest)
     end
 
     it "should default node_terminus setting to 'rest'" do
       @puppetd.initialize_app_defaults
-      Puppet[:node_terminus].should ==  :rest
+      expect(Puppet[:node_terminus]).to eq(:rest)
     end
 
     it "has an application default :catalog_cache_terminus setting of 'json'" do
@@ -346,7 +346,7 @@ describe Puppet::Application::Agent do
 
     it "should default facts_terminus setting to 'facter'" do
       @puppetd.initialize_app_defaults
-      Puppet[:facts_terminus].should == :facter
+      expect(Puppet[:facts_terminus]).to eq(:facter)
     end
 
     it "should create an agent" do
@@ -395,7 +395,7 @@ describe Puppet::Application::Agent do
 
       execute_agent
 
-      @daemon.agent.should == @agent
+      expect(@daemon.agent).to eq(@agent)
     end
 
     it "should daemonize if needed" do

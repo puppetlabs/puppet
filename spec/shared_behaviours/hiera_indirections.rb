@@ -28,18 +28,18 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
   end
 
   it "should be the default data_binding terminus" do
-    Puppet.settings[:data_binding_terminus].should == :hiera
+    expect(Puppet.settings[:data_binding_terminus]).to eq(:hiera)
   end
 
   it "should raise an error if we don't have the hiera feature" do
     Puppet.features.expects(:hiera?).returns(false)
-    lambda { test_klass.new }.should raise_error RuntimeError,
+    expect { test_klass.new }.to raise_error RuntimeError,
       "Hiera terminus not supported without hiera library"
   end
 
   describe "the behavior of the hiera_config method", :if => Puppet.features.hiera? do
     it "should override the logger and set it to puppet" do
-      test_klass.hiera_config[:logger].should == "puppet"
+      expect(test_klass.hiera_config[:logger]).to eq("puppet")
     end
 
     context "when the Hiera configuration file does not exist" do
@@ -58,7 +58,7 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
       it "should only configure the logger and set it to puppet" do
         Puppet.expects(:warning).with(
          "Config file #{path} not found, using Hiera defaults")
-        test_klass.hiera_config.should == { :logger => 'puppet' }
+        expect(test_klass.hiera_config).to eq({ :logger => 'puppet' })
       end
     end
   end
@@ -68,26 +68,26 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
     let(:data_binder) { test_klass.new }
 
     it "should support looking up an integer" do
-      data_binder.find(request("integer")).should == 3000
+      expect(data_binder.find(request("integer"))).to eq(3000)
     end
 
     it "should support looking up a string" do
-      data_binder.find(request("string")).should == 'apache'
+      expect(data_binder.find(request("string"))).to eq('apache')
     end
 
     it "should support looking up an array" do
-      data_binder.find(request("array")).should == [
+      expect(data_binder.find(request("array"))).to eq([
         '0.ntp.puppetlabs.com',
         '1.ntp.puppetlabs.com',
-      ]
+      ])
     end
 
     it "should support looking up a hash" do
-      data_binder.find(request("hash")).should == {
+      expect(data_binder.find(request("hash"))).to eq({
         'user'  => 'Hightower',
         'group' => 'admin',
         'mode'  => '0644'
-      }
+      })
     end
 
     it "raises a data binding error if hiera cannot parse the yaml data" do

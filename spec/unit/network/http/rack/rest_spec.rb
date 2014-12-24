@@ -5,7 +5,7 @@ require 'puppet/network/http/rack/rest'
 
 describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
   it "should include the Puppet::Network::HTTP::Handler module" do
-    Puppet::Network::HTTP::RackREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
+    expect(Puppet::Network::HTTP::RackREST.ancestors).to be_include(Puppet::Network::HTTP::Handler)
   end
 
   describe "when serving a request" do
@@ -43,31 +43,31 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         req = mk_req('/', {'HTTP_Accept' => 'myaccept',
                            'HTTP_X_Custom_Header' => 'mycustom',
                            'NOT_HTTP_foo' => 'not an http header'})
-        @handler.headers(req).should == {"accept" => 'myaccept',
+        expect(@handler.headers(req)).to eq({"accept" => 'myaccept',
                                          "x-custom-header" => 'mycustom',
-                                         "content-type" => nil }
+                                         "content-type" => nil })
       end
     end
 
     describe "and using the HTTP Handler interface" do
       it "should return the CONTENT_TYPE parameter as the content type header" do
         req = mk_req('/', 'CONTENT_TYPE' => 'mycontent')
-        @handler.headers(req)['content-type'].should == "mycontent"
+        expect(@handler.headers(req)['content-type']).to eq("mycontent")
       end
 
       it "should use the REQUEST_METHOD as the http method" do
         req = mk_req('/', :method => 'MYMETHOD')
-        @handler.http_method(req).should == "MYMETHOD"
+        expect(@handler.http_method(req)).to eq("MYMETHOD")
       end
 
       it "should return the request path as the path" do
         req = mk_req('/foo/bar')
-        @handler.path(req).should == "/foo/bar"
+        expect(@handler.path(req)).to eq("/foo/bar")
       end
 
       it "should return the request body as the body" do
         req = mk_req('/foo/bar', :input => 'mybody')
-        @handler.body(req).should == "mybody"
+        expect(@handler.body(req)).to eq("mybody")
       end
 
       it "should return the an Puppet::SSL::Certificate instance as the client_cert" do
@@ -78,7 +78,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "returns nil when SSL_CLIENT_CERT is empty" do
         req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => '')
 
-        @handler.client_cert(req).should be_nil
+        expect(@handler.client_cert(req)).to be_nil
       end
 
       it "should set the response's content-type header when setting the content type" do
@@ -139,84 +139,84 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should include the HTTP request parameters, with the keys as symbols" do
         req = mk_req('/?foo=baz&bar=xyzzy')
         result = @handler.params(req)
-        result[:foo].should == "baz"
-        result[:bar].should == "xyzzy"
+        expect(result[:foo]).to eq("baz")
+        expect(result[:bar]).to eq("xyzzy")
       end
 
       it "should return multi-values params as an array of the values" do
         req = mk_req('/?foo=baz&foo=xyzzy')
         result = @handler.params(req)
-        result[:foo].should == ["baz", "xyzzy"]
+        expect(result[:foo]).to eq(["baz", "xyzzy"])
       end
 
       it "should return parameters from the POST body" do
         req = mk_req("/", :method => 'POST', :input => 'foo=baz&bar=xyzzy')
         result = @handler.params(req)
-        result[:foo].should == "baz"
-        result[:bar].should == "xyzzy"
+        expect(result[:foo]).to eq("baz")
+        expect(result[:bar]).to eq("xyzzy")
       end
 
       it "should not return multi-valued params in a POST body as an array of values" do
         req = mk_req("/", :method => 'POST', :input => 'foo=baz&foo=xyzzy')
         result = @handler.params(req)
-        result[:foo].should be_one_of("baz", "xyzzy")
+        expect(result[:foo]).to be_one_of("baz", "xyzzy")
       end
 
       it "should CGI-decode the HTTP parameters" do
         encoding = CGI.escape("foo bar")
         req = mk_req("/?foo=#{encoding}")
         result = @handler.params(req)
-        result[:foo].should == "foo bar"
+        expect(result[:foo]).to eq("foo bar")
       end
 
       it "should convert the string 'true' to the boolean" do
         req = mk_req("/?foo=true")
         result = @handler.params(req)
-        result[:foo].should be_truthy
+        expect(result[:foo]).to be_truthy
       end
 
       it "should convert the string 'false' to the boolean" do
         req = mk_req("/?foo=false")
         result = @handler.params(req)
-        result[:foo].should be_falsey
+        expect(result[:foo]).to be_falsey
       end
 
       it "should convert integer arguments to Integers" do
         req = mk_req("/?foo=15")
         result = @handler.params(req)
-        result[:foo].should == 15
+        expect(result[:foo]).to eq(15)
       end
 
       it "should convert floating point arguments to Floats" do
         req = mk_req("/?foo=1.5")
         result = @handler.params(req)
-        result[:foo].should == 1.5
+        expect(result[:foo]).to eq(1.5)
       end
 
       it "should treat YAML encoded parameters like it was any string" do
         escaping = CGI.escape(YAML.dump(%w{one two}))
         req = mk_req("/?foo=#{escaping}")
-        @handler.params(req)[:foo].should == "---\n- one\n- two\n"
+        expect(@handler.params(req)[:foo]).to eq("---\n- one\n- two\n")
       end
 
       it "should not allow the client to set the node via the query string" do
         req = mk_req("/?node=foo")
-        @handler.params(req)[:node].should be_nil
+        expect(@handler.params(req)[:node]).to be_nil
       end
 
       it "should not allow the client to set the IP address via the query string" do
         req = mk_req("/?ip=foo")
-        @handler.params(req)[:ip].should be_nil
+        expect(@handler.params(req)[:ip]).to be_nil
       end
 
       it "should pass the client's ip address to model find" do
         req = mk_req("/", 'REMOTE_ADDR' => 'ipaddress')
-        @handler.params(req)[:ip].should == "ipaddress"
+        expect(@handler.params(req)[:ip]).to eq("ipaddress")
       end
 
       it "should set 'authenticated' to false if no certificate is present" do
         req = mk_req('/')
-        @handler.params(req)[:authenticated].should be_falsey
+        expect(@handler.params(req)[:authenticated]).to be_falsey
       end
     end
 
@@ -224,54 +224,54 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should retrieve the hostname by finding the CN given in :ssl_client_header, in the format returned by Apache (RFC2253)" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => "O=Foo\\, Inc,CN=host.domain.com")
-        @handler.params(req)[:node].should == "host.domain.com"
+        expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should retrieve the hostname by finding the CN given in :ssl_client_header, in the format returned by nginx" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => "/CN=host.domain.com")
-        @handler.params(req)[:node].should == "host.domain.com"
+        expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should retrieve the hostname by finding the CN given in :ssl_client_header, ignoring other fields" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => 'ST=Denial,CN=host.domain.com,O=Domain\\, Inc.')
-        @handler.params(req)[:node].should == "host.domain.com"
+        expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should use the :ssl_client_header to determine the parameter for checking whether the host certificate is valid" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => "SUCCESS", "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_truthy
+        expect(@handler.params(req)[:authenticated]).to be_truthy
       end
 
       it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => "whatever", "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_falsey
+        expect(@handler.params(req)[:authenticated]).to be_falsey
       end
 
       it "should consider the host unauthenticated if no certificate information is present" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
         req = mk_req('/', "myheader" => nil, "certheader" => "CN=host.domain.com")
-        @handler.params(req)[:authenticated].should be_falsey
+        expect(@handler.params(req)[:authenticated]).to be_falsey
       end
 
       it "should resolve the node name with an ip address look-up if no certificate is present" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => nil)
         @handler.expects(:resolve_node).returns("host.domain.com")
-        @handler.params(req)[:node].should == "host.domain.com"
+        expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should resolve the node name with an ip address look-up if a certificate without a CN is present" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => "O=no CN")
         @handler.expects(:resolve_node).returns("host.domain.com")
-        @handler.params(req)[:node].should == "host.domain.com"
+        expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should not allow authentication via the verify header if there is no CN available" do
@@ -281,7 +281,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
         @handler.expects(:resolve_node).returns("host.domain.com")
 
-        @handler.params(req)[:authenticated].should be_falsey
+        expect(@handler.params(req)[:authenticated]).to be_falsey
       end
     end
   end
@@ -295,20 +295,20 @@ describe Puppet::Network::HTTP::RackREST::RackFile do
   end
 
   it "should have an each method" do
-    @rackfile.should be_respond_to(:each)
+    expect(@rackfile).to be_respond_to(:each)
   end
 
   it "should yield file chunks by chunks" do
     @file.expects(:read).times(3).with(8192).returns("1", "2", nil)
     i = 1
     @rackfile.each do |chunk|
-      chunk.to_i.should == i
+      expect(chunk.to_i).to eq(i)
       i += 1
     end
   end
 
   it "should have a close method" do
-    @rackfile.should be_respond_to(:close)
+    expect(@rackfile).to be_respond_to(:close)
   end
 
   it "should delegate close to File close" do

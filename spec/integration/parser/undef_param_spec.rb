@@ -12,7 +12,7 @@ describe "Parameter passing" do
 
   def expect_the_message_to_be(message, node = Puppet::Node.new('the node'))
     catalog = compile_to_catalog(yield, node)
-    catalog.resource('Notify', 'something')[:message].should == message
+    expect(catalog.resource('Notify', 'something')[:message]).to eq(message)
   end
 
   def expect_puppet_error(message, node = Puppet::Node.new('the node'))

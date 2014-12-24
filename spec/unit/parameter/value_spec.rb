@@ -5,82 +5,82 @@ require 'puppet/parameter'
 
 describe Puppet::Parameter::Value do
   it "should require a name" do
-    lambda { Puppet::Parameter::Value.new }.should raise_error(ArgumentError)
+    expect { Puppet::Parameter::Value.new }.to raise_error(ArgumentError)
   end
 
   it "should set its name" do
-    Puppet::Parameter::Value.new(:foo).name.should == :foo
+    expect(Puppet::Parameter::Value.new(:foo).name).to eq(:foo)
   end
 
   it "should support regexes as names" do
-    lambda { Puppet::Parameter::Value.new(%r{foo}) }.should_not raise_error
+    expect { Puppet::Parameter::Value.new(%r{foo}) }.not_to raise_error
   end
 
   it "should mark itself as a regex if its name is a regex" do
-    Puppet::Parameter::Value.new(%r{foo}).should be_regex
+    expect(Puppet::Parameter::Value.new(%r{foo})).to be_regex
   end
 
   it "should always convert its name to a symbol if it is not a regex" do
-    Puppet::Parameter::Value.new("foo").name.should == :foo
-    Puppet::Parameter::Value.new(true).name.should == :true
+    expect(Puppet::Parameter::Value.new("foo").name).to eq(:foo)
+    expect(Puppet::Parameter::Value.new(true).name).to eq(:true)
   end
 
   it "should support adding aliases" do
-    Puppet::Parameter::Value.new("foo").should respond_to(:alias)
+    expect(Puppet::Parameter::Value.new("foo")).to respond_to(:alias)
   end
 
   it "should be able to return its aliases" do
     value = Puppet::Parameter::Value.new("foo")
     value.alias("bar")
     value.alias("baz")
-    value.aliases.should == [:bar, :baz]
+    expect(value.aliases).to eq([:bar, :baz])
   end
 
   [:block, :call, :method, :event, :required_features].each do |attr|
     it "should support a #{attr} attribute" do
       value = Puppet::Parameter::Value.new("foo")
-      value.should respond_to(attr.to_s + "=")
-      value.should respond_to(attr)
+      expect(value).to respond_to(attr.to_s + "=")
+      expect(value).to respond_to(attr)
     end
   end
 
   it "should default to :instead for :call if a block is provided" do
-    Puppet::Parameter::Value.new("foo").call.should == :instead
+    expect(Puppet::Parameter::Value.new("foo").call).to eq(:instead)
   end
 
   it "should always return events as symbols" do
     value = Puppet::Parameter::Value.new("foo")
     value.event = "foo_test"
-    value.event.should == :foo_test
+    expect(value.event).to eq(:foo_test)
   end
 
   describe "when matching" do
     describe "a regex" do
       it "should return true if the regex matches the value" do
-        Puppet::Parameter::Value.new(/\w/).should be_match("foo")
+        expect(Puppet::Parameter::Value.new(/\w/)).to be_match("foo")
       end
 
       it "should return false if the regex does not match the value" do
-        Puppet::Parameter::Value.new(/\d/).should_not be_match("foo")
+        expect(Puppet::Parameter::Value.new(/\d/)).not_to be_match("foo")
       end
     end
 
     describe "a non-regex" do
       it "should return true if the value, converted to a symbol, matches the name" do
-        Puppet::Parameter::Value.new("foo").should be_match("foo")
-        Puppet::Parameter::Value.new(:foo).should be_match(:foo)
-        Puppet::Parameter::Value.new(:foo).should be_match("foo")
-        Puppet::Parameter::Value.new("foo").should be_match(:foo)
+        expect(Puppet::Parameter::Value.new("foo")).to be_match("foo")
+        expect(Puppet::Parameter::Value.new(:foo)).to be_match(:foo)
+        expect(Puppet::Parameter::Value.new(:foo)).to be_match("foo")
+        expect(Puppet::Parameter::Value.new("foo")).to be_match(:foo)
       end
 
       it "should return false if the value, converted to a symbol, does not match the name" do
-        Puppet::Parameter::Value.new(:foo).should_not be_match(:bar)
+        expect(Puppet::Parameter::Value.new(:foo)).not_to be_match(:bar)
       end
 
       it "should return true if any of its aliases match" do
         value = Puppet::Parameter::Value.new("foo")
         value.alias("bar")
-        value.should be_match("bar")
+        expect(value).to be_match("bar")
       end
     end
   end

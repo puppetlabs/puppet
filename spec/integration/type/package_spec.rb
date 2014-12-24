@@ -41,14 +41,14 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
   end
 
   it "should have a default provider" do
-    Puppet::Type.type(:package).defaultprovider.should_not be_nil
+    expect(Puppet::Type.type(:package).defaultprovider).not_to be_nil
   end
 
   it "should choose the correct provider each platform" do
     unless default_provider = provider_name(Facter.value(:operatingsystem))
       pending("No default provider specified in this test for #{Facter.value(:operatingsystem)}")
     end
-    Puppet::Type.type(:package).defaultprovider.name.should == default_provider
+    expect(Puppet::Type.type(:package).defaultprovider.name).to eq(default_provider)
   end
 end
 
