@@ -9,10 +9,6 @@ describe Puppet::Util::Feature do
     @features.stubs(:warn)
   end
 
-  it "should consider undefined features to be absent" do
-    expect(@features).not_to be_defined_feature
-  end
-
   it "should be able to add new features" do
     @features.add(:myfeature) {}
     expect(@features).to respond_to(:myfeature?)
