@@ -52,7 +52,7 @@ require 'spec_helper'
 
     it "should handle no default gracefully" do
       @sel.expects(:get_selinux_default_context).with(@path).returns nil
-      @sel.default.must be_nil
+      expect(@sel.default).to be_nil
     end
 
     it "should be able to detect matchpathcon defaults" do
@@ -64,12 +64,12 @@ require 'spec_helper'
         when :seltype; "type_t"
         when :selrange; "s0"
       end
-      @sel.default.must == expectedresult
+      expect(@sel.default).to eq(expectedresult)
     end
 
     it "should return nil for defaults if selinux_ignore_defaults is true" do
       @resource[:selinux_ignore_defaults] = :true
-      @sel.default.must be_nil
+      expect(@sel.default).to be_nil
     end
 
     it "should be able to set a new context" do

@@ -24,7 +24,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   it "should be a subclass of Parameter" do
-    source.superclass.must == Puppet::Parameter
+    expect(source.superclass).to eq(Puppet::Parameter)
   end
 
   describe "#validate" do
@@ -34,11 +34,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     it "should fail if the set values are not URLs" do
       URI.expects(:parse).with('foo').raises RuntimeError
 
-      lambda { resource[:source] = %w{foo} }.must raise_error(Puppet::Error)
+      expect(lambda { resource[:source] = %w{foo} }).to raise_error(Puppet::Error)
     end
 
     it "should fail if the URI is not a local file, file URI, or puppet URI" do
-      lambda { resource[:source] = %w{http://foo/bar} }.must raise_error(Puppet::Error, /Cannot use URLs of type 'http' as source for fileserving/)
+      expect(lambda { resource[:source] = %w{http://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'http' as source for fileserving/)
     end
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
@@ -61,11 +61,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
 
     it "should reject relative URI sources" do
-      lambda { resource[:source] = 'foo/bar' }.must raise_error(Puppet::Error)
+      expect(lambda { resource[:source] = 'foo/bar' }).to raise_error(Puppet::Error)
     end
 
     it "should reject opaque sources" do
-      lambda { resource[:source] = 'mailto:foo@com' }.must raise_error(Puppet::Error)
+      expect(lambda { resource[:source] = 'mailto:foo@com' }).to raise_error(Puppet::Error)
     end
 
     it "should accept URI authority component" do
@@ -178,7 +178,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   it "should have a method for setting the desired values on the resource" do
-    source.new(:resource => @resource).must respond_to(:copy_source_values)
+    expect(source.new(:resource => @resource)).to respond_to(:copy_source_values)
   end
 
   describe "when copying the source values" do
@@ -222,7 +222,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @metadata.stubs(:ftype).returns "file"
 
       @source.copy_source_values
-      @resource[:ensure].must == :file
+      expect(@resource[:ensure]).to eq(:file)
     end
 
     it "should not set 'ensure' if it is already set to 'absent'" do
@@ -230,7 +230,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
       @resource[:ensure] = :absent
       @source.copy_source_values
-      @resource[:ensure].must == :absent
+      expect(@resource[:ensure]).to eq(:absent)
     end
 
     describe "and the source is a file" do
@@ -247,12 +247,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
           @source.copy_source_values
 
-          @resource[:owner].must == 100
-          @resource[:group].must == 200
-          @resource[:mode].must == "173"
+          expect(@resource[:owner]).to eq(100)
+          expect(@resource[:group]).to eq(200)
+          expect(@resource[:mode]).to eq("173")
 
           # Metadata calls it checksum, we call it content.
-          @resource[:content].must == @metadata.checksum
+          expect(@resource[:content]).to eq(@metadata.checksum)
         end
 
         it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
@@ -263,9 +263,9 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @source.copy_source_values
 
-          @resource[:owner].must == 1
-          @resource[:group].must == 2
-          @resource[:mode].must == '173'
+          expect(@resource[:owner]).to eq(1)
+          expect(@resource[:group]).to eq(2)
+          expect(@resource[:mode]).to eq('173')
           expect(@resource[:content]).not_to eq(@metadata.checksum)
         end
 
@@ -299,27 +299,27 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
             @source.copy_source_values
 
-            @resource[:owner].must == 100
-            @resource[:group].must == 200
-            @resource[:mode].must == "173"
+            expect(@resource[:owner]).to eq(100)
+            expect(@resource[:group]).to eq(200)
+            expect(@resource[:mode]).to eq("173")
           end
 
           it "copies the remote owner" do
             @source.copy_source_values
 
-            @resource[:owner].must == 100
+            expect(@resource[:owner]).to eq(100)
           end
 
           it "copies the remote group" do
             @source.copy_source_values
 
-            @resource[:group].must == 200
+            expect(@resource[:group]).to eq(200)
           end
 
           it "copies the remote mode" do
             @source.copy_source_values
 
-            @resource[:mode].must == "173"
+            expect(@resource[:mode]).to eq("173")
           end
         end
 
@@ -333,27 +333,27 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
             @source.copy_source_values
 
-            @resource[:owner].must be_nil
-            @resource[:group].must be_nil
-            @resource[:mode].must be_nil
+            expect(@resource[:owner]).to be_nil
+            expect(@resource[:group]).to be_nil
+            expect(@resource[:mode]).to be_nil
           end
 
           it "preserves the local owner" do
             @source.copy_source_values
 
-            @resource[:owner].must be_nil
+            expect(@resource[:owner]).to be_nil
           end
 
           it "preserves the local group" do
             @source.copy_source_values
 
-            @resource[:group].must be_nil
+            expect(@resource[:group]).to be_nil
           end
 
           it "preserves the local mode" do
             @source.copy_source_values
 
-            @resource[:mode].must be_nil
+            expect(@resource[:mode]).to be_nil
           end
         end
       end
@@ -369,27 +369,27 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @source.copy_source_values
 
-          @resource[:owner].must be_nil
-          @resource[:group].must be_nil
-          @resource[:mode].must be_nil
+          expect(@resource[:owner]).to be_nil
+          expect(@resource[:group]).to be_nil
+          expect(@resource[:mode]).to be_nil
         end
 
         it "preserves the local owner" do
           @source.copy_source_values
 
-          @resource[:owner].must be_nil
+          expect(@resource[:owner]).to be_nil
         end
 
         it "preserves the local group" do
           @source.copy_source_values
 
-          @resource[:group].must be_nil
+          expect(@resource[:group]).to be_nil
         end
 
         it "preserves the local mode" do
           @source.copy_source_values
 
-          @resource[:mode].must be_nil
+          expect(@resource[:mode]).to be_nil
         end
       end
 
@@ -465,7 +465,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   it "should have a local? method" do
-    source.new(:resource => @resource).must be_respond_to(:local?)
+    expect(source.new(:resource => @resource)).to be_respond_to(:local?)
   end
 
   context "when accessing source properties" do
@@ -483,7 +483,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         ['', "file:", "file://"].each do |prefix|
           it "with prefix '#{prefix}' should be local" do
             resource[:source] = "#{prefix}#{sourcepath}"
-            resource.parameter(:source).must be_local
+            expect(resource.parameter(:source)).to be_local
           end
 
           it "should be able to return the metadata source full path" do
@@ -497,7 +497,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         ['', "file:/", "file:///"].each do |prefix|
           it "should be local with prefix '#{prefix}'" do
             resource[:source] = "#{prefix}#{sourcepath}"
-            resource.parameter(:source).must be_local
+            expect(resource.parameter(:source)).to be_local
           end
 
           it "should be able to return the metadata source full path" do

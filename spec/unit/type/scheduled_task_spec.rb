@@ -4,10 +4,10 @@ require 'spec_helper'
 describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_windows? do
 
   it 'should use name as the namevar' do
-    described_class.new(
+    expect(described_class.new(
       :title   => 'Foo',
       :command => 'C:\Windows\System32\notepad.exe'
-    ).name.must == 'Foo'
+    ).name).to eq('Foo')
   end
 
   describe 'when setting the command' do

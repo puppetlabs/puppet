@@ -311,7 +311,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
   describe ".match" do
     describe "normal records" do
       it "should match when all fields are the same" do
-        described_class.match(record,{resource[:name] => resource}).must == resource
+        expect(described_class.match(record,{resource[:name] => resource})).to eq(resource)
       end
 
       {
@@ -325,14 +325,14 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       }.each_pair do |field, new_value|
         it "should not match a record when #{field} does not match" do
           record[field] = new_value
-          described_class.match(record,{resource[:name] => resource}).must be_falsey
+          expect(described_class.match(record,{resource[:name] => resource})).to be_falsey
         end
       end
     end
 
     describe "special records" do
       it "should match when all fields are the same" do
-        described_class.match(record_special,{resource_special[:name] => resource_special}).must == resource_special
+        expect(described_class.match(record_special,{resource_special[:name] => resource_special})).to eq(resource_special)
       end
 
       {
@@ -342,7 +342,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       }.each_pair do |field, new_value|
         it "should not match a record when #{field} does not match" do
           record_special[field] = new_value
-          described_class.match(record_special,{resource_special[:name] => resource_special}).must be_falsey
+          expect(described_class.match(record_special,{resource_special[:name] => resource_special})).to be_falsey
         end
       end
     end

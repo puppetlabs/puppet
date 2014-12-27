@@ -80,13 +80,13 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         content.stubs(:checksum_type).returns digest_algorithm
         content.should = "this is some content"
 
-        content.should.must == "{#{digest_algorithm}}#{d}"
+        expect(content.should).to eq("{#{digest_algorithm}}#{d}")
       end
 
       it "should not checksum 'absent'" do
         content.should = :absent
 
-        content.should.must == :absent
+        expect(content.should).to eq(:absent)
       end
 
       it "should accept a checksum as the desired content" do
@@ -95,7 +95,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         string = "{#{digest_algorithm}}#{d}"
         content.should = string
 
-        content.should.must == string
+        expect(content.should).to eq(string)
       end
     end
 
@@ -162,7 +162,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     it "should return true if the resource shouldn't be a regular file" do
       resource.expects(:should_be_file?).returns false
       content.should = "foo"
-      content.must be_safe_insync("whatever")
+      expect(content).to be_safe_insync("whatever")
     end
 
     it "should warn that no content will be synced to links when ensure is :present" do
@@ -201,7 +201,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         end
 
         it "should return true if the sum for the current contents is the same as the sum for the desired content" do
-          content.must be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
+          expect(content).to be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
         end
 
         [true, false].product([true, false]).each do |cfg, param|
@@ -237,13 +237,13 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       it "should be insync if the file exists and the content is different" do
         resource.stubs(:stat).returns mock('stat')
 
-        content.must be_safe_insync("whatever")
+        expect(content).to be_safe_insync("whatever")
       end
 
       it "should be insync if the file exists and the content is right" do
         resource.stubs(:stat).returns mock('stat')
 
-        content.must be_safe_insync("something")
+        expect(content).to be_safe_insync("something")
       end
 
       it "should not be insync if the file does not exist" do

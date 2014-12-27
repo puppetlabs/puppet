@@ -15,17 +15,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       expect(this.sort).to eq([a, b, c])
     end
 
-    a.must be < b
-    a.must be < c
-    b.must be > a
-    b.must be < c
-    c.must be > a
-    c.must be > b
+    expect(a).to be < b
+    expect(a).to be < c
+    expect(b).to be > a
+    expect(b).to be < c
+    expect(c).to be > a
+    expect(c).to be > b
 
-    [a, b, c].each {|x| a.must be <= x }
-    [a, b, c].each {|x| c.must be >= x }
+    [a, b, c].each {|x| expect(a).to be <= x }
+    [a, b, c].each {|x| expect(c).to be >= x }
 
-    b.must be_between(a, c)
+    expect(b).to be_between(a, c)
   end
 
   it "should consider a parameter to be valid if it is a valid parameter" do
@@ -42,17 +42,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   it "should be able to retrieve a property by name" do
     resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-    resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
+    expect(resource.property(:fstype)).to be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
   end
 
   it "should be able to retrieve a parameter by name" do
     resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-    resource.parameter(:name).must be_instance_of(Puppet::Type.type(:mount).attrclass(:name))
+    expect(resource.parameter(:name)).to be_instance_of(Puppet::Type.type(:mount).attrclass(:name))
   end
 
   it "should be able to retrieve a property by name using the :parameter method" do
     resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-    resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
+    expect(resource.parameter(:fstype)).to be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
   end
 
   it "should be able to retrieve all set properties" do
@@ -87,7 +87,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should have a method for setting default values for resources" do
-    Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:set_default)
+    expect(Puppet::Type.type(:mount).new(:name => "foo")).to respond_to(:set_default)
   end
 
   it "should do nothing for attributes that have no defaults and no specified value" do
@@ -95,7 +95,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should have a method for adding tags" do
-    Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:tags)
+    expect(Puppet::Type.type(:mount).new(:name => "foo")).to respond_to(:tags)
   end
 
   it "should use the tagging module" do
@@ -121,11 +121,11 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should have a method to know if the resource is exported" do
-    Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:exported?)
+    expect(Puppet::Type.type(:mount).new(:name => "foo")).to respond_to(:exported?)
   end
 
   it "should have a method to know if the resource is virtual" do
-    Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:virtual?)
+    expect(Puppet::Type.type(:mount).new(:name => "foo")).to respond_to(:virtual?)
   end
 
   it "should consider its version to be zero if it has no catalog" do
@@ -190,12 +190,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should use any provided noop value" do
-    Puppet::Type.type(:mount).new(:name => "foo", :noop => true).must be_noop
+    expect(Puppet::Type.type(:mount).new(:name => "foo", :noop => true)).to be_noop
   end
 
   it "should use the global noop value if none is provided" do
     Puppet[:noop] = true
-    Puppet::Type.type(:mount).new(:name => "foo").must be_noop
+    expect(Puppet::Type.type(:mount).new(:name => "foo")).to be_noop
   end
 
   it "should not be noop if in a non-host_config catalog" do
@@ -516,8 +516,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
       it "should use any remaining hash keys as its parameters" do
         resource = Puppet::Type.type(:mount).new(:title => "/foo", :catalog => "foo", :atboot => :yes, :fstype => "boo")
-        resource[:fstype].must == "boo"
-        resource[:atboot].must == :yes
+        expect(resource[:fstype]).to eq("boo")
+        expect(resource[:atboot]).to eq(:yes)
       end
     end
 
@@ -655,7 +655,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should have a class method for converting a hash into a Puppet::Resource instance" do
-    Puppet::Type.type(:mount).must respond_to(:hash2resource)
+    expect(Puppet::Type.type(:mount)).to respond_to(:hash2resource)
   end
 
   describe "when converting a hash to a Puppet::Resource instance" do
@@ -836,11 +836,11 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should be suitable if its type doesn't use providers" do
       type.stubs(:paramclass).with(:provider).returns nil
-      resource.must be_suitable
+      expect(resource).to be_suitable
     end
 
     it "should be suitable if it has a provider which is suitable" do
-      resource.must be_suitable
+      expect(resource).to be_suitable
     end
 
     it "should not be suitable if it has a provider which is not suitable" do
@@ -850,7 +850,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should be suitable if it does not have a provider and there is a default provider" do
       resource.stubs(:provider).returns nil
-      resource.must be_suitable
+      expect(resource).to be_suitable
     end
 
     it "should not be suitable if it doesn't have a provider and there is not default provider" do
@@ -998,7 +998,9 @@ describe Puppet::Type::RelationshipMetaparam do
         :catalog => catalog,
         :ref     => 'resource',
         :line=   => nil,
-        :file=   => nil
+        :line    => nil,
+        :file=   => nil,
+        :file    => nil
     end
 
     let(:param) { Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]}) }
@@ -1027,7 +1029,7 @@ describe Puppet::Type::RelationshipMetaparam do
         expect { param.validate_relationship }.to raise_error do |error|
           expect(error).to be_a Puppet::ResourceError
           expect(error.message).to match %r[Class\[Test\]]
-          expect(error.message).to match %r["in /hitchhikers/guide/to/the/galaxy:42"]
+          expect(error.message).to match %r[/hitchhikers/guide/to/the/galaxy:42]
         end
       end
     end
@@ -1123,8 +1125,8 @@ describe Puppet::Type.metaparamclass(:audit) do
 
       expect { instance[:property] = true }.to_not raise_error
       expect { instance["property"] = true }.to_not raise_error
-      instance.property(:property).must be
-      instance.should(:property).must be_truthy
+      expect(instance.property(:property)).to be
+      expect(instance.should(:property)).to be_truthy
     end
 
     it "should handle proprieties correctly" do
@@ -1135,15 +1137,15 @@ describe Puppet::Type.metaparamclass(:audit) do
 
       instance[:one] = "boo"
       one = instance.property(:one)
-      instance.properties.must == [one]
+      expect(instance.properties).to eq [one]
 
       instance[:three] = "rah"
       three = instance.property(:three)
-      instance.properties.must == [one, three]
+      expect(instance.properties).to eq [one, three]
 
       instance[:two] = "whee"
       two = instance.property(:two)
-      instance.properties.must == [one, two, three]
+      expect(instance.properties).to eq [one, two, three]
     end
 
     it "newattr should handle required features correctly" do
@@ -1164,19 +1166,19 @@ describe Puppet::Type.metaparamclass(:audit) do
         rsrc = type.new(:provider => provider.name, :name => "test#{i}",
                         :none => "a", :one => "b", :two => "c")
 
-        rsrc.should(:none).must be
+        expect(rsrc.should(:none)).to be
 
         if provider.declared_feature? :feature1
-          rsrc.should(:one).must be
+          expect(rsrc.should(:one)).to be
         else
-          rsrc.should(:one).must_not be
+          expect(rsrc.should(:one)).to_not be
           expect(@logs.find {|l| l.message =~ /not managing attribute one/ }).to be
         end
 
         if provider.declared_feature? :feature2
-          rsrc.should(:two).must be
+          expect(rsrc.should(:two)).to be
         else
-          rsrc.should(:two).must_not be
+          expect(rsrc.should(:two)).to_not be
           expect(@logs.find {|l| l.message =~ /not managing attribute two/ }).to be
         end
       end

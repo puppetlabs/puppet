@@ -194,12 +194,12 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true
-      provider.check_allow_dup.must == ["-o"]
+      expect(provider.check_allow_dup).to eq(["-o"])
     end
 
     it "should return an empty array if no dup is allowed" do
       resource[:allowdupe] = :false
-      provider.check_allow_dup.must == []
+      expect(provider.check_allow_dup).to eq([])
     end
   end
 
@@ -213,19 +213,19 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     it "should return an array with a flag if it's a system user" do
       described_class.expects(:system_users?).returns true
       resource[:system] = :true
-      provider.check_system_users.must == ["-r"]
+      expect(provider.check_system_users).to eq(["-r"])
     end
 
     it "should return an empty array if it's not a system user" do
       described_class.expects(:system_users?).returns true
       resource[:system] = :false
-      provider.check_system_users.must == []
+      expect(provider.check_system_users).to eq([])
     end
 
     it "should return an empty array if system user is not featured" do
       described_class.expects(:system_users?).returns false
       resource[:system] = :true
-      provider.check_system_users.must == []
+      expect(provider.check_system_users).to eq([])
     end
   end
 
@@ -316,26 +316,26 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
       described_class.expects(:system_users?).returns true
       resource[:expiry] = "2012-08-18"
-      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '08/18/2012', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
+      expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '08/18/2012', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])
     end
 
     it "should return an array with the full command and expiry as YYYY-MM-DD when not on Solaris" do
       Facter.stubs(:value).with(:operatingsystem).returns 'not_solaris'
       described_class.expects(:system_users?).returns true
       resource[:expiry] = "2012-08-18"
-      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '2012-08-18', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
+      expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '2012-08-18', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])
     end
 
     it "should return an array without -e if expiry is undefined full command" do
       described_class.expects(:system_users?).returns true
-      provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
+      expect(provider.addcmd).to eq(["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"])
     end
 
     it "should pass -e \"\" if the expiry has to be removed" do
       described_class.expects(:system_users?).returns true
       resource[:expiry] = :absent
 
-      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
+      expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])
     end
   end
 
@@ -411,23 +411,23 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should return nil if neither min nor max is set" do
-      provider.passcmd.must be_nil
+      expect(provider.passcmd).to be_nil
     end
 
     it "should return a chage command array with -m <value> and the user name if password_min_age is set" do
       resource[:password_min_age] = 123
-      provider.passcmd.must == ['/usr/bin/chage','-m',123,'myuser']
+      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'myuser'])
     end
 
     it "should return a chage command array with -M <value> if password_max_age is set" do
       resource[:password_max_age] = 999
-      provider.passcmd.must == ['/usr/bin/chage','-M',999,'myuser']
+      expect(provider.passcmd).to eq(['/usr/bin/chage','-M',999,'myuser'])
     end
 
     it "should return a chage command array with -M <value> -m <value> if both password_min_age and password_max_age are set" do
       resource[:password_min_age] = 123
       resource[:password_max_age] = 999
-      provider.passcmd.must == ['/usr/bin/chage','-m',123,'-M',999,'myuser']
+      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'-M',999,'myuser'])
     end
   end
 

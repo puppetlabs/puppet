@@ -633,7 +633,7 @@ describe Puppet::Resource do
     it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
       resource = Puppet::Resource.new("file", basepath+"/my/file")
       result = resource.to_ral
-      result.must be_instance_of(Puppet::Type.type(:file))
+      expect(result).to be_instance_of(Puppet::Type.type(:file))
       expect(result[:path]).to eq(basepath+"/my/file")
     end
 
@@ -641,7 +641,7 @@ describe Puppet::Resource do
       resource = Puppet::Resource.new("foobar", "somename")
       result = resource.to_ral
 
-      result.must be_instance_of(Puppet::Type.type(:component))
+      expect(result).to be_instance_of(Puppet::Type.type(:component))
       expect(result.title).to eq("Foobar[somename]")
     end
   end

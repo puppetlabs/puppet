@@ -863,8 +863,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     it "should add each generated resource to the catalog" do
       catalog.apply do |trans|
-        catalog.resource(:file, File.join(path, "one")).must be_a(described_class)
-        catalog.resource(:file, File.join(path, "two")).must be_a(described_class)
+        expect(catalog.resource(:file, File.join(path, "one"))).to be_a(described_class)
+        expect(catalog.resource(:file, File.join(path, "two"))).to be_a(described_class)
       end
     end
 

@@ -16,7 +16,7 @@ describe provider_class do
     end
 
     it "should run pw with no additional flags when no properties are given" do
-      provider.addcmd.must == [provider_class.command(:pw), "useradd", "testuser"]
+      expect(provider.addcmd).to eq([provider_class.command(:pw), "useradd", "testuser"])
       provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser"], kind_of(Hash))
       provider.create
     end
@@ -108,7 +108,7 @@ describe provider_class do
     it "should run pw with no additional flags" do
       provider = resource.provider
       provider.expects(:exists?).returns true
-      provider.deletecmd.must == [provider_class.command(:pw), "userdel", "testuser"]
+      expect(provider.deletecmd).to eq([provider_class.command(:pw), "userdel", "testuser"])
       provider.expects(:execute).with([provider_class.command(:pw), "userdel", "testuser"])
       provider.delete
     end
@@ -139,7 +139,7 @@ describe provider_class do
     end
 
     it "should run pw with the correct arguments" do
-      provider.modifycmd("uid", 12345).must == [provider_class.command(:pw), "usermod", "testuser", "-u", 12345]
+      expect(provider.modifycmd("uid", 12345)).to eq([provider_class.command(:pw), "usermod", "testuser", "-u", 12345])
       provider.expects(:execute).with([provider_class.command(:pw), "usermod", "testuser", "-u", 12345])
       provider.uid = 12345
     end

@@ -33,11 +33,11 @@ describe Puppet::Type.type(:group) do
   end
 
   it "should have a boolean method for determining if duplicates are allowed" do
-    @class.new(:name => "foo").must respond_to "allowdupe?"
+    expect(@class.new(:name => "foo")).to respond_to "allowdupe?"
   end
 
   it "should have a boolean method for determining if system groups are allowed" do
-    @class.new(:name => "foo").must respond_to "system?"
+    expect(@class.new(:name => "foo")).to respond_to "system?"
   end
 
   it "should call 'create' to create the group" do

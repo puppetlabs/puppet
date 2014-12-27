@@ -10,7 +10,7 @@ describe checksum do
   end
 
   it "should be a parameter" do
-    checksum.superclass.must == Puppet::Parameter
+    expect(checksum.superclass).to eq(Puppet::Parameter)
   end
 
   it "should use its current value when asked to sum content" do

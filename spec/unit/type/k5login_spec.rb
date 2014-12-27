@@ -41,7 +41,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
     context "when the file is missing" do
       it "should initially be absent" do
         File.delete(path)
-        resource.retrieve[:ensure].must == :absent
+        expect(resource.retrieve[:ensure]).to eq(:absent)
       end
 
       it "should create the file when synced" do

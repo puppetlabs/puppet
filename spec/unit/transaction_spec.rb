@@ -322,7 +322,7 @@ describe Puppet::Transaction do
       transaction.evaluate
 
       generated.each do |res|
-        res.must be_tagged(*generator.tags)
+        expect(res).to be_tagged(*generator.tags)
       end
     end
   end

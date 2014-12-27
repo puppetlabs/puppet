@@ -193,14 +193,14 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
       it "doesn't match the record to the resource" do
         record = {:name => :one, :user => 'notroot', :record_type => :crontab}
-        subject.resource_for_record(record, resources).must be_nil
+        expect(subject.resource_for_record(record, resources)).to be_nil
       end
     end
 
     describe "with a record with a matching name and matching user" do
       it "matches the record to the resource" do
         record = {:name => :two, :target => 'nobody', :command => '/bin/false'}
-        subject.resource_for_record(record, resources).must == second_resource
+        expect(subject.resource_for_record(record, resources)).to eq(second_resource)
       end
     end
   end

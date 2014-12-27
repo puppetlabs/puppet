@@ -268,12 +268,12 @@ describe Puppet::Type.type(:file) do
   describe "#exist?" do
     it "should be considered existent if it can be stat'ed" do
       file.expects(:stat).returns mock('stat')
-      file.must be_exist
+      expect(file).to be_exist
     end
 
     it "should be considered nonexistent if it can not be stat'ed" do
       file.expects(:stat).returns nil
-      file.must_not be_exist
+      expect(file).to_not be_exist
     end
   end
 
@@ -381,7 +381,7 @@ describe Puppet::Type.type(:file) do
     it "should create a new resource relative to the parent" do
       child = file.newchild('bar')
 
-      child.must be_a(described_class)
+      expect(child).to be_a(described_class)
       expect(child[:path]).to eq(File.join(file[:path], 'bar'))
     end
 
@@ -430,19 +430,19 @@ describe Puppet::Type.type(:file) do
 
   describe "#purge?" do
     it "should return false if purge is not set" do
-      file.must_not be_purge
+      expect(file).to_not be_purge
     end
 
     it "should return true if purge is set to true" do
       file[:purge] = true
 
-      file.must be_purge
+      expect(file).to be_purge
     end
 
     it "should return false if purge is set to false" do
       file[:purge] = false
 
-      file.must_not be_purge
+      expect(file).to_not be_purge
     end
   end
 
@@ -548,17 +548,17 @@ describe Puppet::Type.type(:file) do
   describe "#recurse?" do
     it "should be true if recurse is true" do
       file[:recurse] = true
-      file.must be_recurse
+      expect(file).to be_recurse
     end
 
     it "should be true if recurse is remote" do
       file[:recurse] = :remote
-      file.must be_recurse
+      expect(file).to be_recurse
     end
 
     it "should be false if recurse is false" do
       file[:recurse] = false
-      file.must_not be_recurse
+      expect(file).to_not be_recurse
     end
   end
 
@@ -966,44 +966,44 @@ describe Puppet::Type.type(:file) do
 
   describe "#should_be_file?" do
     it "should have a method for determining if the file should be a normal file" do
-      file.must respond_to(:should_be_file?)
+      expect(file).to respond_to(:should_be_file?)
     end
 
     it "should be a file if :ensure is set to :file" do
       file[:ensure] = :file
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should be a file if :ensure is set to :present and the file exists as a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "file"))
       file[:ensure] = :present
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should not be a file if :ensure is set to something other than :file" do
       file[:ensure] = :directory
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
 
     it "should not be a file if :ensure is set to :present and the file exists but is not a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "directory"))
       file[:ensure] = :present
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
 
     it "should be a file if :ensure is not set and :content is" do
       file[:content] = "foo"
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should be a file if neither :ensure nor :content is set but the file exists as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "file"))
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should not be a file if neither :ensure nor :content is set but the file exists but not as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "directory"))
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
   end
 
@@ -1248,9 +1248,9 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
-        reqs.size.must == 1
-        reqs[0].source.must == file
-        reqs[0].target.must == link
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(file)
+        expect(reqs[0].target).to eq(link)
       end
 
       it "should require file resource when specified with the ensure property" do
@@ -1259,9 +1259,9 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
-        reqs.size.must == 1
-        reqs[0].source.must == file
-        reqs[0].target.must == link
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(file)
+        expect(reqs[0].target).to eq(link)
       end
 
       it "should not require target if target is not managed", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
@@ -1277,8 +1277,8 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource dir
         reqs = file.autorequire
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
+        expect(reqs[0].source).to eq(dir)
+        expect(reqs[0].target).to eq(file)
       end
 
       it "should autorequire its nearest ancestor directory" do
@@ -1288,9 +1288,9 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource dir
         catalog.add_resource grandparent
         reqs = file.autorequire
-        reqs.length.must == 1
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
+        expect(reqs.length).to eq(1)
+        expect(reqs[0].source).to eq(dir)
+        expect(reqs[0].target).to eq(file)
       end
 
       it "should not autorequire anything when there is no nearest ancestor directory" do
@@ -1312,8 +1312,8 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource file
             catalog.add_resource dir
             reqs = file.autorequire
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+            expect(reqs[0].source).to eq(dir)
+            expect(reqs[0].target).to eq(file)
           end
 
           it "should autorequire its nearest ancestor directory" do
@@ -1324,9 +1324,9 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource dir
             catalog.add_resource grandparent
             reqs = file.autorequire
-            reqs.length.must == 1
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+            expect(reqs.length).to eq(1)
+            expect(reqs[0].source).to eq(dir)
+            expect(reqs[0].target).to eq(file)
           end
 
           it "should not autorequire anything when there is no nearest ancestor directory" do

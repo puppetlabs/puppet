@@ -72,7 +72,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      find_vertex(graph, :whit, "completed_thing").must be_a(Puppet::Type.type(:whit))
+      expect(find_vertex(graph, :whit, "completed_thing")).to be_a(Puppet::Type.type(:whit))
     end
 
     it "should replace dependencies on the resource with dependencies on the sentinel" do

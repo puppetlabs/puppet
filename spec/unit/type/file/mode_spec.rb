@@ -73,19 +73,19 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should return true if the mode is correct" do
       FileUtils.touch(path)
 
-      mode.must be_insync('644')
+      expect(mode).to be_insync('644')
     end
 
     it "should return false if the mode is incorrect" do
       FileUtils.touch(path)
 
-      mode.must_not be_insync('755')
+      expect(mode).to_not be_insync('755')
     end
 
     it "should return true if the file is a link and we are managing links", :if => Puppet.features.manages_symlinks? do
       Puppet::FileSystem.symlink('anything', path)
 
-      mode.must be_insync('644')
+      expect(mode).to be_insync('644')
     end
 
     describe "with a symbolic mode" do
@@ -95,19 +95,19 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       it "should return true if the mode matches, regardless of other bits" do
         FileUtils.touch(path)
 
-        mode_sym.must be_insync('644')
+        expect(mode_sym).to be_insync('644')
       end
 
       it "should return false if the mode requires 0's where there are 1's" do
         FileUtils.touch(path)
 
-        mode_sym.must_not be_insync('624')
+        expect(mode_sym).to_not be_insync('624')
       end
 
       it "should return false if the mode requires 1's where there are 0's" do
         FileUtils.touch(path)
 
-        mode_sym.must_not be_insync('044')
+        expect(mode_sym).to_not be_insync('044')
       end
     end
   end

@@ -70,8 +70,8 @@ describe 'function for dynamically creating resources' do
       rg = compile_to_relationship_graph("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>'Notify[test]'}})")
       test  = rg.vertices.find { |v| v.title == 'test' }
       foo   = rg.vertices.find { |v| v.title == 'foo' }
-      test.must be
-      foo.must be
+      expect(test).to be
+      expect(foo).to be
       expect(rg.path_between(test,foo)).to be
     end
 
@@ -132,8 +132,8 @@ describe 'function for dynamically creating resources' do
 
       test = rg.vertices.find { |v| v.title == 'test' }
       blah = rg.vertices.find { |v| v.title == 'blah' }
-      test.must be
-      blah.must be
+      expect(test).to be
+      expect(blah).to be
       expect(rg.path_between(test,blah)).to be
     end
 
@@ -185,8 +185,8 @@ describe 'function for dynamically creating resources' do
 
       test   = rg.vertices.find { |v| v.title == 'test' }
       tester = rg.vertices.find { |v| v.title == 'tester' }
-      test.must be
-      tester.must be
+      expect(test).to be
+      expect(tester).to be
       expect(rg.path_between(tester,test)).to be
     end
 

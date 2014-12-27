@@ -151,14 +151,14 @@ describe Puppet::Property do
   describe "when defining new values" do
     it "should define a method for each value created with a block that's not a regex" do
       subclass.newvalue(:foo) { }
-      property.must respond_to(:set_foo)
+      expect(property).to respond_to(:set_foo)
     end
   end
 
   describe "when assigning the value" do
     it "should just set the 'should' value" do
       property.value = "foo"
-      property.should.must == "foo"
+      expect(property.should).to eq("foo")
     end
 
     it "should validate each value separately" do
@@ -176,7 +176,7 @@ describe Puppet::Property do
       subclass.array_matching = :all
 
       property.value = %w{one two}
-      property.should.must == [:one, :two]
+      expect(property.should).to eq([:one, :two])
     end
 
     it "should return any set value" do
@@ -186,19 +186,19 @@ describe Puppet::Property do
 
   describe "when returning the value" do
     it "should return nil if no value is set" do
-      property.should.must be_nil
+      expect(property.should).to be_nil
     end
 
     it "should return the first set 'should' value if :array_matching is set to :first" do
       subclass.array_matching = :first
       property.should = %w{one two}
-      property.should.must == "one"
+      expect(property.should).to eq("one")
     end
 
     it "should return all set 'should' values as an array if :array_matching is set to :all" do
       subclass.array_matching = :all
       property.should = %w{one two}
-      property.should.must == %w{one two}
+      expect(property.should).to eq(%w{one two})
     end
 
     it "should default to :first array_matching" do
@@ -210,7 +210,7 @@ describe Puppet::Property do
       subclass.array_matching = :first
       property.should = %w{one two}
 
-      property.should.must == :one
+      expect(property.should).to eq(:one)
     end
 
     it "should unmunge all the returned values if :array_matching is set to :all" do
@@ -218,7 +218,7 @@ describe Puppet::Property do
       subclass.array_matching = :all
       property.should = %w{one two}
 
-      property.should.must == [:one, :two]
+      expect(property.should).to eq([:one, :two])
     end
   end
 
@@ -406,7 +406,7 @@ describe Puppet::Property do
     [[], [12], [12, 13]].each do |input|
       it "should return true if should is empty with is => #{input.inspect}" do
         property.should = []
-        property.must be_insync(input)
+        expect(property).to be_insync(input)
       end
     end
   end
@@ -424,32 +424,32 @@ describe Puppet::Property do
         before :each do property.should = [1, 2] end
 
         it "should match if is exactly matches" do
-          property.must be_insync [1, 2]
+          expect(property).to be_insync [1, 2]
         end
 
         it "should match if it matches, but all stringified" do
-          property.must be_insync ["1", "2"]
+          expect(property).to be_insync ["1", "2"]
         end
 
         it "should not match if some-but-not-all values are stringified" do
-          property.must_not be_insync ["1", 2]
-          property.must_not be_insync [1, "2"]
+          expect(property).to_not be_insync ["1", 2]
+          expect(property).to_not be_insync [1, "2"]
         end
 
         it "should not match if order is different but content the same" do
-          property.must_not be_insync [2, 1]
+          expect(property).to_not be_insync [2, 1]
         end
 
         it "should not match if there are more items in should than is" do
-          property.must_not be_insync [1]
+          expect(property).to_not be_insync [1]
         end
 
         it "should not match if there are less items in should than is" do
-          property.must_not be_insync [1, 2, 3]
+          expect(property).to_not be_insync [1, 2, 3]
         end
 
         it "should not match if `is` is empty but `should` isn't" do
-          property.must_not be_insync []
+          expect(property).to_not be_insync []
         end
       end
     end
@@ -469,25 +469,25 @@ describe Puppet::Property do
       ].each do |input|
         it "should by true if one unmodified should value of #{input.inspect} matches what is" do
           property.should = input
-          property.must be_insync 1
+          expect(property).to be_insync 1
         end
 
         it "should be true if one stringified should value of #{input.inspect} matches what is" do
           property.should = input
-          property.must be_insync "1"
+          expect(property).to be_insync "1"
         end
       end
 
       it "should not match if we expect a string but get the non-stringified value" do
         property.should = ["1"]
-        property.must_not be_insync 1
+        expect(property).to_not be_insync 1
       end
 
       [[0], [0, 2]].each do |input|
         it "should not match if no should values match what is" do
           property.should = input
-          property.must_not be_insync 1
-          property.must_not be_insync "1" # shouldn't match either.
+          expect(property).to_not be_insync 1
+          expect(property).to_not be_insync "1" # shouldn't match either.
         end
       end
     end

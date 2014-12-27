@@ -525,8 +525,8 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       @catalog.add_resource @resource
       req = @resource.autorequire
       expect(req.size).to eq(1)
-      req[0].target.must == @resource
-      req[0].source.must == @user_alice
+      expect(req[0].target).to eq(@resource)
+      expect(req[0].source).to eq(@user_alice)
     end
   end
 

@@ -75,12 +75,12 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
       it "should convert number-looking strings into actual numbers" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "300"
-        prop.should.must == 300
+        expect(prop.should).to eq(300)
       end
       it "should support integers as a value" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = 300
-        prop.should.must == 300
+        expect(prop.should).to eq(300)
       end
       it "should raise an error for non-integer values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
@@ -94,12 +94,12 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
       it "should convert boolean-looking false strings into actual booleans" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "false"
-        prop.should.must == :false
+        expect(prop.should).to eq(:false)
       end
       it "should convert boolean-looking true strings into actual booleans" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "true"
-        prop.should.must == :true
+        expect(prop.should).to eq(:true)
       end
       it "should raise an error for non-boolean values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)

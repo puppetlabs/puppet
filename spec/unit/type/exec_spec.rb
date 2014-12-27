@@ -751,15 +751,15 @@ describe Puppet::Type.type(:exec) do
     end
 
     it "should accept a relative command with a path" do
-      type.new(:command => rel, :path => path).must be
+      expect(type.new(:command => rel, :path => path)).to be
     end
 
     it "should accept an absolute command with no path" do
-      type.new(:command => abs).must be
+      expect(type.new(:command => abs)).to be
     end
 
     it "should accept an absolute command with a path" do
-      type.new(:command => abs, :path => path).must be
+      expect(type.new(:command => abs, :path => path)).to be
     end
   end
   describe "when providing a umask" do

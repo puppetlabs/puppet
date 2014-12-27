@@ -8,7 +8,7 @@ list_class = Puppet::Property::List
 describe list_class do
 
   it "should be a subclass of Property" do
-    list_class.superclass.must == Puppet::Property
+    expect(list_class.superclass).to eq(Puppet::Property)
   end
 
   describe "as an instance" do
@@ -63,32 +63,32 @@ describe list_class do
       it "should return true when @resource[membership] == inclusive" do
         @property.stubs(:membership).returns(:membership)
         @resource.stubs(:[]).with(:membership).returns(:inclusive)
-        @property.inclusive?.must == true
+        expect(@property.inclusive?).to eq(true)
       end
 
       it "should return false when @resource[membership] != inclusive" do
         @property.stubs(:membership).returns(:membership)
         @resource.stubs(:[]).with(:membership).returns(:minimum)
-        @property.inclusive?.must == false
+        expect(@property.inclusive?).to eq(false)
       end
     end
 
     describe "when calling should" do
       it "should return nil if @should is nil" do
-        @property.should.must == nil
+        expect(@property.should).to eq(nil)
       end
 
       it "should return the sorted values of @should as a string if inclusive" do
         @property.should = ["foo", "bar"]
         @property.expects(:inclusive?).returns(true)
-        @property.should.must == "bar,foo"
+        expect(@property.should).to eq("bar,foo")
       end
 
       it "should return the uniq sorted values of @should + retrieve as a string if !inclusive" do
         @property.should = ["foo", "bar"]
         @property.expects(:inclusive?).returns(false)
         @property.expects(:retrieve).returns(["foo","baz"])
-        @property.should.must == "bar,baz,foo"
+        expect(@property.should).to eq("bar,baz,foo")
       end
     end
 
@@ -127,12 +127,12 @@ describe list_class do
 
     describe "when calling safe_insync?" do
       it "should return true unless @should is defined and not nil" do
-        @property.must be_safe_insync("foo")
+        expect(@property).to be_safe_insync("foo")
       end
 
       it "should return true unless the passed in values is not nil" do
         @property.should = "foo"
-        @property.must be_safe_insync(nil)
+        expect(@property).to be_safe_insync(nil)
       end
 
       it "should call prepare_is_for_comparison with value passed in and should" do
@@ -145,19 +145,19 @@ describe list_class do
       it "should return true if 'is' value is array of comma delimited should values" do
         @property.should = "bar,foo"
         @property.expects(:inclusive?).returns(true)
-        @property.must be_safe_insync(["bar","foo"])
+        expect(@property).to be_safe_insync(["bar","foo"])
       end
 
       it "should return true if 'is' value is :absent and should value is empty string" do
         @property.should = ""
         @property.expects(:inclusive?).returns(true)
-        @property.must be_safe_insync([])
+        expect(@property).to be_safe_insync([])
       end
 
       it "should return false if prepared value != should value" do
         @property.should = "bar,baz,foo"
         @property.expects(:inclusive?).returns(true)
-        @property.must_not be_safe_insync(["bar","foo"])
+        expect(@property).to_not be_safe_insync(["bar","foo"])
       end
     end
 

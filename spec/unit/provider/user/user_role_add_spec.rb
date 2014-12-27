@@ -180,13 +180,13 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
     it "should add the elements of the keys hash to an array" do
       resource.stubs(:should).returns ""
       resource.expects(:should).with(:keys).returns({ :foo => "bar"})
-      provider.add_properties.must == ["-K", "foo=bar"]
+      expect(provider.add_properties).to eq(["-K", "foo=bar"])
     end
   end
 
   describe "#build_keys_cmd" do
     it "should build cmd array with keypairs separated by -K ending with user" do
-      expect(provider.build_keys_cmd({"foo" => "bar", "baz" => "boo"})).to.eql? ["-K", "foo=bar", "-K", "baz=boo"]
+      expect(provider.build_keys_cmd({"foo" => "bar", "baz" => "boo"})).to eq(["-K", "foo=bar", "-K", "baz=boo"])
     end
   end
 
@@ -237,13 +237,13 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
       @array.stubs(:reject).returns(@array)
       @array.stubs(:collect).returns([["username", "hashedpassword"], ["someoneelse", "theirpassword"]])
       File.stubs(:readlines).with("/etc/shadow").returns(@array)
-      provider.password.must == "hashedpassword"
+      expect(provider.password).to eq("hashedpassword")
     end
 
     it "should get the right password" do
       resource.stubs(:[]).with(:name).returns("username")
       File.stubs(:readlines).with("/etc/shadow").returns(["#comment", "   nonsense", "  ", "username:hashedpassword:stuff:foo:bar:::", "other:pword:yay:::"])
-      provider.password.must == "hashedpassword"
+      expect(provider.password).to eq("hashedpassword")
     end
   end
 

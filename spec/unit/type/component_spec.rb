@@ -39,15 +39,15 @@ describe component do
 
   describe "when building up the path" do
     it "should produce the class name if the component models a class" do
-      component.new(:name => "Class[foo]").pathbuilder.must == ["Foo"]
+      expect(component.new(:name => "Class[foo]").pathbuilder).to eq(["Foo"])
     end
 
     it "should produce the class name even for the class named main" do
-      component.new(:name => "Class[main]").pathbuilder.must == ["Main"]
+      expect(component.new(:name => "Class[main]").pathbuilder).to eq(["Main"])
     end
 
     it "should produce a resource reference if the component does not model a class" do
-      component.new(:name => "Foo[bar]").pathbuilder.must == ["Foo[bar]"]
+      expect(component.new(:name => "Foo[bar]").pathbuilder).to eq(["Foo[bar]"])
     end
   end
 end

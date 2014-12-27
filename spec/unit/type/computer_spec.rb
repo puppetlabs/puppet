@@ -39,7 +39,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     it "should accept :absent as a value" do
       prop = computer.attrclass(property).new(:resource => @resource)
       prop.should = :absent
-      prop.should.must == :absent
+      expect(prop.should).to eq(:absent)
     end
   end
 

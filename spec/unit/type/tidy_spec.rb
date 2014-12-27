@@ -239,7 +239,7 @@ describe tidy do
 
       it "should return true if any pattern matches the last part of the file" do
         @matcher.value = %w{*foo* *bar*}
-        @matcher.must be_tidy("/file/yaybarness", @stat)
+        expect(@matcher).to be_tidy("/file/yaybarness", @stat)
       end
 
       it "should return false if no pattern matches the last part of the file" do
@@ -274,7 +274,7 @@ describe tidy do
       it "should return true if the file is older than the specified age" do
         @stat.expects(:mtime).returns(Time.now - 10)
 
-        @ager.must be_tidy(@basepath, @stat)
+        expect(@ager).to be_tidy(@basepath, @stat)
       end
     end
 
@@ -296,13 +296,13 @@ describe tidy do
       it "should return true if the file is larger than the specified size" do
         @stat.expects(:size).returns(1500) # larger than a kilobyte
 
-        @sizer.must be_tidy(@basepath, @stat)
+        expect(@sizer).to be_tidy(@basepath, @stat)
       end
 
       it "should return true if the file is equal to the specified size" do
         @stat.expects(:size).returns(1024)
 
-        @sizer.must be_tidy(@basepath, @stat)
+        expect(@sizer).to be_tidy(@basepath, @stat)
       end
     end
 
@@ -371,7 +371,7 @@ describe tidy do
 
         @tidy.parameter(:size).stubs(:tidy?).returns true
         @tidy.parameter(:age).stubs(:tidy?).returns false
-        @tidy.must be_tidy(@basepath)
+        expect(@tidy).to be_tidy(@basepath)
       end
 
       it "should tidy a file if age and size are set but only age matches" do
@@ -380,11 +380,11 @@ describe tidy do
 
         @tidy.parameter(:size).stubs(:tidy?).returns false
         @tidy.parameter(:age).stubs(:tidy?).returns true
-        @tidy.must be_tidy(@basepath)
+        expect(@tidy).to be_tidy(@basepath)
       end
 
       it "should tidy all files if neither age nor size is set" do
-        @tidy.must be_tidy(@basepath)
+        expect(@tidy).to be_tidy(@basepath)
       end
 
       it "should sort the results inversely by path length, so files are added to the catalog before their directories" do

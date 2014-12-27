@@ -207,20 +207,20 @@ describe Puppet::Type.type(:user) do
         # this is currently not the case because gid has no default value, so we would never even
         # call insync? on that property
         if param = described_class.new(:name => 'foo').parameter(:gid)
-          param.must be_safe_insync(500)
+          expect(param).to be_safe_insync(500)
         end
       end
 
       it "should return true if any of the specified groups are equal to the current integer" do
         Puppet::Util.expects(:gid).with("foo").returns 300
         Puppet::Util.expects(:gid).with("bar").returns 500
-        described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid).must be_safe_insync(500)
+        expect(described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid)).to be_safe_insync(500)
       end
 
       it "should return false if none of the specified groups are equal to the current integer" do
         Puppet::Util.expects(:gid).with("foo").returns 300
         Puppet::Util.expects(:gid).with("bar").returns 500
-        described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid).must_not be_safe_insync(700)
+        expect(described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid)).to_not be_safe_insync(700)
       end
     end
 
@@ -265,12 +265,12 @@ describe Puppet::Type.type(:user) do
 
       it "should not care about order" do
         @property = described_class.new(:name => 'foo', :groups => [ 'a', 'c', 'b' ]).property(:groups)
-        @property.must be_safe_insync([ 'a', 'b', 'c' ])
-        @property.must be_safe_insync([ 'a', 'c', 'b' ])
-        @property.must be_safe_insync([ 'b', 'a', 'c' ])
-        @property.must be_safe_insync([ 'b', 'c', 'a' ])
-        @property.must be_safe_insync([ 'c', 'a', 'b' ])
-        @property.must be_safe_insync([ 'c', 'b', 'a' ])
+        expect(@property).to be_safe_insync([ 'a', 'b', 'c' ])
+        expect(@property).to be_safe_insync([ 'a', 'c', 'b' ])
+        expect(@property).to be_safe_insync([ 'b', 'a', 'c' ])
+        expect(@property).to be_safe_insync([ 'b', 'c', 'a' ])
+        expect(@property).to be_safe_insync([ 'c', 'a', 'b' ])
+        expect(@property).to be_safe_insync([ 'c', 'b', 'a' ])
       end
 
       it "should merge current value and desired value if membership minimal" do

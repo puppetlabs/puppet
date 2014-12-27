@@ -180,7 +180,7 @@ describe Puppet::Provider do
       subject { provider.new(resource) }
 
       it "should set the resource correctly" do
-        subject.resource.must equal resource
+        expect(subject.resource).to equal resource
       end
 
       it "should set the name from the resource" do
