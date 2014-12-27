@@ -357,6 +357,14 @@ class Puppet::Transaction
 
     not resource.tagged?(*tags)
   end
+
+  # These two methods are only made public to enable the existing spec tests to run
+  # under rspec 3 (apparently rspec 2 didn't enforce access controls?). Please do not
+  # treat these as part of a public API.
+  # Possible future improvement: rewrite to not require access to private methods.
+  public :skip?
+  public :missing_tags?
+
 end
 
 require 'puppet/transaction/report'
