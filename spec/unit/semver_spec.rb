@@ -3,8 +3,10 @@ require 'semver'
 
 describe SemVer do
 
-  describe 'MAX should be +Infinity' do
-    SemVer::MAX.major.infinite?.should == 1
+  describe 'MAX' do
+    it 'should be +Infinity' do
+      expect(SemVer::MAX.major.infinite?).to eq(1)
+    end
   end
 
   describe '::valid?' do

@@ -240,7 +240,11 @@ describe Puppet::Provider do
     }.each do |confines, result|
       it "should confine #{confines.inspect} to #{result}" do
         confines.each {|test, value| subject.confine test => value }
-        subject.send(result ? :should : :should_not, be_suitable)
+        if result
+          expect(subject).to be_suitable
+        else
+          expect(subject).to_not be_suitable
+        end
       end
     end
 
@@ -585,37 +589,54 @@ describe Puppet::Provider do
           type.provider(name)
         end
 
-        let :numeric? do setup[:numeric] ? :should : :should_not end
-        let :alpha?   do setup[:alpha]   ? :should : :should_not end
-
-        subject { provider }
-
-        it { is_expected.to respond_to(:has_features) }
-        it { is_expected.to respond_to(:has_feature) }
-
         context "provider class" do
+          subject { provider }
+
+          it { is_expected.to respond_to(:has_features) }
+          it { is_expected.to respond_to(:has_feature) }
+
           it { is_expected.to respond_to(:nomethods?) }
           it { is_expected.not_to be_nomethods }
 
           it { is_expected.to respond_to(:numeric?) }
-          it { subject.send(numeric?, be_numeric) }
-          it { subject.send(numeric?, be_satisfies(:numeric)) }
+          if setup[:numeric]
+            it { is_expected.to be_numeric }
+            it { is_expected.to be_satisfies(:numeric) }
+          else
+            it { is_expected.not_to be_numeric }
+            it { is_expected.not_to be_satisfies(:numeric) }
+          end
 
           it { is_expected.to respond_to(:alpha?) }
-          it { subject.send(alpha?, be_alpha) }
-          it { subject.send(alpha?, be_satisfies(:alpha)) }
+          if setup[:alpha]
+            it { is_expected.to be_alpha }
+            it { is_expected.to be_satisfies(:alpha) }
+          else
+            it { is_expected.not_to be_alpha }
+            it { is_expected.not_to be_satisfies(:alpha) }
+          end
         end
 
         context "provider instance" do
           subject { provider.new }
 
           it { is_expected.to respond_to(:numeric?) }
-          it { subject.send(numeric?, be_numeric) }
-          it { subject.send(numeric?, be_satisfies(:numeric)) }
+          if setup[:numeric]
+            it { is_expected.to be_numeric }
+            it { is_expected.to be_satisfies(:numeric) }
+          else
+            it { is_expected.not_to be_numeric }
+            it { is_expected.not_to be_satisfies(:numeric) }
+          end
 
           it { is_expected.to respond_to(:alpha?) }
-          it { subject.send(alpha?, be_alpha) }
-          it { subject.send(alpha?, be_satisfies(:alpha)) }
+          if setup[:alpha]
+            it { is_expected.to be_alpha }
+            it { is_expected.to be_satisfies(:alpha) }
+          else
+            it { is_expected.not_to be_alpha }
+            it { is_expected.not_to be_satisfies(:alpha) }
+          end
         end
       end
     end
