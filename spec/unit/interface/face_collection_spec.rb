@@ -30,8 +30,8 @@ describe Puppet::Interface::FaceCollection do
 
   after :all do
     # Restore global state
-    subject.instance_variable_set :@faces, @faces
-    subject.instance_variable_set :@loaded, @faces_loaded
+    described_class.instance_variable_set :@faces, @faces
+    described_class.instance_variable_set :@loaded, @faces_loaded
     $".delete_if { |path| path =~ /face\/.*\.rb$/ }
     @required.each { |path| $".push path unless $".include? path }
     Puppet::Util::Autoload.instance_variable_set(:@loaded, @loaded)
