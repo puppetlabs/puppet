@@ -404,7 +404,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       @containers.all? { |resource_ref| resource_ref == @containers[0] }
     end
 
-    def failure_message_for_should
+    def failure_message
       "expected #{@expected.join(', ')} to all be contained in the same resource but the containment was #{@expected.zip(@containers).collect { |(res, container)| res + ' => ' + container }.join(', ')}"
     end
   end

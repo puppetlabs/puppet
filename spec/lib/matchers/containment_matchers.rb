@@ -24,7 +24,7 @@ module ContainmentMatchers
       end
     end
 
-    def failure_message_for_should
+    def failure_message
       message = "Expected #{@catalog.to_dot} to contain Class #{@containee.inspect} inside of Class #{@container.inspect} but "
 
       missing = []

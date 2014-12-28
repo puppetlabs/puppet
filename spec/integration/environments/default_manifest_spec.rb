@@ -195,11 +195,11 @@ describe "default manifests" do
       actual.resources.map(&:ref).include?(expected)
     end
 
-    def failure_message_for_should
+    def failure_message
       "expected #{@actual.resources.map(&:ref)} to include #{expected}"
     end
 
-    def failure_message_for_should_not
+    def failure_message_when_negated
       "expected #{@actual.resources.map(&:ref)} not to include #{expected}"
     end
   end

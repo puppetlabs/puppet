@@ -36,7 +36,7 @@ module Matchers; module Resource
       @params[name] = value
     end
 
-    def failure_message_for_should
+    def failure_message
       @mismatch
     end
   end
@@ -60,8 +60,8 @@ module Matchers; module Resource
       @matcher.with_parameter(name, value)
     end
 
-    def failure_message_for_should
-      @mismatch.empty? ? @matcher.failure_message_for_should : @mismatch
+    def failure_message
+      @mismatch.empty? ? @matcher.failure_message : @mismatch
     end
   end
   module_function :have_resource

@@ -21,7 +21,7 @@ module Matchers; module Include
     end
 
     failure_message do |enumerable|
-      "did not match #{@not_matched.collect(&:description).join(', ')} in #{enumerable.inspect}: <#{@not_matched.collect(&:failure_message_for_should).join('>, <')}>"
+      "did not match #{@not_matched.collect(&:description).join(', ')} in #{enumerable.inspect}: <#{@not_matched.collect(&:failure_message).join('>, <')}>"
     end
   end
 end; end
