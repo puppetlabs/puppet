@@ -4,7 +4,7 @@ describe "directory environments" do
   let(:args) { ['--configprint', 'modulepath', '--environment', 'direnv'] }
   let(:puppet) do
     app = Puppet::Application[:apply]
-    app.stubs(:command_line).returns(double('command_line', :args => []))
+    app.stubs(:command_line).returns(stub('command_line', :args => []))
     app
   end
 
