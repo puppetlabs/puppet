@@ -16,6 +16,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
   options :password, :method => :sp_pwdp
+  options :loginclass, :flag => '-L', :method => :sp_loginclass
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
       if value == :absent
@@ -34,12 +35,18 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
       end
     }
 
-  [:expiry, :password].each do |shadow_property|
+  [:expiry, :password, :loginclass].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
         if ent = Shadow::Passwd.getspnam(@resource.name)
           method = self.class.option(shadow_property, :method)
-          return unmunge(shadow_property, ent.send(method))
+          # ruby-shadow may not be new enough (< 2.4.1) and therefore lack the
+          # sp_loginclass field.
+          begin
+            return unmunge(shadow_property, ent.send(method))
+          rescue => detail
+            Puppet.warning "ruby-shadow doesn't support #{method}"
+          end
         end
       end
       :absent
@@ -47,8 +54,14 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   end
 
   has_features :manages_homedir, :manages_expiry, :system_users
-  has_features :manages_passwords if Puppet.features.libshadow?
   has_features :manages_shell
+  if Puppet.features.libshadow?
+    has_features :manages_passwords, :manages_loginclass
+  end
+
+  def loginclass=(value)
+    set("loginclass", value)
+  end
 
   def modifycmd(param, value)
     cmd = super

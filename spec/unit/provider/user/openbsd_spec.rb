@@ -15,11 +15,20 @@ describe Puppet::Type.type(:user).provider(:openbsd) do
       :name       => 'myuser',
       :managehome => :false,
       :system     => :false,
+      :loginclass => 'staff',
       :provider   => provider
     )
   end
 
   let(:provider) { described_class.new(:name => 'myuser') }
+
+  let(:shadow_entry) {
+    return unless Puppet.features.libshadow?
+    entry = Struct::PasswdEntry.new
+    entry[:sp_namp]   = 'myuser' # login name
+    entry[:sp_loginclass] = 'staff' # login class
+    entry
+  }
 
   describe "#expiry=" do
     it "should pass expiry to usermod as MM/DD/YY" do
@@ -39,6 +48,29 @@ describe Puppet::Type.type(:user).provider(:openbsd) do
     it "should return an array with the full command and expiry as MM/DD/YY" do
       resource[:expiry] = "1997-06-01"
       provider.addcmd.must == ['/usr/sbin/useradd', '-e', 'June 01 1997', 'myuser']
+    end
+  end
+
+  describe "#loginclass" do
+    before :each do
+      resource
+    end
+
+    it "should return the loginclass if set", :if => Puppet.features.libshadow? do
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+      provider.send(:loginclass).should == 'staff'
+    end
+
+    it "should return the empty string when loginclass isn't set", :if => Puppet.features.libshadow? do
+      shadow_entry[:sp_loginclass] = ''
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+      provider.send(:loginclass).should == ''
+    end
+
+    it "should return nil when loginclass isn't available", :if => Puppet.features.libshadow? do
+      shadow_entry[:sp_loginclass] = nil
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+      provider.send(:loginclass).should be_nil
     end
   end
 end
