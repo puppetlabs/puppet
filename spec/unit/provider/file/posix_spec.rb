@@ -14,7 +14,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       FileUtils.touch(path)
       File.chmod(0644, path)
 
-      provider.mode.should == '644'
+      provider.mode.should == '0644'
     end
 
     it "should return absent if the file doesn't exist" do
@@ -29,12 +29,12 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
       provider.mode = '0755'
 
-      provider.mode.should == '755'
+      provider.mode.should == '0755'
     end
 
     it "should pass along any errors encountered" do
       expect do
-        provider.mode = '644'
+        provider.mode = '0644'
       end.to raise_error(Puppet::Error, /failed to set mode/)
     end
   end
