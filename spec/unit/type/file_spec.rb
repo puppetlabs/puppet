@@ -1383,12 +1383,13 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should manage the mode of the followed link" do
-      pending("Windows cannot presently manage the mode when following symlinks",
-        :if => Puppet.features.microsoft_windows?) do
+      if Puppet.features.microsoft_windows?
+        skip "Windows cannot presently manage the mode when following symlinks"
+      else
         @link_resource[:links] = :follow
         catalog.apply
 
-        (Puppet::FileSystem.stat(@target).mode & 007777).to_s(8).should == '755'
+        expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('755')
       end
     end
   end

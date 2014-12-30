@@ -301,14 +301,13 @@ describe Puppet::Network::AuthStore::Declaration do
 
       issue_7477 = !(IPAddr.new(ip) rescue false)
 
-      it "should match the specified IP" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
-        expect(declaration).to be_match('www.testsite.org',ip)
-      end
-      it "should not match other IPs" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
-        expect(declaration).not_to be_match('www.testsite.org','200.101.99.98')
-      end
+      describe "on rubies with a fix for issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
+        it "should match the specified IP" do
+          expect(declaration).to be_match('www.testsite.org',ip)
+        end
+        it "should not match other IPs" do
+          expect(declaration).not_to be_match('www.testsite.org','200.101.99.98')
+        end
     end
   }
 

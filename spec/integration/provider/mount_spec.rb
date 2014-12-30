@@ -126,22 +126,25 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
               ["local", "journaled"].each do |options_setting|
                 describe "When setting options => #{options_setting}" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
-                    pending("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb", :if => family == "Solaris")
-                    @desired_options = options_setting
-                    run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
-                    expect(@mounted).to eq(expected_final_state)
-                    if expected_fstab_data
-                      expect(check_fstab(expected_fstab_data)).to eq("/dev/disk1s1")
+                    if family == "Solaris"
+                      skip("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb")
                     else
-                      expect(check_fstab(expected_fstab_data)).to eq(nil)
-                    end
-                    if @mounted
-                      if ![:defined, :present].include?(ensure_setting)
-                        expect(@current_options).to eq(@desired_options)
-                      elsif initial_fstab_entry
-                        expect(@current_options).to eq(@desired_options)
+                      @desired_options = options_setting
+                      run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
+                      expect(@mounted).to eq(expected_final_state)
+                      if expected_fstab_data
+                        expect(check_fstab(expected_fstab_data)).to eq("/dev/disk1s1")
                       else
-                        expect(@current_options).to eq('local') #Workaround for #6645
+                        expect(check_fstab(expected_fstab_data)).to eq(nil)
+                      end
+                      if @mounted
+                        if ![:defined, :present].include?(ensure_setting)
+                          expect(@current_options).to eq(@desired_options)
+                        elsif initial_fstab_entry
+                          expect(@current_options).to eq(@desired_options)
+                        else
+                          expect(@current_options).to eq('local') #Workaround for #6645
+                        end
                       end
                     end
                   end
