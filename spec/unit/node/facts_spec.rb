@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+
 require 'spec_helper'
 require 'puppet/node/facts'
 require 'matchers/json'
@@ -98,14 +99,14 @@ describe Puppet::Node::Facts, "when indirecting" do
     describe "when the Puppet application is 'master'" do
       it "should default to the 'yaml' terminus" do
         pending "Cannot test the behavior of defaults in defaults.rb"
-        # Puppet::Node::Facts.indirection.terminus_class.should == :yaml
+        expect(Puppet::Node::Facts.indirection.terminus_class).to eq(:yaml)
       end
     end
 
     describe "when the Puppet application is not 'master'" do
       it "should default to the 'facter' terminus" do
         pending "Cannot test the behavior of defaults in defaults.rb"
-        # Puppet::Node::Facts.indirection.terminus_class.should == :facter
+        expect(Puppet::Node::Facts.indirection.terminus_class).to eq(:facter)
       end
     end
 
