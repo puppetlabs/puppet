@@ -10,7 +10,7 @@ describe resources do
     described_class.reset_system_users_max_uid!
   end
 
-  describe "when initializing" do
+  context "when initializing" do
     it "should fail if the specified resource type does not exist" do
       Puppet::Type.stubs(:type).with { |x| x.to_s.downcase == "resources"}.returns resources
       Puppet::Type.expects(:type).with("nosuchtype").returns nil
@@ -26,7 +26,7 @@ describe resources do
     end
   end
 
-  describe :purge do
+  context "purge" do
     let (:instance) { described_class.new(:name => 'file') }
 
     it "defaults to false" do
@@ -56,8 +56,8 @@ describe resources do
     end
   end
 
-  describe "#check_user purge behaviour" do
-    describe "with unless_system_user => true" do
+  context "#check_user purge behaviour" do
+    context "with unless_system_user => true" do
       before do
         @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
         @res.catalog = Puppet::Resource::Catalog.new
@@ -95,7 +95,7 @@ describe resources do
     end
 
     %w(FreeBSD OpenBSD).each do |os|
-      describe "on #{os}" do
+      context "on #{os}" do
         before :each do
           Facter.stubs(:value).with(:kernel).returns(os)
           Facter.stubs(:value).with(:operatingsystem).returns(os)
@@ -121,7 +121,7 @@ describe resources do
       end
     end
 
-    describe 'with login.defs present' do
+    context 'with login.defs present' do
       before :each do
         Puppet::FileSystem.expects(:exist?).with('/etc/login.defs').returns true
         Puppet::FileSystem.expects(:each_line).with('/etc/login.defs').yields(' UID_MIN         1234 # UID_MIN comment ')
@@ -144,8 +144,8 @@ describe resources do
       end
     end
 
-    describe "with unless_uid" do
-      describe "with a uid array" do
+    context "with unless_uid" do
+      context "with a uid array" do
         before do
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [15_000, 15_001, 15_002]
           @res.catalog = Puppet::Resource::Catalog.new
@@ -167,7 +167,7 @@ describe resources do
 
       end
 
-      describe "with a single integer uid" do
+      context "with a single integer uid" do
         before do
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => 15_000
           @res.catalog = Puppet::Resource::Catalog.new
@@ -188,7 +188,7 @@ describe resources do
         end
       end
 
-      describe "with a single string uid" do
+      context "with a single string uid" do
         before do
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => '15000'
           @res.catalog = Puppet::Resource::Catalog.new
@@ -209,7 +209,7 @@ describe resources do
         end
       end
 
-      describe "with a mixed uid array" do
+      context "with a mixed uid array" do
         before do
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => ['15000', 16_666]
           @res.catalog = Puppet::Resource::Catalog.new
@@ -240,13 +240,13 @@ describe resources do
     end
   end
 
-  describe "#generate" do
+  context "#generate" do
     before do
       @host1 = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
       @catalog = Puppet::Resource::Catalog.new
     end
 
-      describe "when dealing with non-purging resources" do
+      context "when dealing with non-purging resources" do
         before do
           @resources = Puppet::Type.type(:resources).new(:name => 'host')
         end
@@ -256,7 +256,7 @@ describe resources do
         end
       end
 
-      describe "when the catalog contains a purging resource" do
+      context "when the catalog contains a purging resource" do
         before do
           @resources = Puppet::Type.type(:resources).new(:name => 'host', :purge => true)
           @purgeable_resource = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
@@ -282,14 +282,14 @@ describe resources do
           expect(names).not_to be_include("root")
         end
 
-        describe "when generating a purgeable resource" do
+        context "when generating a purgeable resource" do
           it "should be included in the generated resources" do
             Puppet::Type.type(:host).stubs(:instances).returns [@purgeable_resource]
             expect(@resources.generate.collect { |r| r.ref }).to include(@purgeable_resource.ref)
           end
         end
 
-        describe "when the instance's do not have an ensure property" do
+        context "when the instance's do not have an ensure property" do
           it "should not be included in the generated resources" do
             @no_ensure_resource = Puppet::Type.type(:exec).new(:name => "#{File.expand_path('/usr/bin/env')} echo")
             Puppet::Type.type(:host).stubs(:instances).returns [@no_ensure_resource]
@@ -297,7 +297,7 @@ describe resources do
           end
         end
 
-        describe "when the instance's ensure property does not accept absent" do
+        context "when the instance's ensure property does not accept absent" do
           it "should not be included in the generated resources" do
             @no_absent_resource = Puppet::Type.type(:service).new(:name => 'foobar')
             Puppet::Type.type(:host).stubs(:instances).returns [@no_absent_resource]
@@ -305,7 +305,7 @@ describe resources do
           end
         end
 
-        describe "when checking the instance fails" do
+        context "when checking the instance fails" do
           it "should not be included in the generated resources" do
             @purgeable_resource = Puppet::Type.type(:host).new(:name => 'foobar')
             Puppet::Type.type(:host).stubs(:instances).returns [@purgeable_resource]

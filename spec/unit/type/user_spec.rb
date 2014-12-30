@@ -52,7 +52,7 @@ describe Puppet::Type.type(:user) do
     expect(described_class.provider_feature(:manages_shell)).not_to be_nil
   end
 
-  describe :managehome do
+  context "managehome" do
     let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
     let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
 
