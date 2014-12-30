@@ -4,6 +4,7 @@ require 'tempfile'
 
 require 'puppet/util/checksums'
 require 'puppet/network/http'
+require 'puppet/network/http/api/v3/indirected_routes'
 require 'puppet/network/http/compression'
 
 module Puppet
@@ -212,7 +213,7 @@ module Puppet
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        connection.request_get(Puppet::Network::HTTP::API::V1.request_to_uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
+        connection.request_get(Puppet::Network::HTTP::API::V3::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
       end
     end
 

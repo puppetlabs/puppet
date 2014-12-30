@@ -1,6 +1,6 @@
 require 'puppet/network/authorization'
 
-class Puppet::Network::HTTP::API::V1
+class Puppet::Network::HTTP::API::V3::IndirectedRoutes
   include Puppet::Network::Authorization
 
   # How we map http methods and the indirection name in the URI
@@ -30,15 +30,8 @@ class Puppet::Network::HTTP::API::V1
 
   # handle an HTTP request
   def call(request, response)
-    indirection_name, method, key, params = uri2indirection(request.method, request.path, request.params)
+    indirection, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
-
-    check_authorization(method, "/#{indirection_name}/#{key}", params)
-
-    indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-    if !indirection
-      raise ArgumentError, "Could not find indirection '#{indirection_name}'"
-    end
 
     if !indirection.allow_remote_requests?
       # TODO: should we tell the user we found an indirection but it doesn't
@@ -58,24 +51,35 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def uri2indirection(http_method, uri, params)
-    indirection, key = uri.split("/", 3)[1..-1] # the first field is always nil because of the leading slash
+    # the first field is always nil because of the leading slash,
+    # and we also want to strip off the leading /v3.
+    indirection_name, key = uri.split("/", 4)[2..-1]
     environment = params.delete(:environment)
+
+    if indirection_name !~ /^\w+$/
+      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection_name}'"
+    end
+
+    method = indirection_method(http_method, indirection_name)
+    check_authorization(method, "/v3/#{indirection_name}/#{key}", params)
+
+    indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+    if !indirection
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
+        "Could not find indirection '#{indirection_name}'", Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
+    end
+
+    if !environment
+      raise ArgumentError, "An environment parameter must be specified"
+    end
 
     if ! Puppet::Node::Environment.valid_name?(environment)
       raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'"
     end
 
-    if indirection !~ /^\w+$/
-      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'"
-    end
-
-    method = indirection_method(http_method, indirection)
-
     configured_environment = Puppet.lookup(:environments).get(environment)
     if configured_environment.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-                "Could not find environment '#{environment}'",
-                Puppet::Network::HTTP::Issues::ENVIRONMENT_NOT_FOUND)
+      raise ArgumentError, "Could not find environment '#{environment}'"
     else
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
@@ -122,12 +126,12 @@ class Puppet::Network::HTTP::API::V1
 
     rendered_result = result
     if result.respond_to?(:render)
-      Puppet::Util::Profiler.profile("Rendered result in #{format}", [:http, :v1_render, format]) do
+      Puppet::Util::Profiler.profile("Rendered result in #{format}", [:http, :v3_render, format]) do
         rendered_result = result.render(format)
       end
     end
 
-    Puppet::Util::Profiler.profile("Sent response", [:http, :v1_response]) do
+    Puppet::Util::Profiler.profile("Sent response", [:http, :v3_response]) do
       response.respond_with(200, format, rendered_result)
     end
   end
@@ -208,7 +212,7 @@ class Puppet::Network::HTTP::API::V1
 
   def self.request_to_uri_and_body(request)
     indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.name}&#{request.query_string}"]
+    ["/v3/#{indirection}/#{request.escaped_key}", "environment=#{request.environment.name}&#{request.query_string}"]
   end
 
   def self.pluralize(indirection)

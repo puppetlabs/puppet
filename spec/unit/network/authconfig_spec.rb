@@ -81,7 +81,7 @@ describe Puppet::Network::AuthConfig do
 
     it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do
       acl = {
-        :acl => "~ ^\/report\/([^\/]+)$",
+        :acl => "~ ^\/v3\/report\/([^\/]+)$",
         :method => :save,
         :allow => '$1',
         :authenticated => true
