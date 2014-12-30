@@ -19,7 +19,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     register([Puppet::Network::HTTP::Route.path(prefix).
                   any.
                   chain(Puppet::Network::HTTP::API::V3.routes,
-                        Puppet::Network::HTTP::API::V2.routes)])
+                        Puppet::Network::HTTP::API::V2.routes,
+                        Puppet::Network::HTTP::API.not_found)])
     super(server)
   end
 

@@ -32,7 +32,8 @@ class Puppet::Network::HTTP::RackREST
     register([Puppet::Network::HTTP::Route.path(prefix).
                   any.
                   chain(Puppet::Network::HTTP::API::V3.routes,
-                        Puppet::Network::HTTP::API::V2.routes)])
+                        Puppet::Network::HTTP::API::V2.routes,
+                        Puppet::Network::HTTP::API.not_found)])
   end
 
   def set_content_type(response, format)
