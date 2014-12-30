@@ -1175,17 +1175,21 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not fail if the checksum is correct" do
-      file.instance_eval do
-        parameter(:checksum).stubs(:sum_file).returns('anything!')
-        expect(fail_if_checksum_is_wrong(self[:path], 'anything!')).to eq(nil)
-      end
+      expect do
+        file.instance_eval do
+          parameter(:checksum).stubs(:sum_file).returns('anything!')
+          fail_if_checksum_is_wrong(self[:path], 'anything!')
+        end
+      end.not_to raise_error
     end
 
     it "should not fail if the checksum is absent" do
-      file.instance_eval do
-        parameter(:checksum).stubs(:sum_file).returns(nil)
-        expect(fail_if_checksum_is_wrong(self[:path], 'anything!')).to eq(nil)
-      end
+      expect do
+        file.instance_eval do
+          parameter(:checksum).stubs(:sum_file).returns(nil)
+          fail_if_checksum_is_wrong(self[:path], 'anything!')
+        end
+      end.not_to raise_error
     end
   end
 
