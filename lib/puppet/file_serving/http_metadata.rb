@@ -10,9 +10,17 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
     # ignore options that do not apply to HTTP metadata
     @owner = @group = @mode = nil
 
-    @checksum_type = 'mtime'
-    mtime = DateTime.httpdate(http_response['last-modified'])
-    @checksum = "{mtime}#{mtime}"
+    if checksum = http_response['content-md5']
+      # convert base64 digest to hex
+      checksum = checksum.unpack("m0").first.unpack("H*").first
+      @checksum_type = 'md5'
+      @checksum = "{md5}#{checksum}"
+    elsif mtime = DateTime.httpdate(http_response['last-modified'])
+      @checksum_type = 'mtime'
+      @checksum = "{mtime}#{mtime}"
+    else
+      raise PuppetError, "HTTP response contained no usable checksum equivalent"
+    end
 
     @ftype = 'file'
 
