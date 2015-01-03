@@ -23,31 +23,4 @@ describe Puppet::Util::Feature do
 
     expect($features).to be_able_to_load
   end
-
-  # TODO: Make this a spec test or remove it.
-  def test_dynamic_loading
-    $features = @features
-    cleanup { $features = nil }
-    # Now create a feature and make sure it loads.
-    FileUtils.mkdir_p(@path)
-    nope = File.join(@path, "nope.rb")
-    File.open(nope, "w") { |f|
-      f.puts "$features.add(:nope, :libs => %w{nosuchlib})"
-    }
-    assert_nothing_raised("Failed to autoload features") do
-      assert(! @features.nope?, "'nope' returned true")
-    end
-
-    # First make sure "yep?" returns false
-    assert_nothing_raised("Missing feature threw an exception") do
-      assert(! @features.notyep?, "'notyep' returned true before definition")
-    end
-
-    yep = File.join(@path, "yep.rb")
-    File.open(yep, "w") { |f|
-      f.puts "$features.add(:yep, :libs => %w{puppet})"
-    }
-
-    assert(@features.yep?, "false 'yep' is apparently cached or feature could not be loaded")
-  end
 end
