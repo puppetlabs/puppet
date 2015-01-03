@@ -118,7 +118,7 @@ describe Puppet::Indirector::REST do
   let(:terminus) { Puppet::TestModel.indirection.terminus(:rest) }
   let(:indirection) { Puppet::TestModel.indirection }
   let(:model) { Puppet::TestModel }
-  let(:url_prefix) { "#{Puppet[:master_url_prefix]}/v3"}
+  let(:url_prefix) { "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3"}
 
   around(:each) do |example|
     Puppet.override(:current_environment => Puppet::Node::Environment.create(:production, [])) do

@@ -1,6 +1,6 @@
 require 'json'
 
-class Puppet::Network::HTTP::API::V2::Environments
+class Puppet::Network::HTTP::API::Master::V2::Environments
   def initialize(env_loader)
     @env_loader = env_loader
   end

@@ -455,7 +455,7 @@ check_puppetmaster() {
             --header 'Accept: yaml' \
             --cert "${B}/leaves/client2a.example.org.crt" \
             --key "${B}/leaves/client2a.example.org.key" \
-        "https://127.0.0.1:${HTTPS_PORT}/production/catalog/client2a.example.org" >/dev/null
+        "https://127.0.0.1:${HTTPS_PORT}/puppet/v3/catalog/client2a.example.org?environment=production" >/dev/null
     echo
 }
 

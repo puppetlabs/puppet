@@ -405,7 +405,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
 
         conn.unstub(:request_get)
-        conn.expects(:request_get).with("#{Puppet[:master_url_prefix]}/v3/file_content/test/foo%20bar?environment=testing&", anything).yields(response)
+        conn.expects(:request_get).with("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3/file_content/test/foo%20bar?environment=testing&", anything).yields(response)
 
         resource.write(source)
       end

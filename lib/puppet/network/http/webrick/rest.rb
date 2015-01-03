@@ -1,5 +1,4 @@
 require 'puppet/network/http/handler'
-require 'puppet/network/http/api/v3'
 require 'resolv'
 require 'webrick'
 require 'webrick/httputils'
@@ -15,11 +14,16 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   def initialize(server)
     raise ArgumentError, "server is required" unless server
-    prefix = Regexp.new("^#{Puppet[:master_url_prefix]}")
-    register([Puppet::Network::HTTP::Route.path(prefix).
+    master_prefix = Regexp.new("^#{Puppet::Network::HTTP::MASTER_URL_PREFIX}")
+    ca_prefix = Regexp.new("^#{Puppet::Network::HTTP::CA_URL_PREFIX}")
+    register([Puppet::Network::HTTP::Route.path(master_prefix).
                   any.
-                  chain(Puppet::Network::HTTP::API::V3.routes,
-                        Puppet::Network::HTTP::API::V2.routes,
+                  chain(Puppet::Network::HTTP::API::Master::V3.routes,
+                        Puppet::Network::HTTP::API::Master::V2.routes,
+                        Puppet::Network::HTTP::API.not_found),
+              Puppet::Network::HTTP::Route.path(ca_prefix).
+                  any.
+                  chain(Puppet::Network::HTTP::API::CA::V1.routes,
                         Puppet::Network::HTTP::API.not_found)])
     super(server)
   end
