@@ -4,7 +4,7 @@ module Matchers; module Include
   matcher :include_in_any_order do |*matchers|
     match do |enumerable|
       @not_matched = []
-      expected.each do |matcher|
+      expected_as_array.each do |matcher|
         if enumerable.empty?
           break
         end
