@@ -204,7 +204,7 @@ module Puppet
       validate do |user|
         if Puppet.features.microsoft_windows?
           self.fail "Unable to execute commands as other users on Windows"
-        elsif !Puppet.features.root? && resource.current_username() != user
+        elsif Facter.value(:id) != 'root' && Facter.value(:id) != user
           self.fail "Only root can execute commands as other users"
         end
       end
@@ -583,10 +583,6 @@ module Puppet
           self.property(:returns).sync
         end
       end
-    end
-
-    def current_username
-      Etc.getpwuid(Process.uid).name
     end
   end
 end
