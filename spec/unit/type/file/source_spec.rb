@@ -520,47 +520,47 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end
     end
 
-    describe "for remote sources" do
-      let(:sourcepath) { "/path/to/source" }
-      let(:uri) { URI::Generic.build(:scheme => 'puppet', :host => 'server', :port => 8192, :path => sourcepath).to_s }
+      describe "for remote sources" do
+        let(:sourcepath) { "/path/to/source" }
+        let(:uri) { URI::Generic.build(:scheme => 'puppet', :host => 'server', :port => 8192, :path => sourcepath).to_s }
 
-      before(:each) do
-        metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
-        #metadata = stub('remote', :ftype => "file", :source => uri)
-        Puppet::FileServing::Metadata.indirection.stubs(:find).
-          with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
-        resource[:source] = uri
-      end
-
-      it "should not be local" do
-        expect(resource.parameter(:source)).not_to be_local
-      end
-
-      it "should be able to return the metadata source full path" do
-        expect(resource.parameter(:source).full_path).to eq("/path/to/source")
-      end
-
-      it "should be able to return the source server" do
-        expect(resource.parameter(:source).server).to eq("server")
-      end
-
-      it "should be able to return the source port" do
-        expect(resource.parameter(:source).port).to eq(8192)
-      end
-
-      describe "which don't specify server or port" do
-        let(:uri) { "puppet:///path/to/source" }
-
-        it "should return the default source server" do
-          Puppet[:server] = "myserver"
-          expect(resource.parameter(:source).server).to eq("myserver")
+        before(:each) do
+          metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
+          #metadata = stub('remote', :ftype => "file", :source => uri)
+          Puppet::FileServing::Metadata.indirection.stubs(:find).
+            with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
+          resource[:source] = uri
         end
 
-        it "should return the default source port" do
-          Puppet[:masterport] = 1234
-          expect(resource.parameter(:source).port).to eq(1234)
+        it "should not be local" do
+          expect(resource.parameter(:source)).not_to be_local
         end
+
+        it "should be able to return the metadata source full path" do
+          expect(resource.parameter(:source).full_path).to eq("/path/to/source")
+        end
+
+        it "should be able to return the source server" do
+          expect(resource.parameter(:source).server).to eq("server")
+        end
+
+        it "should be able to return the source port" do
+          expect(resource.parameter(:source).port).to eq(8192)
+        end
+
+          describe "which don't specify server or port" do
+            let(:uri) { "puppet:///path/to/source" }
+
+            it "should return the default source server" do
+              Puppet[:server] = "myserver"
+              expect(resource.parameter(:source).server).to eq("myserver")
+            end
+
+            it "should return the default source port" do
+              Puppet[:masterport] = 1234
+              expect(resource.parameter(:source).port).to eq(1234)
+            end
+          end
       end
-    end
   end
 end
