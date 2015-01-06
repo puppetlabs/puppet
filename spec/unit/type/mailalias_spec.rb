@@ -4,13 +4,19 @@ require 'spec_helper'
 describe Puppet::Type.type(:mailalias) do
   include PuppetSpec::Files
 
+  if Puppet.features.microsoft_windows?
+    tmpfile_path = 'C:\\afile'
+  else
+    tmpfile_path = '/tmp/afile'
+  end
+
   let :target do tmpfile('mailalias') end
   let :recipient_resource do
     described_class.new(:name => "luke", :recipient => "yay", :target => target)
   end
 
   let :file_resource do
-    described_class.new(:name => "lukefile", :file => "/tmp/afile", :target => target)
+    described_class.new(:name => "lukefile", :file => tmpfile_path, :target => target)
   end
 
   it "should be initially absent as a recipient" do
@@ -29,7 +35,7 @@ describe Puppet::Type.type(:mailalias) do
 
   it "should try and set the included file when it does the sync" do
     file_resource.retrieve_resource[:file].should == :absent
-    file_resource.property(:file).expects(:set).with("/tmp/afile")
+    file_resource.property(:file).expects(:set).with(tmpfile_path)
     file_resource.property(:file).sync
   end
 
@@ -41,7 +47,7 @@ describe Puppet::Type.type(:mailalias) do
 
   it "should fail when both file and recipient are specified" do
     expect {
-      Puppet::Type.type(:mailalias).new(:name => 'x', :file => '/tmp/afile',
+      Puppet::Type.type(:mailalias).new(:name => 'x', :file => tmpfile_path,
 					:recipient => 'foo@example.com')
     }.to raise_error Puppet::Error, /cannot specify both a recipient and a file/
   end
