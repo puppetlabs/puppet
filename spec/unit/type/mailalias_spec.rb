@@ -4,12 +4,7 @@ require 'spec_helper'
 describe Puppet::Type.type(:mailalias) do
   include PuppetSpec::Files
 
-  if Puppet.features.microsoft_windows?
-    tmpfile_path = 'C:\\afile'
-  else
-    tmpfile_path = '/tmp/afile'
-  end
-
+  let :tmpfile_path do tmpfile('afile') end
   let :target do tmpfile('mailalias') end
   let :recipient_resource do
     described_class.new(:name => "luke", :recipient => "yay", :target => target)
