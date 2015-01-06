@@ -303,7 +303,7 @@ exit 0
 %post
 %if 0%{?_with_systemd}
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
   oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
@@ -315,7 +315,7 @@ if [ "$1" -ge 1 ]; then
 fi
 %else
 /sbin/chkconfig --add puppet || :
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
   oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
@@ -339,7 +339,7 @@ fi
 %post server
 %if 0%{?_with_systemd}
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
   oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
@@ -351,7 +351,7 @@ if [ "$1" -ge 1 ]; then
 fi
 %else
 /sbin/chkconfig --add puppetmaster || :
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
   oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
@@ -365,7 +365,7 @@ fi
 
 %preun
 %if 0%{?_with_systemd}
-if [ "$1" -eq 0 ] ; then
+if [ $1 -eq 0 ] ; then
     # Package removal, not upgrade
     /bin/systemctl --no-reload disable puppetagent.service > /dev/null 2>&1 || :
     /bin/systemctl --no-reload disable puppet.service > /dev/null 2>&1 || :
@@ -374,9 +374,9 @@ if [ "$1" -eq 0 ] ; then
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 
-if [ "$1" == "1" ]; then
+if [ $1 -eq 1 ]; then
     /bin/systemctl is-enabled puppetagent.service > /dev/null 2>&1
-    if [ "$?" == "0" ]; then
+    if [ $? -eq 0 ]; then
         /bin/systemctl --no-reload disable puppetagent.service > /dev/null 2>&1 ||:
         /bin/systemctl stop puppetagent.service > /dev/null 2>&1 ||:
         /bin/systemctl daemon-reload >/dev/null 2>&1 ||:
@@ -391,7 +391,7 @@ if [ "$1" == "1" ]; then
 fi
 
 %else
-if [ "$1" = 0 ] ; then
+if [ $1 -eq 0 ] ; then
     /sbin/service puppet stop > /dev/null 2>&1
     /sbin/chkconfig --del puppet || :
 fi
@@ -406,7 +406,7 @@ if [ $1 -eq 0 ] ; then
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 %else
-if [ "$1" = 0 ] ; then
+if [ $1 -eq 0 ] ; then
     /sbin/service puppetmaster stop > /dev/null 2>&1
     /sbin/chkconfig --del puppetmaster || :
 fi
@@ -425,7 +425,7 @@ if [ $1 -ge 1 ] ; then
     /bin/systemctl try-restart puppetagent.service >/dev/null 2>&1 || :
 fi
 %else
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
     /sbin/service puppet condrestart >/dev/null 2>&1 || :
 fi
 %endif
@@ -437,7 +437,7 @@ if [ $1 -ge 1 ] ; then
     /bin/systemctl try-restart puppetmaster.service >/dev/null 2>&1 || :
 fi
 %else
-if [ "$1" -ge 1 ]; then
+if [ $1 -ge 1 ]; then
     /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
 fi
 %endif
