@@ -198,15 +198,14 @@ describe Puppet::Type.type(:exec) do
   describe "when setting user" do
     describe "on POSIX systems", :as_platform => :posix do
       it "should fail if we are not root" do
-        Puppet.features.stubs(:root?).returns(false)
+        Facter.fact(:id).stubs(:value).returns('foo')
         expect {
           Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
         }.to raise_error Puppet::Error, /Parameter user failed/
       end
 
       it "accepts the current user" do
-        Puppet.features.stubs(:root?).returns(false)
-        Etc.stubs(:getpwuid).returns(Struct::Passwd.new('input'))
+        Facter.fact(:id).stubs(:value).returns('input')
 
         type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
 
@@ -215,7 +214,7 @@ describe Puppet::Type.type(:exec) do
 
       ['one', 2, 'root', 4294967295, 4294967296].each do |value|
         it "should accept '#{value}' as user if we are root" do
-          Puppet.features.stubs(:root?).returns(true)
+          Facter.fact(:id).stubs(:value).returns(value)
           type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => value)
           type[:user].should == value
         end
