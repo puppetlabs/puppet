@@ -15,9 +15,11 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     # The off method operates on run levels 2,3,4 and 5 by default We ensure
     # all run levels are turned off because the reset method may turn on the
     # service in run levels 0, 1 and/or 6
-    output = chkconfig("--level", "0123456", @resource[:name], :off)
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
+    # We're not using --del here because we want to disable the service only,
+    # and --del removes the service from chkconfig management
+    chkconfig("--level", "0123456", @resource[:name], :off)
+  rescue Puppet::ExecutionFailure => detail
+    raise Puppet::Error, "Could not disable #{self.name}: #{detail}", detail.backtrace
   end
 
   def enabled?
@@ -39,6 +41,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   # Don't support them specifying runlevels; always use the runlevels
   # in the init scripts.
   def enable
+      chkconfig("--add", @resource[:name])
       chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error, "Could not enable #{self.name}: #{detail}", detail.backtrace
