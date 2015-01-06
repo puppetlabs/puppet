@@ -1658,20 +1658,6 @@ EOT
   )
 
   define_settings(:parser,
-    :allow_variables_with_dashes => {
-      :default => false,
-      :desc    => <<-'EOT'
-        Permit hyphens (`-`) in variable names and issue deprecation warnings about
-        them. This setting **should always be `false`;** setting it to `true`
-        will cause subtle and wide-ranging bugs. It will be removed in a future version.
-
-        Hyphenated variables caused major problems in the language, but were allowed
-        between Puppet 2.7.3 and 2.7.14. If you used them during this window, we
-        apologize for the inconvenience --- you can temporarily set this to `true`
-        in order to upgrade, and can rename your variables at your leisure. Please
-        revert it to `false` after you have renamed all affected variables.
-      EOT
-    },
    :max_errors => {
      :default => 10,
      :desc => <<-'EOT'
