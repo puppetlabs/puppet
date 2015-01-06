@@ -109,7 +109,7 @@ module Puppet
 
     newparam(:auth_membership, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "whether the provider is authoritative for group membership."
-      defaultto true
+      defaultto false
     end
 
     newparam(:name) do

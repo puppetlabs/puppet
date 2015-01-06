@@ -329,7 +329,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def self.name_sid_hash(names)
-      return [] if names.nil? or names.empty?
+      return {} if names.nil? or names.empty?
 
       sids = names.map do |name|
         sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
