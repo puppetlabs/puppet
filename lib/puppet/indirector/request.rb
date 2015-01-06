@@ -176,6 +176,10 @@ class Puppet::Indirector::Request
     result
   end
 
+  def description
+    return(uri ? uri : "/#{indirection_name}/#{key}")
+  end
+
   def do_request(srv_service=:puppet, default_server=Puppet.settings[:server], default_port=Puppet.settings[:masterport], &block)
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file

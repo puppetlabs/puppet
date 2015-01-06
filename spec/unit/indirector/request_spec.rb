@@ -207,8 +207,18 @@ describe Puppet::Indirector::Request do
     Puppet::Indirector::Request.new(:myind, :find, :key, nil).should_not be_plural
   end
 
-  it "should use its indirection name and key, if it has no uri, as its string representation" do
-    Puppet::Indirector::Request.new(:myind, :find, "key", nil) == "/myind/key"
+  it "should use its uri, if it has one, as its description" do
+    Puppet.override({
+      :environments => Puppet::Environments::Static.new(
+        Puppet::Node::Environment.create(:baz, [])
+    )},
+      "Static loader for spec") do
+      Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).description.should == "foo://bar/baz"
+      end
+  end
+
+  it "should use its indirection name and key, if it has no uri, as its description" do
+    Puppet::Indirector::Request.new(:myind, :find, "key", nil).description.should == "/myind/key"
   end
 
   it "should be able to return the URI-escaped key" do
