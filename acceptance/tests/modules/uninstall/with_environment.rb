@@ -38,7 +38,7 @@ apply_manifest_on master, %Q{
 
 step 'Uninstall a module from a non default directory environment' do
   environment_path = "#{tmpdir}/environments/direnv/modules"
-  on master, "puppet module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=direnv" do
+  on(master, puppet("module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=direnv")) do
     assert_equal <<-OUTPUT, stdout
 \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
 Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}

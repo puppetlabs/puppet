@@ -19,11 +19,11 @@ agents.each do |agent|
     assert_match( / ensure changed 'stopped'.* to 'running'/, result.stdout, "err: #{agent}")
   end
   step "SMF: query the resource"
-  on agent, "puppet resource service tstapp" do
+  on(agent, puppet("resource service tstapp")) do
     assert_match( /ensure => 'running'/, result.stdout, "err: #{agent}")
   end
   step "SMF: query all the instances"
-  on agent, "puppet resource service" do
+  on(agent, puppet("resource service")) do
     assert_match( /tstapp/, result.stdout, "err: #{agent}")
   end
 end

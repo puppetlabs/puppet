@@ -2,16 +2,16 @@ test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
 agent_hostnames = agents.map {|a| a.to_s}
 
-with_puppet_running_on master, {'master' => {'allow_duplicate_certs' => true}} do
+with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true}}) do
   agents.each do |agent|
     step "Generate a certificate request for the agent"
     fqdn = on(agent, facter("fqdn")).stdout.strip
-    on agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}")
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
   end
 
   step "Collect the original certs"
-  on master, puppet_cert("--sign --all")
-  original_certs = on master, puppet_cert("--list --all")
+  on(master, puppet_cert("--sign --all"))
+  original_certs = on(master, puppet_cert("--list --all"))
 
   old_certs = {}
   original_certs.stdout.each_line do |line|
@@ -24,12 +24,12 @@ with_puppet_running_on master, {'master' => {'allow_duplicate_certs' => true}} d
   agents.each do |agent|
     fqdn = on(agent, facter("fqdn")).stdout.strip
     step "Make another request with the same certname"
-    on agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}")
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
   end
 
   step "Collect the new certs"
-  on master, puppet_cert("--sign --all")
-  new_cert_list = on master, puppet_cert("--list --all")
+  on(master, puppet_cert("--sign --all"))
+  new_cert_list = on(master, puppet_cert("--list --all"))
 
   new_certs = {}
   new_cert_list.stdout.each_line do |line|

@@ -42,7 +42,7 @@ agents.each do |agent|
   end
 
   step "ZPool: verify puppet resource reports on the disk array"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/disk +=> .'.+dsk1 .+dsk2'./, result.stdout, "err: #{agent}")
   end
@@ -69,7 +69,7 @@ agents.each do |agent|
   end
 
   step "ZPool: verify puppet resource reports on the mirror"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/mirror => \['\/ztstpool\/dsk1 \/ztstpool\/dsk2 \/ztstpool\/dsk3'\]/, result.stdout, "err: #{agent}")
   end
@@ -98,7 +98,7 @@ agents.each do |agent|
   end
 
   step "ZPool: verify puppet resource reports on both mirrors"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/mirror => \['\/ztstpool\/dsk1 \/ztstpool\/dsk2', '\/ztstpool\/dsk3 \/ztstpool\/dsk5'\]/, result.stdout, "err: #{agent}")
   end
@@ -125,7 +125,7 @@ agents.each do |agent|
   end
 
   step "ZPool: verify puppet reports on the raidz pool"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/raidz  => \['\/ztstpool\/dsk1 \/ztstpool\/dsk2 \/ztstpool\/dsk3'\]/, result.stdout, "err: #{agent}")
   end
@@ -154,7 +154,7 @@ agents.each do |agent|
   end
 
   step "ZPool: verify puppet resource reports on both raidz"
-  on agent, "puppet resource zpool tstpool" do
+  on(agent, puppet("resource zpool tstpool")) do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/raidz  => \['\/ztstpool\/dsk1 \/ztstpool\/dsk2', '\/ztstpool\/dsk3 \/ztstpool\/dsk5'\]/, result.stdout, "err: #{agent}")
   end
