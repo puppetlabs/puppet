@@ -6,6 +6,7 @@ script:
 notifications:
   email: false
 rvm:
+  - 2.2.0
   - 2.1.5
   - 2.0.0
   - 1.9.3
@@ -16,6 +17,8 @@ env:
 
 matrix:
   exclude:
+    - rvm: 2.2.0
+      env: "CHECK=rubocop"
     - rvm: 2.0.0
       env: "CHECK=rubocop"
     - rvm: 1.9.3
