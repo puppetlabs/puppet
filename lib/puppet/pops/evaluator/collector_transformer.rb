@@ -126,6 +126,10 @@ protected
     @@evaluator.evaluate(o, scope)
   end
 
+  def query_ConcatenatedString(o, scope)
+    @@evaluator.evaluate(o, scope)
+  end
+
   def query_LiteralNumber(o, scope)
     @@evaluator.evaluate(o, scope)
   end
@@ -169,6 +173,10 @@ protected
   end
 
   def match_LiteralString(o, scope)
+    @@evaluator.evaluate(o, scope)
+  end
+
+  def match_ConcatenatedString(o, scope)
     @@evaluator.evaluate(o, scope)
   end
 
