@@ -1,5 +1,7 @@
 test_name 'RedHat Service Symlink Validation'
 
+confine :to, :platform => 'el-5' 
+
 manifest_httpd_setup = %Q{
   package { 'httpd':
     ensure => present,
