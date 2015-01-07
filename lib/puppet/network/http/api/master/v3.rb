@@ -15,7 +15,7 @@ class Puppet::Network::HTTP::API::Master::V3
   end)
 
   def self.routes
-    Puppet::Network::HTTP::Route.path(%r{/v3}).
+    Puppet::Network::HTTP::Route.path(%r{v3}).
         any.
         chain(ENVIRONMENTS, INDIRECTED)
   end

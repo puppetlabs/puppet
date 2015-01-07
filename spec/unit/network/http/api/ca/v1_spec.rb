@@ -8,7 +8,7 @@ describe Puppet::Network::HTTP::API::CA::V1 do
 
   let(:ca_routes) {
     Puppet::Network::HTTP::Route.
-      path(Regexp.new("#{Puppet::Network::HTTP::CA_URL_PREFIX}")).
+      path(Regexp.new("#{Puppet::Network::HTTP::CA_URL_PREFIX}/")).
       any.
       chain(Puppet::Network::HTTP::API::CA::V1.routes)
   }

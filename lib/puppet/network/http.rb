@@ -3,7 +3,7 @@ module Puppet::Network::HTTP
   HEADER_PUPPET_VERSION = "X-Puppet-Version"
 
   MASTER_URL_PREFIX = "/puppet"
-  CA_URL_PREFIX = "/ca"
+  CA_URL_PREFIX = "/puppet-ca"
 
   require 'puppet/network/authorization'
   require 'puppet/network/http/issues'

@@ -7,7 +7,7 @@ describe Puppet::Network::HTTP::API::Master::V3 do
   let(:master_url_prefix) { "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3" }
   let(:master_routes) {
     Puppet::Network::HTTP::Route.
-        path(Regexp.new("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}")).
+        path(Regexp.new("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/")).
         any.
         chain(Puppet::Network::HTTP::API::Master::V3.routes)
   }

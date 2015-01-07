@@ -3,7 +3,7 @@ module Puppet::Network::HTTP::API::Master::V2
   require 'puppet/network/http/api/master/v2/authorization'
 
   def self.routes
-    path(%r{^/v2\.0}).
+    path(%r{^v2\.0}).
       get(Authorization.new).
       chain(ENVIRONMENTS, Puppet::Network::HTTP::API.not_found)
   end

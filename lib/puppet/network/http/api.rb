@@ -8,7 +8,7 @@ class Puppet::Network::HTTP::API
   end
 
   def self.master_routes
-    master_prefix = Regexp.new("^#{Puppet::Network::HTTP::MASTER_URL_PREFIX}")
+    master_prefix = Regexp.new("^#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/")
     Puppet::Network::HTTP::Route.path(master_prefix).
       any.
       chain(Puppet::Network::HTTP::API::Master::V3.routes,
@@ -17,7 +17,7 @@ class Puppet::Network::HTTP::API
   end
 
   def self.ca_routes
-    ca_prefix = Regexp.new("^#{Puppet::Network::HTTP::CA_URL_PREFIX}")
+    ca_prefix = Regexp.new("^#{Puppet::Network::HTTP::CA_URL_PREFIX}/")
     Puppet::Network::HTTP::Route.path(ca_prefix).
       any.
       chain(Puppet::Network::HTTP::API::CA::V1.routes,
