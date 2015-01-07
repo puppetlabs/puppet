@@ -92,30 +92,32 @@ Puppet::Type.newtype(:scheduled_task) do
       A trigger can contain the following keys:
 
       * For all triggers:
-          * `schedule` **(Required)** --- The schedule type. Valid values are
-            `daily`, `weekly`, `monthly`, or `once`.
+          * `schedule` **(Required)** --- What kind of trigger this is.
+            Valid values are `daily`, `weekly`, `monthly`, or `once`. Each kind
+            of trigger is configured with a different set of keys; see the
+            sections below. (`once` triggers only need a start time/date.)
           * `start_time` **(Required)** --- The time of day when the trigger should
             first become active. Several time formats will work, but we
             suggest 24-hour time formatted as HH:MM.
           * `start_date` ---  The date when the trigger should first become active.
             Defaults to the current date. You should format dates as YYYY-MM-DD,
             although other date formats may work. (Under the hood, this uses `Date.parse`.)
-      * For daily triggers:
+      * For `daily` triggers:
           * `every` --- How often the task should run, as a number of days. Defaults
             to 1. ("2" means every other day, "3" means every three days, etc.)
-      * For weekly triggers:
+      * For `weekly` triggers:
           * `every` --- How often the task should run, as a number of weeks. Defaults
             to 1. ("2" means every other week, "3" means every three weeks, etc.)
           * `day_of_week` --- Which days of the week the task should run, as an array.
             Defaults to all days. Each day must be one of `mon`, `tues`,
             `wed`, `thurs`, `fri`, `sat`, `sun`, or `all`.
-      * For monthly-by-date triggers:
+      * For `monthly` (by date) triggers:
           * `months` --- Which months the task should run, as an array. Defaults to
             all months. Each month must be an integer between 1 and 12.
           * `on` **(Required)** --- Which days of the month the task should run,
             as an array. Each day must beeither an integer between 1 and 31,
             or the special value `last,` which is always the last day of the month.
-      * For monthly-by-weekday triggers:
+      * For `monthly` (by weekday) triggers:
           * `months` --- Which months the task should run, as an array. Defaults to
             all months. Each month must be an integer between 1 and 12.
           * `day_of_week` **(Required)** --- Which day of the week the task should
