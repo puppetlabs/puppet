@@ -66,6 +66,35 @@ describe 'collectors' do
       MANIFEST
     end
 
+    it "matches with bare word" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "testing": tag => ["one"], message => "wanted" }
+        Notify <| tag == one |>
+      MANIFEST
+    end
+
+    it "matches with single quoted string" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "testing": tag => ["one"], message => "wanted" }
+        Notify <| tag == 'one' |>
+      MANIFEST
+    end
+
+    it "matches with double quoted string" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "testing": tag => ["one"], message => "wanted" }
+        Notify <| tag == "one" |>
+      MANIFEST
+    end
+
+    it "matches with double quoted string with interpolated expression" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "testing": tag => ["one"], message => "wanted" }
+        $x = 'one'
+        Notify <| tag == "$x" |>
+      MANIFEST
+    end
+
     it "allows criteria to be combined with 'and'" do
       expect_the_message_to_be(["the message"], <<-MANIFEST)
         @notify { "testing": message => "the message" }
