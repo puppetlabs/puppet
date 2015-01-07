@@ -18,11 +18,11 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
   let(:account)  { 'quinn' }
 
   describe "#mode" do
-    it "should return a string with the higher-order bits stripped away" do
+    it "should return a string representing the mode in 4-digit octal notation" do
       FileUtils.touch(path)
       WindowsSecurity.set_mode(0644, path)
 
-      provider.mode.should == '644'
+      provider.mode.should == '0644'
     end
 
     it "should return absent if the file doesn't exist" do
@@ -37,12 +37,12 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
       provider.mode = '0755'
 
-      provider.mode.should == '755'
+      provider.mode.should == '0755'
     end
 
     it "should pass along any errors encountered" do
       expect do
-        provider.mode = '644'
+        provider.mode = '0644'
       end.to raise_error(Puppet::Error, /failed to set mode/)
     end
   end
