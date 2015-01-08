@@ -143,15 +143,13 @@ DOC
         # Attempt to decode the extension's DER data located in the original OctetString
         asn1_val = OpenSSL::ASN1.decode(ext_values.last.value)
 
-        # Allows OpenSSL to take the ASN1 value and turn it into something Ruby understands
-        ev = OpenSSL::X509::Extension.new(ext_values[0].value, asn1_val.to_der)
-
         # If the extension value can not be directly converted to an atomic Ruby
         # type, use the original ASN1 value. This is needed to work around a bug
         # in Ruby's OpenSSL library which doesn't convert the value of unknown
         # extension OIDs properly. See PUP-3560
         if @non_convertable.include?(asn1_val.class) then
-          value = ev.value
+          # Allows OpenSSL to take the ASN1 value and turn it into something Ruby understands
+          value = OpenSSL::X509::Extension.new(ext_values[0].value, asn1_val.to_der).value
         else
           value = asn1_val.value
         end
