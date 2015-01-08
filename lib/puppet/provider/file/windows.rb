@@ -63,7 +63,7 @@ Puppet::Type.type(:file).provide :windows do
   def mode
     if resource.stat
       mode = get_mode(resource[:path])
-      mode ? mode.to_s(8) : :absent
+      mode ? mode.to_s(8).rjust(4, '0') : :absent
     else
       :absent
     end
