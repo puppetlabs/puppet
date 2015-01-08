@@ -394,23 +394,4 @@ symlinkfile
 
     it_behaves_like "a packagable module"
   end
-
-  context 'with Modulefile' do
-    before :each do
-      File.open(File.join(path, 'Modulefile'), 'w') do |f|
-        f.write <<-MODULEFILE
-name    '#{module_name}'
-version '#{version}'
-source 'http://github.com/testing/#{module_name}'
-author 'testing'
-license 'Apache License Version 2.0'
-summary 'Puppet testing module'
-description 'This module can be used for basic testing'
-project_page 'http://github.com/testing/#{module_name}'
-MODULEFILE
-      end
-    end
-
-    it_behaves_like "a packagable module"
-  end
 end

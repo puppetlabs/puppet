@@ -5,9 +5,9 @@ Puppet::Face.define(:module, '1.0.0') do
       Prepares a local module for release on the Puppet Forge by building a
       ready-to-upload archive file.
 
-      This action uses the Modulefile in the module directory to set metadata
-      used by the Forge. See <http://links.puppetlabs.com/modulefile> for more
-      about writing modulefiles.
+      This action uses the metadata.json file in the module directory to set metadata
+      used by the Forge. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for more
+      about writing metadata.json files.
 
       After being built, the release archive file can be found in the module's
       `pkg` directory.
@@ -43,11 +43,11 @@ Puppet::Face.define(:module, '1.0.0') do
         pwd = Dir.pwd
         module_path = Puppet::ModuleTool.find_module_root(pwd)
         if module_path.nil?
-          raise "Unable to find metadata.json or Modulefile in module root #{pwd} or parent directories. See <http://links.puppetlabs.com/modulefile> for required file format."
+          raise "Unable to find metadata.json in module root #{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
         end
       else
         unless Puppet::ModuleTool.is_module_root?(module_path)
-          raise "Unable to find metadata.json or Modulefile in module root #{module_path}. See <http://links.puppetlabs.com/modulefile> for required file format."
+          raise "Unable to find metadata.json in module root #{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
         end
       end
 

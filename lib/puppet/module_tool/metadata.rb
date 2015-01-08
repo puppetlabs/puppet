@@ -66,7 +66,7 @@ module Puppet::ModuleTool
       validate_version_range(version_requirement) if version_requirement
 
       if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
-        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json or the Modulefile."
+        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json."
       end
 
       dep = Dependency.new(name, version_requirement, repository)

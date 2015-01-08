@@ -107,9 +107,9 @@ Puppet::Face.define(:module, '1.0.0') do
       begin
         # A default dependency for all newly generated modules is being
         # introduced as a substitute for the comments we used to include in the
-        # Modulefile. While introducing a default dependency is less than
-        # perfectly desirable, the cost is low, and the syntax is obtuse enough
-        # to justify its inclusion.
+        # previous module data specifications. While introducing a default
+        # dependency is less than perfectly desirable, the cost is low, and the
+        # syntax is obtuse enough to justify its inclusion.
         metadata = Puppet::ModuleTool::Metadata.new.update(
           'name' => name,
           'version' => '0.1.0',
