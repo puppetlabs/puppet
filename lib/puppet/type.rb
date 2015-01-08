@@ -2534,5 +2534,3 @@ class Type
   end
 end
 end
-
-require 'puppet/provider'
