@@ -55,16 +55,23 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   def uri2indirection(http_method, uri, params)
     # the first field is always nil because of the leading slash,
-    indirection_name, key = uri.split("/", 5)[3..-1]
+    indirection_type, version, indirection_name, key = uri.split("/", 5)[1..-1]
+    url_prefix = "/#{indirection_type}/#{version}"
     environment = params.delete(:environment)
 
     if indirection_name !~ /^\w+$/
       raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection_name}'"
     end
 
-    url_prefix = IndirectionType.url_prefix_for(indirection_name)
-
+    # this also depluralizes the indirection_name if it is a search
     method = indirection_method(http_method, indirection_name)
+
+    # check whether this indirection matches the prefix and version in the
+    # request
+    if url_prefix != IndirectionType.url_prefix_for(indirection_name)
+      raise ArgumentError, "Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'"
+    end
+
     check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
