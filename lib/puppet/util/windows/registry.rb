@@ -32,48 +32,21 @@ module Puppet::Util::Windows
 
     def values(subkey)
       values = {}
+      orig_enc = Encoding.default_internal
+
       begin
+        Encoding.default_internal = Encoding::UTF_8
         subkey.each_value do |name, type, data|
-          case type
-            when Win32::Registry::REG_MULTI_SZ
-              data.each { |str| force_encoding(str) }
-            when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-              force_encoding(data)
-          end
           values[name] = data
         end
-      rescue Encoding::UndefinedConversionError => error
+      rescue Encoding::UndefinedConversionError, Encoding::CompatibilityError => error
         raise Puppet::Error.new("Failed to get registry key values for '#{subkey.name}'.\n  #{error.to_s}")
+      ensure
+        Encoding.default_internal = orig_enc
       end
 
       values
     end
-
-    if defined?(Encoding)
-      def force_encoding(str)
-        if @encoding.nil?
-          # See https://bugs.ruby-lang.org/issues/8943
-          # Ruby uses ANSI versions of Win32 APIs to read values from the
-          # registry. The encoding of these strings depends on the active
-          # code page. However, ruby incorrectly sets the string
-          # encoding to US-ASCII. So we must force the encoding to the
-          # correct value.
-          begin
-            cp = GetACP()
-            @encoding = Encoding.const_get("CP#{cp}")
-          rescue
-            @encoding = Encoding.default_external
-          end
-        end
-
-        str.force_encoding(@encoding)
-      end
-    else
-      def force_encoding(str, enc)
-      end
-    end
-    private :force_encoding
-
 
     ffi_convention :stdcall
 
