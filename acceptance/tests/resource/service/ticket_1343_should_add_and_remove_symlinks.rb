@@ -1,6 +1,7 @@
 test_name 'RedHat Service Symlink Validation'
 
-confine :to, :platform => 'el-5' 
+# RedHat v7 uses systemd, so confine this test to v5 and v6 only
+confine :to, :platform => /el\-5|el\-6|centos\-5|centos\-6/
 
 manifest_httpd_setup = %Q{
   package { 'httpd':
