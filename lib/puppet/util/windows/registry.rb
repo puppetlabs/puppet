@@ -32,15 +32,20 @@ module Puppet::Util::Windows
 
     def values(subkey)
       values = {}
-      subkey.each_value do |name, type, data|
-        case type
-        when Win32::Registry::REG_MULTI_SZ
-          data.each { |str| force_encoding(str) }
-        when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-          force_encoding(data)
+      begin
+        subkey.each_value do |name, type, data|
+          case type
+            when Win32::Registry::REG_MULTI_SZ
+              data.each { |str| force_encoding(str) }
+            when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
+              force_encoding(data)
+          end
+          values[name] = data
         end
-        values[name] = data
+      rescue Encoding::UndefinedConversionError => error
+        raise Puppet::Error.new("Failed to get registry key values for '#{subkey.name}'.\n  #{error.to_s}")
       end
+
       values
     end
 
