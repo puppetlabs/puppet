@@ -305,7 +305,7 @@ class Puppet::Transaction
     Puppet.debug "Prefetching #{provider_class.name} resources for #{type_name}"
     begin
       provider_class.prefetch(resources)
-    rescue => detail
+    rescue LoadError, Puppet::MissingCommand => detail
       Puppet.log_exception(detail, "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}")
     end
     @prefetched_providers[type_name][provider_class.name] = true
