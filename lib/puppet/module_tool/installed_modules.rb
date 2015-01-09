@@ -73,10 +73,8 @@ module Puppet::ModuleTool
             results = Puppet::ModuleTool.parse_module_dependency(release, dependency)
             dep_name, parsed_range, range = results
 
-            dependency.tap do |dep|
-              add_constraint('initialize', dep_name, range.to_s) do |node|
-                parsed_range === node.version
-              end
+            add_constraint('initialize', dep_name, range.to_s) do |node|
+              parsed_range === node.version
             end
           end
         end
