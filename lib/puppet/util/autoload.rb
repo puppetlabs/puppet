@@ -147,7 +147,7 @@ class Puppet::Util::Autoload
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
       if (Puppet.settings.app_defaults_initialized?)
-        Puppet[:libdir].split(File::PATH_SEPARATOR)
+        [Puppet[:libdir]]
       else
         []
       end
