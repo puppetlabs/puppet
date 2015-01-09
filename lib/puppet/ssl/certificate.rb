@@ -60,10 +60,17 @@ DOC
 
   private
 
+
   # Extract the extensions sequence from the wrapped certificate's raw ASN.1 form
   def exts_seq
+    # See RFC-2459 section 4.1 (https://tools.ietf.org/html/rfc2459#section-4.1)
+    # to see where this is defined. Essentially this is saying "in the first
+    # sequence in the certificate, find the item that's tagged with 3. This
+    # is where the extensions are stored."
+    @extensions_tag ||= 3
+
     @exts_seq ||= OpenSSL::ASN1.decode(content.to_der).value[0].find do |data|
-      (data.tag == 3) && (data.tag_class == :CONTEXT_SPECIFIC)
+      (data.tag == @extensions_tag) && (data.tag_class == :CONTEXT_SPECIFIC)
     end.value[0]
   end
 
