@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/util/retryaction'
+require 'puppet/util/retry_action'
 
 describe Puppet::Util::RetryAction do
   let (:exceptions) { [ Puppet::Error, NameError ] }
