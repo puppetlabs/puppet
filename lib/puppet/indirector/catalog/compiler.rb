@@ -31,8 +31,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         raise Puppet::Error, "Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect})."
       end
 
-      facts.add_timestamp
-
       options = {
         :environment => request.environment,
         :transaction_uuid => request.options[:transaction_uuid],

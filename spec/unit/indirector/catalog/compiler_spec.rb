@@ -150,15 +150,12 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.extract_facts_from_request(request).should be_nil
     end
 
-    it "deserializes the facts and timestamps them" do
-      @facts.timestamp = Time.parse('2010-11-01')
+    it "should deserialize the facts without changing the timestamp" do
+      time = Time.now
+      @facts.timestamp = time
       request = a_request_that_contains(@facts)
-      now = Time.parse('2010-11-02')
-      Time.stubs(:now).returns(now)
-
       facts = @compiler.extract_facts_from_request(request)
-
-      facts.timestamp.should == now
+      expect(facts.timestamp).to eq(time)
     end
 
     it "should convert the facts into a fact instance and save it" do
