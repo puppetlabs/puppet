@@ -294,7 +294,7 @@ class Puppet::Indirector::Indirection
     return unless terminus.respond_to?(:authorized?)
 
     unless terminus.authorized?(request)
-      msg = "Not authorized to call #{request.method} on #{request}"
+      msg = "Not authorized to call #{request.method} on #{request.description}"
       msg += " with #{request.options.inspect}" unless request.options.empty?
       raise ArgumentError, msg
     end
@@ -305,7 +305,7 @@ class Puppet::Indirector::Indirection
     # Pick our terminus.
     if respond_to?(:select_terminus)
       unless terminus_name = select_terminus(request)
-        raise ArgumentError, "Could not determine appropriate terminus for #{request}"
+        raise ArgumentError, "Could not determine appropriate terminus for #{request.description}"
       end
     else
       terminus_name = terminus_class
