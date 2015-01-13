@@ -1120,17 +1120,6 @@ Generated on #{Time.now}.
     end
   end
 
-  def get_config_file_default(default)
-    obj = nil
-    unless obj = @config[default]
-      raise ArgumentError, "Unknown default #{default}"
-    end
-
-    raise ArgumentError, "Default #{default} is not a file" unless obj.is_a? FileSetting
-
-    obj
-  end
-
   def add_environment_resources(catalog, sections)
     path = self[:environmentpath]
     envdir = path.split(File::PATH_SEPARATOR).first if path
