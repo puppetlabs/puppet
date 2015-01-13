@@ -442,7 +442,7 @@ describe Puppet::Settings do
 
     it "allows overriding cli args based on the cli-set value" do
       @settings.handlearg("--myval", "cliarg")
-      @settings.set_value(:myval, "modified #{@settings[:myval]}", :cli)
+      @settings.patch_value(:myval, "modified #{@settings[:myval]}", :cli)
       expect(@settings[:myval]).to eq("modified cliarg")
     end
   end

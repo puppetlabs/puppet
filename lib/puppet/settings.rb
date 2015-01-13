@@ -779,8 +779,14 @@ class Puppet::Settings
     !@value_sets[:cli].lookup(param).nil?
   end
 
-  def set_value(param, value, type, options = {})
-    Puppet.deprecation_warning("Puppet.settings.set_value is deprecated. Use Puppet[]= instead.")
+  # Patches the value for a param in a section.
+  # This method is required to support the use case of unifying --dns-alt-names and
+  # --dns_alt_names in the certificate face. Ideally this should be cleaned up.
+  # See PUP-3684 for more information.
+  # For regular use of setting a value, the method `[]=` should be used.
+  # @api private
+  #
+  def patch_value(param, value, type, options = {})
     if @value_sets[type]
       @value_sets[type].set(param, value)
       unsafe_flush_cache

@@ -129,7 +129,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       end
       
       it "should use the global setting if set by CLI" do
-        Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
+        Puppet.settings.patch_value(:dns_alt_names, 'from,the,cli', :cli)
         
         subject.generate(hostname, options)
         
@@ -139,7 +139,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       end
       
       it "should generate an error if both set on CLI" do
-        Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
+        Puppet.settings.patch_value(:dns_alt_names, 'from,the,cli', :cli)
         expect do
           subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
         end.to raise_error ArgumentError, /Can't specify both/ 
