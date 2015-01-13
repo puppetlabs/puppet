@@ -35,8 +35,10 @@ describe Puppet::Settings do
       @settings = Puppet::Settings.new
     end
 
-    it "should start with no defined parameters" do
-      @settings.params.length.should == 0
+    it "should start with no defined sections or parameters" do
+      # Note this relies on undocumented side effect that eachsection returns the Settings internal
+      # configuration on which keys returns all parameters.
+      @settings.eachsection.keys.length.should == 0
     end
 
     it "should not allow specification of default values associated with a section as an array" do

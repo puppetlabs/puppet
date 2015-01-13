@@ -498,20 +498,6 @@ class Puppet::Settings
     mode
   end
 
-  # Return all of the settings associated with a given section.
-  def params(section = nil)
-    if section
-      section = section.intern if section.is_a? String
-      @config.find_all { |name, obj|
-        obj.section == section
-      }.collect { |name, obj|
-        name
-      }
-    else
-      @config.keys
-    end
-  end
-
   def parse_config(text, file = "text")
     begin
       data = @config_file_parser.parse_file(file, text, ALLOWED_SECTION_NAMES)
