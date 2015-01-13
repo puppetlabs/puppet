@@ -1382,12 +1382,6 @@ describe Puppet::Settings do
       @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => '0755'}
     end
 
-    it "should provide a method that creates directories with the correct modes" do
-      Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
-      Dir.expects(:mkdir).with(make_absolute("/otherdir"), '0755')
-      @settings.mkdir(:otherdir)
-    end
-
     it "should create a catalog with the specified sections" do
       @settings.expects(:to_catalog).with(:main, :other).returns Puppet::Resource::Catalog.new("foo")
       @settings.use(:main, :other)

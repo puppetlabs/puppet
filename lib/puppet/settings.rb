@@ -477,16 +477,6 @@ class Puppet::Settings
     (value(:configprint) != "" || value(:genconfig) || value(:genmanifest)) && true
   end
 
-  # Make a directory with the appropriate user, group, and mode
-  def mkdir(default)
-    obj = get_config_file_default(default)
-
-    Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
-      mode = obj.mode || 0750
-      Dir.mkdir(obj.value, mode)
-    end
-  end
-
   # The currently configured run mode that is preferred for constructing the application configuration.
   def preferred_run_mode
     @preferred_run_mode_name || :user
