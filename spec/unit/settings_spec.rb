@@ -491,8 +491,8 @@ describe Puppet::Settings do
 
     it "should provide a method for returning uninterpolated values" do
       @settings[:two] = "$one tw0"
-      @settings.uninterpolated_value(:two).should  == "$one tw0"
-      @settings.uninterpolated_value(:four).should == "$two $three FOUR"
+      @settings.value(:two, nil, true).should  == "$one tw0"
+      @settings.value(:four, nil, true).should == "$two $three FOUR"
     end
 
     it "should interpolate set values for other parameters into returned parameter values" do

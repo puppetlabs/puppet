@@ -957,14 +957,6 @@ Generated on #{Time.now}.
     @config.has_key?(param)
   end
 
-  def uninterpolated_value(param, environment = nil)
-    Puppet.deprecation_warning("Puppet.settings.uninterpolated_value is deprecated. Use Puppet.settings.value instead")
-    param = param.to_sym
-    environment &&= environment.to_sym
-
-    values(environment, self.preferred_run_mode).lookup(param)
-  end
-
   # Retrieve an object that can be used for looking up values of configuration
   # settings.
   #
