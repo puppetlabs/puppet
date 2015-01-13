@@ -477,19 +477,6 @@ class Puppet::Settings
     (value(:configprint) != "" || value(:genconfig) || value(:genmanifest)) && true
   end
 
-  # Return a given object's file metadata.
-  def metadata(param)
-    if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
-      {
-        :owner => obj.owner,
-        :group => obj.group,
-        :mode => obj.mode
-      }.delete_if { |key, value| value.nil? }
-    else
-      nil
-    end
-  end
-
   # Make a directory with the appropriate user, group, and mode
   def mkdir(default)
     obj = get_config_file_default(default)
