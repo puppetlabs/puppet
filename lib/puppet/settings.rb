@@ -424,12 +424,6 @@ class Puppet::Settings
     @config.include?(name)
   end
 
-  # check to see if a short name is already defined
-  def shortinclude?(short)
-    short = short.intern if name.is_a? String
-    @shortnames.include?(short)
-  end
-
   # Prints the contents of a config file with the available config settings, or it
   # prints a single value of a config setting.
   def print_config_options
