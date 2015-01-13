@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:pip)
-osfamilies = { 'RedHat' => 'pip-python', 'Not RedHat' => 'pip' }
+osfamilies = { 'Everything' => 'pip' }
 
 describe provider_class do
 
@@ -32,9 +32,9 @@ describe provider_class do
   end
 
   describe "cmd" do
-    it "should return pip-python on RedHat systems" do
+    it "should return pip on RedHat systems" do
       Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      provider_class.cmd.should == 'pip-python'
+      provider_class.cmd.should == 'pip'
     end
 
     it "should return pip by default" do

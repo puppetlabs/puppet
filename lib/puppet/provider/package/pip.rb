@@ -36,12 +36,7 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    case Facter.value(:osfamily)
-      when "RedHat"
-        "pip-python"
-      else
-        "pip"
-    end
+    'pip'
   end
 
   # Return structured information about a particular package or `nil` if
