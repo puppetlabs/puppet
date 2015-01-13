@@ -787,12 +787,6 @@ class Puppet::Settings
     end
   end
 
-  # Deprecated; use #define_settings instead
-  def setdefaults(section, defs)
-    Puppet.deprecation_warning("'setdefaults' is deprecated and will be removed; please call 'define_settings' instead")
-    define_settings(section, defs)
-  end
-
   # Define a group of settings.
   #
   # @param [Symbol] section a symbol to use for grouping multiple settings together into a conceptual unit.  This value
