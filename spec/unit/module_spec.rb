@@ -664,12 +664,9 @@ describe Puppet::Module do
 
     IO.binwrite(foo_path, 'notfoo')
     Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
-    checksummed_module.has_local_changes?.should be_true
 
     IO.binwrite(foo_path, 'foo')
-
     Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
-    checksummed_module.has_local_changes?.should be_false
   end
 
   it "should know what other modules require it" do
