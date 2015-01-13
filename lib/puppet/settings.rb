@@ -747,19 +747,6 @@ class Puppet::Settings
     searchpath << SearchPathElement.new(:overridden_defaults, :values)
   end
 
-  # Get a list of objects per section
-  def sectionlist
-    sectionlist = []
-    self.each { |name, obj|
-      section = obj.section || "puppet"
-      sections[section] ||= []
-      sectionlist << section unless sectionlist.include?(section)
-      sections[section] << obj
-    }
-
-    return sectionlist, sections
-  end
-
   def service_user_available?
     return @service_user_available if defined?(@service_user_available)
 
