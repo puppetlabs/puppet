@@ -108,12 +108,6 @@ class Puppet::Settings
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
-  # @param name [Symbol] The name of the setting to fetch
-  # @return [Puppet::Settings::BaseSetting] The setting object
-  def setting(name)
-    @config[name]
-  end
-
   # Retrieve a config value
   # @param param [Symbol] the name of the setting
   # @return [Object] the value of the setting
@@ -382,7 +376,9 @@ class Puppet::Settings
     end
   end
 
-  # Return an object by name.
+  # Returns a given setting by name
+  # @param name [Symbol] The name of the setting to fetch
+  # @return [Puppet::Settings::BaseSetting] The setting object
   def setting(param)
     param = param.to_sym
     @config[param]
