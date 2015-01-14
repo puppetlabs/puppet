@@ -1,5 +1,4 @@
 language: ruby
-sudo: false
 bundler_args: --without development
 script:
   - "bundle exec rake $CHECK"
