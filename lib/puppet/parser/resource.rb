@@ -189,15 +189,22 @@ class Puppet::Parser::Resource < Puppet::Resource
     copy_as_resource.to_ral
   end
 
-  # Is the receiver tagged with the given tags?
-  # This match takes into account the tags that a resource will inherit from its container
+  # Answers if this resource is tagged with at least one of the tags given in downcased string form.
+  #
+  # The method is a faster variant of the tagged? method that does no conversion of its
+  # arguments.
+  #
+  # The match takes into account the tags that a resource will inherit from its container
   # but have not been set yet.
   # It does *not* take tags set via resource defaults as these will *never* be set on
   # the resource itself since all resources always have tags that are automatically
   # assigned.
   #
-  def tagged?(*tags)
-    super || ((scope_resource = scope.resource) && scope_resource != self && scope_resource.tagged?(tags))
+  # @param tag_array [Array[String]] list tags to look for
+  # @return [Boolean] true if this instance is tagged with at least one of the provided tags
+  #
+  def raw_tagged?(tag_array)
+    super || ((scope_resource = scope.resource) && !scope_resource.equal?(self) && scope_resource.raw_tagged?(tag_array))
   end
 
   private
