@@ -47,7 +47,9 @@ module Puppet::Util::Tagging
     end
   end
 
-  # Is the receiver tagged with at least one of the given tags?
+  # Answers if this resource is tagged with at least one of the given tags.
+  #
+  # The given tags are converted to downcased strings before the match is performed.
   #
   # @param *tags [String] splat of tags to look for
   # @return [Boolean] true if this instance is tagged with at least one of the provided tags
@@ -56,16 +58,17 @@ module Puppet::Util::Tagging
     raw_tagged?(tags.collect {|t| t.to_s.downcase})
   end
 
-  # Faster variant of the tagged method that does no conversion of its
-  # arguments. Instead it's assumed that the arguments already are
-  # downcased strings.
+  # Answers if this resource is tagged with at least one of the tags given in downcased string form.
   #
-  # @param tag_array [Array] array of tags to look for
+  # The method is a faster variant of the tagged? method that does no conversion of its
+  # arguments.
+  #
+  # @param tag_array [Array[String]] array of tags to look for
   # @return [Boolean] true if this instance is tagged with at least one of the provided tags
   #
   def raw_tagged?(tag_array)
     my_tags = self.tags
-    not tag_array.index { |t| my_tags.include?(t) }.nil?
+    !tag_array.index { |t| my_tags.include?(t) }.nil?
   end
 
   # Only use this method when copying known tags from one Tagging instance to another
