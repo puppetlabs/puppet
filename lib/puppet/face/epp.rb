@@ -34,11 +34,11 @@ Puppet::Face.define(:epp, '0.0.1') do
 
       Validate two arbitrary template files:
 
-          $ puppet parser validate mymodule/template1.epp yourmodule/something.epp
+          $ puppet epp validate mymodule/template1.epp yourmodule/something.epp
 
         Validate a template somewhere in the file system:
 
-            $ puppet parser validate /tmp/testing/template1.epp
+            $ puppet epp validate /tmp/testing/template1.epp
 
       Validate from STDIN:
 
@@ -342,7 +342,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           Puppet.err("Only .yaml or .pp can be used as a --values_file")
         end
       rescue => e
-        Puppet.err("Could not load --values_file.args #{e.message}")
+        Puppet.err("Could not load --values_file #{e.message}")
       end
       if !(template_values.nil? || template_values.is_a?(Hash))
         Puppet.err("--values_file option must evaluate to a Hash or undef/nil, got: '#{template_values.class}'")
@@ -352,15 +352,13 @@ Puppet::Face.define(:epp, '0.0.1') do
     if values = options[:values]
       evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
       result = evaluating_parser.evaluate_string(compiler.topscope, values, 'values-hash')
-      if !(result.nil? || result.is_a?(Hash))
-        Puppet.err("--values option must evaluate to a Hash or undef, got '#{result.class}'")
-      end
-      if template_values.nil?
-        result
-      elsif result.nil?
+      case result
+      when nil
         template_values
+      when Hash
+        template_values.nil? ? result : template_values.merge(result)
       else
-        template_values.merge(result)
+        Puppet.err("--values option must evaluate to a Hash or undef, got: '#{result.class}'")
       end
     else
       template_values
