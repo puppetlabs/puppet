@@ -18,14 +18,14 @@ describe Puppet::Face[:epp, :current] do
         template_name = 'template1.epp'
         dir = dir_containing('templates', { template_name => "<%= |$a $b |%>" })
         template = File.join(dir, template_name)
-        expect { eppface.validate(template) }.to exit_with(1)
+        expect { eppface.validate(template) }.to raise_exception(Puppet::Error, /Errors while validating epp/)
       end
 
       it "runs error free when there are no validation errors from an absolute file" do
         template_name = 'template1.epp'
         dir = dir_containing('templates', { template_name => "just text" })
         template = File.join(dir, template_name)
-        expect { eppface.validate(template) }.to_not exit_with(1)
+        expect { eppface.validate(template) }.to_not raise_exception()
       end
 
       it "reports missing files" do
@@ -64,25 +64,25 @@ describe Puppet::Face[:epp, :current] do
         end
 
         it "finds errors in supplied template file in the context of a directory environment" do
-          expect { eppface.validate('m1/broken.epp') }.to exit_with(1)
+          expect { eppface.validate('m1/broken.epp') }.to raise_exception(Puppet::Error, /Errors while validating epp/)
           expect(@logs.join).to match(/Syntax error at 'b'/)
         end
 
         it "stops on first error by default" do
-          expect { eppface.validate('m1/broken.epp', 'm1/broken2.epp') }.to exit_with(1)
+          expect { eppface.validate('m1/broken.epp', 'm1/broken2.epp') }.to raise_exception(Puppet::Error, /Errors while validating epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken\.epp/)
           expect(@logs.join).to_not match(/Syntax error at 'b'.*broken2\.epp/)
         end
 
         it "continues after error when --continue_on_error is given" do
-          expect { eppface.validate('m1/broken.epp', 'm1/broken2.epp', :continue_on_error => true) }.to exit_with(1)
+          expect { eppface.validate('m1/broken.epp', 'm1/broken2.epp', :continue_on_error => true) }.to raise_exception(Puppet::Error, /Errors while validating epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken\.epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken2\.epp/)
         end
 
         it "validates all templates in the environment" do
           pending "NOT IMPLEMENTED YET"
-          expect { eppface.validate(:continue_on_error => true) }.to exit_with(1)
+          expect { eppface.validate(:continue_on_error => true) }.to raise_exception(Puppet::Error, /Errors while validating epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken\.epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken2\.epp/)
           expect(@logs.join).to match(/Syntax error at 'b'.*broken3\.epp/)
@@ -92,7 +92,7 @@ describe Puppet::Face[:epp, :current] do
 
     it "validates the contents of STDIN when no files given and STDIN is not a tty" do
       from_a_piped_input_of("<% | $a $oh_no | %> I am broken")
-      expect { eppface.validate() }.to exit_with(1)
+      expect { eppface.validate() }.to raise_exception(Puppet::Error, /Errors while validating epp/)
       expect(@logs.join).to match(/Syntax error at 'oh_no'/)
     end
 
@@ -162,8 +162,8 @@ describe Puppet::Face[:epp, :current] do
     end
 
     it "informs the user of files that don't exist" do
-      result = eppface.dump('does_not_exist_here.epp')
-      expect(result).to match(/One or more file\(s\) specified did not exist:\n\s*does_not_exist_here\.epp/m)
+      expected_message = /One or more file\(s\) specified did not exist:\n\s*does_not_exist_here\.epp/m
+      expect { eppface.dump('does_not_exist_here.epp') }.to raise_exception(Puppet::Error, expected_message)
     end
 
     it "dumps the AST of STDIN when no files given and STDIN is not a tty" do

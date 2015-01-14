@@ -47,7 +47,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
             $ puppet epp validate /tmp/testing/template1.epp
 
-         Validate a template against a local file in the file system:
+         Validate a template against a file relative to the current directory:
 
            $ puppet epp validate template1.epp
            $ puppet epp validate ./template1.epp
@@ -71,6 +71,8 @@ Puppet::Face.define(:epp, '0.0.1') do
           tmp = validate_template_string(STDIN.read)
           status &&= tmp
         else
+          # This is not an error since a validate of all files in an empty
+          # directry should not be treated as a failed validation.
           Puppet.notice "No template specified. No action taken"
         end
       end
@@ -94,8 +96,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         raise Puppet::Error, "One or more file(s) specified did not exist:\n" + missing_files.map { |f| "   #{f}" }.join("\n")
       else
         # Exit with 1 if there were errors
-        exit(1) unless status
-        nil
+        raise Puppet::Error, "Errors while validating epp" unless status
       end
     end
   end
@@ -148,11 +149,16 @@ Puppet::Face.define(:epp, '0.0.1') do
 
       compiler = create_compiler(options)
 
+      # Print to a buffer since the face needs to return the resulting string
+      # and the face API is "all or nothing"
+      #
+      buffer = StringIO.new
+
       if options[:e]
-        dump_parse(options[:e], 'command-line-string', options, false)
+        buffer.print dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
         if ! STDIN.tty?
-          dump_parse(STDIN.read, 'stdin', options, false)
+          buffer.print dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, "No input to parse given on command line or stdin"
         end
@@ -171,18 +177,15 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
 
         show_filename = templates.count > 1
-        dumps = templates.map do |file|
-          dump_parse(File.read(file), file, options, show_filename)
-        end.join("")
+        dumps = templates.each do |file|
+          buffer.print dump_parse(File.read(file), file, options, show_filename)
+        end
 
-        if missing_files.empty?
-          dumps
-        else
-          puts dumps
-          STDERR.puts "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
-          exit(1)
+        if !missing_files.empty?
+          raise Puppet::Error, "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
         end
       end
+      buffer.string
     end
   end
 
@@ -236,7 +239,8 @@ Puppet::Face.define(:epp, '0.0.1') do
       names as facts as this result in an error; "attempt to redefine a variable" since facts
       are set first.
 
-      Exits with 0 if there were no validation errors. On errors, no rendered output is produced.
+      Exits with 0 if there were no validation errors. On errors, no rendered output is produced for
+      that template file.
 
       When designing EPP templates, it is strongly recommended to define all template arguments
       in the template, and to give them in a hash when calling `epp` or `inline_epp` and to use
@@ -307,23 +311,33 @@ Puppet::Face.define(:epp, '0.0.1') do
 
       compiler = create_compiler(options)
 
+      # Print to a buffer since the face needs to return the resulting string
+      # and the face API is "all or nothing"
+      #
+      buffer = StringIO.new
+      status = true
       if options[:e]
-        render_inline(options[:e], compiler, options)
+        buffer.print render_inline(options[:e], compiler, options)
       elsif args.empty?
         if ! STDIN.tty?
-          render_inline(STDIN.read, compiler, options)
+          buffer.print render_inline(STDIN.read, compiler, options)
         else
           raise Puppet::Error, "No input to process given on command line or stdin"
         end
       else
         show_filename = args.count > 1
         file_nbr = 0
-        results = args.map do |file|
-          render_file(file, compiler, options, show_filename, file_nbr += 1)
-        end.join("")
-
-        results
+        args.each do |file|
+          begin
+            buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
+          rescue Puppet::ParseError => detail
+            Puppet.err(detail.message)
+            status = false
+          end
+        end
       end
+      raise Puppet::Error, "error while rendering epp" unless status
+      buffer.string
     end
   end
 
@@ -389,12 +403,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   def render_inline(epp_source, compiler, options)
     template_args = get_values(compiler, options)
-    begin
-      Puppet::Pops::Evaluator::EppEvaluator.inline_epp(compiler.topscope, epp_source, template_args)
-    rescue Puppet::ParseError => detail
-      Puppet.err(detail.message)
-      ""
-    end
+    Puppet::Pops::Evaluator::EppEvaluator.inline_epp(compiler.topscope, epp_source, template_args)
   end
 
   def render_file(epp_template_name, compiler, options, show_filename, file_nbr)
@@ -411,12 +420,10 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
       output << Puppet::Pops::Evaluator::EppEvaluator.epp(compiler.topscope, epp_template_name, compiler.environment, template_args)
     rescue Puppet::ParseError => detail
-      if show_filename
-        Puppet.err("--- #{epp_template_name}")
-      end
-      Puppet.err(detail.message)
-      ""
+      Puppet.err("--- #{epp_template_name}") if show_filename
+      raise detail
     end
+    output
   end
 
   # @api private
