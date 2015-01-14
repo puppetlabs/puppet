@@ -167,5 +167,16 @@ describe Puppet::SSL::Certificate do
       @certificate.content = real_certificate
       @certificate.to_text.should == "certificatetext"
     end
+
+    it "should parse the old non-DER encoded extension values" do
+      cert = OpenSSL::X509::Certificate.new(File.read(my_fixture("old-style-cert-exts.pem")))
+      wrapped_cert = Puppet::SSL::Certificate.from_instance cert
+      exts = wrapped_cert.custom_extensions
+
+      expect(exts.find { |ext| ext['oid'] == 'pp_uuid'}['value']).to eq('I-AM-A-UUID')
+      expect(exts.find { |ext| ext['oid'] == 'pp_instance_id'}['value']).to eq('i_am_an_id')
+      expect(exts.find { |ext| ext['oid'] == 'pp_image_name'}['value']).to eq('i_am_an_image_name')
+    end
+
   end
 end
