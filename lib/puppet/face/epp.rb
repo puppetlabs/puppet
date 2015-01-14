@@ -81,12 +81,9 @@ Puppet::Face.define(:epp, '0.0.1') do
       files.each do |file|
         break if !status && !options[:continue_on_error]
 
-        template_file = Puppet::Parser::Files.find_template(file, compiler.environment)
+        template_file = effective_template(file, compiler.environment)
         if template_file
           tmp = validate_template(template_file)
-          status &&= tmp
-        elsif Puppet::FileSystem.exist?(file)
-          tmp = validate_template(file)
           status &&= tmp
         else
           missing_files << file
@@ -164,10 +161,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
       else
         templates, missing_files = args.reduce([[],[]]) do |memo, file|
-          template_file = Puppet::Parser::Files.find_template(file, compiler.environment)
-          if template_file.nil? && Puppet::FileSystem.exist?(file)
-            template_file = file
-          end
+          template_file = effective_template(file, compiler.environment)
           if template_file.nil?
             memo[1] << file
           else
@@ -414,6 +408,8 @@ Puppet::Face.define(:epp, '0.0.1') do
         output << "\n" unless file_nbr == 1
         output << "--- #{epp_template_name}\n"
       end
+      # Change to an absolute file only if reference is to a an existing file. Note that an absolute file must be used
+      # or the template must be found on the module path when calling the epp evaluator.
       template_file = Puppet::Parser::Files.find_template(epp_template_name, compiler.environment)
       if template_file.nil? && Puppet::FileSystem.exist?(epp_template_name)
         epp_template_name = File.expand_path(epp_template_name)
@@ -466,4 +462,18 @@ Puppet::Face.define(:epp, '0.0.1') do
     compiler.topscope.class_set('', compiler.topscope)
     compiler
   end
+
+  # Produces the effective template file from a module/template or file reference
+  # @api private
+  def effective_template(file, env)
+    template_file = Puppet::Parser::Files.find_template(file, env)
+    if !template_file.nil?
+      template_file
+    elsif Puppet::FileSystem.exist?(file)
+      file
+    else
+      nil
+    end
+  end
+
 end
