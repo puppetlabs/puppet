@@ -189,11 +189,12 @@ class Puppet::Parser::Resource < Puppet::Resource
     copy_as_resource.to_ral
   end
 
-  # Faster variant of the tagged method that does no conversion of its
-  # arguments. Instead it's assumed that the arguments already are
-  # downcased strings.
+  # Answers if this resource is tagged with at least one of the tags given in downcased string form.
   #
-  # This match takes into account the tags that a resource will inherit from its container
+  # The method is a faster variant of the tagged? method that does no conversion of its
+  # arguments.
+  #
+  # The match takes into account the tags that a resource will inherit from its container
   # but have not been set yet.
   # It does *not* take tags set via resource defaults as these will *never* be set on
   # the resource itself since all resources always have tags that are automatically
