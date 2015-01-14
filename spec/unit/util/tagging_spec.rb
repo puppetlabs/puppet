@@ -88,6 +88,13 @@ describe Puppet::Util::Tagging do
       expect(tagger).to be_tagged("goodbye")
     end
 
+    it "downcases tag arguments" do
+      tagger.tag("hello")
+      tagger.tag("goodbye")
+      expect(tagger).to be_tagged(:HEllO)
+      expect(tagger).to be_tagged("GooDByE")
+    end
+
     it "accepts hyphenated tags" do
       tagger.tag("my-tag")
       expect(tagger).to be_tagged("my-tag")
