@@ -95,8 +95,19 @@ protected
     case o.operator
     when :'=='
       if left_code == "tag"
+        # Ensure that to_s and downcase is done once, i.e. outside the proc block and
+        # then use raw_tagged? instead of tagged?
+        if right_code.is_a?(Array)
+          tags = right_code
+        else
+          tags = [ right_code ]
+        end
+        tags = tags.collect do |t|
+          raise ArgumentError, 'Cannot transform a number to a tag' if t.is_a?(Numeric)
+          t.to_s.downcase
+        end
         proc do |resource|
-          resource.tagged?(right_code)
+          resource.raw_tagged?(tags)
         end
       else
         proc do |resource|
