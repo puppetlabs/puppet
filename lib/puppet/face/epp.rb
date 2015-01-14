@@ -1,6 +1,7 @@
 require 'puppet/face'
 require 'puppet/pops'
 require 'puppet/parser/files'
+require 'puppet/file_system'
 
 Puppet::Face.define(:epp, '0.0.1') do
   copyright "Puppet Labs", 2014
@@ -19,6 +20,12 @@ Puppet::Face.define(:epp, '0.0.1') do
       to the settings of max_error, and max_warnings. The processing
       stops after having reported issues for the first encountered file with errors
       unless the option --continue_on_error is given.
+
+      Files can be given using the `modulename/template.epp` style to lookup the
+      template from a module, or be given as a reference to a file. If the reference
+      to a file can be resolved against a template in a module, the module version
+      wins - in this case use an absolute path to reference the template file
+      if the module version is not wanted.
 
       Exits with 0 if there were no validation errors.
     EOT
@@ -39,6 +46,11 @@ Puppet::Face.define(:epp, '0.0.1') do
         Validate a template somewhere in the file system:
 
             $ puppet epp validate /tmp/testing/template1.epp
+
+         Validate a template against a local file in the file system:
+
+           $ puppet epp validate template1.epp
+           $ puppet epp validate ./template1.epp
 
       Validate from STDIN:
 
@@ -70,6 +82,9 @@ Puppet::Face.define(:epp, '0.0.1') do
         template_file = Puppet::Parser::Files.find_template(file, compiler.environment)
         if template_file
           tmp = validate_template(template_file)
+          status &&= tmp
+        elsif Puppet::FileSystem.exist?(file)
+          tmp = validate_template(file)
           status &&= tmp
         else
           missing_files << file
