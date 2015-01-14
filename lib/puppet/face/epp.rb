@@ -112,7 +112,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       and is not API, and may thus change between versions without deprecation warnings.
 
       The command accepts one or more templates (.epp) files, or an -e followed by the template
-      source text. The given templates can be absolute paths to template files, or references
+      source text. The given templates can be paths to template files, or references
       to templates in modules when given on the form <modulename>/<template-name>.epp.
       If no arguments are given, the stdin is read (unless it is attached to a terminal)
 
@@ -159,6 +159,9 @@ Puppet::Face.define(:epp, '0.0.1') do
       else
         templates, missing_files = args.reduce([[],[]]) do |memo, file|
           template_file = Puppet::Parser::Files.find_template(file, compiler.environment)
+          if template_file.nil? && Puppet::FileSystem.exist?(file)
+            template_file = file
+          end
           if template_file.nil?
             memo[1] << file
           else
@@ -175,7 +178,9 @@ Puppet::Face.define(:epp, '0.0.1') do
         if missing_files.empty?
           dumps
         else
-          dumps + "\nOne or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
+          puts dumps
+          STDERR.puts "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
+          exit(1)
         end
       end
     end
