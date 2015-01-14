@@ -220,7 +220,7 @@ describe Puppet::SSL::CertificateRequest do
       it "should support old non-DER encoded extensions" do
         csr = OpenSSL::X509::Request.new(File.read(my_fixture("old-style-cert-request.pem")))
         wrapped_csr = Puppet::SSL::CertificateRequest.from_instance csr
-        exts = wrapped_csr.request_extensions
+        exts = wrapped_csr.request_extensions()
 
         exts.find { |ext| ext['oid'] == 'pp_uuid' }['value'].should == 'I-AM-A-UUID'
         exts.find { |ext| ext['oid'] == 'pp_instance_id' }['value'].should == 'i_am_an_id'
