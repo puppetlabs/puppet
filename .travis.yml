@@ -2,6 +2,9 @@ language: ruby
 sudo: false
 bundler_args: --without development
 script:
+  - "ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'"
+  - "ls -l spec/fixtures/unit/ssl/certificate"
+  - "ls -l spec/fixtures/unit/ssl/certificate_request"
   - "bundle exec rake $CHECK"
 notifications:
   email: false

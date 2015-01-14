@@ -213,7 +213,7 @@ module Puppet::SSL::CertificateFactory
       # This is not an X509v3 extension which means that the extension
       # factory cannot generate it. We need to generate the extension
       # manually.
-      OpenSSL::X509::Extension.new(oid, val, crit)
+      OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(val).to_der, crit)
     end
   end
 end
