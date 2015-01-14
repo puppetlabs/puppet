@@ -412,7 +412,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       output << Puppet::Pops::Evaluator::EppEvaluator.epp(compiler.topscope, epp_template_name, compiler.environment, template_args)
     rescue Puppet::ParseError => detail
       if show_filename
-        Puppet.err("#{file_nbr == 1 ? "" : "\n"}--- #{epp_template_name}")
+        Puppet.err("--- #{epp_template_name}")
       end
       Puppet.err(detail.message)
       ""
