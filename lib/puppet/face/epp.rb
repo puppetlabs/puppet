@@ -195,7 +195,9 @@ Puppet::Face.define(:epp, '0.0.1') do
 
       The command accepts one or more templates (.epp files), given the same way as templates
       are given to the puppet `epp` function (a full path, or a relative reference
-      on the form '<modulename>/<template-name>.epp').
+      on the form '<modulename>/<template-name>.epp'), or as a relative path.args In case
+      the given path matches both a modulename/template and a file, the template from
+      the module is used.
 
       An inline_epp equivalent can also be performed by giving the template after
       an -e, or by piping the EPP source text to the command.
@@ -402,6 +404,10 @@ Puppet::Face.define(:epp, '0.0.1') do
       if show_filename && options[:header]
         output << "\n" unless file_nbr == 1
         output << "--- #{epp_template_name}\n"
+      end
+      template_file = Puppet::Parser::Files.find_template(epp_template_name, compiler.environment)
+      if template_file.nil? && Puppet::FileSystem.exist?(epp_template_name)
+        epp_template_name = File.expand_path(epp_template_name)
       end
       output << Puppet::Pops::Evaluator::EppEvaluator.epp(compiler.topscope, epp_template_name, compiler.environment, template_args)
     rescue Puppet::ParseError => detail
