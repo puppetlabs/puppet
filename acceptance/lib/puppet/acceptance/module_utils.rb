@@ -1,7 +1,6 @@
 module Puppet
   module Acceptance
     module ModuleUtils
-
       # Return an array of module paths for a given host.
       #
       # Example return value:
@@ -180,10 +179,11 @@ module Puppet
         modulepath = moduledir.is_a?(Array) ? moduledir : [moduledir]
         moduledir= nil
 
-        modulepath.each do |i|
+        modulepath.each do |path|
+          full_path = File.join(path.strip, module_name)
           # module directory should exist
-          if on(host, %Q{[ -d "#{i}/#{module_name}" ]}, :acceptable_exit_codes => (0..255)).exit_code == 0
-            moduledir = i
+          if on(host, %Q{[ -d "#{full_path}" ]}, :acceptable_exit_codes => (0..255)).exit_code == 0
+            moduledir = path.strip
           end
         end
         fail_test('module directory not found') unless moduledir
