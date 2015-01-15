@@ -22,13 +22,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     @enclosing_scope = scope
   end
 
-  # marker method checked with respond_to :puppet_lambda
-  # @api private
-  # @deprecated Use the type system to query if an object is of Callable type, then use its signatures method for info
-  def puppet_lambda()
-    true
-  end
-
   # Evaluates a closure in its enclosing scope after having matched given arguments with parameters (from left to right)
   # @api public
   def call(*args)
