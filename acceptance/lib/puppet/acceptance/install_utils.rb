@@ -198,6 +198,18 @@ module Puppet
             host.logger.notify("No repository installation step for #{platform} yet...")
         end
       end
+
+      # Configures gem sources on hosts to use a mirror, if specified
+      # This is a duplicate of the Gemfile logic.
+      def configure_gem_mirror(hosts)
+        hosts = [hosts] unless hosts.kind_of?(Array)
+        gem_source = ENV['GEM_SOURCE'] || 'https://rubygems.org'
+
+        hosts.each do |host|
+          on host, 'gem source --clear-all'
+          on host, "gem source --add #{gem_source}"
+        end
+      end
     end
   end
 end
