@@ -206,8 +206,15 @@ module Puppet
         gem_source = ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
         hosts.each do |host|
-          on host, 'gem source --clear-all'
-          on host, "gem source --add #{gem_source}"
+          case host['platform']
+          when /windows/
+            gem = 'cmd /c gem'
+          else
+            gem = 'gem'
+          end
+
+          on host, "#{gem} source --clear-all"
+          on host, "#{gem} source --add #{gem_source}"
         end
       end
     end
