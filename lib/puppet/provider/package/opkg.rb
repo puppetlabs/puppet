@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
   def install
     # OpenWrt package lists are ephemeral, make sure we have at least
     # some entries in the list directory for opkg to use
-    opkg('update') if Dir.entries('/var/opkg-lists/').size <= 2
+    opkg('update') if package_lists.size <= 2
 
     if @resource[:source]
       opkg( '--force-overwrite', 'install', @resource[:source] )
@@ -73,4 +73,9 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     }
   end
 
+  private
+
+  def package_lists
+    Dir.entries('/var/opkg-lists/')
+  end
 end
