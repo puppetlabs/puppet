@@ -33,8 +33,8 @@ bundle install --path=./.bundle/gems
 
 #export pe_version=${pe_version_override:-$pe_version}
 #export pe_family=3.4
-if bundle exec genconfig ${platform}-${layout} > hosts.cfg
-then; else echo "Usage: ensure Gemfile.local exists requiring sqa-utils"
+if ! bundle exec genconfig ${platform}-${layout} > hosts.cfg; then
+  echo "Usage: ensure Gemfile.local exists requiring sqa-utils"
 fi
 
 export forge_host=api-forge-aio01-petest.puppetlabs.com
