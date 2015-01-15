@@ -213,12 +213,12 @@ describe Puppet::Indirector::Request do
         Puppet::Node::Environment.create(:baz, [])
     )},
       "Static loader for spec") do
-      Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).description.should == "foo://bar/baz"
+      expect(Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).description).to eq("foo://bar/baz")
       end
   end
 
   it "should use its indirection name and key, if it has no uri, as its description" do
-    Puppet::Indirector::Request.new(:myind, :find, "key", nil).description.should == "/myind/key"
+    expect(Puppet::Indirector::Request.new(:myind, :find, "key", nil).description).to eq("/myind/key")
   end
 
   it "should be able to return the URI-escaped key" do
