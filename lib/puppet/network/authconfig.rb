@@ -16,24 +16,30 @@ module Puppet
 
     def self.default_acl
       [
-      # API V2.0
+      # Master API V2.0
       { :acl => "#{master_url_prefix}/v2.0/environments", :method => :find, :allow => '*', :authenticated => true },
 
-      # API V3
+      # Master API V3
+      { :acl => "#{master_url_prefix}/v3/environments", :method => :find, :allow => '*', :authenticated => true },
+
       { :acl => "~ ^#{master_url_prefix}\/v3\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
       { :acl => "~ ^#{master_url_prefix}\/v3\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^#{master_url_prefix}\/v3\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
+
       # this one will allow all file access, and thus delegate
       # to fileserver.conf
       { :acl => "#{master_url_prefix}/v3/file" },
+
+      { :acl => "#{master_url_prefix}/v3/status", :method => [:find], :authenticated => true },
+
+      # CA API V1
       { :acl => "#{ca_url_prefix}/v1/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-      { :acl => "~ ^#{master_url_prefix}\/v3\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
+
       # These allow `auth any`, because if you can do them anonymously you
       # should probably also be able to do them when trusted.
       { :acl => "#{ca_url_prefix}/v1/certificate/ca", :method => :find, :authenticated => :any },
       { :acl => "#{ca_url_prefix}/v1/certificate/", :method => :find, :authenticated => :any },
       { :acl => "#{ca_url_prefix}/v1/certificate_request", :method => [:find, :save], :authenticated => :any },
-      { :acl => "#{master_url_prefix}/v3/status", :method => [:find], :authenticated => true },
-      { :acl => "#{master_url_prefix}/v3/environments", :method => :find, :allow => '*', :authenticated => true },
       ]
       end
 
