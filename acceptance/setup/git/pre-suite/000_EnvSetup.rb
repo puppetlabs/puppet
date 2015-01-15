@@ -84,8 +84,6 @@ end
 
 install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
-configure_gem_mirror(hosts)
-
 hosts.each do |host|
   case host['platform']
   when /windows/
@@ -111,6 +109,14 @@ hosts.each do |host|
     on host, 'cd /; icacls bin /reset /T'
     on host, 'ruby --version'
     on host, 'cmd /c gem list'
+  end
+end
+
+# Only configure gem mirror after Ruby has been installed, but before any gems are installed.
+configure_gem_mirror(hosts)
+
+hosts.each do |host|
+  case host['platform']
   when /solaris/
     step "#{host} Install json from rubygems"
     on host, 'gem install json_pure'
