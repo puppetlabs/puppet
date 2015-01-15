@@ -786,7 +786,7 @@ class Puppet::Settings
   # For regular use of setting a value, the method `[]=` should be used.
   # @api private
   #
-  def patch_value(param, value, type, options = {})
+  def patch_value(param, value, type)
     if @value_sets[type]
       @value_sets[type].set(param, value)
       unsafe_flush_cache
