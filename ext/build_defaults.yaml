@@ -24,6 +24,9 @@ build_msi:
   hiera:
     ref: 'refs/tags/1.3.4'
     repo: 'git://github.com/puppetlabs/hiera.git'
+  mcollective:
+    ref: 'refs/tags/2.7.0'
+    repo: 'git://github.com/puppetlabs/marionette-collective.git'
   sys:
     ref:
       x86: '57068e7b7c87288c51ff39d96c80cfb509a42091'
