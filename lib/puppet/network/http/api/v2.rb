@@ -5,7 +5,7 @@ module Puppet::Network::HTTP::API::V2
   def self.routes
     path(%r{^/v2\.0}).
       get(Authorization.new).
-      chain(ENVIRONMENTS, NOT_FOUND)
+      chain(ENVIRONMENTS, Puppet::Network::HTTP::API.not_found)
   end
 
   private
@@ -19,12 +19,6 @@ module Puppet::Network::HTTP::API::V2
       block.call.call(request, response)
     end
   end
-
-  NOT_FOUND = Puppet::Network::HTTP::Route.
-    path(/.*/).
-    any(lambda do |req, res|
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(req.path, Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
-    end)
 
   ENVIRONMENTS = path(%r{^/environments$}).get(provide do
     Environments.new(Puppet.lookup(:environments))

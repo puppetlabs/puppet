@@ -5,15 +5,15 @@ in_testdir = master.tmpdir('nodenamevalue')
 
 authfile = "#{in_testdir}/auth.conf"
 authconf = <<-AUTHCONF
-path /v3/catalog/specified_node_name
+path /puppet/v3/catalog/specified_node_name
 auth yes
 allow *
 
-path /v3/node/specified_node_name
+path /puppet/v3/node/specified_node_name
 auth yes
 allow *
 
-path /v3/report/specified_node_name
+path /puppet/v3/report/specified_node_name
 auth yes
 allow *
 AUTHCONF

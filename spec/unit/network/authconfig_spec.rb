@@ -58,7 +58,7 @@ describe Puppet::Network::AuthConfig do
       Puppet::Network::AuthConfig.any_instance.unstub(:insert_default_acl)
     end
 
-    Puppet::Network::AuthConfig::DEFAULT_ACL.each do |acl|
+    Puppet::Network::AuthConfig::default_acl.each do |acl|
       it "should create a default right for #{acl[:acl]}" do
         @authconfig.stubs(:mk_acl)
         @authconfig.expects(:mk_acl).with(acl)
@@ -81,7 +81,7 @@ describe Puppet::Network::AuthConfig do
 
     it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do
       acl = {
-        :acl => "~ ^\/v3\/report\/([^\/]+)$",
+        :acl => "~ ^#{Puppet[:master_url_prefix]}\/v3\/report\/([^\/]+)$",
         :method => :save,
         :allow => '$1',
         :authenticated => true
