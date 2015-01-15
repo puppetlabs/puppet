@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/key'
 
+Puppet::SSL::Oids.register_puppet_oids
+
 describe Puppet::SSL::CertificateRequest do
   let(:request) { described_class.new("myname") }
   let(:key) {
@@ -216,6 +218,16 @@ describe Puppet::SSL::CertificateRequest do
           request.generate(key, :csr_attributes => csr_attributes)
         end.to raise_error Puppet::Error, /Cannot create CSR with attribute thats\.no\.moon: first num too large/
       end
+
+      it "should support old non-DER encoded extensions" do
+        csr = OpenSSL::X509::Request.new(File.read(my_fixture("old-style-cert-request.pem")))
+        wrapped_csr = Puppet::SSL::CertificateRequest.from_instance csr
+        exts = wrapped_csr.request_extensions()
+
+        exts.find { |ext| ext['oid'] == 'pp_uuid' }['value'].should == 'I-AM-A-UUID'
+        exts.find { |ext| ext['oid'] == 'pp_instance_id' }['value'].should == 'i_am_an_id'
+        exts.find { |ext| ext['oid'] == 'pp_image_name' }['value'].should == 'i_am_an_image_name'
+      end
     end
 
     context "with extension requests" do
@@ -365,5 +377,7 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
     end
+
+
   end
 end

@@ -107,6 +107,37 @@ DOC
     @content
   end
 
+  def ext_value_to_ruby_value(asn1_arr)
+    # A list of ASN1 types than can't be directly converted to a Ruby type
+    @non_convertable ||= [OpenSSL::ASN1::EndOfContent,
+                          OpenSSL::ASN1::BitString,
+                          OpenSSL::ASN1::Null,
+                          OpenSSL::ASN1::Enumerated,
+                          OpenSSL::ASN1::UTCTime,
+                          OpenSSL::ASN1::GeneralizedTime,
+                          OpenSSL::ASN1::Sequence,
+                          OpenSSL::ASN1::Set]
+
+    begin
+      # Attempt to decode the extension's DER data located in the original OctetString
+      asn1_val = OpenSSL::ASN1.decode(asn1_arr.last.value)
+    rescue OpenSSL::ASN1::ASN1Error
+      # This is to allow supporting the old-style of not DER encoding trusted facts
+      return asn1_arr.last.value
+    end
+
+    # If the extension value can not be directly converted to an atomic Ruby
+    # type, use the original ASN1 value. This is needed to work around a bug
+    # in Ruby's OpenSSL library which doesn't convert the value of unknown
+    # extension OIDs properly. See PUP-3560
+    if @non_convertable.include?(asn1_val.class) then
+      # Allows OpenSSL to take the ASN1 value and turn it into something Ruby understands
+      OpenSSL::X509::Extension.new(asn1_arr.first.value, asn1_val.to_der).value
+    else
+      asn1_val.value
+    end
+  end
+
   # Return the set of extensions requested on this CSR, in a form designed to
   # be useful to Ruby: an array of hashes.  Which, not coincidentally, you can pass
   # successfully to the OpenSSL constructor later, if you want.
@@ -128,7 +159,8 @@ DOC
     index = -1
     extensions.map do |ext_values|
       index += 1
-      context = "#{attribute.oid} extension index #{index}"
+
+      value = ext_value_to_ruby_value(ext_values)
 
       # OK, turn that into an extension, to unpack the content.  Lovely that
       # we have to swap the order of arguments to the underlying method, or
@@ -137,13 +169,9 @@ DOC
       # fixed component in the sequence.
       case ext_values.length
       when 2
-        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[1].value)
-        { "oid" => ev.oid, "value" => ev.value }
-
+        {"oid" => ext_values[0].value, "value" => value}
       when 3
-        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[2].value, ext_values[1].value)
-        { "oid" => ev.oid, "value" => ev.value, "critical" => ev.critical? }
-
+        {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value}
       else
         raise Puppet::Error, "In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}"
       end
@@ -227,7 +255,7 @@ DOC
             raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
           end
 
-          ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
+          ext = OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(value.to_s).to_der, false)
           extensions << ext
         rescue OpenSSL::X509::ExtensionError => e
           raise Puppet::Error, "Cannot create CSR with extension request #{oid}: #{e.message}", e.backtrace
