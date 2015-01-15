@@ -11,7 +11,7 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
   end
 
   let(:resource) do
-    Puppet::Type.type(:package).new(:name => 'foopkg')
+    Puppet::Type.type(:package).new(:name => 'foopkg', :provider => :urpmi)
   end
 
   before do
