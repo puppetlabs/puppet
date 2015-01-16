@@ -368,7 +368,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "for an administrator", :if => Puppet.features.root? do
+      describe "for an administrator", :if => (Puppet.features.root? && Puppet.features.microsoft_windows?) do
         before :each do
           is_dir = Puppet::FileSystem.directory?(path)
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)

@@ -151,7 +151,7 @@ describe Puppet::Application::Inspect do
           @inspect.run_command
         end
 
-        it "should not send unreadable files", :unless => Puppet.features.microsoft_windows? do
+        it "should not send unreadable files", :unless => (Puppet.features.microsoft_windows? || Puppet.features.root?) do
           File.open(@file, 'w') { |f| f.write('stuff') }
           File.chmod(0, @file)
           Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
