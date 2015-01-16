@@ -4,8 +4,6 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-Puppet::SSL::Oids.register_puppet_oids
-
 describe Puppet::SSL::CertificateAuthority do
   after do
     Puppet::SSL::CertificateAuthority.instance_variable_set(:@singleton_instance, nil)

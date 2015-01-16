@@ -4,8 +4,6 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/key'
 
-Puppet::SSL::Oids.register_puppet_oids
-
 describe Puppet::SSL::CertificateRequest do
   let(:request) { described_class.new("myname") }
   let(:key) {

@@ -2,6 +2,7 @@ require 'spec_helper'
 
 require 'puppet/settings'
 require 'puppet/settings/autosign_setting'
+require 'puppet/type/file'
 
 describe Puppet::Settings::AutosignSetting do
   let(:settings) do

@@ -63,6 +63,7 @@ module Puppet::Test
           FileUtils.rm_rf(@environmentpath)
         end
       })
+      Puppet::SSL::Oids.register_puppet_oids
     end
 
     # Call this method once, when beginning a test run--prior to running

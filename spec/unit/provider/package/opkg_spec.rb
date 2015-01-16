@@ -12,7 +12,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
   before do
     Puppet::Util::Execution.stubs(:execute).never
     Puppet::Util.stubs(:which).with("opkg").returns("/bin/opkg")
-    Dir.stubs(:entries).with('/var/opkg-lists/').returns ['.', '..', 'packages']
+    provider.stubs(:package_lists).returns ['.', '..', 'packages']
   end
 
   describe "when installing" do
@@ -22,7 +22,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
 
     context "when the package list is absent" do
       before do
-        Dir.stubs(:entries).with('/var/opkg-lists/').returns ['.', '..']  #empty, no package list
+        provider.stubs(:package_lists).returns ['.', '..']  #empty, no package list
       end
 
       it "fetches the package list when installing" do
@@ -35,7 +35,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
 
     context "when the package list is present" do
       before do
-        Dir.stubs(:entries).with('/var/opkg-lists/').returns ['.', '..', 'lists']  # With a pre-downloaded package list
+        provider.stubs(:package_lists).returns ['.', '..', 'lists']  # With a pre-downloaded package list
       end
 
       it "fetches the package list when installing" do

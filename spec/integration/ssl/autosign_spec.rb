@@ -1,7 +1,5 @@
 require 'spec_helper'
 
-Puppet::SSL::Oids.register_puppet_oids
-
 describe "autosigning" do
   include PuppetSpec::Files
 
