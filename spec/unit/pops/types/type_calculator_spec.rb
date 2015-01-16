@@ -568,6 +568,24 @@ describe 'The type calculator' do
       end
     end
 
+    context 'for Variant, such that' do
+      it 'it is assignable to a type if all contained types are assignable to that type' do
+        v = variant_t(range_t(10, 12),range_t(14, 20))
+        v.should be_assignable_to(integer_t)
+        v.should be_assignable_to(range_t(10, 20))
+
+        # test that both types are assignable to one of the variants OK
+        v.should be_assignable_to(variant_t(range_t(10, 20), range_t(30, 40)))
+
+        # test where each type is assignable to different types in a variant is OK
+        v.should be_assignable_to(variant_t(range_t(10, 13), range_t(14, 40)))
+
+        # not acceptable
+        v.should_not be_assignable_to(range_t(0, 4))
+        v.should_not be_assignable_to(string_t)
+      end
+    end
+
     context "for Scalar, such that" do
       it "all scalars are assignable to Scalar" do
         t = Puppet::Pops::Types::PScalarType.new()
