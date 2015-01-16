@@ -108,12 +108,6 @@ class Puppet::Settings
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
-  # @param name [Symbol] The name of the setting to fetch
-  # @return [Puppet::Settings::BaseSetting] The setting object
-  def setting(name)
-    @config[name]
-  end
-
   # Retrieve a config value
   # @param param [Symbol] the name of the setting
   # @return [Object] the value of the setting
@@ -382,7 +376,9 @@ class Puppet::Settings
     end
   end
 
-  # Return an object by name.
+  # Returns a given setting by name
+  # @param name [Symbol] The name of the setting to fetch
+  # @return [Puppet::Settings::BaseSetting] The setting object
   def setting(param)
     param = param.to_sym
     @config[param]
@@ -426,12 +422,6 @@ class Puppet::Settings
   def include?(name)
     name = name.intern if name.is_a? String
     @config.include?(name)
-  end
-
-  # check to see if a short name is already defined
-  def shortinclude?(short)
-    short = short.intern if name.is_a? String
-    @shortnames.include?(short)
   end
 
   # Prints the contents of a config file with the available config settings, or it
@@ -487,29 +477,6 @@ class Puppet::Settings
     (value(:configprint) != "" || value(:genconfig) || value(:genmanifest)) && true
   end
 
-  # Return a given object's file metadata.
-  def metadata(param)
-    if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
-      {
-        :owner => obj.owner,
-        :group => obj.group,
-        :mode => obj.mode
-      }.delete_if { |key, value| value.nil? }
-    else
-      nil
-    end
-  end
-
-  # Make a directory with the appropriate user, group, and mode
-  def mkdir(default)
-    obj = get_config_file_default(default)
-
-    Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
-      mode = obj.mode || 0750
-      Dir.mkdir(obj.value, mode)
-    end
-  end
-
   # The currently configured run mode that is preferred for constructing the application configuration.
   def preferred_run_mode
     @preferred_run_mode_name || :user
@@ -529,20 +496,6 @@ class Puppet::Settings
     # settings so they will be re-generated.
     flush_cache
     mode
-  end
-
-  # Return all of the settings associated with a given section.
-  def params(section = nil)
-    if section
-      section = section.intern if section.is_a? String
-      @config.find_all { |name, obj|
-        obj.section == section
-      }.collect { |name, obj|
-        name
-      }
-    else
-      @config.keys
-    end
   end
 
   def parse_config(text, file = "text")
@@ -794,19 +747,6 @@ class Puppet::Settings
     searchpath << SearchPathElement.new(:overridden_defaults, :values)
   end
 
-  # Get a list of objects per section
-  def sectionlist
-    sectionlist = []
-    self.each { |name, obj|
-      section = obj.section || "puppet"
-      sections[section] ||= []
-      sectionlist << section unless sectionlist.include?(section)
-      sections[section] << obj
-    }
-
-    return sectionlist, sections
-  end
-
   def service_user_available?
     return @service_user_available if defined?(@service_user_available)
 
@@ -839,18 +779,18 @@ class Puppet::Settings
     !@value_sets[:cli].lookup(param).nil?
   end
 
-  def set_value(param, value, type, options = {})
-    Puppet.deprecation_warning("Puppet.settings.set_value is deprecated. Use Puppet[]= instead.")
+  # Patches the value for a param in a section.
+  # This method is required to support the use case of unifying --dns-alt-names and
+  # --dns_alt_names in the certificate face. Ideally this should be cleaned up.
+  # See PUP-3684 for more information.
+  # For regular use of setting a value, the method `[]=` should be used.
+  # @api private
+  #
+  def patch_value(param, value, type)
     if @value_sets[type]
       @value_sets[type].set(param, value)
       unsafe_flush_cache
     end
-  end
-
-  # Deprecated; use #define_settings instead
-  def setdefaults(section, defs)
-    Puppet.deprecation_warning("'setdefaults' is deprecated and will be removed; please call 'define_settings' instead")
-    define_settings(section, defs)
   end
 
   # Define a group of settings.
@@ -1017,14 +957,6 @@ Generated on #{Time.now}.
     @config.has_key?(param)
   end
 
-  def uninterpolated_value(param, environment = nil)
-    Puppet.deprecation_warning("Puppet.settings.uninterpolated_value is deprecated. Use Puppet.settings.value instead")
-    param = param.to_sym
-    environment &&= environment.to_sym
-
-    values(environment, self.preferred_run_mode).lookup(param)
-  end
-
   # Retrieve an object that can be used for looking up values of configuration
   # settings.
   #
@@ -1151,17 +1083,6 @@ Generated on #{Time.now}.
     when setting.allowed_on_commandline?
       Puppet.deprecation_warning("Setting #{name} is deprecated in puppet.conf. #{ref}", "puppet-conf-setting-#{name}")
     end
-  end
-
-  def get_config_file_default(default)
-    obj = nil
-    unless obj = @config[default]
-      raise ArgumentError, "Unknown default #{default}"
-    end
-
-    raise ArgumentError, "Default #{default} is not a file" unless obj.is_a? FileSetting
-
-    obj
   end
 
   def add_environment_resources(catalog, sections)

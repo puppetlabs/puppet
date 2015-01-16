@@ -17,13 +17,28 @@ describe Puppet::Settings do
     File.join(Puppet::Util::RunMode[:user].conf_dir, "puppet.conf")
   end
 
+  # Return a given object's file metadata.
+  def metadata(setting)
+    if setting.is_a?(Puppet::Settings::FileSetting)
+      {
+        :owner => setting.owner,
+        :group => setting.group,
+        :mode => setting.mode
+      }.delete_if { |key, value| value.nil? }
+    else
+      nil
+    end
+  end
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Settings.new
     end
 
-    it "should start with no defined parameters" do
-      @settings.params.length.should == 0
+    it "should start with no defined sections or parameters" do
+      # Note this relies on undocumented side effect that eachsection returns the Settings internal
+      # configuration on which keys returns all parameters.
+      @settings.eachsection.keys.length.should == 0
     end
 
     it "should not allow specification of default values associated with a section as an array" do
@@ -427,7 +442,7 @@ describe Puppet::Settings do
 
     it "allows overriding cli args based on the cli-set value" do
       @settings.handlearg("--myval", "cliarg")
-      @settings.set_value(:myval, "modified #{@settings[:myval]}", :cli)
+      @settings.patch_value(:myval, "modified #{@settings[:myval]}", :cli)
       expect(@settings[:myval]).to eq("modified cliarg")
     end
   end
@@ -476,8 +491,8 @@ describe Puppet::Settings do
 
     it "should provide a method for returning uninterpolated values" do
       @settings[:two] = "$one tw0"
-      @settings.uninterpolated_value(:two).should  == "$one tw0"
-      @settings.uninterpolated_value(:four).should == "$two $three FOUR"
+      @settings.value(:two, nil, true).should  == "$one tw0"
+      @settings.value(:four, nil, true).should == "$two $three FOUR"
     end
 
     it "should interpolate set values for other parameters into returned parameter values" do
@@ -681,7 +696,7 @@ describe Puppet::Settings do
       CONF
 
       @settings[:myfile].should == otherfile
-      @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
+      metadata(@settings.setting(:myfile)).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
 
     it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
@@ -694,7 +709,7 @@ describe Puppet::Settings do
       CONF
 
       @settings[:myfile].should == otherfile
-      @settings.metadata(:myfile).should == {:owner => "suser"}
+      metadata(@settings.setting(:myfile)).should == {:owner => "suser"}
     end
 
     it "should support loading metadata (owner, group, or mode) from a run_mode section in the configuration file" do
@@ -721,7 +736,7 @@ describe Puppet::Settings do
 
       # initializing the app should have reloaded the metadata based on run_mode
       @settings[:myfile].should == otherfile
-      @settings.metadata(:myfile).should == {:mode => "664"}
+      metadata(@settings.setting(:myfile)).should == {:mode => "664"}
     end
 
     it "does not use the metadata from the same setting in a different section" do
@@ -752,7 +767,7 @@ describe Puppet::Settings do
 
       # initializing the app should have reloaded the metadata based on run_mode
       @settings[:myfile].should == "#{file}/foo"
-      @settings.metadata(:myfile).should == { :mode => default_mode }
+      metadata(@settings.setting(:myfile)).should == { :mode => default_mode }
     end
 
     it "should call hooks associated with values set in the configuration file" do
@@ -1367,12 +1382,6 @@ describe Puppet::Settings do
       @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => '0755'}
       @settings.define_settings :third, :thirddir => { :type => :directory, :default => make_absolute("/thirddir"), :desc => "b"}
       @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => '0755'}
-    end
-
-    it "should provide a method that creates directories with the correct modes" do
-      Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
-      Dir.expects(:mkdir).with(make_absolute("/otherdir"), '0755')
-      @settings.mkdir(:otherdir)
     end
 
     it "should create a catalog with the specified sections" do
