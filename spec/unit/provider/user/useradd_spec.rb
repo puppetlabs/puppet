@@ -51,9 +51,18 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should use -G to set groups" do
+      Facter.stubs(:value).with(:osfamily).returns('Not RedHat')
       resource[:ensure] = :present
       resource[:groups] = ['group1', 'group2']
       provider.expects(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', 'myuser'], kind_of(Hash))
+      provider.create
+    end
+
+    it "should use -G to set groups without -M on RedHat" do
+      Facter.stubs(:value).with(:osfamily).returns('RedHat')
+      resource[:ensure] = :present
+      resource[:groups] = ['group1', 'group2']
+      provider.expects(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', '-M', 'myuser'], kind_of(Hash))
       provider.create
     end
 
