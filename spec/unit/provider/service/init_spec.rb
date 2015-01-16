@@ -6,11 +6,16 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:init) do
+  before do
+    Puppet::Type.type(:service).defaultprovider = described_class
+  end
+
+  after do
+    Puppet::Type.type(:service).defaultprovider = nil
+  end
 
   let :provider do
-    provider = described_class.new(:name => 'myservice')
-    provider.resource = resource
-    provider
+    resource.provider
   end
 
   let :resource do
