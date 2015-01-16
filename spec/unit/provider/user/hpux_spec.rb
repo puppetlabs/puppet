@@ -34,6 +34,7 @@ describe provider_class do
     before :each do
       Etc.stubs(:getpwent).returns(pwent)
       Etc.stubs(:getpwnam).returns(pwent)
+      resource.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
     end
 
     it "should have feature manages_passwords" do
@@ -50,53 +51,22 @@ describe provider_class do
     end
   end
 
-  context "managing passwords 2" do
-    let :pwent do
-      Struct::Passwd.new("root", "bazpassword")
-    end
-    before :each do
-      Etc.stubs(:getpwent).returns(pwent)
-      Etc.stubs(:getpwnam).returns(pwent)
-    end
+  context "Check for trusted computing" do
+  before :each do
+    provider.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
+  end
 
-     it "Should have feature manages_password_age" do
-        provider_class.should be_manages_password_age
-     end
-
-     it "Should have feature manages_expiry" do
-        provider_class.should be_manages_expiry
-     end
-
-
-     it "should return modprpw for password aging on trusted systems" do
-        if provider.trusted == "Trusted"
-           provider_class.command(:password).should == "/usr/lbin/modprpw"
-        end
-     end
-
-    it "Should be able to test for trusted computing" do
-      #provider.trusted.should be ("Trusted").or("NotTrusted")
-      provider.trusted.should_not be_nil
-    end
-
-    it "Should return min age for user if trusted system" do
-       if provider.trusted == "Trusted"
-          provider.password_min_age.should_not be_nil
-       end
-    end
-
-    it "Should return max age for user if trusted system" do
-       if provider.trusted == "Trusted"
-          provider.password_max_age.should_not be_nil
-       end
-    end
-
-  it "should add /usr/lbin/modprpw -v -l when modifying user if trusted" do
-    if provider.trust2
-       resource.stubs(:allowdupe?).returns true
-       provider.expects(:execute).with() { |args|  args.include?('/usr/lbin/modprpw') and args.include?("-v") and args.include?("-l") }
-       provider.uid = 1000
-    end
+  it "Should add modprpw to modifycmd if Trusted System" do
+    resource.stubs(:allowdupe?).returns true
+    provider.stubs(:exec_getprpw).with('root','-m uid').returns('uid=0')
+    provider.expects(:execute).with { |args| args.include?("/usr/lbin/modprpw") }
+    provider.uid = 1000
+  end
+  it "Should not add modprpw if not Trusted System" do
+    resource.stubs(:allowdupe?).returns true
+    provider.stubs(:exec_getprpw).with('root','-m uid').returns('System is not trusted')
+    provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'])
+    provider.uid = 1000
   end
  end
 end
