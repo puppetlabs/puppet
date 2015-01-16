@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
 require 'etc'
+require 'pp'
 
 provider_class = Puppet::Type.type(:user).provider(:hpuxuseradd)
 
@@ -13,7 +14,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     )
   end
   let(:provider) { resource.provider }
-
   it "should add -F when modifying a user" do
     resource.stubs(:allowdupe?).returns true
     provider.expects(:execute).with { |args| args.include?("-F") }
@@ -34,6 +34,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     before :each do
       Etc.stubs(:getpwent).returns(pwent)
       Etc.stubs(:getpwnam).returns(pwent)
+      resource.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
     end
 
     it "should have feature manages_passwords" do
@@ -49,4 +50,23 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider.password.must == "foopassword"
     end
   end
+
+  context "Check for trusted computing" do
+  before :each do
+    provider.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
+  end
+
+  it "Should add modprpw to modifycmd if Trusted System" do
+    resource.stubs(:allowdupe?).returns true
+    provider.stubs(:exec_getprpw).with('root','-m uid').returns('uid=0')
+    provider.expects(:execute).with { |args| args.include?("/usr/lbin/modprpw") }
+    provider.uid = 1000
+  end
+  it "Should not add modprpw if not Trusted System" do
+    resource.stubs(:allowdupe?).returns true
+    provider.stubs(:exec_getprpw).with('root','-m uid').returns('System is not trusted')
+    provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'])
+    provider.uid = 1000
+  end
+ end
 end
