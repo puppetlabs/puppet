@@ -285,6 +285,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         Puppet[:daemonize] = false
         Puppet.stubs(:notice)
         Puppet.stubs(:start)
+        Puppet::Util.stubs(:chuser)
       end
 
       it "should create a Server" do
@@ -355,9 +356,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
           app = @master.main
           app.should equal(@app)
         end
-
       end
-
     end
   end
 end

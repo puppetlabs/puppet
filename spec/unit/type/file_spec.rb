@@ -243,7 +243,7 @@ describe Puppet::Type.type(:file) do
     before :each do
       # Mocha won't let me just stub SUIDManager.asuser to yield and return,
       # but it will do exactly that if we're not root.
-      Puppet.features.stubs(:root?).returns false
+      Puppet::Util::SUIDManager.stubs(:root?).returns false
     end
 
     it "should return the desired owner if they can write to the parent directory" do
