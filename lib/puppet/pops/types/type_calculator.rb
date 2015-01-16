@@ -271,7 +271,12 @@ class Puppet::Pops::Types::TypeCalculator
     # Unit can be assigned to anything
     return true if t2.class == Types::PUnitType
 
-    @@assignable_visitor.visit_this_1(self, t, t2)
+    if t2.class == Types::PVariantType
+      # Assignable if all contained types are assignable
+      t2.types.all? { |vt| @@assignable_visitor.visit_this_1(self, t, vt) }
+    else
+      @@assignable_visitor.visit_this_1(self, t, t2)
+    end
  end
 
   # Returns an enumerable if the t represents something that can be iterated
@@ -410,9 +415,18 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.is_a?(Array)
     return false unless o.all? {|element| instance_of(t.element_type, element) }
     size_t = t.size_type || @collection_default_size_t
-    size_t2 = size_as_type(o)
     # optimize by calling directly
-    assignable_PIntegerType(size_t, size_t2)
+    return instance_of_PIntegerType(size_t, o.size)
+  end
+
+  # @api private
+  def instance_of_PIntegerType(t, o)
+    return false unless o.is_a?(Integer)
+    x = t.from
+    x = -Float::INFINITY if x.nil? || x == :default
+    y = t.to
+    y = Float::INFINITY if y.nil? || y == :default
+    return x < y ? x <= o && y >= o : y <= o && x >= o
   end
 
   def instance_of_PTupleType(t, o)
@@ -420,9 +434,7 @@ class Puppet::Pops::Types::TypeCalculator
     # compute the tuple's min/max size, and check if that size matches
     size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
 
-    # compute the array's size as type
-    size_t2 = size_as_type(o)
-    return false unless assignable?(size_t, size_t2)
+    return false unless instance_of_PIntegerType(size_t, o.size)
     o.each_with_index do |element, index|
        return false unless instance_of(t.types[index] || t.types[-1], element)
     end
@@ -442,9 +454,8 @@ class Puppet::Pops::Types::TypeCalculator
     element_t = t.element_type
     return false unless o.keys.all? {|key| instance_of(key_t, key) } && o.values.all? {|value| instance_of(element_t, value) }
     size_t = t.size_type || @collection_default_size_t
-    size_t2 = size_as_type(o)
     # optimize by calling directly
-    assignable_PIntegerType(size_t, size_t2)
+    return instance_of_PIntegerType(size_t, o.size)
   end
 
   def instance_of_PDataType(t, o)
