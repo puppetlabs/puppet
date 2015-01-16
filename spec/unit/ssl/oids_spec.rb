@@ -1,8 +1,6 @@
 require 'spec_helper'
 require 'puppet/ssl/oids'
 
-Puppet::SSL::Oids.register_puppet_oids
-
 describe Puppet::SSL::Oids do
   describe "defining application OIDs" do
 
