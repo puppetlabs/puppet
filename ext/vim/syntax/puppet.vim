@@ -48,7 +48,7 @@ syn match   puppetParam         "\w\+\s*[=+]>\s*[a-z0-9]\+" contains=puppetParam
 syn match   puppetParamString   "[=+]>\s*\w\+" contains=puppetParamKeyword,puppetParamSpecial,puppetParamDigits contained
 syn keyword puppetParamKeyword  present absent purged latest installed running stopped mounted unmounted role configured file directory link contained
 syn keyword puppetParamSpecial  true false undef contained
-syn match   puppetParamDigits   "[0-9]\+"
+syn match   puppetParamDigits   "\<[0-9]\+"
 
 " match 'template' in 'content => template("...")'
 syn match   puppetParam         "\w\+\s*[=+]>\s*\w\+\s*(" contains=puppetFunction,puppetParamName
