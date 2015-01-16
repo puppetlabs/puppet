@@ -14,6 +14,7 @@ yum_host: 'yum.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
 build_gem: TRUE
 build_dmg: TRUE
+msi_name: 'puppet-agent'
 build_msi:
   puppet_for_the_win:
     ref: '2476cd007b1b52fb1b9f22202b56218629626b5c'
