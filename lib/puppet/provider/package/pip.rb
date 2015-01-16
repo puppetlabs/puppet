@@ -36,11 +36,10 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    case Facter.value(:osfamily)
-      when "RedHat"
-        "pip-python"
-      else
-        "pip"
+    if Facter.value(:osfamily) == "RedHat" and Facter.value(:operatingsystemmajrelease).to_i < 7
+      "pip-python"
+    else
+      "pip"
     end
   end
 
