@@ -635,14 +635,14 @@ reserved_word
 
 array
   : LISTSTART assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LISTSTART                       RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  | LISTSTART                       RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
   | LBRACK    assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LBRACK                          RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  | LBRACK                          RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
   | LBRACE hashpairs COMMA RBRACE { result = Factory.HASH(val[1]); loc result, val[0], val[3] }
-  | LBRACE RBRACE                 { result = Factory.literal({}) ; loc result, val[0], val[3] }
+  | LBRACE RBRACE                 { result = Factory.literal({}) ; loc result, val[0], val[1] }
 
   hashpairs
     : hashpair                 { result = [val[0]] }

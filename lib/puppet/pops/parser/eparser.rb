@@ -2360,7 +2360,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 636)
 
 module_eval(<<'.,.,', 'egrammar.ra', 637)
   def _reduce_180(val, _values, result)
-     result = Factory.literal([]) ; loc result, val[0] 
+     result = Factory.literal([]) ; loc result, val[0], val[1] 
     result
   end
 .,.,
@@ -2374,7 +2374,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 638)
 
 module_eval(<<'.,.,', 'egrammar.ra', 639)
   def _reduce_182(val, _values, result)
-     result = Factory.literal([]) ; loc result, val[0] 
+     result = Factory.literal([]) ; loc result, val[0], val[1] 
     result
   end
 .,.,
@@ -2395,7 +2395,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 643)
 
 module_eval(<<'.,.,', 'egrammar.ra', 644)
   def _reduce_185(val, _values, result)
-     result = Factory.literal({}) ; loc result, val[0], val[3] 
+     result = Factory.literal({}) ; loc result, val[0], val[1] 
     result
   end
 .,.,
