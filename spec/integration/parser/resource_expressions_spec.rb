@@ -164,15 +164,15 @@ describe "Puppet resource expressions" do
              path => '/somewhere',
              * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
 
-    fails("notify { title: unknown => value }" => /Invalid parameter unknown/)
+    fails("notify { title: unknown => value }" => /Invalid parameter: 'unknown'/)
 
     # this really needs to be a better error message.
-    fails("notify { title: * => { hash => value }, message => oops }" => /Invalid parameter hash/)
+    fails("notify { title: * => { hash => value }, message => oops }" => /Invalid parameter: 'hash'/)
 
     # should this be a better error message?
-    fails("notify { title: message => oops, * => { hash => value } }" => /Invalid parameter hash/)
+    fails("notify { title: message => oops, * => { hash => value } }" => /Invalid parameter: 'hash'/)
 
-    fails("notify { title: * => { unknown => value } }" => /Invalid parameter unknown/)
+    fails("notify { title: * => { unknown => value } }" => /Invalid parameter: 'unknown'/)
     fails("
          $x = { mode => '0666' }
          $y = { owner => the_y }
