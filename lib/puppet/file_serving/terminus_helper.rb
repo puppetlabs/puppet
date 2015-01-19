@@ -31,7 +31,7 @@ module Puppet::FileServing::TerminusHelper
   end
 
   def unescape_url(url)
-    url.sub(%r{^/file_(content|metadata)/url=},'')
+    url.sub(/^url=/,'')
   end
 
   def self.escape_url(url)

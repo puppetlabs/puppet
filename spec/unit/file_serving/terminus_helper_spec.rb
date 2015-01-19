@@ -126,14 +126,11 @@ describe Puppet::FileServing::TerminusHelper do
   end
 
   describe "#unescape_url" do
-    it "should remove the prefix from file_metadata indirector keys" do
-      @helper.unescape_url('/file_metadata/url=result').should == 'result'
-    end
-    it "should remove the prefix from file_content indirector keys" do
-      @helper.unescape_url('/file_content/url=result').should == 'result'
+    it "should remove the 'url=' prefix from indirector keys" do
+      @helper.unescape_url('url=result').should == 'result'
     end
     it "should not try to remove other prefixes" do
-      %w{url=foobar /catalog/url=foobar key-without-prefix}.each do |key|
+      %w{urlstring=foobar /catalog/url=foobar key-without-prefix}.each do |key|
         @helper.unescape_url(key).should == key
       end
     end

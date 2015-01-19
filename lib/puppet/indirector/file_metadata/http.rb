@@ -11,7 +11,7 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::Plain
   include Puppet::FileServing::TerminusHelper
 
   def find(request)
-    uri = URI( unescape_url(request.to_s) )
+    uri = URI( unescape_url(request.key) )
 
     use_ssl = uri.scheme == 'https'
     connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
