@@ -498,7 +498,7 @@ class Puppet::Resource
   end
 
   def validate_parameter(name)
-    raise ArgumentError, "Invalid parameter #{name}" unless valid_parameter?(name)
+    raise ArgumentError, "Invalid parameter: '#{name}'" unless valid_parameter?(name)
   end
 
   def prune_parameters(options = {})
