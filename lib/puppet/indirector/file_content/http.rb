@@ -1,20 +1,15 @@
 require 'puppet/file_serving/metadata'
-require 'puppet/indirector/file_metadata'
-require 'net/http'
-require 'puppet/network/http_pool'
+require 'puppet/indirector/generic_http'
 
-class Puppet::Indirector::FileContent::Http < Puppet::Indirector::Plain
+class Puppet::Indirector::FileContent::Http < Puppet::Indirector::GenericHttp
   desc "Retrieve file contents from a remote HTTP server."
 
   include Puppet::FileServing::TerminusHelper
 
+  @http_method = :get
+
   def find(request)
-    uri = URI( unescape_url(request.key) )
-
-    use_ssl = uri.scheme == 'https'
-    connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
-
-    response = connection.get(uri.path)
+    response = super
     model.from_binary(response.body)
   end
 end
