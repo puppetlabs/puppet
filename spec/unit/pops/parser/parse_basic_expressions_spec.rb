@@ -163,6 +163,11 @@ describe "egrammar parsing basic expressions" do
     it "$a [1,2,3] == [1,2,3]" do
       dump(parse("$a = [1,2,3] == [1,2,3]")).should == "(= $a (== ([] 1 2 3) ([] 1 2 3)))"
     end
+
+    it "calculates the text length of an empty array" do
+      expect(parse("[]").current.body.length).to eq(2)
+      expect(parse("[ ]").current.body.length).to eq(3)
+    end
   end
 
   context "When parsing indexed access" do
@@ -220,6 +225,11 @@ describe "egrammar parsing basic expressions" do
 
     it "$a = {'a'=> 1, 'b'=>2} != {'x'=> 1, 'y'=>3}" do
       dump(parse("$a = {'a'=>1,'b'=>2} != {'a'=>1,'b'=>2}")).should == "(= $a (!= ({} ('a' 1) ('b' 2)) ({} ('a' 1) ('b' 2))))"
+    end
+
+    it "calculates the text length of an empty hash" do
+      expect(parse("{}").current.body.length).to eq(2)
+      expect(parse("{ }").current.body.length).to eq(3)
     end
   end
 
