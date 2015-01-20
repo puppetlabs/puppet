@@ -1,7 +1,9 @@
 Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   desc "User management for HP-UX. This provider uses the undocumented `-F`
     switch to HP-UX's special `usermod` binary to work around the fact that
-    its standard `usermod` cannot make changes while the user is logged in."
+    its standard `usermod` cannot make changes while the user is logged in.
+    New functionality provides for changing trusted computing passwords and
+    resetting password expirations under trusted computing"
 
   defaultfor :operatingsystem => "hp-ux"
   confine :operatingsystem => "hp-ux"
@@ -26,7 +28,19 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   end
 
   def modifycmd(param,value)
-    super.insert(1,"-F")
+     cmd = super(param, value)
+     cmd << "-F"
+     if trusted then
+       # Append an additional command to reset the password age to 0
+       # until a workaround with expiry module can be found for trusted
+       # computing.
+       cmd << ";"
+       cmd << "/usr/lbin/modprpw"
+       cmd << "-v"
+       cmd << "-l"
+       cmd << "#{resource.name}"
+     end
+     cmd
   end
 
   def password
@@ -62,5 +76,20 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     else
       return ent.passwd
     end
+  end
+
+  def trusted
+    # Check to see if the HP-UX box is running in trusted compute mode
+    # UID for root should always be 0
+    trusted_sys = exec_getprpw('root','-m uid')
+    if trusted_sys.chomp == "uid=0"
+      return true
+    else
+      return false
+    end
+  end
+
+  def exec_getprpw(user,opts)
+    Puppet::Util::Execution.execute("/usr/lbin/getprpw #{opts} #{user}", { :combine => true })
   end
 end
