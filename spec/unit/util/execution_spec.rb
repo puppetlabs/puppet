@@ -470,6 +470,16 @@ describe Puppet::Util::Execution do
     end
 
     describe "#execute (debug logging)" do
+      before :each do
+        stub_process_wait(0)
+
+        if Puppet.features.microsoft_windows?
+          Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
+        else
+          Puppet::Util::Execution.stubs(:execute_posix).returns(pid)
+        end
+      end
+
       it "should log if no uid or gid specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello')
