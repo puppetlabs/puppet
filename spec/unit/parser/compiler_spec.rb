@@ -78,17 +78,6 @@ describe Puppet::Parser::Compiler do
     @scope.resource = @scope_resource
   end
 
-  it "should have a class method that compiles, converts, and returns a catalog" do
-    compiler = stub 'compiler'
-    Puppet::Parser::Compiler.expects(:new).with(@node).returns compiler
-    catalog = stub 'catalog'
-    compiler.expects(:compile).returns catalog
-    converted_catalog = stub 'converted_catalog'
-    catalog.expects(:to_resource).returns converted_catalog
-
-    Puppet::Parser::Compiler.compile(@node).should equal(converted_catalog)
-  end
-
   it "should fail intelligently when a class-level compile fails" do
     Puppet::Parser::Compiler.expects(:new).raises ArgumentError
     lambda { Puppet::Parser::Compiler.compile(@node) }.should raise_error(Puppet::Error)
@@ -115,22 +104,6 @@ describe Puppet::Parser::Compiler do
     @compiler.add_class "two"
 
     @compiler.classlist.sort.should == %w{one two}.sort
-  end
-
-  it "should clear the global caches before compile" do
-    compiler = stub 'compiler'
-    Puppet::Parser::Compiler.expects(:new).with(@node).returns compiler
-    catalog = stub 'catalog'
-    compiler.expects(:compile).returns catalog
-    catalog.expects(:to_resource)
-
-    $known_resource_types = "rspec"
-    $env_module_directories = "rspec"
-
-    Puppet::Parser::Compiler.compile(@node)
-
-    $known_resource_types = nil
-    $env_module_directories = nil
   end
 
   describe "when initializing" do
