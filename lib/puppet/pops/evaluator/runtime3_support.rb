@@ -425,18 +425,13 @@ module Puppet::Pops::Evaluator::Runtime3Support
     x.is_a?(TrueClass) || x.is_a?(FalseClass)
   end
 
-  def initialize
-    @@convert_visitor   ||= Puppet::Pops::Visitor.new(self, "convert", 2, 2)
-    @@convert2_visitor   ||= Puppet::Pops::Visitor.new(self, "convert2", 2, 2)
-  end
-
   # Converts 4x supported values to 3x values. This is required because
   # resources and other objects do not know about the new type system, and does not support
   # regular expressions. Unfortunately this has to be done for array and hash as well.
   # A complication is that catalog types needs to be resolved against the scope.
   #
   def convert(o, scope, undef_value)
-    @@convert_visitor.visit_this_2(self, o, scope, undef_value)
+    convert_visitor.visit_this_2(self, o, scope, undef_value)
   end
 
   # Converts nested 4x supported values to 3x values. This is required because
@@ -445,7 +440,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # A complication is that catalog types needs to be resolved against the scope.
   #
   def convert2(o, scope, undef_value)
-    @@convert2_visitor.visit_this_2(self, o, scope, undef_value)
+    convert2_visitor.visit_this_2(self, o, scope, undef_value)
   end
 
 
@@ -519,6 +514,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   alias :convert2_PCatalogEntryType :convert_PCatalogEntryType
 
   private
+
+  def convert_visitor
+    @@convert_visitor ||= Puppet::Pops::Visitor.new(self, "convert", 2, 2)
+  end
+
+  def convert2_visitor
+    @@convert2_visitor ||= Puppet::Pops::Visitor.new(self, "convert2", 2, 2)
+  end
 
   # Produces an array with [type, title] from a PCatalogEntryType
   # This method is used to produce the arguments for creation of reference resource instances

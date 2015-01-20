@@ -49,16 +49,24 @@ class Puppet::Pops::Functions::Function
   #
   # @api public
   def call_function(function_name, *args)
-    if the_loader = loader
-      func = the_loader.load(:function, function_name)
-      if func
-        return func.call(closure_scope, *args)
-      end
-    end
-    # Raise a generic error to allow upper layers to fill in the details about where in a puppet manifest this
-    # error originates. (Such information is not available here).
-    #
-    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
+    the_loader = loader
+    scope = closure_scope
+    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - no loader specified" unless the_loader
+
+    func = the_loader.load(:function, function_name)
+    return func.call(scope, *args) if func
+
+    # Check if a 3x function is present. Raise a generic error if it's not to allow upper layers to fill in the details
+    # about where in a puppet manifest this error originates. (Such information is not available here).
+    func_3x = Puppet::Parser::Functions.function(function_name)
+    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found" unless func_3x
+
+    # Call via 3x API
+    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+    result = scope.send(func_3x, converter.convert_args(args, scope))
+
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
   end
 
   # The dispatcher for the function
@@ -73,5 +81,18 @@ class Puppet::Pops::Functions::Function
   # @api private
   def self.signatures
     @dispatcher.signatures
+  end
+
+  def converter
+    @@converter ||= ArgConverter.new
+  end
+end
+
+class ArgConverter
+  include Puppet::Pops::Evaluator::Runtime3Support
+
+  def convert_args(args, scope)
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
+    args.map {|a| convert(a, scope, '') }
   end
 end
