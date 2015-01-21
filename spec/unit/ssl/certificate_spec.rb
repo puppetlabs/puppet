@@ -4,6 +4,14 @@ require 'spec_helper'
 require 'puppet/ssl/certificate'
 
 describe Puppet::SSL::Certificate do
+  let :key do Puppet::SSL::Key.new("test.localdomain").generate end
+
+  # Sign the provided cert so that it can be DER-decoded later
+  def sign_wrapped_cert(cert)
+    signer = Puppet::SSL::CertificateSigner.new
+    signer.sign(cert.content, key)
+  end
+
   before do
     @class = Puppet::SSL::Certificate
   end
@@ -119,12 +127,14 @@ describe Puppet::SSL::Certificate do
       it "returns extensions under the ppRegCertExt" do
         exts = {'pp_uuid' => 'abcdfd'}
         cert = build_cert(:extension_requests => exts)
+        sign_wrapped_cert(cert)
         expect(cert.custom_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdfd')
       end
 
       it "returns extensions under the ppPrivCertExt" do
         exts = {'1.3.6.1.4.1.34380.1.2.1' => 'x509 :('}
         cert = build_cert(:extension_requests => exts)
+        sign_wrapped_cert(cert)
         expect(cert.custom_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'x509 :(')
       end
 

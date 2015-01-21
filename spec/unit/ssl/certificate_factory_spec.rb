@@ -142,6 +142,10 @@ describe Puppet::SSL::CertificateFactory do
       ])
 
       cert = subject.build(:client, csr, issuer, serial)
+
+      # The cert must be signed before being later DER-decoding
+      signer = Puppet::SSL::CertificateSigner.new
+      signer.sign(cert, key)
       wrapped_cert = Puppet::SSL::Certificate.from_instance cert
 
       priv_ext = wrapped_cert.custom_extensions.find {|ext| ext['oid'] == '1.3.6.1.4.1.34380.1.2.1'}
