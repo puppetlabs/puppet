@@ -82,7 +82,7 @@ describe Puppet::Configurer::Downloader do
       expect(file[:source_permissions]).to eq(:use)
     end
 
-    describe "on POSIX", :as_platform => :posix do
+    describe "on POSIX", :if => Puppet.features.posix? do
       it "should always set the owner to the current UID" do
         Process.expects(:uid).returns 51
 
@@ -98,7 +98,7 @@ describe Puppet::Configurer::Downloader do
       end
     end
 
-    describe "on Windows", :as_platform => :windows do
+    describe "on Windows", :if => Puppet.features.microsoft_windows? do
       it "should omit the owner" do
         file = generate_file_resource(:path => 'C:/path')
 

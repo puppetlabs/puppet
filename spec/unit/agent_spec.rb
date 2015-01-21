@@ -169,7 +169,7 @@ describe Puppet::Agent do
       @agent.run.should == :result
     end
 
-    describe "when should_fork is true", :as_platform => :posix do
+    describe "when should_fork is true", :if => Puppet.features.posix? do
       before do
         @agent = Puppet::Agent.new(AgentTestClient, true)
 
@@ -226,7 +226,7 @@ describe Puppet::Agent do
       end
     end
 
-    describe "on Windows", :as_platform => :windows do
+    describe "on Windows", :if => Puppet.features.microsoft_windows? do
       it "should never fork" do
         agent = Puppet::Agent.new(AgentTestClient, true)
         expect(agent.should_fork).to be_false

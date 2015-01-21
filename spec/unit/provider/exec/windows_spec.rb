@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:windows), :as_platform => :windows do
+describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => 'C:\foo', :provider => :windows) }

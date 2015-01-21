@@ -4,7 +4,7 @@
 #
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:openwrt), :as_platform => :posix do
+describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.posix? do
 
   let(:resource) do
     resource = stub 'resource'

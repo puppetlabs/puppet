@@ -8,7 +8,7 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:smf)
 
-describe provider_class, :as_platform => :posix do
+describe provider_class, :if => Puppet.features.posix? do
 
   before(:each) do
     # Create a mock resource
