@@ -27,6 +27,7 @@ describe 'loaders' do
   include PuppetSpec::Files
 
   let(:module_without_metadata) { File.join(config_dir('wo_metadata_module'), 'modules') }
+  let(:mix_4x_and_3x_functions) { config_dir('mix_4x_and_3x_functions') }
   let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
   let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
   let(:empty_test_env) { environment_for() }
@@ -99,6 +100,19 @@ describe 'loaders' do
     expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
   end
 
+  it 'can call 3x function in dependent module from a 4x function' do
+    compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => environment_for(mix_4x_and_3x_functions)))
+    scope    = Puppet::Parser::Scope.new(compiler)
+    scope.parent = compiler.topscope
+    loaders = Puppet::Pops::Loaders.new(compiler.environment)
+
+    Puppet.override({ :current_environment => compiler.environment, :global_scope => scope }) do
+      loader = loaders.private_loader_for_module('user')
+      function = loader.load_typed(typed_name(:function, 'user::caller')).value
+      expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+    end
+  end
+
   it 'can load a function more than once from modules' do
     env = environment_for(dependent_modules_with_metadata)
     loaders = Puppet::Pops::Loaders.new(env)
@@ -112,7 +126,7 @@ describe 'loaders' do
   end
 
   def environment_for(*module_paths)
-    Puppet::Node::Environment.create(:'*test*', module_paths, '')
+    Puppet::Node::Environment.create(:'*test*', module_paths)
   end
 
   def typed_name(type, name)

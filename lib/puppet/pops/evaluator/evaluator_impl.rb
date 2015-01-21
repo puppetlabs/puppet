@@ -49,9 +49,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
-
-    # Initialize the runtime module
-    Puppet::Pops::Evaluator::Runtime3Support.instance_method(:initialize).bind(self).call()
   end
 
   # @api private
