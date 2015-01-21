@@ -69,14 +69,14 @@ describe Puppet::Util do
   end
 
   describe "#absolute_path?" do
-    describe "on posix systems", :as_platform => :posix do
+    describe "on posix systems", :if => Puppet.features.posix? do
       it "should default to the platform of the local system" do
         Puppet::Util.should be_absolute_path('/foo')
         Puppet::Util.should_not be_absolute_path('C:/foo')
       end
     end
 
-    describe "on windows", :as_platform => :windows do
+    describe "on windows", :if => Puppet.features.microsoft_windows? do
       it "should default to the platform of the local system" do
         Puppet::Util.should be_absolute_path('C:/foo')
         Puppet::Util.should_not be_absolute_path('/foo')

@@ -196,7 +196,7 @@ describe Puppet::Type.type(:exec) do
   end
 
   describe "when setting user" do
-    describe "on POSIX systems", :as_platform => :posix do
+    describe "on POSIX systems", :if => Puppet.features.posix? do
       it "should fail if we are not root" do
         Puppet.features.stubs(:root?).returns(false)
         expect {
@@ -222,7 +222,7 @@ describe Puppet::Type.type(:exec) do
       end
     end
 
-    describe "on Windows systems", :as_platform => :windows do
+    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
       end

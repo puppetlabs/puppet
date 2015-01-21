@@ -87,7 +87,7 @@ shared_examples_for "all path parameters" do |param, options|
     @param = param
   end
 
-  describe "on a Unix-like platform it", :as_platform => :posix do
+  describe "on a Unix-like platform it", :if => Puppet.features.posix? do
     if array then
       it_should_behave_like "all pathname parameters with arrays", false
     end
@@ -115,7 +115,7 @@ shared_examples_for "all path parameters" do |param, options|
     end
   end
 
-  describe "on a Windows-like platform it", :as_platform => :windows do
+  describe "on a Windows-like platform it", :if => Puppet.features.microsoft_windows? do
     if array then
       it_should_behave_like "all pathname parameters with arrays", true
     end

@@ -79,7 +79,7 @@ describe "the generate function" do
     end
   end
 
-  describe "on non-Windows", :as_platform => :posix do
+  describe "on POSIX", :if => Puppet.features.posix? do
     it "should reject backslashes" do
       lambda { scope.function_generate(['/com\\mand']) }.should raise_error(Puppet::ParseError)
     end
