@@ -236,7 +236,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # and should have a non-inherited SYSTEM ACE(s)
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.each do |ace|
-              expect(ace.mask).to eq(klass::FILE_ALL_ACCESS) && ! ace.inherited?
+              expect(ace.mask).to eq(klass::FILE_ALL_ACCESS)
+              expect(ace).not_to be_inherited
             end
           end
 
