@@ -45,7 +45,8 @@ class Puppet::Pops::Functions::Function
   end
 
   # Allows the implementation of a function to call other functions by name. The callable functions
-  # are those visible to the same loader that loaded this function (the calling function).
+  # are those visible to the same loader that loaded this function (the calling function). The
+  # referenced function is called with the calling functions closure scope as the caller's scope.
   #
   # @param function_name [String] The name of the function
   # @param *args [Object] splat of arguments
@@ -70,7 +71,7 @@ class Puppet::Pops::Functions::Function
     @dispatcher.signatures
   end
 
-  private
+  protected
 
   # Allows the implementation of a function to call other functions by name and pass the caller
   # scope. The callable functions are those visible to the same loader that loaded this function
@@ -99,7 +100,7 @@ class Puppet::Pops::Functions::Function
     # Call via 3x API
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3Converter.convert_args(args, loader_scope, ''))
+    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, loader_scope, ''))
 
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(function_name) ? result : nil

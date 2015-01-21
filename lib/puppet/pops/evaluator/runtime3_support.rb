@@ -244,7 +244,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.convert_args(args, scope, '')
+    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil

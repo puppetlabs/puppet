@@ -5,20 +5,20 @@ module Puppet::Pops::Evaluator
 # A complication is that catalog types needs to be resolved against the scope.
 #
 # Users should not create instances of this class. Instead the class methods {Runtime3Converter.convert},
-# {Runtime3Converter.convert_args}, or {Runtime3Converter.instance} should be used
+# {Runtime3Converter.map_args}, or {Runtime3Converter.instance} should be used
 class Runtime3Converter
-  # Converts 4x supported values to a 3x values using the singleton instance.
+  # Converts 4x supported values to a 3x values. Same as calling Runtime3Converter.instance.map_args(...)
   #
   # @param args [Array] Array of values to convert
   # @param scope [Puppet::Parser::Scope] The scope to use when converting
   # @param undef_value [Object] The value that nil is converted to
   # @return [Array] The converted values
   #
-  def self.convert_args(args, scope, undef_value)
-    @@instance.convert_args(args, scope, undef_value)
+  def self.map_args(args, scope, undef_value)
+    @@instance.map_args(args, scope, undef_value)
   end
 
-  # Converts a 4x supported value to a 3x value using the singleton instance.
+  # Converts 4x supported values to a 3x values. Same as calling Runtime3Converter.instance.convert(...)
   #
   # @param o [Object]The value to convert
   # @param scope [Puppet::Parser::Scope] The scope to use when converting
@@ -42,7 +42,7 @@ class Runtime3Converter
   # @param undef_value [Object] The value that nil is converted to
   # @return [Array] The converted values
   #
-  def convert_args(args, scope, undef_value)
+  def map_args(args, scope, undef_value)
     args.map {|a| convert(a, scope, undef_value) }
   end
 
