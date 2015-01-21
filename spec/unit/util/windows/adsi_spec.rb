@@ -111,7 +111,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       system_user = Win32::Security::SID::LocalSystem
       # ensure that the underlying OS is queried here
-      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original
+      Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::User.exists?(system_user)).to be_truthy
     end
 
@@ -119,7 +119,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
-      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original
+      Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::User.exists?(bogus_sid)).to be_falsey
     end
 
@@ -338,7 +338,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       service_group = Win32::Security::SID::Service
       # ensure that the underlying OS is queried here
-      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original
+      Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::Group.exists?(service_group)).to be_truthy
     end
 
@@ -346,7 +346,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
-      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original
+      Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::Group.exists?(bogus_sid)).to be_falsey
     end
 
