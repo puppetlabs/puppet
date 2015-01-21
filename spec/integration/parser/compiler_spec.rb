@@ -908,4 +908,20 @@ describe Puppet::Parser::Compiler do
       lambda { @compiler.compile }.should raise_error Puppet::ParseError, 'Could not find resource(s) File[/foo] for overriding'
     end
   end
+
+
+  context "when converting catalog to resource" do
+    it "the same environment is used for compilation as for transformation to resource form" do
+        Puppet[:code] = <<-MANIFEST
+          notify { 'dummy':
+          }
+        MANIFEST
+
+      Puppet::Parser::Resource::Catalog.any_instance.expects(:to_resource).with do |catalog|
+        Puppet.lookup(:current_environment).name == :production
+      end
+
+      Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
+    end
+  end
 end

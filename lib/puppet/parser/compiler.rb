@@ -31,7 +31,7 @@ class Puppet::Parser::Compiler
       raise(Puppet::Error, errmsg.join(' '))
     end
 
-    new(node).compile.to_resource
+    new(node).compile {|resulting_catalog| resulting_catalog.to_resource }
   rescue => detail
     message = "#{detail} on node #{node.name}"
     Puppet.log_exception(detail, message)
@@ -136,7 +136,11 @@ class Puppet::Parser::Compiler
 
       fail_on_unevaluated
 
-      @catalog
+      if block_given?
+        yield @catalog
+      else
+        @catalog
+      end
     end
   end
 
