@@ -81,8 +81,6 @@ describe Puppet::Util::Checksums do
 
         fh = mock 'filehandle'
         fh.expects(:read).with(4096).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
-        #fh.expects(:read).with(512).returns("secondline")
-        #fh.expects(:read).with(512).returns(nil)
 
         File.expects(:open).with(file, "rb").yields(fh)
 
@@ -93,13 +91,16 @@ describe Puppet::Util::Checksums do
         expect(@summer.send(sum.to_s + "_file", file)).to eq(:mydigest)
       end
 
-      it "should yield #{klass} to the given block to calculate stream checksums" do
+      it "should behave like #{klass} to calculate stream checksums" do
         digest = mock 'digest'
         klass.expects(:new).returns digest
+        digest.expects(:<<).with "firstline"
+        digest.expects(:<<).with "secondline"
         digest.expects(:hexdigest).returns :mydigest
 
         expect(@summer.send(sum.to_s + "_stream") do |checksum|
-          expect(checksum).to eq(digest)
+          checksum << "firstline"
+          checksum << "secondline"
         end).to eq(:mydigest)
       end
     end
@@ -128,6 +129,34 @@ describe Puppet::Util::Checksums do
         digest.expects(:hexdigest).returns :mydigest
 
         expect(@summer.send(sum.to_s + "_file", file)).to eq(:mydigest)
+      end
+
+      it "should use #{klass} to calculate a sum from the first 512 characters in a stream" do
+        digest = mock 'digest'
+        content = "this is a test" * 100
+        klass.expects(:new).returns digest
+        digest.expects(:<<).with content[0..511]
+        digest.expects(:hexdigest).returns :mydigest
+
+        expect(@summer.send(sum.to_s + "_stream") do |checksum|
+          checksum << content
+        end).to eq(:mydigest)
+      end
+
+      it "should use #{klass} to calculate a sum from the first 512 characters in a multi-part stream" do
+        digest = mock 'digest'
+        content = "this is a test" * 100
+        klass.expects(:new).returns digest
+        digest.expects(:<<).with content[0..5]
+        digest.expects(:<<).with content[6..510]
+        digest.expects(:<<).with content[511..511]
+        digest.expects(:hexdigest).returns :mydigest
+
+        expect(@summer.send(sum.to_s + "_stream") do |checksum|
+          checksum << content[0..5]
+          checksum << content[6..510]
+          checksum << content[511..-1]
+        end).to eq(:mydigest)
       end
     end
   end

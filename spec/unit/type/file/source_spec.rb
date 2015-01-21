@@ -101,6 +101,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @metadata = stub 'metadata', :source= => nil
       @resource.stubs(:[]).with(:links).returns :manage
       @resource.stubs(:[]).with(:source_permissions).returns :use
+      @resource.stubs(:[]).with(:checksum).returns :checksum
     end
 
     it "should return already-available metadata" do
@@ -120,6 +121,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         expect(uri).to eq @foobar_uri
         expect(options[:environment]).to eq @environment
         expect(options[:links]).to eq :manage
+        expect(options[:checksum_type]).to eq :checksum
       end.returns @metadata
 
       @source.metadata
@@ -131,7 +133,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       options = {
         :environment => @environment,
         :links => :manage,
-        :source_permissions => :use
+        :source_permissions => :use,
+        :checksum_type => :checksum
       }
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, options).returns nil
       Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, options).returns metadata
@@ -145,6 +148,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         expect(uri).to eq @foobar_uri
         expect(options[:environment]).to eq @environment
         expect(options[:links]).to eq :manage
+        expect(options[:checksum_type]).to eq :checksum
       end.returns metadata
 
       metadata.expects(:source=).with(@foobar_uri)
@@ -157,6 +161,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         expect(uri).to eq @foobar_uri
         expect(options[:environment]).to eq @environment
         expect(options[:links]).to eq :manage
+        expect(options[:checksum_type]).to eq :checksum
       end.raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
@@ -169,6 +174,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         expect(uri).to eq @foobar_uri
         expect(options[:environment]).to eq @environment
         expect(options[:links]).to eq :manage
+        expect(options[:checksum_type]).to eq :checksum
       end.returns nil
 
       @source.expects(:fail).raises RuntimeError

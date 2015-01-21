@@ -12,6 +12,7 @@ end
 
 describe Puppet::Type.type(:file), :uses_checksums => true do
   include PuppetSpec::Files
+  include_context 'with supported checksum types'
 
   let(:catalog) { Puppet::Resource::Catalog.new }
   let(:path) do
@@ -408,16 +409,16 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when writing files" do
-    with_digest_algorithms do
+    shared_examples "files are backed up" do |resource_options|
       it "should backup files to a filebucket when one is configured" do
         filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
+        file = described_class.new({:path => path, :backup => "mybucket", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource filebucket
 
         File.open(file[:path], "w") { |f| f.write("bar") }
 
-        d = digest(IO.binread(file[:path]))
+        d = filebucket_digest.call(IO.binread(file[:path]))
 
         catalog.apply
 
@@ -425,7 +426,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
 
       it "should backup files in the local directory when a backup string is provided" do
-        file = described_class.new :path => path, :backup => ".bak", :content => "foo"
+        file = described_class.new({:path => path, :backup => ".bak", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
 
         File.open(file[:path], "w") { |f| f.puts "bar" }
@@ -440,7 +441,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       it "should fail if no backup can be performed" do
         dir = tmpdir("backups")
 
-        file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
+        file = described_class.new({:path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
 
         File.open(file[:path], 'w') { |f| f.puts "bar" }
@@ -460,14 +461,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         dest1 = tmpfile("dest1")
         dest2 = tmpfile("dest2")
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
+        file = described_class.new({:path => link, :target => dest2, :ensure => :link, :backup => "mybucket"}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource bucket
 
         File.open(dest1, "w") { |f| f.puts "whatever" }
         Puppet::FileSystem.symlink(dest1, link)
 
-        d = digest(File.read(file[:path]))
+        d = filebucket_digest.call(File.read(file[:path]))
 
         catalog.apply
 
@@ -476,7 +477,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
 
       it "should backup directories to the local filesystem by copying the whole directory" do
-        file = described_class.new :path => path, :backup => ".bak", :content => "foo", :force => true
+        file = described_class.new({:path => path, :backup => ".bak", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
 
         Dir.mkdir(path)
@@ -494,7 +495,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       it "should backup directories to filebuckets by backing up each file separately" do
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
+        file = described_class.new({:path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource bucket
 
@@ -505,13 +506,28 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         File.open(barfile, "w") { |f| f.print "baryay" }
 
 
-        food = digest(File.read(foofile))
-        bard = digest(File.read(barfile))
+        food = filebucket_digest.call(File.read(foofile))
+        bard = filebucket_digest.call(File.read(barfile))
 
         catalog.apply
 
         expect(bucket.bucket.getfile(food)).to eq("fooyay")
         expect(bucket.bucket.getfile(bard)).to eq("baryay")
+      end
+    end
+
+    with_digest_algorithms do
+      it_should_behave_like "files are backed up", {} do
+        let(:filebucket_digest) { method(:digest) }
+      end
+    end
+
+    CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+      describe "when checksum_type is #{checksum_type}" do
+        # FileBucket uses the globally configured default for lookup by digest, which right now is MD5.
+        it_should_behave_like "files are backed up", {:checksum => checksum_type} do
+          let(:filebucket_digest) { Proc.new {|x| Puppet::Util::Checksums.md5(x)} }
+        end
       end
     end
   end
@@ -953,46 +969,49 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when sourcing" do
-    let(:source) { tmpfile_with_contents("source_default_values", "yay") }
+    with_checksum_types "source", "default_values" do
+      describe "on POSIX systems", :if => Puppet.features.posix? do
+        it "should apply the source metadata values" do
+          set_mode(0770, checksum_file)
 
-    describe "on POSIX systems", :if => Puppet.features.posix? do
-      it "should apply the source metadata values" do
-        set_mode(0770, source)
+          file = described_class.new(
+            :path   => path,
+            :ensure => :file,
+            :source => checksum_file,
+            :source_permissions => :use,
+            :checksum => checksum_type,
+            :backup => false
+          )
+
+          catalog.add_resource file
+          catalog.apply
+
+          expect(get_owner(path)).to eq(get_owner(checksum_file))
+          expect(get_group(path)).to eq(get_group(checksum_file))
+          expect(get_mode(path) & 07777).to eq(0770)
+        end
+      end
+
+      it "should override the default metadata values" do
+        set_mode(0770, checksum_file)
 
         file = described_class.new(
           :path   => path,
           :ensure => :file,
-          :source => source,
-          :source_permissions => :use,
-          :backup => false
+          :source => checksum_file,
+          :checksum => checksum_type,
+          :backup => false,
+          :mode => '0440'
         )
 
         catalog.add_resource file
         catalog.apply
 
-        expect(get_owner(path)).to eq(get_owner(source))
-        expect(get_group(path)).to eq(get_group(source))
-        expect(get_mode(path) & 07777).to eq(0770)
+        expect(get_mode(path) & 07777).to eq(0440)
       end
     end
 
-    it "should override the default metadata values" do
-      set_mode(0770, source)
-
-      file = described_class.new(
-         :path   => path,
-         :ensure => :file,
-         :source => source,
-         :backup => false,
-         :mode => '0440'
-       )
-
-      catalog.add_resource file
-      catalog.apply
-
-      expect(get_mode(path) & 07777).to eq(0440)
-    end
-
+    let(:source) { tmpfile_with_contents("source_default_values", "yay") }
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
