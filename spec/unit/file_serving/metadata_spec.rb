@@ -411,7 +411,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         @file.stubs("#{digest_algorithm}_file".intern).returns(checksum) # Remove these when :managed links are no longer checksumed.
 
         if Puppet.features.microsoft_windows?
-          win_stat = double('win_stat', :owner => 'snarf', :group => 'thundercats',
+          win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'link', :mode => 0755)
           Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
         end
@@ -442,7 +442,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         Puppet::FileSystem.expects(:readlink).never
 
         if Puppet.features.microsoft_windows?
-          win_stat = double('win_stat', :owner => 'snarf', :group => 'thundercats',
+          win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'file', :mode => 0755)
           Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
         end

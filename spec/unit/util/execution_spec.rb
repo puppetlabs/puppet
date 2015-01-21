@@ -16,7 +16,7 @@ describe Puppet::Util::Execution do
     let(:pid) { 5501 }
     let(:process_handle) { 0xDEADBEEF }
     let(:thread_handle) { 0xCAFEBEEF }
-    let(:proc_info_stub) { double 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
+    let(:proc_info_stub) { stub 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
     let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
 
     def stub_process_wait(exitstatus)

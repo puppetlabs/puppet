@@ -13,7 +13,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
 
   let(:provider) { resource.provider }
 
-  let(:connection) { double 'connection' }
+  let(:connection) { stub 'connection' }
 
   before :each do
     Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
@@ -23,7 +23,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   describe ".instances" do
     it "should enumerate all users" do
       names = ['user1', 'user2', 'user3']
-      stub_users = names.map{|n| double(:name => n)}
+      stub_users = names.map{|n| stub(:name => n)}
       connection.stubs(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(stub_users)
 
       expect(described_class.instances.map(&:name)).to match(names)
@@ -67,7 +67,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       resource[:comment]    = 'a test user'
       resource[:home]       = 'C:\Users\testuser'
 
-      user = double 'user'
+      user = stub 'user'
       Puppet::Util::Windows::ADSI::User.expects(:create).with('testuser').returns user
 
       user.stubs(:groups).returns(['group2', 'group3'])
@@ -123,7 +123,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
 
   it 'should be able to test whether a user exists' do
     Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
-    Puppet::Util::Windows::ADSI.stubs(:connect).returns double('connection')
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection')
     expect(provider).to be_exists
 
     Puppet::Util::Windows::ADSI.stubs(:connect).returns nil

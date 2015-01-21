@@ -5,7 +5,7 @@ require 'spec_helper'
 require 'puppet/util/windows'
 
 describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? do
-  let(:connection) { double 'connection' }
+  let(:connection) { stub 'connection' }
 
   before(:each) do
     Puppet::Util::Windows::ADSI.instance_variable_set(:@computer_name, 'testcomputername')
@@ -84,7 +84,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to create a user" do
-      adsi_user = double('adsi')
+      adsi_user = stub('adsi')
 
       connection.expects(:Create).with('user', username).returns(adsi_user)
       Puppet::Util::Windows::ADSI::Group.expects(:exists?).with(username).returns(false)
@@ -133,10 +133,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
 
       name = 'Administrator'
-      wmi_users = [double('WMI', :name => name)]
+      wmi_users = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
 
-      native_user = double('IADsUser')
+      native_user = stub('IADsUser')
       homedir = "C:\\Users\\#{name}"
       native_user.expects(:Get).with('HomeDirectory').returns(homedir)
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},user").returns(native_user)
@@ -148,14 +148,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     describe "an instance" do
-      let(:adsi_user) { double('user', :objectSID => []) }
-      let(:sid)       { double(:account => username, :domain => 'testcomputername') }
+      let(:adsi_user) { stub('user', :objectSID => []) }
+      let(:sid)       { stub(:account => username, :domain => 'testcomputername') }
       let(:user)      { Puppet::Util::Windows::ADSI::User.new(username, adsi_user) }
 
       it "should provide its groups as a list of names" do
         names = ["group1", "group2"]
 
-        groups = names.map { |name| double('group', :Name => name) }
+        groups = names.map { |name| stub('group', :Name => name) }
 
         adsi_user.expects(:Groups).returns(groups)
 
@@ -198,10 +198,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
-            group1 = double 'group1'
+            group1 = stub 'group1'
             group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
 
-            group3 = double 'group1'
+            group3 = stub 'group1'
             group3.expects(:Remove).with("WinNT://testcomputername/#{username},user")
 
             Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user").twice
@@ -214,7 +214,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
-            group1 = double 'group1'
+            group1 = stub 'group1'
             group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
 
             Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user")
@@ -231,9 +231,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     let(:groupname)  { 'testgroup' }
 
     describe "an instance" do
-      let(:adsi_group) { double 'group' }
+      let(:adsi_group) { stub 'group' }
       let(:group)      { Puppet::Util::Windows::ADSI::Group.new(groupname, adsi_group) }
-      let(:someone_sid){ double(:account => 'someone', :domain => 'testcomputername')}
+      let(:someone_sid){ stub(:account => 'someone', :domain => 'testcomputername')}
 
       describe "should be able to use SID objects" do
         let(:system)     { Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM') }
@@ -263,7 +263,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       it "should provide its groups as a list of names" do
         names = ['user1', 'user2']
 
-        users = names.map { |name| double('user', :Name => name) }
+        users = names.map { |name| stub('user', :Name => name) }
 
         adsi_group.expects(:Members).returns(users)
 
@@ -273,9 +273,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       it "should be able to add a list of users to a group" do
         names = ['DOMAIN\user1', 'user2']
         sids = [
-          double(:account => 'user1', :domain => 'DOMAIN'),
-          double(:account => 'user2', :domain => 'testcomputername'),
-          double(:account => 'user3', :domain => 'DOMAIN2'),
+          stub(:account => 'user1', :domain => 'DOMAIN'),
+          stub(:account => 'user2', :domain => 'testcomputername'),
+          stub(:account => 'user3', :domain => 'DOMAIN2'),
         ]
 
         # use stubbed objectSid on member to return stubbed SID
@@ -288,7 +288,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
 
-        members = names.each_with_index.map{|n,i| double(:Name => n, :objectSID => [i])}
+        members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
         adsi_group.expects(:Members).returns members
 
         adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
@@ -316,7 +316,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to create a group" do
-      adsi_group = double("adsi")
+      adsi_group = stub("adsi")
 
       connection.expects(:Create).with('group', groupname).returns(adsi_group)
       Puppet::Util::Windows::ADSI::User.expects(:exists?).with(groupname).returns(false)
@@ -360,11 +360,11 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
 
       name = 'Administrators'
-      wmi_groups = [double('WMI', :name => name)]
+      wmi_groups = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
 
-      native_group = double('IADsGroup')
-      native_group.expects(:Members).returns([double(:Name => 'Administrator')])
+      native_group = stub('IADsGroup')
+      native_group.expects(:Members).returns([stub(:Name => 'Administrator')])
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_group)
 
       groups = Puppet::Util::Windows::ADSI::Group.to_a

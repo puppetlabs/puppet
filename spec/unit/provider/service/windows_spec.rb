@@ -25,7 +25,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
 
   describe ".instances" do
     it "should enumerate all services" do
-      list_of_services = ['snmptrap', 'svchost', 'sshd'].map { |s| double('service', :service_name => s) }
+      list_of_services = ['snmptrap', 'svchost', 'sshd'].map { |s| stub('service', :service_name => s) }
       Win32::Service.expects(:services).returns(list_of_services)
 
       expect(described_class.instances.map(&:name)).to match_array(['snmptrap', 'svchost', 'sshd'])

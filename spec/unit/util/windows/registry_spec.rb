@@ -25,8 +25,8 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
   end
 
   context "#open" do
-    let(:hkey)   { double 'hklm' }
-    let(:subkey) { double 'subkey' }
+    let(:hkey)   { stub 'hklm' }
+    let(:subkey) { stub 'subkey' }
 
     before :each do
       subject.stubs(:root).returns(hkey)
@@ -69,7 +69,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
   end
 
   context "#values" do
-    let(:key) { double('uninstall') }
+    let(:key) { stub('uninstall') }
 
     it "should return each value's name and data" do
       key.expects(:each_value).multiple_yields(

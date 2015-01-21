@@ -202,7 +202,7 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
   let(:klass) { Puppet::Util::Log.desttypes[:eventlog] }
 
   def expects_message_with_type(klass, level, eventlog_type, eventlog_id)
-    eventlog = double('eventlog')
+    eventlog = stub('eventlog')
     eventlog.expects(:report_event).with(has_entries(:source => "Puppet", :event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
     Win32::EventLog.stubs(:open).returns(eventlog)
 
@@ -216,8 +216,8 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
   end
 
   it "logs to the Application event log" do
-    eventlog = double('eventlog')
-    Win32::EventLog.expects(:open).with('Application').returns(double('eventlog'))
+    eventlog = stub('eventlog')
+    Win32::EventLog.expects(:open).with('Application').returns(stub('eventlog'))
 
     klass.new
   end

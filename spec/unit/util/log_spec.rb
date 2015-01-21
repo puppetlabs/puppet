@@ -139,7 +139,7 @@ describe Puppet::Util::Log do
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
-      Win32::EventLog.stubs(:open).returns(double 'mylog')
+      Win32::EventLog.stubs(:open).returns(stub 'mylog')
       Win32::EventLog.stubs(:report_event)
       Win32::EventLog.stubs(:close)
       Puppet.features.stubs(:eventlog?).returns(true)
@@ -158,7 +158,7 @@ describe Puppet::Util::Log do
     end
 
     it "should close the event log" do
-      log = double('myeventlog')
+      log = stub('myeventlog')
       log.expects(:close)
       Win32::EventLog.expects(:open).returns(log)
 

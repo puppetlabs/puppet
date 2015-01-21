@@ -12,7 +12,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
   let(:provider) { resource.provider }
 
-  let(:connection) { double 'connection' }
+  let(:connection) { stub 'connection' }
 
   before :each do
     Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
@@ -22,7 +22,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   describe ".instances" do
     it "should enumerate all groups" do
       names = ['group1', 'group2', 'group3']
-      stub_groups = names.map{|n| double(:name => n)}
+      stub_groups = names.map{|n| stub(:name => n)}
 
       connection.stubs(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns stub_groups
 
@@ -32,9 +32,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
   describe "group type :members property helpers" do
 
-    let(:user1) { double(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
-    let(:user2) { double(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
-    let(:user3) { double(:account => 'user3', :domain => '.', :to_s => 'user3sid') }
+    let(:user1) { stub(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
+    let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
+    let(:user3) { stub(:account => 'user3', :domain => '.', :to_s => 'user3sid') }
 
     before :each do
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user1').returns(user1)
@@ -69,15 +69,15 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return false when current contains different users than should" do
-          provider.members_insync?(['user1'], ['user2']).should be_falsey
+          expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
         end
 
         it "should return false when current contains members and should is empty" do
-          provider.members_insync?(['user1'], []).should be_falsey
+          expect(provider.members_insync?(['user1'], [])).to be_falsey
         end
 
         it "should return false when current is empty and should contains members" do
-          provider.members_insync?([], ['user2']).should be_falsey
+          expect(provider.members_insync?([], ['user2'])).to be_falsey
         end
 
         it "should return false when should user(s) are not the only items in the current" do
@@ -92,15 +92,15 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return false when current contains different users than should" do
-          provider.members_insync?(['user1'], ['user2']).should be_falsey
+          expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
         end
 
         it "should return true when current contains members and should is empty" do
-          provider.members_insync?(['user1'], []).should be_truthy
+          expect(provider.members_insync?(['user1'], [])).to be_truthy
         end
 
         it "should return false when current is empty and should contains members" do
-          provider.members_insync?([], ['user2']).should be_falsey
+          expect(provider.members_insync?([], ['user2'])).to be_falsey
         end
 
         it "should return true when current user(s) contains at least the should list" do
@@ -147,9 +147,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       provider.group.stubs(:members).returns ['user1', 'user2']
 
       member_sids = [
-        double(:account => 'user1', :domain => 'testcomputername'),
-        double(:account => 'user2', :domain => 'testcomputername'),
-        double(:account => 'user3', :domain => 'testcomputername'),
+        stub(:account => 'user1', :domain => 'testcomputername'),
+        stub(:account => 'user2', :domain => 'testcomputername'),
+        stub(:account => 'user3', :domain => 'testcomputername'),
       ]
 
       provider.group.stubs(:member_sids).returns(member_sids[0..1])
@@ -168,7 +168,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     it "should be able to create a group" do
       resource[:members] = ['user1', 'user2']
 
-      group = double 'group'
+      group = stub 'group'
       Puppet::Util::Windows::ADSI::Group.expects(:create).with('testers').returns group
 
       create = sequence('create')
@@ -194,7 +194,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
   it "should be able to test whether a group exists" do
     Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
-    Puppet::Util::Windows::ADSI.stubs(:connect).returns double('connection')
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection')
     expect(provider).to be_exists
 
     Puppet::Util::Windows::ADSI.stubs(:connect).returns nil

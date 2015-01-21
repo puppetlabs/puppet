@@ -116,7 +116,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
   describe 'when retrieving' do
     before :each do
-      @mock_task = double
+      @mock_task = stub
       @mock_task.responds_like(Win32::TaskScheduler.new)
       described_class.any_instance.stubs(:task).returns(@mock_task)
 
@@ -470,7 +470,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
   describe '#exists?' do
     before :each do
-      @mock_task = double
+      @mock_task = stub
       @mock_task.responds_like(Win32::TaskScheduler.new)
       described_class.any_instance.stubs(:task).returns(@mock_task)
 
@@ -487,8 +487,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
   describe '#clear_task' do
     before :each do
-      @mock_task     = double
-      @new_mock_task = double
+      @mock_task     = stub
+      @new_mock_task = stub
       @mock_task.responds_like(Win32::TaskScheduler.new)
       @new_mock_task.responds_like(Win32::TaskScheduler.new)
       Win32::TaskScheduler.stubs(:new).returns(@mock_task, @new_mock_task)
@@ -1316,7 +1316,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     before :each do
-      @mock_task = double
+      @mock_task = stub
       @mock_task.responds_like(Win32::TaskScheduler.new)
       @mock_task.stubs(:exists?).returns(true)
       @mock_task.stubs(:activate)
@@ -1383,7 +1383,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     before :each do
-        @mock_task = double
+        @mock_task = stub
         @mock_task.responds_like(Win32::TaskScheduler.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
@@ -1440,7 +1440,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       before :each do
-        @mock_task = double
+        @mock_task = stub
         @mock_task.responds_like(Win32::TaskScheduler.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
@@ -1494,7 +1494,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     describe '#user=', :if => Puppet.features.microsoft_windows? do
       before :each do
-        @mock_task = double
+        @mock_task = stub
         @mock_task.responds_like(Win32::TaskScheduler.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
@@ -1550,7 +1550,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       @arguments   = '/a /list /of /arguments'
       @working_dir = 'C:\Windows\Some\Directory'
 
-      @mock_task = double
+      @mock_task = stub
       @mock_task.responds_like(Win32::TaskScheduler.new)
       @mock_task.stubs(:exists?).returns(true)
       @mock_task.stubs(:activate)
