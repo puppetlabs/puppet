@@ -1,7 +1,7 @@
 Puppet::Functions.create_function(:'user::caller_ws', Puppet::Functions::InternalFunction) do
   dispatch :caller_ws do
     scope_param
-    param 'String', 'value'
+    param 'String', :value
   end
 
   def caller_ws(scope, value)
