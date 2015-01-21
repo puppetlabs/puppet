@@ -27,8 +27,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  let(:server) { double("Server", :start => nil, :wait_for_shutdown => nil) }
   let(:agent) { Puppet::Agent.new(TestClient.new, false) }
+  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
 
   let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
   let(:scheduler) { RecordingScheduler.new }
@@ -43,8 +43,6 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     Puppet::Util::Log.expects(:reopen)
     daemon.reopen_logs
   end
-
-  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
 
   describe "when setting signal traps" do
     signals = {:INT => :stop, :TERM => :stop }

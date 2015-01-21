@@ -91,7 +91,6 @@ describe Puppet::FileServing::Fileset do
 
     describe "using an indirector request" do
       let(:values) { { :links => :manage, :ignore => %w{a b}, :recurse => true, :recurselimit => 1234 } }
-      let(:stub_file) { double(somefile, :lstat => double('stat')) }
 
       before :each do
         Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
