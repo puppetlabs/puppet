@@ -1573,6 +1573,14 @@ EOT
         Defaults to false because SSL usually requires certificates
         to be set up on the client side.",
     },
+    :ldapcrtdir => {
+      :default => false,
+      :desc    => "Path to cerificate directories.
+        Defaults to 'false'.
+        Normally SSL based LDAP connections should work without explicit setting
+        the `ldapcrtdir`. On e.g. Solaris based systems set this to `/var/ldap`
+        or any other Directory that contains the certificates.",
+    },
     :ldaptls => {
       :default  => false,
       :type     => :boolean,
