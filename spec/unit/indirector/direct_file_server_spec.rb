@@ -32,8 +32,10 @@ describe Puppet::Indirector::DirectFileServer do
 
     it "should return a Content instance created with the full path to the file if the file exists" do
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
-      @model.expects(:new).returns(:mycontent)
-      expect(@server.find(@request)).to eq(:mycontent)
+      mycontent = stub 'content', :collect => nil
+      mycontent.expects(:collect)
+      @model.expects(:new).returns(mycontent)
+      expect(@server.find(@request)).to eq(mycontent)
     end
   end
 
@@ -55,6 +57,14 @@ describe Puppet::Indirector::DirectFileServer do
       @data.expects(:links=).with(:manage)
 
       @request.stubs(:options).returns(:links => :manage)
+      @server.find(@request)
+    end
+
+    it "should set 'checksum_type' on the instances if it is set in the request options" do
+      @model.expects(:new).returns(@data)
+      @data.expects(:checksum_type=).with :checksum
+
+      @request.stubs(:options).returns(:checksum_type => :checksum)
       @server.find(@request)
     end
   end

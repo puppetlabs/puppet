@@ -75,7 +75,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
       expect(@file_server.find(@request)).to equal(@instance)
     end
@@ -86,7 +86,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
       @instance.expects(:links=).with(true)
 
@@ -99,7 +99,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
       @instance.expects(:collect)
 
@@ -202,6 +202,24 @@ describe Puppet::Indirector::FileServer do
       one.expects(:links=).with true
 
       @request.options[:links] = true
+
+      @file_server.search(@request)
+    end
+
+    it "should set 'checksum_type' on the instances if it is set in the request options" do
+      @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+      @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
+
+      Puppet::FileSystem.stubs(:exist?).returns true
+
+      Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
+
+      one = stub 'one', :collect => nil
+      @model.expects(:new).with("/one", :relative_path => "one").returns one
+
+      one.expects(:checksum_type=).with :checksum
+      @request.options[:checksum_type] = :checksum
 
       @file_server.search(@request)
     end

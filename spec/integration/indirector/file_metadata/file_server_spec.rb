@@ -9,6 +9,7 @@ require 'puppet_spec/files'
 describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
   it_should_behave_like "Puppet::Indirector::FileServerTerminus"
   include PuppetSpec::Files
+  include_context 'with supported checksum types'
 
   before do
     @terminus = Puppet::Indirector::FileMetadata::FileServer.new
@@ -16,76 +17,51 @@ describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
     Puppet::FileServing::Configuration.instance_variable_set(:@configuration, nil)
   end
 
-  it "should find plugin file content in the environment specified in the request" do
-    path = tmpfile("file_content_with_env")
+  describe "with a plugin environment specified in the request" do
+    with_checksum_types("file_content_with_env", "mod/lib/file.rb") do
+      it "should return the correct metadata" do
+        Puppet.settings[:modulepath] = "/no/such/file"
+        env = Puppet::Node::Environment.create(:foo, [env_path])
+        result = Puppet::FileServing::Metadata.indirection.search("plugins", :environment => env, :checksum_type => checksum_type, :recurse => true)
 
-    Dir.mkdir(path)
-
-    modpath = File.join(path, "mod")
-    FileUtils.mkdir_p(File.join(modpath, "lib"))
-    file = File.join(modpath, "lib", "file.rb")
-    File.open(file, "wb") { |f| f.write "1\r\n" }
-
-    Puppet.settings[:modulepath] = "/no/such/file"
-
-    env = Puppet::Node::Environment.create(:foo, [path])
-
-    result = Puppet::FileServing::Metadata.indirection.search("plugins", :environment => env, :recurse => true)
-
-    result.should_not be_nil
-    result.length.should == 2
-    result.map {|x| x.should be_instance_of(Puppet::FileServing::Metadata) }
-    result.find {|x| x.relative_path == 'file.rb' }.checksum.should == "{md5}a5ea0ad9260b1550a14cc58d2c39b03d"
+        expect(result).to_not be_nil
+        expect(result.length).to eq(2)
+        result.map {|x| expect(x).to be_instance_of(Puppet::FileServing::Metadata)}
+        expect_correct_checksum(result.find {|x| x.relative_path == 'file.rb'}, checksum_type, checksum, Puppet::FileServing::Metadata)
+      end
+    end
   end
 
-  it "should find file metadata in modules" do
-    path = tmpfile("file_content")
-
-    Dir.mkdir(path)
-
-    modpath = File.join(path, "mymod")
-    FileUtils.mkdir_p(File.join(modpath, "files"))
-    file = File.join(modpath, "files", "myfile")
-    File.open(file, "wb") { |f| f.write "1\r\n" }
-
-    env = Puppet::Node::Environment.create(:foo, [path])
-
-    result = Puppet::FileServing::Metadata.indirection.find("modules/mymod/myfile", :environment => env)
-
-    result.should_not be_nil
-    result.should be_instance_of(Puppet::FileServing::Metadata)
-    result.checksum.should == "{md5}a5ea0ad9260b1550a14cc58d2c39b03d"
+  describe "in modules" do
+    with_checksum_types("file_content", "mymod/files/myfile") do
+      it "should return the correct metadata" do
+        env = Puppet::Node::Environment.create(:foo, [env_path])
+        result = Puppet::FileServing::Metadata.indirection.find("modules/mymod/myfile", :environment => env, :checksum_type => checksum_type)
+        expect_correct_checksum(result, checksum_type, checksum, Puppet::FileServing::Metadata)
+      end
+    end
   end
 
-  it "should find file content in files when node name expansions are used" do
-    Puppet::FileSystem.stubs(:exist?).returns true
-    Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
+  describe "when node name expansions are used" do
+    with_checksum_types("file_server_testing", "mynode/myfile") do
+      it "should return the correct metadata" do
+        Puppet::FileSystem.stubs(:exist?).with(checksum_file).returns true
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
 
-    path = tmpfile("file_server_testing")
+        # Use a real mount, so the integration is a bit deeper.
+        mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+        mount1.stubs(:allowed?).returns true
+        mount1.path = File.join(env_path, "%h")
 
-    Dir.mkdir(path)
-    subdir = File.join(path, "mynode")
-    Dir.mkdir(subdir)
-    File.open(File.join(subdir, "myfile"), "wb") { |f| f.write "1\r\n" }
+        parser = stub 'parser', :changed? => false
+        parser.stubs(:parse).returns("one" => mount1)
 
-    # Use a real mount, so the integration is a bit deeper.
-    mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
-    mount1.stubs(:allowed?).returns true
-    mount1.path = File.join(path, "%h")
+        Puppet::FileServing::Configuration::Parser.stubs(:new).returns(parser)
+        env = Puppet::Node::Environment.create(:foo, [])
 
-    parser = stub 'parser', :changed? => false
-    parser.stubs(:parse).returns("one" => mount1)
-
-    Puppet::FileServing::Configuration::Parser.stubs(:new).returns(parser)
-
-    path = File.join(path, "myfile")
-
-    env = Puppet::Node::Environment.create(:foo, [])
-
-    result = Puppet::FileServing::Metadata.indirection.find("one/myfile", :environment => env, :node => "mynode")
-
-    result.should_not be_nil
-    result.should be_instance_of(Puppet::FileServing::Metadata)
-    result.checksum.should == "{md5}a5ea0ad9260b1550a14cc58d2c39b03d"
+        result = Puppet::FileServing::Metadata.indirection.find("one/myfile", :environment => env, :node => "mynode", :checksum_type => checksum_type)
+        expect_correct_checksum(result, checksum_type, checksum, Puppet::FileServing::Metadata)
+      end
+    end
   end
 end
