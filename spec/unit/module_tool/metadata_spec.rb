@@ -276,7 +276,7 @@ describe Puppet::ModuleTool::Metadata do
 
     describe "['license']" do
       it "defaults to Apache 2" do
-        subject['license'].should == "Apache 2.0"
+        subject['license'].should == "Apache-2.0"
       end
     end
 
