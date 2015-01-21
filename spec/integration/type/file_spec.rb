@@ -686,8 +686,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     describe "when recursing remote directories" do
       describe "for the 2nd time" do
         with_checksum_types "one", "x" do
-          it "should not update the target directory" do
-            options = {
+          let(:target_file) { File.join(path, 'x') }
+          let(:second_catalog) { Puppet::Resource::Catalog.new }
+          before(:each) do
+            @options = {
               :path => path,
               :ensure => :directory,
               :backup => false,
@@ -695,21 +697,44 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               :checksum => checksum_type,
               :source => env_path
             }
-            target_file = File.join(path, 'x')
+          end
 
-            first_catalog = Puppet::Resource::Catalog.new
-            first_catalog.add_resource Puppet::Type.send(:newfile, options)
-            first_catalog.apply
+          it "should not update the target directory" do
+            # Ensure the test believes the source file was written in the past.
+            FileUtils.touch checksum_file, :mtime => Time.now - 20
+            catalog.add_resource Puppet::Type.send(:newfile, @options)
+            catalog.apply
             expect(File).to be_directory(path)
             expect(Puppet::FileSystem.exist?(target_file)).to be_truthy
 
             # The 2nd time the resource should not change.
-            second_catalog = Puppet::Resource::Catalog.new
-            second_catalog.add_resource Puppet::Type.send(:newfile, options)
+            second_catalog.add_resource Puppet::Type.send(:newfile, @options)
             result = second_catalog.apply
             status = result.report.resource_statuses["File[#{target_file}]"]
             expect(status).not_to be_failed
             expect(status).not_to be_changed
+          end
+
+          it "should update the target directory if contents change" do
+            pending "a way to appropriately mock ctime checks for a particular file" if checksum_type == 'ctime'
+
+            catalog.add_resource Puppet::Type.send(:newfile, @options)
+            catalog.apply
+            expect(File).to be_directory(path)
+            expect(Puppet::FileSystem.exist?(target_file)).to be_truthy
+
+            # Change the source file.
+            File.open(checksum_file, "wb") { |f| f.write "some content" }
+            File::Stat.any_instance.unstub(:mtime)
+            File::Stat.any_instance.unstub(:ctime)
+            FileUtils.touch target_file, :mtime => Time.now - 20
+
+            # The 2nd time should update the resource.
+            second_catalog.add_resource Puppet::Type.send(:newfile, @options)
+            result = second_catalog.apply
+            status = result.report.resource_statuses["File[#{target_file}]"]
+            expect(status).not_to be_failed
+            expect(status).to be_changed
           end
         end
       end
