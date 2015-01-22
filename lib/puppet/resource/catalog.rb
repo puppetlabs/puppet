@@ -416,7 +416,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # If the block result is false, the resource will
   # be kept otherwise it will be skipped
   def filter(&block)
-    to_catalog :to_resource, &block
+    # to_catalog must take place in a context where current_environment is set to the same env as the
+    # environment set in the catalog (if it is set)
+    # See PUP-3755
+    if environment_instance
+      Puppet.override({:current_environment => environment_instance}) do
+        to_catalog :to_resource, &block
+      end
+    else
+      # If catalog has no environment_instance, hope that the caller has made sure the context has the
+      # correct current_environment
+      to_catalog :to_resource, &block
+    end
   end
 
   # Store the classes in the classfile.
