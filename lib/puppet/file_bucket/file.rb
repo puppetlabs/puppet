@@ -14,16 +14,11 @@ class Puppet::FileBucket::File
   attr :bucket_path
 
   def self.supported_formats
-    [:s]
+    [:binary]
   end
 
   def self.default_format
-    # This should really be :raw, like is done for Puppet::FileServing::Content
-    # but this class hasn't historically supported `from_raw`, so switching
-    # would break compatibility between newer 3.x agents talking to older 3.x
-    # masters. However, to/from_s has been supported and achieves the desired
-    # result without breaking compatibility.
-    :s
+    :binary
   end
 
   def initialize(contents, options = {})
@@ -67,6 +62,10 @@ class Puppet::FileBucket::File
     @contents.to_s
   end
 
+  def to_binary
+    @contents.to_s
+  end
+
   def contents
     to_s
   end
@@ -76,6 +75,10 @@ class Puppet::FileBucket::File
   end
 
   def self.from_s(contents)
+    self.new(contents)
+  end
+
+  def self.from_binary(contents)
     self.new(contents)
   end
 
