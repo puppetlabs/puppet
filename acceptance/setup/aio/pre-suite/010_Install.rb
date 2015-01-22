@@ -10,7 +10,7 @@ step "Install repositories on target machines..." do
   repo_configs_dir = 'repo-configs'
 
   hosts.each do |host|
-    install_repos_on(host, 'puppet', sha, repo_configs_dir)
+    install_repos_on(host, 'puppet-agent', sha, repo_configs_dir)
   end
 end
 
@@ -32,10 +32,10 @@ MASTER_PACKAGES = {
 
 AGENT_PACKAGES = {
   :redhat => [
-    'puppet',
+    'puppet-agent',
   ],
   :debian => [
-    'puppet',
+    'puppet-agent',
   ],
 #  :solaris => [
 #    'puppet',

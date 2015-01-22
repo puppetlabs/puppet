@@ -273,6 +273,14 @@ EOS
     end
 
     desc <<-EOS
+Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation.
+#{USAGE}
+EOS
+    task :aio => 'ci:check_env' do
+      beaker_test(:aio)
+    end
+
+    desc <<-EOS
 Run the acceptance tests through Beaker and install from git on the configuration targets.
 #{USAGE}
 EOS

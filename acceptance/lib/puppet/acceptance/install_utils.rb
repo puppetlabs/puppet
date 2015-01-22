@@ -115,7 +115,7 @@ module Puppet
         end
       end
 
-      def install_repos_on(host, sha, repo_configs_dir)
+      def install_repos_on(host, project, sha, repo_configs_dir)
         platform = host['platform'].with_version_codename
         platform_configs_dir = File.join(repo_configs_dir,platform)
 
@@ -132,8 +132,9 @@ module Puppet
               platform_configs_dir
             )
 
-            pattern = "pl-puppet-%s-%s-%s%s-%s.repo"
+            pattern = "pl-%s-%s-%s-%s%s-%s.repo"
             repo_filename = pattern % [
+              project,
               sha,
               variant,
               fedora_prefix,
@@ -141,14 +142,28 @@ module Puppet
               arch
             ]
             repo = fetch(
-              "http://builds.puppetlabs.lan/puppet/%s/repo_configs/rpm/" % sha,
+              "http://builds.puppetlabs.lan/%s/%s/repo_configs/rpm/" % [project, sha],
               repo_filename,
               platform_configs_dir
             )
 
-            link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/products/%s/" % [sha, variant, fedora_prefix, version, arch]
+            link = "http://builds.puppetlabs.lan/%s/%s/repos/%s/%s%s/products/%s/" % [
+              project,
+              sha,
+              variant,
+              fedora_prefix,
+              version,
+              arch
+            ]
             if not link_exists?(link)
-              link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/devel/%s/" % [sha, variant, fedora_prefix, version, arch]
+              link = "http://builds.puppetlabs.lan/%s/%s/repos/%s/%s%s/devel/%s/" % [
+                project,
+                sha,
+                variant,
+                fedora_prefix,
+                version,
+                arch
+              ]
             end
             if not link_exists?(link)
               raise "Unable to reach a repo directory at #{link}"
@@ -177,12 +192,12 @@ module Puppet
             )
 
             list = fetch(
-              "http://builds.puppetlabs.lan/puppet/%s/repo_configs/deb/" % sha,
-              "pl-puppet-%s-%s.list" % [sha, version],
+              "http://builds.puppetlabs.lan/%s/%s/repo_configs/deb/" % [project, sha],
+              "pl-%s-%s-%s.list" % [project, sha, version],
               platform_configs_dir
             )
 
-            repo_dir = fetch_remote_dir("http://builds.puppetlabs.lan/puppet/%s/repos/apt/%s" % [sha, version], platform_configs_dir)
+            repo_dir = fetch_remote_dir("http://builds.puppetlabs.lan/%s/%s/repos/apt/%s" % [project, sha, version], platform_configs_dir)
 
             on host, "rm -rf /root/*.list; rm -rf /root/*.deb; rm -rf /root/#{version}"
 
