@@ -72,8 +72,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise ArgumentError, "Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'"
     end
 
-    check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
-
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     if !indirection
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
@@ -95,6 +93,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
     end
+
+    check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
 
     params.delete(:bucket_path)
 

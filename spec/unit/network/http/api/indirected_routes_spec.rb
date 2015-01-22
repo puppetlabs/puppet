@@ -196,6 +196,18 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       indirection, method, key, final_params = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
       expect(key).to eq("foo bar")
     end
+
+    it "should pass through a proper environment param in a call to check_authorization" do
+      handler.expects(:check_authorization).with(anything,
+                                                 anything,
+                                                 all_of(
+                                                   has_entry(:environment,
+                                                             is_a(Puppet::Node::Environment)),
+                                                   has_entry(:environment,
+                                                             responds_with(:name,
+                                                                           :env))))
+      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)
+    end
   end
 
   describe "when converting a request into a URI" do
