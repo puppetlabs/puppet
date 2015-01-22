@@ -6,13 +6,15 @@
 # create a new example group for each types and will run the given block
 # in each example group.
 
-CHECKSUM_STAT_TIME = Time.now
+CHECKSUM_PLAINTEXT = "1\r\n"*4000
 CHECKSUM_TYPES_TO_TRY = [
   ['md5', 'a7a169ac84bb863b30484d0aa03139c1'],
   ['md5lite', '22b4182363e81b326e98231fde616782'],
   ['sha256', '47fcae62967db2fb5cba2fc0d9cf3e6767035d763d825ecda535a7b1928b9746'],
-  ['sha256lite', 'fd50217a2b0286ba25121bf2297bbe6c197933992de67e4e568f19861444ecf8'],
+  ['sha256lite', 'fd50217a2b0286ba25121bf2297bbe6c197933992de67e4e568f19861444ecf8']
 ]
+
+CHECKSUM_STAT_TIME = Time.now
 TIME_TYPES_TO_TRY = [
   ['ctime', "#{CHECKSUM_STAT_TIME}"],
   ['mtime', "#{CHECKSUM_STAT_TIME}"]
@@ -30,7 +32,7 @@ shared_context('with supported checksum types') do
     (CHECKSUM_TYPES_TO_TRY + TIME_TYPES_TO_TRY).each do |checksum_type, checksum|
       describe("when checksum_type is #{checksum_type}") do
         let(:checksum_type) { checksum_type }
-        let(:plaintext) { "1\r\n"*4000 }
+        let(:plaintext) { CHECKSUM_PLAINTEXT }
         let(:checksum) { checksum }
         let(:env_path) { tmpfile(path) }
         let(:checksum_file) { File.join(env_path, file) }
