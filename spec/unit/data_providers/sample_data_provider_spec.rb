@@ -26,7 +26,6 @@ describe "when using a sample data provider from an external module" do
   end
 
   it 'the environment data loader is used to set parameters' do
-#    Puppet[:code] = 'include test'
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'sample')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
@@ -34,6 +33,13 @@ describe "when using a sample data provider from an external module" do
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
   end
 
+  it 'the module and environment data loader is used to set parameters' do
+    node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'sample')
+    compiler = Puppet::Parser::Compiler.new(node)
+    catalog = compiler.compile()
+    resources_created_in_fixture = ["Notify[module data param_a is 100, module data param_b is 200, env data param_c is 300]"]
+    expect(resources_in(catalog)).to include(*resources_created_in_fixture)
+  end
 
   def parent_fixture(dir_name)
     File.absolute_path(File.join(my_fixture_dir(), "../#{dir_name}"))

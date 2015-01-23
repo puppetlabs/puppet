@@ -3,4 +3,4 @@ class test($param_a = 1, $param_b = 2, $param_c = 3) {
 }
 
 include test
-#include dataprovider::test
+include dataprovider::test
