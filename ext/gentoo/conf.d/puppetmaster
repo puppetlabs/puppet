@@ -1,5 +1,5 @@
 # Location of PID files
-PUPPETMASTER_PID_DIR="/var/run/puppet"
+PUPPETMASTER_PID_DIR="/var/run/puppetlabs"
 
 # Location of the main manifest
 #PUPPETMASTER_MANIFEST="/etc/puppet/manifests/site.pp"
