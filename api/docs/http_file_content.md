@@ -38,7 +38,7 @@ None
     Accept: raw
 
     HTTP/1.1 200 OK
-    Content-Type: application/x-raw
+    Content-Type: application/octet-stream
     Content-Length: 16
 
     this is my file
