@@ -118,10 +118,6 @@ class Puppet::Pops::Types::ClassLoader
     [fq_named_parts.map {|part| de_camel(part)}.join('/'), fq_named_parts.join('/').downcase ]
   end
 
-#  def self.downcased_path(fq_name)
-#    fq_name.to_s.gsub(/::/, '/').downcase
-#  end
-
   def self.de_camel(fq_name)
     fq_name.to_s.gsub(/::/, '/').
     gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
