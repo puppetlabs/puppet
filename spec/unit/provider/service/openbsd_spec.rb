@@ -20,7 +20,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should list all available services" do
-      described_class.stubs(:execpipe).with(['/usr/sbin/rcctl', :status]).yields File.read(my_fixture('rcctl_status'))
+      described_class.stubs(:execpipe).with(['/usr/sbin/rcctl', :getall]).yields File.read(my_fixture('rcctl_getall'))
       expect(described_class.instances.map(&:name)).to eq([
         'accounting', 'pf', 'postgresql', 'tftpd', 'wsmoused', 'xdm',
       ])
@@ -58,14 +58,14 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   describe "#status" do
     it "should use the status command from the resource" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :get, 'sshd', :status], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       provider.status
     end
 
     it "should return :stopped when status command returns with a non-zero exitcode" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :get, 'sshd', :status], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 3
       expect(provider.status).to eq(:stopped)
@@ -73,7 +73,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
     it "should return :running when status command returns with a zero exitcode" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/usr/sbin/rcctl', :status, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/usr/sbin/rcctl', :get, 'sshd', :status], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       $CHILD_STATUS.stubs(:exitstatus).returns 0
       expect(provider.status).to eq(:running)
@@ -106,15 +106,15 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      described_class.stubs(:rcctl).with('status', 'sshd').returns('-6')
-      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
+      described_class.stubs(:rcctl).with(:get, 'sshd', :status)
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'status'], :failonfail => false, :combine => false, :squelch => false).returns(stub(:exitstatus => 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      described_class.stubs(:rcctl).with('status', 'sshd').returns('NO')
-      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('NO')
+      described_class.stubs(:rcctl).with(:get, 'sshd', :status).returns('NO')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'status'], :failonfail => false, :combine => false, :squelch => false).returns(stub(:exitstatus => 1))
       expect(provider.enabled?).to eq(:false)
     end
   end
@@ -129,8 +129,10 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
     it "should run rcctl enable with flags if provided" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
-      described_class.stubs(:rcctl).with(:enable, 'sshd', :flags, '-6').returns('')
-      provider.expects(:rcctl).with(:enable, 'sshd', :flags, '-6')
+      described_class.stubs(:rcctl).with(:enable, 'sshd').returns('')
+      described_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-6').returns('')
+      provider.expects(:rcctl).with(:enable, 'sshd')
+      provider.expects(:rcctl).with(:set, 'sshd', :flags, '-6')
       provider.enable
     end
   end
@@ -170,22 +172,22 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   describe "#flags" do
     it "should return flags when set" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
-      described_class.stubs(:rcctl).with(:status, 'sshd').returns('-6')
-      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
+      described_class.stubs(:rcctl).with('get', 'sshd', 'flags').returns('-6')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'flags'], :failonfail => false, :combine => false, :squelch => false).returns('-6')
       provider.flags
     end
 
     it "should return empty flags" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      described_class.stubs(:rcctl).with(:status, 'sshd').returns('')
-      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'sshd'], :failonfail => false, :combine => false, :squelch => false).returns('')
+      described_class.stubs(:rcctl).with('get', 'sshd', 'flags').returns('')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'flags'], :failonfail => false, :combine => false, :squelch => false).returns('')
       provider.flags
     end
 
     it "should return flags for special services" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'pf'))
-      described_class.stubs(:rcctl).with(:status, 'pf').returns('YES')
-      provider.expects(:execute).with(['/usr/sbin/rcctl', 'status', 'pf'], :failonfail => false, :combine => false, :squelch => false).returns('YES')
+      described_class.stubs(:rcctl).with('get', 'pf', 'flags').returns('YES')
+      provider.expects(:execute).with(['/usr/sbin/rcctl', 'get', 'pf', 'flags'], :failonfail => false, :combine => false, :squelch => false).returns('YES')
       provider.flags
     end
   end
@@ -193,8 +195,8 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   describe "#flags=" do
     it "should run rcctl to set flags" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      described_class.stubs(:rcctl).with(:enable, 'sshd', :flags, '-4').returns('')
-      provider.expects(:rcctl).with(:enable, 'sshd', :flags, '-4')
+      described_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-4').returns('')
+      provider.expects(:rcctl).with(:set, 'sshd', :flags, '-4')
       provider.flags = '-4'
     end
   end
