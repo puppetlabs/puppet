@@ -1,8 +1,8 @@
-test_name "Test a new environment, unknown to agent"
+test_name 'Test a new environment, unknown to agent'
 
-step "setup environments"
+step 'setup environments'
 
-testdir = create_tmpdir_for_user master, "confdir"
+testdir = create_tmpdir_for_user master, 'confdir'
 manifest = <<-MANIFEST
   File {
     ensure => directory,
@@ -32,11 +32,11 @@ MANIFEST
 
 apply_manifest_on(master, manifest, :catch_failures => true)
 
-step "run agents, ensure new environment used"
+step 'run agents, ensure new environment used'
 
 master_opts = {
   'main' => {
-    'environmentpath' => "#{testdir}/environments",
+    'environmentpath' => "#{testdir}/environments"
   },
   'agent' => {
     'environment' => 'debug'
@@ -45,9 +45,9 @@ master_opts = {
 
 with_puppet_running_on(master, master_opts, testdir) do
   agents.each do |agent|
-    on(agent, puppet("agent", "--test"), :acceptable_exit_codes => (0..255) ) do
+    on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => (0..255) ) do
       assert_match(/you win/, stdout,
-                   "agent did not pickup newly classified environment." )
+                   'agent did not pickup newly classified environment.')
     end
   end
 end
