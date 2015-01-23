@@ -62,4 +62,15 @@ describe Puppet::Resource::Catalog::Compiler do
 
     Puppet::Resource::Catalog.indirection.find("mynode").resource_refs.should == [ @two.ref ]
   end
+
+  it "filters out virtual exported resources using the agent's production environment" do
+    Puppet[:node_terminus] = :memory
+    Puppet::Node.indirection.save(Puppet::Node.new("mynode"))
+
+    Puppet::Parser::Resource::Catalog.any_instance.expects(:to_resource).with do |catalog|
+      expect(Puppet.lookup(:current_environment).name).to eq(:production)
+    end
+
+    Puppet::Resource::Catalog.indirection.find("mynode")
+  end
 end
