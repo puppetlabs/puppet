@@ -59,23 +59,19 @@ class Puppet::FileBucket::File
   end
 
   def to_s
-    @contents.to_s
+    to_binary
   end
 
   def to_binary
-    @contents.to_s
+    @contents.to_binary
   end
 
   def contents
-    to_s
+    to_binary
   end
 
   def name
     "#{checksum_type}/#{checksum_data}"
-  end
-
-  def self.from_s(contents)
-    self.new(contents)
   end
 
   def self.from_binary(contents)
@@ -84,7 +80,7 @@ class Puppet::FileBucket::File
 
   def to_data_hash
     # Note that this serializes the entire data to a string and places it in a hash.
-    { "contents" => contents.to_s }
+    { "contents" => contents.to_binary }
   end
 
   def self.from_data_hash(data)
@@ -116,7 +112,7 @@ class Puppet::FileBucket::File
       Puppet::Util::Checksums.method(base_method).call(@contents)
     end
 
-    def to_s
+    def to_binary
       # This is not so horrible as for FileContent, but still possible to mutate the content that the
       # checksum is based on... so semi horrible...
       return @contents;
@@ -141,7 +137,7 @@ class Puppet::FileBucket::File
       Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
     end
 
-    def to_s
+    def to_binary
       Puppet::FileSystem::binread(@path)
     end
   end
