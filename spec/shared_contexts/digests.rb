@@ -2,14 +2,14 @@
 #
 # These helpers define nested rspec example groups to test code against all our
 # supported digest algorithms. Example groups that need to be run against all
-# algorithms should use the `using_checksums_describe` helper which will
+# algorithms should use the `with_digest_algorithms` helper which will
 # create a new example group for each algorithm and will run the given block
 # in each example group.
 #
 # For each algorithm a shared context is defined for the given algorithm that
 # has precomputed checksum values and paths. These contexts are included
 # automatically based on the rspec metadata selected with
-# `using_checksums_describe`.
+# `with_digest_algorithms`.
 
 DIGEST_ALGORITHMS_TO_TRY = ['md5', 'sha256']
 
