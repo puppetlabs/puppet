@@ -130,6 +130,16 @@ describe "Puppet Network Format" do
     end
   end
 
+  describe "binary" do
+    before do
+      @binary = Puppet::Network::FormatHandler.format(:binary)
+    end
+
+    it "should have its mimetype set to application/octet-stream" do
+      @binary.mime.should == "application/octet-stream"
+    end
+  end
+
   describe "plaintext" do
     before do
       @text = Puppet::Network::FormatHandler.format(:s)
