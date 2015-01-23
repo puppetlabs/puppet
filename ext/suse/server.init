@@ -31,7 +31,7 @@
 #      rc_exit          exit appropriate to overall rc status
 
 lockfile=/var/lock/subsys/puppetmaster
-pidfile=/var/run/puppet/master.pid
+pidfile=/var/run/puppetlabs/master.pid
 
 # Source function library.
 [ -f /etc/rc.status ] && . /etc/rc.status
