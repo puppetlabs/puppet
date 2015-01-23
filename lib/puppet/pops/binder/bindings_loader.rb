@@ -59,7 +59,7 @@ class Puppet::Pops::Binder::BindingsLoader
 
     unless result
       # Attempt to load it using the auto loader
-      paths_for_name(name).find {|path| loader.load(path) }
+      paths_for_name(name).find {|path| loader.load(path, Puppet.lookup(:current_environment)) }
       result = Puppet::Bindings.resolve(scope, name)
     end
     result

@@ -1,6 +1,6 @@
 require 'puppet/plugins/binding_schemes'
 
-module Puppetx
+module PuppetX
   module Awesome2
     # A binding scheme that echos its path
     # 'echo:/quick/brown/fox' becomes key '::quick::brown::fox' => 'echo: quick brown fox'.
