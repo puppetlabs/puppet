@@ -2,11 +2,11 @@ require 'spec_helper'
 
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::API::V3::Authorization do
+describe Puppet::Network::HTTP::API::Master::V3::Authorization do
   HTTP = Puppet::Network::HTTP
 
   let(:response) { HTTP::MemoryResponse.new }
-  let(:authz) { HTTP::API::V3::Authorization.new }
+  let(:authz) { HTTP::API::Master::V3::Authorization.new }
   let(:noop_handler) {
     lambda do |request, response|
     end

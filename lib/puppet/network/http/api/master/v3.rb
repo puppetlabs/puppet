@@ -1,13 +1,13 @@
-class Puppet::Network::HTTP::API::V3
-  require 'puppet/network/http/api/v3/authorization'
-  require 'puppet/network/http/api/v3/environments'
-  require 'puppet/network/http/api/v3/indirected_routes'
+class Puppet::Network::HTTP::API::Master::V3
+  require 'puppet/network/http/api/master/v3/authorization'
+  require 'puppet/network/http/api/master/v3/environments'
+  require 'puppet/network/http/api/indirected_routes'
 
   AUTHZ = Authorization.new
 
   INDIRECTED = Puppet::Network::HTTP::Route.
       path(/.*/).
-      any(Puppet::Network::HTTP::API::V3::IndirectedRoutes.new)
+      any(Puppet::Network::HTTP::API::IndirectedRoutes.new)
 
   ENVIRONMENTS = Puppet::Network::HTTP::Route.
       path(%r{^/environments$}).get(AUTHZ.wrap do
@@ -15,7 +15,7 @@ class Puppet::Network::HTTP::API::V3
   end)
 
   def self.routes
-    Puppet::Network::HTTP::Route.path(%r{/v3}).
+    Puppet::Network::HTTP::Route.path(%r{v3}).
         any.
         chain(ENVIRONMENTS, INDIRECTED)
   end

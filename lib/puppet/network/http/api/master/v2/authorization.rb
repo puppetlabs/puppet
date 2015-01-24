@@ -1,4 +1,4 @@
-class Puppet::Network::HTTP::API::V2::Authorization
+class Puppet::Network::HTTP::API::Master::V2::Authorization
   include Puppet::Network::Authorization
 
   def call(request, response)

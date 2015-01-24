@@ -1,6 +1,6 @@
 require 'puppet/network/authorization'
 
-class Puppet::Network::HTTP::API::V3::Authorization
+class Puppet::Network::HTTP::API::Master::V3::Authorization
   include Puppet::Network::Authorization
 
   def wrap(&block)

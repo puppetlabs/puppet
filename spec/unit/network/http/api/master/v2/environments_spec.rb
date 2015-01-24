@@ -4,13 +4,13 @@ require 'puppet/node/environment'
 require 'puppet/network/http'
 require 'matchers/json'
 
-describe Puppet::Network::HTTP::API::V3::Environments do
+describe Puppet::Network::HTTP::API::Master::V2::Environments do
   include JSONMatchers
 
   it "responds with all of the available environments" do
     environment = Puppet::Node::Environment.create(:production, ["/first", "/second"], '/manifests')
     loader = Puppet::Environments::Static.new(environment)
-    handler = Puppet::Network::HTTP::API::V3::Environments.new(loader)
+    handler = Puppet::Network::HTTP::API::Master::V2::Environments.new(loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
@@ -38,7 +38,7 @@ describe Puppet::Network::HTTP::API::V3::Environments do
     environment = Puppet::Node::Environment.create(:production, [])
     env_loader = Puppet::Environments::Static.new(environment)
     env_loader.expects(:get_conf).with(:production).returns(conf_stub)
-    handler = Puppet::Network::HTTP::API::V3::Environments.new(env_loader)
+    handler = Puppet::Network::HTTP::API::Master::V2::Environments.new(env_loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
@@ -52,7 +52,7 @@ describe Puppet::Network::HTTP::API::V3::Environments do
     environment = Puppet::Node::Environment.create(:production, [])
     env_loader = Puppet::Environments::Static.new(environment)
     env_loader.expects(:get_conf).with(:production).returns(conf_stub)
-    handler = Puppet::Network::HTTP::API::V3::Environments.new(env_loader)
+    handler = Puppet::Network::HTTP::API::Master::V2::Environments.new(env_loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)

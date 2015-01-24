@@ -2,14 +2,13 @@ require 'net/http'
 require 'uri'
 
 require 'puppet/network/http'
-require 'puppet/network/http/api/v3/indirected_routes'
 require 'puppet/network/http_pool'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   include Puppet::Network::HTTP::Compression.module
 
-  IndirectedRoutes = Puppet::Network::HTTP::API::V3::IndirectedRoutes
+  IndirectedRoutes = Puppet::Network::HTTP::API::IndirectedRoutes
 
   class << self
     attr_reader :server_setting, :port_setting

@@ -2,11 +2,11 @@ require 'spec_helper'
 
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::API::V2::Authorization do
+describe Puppet::Network::HTTP::API::Master::V2::Authorization do
   HTTP = Puppet::Network::HTTP
 
   let(:response) { HTTP::MemoryResponse.new }
-  let(:authz) { HTTP::API::V2::Authorization.new }
+  let(:authz) { HTTP::API::Master::V2::Authorization.new }
 
   it "only authorizes GET requests" do
     request = HTTP::Request.from_hash({
