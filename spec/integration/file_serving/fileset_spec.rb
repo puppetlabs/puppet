@@ -8,6 +8,6 @@ describe Puppet::FileServing::Fileset do
     @path = Tempfile.new("fileset_integration")
 
     fileset = Puppet::FileServing::Fileset.new(@path.path)
-    lambda { fileset.files }.should_not raise_error
+    expect { fileset.files }.not_to raise_error
   end
 end

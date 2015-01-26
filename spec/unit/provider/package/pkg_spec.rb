@@ -12,7 +12,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
   def self.it_should_respond_to(*actions)
     actions.each do |action|
       it "should respond to :#{action}" do
-        provider.should respond_to(action)
+        expect(provider).to respond_to(action)
       end
     end
   end
@@ -20,20 +20,20 @@ describe Puppet::Type.type(:package).provider(:pkg) do
   it_should_respond_to :install, :uninstall, :update, :query, :latest
 
   it "should be versionable" do
-    described_class.should be_versionable
+    expect(described_class).to be_versionable
   end
 
   describe "#methods" do
     context ":pkg_state" do
       it "should raise error on unknown values" do
         expect {
-          described_class.pkg_state('extra').should
+          expect(described_class.pkg_state('extra')).to
         }.to raise_error(ArgumentError, /Unknown format/)
       end
 
       ['known', 'installed'].each do |k|
         it "should return known values" do
-          described_class.pkg_state(k).should == {:status => k}
+          expect(described_class.pkg_state(k)).to eq({:status => k})
         end
       end
     end
@@ -41,13 +41,13 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     context ":ifo_flag" do
       it "should raise error on unknown values" do
         expect {
-          described_class.ifo_flag('x--').should
+          expect(described_class.ifo_flag('x--')).to
         }.to raise_error(ArgumentError, /Unknown format/)
       end
 
       {'i--' => 'installed', '---'=> 'known'}.each do |k, v|
         it "should return known values" do
-          described_class.ifo_flag(k).should == {:status => v}
+          expect(described_class.ifo_flag(k)).to eq({:status => v})
         end
       end
     end
@@ -55,7 +55,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     context ":parse_line" do
       it "should raise error on unknown values" do
         expect {
-          described_class.parse_line('pkg (mypkg) 1.2.3.4 i-- zzz').should
+          expect(described_class.parse_line('pkg (mypkg) 1.2.3.4 i-- zzz')).to
         }.to raise_error(ArgumentError, /Unknown line format/)
       end
 
@@ -65,7 +65,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         'pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  -----' => {:name => 'SUNWcs', :ensure => '0.5.11,5.11-0.151.0.1:20101105T001108Z', :status => 'installed', :provider => :pkg, :publisher => 'solaris'},
        }.each do |k, v|
         it "[#{k}] should correctly parse" do
-          described_class.parse_line(k).should == v
+          expect(described_class.parse_line(k)).to eq(v)
         end
       end
     end
@@ -73,12 +73,12 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     context ":latest" do
       it "should work correctly for ensure latest on solaris 11 (UFOXI) when there are no further packages to install" do
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
-        provider.latest.should == '1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z'
+        expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
       end
 
       it "should work correctly for ensure latest on solaris 11 in the presence of a certificate expiration warning" do
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.certificate_warning'))
-        provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
+        expect(provider.latest).to eq("1.0.6-0.175.0.0.0.2.537")
       end
 
       it "should work correctly for ensure latest on solaris 11(known UFOXI)" do
@@ -86,12 +86,12 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         $CHILD_STATUS.stubs(:exitstatus).returns 0
 
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.known'))
-        provider.latest.should == '1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z'
+        expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
       end
 
       it "should work correctly for ensure latest on solaris 11 (IFO)" do
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.installed'))
-        provider.latest.should == '1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z'
+        expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
       end
 
       it "should work correctly for ensure latest on solaris 11(known IFO)" do
@@ -99,7 +99,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         $CHILD_STATUS.stubs(:exitstatus).returns 0
 
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.known'))
-        provider.latest.should == '1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z'
+        expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
       end
 
       it "issues a warning when the certificate has expired" do
@@ -123,9 +123,9 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         described_class.expects(:pkg).with(:list, '-Hv').returns File.read(my_fixture('solaris11'))
         described_class.expects(:warning).never
         instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure) }}
-        instances.size.should == 2
-        instances[0].should == {:name => 'dummy/dummy', :ensure => '3.0,5.11-0.175.0.0.0.2.537:20131230T130000Z'}
-        instances[1].should == {:name => 'dummy/dummy2', :ensure => '1.8.1.2-0.175.0.0.0.2.537:20131230T130000Z'}
+        expect(instances.size).to eq(2)
+        expect(instances[0]).to eq({:name => 'dummy/dummy', :ensure => '3.0,5.11-0.175.0.0.0.2.537:20131230T130000Z'})
+        expect(instances[1]).to eq({:name => 'dummy/dummy2', :ensure => '1.8.1.2-0.175.0.0.0.2.537:20131230T130000Z'})
       end
 
       it "should fail on incorrect lines" do
@@ -149,19 +149,19 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         it "should find the package" do
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true}).returns File.read(my_fixture('dummy_solaris10'))
           $CHILD_STATUS.stubs(:exitstatus).returns 0
-          provider.query.should == {
+          expect(provider.query).to eq({
             :name      => 'dummy',
             :ensure    => '2.5.5,5.10-0.111:20131230T130000Z',
             :publisher => 'solaris',
             :status    => 'installed',
             :provider  => :pkg,
-          }
+          })
         end
 
         it "should return :absent when the package is not found" do
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true}).returns ''
           $CHILD_STATUS.stubs(:exitstatus).returns 1
-          provider.query.should == {:ensure => :absent, :name => "dummy"}
+          expect(provider.query).to eq({:ensure => :absent, :name => "dummy"})
         end
       end
 
@@ -169,19 +169,19 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         it "should find the package" do
           $CHILD_STATUS.stubs(:exitstatus).returns 0
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true}).returns File.read(my_fixture('dummy_solaris11.installed'))
-          provider.query.should == {
+          expect(provider.query).to eq({
             :name      => 'dummy',
             :status    => 'installed',
             :ensure    => '1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z',
             :publisher => 'solaris',
             :provider  => :pkg,
-          }
+          })
         end
 
         it "should return :absent when the package is not found" do
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true}).returns ''
           $CHILD_STATUS.stubs(:exitstatus).returns 1
-          provider.query.should == {:ensure => :absent, :name => "dummy"}
+          expect(provider.query).to eq({:ensure => :absent, :name => "dummy"})
         end
       end
 

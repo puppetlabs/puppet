@@ -35,8 +35,8 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
             ''
           end
         else
-          command.length.should == 4
-          command[1].should == '-o'
+          expect(command.length).to eq(4)
+          expect(command[1]).to eq('-o')
 
           # update is a special option, used on bsd's
           # strip it out and track as a local bool here
@@ -50,17 +50,17 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
           @current_options = tmp_options.join(",")
 
           if !update
-            @mounted.should == false # verify that we don't try to call "mount" redundantly
+            expect(@mounted).to eq(false) # verify that we don't try to call "mount" redundantly
           end
-          command[3].should == '/Volumes/foo_disk'
+          expect(command[3]).to eq('/Volumes/foo_disk')
           @current_device = check_fstab(true)
           @mounted = true
           ''
         end
       when %r{/s?bin/umount}
-        command.length.should == 2
-        command[1].should == '/Volumes/foo_disk'
-        @mounted.should == true # "umount" doesn't work when device not mounted (see #6632)
+        expect(command.length).to eq(2)
+        expect(command[1]).to eq('/Volumes/foo_disk')
+        expect(@mounted).to eq(true) # "umount" doesn't work when device not mounted (see #6632)
         @mounted = false
         ''
       else
@@ -77,12 +77,12 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
     # Verify that the fake fstab has the expected data in it
     fstab_contents = File.read(@fake_fstab).split("\n").reject { |x| x =~ /^#|^$/ }
     if expected_to_be_present
-      fstab_contents.length().should == 1
+      expect(fstab_contents.length()).to eq(1)
       device, rest_of_line = fstab_contents[0].split(/\t/,2)
-      rest_of_line.should == "/Volumes/foo_disk\tmsdos\t#{@desired_options}\t0\t0"
+      expect(rest_of_line).to eq("/Volumes/foo_disk\tmsdos\t#{@desired_options}\t0\t0")
       device
     else
-      fstab_contents.length().should == 0
+      expect(fstab_contents.length()).to eq(0)
       nil
     end
   end
@@ -126,22 +126,25 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
               ["local", "journaled"].each do |options_setting|
                 describe "When setting options => #{options_setting}" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
-                    pending("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb", :if => family == "Solaris")
-                    @desired_options = options_setting
-                    run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
-                    @mounted.should == expected_final_state
-                    if expected_fstab_data
-                      check_fstab(expected_fstab_data).should == "/dev/disk1s1"
+                    if family == "Solaris"
+                      skip("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb")
                     else
-                      check_fstab(expected_fstab_data).should == nil
-                    end
-                    if @mounted
-                      if ![:defined, :present].include?(ensure_setting)
-                        @current_options.should == @desired_options
-                      elsif initial_fstab_entry
-                        @current_options.should == @desired_options
+                      @desired_options = options_setting
+                      run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
+                      expect(@mounted).to eq(expected_final_state)
+                      if expected_fstab_data
+                        expect(check_fstab(expected_fstab_data)).to eq("/dev/disk1s1")
                       else
-                        @current_options.should == 'local' #Workaround for #6645
+                        expect(check_fstab(expected_fstab_data)).to eq(nil)
+                      end
+                      if @mounted
+                        if ![:defined, :present].include?(ensure_setting)
+                          expect(@current_options).to eq(@desired_options)
+                        elsif initial_fstab_entry
+                          expect(@current_options).to eq(@desired_options)
+                        else
+                          expect(@current_options).to eq('local') #Workaround for #6645
+                        end
                       end
                     end
                   end
@@ -162,10 +165,10 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
       create_fake_fstab(true)
       @desired_options = "local"
       run_in_catalog(:ensure=>:mounted, :options=>'local')
-      @current_device.should=="/dev/disk1s1"
-      @mounted.should==true
-      @current_options.should=='local'
-      check_fstab(true).should == "/dev/disk1s1"
+      expect(@current_device).to eq("/dev/disk1s1")
+      expect(@mounted).to eq(true)
+      expect(@current_options).to eq('local')
+      expect(check_fstab(true)).to eq("/dev/disk1s1")
     end
   end
 end

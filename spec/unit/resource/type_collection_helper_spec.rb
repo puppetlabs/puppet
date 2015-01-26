@@ -19,6 +19,6 @@ describe Puppet::Resource::TypeCollectionHelper do
     rtc = stub 'known_resource_types'
     env.expects(:known_resource_types).returns  rtc
 
-    @helper.known_resource_types.should equal(rtc)
+    expect(@helper.known_resource_types).to equal(rtc)
   end
 end

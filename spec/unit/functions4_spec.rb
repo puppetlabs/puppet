@@ -85,7 +85,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     expect(func.call({}, 10,20)).to eql(10)
   end
 
@@ -93,7 +93,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
@@ -108,7 +108,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
@@ -149,7 +149,7 @@ actual:
       f = create_min_function_class_using_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10, 10, 10)
       end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
@@ -164,7 +164,7 @@ actual:
       f = create_function_with_optionals_and_varargs()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       signature = 'Any x, Any y, Any a?, Any b?, Any c{0,}'
       expect do
         func.call({}, 10)
@@ -180,7 +180,7 @@ actual:
       f = create_function_with_optionals_and_varargs_via_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10)
       end.to raise_error(ArgumentError,
@@ -202,7 +202,7 @@ actual:
       f = create_min_function_class_disptaching_to_two_methods()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10, 10, 10)
       end.to raise_error(ArgumentError,
@@ -314,14 +314,14 @@ actual:
         signatures = fc.signatures
         expect(signatures.size).to eql(1)
         signature = signatures[0]
-        expect(signature.last_captures_rest?).to be_true
+        expect(signature.last_captures_rest?).to be_truthy
       end
 
       it 'about optional and required parameters' do
         fc = create_function_with_optionals_and_varargs
         signature = fc.signatures[0]
         expect(signature.args_range).to eql( [2, Float::INFINITY ] )
-        expect(signature.infinity?(signature.args_range[1])).to be_true
+        expect(signature.infinity?(signature.args_range[1])).to be_truthy
       end
 
       it 'about block not being allowed' do

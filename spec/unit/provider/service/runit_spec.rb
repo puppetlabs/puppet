@@ -36,31 +36,31 @@ describe provider_class do
   end
 
   it "should have a restart method" do
-    @provider.should respond_to(:restart)
+    expect(@provider).to respond_to(:restart)
   end
 
   it "should have a restartcmd method" do
-    @provider.should respond_to(:restartcmd)
+    expect(@provider).to respond_to(:restartcmd)
   end
 
   it "should have a start method" do
-    @provider.should respond_to(:start)
+    expect(@provider).to respond_to(:start)
   end
 
   it "should have a stop method" do
-    @provider.should respond_to(:stop)
+    expect(@provider).to respond_to(:stop)
   end
 
   it "should have an enabled? method" do
-    @provider.should respond_to(:enabled?)
+    expect(@provider).to respond_to(:enabled?)
   end
 
   it "should have an enable method" do
-    @provider.should respond_to(:enable)
+    expect(@provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    @provider.should respond_to(:disable)
+    expect(@provider).to respond_to(:disable)
   end
 
   describe "when starting" do
@@ -126,19 +126,19 @@ describe provider_class do
   describe "when checking status" do
     it "and sv status fails, properly raise a Puppet::Error" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).raises(Puppet::ExecutionFailure, "fail: /etc/sv/myservice: file not found")
-      lambda { @provider.status }.should raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: fail: /etc/sv/myservice: file not found')
+      expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: fail: /etc/sv/myservice: file not found')
     end
     it "and sv status returns up, then return :running" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("run: /etc/sv/myservice: (pid 9029) 6s")
-      @provider.status.should == :running
+      expect(@provider.status).to eq(:running)
     end
     it "and sv status returns not running, then return :stopped" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("fail: /etc/sv/myservice: runsv not running")
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
     it "and sv status returns a warning, then return :stopped" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("warning: /etc/sv/myservice: unable to open supervise/ok: file does not exist")
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
   end
 

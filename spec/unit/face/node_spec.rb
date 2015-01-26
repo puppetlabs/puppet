@@ -43,7 +43,7 @@ describe Puppet::Face[:node, '0.0.1'] do
     end
 
     it "should have a clean action" do
-      subject.should be_action :clean
+      expect(subject).to be_action :clean
     end
 
     it "should not accept a call with no arguments" do
@@ -81,7 +81,7 @@ describe Puppet::Face[:node, '0.0.1'] do
 
         it "should run in master mode" do
           subject.clean('hostname')
-          Puppet.run_mode.should be_master
+          expect(Puppet.run_mode).to be_master
         end
 
         it "should set node cache as yaml" do

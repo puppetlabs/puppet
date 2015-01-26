@@ -37,13 +37,18 @@ RSpec::Matchers.define :exit_with do |expected|
     end
     actual and actual == expected
   end
-  failure_message_for_should do |block|
+
+  supports_block_expectations
+
+  failure_message do |block|
     "expected exit with code #{expected} but " +
       (actual.nil? ? " exit was not called" : "we exited with #{actual} instead")
   end
-  failure_message_for_should_not do |block|
+
+  failure_message_when_negated do |block|
     "expected that exit would not be called with #{expected}"
   end
+
   description do
     "expect exit with #{expected}"
   end
@@ -99,7 +104,9 @@ RSpec::Matchers.define :have_printed do |expected|
     matches_output?(@actual) && matches_exit_code?(@actual_exit_code)
   end
 
-  failure_message_for_should do |actual|
+  supports_block_expectations
+
+  failure_message do |actual|
     if actual.nil? then
       "expected #{expected.inspect}, but nothing was printed"
     else
@@ -112,7 +119,7 @@ RSpec::Matchers.define :have_printed do |expected|
     end
   end
 
-  failure_message_for_should_not do |actual|
+  failure_message_when_negated do |actual|
     if @expected_exit_code && matches_exit_code?(@actual_exit_code)
       "expected exit code to not be #{@actual_exit_code}"
     else
@@ -146,7 +153,7 @@ RSpec::Matchers.define :be_one_of do |*expected|
     expected.include? actual
   end
 
-  failure_message_for_should do |actual|
+  failure_message do |actual|
     "expected #{actual.inspect} to be one of #{expected.map(&:inspect).join(' or ')}"
   end
 end

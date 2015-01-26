@@ -14,20 +14,20 @@ describe Puppet::Util::Storage do
 
   describe "when caching a symbol" do
     it "should return an empty hash" do
-      Puppet::Util::Storage.cache(:yayness).should == {}
-      Puppet::Util::Storage.cache(:more_yayness).should == {}
+      expect(Puppet::Util::Storage.cache(:yayness)).to eq({})
+      expect(Puppet::Util::Storage.cache(:more_yayness)).to eq({})
     end
 
     it "should add the symbol to its internal state" do
       Puppet::Util::Storage.cache(:yayness)
-      Puppet::Util::Storage.state.should == {:yayness=>{}}
+      expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
     end
 
     it "should not clobber existing state when caching additional objects" do
       Puppet::Util::Storage.cache(:yayness)
-      Puppet::Util::Storage.state.should == {:yayness=>{}}
+      expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
       Puppet::Util::Storage.cache(:bubblyness)
-      Puppet::Util::Storage.state.should == {:yayness=>{},:bubblyness=>{}}
+      expect(Puppet::Util::Storage.state).to eq({:yayness=>{},:bubblyness=>{}})
     end
   end
 
@@ -38,16 +38,16 @@ describe Puppet::Util::Storage do
     end
 
     it "should return an empty hash" do
-      Puppet::Util::Storage.cache(@file_test).should == {}
-      Puppet::Util::Storage.cache(@exec_test).should == {}
+      expect(Puppet::Util::Storage.cache(@file_test)).to eq({})
+      expect(Puppet::Util::Storage.cache(@exec_test)).to eq({})
     end
 
     it "should add the resource ref to its internal state" do
-      Puppet::Util::Storage.state.should == {}
+      expect(Puppet::Util::Storage.state).to eq({})
       Puppet::Util::Storage.cache(@file_test)
-      Puppet::Util::Storage.state.should == {"File[#{@basepath}/yayness]"=>{}}
+      expect(Puppet::Util::Storage.state).to eq({"File[#{@basepath}/yayness]"=>{}})
       Puppet::Util::Storage.cache(@exec_test)
-      Puppet::Util::Storage.state.should == {"File[#{@basepath}/yayness]"=>{}, "Exec[#{@basepath}/bin/ls /yayness]"=>{}}
+      expect(Puppet::Util::Storage.state).to eq({"File[#{@basepath}/yayness]"=>{}, "Exec[#{@basepath}/bin/ls /yayness]"=>{}})
     end
   end
 
@@ -55,15 +55,15 @@ describe Puppet::Util::Storage do
     it "should cache by converting to a string" do
       data = Puppet::Util::Storage.cache(42)
       data[:yay] = true
-      Puppet::Util::Storage.cache("42")[:yay].should be_true
+      expect(Puppet::Util::Storage.cache("42")[:yay]).to be_truthy
     end
   end
 
   it "should clear its internal state when clear() is called" do
     Puppet::Util::Storage.cache(:yayness)
-    Puppet::Util::Storage.state.should == {:yayness=>{}}
+    expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
     Puppet::Util::Storage.clear
-    Puppet::Util::Storage.state.should == {}
+    expect(Puppet::Util::Storage.state).to eq({})
   end
 
   describe "when loading from the state file" do
@@ -77,7 +77,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should not fail to load" do
-        Puppet::FileSystem.exist?(@path).should be_false
+        expect(Puppet::FileSystem.exist?(@path)).to be_falsey
         Puppet[:statedir] = @path
         Puppet::Util::Storage.load
         Puppet[:statefile] = @path
@@ -85,15 +85,15 @@ describe Puppet::Util::Storage do
       end
 
       it "should not lose its internal state when load() is called" do
-        Puppet::FileSystem.exist?(@path).should be_false
+        expect(Puppet::FileSystem.exist?(@path)).to be_falsey
 
         Puppet::Util::Storage.cache(:yayness)
-        Puppet::Util::Storage.state.should == {:yayness=>{}}
+        expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
 
         Puppet[:statefile] = @path
         Puppet::Util::Storage.load
 
-        Puppet::Util::Storage.state.should == {:yayness=>{}}
+        expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
       end
     end
 
@@ -111,11 +111,11 @@ describe Puppet::Util::Storage do
       it "should overwrite its internal state if load() is called" do
         # Should the state be overwritten even if Puppet[:statefile] is not valid YAML?
         Puppet::Util::Storage.cache(:yayness)
-        Puppet::Util::Storage.state.should == {:yayness=>{}}
+        expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
 
         Puppet::Util::Storage.load
 
-        Puppet::Util::Storage.state.should == {}
+        expect(Puppet::Util::Storage.state).to eq({})
       end
 
       it "should restore its internal state if the state file contains valid YAML" do
@@ -124,7 +124,7 @@ describe Puppet::Util::Storage do
 
         Puppet::Util::Storage.load
 
-        Puppet::Util::Storage.state.should == test_yaml
+        expect(Puppet::Util::Storage.state).to eq(test_yaml)
       end
 
       it "should initialize with a clear internal state if the state file does not contain valid YAML" do
@@ -132,7 +132,7 @@ describe Puppet::Util::Storage do
 
         Puppet::Util::Storage.load
 
-        Puppet::Util::Storage.state.should == {}
+        expect(Puppet::Util::Storage.state).to eq({})
       end
 
       it "should initialize with a clear internal state if the state file does not contain a hash of data" do
@@ -140,7 +140,7 @@ describe Puppet::Util::Storage do
 
         Puppet::Util::Storage.load
 
-        Puppet::Util::Storage.state.should == {}
+        expect(Puppet::Util::Storage.state).to eq({})
       end
 
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
@@ -176,12 +176,12 @@ describe Puppet::Util::Storage do
     end
 
     it "should create the state file if it does not exist" do
-      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_false
+      expect(Puppet::FileSystem.exist?(Puppet[:statefile])).to be_falsey
       Puppet::Util::Storage.cache(:yayness)
 
       Puppet::Util::Storage.store
 
-      Puppet::FileSystem.exist?(Puppet[:statefile]).should be_true
+      expect(Puppet::FileSystem.exist?(Puppet[:statefile])).to be_truthy
     end
 
     it "should raise an exception if the state file is not a regular file" do
@@ -195,16 +195,16 @@ describe Puppet::Util::Storage do
 
     it "should load() the same information that it store()s" do
       Puppet::Util::Storage.cache(:yayness)
-      Puppet::Util::Storage.state.should == {:yayness=>{}}
+      expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
 
       Puppet::Util::Storage.store
       Puppet::Util::Storage.clear
 
-      Puppet::Util::Storage.state.should == {}
+      expect(Puppet::Util::Storage.state).to eq({})
 
       Puppet::Util::Storage.load
 
-      Puppet::Util::Storage.state.should == {:yayness=>{}}
+      expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
     end
   end
 end

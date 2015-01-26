@@ -31,20 +31,20 @@ describe Puppet::Util do
 
     it "should change environment variables within the block then reset environment variables to their original values" do
       Puppet::Util.withenv @new_env do
-        ENV["PATH"].should == "/some/bogus/path"
+        expect(ENV["PATH"]).to eq("/some/bogus/path")
       end
-      ENV["PATH"].should == @original_path
+      expect(ENV["PATH"]).to eq(@original_path)
     end
 
     it "should reset environment variables to their original values even if the block fails" do
       begin
         Puppet::Util.withenv @new_env do
-          ENV["PATH"].should == "/some/bogus/path"
+          expect(ENV["PATH"]).to eq("/some/bogus/path")
           raise "This is a failure"
         end
       rescue
       end
-      ENV["PATH"].should == @original_path
+      expect(ENV["PATH"]).to eq(@original_path)
     end
 
     it "should reset environment variables even when they are set twice" do
@@ -52,18 +52,18 @@ describe Puppet::Util do
       @new_env["PATH"] = "/someother/bogus/path"
       Puppet::Util.withenv @new_env do
         # When assigning duplicate keys, can't guarantee order of evaluation
-        ENV["PATH"].should =~ /\/some.*\/bogus\/path/
+        expect(ENV["PATH"]).to match(/\/some.*\/bogus\/path/)
       end
-      ENV["PATH"].should == @original_path
+      expect(ENV["PATH"]).to eq(@original_path)
     end
 
     it "should remove any new environment variables after the block ends" do
       @new_env[:FOO] = "bar"
       ENV["FOO"] = nil
       Puppet::Util.withenv @new_env do
-        ENV["FOO"].should == "bar"
+        expect(ENV["FOO"]).to eq("bar")
       end
-      ENV["FOO"].should == nil
+      expect(ENV["FOO"]).to eq(nil)
     end
 
   end
@@ -71,28 +71,28 @@ describe Puppet::Util do
   describe "#absolute_path?" do
     describe "on posix systems", :if => Puppet.features.posix? do
       it "should default to the platform of the local system" do
-        Puppet::Util.should be_absolute_path('/foo')
-        Puppet::Util.should_not be_absolute_path('C:/foo')
+        expect(Puppet::Util).to be_absolute_path('/foo')
+        expect(Puppet::Util).not_to be_absolute_path('C:/foo')
       end
     end
 
     describe "on windows", :if => Puppet.features.microsoft_windows? do
       it "should default to the platform of the local system" do
-        Puppet::Util.should be_absolute_path('C:/foo')
-        Puppet::Util.should_not be_absolute_path('/foo')
+        expect(Puppet::Util).to be_absolute_path('C:/foo')
+        expect(Puppet::Util).not_to be_absolute_path('/foo')
       end
     end
 
     describe "when using platform :posix" do
       %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo /foo//bar/baz].each do |path|
         it "should return true for #{path}" do
-          Puppet::Util.should be_absolute_path(path, :posix)
+          expect(Puppet::Util).to be_absolute_path(path, :posix)
         end
       end
 
       %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo foo//bar/baz].each do |path|
         it "should return false for #{path}" do
-          Puppet::Util.should_not be_absolute_path(path, :posix)
+          expect(Puppet::Util).not_to be_absolute_path(path, :posix)
         end
       end
     end
@@ -100,13 +100,13 @@ describe Puppet::Util do
     describe "when using platform :windows" do
       %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar c:/foo//bar//baz].each do |path|
         it "should return true for #{path}" do
-          Puppet::Util.should be_absolute_path(path, :windows)
+          expect(Puppet::Util).to be_absolute_path(path, :windows)
         end
       end
 
       %w[/ . ./foo \foo /foo /foo/../bar //foo C:foo/bar foo//bar/baz].each do |path|
         it "should return false for #{path}" do
-          Puppet::Util.should_not be_absolute_path(path, :windows)
+          expect(Puppet::Util).not_to be_absolute_path(path, :windows)
         end
       end
     end
@@ -115,12 +115,12 @@ describe Puppet::Util do
   describe "#path_to_uri" do
     %w[. .. foo foo/bar foo/../bar].each do |path|
       it "should reject relative path: #{path}" do
-        lambda { Puppet::Util.path_to_uri(path) }.should raise_error(Puppet::Error)
+        expect { Puppet::Util.path_to_uri(path) }.to raise_error(Puppet::Error)
       end
     end
 
     it "should perform URI escaping" do
-      Puppet::Util.path_to_uri("/foo bar").path.should == "/foo%20bar"
+      expect(Puppet::Util.path_to_uri("/foo bar").path).to eq("/foo%20bar")
     end
 
     describe "when using platform :posix" do
@@ -131,7 +131,7 @@ describe Puppet::Util do
 
       %w[/ /foo /foo/../bar].each do |path|
         it "should convert #{path} to URI" do
-          Puppet::Util.path_to_uri(path).path.should == path
+          expect(Puppet::Util.path_to_uri(path).path).to eq(path)
         end
       end
     end
@@ -143,20 +143,20 @@ describe Puppet::Util do
       end
 
       it "should normalize backslashes" do
-        Puppet::Util.path_to_uri('c:\\foo\\bar\\baz').path.should == '/' + 'c:/foo/bar/baz'
+        expect(Puppet::Util.path_to_uri('c:\\foo\\bar\\baz').path).to eq('/' + 'c:/foo/bar/baz')
       end
 
       %w[C:/ C:/foo/bar].each do |path|
         it "should convert #{path} to absolute URI" do
-          Puppet::Util.path_to_uri(path).path.should == '/' + path
+          expect(Puppet::Util.path_to_uri(path).path).to eq('/' + path)
         end
       end
 
       %w[share C$].each do |path|
         it "should convert UNC #{path} to absolute URI" do
           uri = Puppet::Util.path_to_uri("\\\\server\\#{path}")
-          uri.host.should == 'server'
-          uri.path.should == '/' + path
+          expect(uri.host).to eq('server')
+          expect(uri.path).to eq('/' + path)
         end
       end
     end
@@ -166,50 +166,50 @@ describe Puppet::Util do
     require 'uri'
 
     it "should strip host component" do
-      Puppet::Util.uri_to_path(URI.parse('http://foo/bar')).should == '/bar'
+      expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar'))).to eq('/bar')
     end
 
     it "should accept puppet URLs" do
-      Puppet::Util.uri_to_path(URI.parse('puppet:///modules/foo')).should == '/modules/foo'
+      expect(Puppet::Util.uri_to_path(URI.parse('puppet:///modules/foo'))).to eq('/modules/foo')
     end
 
     it "should return unencoded path" do
-      Puppet::Util.uri_to_path(URI.parse('http://foo/bar%20baz')).should == '/bar baz'
+      expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar%20baz'))).to eq('/bar baz')
     end
 
     it "should be nil-safe" do
-      Puppet::Util.uri_to_path(nil).should be_nil
+      expect(Puppet::Util.uri_to_path(nil)).to be_nil
     end
 
     describe "when using platform :posix",:if => Puppet.features.posix? do
       it "should accept root" do
-        Puppet::Util.uri_to_path(URI.parse('file:/')).should == '/'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:/'))).to eq('/')
       end
 
       it "should accept single slash" do
-        Puppet::Util.uri_to_path(URI.parse('file:/foo/bar')).should == '/foo/bar'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:/foo/bar'))).to eq('/foo/bar')
       end
 
       it "should accept triple slashes" do
-        Puppet::Util.uri_to_path(URI.parse('file:///foo/bar')).should == '/foo/bar'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:///foo/bar'))).to eq('/foo/bar')
       end
     end
 
     describe "when using platform :windows", :if => Puppet.features.microsoft_windows? do
       it "should accept root" do
-        Puppet::Util.uri_to_path(URI.parse('file:/C:/')).should == 'C:/'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:/C:/'))).to eq('C:/')
       end
 
       it "should accept single slash" do
-        Puppet::Util.uri_to_path(URI.parse('file:/C:/foo/bar')).should == 'C:/foo/bar'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:/C:/foo/bar'))).to eq('C:/foo/bar')
       end
 
       it "should accept triple slashes" do
-        Puppet::Util.uri_to_path(URI.parse('file:///C:/foo/bar')).should == 'C:/foo/bar'
+        expect(Puppet::Util.uri_to_path(URI.parse('file:///C:/foo/bar'))).to eq('C:/foo/bar')
       end
 
       it "should accept file scheme with double slashes as a UNC path" do
-        Puppet::Util.uri_to_path(URI.parse('file://host/share/file')).should == '//host/share/file'
+        expect(Puppet::Util.uri_to_path(URI.parse('file://host/share/file'))).to eq('//host/share/file')
       end
     end
   end
@@ -247,7 +247,7 @@ describe Puppet::Util do
     end
 
     it "should return the pid of the child process" do
-      Puppet::Util.safe_posix_fork.should == pid
+      expect(Puppet::Util.safe_posix_fork).to eq(pid)
     end
   end
 
@@ -264,11 +264,11 @@ describe Puppet::Util do
     end
 
     it "should accept absolute paths" do
-      Puppet::Util.which(path).should == path
+      expect(Puppet::Util.which(path)).to eq(path)
     end
 
     it "should return nil if no executable found" do
-      Puppet::Util.which('doesnotexist').should be_nil
+      expect(Puppet::Util.which('doesnotexist')).to be_nil
     end
 
     it "should warn if the user's HOME is not set but their PATH contains a ~" do
@@ -284,7 +284,7 @@ describe Puppet::Util do
     end
 
     it "should reject directories" do
-      Puppet::Util.which(base).should be_nil
+      expect(Puppet::Util.which(base)).to be_nil
     end
 
     it "should ignore ~user directories if the user doesn't exist" do
@@ -294,7 +294,7 @@ describe Puppet::Util do
       # the lookup for real) it should just work transparently.
       baduser = 'if_this_user_exists_I_will_eat_my_hat'
       Puppet::Util.withenv("PATH" => "~#{baduser}#{File::PATH_SEPARATOR}#{base}") do
-        Puppet::Util.which('foo').should == path
+        expect(Puppet::Util.which('foo')).to eq(path)
       end
     end
 
@@ -307,7 +307,7 @@ describe Puppet::Util do
       it "should walk the search PATH returning the first executable" do
         ENV.stubs(:[]).with('PATH').returns(File.expand_path('/bin'))
 
-        Puppet::Util.which('foo').should == path
+        expect(Puppet::Util.which('foo')).to eq(path)
       end
     end
 
@@ -326,7 +326,7 @@ describe Puppet::Util do
           FileTest.expects(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).returns false
 
           ENV.expects(:[]).with('PATHEXT').never
-          Puppet::Util.which('foo.CMD').should == path
+          expect(Puppet::Util.which('foo.CMD')).to eq(path)
         end
       end
 
@@ -342,7 +342,7 @@ describe Puppet::Util do
           FileTest.expects(:file?).in_sequence(exts).with(File.join(base, 'foo.EXE')).returns false
           FileTest.expects(:file?).in_sequence(exts).with(path).returns true
 
-          Puppet::Util.which('foo').should == path
+          expect(Puppet::Util.which('foo')).to eq(path)
         end
 
         it "should walk the default extension path if the environment variable is not defined" do
@@ -355,7 +355,7 @@ describe Puppet::Util do
           end
           FileTest.expects(:file?).in_sequence(exts).with(path).returns true
 
-          Puppet::Util.which('foo').should == path
+          expect(Puppet::Util.which('foo')).to eq(path)
         end
 
         it "should fall back if no extension matches" do
@@ -366,7 +366,7 @@ describe Puppet::Util do
           FileTest.stubs(:file?).with(File.join(base, 'foo')).returns true
           FileTest.stubs(:executable?).with(File.join(base, 'foo')).returns true
 
-          Puppet::Util.which('foo').should == File.join(base, 'foo')
+          expect(Puppet::Util.which('foo')).to eq(File.join(base, 'foo'))
         end
       end
     end
@@ -379,14 +379,14 @@ describe Puppet::Util do
     describe "#symbolizehash" do
       it "should return a symbolized hash" do
         newhash = Puppet::Util.symbolizehash(myhash)
-        newhash.should == resulthash
+        expect(newhash).to eq(resulthash)
       end
     end
   end
 
   context "#replace_file" do
     subject { Puppet::Util }
-    it { should respond_to :replace_file }
+    it { is_expected.to respond_to :replace_file }
 
     let :target do
       target = Tempfile.new("puppet-util-replace-file")
@@ -403,7 +403,7 @@ describe Puppet::Util do
 
     it "should replace a file when invoked" do
       # Check that our file has the expected content.
-      File.read(target.path).should == "hello, world\n"
+      expect(File.read(target.path)).to eq("hello, world\n")
 
       # Replace the file.
       subject.replace_file(target.path, 0600) do |fh|
@@ -411,7 +411,7 @@ describe Puppet::Util do
       end
 
       # ...and check the replacement was complete.
-      File.read(target.path).should == "I am the passenger...\n"
+      expect(File.read(target.path)).to eq("I am the passenger...\n")
     end
 
     # When running with the same user and group sid, which is the default,
@@ -423,12 +423,12 @@ describe Puppet::Util do
       it "should copy 0#{mode.to_s(8)} permissions from the target file by default" do
         set_mode(mode, target.path)
 
-        get_mode(target.path).should == mode
+        expect(get_mode(target.path)).to eq(mode)
 
         subject.replace_file(target.path, 0000) {|fh| fh.puts "bazam" }
 
-        get_mode(target.path).should == mode
-        File.read(target.path).should == "bazam\n"
+        expect(get_mode(target.path)).to eq(mode)
+        expect(File.read(target.path)).to eq("bazam\n")
       end
     end
 
@@ -438,22 +438,22 @@ describe Puppet::Util do
 
       yielded = false
       subject.replace_file(target.path, 0600) do |fh|
-        get_mode(fh.path).should == 0555
+        expect(get_mode(fh.path)).to eq(0555)
         yielded = true
       end
-      yielded.should be_true
+      expect(yielded).to be_truthy
 
-      Puppet::FileSystem.stat(target.path).ino.should_not == inode
-      get_mode(target.path).should == 0555
+      expect(Puppet::FileSystem.stat(target.path).ino).not_to eq(inode)
+      expect(get_mode(target.path)).to eq(0555)
     end
 
     it "should use the default permissions if the source file doesn't exist" do
       new_target = target.path + '.foo'
-      Puppet::FileSystem.exist?(new_target).should be_false
+      expect(Puppet::FileSystem.exist?(new_target)).to be_falsey
 
       begin
         subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
-        get_mode(new_target).should == 0555
+        expect(get_mode(new_target)).to eq(0555)
       ensure
         Puppet::FileSystem.unlink(new_target) if Puppet::FileSystem.exist?(new_target)
       end
@@ -477,22 +477,22 @@ describe Puppet::Util do
         end
       end
 
-      yielded.should be_true
-      threw.should be_true
+      expect(yielded).to be_truthy
+      expect(threw).to be_truthy
 
       # ...and check the replacement was complete.
-      File.read(target.path).should == "hello, world\n"
+      expect(File.read(target.path)).to eq("hello, world\n")
     end
 
     {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
       it "should support #{label} format permissions" do
         new_target = target.path + "#{mode}.foo"
-        Puppet::FileSystem.exist?(new_target).should be_false
+        expect(Puppet::FileSystem.exist?(new_target)).to be_falsey
 
         begin
           subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }
 
-          get_mode(new_target).should == 0664
+          expect(get_mode(new_target)).to eq(0664)
         ensure
           Puppet::FileSystem.unlink(new_target) if Puppet::FileSystem.exist?(new_target)
         end
@@ -505,16 +505,16 @@ describe Puppet::Util do
     it "should include lines that don't match the standard backtrace pattern" do
       line = "non-standard line\n"
       trace = caller[0..2] + [line] + caller[3..-1]
-      Puppet::Util.pretty_backtrace(trace).should =~ /#{line}/
+      expect(Puppet::Util.pretty_backtrace(trace)).to match(/#{line}/)
     end
 
     it "should include function names" do
-      Puppet::Util.pretty_backtrace.should =~ /:in `\w+'/
+      expect(Puppet::Util.pretty_backtrace).to match(/:in `\w+'/)
     end
 
     it "should work with Windows paths" do
-      Puppet::Util.pretty_backtrace(["C:/work/puppet/c.rb:12:in `foo'\n"]).
-        should == "C:/work/puppet/c.rb:12:in `foo'"
+      expect(Puppet::Util.pretty_backtrace(["C:/work/puppet/c.rb:12:in `foo'\n"])).
+        to eq("C:/work/puppet/c.rb:12:in `foo'")
     end
   end
 
@@ -524,21 +524,21 @@ describe Puppet::Util do
       Puppet::Util.deterministic_rand(123,20)
       rand_one = rand()
       Puppet::Util.deterministic_rand(123,20)
-      rand().should_not eql(rand_one)
+      expect(rand()).not_to eql(rand_one)
     end
 
     if defined?(Random) == 'constant' && Random.class == Class
       it "should not fiddle with the global seed" do
         srand(1234)
         Puppet::Util.deterministic_rand(123,20)
-        srand().should eql(1234)
+        expect(srand()).to eql(1234)
       end
     # ruby below 1.9.2 variant
     else
       it "should set a new global seed" do
         srand(1234)
         Puppet::Util.deterministic_rand(123,20)
-        srand().should_not eql(1234)
+        expect(srand()).not_to eql(1234)
       end
     end
   end

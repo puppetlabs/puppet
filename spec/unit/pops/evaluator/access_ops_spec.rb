@@ -433,7 +433,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       calc.assignable?(actual, type) && calc.assignable?(type, actual)
     end
 
-    failure_message_for_should do |actual|
+    failure_message do |actual|
       "expected #{type.to_s}, but was #{actual.to_s}"
     end
   end

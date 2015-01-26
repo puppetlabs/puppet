@@ -24,16 +24,16 @@ describe Puppet::Parser::TypeLoader do
 
   it "should support an environment" do
     loader = Puppet::Parser::TypeLoader.new(:myenv)
-    loader.environment.name.should == :myenv
+    expect(loader.environment.name).to eq(:myenv)
   end
 
   it "should delegate its known resource types to its environment" do
-    loader.known_resource_types.should be_instance_of(Puppet::Resource::TypeCollection)
+    expect(loader.known_resource_types).to be_instance_of(Puppet::Resource::TypeCollection)
   end
 
   describe "when loading names from namespaces" do
     it "should do nothing if the name to import is an empty string" do
-      loader.try_load_fqname(:hostclass, "").should be_nil
+      expect(loader.try_load_fqname(:hostclass, "")).to be_nil
     end
 
     it "should attempt to import each generated name" do
@@ -71,7 +71,7 @@ describe Puppet::Parser::TypeLoader do
 
     it "should fail if no files are found" do
       Puppet::Parser::Files.expects(:find_manifests_in_modules).returns [nil, []]
-      lambda { loader.import("myfile", "/path") }.should raise_error(/No file\(s\) found for import/)
+      expect { loader.import("myfile", "/path") }.to raise_error(/No file\(s\) found for import/)
     end
 
     it "should parse each found file" do
@@ -84,9 +84,9 @@ describe Puppet::Parser::TypeLoader do
       loader = Puppet::Parser::TypeLoader.new(:myenv)
 
       Puppet::Parser::Files.expects(:find_manifests_in_modules).twice.returns ["modname", %w{/one}]
-      loader.import("myfile", "/path").should_not be_empty
+      expect(loader.import("myfile", "/path")).not_to be_empty
 
-      loader.import("myfile", "/path").should be_empty
+      expect(loader.import("myfile", "/path")).to be_empty
     end
   end
 
@@ -129,10 +129,10 @@ describe Puppet::Parser::TypeLoader do
 
       loader.import_all
 
-      loader.environment.known_resource_types.hostclass("one::a").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("one::b").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("two::c").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("two::d").should be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("one::a")).to be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("one::b")).to be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("two::c")).to be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("two::d")).to be_instance_of(Puppet::Resource::Type)
     end
 
     it "should not load manifests from duplicate modules later in the module path" do
@@ -146,7 +146,7 @@ describe Puppet::Parser::TypeLoader do
 
       loader.import_all
 
-      loader.environment.known_resource_types.hostclass("one::c").should be_nil
+      expect(loader.environment.known_resource_types.hostclass("one::c")).to be_nil
     end
 
     it "should load manifests from subdirectories" do
@@ -156,8 +156,8 @@ describe Puppet::Parser::TypeLoader do
 
       loader.import_all
 
-      loader.environment.known_resource_types.hostclass("one::a::b").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("one::a::b::c").should be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("one::a::b")).to be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("one::a::b::c")).to be_instance_of(Puppet::Resource::Type)
     end
 
     it "should skip modules that don't have manifests" do
@@ -167,9 +167,9 @@ describe Puppet::Parser::TypeLoader do
 
       loader.import_all
 
-      loader.environment.known_resource_types.hostclass("one::a").should be_nil
-      loader.environment.known_resource_types.hostclass("two::c").should be_instance_of(Puppet::Resource::Type)
-      loader.environment.known_resource_types.hostclass("two::d").should be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("one::a")).to be_nil
+      expect(loader.environment.known_resource_types.hostclass("two::c")).to be_instance_of(Puppet::Resource::Type)
+      expect(loader.environment.known_resource_types.hostclass("two::d")).to be_instance_of(Puppet::Resource::Type)
     end
   end
 
@@ -199,6 +199,6 @@ describe Puppet::Parser::TypeLoader do
     File.open(file, "w") { |f| f.puts "class foo {}" }
     loader.import(File.basename(file), File.dirname(file))
 
-    loader.known_resource_types.hostclass("foo").should be_instance_of(Puppet::Resource::Type)
+    expect(loader.known_resource_types.hostclass("foo")).to be_instance_of(Puppet::Resource::Type)
   end
 end

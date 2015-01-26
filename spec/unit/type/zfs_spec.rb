@@ -8,7 +8,7 @@ describe zfs do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      zfs.attrclass(property).ancestors.should be_include(Puppet::Property)
+      expect(zfs.attrclass(property).ancestors).to be_include(Puppet::Property)
     end
   end
 
@@ -16,7 +16,7 @@ describe zfs do
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
-      zfs.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+      expect(zfs.attrclass(parameter).ancestors).to be_include(Puppet::Parameter)
     end
   end
 
@@ -41,6 +41,6 @@ describe zfs do
 
     req = foo_bar_baz_buz_zfs.autorequire.collect { |edge| edge.source.ref }
 
-    [foo_pool.ref, foo_bar_zfs.ref, foo_bar_baz_zfs.ref].each { |ref| req.include?(ref).should == true }
+    [foo_pool.ref, foo_bar_zfs.ref, foo_bar_baz_zfs.ref].each { |ref| expect(req.include?(ref)).to eq(true) }
   end
 end

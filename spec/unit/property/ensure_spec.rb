@@ -7,6 +7,6 @@ klass = Puppet::Property::Ensure
 
 describe klass do
   it "should be a subclass of Property" do
-    klass.superclass.must == Puppet::Property
+    expect(klass.superclass).to eq(Puppet::Property)
   end
 end

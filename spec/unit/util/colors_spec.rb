@@ -9,23 +9,23 @@ describe Puppet::Util::Colors do
   let (:subject) { self }
 
   describe ".console_color" do
-    it { should respond_to :console_color }
+    it { is_expected.to respond_to :console_color }
 
     it "should generate ANSI escape sequences" do
-      subject.console_color(color, message).should == "\e[0;30m#{message}\e[0m"
+      expect(subject.console_color(color, message)).to eq("\e[0;30m#{message}\e[0m")
     end
   end
 
   describe ".html_color" do
-    it { should respond_to :html_color }
+    it { is_expected.to respond_to :html_color }
 
     it "should generate an HTML span element and style attribute" do
-      subject.html_color(color, message).should =~ /<span style=\"color: #FFA0A0\">#{message}<\/span>/
+      expect(subject.html_color(color, message)).to match(/<span style=\"color: #FFA0A0\">#{message}<\/span>/)
     end
   end
 
   describe ".colorize" do
-    it { should respond_to :colorize }
+    it { is_expected.to respond_to :colorize }
 
     context "ansicolor supported" do
       before :each do
@@ -42,7 +42,7 @@ describe Puppet::Util::Colors do
       it "should not colorize unknown color schemes" do
         Puppet[:color] = :thisisanunknownscheme
 
-        subject.colorize(:black, message).should == message
+        expect(subject.colorize(:black, message)).to eq(message)
       end
     end
 
@@ -55,7 +55,7 @@ describe Puppet::Util::Colors do
         Puppet[:color] = true
 
         subject.expects(:console_color).never
-        subject.colorize(:black, message).should == message
+        expect(subject.colorize(:black, message)).to eq(message)
       end
 
       it "should colorize html output" do
@@ -69,21 +69,21 @@ describe Puppet::Util::Colors do
 
   context "on Windows in Ruby 1.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^1./ do
     it "should define WideConsole" do
-      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_true
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_truthy
     end
 
     it "should define WideIO" do
-      expect(defined?(Puppet::Util::Colors::WideIO)).to be_true
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_truthy
     end
   end
 
   context "on Windows in Ruby 2.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^2./ do
     it "should not define WideConsole" do
-      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_false
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_falsey
     end
 
     it "should not define WideIO" do
-      expect(defined?(Puppet::Util::Colors::WideIO)).to be_false
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_falsey
     end
   end
 end

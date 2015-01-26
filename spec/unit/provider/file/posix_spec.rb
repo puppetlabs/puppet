@@ -14,11 +14,11 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       FileUtils.touch(path)
       File.chmod(0644, path)
 
-      provider.mode.should == '0644'
+      expect(provider.mode).to eq('0644')
     end
 
     it "should return absent if the file doesn't exist" do
-      provider.mode.should == :absent
+      expect(provider.mode).to eq(:absent)
     end
   end
 
@@ -29,7 +29,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
       provider.mode = '0755'
 
-      provider.mode.should == '0755'
+      expect(provider.mode).to eq('0755')
     end
 
     it "should pass along any errors encountered" do
@@ -43,21 +43,21 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
     it "should return the name of the user identified by the id" do
       Etc.stubs(:getpwuid).with(501).returns(Struct::Passwd.new('jilluser', nil, 501))
 
-      provider.uid2name(501).should == 'jilluser'
+      expect(provider.uid2name(501)).to eq('jilluser')
     end
 
     it "should return the argument if it's already a name" do
-      provider.uid2name('jilluser').should == 'jilluser'
+      expect(provider.uid2name('jilluser')).to eq('jilluser')
     end
 
     it "should return nil if the argument is above the maximum uid" do
-      provider.uid2name(Puppet[:maximum_uid] + 1).should == nil
+      expect(provider.uid2name(Puppet[:maximum_uid] + 1)).to eq(nil)
     end
 
     it "should return nil if the user doesn't exist" do
       Etc.expects(:getpwuid).raises(ArgumentError, "can't find user for 999")
 
-      provider.uid2name(999).should == nil
+      expect(provider.uid2name(999)).to eq(nil)
     end
   end
 
@@ -68,17 +68,17 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       Etc.stubs(:getpwnam).with('bobbo').returns(passwd)
       Etc.stubs(:getpwuid).with(502).returns(passwd)
 
-      provider.name2uid('bobbo').should == 502
+      expect(provider.name2uid('bobbo')).to eq(502)
     end
 
     it "should return the argument if it's already an id" do
-      provider.name2uid('503').should == 503
+      expect(provider.name2uid('503')).to eq(503)
     end
 
     it "should return false if the user doesn't exist" do
       Etc.stubs(:getpwnam).with('chuck').raises(ArgumentError, "can't find user for chuck")
 
-      provider.name2uid('chuck').should == false
+      expect(provider.name2uid('chuck')).to eq(false)
     end
   end
 
@@ -87,19 +87,19 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       FileUtils.touch(path)
       owner = Puppet::FileSystem.stat(path).uid
 
-      provider.owner.should == owner
+      expect(provider.owner).to eq(owner)
     end
 
     it "should return absent if the file can't be statted" do
-      provider.owner.should == :absent
+      expect(provider.owner).to eq(:absent)
     end
 
     it "should warn and return :silly if the value is beyond the maximum uid" do
       stat = stub('stat', :uid => Puppet[:maximum_uid] + 1)
       resource.stubs(:stat).returns(stat)
 
-      provider.owner.should == :silly
-      @logs.should be_any {|log| log.level == :warning and log.message =~ /Apparently using negative UID/}
+      expect(provider.owner).to eq(:silly)
+      expect(@logs).to be_any {|log| log.level == :warning and log.message =~ /Apparently using negative UID/}
     end
   end
 
@@ -135,21 +135,21 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
     it "should return the name of the group identified by the id" do
       Etc.stubs(:getgrgid).with(501).returns(Struct::Passwd.new('unicorns', nil, nil, 501))
 
-      provider.gid2name(501).should == 'unicorns'
+      expect(provider.gid2name(501)).to eq('unicorns')
     end
 
     it "should return the argument if it's already a name" do
-      provider.gid2name('leprechauns').should == 'leprechauns'
+      expect(provider.gid2name('leprechauns')).to eq('leprechauns')
     end
 
     it "should return nil if the argument is above the maximum gid" do
-      provider.gid2name(Puppet[:maximum_uid] + 1).should == nil
+      expect(provider.gid2name(Puppet[:maximum_uid] + 1)).to eq(nil)
     end
 
     it "should return nil if the group doesn't exist" do
       Etc.expects(:getgrgid).raises(ArgumentError, "can't find group for 999")
 
-      provider.gid2name(999).should == nil
+      expect(provider.gid2name(999)).to eq(nil)
     end
   end
 
@@ -160,17 +160,17 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       Etc.stubs(:getgrnam).with('penguins').returns(passwd)
       Etc.stubs(:getgrgid).with(502).returns(passwd)
 
-      provider.name2gid('penguins').should == 502
+      expect(provider.name2gid('penguins')).to eq(502)
     end
 
     it "should return the argument if it's already an id" do
-      provider.name2gid('503').should == 503
+      expect(provider.name2gid('503')).to eq(503)
     end
 
     it "should return false if the group doesn't exist" do
       Etc.stubs(:getgrnam).with('wombats').raises(ArgumentError, "can't find group for wombats")
 
-      provider.name2gid('wombats').should == false
+      expect(provider.name2gid('wombats')).to eq(false)
     end
 
   end
@@ -180,19 +180,19 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       FileUtils.touch(path)
       group = Puppet::FileSystem.stat(path).gid
 
-      provider.group.should == group
+      expect(provider.group).to eq(group)
     end
 
     it "should return absent if the file can't be statted" do
-      provider.group.should == :absent
+      expect(provider.group).to eq(:absent)
     end
 
     it "should warn and return :silly if the value is beyond the maximum gid" do
       stat = stub('stat', :gid => Puppet[:maximum_uid] + 1)
       resource.stubs(:stat).returns(stat)
 
-      provider.group.should == :silly
-      @logs.should be_any {|log| log.level == :warning and log.message =~ /Apparently using negative GID/}
+      expect(provider.group).to eq(:silly)
+      expect(@logs).to be_any {|log| log.level == :warning and log.message =~ /Apparently using negative GID/}
     end
   end
 

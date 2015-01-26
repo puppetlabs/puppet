@@ -12,7 +12,7 @@ describe "the 'include' function" do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function("include").should == "function_include"
+    expect(Puppet::Parser::Functions.function("include")).to eq("function_include")
   end
 
   it "should include a single class" do

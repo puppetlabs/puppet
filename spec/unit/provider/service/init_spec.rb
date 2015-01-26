@@ -46,25 +46,25 @@ describe Puppet::Type.type(:service).provider(:init) do
     end
 
     it "should return instances for all services" do
-      described_class.instances.map(&:name).should == @services
+      expect(described_class.instances.map(&:name)).to eq(@services)
     end
 
     it "should omit an array of services from exclude list" do
       exclude = ['two', 'four']
-      described_class.get_services(described_class.defpath, exclude).map(&:name).should == (@services - exclude)
+      expect(described_class.get_services(described_class.defpath, exclude).map(&:name)).to eq(@services - exclude)
     end
 
     it "should omit a single service from the exclude list" do
       exclude = 'two'
-      described_class.get_services(described_class.defpath, exclude).map(&:name).should == @services - [exclude]
+      expect(described_class.get_services(described_class.defpath, exclude).map(&:name)).to eq(@services - [exclude])
     end
 
     it "should use defpath" do
-      described_class.instances.should be_all { |provider| provider.get(:path) == described_class.defpath }
+      expect(described_class.instances).to be_all { |provider| provider.get(:path) == described_class.defpath }
     end
 
     it "should set hasstatus to true for providers" do
-      described_class.instances.should be_all { |provider| provider.get(:hasstatus) == true }
+      expect(described_class.instances).to be_all { |provider| provider.get(:hasstatus) == true }
     end
 
     it "should discard upstart jobs", :if => Puppet.features.manages_symlinks? do
@@ -73,14 +73,14 @@ describe Puppet::Type.type(:service).provider(:init) do
       Puppet::FileSystem.expects(:symlink?).at_least_once.returns false
       Puppet::FileSystem.expects(:symlink?).with(Puppet::FileSystem.pathname(path)).returns(true)
       Puppet::FileSystem.expects(:readlink).with(Puppet::FileSystem.pathname(path)).returns("/lib/init/upstart-job")
-      described_class.instances.map(&:name).should == valid_services
+      expect(described_class.instances.map(&:name)).to eq(valid_services)
     end
 
     it "should discard non-initscript scripts" do
       valid_services = @services
       all_services = valid_services + excludes
       Dir.expects(:entries).with('tmp').returns all_services
-      described_class.instances.map(&:name).should =~ valid_services
+      expect(described_class.instances.map(&:name)).to match_array(valid_services)
     end
   end
 
@@ -90,7 +90,7 @@ describe Puppet::Type.type(:service).provider(:init) do
       Puppet::FileSystem.expects(:exist?).with(paths[0]).returns false
       File.expects(:directory?).with(paths[1]).returns true
 
-      provider.paths.should == [paths[1]]
+      expect(provider.paths).to eq([paths[1]])
     end
 
     it "should discard paths that are not directories" do
@@ -98,7 +98,7 @@ describe Puppet::Type.type(:service).provider(:init) do
         Puppet::FileSystem.expects(:exist?).with(path).returns true
         File.expects(:directory?).with(path).returns false
       end
-      provider.paths.should be_empty
+      expect(provider.paths).to be_empty
     end
   end
 
@@ -110,20 +110,20 @@ describe Puppet::Type.type(:service).provider(:init) do
     it "should be able to find the init script in the service path" do
       Puppet::FileSystem.expects(:exist?).with("#{paths[0]}/myservice").returns true
       Puppet::FileSystem.expects(:exist?).with("#{paths[1]}/myservice").never # first one wins
-      provider.initscript.should == "/service/path/myservice"
+      expect(provider.initscript).to eq("/service/path/myservice")
     end
 
     it "should be able to find the init script in an alternate service path" do
       Puppet::FileSystem.expects(:exist?).with("#{paths[0]}/myservice").returns false
       Puppet::FileSystem.expects(:exist?).with("#{paths[1]}/myservice").returns true
-      provider.initscript.should == "/alt/service/path/myservice"
+      expect(provider.initscript).to eq("/alt/service/path/myservice")
     end
 
     it "should be able to find the init script if it ends with .sh" do
       Puppet::FileSystem.expects(:exist?).with("#{paths[0]}/myservice").returns false
       Puppet::FileSystem.expects(:exist?).with("#{paths[1]}/myservice").returns false
       Puppet::FileSystem.expects(:exist?).with("#{paths[0]}/myservice.sh").returns true
-      provider.initscript.should == "/service/path/myservice.sh"
+      expect(provider.initscript).to eq("/service/path/myservice.sh")
     end
 
     it "should fail if the service isn't there" do
@@ -144,7 +144,7 @@ describe Puppet::Type.type(:service).provider(:init) do
 
     [:start, :stop, :status, :restart].each do |method|
       it "should have a #{method} method" do
-        provider.should respond_to(method)
+        expect(provider).to respond_to(method)
       end
       describe "when running #{method}" do
 
@@ -175,13 +175,13 @@ describe Puppet::Type.type(:service).provider(:init) do
         it "should consider the process running if the command returns 0" do
           provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
           $CHILD_STATUS.stubs(:exitstatus).returns(0)
-          provider.status.should == :running
+          expect(provider.status).to eq(:running)
         end
         [-10,-1,1,10].each { |ec|
           it "should consider the process stopped if the command returns something non-0" do
             provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
             $CHILD_STATUS.stubs(:exitstatus).returns(ec)
-            provider.status.should == :stopped
+            expect(provider.status).to eq(:stopped)
           end
         }
       end
@@ -192,11 +192,11 @@ describe Puppet::Type.type(:service).provider(:init) do
 
         it "should consider the service :running if it has a pid" do
           provider.expects(:getpid).returns "1234"
-          provider.status.should == :running
+          expect(provider.status).to eq(:running)
         end
         it "should consider the service :stopped if it doesn't have a pid" do
           provider.expects(:getpid).returns nil
-          provider.status.should == :stopped
+          expect(provider.status).to eq(:stopped)
         end
       end
     end

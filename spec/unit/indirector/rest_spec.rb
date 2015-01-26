@@ -155,39 +155,39 @@ describe Puppet::Indirector::REST do
   end
 
   it "should have a method for specifying what setting a subclass should use to retrieve its server" do
-    terminus_class.should respond_to(:use_server_setting)
+    expect(terminus_class).to respond_to(:use_server_setting)
   end
 
   it "should use any specified setting to pick the server" do
     terminus_class.expects(:server_setting).returns :ca_server
     Puppet[:ca_server] = "myserver"
-    terminus_class.server.should == "myserver"
+    expect(terminus_class.server).to eq("myserver")
   end
 
   it "should default to :server for the server setting" do
     terminus_class.expects(:server_setting).returns nil
     Puppet[:server] = "myserver"
-    terminus_class.server.should == "myserver"
+    expect(terminus_class.server).to eq("myserver")
   end
 
   it "should have a method for specifying what setting a subclass should use to retrieve its port" do
-    terminus_class.should respond_to(:use_port_setting)
+    expect(terminus_class).to respond_to(:use_port_setting)
   end
 
   it "should use any specified setting to pick the port" do
     terminus_class.expects(:port_setting).returns :ca_port
     Puppet[:ca_port] = "321"
-    terminus_class.port.should == 321
+    expect(terminus_class.port).to eq(321)
   end
 
   it "should default to :port for the port setting" do
     terminus_class.expects(:port_setting).returns nil
     Puppet[:masterport] = "543"
-    terminus_class.port.should == 543
+    expect(terminus_class.port).to eq(543)
   end
 
   it 'should default to :puppet for the srv_service' do
-    Puppet::Indirector::REST.srv_service.should == :puppet
+    expect(Puppet::Indirector::REST.srv_service).to eq(:puppet)
   end
 
   describe "when creating an HTTP client" do
@@ -196,21 +196,21 @@ describe Puppet::Indirector::REST do
       terminus.class.expects(:port).returns 321
       terminus.class.expects(:server).returns "myserver"
       Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
-      terminus.network(@request).should == "myconn"
+      expect(terminus.network(@request)).to eq("myconn")
     end
 
     it "should use the server from the indirection request if one is present" do
       @request = stub 'request', :key => "foo", :server => "myserver", :port => nil
       terminus.class.stubs(:port).returns 321
       Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
-      terminus.network(@request).should == "myconn"
+      expect(terminus.network(@request)).to eq("myconn")
     end
 
     it "should use the port from the indirection request if one is present" do
       @request = stub 'request', :key => "foo", :server => nil, :port => 321
       terminus.class.stubs(:server).returns "myserver"
       Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
-      terminus.network(@request).should == "myconn"
+      expect(terminus.network(@request)).to eq("myconn")
     end
   end
 
@@ -257,7 +257,7 @@ describe Puppet::Indirector::REST do
 
         connection.expects(:get).with("#{url_prefix}/test_model/foo%20bar?environment=production&", anything).returns(mock_response('200', 'response body'))
 
-        terminus.find(request).should == model.new('foo bar', 'response body')
+        expect(terminus.find(request)).to eq(model.new('foo bar', 'response body'))
       end
     end
 
@@ -266,7 +266,7 @@ describe Puppet::Indirector::REST do
 
       connection.expects(:get).returns(response)
 
-      terminus.find(request).should == nil
+      expect(terminus.find(request)).to eq(nil)
     end
 
     it 'raises no warning for a 404 (when not asked to do so)' do
@@ -321,7 +321,7 @@ describe Puppet::Indirector::REST do
         model.new('overwritten', 'decoded body')
       )
 
-      terminus.find(request).should == model.new('foo', 'decoded body')
+      expect(terminus.find(request)).to eq(model.new('foo', 'decoded body'))
     end
 
     it "doesn't require the model to support name=" do
@@ -332,7 +332,7 @@ describe Puppet::Indirector::REST do
       instance.expects(:respond_to?).with(:name=).returns(false)
       instance.expects(:name=).never
 
-      terminus.find(request).should == model.new('name', 'decoded body')
+      expect(terminus.find(request)).to eq(model.new('name', 'decoded body'))
     end
 
     it "provides an Accept header containing the list of supported formats joined with commas" do
@@ -356,7 +356,7 @@ describe Puppet::Indirector::REST do
 
       model.expects(:convert_from).with("text/plain", "mydata").returns "myobject"
 
-      terminus.find(request).should == "myobject"
+      expect(terminus.find(request)).to eq("myobject")
     end
 
     it "decompresses the body before passing it to the model for deserialization" do
@@ -368,7 +368,7 @@ describe Puppet::Indirector::REST do
 
       model.expects(:convert_from).with("text/plain", uncompressed_body).returns "myobject"
 
-      terminus.find(request).should == "myobject"
+      expect(terminus.find(request)).to eq("myobject")
     end
   end
 
@@ -387,13 +387,13 @@ describe Puppet::Indirector::REST do
     it "returns true if there was a successful http response" do
       connection.expects(:head).returns mock_response('200', nil)
 
-      terminus.head(request).should == true
+      expect(terminus.head(request)).to eq(true)
     end
 
     it "returns false on a 404 response" do
       connection.expects(:head).returns mock_response('404', nil)
 
-      terminus.head(request).should == false
+      expect(terminus.head(request)).to eq(false)
     end
   end
 
@@ -421,11 +421,11 @@ describe Puppet::Indirector::REST do
 
       connection.expects(:get).returns(response)
 
-      terminus.search(request).should == []
+      expect(terminus.search(request)).to eq([])
     end
 
     it "asks the model to deserialize the response body into multiple instances" do
-      terminus.search(request).should == [model.new('', 'data1'), model.new('', 'data2'), model.new('', 'data3')]
+      expect(terminus.search(request)).to eq([model.new('', 'data1'), model.new('', 'data2'), model.new('', 'data3')])
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do
@@ -438,7 +438,7 @@ describe Puppet::Indirector::REST do
     it "should return an empty array if serialization returns nil" do
       model.stubs(:convert_from_multiple).returns nil
 
-      terminus.search(request).should == []
+      expect(terminus.search(request)).to eq([])
     end
   end
 
@@ -470,7 +470,7 @@ describe Puppet::Indirector::REST do
     it "should deserialize and return the http response" do
       connection.expects(:delete).returns response
 
-      terminus.destroy(request).should == model.new('', 'body')
+      expect(terminus.destroy(request)).to eq(model.new('', 'body'))
     end
 
     it "returns nil on 404" do
@@ -478,7 +478,7 @@ describe Puppet::Indirector::REST do
 
       connection.expects(:delete).returns(response)
 
-      terminus.destroy(request).should == nil
+      expect(terminus.destroy(request)).to eq(nil)
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do
@@ -526,13 +526,13 @@ describe Puppet::Indirector::REST do
 
       connection.expects(:put).returns(response)
 
-      terminus.save(request).should == nil
+      expect(terminus.save(request)).to eq(nil)
     end
 
     it "returns nil" do
       connection.expects(:put).returns response
 
-      terminus.save(request).should be_nil
+      expect(terminus.save(request)).to be_nil
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do

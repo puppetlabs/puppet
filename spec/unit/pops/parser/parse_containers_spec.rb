@@ -10,63 +10,63 @@ describe "egrammar parsing containers" do
 
   context "When parsing file scope" do
     it "$a = 10 $b = 20" do
-      dump(parse("$a = 10 $b = 20")).should == [
+      expect(dump(parse("$a = 10 $b = 20"))).to eq([
         "(block",
         "  (= $a 10)",
         "  (= $b 20)",
         ")"
-        ].join("\n")
+        ].join("\n"))
     end
 
     it "$a = 10" do
-      dump(parse("$a = 10")).should == "(= $a 10)"
+      expect(dump(parse("$a = 10"))).to eq("(= $a 10)")
     end
   end
 
   context "When parsing class" do
     it "class foo {}" do
-      dump(parse("class foo {}")).should == "(class foo ())"
+      expect(dump(parse("class foo {}"))).to eq("(class foo ())")
     end
 
     it "class foo { class bar {} }" do
-      dump(parse("class foo { class bar {}}")).should == [
+      expect(dump(parse("class foo { class bar {}}"))).to eq([
         "(class foo (block",
         "  (class foo::bar ())",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
 
     it "class foo::bar {}" do
-      dump(parse("class foo::bar {}")).should == "(class foo::bar ())"
+      expect(dump(parse("class foo::bar {}"))).to eq("(class foo::bar ())")
     end
 
     it "class foo inherits bar {}" do
-      dump(parse("class foo inherits bar {}")).should == "(class foo (inherits bar) ())"
+      expect(dump(parse("class foo inherits bar {}"))).to eq("(class foo (inherits bar) ())")
     end
 
     it "class foo($a) {}" do
-      dump(parse("class foo($a) {}")).should == "(class foo (parameters a) ())"
+      expect(dump(parse("class foo($a) {}"))).to eq("(class foo (parameters a) ())")
     end
 
     it "class foo($a, $b) {}" do
-      dump(parse("class foo($a, $b) {}")).should == "(class foo (parameters a b) ())"
+      expect(dump(parse("class foo($a, $b) {}"))).to eq("(class foo (parameters a b) ())")
     end
 
     it "class foo($a, $b=10) {}" do
-      dump(parse("class foo($a, $b=10) {}")).should == "(class foo (parameters a (= b 10)) ())"
+      expect(dump(parse("class foo($a, $b=10) {}"))).to eq("(class foo (parameters a (= b 10)) ())")
     end
 
     it "class foo($a, $b) inherits belgo::bar {}" do
-      dump(parse("class foo($a, $b) inherits belgo::bar{}")).should == "(class foo (inherits belgo::bar) (parameters a b) ())"
+      expect(dump(parse("class foo($a, $b) inherits belgo::bar{}"))).to eq("(class foo (inherits belgo::bar) (parameters a b) ())")
     end
 
     it "class foo {$a = 10 $b = 20}" do
-      dump(parse("class foo {$a = 10 $b = 20}")).should == [
+      expect(dump(parse("class foo {$a = 10 $b = 20}"))).to eq([
         "(class foo (block",
         "  (= $a 10)",
         "  (= $b 20)",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
 
     context "it should handle '3x weirdness'" do
@@ -76,7 +76,7 @@ describe "egrammar parsing containers" do
         # instead of some foo::class etc.
         # This is allowed in 3.x.
         expect {
-          dump(parse("class class {}")).should == "(class class ())"
+          expect(dump(parse("class class {}"))).to eq("(class class ())")
         }.to raise_error(/not a valid classname/)
       end
 
@@ -84,16 +84,16 @@ describe "egrammar parsing containers" do
         # The weirdness here is that a class can inherit 'default' but not declare a class called default.
         # (It will work with relative names i.e. foo::default though). The whole idea with keywords as
         # names is flawed to begin with - it generally just a very bad idea.
-        expect { dump(parse("class default {}")).should == "(class default ())" }.to raise_error(Puppet::ParseError)
+        expect { expect(dump(parse("class default {}"))).to eq("(class default ())") }.to raise_error(Puppet::ParseError)
       end
 
       it "class foo::default {} # a nested name 'default'" do
-        dump(parse("class foo::default {}")).should == "(class foo::default ())"
+        expect(dump(parse("class foo::default {}"))).to eq("(class foo::default ())")
       end
 
       it "class class inherits default {} # inherits default", :broken => true do
         expect {
-          dump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
+          expect(dump(parse("class class inherits default {}"))).to eq("(class class (inherits default) ())")
         }.to raise_error(/not a valid classname/)
       end
 
@@ -104,13 +104,13 @@ describe "egrammar parsing containers" do
         # I think it is wrong.)
         # 
         expect {
-        dump(parse("class class inherits default {}")).should == "(class class::class (inherits default) ())"
+        expect(dump(parse("class class inherits default {}"))).to eq("(class class::class (inherits default) ())")
           }.to raise_error(/not a valid classname/)
       end
 
       it "class foo inherits class" do
         expect {
-          dump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+          expect(dump(parse("class foo inherits class {}"))).to eq("(class foo (inherits class) ())")
         }.to raise_error(/not a valid classname/)
       end
     end
@@ -128,49 +128,49 @@ describe "egrammar parsing containers" do
 
   context "When the parser parses define" do
     it "define foo {}" do
-      dump(parse("define foo {}")).should == "(define foo ())"
+      expect(dump(parse("define foo {}"))).to eq("(define foo ())")
     end
 
     it "class foo { define bar {}}" do
-      dump(parse("class foo {define bar {}}")).should == [
+      expect(dump(parse("class foo {define bar {}}"))).to eq([
         "(class foo (block",
         "  (define foo::bar ())",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
 
     it "define foo { define bar {}}" do
       # This is illegal, but handled as part of validation
-      dump(parse("define foo { define bar {}}")).should == [
+      expect(dump(parse("define foo { define bar {}}"))).to eq([
         "(define foo (block",
         "  (define bar ())",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
 
     it "define foo::bar {}" do
-      dump(parse("define foo::bar {}")).should == "(define foo::bar ())"
+      expect(dump(parse("define foo::bar {}"))).to eq("(define foo::bar ())")
     end
 
     it "define foo($a) {}" do
-      dump(parse("define foo($a) {}")).should == "(define foo (parameters a) ())"
+      expect(dump(parse("define foo($a) {}"))).to eq("(define foo (parameters a) ())")
     end
 
     it "define foo($a, $b) {}" do
-      dump(parse("define foo($a, $b) {}")).should == "(define foo (parameters a b) ())"
+      expect(dump(parse("define foo($a, $b) {}"))).to eq("(define foo (parameters a b) ())")
     end
 
     it "define foo($a, $b=10) {}" do
-      dump(parse("define foo($a, $b=10) {}")).should == "(define foo (parameters a (= b 10)) ())"
+      expect(dump(parse("define foo($a, $b=10) {}"))).to eq("(define foo (parameters a (= b 10)) ())")
     end
 
     it "define foo {$a = 10 $b = 20}" do
-      dump(parse("define foo {$a = 10 $b = 20}")).should == [
+      expect(dump(parse("define foo {$a = 10 $b = 20}"))).to eq([
         "(define foo (block",
         "  (= $a 10)",
         "  (= $b 20)",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
 
     context "it should handle '3x weirdness'" do
@@ -178,7 +178,7 @@ describe "egrammar parsing containers" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
         expect {
-          dump(parse("define class {}")).should == "(define class ())"
+          expect(dump(parse("define class {}"))).to eq("(define class ())")
           }.to raise_error(/not a valid classname/)
       end
 
@@ -186,7 +186,7 @@ describe "egrammar parsing containers" do
         # Check unwanted ability to define 'default'.
         # The expression below is not allowed (which is good).
         #
-        expect { dump(parse("define default {}")).should == "(define default ())"}.to raise_error(Puppet::ParseError)
+        expect { expect(dump(parse("define default {}"))).to eq("(define default ())")}.to raise_error(Puppet::ParseError)
       end
     end
 
@@ -202,60 +202,60 @@ describe "egrammar parsing containers" do
 
   context "When parsing node" do
     it "node foo {}" do
-      dump(parse("node foo {}")).should == "(node (matches 'foo') ())"
+      expect(dump(parse("node foo {}"))).to eq("(node (matches 'foo') ())")
     end
 
     it "node foo, {} # trailing comma" do
-      dump(parse("node foo, {}")).should == "(node (matches 'foo') ())"
+      expect(dump(parse("node foo, {}"))).to eq("(node (matches 'foo') ())")
     end
 
     it "node kermit.example.com {}" do
-      dump(parse("node kermit.example.com {}")).should == "(node (matches 'kermit.example.com') ())"
+      expect(dump(parse("node kermit.example.com {}"))).to eq("(node (matches 'kermit.example.com') ())")
     end
 
     it "node kermit . example . com {}" do
-      dump(parse("node kermit . example . com {}")).should == "(node (matches 'kermit.example.com') ())"
+      expect(dump(parse("node kermit . example . com {}"))).to eq("(node (matches 'kermit.example.com') ())")
     end
 
     it "node foo, x::bar, default {}" do
-      dump(parse("node foo, x::bar, default {}")).should == "(node (matches 'foo' 'x::bar' :default) ())"
+      expect(dump(parse("node foo, x::bar, default {}"))).to eq("(node (matches 'foo' 'x::bar' :default) ())")
     end
 
     it "node 'foo' {}" do
-      dump(parse("node 'foo' {}")).should == "(node (matches 'foo') ())"
+      expect(dump(parse("node 'foo' {}"))).to eq("(node (matches 'foo') ())")
     end
 
     it "node foo inherits x::bar {}" do
-      dump(parse("node foo inherits x::bar {}")).should == "(node (matches 'foo') (parent 'x::bar') ())"
+      expect(dump(parse("node foo inherits x::bar {}"))).to eq("(node (matches 'foo') (parent 'x::bar') ())")
     end
 
     it "node foo inherits 'bar' {}" do
-      dump(parse("node foo inherits 'bar' {}")).should == "(node (matches 'foo') (parent 'bar') ())"
+      expect(dump(parse("node foo inherits 'bar' {}"))).to eq("(node (matches 'foo') (parent 'bar') ())")
     end
 
     it "node foo inherits default {}" do
-      dump(parse("node foo inherits default {}")).should == "(node (matches 'foo') (parent :default) ())"
+      expect(dump(parse("node foo inherits default {}"))).to eq("(node (matches 'foo') (parent :default) ())")
     end
 
     it "node /web.*/ {}" do
-      dump(parse("node /web.*/ {}")).should == "(node (matches /web.*/) ())"
+      expect(dump(parse("node /web.*/ {}"))).to eq("(node (matches /web.*/) ())")
     end
 
     it "node /web.*/, /do\.wop.*/, and.so.on {}" do
-      dump(parse("node /web.*/, /do\.wop.*/, 'and.so.on' {}")).should == "(node (matches /web.*/ /do\.wop.*/ 'and.so.on') ())"
+      expect(dump(parse("node /web.*/, /do\.wop.*/, 'and.so.on' {}"))).to eq("(node (matches /web.*/ /do\.wop.*/ 'and.so.on') ())")
     end
 
     it "node wat inherits /apache.*/ {}" do
-      dump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches 'wat') (parent /apache.*/) ())"
+      expect(dump(parse("node wat inherits /apache.*/ {}"))).to eq("(node (matches 'wat') (parent /apache.*/) ())")
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do
-      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == [
+      expect(dump(parse("node foo inherits bar {$a = 10 $b = 20}"))).to eq([
         "(node (matches 'foo') (parent 'bar') (block",
         "  (= $a 10)",
         "  (= $b 20)",
         "))"
-        ].join("\n")
+        ].join("\n"))
     end
   end
 end

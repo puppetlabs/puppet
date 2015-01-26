@@ -69,7 +69,7 @@ describe Puppet::Network::HTTP::Connection do
           subject.send(method, "/foo", {}) do |response|
             block_executed = true
           end
-          block_executed.should == true
+          expect(block_executed).to eq(true)
         end
       end
     end
@@ -143,7 +143,7 @@ describe Puppet::Network::HTTP::Connection do
         connection.get('request')
       end.to raise_error(Puppet::Error) do |error|
         error.message =~ /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-        $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
+        expect($1.split(', ')).to match_array(%w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server])
       end
     end
 

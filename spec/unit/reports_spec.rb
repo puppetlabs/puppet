@@ -5,15 +5,15 @@ require 'puppet/reports'
 
 describe Puppet::Reports do
   it "should instance-load report types" do
-    Puppet::Reports.instance_loader(:report).should be_instance_of(Puppet::Util::Autoload)
+    expect(Puppet::Reports.instance_loader(:report)).to be_instance_of(Puppet::Util::Autoload)
   end
 
   it "should have a method for registering report types" do
-    Puppet::Reports.should respond_to(:register_report)
+    expect(Puppet::Reports).to respond_to(:register_report)
   end
 
   it "should have a method for retrieving report types by name" do
-    Puppet::Reports.should respond_to(:report)
+    expect(Puppet::Reports).to respond_to(:report)
   end
 
   it "should provide a method for returning documentation for all reports" do
@@ -24,8 +24,8 @@ describe Puppet::Reports do
     Puppet::Reports.expects(:report).with(:two).returns(two)
 
     doc = Puppet::Reports.reportdocs
-    doc.include?("onedoc").should be_true
-    doc.include?("twodoc").should be_true
+    expect(doc.include?("onedoc")).to be_truthy
+    expect(doc.include?("twodoc")).to be_truthy
   end
 end
 

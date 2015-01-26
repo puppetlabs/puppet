@@ -188,7 +188,7 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "informs about an absent user" do
         Puppet::Log.level = :debug
         described_class.new(:name => "whev", :user => 'idontexist').should(:target)
-        @logs.map(&:message).should include("The required user is not yet present on the system")
+        expect(@logs.map(&:message)).to include("The required user is not yet present on the system")
       end
 
     end

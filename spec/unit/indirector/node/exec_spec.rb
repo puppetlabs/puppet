@@ -14,12 +14,12 @@ describe Puppet::Node::Exec do
   describe "when constructing the command to run" do
     it "should use the external_node script as the command" do
       Puppet[:external_nodes] = "/bin/echo"
-      @searcher.command.should == %w{/bin/echo}
+      expect(@searcher.command).to eq(%w{/bin/echo})
     end
 
     it "should throw an exception if no external node command is set" do
       Puppet[:external_nodes] = "none"
-      proc { @searcher.find(stub('request', :key => "foo")) }.should raise_error(ArgumentError)
+      expect { @searcher.find(stub('request', :key => "foo")) }.to raise_error(ArgumentError)
     end
   end
 
@@ -52,19 +52,19 @@ describe Puppet::Node::Exec do
 
     it "should translate the YAML into a Node instance" do
       # Use an empty hash
-      @searcher.find(@request).should equal(@node)
+      expect(@searcher.find(@request)).to equal(@node)
     end
 
     it "should set the resulting parameters as the node parameters" do
       @result[:parameters] = {"a" => "b", "c" => "d"}
       @searcher.find(@request)
-      @node.parameters.should == {"a" => "b", "c" => "d"}
+      expect(@node.parameters).to eq({"a" => "b", "c" => "d"})
     end
 
     it "should set the resulting classes as the node classes" do
       @result[:classes] = %w{one two}
       @searcher.find(@request)
-      @node.classes.should == [ 'one', 'two' ]
+      expect(@node.classes).to eq([ 'one', 'two' ])
     end
 
     it "should merge the node's facts with its parameters" do

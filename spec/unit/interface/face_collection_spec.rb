@@ -30,8 +30,8 @@ describe Puppet::Interface::FaceCollection do
 
   after :all do
     # Restore global state
-    subject.instance_variable_set :@faces, @faces
-    subject.instance_variable_set :@loaded, @faces_loaded
+    described_class.instance_variable_set :@faces, @faces
+    described_class.instance_variable_set :@loaded, @faces_loaded
     $".delete_if { |path| path =~ /face\/.*\.rb$/ }
     @required.each { |path| $".push path unless $".include? path }
     Puppet::Util::Autoload.instance_variable_set(:@loaded, @loaded)
@@ -51,7 +51,7 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should return the face with the given name" do
-      subject["foo", '0.0.1'].should == 10
+      expect(subject["foo", '0.0.1']).to eq(10)
     end
 
     it "should attempt to load the face if it isn't found" do
@@ -67,7 +67,7 @@ describe Puppet::Interface::FaceCollection do
 
     it "should return true if the face specified is registered" do
       subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
-      subject["foo", '0.0.1'].should == 10
+      expect(subject["foo", '0.0.1']).to eq(10)
     end
 
     it "should attempt to require the face if it is not registered" do
@@ -75,19 +75,19 @@ describe Puppet::Interface::FaceCollection do
         subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
         file == 'puppet/face/bar'
       end
-      subject["bar", '0.0.1'].should be_true
+      expect(subject["bar", '0.0.1']).to be_truthy
     end
 
     it "should return false if the face is not registered" do
       subject.stubs(:require).returns(true)
-      subject["bar", '0.0.1'].should be_false
+      expect(subject["bar", '0.0.1']).to be_falsey
     end
 
     it "should return false if the face file itself is missing" do
       subject.stubs(:require).
         raises(LoadError, 'no such file to load -- puppet/face/bar').then.
         raises(LoadError, 'no such file to load -- puppet/face/0.0.1/bar')
-      subject["bar", '0.0.1'].should be_false
+      expect(subject["bar", '0.0.1']).to be_falsey
     end
 
     it "should register the version loaded by `:current` as `:current`" do
@@ -96,62 +96,62 @@ describe Puppet::Interface::FaceCollection do
         file == 'puppet/face/huzzah'
       end
       subject["huzzah", :current]
-      subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_face
+      expect(subject.instance_variable_get("@faces")[:huzzah][:current]).to eq(:huzzah_face)
     end
 
     context "with something on disk" do
       it "should register the version loaded from `puppet/face/{name}` as `:current`" do
-        subject["huzzah", '2.0.1'].should be
-        subject["huzzah", :current].should be
-        Puppet::Face[:huzzah, '2.0.1'].should == Puppet::Face[:huzzah, :current]
+        expect(subject["huzzah", '2.0.1']).to be
+        expect(subject["huzzah", :current]).to be
+        expect(Puppet::Face[:huzzah, '2.0.1']).to eq(Puppet::Face[:huzzah, :current])
       end
 
       it "should index :current when the code was pre-required" do
-        subject.instance_variable_get("@faces")[:huzzah].should_not be_key :current
+        expect(subject.instance_variable_get("@faces")[:huzzah]).not_to be_key :current
         require 'puppet/face/huzzah'
-        subject[:huzzah, :current].should be_true
+        expect(subject[:huzzah, :current]).to be_truthy
       end
     end
 
     it "should not cause an invalid face to be enumerated later" do
-      subject[:there_is_no_face, :current].should be_false
-      subject.faces.should_not include :there_is_no_face
+      expect(subject[:there_is_no_face, :current]).to be_falsey
+      expect(subject.faces).not_to include :there_is_no_face
     end
   end
 
   describe "::get_action_for_face" do
     it "should return an action on the current face" do
-      Puppet::Face::FaceCollection.get_action_for_face(:huzzah, :bar, :current).
-        should be_an_instance_of Puppet::Interface::Action
+      expect(Puppet::Face::FaceCollection.get_action_for_face(:huzzah, :bar, :current)).
+        to be_an_instance_of Puppet::Interface::Action
     end
 
     it "should return an action on an older version of a face" do
       action = Puppet::Face::FaceCollection.
         get_action_for_face(:huzzah, :obsolete, :current)
 
-      action.should be_an_instance_of Puppet::Interface::Action
-      action.face.version.should == SemVer.new('1.0.0')
+      expect(action).to be_an_instance_of Puppet::Interface::Action
+      expect(action.face.version).to eq(SemVer.new('1.0.0'))
     end
 
     it "should load the full older version of a face" do
       action = Puppet::Face::FaceCollection.
         get_action_for_face(:huzzah, :obsolete, :current)
 
-      action.face.version.should == SemVer.new('1.0.0')
-      action.face.should be_action :obsolete_in_core
+      expect(action.face.version).to eq(SemVer.new('1.0.0'))
+      expect(action.face).to be_action :obsolete_in_core
     end
 
     it "should not add obsolete actions to the current version" do
       action = Puppet::Face::FaceCollection.
         get_action_for_face(:huzzah, :obsolete, :current)
 
-      action.face.version.should == SemVer.new('1.0.0')
-      action.face.should be_action :obsolete_in_core
+      expect(action.face.version).to eq(SemVer.new('1.0.0'))
+      expect(action.face).to be_action :obsolete_in_core
 
       current = Puppet::Face[:huzzah, :current]
-      current.version.should == SemVer.new('2.0.1')
-      current.should_not be_action :obsolete_in_core
-      current.should_not be_action :obsolete
+      expect(current.version).to eq(SemVer.new('2.0.1'))
+      expect(current).not_to be_action :obsolete_in_core
+      expect(current).not_to be_action :obsolete
     end
   end
 
@@ -159,9 +159,9 @@ describe Puppet::Interface::FaceCollection do
     it "should store the face by name" do
       face = Puppet::Face.new(:my_face, '0.0.1')
       subject.register(face)
-      subject.instance_variable_get("@faces").should == {
+      expect(subject.instance_variable_get("@faces")).to eq({
         :my_face => { face.version => face }
-      }
+      })
     end
   end
 
@@ -181,7 +181,7 @@ describe Puppet::Interface::FaceCollection do
     valid.each do |input, expect|
       it "should map #{input.inspect} to #{expect.inspect}" do
         result = subject.underscorize(input)
-        result.should == expect
+        expect(result).to eq(expect)
       end
     end
 
@@ -203,10 +203,10 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should not die if a face has a syntax error" do
-      subject.faces.should be_include :help
-      subject.faces.should_not be_include :syntax
-      @logs.should_not be_empty
-      @logs.first.message.should =~ /syntax error/
+      expect(subject.faces).to be_include :help
+      expect(subject.faces).not_to be_include :syntax
+      expect(@logs).not_to be_empty
+      expect(@logs.first.message).to match(/syntax error/)
     end
   end
 end

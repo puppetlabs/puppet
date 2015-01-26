@@ -8,7 +8,7 @@ list_class = Puppet::Property::List
 describe list_class do
 
   it "should be a subclass of Property" do
-    list_class.superclass.must == Puppet::Property
+    expect(list_class.superclass).to eq(Puppet::Property)
   end
 
   describe "as an instance" do
@@ -20,11 +20,11 @@ describe list_class do
     end
 
     it "should have a , as default delimiter" do
-      @property.delimiter.should == ","
+      expect(@property.delimiter).to eq(",")
     end
 
     it "should have a :membership as default membership" do
-      @property.membership.should == :membership
+      expect(@property.membership).to eq(:membership)
     end
 
     it "should return the same value passed into should_to_s" do
@@ -32,24 +32,24 @@ describe list_class do
     end
 
     it "should return the passed in array values joined with the delimiter from is_to_s" do
-      @property.is_to_s(["foo","bar"]).should == "foo,bar"
+      expect(@property.is_to_s(["foo","bar"])).to eq("foo,bar")
     end
 
     it "should be able to correctly convert ':absent' to a string" do
-      @property.is_to_s(:absent).should == "absent"
+      expect(@property.is_to_s(:absent)).to eq("absent")
     end
 
     describe "when adding should to current" do
       it "should add the arrays when current is an array" do
-        @property.add_should_with_current(["foo"], ["bar"]).should == ["foo", "bar"]
+        expect(@property.add_should_with_current(["foo"], ["bar"])).to eq(["foo", "bar"])
       end
 
       it "should return should if current is not an array" do
-        @property.add_should_with_current(["foo"], :absent).should == ["foo"]
+        expect(@property.add_should_with_current(["foo"], :absent)).to eq(["foo"])
       end
 
       it "should return only the uniq elements" do
-        @property.add_should_with_current(["foo", "bar"], ["foo", "baz"]).should == ["foo", "bar", "baz"]
+        expect(@property.add_should_with_current(["foo", "bar"], ["foo", "baz"])).to eq(["foo", "bar", "baz"])
       end
     end
 
@@ -63,32 +63,32 @@ describe list_class do
       it "should return true when @resource[membership] == inclusive" do
         @property.stubs(:membership).returns(:membership)
         @resource.stubs(:[]).with(:membership).returns(:inclusive)
-        @property.inclusive?.must == true
+        expect(@property.inclusive?).to eq(true)
       end
 
       it "should return false when @resource[membership] != inclusive" do
         @property.stubs(:membership).returns(:membership)
         @resource.stubs(:[]).with(:membership).returns(:minimum)
-        @property.inclusive?.must == false
+        expect(@property.inclusive?).to eq(false)
       end
     end
 
     describe "when calling should" do
       it "should return nil if @should is nil" do
-        @property.should.must == nil
+        expect(@property.should).to eq(nil)
       end
 
       it "should return the sorted values of @should as a string if inclusive" do
         @property.should = ["foo", "bar"]
         @property.expects(:inclusive?).returns(true)
-        @property.should.must == "bar,foo"
+        expect(@property.should).to eq("bar,foo")
       end
 
       it "should return the uniq sorted values of @should + retrieve as a string if !inclusive" do
         @property.should = ["foo", "bar"]
         @property.expects(:inclusive?).returns(false)
         @property.expects(:retrieve).returns(["foo","baz"])
-        @property.should.must == "bar,baz,foo"
+        expect(@property.should).to eq("bar,baz,foo")
       end
     end
 
@@ -127,12 +127,12 @@ describe list_class do
 
     describe "when calling safe_insync?" do
       it "should return true unless @should is defined and not nil" do
-        @property.must be_safe_insync("foo")
+        expect(@property).to be_safe_insync("foo")
       end
 
       it "should return true unless the passed in values is not nil" do
         @property.should = "foo"
-        @property.must be_safe_insync(nil)
+        expect(@property).to be_safe_insync(nil)
       end
 
       it "should call prepare_is_for_comparison with value passed in and should" do
@@ -145,19 +145,19 @@ describe list_class do
       it "should return true if 'is' value is array of comma delimited should values" do
         @property.should = "bar,foo"
         @property.expects(:inclusive?).returns(true)
-        @property.must be_safe_insync(["bar","foo"])
+        expect(@property).to be_safe_insync(["bar","foo"])
       end
 
       it "should return true if 'is' value is :absent and should value is empty string" do
         @property.should = ""
         @property.expects(:inclusive?).returns(true)
-        @property.must be_safe_insync([])
+        expect(@property).to be_safe_insync([])
       end
 
       it "should return false if prepared value != should value" do
         @property.should = "bar,baz,foo"
         @property.expects(:inclusive?).returns(true)
-        @property.must_not be_safe_insync(["bar","foo"])
+        expect(@property).to_not be_safe_insync(["bar","foo"])
       end
     end
 

@@ -16,19 +16,19 @@ describe Puppet::Type.type(:file).attrclass(:mtime) do
     @resource[:audit] = [:mtime]
 
     # this .to_resource audit behavior is magical :-(
-    @resource.to_resource[:mtime].should == Puppet::FileSystem.stat(@filename).mtime
+    expect(@resource.to_resource[:mtime]).to eq(Puppet::FileSystem.stat(@filename).mtime)
   end
 
   it "should return absent if auditing an absent file" do
     @resource[:audit] = [:mtime]
 
-    @resource.to_resource[:mtime].should == :absent
+    expect(@resource.to_resource[:mtime]).to eq(:absent)
   end
 
   it "should prevent the user from trying to set the mtime" do
-    lambda {
+    expect {
       @resource[:mtime] = Time.now.to_s
-    }.should raise_error(Puppet::Error, /mtime is read-only/)
+    }.to raise_error(Puppet::Error, /mtime is read-only/)
   end
 
 end

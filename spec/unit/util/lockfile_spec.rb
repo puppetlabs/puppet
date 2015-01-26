@@ -41,18 +41,18 @@ describe Puppet::Util::Lockfile do
 
   describe "#lock" do
     it "should return true if it successfully locked" do
-      @lock.lock.should be_true
+      expect(@lock.lock).to be_truthy
     end
 
     it "should return false if already locked" do
       @lock.lock
-      @lock.lock.should be_false
+      expect(@lock.lock).to be_falsey
     end
 
     it "should create a lock file" do
       @lock.lock
 
-      Puppet::FileSystem.exist?(@lockfile).should be_true
+      expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
     end
 
     # We test simultaneous locks using fork which isn't supported on Windows.
@@ -65,8 +65,8 @@ describe Puppet::Util::Lockfile do
         @lock.unlock
 
         # Confirm one fork returned true and everyone else false.
-        (results - [true]).size.should == forks - 1
-        (results - [false]).size.should == 1
+        expect((results - [true]).size).to eq(forks - 1)
+        expect((results - [false]).size).to eq(1)
       end
     end
 
@@ -74,45 +74,45 @@ describe Puppet::Util::Lockfile do
       data = "foofoo barbar"
       @lock.lock(data)
 
-      File.read(@lockfile).should == data
+      expect(File.read(@lockfile)).to eq(data)
     end
   end
 
   describe "#unlock" do
     it "should return true when unlocking" do
       @lock.lock
-      @lock.unlock.should be_true
+      expect(@lock.unlock).to be_truthy
     end
 
     it "should return false when not locked" do
-      @lock.unlock.should be_false
+      expect(@lock.unlock).to be_falsey
     end
 
     it "should clear the lock file" do
       File.open(@lockfile, 'w') { |fd| fd.print("locked") }
       @lock.unlock
-      Puppet::FileSystem.exist?(@lockfile).should be_false
+      expect(Puppet::FileSystem.exist?(@lockfile)).to be_falsey
     end
   end
 
   it "should be locked when locked" do
     @lock.lock
-    @lock.should be_locked
+    expect(@lock).to be_locked
   end
 
   it "should not be locked when not locked" do
-    @lock.should_not be_locked
+    expect(@lock).not_to be_locked
   end
 
   it "should not be locked when unlocked" do
     @lock.lock
     @lock.unlock
-    @lock.should_not be_locked
+    expect(@lock).not_to be_locked
   end
 
   it "should return the lock data" do
     data = "foofoo barbar"
     @lock.lock(data)
-    @lock.lock_data.should == data
+    expect(@lock.lock_data).to eq(data)
   end
 end

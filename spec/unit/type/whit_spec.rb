@@ -5,6 +5,6 @@ whit = Puppet::Type.type(:whit)
 
 describe whit do
   it "should stringify in a way that users will regognise" do
-    whit.new(:name => "Foo::Bar").to_s.should == "Foo::Bar"
+    expect(whit.new(:name => "Foo::Bar").to_s).to eq("Foo::Bar")
   end
 end

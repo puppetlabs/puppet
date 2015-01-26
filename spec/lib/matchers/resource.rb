@@ -1,10 +1,8 @@
 module Matchers; module Resource
   extend RSpec::Matchers::DSL
 
-  matcher :be_resource do |expected_resource|
-    @params = {}
-
-    match do |actual_resource|
+  matcher :have_resource do |expected_resource|
+    def resource_match(expected_resource, actual_resource)
       matched = true
       failures = []
 
@@ -13,6 +11,7 @@ module Matchers; module Resource
         failures << "expected #{expected_resource} but was #{actual_resource.ref}"
       end
 
+      @params ||= {}
       @params.each do |name, value|
         case value
         when RSpec::Matchers::DSL::Matcher
@@ -32,24 +31,10 @@ module Matchers; module Resource
       matched
     end
 
-    chain :with_parameter do |name, value|
-      @params[name] = value
-    end
-
-    def failure_message_for_should
-      @mismatch
-    end
-  end
-  module_function :be_resource
-
-  matcher :have_resource do |expected_resource|
-    @params = {}
-    @matcher = Matchers::Resource.be_resource(expected_resource)
-
     match do |actual_catalog|
       @mismatch = ""
       if resource = actual_catalog.resource(expected_resource)
-        @matcher.matches?(resource)
+        resource_match(expected_resource, resource)
       else
         @mismatch = "expected #{@actual.to_dot} to include #{@expected[0]}"
         false
@@ -57,12 +42,12 @@ module Matchers; module Resource
     end
 
     chain :with_parameter do |name, value|
-      @matcher.with_parameter(name, value)
+      @params ||= {}
+      @params[name] = value
     end
 
-    def failure_message_for_should
-      @mismatch.empty? ? @matcher.failure_message_for_should : @mismatch
+    def failure_message
+      @mismatch
     end
   end
-  module_function :have_resource
 end; end

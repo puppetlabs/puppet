@@ -42,10 +42,10 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     catalog.add_resource(res, res2, res3, res4, comp_res)
     catalog.write_resource_file
-    File.readlines(resourcefile).map(&:chomp).should =~ [
+    expect(File.readlines(resourcefile).map(&:chomp)).to match_array([
       "file[#{File.expand_path('/tmp/sam')}]",
       "exec[#{File.expand_path('/bin/rm')} -rf /]"
-    ]
+    ])
   end
 
   it "should log an error if unable to write to the resource file" do
@@ -54,9 +54,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     catalog.add_resource(Puppet::Type.type('file').new(:title => File.expand_path('/tmp/foo')))
     catalog.write_resource_file
-    @logs.size.should == 1
-    @logs.first.message.should =~ /Could not create resource file/
-    @logs.first.level.should == :err
+    expect(@logs.size).to eq(1)
+    expect(@logs.first.message).to match(/Could not create resource file/)
+    expect(@logs.first.level).to eq(:err)
   end
 
   it "should be able to write its list of classes to the class file" do
@@ -77,55 +77,55 @@ describe Puppet::Resource::Catalog, "when compiling" do
   it "should have a client_version attribute" do
     @catalog = Puppet::Resource::Catalog.new("host")
     @catalog.client_version = 5
-    @catalog.client_version.should == 5
+    expect(@catalog.client_version).to eq(5)
   end
 
   it "should have a server_version attribute" do
     @catalog = Puppet::Resource::Catalog.new("host")
     @catalog.server_version = 5
-    @catalog.server_version.should == 5
+    expect(@catalog.server_version).to eq(5)
   end
 
   describe "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one")
-      config.should be_tagged("one")
+      expect(config).to be_tagged("one")
     end
 
     it "should accept multiple tags at once" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", "two")
-      config.should be_tagged("one")
-      config.should be_tagged("two")
+      expect(config).to be_tagged("one")
+      expect(config).to be_tagged("two")
     end
 
     it "should convert all tags to strings" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", :two)
-      config.should be_tagged("one")
-      config.should be_tagged("two")
+      expect(config).to be_tagged("one")
+      expect(config).to be_tagged("two")
     end
 
     it "should tag with both the qualified name and the split name" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one::two")
-      config.should be_tagged("one")
-      config.should be_tagged("one::two")
+      expect(config).to be_tagged("one")
+      expect(config).to be_tagged("one::two")
     end
 
     it "should accept classes" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.add_class("one")
-      config.classes.should == %w{one}
+      expect(config.classes).to eq(%w{one})
       config.add_class("two", "three")
-      config.classes.should == %w{one two three}
+      expect(config.classes).to eq(%w{one two three})
     end
 
     it "should tag itself with passed class names" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.add_class("one")
-      config.should be_tagged("one")
+      expect(config).to be_tagged("one")
     end
   end
 
@@ -160,26 +160,26 @@ describe Puppet::Resource::Catalog, "when compiling" do
         # Warning: a failure here will result in "global resource iteration is
         # deprecated" being raised, because the rspec rendering to get the
         # result tries to call `each` on the resource, and that raises.
-        @catalog.resource(resource.ref).must be_a_kind_of(Puppet::Type)
+        expect(@catalog.resource(resource.ref)).to be_a_kind_of(Puppet::Type)
       end
     end
 
     it "should copy the tag list to the new catalog" do
-      @catalog.tags.sort.should == @original.tags.sort
+      expect(@catalog.tags.sort).to eq(@original.tags.sort)
     end
 
     it "should copy the class list to the new catalog" do
-      @catalog.classes.should == @original.classes
+      expect(@catalog.classes).to eq(@original.classes)
     end
 
     it "should duplicate the original edges" do
       @original.edges.each do |edge|
-        @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
+        expect(@catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref))).to be_truthy
       end
     end
 
     it "should set itself as the catalog for each converted resource" do
-      @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
+      @catalog.vertices.each { |v| expect(v.catalog.object_id).to equal(@catalog.object_id) }
     end
 
     # This tests #931.
@@ -193,7 +193,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       config.add_edge(@top, changer)
 
       catalog = config.to_ral
-      catalog.resource("File[#{@basepath}/test/]").must equal(catalog.resource("File[#{@basepath}/test]"))
+      expect(catalog.resource("File[#{@basepath}/test/]")).to equal(catalog.resource("File[#{@basepath}/test]"))
     end
 
     after do
@@ -237,16 +237,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should filter out resources which produce true when the filter block is evaluated" do
-      @original.filter do |r|
+      expect(@original.filter do |r|
         r == @r1
-      end.resource("File[/a]").should be_nil
+      end.resource("File[/a]")).to be_nil
     end
 
     it "should not consider edges against resources that were filtered out" do
       @original.add_edge(@r1,@r2)
-      @original.filter do |r|
+      expect(@original.filter do |r|
         r == @r1
-      end.edge?(@r1,@r2).should_not be
+      end.edge?(@r1,@r2)).not_to be
     end
   end
 
@@ -260,8 +260,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should provide a method to add one or more resources" do
       @catalog.add_resource @one, @two
-      @catalog.resource(@one.ref).must equal(@one)
-      @catalog.resource(@two.ref).must equal(@two)
+      expect(@catalog.resource(@one.ref)).to equal(@one)
+      expect(@catalog.resource(@two.ref)).to equal(@two)
     end
 
     it "should add resources to the relationship graph if it exists" do
@@ -269,7 +269,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.add_resource @one
 
-      relgraph.should be_vertex(@one)
+      expect(relgraph).to be_vertex(@one)
     end
 
     it "should set itself as the resource's catalog if it is not a relationship graph" do
@@ -279,8 +279,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should make all vertices available by resource reference" do
       @catalog.add_resource(@one)
-      @catalog.resource(@one.ref).must equal(@one)
-      @catalog.vertices.find { |r| r.ref == @one.ref }.must equal(@one)
+      expect(@catalog.resource(@one.ref)).to equal(@one)
+      expect(@catalog.vertices.find { |r| r.ref == @one.ref }).to equal(@one)
     end
 
     it "tracks the container through edges" do
@@ -289,23 +289,23 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.add_edge(@one, @two)
 
-      @catalog.container_of(@two).must == @one
+      expect(@catalog.container_of(@two)).to eq(@one)
     end
 
     it "a resource without a container is contained in nil" do
       @catalog.add_resource(@one)
 
-      @catalog.container_of(@one).must be_nil
+      expect(@catalog.container_of(@one)).to be_nil
     end
 
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
       @catalog.add_resource(@one)
-      @catalog.resource("notify", "one").must equal(@one)
+      expect(@catalog.resource("notify", "one")).to equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
       @catalog.add_resource(@one)
-      @catalog.resource("notify[one]", nil).must equal(@one)
+      expect(@catalog.resource("notify[one]", nil)).to equal(@one)
     end
 
     describe 'with a duplicate resource' do
@@ -324,12 +324,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.add_resource(orig)
 
         expect { @catalog.add_resource(dupe) }.to raise_error { |error|
-          error.should be_a Puppet::Resource::Catalog::DuplicateResourceError
+          expect(error).to be_a Puppet::Resource::Catalog::DuplicateResourceError
 
-          error.message.should match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
-          error.message.should match %r[in file /path/to/orig/file:42]
-          error.message.should match %r[cannot redeclare]
-          error.message.should match %r[at /path/to/dupe/file:314]
+          expect(error.message).to match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
+          expect(error.message).to match %r[in file /path/to/orig/file:42]
+          expect(error.message).to match %r[cannot redeclare]
+          expect(error.message).to match %r[at /path/to/dupe/file:314]
         }
       end
     end
@@ -358,7 +358,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should add default resources to the catalog upon creation" do
       @catalog.make_default_resources
-      @catalog.resource(:schedule, "daily").should_not be_nil
+      expect(@catalog.resource(:schedule, "daily")).not_to be_nil
     end
 
     it "should optionally support an initialization block and should finalize after such blocks" do
@@ -377,33 +377,33 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should be able to find resources by reference" do
       @catalog.add_resource @one
-      @catalog.resource(@one.ref).must equal(@one)
+      expect(@catalog.resource(@one.ref)).to equal(@one)
     end
 
     it "should be able to find resources by reference or by type/title tuple" do
       @catalog.add_resource @one
-      @catalog.resource("notify", "one").must equal(@one)
+      expect(@catalog.resource("notify", "one")).to equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
       @catalog.add_resource(@one)
-      @catalog.resource(@one.ref).must be
-      @catalog.vertex?(@one).must be_true
+      expect(@catalog.resource(@one.ref)).to be
+      expect(@catalog.vertex?(@one)).to be_truthy
 
       @catalog.remove_resource(@one)
-      @catalog.resource(@one.ref).must be_nil
-      @catalog.vertex?(@one).must be_false
+      expect(@catalog.resource(@one.ref)).to be_nil
+      expect(@catalog.vertex?(@one)).to be_falsey
     end
 
     it "should have a method for creating aliases for resources" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").must equal(@one)
+      expect(@catalog.resource("notify", "other")).to equal(@one)
     end
 
     it "should ignore conflicting aliases that point to the aliased resource" do
       @catalog.alias(@one, "other")
-      lambda { @catalog.alias(@one, "other") }.should_not raise_error
+      expect { @catalog.alias(@one, "other") }.not_to raise_error
     end
 
     it "should create aliases for isomorphic resources whose names do not match their titles" do
@@ -411,7 +411,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.add_resource(resource)
 
-      @catalog.resource(:file, @basepath+"/something").must equal(resource)
+      expect(@catalog.resource(:file, @basepath+"/something")).to equal(resource)
     end
 
     it "should not create aliases for non-isomorphic resources whose names do not match their titles" do
@@ -420,35 +420,35 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.add_resource(resource)
 
       # Yay, I've already got a 'should' method
-      @catalog.resource(:exec, "echo").object_id.should == nil.object_id
+      expect(@catalog.resource(:exec, "echo").object_id).to eq(nil.object_id)
     end
 
     # This test is the same as the previous, but the behaviour should be explicit.
     it "should alias using the class name from the resource reference, not the resource class name" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").must equal(@one)
+      expect(@catalog.resource("notify", "other")).to equal(@one)
     end
 
     it "should fail to add an alias if the aliased name already exists" do
       @catalog.add_resource @one
-      proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)
+      expect { @catalog.alias @two, "one" }.to raise_error(ArgumentError)
     end
 
     it "should not fail when a resource has duplicate aliases created" do
       @catalog.add_resource @one
-      proc { @catalog.alias @one, "one" }.should_not raise_error
+      expect { @catalog.alias @one, "one" }.not_to raise_error
     end
 
     it "should not create aliases that point back to the resource" do
       @catalog.alias(@one, "one")
-      @catalog.resource(:notify, "one").must be_nil
+      expect(@catalog.resource(:notify, "one")).to be_nil
     end
 
     it "should be able to look resources up by their aliases" do
       @catalog.add_resource @one
       @catalog.alias @one, "two"
-      @catalog.resource(:notify, "two").must equal(@one)
+      expect(@catalog.resource(:notify, "two")).to equal(@one)
     end
 
     it "should remove resource aliases when the target resource is removed" do
@@ -456,22 +456,22 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.alias(@one, "other")
       @one.expects :remove
       @catalog.remove_resource(@one)
-      @catalog.resource("notify", "other").must be_nil
+      expect(@catalog.resource("notify", "other")).to be_nil
     end
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(true)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, "other").must equal(resource)
-      @catalog.resource(:file, @basepath+"/something").ref.should == resource.ref
+      expect(@catalog.resource(:file, "other")).to equal(resource)
+      expect(@catalog.resource(:file, @basepath+"/something").ref).to eq(resource.ref)
     end
 
     it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(false)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, resource.title).must equal(resource)
+      expect(@catalog.resource(:file, resource.title)).to equal(resource)
       # We can't use .should here, because the resources respond to that method.
       raise "Aliased non-isomorphic resource" if @catalog.resource(:file, resource.name)
     end
@@ -481,7 +481,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
-      @catalog.resource("File[/yay]").must equal(resource)
+      expect(@catalog.resource("File[/yay]")).to equal(resource)
     end
 
     describe "when adding resources with multiple namevars" do
@@ -506,9 +506,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @resource = Puppet::Type.type(:multiple).new(:title => "some resource", :color => "red", :designation => "5")
 
         @catalog.add_resource(@resource)
-        @catalog.resource(:multiple, "some resource").must == @resource
-        @catalog.resource("Multiple[some resource]").must == @resource
-        @catalog.resource("Multiple[red 5]").must == @resource
+        expect(@catalog.resource(:multiple, "some resource")).to eq(@resource)
+        expect(@catalog.resource("Multiple[some resource]")).to eq(@resource)
+        expect(@catalog.resource("Multiple[red 5]")).to eq(@resource)
       end
 
       it "should conflict with a resource with the same uniqueness key" do
@@ -556,22 +556,22 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should return the transaction" do
-      @catalog.apply.should equal(@transaction)
+      expect(@catalog.apply).to equal(@transaction)
     end
 
     it "should yield the transaction if a block is provided" do
       @catalog.apply do |trans|
-        trans.should equal(@transaction)
+        expect(trans).to equal(@transaction)
       end
     end
 
     it "should default to being a host catalog" do
-      @catalog.host_config.should be_true
+      expect(@catalog.host_config).to be_truthy
     end
 
     it "should be able to be set to a non-host_config" do
       @catalog.host_config = false
-      @catalog.host_config.should be_false
+      expect(@catalog.host_config).to be_falsey
     end
 
     it "should pass supplied tags on to the transaction" do
@@ -597,7 +597,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
         # Short-circuit the apply, so we know we're loading before the transaction
         Puppet::Transaction.expects(:new).raises ArgumentError
-        proc { @catalog.apply }.should raise_error(ArgumentError)
+        expect { @catalog.apply }.to raise_error(ArgumentError)
       end
 
       it "should sync the state database after applying" do
@@ -639,7 +639,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.clear
 
-      @catalog.instance_variable_get("@relationship_graph").should be_nil
+      expect(@catalog.instance_variable_get("@relationship_graph")).to be_nil
     end
   end
 
@@ -673,12 +673,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Resource::Catalog.indirection.reset_terminus_class
 
       Puppet.settings[:catalog_terminus] = "rest"
-      Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
+      expect(Puppet::Resource::Catalog.indirection.terminus_class).to eq(:rest)
     end
 
     it "should allow the terminus class to be set manually" do
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
-      Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
+      expect(Puppet::Resource::Catalog.indirection.terminus_class).to eq(:rest)
     end
 
     after do
@@ -693,7 +693,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should be able to be dumped to yaml" do
-      YAML.dump(@catalog).should be_instance_of(String)
+      expect(YAML.dump(@catalog)).to be_instance_of(String)
     end
   end
 
@@ -707,16 +707,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should get converted back to a catalog" do
-      @newcatalog.should be_instance_of(Puppet::Resource::Catalog)
+      expect(@newcatalog).to be_instance_of(Puppet::Resource::Catalog)
     end
 
     it "should have all vertices" do
-      @newcatalog.vertex?("one").should be_true
-      @newcatalog.vertex?("two").should be_true
+      expect(@newcatalog.vertex?("one")).to be_truthy
+      expect(@newcatalog.vertex?("two")).to be_truthy
     end
 
     it "should have all edges" do
-      @newcatalog.edge?("one", "two").should be_true
+      expect(@newcatalog.edge?("one", "two")).to be_truthy
     end
   end
 end
@@ -785,7 +785,7 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     it "should set its #{param} to the #{param} of the resource" do
       @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-      pson_output_should { |hash| hash[param.to_s].should == @catalog.send(param) }
+      pson_output_should { |hash| expect(hash[param.to_s]).to eq(@catalog.send(param)) }
       Puppet::Resource::Catalog.from_data_hash PSON.parse @catalog.to_pson
     end
   end
@@ -798,7 +798,7 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.add_resource(two)
 
     # TODO this should really guarantee sort order
-    PSON.parse(@catalog.to_pson,:create_additions => false)['resources'].sort.should == ["one_resource", "two_resource"].sort
+    expect(PSON.parse(@catalog.to_pson,:create_additions => false)['resources'].sort).to eq(["one_resource", "two_resource"].sort)
 
   end
 
@@ -813,7 +813,7 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.edges_between(one, two  )[0].expects(:to_data_hash).returns "one_two_pson"
     @catalog.edges_between(two, three)[0].expects(:to_data_hash).returns "two_three_pson"
 
-    PSON.parse(@catalog.to_pson,:create_additions => false)['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
+    expect(PSON.parse(@catalog.to_pson,:create_additions => false)['edges'].sort).to eq(%w{one_two_pson two_three_pson}.sort)
   end
 end
 

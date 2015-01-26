@@ -44,7 +44,7 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([later_job, earlier_job])
 
-    timer.wait_for_calls.should == [2, 5]
+    expect(timer.wait_for_calls).to eq([2, 5])
   end
 
   it "ignores disabled jobs when calculating intervals" do
@@ -54,7 +54,7 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([enabled, disabled])
 
-    timer.wait_for_calls.should == [7]
+    expect(timer.wait_for_calls).to eq([7])
   end
 
   it "asks the timer to wait for the job interval" do
@@ -63,13 +63,13 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([job])
 
-    timer.wait_for_calls.should == [5]
+    expect(timer.wait_for_calls).to eq([5])
   end
 
   it "does not run when there are no jobs" do
     scheduler.run_loop([])
 
-    timer.wait_for_calls.should be_empty
+    expect(timer.wait_for_calls).to be_empty
   end
 
   it "does not run when there are only disabled jobs" do
@@ -78,7 +78,7 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([disabled_job])
 
-    timer.wait_for_calls.should be_empty
+    expect(timer.wait_for_calls).to be_empty
   end
 
   it "stops running when there are no more enabled jobs" do
@@ -88,7 +88,7 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([disabling_job])
 
-    timer.wait_for_calls.size.should == 1
+    expect(timer.wait_for_calls.size).to eq(1)
   end
 
   it "marks the start of the run loop" do
@@ -98,7 +98,7 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([disabled_job])
 
-    disabled_job.start_time.should == now
+    expect(disabled_job.start_time).to eq(now)
   end
 
   it "calculates the next interval from the start of a job" do
@@ -111,6 +111,6 @@ describe Puppet::Scheduler::Scheduler do
 
     scheduler.run_loop([slow_job])
 
-    timer.wait_for_calls.should == [0, 3, 7, 3]
+    expect(timer.wait_for_calls).to eq([0, 3, 7, 3])
   end
 end

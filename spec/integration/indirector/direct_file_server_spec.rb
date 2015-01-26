@@ -14,20 +14,24 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 
   it "should return an instance of the model" do
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    if Puppet.features.microsoft_windows?
+      skip("porting to Windows")
+    else
       Puppet::FileSystem.expects(:exist?).with(@filepath).returns(true)
 
-      @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}", nil)).should be_instance_of(Puppet::FileServing::Content)
+      expect(@terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}", nil))).to be_instance_of(Puppet::FileServing::Content)
     end
   end
 
   it "should return an instance capable of returning its content" do
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    if Puppet.features.microsoft_windows?
+      skip("porting to Windows")
+    else
       filename = file_containing("testfile", "my content")
 
       instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{filename}", nil))
 
-      instance.content.should == "my content"
+      expect(instance.content).to eq("my content")
     end
   end
 end

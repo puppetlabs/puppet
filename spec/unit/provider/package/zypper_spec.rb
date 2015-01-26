@@ -21,27 +21,27 @@ describe provider_class do
 
   it "should have an install method" do
     @provider = provider_class.new
-    @provider.should respond_to(:install)
+    expect(@provider).to respond_to(:install)
   end
 
   it "should have an uninstall method" do
     @provider = provider_class.new
-    @provider.should respond_to(:uninstall)
+    expect(@provider).to respond_to(:uninstall)
   end
 
   it "should have an update method" do
     @provider = provider_class.new
-    @provider.should respond_to(:update)
+    expect(@provider).to respond_to(:update)
   end
 
   it "should have a latest method" do
     @provider = provider_class.new
-    @provider.should respond_to(:latest)
+    expect(@provider).to respond_to(:latest)
   end
 
   it "should have a install_options method" do
     @provider = provider_class.new
-    @provider.should respond_to(:install_options)
+    expect(@provider).to respond_to(:install_options)
   end
 
   describe "when installing with zypper version >= 1.0" do
@@ -120,7 +120,7 @@ describe provider_class do
 
       @resource.stubs(:[]).with(:name).returns "at"
       @provider.expects(:zypper).with("list-updates").returns fake_data
-      @provider.latest.should == "3.1.8-1069.18.2"
+      expect(@provider.latest).to eq("3.1.8-1069.18.2")
     end
   end
 

@@ -24,45 +24,45 @@ describe provider_class, :if => Puppet.features.posix? do
 
   describe ".instances" do
     it "should have an instances method" do
-      provider_class.should respond_to :instances
+      expect(provider_class).to respond_to :instances
     end
 
     it "should get a list of services (excluding legacy)" do
       provider_class.expects(:svcs).with().returns File.read(my_fixture('svcs.out'))
       instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       # we dont manage legacy
-      instances.size.should == 2
-      instances[0].should == {:name => 'svc:/system/svc/restarter:default', :ensure => :running }
-      instances[1].should == {:name => 'svc:/network/cswrsyncd:default', :ensure => :maintenance }
+      expect(instances.size).to eq(2)
+      expect(instances[0]).to eq({:name => 'svc:/system/svc/restarter:default', :ensure => :running })
+      expect(instances[1]).to eq({:name => 'svc:/network/cswrsyncd:default', :ensure => :maintenance })
     end
   end
 
   it "should have a restart method" do
-    @provider.should respond_to(:restart)
+    expect(@provider).to respond_to(:restart)
   end
 
   it "should have a restartcmd method" do
-    @provider.should respond_to(:restartcmd)
+    expect(@provider).to respond_to(:restartcmd)
   end
 
   it "should have a start method" do
-    @provider.should respond_to(:start)
+    expect(@provider).to respond_to(:start)
   end
 
   it "should have a stop method" do
-    @provider.should respond_to(:stop)
+    expect(@provider).to respond_to(:stop)
   end
 
   it "should have an enabled? method" do
-    @provider.should respond_to(:enabled?)
+    expect(@provider).to respond_to(:enabled?)
   end
 
   it "should have an enable method" do
-    @provider.should respond_to(:enable)
+    expect(@provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    @provider.should respond_to(:disable)
+    expect(@provider).to respond_to(:disable)
   end
 
   describe "when checking status" do
@@ -72,27 +72,27 @@ describe provider_class, :if => Puppet.features.posix? do
     end
     it "should return stopped if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
     it "should return running if online in svcs output" do
       @provider.stubs(:svcs).returns("online\t-")
-      @provider.status.should == :running
+      expect(@provider.status).to eq(:running)
     end
     it "should return stopped if disabled in svcs output" do
       @provider.stubs(:svcs).returns("disabled\t-")
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
     it "should return maintenance if in maintenance in svcs output" do
       @provider.stubs(:svcs).returns("maintenance\t-")
-      @provider.status.should == :maintenance
+      expect(@provider.status).to eq(:maintenance)
     end
     it "should return target state if transitioning in svcs output" do
       @provider.stubs(:svcs).returns("online\tdisabled")
-      @provider.status.should == :stopped
+      expect(@provider.status).to eq(:stopped)
     end
     it "should throw error if it's a legacy service in svcs output" do
       @provider.stubs(:svcs).returns("legacy_run\t-")
-      lambda { @provider.status }.should raise_error(Puppet::Error, "Cannot manage legacy services through SMF")
+      expect { @provider.status }.to raise_error(Puppet::Error, "Cannot manage legacy services through SMF")
     end
   end
 
@@ -132,7 +132,7 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should handle failures if importing a manifest" do
       @provider.expects(:svccfg).raises(Puppet::ExecutionFailure.new("can't svccfg import"))
-      lambda { @provider.start }.should raise_error(Puppet::Error, "Cannot config /system/myservice to enable it: can't svccfg import")
+      expect { @provider.start }.to raise_error(Puppet::Error, "Cannot config /system/myservice to enable it: can't svccfg import")
     end
   end
 

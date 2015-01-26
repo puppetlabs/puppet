@@ -20,7 +20,7 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
 
   context '::installer', :if => Puppet.features.microsoft_windows? do
     it 'should return an instance of the COM interface' do
-      subject.installer.should_not be_nil
+      expect(subject.installer).not_to be_nil
     end
   end
 
@@ -30,16 +30,16 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
       expect_installer
 
       pkg = subject.from_registry(productcode, {'DisplayName' => name, 'DisplayVersion' => version})
-      pkg.name.should == name
-      pkg.version.should == version
-      pkg.productcode.should == productcode
-      pkg.packagecode.should == packagecode
+      expect(pkg.name).to eq(name)
+      expect(pkg.version).to eq(version)
+      expect(pkg.productcode).to eq(productcode)
+      expect(pkg.packagecode).to eq(packagecode)
     end
 
     it 'should return nil if it is not a valid MSI' do
       subject.expects(:valid?).returns(false)
 
-      subject.from_registry(productcode, {}).should be_nil
+      expect(subject.from_registry(productcode, {})).to be_nil
     end
   end
 
@@ -53,21 +53,21 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     }.each_pair do |k, arr|
       it "should accept '#{k}' with value '#{arr[0]}'" do
         values[k] = arr[0]
-        subject.valid?(productcode, values).should be_true
+        expect(subject.valid?(productcode, values)).to be_truthy
       end
 
       it "should reject '#{k}' with value '#{arr[1]}'" do
         values[k] = arr[1]
-        subject.valid?(productcode, values).should be_false
+        expect(subject.valid?(productcode, values)).to be_falsey
       end
     end
 
     it 'should reject packages whose name is not a productcode' do
-     subject.valid?('AddressBook', values).should be_false
+     expect(subject.valid?('AddressBook', values)).to be_falsey
    end
 
    it 'should accept packages whose name is a productcode' do
-     subject.valid?(productcode, values).should be_true
+     expect(subject.valid?(productcode, values)).to be_truthy
    end
   end
 
@@ -75,25 +75,25 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     it 'should match package codes case-insensitively' do
       pkg = subject.new(name, version, productcode, packagecode.upcase)
 
-      pkg.match?({:name => packagecode.downcase}).should be_true
+      expect(pkg.match?({:name => packagecode.downcase})).to be_truthy
     end
 
     it 'should match product codes case-insensitively' do
       pkg = subject.new(name, version, productcode.upcase, packagecode)
 
-      pkg.match?({:name => productcode.downcase}).should be_true
+      expect(pkg.match?({:name => productcode.downcase})).to be_truthy
     end
 
     it 'should match product name' do
       pkg = subject.new(name, version, productcode, packagecode)
 
-      pkg.match?({:name => name}).should be_true
+      expect(pkg.match?({:name => name})).to be_truthy
     end
 
     it 'should return false otherwise' do
       pkg = subject.new(name, version, productcode, packagecode)
 
-      pkg.match?({:name => 'not going to find it'}).should be_false
+      expect(pkg.match?({:name => 'not going to find it'})).to be_falsey
     end
   end
 
@@ -101,7 +101,7 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     it 'should install using the source' do
       cmd = subject.install_command({:source => source})
 
-      cmd.should == ['msiexec.exe', '/qn', '/norestart', '/i', source]
+      expect(cmd).to eq(['msiexec.exe', '/qn', '/norestart', '/i', source])
     end
   end
 
@@ -109,7 +109,7 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     it 'should uninstall using the productcode' do
       pkg = subject.new(name, version, productcode, packagecode)
 
-      pkg.uninstall_command.should == ['msiexec.exe', '/qn', '/norestart', '/x', productcode]
+      expect(pkg.uninstall_command).to eq(['msiexec.exe', '/qn', '/norestart', '/x', productcode])
     end
   end
 end

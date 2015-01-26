@@ -20,9 +20,9 @@ describe Puppet::Provider::AixObject do
       :deletecmd
     ].each do |method|
       it "should raise an error when unimplemented method #{method} called" do
-        lambda do
+        expect do
           provider.send(method)
-        end.should raise_error(Puppet::Error, /not defined/)
+        end.to raise_error(Puppet::Error, /not defined/)
       end
     end
   end
@@ -51,12 +51,12 @@ describe Puppet::Provider::AixObject do
 
       it "should create a hash where the key is the puppet property and the value is a hash with the aix property and the conversion method" do
         hash = provider.class.attribute_mapping_to
-        hash.should have_key :test_puppet_property
+        expect(hash).to have_key :test_puppet_property
         sub_hash = hash[:test_puppet_property]
-        sub_hash.should have_key :key
-        sub_hash.should have_key :method
-        sub_hash[:key].should == :test_aix_property
-        sub_hash[:method].should == :test_convert_to_aix_method
+        expect(sub_hash).to have_key :key
+        expect(sub_hash).to have_key :method
+        expect(sub_hash[:key]).to eq(:test_aix_property)
+        expect(sub_hash[:method]).to eq(:test_convert_to_aix_method)
       end
 
       it "should cache results between calls" do
@@ -75,12 +75,12 @@ describe Puppet::Provider::AixObject do
 
       it "should create a hash where the key is the aix property and the value is a hash with the puppet property and the conversion method" do
         hash = provider.class.attribute_mapping_from
-        hash.should have_key :test_aix_property
+        expect(hash).to have_key :test_aix_property
         sub_hash = hash[:test_aix_property]
-        sub_hash.should have_key :key
-        sub_hash.should have_key :method
-        sub_hash[:key].should == :test_puppet_property
-        sub_hash[:method].should == :test_convert_to_puppet_method
+        expect(sub_hash).to have_key :key
+        expect(sub_hash).to have_key :method
+        expect(sub_hash[:key]).to eq(:test_puppet_property)
+        expect(sub_hash[:method]).to eq(:test_convert_to_puppet_method)
       end
 
       it "should cache results between calls" do

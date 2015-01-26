@@ -16,34 +16,34 @@ describe Puppet::Parameter do
 
   it "should create a value collection" do
     @class = Class.new(Puppet::Parameter)
-    @class.value_collection.should be_nil
+    expect(@class.value_collection).to be_nil
     @class.initvars
-    @class.value_collection.should be_instance_of(Puppet::Parameter::ValueCollection)
+    expect(@class.value_collection).to be_instance_of(Puppet::Parameter::ValueCollection)
   end
 
   it "should return its name as a string when converted to a string" do
-    @parameter.to_s.should == @parameter.name.to_s
+    expect(@parameter.to_s).to eq(@parameter.name.to_s)
   end
 
   [:line, :file, :version].each do |data|
     it "should return its resource's #{data} as its #{data}" do
       @resource.expects(data).returns "foo"
-      @parameter.send(data).should == "foo"
+      expect(@parameter.send(data)).to eq("foo")
     end
   end
 
   it "should return the resource's tags plus its name as its tags" do
     @resource.expects(:tags).returns %w{one two}
-    @parameter.tags.should == %w{one two foo}
+    expect(@parameter.tags).to eq(%w{one two foo})
   end
 
   it "should have a path" do
-    @parameter.path.should == "//foo"
+    expect(@parameter.path).to eq("//foo")
   end
 
   describe "when returning the value" do
     it "should return nil if no value is set" do
-      @parameter.value.should be_nil
+      expect(@parameter.value).to be_nil
     end
 
     it "should validate the value" do
@@ -54,22 +54,22 @@ describe Puppet::Parameter do
     it "should munge the value and use any result as the actual value" do
       @parameter.expects(:munge).with("foo").returns "bar"
       @parameter.value = "foo"
-      @parameter.value.should == "bar"
+      expect(@parameter.value).to eq("bar")
     end
 
     it "should unmunge the value when accessing the actual value" do
       @parameter.class.unmunge do |value| value.to_sym end
       @parameter.value = "foo"
-      @parameter.value.should == :foo
+      expect(@parameter.value).to eq(:foo)
     end
 
     it "should return the actual value by default when unmunging" do
-      @parameter.unmunge("bar").should == "bar"
+      expect(@parameter.unmunge("bar")).to eq("bar")
     end
 
     it "should return any set value" do
       @parameter.value = "foo"
-      @parameter.value.should == "foo"
+      expect(@parameter.value).to eq("foo")
     end
   end
 
@@ -117,7 +117,7 @@ describe Puppet::Parameter do
 
   describe "when munging values" do
     it "should do nothing if no values or regexes have been defined" do
-      @parameter.munge("foo").should == "foo"
+      expect(@parameter.munge("foo")).to eq("foo")
     end
 
     it "should catch abnormal failures thrown during munging" do
@@ -127,23 +127,23 @@ describe Puppet::Parameter do
 
     it "should return return any matching defined values" do
       @class.newvalues :foo, :bar
-      @parameter.munge("foo").should == :foo
+      expect(@parameter.munge("foo")).to eq(:foo)
     end
 
     it "should return any matching aliases" do
       @class.newvalues :foo
       @class.aliasvalue :bar, :foo
-      @parameter.munge("bar").should == :foo
+      expect(@parameter.munge("bar")).to eq(:foo)
     end
 
     it "should return the value if it matches a regex" do
       @class.newvalues %r{\w}
-      @parameter.munge("bar").should == "bar"
+      expect(@parameter.munge("bar")).to eq("bar")
     end
 
     it "should return the value if no other option is matched" do
       @class.newvalues :foo
-      @parameter.munge("bar").should == "bar"
+      expect(@parameter.munge("bar")).to eq("bar")
     end
   end
 
@@ -157,37 +157,37 @@ describe Puppet::Parameter do
 
   describe ".format_value_for_display" do
     it 'should format strings appropriately' do
-      described_class.format_value_for_display('foo').should == "'foo'"
+      expect(described_class.format_value_for_display('foo')).to eq("'foo'")
     end
 
     it 'should format numbers appropriately' do
-      described_class.format_value_for_display(1).should == "'1'"
+      expect(described_class.format_value_for_display(1)).to eq("'1'")
     end
 
     it 'should format symbols appropriately' do
-      described_class.format_value_for_display(:bar).should == "'bar'"
+      expect(described_class.format_value_for_display(:bar)).to eq("'bar'")
     end
 
     it 'should format arrays appropriately' do
-      described_class.format_value_for_display([1, 'foo', :bar]).should == "['1', 'foo', 'bar']"
+      expect(described_class.format_value_for_display([1, 'foo', :bar])).to eq("['1', 'foo', 'bar']")
     end
 
     it 'should format hashes appropriately' do
-      described_class.format_value_for_display(
+      expect(described_class.format_value_for_display(
         {1 => 'foo', :bar => 2, 'baz' => :qux}
-      ).should == "{'1' => 'foo', 'bar' => '2', 'baz' => 'qux'}"
+      )).to eq("{'1' => 'foo', 'bar' => '2', 'baz' => 'qux'}")
     end
 
     it 'should format arrays with nested data appropriately' do
-      described_class.format_value_for_display(
+      expect(described_class.format_value_for_display(
         [1, 'foo', :bar, [1, 2, 3], {1 => 2, 3 => 4}]
-      ).should == "['1', 'foo', 'bar', ['1', '2', '3'], {'1' => '2', '3' => '4'}]"
+      )).to eq("['1', 'foo', 'bar', ['1', '2', '3'], {'1' => '2', '3' => '4'}]")
     end
 
     it 'should format hashes with nested data appropriately' do
-      described_class.format_value_for_display(
+      expect(described_class.format_value_for_display(
         {1 => 'foo', :bar => [2, 3, 4], 'baz' => {:qux => 1, :quux => 'two'}}
-      ).should == "{'1' => 'foo', 'bar' => ['2', '3', '4'], 'baz' => {'quux' => 'two', 'qux' => '1'}}"
+      )).to eq("{'1' => 'foo', 'bar' => ['2', '3', '4'], 'baz' => {'quux' => 'two', 'qux' => '1'}}")
     end
   end
 end

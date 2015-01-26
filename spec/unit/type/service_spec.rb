@@ -3,24 +3,24 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service) do
   it "should have an :enableable feature that requires the :enable, :disable, and :enabled? methods" do
-    Puppet::Type.type(:service).provider_feature(:enableable).methods.should == [:disable, :enable, :enabled?]
+    expect(Puppet::Type.type(:service).provider_feature(:enableable).methods).to eq([:disable, :enable, :enabled?])
   end
 
   it "should have a :refreshable feature that requires the :restart method" do
-    Puppet::Type.type(:service).provider_feature(:refreshable).methods.should == [:restart]
+    expect(Puppet::Type.type(:service).provider_feature(:refreshable).methods).to eq([:restart])
   end
 end
 
 describe Puppet::Type.type(:service), "when validating attributes" do
   [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
     it "should have a #{param} parameter" do
-      Puppet::Type.type(:service).attrtype(param).should == :param
+      expect(Puppet::Type.type(:service).attrtype(param)).to eq(:param)
     end
   end
 
   [:ensure, :enable].each do |param|
     it "should have an #{param} property" do
-      Puppet::Type.type(:service).attrtype(param).should == :property
+      expect(Puppet::Type.type(:service).attrtype(param)).to eq(:property)
     end
   end
 end
@@ -41,12 +41,12 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
 
   it "should alias the value :true to :running in :ensure" do
     svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => true)
-    svc.should(:ensure).should == :running
+    expect(svc.should(:ensure)).to eq(:running)
   end
 
   it "should alias the value :false to :stopped in :ensure" do
     svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => false)
-    svc.should(:ensure).should == :stopped
+    expect(svc.should(:ensure)).to eq(:stopped)
   end
 
   describe "the enable property" do
@@ -55,19 +55,19 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     end
     it "should support :true as a value" do
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
-      srv.should(:enable).should == :true
+      expect(srv.should(:enable)).to eq(:true)
     end
 
     it "should support :false as a value" do
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :false)
-      srv.should(:enable).should == :false
+      expect(srv.should(:enable)).to eq(:false)
     end
 
     it "should support :manual as a value on Windows" do
       Puppet.features.stubs(:microsoft_windows?).returns true
 
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
-      srv.should(:enable).should == :manual
+      expect(srv.should(:enable)).to eq(:manual)
     end
 
     it "should not support :manual as a value when not on Windows" do
@@ -82,55 +82,55 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
 
   it "should support :true as a value to :hasstatus" do
     srv = Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :true)
-    srv[:hasstatus].should == :true
+    expect(srv[:hasstatus]).to eq(:true)
   end
 
   it "should support :false as a value to :hasstatus" do
     srv = Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :false)
-    srv[:hasstatus].should == :false
+    expect(srv[:hasstatus]).to eq(:false)
   end
 
   it "should specify :true as the default value of hasstatus" do
     srv = Puppet::Type.type(:service).new(:name => "yay")
-    srv[:hasstatus].should == :true
+    expect(srv[:hasstatus]).to eq(:true)
   end
 
   it "should support :true as a value to :hasrestart" do
     srv = Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :true)
-    srv[:hasrestart].should == :true
+    expect(srv[:hasrestart]).to eq(:true)
   end
 
   it "should support :false as a value to :hasrestart" do
     srv = Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :false)
-    srv[:hasrestart].should == :false
+    expect(srv[:hasrestart]).to eq(:false)
   end
 
   it "should allow setting the :enable parameter if the provider has the :enableable feature" do
     Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
     Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
-    svc.should(:enable).should == :true
+    expect(svc.should(:enable)).to eq(:true)
   end
 
   it "should not allow setting the :enable parameter if the provider is missing the :enableable feature" do
     Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
     Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(false)
     svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
-    svc.should(:enable).should be_nil
+    expect(svc.should(:enable)).to be_nil
   end
 
   it "should split paths on '#{File::PATH_SEPARATOR}'" do
     Puppet::FileSystem.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two#{File::PATH_SEPARATOR}/three/four")
-    svc[:path].should == %w{/one/two /three/four}
+    expect(svc[:path]).to eq(%w{/one/two /three/four})
   end
 
   it "should accept arrays of paths joined by '#{File::PATH_SEPARATOR}'" do
     Puppet::FileSystem.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one#{File::PATH_SEPARATOR}/two", "/three#{File::PATH_SEPARATOR}/four"])
-    svc[:path].should == %w{/one /two /three /four}
+    expect(svc[:path]).to eq(%w{/one /two /three /four})
   end
 end
 
@@ -142,24 +142,24 @@ describe Puppet::Type.type(:service), "when setting default attribute values" do
     Puppet::Type.type(:service).defaultprovider.stubs(:respond_to?).returns(true)
     Puppet::Type.type(:service).defaultprovider.stubs(:defpath).returns("testing")
     svc = Puppet::Type.type(:service).new(:name => "other")
-    svc[:path].should == ["testing"]
+    expect(svc[:path]).to eq(["testing"])
   end
 
   it "should default 'pattern' to the binary if one is provided" do
     svc = Puppet::Type.type(:service).new(:name => "other", :binary => "/some/binary")
-    svc[:pattern].should == "/some/binary"
+    expect(svc[:pattern]).to eq("/some/binary")
   end
 
   it "should default 'pattern' to the name if no pattern is provided" do
     svc = Puppet::Type.type(:service).new(:name => "other")
-    svc[:pattern].should == "other"
+    expect(svc[:pattern]).to eq("other")
   end
 
   it "should default 'control' to the upcased service name with periods replaced by underscores if the provider supports the 'controllable' feature" do
     provider = stub 'provider', :controllable? => true, :class => Puppet::Type.type(:service).defaultprovider, :clear => nil
     Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(provider)
     svc = Puppet::Type.type(:service).new(:name => "nfs.client")
-    svc[:control].should == "NFS_CLIENT_START"
+    expect(svc[:control]).to eq("NFS_CLIENT_START")
   end
 end
 
@@ -171,14 +171,14 @@ describe Puppet::Type.type(:service), "when retrieving the host's current state"
   it "should use the provider's status to determine whether the service is running" do
     @service.provider.expects(:status).returns(:yepper)
     @service[:ensure] = :running
-    @service.property(:ensure).retrieve.should == :yepper
+    expect(@service.property(:ensure).retrieve).to eq(:yepper)
   end
 
   it "should ask the provider whether it is enabled" do
     @service.provider.class.stubs(:supports_parameter?).returns(true)
     @service.provider.expects(:enabled?).returns(:yepper)
     @service[:enable] = true
-    @service.property(:enable).retrieve.should == :yepper
+    expect(@service.property(:enable).retrieve).to eq(:yepper)
   end
 end
 

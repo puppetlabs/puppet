@@ -5,15 +5,15 @@ require 'puppet/confine_collection'
 
 describe Puppet::ConfineCollection do
   it "should be able to add confines" do
-    Puppet::ConfineCollection.new("label").should respond_to(:confine)
+    expect(Puppet::ConfineCollection.new("label")).to respond_to(:confine)
   end
 
   it "should require a label at initialization" do
-    lambda { Puppet::ConfineCollection.new }.should raise_error(ArgumentError)
+    expect { Puppet::ConfineCollection.new }.to raise_error(ArgumentError)
   end
 
   it "should make its label available" do
-    Puppet::ConfineCollection.new("mylabel").label.should == "mylabel"
+    expect(Puppet::ConfineCollection.new("mylabel").label).to eq("mylabel")
   end
 
   describe "when creating confine instances" do
@@ -56,7 +56,7 @@ describe Puppet::ConfineCollection do
   end
 
   it "should be valid if no confines are present" do
-    Puppet::ConfineCollection.new("label").should be_valid
+    expect(Puppet::ConfineCollection.new("label")).to be_valid
   end
 
   it "should be valid if all confines pass" do
@@ -69,7 +69,7 @@ describe Puppet::ConfineCollection do
     confiner = Puppet::ConfineCollection.new("label")
     confiner.confine :true => :bar, :false => :bee
 
-    confiner.should be_valid
+    expect(confiner).to be_valid
   end
 
   it "should not be valid if any confines fail" do
@@ -82,7 +82,7 @@ describe Puppet::ConfineCollection do
     confiner = Puppet::ConfineCollection.new("label")
     confiner.confine :true => :bar, :false => :bee
 
-    confiner.should_not be_valid
+    expect(confiner).not_to be_valid
   end
 
   describe "when providing a summary" do
@@ -91,11 +91,11 @@ describe Puppet::ConfineCollection do
     end
 
     it "should return a hash" do
-      @confiner.summary.should be_instance_of(Hash)
+      expect(@confiner.summary).to be_instance_of(Hash)
     end
 
     it "should return an empty hash if the confiner is valid" do
-      @confiner.summary.should == {}
+      expect(@confiner.summary).to eq({})
     end
 
     it "should add each test type's summary to the hash" do
@@ -103,7 +103,7 @@ describe Puppet::ConfineCollection do
       Puppet::Confine.test(:true).expects(:summarize).returns :tsumm
       Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
 
-      @confiner.summary.should == {:true => :tsumm, :false => :fsumm}
+      expect(@confiner.summary).to eq({:true => :tsumm, :false => :fsumm})
     end
 
     it "should not include tests that return 0" do
@@ -111,7 +111,7 @@ describe Puppet::ConfineCollection do
       Puppet::Confine.test(:true).expects(:summarize).returns 0
       Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
 
-      @confiner.summary.should == {:false => :fsumm}
+      expect(@confiner.summary).to eq({:false => :fsumm})
     end
 
     it "should not include tests that return empty arrays" do
@@ -119,7 +119,7 @@ describe Puppet::ConfineCollection do
       Puppet::Confine.test(:true).expects(:summarize).returns []
       Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
 
-      @confiner.summary.should == {:false => :fsumm}
+      expect(@confiner.summary).to eq({:false => :fsumm})
     end
 
     it "should not include tests that return empty hashes" do
@@ -127,7 +127,7 @@ describe Puppet::ConfineCollection do
       Puppet::Confine.test(:true).expects(:summarize).returns({})
       Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
 
-      @confiner.summary.should == {:false => :fsumm}
+      expect(@confiner.summary).to eq({:false => :fsumm})
     end
   end
 end

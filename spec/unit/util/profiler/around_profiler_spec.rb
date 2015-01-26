@@ -12,7 +12,7 @@ describe Puppet::Util::Profiler::AroundProfiler do
   it "returns the value of the profiled segment" do
     retval = profiler.profile("Testing", ["testing"]) { "the return value" }
 
-    retval.should == "the return value"
+    expect(retval).to eq("the return value")
   end
 
   it "propagates any errors raised in the profiled segment" do
@@ -24,15 +24,15 @@ describe Puppet::Util::Profiler::AroundProfiler do
   it "makes the description and the context available to the `start` and `finish` methods" do
     profiler.profile("Testing", ["testing"]) { }
 
-    child.context.should == "Testing"
-    child.description.should == "Testing"
+    expect(child.context).to eq("Testing")
+    expect(child.description).to eq("Testing")
   end
 
   it "calls finish even when an error is raised" do
     begin
       profiler.profile("Testing", ["testing"]) { raise "a problem" }
     rescue
-      child.context.should == "Testing"
+      expect(child.context).to eq("Testing")
     end
   end
 
@@ -41,8 +41,8 @@ describe Puppet::Util::Profiler::AroundProfiler do
     profiler.add_profiler(profiler2)
     profiler.profile("Testing", ["testing"]) {}
 
-    child.context.should == "Testing"
-    profiler2.context.should == "Testing"
+    expect(child.context).to eq("Testing")
+    expect(profiler2.context).to eq("Testing")
   end
 
   class TestAroundProfiler

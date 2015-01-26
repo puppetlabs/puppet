@@ -23,7 +23,7 @@ Switch>sh ver
 #{ver}
 Switch>
 eos
-      @facts.parse_show_ver.should == expected
+      expect(@facts.parse_show_ver).to eq(expected)
     end
   end
 
@@ -41,7 +41,7 @@ Switch>sh ver
 #{ver}
 Switch>
 eos
-      @facts.parse_show_ver.should == expected
+      expect(@facts.parse_show_ver).to eq(expected)
     end
   end
 
@@ -58,7 +58,7 @@ Switch>sh ver
 #{ver}
 Switch>
 eos
-      @facts.parse_show_ver.should == expected
+      expect(@facts.parse_show_ver).to eq(expected)
     end
   end
 end

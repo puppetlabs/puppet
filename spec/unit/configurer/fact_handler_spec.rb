@@ -36,7 +36,7 @@ describe Puppet::Configurer::FactHandler do
       Puppet[:certname] = 'foo'
       Puppet[:node_name_value] = 'bar'
 
-      facthandler.find_facts.should == bar_facts
+      expect(facthandler.find_facts).to eq(bar_facts)
     end
 
     it "should set the facts name based on the node_name_fact" do
@@ -44,7 +44,7 @@ describe Puppet::Configurer::FactHandler do
       Puppet::Node::Facts.indirection.save(facts)
       Puppet[:node_name_fact] = 'my_name_fact'
 
-      facthandler.find_facts.name.should == 'other_node_name'
+      expect(facthandler.find_facts.name).to eq('other_node_name')
     end
 
     it "should set the node_name_value based on the node_name_fact" do
@@ -54,7 +54,7 @@ describe Puppet::Configurer::FactHandler do
 
       facthandler.find_facts
 
-      Puppet[:node_name_value].should == 'other_node_name'
+      expect(Puppet[:node_name_value]).to eq('other_node_name')
     end
 
     it "should fail if finding facts fails" do
@@ -74,7 +74,7 @@ describe Puppet::Configurer::FactHandler do
     Puppet::Node::Facts.indirection.save(facts)
     text = CGI.escape(facthandler.find_facts.render(:pson))
 
-    facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
+    expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
   end
 
   it "should properly accept facts containing a '+'" do
@@ -82,7 +82,7 @@ describe Puppet::Configurer::FactHandler do
     Puppet::Node::Facts.indirection.save(facts)
     text = CGI.escape(facthandler.find_facts.render(:pson))
 
-    facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
+    expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
   end
 
   it "should generate valid facts data against the facts schema" do

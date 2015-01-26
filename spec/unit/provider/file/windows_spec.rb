@@ -22,11 +22,11 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
       FileUtils.touch(path)
       WindowsSecurity.set_mode(0644, path)
 
-      provider.mode.should == '0644'
+      expect(provider.mode).to eq('0644')
     end
 
     it "should return absent if the file doesn't exist" do
-      provider.mode.should == :absent
+      expect(provider.mode).to eq(:absent)
     end
   end
 
@@ -37,7 +37,7 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
       provider.mode = '0755'
 
-      provider.mode.should == '0755'
+      expect(provider.mode).to eq('0755')
     end
 
     it "should pass along any errors encountered" do
@@ -52,21 +52,21 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
       Puppet::Util::Windows::SID.expects(:valid_sid?).with(sid).returns(true)
       Puppet::Util::Windows::SID.expects(:sid_to_name).with(sid).returns(account)
 
-      provider.id2name(sid).should == account
+      expect(provider.id2name(sid)).to eq(account)
     end
 
     it "should return the argument if it's already a name" do
       Puppet::Util::Windows::SID.expects(:valid_sid?).with(account).returns(false)
       Puppet::Util::Windows::SID.expects(:sid_to_name).never
 
-      provider.id2name(account).should == account
+      expect(provider.id2name(account)).to eq(account)
     end
 
     it "should return nil if the user doesn't exist" do
       Puppet::Util::Windows::SID.expects(:valid_sid?).with(sid).returns(true)
       Puppet::Util::Windows::SID.expects(:sid_to_name).with(sid).returns(nil)
 
-      provider.id2name(sid).should == nil
+      expect(provider.id2name(sid)).to eq(nil)
     end
   end
 
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
     it "should delegate to name_to_sid" do
       Puppet::Util::Windows::SID.expects(:name_to_sid).with(account).returns(sid)
 
-      provider.name2id(account).should == sid
+      expect(provider.name2id(account)).to eq(sid)
     end
   end
 
@@ -83,11 +83,11 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
       FileUtils.touch(resource[:path])
       provider.stubs(:get_owner).with(resource[:path]).returns(sid)
 
-      provider.owner.should == sid
+      expect(provider.owner).to eq(sid)
     end
 
     it "should return absent if the file doesn't exist" do
-      provider.owner.should == :absent
+      expect(provider.owner).to eq(:absent)
     end
   end
 
@@ -111,11 +111,11 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
       FileUtils.touch(resource[:path])
       provider.stubs(:get_group).with(resource[:path]).returns(sid)
 
-      provider.group.should == sid
+      expect(provider.group).to eq(sid)
     end
 
     it "should return absent if the file doesn't exist" do
-      provider.group.should == :absent
+      expect(provider.group).to eq(:absent)
     end
   end
 

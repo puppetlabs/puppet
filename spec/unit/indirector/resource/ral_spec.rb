@@ -20,7 +20,7 @@ describe "Puppet::Resource::Ral" do
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ wrong_instance, my_instance, wrong_instance ])
-      Puppet::Resource::Ral.new.find(@request).should == my_resource
+      expect(Puppet::Resource::Ral.new.find(@request)).to eq(my_resource)
     end
 
     it "should produce Puppet::Error instead of ArgumentError" do
@@ -40,7 +40,7 @@ describe "Puppet::Resource::Ral" do
 
       result = Puppet::Resource::Ral.new.find(@request)
 
-      result.should == root_resource
+      expect(result).to eq(root_resource)
     end
   end
 
@@ -55,7 +55,7 @@ describe "Puppet::Resource::Ral" do
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ my_instance ])
-      Puppet::Resource::Ral.new.search(@request).should == [my_resource]
+      expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should filter results by name if there's a name in the key" do
@@ -74,7 +74,7 @@ describe "Puppet::Resource::Ral" do
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ my_instance, wrong_instance ])
-      Puppet::Resource::Ral.new.search(@request).should == [my_resource]
+      expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should filter results by query parameters" do
@@ -93,7 +93,7 @@ describe "Puppet::Resource::Ral" do
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ my_instance, wrong_instance ])
-      Puppet::Resource::Ral.new.search(@request).should == [my_resource]
+      expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should return sorted results" do
@@ -112,7 +112,7 @@ describe "Puppet::Resource::Ral" do
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ b_instance, a_instance ])
-      Puppet::Resource::Ral.new.search(@request).should == [a_resource, b_resource]
+      expect(Puppet::Resource::Ral.new.search(@request)).to eq([a_resource, b_resource])
     end
   end
 

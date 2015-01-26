@@ -20,54 +20,54 @@ describe Puppet::Parser::Scope do
     let(:scope) { create_test_scope_for_node(node_name) }
 
     it "should be a kind of Scope" do
-      scope.should be_a_kind_of(Puppet::Parser::Scope)
+      expect(scope).to be_a_kind_of(Puppet::Parser::Scope)
     end
     it "should set the source to a node resource" do
-      scope.source.should be_a_kind_of(Puppet::Resource::Type)
+      expect(scope.source).to be_a_kind_of(Puppet::Resource::Type)
     end
     it "should have a compiler" do
-      scope.compiler.should be_a_kind_of(Puppet::Parser::Compiler)
+      expect(scope.compiler).to be_a_kind_of(Puppet::Parser::Compiler)
     end
     it "should set the parent to the compiler topscope" do
-      scope.parent.should be(scope.compiler.topscope)
+      expect(scope.parent).to be(scope.compiler.topscope)
     end
   end
 
   it "should return a scope for use in a test harness" do
-    create_test_scope_for_node("node_name_foo").should be_a_kind_of(Puppet::Parser::Scope)
+    expect(create_test_scope_for_node("node_name_foo")).to be_a_kind_of(Puppet::Parser::Scope)
   end
 
   it "should be able to retrieve class scopes by name" do
     @scope.class_set "myname", "myscope"
-    @scope.class_scope("myname").should == "myscope"
+    expect(@scope.class_scope("myname")).to eq("myscope")
   end
 
   it "should be able to retrieve class scopes by object" do
     klass = mock 'ast_class'
     klass.expects(:name).returns("myname")
     @scope.class_set "myname", "myscope"
-    @scope.class_scope(klass).should == "myscope"
+    expect(@scope.class_scope(klass)).to eq("myscope")
   end
 
   it "should be able to retrieve its parent module name from the source of its parent type" do
     @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
 
-    @scope.parent_module_name.should == "foo"
+    expect(@scope.parent_module_name).to eq("foo")
   end
 
   it "should return a nil parent module name if it has no parent" do
-    @topscope.parent_module_name.should be_nil
+    expect(@topscope.parent_module_name).to be_nil
   end
 
   it "should return a nil parent module name if its parent has no source" do
-    @scope.parent_module_name.should be_nil
+    expect(@scope.parent_module_name).to be_nil
   end
 
   it "should get its environment from its compiler" do
     env = Puppet::Node::Environment.create(:testing, [])
     compiler = stub 'compiler', :environment => env, :is_a? => true
     scope = Puppet::Parser::Scope.new(compiler)
-    scope.environment.should equal(env)
+    expect(scope.environment).to equal(env)
   end
 
   it "should fail if no compiler is supplied" do
@@ -83,7 +83,7 @@ describe Puppet::Parser::Scope do
   end
 
   it "should use the resource type collection helper to find its known resource types" do
-    Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
+    expect(Puppet::Parser::Scope.ancestors).to include(Puppet::Resource::TypeCollectionHelper)
   end
 
   describe "when custom functions are called" do
@@ -92,7 +92,7 @@ describe Puppet::Parser::Scope do
     let(:scope) { Puppet::Parser::Scope.new(compiler) }
 
     it "calls methods prefixed with function_ as custom functions" do
-      scope.function_sprintf(["%b", 123]).should == "1111011"
+      expect(scope.function_sprintf(["%b", 123])).to eq("1111011")
     end
 
     it "raises an error when arguments are not passed in an Array" do
@@ -125,8 +125,8 @@ describe Puppet::Parser::Scope do
       compiler = stub 'compiler', :environment => env, :is_a? => true
 
       scope = Puppet::Parser::Scope.new(compiler)
-      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(env))
-      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
+      expect(scope.singleton_class.ancestors).to be_include(Puppet::Parser::Functions.environment_module(env))
+      expect(scope.singleton_class.ancestors).to be_include(Puppet::Parser::Functions.environment_module(root))
     end
 
     it "should extend itself with the default Functions module if its environment is the default" do
@@ -134,14 +134,14 @@ describe Puppet::Parser::Scope do
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)
-      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
+      expect(scope.singleton_class.ancestors).to be_include(Puppet::Parser::Functions.environment_module(root))
     end
   end
 
   describe "when looking up a variable" do
     it "should support :lookupvar and :setvar for backward compatibility" do
       @scope.setvar("var", "yep")
-      @scope.lookupvar("var").should == "yep"
+      expect(@scope.lookupvar("var")).to eq("yep")
     end
 
     it "should fail if invoked with a non-string name" do
@@ -150,7 +150,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should return nil for unset variables" do
-      @scope["var"].should be_nil
+      expect(@scope["var"]).to be_nil
     end
 
     it "answers exist? with boolean false for non existing variables" do
@@ -164,28 +164,28 @@ describe Puppet::Parser::Scope do
 
     it "should be able to look up values" do
       @scope["var"] = "yep"
-      @scope["var"].should == "yep"
+      expect(@scope["var"]).to eq("yep")
     end
 
     it "should be able to look up hashes" do
       @scope["var"] = {"a" => "b"}
-      @scope["var"].should == {"a" => "b"}
+      expect(@scope["var"]).to eq({"a" => "b"})
     end
 
     it "should be able to look up variables in parent scopes" do
       @topscope["var"] = "parentval"
-      @scope["var"].should == "parentval"
+      expect(@scope["var"]).to eq("parentval")
     end
 
     it "should prefer its own values to parent values" do
       @topscope["var"] = "parentval"
       @scope["var"] = "childval"
-      @scope["var"].should == "childval"
+      expect(@scope["var"]).to eq("childval")
     end
 
     it "should be able to detect when variables are set" do
       @scope["var"] = "childval"
-      @scope.should be_include("var")
+      expect(@scope).to be_include("var")
     end
 
     it "does not allow changing a set value" do
@@ -196,7 +196,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should be able to detect when variables are not set" do
-      @scope.should_not be_include("var")
+      expect(@scope).not_to be_include("var")
     end
 
     describe "and the variable is qualified" do
@@ -228,7 +228,7 @@ describe Puppet::Parser::Scope do
 
         other_scope["othervar"] = "otherval"
 
-        @scope["::othervar"].should == "otherval"
+        expect(@scope["::othervar"]).to eq("otherval")
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
@@ -237,7 +237,7 @@ describe Puppet::Parser::Scope do
 
         other_scope["var"] = "otherval"
 
-        @scope["::other::var"].should == "otherval"
+        expect(@scope["::other::var"]).to eq("otherval")
       end
 
       it "should be able to look up deeply qualified variables" do
@@ -246,35 +246,35 @@ describe Puppet::Parser::Scope do
 
         other_scope["var"] = "otherval"
 
-        @scope["other::deep::klass::var"].should == "otherval"
+        expect(@scope["other::deep::klass::var"]).to eq("otherval")
       end
 
       it "should return nil for qualified variables that cannot be found in other classes" do
         other_scope = create_class_scope("other::deep::klass")
 
-        @scope["other::deep::klass::var"].should be_nil
+        expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
         @scope.expects(:warning)
-        @scope["other::deep::klass::var"].should be_nil
+        expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes do not exist" do
         @scope.expects(:warning)
-        @scope["other::deep::klass::var"].should be_nil
+        expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should return nil when asked for a non-string qualified variable from a class that does not exist" do
         @scope.stubs(:warning)
-        @scope["other::deep::klass::var"].should be_nil
+        expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should return nil when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
-        @scope["other::deep::klass::var"].should be_nil
+        expect(@scope["other::deep::klass::var"]).to be_nil
       end
     end
 
@@ -312,19 +312,19 @@ describe Puppet::Parser::Scope do
     it "should store the concatenated string '42'" do
       @topscope.setvar("var", "4", :append => false)
       @scope.setvar("var", "2", :append => true)
-      @scope["var"].should == "42"
+      expect(@scope["var"]).to eq("42")
     end
 
     it "should store the concatenated array [4,2]" do
       @topscope.setvar("var", [4], :append => false)
       @scope.setvar("var", [2], :append => true)
-      @scope["var"].should == [4,2]
+      expect(@scope["var"]).to eq([4,2])
     end
 
     it "should store the merged hash {a => b, c => d}" do
       @topscope.setvar("var", {"a" => "b"}, :append => false)
       @scope.setvar("var", {"c" => "d"}, :append => true)
-      @scope["var"].should == {"a" => "b", "c" => "d"}
+      expect(@scope["var"]).to eq({"a" => "b", "c" => "d"})
     end
 
     it "should raise an error when appending a hash with something other than another hash" do
@@ -341,63 +341,63 @@ describe Puppet::Parser::Scope do
 
   describe "when calling number?" do
     it "should return nil if called with anything not a number" do
-      Puppet::Parser::Scope.number?([2]).should be_nil
+      expect(Puppet::Parser::Scope.number?([2])).to be_nil
     end
 
     it "should return a Fixnum for a Fixnum" do
-      Puppet::Parser::Scope.number?(2).should be_an_instance_of(Fixnum)
+      expect(Puppet::Parser::Scope.number?(2)).to be_an_instance_of(Fixnum)
     end
 
     it "should return a Float for a Float" do
-      Puppet::Parser::Scope.number?(2.34).should be_an_instance_of(Float)
+      expect(Puppet::Parser::Scope.number?(2.34)).to be_an_instance_of(Float)
     end
 
     it "should return 234 for '234'" do
-      Puppet::Parser::Scope.number?("234").should == 234
+      expect(Puppet::Parser::Scope.number?("234")).to eq(234)
     end
 
     it "should return nil for 'not a number'" do
-      Puppet::Parser::Scope.number?("not a number").should be_nil
+      expect(Puppet::Parser::Scope.number?("not a number")).to be_nil
     end
 
     it "should return 23.4 for '23.4'" do
-      Puppet::Parser::Scope.number?("23.4").should == 23.4
+      expect(Puppet::Parser::Scope.number?("23.4")).to eq(23.4)
     end
 
     it "should return 23.4e13 for '23.4e13'" do
-      Puppet::Parser::Scope.number?("23.4e13").should == 23.4e13
+      expect(Puppet::Parser::Scope.number?("23.4e13")).to eq(23.4e13)
     end
 
     it "should understand negative numbers" do
-      Puppet::Parser::Scope.number?("-234").should == -234
+      expect(Puppet::Parser::Scope.number?("-234")).to eq(-234)
     end
 
     it "should know how to convert exponential float numbers ala '23e13'" do
-      Puppet::Parser::Scope.number?("23e13").should == 23e13
+      expect(Puppet::Parser::Scope.number?("23e13")).to eq(23e13)
     end
 
     it "should understand hexadecimal numbers" do
-      Puppet::Parser::Scope.number?("0x234").should == 0x234
+      expect(Puppet::Parser::Scope.number?("0x234")).to eq(0x234)
     end
 
     it "should understand octal numbers" do
-      Puppet::Parser::Scope.number?("0755").should == 0755
+      expect(Puppet::Parser::Scope.number?("0755")).to eq(0755)
     end
 
     it "should return nil on malformed integers" do
-      Puppet::Parser::Scope.number?("0.24.5").should be_nil
+      expect(Puppet::Parser::Scope.number?("0.24.5")).to be_nil
     end
 
     it "should convert strings with leading 0 to integer if they are not octal" do
-      Puppet::Parser::Scope.number?("0788").should == 788
+      expect(Puppet::Parser::Scope.number?("0788")).to eq(788)
     end
 
     it "should convert strings of negative integers" do
-      Puppet::Parser::Scope.number?("-0788").should == -788
+      expect(Puppet::Parser::Scope.number?("-0788")).to eq(-788)
     end
 
     it "should return nil on malformed hexadecimal numbers" do
-      Puppet::Parser::Scope.number?("0x89g").should be_nil
+      expect(Puppet::Parser::Scope.number?("0x89g")).to be_nil
     end
   end
 
@@ -405,7 +405,7 @@ describe Puppet::Parser::Scope do
     it "should store the variable value" do
 #      @scope.setvar("1", :value, :ephemeral => true)
       @scope.set_match_data({1 => :value})
-      @scope["1"].should == :value
+      expect(@scope["1"]).to eq(:value)
     end
 
     it "should remove the variable value when unset_ephemeral_var(:all) is called" do
@@ -415,7 +415,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var(:all)
 
-      @scope["1"].should be_nil
+      expect(@scope["1"]).to be_nil
     end
 
     it "should not remove classic variables when unset_ephemeral_var(:all) is called" do
@@ -425,7 +425,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var(:all)
 
-      @scope["myvar"].should == :value1
+      expect(@scope["myvar"]).to eq(:value1)
     end
 
     it "should raise an error when setting numerical variable" do
@@ -439,13 +439,13 @@ describe Puppet::Parser::Scope do
         @scope.set_match_data({0 => :earliest})
         @scope.new_ephemeral
         @scope.set_match_data({0 => :latest})
-        @scope["0"].should == :latest
+        expect(@scope["0"]).to eq(:latest)
       end
 
       it "should be able to report the current level" do
-        @scope.ephemeral_level.should == 1
+        expect(@scope.ephemeral_level).to eq(1)
         @scope.new_ephemeral
-        @scope.ephemeral_level.should == 2
+        expect(@scope.ephemeral_level).to eq(2)
       end
 
       it "should not check presence of an ephemeral variable across multiple levels" do
@@ -456,7 +456,7 @@ describe Puppet::Parser::Scope do
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
         @scope.new_ephemeral
-        @scope.include?("1").should be_false
+        expect(@scope.include?("1")).to be_falsey
       end
 
       it "should return false when an ephemeral variable doesn't exist in any ephemeral scope" do
@@ -465,14 +465,14 @@ describe Puppet::Parser::Scope do
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
         @scope.new_ephemeral
-        @scope.include?("2").should be_false
+        expect(@scope.include?("2")).to be_falsey
       end
 
       it "should not get ephemeral values from earlier scope when not in later" do
         @scope.set_match_data({1 => :value1})
         @scope.new_ephemeral
         @scope.set_match_data({0 => :value2})
-        @scope.include?("1").should be_false
+        expect(@scope.include?("1")).to be_falsey
       end
 
       describe "when calling unset_ephemeral_var with a level" do
@@ -486,7 +486,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var(level)
 
-          @scope["1"].should == :value2
+          expect(@scope["1"]).to eq(:value2)
         end
       end
     end
@@ -496,20 +496,20 @@ describe Puppet::Parser::Scope do
     it "should store all variables in local scope" do
       @scope.new_ephemeral true
       @scope.setvar("apple", :fruit)
-      @scope["apple"].should == :fruit
+      expect(@scope["apple"]).to eq(:fruit)
     end
 
     it "should remove all local scope variables on unset" do
       @scope.new_ephemeral true
       @scope.setvar("apple", :fruit)
-      @scope["apple"].should == :fruit
+      expect(@scope["apple"]).to eq(:fruit)
       @scope.unset_ephemeral_var
-      @scope["apple"].should == nil
+      expect(@scope["apple"]).to eq(nil)
     end
     it "should be created from a hash" do
       @scope.ephemeral_from({ "apple" => :fruit, "strawberry" => :berry})
-      @scope["apple"].should == :fruit
-      @scope["strawberry"].should == :berry
+      expect(@scope["apple"]).to eq(:fruit)
+      expect(@scope["strawberry"]).to eq(:berry)
     end
   end
 
@@ -552,7 +552,7 @@ describe Puppet::Parser::Scope do
       @match2.stubs(:[]).with(2).returns(nil)
       @scope.ephemeral_from(@match)
       @scope.ephemeral_from(@match2)
-      @scope.lookupvar('2').should == nil
+      expect(@scope.lookupvar('2')).to eq(nil)
     end
 
     it "should create a new ephemeral level" do
@@ -566,7 +566,7 @@ describe Puppet::Parser::Scope do
     it "should be able to set and lookup defaults" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param)
-      @scope.lookupdefaults(:mytype).should == {:myparam => param}
+      expect(@scope.lookupdefaults(:mytype)).to eq({:myparam => param})
     end
 
     it "should fail if a default is already defined and a new default is being defined" do
@@ -583,7 +583,7 @@ describe Puppet::Parser::Scope do
       param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param2)
 
-      @scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
+      expect(@scope.lookupdefaults(:mytype)).to eq({:myparam => param1, :other => param2})
     end
 
     it "should look up defaults defined in parent scopes" do
@@ -594,7 +594,7 @@ describe Puppet::Parser::Scope do
       param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
       child_scope.define_settings(:mytype, param2)
 
-      child_scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
+      expect(child_scope.lookupdefaults(:mytype)).to eq({:myparam => param1, :other => param2})
     end
   end
 
@@ -608,7 +608,7 @@ describe Puppet::Parser::Scope do
       nil        => false
     }.each do |input, output|
       it "should treat #{input.inspect} as #{output}" do
-        Puppet::Parser::Scope.true?(input).should == output
+        expect(Puppet::Parser::Scope.true?(input)).to eq(output)
       end
     end
   end
@@ -617,7 +617,7 @@ describe Puppet::Parser::Scope do
     it "should contain all defined variables in the scope" do
       @scope.setvar("orange", :tangerine)
       @scope.setvar("pear", :green)
-      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+      expect(@scope.to_hash).to eq({'orange' => :tangerine, 'pear' => :green })
     end
 
     it "should contain variables in all local scopes (#21508)" do
@@ -626,7 +626,7 @@ describe Puppet::Parser::Scope do
       @scope.setvar("pear", :green)
       @scope.new_ephemeral true
       @scope.setvar("apple", :red)
-      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+      expect(@scope.to_hash).to eq({'orange' => :tangerine, 'pear' => :green, 'apple' => :red })
     end
 
     it "should contain all defined variables in the scope and all local scopes" do
@@ -634,7 +634,7 @@ describe Puppet::Parser::Scope do
       @scope.setvar("pear", :green)
       @scope.new_ephemeral true
       @scope.setvar("apple", :red)
-      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+      expect(@scope.to_hash).to eq({'orange' => :tangerine, 'pear' => :green, 'apple' => :red })
     end
 
     it "should not contain varaibles in match scopes (non local emphemeral)" do
@@ -642,7 +642,7 @@ describe Puppet::Parser::Scope do
       @scope.setvar("orange", :tangerine)
       @scope.setvar("pear", :green)
       @scope.ephemeral_from(/(f)(o)(o)/.match('foo'))
-      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+      expect(@scope.to_hash).to eq({'orange' => :tangerine, 'pear' => :green })
     end
 
     it "should delete values that are :undef in inner scope" do
@@ -652,7 +652,7 @@ describe Puppet::Parser::Scope do
       @scope.new_ephemeral true
       @scope.setvar("apple", :red)
       @scope.setvar("orange", :undef)
-      @scope.to_hash.should == {'pear' => :green, 'apple' => :red }
+      expect(@scope.to_hash).to eq({'pear' => :green, 'apple' => :red })
     end
   end
 end

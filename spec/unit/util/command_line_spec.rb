@@ -11,50 +11,50 @@ describe Puppet::Util::CommandLine do
     it "should pull off the first argument if it looks like a subcommand" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ client --help whatever.pp })
 
-      command_line.subcommand_name.should == "client"
-      command_line.args.should            == %w{ --help whatever.pp }
+      expect(command_line.subcommand_name).to eq("client")
+      expect(command_line.args).to            eq(%w{ --help whatever.pp })
     end
 
     it "should return nil if the first argument looks like a .pp file" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ whatever.pp })
 
-      command_line.subcommand_name.should == nil
-      command_line.args.should            == %w{ whatever.pp }
+      expect(command_line.subcommand_name).to eq(nil)
+      expect(command_line.args).to            eq(%w{ whatever.pp })
     end
 
     it "should return nil if the first argument looks like a flag" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ --debug })
 
-      command_line.subcommand_name.should == nil
-      command_line.args.should            == %w{ --debug }
+      expect(command_line.subcommand_name).to eq(nil)
+      expect(command_line.args).to            eq(%w{ --debug })
     end
 
     it "should return nil if the first argument is -" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ - })
 
-      command_line.subcommand_name.should == nil
-      command_line.args.should            == %w{ - }
+      expect(command_line.subcommand_name).to eq(nil)
+      expect(command_line.args).to            eq(%w{ - })
     end
 
     it "should return nil if the first argument is --help" do
       command_line = Puppet::Util::CommandLine.new("puppet", %w{ --help })
 
-      command_line.subcommand_name.should == nil
+      expect(command_line.subcommand_name).to eq(nil)
     end
 
 
     it "should return nil if there are no arguments" do
       command_line = Puppet::Util::CommandLine.new("puppet", [])
 
-      command_line.subcommand_name.should == nil
-      command_line.args.should            == []
+      expect(command_line.subcommand_name).to eq(nil)
+      expect(command_line.args).to            eq([])
     end
 
     it "should pick up changes to the array of arguments" do
       args = %w{subcommand}
       command_line = Puppet::Util::CommandLine.new("puppet", args)
       args[0] = 'different_subcommand'
-      command_line.subcommand_name.should == 'different_subcommand'
+      expect(command_line.subcommand_name).to eq('different_subcommand')
     end
   end
 
@@ -71,7 +71,7 @@ describe Puppet::Util::CommandLine do
   describe "when dealing with puppet commands" do
     it "should return the executable name if it is not puppet" do
       command_line = Puppet::Util::CommandLine.new("puppetmasterd", [])
-      command_line.subcommand_name.should == "puppetmasterd"
+      expect(command_line.subcommand_name).to eq("puppetmasterd")
     end
 
     describe "when the subcommand is not implemented" do

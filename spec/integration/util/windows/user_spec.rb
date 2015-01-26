@@ -12,21 +12,21 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       Puppet::Util::Windows::User.expects(:check_token_membership).returns(true)
       Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
-      Puppet::Util::Windows::User.should be_admin
+      expect(Puppet::Util::Windows::User).to be_admin
     end
 
     it "should not be an admin if user's token doesn't contain the Administrators SID" do
       Puppet::Util::Windows::User.expects(:check_token_membership).returns(false)
       Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
-      Puppet::Util::Windows::User.should_not be_admin
+      expect(Puppet::Util::Windows::User).not_to be_admin
     end
 
     it "should raise an exception if we can't check token membership" do
       Puppet::Util::Windows::User.expects(:check_token_membership).raises(Puppet::Util::Windows::Error, "Access denied.")
       Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
-      lambda { Puppet::Util::Windows::User.admin? }.should raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
     end
   end
 
@@ -39,21 +39,21 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(true)
       Puppet::Util::Windows::User.expects(:check_token_membership).never
 
-      Puppet::Util::Windows::User.should be_admin
+      expect(Puppet::Util::Windows::User).to be_admin
     end
 
     it "should not be an admin if user is not running with elevated privileges" do
       Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(false)
       Puppet::Util::Windows::User.expects(:check_token_membership).never
 
-      Puppet::Util::Windows::User.should_not be_admin
+      expect(Puppet::Util::Windows::User).not_to be_admin
     end
 
     it "should raise an exception if the process fails to open the process token" do
       Puppet::Util::Windows::Process.stubs(:elevated_security?).raises(Puppet::Util::Windows::Error, "Access denied.")
       Puppet::Util::Windows::User.expects(:check_token_membership).never
 
-      lambda { Puppet::Util::Windows::User.admin? }.should raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
     end
   end
 
@@ -103,22 +103,22 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
-        Puppet::Util::Windows::User.password_is?(username, bad_password).should be_false
+        expect(Puppet::Util::Windows::User.password_is?(username, bad_password)).to be_falsey
       end
 
       it "should return false given an incorrect username and nil password" do
-        Puppet::Util::Windows::User.password_is?(username, nil).should be_false
+        expect(Puppet::Util::Windows::User.password_is?(username, nil)).to be_falsey
       end
 
       it "should return false given a nil username and an incorrect password" do
-        Puppet::Util::Windows::User.password_is?(nil, bad_password).should be_false
+        expect(Puppet::Util::Windows::User.password_is?(nil, bad_password)).to be_falsey
       end
     end
 
     describe "check_token_membership" do
       it "should not raise an error" do
         # added just to call an FFI code path on all platforms
-        lambda { Puppet::Util::Windows::User.check_token_membership }.should_not raise_error
+        expect { Puppet::Util::Windows::User.check_token_membership }.not_to raise_error
       end
     end
   end

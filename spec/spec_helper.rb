@@ -14,8 +14,10 @@ rescue LoadError
 end
 
 require 'puppet'
-gem 'rspec', '>=2.0.0'
+gem 'rspec', '>=3.1.0'
 require 'rspec/expectations'
+require 'rspec/its'
+require 'rspec/collection_matchers'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
@@ -31,7 +33,6 @@ require 'puppet_spec/files'
 require 'puppet_spec/settings'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
-require 'monkey_patches/alias_should_to_must'
 require 'puppet/test/test_helper'
 
 Pathname.glob("#{dir}/shared_contexts/*.rb") do |file|
@@ -174,7 +175,7 @@ RSpec.configure do |config|
 
     def profile
       result = RubyProf.profile { yield }
-      name = example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
+      name = RSpec.current_example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
       printer = RubyProf::CallTreePrinter.new(result)
       open(File.join(ENV['PROFILEOUT'],"callgrind.#{name}.#{Time.now.to_i}.trace"), "w") do |f|
         printer.print(f)

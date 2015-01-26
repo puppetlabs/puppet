@@ -36,7 +36,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
   end
 
   def expect_output(fixture_name)
-    File.read(crontab_user1).should == File.read(my_fixture(fixture_name))
+    expect(File.read(crontab_user1)).to eq(File.read(my_fixture(fixture_name)))
   end
 
   describe "when managing a cron entry" do
@@ -232,8 +232,8 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
             target       => '#{crontab_user2}',
         }
         MANIFEST
-        File.read(crontab_user1).should == File.read(my_fixture('moved_cronjob_input1'))
-        File.read(crontab_user2).should == File.read(my_fixture('moved_cronjob_input2'))
+        expect(File.read(crontab_user1)).to eq(File.read(my_fixture('moved_cronjob_input1')))
+        expect(File.read(crontab_user2)).to eq(File.read(my_fixture('moved_cronjob_input2')))
       end
     end
   end

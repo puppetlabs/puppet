@@ -30,18 +30,18 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       resource[:source] = File.expand_path("/foo")
       resource.parameter(:source).expects(:checksum).returns "{md5lite}eh"
 
-      content.checksum_type.should == :md5lite
+      expect(content.checksum_type).to eq(:md5lite)
     end
 
     it "should use the type specified by the checksum parameter if no source is set" do
       resource[:checksum] = :md5lite
 
-      content.checksum_type.should == :md5lite
+      expect(content.checksum_type).to eq(:md5lite)
     end
 
     with_digest_algorithms do
       it "should use the type specified by digest_algorithm by default" do
-        content.checksum_type.should == digest_algorithm.intern
+        expect(content.checksum_type).to eq(digest_algorithm.intern)
       end
     end
   end
@@ -51,7 +51,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
     it "should use the set content if available" do
       content.should = "ehness"
-      content.actual_content.should == "ehness"
+      expect(content.actual_content).to eq("ehness")
     end
 
     it "should not use the content from the source if the source is set" do
@@ -59,7 +59,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
       resource.expects(:parameter).never.with(:source).returns source
 
-      content.actual_content.should be_nil
+      expect(content.actual_content).to be_nil
     end
   end
 
@@ -70,7 +70,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       content.stubs(:checksum_type).returns "md5"
       content.should = "this is some content"
 
-      content.actual_content.should == "this is some content"
+      expect(content.actual_content).to eq("this is some content")
     end
 
     with_digest_algorithms do
@@ -80,13 +80,13 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         content.stubs(:checksum_type).returns digest_algorithm
         content.should = "this is some content"
 
-        content.should.must == "{#{digest_algorithm}}#{d}"
+        expect(content.should).to eq("{#{digest_algorithm}}#{d}")
       end
 
       it "should not checksum 'absent'" do
         content.should = :absent
 
-        content.should.must == :absent
+        expect(content.should).to eq(:absent)
       end
 
       it "should accept a checksum as the desired content" do
@@ -95,14 +95,14 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         string = "{#{digest_algorithm}}#{d}"
         content.should = string
 
-        content.should.must == string
+        expect(content.should).to eq(string)
       end
     end
 
     it "should convert the value to ASCII-8BIT", :if => "".respond_to?(:encode) do
       content.should= "Let's make a \u{2603}"
 
-      content.actual_content.should == "Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT)
+      expect(content.actual_content).to eq("Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT))
     end
   end
 
@@ -112,21 +112,21 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     it "should return :absent if the file does not exist" do
       resource.expects(:stat).returns nil
 
-      content.retrieve.should == :absent
+      expect(content.retrieve).to eq(:absent)
     end
 
     it "should not manage content on directories" do
       stat = mock 'stat', :ftype => "directory"
       resource.expects(:stat).returns stat
 
-      content.retrieve.should be_nil
+      expect(content.retrieve).to be_nil
     end
 
     it "should not manage content on links" do
       stat = mock 'stat', :ftype => "link"
       resource.expects(:stat).returns stat
 
-      content.retrieve.should be_nil
+      expect(content.retrieve).to be_nil
     end
 
     it "should always return the checksum as a string" do
@@ -138,7 +138,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       time = Time.now
       resource.parameter(:checksum).expects(:mtime_file).with(resource[:path]).returns time
 
-      content.retrieve.should == "{mtime}#{time}"
+      expect(content.retrieve).to eq("{mtime}#{time}")
     end
 
     with_digest_algorithms do
@@ -147,7 +147,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         resource.expects(:stat).returns stat
         resource.parameter(:checksum).expects("#{digest_algorithm}_file".intern).with(resource[:path]).returns "mysum"
 
-        content.retrieve.should == "{#{digest_algorithm}}mysum"
+        expect(content.retrieve).to eq("{#{digest_algorithm}}mysum")
       end
     end
   end
@@ -162,7 +162,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     it "should return true if the resource shouldn't be a regular file" do
       resource.expects(:should_be_file?).returns false
       content.should = "foo"
-      content.must be_safe_insync("whatever")
+      expect(content).to be_safe_insync("whatever")
     end
 
     it "should warn that no content will be synced to links when ensure is :present" do
@@ -178,14 +178,14 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
     it "should return false if the current content is :absent" do
       content.should = "foo"
-      content.should_not be_safe_insync(:absent)
+      expect(content).not_to be_safe_insync(:absent)
     end
 
     it "should return false if the file should be a file but is not present" do
       resource.expects(:should_be_file?).returns true
       content.should = "foo"
 
-      content.should_not be_safe_insync(:absent)
+      expect(content).not_to be_safe_insync(:absent)
     end
 
     describe "and the file exists" do
@@ -197,11 +197,11 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         end
 
         it "should return false if the current contents are different from the desired content" do
-          content.should_not be_safe_insync("other content")
+          expect(content).not_to be_safe_insync("other content")
         end
 
         it "should return true if the sum for the current contents is the same as the sum for the desired content" do
-          content.must be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
+          expect(content).to be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
         end
 
         [true, false].product([true, false]).each do |cfg, param|
@@ -216,12 +216,12 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
               it "should display a diff" do
                 content.expects(:diff).returns("my diff").once
                 content.expects(:debug).with("\nmy diff").once
-                content.should_not be_safe_insync("other content")
+                expect(content).not_to be_safe_insync("other content")
               end
             else
               it "should not display a diff" do
                 content.expects(:diff).never
-                content.should_not be_safe_insync("other content")
+                expect(content).not_to be_safe_insync("other content")
               end
             end
           end
@@ -237,18 +237,18 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       it "should be insync if the file exists and the content is different" do
         resource.stubs(:stat).returns mock('stat')
 
-        content.must be_safe_insync("whatever")
+        expect(content).to be_safe_insync("whatever")
       end
 
       it "should be insync if the file exists and the content is right" do
         resource.stubs(:stat).returns mock('stat')
 
-        content.must be_safe_insync("something")
+        expect(content).to be_safe_insync("something")
       end
 
       it "should not be insync if the file does not exist" do
         content.should = "foo"
-        content.should_not be_safe_insync(:absent)
+        expect(content).not_to be_safe_insync(:absent)
       end
     end
   end
@@ -270,13 +270,13 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     it "should return :file_changed if the file already existed" do
       resource.expects(:stat).returns "something"
       resource.stubs(:write)
-      content.sync.should == :file_changed
+      expect(content.sync).to eq(:file_changed)
     end
 
     it "should return :file_created if the file did not exist" do
       resource.expects(:stat).returns nil
       resource.stubs(:write)
-      content.sync.should == :file_created
+      expect(content.sync).to eq(:file_created)
     end
   end
 
@@ -305,7 +305,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
       it "should return the current checksum value" do
         resource.parameter(:checksum).expects(:sum_stream).returns "checksum"
-        content.write(fh).should == "checksum"
+        expect(content.write(fh)).to eq("checksum")
       end
     end
 
@@ -354,14 +354,14 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         source = resource.parameter(:source)
         resource.write(source)
 
-        Puppet::FileSystem.binread(filename).should == source_content
+        expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
       end
 
       with_digest_algorithms do
         it "should return the checksum computed" do
           File.open(filename, 'wb') do |file|
             resource[:checksum] = digest_algorithm
-            content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
+            expect(content.write(file)).to eq("{#{digest_algorithm}}#{digest(source_content)}")
           end
         end
       end
@@ -457,7 +457,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     describe "each_chunk_from should work" do
 
       it "when content is a string" do
-        content.each_chunk_from('i_am_a_string') { |chunk| chunk.should == 'i_am_a_string' }
+        content.each_chunk_from('i_am_a_string') { |chunk| expect(chunk).to eq('i_am_a_string') }
       end
 
       # The following manifest is a case where source and content.should are both set
@@ -471,50 +471,50 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         content.should = "{md5}123abcd"
 
         content.expects(:chunk_file_from_source).returns('from_source')
-        content.each_chunk_from(source) { |chunk| chunk.should == 'from_source' }
+        content.each_chunk_from(source) { |chunk| expect(chunk).to eq('from_source') }
       end
 
       it "when no content, source, but ensure present" do
         resource[:ensure] = :present
-        content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
       end
 
       # you might do this if you were just auditing
       it "when no content, source, but ensure file" do
         resource[:ensure] = :file
-        content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
       end
 
       it "when source_or_content is nil and content not a checksum" do
-        content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
       end
 
       # the content is munged so that if it's a checksum nil gets passed in
       it "when content is a checksum it should try to read from filebucket" do
         content.should = "{md5}123abcd"
         content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
-        content.each_chunk_from(nil) { |chunk| chunk.should == 'im_a_filebucket' }
+        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('im_a_filebucket') }
       end
 
       it "when running as puppet apply" do
         Puppet[:default_file_terminus] = "file_server"
         source_or_content = stubs('source_or_content')
         source_or_content.expects(:content).once.returns :whoo
-        content.each_chunk_from(source_or_content) { |chunk| chunk.should == :whoo }
+        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq(:whoo) }
       end
 
       it "when running from source with a local file" do
         source_or_content = stubs('source_or_content')
         source_or_content.expects(:local?).returns true
         content.expects(:chunk_file_from_disk).with(source_or_content).once.yields 'woot'
-        content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq('woot') }
       end
 
       it "when running from source with a remote file" do
         source_or_content = stubs('source_or_content')
         source_or_content.expects(:local?).returns false
         content.expects(:chunk_file_from_source).with(source_or_content).once.yields 'woot'
-        content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq('woot') }
       end
     end
   end

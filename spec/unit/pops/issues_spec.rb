@@ -7,21 +7,21 @@ describe "Puppet::Pops::Issues" do
 
   it "should have an issue called NAME_WITH_HYPHEN" do
     x = Puppet::Pops::Issues::NAME_WITH_HYPHEN
-    x.class.should == Puppet::Pops::Issues::Issue
-    x.issue_code.should == :NAME_WITH_HYPHEN
+    expect(x.class).to eq(Puppet::Pops::Issues::Issue)
+    expect(x.issue_code).to eq(:NAME_WITH_HYPHEN)
   end
 
   it "should should format a message that requires an argument" do
     x = Puppet::Pops::Issues::NAME_WITH_HYPHEN
-    x.format(:name => 'Boo-Hoo',
+    expect(x.format(:name => 'Boo-Hoo',
       :label => Puppet::Pops::Model::ModelLabelProvider.new,
       :semantic => "dummy"
-      ).should == "A String may not have a name containing a hyphen. The name 'Boo-Hoo' is not legal"
+      )).to eq("A String may not have a name containing a hyphen. The name 'Boo-Hoo' is not legal")
   end
 
   it "should should format a message that does not require an argument" do
     x = Puppet::Pops::Issues::NOT_TOP_LEVEL
-    x.format().should == "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
+    expect(x.format()).to eq("Classes, definitions, and nodes may only appear at toplevel or inside other classes")
   end
 
 end

@@ -8,11 +8,11 @@ describe "egrammar parsing heredoc" do
   include ParserRspecHelper
 
   it "parses plain heredoc" do
-    dump(parse("@(END)\nThis is\nheredoc text\nEND\n")).should == [
+    expect(dump(parse("@(END)\nThis is\nheredoc text\nEND\n"))).to eq([
       "(@()",
       "  (sublocated 'This is\nheredoc text\n')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses heredoc with margin" do
@@ -23,11 +23,11 @@ describe "egrammar parsing heredoc" do
     "   | END",
     ""
     ].join("\n")
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated 'This is\nheredoc text\n')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses heredoc with margin and right newline trim" do
@@ -38,11 +38,11 @@ describe "egrammar parsing heredoc" do
     "   |- END",
     ""
     ].join("\n")
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated 'This is\nheredoc text')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses syntax and escape specification" do
@@ -51,11 +51,11 @@ describe "egrammar parsing heredoc" do
     Tex\\tt\\n
     |- END
     CODE
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@(syntax)",
       "  (sublocated 'Tex\tt\\n')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses interpolated heredoc expression" do
@@ -64,11 +64,11 @@ describe "egrammar parsing heredoc" do
     Hello $name
     |- END
     CODE
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated (cat 'Hello ' (str $name) ''))",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses with escaped newlines without preceding whitespace" do
@@ -79,11 +79,11 @@ describe "egrammar parsing heredoc" do
     |- END
     CODE
     parse(src)
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated 'First Line Second Line')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses with escaped newlines with proper margin" do
@@ -94,11 +94,11 @@ describe "egrammar parsing heredoc" do
     |- END
     CODE
     parse(src)
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated ' First Line  Second Line')",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses interpolated heredoc expression with false start on $" do
@@ -107,11 +107,11 @@ describe "egrammar parsing heredoc" do
     Hello $name$%a
     |- END
     CODE
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated (cat 'Hello ' (str $name) '$%a'))",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
 end

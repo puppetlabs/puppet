@@ -57,12 +57,12 @@ describe Puppet::Type.type(:exec) do
 
     it "should return :executed_command as its event" do
       resource = Puppet::Type.type(:exec).new :command => @command
-      resource.parameter(:returns).event.name.should == :executed_command
+      expect(resource.parameter(:returns).event.name).to eq(:executed_command)
     end
 
     describe "when execing" do
       it "should use the 'execute' method to exec" do
-        exec_tester("true").refresh.should == :executed_command
+        expect(exec_tester("true").refresh).to eq(:executed_command)
       end
 
       it "should report a failure" do
@@ -84,8 +84,8 @@ describe Puppet::Type.type(:exec) do
         exec_tester('false', 0, :output => output, :logoutput => true).refresh
         output.split("\n").each do |line|
           log = @logs.shift
-          log.level.should == :err
-          log.message.should == line
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
         end
       end
 
@@ -96,8 +96,8 @@ describe Puppet::Type.type(:exec) do
 
         output.split("\n").each do |line|
           log = @logs.shift
-          log.level.should == :err
-          log.message.should == line
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
         end
       end
     end
@@ -110,8 +110,8 @@ describe Puppet::Type.type(:exec) do
 
         output.split("\n").each do |line|
           log = @logs.shift
-          log.level.should == :err
-          log.message.should == line
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
         end
       end
 
@@ -125,20 +125,20 @@ describe Puppet::Type.type(:exec) do
 
         output.split("\n").each do |line|
           log = @logs.shift
-          log.level.should == :err
-          log.message.should == line
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
         end
       end
 
       it "shouldn't log the output on success" do
         exec_tester('true', 0, :output => "a\nb\nc\n", :logoutput => :on_failure).refresh
-        @logs.should == []
+        expect(@logs).to eq([])
       end
     end
 
     it "shouldn't log the output on success when non-zero exit status is in a returns array" do
       exec_tester("true", 100, :output => "a\n", :logoutput => :on_failure, :returns => [1, 100]).refresh
-      @logs.should == []
+      expect(@logs).to eq([])
     end
 
     describe " when multiple tries are set," do
@@ -160,7 +160,7 @@ describe Puppet::Type.type(:exec) do
     catalog.add_resource execer
     dependencies = execer.autorequire(catalog)
 
-    dependencies.collect(&:to_s).should == [Puppet::Relationship.new(tmp, execer).to_s]
+    expect(dependencies.collect(&:to_s)).to eq([Puppet::Relationship.new(tmp, execer).to_s])
   end
 
   describe "when handling the path parameter" do
@@ -171,7 +171,7 @@ describe Puppet::Type.type(:exec) do
     }.each do |test, input|
       it "should accept #{test}" do
         type = Puppet::Type.type(:exec).new(:name => @command, :path => input)
-        type[:path].should == expect
+        expect(type[:path]).to eq(expect)
       end
     end
 
@@ -190,7 +190,7 @@ describe Puppet::Type.type(:exec) do
 
       it "should use the path separator of the current platform" do
         type = Puppet::Type.type(:exec).new(:name => @command, :path => "fooqbarqbaz")
-        type[:path].should == %w[foo bar baz]
+        expect(type[:path]).to eq(%w[foo bar baz])
       end
     end
   end
@@ -217,7 +217,7 @@ describe Puppet::Type.type(:exec) do
         it "should accept '#{value}' as user if we are root" do
           Puppet.features.stubs(:root?).returns(true)
           type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => value)
-          type[:user].should == value
+          expect(type[:user]).to eq(value)
         end
       end
     end
@@ -240,7 +240,7 @@ describe Puppet::Type.type(:exec) do
       ['one', 2, 'wheel', 4294967295, 4294967296].each do |value|
         it "should accept '#{value}' without error or judgement" do
           type = Puppet::Type.type(:exec).new(:name => @command, :group => value)
-          type[:group].should == value
+          expect(type[:group]).to eq(value)
         end
       end
     end
@@ -308,7 +308,7 @@ describe Puppet::Type.type(:exec) do
         input = %w{one two three}
         @test.provider.expects(:validatecmd).times(input.length).returns(true)
         @test[param] = input
-        @test[param].should == input
+        expect(@test[param]).to eq(input)
       end
 
       it "should reject the array when any commands return invalid" do
@@ -318,14 +318,14 @@ describe Puppet::Type.type(:exec) do
           @test.provider.expects(:validatecmd).with(cmd).returns(true)
         end
         @test[param] = input
-        @test[param].should == input
+        expect(@test[param]).to eq(input)
       end
 
       it "should reject the array when all commands return invalid" do
         input = %w{one two three}
         @test.provider.expects(:validatecmd).times(input.length).returns(false)
         @test[param] = input
-        @test[param].should == input
+        expect(@test[param]).to eq(input)
       end
     end
   end
@@ -356,7 +356,7 @@ describe Puppet::Type.type(:exec) do
       }.each do |name, data|
         it "should accept #{name}" do
           @exec[:environment] = data
-          @exec[:environment].should == data
+          expect(@exec[:environment]).to eq(data)
         end
       end
 
@@ -375,12 +375,12 @@ describe Puppet::Type.type(:exec) do
       [0, 0.1, 1, 10, 4294967295].each do |valid|
         it "should accept '#{valid}' as valid" do
           @exec[:timeout] = valid
-          @exec[:timeout].should == valid
+          expect(@exec[:timeout]).to eq(valid)
         end
 
         it "should accept '#{valid}' in an array as valid" do
           @exec[:timeout] = [valid]
-          @exec[:timeout].should == valid
+          expect(@exec[:timeout]).to eq(valid)
         end
       end
 
@@ -411,15 +411,15 @@ describe Puppet::Type.type(:exec) do
       it "should convert timeout to a float" do
         command = make_absolute('/bin/false')
         resource = Puppet::Type.type(:exec).new :command => command, :timeout => "12"
-        resource[:timeout].should be_a(Float)
-        resource[:timeout].should == 12.0
+        expect(resource[:timeout]).to be_a(Float)
+        expect(resource[:timeout]).to eq(12.0)
       end
 
       it "should munge negative timeouts to 0.0" do
         command = make_absolute('/bin/false')
         resource = Puppet::Type.type(:exec).new :command => command, :timeout => "-12.0"
-        resource.parameter(:timeout).value.should be_a(Float)
-        resource.parameter(:timeout).value.should == 0.0
+        expect(resource.parameter(:timeout).value).to be_a(Float)
+        expect(resource.parameter(:timeout).value).to eq(0.0)
       end
     end
 
@@ -427,14 +427,14 @@ describe Puppet::Type.type(:exec) do
       [1, 10, 4294967295].each do |valid|
         it "should accept '#{valid}' as valid" do
           @exec[:tries] = valid
-          @exec[:tries].should == valid
+          expect(@exec[:tries]).to eq(valid)
         end
 
         if "REVISIT: too much test log spam" == "a good thing" then
           it "should accept '#{valid}' in an array as valid" do
             pending "inconsistent, but this is not supporting arrays, unlike timeout"
             @exec[:tries] = [valid]
-            @exec[:tries].should == valid
+            expect(@exec[:tries]).to eq(valid)
           end
         end
       end
@@ -459,14 +459,14 @@ describe Puppet::Type.type(:exec) do
       [0, 0.2, 1, 10, 4294967295].each do |valid|
         it "should accept '#{valid}' as valid" do
           @exec[:try_sleep] = valid
-          @exec[:try_sleep].should == valid
+          expect(@exec[:try_sleep]).to eq(valid)
         end
 
         if "REVISIT: too much test log spam" == "a good thing" then
           it "should accept '#{valid}' in an array as valid" do
             pending "inconsistent, but this is not supporting arrays, unlike timeout"
             @exec[:try_sleep] = [valid]
-            @exec[:try_sleep].should == valid
+            expect(@exec[:try_sleep]).to eq(valid)
           end
         end
       end
@@ -498,7 +498,7 @@ describe Puppet::Type.type(:exec) do
       [:true, :false].each do |value|
         it "should accept '#{value}'" do
           @exec[:refreshonly] = value
-          @exec[:refreshonly].should == value
+          expect(@exec[:refreshonly]).to eq(value)
         end
       end
 
@@ -541,7 +541,7 @@ describe Puppet::Type.type(:exec) do
       { :true => false, :false => true }.each do |input, result|
         it "should return '#{result}' when given '#{input}'" do
           @test[:refreshonly] = input
-          @test.check_all_attributes.should == result
+          expect(@test.check_all_attributes).to eq(result)
         end
       end
     end
@@ -556,36 +556,36 @@ describe Puppet::Type.type(:exec) do
       context "with a single item" do
         it "should run when the item does not exist" do
           @test[:creates] = @unexist
-          @test.check_all_attributes.should == true
+          expect(@test.check_all_attributes).to eq(true)
         end
 
         it "should not run when the item exists" do
           @test[:creates] = @exist
-          @test.check_all_attributes.should == false
+          expect(@test.check_all_attributes).to eq(false)
         end
       end
 
       context "with an array with one item" do
         it "should run when the item does not exist" do
           @test[:creates] = [@unexist]
-          @test.check_all_attributes.should == true
+          expect(@test.check_all_attributes).to eq(true)
         end
 
         it "should not run when the item exists" do
           @test[:creates] = [@exist]
-          @test.check_all_attributes.should == false
+          expect(@test.check_all_attributes).to eq(false)
         end
       end
 
       context "with an array with multiple items" do
         it "should run when all items do not exist" do
           @test[:creates] = [@unexist] * 3
-          @test.check_all_attributes.should == true
+          expect(@test.check_all_attributes).to eq(true)
         end
 
         it "should not run when one item exists" do
           @test[:creates] = [@unexist, @exist, @unexist]
-          @test.check_all_attributes.should == false
+          expect(@test.check_all_attributes).to eq(false)
         end
 
         it "should not run when all items exist" do
@@ -617,49 +617,49 @@ describe Puppet::Type.type(:exec) do
         context "with a single item" do
           it "should run if the command exits non-zero" do
             @test[param] = @fail
-            @test.check_all_attributes.should == true
+            expect(@test.check_all_attributes).to eq(true)
           end
 
           it "should not run if the command exits zero" do
             @test[param] = @pass
-            @test.check_all_attributes.should == false
+            expect(@test.check_all_attributes).to eq(false)
           end
         end
 
         context "with an array with a single item" do
           it "should run if the command exits non-zero" do
             @test[param] = [@fail]
-            @test.check_all_attributes.should == true
+            expect(@test.check_all_attributes).to eq(true)
           end
 
           it "should not run if the command exits zero" do
             @test[param] = [@pass]
-            @test.check_all_attributes.should == false
+            expect(@test.check_all_attributes).to eq(false)
           end
         end
 
         context "with an array with multiple items" do
           it "should run if all the commands exits non-zero" do
             @test[param] = [@fail] * 3
-            @test.check_all_attributes.should == true
+            expect(@test.check_all_attributes).to eq(true)
           end
 
           it "should not run if one command exits zero" do
             @test[param] = [@pass, @fail, @pass]
-            @test.check_all_attributes.should == false
+            expect(@test.check_all_attributes).to eq(false)
           end
 
           it "should not run if all command exits zero" do
             @test[param] = [@pass] * 3
-            @test.check_all_attributes.should == false
+            expect(@test.check_all_attributes).to eq(false)
           end
         end
 
         it "should emit output to debug" do
           Puppet::Util::Log.level = :debug
           @test[param] = @fail
-          @test.check_all_attributes.should == true
-          @logs.shift.message.should == "test output"
+          expect(@test.check_all_attributes).to eq(true)
+          expect(@logs.shift.message).to eq("test output")
         end
       end
     end
@@ -672,18 +672,18 @@ describe Puppet::Type.type(:exec) do
 
     it "should return :notrun when check_all_attributes returns true" do
       @exec_resource.stubs(:check_all_attributes).returns true
-      @exec_resource.retrieve[:returns].should == :notrun
+      expect(@exec_resource.retrieve[:returns]).to eq(:notrun)
     end
 
     it "should return default exit code 0 when check_all_attributes returns false" do
       @exec_resource.stubs(:check_all_attributes).returns false
-      @exec_resource.retrieve[:returns].should == ['0']
+      expect(@exec_resource.retrieve[:returns]).to eq(['0'])
     end
 
     it "should return the specified exit code when check_all_attributes returns false" do
       @exec_resource.stubs(:check_all_attributes).returns false
       @exec_resource[:returns] = 42
-      @exec_resource.retrieve[:returns].should == ["42"]
+      expect(@exec_resource.retrieve[:returns]).to eq(["42"])
     end
   end
 
@@ -700,7 +700,7 @@ describe Puppet::Type.type(:exec) do
       @exec_resource.stubs(:provider).returns(provider)
 
       @exec_resource.refresh
-      @exec_resource.output.should == 'silly output'
+      expect(@exec_resource.output).to eq('silly output')
     end
   end
 
@@ -751,15 +751,15 @@ describe Puppet::Type.type(:exec) do
     end
 
     it "should accept a relative command with a path" do
-      type.new(:command => rel, :path => path).must be
+      expect(type.new(:command => rel, :path => path)).to be
     end
 
     it "should accept an absolute command with no path" do
-      type.new(:command => abs).must be
+      expect(type.new(:command => abs)).to be
     end
 
     it "should accept an absolute command with a path" do
-      type.new(:command => abs, :path => path).must be
+      expect(type.new(:command => abs, :path => path)).to be
     end
   end
   describe "when providing a umask" do

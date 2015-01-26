@@ -6,11 +6,11 @@ augeas = Puppet::Type.type(:augeas)
 describe augeas do
   describe "when augeas is present", :if => Puppet.features.augeas? do
     it "should have a default provider inheriting from Puppet::Provider" do
-      augeas.defaultprovider.ancestors.should be_include(Puppet::Provider)
+      expect(augeas.defaultprovider.ancestors).to be_include(Puppet::Provider)
     end
 
     it "should have a valid provider" do
-      augeas.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
+      expect(augeas.new(:name => "foo").provider.class.ancestors).to be_include(Puppet::Provider)
     end
   end
 
@@ -18,19 +18,19 @@ describe augeas do
     it "should be able to create an instance" do
       provider_class = Puppet::Type::Augeas.provider(Puppet::Type::Augeas.providers[0])
       Puppet::Type::Augeas.expects(:defaultprovider).returns provider_class
-      augeas.new(:name => "bar").should_not be_nil
+      expect(augeas.new(:name => "bar")).not_to be_nil
     end
 
     it "should have a parse_commands feature" do
-      augeas.provider_feature(:parse_commands).should_not be_nil
+      expect(augeas.provider_feature(:parse_commands)).not_to be_nil
     end
 
     it "should have a need_to_run? feature" do
-      augeas.provider_feature(:need_to_run?).should_not be_nil
+      expect(augeas.provider_feature(:need_to_run?)).not_to be_nil
     end
 
     it "should have an execute_changes feature" do
-      augeas.provider_feature(:execute_changes).should_not be_nil
+      expect(augeas.provider_feature(:execute_changes)).not_to be_nil
     end
 
     properties = [:returns]
@@ -38,21 +38,21 @@ describe augeas do
 
     properties.each do |property|
       it "should have a #{property} property" do
-        augeas.attrclass(property).ancestors.should be_include(Puppet::Property)
+        expect(augeas.attrclass(property).ancestors).to be_include(Puppet::Property)
       end
 
       it "should have documentation for its #{property} property" do
-        augeas.attrclass(property).doc.should be_instance_of(String)
+        expect(augeas.attrclass(property).doc).to be_instance_of(String)
       end
     end
 
     params.each do |param|
       it "should have a #{param} parameter" do
-        augeas.attrclass(param).ancestors.should be_include(Puppet::Parameter)
+        expect(augeas.attrclass(param).ancestors).to be_include(Puppet::Parameter)
       end
 
       it "should have documentation for its #{param} parameter" do
-        augeas.attrclass(param).doc.should be_instance_of(String)
+        expect(augeas.attrclass(param).doc).to be_instance_of(String)
       end
     end
   end
@@ -64,23 +64,23 @@ describe augeas do
     end
 
     it "should be blank for context" do
-      augeas.new(:name => :context)[:context].should == ""
+      expect(augeas.new(:name => :context)[:context]).to eq("")
     end
 
     it "should be blank for onlyif" do
-      augeas.new(:name => :onlyif)[:onlyif].should == ""
+      expect(augeas.new(:name => :onlyif)[:onlyif]).to eq("")
     end
 
     it "should be blank for load_path" do
-      augeas.new(:name => :load_path)[:load_path].should == ""
+      expect(augeas.new(:name => :load_path)[:load_path]).to eq("")
     end
 
     it "should be / for root" do
-      augeas.new(:name => :root)[:root].should == "/"
+      expect(augeas.new(:name => :root)[:root]).to eq("/")
     end
 
     it "should be false for type_check" do
-      augeas.new(:name => :type_check)[:type_check].should == :false
+      expect(augeas.new(:name => :type_check)[:type_check]).to eq(:false)
     end
   end
 
@@ -90,30 +90,30 @@ describe augeas do
       provider = stub("provider", :need_to_run? => false)
       resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
       changes = augeas.attrclass(:returns).new(:resource => resource)
-      changes.retrieve.should == 0
+      expect(changes.retrieve).to eq(0)
     end
 
     it "should return :need_to_run if it needs to run" do
       provider = stub("provider", :need_to_run? => true)
       resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
       changes = augeas.attrclass(:returns).new(:resource => resource)
-      changes.retrieve.should == :need_to_run
+      expect(changes.retrieve).to eq(:need_to_run)
     end
   end
 
   describe "loading specific files" do
     it "should require lens when incl is used" do
-      lambda { augeas.new(:name => :no_lens, :incl => "/etc/hosts")}.should raise_error(Puppet::Error)
+      expect { augeas.new(:name => :no_lens, :incl => "/etc/hosts")}.to raise_error(Puppet::Error)
     end
 
     it "should require incl when lens is used" do
-      lambda { augeas.new(:name => :no_incl, :lens => "Hosts.lns") }.should raise_error(Puppet::Error)
+      expect { augeas.new(:name => :no_incl, :lens => "Hosts.lns") }.to raise_error(Puppet::Error)
     end
 
     it "should set the context when a specific file is used" do
       fake_provider = stub_everything "fake_provider"
       augeas.stubs(:defaultprovider).returns fake_provider
-      augeas.new(:name => :no_incl, :lens => "Hosts.lns", :incl => "/etc/hosts")[:context].should == "/files/etc/hosts"
+      expect(augeas.new(:name => :no_incl, :lens => "Hosts.lns", :incl => "/etc/hosts")[:context]).to eq("/files/etc/hosts")
     end
   end
 end

@@ -18,6 +18,6 @@ describe Puppet::Application::Facts do
       }.to exit_with(0)
     }.to have_printed(/object:Puppet::Node::Facts/)
 
-    @logs.should be_empty
+    expect(@logs).to be_empty
   end
 end

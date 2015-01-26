@@ -16,43 +16,43 @@ describe Puppet::Network::Rights do
         right.allow("*")
         right.restrict_method(allowed_method)
         right.restrict_authenticated(:any)
-        rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {}).should == nil
+        expect(rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {})).to eq(nil)
       end
     end
 
     it "should disallow the request if neither :find nor :save is allowed" do
       rights = Puppet::Network::Rights.new
       why_forbidden = rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {})
-      why_forbidden.should be_instance_of(Puppet::Network::AuthorizationError)
-      why_forbidden.to_s.should == "Forbidden request:  access to /indirection_name/key [find]"
+      expect(why_forbidden).to be_instance_of(Puppet::Network::AuthorizationError)
+      expect(why_forbidden.to_s).to eq("Forbidden request:  access to /indirection_name/key [find]")
     end
   end
 
   it "should throw an error if type can't be determined" do
-    lambda { @right.newright("name") }.should raise_error
+    expect { @right.newright("name") }.to raise_error
   end
 
   describe "when creating new path ACLs" do
     it "should not throw an error if the ACL already exists" do
       @right.newright("/name")
 
-      lambda { @right.newright("/name")}.should_not raise_error
+      expect { @right.newright("/name")}.not_to raise_error
     end
 
     it "should throw an error if the acl uri path is not absolute" do
-      lambda { @right.newright("name")}.should raise_error
+      expect { @right.newright("name")}.to raise_error
     end
 
     it "should create a new ACL with the correct path" do
       @right.newright("/name")
 
-      @right["/name"].should_not be_nil
+      expect(@right["/name"]).not_to be_nil
     end
 
     it "should create an ACL of type Puppet::Network::AuthStore" do
       @right.newright("/name")
 
-      @right["/name"].should be_a_kind_of(Puppet::Network::AuthStore)
+      expect(@right["/name"]).to be_a_kind_of(Puppet::Network::AuthStore)
     end
   end
 
@@ -60,59 +60,59 @@ describe Puppet::Network::Rights do
     it "should not throw an error if the ACL already exists" do
       @right.newright("~ .rb$")
 
-      lambda { @right.newright("~ .rb$")}.should_not raise_error
+      expect { @right.newright("~ .rb$")}.not_to raise_error
     end
 
     it "should create a new ACL with the correct regex" do
       @right.newright("~ .rb$")
 
-      @right.include?(".rb$").should_not be_nil
+      expect(@right.include?(".rb$")).not_to be_nil
     end
 
     it "should be able to lookup the regex" do
       @right.newright("~ .rb$")
 
-      @right[".rb$"].should_not be_nil
+      expect(@right[".rb$"]).not_to be_nil
     end
 
     it "should be able to lookup the regex by its full name" do
       @right.newright("~ .rb$")
 
-      @right["~ .rb$"].should_not be_nil
+      expect(@right["~ .rb$"]).not_to be_nil
     end
 
     it "should create an ACL of type Puppet::Network::AuthStore" do
-      @right.newright("~ .rb$").should be_a_kind_of(Puppet::Network::AuthStore)
+      expect(@right.newright("~ .rb$")).to be_a_kind_of(Puppet::Network::AuthStore)
     end
   end
 
   describe "when checking ACLs existence" do
     it "should return false if there are no matching rights" do
-      @right.include?("name").should be_false
+      expect(@right.include?("name")).to be_falsey
     end
 
     it "should return true if a path right exists" do
       @right.newright("/name")
 
-      @right.include?("/name").should be_true
+      expect(@right.include?("/name")).to be_truthy
     end
 
     it "should return false if no matching path rights exist" do
       @right.newright("/name")
 
-      @right.include?("/differentname").should be_false
+      expect(@right.include?("/differentname")).to be_falsey
     end
 
     it "should return true if a regex right exists" do
       @right.newright("~ .rb$")
 
-      @right.include?(".rb$").should be_true
+      expect(@right.include?(".rb$")).to be_truthy
     end
 
     it "should return false if no matching path rights exist" do
       @right.newright("~ .rb$")
 
-      @right.include?(".pp$").should be_false
+      expect(@right.include?(".pp$")).to be_falsey
     end
   end
 
@@ -132,12 +132,12 @@ describe Puppet::Network::Rights do
 
     it "should return true if is_forbidden_and_why? returns nil" do
       @right.stubs(:is_forbidden_and_why?).returns(nil)
-      @right.allowed?("namespace", :args).should be_true
+      expect(@right.allowed?("namespace", :args)).to be_truthy
     end
 
     it "should return false if is_forbidden_and_why? returns an AuthorizationError" do
       @right.stubs(:is_forbidden_and_why?).returns(Puppet::Network::AuthorizationError.new("forbidden"))
-      @right.allowed?("namespace", :args1, :args2).should be_false
+      expect(@right.allowed?("namespace", :args1, :args2)).to be_falsey
     end
 
     it "should pass the match? return to allowed?" do
@@ -146,7 +146,7 @@ describe Puppet::Network::Rights do
       @pathacl.expects(:match?).returns(:match)
       @pathacl.expects(:allowed?).with { |node,ip,h| h[:match] == :match }.returns(true)
 
-      @right.is_forbidden_and_why?("/path/to/there", {}).should == nil
+      expect(@right.is_forbidden_and_why?("/path/to/there", {})).to eq(nil)
     end
 
     describe "with path acls" do
@@ -171,7 +171,7 @@ describe Puppet::Network::Rights do
         @short_acl.expects(:allowed?).returns(true)
         @long_acl.expects(:allowed?).never
 
-        @right.is_forbidden_and_why?("/path/to/there/and/there", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
 
       it "should select the first match that doesn't return :dunno" do
@@ -184,7 +184,7 @@ describe Puppet::Network::Rights do
         @long_acl.expects(:allowed?).returns(:dunno)
         @short_acl.expects(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/path/to/there/and/there", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
 
       it "should not select an ACL that doesn't match" do
@@ -197,7 +197,7 @@ describe Puppet::Network::Rights do
         @long_acl.expects(:allowed?).never
         @short_acl.expects(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/path/to/there/and/there", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
 
       it "should not raise an AuthorizationError if allowed" do
@@ -206,7 +206,7 @@ describe Puppet::Network::Rights do
         @long_acl.stubs(:match?).returns(true)
         @long_acl.stubs(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/path/to/there/and/there", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
 
       it "should raise an AuthorizationError if the match is denied" do
@@ -215,11 +215,11 @@ describe Puppet::Network::Rights do
         @long_acl.stubs(:match?).returns(true)
         @long_acl.stubs(:allowed?).returns(false)
 
-        @right.is_forbidden_and_why?("/path/to/there", {}).should be_instance_of(Puppet::Network::AuthorizationError)
+        expect(@right.is_forbidden_and_why?("/path/to/there", {})).to be_instance_of(Puppet::Network::AuthorizationError)
       end
 
       it "should raise an AuthorizationError if no path match" do
-        @right.is_forbidden_and_why?("/nomatch", {}).should be_instance_of(Puppet::Network::AuthorizationError)
+        expect(@right.is_forbidden_and_why?("/nomatch", {})).to be_instance_of(Puppet::Network::AuthorizationError)
       end
     end
 
@@ -245,7 +245,7 @@ describe Puppet::Network::Rights do
         @regex_acl1.expects(:allowed?).returns(true)
         @regex_acl2.expects(:allowed?).never
 
-        @right.is_forbidden_and_why?("/files/repository/myfile/other", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
 
       it "should select the first match that doesn't return :dunno" do
@@ -258,7 +258,7 @@ describe Puppet::Network::Rights do
         @regex_acl1.expects(:allowed?).returns(:dunno)
         @regex_acl2.expects(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/files/repository/myfile/other", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
 
       it "should not select an ACL that doesn't match" do
@@ -271,7 +271,7 @@ describe Puppet::Network::Rights do
         @regex_acl1.expects(:allowed?).never
         @regex_acl2.expects(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/files/repository/myfile/other", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
 
       it "should not raise an AuthorizationError if allowed" do
@@ -280,15 +280,15 @@ describe Puppet::Network::Rights do
         @regex_acl1.stubs(:match?).returns(true)
         @regex_acl1.stubs(:allowed?).returns(true)
 
-        @right.is_forbidden_and_why?("/files/repository/myfile/other", {}).should == nil
+        expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
 
       it "should raise an error if no regex acl match" do
-        @right.is_forbidden_and_why?("/path", {}).should be_instance_of(Puppet::Network::AuthorizationError)
+        expect(@right.is_forbidden_and_why?("/path", {})).to be_instance_of(Puppet::Network::AuthorizationError)
       end
 
       it "should raise an AuthorizedError on deny" do
-        @right.is_forbidden_and_why?("/path", {}).should be_instance_of(Puppet::Network::AuthorizationError)
+        expect(@right.is_forbidden_and_why?("/path", {})).to be_instance_of(Puppet::Network::AuthorizationError)
       end
 
     end
@@ -301,15 +301,15 @@ describe Puppet::Network::Rights do
 
     describe "with path" do
       it "should match up to its path length" do
-        @acl.match?("/path/that/works").should_not be_nil
+        expect(@acl.match?("/path/that/works")).not_to be_nil
       end
 
       it "should match up to its path length" do
-        @acl.match?("/paththatalsoworks").should_not be_nil
+        expect(@acl.match?("/paththatalsoworks")).not_to be_nil
       end
 
       it "should return nil if no match" do
-        @acl.match?("/notpath").should be_nil
+        expect(@acl.match?("/notpath")).to be_nil
       end
     end
 
@@ -319,39 +319,39 @@ describe Puppet::Network::Rights do
       end
 
       it "should match as a regex" do
-        @acl.match?("this should work.rb").should_not be_nil
+        expect(@acl.match?("this should work.rb")).not_to be_nil
       end
 
       it "should return nil if no match" do
-        @acl.match?("do not match").should be_nil
+        expect(@acl.match?("do not match")).to be_nil
       end
     end
 
     it "should allow all rest methods by default" do
-      @acl.methods.should == Puppet::Network::Rights::Right::ALL
+      expect(@acl.methods).to eq(Puppet::Network::Rights::Right::ALL)
     end
 
     it "should allow only authenticated request by default" do
-      @acl.authentication.should be_true
+      expect(@acl.authentication).to be_truthy
     end
 
     it "should allow modification of the methods filters" do
       @acl.restrict_method(:save)
 
-      @acl.methods.should == [:save]
+      expect(@acl.methods).to eq([:save])
     end
 
     it "should stack methods filters" do
       @acl.restrict_method(:save)
       @acl.restrict_method(:destroy)
 
-      @acl.methods.should == [:save, :destroy]
+      expect(@acl.methods).to eq([:save, :destroy])
     end
 
     it "should raise an error if the method is already filtered" do
       @acl.restrict_method(:save)
 
-      lambda { @acl.restrict_method(:save) }.should raise_error
+      expect { @acl.restrict_method(:save) }.to raise_error
     end
 
     it "should allow setting an environment filters" do
@@ -359,7 +359,7 @@ describe Puppet::Network::Rights do
       Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
         @acl.restrict_environment(:acltest)
 
-        @acl.environment.should == [env]
+        expect(@acl.environment).to eq([env])
       end
     end
 
@@ -367,14 +367,14 @@ describe Puppet::Network::Rights do
       it "should allow filtering on authenticated requests with '#{auth}'" do
         @acl.restrict_authenticated(auth)
 
-        @acl.authentication.should be_true
+        expect(@acl.authentication).to be_truthy
       end
     end
 
     ["off", "no", "false", false, "all", "any", :all, :any].each do |auth|
       it "should allow filtering on authenticated or unauthenticated requests with '#{auth}'" do
         @acl.restrict_authenticated(auth)
-        @acl.authentication.should be_false
+        expect(@acl.authentication).to be_falsey
       end
     end
 
@@ -382,14 +382,14 @@ describe Puppet::Network::Rights do
       it "should return :dunno if this right is not restricted to the given method" do
         @acl.restrict_method(:destroy)
 
-        @acl.allowed?("me","127.0.0.1", { :method => :save } ).should == :dunno
+        expect(@acl.allowed?("me","127.0.0.1", { :method => :save } )).to eq(:dunno)
       end
 
       it "should return true if this right is restricted to the given method" do
         @acl.restrict_method(:save)
         @acl.allow("me")
 
-        @acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => true }).should eq true
+        expect(@acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => true })).to eq true
       end
 
       it "should return :dunno if this right is not restricted to the given environment" do
@@ -398,7 +398,7 @@ describe Puppet::Network::Rights do
         Puppet.override(:environments => Puppet::Environments::Static.new(prod, dev)) do
           @acl.restrict_environment(:production)
 
-          @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => dev }).should == :dunno
+          expect(@acl.allowed?("me","127.0.0.1", { :method => :save, :environment => dev })).to eq(:dunno)
         end
       end
 
@@ -414,14 +414,14 @@ describe Puppet::Network::Rights do
       it "should return :dunno if this right is not restricted to the given request authentication state" do
         @acl.restrict_authenticated(true)
 
-        @acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => false }).should == :dunno
+        expect(@acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => false })).to eq(:dunno)
       end
 
       it "returns true if this right is restricted to the given request authentication state" do
         @acl.restrict_authenticated(false)
         @acl.allow("me")
 
-        @acl.allowed?("me","127.0.0.1", {:method => :save, :authenticated => false }).should eq true
+        expect(@acl.allowed?("me","127.0.0.1", {:method => :save, :authenticated => false })).to eq true
       end
 
       it "should interpolate allow/deny patterns with the given match" do

@@ -28,15 +28,15 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
     end
 
     it "should use the id for comparisons, not the name" do
-      owner.insync?('foo').should be_false
+      expect(owner.insync?('foo')).to be_falsey
     end
 
     it "should return true if the current owner is one of the desired owners" do
-      owner.insync?(1001).should be_true
+      expect(owner.insync?(1001)).to be_truthy
     end
 
     it "should return false if the current owner is not one of the desired owners" do
-      owner.insync?(1003).should be_false
+      expect(owner.insync?(1003)).to be_falsey
     end
   end
 
@@ -45,13 +45,13 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
       it "should use the name of the user if it can find it" do
         resource.provider.stubs(:uid2name).with(1001).returns 'foo'
 
-        owner.send(prop_to_s, 1001).should == 'foo'
+        expect(owner.send(prop_to_s, 1001)).to eq('foo')
       end
 
       it "should use the id of the user if it can't" do
         resource.provider.stubs(:uid2name).with(1001).returns nil
 
-        owner.send(prop_to_s, 1001).should == 1001
+        expect(owner.send(prop_to_s, 1001)).to eq(1001)
       end
     end
   end

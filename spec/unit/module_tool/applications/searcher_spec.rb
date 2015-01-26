@@ -16,23 +16,23 @@ describe Puppet::ModuleTool::Applications::Searcher do
       forge.expects(:search).with('search_term').returns(results)
 
       search_result = searcher.run
-      search_result.should == {
+      expect(search_result).to eq({
         :result => :success,
         :answers => results,
-      }
+      })
     end
 
     it "should return an error when the forge query throws an exception" do
       forge.expects(:search).with('search_term').raises Puppet::Forge::Errors::ForgeError.new("something went wrong")
 
       search_result = searcher.run
-      search_result.should == {
+      expect(search_result).to eq({
         :result => :failure,
         :error => {
           :oneline   => 'something went wrong',
           :multiline => 'something went wrong',
         },
-      }
+      })
     end
   end
 end

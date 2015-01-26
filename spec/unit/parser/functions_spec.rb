@@ -15,14 +15,14 @@ describe Puppet::Parser::Functions do
   end
 
   it "should have a method for returning an environment-specific module" do
-    Puppet::Parser::Functions.environment_module(environment).should be_instance_of(Module)
+    expect(Puppet::Parser::Functions.environment_module(environment)).to be_instance_of(Module)
   end
 
   describe "when calling newfunction" do
     it "should create the function in the environment module" do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
 
-      function_module.should be_method_defined :function_name
+      expect(function_module).to be_method_defined :function_name
     end
 
     it "should warn if the function already exists" do
@@ -43,7 +43,7 @@ describe Puppet::Parser::Functions do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
       callable_functions_from(function_module).function_name([])
 
-      messages.first.should =~ /Called name/
+      expect(messages.first).to match(/Called name/)
     end
   end
 
@@ -51,13 +51,13 @@ describe Puppet::Parser::Functions do
     it "should return false if the function doesn't exist" do
       Puppet::Parser::Functions.autoloader.stubs(:load)
 
-      Puppet::Parser::Functions.function("name").should be_false
+      expect(Puppet::Parser::Functions.function("name")).to be_falsey
     end
 
     it "should return its name if the function exists" do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
 
-      Puppet::Parser::Functions.function("name").should == "function_name"
+      expect(Puppet::Parser::Functions.function("name")).to eq("function_name")
     end
 
     it "should try to autoload the function if it doesn't exist yet" do
@@ -80,7 +80,7 @@ describe Puppet::Parser::Functions do
         expect(Puppet::Parser::Functions.function("other_env")).to eq("function_other_env")
       end
 
-      expect(Puppet::Parser::Functions.function("other_env")).to be_false
+      expect(Puppet::Parser::Functions.function("other_env")).to be_falsey
     end
   end
 
@@ -121,12 +121,12 @@ describe Puppet::Parser::Functions do
   describe "::arity" do
     it "returns the given arity of a function" do
       Puppet::Parser::Functions.newfunction("name", :arity => 4) { |args| }
-      Puppet::Parser::Functions.arity(:name).should == 4
+      expect(Puppet::Parser::Functions.arity(:name)).to eq(4)
     end
 
     it "returns -1 if no arity is given" do
       Puppet::Parser::Functions.newfunction("name") { |args| }
-      Puppet::Parser::Functions.arity(:name).should == -1
+      expect(Puppet::Parser::Functions.arity(:name)).to eq(-1)
     end
   end
 end

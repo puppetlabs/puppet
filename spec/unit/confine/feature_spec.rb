@@ -5,15 +5,15 @@ require 'puppet/confine/feature'
 
 describe Puppet::Confine::Feature do
   it "should be named :feature" do
-    Puppet::Confine::Feature.name.should == :feature
+    expect(Puppet::Confine::Feature.name).to eq(:feature)
   end
 
   it "should require a value" do
-    lambda { Puppet::Confine::Feature.new }.should raise_error(ArgumentError)
+    expect { Puppet::Confine::Feature.new }.to raise_error(ArgumentError)
   end
 
   it "should always convert values to an array" do
-    Puppet::Confine::Feature.new("/some/file").values.should be_instance_of(Array)
+    expect(Puppet::Confine::Feature.new("/some/file").values).to be_instance_of(Array)
   end
 
   describe "when testing values" do
@@ -29,16 +29,16 @@ describe Puppet::Confine::Feature do
 
     it "should return true if the feature is present" do
       Puppet.features.add(:myfeature) do true end
-      @confine.pass?("myfeature").should be_true
+      expect(@confine.pass?("myfeature")).to be_truthy
     end
 
     it "should return false if the value is false" do
       Puppet.features.add(:myfeature) do false end
-      @confine.pass?("myfeature").should be_false
+      expect(@confine.pass?("myfeature")).to be_falsey
     end
 
     it "should log that a feature is missing" do
-      @confine.message("myfeat").should be_include("missing")
+      expect(@confine.message("myfeat")).to be_include("missing")
     end
   end
 
@@ -52,6 +52,6 @@ describe Puppet::Confine::Feature do
     features.stub_everything
     Puppet.stubs(:features).returns features
 
-    Puppet::Confine::Feature.summarize(confines).sort.should == %w{one two three four}.sort
+    expect(Puppet::Confine::Feature.summarize(confines).sort).to eq(%w{one two three four}.sort)
   end
 end

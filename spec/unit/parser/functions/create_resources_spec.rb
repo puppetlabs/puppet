@@ -15,7 +15,7 @@ describe 'function for dynamically creating resources' do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function(:create_resources).should == "function_create_resources"
+    expect(Puppet::Parser::Functions.function(:create_resources)).to eq("function_create_resources")
   end
 
   it 'should require two or three arguments' do
@@ -35,29 +35,29 @@ describe 'function for dynamically creating resources' do
     it 'empty hash should not cause resources to be added' do
       noop_catalog = compile_to_catalog("create_resources('file', {})")
       empty_catalog = compile_to_catalog("")
-      noop_catalog.resources.size.should == empty_catalog.resources.size
+      expect(noop_catalog.resources.size).to eq(empty_catalog.resources.size)
     end
 
     it 'should be able to add' do
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
     end
 
     it 'should be able to add virtual resources' do
       catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
     end
 
     it 'should be able to add exported resources' do
       catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}}) realize(File['/etc/foo'])")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
-      catalog.resource(:file, "/etc/foo").exported.should == true
+      expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/etc/foo").exported).to eq(true)
     end
 
     it 'should accept multiple types' do
       catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
-      catalog.resource(:notify, "foo")['message'].should == 'one'
-      catalog.resource(:notify, "bar")['message'].should == 'two'
+      expect(catalog.resource(:notify, "foo")['message']).to eq('one')
+      expect(catalog.resource(:notify, "bar")['message']).to eq('two')
     end
 
     it 'should fail to add non-existing type' do
@@ -70,15 +70,15 @@ describe 'function for dynamically creating resources' do
       rg = compile_to_relationship_graph("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>'Notify[test]'}})")
       test  = rg.vertices.find { |v| v.title == 'test' }
       foo   = rg.vertices.find { |v| v.title == 'foo' }
-      test.must be
-      foo.must be
-      rg.path_between(test,foo).should be
+      expect(test).to be
+      expect(foo).to be
+      expect(rg.path_between(test,foo)).to be
     end
 
     it 'should account for default values' do
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}, '/etc/baz'=>{'group'=>'food'}}, {'group' => 'bar'})")
-      catalog.resource(:file, "/etc/foo")['group'].should == 'bar'
-      catalog.resource(:file, "/etc/baz")['group'].should == 'food'
+      expect(catalog.resource(:file, "/etc/foo")['group']).to eq('bar')
+      expect(catalog.resource(:file, "/etc/baz")['group']).to eq('food')
     end
   end
 
@@ -91,7 +91,7 @@ describe 'function for dynamically creating resources' do
 
         create_resources('foocreateresource', {'blah'=>{'one'=>'two'}})
       MANIFEST
-      catalog.resource(:notify, "blah")['message'].should == 'two'
+      expect(catalog.resource(:notify, "blah")['message']).to eq('two')
     end
 
     it 'should fail if defines are missing params' do
@@ -115,8 +115,8 @@ describe 'function for dynamically creating resources' do
         create_resources('foocreateresource', {'blah'=>{'one'=>'two'}, 'blaz'=>{'one'=>'three'}})
       MANIFEST
 
-      catalog.resource(:notify, "blah")['message'].should == 'two'
-      catalog.resource(:notify, "blaz")['message'].should == 'three'
+      expect(catalog.resource(:notify, "blah")['message']).to eq('two')
+      expect(catalog.resource(:notify, "blaz")['message']).to eq('three')
     end
 
     it 'should be able to add edges' do
@@ -132,9 +132,9 @@ describe 'function for dynamically creating resources' do
 
       test = rg.vertices.find { |v| v.title == 'test' }
       blah = rg.vertices.find { |v| v.title == 'blah' }
-      test.must be
-      blah.must be
-      rg.path_between(test,blah).should be
+      expect(test).to be
+      expect(blah).to be
+      expect(rg.path_between(test,blah)).to be
     end
 
     it 'should account for default values' do
@@ -146,7 +146,7 @@ describe 'function for dynamically creating resources' do
         create_resources('foocreateresource', {'blah'=>{}}, {'one' => 'two'})
       MANIFEST
 
-      catalog.resource(:notify, "blah")['message'].should == 'two'
+      expect(catalog.resource(:notify, "blah")['message']).to eq('two')
     end
   end
 
@@ -160,8 +160,8 @@ describe 'function for dynamically creating resources' do
         create_resources('class', {'bar'=>{'one'=>'two'}})
       MANIFEST
 
-      catalog.resource(:notify, "test")['message'].should == 'two'
-      catalog.resource(:class, "bar").should_not be_nil
+      expect(catalog.resource(:notify, "test")['message']).to eq('two')
+      expect(catalog.resource(:class, "bar")).not_to be_nil
     end
 
     it 'should fail to create non-existing classes' do
@@ -185,9 +185,9 @@ describe 'function for dynamically creating resources' do
 
       test   = rg.vertices.find { |v| v.title == 'test' }
       tester = rg.vertices.find { |v| v.title == 'tester' }
-      test.must be
-      tester.must be
-      rg.path_between(tester,test).should be
+      expect(test).to be
+      expect(tester).to be
+      expect(rg.path_between(tester,test)).to be
     end
 
     it 'should account for default values' do
@@ -199,8 +199,8 @@ describe 'function for dynamically creating resources' do
         create_resources('class', {'bar'=>{}}, {'one' => 'two'})
       MANIFEST
 
-      catalog.resource(:notify, "test")['message'].should == 'two'
-      catalog.resource(:class, "bar").should_not be_nil
+      expect(catalog.resource(:notify, "test")['message']).to eq('two')
+      expect(catalog.resource(:class, "bar")).not_to be_nil
     end
 
     it 'should fail with a correct error message if the syntax of an imported file is incorrect' do

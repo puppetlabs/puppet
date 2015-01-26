@@ -12,19 +12,19 @@ describe mcx_type, "when validating attributes" do
 
   parameters.each do |p|
     it "should have a #{p} parameter" do
-      mcx_type.attrclass(p).ancestors.should be_include(Puppet::Parameter)
+      expect(mcx_type.attrclass(p).ancestors).to be_include(Puppet::Parameter)
     end
     it "should have documentation for its #{p} parameter" do
-      mcx_type.attrclass(p).doc.should be_instance_of(String)
+      expect(mcx_type.attrclass(p).doc).to be_instance_of(String)
     end
   end
 
   properties.each do |p|
     it "should have a #{p} property" do
-      mcx_type.attrclass(p).ancestors.should be_include(Puppet::Property)
+      expect(mcx_type.attrclass(p).ancestors).to be_include(Puppet::Property)
     end
     it "should have documentation for its #{p} property" do
-      mcx_type.attrclass(p).doc.should be_instance_of(String)
+      expect(mcx_type.attrclass(p).doc).to be_instance_of(String)
     end
   end
 
@@ -38,15 +38,15 @@ describe mcx_type, "default values" do
   end
 
   it "should be nil for :ds_type" do
-    mcx_type.new(:name => '/Foo/bar')[:ds_type].should be_nil
+    expect(mcx_type.new(:name => '/Foo/bar')[:ds_type]).to be_nil
   end
 
   it "should be nil for :ds_name" do
-    mcx_type.new(:name => '/Foo/bar')[:ds_name].should be_nil
+    expect(mcx_type.new(:name => '/Foo/bar')[:ds_name]).to be_nil
   end
 
   it "should be nil for :content" do
-    mcx_type.new(:name => '/Foo/bar')[:content].should be_nil
+    expect(mcx_type.new(:name => '/Foo/bar')[:content]).to be_nil
   end
 
 end
@@ -59,21 +59,21 @@ describe mcx_type, "when validating properties" do
   end
 
   it "should be able to create an instance" do
-    lambda {
+    expect {
       mcx_type.new(:name => '/Foo/bar')
-    }.should_not raise_error
+    }.not_to raise_error
   end
 
   it "should support :present as a value to :ensure" do
-    lambda {
+    expect {
       mcx_type.new(:name => "/Foo/bar", :ensure => :present)
-    }.should_not raise_error
+    }.not_to raise_error
   end
 
   it "should support :absent as a value to :ensure" do
-    lambda {
+    expect {
       mcx_type.new(:name => "/Foo/bar", :ensure => :absent)
-    }.should_not raise_error
+    }.not_to raise_error
   end
 
 end

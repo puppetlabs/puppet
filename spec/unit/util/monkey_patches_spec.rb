@@ -7,34 +7,7 @@ require 'puppet/util/monkey_patches'
 describe Symbol do
   it "should return self from #intern" do
     symbol = :foo
-    symbol.should equal symbol.intern
-  end
-end
-
-
-describe "yaml deserialization" do
-  it "should call yaml_initialize when deserializing objects that have that method defined" do
-    class Puppet::TestYamlInitializeClass
-      attr_reader :foo
-
-      def yaml_initialize(tag, var)
-        var.should == {'foo' => 100}
-        instance_variables.should == []
-        @foo = 200
-      end
-    end
-
-    obj = YAML.load("--- !ruby/object:Puppet::TestYamlInitializeClass\n  foo: 100")
-    obj.foo.should == 200
-  end
-
-  it "should not call yaml_initialize if not defined" do
-    class Puppet::TestYamlNonInitializeClass
-      attr_reader :foo
-    end
-
-    obj = YAML.load("--- !ruby/object:Puppet::TestYamlNonInitializeClass\n  foo: 100")
-    obj.foo.should == 100
+    expect(symbol).to equal symbol.intern
   end
 end
 
@@ -46,14 +19,14 @@ describe IO do
 
   describe "::binwrite" do
     it "should write in binary mode" do
-      IO.binwrite(file, content).should == content.length
-      File.open(file, 'rb') {|f| f.read.should == content }
+      expect(IO.binwrite(file, content)).to eq(content.length)
+      File.open(file, 'rb') {|f| expect(f.read).to eq(content) }
     end
 
     (0..10).each do |offset|
       it "should write correctly using an offset of #{offset}" do
-        IO.binwrite(file, content, offset).should == content.length
-        File.open(file, 'rb') {|f| f.read.should == ("\x00" * offset) + content }
+        expect(IO.binwrite(file, content, offset)).to eq(content.length)
+        File.open(file, 'rb') {|f| expect(f.read).to eq(("\x00" * offset) + content) }
       end
     end
 
@@ -62,8 +35,8 @@ describe IO do
       before :each do IO.binwrite(file, input) end
 
       it "should truncate if no offset is given" do
-        IO.binwrite(file, "boo").should == 3
-        File.read(file).should == "boo"
+        expect(IO.binwrite(file, "boo")).to eq(3)
+        expect(File.read(file)).to eq("boo")
       end
 
       (0..10).each do |offset|
@@ -71,15 +44,15 @@ describe IO do
           expect = input.dup
           expect[offset, 3] = "BAM"
 
-          IO.binwrite(file, "BAM", offset).should == 3
-          File.read(file).should == expect
+          expect(IO.binwrite(file, "BAM", offset)).to eq(3)
+          expect(File.read(file)).to eq(expect)
         end
       end
 
       it "should pad with NULL bytes if writing past EOF without truncate" do
         expect = input + ("\x00" * 4) + "BAM"
-        IO.binwrite(file, "BAM", input.length + 4).should == 3
-        File.read(file).should == expect
+        expect(IO.binwrite(file, "BAM", input.length + 4)).to eq(3)
+        expect(File.read(file)).to eq(expect)
       end
     end
 
@@ -92,7 +65,7 @@ end
 describe Range do
   def do_test( range, other, expected )
     result = range.intersection(other)
-    result.should == expected
+    expect(result).to eq(expected)
   end
 
   it "should return expected ranges for iterable things" do
@@ -168,21 +141,21 @@ end
 
 describe OpenSSL::SSL::SSLContext do
   it 'disables SSLv2 via the SSLContext#options bitmask' do
-    (subject.options & OpenSSL::SSL::OP_NO_SSLv2).should == OpenSSL::SSL::OP_NO_SSLv2
+    expect(subject.options & OpenSSL::SSL::OP_NO_SSLv2).to eq(OpenSSL::SSL::OP_NO_SSLv2)
   end
 
   it 'disables SSLv3 via the SSLContext#options bitmask' do
-    (subject.options & OpenSSL::SSL::OP_NO_SSLv3).should == OpenSSL::SSL::OP_NO_SSLv3
+    expect(subject.options & OpenSSL::SSL::OP_NO_SSLv3).to eq(OpenSSL::SSL::OP_NO_SSLv3)
   end
 
   it 'explicitly disable SSLv2 ciphers using the ! prefix so they cannot be re-added' do
     cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
-    cipher_str.split(':').should include('!SSLv2')
+    expect(cipher_str.split(':')).to include('!SSLv2')
   end
 
   it 'does not exclude SSLv3 ciphers shared with TLSv1' do
     cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
-    cipher_str.split(':').should_not include('!SSLv3')
+    expect(cipher_str.split(':')).not_to include('!SSLv3')
   end
 
   it 'sets parameters on initialization' do
@@ -194,7 +167,7 @@ describe OpenSSL::SSL::SSLContext do
     ciphers = subject.ciphers.select do |name, version, bits, alg_bits|
       /SSLv2/.match(version)
     end
-    ciphers.should be_empty
+    expect(ciphers).to be_empty
   end
 end
 
@@ -241,6 +214,6 @@ end
 
 describe SecureRandom do
   it 'generates a properly formatted uuid' do
-    SecureRandom.uuid.should =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    expect(SecureRandom.uuid).to match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
   end
 end

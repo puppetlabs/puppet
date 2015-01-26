@@ -43,7 +43,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       executor.stubs(:execute).returns("")
       provider.expects(:query).returns(nil)
 
-      lambda { provider.install }.should raise_exception(Puppet::ExecutionFailure)
+      expect { provider.install }.to raise_exception(Puppet::ExecutionFailure)
     end
 
     describe "and install_options are given" do
@@ -124,7 +124,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
         end
 
         it "should fail" do
-          lambda { provider.install }.should raise_error(Puppet::Error)
+          expect { provider.install }.to raise_error(Puppet::Error)
         end
       end
 
@@ -134,7 +134,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
         end
 
         it "should fail" do
-          lambda { provider.install }.should raise_error(Puppet::Error)
+          expect { provider.install }.to raise_error(Puppet::Error)
         end
       end
     end
@@ -143,7 +143,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
   describe "when updating" do
     it "should call install" do
       provider.expects(:install).returns("install return value")
-      provider.update.should == "install return value"
+      expect(provider.update).to eq("install return value")
     end
   end
 
@@ -195,22 +195,22 @@ Description    : A library-based package manager with dependency support
 EOF
 
       executor.expects(:execute).returns(query_output)
-      provider.query.should == {:ensure => "1.01.3-2"}
+      expect(provider.query).to eq({:ensure => "1.01.3-2"})
     end
 
     it "should return a nil if the package isn't found" do
       executor.expects(:execute).returns("")
-      provider.query.should be_nil
+      expect(provider.query).to be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
       executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
-      provider.query.should == {
+      expect(provider.query).to eq({
         :ensure => :purged,
         :status => 'missing',
         :name => resource[:name],
         :error => 'ok',
-      }
+      })
     end
   end
 
@@ -231,37 +231,37 @@ EOF
       described_class.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
       packages = described_class.installedpkgs
 
-      packages.length.should == 2
+      expect(packages.length).to eq(2)
 
-      packages[0].properties.should == {
+      expect(packages[0].properties).to eq({
         :provider => :pacman,
         :ensure => '1.23-4',
         :name => 'package1'
-      }
+      })
 
-      packages[1].properties.should == {
+      expect(packages[1].properties).to eq({
         :provider => :pacman,
         :ensure => '2.00',
         :name => 'package2'
-      }
+      })
     end
 
     it "should return installed groups with a dummy version" do
       described_class.expects(:execpipe).yields(StringIO.new("group1 pkg1\ngroup1 pkg2"))
       groups = described_class.installedgroups
 
-      groups.length.should == 1
+      expect(groups.length).to eq(1)
 
-      groups[0].properties.should == {
+      expect(groups[0].properties).to eq({
         :provider => :pacman,
         :ensure   => '1',
         :name     => 'group1'
-      }
+      })
     end
 
     it "should return nil on error" do
       described_class.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
-      described_class.instances.should be_nil
+      expect(described_class.instances).to be_nil
     end
 
     it "should warn on invalid input" do
@@ -308,7 +308,7 @@ EOF
         at_least_once().
         returns("1.00.2-3\n")
 
-      provider.latest.should == "1.00.2-3"
+      expect(provider.latest).to eq("1.00.2-3")
     end
   end
 end

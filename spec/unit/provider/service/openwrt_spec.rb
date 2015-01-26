@@ -41,7 +41,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
   operatingsystem = 'openwrt'
   it "should be the default provider on #{operatingsystem}" do
     Facter.expects(:value).with(:operatingsystem).returns(operatingsystem)
-    described_class.default?.should be_true
+    expect(described_class.default?).to be_truthy
   end
 
   # test self.instances
@@ -59,25 +59,25 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
         described_class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
       end
       results = services.collect {|x| "#{x}_instance"}
-      described_class.instances.should == results
+      expect(described_class.instances).to eq(results)
     end
   end
 
   it "should have an enabled? method" do
-    provider.should respond_to(:enabled?)
+    expect(provider).to respond_to(:enabled?)
   end
 
   it "should have an enable method" do
-    provider.should respond_to(:enable)
+    expect(provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    provider.should respond_to(:disable)
+    expect(provider).to respond_to(:disable)
   end
 
   [:start, :stop, :restart].each do |method|
     it "should have a #{method} method" do
-      provider.should respond_to(method)
+      expect(provider).to respond_to(method)
     end
     describe "when running #{method}" do
 
@@ -98,11 +98,11 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
   describe "when checking status" do
     it "should consider the service :running if it has a pid" do
       provider.expects(:getpid).returns "1234"
-      provider.status.should == :running
+      expect(provider.status).to eq(:running)
     end
     it "should consider the service :stopped if it doesn't have a pid" do
       provider.expects(:getpid).returns nil
-      provider.status.should == :stopped
+      expect(provider.status).to eq(:stopped)
     end
   end
 

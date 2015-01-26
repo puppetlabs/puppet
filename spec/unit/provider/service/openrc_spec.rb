@@ -17,12 +17,12 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   describe ".instances" do
 
     it "should have an instances method" do
-      described_class.should respond_to :instances
+      expect(described_class).to respond_to :instances
     end
 
     it "should get a list of services from rc-service --list" do
       described_class.expects(:rcservice).with('-C','--list').returns File.read(my_fixture('rcservice_list'))
-      described_class.instances.map(&:name).should == [
+      expect(described_class.instances.map(&:name)).to eq([
         'alsasound',
         'consolefont',
         'lvm-monitoring',
@@ -31,7 +31,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         'wpa_supplicant',
         'xdm',
         'xdm-setup'
-      ]
+      ])
     end
   end
 
@@ -89,35 +89,35 @@ describe Puppet::Type.type(:service).provider(:openrc) do
     ['hwclock', 'modules', 'urandom'].each do |service|
       it "should consider service #{service} in runlevel boot as enabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :true
+        expect(provider.enabled?).to eq(:true)
       end
     end
 
     ['netmount', 'xdm', 'local', 'foo_with_very_very_long_servicename_no_still_not_the_end_wait_for_it_almost_there_almost_there_now_finally_the_end'].each do |service|
       it "should consider service #{service} in runlevel default as enabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :true
+        expect(provider.enabled?).to eq(:true)
       end
     end
 
     ['net.eth0', 'pcscd'].each do |service|
       it "should consider service #{service} in dynamic runlevel: hotplugged as disabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :false
+        expect(provider.enabled?).to eq(:false)
       end
     end
 
     ['sysfs', 'udev-mount'].each do |service|
       it "should consider service #{service} in dynamic runlevel: needed as disabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :false
+        expect(provider.enabled?).to eq(:false)
       end
     end
 
     ['sshd'].each do |service|
       it "should consider service #{service} in dynamic runlevel: manual as disabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :false
+        expect(provider.enabled?).to eq(:false)
       end
     end
 
@@ -154,7 +154,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when status command returns with a zero exitcode" do
@@ -162,7 +162,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -171,14 +171,14 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:getpid).returns 1000
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if no pid can be found" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:getpid).returns nil
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
     end
 
@@ -187,14 +187,14 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if rc-service status exits with a non-zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         provider.expects(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
     end
   end

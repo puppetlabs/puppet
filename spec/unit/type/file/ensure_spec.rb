@@ -10,21 +10,21 @@ describe Puppet::Type::File::Ensure do
   let(:property) { resource.property(:ensure) }
 
   it "should be a subclass of Ensure" do
-    described_class.superclass.must == Puppet::Property::Ensure
+    expect(described_class.superclass).to eq(Puppet::Property::Ensure)
   end
 
   describe "when retrieving the current state" do
     it "should return :absent if the file does not exist" do
       resource.expects(:stat).returns nil
 
-      property.retrieve.should == :absent
+      expect(property.retrieve).to eq(:absent)
     end
 
     it "should return the current file type if the file exists" do
       stat = mock 'stat', :ftype => "directory"
       resource.expects(:stat).returns stat
 
-      property.retrieve.should == :directory
+      expect(property.retrieve).to eq(:directory)
     end
   end
 
@@ -32,43 +32,43 @@ describe Puppet::Type::File::Ensure do
     it "should always be in sync if replace is 'false' unless the file is missing" do
       property.should = :file
       resource.expects(:replace?).returns false
-      property.safe_insync?(:link).should be_true
+      expect(property.safe_insync?(:link)).to be_truthy
     end
 
     it "should be in sync if :ensure is set to :absent and the file does not exist" do
       property.should = :absent
 
-      property.must be_safe_insync(:absent)
+      expect(property).to be_safe_insync(:absent)
     end
 
     it "should not be in sync if :ensure is set to :absent and the file exists" do
       property.should = :absent
 
-      property.should_not be_safe_insync(:file)
+      expect(property).not_to be_safe_insync(:file)
     end
 
     it "should be in sync if a normal file exists and :ensure is set to :present" do
       property.should = :present
 
-      property.must be_safe_insync(:file)
+      expect(property).to be_safe_insync(:file)
     end
 
     it "should be in sync if a directory exists and :ensure is set to :present" do
       property.should = :present
 
-      property.must be_safe_insync(:directory)
+      expect(property).to be_safe_insync(:directory)
     end
 
     it "should be in sync if a symlink exists and :ensure is set to :present" do
       property.should = :present
 
-      property.must be_safe_insync(:link)
+      expect(property).to be_safe_insync(:link)
     end
 
     it "should not be in sync if :ensure is set to :file and a directory exists" do
       property.should = :file
 
-      property.should_not be_safe_insync(:directory)
+      expect(property).not_to be_safe_insync(:directory)
     end
   end
 

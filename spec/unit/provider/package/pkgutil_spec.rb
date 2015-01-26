@@ -17,19 +17,19 @@ describe provider do
   end
 
   it "should have an install method" do
-    @provider.should respond_to(:install)
+    expect(@provider).to respond_to(:install)
   end
 
   it "should have a latest method" do
-    @provider.should respond_to(:uninstall)
+    expect(@provider).to respond_to(:uninstall)
   end
 
   it "should have an update method" do
-    @provider.should respond_to(:update)
+    expect(@provider).to respond_to(:update)
   end
 
   it "should have a latest method" do
-    @provider.should respond_to(:latest)
+    expect(@provider).to respond_to(:latest)
   end
 
   describe "when installing" do
@@ -98,7 +98,7 @@ describe provider do
 noisy output here
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.latest.should == "1.4.5,REV=2007.11.20"
+      expect(@provider.latest).to eq("1.4.5,REV=2007.11.20")
     end
 
     it "should support a temp repo URL" do
@@ -107,7 +107,7 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
 noisy output here
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-c', '--single', 'TESTpkg').returns fake_data
-      @provider.latest.should == "1.4.5,REV=2007.11.20"
+      expect(@provider.latest).to eq("1.4.5,REV=2007.11.20")
     end
 
     it "should handle TESTpkg's 'SAME' version string" do
@@ -115,19 +115,19 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
 noisy output here
 TESTpkg                   1.4.5,REV=2007.11.18      SAME"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.latest.should == "1.4.5,REV=2007.11.18"
+      expect(@provider.latest).to eq("1.4.5,REV=2007.11.18")
     end
 
     it "should handle a non-existent package" do
       fake_data = "noisy output here
 Not in catalog"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.latest.should == nil
+      expect(@provider.latest).to eq(nil)
     end
 
     it "should warn on unknown pkgutil noise" do
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns("testingnoise")
-      @provider.latest.should == nil
+      expect(@provider.latest).to eq(nil)
     end
 
     it "should ignore pkgutil noise/headers to find TESTpkg" do
@@ -141,7 +141,7 @@ gpg: Good signature from \"Distribution Manager <dm@blastwave.org>\"
 package                   installed                 catalog
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.latest.should == "1.4.5,REV=2007.11.20"
+      expect(@provider.latest).to eq("1.4.5,REV=2007.11.20")
     end
 
     it "should find REALpkg via an alias (TESTpkg)" do
@@ -149,7 +149,7 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
 noisy output here
 REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:name].should == "TESTpkg"
+      expect(@provider.query[:name]).to eq("TESTpkg")
     end
   end
 
@@ -157,27 +157,27 @@ REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
     it "should return TESTpkg's version string" do
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
+      expect(@provider.query[:ensure]).to eq("1.4.5,REV=2007.11.18")
     end
 
     it "should handle a package that isn't installed" do
       fake_data = "TESTpkg  notinst  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == :absent
+      expect(@provider.query[:ensure]).to eq(:absent)
     end
 
     it "should handle a non-existent package" do
       fake_data = "noisy output here
 Not in catalog"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == :absent
+      expect(@provider.query[:ensure]).to eq(:absent)
     end
 
     it "should support a temp repo URL" do
       @resource[:source] = "http://example.net/repo"
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
+      expect(@provider.query[:ensure]).to eq("1.4.5,REV=2007.11.18")
     end
   end
 
@@ -187,7 +187,7 @@ Not in catalog"
       provider.expects(:pkguti).with(['-c']).returns("testingnoise")
       Puppet.expects(:warning).times(2)
       provider.expects(:new).never
-      provider.instances.should == []
+      expect(provider.instances).to eq([])
     end
 
     it "should return TESTpkg's version string" do
@@ -199,7 +199,7 @@ Not in catalog"
 
       testpkg = mock 'pkg1'
       provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
-      provider.instances.should == [testpkg]
+      expect(provider.instances).to eq([testpkg])
     end
 
     it "should also return both TESTpkg and mypkg alias instances" do
@@ -215,7 +215,7 @@ Not in catalog"
       aliaspkg = mock 'pkg2'
       provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil).returns aliaspkg
 
-      provider.instances.should == [testpkg,aliaspkg]
+      expect(provider.instances).to eq([testpkg,aliaspkg])
     end
 
     it "shouldn't mind noise in the -a output" do
@@ -228,7 +228,7 @@ Not in catalog"
       testpkg = mock 'pkg1'
       provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
 
-      provider.instances.should == [testpkg]
+      expect(provider.instances).to eq([testpkg])
     end
   end
 

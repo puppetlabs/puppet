@@ -14,25 +14,25 @@ describe Puppet::Parameter::PackageOptions do
     # The parser automatically converts single element arrays to just
     # a single element, why it does this is beyond me. See 46252b5bb8
     it 'should accept a string' do
-      param.munge(arg).should == [arg]
+      expect(param.munge(arg)).to eq([arg])
     end
 
     it 'should accept a hash' do
-      param.munge({key => value}).should == [{key => value}]
+      expect(param.munge({key => value})).to eq([{key => value}])
     end
 
     it 'should accept an array of strings and hashes' do
       munged = param.munge([arg, {key => value}, '/NCRC', {'CONF' => 'C:\datadir'}])
-      munged.should == [arg, {key => value}, '/NCRC', {'CONF' => 'C:\datadir'}]
+      expect(munged).to eq([arg, {key => value}, '/NCRC', {'CONF' => 'C:\datadir'}])
     end
 
     it 'should quote strings' do
-      param.munge('arg one').should == ["\"arg one\""]
+      expect(param.munge('arg one')).to eq(["\"arg one\""])
     end
 
     it 'should quote hash pairs' do
       munged = param.munge({'INSTALL DIR' => 'C:\Program Files'})
-      munged.should == [{"\"INSTALL DIR\"" => "\"C:\\Program Files\""}]
+      expect(munged).to eq([{"\"INSTALL DIR\"" => "\"C:\\Program Files\""}])
     end
 
     it 'should reject symbols' do

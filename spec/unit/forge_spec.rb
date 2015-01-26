@@ -107,7 +107,7 @@ describe Puppet::Forge do
 
   it "returns a list of matches from the forge when there are matches for the search term" do
     repository_responds_with(stub(:body => http_response, :code => '200'))
-    forge.search('bacula').should == search_results
+    expect(forge.search('bacula')).to eq(search_results)
   end
 
   context "when module_groups are defined" do

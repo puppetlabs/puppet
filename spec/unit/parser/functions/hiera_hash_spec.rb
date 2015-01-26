@@ -16,7 +16,7 @@ describe 'Puppet::Parser::Functions#hiera_hash' do
   end
 
   it 'should use the hash resolution_type' do
-    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be :hash }.returns({})
+    Hiera.any_instance.expects(:lookup).with() { |*args| expect(args[4]).to be :hash }.returns({})
     scope.function_hiera_hash(['key'])
   end
 end

@@ -17,11 +17,11 @@ describe "Puppet.version Public API" do
     end
 
     it "is Puppet::PUPPETVERSION" do
-      Puppet.version.should == Puppet::PUPPETVERSION
+      expect(Puppet.version).to eq(Puppet::PUPPETVERSION)
     end
     it "respects the version= setter" do
       Puppet.version = '1.2.3'
-      Puppet.version.should == '1.2.3'
+      expect(Puppet.version).to eq('1.2.3')
     end
   end
 
@@ -32,11 +32,11 @@ describe "Puppet.version Public API" do
         pathname.basename.to_s == "VERSION"
       end.returns('3.0.1-260-g9ca4e54')
 
-      Puppet.version.should == '3.0.1-260-g9ca4e54'
+      expect(Puppet.version).to eq('3.0.1-260-g9ca4e54')
     end
     it "respects the version= setter" do
       Puppet.version = '1.2.3'
-      Puppet.version.should == '1.2.3'
+      expect(Puppet.version).to eq('1.2.3')
     end
   end
 end

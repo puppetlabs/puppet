@@ -30,7 +30,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     Puppet::ModuleTool::Tar.expects(:instance).returns(untar)
 
     Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
-    File.should be_directory(File.join(target, 'mytarball'))
+    expect(File).to be_directory(File.join(target, 'mytarball'))
   end
 
   it "should warn about symlinks", :if => Puppet.features.manages_symlinks? do
@@ -49,7 +49,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     Puppet.expects(:warning).with(regexp_matches(/symlinks/i))
 
     Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
-    File.should be_directory(File.join(target, 'mytarball'))
+    expect(File).to be_directory(File.join(target, 'mytarball'))
   end
 
   it "should warn about symlinks in subdirectories", :if => Puppet.features.manages_symlinks? do
@@ -69,6 +69,6 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     Puppet.expects(:warning).with(regexp_matches(/symlinks/i))
 
     Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
-    File.should be_directory(File.join(target, 'mytarball'))
+    expect(File).to be_directory(File.join(target, 'mytarball'))
   end
 end

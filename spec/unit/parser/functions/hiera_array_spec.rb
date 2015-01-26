@@ -20,7 +20,7 @@ describe 'Puppet::Parser::Functions#hiera_array' do
   end
 
   it 'should use the array resolution_type' do
-    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be(:array) }.returns([])
+    Hiera.any_instance.expects(:lookup).with() { |*args| expect(args[4]).to be(:array) }.returns([])
     scope.function_hiera_array(['key'])
   end
 end

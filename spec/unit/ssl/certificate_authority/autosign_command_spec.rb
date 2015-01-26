@@ -10,13 +10,13 @@ describe Puppet::SSL::CertificateAuthority::AutosignCommand do
   it "returns true if the command succeeded" do
     executes_the_command_resulting_in(0)
 
-    decider.allowed?(csr).should == true
+    expect(decider.allowed?(csr)).to eq(true)
   end
 
   it "returns false if the command failed" do
     executes_the_command_resulting_in(1)
 
-    decider.allowed?(csr).should == false
+    expect(decider.allowed?(csr)).to eq(false)
   end
 
   def executes_the_command_resulting_in(exitstatus)

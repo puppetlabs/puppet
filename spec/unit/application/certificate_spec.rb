@@ -9,7 +9,7 @@ describe Puppet::Application::Certificate do
     subject.command_line.stubs(:args).returns %w{list}
     subject.preinit
     subject.parse_options
-    subject.should respond_to(:handle_ca_location)
+    expect(subject).to respond_to(:handle_ca_location)
   end
 
   it "should accept the ca-location option" do
@@ -17,6 +17,6 @@ describe Puppet::Application::Certificate do
     subject.preinit
     subject.parse_options
     subject.setup
-    subject.arguments.should == [{ :ca_location => "local" }]
+    expect(subject.arguments).to eq([{ :ca_location => "local" }])
   end
 end

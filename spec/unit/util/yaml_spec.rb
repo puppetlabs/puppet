@@ -37,7 +37,7 @@ describe Puppet::Util::Yaml do
     it "returns false" do
       Puppet::FileSystem.touch(filename)
 
-      expect(Puppet::Util::Yaml.load_file(filename)).to be_false
+      expect(Puppet::Util::Yaml.load_file(filename)).to be_falsey
     end
 
     it "allows return value to be overridden" do

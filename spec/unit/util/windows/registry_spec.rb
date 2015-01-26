@@ -16,7 +16,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
 
   context "#root" do
     it "should lookup the root hkey" do
-      subject.root(name).should be_instance_of(Win32::Registry::PredefinedKey)
+      expect(subject.root(name)).to be_instance_of(Win32::Registry::PredefinedKey)
     end
 
     it "should raise for unknown root keys" do
@@ -25,7 +25,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
   end
 
   context "#open" do
-    let(:hkey)   { mock 'hklm' }
+    let(:hkey)   { stub 'hklm' }
     let(:subkey) { stub 'subkey' }
 
     before :each do
@@ -34,12 +34,12 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
 
     it "should yield the opened the subkey" do
       hkey.expects(:open).with do |p, _|
-        p.should == path
+        expect(p).to eq(path)
       end.yields(subkey)
 
       yielded = nil
       subject.open(name, path) {|reg| yielded = reg}
-      yielded.should == subkey
+      expect(yielded).to eq(subkey)
     end
 
     if Puppet::Util::Platform.windows?
@@ -75,13 +75,13 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
       key.expects(:each_value).multiple_yields(
         ['string', 1, 'foo'], ['dword', 4, 0]
       )
-      subject.values(key).should == { 'string' => 'foo', 'dword' => 0 }
+      expect(subject.values(key)).to eq({ 'string' => 'foo', 'dword' => 0 })
     end
 
     it "should return an empty hash if there are no values" do
       key.expects(:each_value)
 
-      subject.values(key).should == {}
+      expect(subject.values(key)).to eq({})
     end
 
     context "when reading non-ASCII values" do
@@ -134,7 +134,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
 
         value = expects_registry_value(reg_value)
 
-        Integer(value).should == 1
+        expect(Integer(value)).to eq(1)
       end
     end
   end

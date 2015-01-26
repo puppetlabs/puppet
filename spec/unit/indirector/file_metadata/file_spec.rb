@@ -5,11 +5,11 @@ require 'puppet/indirector/file_metadata/file'
 
 describe Puppet::Indirector::FileMetadata::File do
   it "should be registered with the file_metadata indirection" do
-    Puppet::Indirector::Terminus.terminus_class(:file_metadata, :file).should equal(Puppet::Indirector::FileMetadata::File)
+    expect(Puppet::Indirector::Terminus.terminus_class(:file_metadata, :file)).to equal(Puppet::Indirector::FileMetadata::File)
   end
 
   it "should be a subclass of the DirectFileServer terminus" do
-    Puppet::Indirector::FileMetadata::File.superclass.should equal(Puppet::Indirector::DirectFileServer)
+    expect(Puppet::Indirector::FileMetadata::File.superclass).to equal(Puppet::Indirector::DirectFileServer)
   end
 
   describe "when creating the instance for a single found file" do
@@ -28,7 +28,7 @@ describe Puppet::Indirector::FileMetadata::File do
       @data.expects(:collect)
 
       Puppet::FileServing::Metadata.expects(:new).returns(@data)
-      @metadata.find(@request).should == @data
+      expect(@metadata.find(@request)).to eq(@data)
     end
   end
 

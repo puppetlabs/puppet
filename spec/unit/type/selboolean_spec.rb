@@ -4,12 +4,12 @@ require 'spec_helper'
 describe Puppet::Type.type(:selboolean), "when validating attributes" do
   [:name, :persistent].each do |param|
     it "should have a #{param} parameter" do
-      Puppet::Type.type(:selboolean).attrtype(param).should == :param
+      expect(Puppet::Type.type(:selboolean).attrtype(param)).to eq(:param)
     end
   end
 
   it "should have a value property" do
-    Puppet::Type.type(:selboolean).attrtype(:value).should == :property
+    expect(Puppet::Type.type(:selboolean).attrtype(:value)).to eq(:property)
   end
 end
 

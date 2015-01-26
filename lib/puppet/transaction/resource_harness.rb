@@ -108,6 +108,12 @@ class Puppet::Transaction::ResourceHarness
     end
   end
 
+  # allow_changes? is only made public to enable the existing spec tests to run
+  # under rspec 3 (apparently rspec 2 didn't enforce access controls?). Please do not
+  # treat this as part of a public API.
+  # Possible future improvement: rewrite to not require access to private methods.
+  public :allow_changes?
+
   def sync_if_needed(param, context)
     historical_value = context.historical_values[param.name]
     current_value = context.current_values[param.name]

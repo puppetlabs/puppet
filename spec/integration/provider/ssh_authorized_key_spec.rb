@@ -68,7 +68,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
   def check_fake_key(username, expected_content)
     filename = (username == :root ? fake_rootfile : fake_userfile )
     content = File.readlines(filename).map(&:chomp).sort.reject{ |x| x =~ /^# HEADER:/ }
-    content.join("\n").should == expected_content.sort.join("\n")
+    expect(content.join("\n")).to eq(expected_content.sort.join("\n"))
   end
 
   def run_in_catalog(*resources)

@@ -16,22 +16,22 @@ describe "http compression" do
     end
 
     it "should have a module function that returns the None underlying module" do
-      Puppet::Network::HTTP::Compression.module.should == Puppet::Network::HTTP::Compression::None
+      expect(Puppet::Network::HTTP::Compression.module).to eq(Puppet::Network::HTTP::Compression::None)
     end
 
     it "should not add any Accept-Encoding header" do
-      @uncompressor.add_accept_encoding({}).should == {}
+      expect(@uncompressor.add_accept_encoding({})).to eq({})
     end
 
     it "should not tamper the body" do
       response = stub 'response', :body => "data"
-      @uncompressor.uncompress_body(response).should == "data"
+      expect(@uncompressor.uncompress_body(response)).to eq("data")
     end
 
     it "should yield an identity uncompressor" do
       response = stub 'response'
       @uncompressor.uncompress(response) { |u|
-        u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
+        expect(u).to be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
       }
     end
   end
@@ -49,15 +49,15 @@ describe "http compression" do
     end
 
     it "should have a module function that returns the Active underlying module" do
-      Puppet::Network::HTTP::Compression.module.should == Puppet::Network::HTTP::Compression::Active
+      expect(Puppet::Network::HTTP::Compression.module).to eq(Puppet::Network::HTTP::Compression::Active)
     end
 
     it "should add an Accept-Encoding header supporting compression" do
       headers = @uncompressor.add_accept_encoding({})
-      headers.should have_key('accept-encoding')
-      headers['accept-encoding'].should =~ /gzip/
-      headers['accept-encoding'].should =~ /deflate/
-      headers['accept-encoding'].should =~ /identity/
+      expect(headers).to have_key('accept-encoding')
+      expect(headers['accept-encoding']).to match(/gzip/)
+      expect(headers['accept-encoding']).to match(/deflate/)
+      expect(headers['accept-encoding']).to match(/identity/)
     end
 
     describe "when uncompressing response body" do
@@ -68,12 +68,12 @@ describe "http compression" do
       end
 
       it "should return untransformed response body with no content-encoding" do
-        @uncompressor.uncompress_body(@response).should == "mydata"
+        expect(@uncompressor.uncompress_body(@response)).to eq("mydata")
       end
 
       it "should return untransformed response body with 'identity' content-encoding" do
         @response.stubs(:[]).with('content-encoding').returns('identity')
-        @uncompressor.uncompress_body(@response).should == "mydata"
+        expect(@uncompressor.uncompress_body(@response)).to eq("mydata")
       end
 
       it "should use a Zlib inflater with 'deflate' content-encoding" do
@@ -83,7 +83,7 @@ describe "http compression" do
         Zlib::Inflate.expects(:new).returns(inflater)
         inflater.expects(:inflate).with("mydata").returns "uncompresseddata"
 
-        @uncompressor.uncompress_body(@response).should == "uncompresseddata"
+        expect(@uncompressor.uncompress_body(@response)).to eq("uncompresseddata")
       end
 
       it "should use a GzipReader with 'gzip' content-encoding" do
@@ -96,7 +96,7 @@ describe "http compression" do
         Zlib::GzipReader.expects(:new).with(io).returns(reader)
         reader.expects(:read).returns "uncompresseddata"
 
-        @uncompressor.uncompress_body(@response).should == "uncompresseddata"
+        expect(@uncompressor.uncompress_body(@response)).to eq("uncompresseddata")
       end
     end
 
@@ -111,14 +111,14 @@ describe "http compression" do
 
       it "should yield an identity uncompressor with no content-encoding" do
         @uncompressor.uncompress(@response) { |u|
-          u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
+          expect(u).to be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
         }
       end
 
       it "should yield an identity uncompressor with 'identity' content-encoding" do
         @response.stubs(:[]).with('content-encoding').returns 'identity'
         @uncompressor.uncompress(@response) { |u|
-          u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
+          expect(u).to be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
         }
       end
 
@@ -126,7 +126,7 @@ describe "http compression" do
         it "should yield a Zlib uncompressor with '#{c}' content-encoding" do
           @response.stubs(:[]).with('content-encoding').returns c
           @uncompressor.uncompress(@response) { |u|
-            u.should be_instance_of(Puppet::Network::HTTP::Compression::Active::ZlibAdapter)
+            expect(u).to be_instance_of(Puppet::Network::HTTP::Compression::Active::ZlibAdapter)
           }
         end
       end
@@ -159,7 +159,7 @@ describe "http compression" do
 
       it "should return the inflated chunk" do
         @inflater.stubs(:inflate).with("chunk").returns("uncompressed")
-        @adapter.uncompress("chunk").should == "uncompressed"
+        expect(@adapter.uncompress("chunk")).to eq("uncompressed")
       end
 
       it "should try a 'regular' inflater on Zlib::DataError" do
@@ -173,7 +173,7 @@ describe "http compression" do
       it "should raise the error the second time" do
         @inflater.stubs(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
         Zlib::Inflate.expects(:new).with.returns(@inflater)
-        lambda { @adapter.uncompress("chunk") }.should raise_error
+        expect { @adapter.uncompress("chunk") }.to raise_error
       end
 
       it "should finish the stream on close" do

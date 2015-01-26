@@ -8,45 +8,45 @@ describe Puppet::Relationship do
   end
 
   it "should have a :source attribute" do
-    @edge.should respond_to(:source)
+    expect(@edge).to respond_to(:source)
   end
 
   it "should have a :target attribute" do
-    @edge.should respond_to(:target)
+    expect(@edge).to respond_to(:target)
   end
 
   it "should have a :callback attribute" do
     @edge.callback = :foo
-    @edge.callback.should == :foo
+    expect(@edge.callback).to eq(:foo)
   end
 
   it "should have an :event attribute" do
     @edge.event = :NONE
-    @edge.event.should == :NONE
+    expect(@edge.event).to eq(:NONE)
   end
 
   it "should require a callback if a non-NONE event is specified" do
-    proc { @edge.event = :something }.should raise_error(ArgumentError)
+    expect { @edge.event = :something }.to raise_error(ArgumentError)
   end
 
   it "should have a :label attribute" do
-    @edge.should respond_to(:label)
+    expect(@edge).to respond_to(:label)
   end
 
   it "should provide a :ref method that describes the edge" do
     @edge = Puppet::Relationship.new("a", "b")
-    @edge.ref.should == "a => b"
+    expect(@edge.ref).to eq("a => b")
   end
 
   it "should be able to produce a label as a hash with its event and callback" do
     @edge.callback = :foo
     @edge.event = :bar
 
-    @edge.label.should == {:callback => :foo, :event => :bar}
+    expect(@edge.label).to eq({:callback => :foo, :event => :bar})
   end
 
   it "should work if nil options are provided" do
-    lambda { Puppet::Relationship.new("a", "b", nil) }.should_not raise_error
+    expect { Puppet::Relationship.new("a", "b", nil) }.not_to raise_error
   end
 end
 
@@ -56,27 +56,27 @@ describe Puppet::Relationship, " when initializing" do
   end
 
   it "should use the first argument as the source" do
-    @edge.source.should == :a
+    expect(@edge.source).to eq(:a)
   end
 
   it "should use the second argument as the target" do
-    @edge.target.should == :b
+    expect(@edge.target).to eq(:b)
   end
 
   it "should set the rest of the arguments as the event and callback" do
     @edge = Puppet::Relationship.new(:a, :b, :callback => :foo, :event => :bar)
-    @edge.callback.should == :foo
-    @edge.event.should == :bar
+    expect(@edge.callback).to eq(:foo)
+    expect(@edge.event).to eq(:bar)
   end
 
   it "should accept events specified as strings" do
     @edge = Puppet::Relationship.new(:a, :b, "event" => :NONE)
-    @edge.event.should == :NONE
+    expect(@edge.event).to eq(:NONE)
   end
 
   it "should accept callbacks specified as strings" do
     @edge = Puppet::Relationship.new(:a, :b, "callback" => :foo)
-    @edge.callback.should == :foo
+    expect(@edge.callback).to eq(:foo)
   end
 end
 
@@ -86,15 +86,15 @@ describe Puppet::Relationship, " when matching edges with no specified event" do
   end
 
   it "should not match :NONE" do
-    @edge.should_not be_match(:NONE)
+    expect(@edge).not_to be_match(:NONE)
   end
 
   it "should not match :ALL_EVENTS" do
-    @edge.should_not be_match(:ALL_EVENTS)
+    expect(@edge).not_to be_match(:ALL_EVENTS)
   end
 
   it "should not match any other events" do
-    @edge.should_not be_match(:whatever)
+    expect(@edge).not_to be_match(:whatever)
   end
 end
 
@@ -103,15 +103,15 @@ describe Puppet::Relationship, " when matching edges with :NONE as the event" do
     @edge = Puppet::Relationship.new(:a, :b, :event => :NONE)
   end
   it "should not match :NONE" do
-    @edge.should_not be_match(:NONE)
+    expect(@edge).not_to be_match(:NONE)
   end
 
   it "should not match :ALL_EVENTS" do
-    @edge.should_not be_match(:ALL_EVENTS)
+    expect(@edge).not_to be_match(:ALL_EVENTS)
   end
 
   it "should not match other events" do
-    @edge.should_not be_match(:yayness)
+    expect(@edge).not_to be_match(:yayness)
   end
 end
 
@@ -121,15 +121,15 @@ describe Puppet::Relationship, " when matching edges with :ALL as the event" do
   end
 
   it "should not match :NONE" do
-    @edge.should_not be_match(:NONE)
+    expect(@edge).not_to be_match(:NONE)
   end
 
   it "should match :ALL_EVENTS" do
-    @edge.should be_match(:ALL_EVENTS)
+    expect(@edge).to be_match(:ALL_EVENTS)
   end
 
   it "should match all other events" do
-    @edge.should be_match(:foo)
+    expect(@edge).to be_match(:foo)
   end
 end
 
@@ -139,15 +139,15 @@ describe Puppet::Relationship, " when matching edges with a non-standard event" 
   end
 
   it "should not match :NONE" do
-    @edge.should_not be_match(:NONE)
+    expect(@edge).not_to be_match(:NONE)
   end
 
   it "should not match :ALL_EVENTS" do
-    @edge.should_not be_match(:ALL_EVENTS)
+    expect(@edge).not_to be_match(:ALL_EVENTS)
   end
 
   it "should match events with the same name" do
-    @edge.should be_match(:random)
+    expect(@edge).to be_match(:random)
   end
 end
 
@@ -157,30 +157,30 @@ describe Puppet::Relationship, "when converting to pson" do
   end
 
   it "should store the stringified source as the source in the data" do
-    PSON.parse(@edge.to_pson)["source"].should == "a"
+    expect(PSON.parse(@edge.to_pson)["source"]).to eq("a")
   end
 
   it "should store the stringified target as the target in the data" do
-    PSON.parse(@edge.to_pson)['target'].should == "b"
+    expect(PSON.parse(@edge.to_pson)['target']).to eq("b")
   end
 
   it "should store the psonified event as the event in the data" do
-    PSON.parse(@edge.to_pson)["event"].should == "random"
+    expect(PSON.parse(@edge.to_pson)["event"]).to eq("random")
   end
 
   it "should not store an event when none is set" do
     @edge.event = nil
-    PSON.parse(@edge.to_pson)["event"].should be_nil
+    expect(PSON.parse(@edge.to_pson)["event"]).to be_nil
   end
 
   it "should store the psonified callback as the callback in the data" do
     @edge.callback = "whatever"
-    PSON.parse(@edge.to_pson)["callback"].should == "whatever"
+    expect(PSON.parse(@edge.to_pson)["callback"]).to eq("whatever")
   end
 
   it "should not store a callback when none is set in the edge" do
     @edge.callback = nil
-    PSON.parse(@edge.to_pson)["callback"].should be_nil
+    expect(PSON.parse(@edge.to_pson)["callback"]).to be_nil
   end
 end
 
@@ -207,18 +207,18 @@ describe Puppet::Relationship, "when converting from pson" do
   # LAK:NOTE For all of these tests, we convert back to the edge so we can
   # trap the actual data structure then.
   it "should pass the source in as the first argument" do
-    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").source.should == "mysource"
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").source).to eq("mysource")
   end
 
   it "should pass the target in as the second argument" do
-    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").target.should == "mytarget"
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").target).to eq("mytarget")
   end
 
   it "should pass the event as an argument if it's provided" do
-    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event.should == "myevent"
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event).to eq("myevent")
   end
 
   it "should pass the callback as an argument if it's provided" do
-    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback.should == "mycallback"
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback).to eq("mycallback")
   end
 end

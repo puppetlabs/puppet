@@ -100,7 +100,7 @@ describe 'agent logging' do
         end
         double_of_bin_puppet_agent_call(argv)
 
-        Puppet::Util::Log.level.should == expected[:level]
+        expect(Puppet::Util::Log.level).to eq(expected[:level])
       end
 
     end

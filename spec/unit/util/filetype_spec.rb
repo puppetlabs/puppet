@@ -11,7 +11,7 @@ describe Puppet::Util::FileType do
     let(:file) { type.new(path) }
 
     it "should exist" do
-      type.should_not be_nil
+      expect(type).not_to be_nil
     end
 
     describe "when the file already exists" do
@@ -19,7 +19,7 @@ describe Puppet::Util::FileType do
         Puppet::FileSystem.expects(:exist?).with(path).returns true
         File.expects(:read).with(path).returns "my text"
 
-        file.read.should == "my text"
+        expect(file.read).to eq("my text")
       end
 
       it "should unlink the file when asked to remove it" do
@@ -34,7 +34,7 @@ describe Puppet::Util::FileType do
       it "should return an empty string when asked to read the file" do
         Puppet::FileSystem.expects(:exist?).with(path).returns false
 
-        file.read.should == ""
+        expect(file.read).to eq("")
       end
     end
 
@@ -84,7 +84,7 @@ describe Puppet::Util::FileType do
 
         Puppet::Type.type(:filebucket).expects(:mkdefaultbucket).returns bucket
 
-        file.bucket.should == "mybucket"
+        expect(file.bucket).to eq("mybucket")
       end
     end
   end
@@ -97,7 +97,7 @@ describe Puppet::Util::FileType do
     let(:user_options) { options.merge({:uid => uid}) }
 
     it "should exist" do
-      type.should_not be_nil
+      expect(type).not_to be_nil
     end
 
     # make Puppet::Util::SUIDManager return something deterministic, not the
@@ -109,19 +109,19 @@ describe Puppet::Util::FileType do
     describe "#read" do
       it "should run crontab -l as the target user" do
         Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).returns crontab
-        cron.read.should == crontab
+        expect(cron.read).to eq(crontab)
       end
 
       it "should not switch user if current user is the target user" do
         Puppet::Util.expects(:uid).with(uid).returns 9000
         Puppet::Util::SUIDManager.expects(:uid).returns 9000
         Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], options).returns crontab
-        cron.read.should == crontab
+        expect(cron.read).to eq(crontab)
       end
 
       it "should treat an absent crontab as empty" do
         Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).raises(Puppet::ExecutionFailure, absent_crontab)
-        cron.read.should == ''
+        expect(cron.read).to eq('')
       end
 
       it "should raise an error if the user is not authorized to use cron" do
@@ -155,7 +155,7 @@ describe Puppet::Util::FileType do
       end
 
       after :each do
-        Puppet::FileSystem.exist?(@tmp_cron_path).should be_false
+        expect(Puppet::FileSystem.exist?(@tmp_cron_path)).to be_falsey
       end
 
       it "should run crontab as the target user on a temporary file" do

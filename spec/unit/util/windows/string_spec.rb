@@ -15,16 +15,16 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
     expected = string_value.encode(Encoding::UTF_16LE)
     expected_bytes = expected.bytes.to_a + UTF16_NULL
 
-    wide_string(string_value).bytes.to_a.should == expected_bytes
+    expect(wide_string(string_value).bytes.to_a).to eq(expected_bytes)
   end
 
   context "wide_string" do
     it "should return encoding of UTF-16LE" do
-      wide_string("bob").encoding.should == Encoding::UTF_16LE
+      expect(wide_string("bob").encoding).to eq(Encoding::UTF_16LE)
     end
 
     it "should return valid encoding" do
-      wide_string("bob").valid_encoding?.should be_true
+      expect(wide_string("bob").valid_encoding?).to be_truthy
     end
 
     it "should convert an ASCII string" do
@@ -52,7 +52,7 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
     end
 
     it "should return a nil when given a nil" do
-      wide_string(nil).should == nil
+      expect(wide_string(nil)).to eq(nil)
     end
   end
 end

@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'rspec'
 require 'rspec/core/formatters/progress_formatter'
-require 'rspec/core/command_line'
+require 'rspec/core/runner'
 
 # Disable ruby verbosity
 # We need control over output so that the parallel task can parse it correctly
@@ -15,6 +15,7 @@ module Parallel
     # This differs from the built-in progress formatter by not appending an index to failures.
     #
     class Formatter < ::RSpec::Core::Formatters::ProgressFormatter
+      ::RSpec::Core::Formatters.register self, :dump_failure
       def dump_failure(example, _)
         # Unlike the super class implementation, do not print the failure number
         output.puts "#{short_padding}#{example.full_description}"
@@ -34,7 +35,8 @@ module Parallel
       end
 
       def run
-        ::RSpec::Core::CommandLine.new(@options).run($stderr, $stdout)
+        @options = ::RSpec::Core::ConfigurationOptions.new(@options)
+        ::RSpec::Core::Runner.new(@options).run($stderr, $stdout)
       end
     end
   end

@@ -15,18 +15,18 @@ describe Puppet::Resource::Catalog::Compiler do
 
   it "should remove virtual resources when filtering" do
     @one.virtual = true
-    Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs.should == [ @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs).to eq([ @two.ref ])
   end
 
   it "should not remove exported resources when filtering" do
     @one.exported = true
-    Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs.sort.should == [ @one.ref, @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs.sort).to eq([ @one.ref, @two.ref ])
   end
 
   it "should remove virtual exported resources when filtering" do
     @one.exported = true
     @one.virtual = true
-    Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs.should == [ @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs).to eq([ @two.ref ])
   end
 
   it "should filter out virtual resources when finding a catalog" do
@@ -37,7 +37,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     @one.virtual = true
 
-    Puppet::Resource::Catalog.indirection.find("mynode").resource_refs.should == [ @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.find("mynode").resource_refs).to eq([ @two.ref ])
   end
 
   it "should not filter out exported resources when finding a catalog" do
@@ -48,7 +48,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     @one.exported = true
 
-    Puppet::Resource::Catalog.indirection.find("mynode").resource_refs.sort.should == [ @one.ref, @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.find("mynode").resource_refs.sort).to eq([ @one.ref, @two.ref ])
   end
 
   it "should filter out virtual exported resources when finding a catalog" do
@@ -60,7 +60,7 @@ describe Puppet::Resource::Catalog::Compiler do
     @one.exported = true
     @one.virtual = true
 
-    Puppet::Resource::Catalog.indirection.find("mynode").resource_refs.should == [ @two.ref ]
+    expect(Puppet::Resource::Catalog.indirection.find("mynode").resource_refs).to eq([ @two.ref ])
   end
 
   it "filters out virtual exported resources using the agent's production environment" do

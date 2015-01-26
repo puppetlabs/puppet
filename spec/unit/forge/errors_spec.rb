@@ -7,11 +7,11 @@ describe Puppet::Forge::Errors do
     let(:exception) { subject.new(:uri => 'https://fake.com:1111') }
 
     it 'should return a valid single line error' do
-      exception.message.should == 'Unable to verify the SSL certificate at https://fake.com:1111'
+      expect(exception.message).to eq('Unable to verify the SSL certificate at https://fake.com:1111')
     end
 
     it 'should return a valid multiline error' do
-      exception.multiline.should == <<-EOS.chomp
+      expect(exception.multiline).to eq <<-EOS.chomp
 Could not connect via HTTPS to https://fake.com:1111
   Unable to verify the SSL certificate
     The certificate may not be signed by a valid CA
@@ -26,11 +26,11 @@ Could not connect via HTTPS to https://fake.com:1111
     let(:exception) { subject.new(:uri => 'http://fake.com:1111', :original => socket_exception) }
 
     it 'should return a valid single line error' do
-      exception.message.should == 'Unable to connect to the server at http://fake.com:1111. Detail: There was a problem.'
+      expect(exception.message).to eq('Unable to connect to the server at http://fake.com:1111. Detail: There was a problem.')
     end
 
     it 'should return a valid multiline error' do
-      exception.multiline.should == <<-EOS.chomp
+      expect(exception.multiline).to eq <<-EOS.chomp
 Could not connect to http://fake.com:1111
   There was a network communications problem
     The error we caught said 'There was a problem'
@@ -47,11 +47,11 @@ Could not connect to http://fake.com:1111
       let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module') }
 
       it 'should return a valid single line error' do
-        exception.message.should == 'Request to Puppet Forge failed. Detail: 404 not found.'
+        expect(exception.message).to eq('Request to Puppet Forge failed. Detail: 404 not found.')
       end
 
       it 'should return a valid multiline error' do
-        exception.multiline.should == <<-eos.chomp
+        expect(exception.multiline).to eq <<-eos.chomp
 Request to Puppet Forge failed.
   The server being queried was http://fake.com:1111
   The HTTP response we received was '404 not found'
@@ -63,11 +63,11 @@ Request to Puppet Forge failed.
       let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module', :message => 'no such module') }
 
       it 'should return a valid single line error' do
-        exception.message.should == 'Request to Puppet Forge failed. Detail: no such module / 404 not found.'
+        expect(exception.message).to eq('Request to Puppet Forge failed. Detail: no such module / 404 not found.')
       end
 
       it 'should return a valid multiline error' do
-        exception.multiline.should == <<-eos.chomp
+        expect(exception.multiline).to eq <<-eos.chomp
 Request to Puppet Forge failed.
   The server being queried was http://fake.com:1111
   The HTTP response we received was '404 not found'

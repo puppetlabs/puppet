@@ -22,6 +22,6 @@ describe Puppet::Indirector::Plain do
   it "should return return an instance of the indirected model" do
     object = mock 'object'
     @model.expects(:new).with(@request.key).returns object
-    @searcher.find(@request).should equal(object)
+    expect(@searcher.find(@request)).to equal(object)
   end
 end

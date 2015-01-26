@@ -24,21 +24,21 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
 
     parameters.each do |parameter|
       it "should have a #{parameter} parameter" do
-        macauth_type.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+        expect(macauth_type.attrclass(parameter).ancestors).to be_include(Puppet::Parameter)
       end
 
       it "should have documentation for its #{parameter} parameter" do
-        macauth_type.attrclass(parameter).doc.should be_instance_of(String)
+        expect(macauth_type.attrclass(parameter).doc).to be_instance_of(String)
       end
     end
 
     properties.each do |property|
       it "should have a #{property} property" do
-        macauth_type.attrclass(property).ancestors.should be_include(Puppet::Property)
+        expect(macauth_type.attrclass(property).ancestors).to be_include(Puppet::Property)
       end
 
       it "should have documentation for its #{property} property" do
-        macauth_type.attrclass(property).doc.should be_instance_of(String)
+        expect(macauth_type.attrclass(property).doc).to be_instance_of(String)
       end
     end
 
@@ -47,25 +47,25 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
   describe "when validating properties" do
 
     it "should have a default provider inheriting from Puppet::Provider" do
-      macauth_type.defaultprovider.ancestors.should be_include(Puppet::Provider)
+      expect(macauth_type.defaultprovider.ancestors).to be_include(Puppet::Provider)
     end
 
     it "should be able to create an instance" do
-      lambda {
+      expect {
         macauth_type.new(:name => 'foo')
-      }.should_not raise_error
+      }.not_to raise_error
     end
 
     it "should support :present as a value to :ensure" do
-      lambda {
+      expect {
         macauth_type.new(:name => "foo", :ensure => :present)
-      }.should_not raise_error
+      }.not_to raise_error
     end
 
     it "should support :absent as a value to :ensure" do
-      lambda {
+      expect {
         macauth_type.new(:name => "foo", :ensure => :absent)
-      }.should_not raise_error
+      }.not_to raise_error
     end
 
   end
@@ -75,16 +75,16 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
       it "should convert number-looking strings into actual numbers" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "300"
-        prop.should.must == 300
+        expect(prop.should).to eq(300)
       end
       it "should support integers as a value" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = 300
-        prop.should.must == 300
+        expect(prop.should).to eq(300)
       end
       it "should raise an error for non-integer values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
-        lambda { prop.should = "foo" }.should raise_error(Puppet::Error)
+        expect { prop.should = "foo" }.to raise_error(Puppet::Error)
       end
     end
   end
@@ -94,16 +94,16 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
       it "should convert boolean-looking false strings into actual booleans" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "false"
-        prop.should.must == :false
+        expect(prop.should).to eq(:false)
       end
       it "should convert boolean-looking true strings into actual booleans" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "true"
-        prop.should.must == :true
+        expect(prop.should).to eq(:true)
       end
       it "should raise an error for non-boolean values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
-        lambda { prop.should = "foo" }.should raise_error(Puppet::Error)
+        expect { prop.should = "foo" }.to raise_error(Puppet::Error)
       end
     end
   end

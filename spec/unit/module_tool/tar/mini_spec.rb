@@ -42,7 +42,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   end
 
   it "packs a tar file" do
-    writer = mock('GzipWriter')
+    writer = stub('GzipWriter')
 
     Zlib::GzipWriter.expects(:open).with(destfile).yields(writer)
     Archive::Tar::Minitar.expects(:pack).with(sourcedir, writer)
@@ -51,7 +51,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   end
 
   def unpacks_the_entry(type, name)
-    reader = mock('GzipReader')
+    reader = stub('GzipReader')
 
     Zlib::GzipReader.expects(:open).with(sourcefile).yields(reader)
     minitar.expects(:find_valid_files).with(reader).returns([name])

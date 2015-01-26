@@ -23,7 +23,7 @@ describe Puppet::FileServing::Mount::Plugins do
       mod.stubs(:plugin).with("foo/bar").returns nil
 
       @environment.stubs(:modules).returns [mod]
-      @mount.find("foo/bar", @request).should be_nil
+      expect(@mount.find("foo/bar", @request)).to be_nil
     end
 
     it "should return the file path from the module" do
@@ -31,7 +31,7 @@ describe Puppet::FileServing::Mount::Plugins do
       mod.stubs(:plugin).with("foo/bar").returns "eh"
 
       @environment.stubs(:modules).returns [mod]
-      @mount.find("foo/bar", @request).should == "eh"
+      expect(@mount.find("foo/bar", @request)).to eq("eh")
     end
   end
 
@@ -50,7 +50,7 @@ describe Puppet::FileServing::Mount::Plugins do
       @environment.stubs(:modules).returns []
       @environment.stubs(:modulepath).returns ["/"]
       @options.expects(:[]=).with(:recurse, false)
-      @mount.search("foo/bar", @request).should == ["/"]
+      expect(@mount.search("foo/bar", @request)).to eq(["/"])
     end
 
     it "should return nil if no modules can be found that have plugins and modulepath is invalid" do
@@ -59,7 +59,7 @@ describe Puppet::FileServing::Mount::Plugins do
 
       @environment.stubs(:modules).returns []
       @environment.stubs(:modulepath).returns []
-      @mount.search("foo/bar", @request).should be_nil
+      expect(@mount.search("foo/bar", @request)).to be_nil
     end
 
     it "should return the plugin paths for each module that has plugins" do
@@ -67,7 +67,7 @@ describe Puppet::FileServing::Mount::Plugins do
       two = stub 'module', :plugins? => true, :plugin_directory => "/two"
 
       @environment.stubs(:modules).returns [one, two]
-      @mount.search("foo/bar", @request).should == %w{/one /two}
+      expect(@mount.search("foo/bar", @request)).to eq(%w{/one /two})
     end
   end
 end

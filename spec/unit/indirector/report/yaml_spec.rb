@@ -6,23 +6,23 @@ require 'puppet/indirector/report/yaml'
 
 describe Puppet::Transaction::Report::Yaml do
   it "should be a subclass of the Yaml terminus" do
-    Puppet::Transaction::Report::Yaml.superclass.should equal(Puppet::Indirector::Yaml)
+    expect(Puppet::Transaction::Report::Yaml.superclass).to equal(Puppet::Indirector::Yaml)
   end
 
   it "should have documentation" do
-    Puppet::Transaction::Report::Yaml.doc.should_not be_nil
+    expect(Puppet::Transaction::Report::Yaml.doc).not_to be_nil
   end
 
   it "should be registered with the report indirection" do
     indirection = Puppet::Indirector::Indirection.instance(:report)
-    Puppet::Transaction::Report::Yaml.indirection.should equal(indirection)
+    expect(Puppet::Transaction::Report::Yaml.indirection).to equal(indirection)
   end
 
   it "should have its name set to :yaml" do
-    Puppet::Transaction::Report::Yaml.name.should == :yaml
+    expect(Puppet::Transaction::Report::Yaml.name).to eq(:yaml)
   end
 
   it "should unconditionally save/load from the --lastrunreport setting" do
-    subject.path(:me).should == Puppet[:lastrunreport]
+    expect(subject.path(:me)).to eq(Puppet[:lastrunreport])
   end
 end

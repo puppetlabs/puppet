@@ -23,11 +23,11 @@ describe provider_class do
   end
 
   it "should be able to prefetch instances from the device" do
-    provider_class.should respond_to(:prefetch)
+    expect(provider_class).to respond_to(:prefetch)
   end
 
   it "should have an instances method" do
-    provider_class.should respond_to(:instances)
+    expect(provider_class).to respond_to(:instances)
   end
 
   describe "when prefetching" do
@@ -79,7 +79,7 @@ describe provider_class do
 
       it "should store a copy of the hash as its vlan_properties" do
         instance = provider_class.new(:device, :one => :two)
-        instance.former_properties.should == {:one => :two}
+        expect(instance.former_properties).to eq({:one => :two})
       end
     end
   end
@@ -94,28 +94,28 @@ describe provider_class do
     end
 
     it "should have a method for creating the instance" do
-      @instance.should respond_to(:create)
+      expect(@instance).to respond_to(:create)
     end
 
     it "should have a method for removing the instance" do
-      @instance.should respond_to(:destroy)
+      expect(@instance).to respond_to(:destroy)
     end
 
     it "should indicate when the instance already exists" do
       @instance = provider_class.new(:device, :ensure => :present)
-      @instance.exists?.should be_true
+      expect(@instance.exists?).to be_truthy
     end
 
     it "should indicate when the instance does not exist" do
       @instance = provider_class.new(:device, :ensure => :absent)
-      @instance.exists?.should be_false
+      expect(@instance.exists?).to be_falsey
     end
 
     describe "is being flushed" do
       it "should flush properties" do
         @instance = provider_class.new(:ensure => :present, :name => "200", :description => "myvlan")
         @instance.flush
-        @instance.properties.should be_empty
+        expect(@instance.properties).to be_empty
       end
     end
 
@@ -131,21 +131,21 @@ describe provider_class do
 
       it "should set its :ensure value to :present" do
         @instance.create
-        @instance.properties[:ensure].should == :present
+        expect(@instance.properties[:ensure]).to eq(:present)
       end
 
       it "should set all of the other attributes from the resource" do
         @resource.expects(:should).with(:description).returns "myvlan"
 
         @instance.create
-        @instance.properties[:description].should == "myvlan"
+        expect(@instance.properties[:description]).to eq("myvlan")
       end
     end
 
     describe "is being destroyed" do
       it "should set its :ensure value to :absent" do
         @instance.destroy
-        @instance.properties[:ensure].should == :absent
+        expect(@instance.properties[:ensure]).to eq(:absent)
       end
     end
   end

@@ -4,7 +4,7 @@ module Matchers; module Include
   matcher :include_in_any_order do |*matchers|
     match do |enumerable|
       @not_matched = []
-      expected.each do |matcher|
+      expected_as_array.each do |matcher|
         if enumerable.empty?
           break
         end
@@ -20,8 +20,8 @@ module Matchers; module Include
       @not_matched.empty? && enumerable.empty?
     end
 
-    failure_message_for_should do |enumerable|
-      "did not match #{@not_matched.collect(&:description).join(', ')} in #{enumerable.inspect}: <#{@not_matched.collect(&:failure_message_for_should).join('>, <')}>"
+    failure_message do |enumerable|
+      "did not match #{@not_matched.collect(&:description).join(', ')} in #{enumerable.inspect}: <#{@not_matched.collect(&:failure_message).join('>, <')}>"
     end
   end
 end; end

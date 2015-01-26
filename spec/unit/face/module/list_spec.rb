@@ -22,10 +22,10 @@ describe "puppet module list" do
   end
 
   it "should return an empty list per dir in path if there are no modules" do
-    Puppet::Face[:module, :current].list[:modules_by_path].should == {
+    expect(Puppet::Face[:module, :current].list[:modules_by_path]).to eq({
       @modpath1 => [],
       @modpath2 => []
-    }
+    })
   end
 
   it "should include modules separated by the environment's modulepath" do
@@ -36,14 +36,14 @@ describe "puppet module list" do
     usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
-      Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
+      expect(Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path]).to eq({
         @modpath1 => [
           Puppet::Module.new('bar', barmod1.path, usedenv),
           Puppet::Module.new('foo', foomod1.path, usedenv)
         ],
         @modpath2 => [Puppet::Module.new('foo', foomod2.path, usedenv)],
         @modpath3 => [],
-      }
+      })
     end
   end
 
@@ -54,14 +54,14 @@ describe "puppet module list" do
     usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
-      Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
+      expect(Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path]).to eq({
         @modpath1 => [
           Puppet::Module.new('bar', barmod.path, usedenv),
           Puppet::Module.new('foo', foomod.path, usedenv)
         ],
         @modpath2 => [],
         @modpath3 => [],
-      }
+      })
     end
   end
 
@@ -123,7 +123,7 @@ describe "puppet module list" do
         #{empty_modpath} (no modules installed)
       HEREDOC
 
-      console_output(:modulepath => empty_modpath).should == expected
+      expect(console_output(:modulepath => empty_modpath)).to eq(expected)
     end
 
     it "should print both modules with and without metadata" do
@@ -140,7 +140,7 @@ describe "puppet module list" do
           └── nometadata (\e[0;36m???\e[0m)
         HEREDOC
 
-        console_output.should == expected
+        expect(console_output).to eq(expected)
       end
     end
 
@@ -157,7 +157,7 @@ describe "puppet module list" do
           #{path3} (no modules installed)
         HEREDOC
 
-        console_output.should == expected
+        expect(console_output).to eq(expected)
       end
     end
 
@@ -182,7 +182,7 @@ describe "puppet module list" do
         #{@modpath2} (no modules installed)
       HEREDOC
 
-      console_output(:tree => true).should == expected
+      expect(console_output(:tree => true)).to eq(expected)
     end
 
     it "should print both modules with and without metadata as a tree" do
@@ -196,7 +196,7 @@ describe "puppet module list" do
         #{@modpath2} (no modules installed)
       HEREDOC
 
-      console_output.should == expected
+      expect(console_output).to eq(expected)
     end
 
     it "should warn about missing dependencies" do

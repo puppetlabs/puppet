@@ -32,23 +32,23 @@ describe provider_class do
   end
 
   it "should have a create method." do
-    @provider.should respond_to(:create)
+    expect(@provider).to respond_to(:create)
   end
 
   it "should have a destroy method." do
-    @provider.should respond_to(:destroy)
+    expect(@provider).to respond_to(:destroy)
   end
 
   it "should have an exists? method." do
-    @provider.should respond_to(:exists?)
+    expect(@provider).to respond_to(:exists?)
   end
 
   it "should have a content method." do
-    @provider.should respond_to(:content)
+    expect(@provider).to respond_to(:content)
   end
 
   it "should have a content= method." do
-    @provider.should respond_to(:content=)
+    expect(@provider).to respond_to(:content=)
   end
 
   describe "when managing the resource" do
@@ -178,7 +178,7 @@ describe provider_class do
 
   describe "when gathering existing instances" do
     it "should define an instances class method." do
-      @provider.class.should respond_to(:instances)
+      expect(@provider.class).to respond_to(:instances)
     end
 
     it "should call external command dscl -list /Local/Default/<ds_type> on each known ds_type" do

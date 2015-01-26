@@ -19,7 +19,7 @@ module RelationshipGraphMatchers
       @forward_edge && !@reverse_edge
     end
 
-    def failure_message_for_should
+    def failure_message
       "expect #{@actual_graph.to_dot_graph} to only contain an edge from #{@before} to #{@after} but #{[forward_failure_message, reverse_failure_message].compact.join(' and ')}"
     end
 

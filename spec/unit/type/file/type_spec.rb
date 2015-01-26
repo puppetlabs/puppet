@@ -11,9 +11,9 @@ describe Puppet::Type.type(:file).attrclass(:type) do
   end
 
   it "should prevent the user from trying to set the type" do
-    lambda {
+    expect {
       @resource[:type] = "fifo"
-    }.should raise_error(Puppet::Error, /type is read-only/)
+    }.to raise_error(Puppet::Error, /type is read-only/)
   end
 
 end

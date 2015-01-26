@@ -23,7 +23,7 @@ describe "the 'file' function" do
 
   it "should read a file" do
     with_file_content('file content') do |name|
-      scope.function_file([name]).should == "file content"
+      expect(scope.function_file([name])).to eq("file content")
     end
   end
 
@@ -33,14 +33,14 @@ describe "the 'file' function" do
       mod.stubs(:file).with('myfile').returns(name)
       compiler.environment.stubs(:module).with('mymod').returns(mod)
 
-      scope.function_file(['mymod/myfile']).should == 'file content'
+      expect(scope.function_file(['mymod/myfile'])).to eq('file content')
     end
   end
 
   it "should return the first file if given two files with absolute paths" do
     with_file_content('one') do |one|
       with_file_content('two') do |two|
-        scope.function_file([one, two]).should == "one"
+        expect(scope.function_file([one, two])).to eq("one")
       end
     end
   end
@@ -53,7 +53,7 @@ describe "the 'file' function" do
         mod.expects(:file).with('one').returns(one)
         mod.stubs(:file).with('two').returns(two)
 
-        scope.function_file(['mymod/one','mymod/two']).should == 'one'
+        expect(scope.function_file(['mymod/one','mymod/two'])).to eq('one')
       end
     end
   end
@@ -65,7 +65,7 @@ describe "the 'file' function" do
         compiler.environment.stubs(:module).with('mymod').returns(mod)
         mod.stubs(:file).with('two').returns(two)
 
-        scope.function_file([one,'mymod/two']).should == 'one'
+        expect(scope.function_file([one,'mymod/two'])).to eq('one')
       end
     end
   end
@@ -77,7 +77,7 @@ describe "the 'file' function" do
         compiler.environment.expects(:module).with('mymod').returns(mod)
         mod.stubs(:file).with('two').returns(two)
 
-        scope.function_file(['mymod/two',one]).should == 'two'
+        expect(scope.function_file(['mymod/two',one])).to eq('two')
       end
     end
   end
@@ -85,7 +85,7 @@ describe "the 'file' function" do
   it "should not fail when some files are absent" do
     expect {
       with_file_content('one') do |one|
-        scope.function_file([make_absolute("/should-not-exist"), one]).should == 'one'
+        expect(scope.function_file([make_absolute("/should-not-exist"), one])).to eq('one')
       end
     }.to_not raise_error
   end

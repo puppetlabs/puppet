@@ -21,7 +21,7 @@ describe "puppet module search" do
     before { Puppet::Util::Terminal.stubs(:width).returns(100) }
 
     it 'should output nothing when receiving an empty dataset' do
-      subject.render({:answers => [], :result => :success}, ['apache', {}]).should == "No results found for 'apache'."
+      expect(subject.render({:answers => [], :result => :success}, ['apache', {}])).to eq("No results found for 'apache'.")
     end
 
     it 'should return error and exit when error returned' do
@@ -43,10 +43,10 @@ describe "puppet module search" do
         ],
       }
 
-      subject.render(results, ['apache', {}]).should =~ /NAME/
-      subject.render(results, ['apache', {}]).should =~ /DESCRIPTION/
-      subject.render(results, ['apache', {}]).should =~ /AUTHOR/
-      subject.render(results, ['apache', {}]).should =~ /KEYWORDS/
+      expect(subject.render(results, ['apache', {}])).to match(/NAME/)
+      expect(subject.render(results, ['apache', {}])).to match(/DESCRIPTION/)
+      expect(subject.render(results, ['apache', {}])).to match(/AUTHOR/)
+      expect(subject.render(results, ['apache', {}])).to match(/KEYWORDS/)
     end
 
     it 'should output the relevant fields when receiving a non-empty dataset' do
@@ -57,11 +57,11 @@ describe "puppet module search" do
         ]
       }
 
-      subject.render(results, ['apache', {}]).should =~ /Name/
-      subject.render(results, ['apache', {}]).should =~ /Author/
-      subject.render(results, ['apache', {}]).should =~ /Summary/
-      subject.render(results, ['apache', {}]).should =~ /tag1/
-      subject.render(results, ['apache', {}]).should =~ /tag2/
+      expect(subject.render(results, ['apache', {}])).to match(/Name/)
+      expect(subject.render(results, ['apache', {}])).to match(/Author/)
+      expect(subject.render(results, ['apache', {}])).to match(/Summary/)
+      expect(subject.render(results, ['apache', {}])).to match(/tag1/)
+      expect(subject.render(results, ['apache', {}])).to match(/tag2/)
     end
 
     it 'should elide really long descriptions' do
@@ -77,7 +77,7 @@ describe "puppet module search" do
         ]
       }
 
-      subject.render(results, ['apache', {}]).should =~ /\.{3}  @Author/
+      expect(subject.render(results, ['apache', {}])).to match(/\.{3}  @Author/)
     end
 
     it 'should never truncate the module name' do
@@ -93,7 +93,7 @@ describe "puppet module search" do
         ]
       }
 
-      subject.render(results, ['apache', {}]).should =~ /This-module-has-a-really-really-long-name/
+      expect(subject.render(results, ['apache', {}])).to match(/This-module-has-a-really-really-long-name/)
     end
 
     it 'should never truncate the author name' do
@@ -109,7 +109,7 @@ describe "puppet module search" do
         ]
       }
 
-      subject.render(results, ['apache', {}]).should =~ /@This-author-has-a-really-really-long-name/
+      expect(subject.render(results, ['apache', {}])).to match(/@This-author-has-a-really-really-long-name/)
     end
 
     it 'should never remove tags that match the search term' do
@@ -125,8 +125,8 @@ describe "puppet module search" do
         ]
       }
 
-      subject.render(results, ['Supercalifragilisticexpialidocious', {}]).should =~ /Supercalifragilisticexpialidocious/
-      subject.render(results, ['Supercalifragilisticexpialidocious', {}]).should_not =~ /tag/
+      expect(subject.render(results, ['Supercalifragilisticexpialidocious', {}])).to match(/Supercalifragilisticexpialidocious/)
+      expect(subject.render(results, ['Supercalifragilisticexpialidocious', {}])).not_to match(/tag/)
     end
 
     {
@@ -157,8 +157,8 @@ describe "puppet module search" do
 
         Puppet::Util::Terminal.expects(:width).returns(width)
         result = subject.render(results, ['apache', {}])
-        result.lines.sort_by(&:length).last.chomp.length.should <= width
-        result.should == expectation
+        expect(result.lines.sort_by(&:length).last.chomp.length).to be <= width
+        expect(result).to eq(expectation)
       end
     end
   end

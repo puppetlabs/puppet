@@ -10,7 +10,7 @@ describe checksum do
   end
 
   it "should be a parameter" do
-    checksum.superclass.must == Puppet::Parameter
+    expect(checksum.superclass).to eq(Puppet::Parameter)
   end
 
   it "should use its current value when asked to sum content" do
@@ -27,17 +27,17 @@ describe checksum do
   it "should return the summed contents with a checksum label" do
     sum = Digest::MD5.hexdigest("foobar")
     @resource[:checksum] = :md5
-    @checksum.sum("foobar").should == "{md5}#{sum}"
+    expect(@checksum.sum("foobar")).to eq("{md5}#{sum}")
   end
 
   it "when using digest_algorithm 'sha256' should return the summed contents with a checksum label" do
     sum = Digest::SHA256.hexdigest("foobar")
     @resource[:checksum] = :sha256
-    @checksum.sum("foobar").should == "{sha256}#{sum}"
+    expect(@checksum.sum("foobar")).to eq("{sha256}#{sum}")
   end
 
   it "should use :md5 as its default type" do
-    @checksum.default.should == :md5
+    expect(@checksum.default).to eq(:md5)
   end
 
   it "should use its current value when asked to sum a file's content" do
@@ -54,26 +54,26 @@ describe checksum do
   it "should convert all sums to strings when summing files" do
     @checksum.value = :mtime
     @checksum.expects(:mtime_file).with(@path).returns Time.now
-    lambda { @checksum.sum_file(@path) }.should_not raise_error
+    expect { @checksum.sum_file(@path) }.not_to raise_error
   end
 
   it "should return the summed contents of a file with a checksum label" do
     @resource[:checksum] = :md5
     @checksum.expects(:md5_file).returns "mysum"
-    @checksum.sum_file(@path).should == "{md5}mysum"
+    expect(@checksum.sum_file(@path)).to eq("{md5}mysum")
   end
 
   it "should return the summed contents of a stream with a checksum label" do
     @resource[:checksum] = :md5
     @checksum.expects(:md5_stream).returns "mysum"
-    @checksum.sum_stream.should == "{md5}mysum"
+    expect(@checksum.sum_stream).to eq("{md5}mysum")
   end
 
   it "should yield the sum_stream block to the underlying checksum" do
     @resource[:checksum] = :md5
     @checksum.expects(:md5_stream).yields("something").returns("mysum")
     @checksum.sum_stream do |sum|
-      sum.should == "something"
+      expect(sum).to eq("something")
     end
   end
 end

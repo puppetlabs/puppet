@@ -7,7 +7,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     type.new(:name => 'faff', :provider => :aptrpm, :source => '/tmp/faff.rpm')
   end
 
-  it { should be_versionable }
+  it { is_expected.to be_versionable }
 
   context "when retrieving ensure" do
     before(:each) do
@@ -26,12 +26,12 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
 
     it "should report absent packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
-      pkg.property(:ensure).retrieve.should == :absent
+      expect(pkg.property(:ensure).retrieve).to eq(:absent)
     end
 
     it "should report present packages correctly" do
       rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686\n")
-      pkg.property(:ensure).retrieve.should == "1.2.3-1-5"
+      expect(pkg.property(:ensure).retrieve).to eq("1.2.3-1-5")
     end
   end
 

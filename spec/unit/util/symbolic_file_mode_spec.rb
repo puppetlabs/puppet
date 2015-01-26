@@ -17,13 +17,13 @@ describe Puppet::Util::SymbolicFileMode do
          755 0755
     }.each do |input|
       it "should treat #{input.inspect} as valid" do
-        valid_symbolic_mode?(input).should be_true
+        expect(valid_symbolic_mode?(input)).to be_truthy
       end
     end
 
     [0000, 0111, 0640, 0755, 0777].each do |input|
       it "should treat the int #{input.to_s(8)} as value" do
-        valid_symbolic_mode?(input).should be_true
+        expect(valid_symbolic_mode?(input)).to be_truthy
       end
     end
 
@@ -33,30 +33,30 @@ describe Puppet::Util::SymbolicFileMode do
          u g o a ug uo ua ag
     }.each do |input|
       it "should treat #{input.inspect} as invalid" do
-        valid_symbolic_mode?(input).should be_false
+        expect(valid_symbolic_mode?(input)).to be_falsey
       end
     end
   end
 
   describe "#normalize_symbolic_mode" do
     it "should turn an int into a string" do
-      normalize_symbolic_mode(12).should be_an_instance_of String
+      expect(normalize_symbolic_mode(12)).to be_an_instance_of String
     end
 
     it "should not add a leading zero to an int" do
-      normalize_symbolic_mode(12).should_not =~ /^0/
+      expect(normalize_symbolic_mode(12)).not_to match(/^0/)
     end
 
     it "should not add a leading zero to a string with a number" do
-      normalize_symbolic_mode("12").should_not =~ /^0/
+      expect(normalize_symbolic_mode("12")).not_to match(/^0/)
     end
 
     it "should string a leading zero from a number" do
-      normalize_symbolic_mode("012").should == '12'
+      expect(normalize_symbolic_mode("012")).to eq('12')
     end
 
     it "should pass through any other string" do
-      normalize_symbolic_mode("u=rwx").should == 'u=rwx'
+      expect(normalize_symbolic_mode("u=rwx")).to eq('u=rwx')
     end
   end
 
@@ -123,7 +123,7 @@ describe Puppet::Util::SymbolicFileMode do
     }.each do |input, result|
       from = input.is_a?(Array) ? "#{input[0]}, 0#{input[1].to_s(8)}" : input
       it "should map #{from.inspect} to #{result.inspect}" do
-        symbolic_mode_to_int(*input).should == result
+        expect(symbolic_mode_to_int(*input)).to eq(result)
       end
     end
 
@@ -165,18 +165,18 @@ describe Puppet::Util::SymbolicFileMode do
     end
 
     it "should set the execute bit on a directory, without exec in original" do
-      symbolic_mode_to_int("u+X", 0444, true).to_s(8).should == "544"
-      symbolic_mode_to_int("g+X", 0444, true).to_s(8).should == "454"
-      symbolic_mode_to_int("o+X", 0444, true).to_s(8).should == "445"
-      symbolic_mode_to_int("+X",  0444, true).to_s(8).should == "555"
+      expect(symbolic_mode_to_int("u+X", 0444, true).to_s(8)).to eq("544")
+      expect(symbolic_mode_to_int("g+X", 0444, true).to_s(8)).to eq("454")
+      expect(symbolic_mode_to_int("o+X", 0444, true).to_s(8)).to eq("445")
+      expect(symbolic_mode_to_int("+X",  0444, true).to_s(8)).to eq("555")
     end
 
     it "should set the execute bit on a file with exec in the original" do
-      symbolic_mode_to_int("+X", 0544).to_s(8).should == "555"
+      expect(symbolic_mode_to_int("+X", 0544).to_s(8)).to eq("555")
     end
 
     it "should not set the execute bit on a file without exec on the original even if set by earlier DSL" do
-      symbolic_mode_to_int("u+x,go+X", 0444).to_s(8).should == "544"
+      expect(symbolic_mode_to_int("u+x,go+X", 0444).to_s(8)).to eq("544")
     end
   end
 end

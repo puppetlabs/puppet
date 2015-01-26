@@ -76,8 +76,8 @@ describe Puppet::Network::Resolver do
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain) do |hostname, port|
         expected_priority = order.keys.min
 
-        order[expected_priority].should include(hostname)
-        port.should_not be(@test_port)
+        expect(order[expected_priority]).to include(hostname)
+        expect(port).not_to be(@test_port)
 
         # Remove the host from our expected hosts
         order[expected_priority].delete hostname
@@ -109,8 +109,8 @@ describe Puppet::Network::Resolver do
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
 
-        order[expected_priority].should include(hostname)
-        port.should_not be(@test_port)
+        expect(order[expected_priority]).to include(hostname)
+        expect(port).not_to be(@test_port)
 
         # Remove the host from our expected hosts
         order[expected_priority].delete hostname
@@ -150,8 +150,8 @@ describe Puppet::Network::Resolver do
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
 
-        order[expected_priority].should include(hostname)
-        port.should_not be(@test_port)
+        expect(order[expected_priority]).to include(hostname)
+        expect(port).not_to be(@test_port)
 
         # Remove the host from our expected hosts
         order[expected_priority].delete hostname
@@ -164,12 +164,12 @@ describe Puppet::Network::Resolver do
 
   describe "when finding weighted servers" do
     it "should return nil when no records were found" do
-      Puppet::Network::Resolver.find_weighted_server([]).should == nil
+      expect(Puppet::Network::Resolver.find_weighted_server([])).to eq(nil)
     end
 
     it "should return the first record when one record is passed" do
       result = Puppet::Network::Resolver.find_weighted_server([@test_records.first])
-      result.should == @test_records.first
+      expect(result).to eq(@test_records.first)
     end
 
     {
@@ -197,9 +197,9 @@ describe Puppet::Network::Resolver do
           seen[server] += 1
         end
 
-        seen.length.should == records.length
+        expect(seen.length).to eq(records.length)
         records.each do |record|
-          seen[record].should == Puppet::Network::Resolver.weight(record)
+          expect(seen[record]).to eq(Puppet::Network::Resolver.weight(record))
         end
       end
     end

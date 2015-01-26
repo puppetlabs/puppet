@@ -16,7 +16,7 @@ describe Puppet::Type do
       newparam(:name) {}
     end
 
-    type.provider(:myprovider).should equal(provider)
+    expect(type.provider(:myprovider)).to equal(provider)
   end
 
   it "should not lose its provider parameter when it is reloaded" do
@@ -27,6 +27,6 @@ describe Puppet::Type do
     # reload it
     type = Puppet::Type.newtype(:reload_test_type)
 
-    type.parameters.should include(:provider)
+    expect(type.parameters).to include(:provider)
   end
 end

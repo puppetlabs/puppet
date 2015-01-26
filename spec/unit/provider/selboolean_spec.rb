@@ -12,12 +12,12 @@ describe provider_class do
 
   it "should return :on when getsebool returns on" do
     @provider.expects(:getsebool).with("foo").returns "foo --> on\n"
-    @provider.value.should == :on
+    expect(@provider.value).to eq(:on)
   end
 
   it "should return :off when getsebool returns on" do
     @provider.expects(:getsebool).with("foo").returns "foo --> off\n"
-    @provider.value.should == :off
+    expect(@provider.value).to eq(:off)
   end
 
   it "should call execpipe when updating boolean setting" do

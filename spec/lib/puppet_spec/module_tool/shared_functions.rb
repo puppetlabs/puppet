@@ -29,7 +29,7 @@ module PuppetSpec
         release = releases.find { |x| x[:name] == name }
 
         if options.nil?
-          release.should be_nil
+          expect(release).to be_nil
         else
           from = options.keys.find { |k| k.nil? || k.is_a?(Semantic::Version) }
           to   = options.delete(from)
@@ -39,8 +39,8 @@ module PuppetSpec
             options[:version] ||= to
           end
 
-          release.should_not be_nil
-          release.should include options
+          expect(release).not_to be_nil
+          expect(release).to include options
         end
       end
 

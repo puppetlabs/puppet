@@ -3,37 +3,39 @@ require 'semver'
 
 describe SemVer do
 
-  describe 'MAX should be +Infinity' do
-    SemVer::MAX.major.infinite?.should == 1
+  describe 'MAX' do
+    it 'should be +Infinity' do
+      expect(SemVer::MAX.major.infinite?).to eq(1)
+    end
   end
 
   describe '::valid?' do
     it 'should validate basic version strings' do
       %w[ 0.0.0 999.999.999 v0.0.0 v999.999.999 ].each do |vstring|
-        SemVer.valid?(vstring).should be_true
+        expect(SemVer.valid?(vstring)).to be_truthy
       end
     end
 
     it 'should validate special version strings' do
       %w[ 0.0.0-foo 999.999.999-bar v0.0.0-a v999.999.999-beta ].each do |vstring|
-        SemVer.valid?(vstring).should be_true
+        expect(SemVer.valid?(vstring)).to be_truthy
       end
     end
 
     it 'should fail to validate invalid version strings' do
       %w[ nope 0.0foo 999.999 x0.0.0 z.z.z 1.2.3beta 1.x.y ].each do |vstring|
-        SemVer.valid?(vstring).should be_false
+        expect(SemVer.valid?(vstring)).to be_falsey
       end
     end
   end
 
   describe '::pre' do
     it 'should append a dash when no dash appears in the string' do
-      SemVer.pre('1.2.3').should == '1.2.3-'
+      expect(SemVer.pre('1.2.3')).to eq('1.2.3-')
     end
 
     it 'should not append a dash when a dash appears in the string' do
-      SemVer.pre('1.2.3-a').should == '1.2.3-a'
+      expect(SemVer.pre('1.2.3-a')).to eq('1.2.3-a')
     end
   end
 
@@ -59,33 +61,33 @@ describe SemVer do
 
     it 'should match exact versions by string' do
       @versions.each do |version|
-        SemVer.find_matching(version, @versions).should == version
+        expect(SemVer.find_matching(version, @versions)).to eq(version)
       end
     end
 
     it 'should return nil if no versions match' do
       %w[ 3.0.0 2.0.0-rc2 1.0.0-alpha ].each do |v|
-        SemVer.find_matching(v, @versions).should be_nil
+        expect(SemVer.find_matching(v, @versions)).to be_nil
       end
     end
 
     it 'should find the greatest match for partial versions' do
-      SemVer.find_matching('1.0', @versions).should == 'v1.0.1'
-      SemVer.find_matching('1.1', @versions).should == 'v1.1.4'
-      SemVer.find_matching('1', @versions).should   == 'v1.2.1'
-      SemVer.find_matching('2', @versions).should   == 'v2.0.0-rc1'
-      SemVer.find_matching('2.1', @versions).should == nil
+      expect(SemVer.find_matching('1.0', @versions)).to eq('v1.0.1')
+      expect(SemVer.find_matching('1.1', @versions)).to eq('v1.1.4')
+      expect(SemVer.find_matching('1', @versions)).to   eq('v1.2.1')
+      expect(SemVer.find_matching('2', @versions)).to   eq('v2.0.0-rc1')
+      expect(SemVer.find_matching('2.1', @versions)).to eq(nil)
     end
 
 
     it 'should find the greatest match for versions with placeholders' do
-      SemVer.find_matching('1.0.x', @versions).should == 'v1.0.1'
-      SemVer.find_matching('1.1.x', @versions).should == 'v1.1.4'
-      SemVer.find_matching('1.x', @versions).should   == 'v1.2.1'
-      SemVer.find_matching('1.x.x', @versions).should == 'v1.2.1'
-      SemVer.find_matching('2.x', @versions).should   == 'v2.0.0-rc1'
-      SemVer.find_matching('2.x.x', @versions).should == 'v2.0.0-rc1'
-      SemVer.find_matching('2.1.x', @versions).should == nil
+      expect(SemVer.find_matching('1.0.x', @versions)).to eq('v1.0.1')
+      expect(SemVer.find_matching('1.1.x', @versions)).to eq('v1.1.4')
+      expect(SemVer.find_matching('1.x', @versions)).to   eq('v1.2.1')
+      expect(SemVer.find_matching('1.x.x', @versions)).to eq('v1.2.1')
+      expect(SemVer.find_matching('2.x', @versions)).to   eq('v2.0.0-rc1')
+      expect(SemVer.find_matching('2.x.x', @versions)).to eq('v2.0.0-rc1')
+      expect(SemVer.find_matching('2.1.x', @versions)).to eq(nil)
     end
   end
 
@@ -116,7 +118,7 @@ describe SemVer do
       }
 
       tests.each do |vstring, expected|
-        SemVer[vstring].should == expected
+        expect(SemVer[vstring]).to eq(expected)
       end
     end
 
@@ -185,7 +187,7 @@ describe SemVer do
       suitability.each do |arguments, expected|
         range, vstring = arguments
         actual = SemVer[range] === SemVer.new(vstring)
-        actual.should == expected
+        expect(actual).to eq(expected)
       end
     end
   end
@@ -197,18 +199,18 @@ describe SemVer do
 
     it 'should populate the appropriate fields for a basic version string' do
       version = SemVer.new('1.2.3')
-      version.major.should   == 1
-      version.minor.should   == 2
-      version.tiny.should    == 3
-      version.special.should == ''
+      expect(version.major).to   eq(1)
+      expect(version.minor).to   eq(2)
+      expect(version.tiny).to    eq(3)
+      expect(version.special).to eq('')
     end
 
     it 'should populate the appropriate fields for a special version string' do
       version = SemVer.new('3.4.5-beta6')
-      version.major.should   == 3
-      version.minor.should   == 4
-      version.tiny.should    == 5
-      version.special.should == '-beta6'
+      expect(version.major).to   eq(3)
+      expect(version.minor).to   eq(4)
+      expect(version.tiny).to    eq(5)
+      expect(version.special).to eq('-beta6')
     end
   end
 
@@ -217,25 +219,25 @@ describe SemVer do
 
     describe 'should match against' do
       describe 'literal version strings' do
-        it { should be_matched_by('1.2.3-beta') }
+        it { is_expected.to be_matched_by('1.2.3-beta') }
 
-        it { should_not be_matched_by('1.2.3-alpha') }
-        it { should_not be_matched_by('1.2.4-beta') }
-        it { should_not be_matched_by('1.3.3-beta') }
-        it { should_not be_matched_by('2.2.3-beta') }
+        it { is_expected.not_to be_matched_by('1.2.3-alpha') }
+        it { is_expected.not_to be_matched_by('1.2.4-beta') }
+        it { is_expected.not_to be_matched_by('1.3.3-beta') }
+        it { is_expected.not_to be_matched_by('2.2.3-beta') }
       end
 
       describe 'partial version strings' do
-        it { should be_matched_by('1.2.3') }
-        it { should be_matched_by('1.2') }
-        it { should be_matched_by('1') }
+        it { is_expected.to be_matched_by('1.2.3') }
+        it { is_expected.to be_matched_by('1.2') }
+        it { is_expected.to be_matched_by('1') }
       end
 
       describe 'version strings with placeholders' do
-        it { should be_matched_by('1.2.x') }
-        it { should be_matched_by('1.x.3') }
-        it { should be_matched_by('1.x.x') }
-        it { should be_matched_by('1.x') }
+        it { is_expected.to be_matched_by('1.2.x') }
+        it { is_expected.to be_matched_by('1.x.3') }
+        it { is_expected.to be_matched_by('1.x.x') }
+        it { is_expected.to be_matched_by('1.x') }
       end
     end
   end
@@ -243,61 +245,61 @@ describe SemVer do
   describe 'comparisons' do
     describe 'against a string' do
       it 'should just work' do
-        SemVer.new('1.2.3').should == '1.2.3'
+        expect(SemVer.new('1.2.3')).to eq('1.2.3')
       end
     end
 
     describe 'against a symbol' do
       it 'should just work' do
-        SemVer.new('1.2.3').should == :'1.2.3'
+        expect(SemVer.new('1.2.3')).to eq(:'1.2.3')
       end
     end
 
     describe 'on a basic version (v1.2.3)' do
       subject { SemVer.new('v1.2.3') }
 
-      it { should == SemVer.new('1.2.3') }
+      it { is_expected.to eq(SemVer.new('1.2.3')) }
 
       # Different major versions
-      it { should > SemVer.new('0.2.3') }
-      it { should < SemVer.new('2.2.3') }
+      it { is_expected.to be > SemVer.new('0.2.3') }
+      it { is_expected.to be < SemVer.new('2.2.3') }
 
       # Different minor versions
-      it { should > SemVer.new('1.1.3') }
-      it { should < SemVer.new('1.3.3') }
+      it { is_expected.to be > SemVer.new('1.1.3') }
+      it { is_expected.to be < SemVer.new('1.3.3') }
 
       # Different tiny versions
-      it { should > SemVer.new('1.2.2') }
-      it { should < SemVer.new('1.2.4') }
+      it { is_expected.to be > SemVer.new('1.2.2') }
+      it { is_expected.to be < SemVer.new('1.2.4') }
 
       # Against special versions
-      it { should > SemVer.new('1.2.3-beta') }
-      it { should < SemVer.new('1.2.4-beta') }
+      it { is_expected.to be > SemVer.new('1.2.3-beta') }
+      it { is_expected.to be < SemVer.new('1.2.4-beta') }
     end
 
     describe 'on a special version (v1.2.3-beta)' do
       subject { SemVer.new('v1.2.3-beta') }
 
-      it { should == SemVer.new('1.2.3-beta') }
+      it { is_expected.to eq(SemVer.new('1.2.3-beta')) }
 
       # Same version, final release
-      it { should < SemVer.new('1.2.3') }
+      it { is_expected.to be < SemVer.new('1.2.3') }
 
       # Different major versions
-      it { should > SemVer.new('0.2.3') }
-      it { should < SemVer.new('2.2.3') }
+      it { is_expected.to be > SemVer.new('0.2.3') }
+      it { is_expected.to be < SemVer.new('2.2.3') }
 
       # Different minor versions
-      it { should > SemVer.new('1.1.3') }
-      it { should < SemVer.new('1.3.3') }
+      it { is_expected.to be > SemVer.new('1.1.3') }
+      it { is_expected.to be < SemVer.new('1.3.3') }
 
       # Different tiny versions
-      it { should > SemVer.new('1.2.2') }
-      it { should < SemVer.new('1.2.4') }
+      it { is_expected.to be > SemVer.new('1.2.2') }
+      it { is_expected.to be < SemVer.new('1.2.4') }
 
       # Against special versions
-      it { should > SemVer.new('1.2.3-alpha') }
-      it { should < SemVer.new('1.2.3-beta2') }
+      it { is_expected.to be > SemVer.new('1.2.3-alpha') }
+      it { is_expected.to be < SemVer.new('1.2.3-beta2') }
     end
   end
 end

@@ -100,101 +100,101 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should get the environment from a query parameter" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[3][:environment].to_s.should == "env"
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[3][:environment].to_s).to eq("env")
     end
 
     it "should fail if there is no environment specified" do
-      lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {}) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {}) }).to raise_error(ArgumentError)
     end
 
     it "should fail if the environment is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"}) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"}) }).to raise_error(ArgumentError)
     end
 
     it "should fail if the indirection does not match the prefix" do
-      lambda { handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params) }).to raise_error(ArgumentError)
     end
 
     it "should fail if the indirection does not have the correct version" do
-      lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }).to raise_error(ArgumentError)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar",
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar",
                               { :environment => "env",
-                                :bucket_path => "/malicious/path" })[3].should_not include({ :bucket_path => "/malicious/path" })
+                                :bucket_path => "/malicious/path" })[3]).not_to include({ :bucket_path => "/malicious/path" })
     end
 
     it "should pass allowed parameters through" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar",
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar",
                               { :environment => "env",
-                                :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
+                                :allowed_param => "value" })[3]).to include({ :allowed_param => "value" })
     end
 
     it "should return the environment as a Puppet::Node::Environment" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[3][:environment].should be_a(Puppet::Node::Environment)
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[3][:environment]).to be_a(Puppet::Node::Environment)
     end
 
     it "should use the first field of the URI as the indirection name" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[0].name.should == :node
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[0].name).to eq(:node)
     end
 
     it "should fail if the indirection name is not alphanumeric" do
-      lambda { handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params) }).to raise_error(ArgumentError)
     end
 
     it "should use the remainder of the URI as the indirection key" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[2].should == "bar"
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[2]).to eq("bar")
     end
 
     it "should support the indirection key being a /-separated file path" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bee/baz/bomb", params)[2].should == "bee/baz/bomb"
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bee/baz/bomb", params)[2]).to eq("bee/baz/bomb")
     end
 
     it "should fail if no indirection key is specified" do
-      lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node", params) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node", params) }).to raise_error(ArgumentError)
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[1].should == :find
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[1]).to eq(:find)
     end
 
     it "should choose 'find' as the indirection method if the http method is a POST and the indirection name is singular" do
-      handler.uri2indirection("POST", "#{master_url_prefix}/node/bar", params)[1].should == :find
+      expect(handler.uri2indirection("POST", "#{master_url_prefix}/node/bar", params)[1]).to eq(:find)
     end
 
     it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
-      handler.uri2indirection("HEAD", "#{master_url_prefix}/node/bar", params)[1].should == :head
+      expect(handler.uri2indirection("HEAD", "#{master_url_prefix}/node/bar", params)[1]).to eq(:head)
     end
 
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/nodes/bar", params)[1].should == :search
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/nodes/bar", params)[1]).to eq(:search)
     end
 
     it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/statuses/bar", params)[0].name.should == :status
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/statuses/bar", params)[0].name).to eq(:status)
     end
 
     it "should change indirection name to 'node' if the http method is a GET and the indirection name is nodes" do
-      handler.uri2indirection("GET", "#{master_url_prefix}/nodes/bar", params)[0].name.should == :node
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/nodes/bar", params)[0].name).to eq(:node)
     end
 
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
-      handler.uri2indirection("DELETE", "#{master_url_prefix}/node/bar", params)[1].should == :destroy
+      expect(handler.uri2indirection("DELETE", "#{master_url_prefix}/node/bar", params)[1]).to eq(:destroy)
     end
 
     it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is singular" do
-      handler.uri2indirection("PUT", "#{master_url_prefix}/node/bar", params)[1].should == :save
+      expect(handler.uri2indirection("PUT", "#{master_url_prefix}/node/bar", params)[1]).to eq(:save)
     end
 
     it "should fail if an indirection method cannot be picked" do
-      lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }.should raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }).to raise_error(ArgumentError)
     end
 
     it "should URI unescape the indirection key" do
       escaped = URI.escape("foo bar")
       indirection, method, key, final_params = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
-      key.should == "foo bar"
+      expect(key).to eq("foo bar")
     end
   end
 
@@ -207,22 +207,22 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should include the environment in the query string of the URI" do
-      handler.class.request_to_uri(request).should == "#{master_url_prefix}/foo/with%20spaces?environment=myenv&foo=bar"
+      expect(handler.class.request_to_uri(request)).to eq("#{master_url_prefix}/foo/with%20spaces?environment=myenv&foo=bar")
     end
 
     it "should include the correct url prefix if it is a ca request" do
       request.stubs(:indirection_name).returns("certificate")
-      handler.class.request_to_uri(request).should == "#{ca_url_prefix}/certificate/with%20spaces?environment=myenv&foo=bar"
+      expect(handler.class.request_to_uri(request)).to eq("#{ca_url_prefix}/certificate/with%20spaces?environment=myenv&foo=bar")
     end
 
     it "should pluralize the indirection name if the method is 'search'" do
       request.stubs(:method).returns :search
-      handler.class.request_to_uri(request).split("/")[3].should == "foos"
+      expect(handler.class.request_to_uri(request).split("/")[3]).to eq("foos")
     end
 
     it "should add the query string to the URI" do
       request.expects(:query_string).returns "query"
-      handler.class.request_to_uri(request).should =~ /\&query$/
+      expect(handler.class.request_to_uri(request)).to match(/\&query$/)
     end
   end
 
@@ -231,25 +231,25 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
 
     it "should use the indirection as the first field of the URI" do
-      handler.class.request_to_uri_and_body(request).first.split("/")[3].should == "foo"
+      expect(handler.class.request_to_uri_and_body(request).first.split("/")[3]).to eq("foo")
     end
 
     it "should use the escaped key as the remainder of the URI" do
       escaped = URI.escape("with spaces")
-      handler.class.request_to_uri_and_body(request).first.split("/")[4].sub(/\?.+/, '').should == escaped
+      expect(handler.class.request_to_uri_and_body(request).first.split("/")[4].sub(/\?.+/, '')).to eq(escaped)
     end
 
     it "should include the correct url prefix if it is a master request" do
-      handler.class.request_to_uri_and_body(request).first.should == "#{master_url_prefix}/foo/with%20spaces"
+      expect(handler.class.request_to_uri_and_body(request).first).to eq("#{master_url_prefix}/foo/with%20spaces")
     end
 
     it "should include the correct url prefix if it is a ca request" do
       request.stubs(:indirection_name).returns("certificate")
-      handler.class.request_to_uri_and_body(request).first.should == "#{ca_url_prefix}/certificate/with%20spaces"
+      expect(handler.class.request_to_uri_and_body(request).first).to eq("#{ca_url_prefix}/certificate/with%20spaces")
     end
 
     it "should return the URI and body separately" do
-      handler.class.request_to_uri_and_body(request).should == ["#{master_url_prefix}/foo/with%20spaces", "environment=myenv&foo=bar"]
+      expect(handler.class.request_to_uri_and_body(request)).to eq(["#{master_url_prefix}/foo/with%20spaces", "environment=myenv&foo=bar"])
     end
   end
 
@@ -388,7 +388,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
       handler.call(request, response)
 
-      Puppet::IndirectorTesting.indirection.find("my data").should be_nil
+      expect(Puppet::IndirectorTesting.indirection.find("my data")).to be_nil
     end
 
     it "responds with pson when no Accept header is given" do
@@ -421,7 +421,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       handler.call(request, response)
 
       expect(response.code).to eq(not_acceptable_code)
-      Puppet::IndirectorTesting.indirection.find("my data").should_not be_nil
+      expect(Puppet::IndirectorTesting.indirection.find("my data")).not_to be_nil
     end
   end
 
@@ -447,7 +447,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       # corrent or not.
       # (helindbe)
       #
-      Puppet::IndirectorTesting.indirection.find("test").name.should == ''
+      expect(Puppet::IndirectorTesting.indirection.find("test").name).to eq('')
     end
 
     it "saves the data sent in the request" do

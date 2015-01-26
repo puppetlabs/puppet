@@ -9,7 +9,7 @@ describe 'collectors' do
     catalog = compile_to_catalog(code, node)
     messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }.
                                  collect { |notify| notify[:message] }
-    messages.should include(*expected_messages)
+    expect(messages).to include(*expected_messages)
   end
 
   context "virtual resource collection" do

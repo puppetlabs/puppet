@@ -15,7 +15,7 @@ describe Puppet::Util::Log do
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
     Puppet::Util::Log.new(:level => :notice, :message => "foo")
     message = arraydest.last.message
-    message.should == "foo"
+    expect(message).to eq("foo")
   end
 
   describe ".setup_default" do
@@ -103,31 +103,31 @@ describe Puppet::Util::Log do
     it "should colorize if Puppet[:color] is :ansi" do
       Puppet[:color] = :ansi
 
-      @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+      expect(@console.colorize(:alert, "abc")).to eq("\e[0;31mabc\e[0m")
     end
 
     it "should colorize if Puppet[:color] is 'yes'" do
       Puppet[:color] = "yes"
 
-      @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+      expect(@console.colorize(:alert, "abc")).to eq("\e[0;31mabc\e[0m")
     end
 
     it "should htmlize if Puppet[:color] is :html" do
       Puppet[:color] = :html
 
-      @console.colorize(:alert, "abc").should == "<span style=\"color: #FFA0A0\">abc</span>"
+      expect(@console.colorize(:alert, "abc")).to eq("<span style=\"color: #FFA0A0\">abc</span>")
     end
 
     it "should do nothing if Puppet[:color] is false" do
       Puppet[:color] = false
 
-      @console.colorize(:alert, "abc").should == "abc"
+      expect(@console.colorize(:alert, "abc")).to eq("abc")
     end
 
     it "should do nothing if Puppet[:color] is invalid" do
       Puppet[:color] = "invalid option"
 
-      @console.colorize(:alert, "abc").should == "abc"
+      expect(@console.colorize(:alert, "abc")).to eq("abc")
     end
   end
 
@@ -139,7 +139,7 @@ describe Puppet::Util::Log do
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
-      Win32::EventLog.stubs(:open).returns(mock 'mylog')
+      Win32::EventLog.stubs(:open).returns(stub 'mylog')
       Win32::EventLog.stubs(:report_event)
       Win32::EventLog.stubs(:close)
       Puppet.features.stubs(:eventlog?).returns(true)
@@ -148,7 +148,7 @@ describe Puppet::Util::Log do
     it "should restrict its suitability" do
       Puppet.features.expects(:eventlog?).returns(false)
 
-      Puppet::Util::Log::DestEventlog.suitable?('whatever').should == false
+      expect(Puppet::Util::Log::DestEventlog.suitable?('whatever')).to eq(false)
     end
 
     it "should open the 'Application' event log" do
@@ -158,7 +158,7 @@ describe Puppet::Util::Log do
     end
 
     it "should close the event log" do
-      log = mock('myeventlog')
+      log = stub('myeventlog')
       log.expects(:close)
       Win32::EventLog.expects(:open).returns(log)
 
@@ -170,7 +170,7 @@ describe Puppet::Util::Log do
       log = Puppet::Util::Log::DestEventlog.new
 
       Puppet::Util::Log.eachlevel do |level|
-        log.to_native(level).should be_is_a(Array)
+        expect(log.to_native(level)).to be_is_a(Array)
       end
     end
   end
@@ -183,31 +183,31 @@ describe Puppet::Util::Log do
     [:level, :message, :time, :remote].each do |attr|
       it "should have a #{attr} attribute" do
         log = Puppet::Util::Log.new :level => :notice, :message => "A test message"
-        log.should respond_to(attr)
-        log.should respond_to(attr.to_s + "=")
+        expect(log).to respond_to(attr)
+        expect(log).to respond_to(attr.to_s + "=")
       end
     end
 
     it "should fail if created without a level" do
-      lambda { Puppet::Util::Log.new(:message => "A test message") }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Log.new(:message => "A test message") }.to raise_error(ArgumentError)
     end
 
     it "should fail if created without a message" do
-      lambda { Puppet::Util::Log.new(:level => :notice) }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Log.new(:level => :notice) }.to raise_error(ArgumentError)
     end
 
     it "should make available the level passed in at initialization" do
-      Puppet::Util::Log.new(:level => :notice, :message => "A test message").level.should == :notice
+      expect(Puppet::Util::Log.new(:level => :notice, :message => "A test message").level).to eq(:notice)
     end
 
     it "should make available the message passed in at initialization" do
-      Puppet::Util::Log.new(:level => :notice, :message => "A test message").message.should == "A test message"
+      expect(Puppet::Util::Log.new(:level => :notice, :message => "A test message").message).to eq("A test message")
     end
 
     # LAK:NOTE I don't know why this behavior is here, I'm just testing what's in the code,
     # at least at first.
     it "should always convert messages to strings" do
-      Puppet::Util::Log.new(:level => :notice, :message => :foo).message.should == "foo"
+      expect(Puppet::Util::Log.new(:level => :notice, :message => :foo).message).to eq("foo")
     end
 
     it "should flush the log queue when the first destination is specified" do
@@ -217,28 +217,28 @@ describe Puppet::Util::Log do
     end
 
     it "should convert the level to a symbol if it's passed in as a string" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).level.should == :notice
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo).level).to eq(:notice)
     end
 
     it "should fail if the level is not a symbol or string" do
-      lambda { Puppet::Util::Log.new(:level => 50, :message => :foo) }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Log.new(:level => 50, :message => :foo) }.to raise_error(ArgumentError)
     end
 
     it "should fail if the provided level is not valid" do
       Puppet::Util::Log.expects(:validlevel?).with(:notice).returns false
-      lambda { Puppet::Util::Log.new(:level => :notice, :message => :foo) }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Log.new(:level => :notice, :message => :foo) }.to raise_error(ArgumentError)
     end
 
     it "should set its time to the initialization time" do
       time = mock 'time'
       Time.expects(:now).returns time
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).time.should equal(time)
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo).time).to equal(time)
     end
 
     it "should make available any passed-in tags" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{foo bar})
-      log.tags.should be_include("foo")
-      log.tags.should be_include("bar")
+      expect(log.tags).to be_include("foo")
+      expect(log.tags).to be_include("bar")
     end
 
     it "should use a passed-in source" do
@@ -254,7 +254,7 @@ describe Puppet::Util::Log do
     end
 
     it "should default to 'Puppet' as its source" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).source.should == "Puppet"
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo).source).to eq("Puppet")
     end
 
     it "should register itself with Log" do
@@ -268,28 +268,28 @@ describe Puppet::Util::Log do
     end
 
     it "should have a method for determining if a tag is present" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).should respond_to(:tagged?)
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo)).to respond_to(:tagged?)
     end
 
     it "should match a tag if any of the tags are equivalent to the passed tag as a string" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{one two}).should be_tagged(:one)
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{one two})).to be_tagged(:one)
     end
 
     it "should tag itself with its log level" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).should be_tagged(:notice)
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo)).to be_tagged(:notice)
     end
 
     it "should return its message when converted to a string" do
-      Puppet::Util::Log.new(:level => "notice", :message => :foo).to_s.should == "foo"
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo).to_s).to eq("foo")
     end
 
     it "should include its time, source, level, and message when prepared for reporting" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
       report = log.to_report
-      report.should be_include("notice")
-      report.should be_include("foo")
-      report.should be_include(log.source)
-      report.should be_include(log.time.to_s)
+      expect(report).to be_include("notice")
+      expect(report).to be_include("foo")
+      expect(report).to be_include(log.source)
+      expect(report).to be_include(log.time.to_s)
     end
 
     it "should not create unsuitable log destinations" do
@@ -308,7 +308,7 @@ describe Puppet::Util::Log do
         source = Puppet::Type.type(:file).new :path => path
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
         source.tags.each do |tag|
-          log.tags.should be_include(tag)
+          expect(log.tags).to be_include(tag)
         end
       end
 
@@ -323,7 +323,7 @@ describe Puppet::Util::Log do
 
         log.source = source
 
-        log.source.should == "/File[#{path}]"
+        expect(log.source).to eq("/File[#{path}]")
       end
 
       it "should copy over any file and line information" do
@@ -331,8 +331,8 @@ describe Puppet::Util::Log do
         source.file = "/my/file"
         source.line = 50
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
-        log.line.should == 50
-        log.file.should == "/my/file"
+        expect(log.line).to eq(50)
+        expect(log.file).to eq("/my/file")
       end
     end
 
@@ -348,18 +348,18 @@ describe Puppet::Util::Log do
   describe "to_yaml" do
     it "should not include the @version attribute" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      log.to_yaml_properties.should_not include('@version')
+      expect(log.to_yaml_properties).not_to include('@version')
     end
 
     it "should include attributes @level, @message, @source, @tags, and @time" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      log.to_yaml_properties.should =~ [:@level, :@message, :@source, :@tags, :@time]
+      expect(log.to_yaml_properties).to match_array([:@level, :@message, :@source, :@tags, :@time])
     end
 
     it "should include attributes @file and @line if specified" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
-      log.to_yaml_properties.should include(:@file)
-      log.to_yaml_properties.should include(:@line)
+      expect(log.to_yaml_properties).to include(:@file)
+      expect(log.to_yaml_properties).to include(:@line)
     end
   end
 
@@ -367,12 +367,12 @@ describe Puppet::Util::Log do
     log = Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c'])
     tripped = Puppet::Util::Log.from_data_hash(PSON.parse(log.to_pson))
 
-    tripped.file.should == log.file
-    tripped.line.should == log.line
-    tripped.level.should == log.level
-    tripped.message.should == log.message
-    tripped.source.should == log.source
-    tripped.tags.should == log.tags
-    tripped.time.should == log.time
+    expect(tripped.file).to eq(log.file)
+    expect(tripped.line).to eq(log.line)
+    expect(tripped.level).to eq(log.level)
+    expect(tripped.message).to eq(log.message)
+    expect(tripped.source).to eq(log.source)
+    expect(tripped.tags).to eq(log.tags)
+    expect(tripped.time).to eq(log.time)
   end
 end

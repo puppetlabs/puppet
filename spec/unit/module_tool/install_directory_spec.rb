@@ -4,9 +4,9 @@ require 'puppet/module_tool/install_directory'
 describe Puppet::ModuleTool::InstallDirectory do
   def expect_normal_results
     results = installer.run
-    results[:installed_modules].length.should eq 1
-    results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-    results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+    expect(results[:installed_modules].length).to eq 1
+    expect(results[:installed_modules][0][:module]).to eq("pmtacceptance-stdlib")
+    expect(results[:installed_modules][0][:version][:vstring]).to eq("1.0.0")
     results
   end
 

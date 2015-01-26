@@ -16,12 +16,12 @@ describe Puppet::SSL::Certificate do
   describe "when creating new instances" do
     it "should fail if given an object that is not an instance of the wrapped class" do
       obj = stub 'obj', :is_a? => false
-      lambda { @class.from_instance(obj) }.should raise_error(ArgumentError)
+      expect { @class.from_instance(obj) }.to raise_error(ArgumentError)
     end
 
     it "should fail if a name is not supplied and can't be determined from the object" do
       obj = stub 'obj', :is_a? => true
-      lambda { @class.from_instance(obj) }.should raise_error(ArgumentError)
+      expect { @class.from_instance(obj) }.to raise_error(ArgumentError)
     end
 
     it "should determine the name from the object if it has a subject" do
@@ -33,7 +33,7 @@ describe Puppet::SSL::Certificate do
       @class.expects(:new).with('foo').returns inst
       @class.expects(:name_from_subject).with('/CN=foo').returns('foo')
 
-      @class.from_instance(obj).should == inst
+      expect(@class.from_instance(obj)).to eq(inst)
     end
   end
 
@@ -41,7 +41,7 @@ describe Puppet::SSL::Certificate do
     it "should extract only the CN and not any other components" do
       subject = stub 'sub'
       Puppet::Util::SSL.expects(:cn_from_subject).with(subject).returns 'host.domain.com'
-      @class.name_from_subject(subject).should == 'host.domain.com'
+      expect(@class.name_from_subject(subject)).to eq('host.domain.com')
     end
   end
 
@@ -71,7 +71,7 @@ describe Puppet::SSL::Certificate do
     }.each do |signature, digest|
       it "returns '#{digest}' for signature algorithm '#{signature}'" do
         content.stubs(:signature_algorithm).returns(signature)
-        base.digest_algorithm.should == digest
+        expect(base.digest_algorithm).to eq(digest)
       end
     end
 

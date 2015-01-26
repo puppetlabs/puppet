@@ -7,7 +7,7 @@ describe Puppet::Util::ResourceTemplate do
   describe "when initializing" do
     it "should fail if the template does not exist" do
       Puppet::FileSystem.expects(:exist?).with("/my/template").returns false
-      lambda { Puppet::Util::ResourceTemplate.new("/my/template", mock('resource')) }.should raise_error(ArgumentError)
+      expect { Puppet::Util::ResourceTemplate.new("/my/template", mock('resource')) }.to raise_error(ArgumentError)
     end
 
     it "should not create the ERB template" do
@@ -51,7 +51,7 @@ describe Puppet::Util::ResourceTemplate do
 
       @wrapper.expects(:binding).returns "mybinding"
       @template.expects(:result).with("mybinding").returns "myresult"
-      @wrapper.evaluate.should == "myresult"
+      expect(@wrapper.evaluate).to eq("myresult")
     end
   end
 end

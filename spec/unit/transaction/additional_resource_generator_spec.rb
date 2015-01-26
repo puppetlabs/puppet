@@ -72,7 +72,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      find_vertex(graph, :whit, "completed_thing").must be_a(Puppet::Type.type(:whit))
+      expect(find_vertex(graph, :whit, "completed_thing")).to be_a(Puppet::Type.type(:whit))
     end
 
     it "should replace dependencies on the resource with dependencies on the sentinel" do
@@ -404,7 +404,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       @containers.all? { |resource_ref| resource_ref == @containers[0] }
     end
 
-    def failure_message_for_should
+    def failure_message
       "expected #{@expected.join(', ')} to all be contained in the same resource but the containment was #{@expected.zip(@containers).collect { |(res, container)| res + ' => ' + container }.join(', ')}"
     end
   end

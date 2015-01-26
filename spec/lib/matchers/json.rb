@@ -36,7 +36,7 @@ module JSONMatchers
       end
     end
 
-    def failure_message_for_should(instance)
+    def failure_message(instance)
       if @value
         "expected #{instance.inspect} to set #{@attributes.inspect} to #{@value.inspect}; got #{attr_value(@attributes, instance).inspect}"
       else
@@ -44,7 +44,7 @@ module JSONMatchers
       end
     end
 
-    def failure_message_for_should_not(instance)
+    def failure_message_when_negated(instance)
       if @value
         "expected #{instance.inspect} not to set #{@attributes.inspect} to #{@value.inspect}"
       else
@@ -83,7 +83,7 @@ module JSONMatchers
       end
     end
 
-    def failure_message_for_should(klass)
+    def failure_message(klass)
       if @value
         "expected #{klass} to read #{@attribute} from #{@json} as #{@value.inspect}; got #{@instance.send(@attribute).inspect}"
       else
@@ -91,7 +91,7 @@ module JSONMatchers
       end
     end
 
-    def failure_message_for_should_not(klass)
+    def failure_message_when_negated(klass)
       if @value
         "expected #{klass} not to set #{@attribute} to #{@value}"
       else

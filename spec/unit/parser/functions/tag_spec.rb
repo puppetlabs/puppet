@@ -13,7 +13,7 @@ describe "the 'tag' function" do
   end
 
   it "should exist" do
-    Puppet::Parser::Functions.function(:tag).should == "function_tag"
+    expect(Puppet::Parser::Functions.function(:tag)).to eq("function_tag")
   end
 
   it "should tag the resource with any provided tags" do
@@ -22,7 +22,7 @@ describe "the 'tag' function" do
 
     @scope.function_tag ["one", "two"]
 
-    resource.should be_tagged("one")
-    resource.should be_tagged("two")
+    expect(resource).to be_tagged("one")
+    expect(resource).to be_tagged("two")
   end
 end

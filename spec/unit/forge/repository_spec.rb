@@ -40,7 +40,7 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with(responds_with(:path, "the_path"))
       end
 
-      repository.make_http_request("the_path").should == result
+      expect(repository.make_http_request("the_path")).to eq(result)
     end
 
     it 'returns the result object from a request with ssl' do
@@ -49,7 +49,7 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with(responds_with(:path, "the_path"))
       end
 
-      ssl_repository.make_http_request("the_path").should == result
+      expect(ssl_repository.make_http_request("the_path")).to eq(result)
     end
 
     it 'return a valid exception when there is an SSL verification problem' do
@@ -75,23 +75,23 @@ describe Puppet::Forge::Repository do
 
       request = repository.get_request_object(path)
 
-      request['User-Agent'].should =~ /\b#{agent}\b/
-      request['User-Agent'].should =~ /\bPuppet\b/
-      request['User-Agent'].should =~ /\bRuby\b/
+      expect(request['User-Agent']).to match(/\b#{agent}\b/)
+      expect(request['User-Agent']).to match(/\bPuppet\b/)
+      expect(request['User-Agent']).to match(/\bRuby\b/)
     end
 
     it "Does not set Authorization header by default" do
       Puppet.features.stubs(:pe_license?).returns(false)
       Puppet[:forge_authorization] = nil
       request = repository.get_request_object("the_path")
-      request['Authorization'].should == nil
+      expect(request['Authorization']).to eq(nil)
     end
 
     it "Sets Authorization header from config" do
       token = 'bearer some token'
       Puppet[:forge_authorization] = token
       request = repository.get_request_object("the_path")
-      request['Authorization'].should == token
+      expect(request['Authorization']).to eq(token)
     end
 
     it "escapes the received URI" do
@@ -130,7 +130,7 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with(responds_with(:path, "the_path"))
       end
 
-      repository.make_http_request("the_path").should == result
+      expect(repository.make_http_request("the_path")).to eq(result)
     end
 
     it 'returns the result object from a request with ssl' do
@@ -139,7 +139,7 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with(responds_with(:path, "the_path"))
       end
 
-      ssl_repository.make_http_request("the_path").should == result
+      expect(ssl_repository.make_http_request("the_path")).to eq(result)
     end
 
     it 'return a valid exception when there is an SSL verification problem' do
@@ -165,9 +165,9 @@ describe Puppet::Forge::Repository do
 
       request = repository.get_request_object(path)
 
-      request['User-Agent'].should =~ /\b#{agent}\b/
-      request['User-Agent'].should =~ /\bPuppet\b/
-      request['User-Agent'].should =~ /\bRuby\b/
+      expect(request['User-Agent']).to match(/\b#{agent}\b/)
+      expect(request['User-Agent']).to match(/\bPuppet\b/)
+      expect(request['User-Agent']).to match(/\bRuby\b/)
     end
 
     it "escapes the received URI" do
