@@ -12,7 +12,6 @@ class Puppet::Network::HTTP::API
     Puppet::Network::HTTP::Route.path(master_prefix).
       any.
       chain(Puppet::Network::HTTP::API::Master::V3.routes,
-            Puppet::Network::HTTP::API::Master::V2.routes,
             Puppet::Network::HTTP::API.not_found)
   end
 

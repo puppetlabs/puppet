@@ -30,7 +30,7 @@ master_opts = {
 step 'run master; ensure production environment created'
 with_puppet_running_on(master, master_opts, testdir) do
   if master.is_using_passenger?
-    on(master, "curl -k --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} https://localhost:8140/puppet/v2.0/environments")
+    on(master, "curl -k --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} https://localhost:8140/puppet/v3/environments")
   end
   on(master, "test -d '#{testdir}/environments/production'")
 
