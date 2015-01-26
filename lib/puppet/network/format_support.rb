@@ -92,6 +92,10 @@ module Puppet::Network::FormatSupport
     to_data_hash.to_pson(*args)
   end
 
+  def to_json(*args)
+    to_data_hash.to_json(*args)
+  end
+
   def render(format = nil)
     format ||= self.class.default_format
 
