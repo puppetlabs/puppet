@@ -19,7 +19,7 @@ module Puppet::ModuleTool
       'version'      => nil,
       'author'       => nil,
       'summary'      => nil,
-      'license'      => 'Apache 2.0',
+      'license'      => 'Apache-2.0',
       'source'       => '',
       'project_page' => nil,
       'issues_url'   => nil,
