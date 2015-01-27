@@ -43,7 +43,7 @@ class Hiera
         hierarchy
       end
 
-      def lookup(key, scope, order_override, resolution_type)
+      def lookup(key, scope, order_override, resolution_type, recursive_guard)
         answer = nil
 
         Hiera.debug("Looking up #{key} in Puppet backend")
@@ -84,12 +84,12 @@ class Hiera
             case resolution_type
             when :array
               answer ||= []
-              answer << Backend.parse_answer(temp_answer, scope)
+              answer << Backend.parse_answer(temp_answer, scope, recursive_guard)
             when :hash
               answer ||= {}
-              answer = Backend.parse_answer(temp_answer, scope).merge answer
+              answer = Backend.parse_answer(temp_answer, scope, recursive_guard).merge answer
             else
-              answer = Backend.parse_answer(temp_answer, scope)
+              answer = Backend.parse_answer(temp_answer, scope, recursive_guard)
               break
             end
           end
