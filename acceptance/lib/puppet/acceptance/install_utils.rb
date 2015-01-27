@@ -54,6 +54,16 @@ module Puppet
         return true
       end
 
+      def install_aio_on(hosts)
+        check_if_exists = options[:check_if_exists]
+        hosts = [hosts] unless hosts.kind_of?(Array)
+        hosts.each do |host|
+          install_puppetlabs_dev_repo host, 'puppet-agent', options[:aio][:version]
+          install_packages_from_local_dev_repo host, 'puppet-agent'
+        end
+        return true
+      end
+
       def fetch(base_url, file_name, dst_dir)
         FileUtils.makedirs(dst_dir)
         src = "#{base_url}/#{file_name}"
