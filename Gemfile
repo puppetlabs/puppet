@@ -39,7 +39,7 @@ group(:development, :test) do
   # and can be expected to fail.
   gem "mocha", "~> 0.10.5", :require => false
 
-  gem "yarjuf", "~> 1.0"
+  gem "yarjuf", "~> 2.0"
 
   # json-schema does not support windows, so omit it from the platforms list
   # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
