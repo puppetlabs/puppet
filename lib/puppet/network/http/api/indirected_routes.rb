@@ -87,14 +87,16 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
-    if configured_environment.nil?
-      raise ArgumentError, "Could not find environment '#{environment}'"
-    else
+    unless configured_environment.nil?
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
     end
 
     check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
+
+    if configured_environment.nil?
+      raise ArgumentError, "Could not find environment '#{environment}'"
+    end
 
     params.delete(:bucket_path)
 
