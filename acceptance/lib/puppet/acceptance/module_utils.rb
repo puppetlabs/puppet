@@ -206,11 +206,46 @@ module Puppet
           listings = listings.reject { |l| l =~ /\.\.$/ }
 
           listings.each do |line|
-            assert_match /(drwxr-xr-x|[^d]r--r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
-              "bad permissions for '#{line[/\S+$/]}' - expected 444/755, #{owner}, #{group}"
+            fileinfo = parse_ls(line)
+            assert_equal owner, fileinfo[:owner]
+            assert_equal group, fileinfo[:group]
+
+            if fileinfo[:filetype] == 'd'
+              assert_equal 'rwx', fileinfo[:perms][:user]
+              assert_equal 'r-x', fileinfo[:perms][:group]
+              assert_equal 'r-x', fileinfo[:perms][:other]
+            else
+              assert_equal 'rw-', fileinfo[:perms][:user]
+              assert_equal 'r--', fileinfo[:perms][:group]
+              assert_equal 'r--', fileinfo[:perms][:other]
+            end
           end
         end
       end
+
+      LS_REGEX = %r[(.)(...)(...)(...).?\s+\d+\s+(\w+)\s+(\w+).*(\S+)$]
+
+      def parse_ls(line)
+        match = line.match(LS_REGEX)
+        if match.nil?
+          fail_test "#{line.inspect} doesn't match ls output regular expression"
+        end
+
+        captures = match.captures
+
+        {
+          :filetype => captures[0],
+          :perms => {
+            :user => captures[1],
+            :group => captures[2],
+            :other => captures[3],
+          },
+          :owner => captures[4],
+          :group => captures[5],
+          :file  => captures[6]
+        }
+      end
+      private :parse_ls
 
       # Assert that a module is not installed on disk.
       #
