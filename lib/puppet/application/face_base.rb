@@ -16,6 +16,17 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.render_as = format.to_sym
   end
 
+  option("--help", "-h") do |arg|
+    if action && !@is_default_action
+      # Only invoke help on the action if it was specified, not if
+      # it was the default action.
+      puts Puppet::Face[:help, :current].help(face.name, action.name)
+    else
+      puts Puppet::Face[:help, :current].help(face.name)
+    end
+    exit
+  end
+
   attr_accessor :face, :action, :type, :arguments, :render_as
 
   def render_as=(format)
@@ -108,6 +119,14 @@ class Puppet::Application::FaceBase < Puppet::Application
       if @action = @face.get_default_action() then
         @is_default_action = true
       else
+        # First try to handle global command line options
+        # But ignoring invalid options as this is a invalid action, and
+        # we want the error message for that instead.
+        begin
+          super
+        rescue OptionParser::InvalidOption
+        end
+
         face   = @face.name
         action = action_name.nil? ? 'default' : "'#{action_name}'"
         msg = "'#{face}' has no #{action} action.  See `puppet help #{face}`."
