@@ -59,7 +59,8 @@ module Puppet::Network::HTTP::Handler
       if route = @routes.find { |r| r.matches?(new_request) }
         route.process(new_request, new_response)
       else
-        raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
+        raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path} #{Puppet::Network::HTTP::NOT_FOUND_ERROR_MESSAGE}",
+                                                                  HANDLER_NOT_FOUND)
       end
     end
 

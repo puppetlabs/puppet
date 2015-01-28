@@ -70,7 +70,7 @@ describe Puppet::Network::HTTP::Handler do
 
       expect(res[:content_type_header]).to eq("application/json")
       expect(res_body["issue_kind"]).to eq("HANDLER_NOT_FOUND")
-      expect(res_body["message"]).to eq("Not Found: No route for GET /vtest/foo")
+      expect(res_body["message"]).to eq("Not Found: No route for GET /vtest/foo #{Puppet::Network::HTTP::NOT_FOUND_ERROR_MESSAGE}")
       expect(res[:status]).to eq(404)
     end
 
