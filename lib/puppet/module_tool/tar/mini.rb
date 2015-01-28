@@ -4,7 +4,7 @@ class Puppet::ModuleTool::Tar::Mini
       Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader)) do |action, name, stats|
         case action
         when :file_done
-          File.chmod(0444, "#{destdir}/#{name}")
+          File.chmod(0644, "#{destdir}/#{name}")
         when :dir, :file_start
           validate_entry(destdir, name)
           Puppet.debug("Extracting: #{destdir}/#{name}")
