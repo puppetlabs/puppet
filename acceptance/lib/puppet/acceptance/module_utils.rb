@@ -197,7 +197,7 @@ module Puppet
         end
 
         # A module's files should have:
-        #     * a mode of 444 (755, if they're a directory)
+        #     * a mode of 644 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
         on host, %Q{ls -alR "#{moduledir}/#{module_name}"} do
