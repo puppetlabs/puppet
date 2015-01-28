@@ -159,41 +159,35 @@ end
 describe Puppet::Util::Log.desttypes[:console] do
   let (:klass) { Puppet::Util::Log.desttypes[:console] }
 
-  describe "when color is available" do
-    before :each do
-      subject.stubs(:console_has_color?).returns(true)
-    end
+  it "should support color output" do
+    Puppet[:color] = true
+    expect(subject.colorize(:red, 'version')).to eq("\e[0;31mversion\e[0m")
+  end
 
-    it "should support color output" do
-      Puppet[:color] = true
-      expect(subject.colorize(:red, 'version')).to eq("\e[0;31mversion\e[0m")
-    end
+  it "should withhold color output when not appropriate" do
+    Puppet[:color] = false
+    expect(subject.colorize(:red, 'version')).to eq("version")
+  end
 
-    it "should withhold color output when not appropriate" do
-      Puppet[:color] = false
-      expect(subject.colorize(:red, 'version')).to eq("version")
-    end
+  it "should handle multiple overlapping colors in a stack-like way" do
+    Puppet[:color] = true
+    vstring = subject.colorize(:red, 'version')
+    expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m")
+  end
 
-    it "should handle multiple overlapping colors in a stack-like way" do
-      Puppet[:color] = true
-      vstring = subject.colorize(:red, 'version')
-      expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m")
-    end
+  it "should handle resets in a stack-like way" do
+    Puppet[:color] = true
+    vstring = subject.colorize(:reset, 'version')
+    expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[mversion\e[0;32m)\e[0m")
+  end
 
-    it "should handle resets in a stack-like way" do
-      Puppet[:color] = true
-      vstring = subject.colorize(:reset, 'version')
-      expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[mversion\e[0;32m)\e[0m")
-    end
+  it "should include the log message's source/context in the output when available" do
+    Puppet[:color] = false
+    $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
 
-    it "should include the log message's source/context in the output when available" do
-      Puppet[:color] = false
-      $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
-
-      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
-      dest = klass.new
-      dest.handle(msg)
-    end
+    msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
+    dest = klass.new
+    dest.handle(msg)
   end
 end
 
