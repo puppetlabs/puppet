@@ -270,7 +270,7 @@ describe Puppet::Node::Environment do
             PuppetSpec::Modules.generate_files('foo-', first_modulepath)
             PuppetSpec::Modules.generate_files('foo--bar', first_modulepath)
 
-            expect(env.modules_by_path[first_modulepath].collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
+            expect(env.modules_by_path[first_modulepath].collect{|mod| mod.name}.sort).to eq(%w{foo foo2 foo_bar})
           end
 
         end
@@ -396,7 +396,7 @@ describe Puppet::Node::Environment do
             PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo bar', first_modulepath)
 
-            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
+            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo foo2 foo_bar})
           end
 
           it "creates modules with the correct environment" do

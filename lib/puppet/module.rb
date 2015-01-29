@@ -33,6 +33,25 @@ class Puppet::Module
     env.module(modname)
   end
 
+  def self.is_module_directory?(name, path)
+    # it must be a directory
+    fullpath = File.join(path, name)
+    return false unless Puppet::FileSystem.directory?(fullpath)
+    return is_module_directory_name?(name)
+  end
+
+  def self.is_module_directory_name?(name)
+    # it must match an installed module name according to forge validator
+    return true if name =~ /^[a-z][a-z0-9_]*$/
+    return false
+  end
+
+  def self.is_module_namespaced_name?(name)
+    # it must match the full module name according to forge validator
+    return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/   
+    return false
+  end
+
   attr_reader :name, :environment, :path, :metadata
   attr_writer :environment
 
@@ -320,6 +339,8 @@ class Puppet::Module
   end
 
   def assert_validity
-    raise InvalidName, "Invalid module name #{name}; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
+    if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
+      raise InvalidName, "Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'"
+    end
   end
 end

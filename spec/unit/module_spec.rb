@@ -34,6 +34,65 @@ describe Puppet::Module do
     end
   end
 
+  describe "is_module_directory?" do
+    let(:first_modulepath) { tmpdir('firstmodules') }
+    let(:not_a_module) { tmpfile('thereisnomodule', first_modulepath) }
+
+    it "should return false for a non-directory" do
+      expect(Puppet::Module.is_module_directory?('thereisnomodule', first_modulepath)).to be_falsey
+    end
+
+    it "should return true for a well named directories" do
+      PuppetSpec::Modules.generate_files('foo', first_modulepath)
+      PuppetSpec::Modules.generate_files('foo2', first_modulepath)
+      PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
+      expect(Puppet::Module.is_module_directory?('foo', first_modulepath)).to be_truthy
+      expect(Puppet::Module.is_module_directory?('foo2', first_modulepath)).to be_truthy
+      expect(Puppet::Module.is_module_directory?('foo_bar', first_modulepath)).to be_truthy
+    end
+
+    it "should return false for badly named directories" do
+      PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
+      expect(Puppet::Module.is_module_directory?('foo=bar', first_modulepath)).to be_falsey
+    end
+  end
+
+  describe "is_module_directory_name?" do
+    it "should return true for a valid directory module name" do
+      expect(Puppet::Module.is_module_directory_name?('foo')).to be_truthy
+      expect(Puppet::Module.is_module_directory_name?('foo2')).to be_truthy
+      expect(Puppet::Module.is_module_directory_name?('foo_bar')).to be_truthy
+    end
+
+    it "should return false for badly formed directory module names" do
+      expect(Puppet::Module.is_module_directory_name?('foo-bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo=bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo.bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('-foo')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo-')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo--bar')).to be_falsey
+    end
+  end
+
+  describe "is_module_namespaced_name?" do
+    it "should return true for a valid namespaced module name" do
+      expect(Puppet::Module.is_module_namespaced_name?('foo-bar')).to be_truthy
+    end
+
+    it "should return false for badly formed namespaced module names" do
+      expect(Puppet::Module.is_module_namespaced_name?('foo')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo2')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo_bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo=bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo.bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('-foo')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo-')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo--bar')).to be_falsey
+    end
+  end
+
   describe "attributes" do
     it "should support a 'version' attribute" do
       mod.version = 1.09
