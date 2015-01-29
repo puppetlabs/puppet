@@ -343,10 +343,19 @@ module Puppet
     end
 
     newparam(:source) do
-      desc "Where to find the actual package. This must be a local file
-        (or on a network file system) or a URL that your specific
-        packaging type understands; Puppet will not retrieve files for you,
-        although you can manage packages as `file` resources."
+      desc "Where to find the package file. This is only used by providers that don't
+        automatically download packages from a central repository. (For example:
+        the `yum` and `apt` providers ignore this attribute, but the `rpm` and
+        `dpkg` providers require it.)
+
+        Different providers accept different values for `source`. Most providers
+        accept paths to local files stored on the target system. Some providers
+        may also accept URLs or network drive paths. Puppet will not
+        automatically retrieve source files for you, and usually just passes the
+        value of `source` to the package installation command.
+
+        You can use a `file` resource if you need to manually copy package files
+        to the target system."
 
       validate do |value|
         provider.validate_source(value)
@@ -363,10 +372,14 @@ module Puppet
 
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
-        This is currently only used on Solaris.  The value will be
-        validated according to system rules, which in the case of
-        Solaris means that it should either be a fully qualified path
-        or it should be in `/var/sadm/install/admin`."
+
+        This attribute is only used on Solaris. Its value should be a path to a
+        local file stored on the target system. Solaris's package tools expect
+        either an absolute file path or a relative path to a file in
+        `/var/sadm/install/admin`.
+
+        The value of `adminfile` will be passed directly to the `pkgadd` or
+        `pkgrm` command with the `-a <ADMINFILE>` option."
     end
 
     newparam(:responsefile) do

@@ -458,6 +458,20 @@ module Puppet::Functions
         instance_variable_get(ivar)
       end
     end
+
+    # Allows the implementation of a function to call other functions by name and pass the caller
+    # scope. The callable functions are those visible to the same loader that loaded this function
+    # (the calling function).
+    #
+    # @param scope [Puppet::Parser::Scope] The caller scope
+    # @param function_name [String] The name of the function
+    # @param *args [Object] splat of arguments
+    # @return [Object] The result returned by the called function
+    #
+    # @api public
+    def call_function_with_scope(scope, function_name, *args)
+      internal_call_function(scope, function_name, args)
+    end
   end
 
   # @note WARNING: This style of creating functions is not public. It is a system

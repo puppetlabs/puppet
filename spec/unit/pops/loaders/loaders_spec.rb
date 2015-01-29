@@ -27,6 +27,7 @@ describe 'loaders' do
   include PuppetSpec::Files
 
   let(:module_without_metadata) { File.join(config_dir('wo_metadata_module'), 'modules') }
+  let(:mix_4x_and_3x_functions) { config_dir('mix_4x_and_3x_functions') }
   let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
   let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
   let(:empty_test_env) { environment_for() }
@@ -99,6 +100,26 @@ describe 'loaders' do
     expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
   end
 
+  context 'with scope' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
+    let(:loader) { Puppet::Pops::Loaders.new(env).private_loader_for_module('user') }
+
+    it 'can call 3x function in dependent module from a 4x function' do
+      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
+        function = loader.load_typed(typed_name(:function, 'user::caller')).value
+        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
+      end
+    end
+
+    it 'can call 3x function and propagate caller scope from a 4x function' do
+      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
+        function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
+        expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
+      end
+    end
+  end
+
   it 'can load a function more than once from modules' do
     env = environment_for(dependent_modules_with_metadata)
     loaders = Puppet::Pops::Loaders.new(env)
@@ -112,7 +133,7 @@ describe 'loaders' do
   end
 
   def environment_for(*module_paths)
-    Puppet::Node::Environment.create(:'*test*', module_paths, '')
+    Puppet::Node::Environment.create(:'*test*', module_paths)
   end
 
   def typed_name(type, name)
