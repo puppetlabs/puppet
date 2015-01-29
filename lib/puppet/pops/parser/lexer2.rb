@@ -685,7 +685,7 @@ class Puppet::Pops::Parser::Lexer2
       true
 
     # Operands (that can be followed by DIV (even if illegal in grammar)
-    when :NAME, :CLASSREF, :NUMBER, :STRING, :BOOLEAN, :DQPRE, :DQMID, :DQPOST, :HEREDOC, :REGEX
+    when :NAME, :CLASSREF, :NUMBER, :STRING, :BOOLEAN, :DQPRE, :DQMID, :DQPOST, :HEREDOC, :REGEX, :VARIABLE, :WORD
       false
 
     else

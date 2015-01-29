@@ -301,6 +301,8 @@ describe 'Lexer2' do
     "]"     => ["] /./",       [:RBRACK, :DIV, :DOT, :DIV]],
     "|>"     => ["|> /./",     [:RCOLLECT, :DIV, :DOT, :DIV]],
     "|>>"    => ["|>> /./",    [:RRCOLLECT, :DIV, :DOT, :DIV]],
+    "$x"     => ["$x /1/",     [:VARIABLE, :DIV, :NUMBER, :DIV]],
+    "a-b"    => ["a-b /1/",    [:WORD, :DIV, :NUMBER, :DIV]],
     '"a$a"'  => ['"a$a" /./',  [:DQPRE, :VARIABLE, :DQPOST, :DIV, :DOT, :DIV]],
   }.each do |token, entry|
     it "should not lex regexp after '#{token}'" do
