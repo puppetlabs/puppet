@@ -500,7 +500,7 @@ definition_expression
 #---APPLICATION
 application_expression
   : APPLICATION classname parameter_list LBRACE opt_statements RBRACE {
-    result = Factory.APPLICATION(classname(val[1][:value]), val[2], val[4])
+    result = add_definition(Factory.APPLICATION(classname(val[1][:value]), val[2], val[4]))
     loc result, val[0], val[5]
   }
 
