@@ -32,7 +32,8 @@ describe 'BinderComposer' do
       Puppet.settings[:confdir] = config_directory
       Puppet.settings[:libdir] = File.join(config_directory, 'lib')
 
-      Puppet.override(:environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [File.join(config_directory, 'modules')]))) do
+      environments = Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [File.join(config_directory, 'modules')]))
+      Puppet.override(:environments => environments, :current_environment => environments.get('production')) do
         # this ensure the binder is active at the right time
         # (issues with getting a /dev/null path for "confdir" / "libdir")
         raise "Binder not active" unless scope.compiler.activate_binder

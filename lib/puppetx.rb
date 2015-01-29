@@ -4,5 +4,5 @@
 #
 # @api public
 #
-module Puppetx
+module PuppetX
 end

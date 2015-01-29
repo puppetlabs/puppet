@@ -40,9 +40,39 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result
   end
 
+  def dump_Injector o
+    result = ['injector', :indent,
+      :break,
+      ['entries', do_dump(o.instance_variable_get('@impl').instance_variable_get('@entries'))],
+      :dedent
+    ]
+    result
+  end
+
+  def dump_InjectorEntry o
+    result = ['entry', :indent]
+    result << :break
+    result << ['precedence', o.precedence]
+    result << :break
+    result << ['binding', do_dump(o.binding)]
+    result << :break
+    result << ['producer', do_dump(o.cached_producer)]
+    result << :dedent
+    result
+  end
 
   def dump_Array o
     o.collect {|e| do_dump(e) }
+  end
+
+  def dump_Hash o
+    result = ["hash", :indent]
+    o.each do |elem|
+      result << :break
+      result << ["=>", :indent, do_dump(elem[0]), :break, do_dump(elem[1]), :dedent]
+    end
+    result << :dedent
+    result
   end
 
   def dump_Integer o
@@ -130,22 +160,28 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
   end
 
   def dump_Binding o
-    result = ['bind']
+    result = ['bind', :indent]
     result << 'override' if o.override
     result << 'abstract' if o.abstract
     result.concat([do_dump(o.type), o.name])
+    result << :break
     result << "(in #{o.multibind_id})" if o.multibind_id
+    result << :break
     result << ['to', do_dump(o.producer)] + do_dump(o.producer_args)
+    result << :dedent
     result
   end
 
   def dump_Multibinding o
-    result = ['multibind', o.id]
+    result = ['multibind', o.id, :indent]
     result << 'override' if o.override
     result << 'abstract' if o.abstract
     result.concat([do_dump(o.type), o.name])
+    result << :break
     result << "(in #{o.multibind_id})" if o.multibind_id
+    result << :break
     result << ['to', do_dump(o.producer)] + do_dump(o.producer_args)
+    result << :dedent
     result
   end
 

@@ -325,7 +325,8 @@ class Puppet::Pops::Binder::Binder
             raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)" if entry
             binder.injector_entries[k] = v
           else
-            entry ? entry << v : binder.injector_entries[k] = v
+            # add contributions to existing contributions, else set them
+            binder.injector_entries[k] = entry ? entry + v : v
           end
         end
       end
@@ -380,7 +381,7 @@ class Puppet::Pops::Binder::Binder
           bkey = key(b.binding)
           this_layer[bkey] = b
           bkey
-        end
+        end.flatten
         contributions_key = key_factory.multibind_contributions(k)
         unless this_layer[contributions_key]
           this_layer[contributions_key] = []
