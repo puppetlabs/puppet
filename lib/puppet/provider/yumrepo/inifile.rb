@@ -100,6 +100,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def self.find_conf_value(value, conf='/etc/yum.conf')
     if Puppet::FileSystem.exist?(conf)
       file = Puppet::Util::IniConfig::PhysicalFile.new(conf)
+      file.read
       if (main = file.get_section('main'))
         main[value]
       end
