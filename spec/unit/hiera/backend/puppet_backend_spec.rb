@@ -59,7 +59,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:function_include).with(["rspec::rspec"])
       @mockscope.expects(:lookupvar).with("rspec::rspec::key").returns("rspec")
 
-      expect(@backend.lookup("key", @scope, nil, nil)).to eq("rspec")
+      expect(@backend.lookup("key", @scope, nil, nil, nil)).to eq("rspec")
     end
 
     it "should not load loaded classes" do
@@ -72,7 +72,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:function_include).never
       @mockscope.expects(:lookupvar).with("rspec::rspec::key").returns("rspec")
 
-      expect(@backend.lookup("key", @scope, nil, nil)).to eq("rspec")
+      expect(@backend.lookup("key", @scope, nil, nil, nil)).to eq("rspec")
     end
 
     it "should return the first found data" do
@@ -86,7 +86,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:lookupvar).with("rspec::override::key").returns("rspec")
       @mockscope.expects(:lookupvar).with("rspec::rspec::key").never
 
-      expect(@backend.lookup("key", @scope, "override", nil)).to eq("rspec")
+      expect(@backend.lookup("key", @scope, "override", nil, nil)).to eq("rspec")
     end
 
     it "should consider a value of false to be a real value" do
@@ -100,7 +100,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:lookupvar).with("rspec::override::key").returns(expected_answer)
       @mockscope.expects(:lookupvar).with("rspec::rspec::key").never
 
-      expect(@backend.lookup("key", @scope, "override", nil)).to eq(expected_answer)
+      expect(@backend.lookup("key", @scope, "override", nil, nil)).to eq(expected_answer)
     end
 
     it "should return an array of found data for array searches" do
@@ -112,7 +112,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:lookupvar).with("test::key").returns("test::key")
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
-      expect(@backend.lookup("key", @scope, nil, :array)).to eq(["rspec::key", "test::key"])
+      expect(@backend.lookup("key", @scope, nil, :array, nil)).to eq(["rspec::key", "test::key"])
     end
 
     it "should return a hash of found data for hash searches" do
@@ -124,7 +124,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:lookupvar).with("test::key").returns({'test'=>'key'})
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
-      expect(@backend.lookup("key", @scope, nil, :hash)).to eq({'rspec'=>'key', 'test'=>'key'})
+      expect(@backend.lookup("key", @scope, nil, :hash, nil)).to eq({'rspec'=>'key', 'test'=>'key'})
     end
 
     it "should return a merged hash of found data for hash searches" do
@@ -136,7 +136,7 @@ describe Hiera::Backend::Puppet_backend do
       @mockscope.expects(:lookupvar).with("test::key").returns({'test'=>'key', 'common'=>'rspec'})
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
-      expect(@backend.lookup("key", @scope, nil, :hash)).to eq({'rspec'=>'key', 'common'=>'rspec', 'test'=>'key'})
+      expect(@backend.lookup("key", @scope, nil, :hash, nil)).to eq({'rspec'=>'key', 'common'=>'rspec', 'test'=>'key'})
     end
   end
 
