@@ -22,22 +22,10 @@ describe Puppet::FileServing::Content do
     expect(Puppet::FileServing::Content.new(path)).to respond_to(:collect)
   end
 
-  it "should not retrieve and store its contents when its attributes are collected if the file is a normal file" do
+  it "should not retrieve and store its contents when its attributes are collected" do
     content = Puppet::FileServing::Content.new(path)
 
     result = "foo"
-    Puppet::FileSystem.expects(:lstat).with(path).returns stub('stat', :ftype => "file")
-    File.expects(:read).with(path).never
-    content.collect
-
-    expect(content.instance_variable_get("@content")).to be_nil
-  end
-
-  it "should not attempt to retrieve its contents if the file is a directory" do
-    content = Puppet::FileServing::Content.new(path)
-
-    result = "foo"
-    Puppet::FileSystem.expects(:lstat).with(path).returns stub('stat', :ftype => "directory")
     File.expects(:read).with(path).never
     content.collect
 

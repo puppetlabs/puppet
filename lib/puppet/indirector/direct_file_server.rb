@@ -7,9 +7,7 @@ class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
 
   def find(request)
     return nil unless Puppet::FileSystem.exist?(request.key)
-    instance = model.new(request.key)
-    instance.links = request.options[:links] if request.options[:links]
-    instance
+    path2instance(request, request.key)
   end
 
   def search(request)

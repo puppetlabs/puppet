@@ -43,8 +43,16 @@ describe Puppet::Indirector::FileMetadata::File do
 
     it "should collect the attributes of the instances returned" do
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
-      @metadata.expects(:path2instances).returns( [mock("one", :collect => nil), mock("two", :collect => nil)] )
-      @metadata.search(@request)
+      Puppet::FileServing::Fileset.expects(:new).with(@path, @request).returns mock("fileset")
+      Puppet::FileServing::Fileset.expects(:merge).returns [["one", @path], ["two", @path]]
+
+      one = mock("one", :collect => nil)
+      Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "one"}).returns one
+
+      two = mock("two", :collect => nil)
+      Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "two"}).returns two
+
+      expect(@metadata.search(@request)).to eq([one, two])
     end
   end
 end
