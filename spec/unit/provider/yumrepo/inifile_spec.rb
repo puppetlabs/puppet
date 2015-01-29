@@ -281,6 +281,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       before do
         Puppet::FileSystem.stubs(:exist?).with('/etc/yum.conf').returns true
         Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with('/etc/yum.conf').returns pfile
+        pfile.expects(:read)
       end
 
       it "creates a PhysicalFile to parse the given file" do
