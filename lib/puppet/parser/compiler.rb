@@ -82,6 +82,12 @@ class Puppet::Parser::Compiler
   end
 
   def add_resource(scope, resource)
+    type = resource.resource_type
+    if type.is_a?(Puppet::Resource::Type) && type.application?
+      @applications << resource
+      return
+    end
+
     @resources << resource
 
     # Note that this will fail if the resource is not unique.
@@ -235,6 +241,8 @@ class Puppet::Parser::Compiler
 
   def initialize(node, options = {})
     @node = node
+    # Array of resources representing all application instances we've found
+    @applications = []
     set_options(options)
     initvars
   end

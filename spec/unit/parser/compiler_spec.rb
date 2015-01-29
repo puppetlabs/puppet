@@ -49,6 +49,10 @@ class CompilerTestResource
   def line
     "42"
   end
+
+  def resource_type
+    self.class
+  end
 end
 
 describe Puppet::Parser::Compiler do
