@@ -67,14 +67,7 @@ describe Puppet::Network::HTTP::API do
         expect(res[:status]).to eq(200)
       end
 
-      it "responds to v2.0 environments requests" do
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/v2.0/environments")
-        res = {}
-        handler.process(req, res)
-        expect(res[:status]).to eq(200)
-      end
-
-      it "responds with a not found error to non-v3/2.0 requests" do
+      it "responds with a not found error to non-v3 requests" do
         req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/unknown")
         res = {}
         handler.process(req, res)

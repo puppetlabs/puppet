@@ -16,9 +16,6 @@ module Puppet
 
     def self.default_acl
       [
-      # Master API V2.0
-      { :acl => "#{master_url_prefix}/v2.0/environments", :method => :find, :allow => '*', :authenticated => true },
-
       # Master API V3
       { :acl => "#{master_url_prefix}/v3/environments", :method => :find, :allow => '*', :authenticated => true },
 
