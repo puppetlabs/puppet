@@ -16,13 +16,14 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping]
+  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application]
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
       :hostclass => "class",
       :node => "node",
       :definition => "defined_type",
+      :application => "application"
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
@@ -357,6 +358,9 @@ class Puppet::Resource::Type
     param = param.to_s
 
     return true if param == "name"
+    # This hardcodes the knowledge that the 'nodes' parameter for
+    # application instances is magical
+    return true if param == "nodes" && application?
     return true if Puppet::Type.metaparam?(param)
     return false unless defined?(@arguments)
     return(arguments.include?(param) ? true : false)

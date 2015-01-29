@@ -116,6 +116,15 @@ class Type
     end
   end
 
+  # Returns whether this type represents an application instance; since
+  # only defined types, i.e., instances of Puppet::Resource::Type can
+  # represent application instances, this implementation always returns
+  # +false+. Having this method though makes code checking whether a
+  # resource is an application instance simpler
+  def self.application?
+      false
+  end
+
   # Returns all the attribute names of the type in the appropriate order.
   # The {key_attributes} come first, then the {provider}, then the {properties}, and finally
   # the {parameters} and {metaparams},

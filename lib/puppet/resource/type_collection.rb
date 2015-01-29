@@ -11,6 +11,7 @@ class Puppet::Resource::TypeCollection
   def clear
     @hostclasses.clear
     @definitions.clear
+    @applications.clear
     @nodes.clear
     @notfound.clear
     @capability_mappings.clear
@@ -21,6 +22,7 @@ class Puppet::Resource::TypeCollection
     @hostclasses = {}
     @definitions = {}
     @capability_mappings = {}
+    @applications = {}
     @nodes = {}
     @notfound = {}
 
@@ -35,7 +37,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def inspect
-    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys, :capability_mappings => @capability_mappings.keys }.inspect
+    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys, :capability_mappings => @capability_mappings.keys, :applications => @applications.keys }.inspect
   end
 
   def <<(thing)
@@ -57,6 +59,7 @@ class Puppet::Resource::TypeCollection
   def add_hostclass(instance)
     dupe_check(instance, @hostclasses) { |dupe| "Class '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
     dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
+    dupe_check(instance, @applications) { |dupe| "Application '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
 
     @hostclasses[instance.name] = instance
     instance
@@ -103,6 +106,7 @@ class Puppet::Resource::TypeCollection
   def add_definition(instance)
     dupe_check(instance, @hostclasses) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as a definition" }
     dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined" }
+    dupe_check(instance, @applications) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as an application; cannot be redefined" }
     @definitions[instance.name] = instance
   end
 
@@ -113,6 +117,17 @@ class Puppet::Resource::TypeCollection
 
   def definition(name)
     @definitions[munge_name(name)]
+  end
+
+  def add_application(instance)
+    dupe_check(instance, @hostclasses) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as an application" }
+    dupe_check(instance, @definitions) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a definition; cannot redefine as an application" }
+    dupe_check(instance, @applications) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as an application; cannot be redefined" }
+    @applications[instance.name] = instance
+  end
+
+  def application(name)
+    @applications[munge_name(name)]
   end
 
   def find_node(name)
@@ -127,7 +142,12 @@ class Puppet::Resource::TypeCollection
     find_or_load(name, :definition)
   end
 
-  [:hostclasses, :nodes, :definitions, :capability_mappings].each do |m|
+  def find_application(name)
+    find_or_load(name, :application)
+  end
+
+  [:hostclasses, :nodes, :definitions, :capability_mappings,
+   :applications].each do |m|
     define_method(m) do
       instance_variable_get("@#{m}").dup
     end
