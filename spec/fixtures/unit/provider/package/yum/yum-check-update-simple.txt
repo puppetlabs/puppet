@@ -1,0 +1,12 @@
+Loaded plugins: fastestmirror
+Determining fastest mirrors
+ * base: centos.sonn.com
+ * epel: ftp.osuosl.org
+ * extras: mirror.web-ster.com
+ * updates: centos.sonn.com
+
+curl.i686                               7.32.0-10.fc20           updates        
+curl.x86_64                             7.32.0-10.fc20           updates        
+gawk.i686                               4.1.0-3.fc20             updates        
+dhclient.i686                           12:4.1.1-38.P1.fc20      updates        
+selinux-policy.noarch                   3.12.1-163.fc20          updates-testing

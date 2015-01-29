@@ -4,6 +4,8 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:package).provider(:yum)
 
 describe provider_class do
+  include PuppetSpec::Fixtures
+
   let(:name) { 'mypackage' }
   let(:resource) do
     Puppet::Type.type(:package).new(
@@ -440,63 +442,58 @@ describe provider_class do
   end
 
   describe "parsing the output of check-update" do
-    let(:check_update) do
-      # Trailing whitespace is intentional
-      <<-EOD
-Loaded plugins: fastestmirror
-Determining fastest mirrors
- * base: centos.sonn.com
- * epel: ftp.osuosl.org
- * extras: mirror.web-ster.com
- * updates: centos.sonn.com
 
-curl.i686                               7.32.0-10.fc20           updates        
-curl.x86_64                             7.32.0-10.fc20           updates        
-gawk.i686                               4.1.0-3.fc20             updates        
-dhclient.i686                           12:4.1.1-38.P1.fc20      updates        
-selinux-policy.noarch                   3.12.1-163.fc20          updates-testing
-      EOD
+    describe "with no multiline entries" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-simple.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it 'creates an entry for each package keyed on the package name' do
+        expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+        expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+        expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+        expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      end
+
+      it 'creates an entry for each package keyed on the package name and package architecture' do
+        expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
+        expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+        expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+        expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+        expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      end
     end
 
-    it 'creates an entry for each package keyed on the package name' do
-      output = described_class.parse_updates(check_update)
-      expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
-      expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
-      expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
-      expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
-    end
+    describe "with multiline entries" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-multiline.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
 
-    it 'creates an entry for each package keyed on the package name and package architecture' do
-      output = described_class.parse_updates(check_update)
-      expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
-      expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
-      expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
-      expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
-      expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      it "parses multi-line values as a single package tuple" do
+        expect(output['libpcap']).to eq([{:name => 'libpcap', :epoch => '14', :version => '1.4.0', :release => '1.20130826git2dbcaa1.el6', :arch => 'x86_64'}])
+      end
     end
   end
 
   describe "parsing a line from yum check-update" do
     it "splits up the package name and architecture fields" do
-      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+      checkupdate = %w[curl.i686 7.32.0-10.fc20]
 
-      parsed = described_class.update_to_hash(checkupdate)
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:name]).to eq 'curl'
       expect(parsed[:arch]).to eq 'i686'
     end
 
     it "splits up the epoch, version, and release fields" do
-      checkupdate = "dhclient.i686                            12:4.1.1-38.P1.el6.centos       base"
-      parsed = described_class.update_to_hash(checkupdate)
+      checkupdate = %w[dhclient.i686 12:4.1.1-38.P1.el6.centos]
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:epoch]).to eq '12'
       expect(parsed[:version]).to eq '4.1.1'
       expect(parsed[:release]).to eq '38.P1.el6.centos'
     end
 
     it "sets the epoch to 0 when an epoch is not specified" do
-      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+      checkupdate = %w[curl.i686 7.32.0-10.fc20]
 
-      parsed = described_class.update_to_hash(checkupdate)
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:epoch]).to eq '0'
       expect(parsed[:version]).to eq '7.32.0'
       expect(parsed[:release]).to eq '10.fc20'
