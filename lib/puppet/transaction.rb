@@ -113,6 +113,7 @@ class Puppet::Transaction
       end
 
       resource_status(resource).failed = true
+      mark_failed(resource)
     end
 
     canceled_resource_handler = lambda do |resource|
@@ -199,11 +200,21 @@ class Puppet::Transaction
 
   private
 
+  def mark_failed(resource)
+    relationship_graph.dependents(resource).each do |dependent|
+      resource_status(dependent).dependency_failed = true
+    end
+  end
+
   # Apply all changes for a resource
   def apply(resource, ancestor = nil)
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
-    event_manager.queue_events(ancestor || resource, status.events) unless status.failed?
+    if status.failed?
+      mark_failed(resource)
+    else
+      event_manager.queue_events(ancestor || resource, status.events)
+    end
   rescue => detail
     resource.err "Could not evaluate: #{detail}"
   end
@@ -227,30 +238,7 @@ class Puppet::Transaction
 
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
-    # First make sure there are no failed dependencies.  To do this,
-    # we check for failures in any of the vertexes above us.  It's not
-    # enough to check the immediate dependencies, which is why we use
-    # a tree from the reversed graph.
-    found_failed = false
-
-
-    # When we introduced the :whit into the graph, to reduce the combinatorial
-    # explosion of edges, we also ended up reporting failures for containers
-    # like class and stage.  This is undesirable; while just skipping the
-    # output isn't perfect, it is RC-safe. --daniel 2011-06-07
-    suppress_report = (resource.class == Puppet::Type.type(:whit))
-
-    relationship_graph.dependencies(resource).each do |dep|
-      next unless failed?(dep)
-      found_failed = true
-
-      # See above. --daniel 2011-06-06
-      unless suppress_report then
-        resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
-      end
-    end
-
-    found_failed
+    return (s = resource_status(resource) and s.dependency_failed?)
   end
 
   # A general method for recursively generating new resources from a
