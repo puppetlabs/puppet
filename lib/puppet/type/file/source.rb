@@ -171,6 +171,7 @@ module Puppet
           options = {
             :environment          => resource.catalog.environment_instance,
             :links                => resource[:links],
+            :checksum_type        => resource[:checksum],
             :source_permissions   => resource[:source_permissions]
           }
 

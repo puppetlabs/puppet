@@ -56,11 +56,10 @@ module Puppet::Util::Checksums
     sha256_file(filename, true)
   end
 
-  def sha256_stream(&block)
+  def sha256_stream(lite = false, &block)
     require 'digest/sha2'
     digest = Digest::SHA256.new
-    yield digest
-    digest.hexdigest
+    checksum_stream(digest, block, lite)
   end
 
   def sha256_hex_length
@@ -68,7 +67,7 @@ module Puppet::Util::Checksums
   end
 
   def sha256lite_stream(&block)
-    sha256_stream(&block)
+    sha256_stream(true, &block)
   end
 
   def sha256lite_hex_length
@@ -96,10 +95,9 @@ module Puppet::Util::Checksums
     md5_file(filename, true)
   end
 
-  def md5_stream(&block)
+  def md5_stream(lite = false, &block)
     digest = Digest::MD5.new
-    yield digest
-    digest.hexdigest
+    checksum_stream(digest, block, lite)
   end
 
   def md5_hex_length
@@ -107,7 +105,7 @@ module Puppet::Util::Checksums
   end
 
   def md5lite_stream(&block)
-    md5_stream(&block)
+    md5_stream(true, &block)
   end
 
   def md5lite_hex_length
@@ -152,10 +150,9 @@ module Puppet::Util::Checksums
     sha1_file(filename, true)
   end
 
-  def sha1_stream(&block)
+  def sha1_stream(lite = false, &block)
     digest = Digest::SHA1.new
-    yield digest
-    digest.hexdigest
+    checksum_stream(digest, block, lite)
   end
 
   def sha1_hex_length
@@ -163,7 +160,7 @@ module Puppet::Util::Checksums
   end
 
   def sha1lite_stream(&block)
-    sha1_stream(&block)
+    sha1_stream(true, &block)
   end
 
   def sha1lite_hex_length
@@ -198,6 +195,27 @@ module Puppet::Util::Checksums
     ""
   end
 
+  class DigestLite
+    def initialize(digest, lite = false)
+      @digest = digest
+      @lite = lite
+      @bytes = 0
+    end
+
+    # Provide an interface for digests. If lite, only digest the first 512 bytes
+    def <<(str)
+      if @lite
+        if @bytes < 512
+          buf = str[0, 512 - @bytes]
+          @digest << buf
+          @bytes += buf.length
+        end
+      else
+        @digest << str
+      end
+    end
+  end
+
   private_class_method
 
   # Perform an incremental checksum on a file.
@@ -210,6 +228,11 @@ module Puppet::Util::Checksums
       end
     end
 
+    digest.hexdigest
+  end
+
+  def checksum_stream(digest, block, lite = false)
+    block.call(DigestLite.new(digest, lite))
     digest.hexdigest
   end
 
