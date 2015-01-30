@@ -44,8 +44,10 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
+      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key.hkey)
+
       begin
-        subkey, filetime = reg_enum_key(key.hkey, index)
+        subkey, filetime = reg_enum_key(key.hkey, index, subkey_max_len)
         yield subkey, filetime if !subkey.nil?
         index += 1
       end while !subkey.nil?
@@ -67,8 +69,10 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
+      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key.hkey)
+
       begin
-        subkey, type, data = reg_enum_value(key.hkey, index)
+        subkey, type, data = reg_enum_value(key.hkey, index, value_max_len)
         yield subkey, type, data if !subkey.nil?
         index += 1
       end while !subkey.nil?
@@ -140,6 +144,36 @@ module Puppet::Util::Windows
       end
 
       [subkey, type, data]
+    end
+
+    def reg_query_info_key_max_lengths(hkey)
+      result = nil
+
+      FFI::MemoryPointer.new(:dword) do |max_subkey_name_length_ptr|
+        FFI::MemoryPointer.new(:dword) do |max_value_name_length_ptr|
+
+          status = RegQueryInfoKeyW(hkey,
+            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+            max_subkey_name_length_ptr, FFI::MemoryPointer::NULL,
+            FFI::MemoryPointer::NULL, max_value_name_length_ptr,
+            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+            FFI::MemoryPointer::NULL
+          )
+
+          if status != FFI::ERROR_SUCCESS
+            raise Puppet::Util::Windows::Error.new('Failed to query registry key info')
+          end
+
+          result = [
+            # Unicode characters *not* including trailing NULL
+            max_subkey_name_length_ptr.read_dword + 1,
+            max_value_name_length_ptr.read_dword + 1,
+          ]
+        end
+      end
+
+      result
     end
 
     # Read a registry value named name and return array of
@@ -304,5 +338,25 @@ module Puppet::Util::Windows
     ffi_lib :advapi32
     attach_function_private :RegDeleteKeyExW,
       [:handle, :lpcwstr, :win32_ulong, :dword], :win32_long
+
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724902(v=vs.85).aspx
+    # LONG WINAPI RegQueryInfoKey(
+    #   _In_         HKEY hKey,
+    #   _Out_opt_    LPTSTR lpClass,
+    #   _Inout_opt_  LPDWORD lpcClass,
+    #   _Reserved_   LPDWORD lpReserved,
+    #   _Out_opt_    LPDWORD lpcSubKeys,
+    #   _Out_opt_    LPDWORD lpcMaxSubKeyLen,
+    #   _Out_opt_    LPDWORD lpcMaxClassLen,
+    #   _Out_opt_    LPDWORD lpcValues,
+    #   _Out_opt_    LPDWORD lpcMaxValueNameLen,
+    #   _Out_opt_    LPDWORD lpcMaxValueLen,
+    #   _Out_opt_    LPDWORD lpcbSecurityDescriptor,
+    #   _Out_opt_    PFILETIME lpftLastWriteTime
+    # );
+    ffi_lib :advapi32
+    attach_function_private :RegQueryInfoKeyW,
+      [:handle, :lpwstr, :lpdword, :lpdword, :lpdword, :lpdword, :lpdword,
+        :lpdword, :lpdword, :lpdword, :lpdword, :pointer], :win32_long
   end
 end
