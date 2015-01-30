@@ -4,78 +4,14 @@ require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
 require 'puppet/indirector_testing'
+require 'puppet_spec/network'
 
 describe Puppet::Network::HTTP::API::IndirectedRoutes do
-  let(:not_found_code) { Puppet::Network::HTTP::Error::HTTPNotFoundError::CODE }
-  let(:not_acceptable_code) { Puppet::Network::HTTP::Error::HTTPNotAcceptableError::CODE }
-  let(:bad_request_code) { Puppet::Network::HTTP::Error::HTTPBadRequestError::CODE }
-  let(:not_authorized_code) { Puppet::Network::HTTP::Error::HTTPNotAuthorizedError::CODE }
+  include PuppetSpec::Network
 
   let(:indirection) { Puppet::IndirectorTesting.indirection }
   let(:handler) { Puppet::Network::HTTP::API::IndirectedRoutes.new }
   let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
-  let(:params) { { :environment => "production" } }
-  let(:master_url_prefix) { "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3"}
-  let(:ca_url_prefix) { "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v1"}
-
-  def a_request_that_heads(data, request = {})
-    Puppet::Network::HTTP::Request.from_hash({
-      :headers => {
-        'accept' => request[:accept_header],
-        'content-type' => "text/pson", },
-      :method => "HEAD",
-      :path => "#{master_url_prefix}/#{indirection.name}/#{data.value}",
-      :params => params,
-    })
-  end
-
-  def a_request_that_submits(data, request = {})
-    Puppet::Network::HTTP::Request.from_hash({
-      :headers => {
-        'accept' => request[:accept_header],
-        'content-type' => request[:content_type_header] || "text/pson", },
-      :method => "PUT",
-      :path => "#{master_url_prefix}/#{indirection.name}/#{data.value}",
-      :params => params,
-      :body => request[:body].nil? ? data.render("pson") : request[:body]
-    })
-  end
-
-  def a_request_that_destroys(data, request = {})
-    Puppet::Network::HTTP::Request.from_hash({
-      :headers => {
-        'accept' => request[:accept_header],
-        'content-type' => "text/pson", },
-      :method => "DELETE",
-      :path => "#{master_url_prefix}/#{indirection.name}/#{data.value}",
-      :params => params,
-      :body => ''
-    })
-  end
-
-  def a_request_that_finds(data, request = {})
-    Puppet::Network::HTTP::Request.from_hash({
-      :headers => {
-        'accept' => request[:accept_header],
-        'content-type' => "text/pson", },
-      :method => "GET",
-      :path => "#{master_url_prefix}/#{indirection.name}/#{data.value}",
-      :params => params,
-      :body => ''
-    })
-  end
-
-  def a_request_that_searches(key, request = {})
-    Puppet::Network::HTTP::Request.from_hash({
-      :headers => {
-        'accept' => request[:accept_header],
-        'content-type' => "text/pson", },
-      :method => "GET",
-      :path => "#{master_url_prefix}/#{indirection.name}s/#{key}",
-      :params => params,
-      :body => ''
-    })
-  end
 
   before do
     Puppet::IndirectorTesting.indirection.terminus_class = :memory
@@ -374,7 +310,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_searches("my", :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 
@@ -383,7 +319,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should return [] when searching returns an empty array" do
-      request = a_request_that_searches("nothing", :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, text/pson")
 
       handler.call(request, response)
 
@@ -392,7 +328,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should return a not_found_code when searching returns nil" do
-      request = a_request_that_searches("nothing", :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, text/pson")
       indirection.expects(:search).returns(nil)
 
       handler.call(request, response)
