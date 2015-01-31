@@ -8,8 +8,8 @@ Find
 
 Retrieve a catalog.
 
-    POST /:environment/catalog/:nodename
-    GET /:environment/catalog/:nodename
+    POST /puppet/v3/catalog/:nodename?environment=:environment
+    GET /puppet/v3/catalog/:nodename?environment=:environment
 
 ### Supported HTTP Methods
 
@@ -42,7 +42,7 @@ Three parameters should be provided to the POST or GET:
 
 #### Catalog found
 
-    POST /env/catalog/elmo.mydomain.com
+    POST /puppet/v3/catalog/elmo.mydomain.com?environment=env
 
     facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 

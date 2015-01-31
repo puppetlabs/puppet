@@ -10,7 +10,7 @@ Get
 
 Get the list of known environments.
 
-    GET /v2.0/environments
+    GET /puppet/v3/environments
 
 ### Parameters
 
@@ -18,7 +18,7 @@ None
 
 ### Example Request & Response
 
-    GET /v2.0/environments
+    GET /puppet/v3/environments
 
     HTTP 200 OK
     Content-Type: application/json

@@ -1,16 +1,41 @@
-V1 API Services
+V1/V2 HTTP APIs
 ---------------
+
+The V1 and V2 APIs have been removed. All previous routes can now be found under
+[Master V3](#master-v3-http-api) API or [CA V1](#ca-v1-http-api).
+
+Master and CA APIs
+------------------
+
+Beginning with Puppet 4, puppet's HTTP API has been split into two separate
+APIs which are versioned separately. There is now one API for the master and
+one for the certificate authority (CA).
+
+All master endpoints are prefixed with `/puppet`, while all CA endpoints are
+prefixed with `/puppet-ca`. All endpoints are explicitly versioned.
+
+Authorization for these endpoints is still controlled with the `auth.conf`
+authorization system in puppet. When specifying the authorization in
+`auth.conf` the prefix (either `/puppet` or `/puppet-ca`) and the version
+number on the paths must be retained; the full request path is used.
+
+Master V3 HTTP API
+------------------
 
 Puppet Agents use various network services which the Puppet Master provides in
 order to manage systems. Other systems can access these services in order to
 put the information that the Puppet Master has to use.
 
-The V1 API is all based off of dispatching to puppet's internal "indirector"
-framework. Every HTTP endpoint in V1 follows the form
-`/:environment/:indirection/:key`, where
+The V3 API contains endpoints of two types: those based off of dispatching to
+puppet's internal "indirector" framework and those that are not (namely the
+[environments endpoint](#Environments-Endpoint)).
+
+Every HTTP endpoint that dispatches to the indirector follows the form:
+`/puppet/v3/:indirection/:key?environent=:environment` where
+
   * `:environment` is the name of the environment that should be in effect for
-    the request. Not all endpoints need an environment, but the path component
-    must always be specified.
+    the request. Not all endpoints need an environment, but the query
+    parameter must always be specified.
   * `:indirection` is the indirection to dispatch the request to.
   * `:key` is the "key" portion of the indirection call.
 
@@ -40,33 +65,19 @@ Puppet Agents.
 * {file:api/docs/http_resource_type.md Resource Type}
 * {file:api/docs/http_status.md Status}
 
-### SSL Certificate Related Services
+### Environments Endpoint
 
-These services are all in support of Puppet's PKI system.
+The one endpoint with a different format is the `/puppet/v3/environments`
+endpoint.
 
-* {file:api/docs/http_certificate.md Certificate}
-* {file:api/docs/http_certificate_request.md Certificate Signing Requests}
-* {file:api/docs/http_certificate_status.md Certificate Status}
-* {file:api/docs/http_certificate_revocation_list.md Certificate Revocation List}
-
-V2 HTTP API
------------
-
-The V2 HTTP API is accessed by prefixing requests with `/v2.0`. Authorization for
-these endpoints is still controlled with the `auth.conf` authorization system
-in puppet. When specifying the authorization of the V2 endpoints in `auth.conf`
-the `/v2.0` prefix on V2 API paths must be retained; the full request path is used.
-
-The V2 API will only accept payloads formatted as JSON and respond with JSON
+This endpoint will only accept payloads formatted as JSON and respond with JSON
 (MIME application/json).
-
-### Endpoints
 
 * {file:api/docs/http_environments.md Environments}
 
-### Error Responses
+#### Error Responses
 
-All V2 API endpoints will respond to error conditions in a uniform manner and
+The `environments` endpoint will respond to error conditions in a uniform manner and
 use standard HTTP response code to signify those errors.
 
 * When the client submits a malformed request, the API will return a 400 Bad
@@ -79,12 +90,8 @@ use standard HTTP response code to signify those errors.
   return a 406 Unacceptable response.
 * When the server encounters an unexpected error during the handling of a
   request, it will return a 500 Server Error response.
-* When the server is unable to find an endpoint handler for the request that
-  starts with `/v2.0`, it will return a 404 Not Found response
-
-The V2 API paths are prefixed with `/v2.0` instead of `/v2` so that it is able
-to respond with 404, but not interfere with any environments in the V1 API.
-`v2` is a valid environment name, but `v2.0` is not.
+* When the server is unable to find an endpoint handler for an http request,
+  it will return a 404 Not Found response
 
 All error responses will contain a body, except when it is a HEAD request. The
 error responses will uniformly be a JSON object with the following properties:
@@ -95,6 +102,33 @@ error responses will uniformly be a JSON object with the following properties:
 
 A {file:api/schemas/error.json JSON schema for the error objects} is also available.
 
+CA V1 HTTP API
+--------------
+
+The CA API contains all of the endpoints used in support of Puppet's PKI
+system.
+
+The CA V1 endpoints share the same basic format as the Master V3 API, since
+they are also based off of puppet's internal "indirector". However, they have
+a different prefix and version. The endpoints thus follow the form:
+`/puppet-ca/v1/:indirection/:key?environment=:environment` where
+
+  * `:environment` is the name of the environment that should be in effect for
+    the request. Not all endpoints need an environment, but the query
+    parameter must always be specified.
+  * `:indirection` is the indirection to dispatch the request to.
+  * `:key` is the "key" portion of the indirection call.
+
+As with the Master V3 API, using this API requires a significant amount of
+understanding of how puppet's internal services are structured. The following
+documents provide additional specification.
+
+### SSL Certificate Related Services
+
+* {file:api/docs/http_certificate.md Certificate}
+* {file:api/docs/http_certificate_request.md Certificate Signing Requests}
+* {file:api/docs/http_certificate_status.md Certificate Status}
+* {file:api/docs/http_certificate_revocation_list.md Certificate Revocation List}
 
 Serialization Formats
 ---------------------
