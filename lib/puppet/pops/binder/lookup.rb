@@ -128,7 +128,7 @@ class Puppet::Pops::Binder::Lookup
     elsif !(result = scope.compiler.injector.lookup(scope, type, name)).nil?
       result
    else
-     result = scope.function_hiera([name, PrivateNotFoundMarker])
+     result = call_function(scope, :hiera, name, PrivateNotFoundMarker)
      if !result.nil? && result != PrivateNotFoundMarker
        result
      else
@@ -137,7 +137,14 @@ class Puppet::Pops::Binder::Lookup
    end
   end
 
-  # This is the method called from the puppet/parser/functions/lookup.rb
+  def self.call_function(scope, name, *args)
+    loader = scope.compiler.loaders.private_environment_loader
+    func = loader.load(:function, name) unless loader.nil?
+    raise Error, "Function not found: #{name}" if func.nil?
+    func.call(scope, *args)
+  end
+
+    # This is the method called from the puppet/parser/functions/lookup.rb
   # @param args [Array] array following the puppet function call conventions
   def self.lookup(scope, args)
     type_calculator = Puppet::Pops::Types::TypeCalculator.new
