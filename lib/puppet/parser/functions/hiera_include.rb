@@ -32,13 +32,7 @@ module Puppet::Parser::Functions
   More thorough examples of `hiera_include` are available at:
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    key, default, override = HieraPuppet.parse_args(args)
-    if answer = HieraPuppet.lookup(key, default, self, override, :array)
-      method = Puppet::Parser::Functions.function(:include)
-      send(method, [answer])
-    else
-      raise Puppet::ParseError, "Could not find data item #{key}"
-    end
+    function_fail(["hiera_include() has been converted to 4x API"])
   end
 end
 
