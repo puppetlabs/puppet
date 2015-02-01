@@ -270,6 +270,7 @@ module Puppet::Functions
     #
     # @api public
     def param(type, name)
+      raise ArgumentError, 'Parameters cannot be added after a block_param' unless @block_type.nil?
       if type.is_a?(String)
         @types << type
         @names << name
@@ -313,6 +314,10 @@ module Puppet::Functions
       if @block_type.nil?
         @block_type = type
         @block_name = name
+
+        # mark what should be picked for this position when dispatching. This is the size of
+        # the @names array since the block is required to appear last
+        @weaving << @names.size()
       else
         raise ArgumentError, "Attempt to redefine block"
       end
