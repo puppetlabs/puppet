@@ -611,40 +611,6 @@ describe Puppet::Module do
       @module.load_metadata
       expect(@module.puppetversion).to eq(@data[:puppetversion])
     end
-
-    context "when versionRequirement is used for dependency version info" do
-      before do
-        @data = {
-          :license       => "GPL2",
-          :author        => "luke",
-          :version       => "1.0",
-          :source        => "http://foo/",
-          :puppetversion => "0.25",
-          :dependencies  => [
-            {
-              "versionRequirement" => "0.0.1",
-              "name" => "pmtacceptance/stdlib"
-            },
-            {
-              "versionRequirement" => "0.1.0",
-              "name" => "pmtacceptance/apache"
-            }
-          ]
-        }
-        @module = a_module_with_metadata(@data)
-      end
-
-      it "should set the dependency version_requirement key" do
-        @module.load_metadata
-        expect(@module.dependencies[0]['version_requirement']).to eq("0.0.1")
-      end
-
-      it "should set the version_requirement key for all dependencies" do
-        @module.load_metadata
-        expect(@module.dependencies[0]['version_requirement']).to eq("0.0.1")
-        expect(@module.dependencies[1]['version_requirement']).to eq("0.1.0")
-      end
-    end
   end
 
   it "should be able to tell if there are local changes" do

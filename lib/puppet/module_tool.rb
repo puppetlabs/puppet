@@ -168,7 +168,7 @@ module Puppet
     #         unparsed range expression.
     def self.parse_module_dependency(where, dep)
       dep_name = dep['name'].tr('/', '-')
-      range = dep['version_requirement'] || dep['versionRequirement'] || '>= 0.0.0'
+      range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
         parsed_range = Semantic::VersionRange.parse(range)

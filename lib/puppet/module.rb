@@ -124,12 +124,9 @@ class Puppet::Module
         end
       end
 
-      # NOTICE: The fallback to `versionRequirement` is something we'd like to
-      # not have to support, but we have a reasonable number of releases that
-      # don't use `version_requirement`. When we can deprecate this, we should.
       if attr == :dependencies
         value.each do |dep|
-          dep['version_requirement'] ||= dep['versionRequirement'] || '>= 0.0.0'
+          dep['version_requirement'] ||= '>= 0.0.0'
         end
       end
 
