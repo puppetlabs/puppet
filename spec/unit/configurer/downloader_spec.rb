@@ -58,6 +58,12 @@ describe Puppet::Configurer::Downloader do
       expect(file[:recurse]).to be_truthy
     end
 
+    it "should follow links by default" do
+      file = generate_file_resource
+
+      expect(file[:links]).to eq(:follow)
+    end
+
     it "should always purge" do
       file = generate_file_resource
 
