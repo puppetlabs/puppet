@@ -306,6 +306,13 @@ actual:
         the_function = create_function_with_optional_block_all_defaults().new(:closure_scope, :loader)
         expect(the_function.call({}, 10)).to be_nil
       end
+
+      it 'such that, a scope can be injected and a block can be used' do
+        # use a Function as callable
+        the_callable = create_min_function_class().new(:closure_scope, :loader)
+        the_function = create_function_with_scope_required_block_all_defaults().new(:closure_scope, :loader)
+        expect(the_function.call({}, 10, the_callable)).to be(the_callable)
+      end
     end
 
     context 'provides signature information' do
@@ -605,6 +612,21 @@ actual:
         required_block_param
       end
       def test(x, block)
+        # returns the block to make it easy to test what it got when called
+        block
+      end
+    end
+  end
+
+  def create_function_with_scope_required_block_all_defaults
+    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+      dispatch :test do
+        scope_param
+        param 'Integer', 'x'
+        # use defaults, any callable, name is 'block'
+        required_block_param
+      end
+      def test(scope, x, block)
         # returns the block to make it easy to test what it got when called
         block
       end
