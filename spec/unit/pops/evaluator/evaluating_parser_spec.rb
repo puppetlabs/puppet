@@ -411,7 +411,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'0888' + '010'"   => :error,
         "'0xWTF' + '010'"  => :error,
         "'0x12.3' + '010'" => :error,
-        "'0x12.3' + '010'" => :error,
         '"-\n 2" + "2"'    => :error,
         '"-\v 2" + "2"'    => :error,
         '"-2\n" + "2"'     => :error,
