@@ -33,7 +33,7 @@ module PuppetSpec::Network
     "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v1"
   end
 
-  def a_request_that_heads(data, name, request = {})
+  def a_request_that_heads(data, name, request = {}, params = params())
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
@@ -45,7 +45,7 @@ module PuppetSpec::Network
     })
   end
 
-  def a_request_that_submits(data, name, request = {})
+  def a_request_that_submits(data, name, request = {}, params = params())
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
@@ -58,7 +58,7 @@ module PuppetSpec::Network
     })
   end
 
-  def a_request_that_destroys(data, name, request = {})
+  def a_request_that_destroys(data, name, request = {}, params = params())
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
@@ -71,7 +71,7 @@ module PuppetSpec::Network
     })
   end
 
-  def a_request_that_finds(data, name, request = {})
+  def a_request_that_finds(data, name, request = {}, params = params())
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
@@ -84,7 +84,7 @@ module PuppetSpec::Network
     })
   end
 
-  def a_request_that_searches(key, name, request = {})
+  def a_request_that_searches(key, name, request = {}, params = params())
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
