@@ -13,7 +13,7 @@ class Puppet::IndirectorTesting
     self.value = value
   end
 
-  def self.from_raw(raw)
+  def self.from_binary(raw)
     new(raw)
   end
 

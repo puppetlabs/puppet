@@ -154,17 +154,17 @@ describe "Puppet Network Format" do
     end
   end
 
-  describe Puppet::Network::FormatHandler.format(:raw) do
+  describe Puppet::Network::FormatHandler.format(:binary) do
     before do
-      @format = Puppet::Network::FormatHandler.format(:raw)
+      @format = Puppet::Network::FormatHandler.format(:binary)
     end
 
     it "should exist" do
       expect(@format).not_to be_nil
     end
 
-    it "should have its mimetype set to application/x-raw" do
-      expect(@format.mime).to eq("application/x-raw")
+    it "should have its mimetype set to application/octet-stream" do
+      expect(@format.mime).to eq("application/octet-stream")
     end
 
     it "should always be supported" do

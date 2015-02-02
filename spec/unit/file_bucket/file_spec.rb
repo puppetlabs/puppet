@@ -9,19 +9,19 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
   # this is the default from spec_helper, but it keeps getting reset at odd times
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
 
-  it "defaults to serializing to `:s`" do
-    expect(Puppet::FileBucket::File.default_format).to eq(:s)
+  it "defaults to serializing to `:binary`" do
+    expect(Puppet::FileBucket::File.default_format).to eq(:binary)
   end
 
-  it "accepts s" do
-    expect(Puppet::FileBucket::File.supported_formats).to include(:s)
+  it "accepts binary" do
+    expect(Puppet::FileBucket::File.supported_formats).to include(:binary)
   end
 
   describe "making round trips through network formats" do
     with_digest_algorithms do
-      it "can make a round trip through `s`" do
+      it "can make a round trip through `binary`" do
         file = Puppet::FileBucket::File.new(plaintext)
-        tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+        tripped = Puppet::FileBucket::File.convert_from(:binary, file.render)
         expect(tripped.contents).to eq(plaintext)
       end
     end

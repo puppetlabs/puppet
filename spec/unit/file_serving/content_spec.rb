@@ -14,8 +14,8 @@ describe Puppet::FileServing::Content do
     expect(Puppet::FileServing::Content.indirection.name).to eq(:file_content)
   end
 
-  it "should only support the raw format" do
-    expect(Puppet::FileServing::Content.supported_formats).to eq([:raw])
+  it "should only support the binary format" do
+    expect(Puppet::FileServing::Content.supported_formats).to eq([:binary])
   end
 
   it "should have a method for collecting its attributes" do
@@ -43,25 +43,25 @@ describe Puppet::FileServing::Content do
     expect(content.content).to eq("foo/bar")
   end
 
-  it "should be able to create a content instance from raw file contents" do
-    expect(Puppet::FileServing::Content).to respond_to(:from_raw)
+  it "should be able to create a content instance from binary file contents" do
+    expect(Puppet::FileServing::Content).to respond_to(:from_binary)
   end
 
-  it "should create an instance with a fake file name and correct content when converting from raw" do
+  it "should create an instance with a fake file name and correct content when converting from binary" do
     instance = mock 'instance'
     Puppet::FileServing::Content.expects(:new).with("/this/is/a/fake/path").returns instance
 
     instance.expects(:content=).with "foo/bar"
 
-    expect(Puppet::FileServing::Content.from_raw("foo/bar")).to equal(instance)
+    expect(Puppet::FileServing::Content.from_binary("foo/bar")).to equal(instance)
   end
 
-  it "should return an opened File when converted to raw" do
+  it "should return an opened File when converted to binary" do
     content = Puppet::FileServing::Content.new(path)
 
     File.expects(:new).with(path, "rb").returns :file
 
-    expect(content.to_raw).to eq(:file)
+    expect(content.to_binary).to eq(:file)
   end
 end
 

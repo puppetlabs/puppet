@@ -12,10 +12,10 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
   attr_writer :content
 
   def self.supported_formats
-    [:raw]
+    [:binary]
   end
 
-  def self.from_raw(content)
+  def self.from_binary(content)
     instance = new("/this/is/a/fake/path")
     instance.content = content
     instance
@@ -37,7 +37,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
     @content
   end
 
-  def to_raw
+  def to_binary
     File.new(full_path, "rb")
   end
 end

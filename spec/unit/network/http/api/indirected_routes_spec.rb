@@ -458,7 +458,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
       data = Puppet::IndirectorTesting.new("test")
       request = a_request_that_submits(data,
-                                       :content_type_header => "application/x-raw",
+                                       :content_type_header => "application/octet-stream",
                                        :body => '')
 
       handler.call(request, response)
