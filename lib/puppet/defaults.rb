@@ -599,7 +599,7 @@ EOT
       :desc => "The certificate directory."
     },
     :ssldir => {
-      :default => "$confdir/ssl",
+      :default => "$puppetdir/ssl",
       :type   => :directory,
       :mode => "0771",
       :owner => "service",
