@@ -22,17 +22,20 @@ TIME_TYPES_TO_TRY = [
 
 shared_context('with supported checksum types') do
   def self.with_checksum_types(path, file, &block)
+    def checksum_valid(checksum_type, expected_checksum, actual_checksum_signature)
+      case checksum_type
+      when 'mtime', 'ctime'
+        expect(DateTime.parse(actual_checksum_signature)).to be >= DateTime.parse(expected_checksum)
+      else
+        expect(actual_checksum_signature).to eq("{#{checksum_type}}#{expected_checksum}")
+      end
+    end
+
     def expect_correct_checksum(meta, checksum_type, checksum, type)
       expect(meta).to_not be_nil
       expect(meta).to be_instance_of(type)
       expect(meta.checksum_type).to eq(checksum_type)
-
-      case checksum_type
-      when 'mtime', 'ctime'
-        expect(DateTime.parse(meta.checksum)).to be >= DateTime.parse(checksum)
-      else
-        expect(meta.checksum).to eq("{#{checksum_type}}#{checksum}")
-      end
+      expect(checksum_valid(checksum_type, checksum, meta.checksum)).to be_truthy
     end
 
     (CHECKSUM_TYPES_TO_TRY + TIME_TYPES_TO_TRY).each do |checksum_type, checksum|
