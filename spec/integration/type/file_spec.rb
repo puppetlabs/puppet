@@ -71,6 +71,17 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
+  def apply_twice_idempotent(catalog, resource, &block)
+    catalog.apply
+    block.call
+
+    # The 2nd time the resource should not change.
+    status = catalog.apply.report.resource_statuses[resource]
+    expect(status).not_to be_failed
+    expect(status).not_to be_changed
+    block.call
+  end
+
   around :each do |example|
     Puppet.override(:environments => Puppet::Environments::Static.new) do
       example.run
@@ -927,28 +938,32 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
-  it "should create a file with content if ensure is omitted" do
-    catalog.add_resource described_class.new(
-      :path => path,
-      :content => "this is some content, yo"
-    )
+  CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+    it "should create a file with content if ensure is omitted" do
+      catalog.add_resource described_class.new(
+        :path => path,
+        :content => "this is some content, yo",
+        :checksum => checksum_type
+      )
 
-    catalog.apply
+      apply_twice_idempotent(catalog, "File[#{path}]") do
+        expect(File.read(path)).to eq("this is some content, yo")
+      end
+    end
 
-    expect(File.read(path)).to eq("this is some content, yo")
-  end
+    it "should create files with content if both content and ensure are set" do
+      file = described_class.new(
+        :path    => path,
+        :ensure  => "file",
+        :content => "this is some content, yo",
+        :checksum => checksum_type
+      )
 
-  it "should create files with content if both content and ensure are set" do
-    file = described_class.new(
-      :path    => path,
-      :ensure  => "file",
-      :content => "this is some content, yo"
-    )
-
-    catalog.add_resource file
-    catalog.apply
-
-    expect(File.read(path)).to eq("this is some content, yo")
+      catalog.add_resource file
+      apply_twice_idempotent(catalog, "File[#{path}]") do
+        expect(File.read(path)).to eq("this is some content, yo")
+      end
+    end
   end
 
   it "should delete files with sources but that are set for deletion" do
@@ -984,11 +999,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           )
 
           catalog.add_resource file
-          catalog.apply
-
-          expect(get_owner(path)).to eq(get_owner(checksum_file))
-          expect(get_group(path)).to eq(get_group(checksum_file))
-          expect(get_mode(path) & 07777).to eq(0770)
+          apply_twice_idempotent(catalog, "File[#{path}]") do
+            expect(get_owner(path)).to eq(get_owner(checksum_file))
+            expect(get_group(path)).to eq(get_group(checksum_file))
+            expect(get_mode(path) & 07777).to eq(0770)
+          end
         end
       end
 
@@ -1005,9 +1020,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         )
 
         catalog.add_resource file
-        catalog.apply
-
-        expect(get_mode(path) & 07777).to eq(0440)
+        apply_twice_idempotent(catalog, "File[#{path}]") do
+          expect(get_mode(path) & 07777).to eq(0440)
+        end
       end
     end
 
