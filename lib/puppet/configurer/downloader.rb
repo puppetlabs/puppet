@@ -45,6 +45,7 @@ class Puppet::Configurer::Downloader
     defargs = {
       :path => path,
       :recurse => true,
+      :links => :follow,
       :source => source,
       :source_permissions => @source_permissions,
       :tag => name,
