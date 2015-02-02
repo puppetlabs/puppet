@@ -47,7 +47,9 @@ describe Puppet::Network::HTTP::API do
       req = Puppet::Network::HTTP::Request.from_hash(:path => "/unknown")
       res = {}
       handler.process(req, res)
+      res_body = JSON(res[:body])
       expect(res[:status]).to eq(404)
+      expect(res_body["message"]).to include(Puppet::Network::HTTP::NOT_FOUND_ERROR_MESSAGE)
     end
 
     describe "when processing master routes" do
@@ -71,7 +73,9 @@ describe Puppet::Network::HTTP::API do
         req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/unknown")
         res = {}
         handler.process(req, res)
+        res_body = JSON(res[:body])
         expect(res[:status]).to eq(404)
+        expect(res_body["message"]).to include(Puppet::Network::HTTP::NOT_FOUND_ERROR_MESSAGE)
       end
     end
 
@@ -91,7 +95,9 @@ describe Puppet::Network::HTTP::API do
         req = Puppet::Network::HTTP::Request.from_hash(:path => "#{ca_prefix}/unknown")
         res = {}
         handler.process(req, res)
+        res_body = JSON(res[:body])
         expect(res[:status]).to eq(404)
+        expect(res_body["message"]).to include(Puppet::Network::HTTP::NOT_FOUND_ERROR_MESSAGE)
       end
     end
   end

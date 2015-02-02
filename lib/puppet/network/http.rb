@@ -5,6 +5,10 @@ module Puppet::Network::HTTP
   MASTER_URL_PREFIX = "/puppet"
   CA_URL_PREFIX = "/puppet-ca"
 
+  NOT_FOUND_ERROR_MESSAGE = 'This master is running Puppet 4, and the URL format has changed. ' +
+      'This request was likely made with a Puppet 3 Agent, as it used an invalid ' +
+      'URL format. Please upgrade your agents to Puppet 4 and try again.'
+
   require 'puppet/network/authorization'
   require 'puppet/network/http/issues'
   require 'puppet/network/http/error'
