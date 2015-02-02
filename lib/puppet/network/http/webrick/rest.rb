@@ -15,7 +15,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   def initialize(server)
     raise ArgumentError, "server is required" unless server
     register([Puppet::Network::HTTP::API.master_routes,
-              Puppet::Network::HTTP::API.ca_routes])
+              Puppet::Network::HTTP::API.ca_routes,
+              Puppet::Network::HTTP::API.not_found_upgrade])
     super(server)
   end
 

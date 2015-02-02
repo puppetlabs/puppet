@@ -5,6 +5,9 @@ module Puppet::Network::HTTP
   MASTER_URL_PREFIX = "/puppet"
   CA_URL_PREFIX = "/puppet-ca"
 
+  PUPPET_API_VERSIONS = "v3"
+  PUPPET_CA_API_VERSIONS = "v1"
+
   require 'puppet/network/authorization'
   require 'puppet/network/http/issues'
   require 'puppet/network/http/error'
