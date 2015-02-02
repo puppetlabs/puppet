@@ -34,6 +34,11 @@ module Puppet
   )
 
   define_settings(:main,
+    :puppetdir => {
+        :default  => nil,
+        :type     => :directory,
+        :desc     => "TODO ncw"
+    },
     :confdir  => {
         :default  => nil,
         :type     => :directory,
