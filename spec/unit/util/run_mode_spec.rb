@@ -10,18 +10,34 @@ describe Puppet::Util::RunMode do
     expect(@run_mode.run_dir).to eq('$vardir/run')
   end
 
+  it "has logdir depend on vardir" do
+    expect(@run_mode.log_dir).to eq('$vardir/log')
+  end
+
   describe Puppet::Util::UnixRunMode, :unless => Puppet.features.microsoft_windows? do
     before do
       @run_mode = Puppet::Util::UnixRunMode.new('fake')
     end
 
     describe "#conf_dir" do
-      it "has confdir /etc/puppet when run as root" do
-        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppet')) }
+      describe "when run as root" do
+        it "has confdir /etc/puppetlabs/agent" do
+          as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppetlabs/agent')) }
+        end
       end
 
-      it "has confdir ~/.puppet when run as non-root" do
-        as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppet')) }
+      describe "when run as non-root" do
+        it "has confdir ~/.puppet" do
+          as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppet')) }
+        end
+
+        it "fails when asking for the conf_dir as non-root and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
+          end
+        end
       end
 
       context "master run mode" do
@@ -32,29 +48,96 @@ describe Puppet::Util::RunMode do
           as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppet')) }
         end
       end
+    end
 
-      it "fails when asking for the conf_dir as non-root and there is no $HOME" do
-        as_non_root do
-          without_home do
-            expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+    describe "#var_dir" do
+      before :each do
+        Puppet[:vardir] = nil
+      end
+
+      describe "when run as root" do
+        it "has vardir /opt/puppetlabs/agent/cache" do
+          as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/opt/puppetlabs/agent/cache')) }
+        end
+      end
+
+      describe "when run as non-root" do
+        it "has default vardir ~/.puppet/var" do
+          as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.puppet/var')) }
+        end
+
+        it "has user defined vardir when vardir specified via the commandline" do
+          Puppet[:vardir] = "~/.myvar/puppet"
+          as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.myvar/puppet')) }
+        end
+
+        it "fails when asking for the var_dir and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
           end
         end
       end
     end
 
-    describe "#var_dir" do
-      it "has vardir /var/lib/puppet when run as root" do
-        as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/var/lib/puppet')) }
+    describe "#run_dir" do
+      before :each do
+        Puppet[:vardir] = nil
       end
 
-      it "has vardir ~/.puppet/var when run as non-root" do
-        as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.puppet/var')) }
+      describe "when run as root" do
+        it "has rundir /var/run/puppetlabs" do
+          as_root { expect(@run_mode.run_dir).to eq(File.expand_path('/var/run/puppetlabs')) }
+        end
       end
 
-      it "fails when asking for the var_dir as non-root and there is no $HOME" do
-        as_non_root do
-          without_home do
-            expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+      describe "when run as non-root" do
+        it "has default rundir ~/.puppet/var/run" do
+          as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppet/var/run')) }
+        end
+
+        it "has rundir based on vardir when vardir is passed via commandline" do
+          Puppet[:vardir] = "~/.myvar/puppet"
+          as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.myvar/puppet/run')) }
+        end
+
+        it "fails when asking for the run_dir and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.run_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
+          end
+        end
+      end
+    end
+
+    describe "#log_dir" do
+      before :each do
+        Puppet[:vardir] = nil
+      end
+
+      describe "when run as root" do
+        it "has logdir /var/log/puppetlabs/agent" do
+          as_root { expect(@run_mode.log_dir).to eq(File.expand_path('/var/log/puppetlabs/agent')) }
+        end
+      end
+
+      describe "when run as non-root" do
+        it "has default logdir ~/.puppet/var/log" do
+          as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.puppet/var/log')) }
+        end
+
+        it "has logdir based on vardir when vardir is passed via commandline" do
+          Puppet[:vardir] = "~/.myvar/puppet"
+          as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.myvar/puppet/log')) }
+        end
+
+        it "fails when asking for the log_dir and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
           end
         end
       end
@@ -77,20 +160,24 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#conf_dir" do
-      it "has confdir /etc/puppet when run as root" do
-        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc"))) }
+      describe "when run as root" do
+        it "has confdir /etc/puppet" do
+          as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc"))) }
+        end
       end
 
-      it "has confdir in ~/.puppet when run as non-root" do
-        as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path("~/.puppet")) }
-      end
+      describe "when run as non-root" do
+        it "has confdir in ~/.puppet" do
+          as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path("~/.puppet")) }
+        end
 
-      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+        it "fails when asking for the conf_dir and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
+          as_non_root do
+            without_env('HOME') do
+              without_env('HOMEDRIVE') do
+                without_env('USERPROFILE') do
+                  expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+                end
               end
             end
           end
@@ -99,20 +186,24 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#var_dir" do
-      it "has vardir /var/lib/puppet when run as root" do
-        as_root { expect(@run_mode.var_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var"))) }
+      describe "when run as root" do
+        it "has vardir /var/lib/puppet" do
+          as_root { expect(@run_mode.var_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var"))) }
+        end
       end
 
-      it "has vardir in ~/.puppet/var when run as non-root" do
-        as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path("~/.puppet/var")) }
-      end
+      describe "when run as non-root" do
+        it "has vardir in ~/.puppet/var" do
+          as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path("~/.puppet/var")) }
+        end
 
-      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+        it "fails when asking for the conf_dir and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
+          as_non_root do
+            without_env('HOME') do
+              without_env('HOMEDRIVE') do
+                without_env('USERPROFILE') do
+                  expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+                end
               end
             end
           end

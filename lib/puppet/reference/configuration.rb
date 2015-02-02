@@ -23,9 +23,9 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     # Now print the data about the item.
     val = object.default
     if name.to_s == "vardir"
-      val = "/var/lib/puppet"
+      val = "/opt/puppetlabs/agent/cache"
     elsif name.to_s == "confdir"
-      val = "/etc/puppet"
+      val = "/etc/puppetlabs/agent"
     end
 
     # Leave out the section information; it was apparently confusing people.

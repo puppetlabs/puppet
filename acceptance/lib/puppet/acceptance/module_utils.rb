@@ -7,9 +7,9 @@ module Puppet
       # Example return value:
       #
       # [
-      #   "/etc/puppetlabs/puppet/environments/production/modules",
-      #   "/etc/puppetlabs/puppet/modules",
-      #   "/opt/puppet/share/puppet/modules",
+      #   "/etc/puppetlabs/agent/environments/production/modules",
+      #   "/etc/puppetlabs/agent/modules",
+      #   "/opt/puppetlabs/agent/modules",
       # ]
       #
       # @param host [String] hostname
