@@ -2,14 +2,14 @@ test_name "The source attribute"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-target_file_on_windows = 'C:/windows/temp/source_attr_test'
-target_file_on_nix     = '/tmp/source_attr_test'
+@target_file_on_windows = 'C:/windows/temp/source_attr_test'
+@target_file_on_nix     = '/tmp/source_attr_test'
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
   rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
   hosts.each do |host|
-    file_to_rm = host['platform'] =~ /windows/ ? target_file_on_windows : target_file_on_nix
+    file_to_rm = host['platform'] =~ /windows/ ? @target_file_on_windows : @target_file_on_nix
     on(host, "rm #{file_to_rm}", :acceptable_exit_codes => [0,1])
   end
 end
@@ -25,24 +25,40 @@ module_dir = "#{prod_dir}/modules"
 test_module_dir = "#{module_dir}/source_test_module"
 test_module_manifests_dir = "#{test_module_dir}/manifests"
 test_module_files_dir = "#{test_module_dir}/files"
-mod_manifest_file = "#{test_module_manifests_dir}/init.pp"
+@mod_manifest_file = "#{test_module_manifests_dir}/init.pp"
 mod_source_file = "#{test_module_files_dir}/source_file"
 
 mod_source = ' the content is present'
 
-mod_manifest = <<EOF
+def mod_manifest(checksum_type = nil)
+  checksum = if checksum_type then "checksum => #{checksum_type}," else "" end
+  manifest = <<EOF
 class source_test_module {
   $target_file = $::kernel ? {
-    \\'windows\\' => \\'#{target_file_on_windows}\\',
-    default   => \\'#{target_file_on_nix}\\'
+    \\'windows\\' => \\'#{@target_file_on_windows}\\',
+    default   => \\'#{@target_file_on_nix}\\'
   }
 
   file { $target_file:
     source => \\'puppet:///modules/source_test_module/source_file\\',
+    #{checksum}
     ensure => present
   }
 }
 EOF
+  manifest
+end
+
+def create_mod_manifest(checksum_type = nil)
+  manifest = <<EOF
+file { '#{@mod_manifest_file}':
+  ensure => file,
+  mode => '0644',
+  content => '#{mod_manifest(checksum_type)}',
+}
+EOF
+  manifest
+end
 
 env_manifest = <<EOF
 filebucket { \\'main\\':
@@ -74,11 +90,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
     '#{test_module_files_dir}':;
   }
 
-  file { '#{mod_manifest_file}':
-    ensure => file,
-    mode => '0644',
-    content => '#{mod_manifest}',
-  }
+  #{create_mod_manifest}
   file { '#{mod_source_file}':
     ensure => file,
     mode => '0644',
@@ -99,16 +111,28 @@ master_opts = {
   },
 }
 with_puppet_running_on(master, master_opts, testdir) do
-  agents.each do |agent|
-    # accept an exit code of 2 which is returned if thre are changes
-    on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
-      file_to_check = agent['platform'] =~ /windows/ ? target_file_on_windows : target_file_on_nix
-      on agent, "cat #{file_to_check}" do
-        assert_match(/the content is present/, stdout, "Result file not created")
+  ['md5', 'md5lite', 'sha256', 'sha256lite', 'ctime', 'mtime'].each do |checksum_type|
+    apply_manifest_on(master, create_mod_manifest(checksum_type), :catch_failures => true)
+    agents.each do |agent|
+      # accept an exit code of 2 which is returned if there are changes
+      step "create file the first run"
+      on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
+        file_to_check = agent['platform'] =~ /windows/ ? @target_file_on_windows : @target_file_on_nix
+        on agent, "cat #{file_to_check}" do
+          assert_match(/the content is present/, stdout, "Result file not created")
+        end
+      end
+
+      step "second run should not update file"
+      on(agent, puppet('agent', "--test --server #{master}")) do
+        assert_no_match(/content changed/, stdout, "Shouldn't have overwrote the file")
       end
     end
   end
 end
+
+step "restore default checksum manifest"
+apply_manifest_on(master, create_mod_manifest, :catch_failures => true)
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
 step "when using a puppet://$server/ URI with a master/agent setup"
