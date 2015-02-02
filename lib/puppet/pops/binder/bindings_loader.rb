@@ -5,7 +5,6 @@ require 'rgen/metamodel_builder'
 # This means it can load a class from a gem, or from puppet modules.
 #
 class Puppet::Pops::Binder::BindingsLoader
-  @confdir = Puppet.settings[:confdir]
 
   # Returns a XXXXX given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.

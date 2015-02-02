@@ -104,9 +104,9 @@ describe Puppet::Settings do
     end
 
     it "should fail if the app defaults hash is missing any required values" do
-      incomplete_default_values = default_values.reject { |key, _| key == :confdir }
+      incomplete_default_values = default_values.reject { |key, _| key == :puppetdir }
       expect {
-        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
+        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :puppetdir })
       }.to raise_error(Puppet::Settings::SettingsError)
     end
 
@@ -467,7 +467,7 @@ describe Puppet::Settings do
 
     it "setting a value to nil causes it to return to its default" do
       default_values = { :one => "skipped value" }
-      [:logdir, :confdir, :vardir].each do |key|
+      [:logdir, :puppetdir, :vardir].each do |key|
         default_values[key] = 'default value'
       end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
@@ -817,12 +817,12 @@ describe Puppet::Settings do
 
       @settings.define_settings(:main,
         :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :puppetdir    => { :type => :directory, :default => nil, :desc => "puppetdir" },
         :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
 
       text = <<-EOD
       [main]
-      deferred=$confdir/goose
+      deferred=$puppetdir/goose
       EOD
 
       @settings.stubs(:read_file).returns(text)
@@ -830,10 +830,10 @@ describe Puppet::Settings do
 
       expect(hook_invoked).to be_falsey
 
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :puppetdir => '/path/to/puppetdir', :vardir => '/path/to/vardir')
 
       expect(hook_invoked).to be_truthy
-      expect(@settings[:deferred]).to eq(File.expand_path('/path/to/confdir/goose'))
+      expect(@settings[:deferred]).to eq(File.expand_path('/path/to/puppetdir/goose'))
     end
 
     it "does not require the value for a setting without a hook to resolve during global setup" do
@@ -842,19 +842,19 @@ describe Puppet::Settings do
 
       @settings.define_settings(:main,
         :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :puppetdir    => { :type => :directory, :default => nil, :desc => "puppetdir" },
         :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
 
       text = <<-EOD
       [main]
-      can_cause_problems=$confdir/goose
+      can_cause_problems=$puppetdir/goose
       EOD
 
       @settings.stubs(:read_file).returns(text)
       @settings.initialize_global_settings
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :puppetdir => '/path/to/puppetdir', :vardir => '/path/to/vardir')
 
-      expect(@settings[:can_cause_problems]).to eq(File.expand_path('/path/to/confdir/goose'))
+      expect(@settings[:can_cause_problems]).to eq(File.expand_path('/path/to/puppetdir/goose'))
     end
 
     it "should allow empty values" do
@@ -873,7 +873,7 @@ describe Puppet::Settings do
       let(:app_defaults) {
         {
           :logdir     => "/dev/null",
-          :confdir    => "/dev/null",
+          :puppetdir  => "/dev/null",
           :vardir     => "/dev/null",
         }
       }
@@ -888,7 +888,7 @@ describe Puppet::Settings do
       before(:each) do
         settings.define_settings(:main, {
           :logdir => { :default => 'a', :desc => 'a' },
-          :confdir => { :default => 'b', :desc => 'b' },
+          :puppetdir => { :default => 'b', :desc => 'b' },
           :vardir => { :default => 'c', :desc => 'c' },
         })
       end
@@ -970,7 +970,7 @@ describe Puppet::Settings do
     before :each do
       @settings = Puppet::Settings.new
       @settings.define_settings(:section,
-          { :confdir => { :default => nil,                    :desc => "Conf dir" },
+          { :puppetdir => { :default => nil,                  :desc => "Puppet dir" },
             :config  => { :default => "$confdir/puppet.conf", :desc => "Config" },
             :one     => { :default => "ONE",                  :desc => "a" },
             :two     => { :default => "TWO",                  :desc => "b" }, })
@@ -1023,7 +1023,7 @@ describe Puppet::Settings do
     context "running with an explicit config file as a user (e.g. Apache + Passenger)" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        @settings[:confdir] = File.dirname(main_config_file_default_location)
+        @settings[:puppetdir] = File.dirname(main_config_file_default_location)
         Puppet::FileSystem.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
