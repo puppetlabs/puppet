@@ -980,28 +980,34 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
-  it "should create a file with content if ensure is omitted" do
-    catalog.add_resource described_class.new(
-      :path => path,
-      :content => "this is some content, yo"
-    )
+  CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+    before(:each) do
+      @options = {:path => path, :content => "this is some content, yo", :checksum => checksum_type}
+    end
+    it "should create a file with content if ensure is omitted" do
+      catalog.add_resource described_class.send(:new, @options)
+      catalog.apply
+      expect(File.read(path)).to eq("this is some content, yo")
 
-    catalog.apply
+      second_catalog = Puppet::Resource::Catalog.new
+      second_catalog.add_resource described_class.send(:new, @options)
+      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).not_to be_failed
+      expect(status).not_to be_changed
+    end
 
-    expect(File.read(path)).to eq("this is some content, yo")
-  end
+    it "should create files with content if both content and ensure are set" do
+      @options[:ensure] = "file"
+      catalog.add_resource described_class.send(:new, @options)
+      catalog.apply
+      expect(File.read(path)).to eq("this is some content, yo")
 
-  it "should create files with content if both content and ensure are set" do
-    file = described_class.new(
-      :path    => path,
-      :ensure  => "file",
-      :content => "this is some content, yo"
-    )
-
-    catalog.add_resource file
-    catalog.apply
-
-    expect(File.read(path)).to eq("this is some content, yo")
+      second_catalog = Puppet::Resource::Catalog.new
+      second_catalog.add_resource described_class.send(:new, @options)
+      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).not_to be_failed
+      expect(status).not_to be_changed
+    end
   end
 
   it "should delete files with sources but that are set for deletion" do
@@ -1023,44 +1029,46 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when sourcing" do
     with_checksum_types "source", "default_values" do
-      describe "on POSIX systems", :if => Puppet.features.posix? do
-        it "should apply the source metadata values" do
-          set_mode(0770, checksum_file)
-
-          file = described_class.new(
-            :path   => path,
-            :ensure => :file,
-            :source => checksum_file,
-            :source_permissions => :use,
-            :checksum => checksum_type,
-            :backup => false
-          )
-
-          catalog.add_resource file
-          catalog.apply
-
-          expect(get_owner(path)).to eq(get_owner(checksum_file))
-          expect(get_group(path)).to eq(get_group(checksum_file))
-          expect(get_mode(path) & 07777).to eq(0770)
-        end
-      end
-
-      it "should override the default metadata values" do
+      before(:each) do
         set_mode(0770, checksum_file)
-
-        file = described_class.new(
+        @options = {
           :path   => path,
           :ensure => :file,
           :source => checksum_file,
           :checksum => checksum_type,
-          :backup => false,
-          :mode => '0440'
-        )
+          :backup => false
+        }
+      end
+      describe "on POSIX systems", :if => Puppet.features.posix? do
+        it "should apply the source metadata values" do
+          @options[:source_permissions] = :use
 
-        catalog.add_resource file
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(get_owner(path)).to eq(get_owner(checksum_file))
+          expect(get_group(path)).to eq(get_group(checksum_file))
+          expect(get_mode(path) & 07777).to eq(0770)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+      end
+
+      it "should override the default metadata values" do
+        @options[:mode] = '0440'
+
+        catalog.add_resource described_class.send(:new, @options)
         catalog.apply
-
         expect(get_mode(path) & 07777).to eq(0440)
+
+        second_catalog = Puppet::Resource::Catalog.new
+        second_catalog.add_resource described_class.send(:new, @options)
+        status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+        expect(status).not_to be_failed
+        expect(status).not_to be_changed
       end
     end
 
