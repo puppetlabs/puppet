@@ -1,0 +1,10 @@
+$vr = { 'mode' => 'read', 'path' => ['foo', 'fee' ] }
+$vw = { 'mode' => 'write', 'path' => ['biz', 'baz' ] }
+$v1 = { 'key' => 'a', 'value' => $vr }
+$v2 = { 'key' => 3, 'value' => $vw }
+$val = [ $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2, $v1, $v2 ]
+
+<% size.times do |i| %>
+each($val) | Struct[{key=>Variant[Integer[1,3],Enum[a,b,c]], value=>Struct[{mode=>Enum[read,write,update],path=>Array[String]}]}] $v | {  }
+# each($val) | $v | {  }
+<% end %>
