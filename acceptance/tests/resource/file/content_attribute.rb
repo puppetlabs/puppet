@@ -15,6 +15,27 @@ agents.each do |agent|
     assert_match(/This is the test file content/, stdout, "File content not matched on #{agent}")
   end
 
+  step "Expect the test environment contains the file"
+  ['md5', 'md5lite', 'sha256', 'sha256lite'].each do |checksum_type|
+    step "Content Attribute: using #{checksum_type}"
+    manifest = "file { '#{target}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
+    apply_manifest_on agent, manifest do
+      assert_no_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote the file")
+    end
+
+    on agent, "cat #{target}" do
+      assert_match(/This is the test file content/, stdout, "File content not matched on #{agent}")
+    end
+  end
+
+  ['mtime', 'ctime'].each do |checksum_type|
+    step "Content Attribute: using #{checksum_type}"
+    manifest = "file { '#{target}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
+    apply_manifest_on agent, manifest, :acceptable_exit_codes => [1] do
+      assert_match(/Error: Validation of File\[#{target}\] failed: You cannot specify content when using checksum '#{checksum_type}'/, stderr, "#{agent}: expected failure")
+    end
+  end
+
   step "Ensure the test environment is clean"
   on agent, "rm -f #{target}"
 

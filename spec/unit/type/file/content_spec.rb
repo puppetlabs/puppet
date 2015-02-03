@@ -6,6 +6,7 @@ require 'puppet/network/resolver'
 
 describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true do
   include PuppetSpec::Files
+  include_context 'with supported checksum types'
 
   let(:filename) { tmpfile('testfile') }
   let(:environment) { Puppet::Node::Environment.create(:testing, []) }
@@ -253,7 +254,27 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
   end
 
- describe "when changing the content" do
+  describe "when testing whether the content is initialized in the resource and in sync" do
+    CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+      describe "sync with checksum type #{checksum_type} and the file exists" do
+        before do
+          @new_resource = Puppet::Type.type(:file).new :ensure => :file, :path => filename, :catalog => catalog,
+            :content => CHECKSUM_PLAINTEXT, :checksum => checksum_type
+          @new_resource.stubs(:stat).returns mock('stat')
+        end
+
+        it "should return false if the sum for the current contents are different from the desired content" do
+          expect(@new_resource.parameters[:content]).not_to be_safe_insync("other content")
+        end
+
+        it "should return true if the sum for the current contents is the same as the sum for the desired content" do
+          expect(@new_resource.parameters[:content]).to be_safe_insync("{#{checksum_type}}#{checksum}")
+        end
+      end
+    end
+  end
+
+  describe "when changing the content" do
     let(:content) { described_class.new(:resource => resource) }
 
     before do

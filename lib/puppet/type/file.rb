@@ -379,6 +379,11 @@ Puppet::Type.newtype(:file) do
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
 
+    if @parameters[:content] and @parameters[:content].actual_content
+      # Now that we know the checksum, update content (in case it was created before checksum was known).
+      @parameters[:content].value = @parameters[:checksum].sum(@parameters[:content].actual_content)
+    end
+
     provider.validate if provider.respond_to?(:validate)
   end
 
