@@ -310,13 +310,6 @@ TREE
       expect(expr).to eql('1.2.x')
     end
 
-    it 'parses a dependency with a version range expression in the (deprecated) versionRange key' do
-      name, range, expr = subject.parse_module_dependency('source', 'name' => 'foo-bar', 'versionRequirement' => '1.2.x')
-      expect(name).to eql('foo-bar')
-      expect(range).to eql(Semantic::VersionRange.parse('1.2.x'))
-      expect(expr).to eql('1.2.x')
-    end
-
     it 'does not raise an error on invalid version range expressions' do
       name, range, expr = subject.parse_module_dependency('source', 'name' => 'foo-bar', 'version_requirement' => 'nope')
       expect(name).to eql('foo-bar')
