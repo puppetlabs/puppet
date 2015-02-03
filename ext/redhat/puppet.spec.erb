@@ -114,18 +114,17 @@ find examples/ -type f | xargs --no-run-if-empty chmod a-x
 rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
 
-install -d -m0755 %{buildroot}%{_sysconfdir}/puppetlabs/agent/environments/example_env/manifests
-install -d -m0755 %{buildroot}%{_sysconfdir}/puppetlabs/agent/environments/example_env/modules
-install -d -m0755 %{buildroot}%{_sysconfdir}/puppetlabs/agent/manifests
-install -d -m0755 %{buildroot}/opt/puppetlabs/agent/modules
-install -d -m0755 %{buildroot}/opt/puppetlabs/agent/cache
-install -d -m0755 %{buildroot}/opt/puppetlabs/agent/cache/state
-install -d -m0755 %{buildroot}/opt/puppetlabs/agent/cache/reports
-install -d -m0755 %{buildroot}%{_localstatedir}/run/puppetlabs
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/manifests
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/modules
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
+install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet/state
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet/reports
+install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 
 # As per redhat bz #495096
-install -d -m0750 %{buildroot}%{_localstatedir}/log/puppetlabs
-install -d -m0750 %{buildroot}%{_localstatedir}/log/puppetlabs/agent
+install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
 
 %if 0%{?_with_systemd}
 # Systemd for fedora >= 17 or el 7
@@ -141,10 +140,10 @@ install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %endif
 
-install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppetlabs/agent/fileserver.conf
-install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppetlabs/agent/puppet.conf
+install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
+install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
-install -Dp -m0644 ext/README.environment %{buildroot}%{_sysconfdir}/puppetlabs/agent/environments/example_env/README.environment
+install -Dp -m0644 ext/README.environment %{buildroot}%{_sysconfdir}/puppet/environments/example_env/README.environment
 
 # Install the ext/ directory to %%{_datadir}/%%{name}
 install -d %{buildroot}%{_datadir}/%{name}
@@ -180,7 +179,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %endif
 
 # Create puppet modules directory for puppet module tool
-mkdir -p %{buildroot}%{_sysconfdir}/puppetlabs/agent/modules
+mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
 
 # Install a NetworkManager dispatcher script to pickup changes to
@@ -205,14 +204,13 @@ cp -pr ext/puppet-nm-dispatcher \
 %{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %endif
-%dir %{_sysconfdir}/puppetlabs
-%dir %{_sysconfdir}/puppetlabs/agent
-%dir %{_sysconfdir}/puppetlabs/agent/modules
+%dir %{_sysconfdir}/puppet
+%dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
-%config(noreplace) %{_sysconfdir}/puppetlabs/agent/puppet.conf
-%config(noreplace) %{_sysconfdir}/puppetlabs/agent/auth.conf
+%config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # We don't want to require emacs or vim, so we need to own these dirs
 %{_datadir}/emacs
@@ -254,12 +252,12 @@ cp -pr ext/puppet-nm-dispatcher \
 # write to them. The separate %defattr's are required
 # to work around RH Bugzilla 681540
 %defattr(-, puppet, puppet, 0755)
-%{_localstatedir}/run/puppetlabs
+%{_localstatedir}/run/puppet
 %defattr(-, puppet, puppet, 0750)
-%{_localstatedir}/log/puppetlabs/agent
-/opt/puppetlabs/agent/cache
-/opt/puppetlabs/agent/cache/state
-/opt/puppetlabs/agent/cache/reports
+%{_localstatedir}/log/puppet
+%{_localstatedir}/lib/puppet
+%{_localstatedir}/lib/puppet/state
+%{_localstatedir}/lib/puppet/reports
 # Return the default attributes to 0755 to
 # prevent incorrect permission assignment on EL6
 %defattr(-, root, root, 0755)
@@ -273,13 +271,13 @@ cp -pr ext/puppet-nm-dispatcher \
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
 %endif
-%config(noreplace) %{_sysconfdir}/puppetlabs/agent/fileserver.conf
-%dir %{_sysconfdir}/puppetlabs/agent/manifests
-%dir %{_sysconfdir}/puppetlabs/agent/environments
-%dir %{_sysconfdir}/puppetlabs/agent/environments/example_env
-%dir %{_sysconfdir}/puppetlabs/agent/environments/example_env/manifests
-%dir %{_sysconfdir}/puppetlabs/agent/environments/example_env/modules
-%{_sysconfdir}/puppetlabs/agent/environments/example_env/README.environment
+%config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
+%dir %{_sysconfdir}/puppet/manifests
+%dir %{_sysconfdir}/puppet/environments
+%dir %{_sysconfdir}/puppet/environments/example_env
+%dir %{_sysconfdir}/puppet/environments/example_env/manifests
+%dir %{_sysconfdir}/puppet/environments/example_env/modules
+%{_sysconfdir}/puppet/environments/example_env/README.environment
 %{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-master.8.gz
 
@@ -302,8 +300,8 @@ exit 0
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
-  oldpid="%{_localstatedir}/run/puppetlabs/puppetd.pid"
-  newpid="%{_localstatedir}/run/puppetlabs/agent.pid"
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
   if [ -s "$oldpid" -a ! -s "$newpid" ]; then
     (kill $(< "$oldpid") && rm -f "$oldpid" && \
       /bin/systemctl start puppet.service) >/dev/null 2>&1 || :
@@ -314,8 +312,8 @@ fi
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
-  oldpid="%{_localstatedir}/run/puppetlabs/puppetd.pid"
-  newpid="%{_localstatedir}/run/puppetlabs/agent.pid"
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
   if [ -s "$oldpid" -a ! -s "$newpid" ]; then
     (kill $(< "$oldpid") && rm -f "$oldpid" && \
       /sbin/service puppet start) >/dev/null 2>&1 || :
@@ -338,8 +336,8 @@ fi
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
-  oldpid="%{_localstatedir}/run/puppetlabs/puppetmasterd.pid"
-  newpid="%{_localstatedir}/run/puppetlabs/master.pid"
+  oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
+  newpid="%{_localstatedir}/run/puppet/master.pid"
   if [ -s "$oldpid" -a ! -s "$newpid" ]; then
     (kill $(< "$oldpid") && rm -f "$oldpid" && \
       /bin/systemctl start puppetmaster.service) > /dev/null 2>&1 || :
@@ -350,8 +348,8 @@ fi
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
   # the old process running.
-  oldpid="%{_localstatedir}/run/puppetlabs/puppetmasterd.pid"
-  newpid="%{_localstatedir}/run/puppetlabs/master.pid"
+  oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
+  newpid="%{_localstatedir}/run/puppet/master.pid"
   if [ -s "$oldpid" -a ! -s "$newpid" ]; then
     (kill $(< "$oldpid") && rm -f "$oldpid" && \
       /sbin/service puppetmaster start) >/dev/null 2>&1 || :
