@@ -361,16 +361,16 @@ describe 'The type calculator' do
           t = calculator.infer_set({'first' => 1, 'second' => 2})
           expect(t.class).to eq(Puppet::Pops::Types::PStructType)
           expect(t.elements.size).to eq(2)
-          expect(t.elements[0].name).to eq('first')
-          expect(t.elements[1].name).to eq('second')
+          expect(t.elements.map { |e| e.name }.sort).to eq(['first', 'second'])
         end
 
         it 'with string keys and string and array values translates to PStructType[{key1=>PStringType,key2=>PTupleType}]' do
           t = calculator.infer_set({ 'mode' => 'read', 'path' => ['foo', 'fee' ] })
           expect(t.class).to eq(Puppet::Pops::Types::PStructType)
           expect(t.elements.size).to eq(2)
-          expect(t.elements[0].type.class).to eq(Puppet::Pops::Types::PStringType)
-          expect(t.elements[1].type.class).to eq(Puppet::Pops::Types::PTupleType)
+          els = t.elements.map { |e| e.type }.sort {|a,b| a.to_s <=> b.to_s }
+          els[0].class.should == Puppet::Pops::Types::PStringType
+          els[1].class.should == Puppet::Pops::Types::PTupleType
         end
 
         it 'with mixed string and non-string keys translates to PHashType' do
@@ -709,6 +709,22 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+
+      it 'Struct is assignable to Hash with Pattern that matches all keys' do
+        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(pattern_t(/^\w+$/), factory.any))
+      end
+
+      it 'Struct is assignable to Hash with Enum that matches all keys' do
+        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
+      end
+
+      it 'Struct is not assignable to Hash with Pattern unless all keys match' do
+        struct_t({'a' => integer_t, 'A' => integer_t}).should_not be_assignable_to(hash_t(pattern_t(/^[A-Z]+$/), factory.any))
+      end
+
+      it 'Struct is not assignable to Hash with Enum unless all keys match' do
+        struct_t({'a' => integer_t, 'y' => integer_t}).should_not be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
       end
     end
 
