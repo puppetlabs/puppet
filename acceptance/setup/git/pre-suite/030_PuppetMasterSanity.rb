@@ -1,6 +1,6 @@
 test_name "Puppet Master sanity checks: PID file and SSL dir creation"
 
-pidfile = '/var/run/puppetlabs/master.pid'
+pidfile = '/var/lib/puppet/run/master.pid'
 
 hostname = on(master, 'facter hostname').stdout.strip
 fqdn = on(master, 'facter fqdn').stdout.strip
