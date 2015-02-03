@@ -44,10 +44,10 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
-      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key.hkey)
+      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key)
 
       begin
-        subkey, filetime = reg_enum_key(key.hkey, index, subkey_max_len)
+        subkey, filetime = reg_enum_key(key, index, subkey_max_len)
         yield subkey, filetime if !subkey.nil?
         index += 1
       end while !subkey.nil?
@@ -56,7 +56,7 @@ module Puppet::Util::Windows
     end
 
     def delete_key(key, subkey_name, mode = KEY64)
-      reg_delete_key_ex(key.hkey, subkey_name, mode)
+      reg_delete_key_ex(key, subkey_name, mode)
     end
 
     def values(key)
@@ -69,10 +69,10 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
-      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key.hkey)
+      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key)
 
       begin
-        subkey, type, data = reg_enum_value(key.hkey, index, value_max_len)
+        subkey, type, data = reg_enum_value(key, index, value_max_len)
         yield subkey, type, data if !subkey.nil?
         index += 1
       end while !subkey.nil?
@@ -81,12 +81,12 @@ module Puppet::Util::Windows
     end
 
     def delete_value(key, subkey_name)
-      reg_delete_value(key.hkey, subkey_name)
+      reg_delete_value(key, subkey_name)
     end
 
     private
 
-    def reg_enum_key(hkey, index, max_key_length = Win32::Registry::Constants::MAX_KEY_LENGTH)
+    def reg_enum_key(key, index, max_key_length = Win32::Registry::Constants::MAX_KEY_LENGTH)
       subkey, filetime = nil, nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
@@ -95,7 +95,7 @@ module Puppet::Util::Windows
             subkey_length_ptr.write_dword(max_key_length)
 
             # RegEnumKeyEx cannot be called twice to properly size the buffer
-            result = RegEnumKeyExW(hkey, index,
+            result = RegEnumKeyExW(key.hkey, index,
               subkey_ptr, subkey_length_ptr,
               FFI::Pointer::NULL, FFI::Pointer::NULL,
               FFI::Pointer::NULL, filetime_ptr)
@@ -103,7 +103,8 @@ module Puppet::Util::Windows
             break if result == ERROR_NO_MORE_ITEMS
 
             if result != FFI::ERROR_SUCCESS
-              raise Puppet::Util::Windows::Error.new('Failed to enumerate registry keys')
+              msg = "Failed to enumerate #{key.keyname} registry keys at index #{index}"
+              raise Puppet::Util::Windows::Error.new(msg)
             end
 
             filetime = FFI::WIN32::FILETIME.new(filetime_ptr)
@@ -116,7 +117,7 @@ module Puppet::Util::Windows
       [subkey, filetime]
     end
 
-    def reg_enum_value(hkey, index, max_value_length = Win32::Registry::Constants::MAX_VALUE_LENGTH)
+    def reg_enum_value(key, index, max_value_length = Win32::Registry::Constants::MAX_VALUE_LENGTH)
       subkey, type, data = nil, nil, nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
@@ -124,7 +125,7 @@ module Puppet::Util::Windows
           # RegEnumValueW cannot be called twice to properly size the buffer
           subkey_length_ptr.write_dword(max_value_length)
 
-          result = RegEnumValueW(hkey, index,
+          result = RegEnumValueW(key.hkey, index,
             subkey_ptr, subkey_length_ptr,
             FFI::Pointer::NULL, FFI::Pointer::NULL,
             FFI::Pointer::NULL, FFI::Pointer::NULL
@@ -133,26 +134,27 @@ module Puppet::Util::Windows
           break if result == ERROR_NO_MORE_ITEMS
 
           if result != FFI::ERROR_SUCCESS
-            raise Puppet::Util::Windows::Error.new('Failed to enumerate registry values')
+            msg = "Failed to enumerate #{key.keyname} registry values at index #{index}"
+            raise Puppet::Util::Windows::Error.new(msg)
           end
 
           subkey_length = subkey_length_ptr.read_dword
           subkey = subkey_ptr.read_wide_string(subkey_length, Encoding::UTF_8)
 
-          type, data = read(hkey, subkey_ptr)
+          type, data = read(key, subkey_ptr)
         end
       end
 
       [subkey, type, data]
     end
 
-    def reg_query_info_key_max_lengths(hkey)
+    def reg_query_info_key_max_lengths(key)
       result = nil
 
       FFI::MemoryPointer.new(:dword) do |max_subkey_name_length_ptr|
         FFI::MemoryPointer.new(:dword) do |max_value_name_length_ptr|
 
-          status = RegQueryInfoKeyW(hkey,
+          status = RegQueryInfoKeyW(key.hkey,
             FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
             FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
             max_subkey_name_length_ptr, FFI::MemoryPointer::NULL,
@@ -162,7 +164,8 @@ module Puppet::Util::Windows
           )
 
           if status != FFI::ERROR_SUCCESS
-            raise Puppet::Util::Windows::Error.new('Failed to query registry key info')
+            msg = "Failed to query registry #{key.keyname} for sizes"
+            raise Puppet::Util::Windows::Error.new(msg)
           end
 
           result = [
@@ -192,10 +195,10 @@ module Puppet::Util::Windows
     #
     # When rtype is specified, the value type must be included by
     # rtype array, or TypeError is raised.
-    def read(hkey, name_ptr, *rtype)
+    def read(key, name_ptr, *rtype)
       result = nil
 
-      query_value_ex(hkey, name_ptr) do |type, data_ptr, byte_length|
+      query_value_ex(key, name_ptr) do |type, data_ptr, byte_length|
         unless rtype.empty? or rtype.include?(type)
           raise TypeError, "Type mismatch (expect #{rtype.inspect} but #{type} present)"
         end
@@ -225,20 +228,21 @@ module Puppet::Util::Windows
       result
     end
 
-    def query_value_ex(hkey, name_ptr, &block)
+    def query_value_ex(key, name_ptr, &block)
       FFI::MemoryPointer.new(:dword) do |type_ptr|
         FFI::MemoryPointer.new(:dword) do |length_ptr|
-          result = RegQueryValueExW(hkey, name_ptr,
+          result = RegQueryValueExW(key.hkey, name_ptr,
             FFI::Pointer::NULL, type_ptr,
             FFI::Pointer::NULL, length_ptr)
 
           FFI::MemoryPointer.new(:byte, length_ptr.read_dword) do |buffer_ptr|
-            result = RegQueryValueExW(hkey, name_ptr,
+            result = RegQueryValueExW(key.hkey, name_ptr,
               FFI::Pointer::NULL, type_ptr,
               buffer_ptr, length_ptr)
 
             if result != FFI::ERROR_SUCCESS
-              raise Puppet::Util::Windows::Error.new("Failed to query registry value")
+              msg = "Failed to read registry value #{name_ptr.read_wide_string} at #{key.keyname}"
+              raise Puppet::Util::Windows::Error.new(msg)
             end
 
             # allows caller to use FFI MemoryPointer helpers to read / shape
@@ -248,28 +252,30 @@ module Puppet::Util::Windows
       end
     end
 
-    def reg_delete_value(hkey, name)
+    def reg_delete_value(key, name)
       result = 0
 
       FFI::Pointer.from_string_to_wide_string(name) do |name_ptr|
-        result = RegDeleteValueW(hkey, name_ptr)
+        result = RegDeleteValueW(key.hkey, name_ptr)
 
         if result != FFI::ERROR_SUCCESS
-          raise Puppet::Util::Windows::Error.new("Failed to delete registry value #{name}")
+          msg = "Failed to delete registry value #{name} at #{key.keyname}"
+          raise Puppet::Util::Windows::Error.new(msg)
         end
       end
 
       result
     end
 
-    def reg_delete_key_ex(hkey, name, regsam = KEY64)
+    def reg_delete_key_ex(key, name, regsam = KEY64)
       result = 0
 
       FFI::Pointer.from_string_to_wide_string(name) do |name_ptr|
-        result = RegDeleteKeyExW(hkey, name_ptr, regsam, 0)
+        result = RegDeleteKeyExW(key.hkey, name_ptr, regsam, 0)
 
         if result != FFI::ERROR_SUCCESS
-          raise Puppet::Util::Windows::Error.new("Failed to delete registry key #{name}")
+          msg = "Failed to delete registry value #{name} at #{key.keyname}"
+          raise Puppet::Util::Windows::Error.new(msg)
         end
       end
 
