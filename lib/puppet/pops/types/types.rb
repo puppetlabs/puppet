@@ -23,7 +23,18 @@ module Puppet::Pops
       module ClassModule
         # Produce a deep copy of the type
         def copy
-          Marshal.load(Marshal.dump(self))
+          return @clone unless @clone.nil?
+          @clone = the_copy = clone
+          the_copy.instance_variables.each do |var|
+            val = the_copy.instance_variable_get(var)
+            the_copy.instance_variable_set(var, val.copy) if val.is_a?(PAnyType)
+            begin
+              the_copy.instance_variable_set(var, val.clone)
+            rescue TypeError
+            end
+          end
+          @clone = nil
+          the_copy
         end
 
         def hash
@@ -311,7 +322,7 @@ module Puppet::Pops
         end
 
         def ==(o)
-          self.class == o.class && args_type == o.args_type && block_type == o.block_type
+          self.class == o.class && param_types == o.param_types && block_type == o.block_type
         end
       end
     end
