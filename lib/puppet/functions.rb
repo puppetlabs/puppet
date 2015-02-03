@@ -253,6 +253,7 @@ module Puppet::Functions
     #
     # @api public
     def param(type, name)
+      raise ArgumentError, 'Parameters cannot be added after a block_param' unless @block_type.nil?
       unless type.is_a?(String)
         raise ArgumentError, "Type signature argument must be a String reference to a Puppet Data Type. Got #{type.class}"
       end
@@ -300,6 +301,10 @@ module Puppet::Functions
       if @block_type.nil?
         @block_type = type
         @block_name = name
+
+        # mark what should be picked for this position when dispatching. This is the size of
+        # the @names array since the block is required to appear last
+        @weaving << @names.size()
       else
         raise ArgumentError, "Attempt to redefine block"
       end

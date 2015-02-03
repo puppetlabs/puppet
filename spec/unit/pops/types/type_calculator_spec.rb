@@ -355,8 +355,35 @@ describe 'The type calculator' do
       it 'with fixnum values translates to PHashType[key, PIntegerType]' do
         expect(calculator.infer({:first => 1, :second => 2}).element_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       end
-    end
 
+      context 'using infer_set' do
+        it "with 'first' and 'second' keys translates to PStructType[{first=>value,second=>value}]" do
+          t = calculator.infer_set({'first' => 1, 'second' => 2})
+          expect(t.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(t.elements.size).to eq(2)
+          expect(t.elements.map { |e| e.name }.sort).to eq(['first', 'second'])
+        end
+
+        it 'with string keys and string and array values translates to PStructType[{key1=>PStringType,key2=>PTupleType}]' do
+          t = calculator.infer_set({ 'mode' => 'read', 'path' => ['foo', 'fee' ] })
+          expect(t.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(t.elements.size).to eq(2)
+          els = t.elements.map { |e| e.type }.sort {|a,b| a.to_s <=> b.to_s }
+          els[0].class.should == Puppet::Pops::Types::PStringType
+          els[1].class.should == Puppet::Pops::Types::PTupleType
+        end
+
+        it 'with mixed string and non-string keys translates to PHashType' do
+          t = calculator.infer_set({ 1 => 'first', 'second' => 'second' })
+          expect(t.class).to eq(Puppet::Pops::Types::PHashType)
+        end
+
+        it 'with empty string keys translates to PHashType' do
+          t = calculator.infer_set({ '' => 'first', 'second' => 'second' })
+          expect(t.class).to eq(Puppet::Pops::Types::PHashType)
+        end
+      end
+    end
   end
 
   context 'patterns' do
@@ -682,6 +709,22 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
+      end
+
+      it 'Struct is assignable to Hash with Pattern that matches all keys' do
+        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(pattern_t(/^\w+$/), factory.any))
+      end
+
+      it 'Struct is assignable to Hash with Enum that matches all keys' do
+        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
+      end
+
+      it 'Struct is not assignable to Hash with Pattern unless all keys match' do
+        struct_t({'a' => integer_t, 'A' => integer_t}).should_not be_assignable_to(hash_t(pattern_t(/^[A-Z]+$/), factory.any))
+      end
+
+      it 'Struct is not assignable to Hash with Enum unless all keys match' do
+        struct_t({'a' => integer_t, 'y' => integer_t}).should_not be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
       end
     end
 

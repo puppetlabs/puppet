@@ -429,6 +429,14 @@ class Puppet::Pops::Types::TypeCalculator
     return x < y ? x <= o && y >= o : y <= o && x >= o
   end
 
+  # @api private
+  def instance_of_PStringType(t, o)
+    return false unless o.is_a?(String)
+    # true if size compliant
+    size_t = t.size_type || @collection_default_size_t
+    instance_of_PIntegerType(size_t, o.size)
+  end
+
   def instance_of_PTupleType(t, o)
     return false unless o.is_a?(Array)
     # compute the tuple's min/max size, and check if that size matches
@@ -880,19 +888,33 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def infer_set_Hash(o)
-    type = Types::PHashType.new()
     if o.empty?
-      ktype = Types::PNilType.new()
-      vtype = Types::PNilType.new()
+      type = Types::PHashType.new
+      type.key_type = Types::PNilType.new
+      type.element_type = Types::PNilType.new
+      type.size_type = size_as_type(o)
     else
-      ktype = Types::PVariantType.new()
-      ktype.types = o.keys.map() {|k| infer_set(k) }
-      etype = Types::PVariantType.new()
-      etype.types = o.values.map() {|e| infer_set(e) }
+      if o.keys.find {|k| !instance_of_PStringType(@non_empty_string_t, k) }
+        type = Types::PHashType.new
+        ktype = Types::PVariantType.new
+        ktype.types = o.keys.map {|k| infer_set(k) }
+        etype = Types::PVariantType.new
+        etype.types = o.values.map {|e| infer_set(e) }
+        type.key_type = unwrap_single_variant(ktype)
+        type.element_type = unwrap_single_variant(etype)
+        type.size_type = size_as_type(o)
+      else
+        elements = []
+        o.each_pair do |k,v|
+          element = Types::PStructElement.new
+          element.name = k
+          element.type = infer_set(v)
+          elements << element
+        end
+        type = Types::PStructType.new
+        type.elements = elements
+      end
     end
-    type.key_type = unwrap_single_variant(ktype)
-    type.element_type = unwrap_single_variant(etype)
-    type.size_type = size_as_type(o)
     type
   end
 
@@ -1371,10 +1393,10 @@ class Puppet::Pops::Types::TypeCalculator
       size_t = t.size_type || @collection_default_size_t
       min, max = size_t.range
       struct_size = t2.elements.size
+      key_type = t.key_type
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        assignable?(t.key_type, @non_empty_string_t)  &&
-        t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
+        t2.elements.all? {|e| instance_of(key_type, e.name) && assignable?(element_type, e.type) })
     else
       false
     end
