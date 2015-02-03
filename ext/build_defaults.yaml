@@ -20,7 +20,7 @@ build_msi:
     ref: '52e81967253924428bb0b1e7e1a11e8678d68378'
     repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
   facter:
-    ref: 'refs/tags/2.3.0'
+    ref: 'refs/tags/2.4.0'
     repo: 'git://github.com/puppetlabs/facter.git'
   cfacter:
     archive:
