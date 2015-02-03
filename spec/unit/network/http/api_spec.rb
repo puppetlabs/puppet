@@ -60,8 +60,8 @@ describe Puppet::Network::HTTP::API do
         handler.process(req, res)
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
-        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::PUPPET_API_VERSIONS}")
-        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::PUPPET_CA_API_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}")
       end
 
       it "gives an upgrade message for CA routes" do
@@ -70,8 +70,8 @@ describe Puppet::Network::HTTP::API do
         handler.process(req, res)
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
-        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::PUPPET_API_VERSIONS}")
-        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::PUPPET_CA_API_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}")
       end
     end
 

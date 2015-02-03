@@ -20,8 +20,8 @@ class Puppet::Network::HTTP::API
                                                                       "or point them to a server running Puppet 3.\n\n" +
                                                                       "Master Info:\n" +
                                                                       "  Puppet version: #{Puppet.version}\n" +
-                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::PUPPET_API_VERSIONS}\n" +
-                                                                      "  Supported /puppet-ca API versions: #{Puppet::Network::HTTP::PUPPET_CA_API_VERSIONS}",
+                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}\n" +
+                                                                      "  Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}",
                                                                   Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
       end)
   end
