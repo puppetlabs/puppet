@@ -664,7 +664,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#recurse_remote", :uses_checksums => true do
+  describe "#recurse_remote" do
     let(:my) { File.expand_path('/my') }
 
     before do
@@ -718,18 +718,6 @@ describe Puppet::Type.type(:file) do
       @resource.stubs(:[]=)
       @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
       file.recurse_remote("first" => @resource)
-    end
-
-    # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
-    # filed, and when it's fixed, we'll just fix the whole flow.
-    with_digest_algorithms do
-      it "it should set the checksum type to #{metadata[:digest_algorithm]} if the remote file is a file" do
-        @first.stubs(:ftype).returns "file"
-        file.stubs(:perform_recursion).returns [@first]
-        @resource.stubs(:[]=)
-        @resource.expects(:[]=).with(:checksum, digest_algorithm.intern)
-        file.recurse_remote("first" => @resource)
-      end
     end
 
     it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
@@ -812,7 +800,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#perform_recursion" do
+  describe "#perform_recursion", :uses_checksums => true do
     it "should use Metadata to do its recursion" do
       Puppet::FileServing::Metadata.indirection.expects(:search)
       file.perform_recursion(file[:path])
@@ -856,6 +844,14 @@ describe Puppet::Type.type(:file) do
       file[:ignore] = %w{.svn CVS}
       Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
       file.perform_recursion(file[:path])
+    end
+
+    with_digest_algorithms do
+      it "it should pass its 'checksum' setting #{metadata[:digest_algorithm]} to the search" do
+        file[:source] = File.expand_path('/foo')
+        Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:checksum_type] == digest_algorithm.intern }
+        file.perform_recursion(file[:path])
+      end
     end
   end
 
