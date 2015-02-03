@@ -108,6 +108,8 @@ module Puppet
         end
       end
 
+      aliasvalue(:yolo, :latest)
+
       newvalue(/./, :required_features => :versionable) do
         begin
           provider.install
