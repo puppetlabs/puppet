@@ -355,8 +355,35 @@ describe 'The type calculator' do
       it 'with fixnum values translates to PHashType[key, PIntegerType]' do
         calculator.infer({:first => 1, :second => 2}).element_type.class.should == Puppet::Pops::Types::PIntegerType
       end
-    end
 
+      context 'using infer_set' do
+        it "with 'first' and 'second' keys translates to PStructType[{first=>value,second=>value}]" do
+          t = calculator.infer_set({'first' => 1, 'second' => 2})
+          expect(t.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(t.elements.size).to eq(2)
+          expect(t.elements[0].name).to eq('first')
+          expect(t.elements[1].name).to eq('second')
+        end
+
+        it 'with string keys and string and array values translates to PStructType[{key1=>PStringType,key2=>PTupleType}]' do
+          t = calculator.infer_set({ 'mode' => 'read', 'path' => ['foo', 'fee' ] })
+          expect(t.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(t.elements.size).to eq(2)
+          expect(t.elements[0].type.class).to eq(Puppet::Pops::Types::PStringType)
+          expect(t.elements[1].type.class).to eq(Puppet::Pops::Types::PTupleType)
+        end
+
+        it 'with mixed string and non-string keys translates to PHashType' do
+          t = calculator.infer_set({ 1 => 'first', 'second' => 'second' })
+          expect(t.class).to eq(Puppet::Pops::Types::PHashType)
+        end
+
+        it 'with empty string keys translates to PHashType' do
+          t = calculator.infer_set({ '' => 'first', 'second' => 'second' })
+          expect(t.class).to eq(Puppet::Pops::Types::PHashType)
+        end
+      end
+    end
   end
 
   context 'patterns' do
