@@ -725,8 +725,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             # Change the source file.
             File.open(checksum_file, "wb") { |f| f.write "some content" }
-            File::Stat.any_instance.unstub(:mtime)
-            File::Stat.any_instance.unstub(:ctime)
             FileUtils.touch target_file, :mtime => Time.now - 20
 
             # The 2nd time should update the resource.
