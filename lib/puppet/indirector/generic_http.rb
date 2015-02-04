@@ -13,7 +13,6 @@ class Puppet::Indirector::GenericHttp < Puppet::Indirector::Terminus
 
   def find(request)
     uri = URI( unescape_url(request.key) )
-
     method = self.class.http_method
 
     proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host,

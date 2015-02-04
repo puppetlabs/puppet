@@ -235,9 +235,6 @@ module Puppet
         proxy.verify_mode = OpenSSL::SSL::VERIFY_PEER
         proxy.cert_store = cert_store
       end
-      uri.path += '/'
-      #connection = Puppet::Network::HttpPool.http_instance(uri.host, uri.port, use_ssl)
-      #connection.request_get(uri.path, add_accept_encoding({"Accept" => "raw"}), &block)
       response = proxy.send(:get, uri.path, { 'Accept' => 'raw'})
     end
 

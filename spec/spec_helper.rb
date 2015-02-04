@@ -43,6 +43,15 @@ Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
+PROJECT_ROOT = File.expand_path('..', File.dirname(__FILE__))
+
+require 'vcr'
+VCR.configure do |vcr|
+  vcr.cassette_library_dir = File.expand_path('spec/fixtures/vcr/cassettes', PROJECT_ROOT)
+  vcr.hook_into :webmock
+  vcr.configure_rspec_metadata!
+end
+
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
