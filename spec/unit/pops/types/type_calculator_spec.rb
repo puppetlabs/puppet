@@ -369,8 +369,8 @@ describe 'The type calculator' do
           expect(t.class).to eq(Puppet::Pops::Types::PStructType)
           expect(t.elements.size).to eq(2)
           els = t.elements.map { |e| e.type }.sort {|a,b| a.to_s <=> b.to_s }
-          els[0].class.should == Puppet::Pops::Types::PStringType
-          els[1].class.should == Puppet::Pops::Types::PTupleType
+          expect(els[0].class).to eq(Puppet::Pops::Types::PStringType)
+          expect(els[1].class).to eq(Puppet::Pops::Types::PTupleType)
         end
 
         it 'with mixed string and non-string keys translates to PHashType' do
@@ -712,19 +712,19 @@ describe 'The type calculator' do
       end
 
       it 'Struct is assignable to Hash with Pattern that matches all keys' do
-        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(pattern_t(/^\w+$/), factory.any))
+        expect(struct_t({'x' => integer_t, 'y' => integer_t})).to be_assignable_to(hash_t(pattern_t(/^\w+$/), factory.any))
       end
 
       it 'Struct is assignable to Hash with Enum that matches all keys' do
-        struct_t({'x' => integer_t, 'y' => integer_t}).should be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
+        expect(struct_t({'x' => integer_t, 'y' => integer_t})).to be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
       end
 
       it 'Struct is not assignable to Hash with Pattern unless all keys match' do
-        struct_t({'a' => integer_t, 'A' => integer_t}).should_not be_assignable_to(hash_t(pattern_t(/^[A-Z]+$/), factory.any))
+        expect(struct_t({'a' => integer_t, 'A' => integer_t})).not_to be_assignable_to(hash_t(pattern_t(/^[A-Z]+$/), factory.any))
       end
 
       it 'Struct is not assignable to Hash with Enum unless all keys match' do
-        struct_t({'a' => integer_t, 'y' => integer_t}).should_not be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
+        expect(struct_t({'a' => integer_t, 'y' => integer_t})).not_to be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
       end
     end
 
