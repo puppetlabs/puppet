@@ -1,0 +1,4 @@
+Benchmark scenario: a resource is defined with typed arguments
+Benchmark target: type inference overhead
+Parser: Future
+
