@@ -29,7 +29,8 @@ class Puppet::Network::HTTP::RackREST
   def initialize(args={})
     super()
     register([Puppet::Network::HTTP::API.master_routes,
-              Puppet::Network::HTTP::API.ca_routes])
+              Puppet::Network::HTTP::API.ca_routes,
+              Puppet::Network::HTTP::API.not_found_upgrade])
   end
 
   def set_content_type(response, format)
