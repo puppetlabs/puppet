@@ -260,6 +260,7 @@ describe Puppet::Node::Environment do
 
           it "ignores modules with invalid names" do
             PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('.foo', first_modulepath)
             PuppetSpec::Modules.generate_files('foo2', first_modulepath)
             PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
@@ -390,6 +391,7 @@ describe Puppet::Node::Environment do
 
           it "ignores modules with invalid names" do
             PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('.foo', first_modulepath)
             PuppetSpec::Modules.generate_files('foo2', first_modulepath)
             PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)

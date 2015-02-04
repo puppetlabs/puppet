@@ -53,7 +53,9 @@ describe Puppet::Module do
 
     it "should return false for badly named directories" do
       PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
+      PuppetSpec::Modules.generate_files('.foo', first_modulepath)
       expect(Puppet::Module.is_module_directory?('foo=bar', first_modulepath)).to be_falsey
+      expect(Puppet::Module.is_module_directory?('.foo', first_modulepath)).to be_falsey
     end
   end
 
@@ -72,6 +74,7 @@ describe Puppet::Module do
       expect(Puppet::Module.is_module_directory_name?('-foo')).to be_falsey
       expect(Puppet::Module.is_module_directory_name?('foo-')).to be_falsey
       expect(Puppet::Module.is_module_directory_name?('foo--bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('.foo')).to be_falsey
     end
   end
 
@@ -82,6 +85,7 @@ describe Puppet::Module do
 
     it "should return false for badly formed namespaced module names" do
       expect(Puppet::Module.is_module_namespaced_name?('foo')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('.foo-bar')).to be_falsey
       expect(Puppet::Module.is_module_namespaced_name?('foo2')).to be_falsey
       expect(Puppet::Module.is_module_namespaced_name?('foo_bar')).to be_falsey
       expect(Puppet::Module.is_module_namespaced_name?('foo=bar')).to be_falsey
