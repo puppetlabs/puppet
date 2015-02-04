@@ -296,13 +296,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def resource(type, title = nil)
     # Always create a resource reference, so that it always
     # canonicalizes how we are referring to them.
+    attributes = { :environment => environment_instance }
     if title
-      res = Puppet::Resource.new(type, title)
+      res = Puppet::Resource.new(type, title, attributes)
     else
       # If they didn't provide a title, then we expect the first
       # argument to be of the form 'Class[name]', which our
       # Reference class canonicalizes for us.
-      res = Puppet::Resource.new(nil, type)
+      res = Puppet::Resource.new(nil, type, attributes)
     end
     res.catalog = self
     title_key      = [res.type, res.title.to_s]

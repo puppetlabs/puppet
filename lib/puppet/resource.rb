@@ -211,6 +211,7 @@ class Puppet::Resource
   # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
+    environment = attributes[:environment]
     if type.is_a?(Class) && type < Puppet::Type
       # Set the resource type to avoid an expensive `known_resource_types`
       # lookup.
