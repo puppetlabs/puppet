@@ -86,10 +86,6 @@ describe Puppet::Util::CommandLine do
       end
 
       describe "and an external implementation cannot be found" do
-        before :each do
-          Puppet::Util::CommandLine::UnknownSubcommand.any_instance.stubs(:console_has_color?).returns false
-        end
-
         it "should abort and show the usage message" do
           Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
           commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
