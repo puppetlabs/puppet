@@ -271,10 +271,12 @@ class Puppet::Node::Environment
       seen_modules = {}
       modulepath.each do |path|
         Dir.entries(path).each do |name|
-          next if name == "." || name == ".."
+          next if name.start_with? '.'
+          fullpath = File.join(path, name)
+          next unless Puppet::FileSystem.directory?(fullpath)
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
-            module_references << {:name => name, :path => File.join(path, name)}
+            module_references << {:name => name, :path => fullpath}
             seen_modules[name] = true
           end
         end
