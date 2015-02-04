@@ -271,7 +271,7 @@ class Puppet::Node::Environment
       seen_modules = {}
       modulepath.each do |path|
         Dir.entries(path).each do |name|
-          next if name == "." || name == ".."
+          next unless Puppet::Module.is_module_directory?(name, path)
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
             module_references << {:name => name, :path => File.join(path, name)}
@@ -319,8 +319,8 @@ class Puppet::Node::Environment
     modules_by_path = {}
     modulepath.each do |path|
       Dir.chdir(path) do
-        module_names = Dir.glob('*').select do |d|
-          FileTest.directory?(d) && (File.basename(d) =~ /\A\w+(-\w+)*\Z/)
+        module_names = Dir.entries(path).select do |name|
+          Puppet::Module.is_module_directory?(name, path)
         end
         modules_by_path[path] = module_names.sort.map do |name|
           Puppet::Module.new(name, File.join(path, name), self)
