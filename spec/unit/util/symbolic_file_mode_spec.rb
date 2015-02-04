@@ -68,7 +68,6 @@ describe Puppet::Util::SymbolicFileMode do
       "a+r"             => 00444,
       "a+x"             => 00111,
       "o+t"             => 01000,
-      "o+t"             => 01000,
       ["o-t", 07777]    => 06777,
       ["a-x", 07777]    => 07666,
       ["a-rwx", 07777]  => 07000,
