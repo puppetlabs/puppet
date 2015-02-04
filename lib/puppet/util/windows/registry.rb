@@ -109,7 +109,7 @@ module Puppet::Util::Windows
 
             filetime = FFI::WIN32::FILETIME.new(filetime_ptr)
             subkey_length = subkey_length_ptr.read_dword
-            subkey = subkey_ptr.read_wide_string(subkey_length, Encoding::UTF_8)
+            subkey = subkey_ptr.read_wide_string(subkey_length)
           end
         end
       end
@@ -139,7 +139,7 @@ module Puppet::Util::Windows
           end
 
           subkey_length = subkey_length_ptr.read_dword
-          subkey = subkey_ptr.read_wide_string(subkey_length, Encoding::UTF_8)
+          subkey = subkey_ptr.read_wide_string(subkey_length)
 
           type, data = read(key, subkey_ptr)
         end
@@ -209,9 +209,9 @@ module Puppet::Util::Windows
 
         case type
         when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-          result = [ type, data_ptr.read_wide_string(string_length, Encoding::UTF_8) ]
+          result = [ type, data_ptr.read_wide_string(string_length) ]
         when Win32::Registry::REG_MULTI_SZ
-          result = [ type, data_ptr.read_wide_string(string_length, Encoding::UTF_8).split(/\0/) ]
+          result = [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
         when Win32::Registry::REG_BINARY
           result = [ type, data.read_bytes(0, byte_length) ]
         when Win32::Registry::REG_DWORD

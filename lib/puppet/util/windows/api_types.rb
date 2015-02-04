@@ -53,7 +53,7 @@ module Puppet::Util::Windows::APITypes
     alias_method :read_wchar, :read_uint16
     alias_method :read_word,  :read_uint16
 
-    def read_wide_string(char_length, dst_encoding = Encoding.default_external)
+    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
       str.encode(dst_encoding)

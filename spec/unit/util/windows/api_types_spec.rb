@@ -16,13 +16,13 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
       expect(read_string).to eq(string)
     end
 
-    it "should return a given string in the default encoding" do
+    it "should return a given string in UTF-8" do
       read_string = nil
       FFI::MemoryPointer.from_string_to_wide_string(string) do |ptr|
         read_string = ptr.read_wide_string(string.length)
       end
 
-      expect(read_string.encoding).to eq(Encoding.default_external)
+      expect(read_string.encoding).to eq(Encoding::UTF_8)
     end
   end
 end
