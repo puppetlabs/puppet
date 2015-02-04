@@ -14,3 +14,7 @@ with_puppet_running_on(master, :main => { :dns_alt_names => "puppet,#{hostname},
   step "PID file created?"
   on master, "[ -f #{pidfile} ]"
 end
+
+step "Create module directories normally handled via packaging"
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
