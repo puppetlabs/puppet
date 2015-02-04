@@ -1,7 +1,7 @@
 # The module is named after the author, to ensure that names under PuppetX namespace
 # does not clash.
 #
-require 'puppetx'
+require 'puppet_x'
 module PuppetX::Helindbe
 
   # An env data provider that is hardcoded and provides data for
