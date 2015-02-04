@@ -31,7 +31,7 @@ build_msi:
     ref: 'refs/tags/1.3.4'
     repo: 'git://github.com/puppetlabs/hiera.git'
   mcollective:
-    ref: 'refs/tags/2.7.0'
+    ref: 'refs/tags/2.8.0'
     repo: 'git://github.com/puppetlabs/marionette-collective.git'
   sys:
     ref:
