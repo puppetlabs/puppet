@@ -99,7 +99,7 @@ RSpec.configure do |config|
     Puppet::Test::TestHelper.after_all_tests()
   end
 
-  config.before :each do
+  config.before :each do |test|
     # Disabling garbage collection inside each test, and only running it at
     # the end of each block, gives us an ~ 15 percent speedup, and more on
     # some platforms *cough* windows *cough* that are a little slower.
@@ -121,6 +121,14 @@ RSpec.configure do |config|
     # redirecting logging away from console, because otherwise the test output will be
     #  obscured by all of the log output
     @logs = []
+    if ENV["PUPPET_TEST_LOG_LEVEL"]
+      Puppet::Util::Log.level = ENV["PUPPET_TEST_LOG_LEVEL"].intern
+    end
+    if ENV["PUPPET_TEST_LOG"]
+      Puppet::Util::Log.newdestination(ENV["PUPPET_TEST_LOG"])
+      m = test.metadata
+      Puppet.notice("*** BEGIN TEST #{m[:file_path]}:#{m[:line_number]}")
+    end
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
 
     @log_level = Puppet::Util::Log.level
