@@ -23,6 +23,6 @@ a regexp meta-character (.), which must be escaped.  A simple
 way to do that for a single character is to enclose it in square
 brackets; a backslash will also escape a single character.") do |args|
 
-  return args[0].split(Regexp.compile(args[1]))
+    function_fail(['split() has been converted to 4x API'])
   end
 end
