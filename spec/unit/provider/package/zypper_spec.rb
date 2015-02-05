@@ -119,7 +119,7 @@ describe provider_class do
       fake_data = File.read(my_fixture('zypper-list-updates-SLES11sp1.out'))
 
       @resource.stubs(:[]).with(:name).returns "at"
-      @provider.expects(:zypper).with("list-updates").returns fake_data
+      described_class.expects(:zypper).with("list-updates").returns fake_data
       expect(@provider.latest).to eq("3.1.8-1069.18.2")
     end
   end
