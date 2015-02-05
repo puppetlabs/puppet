@@ -5,7 +5,7 @@ require 'spec_helper'
 describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows? do
   describe "2003 without UAC" do
     before :each do
-      Facter.stubs(:value).with(:kernelmajversion).returns("5.2")
+      Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(5)
     end
 
     it "should be an admin if user's token contains the Administrators SID" do
@@ -32,7 +32,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
 
   describe "2008 with UAC" do
     before :each do
-      Facter.stubs(:value).with(:kernelmajversion).returns("6.0")
+      Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(6)
     end
 
     it "should be an admin if user is running with elevated privileges" do

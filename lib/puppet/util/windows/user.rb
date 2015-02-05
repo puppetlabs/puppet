@@ -8,11 +8,10 @@ module Puppet::Util::Windows::User
   extend FFI::Library
 
   def admin?
-    majversion = Facter.value(:kernelmajversion)
-    return false unless majversion
+    elevated_supported = Puppet::Util::Windows::Process.supports_elevated_security?
 
     # if Vista or later, check for unrestricted process token
-    return Puppet::Util::Windows::Process.elevated_security? unless majversion.to_f < 6.0
+    return Puppet::Util::Windows::Process.elevated_security? if elevated_supported
 
     # otherwise 2003 or less
     check_token_membership
