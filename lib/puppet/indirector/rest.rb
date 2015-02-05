@@ -43,7 +43,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   # Provide appropriate headers.
   def headers
-    add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
+    common_headers = {
+      "Accept"                                     => model.supported_formats.join(", "),
+      Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
+    }
+
+    add_accept_encoding(common_headers)
   end
 
   def add_profiling_header(headers)

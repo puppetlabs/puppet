@@ -342,6 +342,12 @@ describe Puppet::Indirector::REST do
       terminus.find(request)
     end
 
+    it "provides a version header with the current puppet version" do
+      connection.expects(:get).with(anything, has_entry(Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version)).returns(response)
+
+      terminus.find(request)
+    end
+
     it "adds an Accept-Encoding header" do
       terminus.expects(:add_accept_encoding).returns({"accept-encoding" => "gzip"})
 
@@ -395,6 +401,12 @@ describe Puppet::Indirector::REST do
 
       expect(terminus.head(request)).to eq(false)
     end
+
+    it "provides a version header with the current puppet version" do
+      connection.expects(:head).with(anything, has_entry(Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version)).returns(response)
+
+      terminus.head(request)
+    end
   end
 
   describe "#search" do
@@ -432,6 +444,12 @@ describe Puppet::Indirector::REST do
       connection.expects(:get).with(anything, has_entry("Accept" => "supported, formats")).returns(mock_response(200, ''))
 
       terminus.model.expects(:supported_formats).returns %w{supported formats}
+      terminus.search(request)
+    end
+
+    it "provides a version header with the current puppet version" do
+      connection.expects(:get).with(anything, has_entry(Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version)).returns(mock_response(200, ''))
+
       terminus.search(request)
     end
 
@@ -485,6 +503,12 @@ describe Puppet::Indirector::REST do
       connection.expects(:delete).with(anything, has_entry("Accept" => "supported, formats")).returns(response)
 
       terminus.model.expects(:supported_formats).returns %w{supported formats}
+      terminus.destroy(request)
+    end
+
+    it "provides a version header with the current puppet version" do
+      connection.expects(:delete).with(anything, has_entry(Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version)).returns(response)
+
       terminus.destroy(request)
     end
   end
@@ -541,6 +565,12 @@ describe Puppet::Indirector::REST do
       instance.expects(:render).returns('')
       model.expects(:supported_formats).returns %w{supported formats}
       instance.expects(:mime).returns "supported"
+
+      terminus.save(request)
+    end
+
+    it "provides a version header with the current puppet version" do
+      connection.expects(:put).with(anything, anything, has_entry(Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version)).returns(response)
 
       terminus.save(request)
     end
