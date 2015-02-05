@@ -11,7 +11,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
   owner => #{master_user},
-  group => #{master['group']},
+  group => #{master.puppet['group']},
   mode => '0640',
 }
 
