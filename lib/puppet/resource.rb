@@ -219,6 +219,7 @@ class Puppet::Resource
         self[p] = v
       end
     else
+      environment = attributes[:environment]
       if type.is_a?(Class) && type < Puppet::Type
         # Set the resource type to avoid an expensive `known_resource_types`
         # lookup.
