@@ -204,6 +204,36 @@ module Puppet::Util::Windows::Process
   end
   module_function :elevated_security?
 
+  def windows_major_version
+    ver = 0
+
+    FFI::MemoryPointer.new(OSVERSIONINFO.size) do |os_version_ptr|
+      os_version = OSVERSIONINFO.new(os_version_ptr)
+      os_version[:dwOSVersionInfoSize] = OSVERSIONINFO.size
+
+      result = GetVersionExW(os_version_ptr)
+
+      if result == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("GetVersionEx failed")
+      end
+
+      ver = os_version[:dwMajorVersion]
+    end
+
+    ver
+  end
+  module_function :windows_major_version
+
+  # Returns whether or not the OS has the ability to set elevated
+  # token information.
+  #
+  # Returns true on Windows Vista or later, otherwise false
+  #
+  def supports_elevated_security?
+    windows_major_version >= 6
+  end
+  module_function :supports_elevated_security?
+
   ABOVE_NORMAL_PRIORITY_CLASS = 0x0008000
   BELOW_NORMAL_PRIORITY_CLASS = 0x0004000
   HIGH_PRIORITY_CLASS         = 0x0000080
@@ -351,4 +381,32 @@ module Puppet::Util::Windows::Process
   ffi_lib :advapi32
   attach_function_private :GetTokenInformation,
     [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724834%28v=vs.85%29.aspx
+  # typedef struct _OSVERSIONINFO {
+  #   DWORD dwOSVersionInfoSize;
+  #   DWORD dwMajorVersion;
+  #   DWORD dwMinorVersion;
+  #   DWORD dwBuildNumber;
+  #   DWORD dwPlatformId;
+  #   TCHAR szCSDVersion[128];
+  # } OSVERSIONINFO;
+  class OSVERSIONINFO < FFI::Struct
+    layout(
+      :dwOSVersionInfoSize, :dword,
+      :dwMajorVersion, :dword,
+      :dwMinorVersion, :dword,
+      :dwBuildNumber, :dword,
+      :dwPlatformId, :dword,
+      :szCSDVersion, [:wchar, 128]
+    )
+  end
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724451(v=vs.85).aspx
+  # BOOL WINAPI GetVersionEx(
+  #   _Inout_  LPOSVERSIONINFO lpVersionInfo
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetVersionExW,
+    [:pointer], :win32_bool
 end
