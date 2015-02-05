@@ -17,7 +17,7 @@ build_dmg: TRUE
 msi_name: 'puppet-agent'
 build_msi:
   puppet_for_the_win:
-    ref: '59031fc0783c70706d1faa774ce4c9cfd74e2965'
+    ref: '52e81967253924428bb0b1e7e1a11e8678d68378'
     repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
   facter:
     ref: 'refs/tags/2.3.0'
