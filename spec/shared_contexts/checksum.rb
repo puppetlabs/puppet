@@ -26,7 +26,13 @@ shared_context('with supported checksum types') do
       expect(meta).to_not be_nil
       expect(meta).to be_instance_of(type)
       expect(meta.checksum_type).to eq(checksum_type)
-      expect(meta.checksum).to eq("{#{checksum_type}}#{checksum}")
+
+      case checksum_type
+      when 'mtime', 'ctime'
+        expect(DateTime.parse(meta.checksum)).to be >= DateTime.parse(checksum)
+      else
+        expect(meta.checksum).to eq("{#{checksum_type}}#{checksum}")
+      end
     end
 
     (CHECKSUM_TYPES_TO_TRY + TIME_TYPES_TO_TRY).each do |checksum_type, checksum|
@@ -44,8 +50,6 @@ shared_context('with supported checksum types') do
         before(:each) do
           FileUtils.mkdir_p(File.dirname(checksum_file))
           File.open(checksum_file, "wb") { |f| f.write plaintext }
-          File::Stat.any_instance.stubs(:ctime).returns(CHECKSUM_STAT_TIME)
-          File::Stat.any_instance.stubs(:mtime).returns(CHECKSUM_STAT_TIME)
         end
 
         instance_eval(&block)
