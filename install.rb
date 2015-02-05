@@ -217,7 +217,7 @@ def prepare_installation
     opts.on('--logdir[=OPTIONAL]', 'Installation directory for log files', 'Default /var/log/puppetlabs/agent') do |logdir|
       InstallOptions.logdir = logdir
     end
-    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
+    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'Default /opt/puppetlabs/agent/bin') do |bindir|
       InstallOptions.bindir = bindir
     end
     opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
@@ -256,7 +256,7 @@ def prepare_installation
   # which is not generally where people expect executables to be installed
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
-    RbConfig::CONFIG['bindir'] = "/usr/bin"
+    RbConfig::CONFIG['bindir'] = "/opt/puppetlabs/agent/bin"
   end
 
   if $operatingsystem == "windows"
@@ -318,8 +318,10 @@ def prepare_installation
 
   if not InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
-  else
+  elsif $operatingsystem == "windows"
     bindir = RbConfig::CONFIG['bindir']
+  else
+    bindir = "/opt/puppetlabs/agent/bin"
   end
 
   if not InstallOptions.sitelibdir.nil?
