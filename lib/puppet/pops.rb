@@ -31,6 +31,7 @@ module Puppet
 
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
+    require 'puppet/pops/types/type_asserter'
     require 'puppet/pops/types/type_calculator'
     require 'puppet/pops/types/type_factory'
     require 'puppet/pops/types/type_parser'
