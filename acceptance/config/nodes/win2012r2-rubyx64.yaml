@@ -5,6 +5,15 @@ HOSTS:
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
+    systembindir: /opt/puppetlabs/agent/bin
+    puppetconfdir: /etc/puppetlabs/agent
+    puppetcodedir: /etc/puppetlabs/agent
+    puppetvardir: /opt/puppetlabs/agent/cache
+    distmoduledir: /etc/puppetlabs/agent/modules
+    # puppet-agent 0.3.1 package on the master still uses /usr/share
+    sitemoduledir: /usr/share/puppet/modules
+    hieraconf: /etc/puppetlabs/puppet/hiera.yaml
+    puppetserver-confdir: /etc/puppetserver/conf.d/
   agent-2012r2-x86_64-rubyx64:
     roles:
       - agent
@@ -12,6 +21,13 @@ HOSTS:
     ruby_arch: x64
     hypervisor: vcloud
     template: win-2012r2-x86_64
+    puppetconfdir: C:/ProgramData/PuppetLabs/puppet/etc
+    puppetcodedir: C:/ProgramData/PuppetLabs/puppet/etc
+    puppetvardir: C:/ProgramData/PuppetLabs/puppet/var
+    distmoduledir: C:/ProgramData/PuppetLabs/puppet/etc/modules
+    # puppet-agent 0.3.1 package on the master still uses /usr/share
+    sitemoduledir: C:/usr/share/puppet/modules
+    hieraconf: C:/ProgramData/PuppetLabs/puppet/etc/hiera.yaml
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
