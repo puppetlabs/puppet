@@ -18,7 +18,7 @@ teardown do
 
     checksums.each do |checksum_type|
       on(host, "rm #{file_to_rm}#{checksum_type}", :acceptable_exit_codes => [0,1])
-      on(host, "rm -r #{file_to_rm}#{checksum_type}", :acceptable_exit_codes => [0,1])
+      on(host, "rm -r #{dir_to_rm}#{checksum_type}", :acceptable_exit_codes => [0,1])
     end
   end
 end
