@@ -433,12 +433,12 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def lookup_in_environment(name, scope)
-    Puppet::DataProviders.lookup_in_environment(name, scope)
+    Puppet::DataProviders.lookup_in_environment(name, scope, nil)
   end
   private :lookup_in_environment
 
   def lookup_in_module(name, scope)
-    Puppet::DataProviders.lookup_in_module(name, scope)
+    Puppet::DataProviders.lookup_in_module(name, scope, nil)
   end
   private :lookup_in_module
 

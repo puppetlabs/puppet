@@ -11,7 +11,7 @@ module Puppet::DataProviders; end
 class Puppet::DataProviders::FunctionEnvDataProvider < Puppet::Plugins::DataProviders::EnvironmentDataProvider
   include Puppet::DataProviders::DataFunctionSupport
 
-  def lookup(name, scope)
+  def lookup(name, scope, merge)
     begin
       data('environment', scope)[name]
     rescue *Puppet::Error => detail

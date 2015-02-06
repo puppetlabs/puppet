@@ -12,7 +12,7 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
   MODULE_NAME = 'module_name'.freeze
   include Puppet::DataProviders::DataFunctionSupport
 
-  def lookup(name, scope)
+  def lookup(name, scope, merge)
     # If the module name does not exist, this call is not from within a module, and should be ignored.
     unless scope.exist?(MODULE_NAME)
       return nil
