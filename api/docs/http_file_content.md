@@ -22,7 +22,7 @@ GET
 
 ### Supported Response Formats
 
-raw (the raw binary content)
+binary (the raw binary content)
 
 ### Parameters
 
@@ -35,7 +35,7 @@ None
 #### File found
 
     GET /env/file_content/modules/example/my_file
-    Accept: raw
+    Accept: binary
 
     HTTP/1.1 200 OK
     Content-Type: application/octet-stream
@@ -47,7 +47,7 @@ None
 #### File not found
 
     GET /env/file_content/modules/example/not_found
-    Accept: raw
+    Accept: binary
 
     HTTP/1.1 404 Not Found
     Content-Type: text/plain
