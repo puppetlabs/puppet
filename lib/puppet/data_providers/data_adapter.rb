@@ -14,7 +14,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def has_name?(name)
-    @data.has_key?
+    @data.has_key? name
   end
 
   def []=(name, value)
