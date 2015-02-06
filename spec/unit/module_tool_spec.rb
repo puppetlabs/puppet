@@ -6,15 +6,6 @@ require 'puppet/module_tool'
 
 describe Puppet::ModuleTool do
   describe '.is_module_root?' do
-    it 'should return true if directory has a Modulefile file' do
-      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
-        returns(false)
-      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
-        returns(true)
-
-      expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_truthy
-    end
-
     it 'should return true if directory has a metadata.json file' do
       FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
         returns(true)
@@ -22,10 +13,8 @@ describe Puppet::ModuleTool do
       expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_truthy
     end
 
-    it 'should return false if directory does not have a metadata.json or a Modulefile file' do
+    it 'should return false if directory does not have a metadata.json file' do
       FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
-        returns(false)
-      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
         returns(false)
 
       expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_falsey

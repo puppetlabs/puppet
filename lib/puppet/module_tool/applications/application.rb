@@ -41,10 +41,9 @@ module Puppet::ModuleTool
         end
 
         if require_metadata && !Puppet::ModuleTool.is_module_root?(@path)
-          raise ArgumentError, "Unable to find metadata.json or Modulefile in module root at #{@path} See http://links.puppetlabs.com/modulefile for required file format."
+          raise ArgumentError, "Unable to find metadata.json in module root at #{@path} See https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html for required file format."
         end
 
-        modulefile_path = File.join(@path, 'Modulefile')
         metadata_path   = File.join(@path, 'metadata.json')
 
         if File.file?(metadata_path)
@@ -57,14 +56,8 @@ module Puppet::ModuleTool
           end
         end
 
-        if File.file?(modulefile_path)
-          if File.file?(metadata_path)
-            Puppet.warning "Modulefile is deprecated. Merging your Modulefile and metadata.json."
-          else
-            Puppet.warning "Modulefile is deprecated. Building metadata.json from Modulefile."
-          end
-
-          Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
+        if File.file?(File.join(@path, 'Modulefile'))
+          Puppet.warning "A Modulefile was found in the root directory of the module. This file will be ignored and can safely be removed."
         end
 
         return @metadata

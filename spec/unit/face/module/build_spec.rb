@@ -25,7 +25,7 @@ describe "puppet module build" do
     it "if current directory or parents contain no module root, should return exception" do
       Dir.expects(:pwd).returns('/a/b/c')
       Puppet::ModuleTool.expects(:find_module_root).returns(nil)
-      expect { subject.build }.to raise_error RuntimeError, "Unable to find metadata.json or Modulefile in module root /a/b/c or parent directories. See <http://links.puppetlabs.com/modulefile> for required file format."
+      expect { subject.build }.to raise_error RuntimeError, "Unable to find metadata.json in module root /a/b/c or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
     end
   end
 
@@ -39,7 +39,7 @@ describe "puppet module build" do
 
     it "if path is not a module root should raise exception" do
       Puppet::ModuleTool.expects(:is_module_root?).with('/a/b/c').returns(false)
-      expect { subject.build('/a/b/c') }.to raise_error RuntimeError, "Unable to find metadata.json or Modulefile in module root /a/b/c. See <http://links.puppetlabs.com/modulefile> for required file format."
+      expect { subject.build('/a/b/c') }.to raise_error RuntimeError, "Unable to find metadata.json in module root /a/b/c or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
     end
   end
 
