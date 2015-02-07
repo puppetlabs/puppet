@@ -21,11 +21,14 @@ require 'puppet/scheduler'
 #
 # @api private
 class Puppet::Daemon
+  SIGNAL_CHECK_INTERVAL = 5
+
   attr_accessor :agent, :server, :argv
 
   def initialize(pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
     @scheduler = scheduler
     @pidfile = pidfile
+    @signals = []
   end
 
   def daemonname
@@ -109,8 +112,8 @@ class Puppet::Daemon
     signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
     signals.each do |signal, method|
       Signal.trap(signal) do
-        Puppet.notice "Caught #{signal}; calling #{method}"
-        send(method)
+        Puppet.notice "Caught #{signal}; storing #{method}"
+        @signals << method
       end
     end
   end
@@ -173,10 +176,16 @@ class Puppet::Daemon
       end
     end
 
+    signal_loop = Puppet::Scheduler.create_job(SIGNAL_CHECK_INTERVAL) do
+      while method = @signals.shift
+        Puppet.notice "Processing #{method}"
+        send(method)
+      end
+    end
+
     reparse_run.disable if Puppet[:filetimeout] == 0
     agent_run.disable unless agent
 
-    @scheduler.run_loop([reparse_run, agent_run])
+    @scheduler.run_loop([reparse_run, agent_run, signal_loop])
   end
 end
-
