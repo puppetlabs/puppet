@@ -185,7 +185,7 @@ module Puppet
             scp_to host, repo_dir, repo_loc
 
             on host, "cp #{repo_loc}/*.repo /etc/yum.repos.d"
-            on host, "find /etc/yum.repos.d/ -name \"*.repo\" -exec sed -i \"s/baseurl\\s*=\\s*http:\\/\\/#{tld}.*$/baseurl=file:\\/\\/\\/root\\/#{project}\\/\" {} \\;"
+            on host, "find /etc/yum.repos.d/ -name \"*.repo\" -exec sed -i \"s/baseurl\\s*=\\s*http:\\/\\/#{tld}.*$/baseurl=file:\\/\\/\\/root\\/#{project}\\/#{arch}/\" {} \\;"
             on host, "rpm -Uvh --force #{repo_loc}/*.rpm"
 
           when /^(debian|ubuntu)-([^-]+)-(.+)$/
