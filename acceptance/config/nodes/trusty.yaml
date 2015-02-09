@@ -2,7 +2,6 @@ HOSTS:
   master:
     roles:
       - master
-      - agent
     platform: ubuntu-trusty-x86_64
     hypervisor: vcloud
     template: ubuntu-1404-x86_64
