@@ -57,7 +57,7 @@ module Puppet::Pops::Binder::Producers
     def initialize(injector, binding, scope, options)
       if transformer_lambda = options[:transformer]
         if transformer_lambda.is_a?(Proc)
-          raise ArgumentError, "Transformer Proc must take two arguments; scope, value." unless transformer_lambda.arity == 2
+          raise ArgumentError, "Transformer Proc must take one argument; value." unless transformer_lambda.arity == 1
           @transformer = transformer_lambda
         else
           raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
@@ -110,7 +110,7 @@ module Puppet::Pops::Binder::Producers
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
-      transformer.call(scope, produced_value)
+      transformer.call(produced_value)
     end
   end
 
