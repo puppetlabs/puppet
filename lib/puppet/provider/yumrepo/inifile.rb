@@ -73,7 +73,9 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [Array<String>] All present directories that may contain yum repo configs.
   def self.reposdir(conf='/etc/yum.conf', dirs=['/etc/yum.repos.d', '/etc/yum/repos.d'])
     reposdir = find_conf_value('reposdir', conf)
-    dirs << reposdir if reposdir
+    # Use directories in reposdir if they are set instead of default
+    dirs = reposdir.split(",").map(&:strip) if reposdir
+    
 
     # We can't use the below due to Ruby 1.8.7
     # dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
@@ -100,6 +102,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def self.find_conf_value(value, conf='/etc/yum.conf')
     if Puppet::FileSystem.exist?(conf)
       file = Puppet::Util::IniConfig::PhysicalFile.new(conf)
+      file.read
       if (main = file.get_section('main'))
         main[value]
       end
