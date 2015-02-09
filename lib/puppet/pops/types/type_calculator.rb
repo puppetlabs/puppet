@@ -798,6 +798,32 @@ class Puppet::Pops::Types::TypeCalculator
     Types::PNilType.new()
   end
 
+  # @api private
+  # @param o [Proc]
+  def infer_Proc(o)
+    min = 0
+    max = 0
+    mapped_types = o.parameters.map do |p|
+      case p[0]
+      when :rest
+        max = :default
+        break @t
+      when :req
+        min += 1
+      end
+      max += 1
+      @t
+    end
+    mapped_types << min
+    mapped_types << max
+    Types::TypeFactory.callable(*mapped_types)
+  end
+
+  # @api private
+  def infer_PuppetProc(o)
+    infer_Closure(o.closure)
+  end
+
   # Inference of :default as PDefaultType, and all other are Ruby[Symbol]
   # @api private
   def infer_Symbol(o)

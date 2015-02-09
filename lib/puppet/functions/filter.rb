@@ -56,28 +56,28 @@ Puppet::Functions.create_function(:filter) do
     required_block_param 'Callable[1,1]', :block
   end
 
-  def filter_Hash_1(hash, pblock)
-    result = hash.select {|x, y| pblock.call([x, y]) }
+  def filter_Hash_1(hash)
+    result = hash.select {|x, y| yield([x, y]) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
-  def filter_Hash_2(hash, pblock)
-    result = hash.select {|x, y| pblock.call(x, y) }
+  def filter_Hash_2(hash)
+    result = hash.select {|x, y| yield(x, y) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
-  def filter_Enumerable_1(enumerable, pblock)
+  def filter_Enumerable_1(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
       loop do
         it = enum.next
-        if pblock.call(it) == true
+        if yield(it) == true
           result << it
         end
       end
@@ -86,14 +86,14 @@ Puppet::Functions.create_function(:filter) do
     result
   end
 
-  def filter_Enumerable_2(enumerable, pblock)
+  def filter_Enumerable_2(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
       loop do
         it = enum.next
-        if pblock.call(index, it) == true
+        if yield(index, it) == true
           result << it
         end
         index += 1
