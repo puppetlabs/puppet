@@ -18,7 +18,7 @@ there was no succesful scan at all, the result is an empty Array.
       scanf("42", "%i")[0] == 42
 
 
-When used with the future parser, an optional parameterized block may be given.  
+When used with the future parser, an optional parameterized block may be given.
 The block is called with the result that is produced by scanf if no block is
 present, the result of the block is then returned by the function.
 
