@@ -760,7 +760,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
-    call_function_or_method(name, unfold([], o.arguments, scope), o, scope)
+    call_function_with_block(name, unfold([], o.arguments, scope), o, scope)
   end
 
   # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
@@ -775,10 +775,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
-    call_function_or_method(name, unfold([receiver], o.arguments || [], scope), o, scope)
+    call_function_with_block(name, unfold([receiver], o.arguments || [], scope), o, scope)
   end
 
-  def call_function_or_method(name, evaluated_arguments, o, scope)
+  def call_function_with_block(name, evaluated_arguments, o, scope)
     if o.lambda.nil?
       call_function(name, evaluated_arguments, o, scope)
     else
@@ -786,7 +786,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       call_function(name, evaluated_arguments, o, scope, &Puppet::Pops::Evaluator::PuppetProc.new(closure) { |*args| closure.call(*args) })
     end
   end
-  private :call_function_or_method
+  private :call_function_with_block
 
   # @example
   #   $x ? { 10 => true, 20 => false, default => 0 }

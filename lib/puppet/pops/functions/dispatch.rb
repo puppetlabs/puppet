@@ -56,17 +56,18 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
       @weaving.each do |knit|
         if knit.is_a?(Array)
           injection_data = @injections[knit[0]]
-          new_args << case injection_data[3]
-          when :dispatcher_internal
-            # currently only supports :scope injection
-            scope
-          when :producer
-            injector ||= Puppet.lookup(:injector)
-            injector.lookup_producer(scope, injection_data[0], injection_data[2])
-          else
-            injector ||= Puppet.lookup(:injector)
-            injector.lookup(scope, injection_data[0], injection_data[2])
-          end
+          new_args <<
+            case injection_data[3]
+            when :dispatcher_internal
+              # currently only supports :scope injection
+              scope
+            when :producer
+              injector ||= Puppet.lookup(:injector)
+              injector.lookup_producer(scope, injection_data[0], injection_data[2])
+            else
+              injector ||= Puppet.lookup(:injector)
+              injector.lookup(scope, injection_data[0], injection_data[2])
+            end
         else
           # Careful so no new nil arguments are added since they would override default
           # parameter values in the received
