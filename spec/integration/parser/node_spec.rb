@@ -61,20 +61,43 @@ describe 'node statements' do
       expect(catalog).to have_resource('Notify[matched]')
     end
 
-    it 'errors when two nodes with regexes collide after some regex syntax is removed' do
+    it 'that have regex names should not collide with matching class names' do
+        catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("foo"))
+        class foo {
+          $bar = 'one'
+        }
+
+        node /foo/ {
+          $bar = 'two'
+          include foo
+          notify{"${::foo::bar}":}
+        }
+        MANIFEST
+        expect(catalog).to have_resource('Notify[one]')
+    end
+
+    it 'does not raise an error with regex and non-regex node names are the same' do
       expect do
         compile_to_catalog(<<-MANIFEST)
         node /a.*(c)?/ { }
         node 'a.c' { }
         MANIFEST
-      end.to raise_error(Puppet::Error, /Node 'a.c' is already defined/)
+      end.not_to raise_error
+    end
+
+    it 'errors when two nodes with regexes collide after some regex syntax is removed' do
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+        node /a.*(c)?/ { }
+        node /a.*c/ { }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /Node '__node_regexp__a.c' is already defined/)
     end
 
     it 'provides captures from the regex in the node body' do
       catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
       node /(.*)/ { notify { "$1": } }
       MANIFEST
-
       expect(catalog).to have_resource('Notify[nodename]')
     end
 

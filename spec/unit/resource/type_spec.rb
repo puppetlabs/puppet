@@ -128,11 +128,11 @@ describe Puppet::Resource::Type do
       end
 
       it "should return the regex converted to a string when asked for its name" do
-        expect(Puppet::Resource::Type.new(:node, /ww/).name).to eq("ww")
+        expect(Puppet::Resource::Type.new(:node, /ww/).name).to eq("__node_regexp__ww")
       end
 
       it "should downcase the regex when returning the name as a string" do
-        expect(Puppet::Resource::Type.new(:node, /W/).name).to eq("w")
+        expect(Puppet::Resource::Type.new(:node, /W/).name).to eq("__node_regexp__w")
       end
 
       it "should remove non-alpha characters when returning the name as a string" do
