@@ -334,7 +334,7 @@ is identical to the above example, except for:
 Schema
 ------
 
-The representation of file metadata conforms to the schema at {file:api/schemas/file_metadata.json api/schemas/file_metadata.json}.
+The representation of file metadata conforms to the schema at [api/schemas/file_metadata.json](../schemas/file_metadata.json).
 
 Sample Module
 -------------

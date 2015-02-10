@@ -51,4 +51,4 @@ Schema
 ------
 
 Returned node objects conform to the json schema at
-{file:api/schemas/node.json api/schemas/node.json}.
+[api/schemas/node.json](../schemas/node.json).

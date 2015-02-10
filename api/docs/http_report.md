@@ -113,4 +113,4 @@ Schema
 ------
 
 The sent report objects must conform to the schema at
-{file:api/schemas/report.json api/schemas/report.json}.
+[api/schemas/report.json](../schemas/report.json).

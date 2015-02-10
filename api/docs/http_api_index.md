@@ -49,11 +49,11 @@ interacted with.
 These services are all related to how the Puppet Agent is able to manage the
 configuration of a node.
 
-* {file:api/docs/http_catalog.md Catalog}
-* {file:api/docs/http_file_bucket_file.md File Bucket File}
-* {file:api/docs/http_file_content.md File Content}
-* {file:api/docs/http_file_metadata.md File Metadata}
-* {file:api/docs/http_report.md Report}
+* [Catalog](./http_catalog.md)
+* [File Bucket File](./http_file_bucket_file.md)
+* [File Content](./http_file_content.md)
+* [File Metadata](./http_file_metadata.md)
+* [Report](./http_report.md)
 
 ### Informational Services
 
@@ -61,9 +61,9 @@ These services all provide extra information that can be used to understand how
 the Puppet Master will be providing configuration management information to
 Puppet Agents.
 
-* {file:api/docs/http_node.md Node}
-* {file:api/docs/http_resource_type.md Resource Type}
-* {file:api/docs/http_status.md Status}
+* [Node](./http_node.md)
+* [Resource Type](./http_resource_type.md)
+* [Status](./http_status.md)
 
 ### Environments Endpoint
 
@@ -73,7 +73,7 @@ endpoint.
 This endpoint will only accept payloads formatted as JSON and respond with JSON
 (MIME application/json).
 
-* {file:api/docs/http_environments.md Environments}
+* [Environments](./http_environments.md)
 
 #### Error Responses
 
@@ -100,7 +100,7 @@ error responses will uniformly be a JSON object with the following properties:
   * `issue_kind`: [String] A unique label to identify the error class.
   * `stacktrace` (only for 5xx errors): [Array<String>] A stacktrace to where the error occurred.
 
-A {file:api/schemas/error.json JSON schema for the error objects} is also available.
+A [JSON schema for the error objects](../schemas/error.json) is also available.
 
 CA V1 HTTP API
 --------------
@@ -125,10 +125,10 @@ documents provide additional specification.
 
 ### SSL Certificate Related Services
 
-* {file:api/docs/http_certificate.md Certificate}
-* {file:api/docs/http_certificate_request.md Certificate Signing Requests}
-* {file:api/docs/http_certificate_status.md Certificate Status}
-* {file:api/docs/http_certificate_revocation_list.md Certificate Revocation List}
+* [Certificate](./http_certificate.md)
+* [Certificate Signing Requests](./http_certificate_request.md)
+* [Certificate Status](./http_certificate_status.md)
+* [Certificate Revocation List](./http_certificate_revocation_list.md)
 
 Serialization Formats
 ---------------------
@@ -136,6 +136,6 @@ Serialization Formats
 Puppet sends messages using several different serialization formats. Not all
 REST services support all of the formats.
 
-* {file:api/docs/pson.md PSON}
-* {http://www.yaml.org/spec/1.2/spec.html YAML}
+* [PSON](./pson.md)
+* [YAML](http://www.yaml.org/spec/1.2/spec.html)
 
