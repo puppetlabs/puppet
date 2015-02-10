@@ -8,8 +8,8 @@ Find
 
 Retrieve a catalog.
 
-    POST /:environment/catalog/:nodename
-    GET /:environment/catalog/:nodename
+    POST /puppet/v3/catalog/:nodename?environment=:environment
+    GET /puppet/v3/catalog/:nodename?environment=:environment
 
 ### Supported HTTP Methods
 
@@ -34,15 +34,15 @@ The examples below use the POST method.
 Three parameters should be provided to the POST or GET:
 - `facts_format`: must be `pson`
 - `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
-           doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
-           escaping is still used/supported.
+doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
+escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 
 ### Example Response
 
 #### Catalog found
 
-    POST /env/catalog/elmo.mydomain.com
+    POST /puppet/v3/catalog/elmo.mydomain.com?environment=env
 
     facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 
@@ -148,6 +148,6 @@ Schema
 ------
 
 In the POST request body (or the GET query), the facts parameter should adhere to the
-{file:api/schemas/facts.json api/schemas/facts.json} schema.
+[api/schemas/facts.json](../schemas/facts.json) schema.
 
-A catalog response body should adhere to the {file:api/schemas/catalog.json api/schemas/catalog.json} schema.
+A catalog response body should adhere to the [api/schemas/catalog.json](../schemas/catalog.json) schema.

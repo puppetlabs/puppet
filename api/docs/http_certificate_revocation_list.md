@@ -12,7 +12,7 @@ Find
 
 Get the submitted CRL
 
-    GET /:environment/certificate_revocation_list/:nodename
+    GET /puppet-ca/v1/certificate_revocation_list/:nodename?environment=:environment
     Accept: s
 
 ### Supported HTTP Methods
@@ -36,7 +36,7 @@ decoding of the CRL PEM file.
 
 #### Empty revocation list
 
-    GET /env/certificate_revocation_list/ca
+    GET /puppet-ca/v1/certificate_revocation_list/ca?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/plain
@@ -102,7 +102,7 @@ decoding of the CRL PEM file.
 
 #### One-item revocation list
 
-    GET /env/certificate_revocation_list/ca
+    GET /puppet-ca/v1/certificate_revocation_list/ca?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/plain
@@ -173,12 +173,12 @@ decoding of the CRL PEM file.
 
 #### No node name given
 
-    GET /env/certificate_revocation_list
+    GET /puppet-ca/v1/certificate_revocation_list?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
-    No request key specified in /env/certificate_revocation_list
+    No request key specified in /puppet-ca/v1/certificate_revocation_list
 
 Schema
 ------

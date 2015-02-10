@@ -9,7 +9,7 @@ Find
 
 Get a certificate.
 
-    GET /:environment/certificate/:nodename
+    GET /puppet-ca/v1/certificate/:nodename?environment=:environment
 
 
 ### Supported HTTP Methods
@@ -34,7 +34,7 @@ The environment field is ignored.
 
 #### Certificate found
 
-    GET /env/certificate/elmo.mydomain.com
+    GET /puppet-ca/v1/certificate/elmo.mydomain.com?environment=env
 
     HTTP 200 OK
     Content-Type: text/plain
@@ -75,7 +75,7 @@ The environment field is ignored.
 
 #### Certificate not found
 
-    GET /env/certificate/certificate_does_not_exist
+    GET /puppet-ca/v1/certificate/certificate_does_not_exist?environment=env
 
     HTTP 404 Not Found
     Content-Type: text/plain
@@ -84,16 +84,16 @@ The environment field is ignored.
 
 #### No Certificate name given
 
-    GET /env/certificate/
+    GET /puppet-ca/v1/certificate?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
-    No request key specified in /env/certificate/
+    No request key specified in /puppet-ca/v1/certificate
 
 #### Master is not a CA
 
-    GET /env/certificate/valid_certificate
+    GET /puppet/v1/certificate/valid_certificate?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain

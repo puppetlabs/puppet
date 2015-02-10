@@ -13,7 +13,7 @@ Find
 
 Retrieve data for a node
 
-  GET /:environment/node/:certname
+  GET /puppet/v3/node/:certname?environment=:environment
 
 
 ### Supported HTTP Methods
@@ -26,7 +26,7 @@ PSON
 
 ### Examples
 
-    > GET /production/node/mycertname HTTP/1.1
+    > GET /puppet/v3/node/mycertname?environment=production HTTP/1.1
     > Accept: pson, b64_zlib_yaml, yaml, raw
 
     < HTTP/1.1 200 OK
@@ -51,4 +51,4 @@ Schema
 ------
 
 Returned node objects conform to the json schema at
-{file:api/schemas/node.json api/schemas/node.json}.
+[api/schemas/node.json](../schemas/node.json).
