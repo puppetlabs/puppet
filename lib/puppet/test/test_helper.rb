@@ -196,6 +196,7 @@ module Puppet::Test
     def self.app_defaults_for_tests()
       {
           :logdir     => "/dev/null",
+          :puppetdir  => "/dev/null",
           :confdir    => "/dev/null",
           :vardir     => "/dev/null",
           :rundir     => "/dev/null",

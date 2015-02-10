@@ -135,7 +135,8 @@ RSpec.configure do |config|
 
     base = PuppetSpec::Files.tmpdir('tmp_settings')
     Puppet[:vardir] = File.join(base, 'var')
-    Puppet[:confdir] = File.join(base, 'etc')
+    Puppet[:puppetdir] = File.join(base, 'etc')
+    Puppet[:confdir] = "$puppetdir/config"
     Puppet[:logdir] = "$vardir/log"
     Puppet[:rundir] = "$vardir/run"
     Puppet[:hiera_config] = File.join(base, 'hiera')

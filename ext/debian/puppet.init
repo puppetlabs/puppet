@@ -8,13 +8,13 @@
 # Default-Stop:      0 1 6
 ### END INIT INFO
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/puppet
+PATH=/opt/puppetlabs/agent/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/opt/puppetlabs/agent/bin/puppet
 DAEMON_OPTS=""
 NAME="agent"
 PROCNAME="puppet"
 DESC="puppet agent"
-PIDFILE="/var/run/puppet/${NAME}.pid"
+PIDFILE="/var/run/puppetlabs/${NAME}.pid"
 
 test -x $DAEMON || exit 0
 

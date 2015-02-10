@@ -199,10 +199,25 @@ def prepare_installation
     opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
       InstallOptions.destdir = destdir
     end
-    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
+    opts.on('--puppetdir[=OPTIONAL]', 'Installation directory for config and code files', 'Default /etc/puppetlabs/agent') do |puppetdir|
+      InstallOptions.puppetdir = puppetdir
+    end
+    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppetlabs/agent/config') do |configdir|
       InstallOptions.configdir = configdir
     end
-    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
+    opts.on('--codedir[=OPTIONAL]', 'Installation directory for code files', 'Default /etc/puppetlabs/agent/code') do |codedir|
+      InstallOptions.codedir = codedir
+    end
+    opts.on('--vardir[=OPTIONAL]', 'Installation directory for var files', 'Default /opt/puppetlabs/agent/cache') do |vardir|
+      InstallOptions.vardir = vardir
+    end
+    opts.on('--rundir[=OPTIONAL]', 'Installation directory for state files', 'Default /var/run/puppetlabs') do |rundir|
+      InstallOptions.rundir = rundir
+    end
+    opts.on('--logdir[=OPTIONAL]', 'Installation directory for log files', 'Default /var/log/puppetlabs/agent') do |logdir|
+      InstallOptions.logdir = logdir
+    end
+    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'Default /opt/puppetlabs/agent/bin') do |bindir|
       InstallOptions.bindir = bindir
     end
     opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
@@ -241,27 +256,72 @@ def prepare_installation
   # which is not generally where people expect executables to be installed
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
-    RbConfig::CONFIG['bindir'] = "/usr/bin"
+    RbConfig::CONFIG['bindir'] = "/opt/puppetlabs/agent/bin"
   end
 
-  if not InstallOptions.configdir.nil?
-    configdir = InstallOptions.configdir
-  elsif $operatingsystem == "windows"
+  if $operatingsystem == "windows"
     begin
       require 'win32/dir'
     rescue LoadError => e
       puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
       exit -1
     end
-    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
+  end
+
+  if not InstallOptions.puppetdir.nil?
+    puppetdir = InstallOptions.puppetdir
+  elsif $operatingsystem == "windows"
+    puppetdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
-    configdir = "/etc/puppet"
+    puppetdir = "/etc/puppetlabs/agent"
+  end
+
+  if not InstallOptions.configdir.nil?
+    configdir = InstallOptions.configdir
+  elsif $operatingsystem == "windows"
+    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc", "config")
+  else
+    configdir = File.join(puppetdir, "config")
+  end
+
+  if not InstallOptions.codedir.nil?
+    codedir = InstallOptions.codedir
+  elsif $operatingsystem == "windows"
+    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc", "code")
+  else
+    codedir = File.join(puppetdir, "code")
+  end
+
+  if not InstallOptions.vardir.nil?
+    vardir = InstallOptions.vardir
+  elsif $operatingsystem == "windows"
+    vardir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")
+  else
+    vardir = "/opt/puppetlabs/agent/cache"
+  end
+
+  if not InstallOptions.rundir.nil?
+    rundir = InstallOptions.rundir
+  elsif $operatingsystem == "windows"
+    rundir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "run")
+  else
+    rundir = "/var/run/puppetlabs"
+  end
+
+  if not InstallOptions.logdir.nil?
+    logdir = InstallOptions.logdir
+  elsif $operatingsystem == "windows"
+    logdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "log")
+  else
+    logdir = "/var/log/puppetlabs/agent"
   end
 
   if not InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
-  else
+  elsif $operatingsystem == "windows"
     bindir = RbConfig::CONFIG['bindir']
+  else
+    bindir = "/opt/puppetlabs/agent/bin"
   end
 
   if not InstallOptions.sitelibdir.nil?
@@ -295,21 +355,36 @@ def prepare_installation
     destdir = ''
   end
 
+  puppetdir = join(destdir, puppetdir)
   configdir = join(destdir, configdir)
+  codedir = join(destdir, codedir)
+  vardir = join(destdir, vardir)
+  rundir = join(destdir, rundir)
+  logdir = join(destdir, logdir)
   bindir = join(destdir, bindir)
   mandir = join(destdir, mandir)
   sitelibdir = join(destdir, sitelibdir)
 
+  FileUtils.makedirs(puppetdir)
   FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(codedir)
   FileUtils.makedirs(bindir)
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
+  FileUtils.makedirs(vardir)
+  FileUtils.makedirs(rundir)
+  FileUtils.makedirs(logdir)
 
   InstallOptions.site_dir = sitelibdir
+  InstallOptions.puppetdir = puppetdir
+  InstallOptions.codedir = codedir
   InstallOptions.config_dir = configdir
-  InstallOptions.bin_dir  = bindir
-  InstallOptions.lib_dir  = libdir
-  InstallOptions.man_dir  = mandir
+  InstallOptions.bin_dir = bindir
+  InstallOptions.lib_dir = libdir
+  InstallOptions.man_dir = mandir
+  InstallOptions.var_dir = vardir
+  InstallOptions.run_dir = rundir
+  InstallOptions.log_dir = logdir
 end
 
 ##
@@ -410,7 +485,7 @@ end
 # Change directory into the puppet root so we don't get the wrong files for install.
 FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
-  configs = glob(%w{conf/auth.conf})
+  configs = glob(%w{conf/auth.conf conf/puppet.conf})
   bins  = glob(%w{bin/*})
   rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }

@@ -9,13 +9,13 @@ expect = ['Signed certificate request for ca',
           'Removing file Puppet::SSL::CertificateRequest working3961.example.org']
 
 agents.each do |agent|
-  scratch = agent.tmpdir('puppet-ssl-3961')
-  options = { :confdir => scratch, :vardir => scratch }
+  scratch_ssldir = agent.tmpdir('puppet-ssl-3961')
+  options = { :ssldir => scratch_ssldir, :vardir => scratch_ssldir }
 
-  step "removing the SSL scratch directory..."
-  on(agent, "rm -rf #{scratch}")
+  step "removing the SSL scratch_ssldir directory..."
+  on(agent, "rm -rf #{scratch_ssldir}")
 
-  step "generate a certificate in #{scratch}"
+  step "generate a certificate in #{scratch_ssldir}"
   on(agent,puppet_cert('--trace', '--generate', target, options)) do
     expect.each do |line|
       stdout.index(line) or fail_test("missing line in output: #{line}")
@@ -23,8 +23,8 @@ agents.each do |agent|
   end
 
   step "verify the certificate for #{target} exists"
-  on agent, "test -f #{scratch}/ssl/certs/#{target}.pem"
+  on agent, "test -f #{scratch_ssldir}/certs/#{target}.pem"
 
   step "verify the private key for #{target} exists"
-  on agent, "grep 'BEGIN RSA PRIVATE KEY' #{scratch}/ssl/private_keys/#{target}.pem > /dev/null 2>&1"
+  on agent, "grep 'BEGIN RSA PRIVATE KEY' #{scratch_ssldir}/private_keys/#{target}.pem > /dev/null 2>&1"
 end
