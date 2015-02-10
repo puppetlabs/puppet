@@ -74,14 +74,14 @@ Puppet::Functions.create_function(:reduce) do
     required_block_param 'Callable[2,2]', :block
   end
 
-  def reduce_without_memo(enumerable, pblock)
+  def reduce_without_memo(enumerable)
     enum = asserted_enumerable(enumerable)
-    enum.reduce {|memo, x| pblock.call(memo, x) }
+    enum.reduce {|memo, x| yield(memo, x) }
   end
 
-  def reduce_with_memo(enumerable, given_memo, pblock)
+  def reduce_with_memo(enumerable, given_memo)
     enum = asserted_enumerable(enumerable)
-    enum.reduce(given_memo) {|memo, x| pblock.call(memo, x) }
+    enum.reduce(given_memo) {|memo, x| yield(memo, x) }
   end
 
   def asserted_enumerable(obj)

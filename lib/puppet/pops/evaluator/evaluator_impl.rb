@@ -760,12 +760,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
-
-    evaluated_arguments = unfold([], o.arguments, scope)
-
-    # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    call_function_with_block(name, unfold([], o.arguments, scope), o, scope)
   end
 
   # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
@@ -780,13 +775,82 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
-
-    evaluated_arguments = unfold([receiver], o.arguments || [], scope)
-
-    # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    call_function_with_block(name, unfold([receiver], o.arguments || [], scope), o, scope)
   end
+
+  def call_function_with_block(name, evaluated_arguments, o, scope)
+    if o.lambda.nil?
+      call_function(name, evaluated_arguments, o, scope)
+    else
+      closure = Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope)
+      call_function(name, evaluated_arguments, o, scope, &proc_from_closure(closure))
+    end
+  end
+  private :call_function_with_block
+
+  # Creates a Proc with an arity count that matches the parameters of the given closure. The arity will
+  # be correct up to 10 parameters and then default to varargs (-1)
+  #
+  def proc_from_closure(closure)
+    return Puppet::Pops::Evaluator::PuppetProc.new(closure) { |*args| closure.call(*args) } unless RUBY_VERSION[0,3] == '1.8'
+
+    # This code is required since a Proc isn't propagated by reference in Ruby 1.8.x. It produces a standard
+    # Proc that has correct arity as a replacement for the otherwise used PuppetProc
+    # TODO: Remove when Ruby 1.8.x support is dropped
+    arity = closure.parameters.reduce(0) do |memo, param|
+      count = memo + 1
+      break -count if param.captures_rest || !param.value.nil?
+      count
+    end
+
+    case arity
+    when 0
+      proc { || closure.call }
+    when 1
+      proc { |a| closure.call(a) }
+    when 2
+      proc { |a, b| closure.call(a, b) }
+    when 3
+      proc { |a, b, c| closure.call(a, b, c) }
+    when 4
+      proc { |a, b, c, d| closure.call(a, b, c, d) }
+    when 5
+      proc { |a, b, c, d, e| closure.call(a, b, c, d, e) }
+    when 6
+      proc { |a, b, c, d, e, f| closure.call(a, b, c, d, e, f) }
+    when 7
+      proc { |a, b, c, d, e, f, g| closure.call(a, b, c, d, e, f, g) }
+    when 8
+      proc { |a, b, c, d, e, f, g, h| closure.call(a, b, c, d, e, f, g, h) }
+    when 9
+      proc { |a, b, c, d, e, f, g, h, i| closure.call(a, b, c, d, e, f, g, h, i) }
+    when 10
+      proc { |a, b, c, d, e, f, g, h, i, j| closure.call(a, b, c, d, e, f, g, h, i, j) }
+    when -1
+      proc { |*v| closure.call(*v) }
+    when -2
+      proc { |a, *v| closure.call(a, *v) }
+    when -3
+      proc { |a, b, *v| closure.call(a, b, *v) }
+    when -4
+      proc { |a, b, c, *v| closure.call(a, b, c, *v) }
+    when -5
+      proc { |a, b, c, d, *v| closure.call(a, b, c, d, *v) }
+    when -6
+      proc { |a, b, c, d, e, *v| closure.call(a, b, c, d, e, *v) }
+    when -7
+      proc { |a, b, c, d, e, f, *v| closure.call(a, b, c, d, e, f, *v) }
+    when -8
+      proc { |a, b, c, d, e, f, g, *v| closure.call(a, b, c, d, e, f, g, *v) }
+    when -9
+      proc { |a, b, c, d, e, f, g, h, *v| closure.call(a, b, c, d, e, f,g, h, *v) }
+    when -10
+      proc { |a, b, c, d, e, f, g, h, i, *v| closure.call(a, b, c, d, e, f,g, h, i, *v) }
+    else
+      proc { |*a| closure.call(*a) }
+    end
+  end
+  private :proc_from_closure
 
   # @example
   #   $x ? { 10 => true, 20 => false, default => 0 }

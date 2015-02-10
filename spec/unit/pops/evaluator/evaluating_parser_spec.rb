@@ -920,8 +920,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           param 'Integer', 'count'
           required_block_param
         end
-        def test(count, block)
-          block.call(*[].fill(10, 0, count))
+        def test(count)
+          yield(*[].fill(10, 0, count))
         end
       end
       the_func = fc.new({}, env_loader)
@@ -937,8 +937,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           param 'Any', 'lambda_arg'
           required_block_param
         end
-        def test(lambda_arg, block)
-          block.call(lambda_arg)
+        def test(lambda_arg)
+          yield(lambda_arg)
         end
       end
       the_func = fc.new({}, env_loader)

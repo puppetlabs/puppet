@@ -27,12 +27,12 @@ class Puppet::Pops::Functions::Dispatcher
   # @return [Object] - what the called function produced
   #
   # @api private
-  def dispatch(instance, calling_scope, args)
+  def dispatch(instance, calling_scope, args, &block)
     tc = Puppet::Pops::Types::TypeCalculator
-    actual = tc.infer_set(args)
+    actual = tc.infer_set(block_given? ? args + [block] : args)
     found = @dispatchers.find { |d| tc.callable?(d.type, actual) }
     if found
-      found.invoke(instance, calling_scope, args)
+      found.invoke(instance, calling_scope, args, &block)
     else
       raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string(instance.class.name, actual, @dispatchers)}"
     end

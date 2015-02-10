@@ -273,15 +273,12 @@ actual:
 
     context 'supports lambdas' do
       it 'such that, a required block can be defined and given as an argument' do
-        # use a Function as callable
-        the_callable = create_min_function_class().new(:closure_scope, :loader)
         the_function = create_function_with_required_block_all_defaults().new(:closure_scope, :loader)
-        result = the_function.call({}, 10, the_callable)
-        expect(result).to be(the_callable)
+        result = the_function.call({}, 7) { |a,b| a < b ? a : b }
+        expect(result).to eq(7)
       end
 
       it 'such that, a missing required block when called raises an error' do
-        # use a Function as callable
         the_function = create_function_with_required_block_all_defaults().new(:closure_scope, :loader)
         expect do
           the_function.call({}, 10)
@@ -294,24 +291,19 @@ actual:
       end
 
       it 'such that, an optional block can be defined and given as an argument' do
-        # use a Function as callable
-        the_callable = create_min_function_class().new(:closure_scope, :loader)
         the_function = create_function_with_optional_block_all_defaults().new(:closure_scope, :loader)
-        result = the_function.call({}, 10, the_callable)
-        expect(result).to be(the_callable)
+        result = the_function.call({}, 4) { |a,b| a < b ? a : b }
+        expect(result).to eql(4)
       end
 
       it 'such that, an optional block can be omitted when called and gets the value nil' do
-        # use a Function as callable
         the_function = create_function_with_optional_block_all_defaults().new(:closure_scope, :loader)
-        expect(the_function.call({}, 10)).to be_nil
+        expect(the_function.call({}, 2)).to be_nil
       end
 
       it 'such that, a scope can be injected and a block can be used' do
-        # use a Function as callable
-        the_callable = create_min_function_class().new(:closure_scope, :loader)
         the_function = create_function_with_scope_required_block_all_defaults().new(:closure_scope, :loader)
-        expect(the_function.call({}, 10, the_callable)).to be(the_callable)
+        expect(the_function.call({}, 1) { |a,b| a < b ? a : b }).to eql(1)
       end
     end
 
@@ -462,9 +454,9 @@ actual:
             # block called 'the_block', and using "all_callables"
             required_block_param #(all_callables(), 'the_block')
           end
-          def test(x, block)
+          def test(x)
             # call the block with x
-            block.call(x)
+            yield(x)
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)
@@ -611,9 +603,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield(8,x)
       end
     end
   end
@@ -626,9 +617,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param
       end
-      def test(scope, x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(scope, x)
+        yield(3,x)
       end
     end
   end
@@ -640,9 +630,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param 'the_block'
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -653,9 +642,8 @@ actual:
         param 'Integer', 'x'
         required_block_param
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -667,9 +655,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param('Callable', 'the_block')
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -681,10 +668,8 @@ actual:
         # use defaults, any callable, name is 'block'
         optional_block_param
       end
-      def test(x, block=nil)
-        # returns the block to make it easy to test what it got when called
-        # a default of nil must be used or the call will fail with a missing parameter
-        block
+      def test(x)
+        yield(5,x) if block_given?
       end
     end
   end
