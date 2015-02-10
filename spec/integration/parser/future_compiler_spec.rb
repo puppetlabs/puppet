@@ -600,12 +600,17 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource("Notify[value second]")
       end
 
-      it 'denies when missing required arguments' do
-        expect do
-          compile_to_catalog(<<-MANIFEST)
-            with(1) |$x, $y| { }
-          MANIFEST
-        end.to raise_error(/Parameter \$y is required but no value was given/m)
+      # Conditinoally left out for Ruby 1.8.x since the Proc created for the expected number of arguments will accept
+      # a call with fewer arguments and then pass all arguments to the closure. The closure then receives an argument
+      # array of correct size with nil values instead of an array with too few arguments
+      unless RUBY_VERSION[0,3] == '1.8'
+        it 'denies when missing required arguments' do
+          expect do
+            compile_to_catalog(<<-MANIFEST)
+              with(1) |$x, $y| { }
+            MANIFEST
+          end.to raise_error(/Parameter \$y is required but no value was given/m)
+        end
       end
 
       it 'accepts anything when parameters are untyped' do
