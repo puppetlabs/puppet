@@ -5,6 +5,12 @@ HOSTS:
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
+    puppetconfdir: /etc/puppetlabs/agent
+    puppetcodedir: /etc/puppetlabs/agent
+    puppetvardir: /opt/puppetlabs/agent/cache
+    distmoduledir: /etc/puppetlabs/agent/modules
+    sitemoduledir: /opt/puppetlabs/agent/modules
+    hieraconf: /etc/puppetlabs/puppet/hiera.yaml
   agent:
     roles:
       - agent
