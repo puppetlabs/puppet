@@ -301,12 +301,8 @@ module Puppet::Functions
       if @block_type.nil?
         @block_type = type
         @block_name = name
-
-        # mark what should be picked for this position when dispatching. This is the size of
-        # the @names array since the block is required to appear last
-        @weaving << @names.size()
       else
-        raise ArgumentError, "Attempt to redefine block"
+        raise ArgumentError, 'Attempt to redefine block'
       end
     end
 
@@ -334,11 +330,12 @@ module Puppet::Functions
       unless min_occurs.is_a?(Integer) && min_occurs >= 0
         raise ArgumentError, "min arg_count of function parameter must be an Integer >=0, got #{min_occurs.class} '#{min_occurs}'"
       end
-      unless max_occurs == :default || (max_occurs.is_a?(Integer) && max_occurs >= 0)
-        raise ArgumentError, "max arg_count of function parameter must be an Integer >= 0, or :default, got #{max_occurs.class} '#{max_occurs}'"
-      end
-      unless max_occurs == :default || (max_occurs.is_a?(Integer) && max_occurs >= min_occurs)
-        raise ArgumentError, "max arg_count must be :default (infinite) or >= min arg_count, got min: '#{min_occurs}, max: '#{max_occurs}'"
+      if max_occurs == :default
+        @last_captures = true
+      else
+        unless max_occurs.is_a?(Integer) && max_occurs >= min_occurs
+          raise ArgumentError, "max arg_count of function parameter must be :default (infinite) or an Integer >= min arg_count, got min: '#{min_occurs}, max: '#{max_occurs}'"
+        end
       end
     end
 

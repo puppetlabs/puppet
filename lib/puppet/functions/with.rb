@@ -18,6 +18,6 @@ Puppet::Functions.create_function(:with) do
   end
 
   def with(*args)
-    args[-1].call(*args[0..-2])
+    yield(*args)
   end
 end

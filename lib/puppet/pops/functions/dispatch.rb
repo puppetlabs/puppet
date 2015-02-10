@@ -41,36 +41,40 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
   end
 
   # @api private
-  def invoke(instance, calling_scope, args)
-    instance.send(@method_name, *weave(calling_scope, args))
+  def invoke(instance, calling_scope, args, &block)
+    instance.send(@method_name, *weave(calling_scope, args), &block)
   end
 
   # @api private
   def weave(scope, args)
     # no need to weave if there are no injections
-    if injections.empty?
+    if @injections.empty?
       args
     else
       injector = nil # lazy lookup of injector Puppet.lookup(:injector)
-      weaving.map do |knit|
+      new_args = []
+      @weaving.each do |knit|
         if knit.is_a?(Array)
           injection_data = @injections[knit[0]]
-          case injection_data[3]
-          when :dispatcher_internal
-            # currently only supports :scope injection
-            scope
-          when :producer
-            injector ||= Puppet.lookup(:injector)
-            injector.lookup_producer(scope, injection_data[0], injection_data[2])
-          else
-            injector ||= Puppet.lookup(:injector)
-            injector.lookup(scope, injection_data[0], injection_data[2])
-          end
+          new_args <<
+            case injection_data[3]
+            when :dispatcher_internal
+              # currently only supports :scope injection
+              scope
+            when :producer
+              injector ||= Puppet.lookup(:injector)
+              injector.lookup_producer(scope, injection_data[0], injection_data[2])
+            else
+              injector ||= Puppet.lookup(:injector)
+              injector.lookup(scope, injection_data[0], injection_data[2])
+            end
         else
-          # pick that argument (injection of static value)
-          args[knit]
+          # Careful so no new nil arguments are added since they would override default
+          # parameter values in the received
+          new_args << args[knit] if knit < args.size
         end
       end
+      new_args
     end
   end
 end

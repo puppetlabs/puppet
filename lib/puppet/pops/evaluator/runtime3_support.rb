@@ -229,27 +229,25 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
-  def call_function(name, args, o, scope)
-    Puppet::Util::Profiler.profile("Called #{name}", [:functions, name]) do
-      # Call via 4x API if the function exists there
-      loaders = scope.compiler.loaders
-      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-      loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
-      if loader && func = loader.load(:function, name)
-        return func.call(scope, *args)
-      end
-
-      # Call via 3x API if function exists there
-      fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
-
-      # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-      # NOTE: Passing an empty string last converts nil/:undef to empty string
-      mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
-      result = scope.send("function_#{name}", mapped_args)
-      # Prevent non r-value functions from leaking their result (they are not written to care about this)
-      Puppet::Parser::Functions.rvalue?(name) ? result : nil
+  def call_function(name, args, o, scope, &block)
+    # Call via 4x API if the function exists there
+    loaders = scope.compiler.loaders
+    # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+    adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+    loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
+    if loader && func = loader.load(:function, name)
+      return func.call(scope, *args, &block)
     end
+
+    # Call via 3x API if function exists there
+    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+
+    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
+    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
+    result = scope.send("function_#{name}", mapped_args, &block)
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
 
   # The o is used for source reference

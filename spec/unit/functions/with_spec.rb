@@ -23,9 +23,14 @@ describe 'the with function' do
     expect(compile_to_catalog('notify { test: message => "data" } with(Notify[test]) |$x| { notify { "${x[message]}": } }')).to have_resource('Notify[data]')
   end
 
-  it 'errors when not given enough arguments for the lambda' do
-    expect do
-      compile_to_catalog('with(1) |$x, $y| { }')
-    end.to raise_error(/Parameter \$y is required but no value was given/m)
+  # Conditinoally left out for Ruby 1.8.x since the Proc created for the expected number of arguments will accept
+  # a call with fewer arguments and then pass all arguments to the closure. The closure then receives an argument
+  # array of correct size with nil values instead of an array with too few arguments
+  unless RUBY_VERSION[0,3] == '1.8'
+    it 'errors when not given enough arguments for the lambda' do
+      expect do
+        compile_to_catalog('with(1) |$x, $y| { }')
+      end.to raise_error(/Parameter \$y is required but no value was given/m)
+    end
   end
 end

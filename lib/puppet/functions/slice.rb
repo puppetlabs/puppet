@@ -49,15 +49,15 @@ Puppet::Functions.create_function(:slice) do
     optional_block_param
   end
 
-  def slice_Hash(hash, slice_size, pblock = nil)
-    result = slice_Common(hash, slice_size, [], pblock)
-    pblock ? hash : result
+  def slice_Hash(hash, slice_size, &pblock)
+    result = slice_Common(hash, slice_size, [], block_given? ? pblock : nil)
+    block_given? ? hash : result
   end
 
-  def slice_Enumerable(enumerable, slice_size, pblock = nil)
+  def slice_Enumerable(enumerable, slice_size, &pblock)
     enum = asserted_enumerable(enumerable)
-    result = slice_Common(enum, slice_size, nil, pblock)
-    pblock ? enumerable : result
+    result = slice_Common(enum, slice_size, nil, block_given? ? pblock : nil)
+    block_given? ? enumerable : result
   end
 
   def slice_Common(o, slice_size, filler, pblock)
@@ -99,7 +99,8 @@ Puppet::Functions.create_function(:slice) do
 
   def asserted_slice_serving_size(pblock, slice_size)
     if pblock
-      serving_size = pblock.last_captures_rest? ? slice_size : pblock.parameter_count
+      arity = pblock.arity
+      serving_size = arity < 0 ? slice_size : arity
     else
       serving_size = 1
     end
