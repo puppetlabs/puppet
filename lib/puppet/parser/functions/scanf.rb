@@ -34,7 +34,8 @@ the result:
         $x[0]
       }
 
-- Since 3.7.5
+- since 3.7.4 with `parser = future`
+- since 3.7.5 with classic parser
 DOC
 ) do |args|
   data = args[0]
