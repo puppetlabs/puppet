@@ -11,9 +11,6 @@ the following three types:
 * directory
 * symbolic link
 
-Note that an `:environment` must be specified in the endpoint, but is actually ignored since the puppet file server
-is not environment-specific.  (In fact, the specified `:environment` does even need to be valid.)
-
 The endpoint path includes a `:mount` which can be one of three types:
 
 * custom file serving mounts as specified in fileserver.conf -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-files-from-custom-mount-points)
@@ -26,7 +23,7 @@ Find
 
 Get file metadata for a single file
 
-    GET /:environment/file_metadata/:mount/path/to/file
+    GET /puppet/v3/file_metadata/:mount/path/to/file?environment=:environment
 
 ### Supported HTTP Methods
 
@@ -44,7 +41,7 @@ None
 
 #### File metadata found for a file
 
-    GET /env/file_metadata/modules/example/just_a_file.txt
+    GET /puppet/v3/file_metadata/modules/example/just_a_file.txt?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -66,7 +63,7 @@ None
 
 #### File metadata found for a directory
 
-    GET /env/file_metadata/modules/example/subdirectory
+    GET /puppet/v3/file_metadata/modules/example/subdirectory?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -88,7 +85,7 @@ None
 
 #### File metadata found for a link
 
-    GET /env/file_metadata/modules/example/link_to_file.txt
+    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -110,7 +107,7 @@ None
 
 #### File not found
 
-    GET /env/file_metadata/modules/example/does_not_exist
+    GET /puppet/v3/file_metadata/modules/example/does_not_exist?environment=env
 
     HTTP/1.1 404 Not Found
 
@@ -121,7 +118,7 @@ Search
 
 Get a list of metadata for multiple files
 
-    GET /env/file_metadatas/foo.txt
+    GET /puppet/v3/file_metadatas/foo.txt?environment=env
 
 ### Supported HTTP Methods
 
@@ -141,7 +138,7 @@ Accept: pson, text/pson
 
 #### Basic search
 
-    GET /env/file_metadatas/modules/example?recurse=yes
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=yes
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -221,7 +218,7 @@ Accept: pson, text/pson
 
 #### Search ignoring 'sub*' and links = manage
 
-    GET /env/file_metadatas/modules/example?recurse=true&ignore=sub*&links=manage
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=manage
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -284,7 +281,7 @@ is identical to the above example, except for:
 
 ` `
 
-    GET /env/file_metadatas/modules/example?recurse=true&ignore=sub*&links=follow
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=follow
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -337,7 +334,7 @@ is identical to the above example, except for:
 Schema
 ------
 
-The representation of file metadata conforms to the schema at {file:api/schemas/file_metadata.json api/schemas/file_metadata.json}.
+The representation of file metadata conforms to the schema at [api/schemas/file_metadata.json](../schemas/file_metadata.json).
 
 Sample Module
 -------------

@@ -8,7 +8,7 @@ Find
 
 Get a file.
 
-    GET /:environment/file_content/:mount_point/:name
+    GET /puppet/v3/file_content/:mount_point/:name
 
 `:mount_point` is one of mounts configured in the `fileserver.conf`.
 See [the puppet file server guide](http://docs.puppetlabs.com/guides/file_serving.html)
@@ -34,7 +34,7 @@ None
 
 #### File found
 
-    GET /env/file_content/modules/example/my_file
+    GET /puppet/v3/file_content/modules/example/my_file?environment=env
     Accept: raw
 
     HTTP/1.1 200 OK
@@ -46,7 +46,7 @@ None
 
 #### File not found
 
-    GET /env/file_content/modules/example/not_found
+    GET /puppet/v3/file_content/modules/example/not_found?environment=env
     Accept: raw
 
     HTTP/1.1 404 Not Found
@@ -56,12 +56,12 @@ None
 
 #### No file name given
 
-    GET /env/file_content/
+    GET /puppet/v3/file_content?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
-    No request key specified in /env/file_content/
+    No request key specified in /puppet/v3/file_content/
 
 Schema
 ------
