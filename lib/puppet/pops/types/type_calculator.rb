@@ -802,36 +802,19 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_Proc(o)
     min = 0
     max = 0
-    if o.respond_to?(:parameters)
-      mapped_types = o.parameters.map do |p|
-        param_t = Types::PAnyType.new
-        case p[0]
-        when :rest
-          max = :default
-          break param_t
-        when :req
-          min += 1
-        end
-        max += 1
-      	param_t
+    mapped_types = o.parameters.map do |p|
+      case p[0]
+      when :rest
+        max = :default
+        break @t
+      when :req
+        min += 1
       end
-    else
-      # Cannot correctly compute the signature in Ruby 1.8.7 because arity for
-      # optional values is screwed up (there is no way to get the upper limit),
-      # an optional looks the same as a varargs.
-      arity = o.arity
-      if arity < 0
-        min = -arity - 1
-        max = :default # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
-      else
-        min = max = arity
-      end
-      mapped_types = Array.new(min) { Types::PAnyType.new }
+      max += 1
+      @t
     end
-    if min == 0 || min != max
-      mapped_types << min
-      mapped_types << max
-    end
+    mapped_types << min
+    mapped_types << max
     Types::TypeFactory.callable(*mapped_types)
   end
 
