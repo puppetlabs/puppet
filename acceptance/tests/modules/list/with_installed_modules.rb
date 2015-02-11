@@ -8,8 +8,6 @@ teardown do
 end
 
 step "Setup"
-on master, "mkdir -p #{master['distmoduledir']}"
-on master, "mkdir -p #{master['sitemoduledir']}"
 
 apply_manifest_on master, <<-PP
 file {
