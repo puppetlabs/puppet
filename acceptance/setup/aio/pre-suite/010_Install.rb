@@ -11,7 +11,7 @@ step "Install repositories on target machines..." do
 
   hosts.each do |host|
     if host == master
-      install_repos_on(host, 'puppet-agent', '0.2.1', repo_configs_dir)
+      install_repos_on(host, 'puppet-agent', '0.3.1', repo_configs_dir)
     else
       install_repos_on(host, 'puppet-agent', sha, repo_configs_dir)
     end
