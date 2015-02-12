@@ -4,7 +4,7 @@ module Puppet::Parser::Functions
   newfunction(:hiera_array, :type => :rvalue, :arity => -2,:doc => "Returns all 
   matches throughout the hierarchy --- not just the first match --- as a flattened array of unique values.
   If any of the matched values are arrays, they're flattened and included in the results.
-  
+
   The function can be called in one of three ways:
   1. Using 1 to 3 arguments where the arguments are:
      'key'      [String] Required

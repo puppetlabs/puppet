@@ -5,7 +5,7 @@ module Puppet::Parser::Functions
   "Returns a merged hash of matches from throughout the hierarchy. In cases where two or 
   more hashes share keys, the hierarchy  order determines which key/value pair will be 
   used in the returned hash, with the pair in the highest priority data source winning.
-  
+
   The function can be called in one of three ways:
   1. Using 1 to 3 arguments where the arguments are:
      'key'      [String] Required
