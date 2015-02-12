@@ -15,7 +15,7 @@ on master, "chmod -R 750 /opt/puppetlabs/agent/cache"
 # puppet-server does. However, some puppet acceptance tests assume the user
 # is present. This is a temporary setup step to create the puppet user and
 # group, but only on nodes that are agents and not the master
-test_name 'Puppet User and Group on agents only' do
+test_name '(PUP-3997) Puppet User and Group on agents only' do
   agents.each do |agent|
     if agent == master
       step "Skipping creating puppet user and group on #{agent}"
