@@ -20,7 +20,8 @@ module Puppet::Parser::Functions
 
   2. Using a 'key' and an optional 'override' parameter like in #1 but with a block to
      provide the default value. The block is called with one parameter (the key) and
-     should return the value. This option can only be used with the 4x version of the function.
+     should return the value. This option can only be used with the 3x future parser or
+     from 4.0.0.
 
   3. Like #1 but with all arguments passed in an array.
 
