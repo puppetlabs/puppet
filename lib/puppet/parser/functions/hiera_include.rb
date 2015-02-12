@@ -35,13 +35,20 @@ module Puppet::Parser::Functions
   2. Using a 'key' and an optional 'override' parameter like in #1 but with a block to
      provide the default value. The block is called with one parameter (the key) and
      should return the array to be used in the subsequent call to include.
+     This option can only be used with the 4x version of the function.
 
   3. Like #1 but with all arguments passed in an array.
 
   More thorough examples of `hiera_include` are available at:
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    function_fail(["hiera_include() has been converted to 4x API"])
+    key, default, override = HieraPuppet.parse_args(args)
+    if answer = HieraPuppet.lookup(key, default, self, override, :array)
+      method = Puppet::Parser::Functions.function(:include)
+      send(method, [answer])
+    else
+      raise Puppet::ParseError, "Could not find data item #{key}"
+    end
   end
 end
 

@@ -1,10 +1,10 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera_array, :type => :rvalue, :arity => -2,:doc => "Returns all 
+  newfunction(:hiera_array, :type => :rvalue, :arity => -2,:doc => "Returns all
   matches throughout the hierarchy --- not just the first match --- as a flattened array of unique values.
   If any of the matched values are arrays, they're flattened and included in the results.
-  
+
   The function can be called in one of three ways:
   1. Using 1 to 3 arguments where the arguments are:
      'key'      [String] Required
@@ -20,16 +20,17 @@ module Puppet::Parser::Functions
 
   2. Using a 'key' and an optional 'override' parameter like in #1 but with a block to
      provide the default value. The block is called with one parameter (the key) and
-     should return the value.
+     should return the value. This option can only be used with the 4x version of the function.
 
   3. Like #1 but with all arguments passed in an array.
 
   If any matched value is a hash, puppet will raise a type mismatch error.
 
-  More thorough examples of `hiera` are available at:  
+  More thorough examples of `hiera` are available at:
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    function_fail(["hiera_array() has been converted to 4x API"])
+    key, default, override = HieraPuppet.parse_args(args)
+    HieraPuppet.lookup(key, default, self, override, :array)
   end
 end
 
