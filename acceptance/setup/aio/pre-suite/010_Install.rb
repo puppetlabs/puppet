@@ -55,7 +55,3 @@ install_packages_on(master, MASTER_PACKAGES)
 install_packages_on(agents, AGENT_PACKAGES)
 
 configure_gem_mirror(hosts)
-
-step "Work around packaging issue (PUP-4001)"
-on master, "mkdir -p #{master['distmoduledir']}"
-on master, "mkdir -p #{master['sitemoduledir']}"

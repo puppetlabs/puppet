@@ -1,3 +1,9 @@
+# Collection of workarounds for AIO
+
+step "(PUP-4001) Work around packaging issue"
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 # The AIO puppet-agent package does not create the puppet user or group, but
 # puppet-server does. However, some puppet acceptance tests assume the user
 # is present. This is a temporary setup step to create the puppet user and
