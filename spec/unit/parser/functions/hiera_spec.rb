@@ -6,17 +6,7 @@ describe 'Puppet::Parser::Functions#hiera' do
 
   let :scope do create_test_scope_for_node('foo') end
 
-  it 'should require a key argument' do
-    expect { scope.function_hiera([]) }.to raise_error(ArgumentError)
-  end
-
-  it 'should raise a useful error when nil is returned' do
-    Hiera.any_instance.expects(:lookup).returns(nil)
-    expect { scope.function_hiera(["badkey"]) }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
-  end
-
-  it 'should use the priority resolution_type' do
-    Hiera.any_instance.expects(:lookup).with() { |*args| expect(args[4]).to be(:priority) }.returns('foo_result')
-    expect(scope.function_hiera(['key'])).to eq('foo_result')
+  it 'should raise an error since this function is converted to 4x API)' do
+    expect { scope.function_hiera(['key']) }.to raise_error(Puppet::ParseError, /converted to 4x API/)
   end
 end
