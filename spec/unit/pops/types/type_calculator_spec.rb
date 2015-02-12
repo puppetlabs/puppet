@@ -85,6 +85,14 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.any()
   end
 
+  def optional_t(t)
+    Puppet::Pops::Types::TypeFactory.optional(t)
+  end
+
+  def undef_t
+    Puppet::Pops::Types::TypeFactory.undef
+  end
+
   def unit_t
     # Cannot be created via factory, the type is private to the type system
     Puppet::Pops::Types::PUnitType.new
@@ -1068,6 +1076,30 @@ describe 'The type calculator' do
         expect(calculator.assignable?(struct2, struct1)).to eq(true)
       end
 
+      it 'should accept matching structs with less elements when unmatched elements are optional' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
+        struct2 = struct_t({'a'=>Integer, 'b'=>Integer})
+        calculator.assignable?(struct1, struct2).should == true
+      end
+
+      it 'should reject matching structs with more elements even if excess elements are optional' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
+        struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
+        calculator.assignable?(struct1, struct2).should == false
+      end
+
+      it 'should accept matching structs where one is more general than the other with respect to optional' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
+        struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>Integer})
+        calculator.assignable?(struct1, struct2).should == true
+      end
+
+      it 'should reject matching structs where one is more special than the other with respect to optional' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>Integer})
+        struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
+        calculator.assignable?(struct1, struct2).should == false
+      end
+
       it 'should accept matching structs where one is more general than the other' do
         struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
         struct2 = struct_t({'a'=>Numeric, 'b'=>Numeric})
@@ -1083,6 +1115,13 @@ describe 'The type calculator' do
         factory.constrain_size(hsh, 2, 2)
         expect(calculator.assignable?(struct1, hsh)).to eq(true)
         expect(calculator.assignable?(hsh, struct1)).to eq(true)
+      end
+
+      it 'should accept empty hash with key_type undef' do
+        struct1 = struct_t({'a'=>optional_t(Integer)})
+        hsh = hash_t(undef_t, undef_t)
+        factory.constrain_size(hsh, 0, 0)
+        expect(calculator.assignable?(struct1, hsh)).to eq(true)
       end
     end
 
@@ -1295,12 +1334,39 @@ describe 'The type calculator' do
       expect(calculator.instance?(tuple, [1, 'a', 1])).to          eq(false)
     end
 
-    it 'should consider hash[cont] as instance of Struct[cont-t]' do
-      struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>Float})
-      expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>3.14})).to       eq(true)
-      expect(calculator.instance?(struct, {'a'=>1.2, 'b'=>'a', 'c'=>3.14})).to     eq(false)
-      expect(calculator.instance?(struct, {'a'=>1, 'b'=>1, 'c'=>3.14})).to         eq(false)
-      expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>1})).to          eq(false)
+    context 'and t is Struct' do
+      it 'should consider hash[cont] as instance of Struct[cont-t]' do
+        struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>Float})
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>3.14})).to       eq(true)
+        expect(calculator.instance?(struct, {'a'=>1.2, 'b'=>'a', 'c'=>3.14})).to     eq(false)
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>1, 'c'=>3.14})).to         eq(false)
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>1})).to          eq(false)
+      end
+
+      it 'should consider empty hash as instance of Struct[x=>Optional[String]]' do
+        struct = struct_t({'a'=>optional_t(String)})
+        expect(calculator.instance?(struct, {})).to eq(true)
+      end
+
+      it 'should consider hash[cont] as instance of Struct[cont-t,optionals]' do
+        struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>optional_t(Float)})
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a'})).to eq(true)
+      end
+
+      it 'should consider hash[cont] as instance of Struct[cont-t,variants with optionals]' do
+        struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>variant_t(String, optional_t(Float))})
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a'})).to eq(true)
+      end
+
+      it 'should not consider hash[cont,cont2] as instance of Struct[cont-t]' do
+        struct = struct_t({'a'=>Integer, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>'x'})).to eq(false)
+      end
+
+      it 'should not consider hash[cont,cont2] as instance of Struct[cont-t,optional[cont3-t]' do
+        struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>optional_t(Float)})
+        expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>'x'})).to eq(false)
+      end
     end
 
     context 'and t is Data' do
