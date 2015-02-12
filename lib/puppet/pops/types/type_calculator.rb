@@ -1192,22 +1192,23 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   #
   def assignable_PStructType(t, t2)
-    return true if t == t2 || t.elements.empty? && (t2.is_a?(Types::PHashType))
-    h = t.hashed_elements
     if t2.is_a?(Types::PStructType)
+      h = t.hashed_elements
       h2 = t2.hashed_elements
-      h.size == h2.size && h.all? {|k, v| assignable?(v, h2[k]) }
+      (h2.keys - h.keys).empty? && h.all? {|k, v| v2 = h2[k]; assignable?(v, v2.nil? ? @nil_t : v2) }
     elsif t2.is_a?(Types::PHashType)
       size_t2 = t2.size_type || @collection_default_size_t
       size_t = Types::PIntegerType.new
-      size_t.from = size_t.to = h.size
+      elements = t.elements
+      size_t.from = elements.count {|e| !assignable?(e.type, @nil_t) }
+      size_t.to = elements.size
       # compatible size
       # hash key type must be string of min 1 size
       # hash value t must be assignable to each key
       element_type = t2.element_type
       assignable_PIntegerType(size_t, size_t2) &&
-        assignable?(@non_empty_string_t, t2.key_type) &&
-        h.all? {|k,v| assignable?(v, element_type) }
+        (size_t2.to == 0 || assignable?(@non_empty_string_t, t2.key_type)) &&
+          elements.all? {|e| assignable?(e.type, element_type) }
     else
       false
     end
