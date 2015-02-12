@@ -39,13 +39,14 @@ describe 'when calling' do
     end
 
     it 'should use default block' do
-      expect(hiera.call(scope, 'foo', lambda_1(scope, loader) { |k| "default for key '#{k}'" })).to eql("default for key 'foo'")
+      #expect(hiera.call(scope, 'foo', lambda_1(scope, loader) { |k| "default for key '#{k}'" })).to eql("default for key 'foo'")
+      expect(hiera.call(scope, 'foo') { |k| "default for key '#{k}'" }).to eql("default for key 'foo'")
     end
 
     it 'should propagate optional override when combined with default block' do
       ovr = 'the_override'
       Hiera::Backend::Yaml_backend.any_instance.expects(:lookup).with { |*args| args[2].should be(ovr) }
-      expect(hiera.call(scope, 'foo', ovr, lambda_1(scope, loader) { |k| "default for key '#{k}'" })).to eql("default for key 'foo'")
+      expect(hiera.call(scope, 'foo', ovr) { |k| "default for key '#{k}'" }).to eql("default for key 'foo'")
     end
   end
 
@@ -67,7 +68,7 @@ describe 'when calling' do
     end
 
     it 'should use default block' do
-      expect(hiera_array.call(scope, 'foo', lambda_1(scope, loader) { |k| ['key', k] })).to eql(%w[key foo])
+      expect(hiera_array.call(scope, 'foo') { |k| ['key', k] }).to eql(%w[key foo])
     end
   end
 
@@ -88,7 +89,7 @@ describe 'when calling' do
     end
 
     it 'should use default block' do
-      expect(hiera_hash.call(scope, 'foo', lambda_1(scope, loader) { |k| {'key' => k} })).to eql({'key' => 'foo'})
+      expect(hiera_hash.call(scope, 'foo') { |k| {'key' => k} }).to eql({'key' => 'foo'})
     end
   end
 
@@ -116,21 +117,7 @@ describe 'when calling' do
 
     it 'should use default block' do
       hiera_include.expects(:call_function).with('include', %w[key foo])
-      hiera_include.call(scope, 'foo', lambda_1(scope, loader) { |k| ['key', k] })
+      hiera_include.call(scope, 'foo') { |k| ['key', k] }
     end
-  end
-
-  # Creates the correspondence to a lambda block in puppet DSL
-  def lambda_1(scope, loader, &block)
-    Puppet::Functions.create_function('do_it') do
-      def initialize(scope, loader, block)
-        super(scope, loader)
-        @my_block = block
-      end
-
-      def do_it(x)
-        @my_block.call(x)
-      end
-    end.new(scope, loader, block)
   end
 end
