@@ -168,10 +168,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       transaction.report.as_logging_destination do
         transaction.evaluate
       end
-    rescue Puppet::Error => detail
-      Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
-    rescue => detail
-      Puppet.log_exception(detail, "Got an uncaught exception of type #{detail.class}: #{detail}")
     ensure
       # Don't try to store state unless we're a host config
       # too recursive.
