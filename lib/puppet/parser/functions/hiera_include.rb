@@ -19,15 +19,25 @@ module Puppet::Parser::Functions
               - apache
               - apache::passenger
 
-  In addition to the required `key` argument, `hiera_include` accepts two additional
-  arguments:
+  The function can be called in one of three ways:
+  1. Using 1 to 3 arguments where the arguments are:
+     'key'      [String] Required
+           The key to lookup.
+     'default`  [Any] Optional
+           A value to return when there's no match for `key`. Optional
+     `override` [Any] Optional
+           An argument in the third position, providing a data source
+           to consult for matching values, even if it would not ordinarily be
+           part of the matched hierarchy. If Hiera doesn't find a matching key
+           in the named override data source, it will continue to search through the
+           rest of the hierarchy.
 
-  - a `default` argument in the second position, providing an array to be returned
-    in the absence of matches to the `key` argument
-  - an `override` argument in the third position, providing a data source to consult
-    for matching values, even if it would not ordinarily be part of the matched hierarchy.
-    If Hiera doesn't find a matching key in the named override data source, it will continue
-    to search through the rest of the hierarchy.
+  2. Using a 'key' and an optional 'override' parameter like in #1 but with a block to
+     provide the default value. The block is called with one parameter (the key) and
+     should return the array to be used in the subsequent call to include.
+     This option can only be used with the 4x version of the function.
+
+  3. Like #1 but with all arguments passed in an array.
 
   More thorough examples of `hiera_include` are available at:
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
