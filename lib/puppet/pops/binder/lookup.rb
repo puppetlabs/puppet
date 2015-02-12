@@ -44,14 +44,17 @@ class Puppet::Pops::Binder::Lookup
     names.each {|n| options[n] = input[n.to_s] || input[n] }
     options
   end
+  private_class_method :to_symbolic_hash
 
   def self.type_mismatch(type_calculator, expected, got)
     "has wrong type, expected #{type_calculator.string(expected)}, got #{type_calculator.string(got)}"
   end
+  private_class_method :type_mismatch
 
   def self.fail(msg)
     raise Puppet::ParseError, "Function lookup() " + msg
   end
+  private_class_method :fail
 
   def self.fail_lookup(names)
     name_part = if names.size == 1
@@ -61,6 +64,7 @@ class Puppet::Pops::Binder::Lookup
     end
     fail("did not find a value for #{name_part}")
   end
+  private_class_method :fail_lookup
 
   def self.validate_options(options, type_calculator)
     type_parser = Puppet::Pops::Types::TypeParser.new
@@ -101,10 +105,12 @@ class Puppet::Pops::Binder::Lookup
     options[:override] = {} unless options[:override]
 
   end
+  private_class_method :validate_options
 
   def self.is_nil_or_undef?(x)
     x.nil? || x == :undef
   end
+  private_class_method :is_nil_or_undef?
 
   # This is used as a marker - a value that cannot (at least not easily) by mistake be found in
   # hiera data.
@@ -118,7 +124,7 @@ class Puppet::Pops::Binder::Lookup
     elsif !(result = scope.compiler.injector.lookup(scope, type, name)).nil?
       result
    else
-     result = scope.function_hiera([name, PrivateNotFoundMarker])
+     result = call_hiera_function(scope, name, PrivateNotFoundMarker)
      if !result.nil? && result != PrivateNotFoundMarker
        result
      else
@@ -126,8 +132,17 @@ class Puppet::Pops::Binder::Lookup
      end
    end
   end
+  private_class_method :search_for
 
-  # This is the method called from the puppet/parser/functions/lookup.rb
+  def self.call_hiera_function(scope, name, dflt)
+    loader = scope.compiler.loaders.private_environment_loader
+    func = loader.load(:function, :hiera) unless loader.nil?
+    raise Error, 'Function not found: hiera' if func.nil?
+    func.call(scope, name, dflt)
+  end
+  private_class_method :call_hiera_function
+
+    # This is the method called from the puppet/parser/functions/lookup.rb
   # @param args [Array] array following the puppet function call conventions
   def self.lookup(scope, args)
     type_calculator = Puppet::Pops::Types::TypeCalculator.new

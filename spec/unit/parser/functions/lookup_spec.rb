@@ -37,7 +37,7 @@ describe "lookup function" do
   end
 
   it "hiera is called to lookup if value is not bound" do
-    Puppet::Parser::Scope.any_instance.stubs(:function_hiera).returns('from_hiera')
+    Hiera.any_instance.stubs(:lookup).returns('from_hiera')
     scope = scope_with_injections_from(bound(bind_single("another_value", "something")))
     expect(scope.function_lookup(['a_value'])).to eq('from_hiera')
   end
