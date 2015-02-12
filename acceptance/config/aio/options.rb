@@ -1,5 +1,6 @@
 {
   :type => 'aio',
+  :is_puppetserver => true,
   :pre_suite => [
     'setup/common/pre-suite/001_PkgBuildSetup.rb',
     'setup/aio/pre-suite/010_Install.rb',

@@ -13,6 +13,7 @@ HOSTS:
     # puppet-agent 0.3.1 package on the master still uses /usr/share
     sitemoduledir: /usr/share/puppet/modules
     hieraconf: /etc/puppetlabs/puppet/hiera.yaml
+    puppetserver-confdir: /etc/puppetserver/conf.d/
   agent:
     roles:
       - agent
