@@ -229,7 +229,7 @@ describe Puppet::Transaction do
     notify.expects(:pre_run_check).raises(Puppet::Error, "fail for testing")
 
     catalog = mk_catalog(file, notify)
-    catalog.apply
+    expect { catalog.apply }.to raise_error(Puppet::Error, /Some pre-run checks failed/)
     expect(Puppet::FileSystem.exist?(path)).not_to be_truthy
   end
 
