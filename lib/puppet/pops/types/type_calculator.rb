@@ -1200,7 +1200,7 @@ class Puppet::Pops::Types::TypeCalculator
       size_t2 = t2.size_type || @collection_default_size_t
       size_t = Types::PIntegerType.new
       elements = t.elements
-      size_t.from = elements.reduce(0) { |c, e| assignable?(e.type, @nil_t) ? c : c + 1 }
+      size_t.from = elements.count {|e| !assignable?(e.type, @nil_t) }
       size_t.to = elements.size
       # compatible size
       # hash key type must be string of min 1 size
