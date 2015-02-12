@@ -1035,6 +1035,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(parser.evaluate_string(scope, source, __FILE__)).to eql('10')
     end
 
+    it 'should accept a numeric variable expressed as $n' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${$2}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('123')
+    end
+
+    it 'should accept a numeric variable expressed as just an integer' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${2}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('123')
+    end
+
+    it 'should accept a numeric variable expressed as $n in an access operation' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${$0[4,3]}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('23d')
+    end
+
+    it 'should accept a numeric variable expressed as just an integer in an access operation' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${0[4,3]}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('23d')
+    end
+
     {
       '"value is ${a*2} yo"'  => :error,
     }.each do |source, result|
