@@ -1079,25 +1079,25 @@ describe 'The type calculator' do
       it 'should accept matching structs with less elements when unmatched elements are optional' do
         struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
         struct2 = struct_t({'a'=>Integer, 'b'=>Integer})
-        calculator.assignable?(struct1, struct2).should == true
+        expect(calculator.assignable?(struct1, struct2)).to eq(true)
       end
 
       it 'should reject matching structs with more elements even if excess elements are optional' do
         struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
         struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
-        calculator.assignable?(struct1, struct2).should == false
+        expect(calculator.assignable?(struct1, struct2)).to eq(false)
       end
 
       it 'should accept matching structs where one is more general than the other with respect to optional' do
         struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
         struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>Integer})
-        calculator.assignable?(struct1, struct2).should == true
+        expect(calculator.assignable?(struct1, struct2)).to eq(true)
       end
 
       it 'should reject matching structs where one is more special than the other with respect to optional' do
         struct1 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>Integer})
         struct2 = struct_t({'a'=>Integer, 'b'=>Integer, 'c'=>optional_t(Integer)})
-        calculator.assignable?(struct1, struct2).should == false
+        expect(calculator.assignable?(struct1, struct2)).to eq(false)
       end
 
       it 'should accept matching structs where one is more general than the other' do
