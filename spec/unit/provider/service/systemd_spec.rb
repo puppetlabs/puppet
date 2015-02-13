@@ -30,10 +30,22 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.default?.should be_true
   end
 
-  it "should not be the default provider on rhel6" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
-    Facter.expects(:value).with(:operatingsystemmajrelease).returns("6")
-    described_class.default?.should_not be_true
+  [ 4, 5, 6 ].each do |ver|
+    it "should not be the default provider on rhel#{ver}" do
+      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+      Facter.expects(:value).with(:operatingsystem).returns(:redhat)
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("#{ver}")
+      described_class.default?.should_not be_true
+    end
+  end
+
+  [ 17, 18, 19, 20, 21 ].each do |ver|
+    it "should be the default provider on fedora#{ver}" do
+      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:fedora)
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("#{ver}")
+      described_class.default?.should be_true
+    end
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
