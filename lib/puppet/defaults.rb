@@ -1054,7 +1054,7 @@ EOT
       :desc       => "File that provides mapping between custom SSL oids and user-friendly names"
     },
     :basemodulepath => {
-      :default => "$codedir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :default => "$codedir/modules#{File::PATH_SEPARATOR}/opt/puppetlabs/puppet/modules",
       :type => :path,
       :desc => "The search path for **global** modules. Should be specified as a
         list of directories separated by the system path separator character. (The

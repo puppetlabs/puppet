@@ -46,20 +46,20 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Install a module into a specific directory:
 
-      $ puppet module install puppetlabs-vcsrepo --target-dir=/usr/share/puppet/modules
-      Preparing to install into /usr/share/puppet/modules ...
+      $ puppet module install puppetlabs-vcsrepo --target-dir=/opt/puppetlabs/puppet/modules
+      Preparing to install into /opt/puppetlabs/puppet/modules ...
       Downloading from http://forgeapi.puppetlabs.com ...
       Installing -- do not interrupt ...
-      /usr/share/puppet/modules
+      /opt/puppetlabs/puppet/modules
       └── puppetlabs-vcsrepo (v0.0.4)
 
       Install a module into a specific directory and check for dependencies in other directories:
 
-      $ puppet module install puppetlabs-vcsrepo --target-dir=/usr/share/puppet/modules --modulepath /etc/puppetlabs/code/modules
-      Preparing to install into /usr/share/puppet/modules ...
+      $ puppet module install puppetlabs-vcsrepo --target-dir=/opt/puppetlabs/puppet/modules --modulepath /etc/puppetlabs/code/modules
+      Preparing to install into /opt/puppetlabs/puppet/modules ...
       Downloading from http://forgeapi.puppetlabs.com ...
       Installing -- do not interrupt ...
-      /usr/share/puppet/modules
+      /opt/puppetlabs/puppet/modules
       └── puppetlabs-vcsrepo (v0.0.4)
 
       Install a module from a release archive:
