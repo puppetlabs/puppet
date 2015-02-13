@@ -27,7 +27,7 @@ Puppet::Face.define(:module, '1.0.0') do
         ├── puppetlabs-mysql (v0.0.1)
         ├── puppetlabs-sqlite (v0.0.1)
         └── puppetlabs-stdlib (v2.2.1)
-        /usr/share/puppet/modules (no modules installed)
+        /opt/puppetlabs/puppet/modules (no modules installed)
 
       List installed modules in a tree view:
 
@@ -38,7 +38,7 @@ Puppet::Face.define(:module, '1.0.0') do
           ├─┬ puppetlabs-mysql (v0.0.1)
           │ └── bodepd-create_resources (v0.0.1)
           └── puppetlabs-sqlite (v0.0.1)
-        /usr/share/puppet/modules (no modules installed)
+        /opt/puppetlabs/puppet/modules (no modules installed)
 
       List installed modules from a specified environment:
 
@@ -49,12 +49,12 @@ Puppet::Face.define(:module, '1.0.0') do
         ├── puppetlabs-mysql (v0.0.1)
         ├── puppetlabs-sqlite (v0.0.1)
         └── puppetlabs-stdlib (v2.2.1)
-        /usr/share/puppet/modules (no modules installed)
+        /opt/puppetlabs/puppet/modules (no modules installed)
 
       List installed modules from a specified modulepath:
 
-      $ puppet module list --modulepath /usr/share/puppet/modules
-        /usr/share/puppet/modules (no modules installed)
+      $ puppet module list --modulepath /opt/puppetlabs/puppet/modules
+        /opt/puppetlabs/puppet/modules (no modules installed)
     EOT
 
     when_invoked do |options|

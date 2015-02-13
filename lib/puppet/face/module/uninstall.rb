@@ -16,8 +16,8 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Uninstall a module from a specific directory:
 
-      $ puppet module uninstall puppetlabs-ssh --modulepath /usr/share/puppet/modules
-      Removed /usr/share/puppet/modules/ssh (v1.0.0)
+      $ puppet module uninstall puppetlabs-ssh --modulepath /opt/puppetlabs/puppet/modules
+      Removed /opt/puppetlabs/puppet/modules/ssh (v1.0.0)
 
       Uninstall a module from a specific environment:
 

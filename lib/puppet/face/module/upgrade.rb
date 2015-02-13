@@ -25,7 +25,7 @@ Puppet::Face.define(:module, '1.0.0') do
       upgrade an installed module for a specific environment
 
       $ puppet module upgrade puppetlabs-apache --environment test
-      /usr/share/puppet/environments/test/modules
+      /etc/puppetlabs/code/environments/test/modules
       └── puppetlabs-apache (v1.0.0 -> v2.4.0)
     EOT
 
