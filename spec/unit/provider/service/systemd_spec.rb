@@ -32,9 +32,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   [ 4, 5, 6 ].each do |ver|
     it "should not be the default provider on rhel#{ver}" do
+      # In Ruby 1.8.7, the order of hash elements differs from 1.9+ and
+      # caused short-circuiting of the logic used by default.all? in the
+      # provider. As a workaround we need to use stubs() instead of
+      # expects() here. 
       Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
-      Facter.expects(:value).with(:operatingsystem).returns(:redhat)
-      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("#{ver}")
+      Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
       described_class.default?.should_not be_true
     end
   end
