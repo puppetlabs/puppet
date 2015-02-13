@@ -53,43 +53,6 @@ DOC
         Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', ext.oid)
     end
 
-    custom_exts.map do |ext|
-      {'oid' => ext.oid, 'value' => get_ext_val(ext.oid)}
-    end
+    custom_exts.map { |ext| {'oid' => ext.oid, 'value' => ext.value} }
   end
-
-  private
-
-
-  # Extract the extensions sequence from the wrapped certificate's raw ASN.1 form
-  def exts_seq
-    # See RFC-2459 section 4.1 (https://tools.ietf.org/html/rfc2459#section-4.1)
-    # to see where this is defined. Essentially this is saying "in the first
-    # sequence in the certificate, find the item that's tagged with 3. This
-    # is where the extensions are stored."
-    @extensions_tag ||= 3
-
-    @exts_seq ||= OpenSSL::ASN1.decode(content.to_der).value[0].find do |data|
-      (data.tag == @extensions_tag) && (data.tag_class == :CONTEXT_SPECIFIC)
-    end.value[0]
-  end
-
-  # Get the DER parsed value of an X.509 extension by it's OID, or short name
-  # if one has been registered with OpenSSL.
-  def get_ext_val(oid)
-    ext_obj = exts_seq.value.find do |ext_seq|
-      ext_seq.value[0].value == oid
-    end
-
-    raw_val = ext_obj.value.last.value
-
-    begin
-      OpenSSL::ASN1.decode(raw_val).value
-    rescue OpenSSL::ASN1::ASN1Error
-      # This is required to maintain backward compatibility with the previous
-      # way trusted facts were signed. See PUP-3560
-      raw_val
-    end
-  end
-
 end

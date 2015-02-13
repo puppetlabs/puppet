@@ -5,7 +5,6 @@ extend Puppet::Acceptance::TempFileUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
-skip_test 'Skip test for the AIO pipeline'
 disable_pe_enterprise_mcollective_agent_classes
 
 initialize_temp_dirs
