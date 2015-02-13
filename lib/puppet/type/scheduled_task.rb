@@ -102,6 +102,9 @@ Puppet::Type.newtype(:scheduled_task) do
           * `start_date` ---  The date when the trigger should first become active.
             Defaults to the current date. You should format dates as YYYY-MM-DD,
             although other date formats may work. (Under the hood, this uses `Date.parse`.)
+			`minutes_interval` --- The repeat interval in minutes.
+            `minutes_duration` --- The duration in minutes, needs to be greater or equal to
+             minutes_interval.
       * For `daily` triggers:
           * `every` --- How often the task should run, as a number of days. Defaults
             to 1. ("2" means every other day, "3" means every three days, etc.)
@@ -140,7 +143,7 @@ Puppet::Type.newtype(:scheduled_task) do
           }
 
           # Run at 8am on the first Monday of the month for January, March, and May,
-          # starting after August 31st, 2011.
+          # starting after August 31st, 2011. Repeat every 10 minutes for 60 minutes.
           trigger => {
             schedule         => monthly,
             start_date       => '2011-08-31', # Defaults to current date
@@ -148,6 +151,8 @@ Puppet::Type.newtype(:scheduled_task) do
             months           => [1,3,5],      # Defaults to all
             which_occurrence => first,        # Must be specified
             day_of_week      => [mon],        # Must be specified
+            minutes_interval => 10,
+            minutes_duration => 60,
           }
 
     EOT
