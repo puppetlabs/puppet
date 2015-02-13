@@ -30,12 +30,28 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class.default?).to be_truthy
   end
 
-  it "should not be the default provider on rhel6" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("6")
-    expect(described_class.default?).not_to be_truthy
+  [ 4, 5, 6 ].each do |ver|
+    it "should not be the default provider on rhel#{ver}" do
+      # In Ruby 1.8.7, the order of hash elements differs from 1.9+ and
+      # caused short-circuiting of the logic used by default.all? in the
+      # provider. As a workaround we need to use stubs() instead of
+      # expects() here. 
+      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+      expect(described_class.default?).not_to be_truthy
+    end
   end
 
+  [ 17, 18, 19, 20, 21 ].each do |ver|
+    it "should be the default provider on fedora#{ver}" do
+      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:fedora)
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("#{ver}")
+      expect(described_class.default?).to be_truthy
+    end
+  end
+  
   it "should be the default provider on sles12" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("12")
