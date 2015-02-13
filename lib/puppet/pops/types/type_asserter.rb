@@ -33,7 +33,9 @@ module Puppet::Pops::Types
     end
 
     def self.check_assignability(tc, subject, wanted, got)
-      raise Puppet::ParseError, "#{subject} value has wrong type, expected #{tc.string(wanted)}, got #{tc.string(got)}" unless tc.assignable?(wanted, got)
+      unless tc.assignable?(wanted, got)
+        raise Puppet::ParseError, "#{subject} value has wrong type, expected #{tc.string(wanted)}, got #{tc.string(got)}"
+      end
     end
     private_class_method :check_assignability
   end

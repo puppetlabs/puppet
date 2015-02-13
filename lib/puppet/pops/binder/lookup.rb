@@ -1,196 +1,90 @@
 # This class is the backing implementation of the Puppet function 'lookup'.
-# See puppet/parser/functions/lookup.rb for documentation.
+# See puppet/functions/lookup.rb for documentation.
 #
 class Puppet::Pops::Binder::Lookup
+  # Performs a lookup in the configured scopes and optionally merges the default.
+  #
+  # This is a backing function and all parameters are assumed to have been type checked.
+  # See puppet/functions/lookup.rb for full documentation and all parameter combinations.
+  #
+  # @param scope [Puppet::Parser::Scope] The scope to use for the lookup
+  # @param name [String|Array<String>] The name or names to lookup
+  # @param type [String|Puppet::Pops::Types::PAnyType] The expected type of the found value. Can be nil
+  # @param default_value [Object] The value to use as default when no value is found
+  # @param accept_undef [Boolean] true if it's accepable to return nil when no value is found. Can be nil
+  # @param override [Hash<String,Object>] A map to use as override. Values found here are returned immediately. Can be empty.
+  # @param extra [Hash<String,Object>] A map to use as the last resort (but before default). Can be empty.
+  # @param merge [String|Hash<String,Object>] Merge strategy or hash with strategy and options
+  # @return [Object] The found value
+  #
+  def self.lookup(scope, name, value_type, default_value, accept_undef, override, extra, merge)
+    value_type = Puppet::Pops::Types::TypeParser.new.parse(value_type || 'Data') unless value_type.is_a?(Puppet::Pops::Types::PAnyType)
+    names = name.is_a?(Array) ? name : [name]
 
-  def self.parse_lookup_args(args)
-    options = {}
-    pblock = args.pop if Puppet::Pops::Types::TypeCalculator.infer(args[-1]).is_a?(Puppet::Pops::Types::PCallableType)
-
-    case args.size
-    when 1
-      # name, or all options
-      if args[ 0 ].is_a?(Hash)
-        options = to_symbolic_hash(args[ 0 ])
-      else
-        options[ :name ] = args[ 0 ]
-      end
-
-    when 2
-      # name and type, or name and options
-      if args[ 1 ].is_a?(Hash)
-        options = to_symbolic_hash(args[ 1 ])
-        options[:name] = args[ 0 ] # silently overwrite option with given name
-      else
-        options[:name] = args[ 0 ]
-        options[:type] = args[ 1 ]
-      end
-
-    when 3
-      # name, type, default (no options)
-      options[ :name ] = args[ 0 ]
-      options[ :type ] = args[ 1 ]
-      options[ :default ] = args[ 2 ]
-    else
-      raise Puppet::ParseError, "The lookup function accepts 1-3 arguments, got #{args.size}"
+    # find first name that yields a non-nil result and wrap it in a two element array
+    # with name and value.
+    result_with_name = names.reduce([nil,nil]) do |memo,key|
+      value = assert_type('override', value_type, override[key])
+      value = search_and_merge(key, value_type, scope, merge) if value.nil?
+      memo = [ key, value ]
+      break memo unless value.nil?
+      memo
     end
-    options[:pblock] = pblock
-    options
+
+    # Use the 'extra' map as a last resort if nothing is found
+    if result_with_name[1].nil? && !extra.empty?
+      result_with_name = names.reduce(result_with_name) do |memo,key|
+        value = assert_type('extra', value_type, extra[key])
+        memo = [ key, value ]
+        break memo unless value.nil?
+        memo
+      end
+    end
+
+    answer = result_with_name[1]
+    if answer.nil?
+      if block_given?
+        answer = assert_type('default_block', value_type, yield(name))
+      else
+        answer = assert_type('default_value', value_type, default_value)
+      end
+      fail_lookup(names) if answer.nil? && !accept_undef
+    end
+    answer
   end
 
-  def self.to_symbolic_hash(input)
-    names = [:name, :type, :default, :accept_undef, :extra, :override]
-    options = {}
-    names.each {|n| options[n] = input[n.to_s] || input[n] }
-    options
-  end
-  private_class_method :to_symbolic_hash
+  def self.search_and_merge(name, type, scope, merge)
+    in_global = lambda { lookup_with_databinding(name, type, scope) }
+    in_env = lambda { Puppet::DataProviders.lookup_in_environment(name, scope, merge) }
+    in_module = lambda { Puppet::DataProviders.lookup_in_module(name, scope, merge) }
 
-  def self.type_mismatch(type_calculator, expected, got)
-    "has wrong type, expected #{type_calculator.string(expected)}, got #{type_calculator.string(got)}"
+    [in_global, in_env, in_module].reduce(nil) do |memo, f|
+      answer = f.call
+      next memo if answer.nil? # nothing found, continue with next
+      break answer if merge.nil? # answer found and no merge
+      next answer if memo.nil?
+      Puppet::Pops::MergeStrategy.merge(memo, answer, merge)
+    end
   end
-  private_class_method :type_mismatch
+  private_class_method :search_and_merge
 
-  def self.fail(msg)
-    raise Puppet::ParseError, "Function lookup() " + msg
+  def self.lookup_with_databinding(name, type, scope)
+    begin
+      Puppet::DataBinding.indirection.find(name, { :environment => scope.environment.to_s, :variables => scope })
+    rescue Puppet::DataBinding::LookupError => e
+      raise Puppet::Error, "Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e
+    end
   end
-  private_class_method :fail
+  private_class_method :lookup_with_databinding
+
+  def self.assert_type(subject, type, value)
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of(subject, type, value, true)
+  end
+  private_class_method :assert_type
 
   def self.fail_lookup(names)
-    name_part = if names.size == 1
-      "the name '#{names[0]}'"
-    else
-      "any of the names ['" + names.join(', ') + "']"
-    end
-    fail("did not find a value for #{name_part}")
+    name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map {|n| "'#{n}'"} .join(', ') + ']'
+    raise Puppet::ParseError, "Function lookup() did not find a value for #{name_part}"
   end
   private_class_method :fail_lookup
-
-  def self.validate_options(options, type_calculator)
-    type_parser = Puppet::Pops::Types::TypeParser.new
-    name_type = type_parser.parse('Variant[Array[String], String]')
-
-    if is_nil_or_undef?(options[:name]) || options[:name].is_a?(Array) && options[:name].empty?
-      fail ("requires a name, or array of names. Got nothing to lookup.")
-    end
-
-    t = type_calculator.infer(options[:name])
-    if ! type_calculator.assignable?(name_type, t)
-      fail("given 'name' argument, #{type_mismatch(type_calculator, options[:name], t)}")
-    end
-
-    # unless a type is already given (future case), parse the type (or default 'Data'), fails if invalid type is given
-    unless options[:type].is_a?(Puppet::Pops::Types::PAnyType)
-      options[:type] = type_parser.parse(options[:type] || 'Data')
-    end
-
-    # default value must comply with the given type
-    if options[:default]
-      t = type_calculator.infer(options[:default])
-      if ! type_calculator.assignable?(options[:type], t)
-        fail("'default' value #{type_mismatch(type_calculator, options[:type], t)}")
-      end
-    end
-
-    if options[:extra] && !options[:extra].is_a?(Hash)
-      # do not perform inference here, it is enough to know that it is not a hash
-      fail("'extra' value must be a Hash, got #{options[:extra].class}")
-    end
-    options[:extra] = {} unless options[:extra]
-
-    if options[:override] && !options[:override].is_a?(Hash)
-      # do not perform inference here, it is enough to know that it is not a hash
-      fail("'override' value must be a Hash, got #{options[:extra].class}")
-    end
-    options[:override] = {} unless options[:override]
-
-  end
-  private_class_method :validate_options
-
-  def self.is_nil_or_undef?(x)
-    x.nil? || x == :undef
-  end
-  private_class_method :is_nil_or_undef?
-
-  # This is used as a marker - a value that cannot (at least not easily) by mistake be found in
-  # hiera data.
-  #
-  class PrivateNotFoundMarker; end
-
-  def self.search_for(scope, type, name, options)
-    # search in order, override, injector, hiera, then extra
-    if !(result = options[:override][name]).nil?
-      result
-    elsif !(result = scope.compiler.injector.lookup(scope, type, name)).nil?
-      result
-   else
-     result = call_hiera_function(scope, name, PrivateNotFoundMarker)
-     if !result.nil? && result != PrivateNotFoundMarker
-       result
-     else
-       options[:extra][name]
-     end
-   end
-  end
-  private_class_method :search_for
-
-  def self.call_hiera_function(scope, name, dflt)
-    loader = scope.compiler.loaders.private_environment_loader
-    func = loader.load(:function, :hiera) unless loader.nil?
-    raise Error, 'Function not found: hiera' if func.nil?
-    func.call(scope, name, dflt)
-  end
-  private_class_method :call_hiera_function
-
-    # This is the method called from the puppet/parser/functions/lookup.rb
-  # @param args [Array] array following the puppet function call conventions
-  def self.lookup(scope, args)
-    type_calculator = Puppet::Pops::Types::TypeCalculator.new
-    options = parse_lookup_args(args)
-    validate_options(options, type_calculator)
-    names = [options[:name]].flatten
-    type = options[:type]
-
-    result_with_name = names.reduce([]) do |memo, name|
-      break memo if !memo[1].nil?
-      [name, search_for(scope, type, name, options)]
-    end
-
-    result = if result_with_name[1].nil?
-      # not found, use default (which may be nil), the default is already type checked
-      options[:default]
-    else
-      # injector.lookup is type-safe already do no need to type check the result
-      result_with_name[1]
-    end
-
-    result = if pblock = options[:pblock]
-      result2 = case pblock.parameter_count
-      when 1
-        pblock.call(result)
-      when 2
-        pblock.call(result_with_name[ 0 ], result)
-      else
-        pblock.call(result_with_name[ 0 ], result, options[ :default ])
-      end
-
-      # if the given result was returned, there is no need to type-check it again
-      if !result2.equal?(result)
-        t = type_calculator.infer(result2)
-        if !type_calculator.assignable?(type, t)
-          fail "the value produced by the given code block #{type_mismatch(type_calculator, type, t)}"
-        end
-      end
-      result2
-    else
-      result
-    end
-
-    # Finally, the result if nil must be acceptable or an error is raised
-    if is_nil_or_undef?(result) && !options[:accept_undef]
-      fail_lookup(names)
-    else
-      result
-    end
-  end
 end

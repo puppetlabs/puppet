@@ -1,52 +1,57 @@
 Puppet::Parser::Functions.newfunction(:lookup, :type => :rvalue, :arity => -2, :doc => <<-'ENDHEREDOC') do |args|
-Looks up data defined using Puppet Bindings and Hiera.
-The function is callable with one to three arguments and optionally with a code block to further process the result.
+Looks up data defined using Hiera and Data Providers
+The function is callable with one to four arguments and optionally with a code block to provide default value.
 
 The lookup function can be called in one of these ways:
 
     lookup(name)
-    lookup(name, type)
-    lookup(name, type, default)
+    lookup(name, value_type)
+    lookup(name, value_type, default_value)
+    lookup(name, value_type, default_value, merge)
     lookup(options_hash)
     lookup(name, options_hash)
 
-The function may optionally be called with a code block / lambda with the following signatures:
+The function may optionally be called with a code block / lambda with the following signature:
 
-    lookup(...) |$result| { ... }
-    lookup(...) |$name, $result| { ... }
-    lookup(...) |$name, $result, $default| { ... }
+    lookup(...) |$name| { ... }
 
-The longer signatures are useful when the block needs to raise an error (it can report the name), or
-if it needs to know if the given default value was selected.
+The block, if present, is mutually exclusive to the `default_value` and will be called with the `name` used in
+in the lookup when no value is found. The value produced by the block then becomes the value produced by the
+lookup.
 
-The code block receives the following three arguments:
-
-* The `$name` is the last name that was looked up (*the* name if only one name was looked up)
-* The `$result` is the looked up value (or the default value if not found).
-* The `$default` is the given default value (`undef` if not given).
-
-The block, if present, is called with the result from the lookup. The value produced by the block is also what is
-produced by the `lookup` function.
-When a block is used, it is the users responsibility to call `error` if the result does not meet additional
-criteria, or if an undef value is not acceptable. If a value is not found, and a default has been
-specified, the default value is given to the block.
+When a block is used, it is the users responsibility to call `error` if an undef value is not acceptable.
 
 The content of the options hash is:
 
 * `name` - The name or array of names to lookup (first found is returned)
-* `type` - The type to assert (a Type or a type specification in string form)
-* `default` - The default value if there was no value found (must comply with the data type)
+* `value_type` - The type to assert (a Type or a type specification in string form)
+* `default_value` - The default value if there was no value found (must comply with the data type)
 * `accept_undef` - (default `false`) An `undef` result is accepted if this options is set to `true`.
 * `override` - a hash with map from names to values that are used instead of the underlying bindings. If the name
   is found here it wins. Defaults to an empty hash.
 * `extra` - a hash with map from names to values that are used as a last resort to obtain a value. Defaults to an
   empty hash.
+* `merge` - a string or a hash denoting merge strategy. A string that is one of'unique', 'hash', or 'merge' or
+   a hash with the key 'strategy' set to that string. The hash may then contain additional options for the given
+   strategy.
 
-When the call is on the form `lookup(name, options_hash)`, or `lookup(name, type, options_hash)`, the given name
-argument wins over the `options_hash['name']`.
+It is not permitted to pass the `name` as both a parameter and in the options hash.
 
-The search order is `override` (if given), then `binder`, then `hiera` and finally `extra` (if given). The first to produce
-a value other than undef for a given name wins.
+The search will proceed as follows:
+For each name given in the `name` array (or once, if it's just one name):
+ - If an override is found, it's returned
+ - Search and optionally merge `global` (hiera), `environment`, and `module`
+ - Return if a value is found
+
+Again, for each name given in the `name` array (or once, if it's just one name):
+ - If an extra entry is found, it's returned
+
+Finally, fall back to default (or a given code block).
+
+The `merge` strategies are:
+ - 'hash' Perform a native Ruby Hash.merge. Arguments must be Hash.
+ - 'unique' Append everything to an array, and do a flatten and a unique at the end. Arguments can be Array or scalar.
+ - 'deep' Perform deep_merge on arrays and hashes using DeepMerge.deep_merge with options. Arguments must be Hash or Array
 
 The type specification is one of:
 
@@ -102,39 +107,20 @@ has the given data type (`String` in the example above):
     lookup('the_name', 'String', 'Fred')
     lookup('the_name', String, 'Fred')
 
-Using a lambda to process the looked up result - asserting that it starts with an upper case letter:
+Using a lambda to provide a default value by calling a function:
 
-    lookup('the_size', Integer[1,100]) |$result| {
-      if $large_value_allowed and $result > 10
-        { error 'Values larger than 10 are not allowed'}
-      $result
-    }
-
-Including the name in the error
-
-    lookup('the_size', Integer[1,100]) |$name, $result| {
-      if $large_value_allowed and $result > 10
-        { error 'The bound value for '${name}' can not be larger than 10 in this configuration'}
-      $result
+    lookup('the_size', Integer[1,100]) |$name| {
+      obtain_size_default()
     }
 
 When using a block, the value it produces is also asserted against the given type, and it may not be
 `undef` unless the option `'accept_undef'` is `true`.
 
-All options work as the corresponding (direct) argument. The `first_found` option and
-`accept_undef` are however only available as options.
-
-Using first_found semantics option to return the first name that has a bound value:
-
-    lookup(['apache::port', 'nginx::port'], 'Integer', 80)
-
 If you want to make lookup return undef when no value was found instead of raising an error:
 
      $are_you_there = lookup('peekaboo', { accept_undef => true} )
-     $are_you_there = lookup('peekaboo', { accept_undef => true}) |$result| { $result }
 
 - Since 4.0.0
 ENDHEREDOC
-
-  Puppet::Pops::Binder::Lookup.lookup(self, args)
+  function_fail(["lookup() has been converted to 4x API"])
 end

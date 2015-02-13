@@ -38,6 +38,7 @@ module Puppet
     require 'puppet/pops/types/class_loader'
     require 'puppet/pops/types/enumeration'
 
+    require 'puppet/pops/merge_strategy'
 
     module Model
       require 'puppet/pops/model/tree_dumper'
