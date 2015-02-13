@@ -45,7 +45,8 @@ config.header = <<EOT
 * Each of these settings can be specified in `puppet.conf` or on the
   command line.
 * When using boolean settings on the command line, use `--setting` and
-  `--no-setting` instead of `--setting (true|false)`.
+  `--no-setting` instead of `--setting (true|false)`. (Using `--setting false`
+  results in "Error: Could not parse application options: needless argument".)
 * Settings can be interpolated as `$variables` in other settings; `$environment`
   is special, in that puppet master will interpolate each agent node's
   environment instead of its own.
