@@ -1,3 +1,5 @@
+require 'deep_merge/core'
+
 module Puppet::Pops
   # Merges to objects into one based on an implemented strategy.
   #
@@ -176,49 +178,41 @@ module Puppet::Pops
     MergeStrategy.add_strategy(self)
   end
 
-  begin
-    # Avoid using the full gem since adds methods to the core Hash class
-    require 'deep_merge/core'
-
-    # Performs a deep merge. The arguments can be either Hash or Array
-    #
-    # @see https://github.com/danielsdeleo/deep_merge
-    #
-    class DeepMergeStrategy < MergeStrategy
-      def checked_merge(e1, e2, options)
-        # e1 (the destination) is cloned to avoid that the passed in object mutates
-        DeepMerge.deep_merge!(e1, e2.clone, { :preserve_unmergeables => false }.merge(options))
-      end
-
-      def key
-        :deep
-      end
-
-      protected
-
-      # Returns a type that allows all deep_merge options except 'preserve_unmergeables' since we force
-      # the setting of that option to false
-      #
-      # @return [Puppet::Pops::Types::PAnyType] the puppet type used when validating the options hash
-      def options_t
-        @options_t ||= Puppet::Pops::Types::TypeParser.new.parse('Struct[{'\
-            "strategy=>Optional[Pattern[#{key}]],"\
-            'knockout_prefix=>Optional[String],'\
-            'merge_debug=>Optional[Boolean],'\
-            'merge_hash_arrays=>Optional[Boolean],'\
-            'sort_merge_arrays=>Optional[Boolean],'\
-            'unpack_arrays=>Optional[String]'\
-            '}]')
-      end
-
-      def value_t
-        @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Variant[Array[Data],Hash[String,Data]]')
-      end
-
-      MergeStrategy.add_strategy(self)
+  # Performs a deep merge. The arguments can be either Hash or Array
+  #
+  # @see https://github.com/danielsdeleo/deep_merge
+  #
+  class DeepMergeStrategy < MergeStrategy
+    def checked_merge(e1, e2, options)
+      # e1 (the destination) is cloned to avoid that the passed in object mutates
+      DeepMerge.deep_merge!(e1, e2.clone, { :preserve_unmergeables => false }.merge(options))
     end
-  rescue LoadError
-    # Deep merge missing. OK but let's print a debug statement
-    Puppet.debug("Merge strategy for 'deep' merge is not present because the deep_merge gem is not present")
+
+    def key
+      :deep
+    end
+
+    protected
+
+    # Returns a type that allows all deep_merge options except 'preserve_unmergeables' since we force
+    # the setting of that option to false
+    #
+    # @return [Puppet::Pops::Types::PAnyType] the puppet type used when validating the options hash
+    def options_t
+      @options_t ||= Puppet::Pops::Types::TypeParser.new.parse('Struct[{'\
+          "strategy=>Optional[Pattern[#{key}]],"\
+          'knockout_prefix=>Optional[String],'\
+          'merge_debug=>Optional[Boolean],'\
+          'merge_hash_arrays=>Optional[Boolean],'\
+          'sort_merge_arrays=>Optional[Boolean],'\
+          'unpack_arrays=>Optional[String]'\
+          '}]')
+    end
+
+    def value_t
+      @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Variant[Array[Data],Hash[String,Data]]')
+    end
+
+    MergeStrategy.add_strategy(self)
   end
 end
