@@ -2,10 +2,18 @@ HOSTS:
   master:
     roles:
       - master
-      - agent
     platform: el-6-x86_64
     hypervisor: vcloud
     template: redhat-6-x86_64
+    systembindir: /opt/puppetlabs/agent/bin
+    puppetconfdir: /etc/puppetlabs/agent
+    puppetcodedir: /etc/puppetlabs/agent
+    puppetvardir: /opt/puppetlabs/agent/cache
+    distmoduledir: /etc/puppetlabs/agent/modules
+    # puppet-agent 0.3.1 package on the master still uses /usr/share
+    sitemoduledir: /usr/share/puppet/modules
+    hieraconf: /etc/puppetlabs/puppet/hiera.yaml
+    puppetserver-confdir: /etc/puppetserver/conf.d/
   rhel-agent:
     roles:
       - agent
