@@ -35,7 +35,7 @@ module Puppet
       end
 
       def log_dir
-        "$vardir/log"
+        RunMode[name].log_dir
       end
 
       private
@@ -61,6 +61,10 @@ module Puppet
       def var_dir
         which_dir("/var/lib/puppet", "~/.puppet/var")
       end
+
+      def log_dir
+        which_dir("/var/log/puppetlabs", "~/.puppet/var/log")
+      end
     end
 
     class WindowsRunMode < RunMode
@@ -70,6 +74,10 @@ module Puppet
 
       def var_dir
         which_dir(File.join(windows_common_base("var")), "~/.puppet/var")
+      end
+
+      def log_dir
+        which_dir(File.join(windows_common_base("var/log")), "~/.puppet/var/log")
       end
 
     private

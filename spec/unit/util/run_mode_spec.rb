@@ -59,6 +59,28 @@ describe Puppet::Util::RunMode do
         end
       end
     end
+
+    describe "#log_dir" do
+      describe "when run as root" do
+        it "has logdir /var/log/puppetlabs" do
+          as_root { expect(@run_mode.log_dir).to eq(File.expand_path('/var/log/puppetlabs')) }
+        end
+      end
+
+      describe "when run as non-root" do
+        it "has default logdir ~/.puppet/var/log" do
+          as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.puppet/var/log')) }
+        end
+
+        it "fails when asking for the log_dir and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
+          end
+        end
+      end
+    end
   end
 
   describe Puppet::Util::WindowsRunMode, :if => Puppet.features.microsoft_windows? do
