@@ -6,10 +6,6 @@ describe Puppet::Util::RunMode do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end
 
-  it "has rundir depend on vardir" do
-    expect(@run_mode.run_dir).to eq('$vardir/run')
-  end
-
   describe Puppet::Util::UnixRunMode, :unless => Puppet.features.microsoft_windows? do
     before do
       @run_mode = Puppet::Util::UnixRunMode.new('fake')
@@ -76,6 +72,28 @@ describe Puppet::Util::RunMode do
           as_non_root do
             without_home do
               expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
+            end
+          end
+        end
+      end
+    end
+
+    describe "#run_dir" do
+      describe "when run as root" do
+        it "has rundir /var/run/puppetlabs" do
+          as_root { expect(@run_mode.run_dir).to eq(File.expand_path('/var/run/puppetlabs')) }
+        end
+      end
+
+      describe "when run as non-root" do
+        it "has default rundir ~/.puppet/var/run" do
+          as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppet/var/run')) }
+        end
+
+        it "fails when asking for the run_dir and there is no $HOME" do
+          as_non_root do
+            without_home do
+              expect { @run_mode.run_dir }.to raise_error ArgumentError, /couldn't find HOME/
             end
           end
         end

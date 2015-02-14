@@ -98,7 +98,7 @@ Puppet::Face.define(:config, '0.0.1') do
     examples <<-'EOT'
       Set puppet's runfile directory:
 
-      $ puppet config set rundir /var/run/puppet
+      $ puppet config set rundir /var/run/puppetlabs
 
       Set the vardir for only the agent:
 
