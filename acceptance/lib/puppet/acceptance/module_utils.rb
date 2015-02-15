@@ -7,8 +7,8 @@ module Puppet
       # Example return value:
       #
       # [
-      #   "/etc/puppetlabs/puppet/environments/production/modules",
-      #   "/etc/puppetlabs/puppet/modules",
+      #   "/etc/puppetlabs/code/environments/production/modules",
+      #   "/etc/puppetlabs/code/modules",
       #   "/opt/puppet/share/puppet/modules",
       # ]
       #
@@ -27,7 +27,7 @@ module Puppet
       #
       # Example return value:
       #
-      #   "/etc/puppetlabs/puppet/environments/production/modules"
+      #   "/etc/puppetlabs/code/environments/production/modules"
       #
       # @param host [String] hostname
       # @return [String] first path for found modulepath

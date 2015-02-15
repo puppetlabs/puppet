@@ -263,13 +263,13 @@ module Puppet
           this provides the default environment for nodes we know nothing about."
     },
     :environmentpath => {
-      :default => "$confdir/environments",
+      :default => "$codedir/environments",
       :desc    => "A search path for directory environments, as a list of directories
         separated by the system path separator character. (The POSIX path separator
         is ':', and the Windows path separator is ';'.)
 
         This setting must have a value set to enable **directory environments.** The
-        recommended value is `$confdir/environments`. For more details, see
+        recommended value is `$codedir/environments`. For more details, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :type    => :path,
     },
@@ -356,7 +356,7 @@ module Puppet
       :desc    => "Where to retrive information about data.",
     },
     :hiera_config => {
-      :default => "$confdir/hiera.yaml",
+      :default => "$codedir/hiera.yaml",
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
@@ -1054,7 +1054,7 @@ EOT
       :desc       => "File that provides mapping between custom SSL oids and user-friendly names"
     },
     :basemodulepath => {
-      :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :default => "$codedir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
       :type => :path,
       :desc => "The search path for **global** modules. Should be specified as a
         list of directories separated by the system path separator character. (The
