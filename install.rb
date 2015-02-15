@@ -202,6 +202,9 @@ def prepare_installation
     opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppetlabs/puppet') do |configdir|
       InstallOptions.configdir = configdir
     end
+    opts.on('--codedir[=OPTIONAL]', 'Installation directory for code files', 'Default /etc/puppetlabs/code') do |codedir|
+      InstallOptions.codedir = codedir
+    end
     opts.on('--vardir[=OPTIONAL]', 'Installation directory for var files', 'Default /opt/puppetlabs/puppet/cache') do |vardir|
       InstallOptions.vardir = vardir
     end
@@ -267,6 +270,14 @@ def prepare_installation
     configdir = "/etc/puppetlabs/puppet"
   end
 
+  if not InstallOptions.codedir.nil?
+    codedir = InstallOptions.codedir
+  elsif $operatingsystem == "windows"
+    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "code")
+  else
+    codedir = "/etc/puppetlabs/code"
+  end
+
   if not InstallOptions.vardir.nil?
     vardir = InstallOptions.vardir
   elsif $operatingsystem == "windows"
@@ -329,6 +340,7 @@ def prepare_installation
   end
 
   configdir = join(destdir, configdir)
+  codedir = join(destdir, codedir)
   vardir = join(destdir, vardir)
   rundir = join(destdir, rundir)
   logdir = join(destdir, logdir)
@@ -337,6 +349,7 @@ def prepare_installation
   sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(codedir)
   FileUtils.makedirs(bindir)
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
@@ -345,6 +358,7 @@ def prepare_installation
   FileUtils.makedirs(logdir)
 
   InstallOptions.site_dir = sitelibdir
+  InstallOptions.codedir = codedir
   InstallOptions.config_dir = configdir
   InstallOptions.bin_dir = bindir
   InstallOptions.lib_dir = libdir
