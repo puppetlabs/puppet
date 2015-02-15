@@ -21,7 +21,7 @@ Puppet::Face.define(:module, '1.0.0') do
       List installed modules:
 
       $ puppet module list
-        /etc/puppetlabs/puppet/modules
+        /etc/puppetlabs/code/modules
         ├── bodepd-create_resources (v0.0.1)
         ├── puppetlabs-bacula (v0.0.2)
         ├── puppetlabs-mysql (v0.0.1)
@@ -32,7 +32,7 @@ Puppet::Face.define(:module, '1.0.0') do
       List installed modules in a tree view:
 
       $ puppet module list --tree
-        /etc/puppetlabs/puppet/modules
+        /etc/puppetlabs/code/modules
         └─┬ puppetlabs-bacula (v0.0.2)
           ├── puppetlabs-stdlib (v2.2.1)
           ├─┬ puppetlabs-mysql (v0.0.1)
@@ -43,7 +43,7 @@ Puppet::Face.define(:module, '1.0.0') do
       List installed modules from a specified environment:
 
       $ puppet module list --environment production
-        /etc/puppetlabs/puppet/modules
+        /etc/puppetlabs/code/modules
         ├── bodepd-create_resources (v0.0.1)
         ├── puppetlabs-bacula (v0.0.2)
         ├── puppetlabs-mysql (v0.0.1)
@@ -207,7 +207,7 @@ Puppet::Face.define(:module, '1.0.0') do
   # When the above data structure is passed to Puppet::ModuleTool.build_tree
   # you end up with something like this:
   #
-  #   /etc/puppetlabs/puppet/modules
+  #   /etc/puppetlabs/code/modules
   #   └─┬ puppetlabs-bacula (v0.0.2)
   #     ├── puppetlabs-stdlib (v2.2.1)
   #     ├─┬ puppetlabs-mysql (v1.0.0)

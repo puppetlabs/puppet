@@ -12,7 +12,7 @@ Puppet::Face.define(:module, '1.0.0') do
       Uninstall a module:
 
       $ puppet module uninstall puppetlabs-ssh
-      Removed /etc/puppetlabs/puppet/modules/ssh (v1.0.0)
+      Removed /etc/puppetlabs/code/modules/ssh (v1.0.0)
 
       Uninstall a module from a specific directory:
 
@@ -22,12 +22,12 @@ Puppet::Face.define(:module, '1.0.0') do
       Uninstall a module from a specific environment:
 
       $ puppet module uninstall puppetlabs-ssh --environment development
-      Removed /etc/puppetlabs/puppet/environments/development/modules/ssh (v1.0.0)
+      Removed /etc/puppetlabs/code/environments/development/modules/ssh (v1.0.0)
 
       Uninstall a specific version of a module:
 
       $ puppet module uninstall puppetlabs-ssh --version 2.0.0
-      Removed /etc/puppetlabs/puppet/modules/ssh (v2.0.0)
+      Removed /etc/puppetlabs/code/modules/ssh (v2.0.0)
     EOT
 
     arguments "<name>"

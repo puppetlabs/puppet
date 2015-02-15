@@ -63,14 +63,14 @@ describe 'HieraPuppet' do
       expect(HieraPuppet.send(:hiera_config_file)).to eq(Puppet[:hiera_config])
     end
 
-    it "should use Puppet.settings[:confdir] as the base directory when hiera_config is not set" do
+    it "should use Puppet.settings[:codedir] as the base directory when hiera_config is not set" do
       begin
         Puppet.settings[:hiera_config] = nil
       rescue ArgumentError => detail
         raise unless detail.message =~ /unknown setting/
       end
-      Puppet.settings[:confdir] = "/dev/null/puppet"
-      hiera_config = File.join(Puppet[:confdir], 'hiera.yaml')
+      Puppet.settings[:codedir] = "/dev/null/puppet"
+      hiera_config = File.join(Puppet[:codedir], 'hiera.yaml')
       Puppet::FileSystem.stubs(:exist?).with(hiera_config).returns(true)
 
       expect(HieraPuppet.send(:hiera_config_file)).to eq(hiera_config)
