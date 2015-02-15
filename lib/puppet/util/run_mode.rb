@@ -59,7 +59,7 @@ module Puppet
       end
 
       def var_dir
-        which_dir("/var/lib/puppet", "~/.puppet/var")
+        which_dir("/opt/puppetlabs/puppet/cache", "~/.puppet/var")
       end
 
       def run_dir

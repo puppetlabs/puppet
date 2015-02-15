@@ -39,8 +39,8 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#var_dir" do
-      it "has vardir /var/lib/puppet when run as root" do
-        as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/var/lib/puppet')) }
+      it "has vardir /opt/puppetlabs/puppet/cache when run as root" do
+        as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/opt/puppetlabs/puppet/cache')) }
       end
 
       it "has vardir ~/.puppet/var when run as non-root" do
