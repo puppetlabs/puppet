@@ -43,6 +43,15 @@ module Puppet
           directory, but if it's running as any other user, it defaults to being
           in the user's home directory.",
     },
+    :codedir  => {
+        :default  => nil,
+        :type     => :directory,
+        :desc     => "The main Puppet code directory.  The default for this setting
+          is calculated based on the user.  If the process is running as root or
+          the user that Puppet is supposed to run as, it defaults to a system
+          directory, but if it's running as any other user, it defaults to being
+          in the user's home directory.",
+    },
     :vardir   => {
         :default  => nil,
         :type     => :directory,

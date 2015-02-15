@@ -38,6 +38,34 @@ describe Puppet::Util::RunMode do
       end
     end
 
+    describe "#code_dir" do
+      it "has codedir /etc/puppetlabs/code when run as root" do
+        as_root { expect(@run_mode.code_dir).to eq(File.expand_path('/etc/puppetlabs/code')) }
+      end
+
+      it "has codedir ~/.puppet/code when run as non-root" do
+        as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path('~/.puppet/code')) }
+      end
+
+      context "master run mode" do
+        before do
+          @run_mode = Puppet::Util::UnixRunMode.new('master')
+        end
+
+        it "has codedir ~/.puppet/code when run as non-root and master run mode" do
+          as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path('~/.puppet/code')) }
+        end
+      end
+
+      it "fails when asking for the code_dir as non-root and there is no $HOME" do
+        as_non_root do
+          without_home do
+            expect { @run_mode.code_dir }.to raise_error ArgumentError, /couldn't find HOME/
+          end
+        end
+      end
+    end
+
     describe "#var_dir" do
       it "has vardir /opt/puppetlabs/puppet/cache when run as root" do
         as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/opt/puppetlabs/puppet/cache')) }
@@ -131,6 +159,28 @@ describe Puppet::Util::RunMode do
             without_env('HOMEDRIVE') do
               without_env('USERPROFILE') do
                 expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+              end
+            end
+          end
+        end
+      end
+    end
+
+    describe "#code_dir" do
+      it "has codedir ending in PuppetLabs/puppet/code when run as root" do
+        as_root { expect(@run_mode.code_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "code"))) }
+      end
+
+      it "has codedir in ~/.puppet/code when run as non-root" do
+        as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path("~/.puppet/code")) }
+      end
+
+      it "fails when asking for the code_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
+        as_non_root do
+          without_env('HOME') do
+            without_env('HOMEDRIVE') do
+              without_env('USERPROFILE') do
+                expect { @run_mode.code_dir }.to raise_error ArgumentError, /couldn't find HOME/
               end
             end
           end

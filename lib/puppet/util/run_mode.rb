@@ -58,6 +58,10 @@ module Puppet
         which_dir("/etc/puppetlabs/puppet", "~/.puppet")
       end
 
+      def code_dir
+        which_dir("/etc/puppetlabs/code", "~/.puppet/code")
+      end
+
       def var_dir
         which_dir("/opt/puppetlabs/puppet/cache", "~/.puppet/var")
       end
@@ -74,6 +78,10 @@ module Puppet
     class WindowsRunMode < RunMode
       def conf_dir
         which_dir(File.join(windows_common_base("etc")), "~/.puppet")
+      end
+
+      def code_dir
+        which_dir(File.join(windows_common_base("code")), "~/.puppet/code")
       end
 
       def var_dir

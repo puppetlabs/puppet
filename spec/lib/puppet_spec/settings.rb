@@ -9,6 +9,7 @@ module PuppetSpec::Settings
     :name         => { :default => "test", :desc => "name" },
     :logdir       => { :type => :directory, :default => "test", :desc => "logdir" },
     :confdir      => { :type => :directory, :default => "test", :desc => "confdir" },
+    :codedir      => { :type => :directory, :default => "test", :desc => "codedir" },
     :vardir       => { :type => :directory, :default => "test", :desc => "vardir" },
     :rundir       => { :type => :directory, :default => "test", :desc => "rundir" },
   }
