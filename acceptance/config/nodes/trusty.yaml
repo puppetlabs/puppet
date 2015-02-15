@@ -20,6 +20,13 @@ HOSTS:
     platform: ubuntu-trusty-i386
     hypervisor: vcloud
     template: ubuntu-1404-i386
+    puppetcodedir: /etc/puppetlabs/code
+    distmoduledir: /etc/puppetlabs/code/modules
+    hieraconf:     /etc/puppetlabs/code/hiera.yaml
+    puppetconfdir: /etc/puppetlabs/puppet
+    puppetbindir:  /opt/puppetlabs/puppet/bin
+    puppetvardir:  /opt/puppetlabs/puppet/cache
+    sitemoduledir: /opt/puppetlabs/puppet/modules
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
