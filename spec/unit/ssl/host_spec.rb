@@ -649,7 +649,7 @@ describe Puppet::SSL::Host do
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
 
-        @ca.expects(:sign).with(@host.name, true)
+        @ca.expects(:sign).with(@host.name, {:allow_dns_alt_names => true})
 
         @host.generate
       end

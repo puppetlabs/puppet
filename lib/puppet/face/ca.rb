@@ -178,7 +178,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       Puppet::SSL::Host.ca_location = :only
 
       begin
-        ca.sign(host, options[:allow_dns_alt_names])
+        ca.sign(host, options)
       rescue ArgumentError => e
         if e.to_s =~ /Could not find certificate request/
           e.to_s

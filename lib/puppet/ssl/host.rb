@@ -172,6 +172,15 @@ DOC
       elsif Puppet::SSL::CertificateAuthority.ca? and fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
         options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
       end
+      if Puppet[:request_pkinit_client]
+        options[:request_pkinit_client] ||= Puppet[:request_pkinit_client]
+      end
+      if Puppet[:request_pkinit_kdc]
+        options[:request_pkinit_kdc] ||= Puppet[:request_pkinit_kdc]
+      end
+      if Puppet[:kerberos_realm]
+        options[:kerberos_realm] ||= Puppet[:kerberos_realm]
+      end
     end
 
     csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
@@ -233,7 +242,7 @@ ERROR_STRING
     # should use it to sign our request; else, just try to read
     # the cert.
     if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, true)
+      ca.sign(self.name, { :allow_dns_alt_names => true } )
     end
   end
 

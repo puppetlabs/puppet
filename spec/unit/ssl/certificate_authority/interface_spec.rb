@@ -162,8 +162,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should sign the specified waiting certificate requests" do
           @options = {:allow_dns_alt_names => false}
 
-          @ca.expects(:sign).with("host1", false)
-          @ca.expects(:sign).with("host2", false)
+          @ca.expects(:sign).with("host1", {:allow_dns_alt_names => false})
+          @ca.expects(:sign).with("host2", {:allow_dns_alt_names => false})
 
           applier.apply(@ca)
         end
@@ -171,8 +171,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should sign the certificate requests with alt names if specified" do
           @options = {:allow_dns_alt_names => true}
 
-          @ca.expects(:sign).with("host1", true)
-          @ca.expects(:sign).with("host2", true)
+          @ca.expects(:sign).with("host1", {:allow_dns_alt_names => true})
+          @ca.expects(:sign).with("host2", {:allow_dns_alt_names => true})
 
           applier.apply(@ca)
         end
@@ -182,8 +182,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should sign all waiting certificate requests" do
           @ca.stubs(:waiting?).returns(%w{cert1 cert2})
 
-          @ca.expects(:sign).with("cert1", nil)
-          @ca.expects(:sign).with("cert2", nil)
+          @ca.expects(:sign).with("cert1", {}, nil)
+          @ca.expects(:sign).with("cert2", {}, nil)
 
           @applier = @class.new(:sign, :to => :all)
           @applier.apply(@ca)

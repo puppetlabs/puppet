@@ -74,6 +74,14 @@ class Puppet::Application::Cert < Puppet::Application
     options[:allow_dns_alt_names] = value
   end
 
+  option("--[no-]allow-pkinit-kdc") do |value|
+    options[:allow_pkinit_kdc] = value
+  end
+
+  option("--[no-]allow-pkinit-client") do |value|
+    options[:allow_pkinit_client] = value
+  end
+
   option("--verbose", "-v") do |arg|
     options[:verbose] = true
     set_log_level
@@ -246,6 +254,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       if Puppet.settings.set_by_cli?(:dns_alt_names)
         options[:dns_alt_names] = Puppet[:dns_alt_names]
       end
+      options[:request_pkinit_client] ||= Puppet[:request_pkinit_client]
+      options[:request_pkinit_kdc] ||= Puppet[:request_pkinit_kdc]
+      options[:kerberos_realm] ||= Puppet[:kerberos_realm]
     end
 
     begin

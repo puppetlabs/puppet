@@ -550,6 +550,21 @@ have a pool of multiple load balanced masters, or for the same master to
 respond on two physically separate networks under different names.
 EOT
     },
+    :request_pkinit_client => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Add a PKINIT Client subjectAltName extension to certificate requests.",
+    },
+    :request_pkinit_kdc => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Add a PKINIT KDC subjectAltName extension to certificate requests.",
+    },
+    :kerberos_realm => {
+      :default => nil,
+      :type => :string,
+      :desc => "The Kerberos realm to use in PKINIT extesions.",
+    },
     :csr_attributes => {
       :default => "$confdir/csr_attributes.yaml",
       :type => :file,
