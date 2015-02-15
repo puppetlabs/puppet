@@ -56,7 +56,7 @@ None
         "links": "manage",
         "mode": 420,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "path": "/etc/puppetlabs/puppet/modules/example/files/just_a_file.txt",
         "relative_path": null,
         "type": "file"
     }
@@ -78,7 +78,7 @@ None
         "links": "manage",
         "mode": 493,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/subdirectory",
+        "path": "/etc/puppetlabs/puppet/modules/example/files/subdirectory",
         "relative_path": null,
         "type": "directory"
     }
@@ -95,12 +95,12 @@ None
             "type": "md5",
             "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
         },
-        "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "destination": "/etc/puppetlabs/puppet/modules/example/files/just_a_file.txt",
         "group": 20,
         "links": "manage",
         "mode": 493,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/link_to_file.txt",
+        "path": "/etc/puppetlabs/puppet/modules/example/files/link_to_file.txt",
         "relative_path": null,
         "type": "link"
     }
@@ -154,7 +154,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -168,7 +168,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -177,12 +177,12 @@ Accept: pson, text/pson
                 "type": "md5",
                 "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "destination": "/etc/puppetlabs/puppet/modules/example/files/just_a_file.txt",
             "group": 20,
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "link"
         },
@@ -196,7 +196,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "subdirectory",
             "type": "directory"
         },
@@ -210,7 +210,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "subdirectory/another_file.txt",
             "type": "file"
         }
@@ -234,7 +234,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -248,7 +248,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -257,12 +257,12 @@ Accept: pson, text/pson
                 "type": "md5",
                 "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "destination": "/etc/puppetlabs/puppet/modules/example/files/just_a_file.txt",
             "group": 20,
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "link"
         }
@@ -297,7 +297,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -311,7 +311,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -325,7 +325,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/puppet/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "file"
         }
@@ -341,9 +341,9 @@ Sample Module
 
 The examples above use this (faux) module:
 
-    /etc/puppet/conf/modules/example/
+    /etc/puppetlabs/puppet/modules/example/
       files/
         just_a_file.txt
-        link_to_file.txt -> /etc/puppet/conf/modules/example/files/just_a_file.txt
+        link_to_file.txt -> /etc/puppetlabs/puppet/modules/example/files/just_a_file.txt
         subdirectory/
           another_file.txt

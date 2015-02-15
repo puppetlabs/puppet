@@ -1012,7 +1012,7 @@ Generated on #{Time.now}.
   # 1. If there is an explicit configuration file, use that.  (--confdir or
   #    --config)
   # 2. If we're running as a root process, use the system puppet.conf
-  #    (usually /etc/puppet/puppet.conf)
+  #    (usually /etc/puppetlabs/puppet/puppet.conf)
   # 3. Otherwise, use the user puppet.conf (usually ~/.puppet/puppet.conf)
   #
   # @api private

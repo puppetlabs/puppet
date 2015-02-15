@@ -62,7 +62,7 @@ describe Puppet::Util::SELinux do
     end
 
     it "should match a path on / to ext3" do
-      expect(find_fs('/etc/puppet/testfile')).to eq("ext3")
+      expect(find_fs('/etc/puppetlabs/puppet/testfile')).to eq("ext3")
     end
 
     it "should match a path on /mnt/nfs to nfs" do
@@ -70,7 +70,7 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return true for a capable filesystem" do
-      expect(selinux_label_support?('/etc/puppet/testfile')).to be_truthy
+      expect(selinux_label_support?('/etc/puppetlabs/puppet/testfile')).to be_truthy
     end
 
     it "should return false for a noncapable filesystem" do

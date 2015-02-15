@@ -13,13 +13,13 @@ Puppet::Face.define(:module, '1.0.0') do
       upgrade an installed module to the latest version
 
       $ puppet module upgrade puppetlabs-apache
-      /etc/puppet/modules
+      /etc/puppetlabs/puppet/modules
       └── puppetlabs-apache (v1.0.0 -> v2.4.0)
 
       upgrade an installed module to a specific version
 
       $ puppet module upgrade puppetlabs-apache --version 2.1.0
-      /etc/puppet/modules
+      /etc/puppetlabs/puppet/modules
       └── puppetlabs-apache (v1.0.0 -> v2.1.0)
 
       upgrade an installed module for a specific environment

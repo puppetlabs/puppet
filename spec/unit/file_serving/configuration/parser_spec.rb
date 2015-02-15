@@ -86,7 +86,7 @@ describe Puppet::FileServing::Configuration::Parser do
     end
 
     it "should return comprehensible error message, if invalid line detected" do
-      write_config_file "[one]\n\n\x01path /etc/puppet/files\n\x01allow *\n"
+      write_config_file "[one]\n\n\x01path /etc/puppetlabs/puppet/files\n\x01allow *\n"
 
       expect { @parser.parse }.to raise_error(ArgumentError, /Invalid line.*in.*, line 3/)
     end

@@ -24,7 +24,7 @@ None
     Content-Type: application/json
 
     {
-      "search_paths": ["/etc/puppet/environments"]
+      "search_paths": ["/etc/puppetlabs/puppet/environments"]
       "environments": {
         "production": {
           "settings": {

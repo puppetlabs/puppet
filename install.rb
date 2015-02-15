@@ -199,7 +199,7 @@ def prepare_installation
     opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
       InstallOptions.destdir = destdir
     end
-    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
+    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppetlabs/puppet') do |configdir|
       InstallOptions.configdir = configdir
     end
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
@@ -255,7 +255,7 @@ def prepare_installation
     end
     configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
-    configdir = "/etc/puppet"
+    configdir = "/etc/puppetlabs/puppet"
   end
 
   if not InstallOptions.bindir.nil?

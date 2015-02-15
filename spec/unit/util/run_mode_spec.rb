@@ -16,8 +16,8 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#conf_dir" do
-      it "has confdir /etc/puppet when run as root" do
-        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppet')) }
+      it "has confdir /etc/puppetlabs/puppet when run as root" do
+        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppetlabs/puppet')) }
       end
 
       it "has confdir ~/.puppet when run as non-root" do
@@ -77,7 +77,7 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#conf_dir" do
-      it "has confdir /etc/puppet when run as root" do
+      it "has confdir ending in Puppetlabs/puppet/etc when run as root" do
         as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc"))) }
       end
 

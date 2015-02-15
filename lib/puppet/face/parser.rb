@@ -21,7 +21,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       after having reported issues for the first encountered file with errors.
     EOT
     examples <<-'EOT'
-      Validate the default site manifest at /etc/puppet/manifests/site.pp:
+      Validate the default site manifest at /etc/puppetlabs/puppet/manifests/site.pp:
 
       $ puppet parser validate
 
