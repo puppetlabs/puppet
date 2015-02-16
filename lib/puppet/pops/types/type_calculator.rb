@@ -1429,7 +1429,8 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PHashType(t, t2)
     case t2
-    when Types::PHashType
+      when Types::PHashType
+      return true if (t.size_type.nil? || t.size_type.from == 0) && t2.is_the_empty_hash?
       return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
       assignable_PCollectionType(t, t2)
     when Types::PStructType
