@@ -422,10 +422,12 @@ class Puppet::Resource
 
   def lookup_with_databinding(name, scope)
     begin
-      Puppet::DataBinding.indirection.find(
-        name,
-        :environment => scope.environment.to_s,
-        :variables => scope)
+      catch(:no_such_key) do
+        Puppet::DataBinding.indirection.find(
+          name,
+          :environment => scope.environment.to_s,
+          :variables => scope)
+      end
     rescue Puppet::DataBinding::LookupError => e
       raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
     end
@@ -433,12 +435,12 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def lookup_in_environment(name, scope)
-    Puppet::DataProviders.lookup_in_environment(name, scope, nil)
+    catch(:no_such_key) { Puppet::DataProviders.lookup_in_environment(name, scope, nil) }
   end
   private :lookup_in_environment
 
   def lookup_in_module(name, scope)
-    Puppet::DataProviders.lookup_in_module(name, scope, nil)
+    catch(:no_such_key) { Puppet::DataProviders.lookup_in_module(name, scope, nil) }
   end
   private :lookup_in_module
 

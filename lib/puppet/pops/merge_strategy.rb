@@ -18,15 +18,27 @@ module Puppet::Pops
     end
     private_class_method :strategies
 
-    # Finds the merge strategy for the given key and returns it.
+    # Finds the merge strategy for the given _merge_, creates an instance of it and returns that instance.
     #
-    # @param merge_strategy_key [Symbol] The merge strategy key
+    # @param merge [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key
+    #   identifier or a hash with options where the key 'strategy' denotes the key
     # @return [MergeStrategy] The matching merge strategy
     #
-    def self.strategy(merge_strategy_key)
-      strategy = strategies[merge_strategy_key]
-      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy_key}'" if strategy.nil?
-      strategy
+    def self.strategy(merge)
+      TypeAsserter.assert_instance_of("MergeStrategies.merge 'merge' parameter", merge_t, merge)
+      if merge.is_a?(Hash)
+        merge_strategy = merge['strategy']
+        if merge_strategy.nil?
+          raise ArgumentError, "The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'"
+        end
+        merge_options  = merge
+      else
+        merge_strategy = merge
+        merge_options  = {}
+      end
+      strategy = strategies[merge_strategy.to_sym]
+      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy.nil?
+      strategy.new(merge_options)
     end
 
     # Returns the list of merge strategy keys known to this class
@@ -42,9 +54,10 @@ module Puppet::Pops
     # @param strategy_class [Class<MergeStrategy>] The class of the added strategy
     #
     def self.add_strategy(strategy_class)
-      raise ArgumentError, "MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got #{strategy_class}" unless MergeStrategy > strategy_class
-      s = strategy_class.new
-      strategies[s.key] = s
+      unless MergeStrategy > strategy_class
+        raise ArgumentError, "MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got #{strategy_class}"
+      end
+      strategies[strategy_class.key] = strategy_class
       nil
     end
 
@@ -52,44 +65,47 @@ module Puppet::Pops
     #
     # @param e1 [Object] The first element
     # @param e2 [Object] The second element
-    # @param merge [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key identifier or a hash with options where the key 'strategy' denotes the key
     # @return [Object] The result of the merge
     #
     def self.merge(e1, e2, merge)
-      TypeAsserter.assert_instance_of("MergeStrategies.merge 'merge' parameter", merge_t, merge)
-      if merge.is_a?(Hash)
-        merge_strategy = merge['strategy']
-        raise ArgumentError, "MergeStrategies.merge 'merge' parameter must contain a 'strategy' of type String" if merge_strategy.nil?
-        merge_options  = merge
-      else
-        merge_strategy = merge
-        merge_options  = {}
-      end
-      strategy(merge_strategy.to_sym).merge(e1, e2, merge_options)
+      strategy(merge).merge(e1, e2)
     end
 
-    # Merges the elements of _e1_ and _e2_ accoring to the implemented strategy
+    def self.key
+      raise NotImplementedError, "Subclass must implement 'key'"
+    end
+
+    # Create a new instance of this strategy configured with the given _options_
+    # @param merge_options [Hash<String,Object>] Merge options
+    def initialize(options)
+      assert_type('merge_options', options_t, options)
+      @options = options
+    end
+
+    # Merges the elements of _e1_ and _e2_ accoring to the implemented strategy and options given when this
+    # instance was created
     #
     # @param e1 [Object] The first element
     # @param e2 [Object] The second element
-    # @param merge_options [Hash<String,Object>] Merge options
     # @return [Object] The result of the merge
     #
-    def merge(e1, e2, merge_options)
+    def merge(e1, e2)
       checked_merge(
         assert_type('e1', value_t, e1),
-        assert_type('e2', value_t, e2),
-        assert_type('merge_options', options_t, merge_options))
+        assert_type('e2', value_t, e2))
+    end
+
+    # Converts a single value to the type expeced when peforming a merge of two elements
+    # @param value [Object] the value to convert
+    # @return [Object] the converted value
+    def convert_value(value)
+      value
     end
 
     protected
 
-    # Returns the symbolic key identifier for this strategy
-    #
-    # @return [Symbol] The symbolic key
-    #
-    def key
-      raise NotImplementedError, 'Subclass must implement key'
+    def options
+      @options
     end
 
     # Returns the type used to validate the options hash
@@ -97,7 +113,7 @@ module Puppet::Pops
     # @return [Puppet::Pops::Types::PStructType] the puppet type
     #
     def options_t
-      @options_t ||=TypeParser.new.parse("Struct[{strategy=>Optional[Pattern[#{key}]]}]")
+      @options_t ||=TypeParser.new.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
     end
 
     # Returns the type used to validate the options hash
@@ -105,11 +121,11 @@ module Puppet::Pops
     # @return [Puppet::Pops::Types::PAnyType] the puppet type
     #
     def value_t
-      raise NotImplementedError.new('Subclass must implement value_t')
+      raise NotImplementedError, "Subclass must implement 'value_t'"
     end
 
-    def checked_merge(e1, e2, options)
-      raise NotImplementedError.new('Subclass must implement checked_merge(e1,e2,options)')
+    def checked_merge(e1, e2)
+      raise NotImplementedError, "Subclass must implement 'checked_merge(e1,e2)'"
     end
 
     def assert_type(param, type, value)
@@ -117,22 +133,20 @@ module Puppet::Pops
     end
   end
 
-  # Performs a native Hash merge
+  # Produces a new hash by merging hash e1 with hash e2 in such a way that the values of duplicate keys
+  # will be those of e1
   #
   class HashMergeStrategy < MergeStrategy
-    # Merges hash e1 onto hash e2 in such a way that if the values of duplicate keys
-    # will be those of e1
-    #
+    def self.key
+      :hash
+    end
+
     # @param e1 [Hash<String,Object>] The hash that will act as the source of the merge
     # @param e2 [Hash<String,Object>] The hash that will act as the receiver for the merge
     # @return [Hash<String,Object]] The merged hash
     # @see Hash#merge
-    def checked_merge(e1, e2, options)
+    def checked_merge(e1, e2)
       e2.merge(e1)
-    end
-
-    def key
-      :hash
     end
 
     protected
@@ -146,23 +160,25 @@ module Puppet::Pops
 
   # Merges two values that must be either scalar or arrays into a unique set of values.
   #
+  # Scalar values will be converted into a one element arrays and array values will be flattened
+  # prior to forming the unique set. The order of the elements is preserved with e1 being the
+  # first contributor of elements and e2 the second.
+  #
   class UniqueMergeStrategy < MergeStrategy
-    # Merges two values that must be either scalar or arrays into a unique set of values.
-    #
-    # Scalar values will be converted into a one element arrays and array values will be flattened
-    # prior to forming the unique set. The order of the elements is preserved with e1 being the
-    # first contributor of elements and e2 the second.
-    #
+    def self.key
+      :unique
+    end
+
     # @param e1 [Array<Object>] The first array
     # @param e2 [Array<Object>] The second array
     # @return [Array<Object>] The unique set of elements
     #
-    def checked_merge(e1, e2, options)
-      to_flat_a(e1) | to_flat_a(e2)
+    def checked_merge(e1, e2)
+      convert_value(e1) | convert_value(e2)
     end
 
-    def key
-      :unique
+    def convert_value(e)
+      e.is_a?(Array) ? e.flatten : [e]
     end
 
     protected
@@ -171,25 +187,78 @@ module Puppet::Pops
       @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Variant[Scalar,Array[Data]]')
     end
 
-    def to_flat_a(e)
-      e.is_a?(Array) ? e.flatten : [e]
-    end
-
     MergeStrategy.add_strategy(self)
   end
 
-  # Performs a deep merge. The arguments can be either Hash or Array
+  # Documentation copied from https://github.com/danielsdeleo/deep_merge/blob/master/lib/deep_merge/core.rb
+  # altered with respect to _preserve_unmergeables_ since this implementation always disables that option.
   #
-  # @see https://github.com/danielsdeleo/deep_merge
+  # The destination is dup'ed before the deep_merge is called to allow frozen objects as values.
+  #
+  # deep_merge method permits merging of arbitrary child elements. The two top level
+  # elements must be hashes. These hashes can contain unlimited (to stack limit) levels
+  # of child elements. These child elements to not have to be of the same types.
+  # Where child elements are of the same type, deep_merge will attempt to merge them together.
+  # Where child elements are not of the same type, deep_merge will skip or optionally overwrite
+  # the destination element with the contents of the source element at that level.
+  # So if you have two hashes like this:
+  #   source = {:x => [1,2,3], :y => 2}
+  #   dest =   {:x => [4,5,'6'], :y => [7,8,9]}
+  #   dest.deep_merge!(source)
+  #   Results: {:x => [1,2,3,4,5,'6'], :y => 2}
+  #
+  # "deep_merge" will unconditionally overwrite any unmergeables and merge everything else.
+  #
+  # Options:
+  #   Options are specified in the last parameter passed, which should be in hash format:
+  #   hash.deep_merge!({:x => [1,2]}, {:knockout_prefix => '--'})
+  #   :knockout_prefix        DEFAULT: nil
+  #      Set to string value to signify prefix which deletes elements from existing element
+  #   :sort_merged_arrays     DEFAULT: false
+  #      Set to true to sort all arrays that are merged together
+  #   :unpack_arrays          DEFAULT: nil
+  #      Set to string value to run "Array::join" then "String::split" against all arrays
+  #   :merge_hash_arrays      DEFAULT: false
+  #      Set to true to merge hashes within arrays
+  #   :merge_debug            DEFAULT: false
+  #      Set to true to get console output of merge process for debugging
+  #
+  # Selected Options Details:
+  # :knockout_prefix => The purpose of this is to provide a way to remove elements
+  #   from existing Hash by specifying them in a special way in incoming hash
+  #    source = {:x => ['--1', '2']}
+  #    dest   = {:x => ['1', '3']}
+  #    dest.ko_deep_merge!(source)
+  #    Results: {:x => ['2','3']}
+  #   Additionally, if the knockout_prefix is passed alone as a string, it will cause
+  #   the entire element to be removed:
+  #    source = {:x => '--'}
+  #    dest   = {:x => [1,2,3]}
+  #    dest.ko_deep_merge!(source)
+  #    Results: {:x => ""}
+  # :unpack_arrays => The purpose of this is to permit compound elements to be passed
+  #   in as strings and to be converted into discrete array elements
+  #   irsource = {:x => ['1,2,3', '4']}
+  #   dest   = {:x => ['5','6','7,8']}
+  #   dest.deep_merge!(source, {:unpack_arrays => ','})
+  #   Results: {:x => ['1','2','3','4','5','6','7','8'}
+  #   Why: If receiving data from an HTML form, this makes it easy for a checkbox
+  #    to pass multiple values from within a single HTML element
+  #
+  # :merge_hash_arrays => merge hashes within arrays
+  #   source = {:x => [{:y => 1}]}
+  #   dest   = {:x => [{:z => 2}]}
+  #   dest.deep_merge!(source, {:merge_hash_arrays => true})
+  #   Results: {:x => [{:y => 1, :z => 2}]}
   #
   class DeepMergeStrategy < MergeStrategy
-    def checked_merge(e1, e2, options)
-      # e1 (the destination) is cloned to avoid that the passed in object mutates
-      DeepMerge.deep_merge!(e1, e2.clone, { :preserve_unmergeables => false }.merge(options))
+    def self.key
+      :deep
     end
 
-    def key
-      :deep
+    def checked_merge(e1, e2)
+      # e2 (the destination) is dup'ed to avoid that the passed in object mutates
+      DeepMerge.deep_merge!(e1, e2.dup, { :preserve_unmergeables => false }.merge(options))
     end
 
     protected
@@ -200,7 +269,7 @@ module Puppet::Pops
     # @return [Puppet::Pops::Types::PAnyType] the puppet type used when validating the options hash
     def options_t
       @options_t ||= Puppet::Pops::Types::TypeParser.new.parse('Struct[{'\
-          "strategy=>Optional[Pattern[#{key}]],"\
+          "strategy=>Optional[Pattern[#{self.class.key}]],"\
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
           'merge_hash_arrays=>Optional[Boolean],'\

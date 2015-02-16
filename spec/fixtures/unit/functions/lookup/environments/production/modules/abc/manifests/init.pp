@@ -1,5 +1,5 @@
 class abc {
-  if $block {
+  if $block != 'no_block_present' {
     $result = lookup(*$args) |$names| { if $block == true { $names } else { $block } }
   }
   else {

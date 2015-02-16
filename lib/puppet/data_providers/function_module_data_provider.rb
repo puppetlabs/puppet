@@ -23,7 +23,9 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
     #
     module_name = scope[MODULE_NAME]
     begin
-      data(module_name, scope)[name]
+      hash = data(module_name, scope)
+      throw :no_such_key unless hash.include?(name)
+      hash[name]
     rescue *Puppet::Error => detail
       raise Puppet::DataBinding::LookupError.new(detail.message, detail)
     end

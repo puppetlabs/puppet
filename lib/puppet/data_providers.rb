@@ -1,11 +1,5 @@
 module Puppet::DataProviders
 
-  # Stub to allow this module to be required before the actual implementation (which requires Puppet::Pops
-  # and Puppet::Pops cannot be loaded until Puppet is fully loaded.
-  #
-  class DataAdapters
-  end
-
   def self.assert_loaded
     unless @loaded
       require 'puppet/pops'
