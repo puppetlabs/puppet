@@ -364,6 +364,19 @@ describe 'The type calculator' do
         expect(calculator.infer({:first => 1, :second => 2}).element_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       end
 
+      it 'when empty infers a type that answers true to is_the_empty_hash?' do
+        expect(calculator.infer({}).is_the_empty_hash?).to be_true
+        expect(calculator.infer_set({}).is_the_empty_hash?).to be_true
+      end
+
+      it 'when empty is assignable to any PHashType' do
+        expect(calculator.assignable?(hash_t(string_t, string_t), calculator.infer({}))).to be_true
+      end
+
+      it 'when empty is not assignable to a PHashType with from size > 0' do
+        expect(calculator.assignable?(constrained_t(hash_t(string_t,string_t), 1, 1), calculator.infer({}))).to be_false
+      end
+
       context 'using infer_set' do
         it "with 'first' and 'second' keys translates to PStructType[{first=>value,second=>value}]" do
           t = calculator.infer_set({'first' => 1, 'second' => 2})

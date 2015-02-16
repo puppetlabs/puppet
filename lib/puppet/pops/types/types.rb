@@ -351,9 +351,12 @@ module Puppet::Pops
           self.element_type == o.element_type  &&
           self.size_type    == o.size_type
         end
+
+        def is_the_empty_hash?
+          size_type.is_a?(PIntegerType) && size_type.from == 0 && size_type.to == 0 && key_type.is_a?(PNilType) && element_type.is_a?(PNilType)
+        end
       end
     end
-
 
     class PRuntimeType < PAnyType
       module ClassModule
