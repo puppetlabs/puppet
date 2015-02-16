@@ -365,16 +365,16 @@ describe 'The type calculator' do
       end
 
       it 'when empty infers a type that answers true to is_the_empty_hash?' do
-        expect(calculator.infer({}).is_the_empty_hash?).to be_true
-        expect(calculator.infer_set({}).is_the_empty_hash?).to be_true
+        expect(calculator.infer({}).is_the_empty_hash?).to eq(true)
+        expect(calculator.infer_set({}).is_the_empty_hash?).to eq(true)
       end
 
       it 'when empty is assignable to any PHashType' do
-        expect(calculator.assignable?(hash_t(string_t, string_t), calculator.infer({}))).to be_true
+        expect(calculator.assignable?(hash_t(string_t, string_t), calculator.infer({}))).to eq(true)
       end
 
       it 'when empty is not assignable to a PHashType with from size > 0' do
-        expect(calculator.assignable?(constrained_t(hash_t(string_t,string_t), 1, 1), calculator.infer({}))).to be_false
+        expect(calculator.assignable?(constrained_t(hash_t(string_t,string_t), 1, 1), calculator.infer({}))).to eq(false)
       end
 
       context 'using infer_set' do
