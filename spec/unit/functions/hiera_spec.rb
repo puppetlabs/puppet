@@ -44,9 +44,9 @@ describe 'when calling' do
     end
 
     it 'should propagate optional override when combined with default block' do
-      ovr = 'the_override'
-      Hiera::Backend::Yaml_backend.any_instance.expects(:lookup).with { |*args| expect(args[2]).to be(ovr) }
-      expect(hiera.call(scope, 'foo', ovr) { |k| "default for key '#{k}'" }).to eql("default for key 'foo'")
+      ovr = {}
+      Hiera::Backend::Yaml_backend.any_instance.expects(:lookup).with { |*args| expect(args[2]).to be(ovr) }.returns(nil)
+      expect(hiera.call(scope, 'foo.bar', ovr) { |k| "default for key '#{k}'" }).to eql("default for key 'foo.bar'")
     end
   end
 
