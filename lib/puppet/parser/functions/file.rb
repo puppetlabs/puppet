@@ -1,3 +1,5 @@
+require 'puppet/file_system'
+
 Puppet::Parser::Functions::newfunction(
   :file, :arity => -2, :type => :rvalue,
   :doc => "Loads a file from a module and returns its contents as a string.
@@ -24,7 +26,7 @@ Puppet::Parser::Functions::newfunction(
     end
 
     if path
-      File.read(path)
+      Puppet::FileSystem.read_preserve_line_endings(path)
     else
       raise Puppet::ParseError, "Could not find any files from #{vals.join(", ")}"
     end
