@@ -44,6 +44,10 @@ class Puppet::FileSystem::MemoryImpl
     handle.read
   end
 
+  def read_preserve_line_endings(path)
+    read(path)
+  end
+
   def open(path, *args, &block)
     handle = assert_path(path).handle
     if block_given?

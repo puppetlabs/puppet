@@ -5,6 +5,18 @@ require 'puppet/util/platform'
 describe "Puppet::FileSystem" do
   include PuppetSpec::Files
 
+  def with_file_content(content)
+    path = tmpfile('file-system')
+    file = File.new(path, 'wb')
+    file.sync = true
+    file.print content
+
+    yield path
+
+  ensure
+    file.close
+  end
+
   context "#exclusive_open" do
     it "opens ands allows updating of an existing file" do
       file = file_containing("file_to_update", "the contents")
@@ -93,6 +105,32 @@ describe "Puppet::FileSystem" do
       end
 
       children.each { |pid| Process.wait(pid) }
+    end
+  end
+
+  context "read_preserve_line_endings" do
+    it "should read a file with line feed" do
+      with_file_content("file content \n") do |file|
+        expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \n")
+      end
+    end
+
+    it "should read a file with carriage return line feed" do
+      with_file_content("file content \r\n") do |file|
+        expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \r\n")
+      end
+    end
+
+    it "should read a mixed file using only the first line newline when lf" do
+      with_file_content("file content \nsecond line \r\n") do |file|
+        expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \nsecond line \r\n")
+      end
+    end
+
+    it "should read a mixed file using only the first line newline when crlf" do
+      with_file_content("file content \r\nsecond line \n") do |file|
+        expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \r\nsecond line \n")
+      end
     end
   end
 

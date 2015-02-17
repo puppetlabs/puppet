@@ -1,5 +1,6 @@
 require 'puppet/parser/files'
 require 'erb'
+require 'puppet/file_system'
 
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.
@@ -97,7 +98,7 @@ class Puppet::Parser::TemplateWrapper
     if string
       template_source = "inline template"
     else
-      string = File.read(@__file__)
+      string = Puppet::FileSystem.read_preserve_line_endings(@__file__)
       template_source = @__file__
     end
 
