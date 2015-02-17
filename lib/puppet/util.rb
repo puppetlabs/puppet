@@ -173,7 +173,7 @@ module Util
               return destext if FileTest.file? destext and FileTest.executable? destext
             end
           end
-          return dest if (FileTest.file? dest or FileTest.symlink? bin) and FileTest.executable? dest
+          return dest if (FileTest.file? dest or FileTest.symlink? dest) and FileTest.executable? dest
         end
       end
     end
