@@ -145,7 +145,7 @@ module Util
   # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
-      return bin if FileTest.file? bin and FileTest.executable? bin
+      return bin if (FileTest.file? bin or FileTest.symlink? bin) and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
         begin
@@ -173,7 +173,7 @@ module Util
               return destext if FileTest.file? destext and FileTest.executable? destext
             end
           end
-          return dest if FileTest.file? dest and FileTest.executable? dest
+          return dest if (FileTest.file? dest or FileTest.symlink? bin) and FileTest.executable? dest
         end
       end
     end
