@@ -212,16 +212,10 @@ module Puppet::Pops
   # Options:
   #   Options are specified in the last parameter passed, which should be in hash format:
   #   hash.deep_merge!({:x => [1,2]}, {:knockout_prefix => '--'})
-  #   :knockout_prefix        DEFAULT: nil
-  #      Set to string value to signify prefix which deletes elements from existing element
-  #   :sort_merged_arrays     DEFAULT: false
-  #      Set to true to sort all arrays that are merged together
-  #   :unpack_arrays          DEFAULT: nil
-  #      Set to string value to run "Array::join" then "String::split" against all arrays
-  #   :merge_hash_arrays      DEFAULT: false
-  #      Set to true to merge hashes within arrays
-  #   :merge_debug            DEFAULT: false
-  #      Set to true to get console output of merge process for debugging
+  #   - 'knockout_prefix' Set to string value to signify prefix which deletes elements from existing element. Defaults is _undef_
+  #   - 'sort_merged_arrays' Set to _true_ to sort all arrays that are merged together. Default is _false_
+  #   - 'unpack_arrays' Set to string value used as a deliminator to join all array values and then split them again. Default is _undef_
+  #   - 'merge_hash_arrays' Set to _true_ to merge hashes within arrays. Default is _false_
   #
   # Selected Options Details:
   # :knockout_prefix => The purpose of this is to provide a way to remove elements
@@ -241,7 +235,7 @@ module Puppet::Pops
   #   irsource = {:x => ['1,2,3', '4']}
   #   dest   = {:x => ['5','6','7,8']}
   #   dest.deep_merge!(source, {:unpack_arrays => ','})
-  #   Results: {:x => ['1','2','3','4','5','6','7','8'}
+  #   Results: {:x => ['1','2','3','4','5','6','7','8']}
   #   Why: If receiving data from an HTML form, this makes it easy for a checkbox
   #    to pass multiple values from within a single HTML element
   #

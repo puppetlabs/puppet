@@ -16,10 +16,6 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    # TODO: Passing a special 'not_found' object to Hiera doesn't really help us distinguish between a not found
-    # and a matching key with a nil value because Hiera will produce the default value in both cases. But this
-    # opens up for a future improvement of Hiera.
-    #
     not_found = Object.new
     value = hiera.lookup(request.key, not_found, Hiera::Scope.new(request.options[:variables]), nil, nil)
     throw :no_such_key if value.equal?(not_found)

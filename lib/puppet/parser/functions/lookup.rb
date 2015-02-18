@@ -2,7 +2,7 @@ Puppet::Parser::Functions.newfunction(:lookup, :type => :rvalue, :arity => -2, :
 Looks up data defined using Data Binding, and Data Providers using different strategies. The lookup searches in
 Data Bindings first (if configured; typically Hiera), then in the environments data provider (if any), and last in
 the module's data provider (if any) of the module the call to lookup originates from. Thus, the global Data Binding
-has higher priority than data provided in the environment, which has higher priority that data provided in a module,
+has higher priority than data provided in the environment, which has higher priority than data provided in a module,
 
 The lookup function can be called in one of these ways:
 
@@ -29,7 +29,7 @@ The meaning of the parameters or content of the options hash is:
   is found here it wins. Defaults to an empty hash.
 * `default_values_hash` - a hash with map from names to values that are used as a last resort to obtain a value.
   Defaults to an empty hash.
-* `merge` - A string of type Enum[unique,hash,merge] or a hash with the key 'strategy' set to that string. See
+* `merge` - A string of type Enum[unique, hash, merge] or a hash with the key 'strategy' set to that string. See
   'Merge Strategies' below.
 
 It is not permitted to pass the `name` as both a parameter and in the options hash.
@@ -50,24 +50,21 @@ The default behavior of the lookup is to return the first value that is found fo
 `merge` parameter will change this so that a lookup makes an attempt to find values in all three sources (the Data
 Binder, the environment, and the module scope) and then merge these values according to the given strategy. This
 does not apply to values found in the 'override' hash. Such values are returned immediately without merging.
+Note that `merge` is passed on to allow the underlying provider to return a merged result
 
 The valid strategies are:
-- 'hash' Performs a simple hash-merge by overwriting keys. Merged values must be of Hash type
+- 'hash' Performs a simple hash-merge by overwriting keys of lower lookup priority. Merged values must be of Hash type
 - 'unique' Appends everything to an array containing no nested arrays and where all duplicates have been removed. Can
    append values of Scalar or Array[Scalar] type
 - 'deep' Performs a deep merge on values of Array and Hash type. See documentation for the DeepMerge gem's deep_merge
    operation for details and options.
 
-The 'deep' strategy can use additional options to control its behavior. Those options can be passed as top level
+The 'deep' strategy can use additional options to control its behavior. Options can be passed as top level
 keys in the `merge` parameter when it is a given as a hash. Recognized options are:
-  'knockout_prefix'        DEFAULT: undef
-     Set to string value to signify prefix which deletes elements from existing element
-  'sort_merged_arrays'     DEFAULT: false
-     Set to true to sort all arrays that are merged together
-  'unpack_arrays'          DEFAULT: undef
-     Set to string value used as a deliminator to join all array values and then split them again
-  'merge_hash_arrays'      DEFAULT: false
-     Set to true to merge hashes within arrays
+- 'knockout_prefix' Set to string value to signify prefix which deletes elements from existing element. Defaults is _undef_
+- 'sort_merged_arrays' Set to _true_ to sort all arrays that are merged together. Default is _false_
+- 'unpack_arrays' Set to string value used as a deliminator to join all array values and then split them again. Default is _undef_
+- 'merge_hash_arrays' Set to _true_ to merge hashes within arrays. Default is _false_
 
 *Type Specification*
 
@@ -142,7 +139,12 @@ to ensure that the four argument variant is used):
 
      $are_you_there = lookup('peekaboo', Optional[String], undef, undef)
 
-Or call it with a block that produces an undef value:
+or call it using an options hash:
+
+     $are_you_there = lookup('peekaboo', { 'default_value' => undef })
+     $are_you_there = lookup({ 'name' => 'peekaboo', 'default_value' => undef })
+
+or with a block that produces an undef value:
 
      $are_you_there = lookup('peekaboo', Optional[String]) |$name| { undef }
 

@@ -1,7 +1,7 @@
 # This class is the backing implementation of the Puppet function 'lookup'.
 # See puppet/functions/lookup.rb for documentation.
 #
-class Puppet::Pops::Binder::Lookup
+class Puppet::Pops::Lookup
   # Performs a lookup in the configured scopes and optionally merges the default.
   #
   # This is a backing function and all parameters are assumed to have been type checked.
@@ -90,7 +90,7 @@ class Puppet::Pops::Binder::Lookup
 
   def self.fail_lookup(names)
     name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map {|n| "'#{n}'"} .join(', ') + ']'
-    raise Puppet::ParseError, "Function lookup() did not find a value for #{name_part}"
+    raise Puppet::Error, "Function lookup() did not find a value for #{name_part}"
   end
   private_class_method :fail_lookup
 end

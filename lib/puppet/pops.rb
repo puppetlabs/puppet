@@ -26,6 +26,7 @@ module Puppet
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
+    require 'puppet/pops/lookup'
 
     require 'puppet/pops/model/model'
 
@@ -71,7 +72,6 @@ module Puppet
       require 'puppet/pops/binder/bindings_model_dumper'
       require 'puppet/pops/binder/system_bindings'
       require 'puppet/pops/binder/bindings_loader'
-      require 'puppet/pops/binder/lookup'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'
