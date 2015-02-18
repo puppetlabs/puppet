@@ -49,6 +49,13 @@ stop_puppet_agent() {
     rm -f "$PIDFILE"
 }
 
+restart_puppet_agent() {
+    log_begin_msg "Restarting $DESC"
+    stop_puppet_agent
+    start_puppet_agent
+    log_end_msg $?
+}
+
 status_puppet_agent() {
     if (type status_of_proc > /dev/null 2>&1) ; then
         status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
@@ -107,13 +114,15 @@ case "$1" in
         status_puppet_agent
     ;;
     restart|force-reload)
-        log_begin_msg "Restarting $DESC"
-        stop_puppet_agent
-        start_puppet_agent
-        log_end_msg $?
+        restart_puppet_agent
+    ;;
+    condrestart)
+        if status_puppet_agent >/dev/null 2>&1; then
+            restart_puppet_agent
+        fi
     ;;
     *)
-        echo "Usage: $0 {start|stop|status|restart|force-reload|reload}" >&2
+        echo "Usage: $0 {start|stop|status|restart|condrestart|force-reload|reload}" >&2
         exit 1
     ;;
 esac
