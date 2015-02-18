@@ -50,3 +50,14 @@ install_packages_on(agents, AGENT_PACKAGES)
 
 configure_gem_mirror(hosts)
 
+hosts.each do |host|
+  case host['platform']
+  when /windows/
+    # skip deep_merge gem on windows
+
+  else
+    step "#{host} Install deep_merge from rubygems"
+    on host, 'gem install deep_merge'
+  end
+end
+
