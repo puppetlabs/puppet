@@ -43,7 +43,7 @@ Puppet::Functions.create_function(:assert_type) do
         # is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output.
         #
         actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
-        raise Puppet::ParseError, "assert_type(): Expected type #{type} does not match actual: #{actual}"
+        raise Puppet::Pops::Types::TypeAssertionError.new("assert_type(): Expected type #{type} does not match actual: #{actual}", type,actual)
       end
     end
     value

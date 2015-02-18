@@ -26,17 +26,21 @@ module Puppet
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
+    require 'puppet/pops/lookup'
 
     require 'puppet/pops/model/model'
 
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
+    require 'puppet/pops/types/type_asserter'
+    require 'puppet/pops/types/type_assertion_error'
     require 'puppet/pops/types/type_calculator'
     require 'puppet/pops/types/type_factory'
     require 'puppet/pops/types/type_parser'
     require 'puppet/pops/types/class_loader'
     require 'puppet/pops/types/enumeration'
 
+    require 'puppet/pops/merge_strategy'
 
     module Model
       require 'puppet/pops/model/tree_dumper'
@@ -68,7 +72,6 @@ module Puppet
       require 'puppet/pops/binder/bindings_model_dumper'
       require 'puppet/pops/binder/system_bindings'
       require 'puppet/pops/binder/bindings_loader'
-      require 'puppet/pops/binder/lookup'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'

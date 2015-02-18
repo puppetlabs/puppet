@@ -23,7 +23,7 @@ module PuppetX::Helindbe
       }
     end
 
-    def lookup(name, scope)
+    def lookup(name, scope, merge)
       @data[name]
     end
   end

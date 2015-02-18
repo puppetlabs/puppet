@@ -77,13 +77,13 @@ class Puppet::Plugins::DataProviders
   end
 
   class ModuleDataProvider
-    def lookup(name, scope)
+    def lookup(name, scope, merge)
       nil
     end
   end
 
   class EnvironmentDataProvider
-    def lookup(name, scope)
+    def lookup(name, scope, merge)
       nil
     end
   end
