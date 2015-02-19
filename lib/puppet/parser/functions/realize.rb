@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(:realize, :arity => -2, :doc => "Make a v
     reference; e.g.: `realize User[luke]`." ) do |vals|
 
     vals = [vals] unless vals.is_a?(Array)
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       coll = Puppet::Pops::Evaluator::Collectors::FixedSetCollector.new(self, vals.flatten)
     else
       coll = Puppet::Parser::Collector.new(self, :nomatter, nil, nil, :virtual)

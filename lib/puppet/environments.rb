@@ -107,7 +107,7 @@ module Puppet::Environments
     def get_conf(name)
       env = get(name)
       if env
-        Puppet::Settings::EnvironmentConf.static_for(env)
+        Puppet::Settings::EnvironmentConf.static_for(env, Puppet[:parser])
       else
         nil
       end

@@ -442,7 +442,7 @@ class Puppet::Resource
         end
       end
 
-      if Puppet[:parser] == 'current'
+      if !Puppet.future_parser?
         # If the value is an array with only one value, then
         # convert it to a single value.  This is largely so that
         # the database interaction doesn't have to worry about
@@ -481,7 +481,7 @@ class Puppet::Resource
     end
 
     # Perform optional type checking
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       # Perform type checking
       arg_types = resource_type.argument_types
       # Parameters is a map from name, to parameter, and the parameter again has name and value

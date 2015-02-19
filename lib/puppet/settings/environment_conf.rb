@@ -1,7 +1,7 @@
 # Configuration settings for a single directory Environment.
 # @api private
 class Puppet::Settings::EnvironmentConf
-  VALID_SETTINGS = [:modulepath, :manifest, :config_version, :environment_timeout].freeze
+  VALID_SETTINGS = [:modulepath, :manifest, :config_version, :environment_timeout, :parser].freeze
 
   # Given a path to a directory environment, attempts to load and parse an
   # environment.conf in ini format, and return an EnvironmentConf instance.
@@ -37,8 +37,8 @@ class Puppet::Settings::EnvironmentConf
   # Configuration values are exactly those returned by the environment object,
   # without interpolation.  This is a special case for the default configured
   # environment returned by the Puppet::Environments::StaticPrivate loader.
-  def self.static_for(environment, environment_timeout = 0)
-    Static.new(environment, environment_timeout)
+  def self.static_for(environment, parser, environment_timeout = 0)
+    Static.new(environment, environment_timeout, parser)
   end
 
   attr_reader :section, :path_to_env, :global_modulepath
@@ -100,6 +100,12 @@ class Puppet::Settings::EnvironmentConf
     end
   end
 
+  def parser
+    get_setting(:parser, Puppet.settings.value(:parser)) do |value|
+      value
+    end
+  end
+
   def config_version
     get_setting(:config_version) do |config_version|
       absolute(config_version)
@@ -152,10 +158,12 @@ class Puppet::Settings::EnvironmentConf
   # @api private
   class Static
     attr_reader :environment_timeout
+    attr_reader :parser
 
-    def initialize(environment, environment_timeout)
+    def initialize(environment, environment_timeout, parser)
       @environment = environment
       @environment_timeout = environment_timeout
+      @parser = parser
     end
 
     def manifest

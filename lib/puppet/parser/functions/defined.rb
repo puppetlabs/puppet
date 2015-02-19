@@ -52,7 +52,7 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
       when Puppet::Resource
         compiler.findresource(val.type, val.title)
       else
-        if Puppet[:parser] == 'future'
+        if Puppet.future_parser?
           case val
           when Puppet::Pops::Types::PResourceType
             raise ArgumentError, "The given resource type is a reference to all kind of types" if val.type_name.nil?
