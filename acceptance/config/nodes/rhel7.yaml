@@ -2,6 +2,7 @@ HOSTS:
   master:
     roles:
       - master
+      - agent
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
