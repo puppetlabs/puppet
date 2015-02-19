@@ -251,6 +251,9 @@ module Puppet
         # `start /w` blocks until installation is complete, but needs to be wrapped in `cmd.exe /c`
         on host, "cmd.exe /c start /w msiexec /qn /i #{opts[:url]} /L*V C:\\\\Windows\\\\Temp\\\\Puppet-Install.log"
 
+        # make sure the background service isn't running while the test executes
+        on host, "net stop puppet"
+
         # make sure install is sane, beaker has already added puppet and ruby
         # to PATH in ~/.ssh/environment
         on host, puppet('--version')
