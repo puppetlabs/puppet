@@ -20,6 +20,13 @@ module Puppet
       requires in order to function, and you must meet those requirements
       to use a given provider.
 
+      You can declare multiple package resources with the same `name`, as long
+      as they specify different providers and have unique titles.
+
+      Note that you must use the _title_ to make a reference to a package
+      resource; `Package[<NAME>]` is not a synonym for `Package[<TITLE>]` like
+      it is for many other resource types.
+
       **Autorequires:** If Puppet is managing the files specified as a
       package's `adminfile`, `responsefile`, or `source`, the package
       resource will autorequire those files."
@@ -203,9 +210,9 @@ module Puppet
     newparam(:name) do
       desc "The package name.  This is the name that the packaging
       system uses internally, which is sometimes (especially on Solaris)
-      a name that is basically useless to humans.  If you want to
-      abstract package installation, then you can use aliases to provide
-      a common name to packages:
+      a name that is basically useless to humans.  If a package goes by
+      several names, you can use a single title and then set the name
+      conditionally:
 
           # In the 'openssl' class
           $ssl = $operatingsystem ? {
@@ -213,11 +220,9 @@ module Puppet
             default => openssl
           }
 
-          # It is not an error to set an alias to the same value as the
-          # object name.
-          package { $ssl:
-            ensure => installed,
-            alias  => openssl
+          package { 'openssl':
+            name   => $ssl,
+            ensure => installed
           }
 
           . etc. .
@@ -227,12 +232,10 @@ module Puppet
             default => openssh
           }
 
-          # Use the alias to specify a dependency, rather than
-          # having another selector to figure it out again.
-          package { $ssh:
+          package { 'openssh':
+            name    => $ssh
             ensure  => installed,
-            alias   => openssh,
-            require => Package[openssl]
+            require => Package['openssl']
           }
 
       "
