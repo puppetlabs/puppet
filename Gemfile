@@ -26,7 +26,6 @@ end
 gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['> 1.0', '< 3'])
-gem 'deep_merge', '~> 1.0'
 gem "rake", "10.1.1", :require => false
 
 group(:development, :test) do
