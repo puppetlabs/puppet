@@ -68,6 +68,8 @@ shared_examples_for "a trigger that handles start_date and start_time" do
     end
   end
 
+
+  
   describe 'the given start_time' do
     before :each do
       trigger_hash['start_date'] = '2011-12-31'
@@ -143,15 +145,43 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'daily',
-            'every'      => '2',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'daily',
+            'every'            => '2',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
+        it 'should handle a single daily with repeat trigger' do
+          @mock_task.expects(:trigger).with(0).returns({
+            'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_DAILY,
+            'start_year'       => 2011,
+            'start_month'      => 9,
+            'start_day'        => 12,
+            'start_hour'       => 13,
+            'start_minute'     => 20,
+            'minutes_interval' => 60,
+            'minutes_duration' => 180,
+            'flags'            => 0,
+            'type'             => { 'days_interval' => 2 },
+          })
+
+          expect(resource.provider.trigger).to eq([{
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'daily',
+            'every'            => '2',
+            'minutes_interval' => 60,
+            'minutes_duration' => 180,
+            'enabled'          => true,
+            'index'            => 0,
+          }])
+        end
+        
         it 'should handle a single weekly trigger' do
           scheduled_days_of_week = Win32::TaskScheduler::MONDAY |
                                    Win32::TaskScheduler::WEDNESDAY |
@@ -172,13 +202,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date'  => '2011-9-12',
-            'start_time'  => '13:20',
-            'schedule'    => 'weekly',
-            'every'       => '2',
-            'day_of_week' => ['sun', 'mon', 'wed', 'fri'],
-            'enabled'     => true,
-            'index'       => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'weekly',
+            'every'            => '2',
+            'day_of_week'      => ['sun', 'mon', 'wed', 'fri'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
@@ -205,13 +237,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'monthly',
-            'months'     => [1, 2, 8, 9, 12],
-            'on'         => [1, 3, 5, 15, 'last'],
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'monthly',
+            'months'           => [1, 2, 8, 9, 12],
+            'on'               => [1, 3, 5, 15, 'last'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
@@ -247,6 +281,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'months'           => [1, 2, 8, 9, 12],
             'which_occurrence' => 'first',
             'day_of_week'      => ['sun', 'mon', 'wed', 'fri'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
             'enabled'          => true,
             'index'            => 0,
           }])
@@ -264,11 +300,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
       end
@@ -305,29 +343,102 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2012-11-14',
-            'start_time' => '15:22',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 1,
+            'start_date'       => '2012-11-14',
+            'start_time'       => '15:22',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 1,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
 
+      it 'should handle multiple triggers with repeat triggers' do
+        @mock_task.expects(:trigger_count).returns(3)
+        @mock_task.expects(:trigger).with(0).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2011,
+          'start_month'      => 10,
+          'start_day'        => 13,
+          'start_hour'       => 14,
+          'start_minute'     => 21,
+          'minutes_interval' => 15,
+          'minutes_duration' => 60,          
+          'flags'            => 0,
+        })
+        @mock_task.expects(:trigger).with(1).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2012,
+          'start_month'      => 11,
+          'start_day'        => 14,
+          'start_hour'       => 15,
+          'start_minute'     => 22,
+          'minutes_interval' => 30,
+          'minutes_duration' => 120,                    
+          'flags'            => 0,
+        })
+        @mock_task.expects(:trigger).with(2).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2013,
+          'start_month'      => 12,
+          'start_day'        => 15,
+          'start_hour'       => 16,
+          'start_minute'     => 23,
+          'minutes_interval' => 60,
+          'minutes_duration' => 240,          
+          'flags'            => 0,
+        })
+
+        expect(resource.provider.trigger).to match_array([
+          {
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 15,
+            'minutes_duration' => 60,
+            'enabled'          => true,
+            'index'            => 0,
+          },
+          {
+            'start_date'       => '2012-11-14',
+            'start_time'       => '15:22',
+            'schedule'         => 'once',
+            'minutes_interval' => 30,
+            'minutes_duration' => 120,
+            'enabled'          => true,
+            'index'            => 1,
+          },
+          {
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 60,
+            'minutes_duration' => 240,
+            'enabled'          => true,
+            'index'            => 2,
+          }
+        ])
+      end
+      
       it 'should skip triggers Win32::TaskScheduler cannot handle' do
         @mock_task.expects(:trigger_count).returns(3)
         @mock_task.expects(:trigger).with(0).returns({
@@ -354,18 +465,22 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
@@ -396,18 +511,22 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
@@ -417,6 +536,12 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       @mock_task.expects(:working_directory).returns('C:\Windows\System32')
 
       expect(resource.provider.working_dir).to eq('C:\Windows\System32')
+    end
+    
+    it 'should get the comment from the comment on the task' do
+      @mock_task.expects(:comment).returns('This is a comment for the task')
+
+      expect(resource.provider.comment).to eq('This is a comment for the task')
     end
 
     it 'should get the command from the application_name on the task' do
@@ -529,11 +654,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       })
 
       mock_task_trigger = {
-        'start_date' => '2011-10-13',
-        'start_time' => '14:21',
-        'schedule'   => 'once',
-        'enabled'    => true,
-        'index'      => 0,
+        'start_date'       => '2011-10-13',
+        'start_time'       => '14:21',
+        'schedule'         => 'once',
+        'minutes_interval' => 0,
+        'minutes_duration' => 0,
+        'enabled'          => true,
+        'index'            => 0,
       }
 
       expect(resource.provider.trigger).to eq([mock_task_trigger])
@@ -542,11 +669,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       resource.provider.clear_task
 
       expect(resource.provider.trigger).to eq([{
-        'start_date' => '2012-11-14',
-        'start_time' => '15:22',
-        'schedule'   => 'once',
-        'enabled'    => true,
-        'index'      => 0,
+        'start_date'       => '2012-11-14',
+        'start_time'       => '15:22',
+        'schedule'         => 'once',
+        'minutes_interval' => 0,
+        'minutes_duration' => 0,
+        'enabled'          => true,
+        'index'            => 0,
       }])
     end
   end
@@ -1022,7 +1151,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
   end
-
+  
   describe '#normalized_date' do
     it 'should format the date without leading zeros' do
       expect(described_class.normalized_date('2011-01-01')).to eq('2011-1-1')
@@ -1076,6 +1205,42 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         )
       end
 
+      it 'should fail if minutes_interval is not an integer' do
+        @puppet_trigger['minutes_interval'] = 'abc'
+        expect { trigger }.to raise_error(ArgumentError)
+      end
+
+      it 'should fail if minutes_duration is not an integer' do
+        @puppet_trigger['minutes_duration'] = 'abc'
+        expect { trigger }.to raise_error(ArgumentError)
+      end
+      
+      it 'should fail if minutes_interval is less than 0' do
+        @puppet_trigger['minutes_interval'] = '-1'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_interval must be an integer greater or equal to 0'
+        )
+      end
+      
+      it 'should fail if minutes_duration is less than minutes_interval' do
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '9'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_duration must be an integer greater than minutes_interval'
+        )
+      end
+      
+      it 'should succeed if minutes_duration is greater than minutes_duration' do
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '11'
+        expect(trigger['minutes_interval']).to eq(10)
+        expect(trigger['minutes_duration']).to eq(11)
+      end
+      
       it_behaves_like "a trigger that handles start_date and start_time" do
         let(:trigger_hash) {{'schedule' => 'once' }}
       end
@@ -1411,6 +1576,14 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         @mock_task.expects(:working_directory=).with('C:\Windows\System32')
 
         resource.provider.working_dir = 'C:\Windows\System32'
+      end
+    end
+    
+    describe '#comment=' do
+      it 'should set the comment on the task' do
+        @mock_task.expects(:comment=).with('This is a comment for the task')
+
+        resource.provider.comment = 'This is a comment for the task'
       end
     end
 

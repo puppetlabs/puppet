@@ -47,6 +47,10 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     task.application_name
   end
 
+  def comment
+    task.comment
+  end
+  
   def arguments
     task.parameters
   end
@@ -76,7 +80,6 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
                   nil
                 end
       next unless trigger and scheduler_trigger_types.include?(trigger['trigger_type'])
-
       puppet_trigger = {}
       case trigger['trigger_type']
       when Win32::TaskScheduler::TASK_TIME_TRIGGER_DAILY
@@ -101,6 +104,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       puppet_trigger['start_date'] = self.class.normalized_date("#{trigger['start_year']}-#{trigger['start_month']}-#{trigger['start_day']}")
       puppet_trigger['start_time'] = self.class.normalized_time("#{trigger['start_hour']}:#{trigger['start_minute']}")
       puppet_trigger['enabled']    = trigger['flags'] & Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED == 0
+      puppet_trigger['minutes_interval'] = trigger['minutes_interval'] ||= 0
+      puppet_trigger['minutes_duration'] = trigger['minutes_duration'] ||= 0
       puppet_trigger['index']      = i
 
       @triggers << puppet_trigger
@@ -139,6 +144,10 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
   def command=(value)
     task.application_name = value
+  end
+
+  def comment=(value)
+    task.comment = value
   end
 
   def arguments=(value)
@@ -209,10 +218,9 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def create
     clear_task
     @task = Win32::TaskScheduler.new(resource[:name], dummy_time_trigger)
-
     self.command = resource[:command]
 
-    [:arguments, :working_dir, :enabled, :trigger, :user].each do |prop|
+    [:arguments, :working_dir, :enabled, :trigger, :user, :comment].each do |prop|
       send("#{prop}=", resource[prop]) if resource[prop]
     end
   end
@@ -239,6 +247,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     desired['months']      ||= current_trigger['months']      if current_trigger.has_key?('months')
     desired['on']          ||= current_trigger['on']          if current_trigger.has_key?('on')
     desired['day_of_week'] ||= current_trigger['day_of_week'] if current_trigger.has_key?('day_of_week')
+    desired['minutes_interval'] ||= current_trigger['minutes_interval'] if current_trigger.has_key?('minutes_interval')
+    desired['minutes_duration'] ||= current_trigger['minutes_duration'] if current_trigger.has_key?('minutes_duration')
 
     translate_hash_to_trigger(current_trigger) == translate_hash_to_trigger(desired)
   end
@@ -258,10 +268,10 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       'flags'                   => 0,
       'random_minutes_interval' => 0,
       'end_day'                 => 0,
-      "end_year"                => 0,
-      "minutes_interval"        => 0,
-      "end_month"               => 0,
-      "minutes_duration"        => 0,
+      'end_year'                => 0,
+      'minutes_interval'        => 0,
+      'end_month'               => 0,
+      'minutes_duration'        => 0,
       'start_year'              => now.year,
       'start_month'             => now.month,
       'start_day'               => now.day,
@@ -280,7 +290,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       trigger['flags'] &= ~Win32::TaskScheduler::TASK_TRIGGER_FLAG_DISABLED
     end
 
-    extra_keys = puppet_trigger.keys.sort - ['index', 'enabled', 'schedule', 'start_date', 'start_time', 'every', 'months', 'on', 'which_occurrence', 'day_of_week']
+    extra_keys = puppet_trigger.keys.sort - ['index', 'enabled', 'schedule', 'start_date', 'start_time', 'every', 'months', 'on', 'which_occurrence', 'day_of_week', 'minutes_interval', 'minutes_duration']
     self.fail "Unknown trigger option(s): #{Puppet::Parameter.format_value_for_display(extra_keys)}" unless extra_keys.empty?
     self.fail "Must specify 'start_time' when defining a trigger" unless puppet_trigger['start_time']
 
@@ -331,6 +341,17 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       trigger['trigger_type'] = Win32::TaskScheduler::ONCE
     else
       self.fail "Unknown schedule type: #{puppet_trigger["schedule"].inspect}"
+    end
+
+    if puppet_trigger['minutes_interval']
+      integer_interval = Integer(puppet_trigger['minutes_interval'])
+      self.fail 'minutes_interval must be an integer greater or equal to 0' unless integer_interval >= 0
+      trigger['minutes_interval'] = integer_interval
+    end
+    if puppet_trigger['minutes_duration']
+      integer_duration = Integer(puppet_trigger['minutes_duration'])
+      self.fail 'minutes_duration must be an integer greater than minutes_interval' unless integer_duration > integer_interval || (integer_duration == 0 && integer_interval == 0)
+      trigger['minutes_duration'] = integer_duration
     end
 
     if start_date = puppet_trigger['start_date']
