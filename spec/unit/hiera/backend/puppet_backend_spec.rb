@@ -34,7 +34,7 @@ describe Hiera::Backend::Puppet_backend do
       with_config(:puppet => {:datasource => "rspec"},
                   :hierarchy => ["%{foo}", "common"])
 
-      @mockscope.expects(:lookupvar).with("foo").returns(nil)
+      @mockscope.expects(:lookupvar).at_least_once.with("foo").returns(nil)
 
       @backend.hierarchy(@scope, nil).should == ["rspec::common", "ntp::config::rspec", "ntp::rspec"]
     end
