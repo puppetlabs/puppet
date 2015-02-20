@@ -1,0 +1,9 @@
+class <%= name %> {
+<% mc.times do |m| %>
+  $v<%= m %> = [
+  <% (function_count - 1).times do |n| %>    <%= name %>::f<%= n %>(),
+  <% end %>
+    module<%= m %>::f<%= function_count - 1 %>()
+  ]
+<% end %>
+}
