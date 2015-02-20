@@ -27,7 +27,7 @@ module Puppet
       a filebucket resource and a resource default for the `backup` attribute
       in site.pp:
 
-          # /etc/puppet/manifests/site.pp
+          # /etc/puppetlabs/puppet/manifests/site.pp
           filebucket { 'main':
             path   => false,                # This is required for remote filebuckets.
             server => 'puppet.example.com', # Optional; defaults to the configured puppet master.

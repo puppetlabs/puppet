@@ -13,13 +13,13 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-PATH=/usr/bin:/sbin:/bin:/usr/sbin
+PATH=/opt/puppetlabs/puppet/bin:/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=${LOCKFILE-/var/lock/subsys/puppet}
-pidfile=${PIDFILE-/var/run/puppet/agent.pid}
-puppetd=${PUPPETD-/usr/bin/puppet}
+pidfile=${PIDFILE-/var/run/puppetlabs/agent.pid}
+puppetd=${PUPPETD-/opt/puppetlabs/puppet/bin/puppet}
 RETVAL=0
 
 PUPPET_OPTS="agent "

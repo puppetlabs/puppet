@@ -1,7 +1,7 @@
 This is an example environment directory. The environment's modules can be
 placed in a "modules" subdirectory. The environments initial manifests are
 placed in a "manifests" subdirectory. By default the environment also has any
-modules that are installed globally (normally in /etc/puppet/modules) for the
+modules that are installed globally (normally in /etc/puppetlabs/code/modules) for the
 puppet master.
 
 For more information see

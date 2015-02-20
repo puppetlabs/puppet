@@ -226,7 +226,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
   links: !ruby/sym manage
   mode: 420
   owner: 0
-  path: #{File.expand_path('/etc/puppet/modules/mymodule/files/config_file.txt')}
+  path: #{File.expand_path('/etc/puppetlabs/code/modules/mymodule/files/config_file.txt')}
   source: #{options[:source]}
   stat_method: !ruby/sym lstat
 EOFILESERVERMETADATA

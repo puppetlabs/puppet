@@ -57,7 +57,7 @@ None
 
     {
       "line": 7,
-      "file": "/etc/puppet/manifests/site.pp",
+      "file": "/etc/puppetlabs/puppet/manifests/site.pp",
       "name":"athing",
       "kind":"class"
     }
@@ -117,21 +117,21 @@ Accept: pson, text/pson
 
     [
       {
-        "file": "/etc/puppet/manifests/site.pp",
+        "file": "/etc/puppetlabs/puppet/manifests/site.pp",
         "kind": "class",
         "line": 7,
         "name": "athing"
       },
       {
         "doc": "An example class\n",
-        "file": "/etc/puppet/manifests/site.pp",
+        "file": "/etc/puppetlabs/puppet/manifests/site.pp",
         "kind": "class",
         "line": 11,
         "name": "bthing",
         "parent": "athing"
       },
       {
-        "file": "/etc/puppet/manifests/site.pp",
+        "file": "/etc/puppetlabs/puppet/manifests/site.pp",
         "kind": "defined_type",
         "line": 1,
         "name": "hello",
@@ -141,13 +141,13 @@ Accept: pson, text/pson
         }
       },
       {
-        "file": "/etc/puppet/manifests/site.pp",
+        "file": "/etc/puppetlabs/puppet/manifests/site.pp",
         "kind": "node",
         "line": 14,
         "name": "web01.example.com"
       },
       {
-        "file": "/etc/puppet/manifests/site.pp",
+        "file": "/etc/puppetlabs/puppet/manifests/site.pp",
         "kind": "node",
         "line": 17,
         "name": "default"

@@ -8,7 +8,7 @@ module Puppet::Parser::Functions
   To use `hiera_include`, the following configuration is required:
 
   - A key name to use for classes, e.g. `classes`.
-  - A line in the puppet `sites.pp` file (e.g. `/etc/puppet/manifests/sites.pp`)
+  - A line in the puppet `sites.pp` file (e.g. `/etc/puppetlabs/puppet/manifests/sites.pp`)
     reading `hiera_include('classes')`. Note that this line must be outside any node
     definition and below any top-scope variables in use for Hiera lookups.
   - Class keys in the appropriate data sources. In a data source keyed to a node's role,

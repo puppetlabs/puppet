@@ -12,7 +12,7 @@ exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
 sbindir=/opt/csw/sbin
 
-pidfile=/var/lib/puppet/run/agent.pid
+pidfile=/var/run/puppetlabs/agent.pid
 
 case "$1" in
 start)

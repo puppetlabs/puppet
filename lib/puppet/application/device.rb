@@ -66,7 +66,7 @@ puppet-device(8) -- Manage remote network devices
 SYNOPSIS
 --------
 Retrieves all configurations from the puppet master and apply
-them to the remote devices configured in /etc/puppet/device.conf.
+them to the remote devices configured in /etc/puppetlabs/puppet/device.conf.
 
 Currently must be run out periodically, using cron or something similar.
 
@@ -84,7 +84,7 @@ retrieve its configuration and apply it.
 
 USAGE NOTES
 -----------
-One need a /etc/puppet/device.conf file with the following content:
+One need a /etc/puppetlabs/puppet/device.conf file with the following content:
 
 [remote.device.fqdn]
 type <type>
