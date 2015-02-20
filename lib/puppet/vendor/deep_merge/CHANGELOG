@@ -1,0 +1,45 @@
+2014-01-21 Dan DeLeo <dan@kallistec.com>
+  * Update knockout behavior to better handle nil (b7de40b5)
+
+2011-08-15 Dan DeLeo <dan@kallistec.com>
+  * Document how to use w/ Rails 3 via Bundler
+
+2011-07-28 Dan DeLeo <dan@kallistec.com>
+  * Use a plain ol' gemspec and Rakefile for gem creation
+
+  * Ship version 1.0.0
+
+2011-05-23  Joe Van Dyk <joe@fixieconsulting.com>
+
+  * Added Changelog
+
+2011-05-18  Joe Van Dyk <joe@fixieconsulting.com>
+
+  * Merging empty strings should work if String#blank? is defined.
+
+  * Use unix line endings
+
+  * Removing extra whitespace
+
+2010-01-11  Dan DeLeo <dan@kallistec.com>
+
+  * fix boolean merging according to mdkent's patch explicitly test 
+    for nils w/ #nil? instead of negating. Thanks mdkent!
+
+2009-12-25  Dan DeLeo <dan@kallistec.com>
+
+  * miscellaneous cleanup
+
+  * make rails/active_support compat optional
+
+  * add jeweler rake task for gemability
+
+2009-12-24  Dan DeLeo <dan@kallistec.com>
+
+  * VERSION: Version bump to 0.0.1
+
+  * VERSION: Version bump to 0.0.0
+
+2009-11-06  Jonathan Weiss <jw@innerewut.de>
+
+  * import

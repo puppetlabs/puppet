@@ -44,15 +44,12 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 3"])
       s.add_runtime_dependency(%q<hiera>, ["~> 1.0"])
-      s.add_runtime_dependency(%q<deep_merge>, ["~> 1.0"])
     else
       s.add_dependency(%q<facter>, [">= 1.7", "< 3"])
       s.add_dependency(%q<hiera>, ["~> 1.0"])
-      s.add_dependency(%q<deep_merge>, ["~> 1.0"])
     end
   else
     s.add_dependency(%q<facter>, [">= 1.7", "< 3"])
     s.add_dependency(%q<hiera>, ["~> 1.0"])
-    s.add_dependency(%q<deep_merge>, ["~> 1.0"])
   end
 end
