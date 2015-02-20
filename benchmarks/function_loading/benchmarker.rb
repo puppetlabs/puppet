@@ -19,9 +19,10 @@ class Benchmarker
   end
 
   def run(args=nil)
-    env = Puppet.lookup(:environments).get("benchmarking#{benchmark_count}")
-    node = Puppet::Node.new("testing", :environment => env)
-    Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
+    envs = Puppet.lookup(:environments)
+    envs.clear('benchmarking')
+    node = Puppet::Node.new('testing', :environment => envs.get('benchmarking'))
+    Puppet::Resource::Catalog.indirection.find('testing', :use_node => node)
   end
 
   def benchmark_count
@@ -31,16 +32,13 @@ class Benchmarker
   end
 
   def generate
-    # We need a new environment for each iteration
-    ENV['ITERATIONS'].to_i.times { |c| generate_env(c) }
-  end
-
-  def generate_env(c)
-    environment = File.join(@target, 'environments', "benchmarking#{c}")
+    environment = File.join(@target, 'environments', 'benchmarking')
     modules = File.join(environment, 'modules')
+    env_functions = File.join(environment, 'lib', 'puppet', 'functions', 'environment')
     templates = File.join('benchmarks', 'function_loading')
 
     mkdir_p(modules)
+    mkdir_p(env_functions)
     mkdir_p(File.join(environment, 'manifests'))
 
     module_count = @size / 10
@@ -48,6 +46,9 @@ class Benchmarker
     render(File.join(templates, 'site.pp.erb'),
            File.join(environment, 'manifests', 'site.pp'),
            :size => module_count)
+
+    env_function_template = File.join(templates, 'env_function.erb')
+    function_count.times { |n| render(env_function_template, File.join(env_functions, "f#{n}.rb"), :n => n) }
 
     module_count.times do |i|
       module_name = "module#{i}"
