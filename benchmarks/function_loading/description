@@ -1,0 +1,3 @@
+Benchmark scenario: many functions spread across many modules.
+Benchmark target: function loading.
+
