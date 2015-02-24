@@ -73,7 +73,8 @@ describing all installed Puppet types or all allowable arguments to
 puppet executables. It is largely meant for internal use and is used to
 generate the reference document available on the Puppet Labs web site.
 
-For all other use cases this command has been superseded by the "puppet-strings"
+For Puppet module documentation (and all other use cases) this command
+has been superseded by the "puppet-strings"
 module - see https://github.com/puppetlabs/puppetlabs-strings for more information.
 
 This command (puppet-doc) will be removed once the
