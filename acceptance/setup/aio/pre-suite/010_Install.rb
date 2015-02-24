@@ -7,13 +7,14 @@ test_name "Install Packages"
 step "Install repositories on target machines..." do
 
   sha = ENV['SHA']
+  server_version = ENV['SERVER_VERSION'] ||= 'nightly'
   repo_configs_dir = 'repo-configs'
 
   hosts.each do |host|
     install_repos_on(host, 'puppet-agent', sha, repo_configs_dir)
   end
 
-  install_repos_on(master, 'puppetserver', 'nightly', repo_configs_dir)
+  install_repos_on(master, 'puppetserver', server_version, repo_configs_dir)
 end
 
 
@@ -61,4 +62,3 @@ agents.each do |agent|
 end
 
 configure_gem_mirror(hosts)
-
