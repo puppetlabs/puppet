@@ -77,7 +77,7 @@ module Puppet
 
     class WindowsRunMode < RunMode
       def conf_dir
-        which_dir(File.join(windows_common_base("etc")), "~/.puppet")
+        which_dir(File.join(windows_common_base("puppet/etc")), "~/.puppet")
       end
 
       def code_dir
@@ -85,21 +85,21 @@ module Puppet
       end
 
       def var_dir
-        which_dir(File.join(windows_common_base("var")), "~/.puppet/var")
+        which_dir(File.join(windows_common_base("puppet/cache")), "~/.puppet/var")
       end
 
       def run_dir
-        which_dir(File.join(windows_common_base("var/run")), "~/.puppet/var/run")
+        which_dir(File.join(windows_common_base("puppet/var/run")), "~/.puppet/var/run")
       end
 
       def log_dir
-        which_dir(File.join(windows_common_base("var/log")), "~/.puppet/var/log")
+        which_dir(File.join(windows_common_base("puppet/var/log")), "~/.puppet/var/log")
       end
 
     private
 
       def windows_common_base(*extra)
-        [Dir::COMMON_APPDATA, "PuppetLabs", "puppet"] + extra
+        [Dir::COMMON_APPDATA, "PuppetLabs"] + extra
       end
     end
   end
