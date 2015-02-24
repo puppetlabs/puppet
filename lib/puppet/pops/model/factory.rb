@@ -34,7 +34,7 @@ class Puppet::Pops::Model::Factory
   # Polymorphic build
   def build(o, *args)
     begin
-      @@build_visitor.visit_this(self, o, *args)
+      @@build_visitor.visit_this(self, o, args)
     rescue =>e
       # debug here when in trouble...
       raise e

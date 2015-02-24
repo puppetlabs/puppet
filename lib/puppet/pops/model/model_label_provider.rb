@@ -11,7 +11,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   # If a Class is given, its name is used as label
   #
   def label o
-    @@label_visitor.visit(o)
+    @@label_visitor.visit_this_0(self, o)
   end
 
   def label_Factory o                     ; label(o.current)                    end

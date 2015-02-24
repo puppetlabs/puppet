@@ -57,7 +57,7 @@ class Puppet::Pops::Model::AstTransformer
   # Transforms pops expressions into AST 3.1 statements/expressions
   def transform(o)
     begin
-    @@transform_visitor.visit_this(self,o)
+    @@transform_visitor.visit_this_0(self,o)
     rescue StandardError => e
       loc_data = {}
       merge_location(loc_data, o)
@@ -68,12 +68,12 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms pops expressions into AST 3.1 query expressions
   def query(o)
-    @@query_transform_visitor.visit_this(self, o)
+    @@query_transform_visitor.visit_this_0(self, o)
   end
 
   # Transforms pops expressions into AST 3.1 hostnames
   def hostname(o)
-    @@hostname_transform_visitor.visit_this(self, o)
+    @@hostname_transform_visitor.visit_this_0(self, o)
   end
 
 
