@@ -431,6 +431,22 @@ module Puppet
       reqs
     end
 
+    #autorequire the nearest ancestor directory of home found in the catalog.
+    autorequire(:file) do
+      req = []
+      path = Pathname.new(self[:home])
+      if !path.root?
+        # Start at our parent, to avoid autorequiring ourself
+        parents = path.parent.enum_for(:ascend)
+        if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+          req << found.to_s
+        end
+      end
+      # if the resource is a link, make sure the target is created first
+      req << self[:target] if self[:target]
+      req
+    end
+
     newparam(:role_membership) do
       desc "Whether specified roles should be considered the **complete list**
         (`inclusive`) or the **minimum list** (`minimum`) of roles the user
