@@ -19,7 +19,7 @@ describe 'loader helper classes' do
     expect(tn.type).to eq(:function)
     expect(tn.name_parts).to eq(['foo', 'bar'])
     expect(tn.name).to eq('foo::bar')
-    expect(tn.qualified).to be_truthy
+    expect(tn.qualified?).to be_truthy
   end
 end
 

@@ -34,7 +34,7 @@ class Puppet::Pops::Model::Factory
   # Polymorphic build
   def build(o, *args)
     begin
-      @@build_visitor.visit_this(self, o, *args)
+      @@build_visitor.visit_this(self, o, args)
     rescue =>e
       # debug here when in trouble...
       raise e
@@ -77,7 +77,7 @@ class Puppet::Pops::Model::Factory
 
   def build_AccessExpression(o, left, *keys)
     o.left_expr = to_ops(left)
-    keys.each {|expr| o.addKeys(to_ops(expr)) }
+    o.keys = keys.map {|expr| to_ops(expr) }
     o
   end
 
@@ -88,14 +88,14 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_BlockExpression(o, *args)
-    args.each {|expr| o.addStatements(to_ops(expr)) }
+    o.statements = args.map {|expr| to_ops(expr) }
     o
   end
 
   def build_CollectExpression(o, type_expr, query_expr, attribute_operations)
     o.type_expr = to_ops(type_expr)
     o.query = build(query_expr)
-    attribute_operations.each {|op| o.addOperations(build(op)) }
+    o.operations = attribute_operations.map {|op| build(op) }
     o
   end
 
@@ -105,7 +105,7 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_ConcatenatedString(o, *args)
-    args.each {|expr| o.addSegments(build(expr)) }
+    o.segments = args.map {|expr| build(expr) }
     o
   end
 
@@ -147,7 +147,7 @@ class Puppet::Pops::Model::Factory
 
   def build_ResourceOverrideExpression(o, resources, attribute_operations)
     o.resources = build(resources)
-    attribute_operations.each {|ao| o.addOperations(build(ao)) }
+    o.operations = attribute_operations.map {|ao| build(ao) }
     o
   end
 
@@ -163,12 +163,12 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_LiteralHash(o, *keyed_entries)
-    keyed_entries.each {|entry| o.addEntries build(entry) }
+    o.entries = keyed_entries.map {|entry| build(entry) }
     o
   end
 
   def build_LiteralList(o, *values)
-    values.each {|v| o.addValues build(v) }
+    o.values = values.map {|v| build(v) }
     o
   end
 
@@ -216,14 +216,14 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_LambdaExpression(o, parameters, body)
-    parameters.each {|p| o.addParameters(build(p)) }
+    o.parameters = parameters.map {|p| build(p) }
     b = f_build_body(body)
     o.body = to_ops(b) if b
     o
   end
 
   def build_NamedDefinition(o, name, parameters, body)
-    parameters.each {|p| o.addParameters(build(p)) }
+    o.parameters = parameters.map {|p| build(p) }
     b = f_build_body(body)
     o.body = b.current if b
     o.name = name
@@ -235,7 +235,7 @@ class Puppet::Pops::Model::Factory
   # @param parent [Expression] parent node matcher
   # @param body [Object] see {#f_build_body}
   def build_NodeDefinition(o, hosts, parent, body)
-    hosts.each {|h| o.addHost_matches(build(h)) }
+    o.host_matches = hosts.map {|h| build(h) }
     o.parent = build(parent) if parent # no nop here
     b = f_build_body(body)
     o.body = b.current if b
@@ -260,7 +260,7 @@ class Puppet::Pops::Model::Factory
 
   def build_ResourceExpression(o, type_name, bodies)
     o.type_name = build(type_name)
-    bodies.each {|b| o.addBodies(build(b)) }
+    o.bodies = bodies.map {|b| build(b) }
     o
   end
 
@@ -271,19 +271,19 @@ class Puppet::Pops::Model::Factory
 
   def build_ResourceBody(o, title_expression, attribute_operations)
     o.title = build(title_expression)
-    attribute_operations.each {|ao| o.addOperations(build(ao)) }
+    o.operations = attribute_operations.map {|ao| build(ao) }
     o
   end
 
   def build_ResourceDefaultsExpression(o, type_ref, attribute_operations)
     o.type_ref = build(type_ref)
-    attribute_operations.each {|ao| o.addOperations(build(ao)) }
+    o.operations = attribute_operations.map {|ao| build(ao) }
     o
   end
 
   def build_SelectorExpression(o, left, *selectors)
     o.left_expr = to_ops(left)
-    selectors.each {|s| o.addSelectors(build(s)) }
+    o.selectors = selectors.map {|s| build(s) }
     o
   end
 
@@ -326,7 +326,7 @@ class Puppet::Pops::Model::Factory
   def build_Program(o, body, definitions, locator)
     o.body = to_ops(body)
     # non containment
-    definitions.each { |d| o.addDefinitions(d) }
+    o.definitions = definitions
     o.source_ref = locator.file
     o.source_text = locator.string
     o.line_offsets = locator.line_index

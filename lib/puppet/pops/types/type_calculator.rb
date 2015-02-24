@@ -1060,22 +1060,33 @@ class Puppet::Pops::Types::TypeCalculator
     if args_tuple.size_type
       raise ArgumentError, "Callable tuple may not have a size constraint when used as args"
     end
-    # Assume no block was given - i.e. it is nil, and its type is PNilType
-    block_t = @nil_t
-    if self.class.is_kind_of_callable?(args_tuple.types.last)
-      # a split is needed to make it possible to use required, optional, and varargs semantics
-      # of the tuple type.
-      #
-      args_tuple = args_tuple.copy
-      # to drop the callable, it must be removed explicitly since this is an rgen array
-      args_tuple.removeTypes(block_t = args_tuple.types.last())
-    else
-      # no block was given, if it is required, the below will fail
+
+    params_tuple = callable_t.param_types
+    param_block_t = callable_t.block_type
+    arg_types = args_tuple.types
+    arg_block_t = arg_types.last()
+    if self.class.is_kind_of_callable?(arg_block_t)
+      # Can't pass a block to a callable that doesn't accept one
+      return false if param_block_t.nil?
+
+      # Check that the block is of the right tyṕe
+      return false unless assignable?(param_block_t, arg_block_t)
+
+      # Check other arguments
+      arg_count = arg_types.size - 1
+      params_size_t = params_tuple.size_type || Types::TypeFactory.range(*params_tuple.size_range)
+      return false unless assignable?(params_size_t, Types::TypeFactory.range(arg_count, arg_count))
+
+      ctypes = params_tuple.types
+      args_assignable = false
+      arg_count.times do |index|
+        return false unless assignable?((ctypes[index] || ctypes[-1]), arg_types[index])
+      end
+      return true
     end
-    # unless argument types match parameter types
-    return false unless assignable?(callable_t.param_types, args_tuple)
-    # can the given block be *called* with a signature requirement specified by callable_t?
-    assignable?(callable_t.block_type || @nil_t, block_t)
+
+    # Check that tuple is assignable and that the block (if declared) is optional
+    assignable?(params_tuple, args_tuple) &&  (param_block_t.nil? || assignable?(param_block_t, @nil_t))
   end
 
   # @api private

@@ -202,7 +202,7 @@ class Puppet::Pops::Binder::Binder
     # @api private
     #
     def bind(binding)
-      @@bind_visitor.visit_this(self, binding)
+      @@bind_visitor.visit_this_0(self, binding)
     end
 
     # @return [Puppet::Pops::Binder::InjectorEntry] the entry with the highest precedence
