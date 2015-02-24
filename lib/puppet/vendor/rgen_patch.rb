@@ -1,10 +1,13 @@
 # Patch to improve generated addXXX and setXXX method performance
-# Submitted to rgen as PR: https://github.com/mthiede/rgen/pull/22
+#
+# Submitted to rgen as PR: https://github.com/mthiede/rgen/pull/22. This
+# patch should be removed once that PR has been included in an rgen
+# release.
 #
 # The current implementation of the generated addXXX method will iterate
 # over the contained array where each iteration will then test for object_id
 # equality. Once the iteration is done and such an entry is found it
-# checks it the added value is an instance of MMBase or MMGeneric. If it
+# checks if the added value is an instance of MMBase or MMGeneric. If it
 # is, then it's considered a duplicate and the method returns.
 #
 # This patch changes the implementation so that the test for MMBase/
