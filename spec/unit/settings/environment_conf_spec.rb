@@ -33,10 +33,16 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.config_version).to eq(File.expand_path('/some/version.sh'))
     end
 
-    it "read an environment_timeout from config" do
+    it "reads an environment_timeout from config" do
       setup_environment_conf(config, :environment_timeout => '3m')
 
       expect(envconf.environment_timeout).to eq(180)
+    end
+
+    it "reads a parser from config" do
+      setup_environment_conf(config, :parser => 'future')
+
+      expect(envconf.parser).to eq('future')
     end
 
     it "can retrieve raw settings" do
@@ -66,6 +72,11 @@ describe Puppet::Settings::EnvironmentConf do
 
     it "returns a defult of 0 for environment_timeout when config has none" do
       expect(envconf.environment_timeout).to eq(0)
+    end
+
+    it "returns what is configured for all environments if parser is not specified" do
+      Puppet[:parser] = 'future'
+      expect(envconf.parser).to eq('future')
     end
 
     it "can still retrieve raw setting" do
