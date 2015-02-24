@@ -26,7 +26,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
   # Finds name in a loader this loader depends on / can see
   #
   def find(typed_name)
-    if typed_name.qualified
+    if typed_name.qualified?
       if l = index()[typed_name.name_parts[0]]
         l.load_typed(typed_name)
       else
