@@ -2,3 +2,6 @@
 # HEADER As added by software from a third party.
 # Another inconspicuous comment.
 A generic content line with: a value.
+A_second_line_with_no_spaces
+Qexample for bug PUP-4012
+Another line

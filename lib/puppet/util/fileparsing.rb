@@ -214,8 +214,9 @@ module Puppet::Util::FileParsing
 
   # Split text into separate lines using the record separator.
   def lines(text)
-    # Remove any trailing separators, and then split based on them
-    text.sub(/#{self.line_separator}\Q/,'').split(self.line_separator)
+    # NOTE: We do not have to remove trailing separators because split will ignore
+    # them by default (unless you pass -1 as a second parameter)
+    text.split(self.line_separator)
   end
 
   # Split a bunch of text into lines and then parse them individually.
