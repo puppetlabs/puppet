@@ -24,6 +24,7 @@ describe "A parser environment setting" do
     File.open(File.join(confdir, "puppet.conf"), "w") do |f|
       f.puts(<<-EOF)
           environmentpath=#{environmentpath}
+          parser='current'
       EOF
     end
 
