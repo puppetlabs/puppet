@@ -23,10 +23,13 @@ class Puppet::Network::HTTP::Factory
     Puppet.debug("Creating new connection for #{site}")
 
     args = [site.host, site.port]
-    if Puppet[:http_proxy_host] == "none"
-      args << nil << nil
-    else
-      args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
+
+    unless Puppet::Util::HttpProxy.no_proxy?(site)
+      if Puppet[:http_proxy_host] == "none"
+        args << nil << nil
+      else
+        args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
+      end
     end
 
     http = Net::HTTP.new(*args)

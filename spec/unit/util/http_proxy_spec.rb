@@ -122,4 +122,91 @@ describe Puppet::Util::HttpProxy do
     end
 
   end
+
+  describe ".no_proxy?" do
+    no_proxy = '127.0.0.1, localhost, mydomain.com, *.otherdomain.com, oddport.com:8080, *.otheroddport.com:8080, .anotherdomain.com, .anotheroddport.com:8080'
+    it "should return false if no_proxy does not exist in env" do
+      Puppet::Util.withenv('no_proxy' => nil) do
+        dest = 'http://puppetlabs.com'
+        expect(subject.no_proxy?(dest)).to be false
+      end
+    end
+
+    it "should return false if the dest does not match any element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://puppetlabs.com'
+        expect(subject.no_proxy?(dest)).to be false
+      end
+    end
+
+    it "should return true if the dest as an IP does match any element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://127.0.0.1'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest as single word does match any element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://localhost'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest as standard domain word does match any element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://mydomain.com'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest as standard domain with port does match any element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://oddport.com:8080'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return false if the dest is standard domain not matching port" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://oddport.com'
+        expect(subject.no_proxy?(dest)).to be false
+      end
+    end
+
+    it "should return true if the dest does match any wildcarded element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://sub.otherdomain.com'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest does match any wildcarded element with port in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://sub.otheroddport.com:8080'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest does match any domain level (no wildcard) element in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://sub.anotherdomain.com'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should return true if the dest does match any domain level (no wildcard) element with port in the no_proxy list" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = 'http://sub.anotheroddport.com:8080'
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+
+    it "should work if passed a URI object" do
+      Puppet::Util.withenv('no_proxy' => no_proxy) do
+        dest = URI.parse('http://sub.otheroddport.com:8080')
+        expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+  end
 end

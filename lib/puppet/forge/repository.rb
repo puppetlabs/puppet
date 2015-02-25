@@ -130,8 +130,7 @@ class Puppet::Forge
     #
     # @return [Net::HTTP::Proxy] object constructed from repo settings
     def get_http_object
-      proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host, Puppet::Util::HttpProxy.http_proxy_port, Puppet::Util::HttpProxy.http_proxy_user, Puppet::Util::HttpProxy.http_proxy_password)
-      proxy = proxy_class.new(@uri.host, @uri.port)
+      proxy = Puppet::Util::HttpProxy.proxy(@uri)
 
       if @uri.scheme == 'https'
         cert_store = OpenSSL::X509::Store.new

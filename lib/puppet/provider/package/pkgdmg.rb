@@ -68,8 +68,10 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   end
 
   def self.installpkgdmg(source, name)
-    http_proxy_host = Puppet::Util::HttpProxy.http_proxy_host
-    http_proxy_port = Puppet::Util::HttpProxy.http_proxy_port
+    unless Puppet::Util::HttpProxy.no_proxy?(source)
+      http_proxy_host = Puppet::Util::HttpProxy.http_proxy_host
+      http_proxy_port = Puppet::Util::HttpProxy.http_proxy_port
+    end
 
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
       raise Puppet::Error.new("Mac OS X PKG DMG's must specify a source string ending in .dmg or flat .pkg file")
