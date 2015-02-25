@@ -9,19 +9,29 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
+  # If yaourt is installed, we can make use of it
+  def self.yaourt?
+    @yaourt ||= Puppet::FileSystem.exist?('/usr/bin/yaourt')
+  end
+
   commands :pacman => "/usr/bin/pacman"
   # Yaourt is a common AUR helper which, if installed, we can use to query the AUR
-  commands :yaourt => "/usr/bin/yaourt" if Puppet::FileSystem.exist? '/usr/bin/yaourt'
+  commands :yaourt => "/usr/bin/yaourt" if yaourt?
 
   confine     :operatingsystem => [:archlinux, :manjarolinux]
   defaultfor  :operatingsystem => [:archlinux, :manjarolinux]
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :upgradeable
+  has_feature :virtual_packages
 
-  # If yaourt is installed, we can make use of it
-  def yaourt?
-    return Puppet::FileSystem.exist?('/usr/bin/yaourt')
+  # Checks if a given name is a group
+  def self.group?(name)
+    begin
+      !pacman("-Sg", name).empty?
+    rescue Puppet::ExecutionFailure
+      fail("Error while determining if '#{@resource[:name]}' is a group")
+    end
   end
 
   # Install a package using 'pacman', or 'yaourt' if available.
@@ -35,24 +45,184 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
 
     unless self.query
-      raise Puppet::ExecutionFailure.new("Could not find package %s" % self.name)
+      fail("Could not find package '#{@resource[:name]}'")
     end
   end
 
-  def install_from_repo
-    if yaourt?
-      cmd = %w{--noconfirm}
-      cmd += install_options if @resource[:install_options]
-      cmd << "-S" << @resource[:name]
+  # Fetch the list of packages and package groups that are currently installed on the system.
+  # Only package groups that are fully installed are included. If a group adds packages over time, it will not
+  # be considered as fully installed any more, and we would install the new packages on the next run.
+  # If a group removes packages over time, nothing will happen. This is intended.
+  def self.instances
+    instances = []
+
+    # Get the installed packages
+    installed_packages = get_installed_packages
+    installed_packages.sort_by { |k, _| k }.each do |package, version|
+      instances << new(to_resource_hash(package, version))
+    end
+
+    # Get the installed groups
+    get_installed_groups(installed_packages).each do |group, version|
+      instances << new(to_resource_hash(group, version))
+    end
+
+    instances
+  end
+
+  # returns a hash package => version of installed packages
+  def self.get_installed_packages
+    begin
+      packages = {}
+      execpipe([command(:pacman), "-Q"]) do |process|
+        # pacman -Q output is 'packagename version-rel'
+        regex = %r{^(\S+)\s(\S+)}
+        process.each_line do |line|
+          if match = regex.match(line)
+            packages[match.captures[0]] = match.captures[1]
+          else
+            warning("Failed to match line '#{line}'")
+          end
+        end
+      end
+      packages
+    rescue Puppet::ExecutionFailure
+      fail("Error getting installed packages")
+    end
+  end
+
+  # returns a hash of group => version of installed groups
+  def self.get_installed_groups(installed_packages, filter = nil)
+    groups = {}
+    begin
+      # Build a hash of group name => list of packages
+      command = [command(:pacman), "-Sgg"]
+      command << filter if filter
+      execpipe(command) do |process|
+        process.each_line do |line|
+          name, package = line.split
+          packages = (groups[name] ||= [])
+          packages << package
+        end
+      end
+
+      # Remove any group that doesn't have all its packages installed
+      groups.delete_if do |_, packages|
+        !packages.all? { |package| installed_packages[package] }
+      end
+
+      # Replace the list of packages with a version string consisting of packages that make up the group
+      groups.each do |name, packages|
+        groups[name] = packages.sort.map {|package| "#{package} #{installed_packages[package]}"}.join ', '
+      end
+
+      groups
+    rescue Puppet::ExecutionFailure
+      fail("Error while getting installed groups")
+    end
+  end
+
+  # Because Archlinux is a rolling release based distro, installing a package
+  # should always result in the newest release.
+  def update
+    # Install in pacman can be used for update, too
+    self.install
+  end
+
+  # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
+  def latest
+    # Synchronize the database
+    pacman "-Sy"
+
+    resource_name = @resource[:name]
+
+    # If target is a group, construct the group version
+    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map{ |line| line.chomp }.sort.join(', ') if self.class.group?(resource_name)
+
+    # Start by querying with pacman first
+    # If that fails, retry using yaourt against the AUR
+    pacman_check = true
+    begin
+      if pacman_check
+        output = pacman "-Sp", "--print-format", "%v", resource_name
+        return output.chomp
+      else
+        output = yaourt "-Qma", resource_name
+        output.split("\n").each do |line|
+          return line.split[1].chomp if line =~ /^aur/
+        end
+      end
+    rescue Puppet::ExecutionFailure
+      if pacman_check and self.class.yaourt?
+        pacman_check = false # now try the AUR
+        retry
+      else
+        raise
+      end
+    end
+  end
+
+  # Querys information for a package or package group
+  def query
+    installed_packages = self.class.get_installed_packages
+    resource_name = @resource[:name]
+
+    # Check for the resource being a group
+    version = self.class.get_installed_groups(installed_packages, resource_name)[resource_name]
+
+    if version
+      unless @resource.allow_virtual?
+        warning("#{resource_name} is a group, but allow_virtual is false.")
+        return nil
+      end
+    else
+      version = installed_packages[resource_name]
+    end
+
+    # Return nil if no package or group found
+    return nil unless version
+
+    self.class.to_resource_hash(resource_name, version)
+  end
+
+  def self.to_resource_hash(name, version)
+    {
+      :name     => name,
+      :ensure   => version,
+      :provider => self.name
+    }
+  end
+
+  # Removes a package from the system.
+  def uninstall
+    resource_name = @resource[:name]
+
+    is_group = self.class.group?(resource_name)
+
+    fail("Refusing to uninstall package group #{resource_name}, because allow_virtual is false.") if is_group && !@resource.allow_virtual?
+
+    cmd = %w{--noconfirm --noprogressbar}
+    cmd += uninstall_options if @resource[:uninstall_options]
+    cmd << "-R"
+    cmd << '-s' if is_group
+    cmd << resource_name
+
+    if self.class.yaourt?
       yaourt *cmd
     else
-      cmd = %w{--noconfirm --noprogressbar}
-      cmd += install_options if @resource[:install_options]
-      cmd << "-Sy" << @resource[:name]
       pacman *cmd
     end
   end
-  private :install_from_repo
+
+  private
+
+  def install_options
+    join_options(@resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(@resource[:uninstall_options])
+  end
 
   def install_from_file
     source = @resource[:source]
@@ -75,160 +245,22 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     pacman "--noconfirm", "--noprogressbar", "-Sy"
     pacman "--noconfirm", "--noprogressbar", "-U", source
   end
-  private :install_from_file
 
-  def self.listcmd
-    [command(:pacman), "-Q"]
-  end
+  def install_from_repo
+    resource_name = @resource[:name]
 
-  # Pacman has a concept of package groups as well.
-  # Package groups have no versions.
-  def self.listgroupcmd
-    [command(:pacman), "-Qg"]
-  end
+    # Refuse to install if not allowing virtual packages and the resource is a group
+    fail("Refusing to install package group #{resource_name}, because allow_virtual is false.") if self.class.group?(resource_name) && !@resource.allow_virtual?
 
-  # Get installed packages (pacman -Q)
-  def self.installedpkgs
-    packages = []
-    begin
-      execpipe(listcmd()) do |process|
-        # pacman -Q output is 'packagename version-rel'
-        regex = %r{^(\S+)\s(\S+)}
-        fields = [:name, :ensure]
-        hash = {}
+    cmd = %w{--noconfirm --needed --noprogressbar}
+    cmd += install_options if @resource[:install_options]
+    cmd << "-Sy" << resource_name
 
-        process.each_line { |line|
-          if match = regex.match(line)
-            fields.zip(match.captures) { |field,value|
-              hash[field] = value
-            }
-
-            hash[:provider] = self.name
-
-            packages << new(hash)
-
-            hash = {}
-          else
-            warning("Failed to match line %s" % line)
-          end
-        }
-      end
-    rescue Puppet::ExecutionFailure
-      return nil
-    end
-    packages
-  end
-
-  # Get installed groups (pacman -Qg)
-  def self.installedgroups
-    packages = []
-    begin
-      execpipe(listgroupcmd()) do |process|
-        # pacman -Qg output is 'groupname packagename'
-        # Groups need to be deduplicated
-        groups = Set[]
-
-        process.each_line { |line|
-          groups.add(line.split[0])
-        }
-
-        groups.each { |line|
-          hash = {
-            :name   => line,
-            :ensure => "1", # Groups don't have versions, so ensure => latest
-                            # will still cause a reinstall.
-            :provider => self.name
-          }
-          packages << new(hash)
-        }
-      end
-    rescue Puppet::ExecutionFailure
-      return nil
-    end
-    packages
-  end
-
-  # Fetch the list of packages currently installed on the system.
-  def self.instances
-    packages = self.installedpkgs
-    groups   = self.installedgroups
-    result   = nil
-
-    if (!packages && !groups)
-      nil
-    elsif (packages && groups)
-      packages.concat(groups)
+    if self.class.yaourt?
+      yaourt *cmd
     else
-      packages
+      pacman *cmd
     end
   end
 
-
-  # Because Archlinux is a rolling release based distro, installing a package
-  # should always result in the newest release.
-  def update
-    # Install in pacman can be used for update, too
-    self.install
-  end
-
-  # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
-  def latest
-    pacman "-Sy"
-    pacman_check = true   # Query the main repos first
-    begin
-      if pacman_check
-        output = pacman "-Sp", "--print-format", "%v", @resource[:name]
-        return output.chomp
-      else
-        output = yaourt "-Qma", @resource[:name]
-        output.split("\n").each do |line|
-          return line.split[1].chomp if line =~ /^aur/
-        end
-      end
-    rescue Puppet::ExecutionFailure
-      if pacman_check and self.yaourt?
-        pacman_check = false # now try the AUR
-        retry
-      else
-        raise
-      end
-    end
-  end
-
-  # Querys the pacman master list for information about the package.
-  def query
-    begin
-      output = pacman("-Qi", @resource[:name])
-
-      if output =~ /Version.*:\s(.+)/
-        return { :ensure => $1 }
-      end
-    rescue Puppet::ExecutionFailure
-      return {
-        :ensure => :purged,
-        :status => 'missing',
-        :name => @resource[:name],
-        :error => 'ok',
-      }
-    end
-    nil
-  end
-
-  # Removes a package from the system.
-  def uninstall
-    cmd = %w{--noconfirm --noprogressbar}
-    cmd += uninstall_options if @resource[:uninstall_options]
-    cmd << "-R" << @resource[:name]
-    pacman *cmd
-  end
-
-  private
-
-  def install_options
-    join_options(@resource[:install_options])
-  end
-
-  def uninstall_options
-    join_options(@resource[:uninstall_options])
-  end
 end
