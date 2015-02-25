@@ -264,7 +264,7 @@ module Puppet::Pops::Types::TypeFactory
   # Creates an instance of the Undef type
   # @api public
   def self.undef()
-    Types::PNilType.new()
+    Types::PUndefType.new()
   end
 
   # Creates an instance of the Default type

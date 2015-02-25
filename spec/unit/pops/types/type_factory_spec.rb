@@ -63,8 +63,8 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.tuple().class().should == Puppet::Pops::Types::PTupleType
     end
 
-    it 'undef() returns PNilType' do
-      Puppet::Pops::Types::TypeFactory.undef().class().should == Puppet::Pops::Types::PNilType
+    it 'undef() returns PUndefType' do
+      Puppet::Pops::Types::TypeFactory.undef().class().should == Puppet::Pops::Types::PUndefType
     end
 
     it 'default() returns PDefaultType' do
