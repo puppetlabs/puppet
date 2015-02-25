@@ -43,17 +43,22 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       executor.stubs(:execute).returns("")
       provider.expects(:query).returns(nil)
 
-      expect { provider.install }.to raise_exception(Puppet::Error)
+      expect {
+        provider.install
+      }.to raise_exception(Puppet::Error, /Could not find package/)
     end
 
     it "should raise an Puppet::Error when trying to install a group and allow_virtual is false" do
       described_class.stubs(:group?).returns(true)
-      expect { provider.install }.to raise_error(Puppet::Error)
+      resource[:allow_virtual] = false
+      expect {
+        provider.install
+      }.to raise_error(Puppet::Error, /Refusing to install package group/)
     end
 
     it "should not raise an Puppet::Error when trying to install a group and allow_virtual is true" do
       described_class.stubs(:group?).returns(true)
-      resource.stubs(:allow_virtual?).returns(true)
+      resource[:allow_virtual] = true
       executor.stubs(:execute).returns("")
       provider.install
     end
@@ -135,17 +140,21 @@ describe Puppet::Type.type(:package).provider(:pacman) do
         end
 
         it "should fail" do
-          expect { provider.install }.to raise_error(Puppet::Error)
+          expect {
+            provider.install
+          }.to raise_error(Puppet::Error, /puppet:\/\/ URL is not supported/)
         end
       end
 
-      context "as a malformed URL" do
+      context "as an unsupported URL scheme" do
         before do
-          resource[:source] = "blah://"
+          resource[:source] = "blah://foo.com"
         end
 
         it "should fail" do
-          expect { provider.install }.to raise_error(Puppet::Error)
+          expect {
+            provider.install
+          }.to raise_error(Puppet::Error, /Source blah:\/\/foo\.com is not supported/)
         end
       end
     end
@@ -225,13 +234,13 @@ EOF
       end
 
       it 'should warn when allow_virtual is false' do
-        resource.stubs(:allow_virtual?).returns(false)
+        resource[:allow_virtual] = false
         provider.expects(:warning)
         provider.query
       end
 
       it 'should not warn allow_virtual is true' do
-        resource.stubs(:allow_virtual?).returns(true)
+        resource[:allow_virtual] = true
         described_class.expects(:warning).never
         provider.query
       end
