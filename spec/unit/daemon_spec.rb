@@ -53,8 +53,6 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
         Puppet.expects(:notice)
 
-        daemon.expects(method)
-
         daemon.set_signal_traps
       end
     end
