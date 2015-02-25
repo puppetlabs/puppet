@@ -88,19 +88,27 @@ describe provider_class do
       expect(@provider.enabled?).to eq(:true)
     end
 
-    context "when invoke-rc.d exits with 105 status" do
+    shared_examples "manually queries service status" do |status|
       it "links count is 4" do
         @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        $CHILD_STATUS.stubs(:exitstatus).returns(status)
         @provider.stubs(:get_start_link_count).returns(4)
         expect(@provider.enabled?).to eq(:true)
       end
       it "links count is less than 4" do
         @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        $CHILD_STATUS.stubs(:exitstatus).returns(status)
         @provider.stubs(:get_start_link_count).returns(3)
         expect(@provider.enabled?).to eq(:false)
       end
+    end
+
+    context "when invoke-rc.d exits with 101 status" do
+      it_should_behave_like "manually queries service status", 101
+    end
+
+    context "when invoke-rc.d exits with 105 status" do
+      it_should_behave_like "manually queries service status", 105
     end
 
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
