@@ -12,9 +12,8 @@
 #
 Puppet::Functions.create_function(:with) do
   dispatch :with do
-    param 'Any', 'arg'
-    arg_count(0, :default)
-    required_block_param
+    repeated_param 'Any', :arg
+    block_param
   end
 
   def with(*args)
