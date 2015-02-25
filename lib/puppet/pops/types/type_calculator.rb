@@ -196,7 +196,7 @@ class Puppet::Pops::Types::TypeCalculator
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
     data_variant.addTypes(Types::PScalarType.new)
-    data_variant.addTypes(Types::PNilType.new)
+    data_variant.addTypes(Types::PUndefType.new)
     data_variant.addTypes(@data_tuple_t.copy)
     @data_variant_t = data_variant
 
@@ -211,7 +211,7 @@ class Puppet::Pops::Types::TypeCalculator
     non_empty_string.size_type.to = nil # infinity
     @non_empty_string_t = non_empty_string
 
-    @nil_t = Types::PNilType.new
+    @nil_t = Types::PUndefType.new
   end
 
   # Convenience method to get a data type for comparisons
@@ -321,7 +321,7 @@ class Puppet::Pops::Types::TypeCalculator
     when c == Regexp
       type = Types::PRegexpType.new()
     when c == NilClass
-      type = Types::PNilType.new()
+      type = Types::PUndefType.new()
     when c == FalseClass, c == TrueClass
       type = Types::PBooleanType.new()
     when c == Class
@@ -470,12 +470,12 @@ class Puppet::Pops::Types::TypeCalculator
     instance_of(@data_variant_t, o)
   end
 
-  def instance_of_PNilType(t, o)
+  def instance_of_PUndefType(t, o)
     o.nil? || o == :undef
   end
 
   def instance_of_POptionalType(t, o)
-    instance_of_PNilType(t, o) || instance_of(t.optional_type, o)
+    instance_of_PUndefType(t, o) || instance_of(t.optional_type, o)
   end
 
   def instance_of_PVariantType(t, o)
@@ -504,11 +504,11 @@ class Puppet::Pops::Types::TypeCalculator
     return t.is_a?(Types::PAnyType)
   end
 
-  # Answers if t represents the puppet type PNilType
+  # Answers if t represents the puppet type PUndefType
   # @api public
   #
   def is_pnil?(t)
-    return t.nil? || t.is_a?(Types::PNilType)
+    return t.nil? || t.is_a?(Types::PUndefType)
   end
 
   # Answers, 'What is the common type of t1 and t2?'
@@ -794,7 +794,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_NilClass(o)
-    Types::PNilType.new()
+    Types::PUndefType.new()
   end
 
   # @api private
@@ -864,7 +864,7 @@ class Puppet::Pops::Types::TypeCalculator
     type = Types::PArrayType.new()
     type.element_type =
     if o.empty?
-      Types::PNilType.new()
+      Types::PUndefType.new()
     else
       infer_and_reduce_type(o)
     end
@@ -876,8 +876,8 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_Hash(o)
     type = Types::PHashType.new()
     if o.empty?
-      ktype = Types::PNilType.new()
-      etype = Types::PNilType.new()
+      ktype = Types::PUndefType.new()
+      etype = Types::PUndefType.new()
     else
       ktype = infer_and_reduce_type(o.keys())
       etype = infer_and_reduce_type(o.values())
@@ -904,7 +904,7 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_set_Array(o)
     if o.empty?
       type = Types::PArrayType.new()
-      type.element_type = Types::PNilType.new()
+      type.element_type = Types::PUndefType.new()
       type.size_type = size_as_type(o)
     else
       type = Types::PTupleType.new()
@@ -916,8 +916,8 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_set_Hash(o)
     if o.empty?
       type = Types::PHashType.new
-      type.key_type = Types::PNilType.new
-      type.element_type = Types::PNilType.new
+      type.key_type = Types::PUndefType.new
+      type.element_type = Types::PUndefType.new
       type.size_type = size_as_type(o)
     else
       if o.keys.find {|k| !instance_of_PStringType(@non_empty_string_t, k) }
@@ -964,9 +964,9 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PNilType(t, t2)
+  def assignable_PUndefType(t, t2)
     # Only undef/nil is assignable to nil type
-    t2.is_a?(Types::PNilType)
+    t2.is_a?(Types::PUndefType)
   end
 
   # Anything is assignable to a Unit type
@@ -1110,8 +1110,8 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(callable_t.block_type || @nil_t, @nil_t)
   end
 
-  def callable_PNilType(nil_t, callable_t)
-    # if callable_t is Optional (or indeed PNilType), this means that 'missing callable' is accepted
+  def callable_PUndefType(nil_t, callable_t)
+    # if callable_t is Optional (or indeed PUndefType), this means that 'missing callable' is accepted
     assignable?(callable_t, nil_t)
   end
 
@@ -1209,7 +1209,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_POptionalType(t, t2)
-    return true if t2.is_a?(Types::PNilType)
+    return true if t2.is_a?(Types::PUndefType)
     if t2.is_a?(Types::POptionalType)
       assignable?(t.optional_type, t2.optional_type)
     else
@@ -1512,7 +1512,7 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PAnyType(t)     ; "Any"     ; end
 
   # @api private
-  def string_PNilType(t)     ; 'Undef'   ; end
+  def string_PUndefType(t)     ; 'Undef'   ; end
 
   # @api private
   def string_PDefaultType(t) ; 'Default' ; end

@@ -342,7 +342,7 @@ module Puppet::Pops
         end
 
         def is_the_empty_hash?
-          size_type.is_a?(PIntegerType) && size_type.from == 0 && size_type.to == 0 && key_type.is_a?(PNilType) && element_type.is_a?(PNilType)
+          size_type.is_a?(PIntegerType) && size_type.from == 0 && size_type.to == 0 && key_type.is_a?(PUndefType) && element_type.is_a?(PUndefType)
         end
       end
     end

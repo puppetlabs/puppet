@@ -63,8 +63,8 @@ describe 'The type factory' do
       expect(Puppet::Pops::Types::TypeFactory.tuple().class()).to eq(Puppet::Pops::Types::PTupleType)
     end
 
-    it 'undef() returns PNilType' do
-      expect(Puppet::Pops::Types::TypeFactory.undef().class()).to eq(Puppet::Pops::Types::PNilType)
+    it 'undef() returns PUndefType' do
+      expect(Puppet::Pops::Types::TypeFactory.undef().class()).to eq(Puppet::Pops::Types::PUndefType)
     end
 
     it 'default() returns PDefaultType' do

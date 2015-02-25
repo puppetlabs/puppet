@@ -107,7 +107,7 @@ describe 'The type calculator' do
     # Do not include the special type Unit in this list
     def all_types
       [ Puppet::Pops::Types::PAnyType,
-        Puppet::Pops::Types::PNilType,
+        Puppet::Pops::Types::PUndefType,
         Puppet::Pops::Types::PDataType,
         Puppet::Pops::Types::PScalarType,
         Puppet::Pops::Types::PStringType,
@@ -183,7 +183,7 @@ describe 'The type calculator' do
       result << Puppet::Pops::Types::PDataType
       result << array_t(types::PDataType.new)
       result << types::TypeFactory.hash_of_data
-      result << Puppet::Pops::Types::PNilType
+      result << Puppet::Pops::Types::PUndefType
       tmp = tuple_t(types::PDataType.new)
       result << (tmp)
       tmp.size_type = range_t(0, nil)
@@ -231,8 +231,8 @@ describe 'The type calculator' do
       expect(calculator.infer(/^a regular expression$/).class).to eq(Puppet::Pops::Types::PRegexpType)
     end
 
-    it 'nil translates to PNilType' do
-      expect(calculator.infer(nil).class).to eq(Puppet::Pops::Types::PNilType)
+    it 'nil translates to PUndefType' do
+      expect(calculator.infer(nil).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
     it ':undef translates to PRuntimeType' do
@@ -803,7 +803,7 @@ describe 'The type calculator' do
         Bignum     => Puppet::Pops::Types::PIntegerType.new,
         Float      => Puppet::Pops::Types::PFloatType.new,
         Numeric    => Puppet::Pops::Types::PNumericType.new,
-        NilClass   => Puppet::Pops::Types::PNilType.new,
+        NilClass   => Puppet::Pops::Types::PUndefType.new,
         TrueClass  => Puppet::Pops::Types::PBooleanType.new,
         FalseClass => Puppet::Pops::Types::PBooleanType.new,
         String     => Puppet::Pops::Types::PStringType.new,
@@ -1212,7 +1212,7 @@ describe 'The type calculator' do
     include_context "types_setup"
 
     it 'should consider undef to be instance of Any, NilType, and optional' do
-      expect(calculator.instance?(Puppet::Pops::Types::PNilType.new(), nil)).to    eq(true)
+      expect(calculator.instance?(Puppet::Pops::Types::PUndefType.new(), nil)).to    eq(true)
       expect(calculator.instance?(Puppet::Pops::Types::PAnyType.new(), nil)).to eq(true)
       expect(calculator.instance?(Puppet::Pops::Types::POptionalType.new(), nil)).to eq(true)
     end
@@ -1234,7 +1234,7 @@ describe 'The type calculator' do
     it 'should not consider undef to be an instance of any other type than Any, NilType and Data' do
       types_to_test = all_types - [
         Puppet::Pops::Types::PAnyType,
-        Puppet::Pops::Types::PNilType,
+        Puppet::Pops::Types::PUndefType,
         Puppet::Pops::Types::PDataType,
         Puppet::Pops::Types::POptionalType,
         ]
@@ -1465,8 +1465,8 @@ describe 'The type calculator' do
       end
     end
 
-    it 'should yield \'PNilType\' for NilClass' do
-      expect(calculator.type(NilClass).class).to eq(Puppet::Pops::Types::PNilType)
+    it 'should yield \'PUndefType\' for NilClass' do
+      expect(calculator.type(NilClass).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
     it 'should yield \'PStringType\' for String' do
@@ -1727,7 +1727,7 @@ describe 'The type calculator' do
   context 'when processing meta type' do
     it 'should infer PType as the type of all other types' do
       ptype = Puppet::Pops::Types::PType
-      expect(calculator.infer(Puppet::Pops::Types::PNilType.new()       ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(Puppet::Pops::Types::PUndefType.new()       ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PDataType.new()      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PScalarType.new()   ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PStringType.new()    ).is_a?(ptype)).to eq(true)
@@ -1752,7 +1752,7 @@ describe 'The type calculator' do
 
     it 'should infer PType as the type of all other types' do
       ptype = Puppet::Pops::Types::PType
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PNilType.new()       ))).to eq("Type[Undef]")
+      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PUndefType.new()       ))).to eq("Type[Undef]")
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PDataType.new()      ))).to eq("Type[Data]")
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PScalarType.new()   ))).to eq("Type[Scalar]")
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PStringType.new()    ))).to eq("Type[String]")
@@ -1895,7 +1895,7 @@ describe 'The type calculator' do
       expect(inferred_type.class).to eq(Puppet::Pops::Types::PTupleType)
       element_types = inferred_type.types
       expect(element_types[0].class).to eq(Puppet::Pops::Types::PStringType)
-      expect(element_types[1].class).to eq(Puppet::Pops::Types::PNilType)
+      expect(element_types[1].class).to eq(Puppet::Pops::Types::PUndefType)
     end
   end
 

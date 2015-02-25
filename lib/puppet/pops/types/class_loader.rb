@@ -66,7 +66,7 @@ class Puppet::Pops::Types::ClassLoader
     when Puppet::Pops::Types::PPatternType  ; String
     when Puppet::Pops::Types::PEnumType     ; String
     when Puppet::Pops::Types::PFloatType    ; Float
-    when Puppet::Pops::Types::PNilType      ; NilClass
+    when Puppet::Pops::Types::PUndefType      ; NilClass
     when Puppet::Pops::Types::PCallableType ; Proc
     else
       nil
