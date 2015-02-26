@@ -4,10 +4,10 @@ require 'tempfile'
 require 'date'
 
 require 'puppet/util/checksums'
-require 'puppet/util/http_proxy'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
 require 'puppet/network/http/compression'
+require 'puppet/network/http/proxy_helper'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do
@@ -223,18 +223,7 @@ module Puppet
 
     def get_from_http_source(source, &block)
       uri = URI(source)
-      proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host,
-                                     Puppet::Util::HttpProxy.http_proxy_port,
-                                     Puppet::Util::HttpProxy.http_proxy_user,
-                                     Puppet::Util::HttpProxy.http_proxy_password)
-      proxy = proxy_class.new(uri.host, uri.port)
-      if uri.scheme == 'https'
-        cert_store = OpenSSL::X509::Store.new
-        cert_store.set_default_paths
-        proxy.use_ssl = true
-        proxy.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        proxy.cert_store = cert_store
-      end
+      proxy = Puppet::Network::HTTP::ProxyHelper.get_http_object(uri)
       response = proxy.send(:get, uri.path, { 'Accept' => 'raw'})
     end
 
