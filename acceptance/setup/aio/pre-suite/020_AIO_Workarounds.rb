@@ -36,9 +36,3 @@ end
 step "(SERVER-347) Set required codedir setting on puppetserver"
 on master, puppet("config set codedir /etc/puppetlabs/code --section master")
 
-step "(SERVER-370) overwrite ruby-load-path"
-create_remote_file(master, '/etc/puppetserver/conf.d/os-settings.conf', <<-EOF)
-os-settings: {
-    ruby-load-path: [/opt/puppetlabs/puppet/lib/ruby/vendor_ruby]
-}
-EOF
