@@ -943,7 +943,7 @@ EOT
       (but it can be overridden from the commandline). Please set a
       per-environment value in environment.conf instead. For more info, see
       http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
-    },
+    }
   )
 
   define_settings(:master,
