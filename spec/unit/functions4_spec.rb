@@ -191,11 +191,26 @@ actual:
   min(Integer) - arg count {1}")
     end
 
+    it 'a function can use inexact argument mapping' do
+      f = create_function_with_inexact_dispatch
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 3,4,5)).to eql([Fixnum, Fixnum, Fixnum])
+      expect(func.call({}, 'Apple', 'Banana')).to eql([String, String])
+    end
+
     it 'a function can be created using dispatch and called' do
       f = create_min_function_class_disptaching_to_two_methods()
       func = f.new(:closure_scope, :loader)
       expect(func.call({}, 3,4)).to eql(3)
       expect(func.call({}, 'Apple', 'Banana')).to eql('Apple')
+    end
+
+    it 'a function can not be created with parameters declared after a repeated parameter' do
+      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 'Parameters cannot be added after a repeated parameter')
+    end
+
+    it 'a function can not be created with required parameters declared after optional ones' do
+      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
     end
 
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
@@ -551,15 +566,56 @@ actual:
   def create_function_with_optionals_and_varargs_via_dispatch
     f = Puppet::Functions.create_function('min') do
       dispatch :min do
-        param 'Numeric', 'x'
-        param 'Numeric', 'y'
-        param 'Numeric', 'a'
-        param 'Numeric', 'b'
-        param 'Numeric', 'c'
-        arg_count 2, :default
+        param 'Numeric', :x
+        param 'Numeric', :y
+        optional_param 'Numeric', :a
+        optional_param 'Numeric', :b
+        repeated_param 'Numeric', :c
       end
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_inexact_dispatch
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        param 'Numeric', :x
+        param 'Numeric', :y
+        repeated_param 'Numeric', :z
+      end
+      dispatch :t1 do
+        param 'String', :x
+        param 'String', :y
+        repeated_param 'String', :z
+      end
+      def t1(first, *x)
+        [first.class, *x.map {|e|e.class}]
+      end
+    end
+  end
+
+  def create_function_with_rq_after_opt
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        optional_param 'Numeric', :x
+        param 'Numeric', :y
+      end
+      def t1(*x)
+        x
+      end
+    end
+  end
+
+  def create_function_with_param_after_repeated
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        repeated_param 'Numeric', :x
+        param 'Numeric', :y
+      end
+      def t1(*x)
+        x
       end
     end
   end
@@ -601,7 +657,7 @@ actual:
       dispatch :test do
         param 'Integer', 'x'
         # use defaults, any callable, name is 'block'
-        required_block_param
+        block_param
       end
       def test(x)
         yield(8,x)
