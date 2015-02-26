@@ -36,16 +36,12 @@ describe Puppet::Parameter::Value do
     expect(value.aliases).to eq([:bar, :baz])
   end
 
-  [:block, :call, :method, :event, :required_features].each do |attr|
+  [:block, :method, :event, :required_features].each do |attr|
     it "should support a #{attr} attribute" do
       value = Puppet::Parameter::Value.new("foo")
       expect(value).to respond_to(attr.to_s + "=")
       expect(value).to respond_to(attr)
     end
-  end
-
-  it "should default to :instead for :call if a block is provided" do
-    expect(Puppet::Parameter::Value.new("foo").call).to eq(:instead)
   end
 
   it "should always return events as symbols" do

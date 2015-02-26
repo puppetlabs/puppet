@@ -120,12 +120,7 @@ class Puppet::Parameter::ValueCollection
   # @option options [Symbol] :event The event that should be emitted when this value is set.
   # @todo Option :event original comment says "event should be returned...", is "returned" the correct word
   #   to use?
-  # @option options [Symbol] :call When to call any associated block. The default value is `:instead` which
-  #   means that the block should be called instead of the provider. In earlier versions (before 20081031) it
-  #   was possible to specify a value of `:before` or `:after` for the purpose of calling
-  #   both the block and the provider. Use of these deprecated options will now raise an exception later
-  #   in the process when the _is_ value is set (see Puppet::Property#set).
-  # @option options [Symbol] :invalidate_refreshes True if a change on this property should invalidate and
+ # @option options [Symbol] :invalidate_refreshes True if a change on this property should invalidate and
   #   remove any scheduled refreshes (from notify or subscribe) targeted at the same resource. For example, if
   #   a change in this property takes into account any changes that a scheduled refresh would have performed,
   #   then the scheduled refresh would be deleted.
@@ -135,6 +130,13 @@ class Puppet::Parameter::ValueCollection
   # @api private
   #
   def newvalue(name, options = {}, &block)
+    call_opt = options[:call]
+    unless call_opt.nil?
+      devfail "Cannot use obsolete :call value '#{call_opt}' for property '#{self.class.name}'" unless call_opt == :none || call_opt == :instead
+      Puppet.deprecation_warning("Property option :call is deprecated and no longer used. Please remove it.")
+      options = options.reject { |k,v| k == :call }
+    end
+
     value = Puppet::Parameter::Value.new(name)
     @values[value.name] = value
     if value.regex?
@@ -145,13 +147,12 @@ class Puppet::Parameter::ValueCollection
 
     options.each { |opt, arg| value.send(opt.to_s + "=", arg) }
     if block_given?
+      devfail "Cannot use :call value ':none' in combination with a block for property '#{self.class.name}'" if call_opt == :none
       value.block = block
+      value.method ||= "set_#{value.name}" if !value.regex?
     else
-      value.call = options[:call] || :none
+      devfail "Cannot use :call value ':instead' without a block for property '#{self.class.name}'" if call_opt == :instead
     end
-
-    value.method ||= "set_#{value.name}" if block_given? and ! value.regex?
-
     value
   end
 

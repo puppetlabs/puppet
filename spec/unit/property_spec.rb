@@ -368,6 +368,12 @@ describe Puppet::Property do
         resource.provider.expects(:foo=).with :bar
         property.set(:bar)
       end
+
+       it "should generate setter named from :method argument and propagate call to the provider" do
+        subclass.newvalue(:bar, :method => 'set_vv')
+        resource.provider.expects(:foo=).with :bar
+        property.set_vv(:bar)
+      end
     end
 
     describe "that was defined with a block" do

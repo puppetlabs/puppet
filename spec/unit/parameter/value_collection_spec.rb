@@ -35,11 +35,6 @@ describe Puppet::Parameter::ValueCollection do
     expect(@collection.match?('')).to equal(value)
   end
 
-  it "should set :call to :none when adding a value with no block" do
-    value = @collection.newvalue(:foo)
-    expect(value.call).to eq(:none)
-  end
-
   describe "when adding a value with a block" do
     it "should set the method name to 'set_' plus the value name" do
       value = @collection.newvalue(:myval) { raise "testing" }
@@ -48,8 +43,8 @@ describe Puppet::Parameter::ValueCollection do
   end
 
   it "should be able to add an individual value with options" do
-    value = @collection.newvalue(:foo, :call => :bar)
-    expect(value.call).to eq(:bar)
+    value = @collection.newvalue(:foo, :method => 'set_myval')
+    expect(value.method).to eq('set_myval')
   end
 
   it "should have a method for validating a value" do
