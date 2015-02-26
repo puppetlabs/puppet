@@ -82,27 +82,27 @@
 # be the same as the number of parameters, and all of the parameters are of
 # type 'Any'.
 #
-# The following methods can be used for declaring a parameter
+# The following methods can be used to define a parameter
 #
-#  - _param_ - the parameter must be given in a call.
-#  - _optional_param_ - the parameter may be missing in the call. May not be used on a parameter that is followed by a required parameter
+#  - _param_ - the argument must be given in the call.
+#  - _optional_param_ - the argument may be missing in the call. May not be followed by a required parameter
 #  - _repeated_param_ - the type specifies a repeating type that occurs 0 to "infinite" number of times. It may only appear last or just before a block parameter.
 #  - _block_param_ - a block must be given in the call. May only appear last.
 #  - _optional_block_param_ - a block may be given in the call. May only appear last.
 #
 # The method name _required_param_ is an alias for _param_ and _required_block_param_ is an alias for _block_param_
 #
-# A parameter declaration takes 2 arguments:
+# A parameter definition takes 2 arguments:
 #  - _type_ A string that must conform to a type in the puppet language
 #  - _name_ A symbol denoting the parameter name
 #
-# Both arguments are optional when declaring a block parameter. The _type_ defaults to "Callable"
+# Both arguments are optional when defining a block parameter. The _type_ defaults to "Callable"
 # and the _name_ to :block.
 #
-# When defining a dispatch for a function, the resulting dispatch matches against the specified
-# argument types. When the dispatch makes the call to  the implementation method the arguments are
-# simply passed and it is the responsibility of the method's implementor to ensure it can handle
-# those arguments.
+# Note that the dispatch definition is used to match arguments given in a call to the function with the defined
+# parameters. It then dispatches the call to the implementation method simply passing the given arguments on to
+# that method without any further processing and it is the responsibility of that method's implementor to ensure
+# that it can handle those arguments.
 #
 # @example Variable number of arguments
 #   Puppet::Functions.create_function('foo') do
@@ -116,9 +116,10 @@
 #     end
 #   end
 #
-# There is no requirement for direct mapping between parameter declarations and the parameters in the receiver so
-# the following example is also legal. Here the dispatch will ensure that *values in the receiver will
-# be an array with at least one entry of type String and that any remaining entries are of type Numeric:
+# There is no requirement for direct mapping between parameter definitions and the parameters in the
+# receiving implementation method so the following example is also legal. Here the dispatch will ensure
+# that `*values` in the receiver will be an array with at least one entry of type String and that any
+# remaining entries are of type Numeric:
 #
 # @example Inexact mapping or parameters
 #   Puppet::Functions.create_function('foo') do
@@ -284,12 +285,12 @@ module Puppet::Functions
       @dispatcher = dispatcher
     end
 
-    # Defines a required positional parameter with a _type_ and a _name_.
+    # Defines a required positional parameter with _type_ and _name_.
     #
     # @param type [String] The type specification for the parameter.
     # @param name [Symbol] The name of the parameter. This is primarily used
-    #   for error message output and does not have to match the name of the
-    #   parameter on the implementation method.
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
     # @return [Void]
     #
     # @api public
@@ -301,13 +302,13 @@ module Puppet::Functions
     end
     alias required_param param
 
-    # Defines an optional positional parameter with a _type_ and a _name_.
-    # May not be used on a parameter that is followed by a required parameter
+    # Defines an optional positional parameter with _type_ and _name_.
+    # May not be followed by a required parameter.
     #
     # @param type [String] The type specification for the parameter.
     # @param name [Symbol] The name of the parameter. This is primarily used
-    #   for error message output and does not have to match the name of the
-    #   parameter on the implementation method.
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
     # @return [Void]
     #
     # @api public
@@ -316,13 +317,13 @@ module Puppet::Functions
       @max += 1
     end
 
-    # Defines a repeated positional parameter with a _type_ and a _name_ that occurs 0 to "infinite" number of times.
+    # Defines a repeated positional parameter with _type_ and _name_ that may occur 0 to "infinite" number of times.
     # It may only appear last or just before a block parameter.
     #
     # @param type [String] The type specification for the parameter.
     # @param name [Symbol] The name of the parameter. This is primarily used
-    #   for error message output and does not have to match the name of the
-    #   parameter on the implementation method.
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
     # @return [Void]
     #
     # @api public
