@@ -273,7 +273,7 @@ def prepare_installation
   if not InstallOptions.codedir.nil?
     codedir = InstallOptions.codedir
   elsif $operatingsystem == "windows"
-    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "code")
+    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "code")
   else
     codedir = "/etc/puppetlabs/code"
   end
@@ -281,7 +281,7 @@ def prepare_installation
   if not InstallOptions.vardir.nil?
     vardir = InstallOptions.vardir
   elsif $operatingsystem == "windows"
-    vardir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")
+    vardir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "cache")
   else
     vardir = "/opt/puppetlabs/puppet/cache"
   end
