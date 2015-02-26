@@ -550,7 +550,7 @@ class Puppet::Node::Environment
       if file == NO_MANIFEST
         Puppet::Parser::AST::Hostclass.new('')
       elsif File.directory?(file)
-        if Puppet[:parser] == 'future'
+        if Puppet.future_parser?
           parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort.map do | file_to_parse |
             parser.file = file_to_parse
             parser.parse

@@ -258,6 +258,18 @@ module Puppet
 
   # The single instance used for normal operation
   @context = Puppet::Context.new(bootstrap_context)
+
+  def self.future_parser?
+    env = Puppet.lookup(:current_environment) { return Puppet[:parser] == 'future' }
+    env_conf = Puppet.lookup(:environments).get_conf(env.name)
+
+    if env_conf.nil?
+      # Case for non-directory environments
+      Puppet[:parser] == 'future'
+    else
+      env_conf.parser == 'future'
+    end
+  end
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement

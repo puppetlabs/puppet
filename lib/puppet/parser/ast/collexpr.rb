@@ -9,7 +9,7 @@ class CollExpr < AST::Branch
   attr_accessor :test1, :test2, :oper, :form, :type, :parens
 
   def evaluate(scope)
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       evaluate4x(scope)
     else
       evaluate3x(scope)

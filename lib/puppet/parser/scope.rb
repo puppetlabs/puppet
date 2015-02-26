@@ -401,7 +401,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      if Puppet[:parser] == 'future'
+      if Puppet.future_parser?
         throw :undefined_variable
       else
         reason_msg = reason.nil? ? '' : "; #{reason}"
@@ -534,8 +534,8 @@ class Puppet::Parser::Scope
   #
   # @see to_hash_legacy
   def to_hash(recursive = true)
-    @parser ||= Puppet[:parser]
-    if @parser == 'future'
+    @future_parser ||= Puppet.future_parser?
+    if @future_parser
       to_hash_future(recursive)
     else
       to_hash_legacy(recursive)
@@ -847,7 +847,7 @@ class Puppet::Parser::Scope
   # lookup in the compiler.
   #
   # Makes names passed in the names array absolute if they are relative
-  # Names are now made absolute if Puppet[:parser] == 'future', this will
+  # Names are now made absolute if Puppet.future_parser? is true, this will
   # be the default behavior in Puppet 4.0
   #
   # Transforms Class[] and Resource[] type referenes to class name
@@ -860,7 +860,7 @@ class Puppet::Parser::Scope
   # @return [Array<String>] names after transformation
   #
   def transform_and_assert_classnames(names)
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       names.map do |name|
         case name
         when String

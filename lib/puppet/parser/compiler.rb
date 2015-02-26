@@ -150,7 +150,7 @@ class Puppet::Parser::Compiler
 
   # Constructs the overrides for the context
   def context_overrides()
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       require 'puppet/loaders'
       {
         :current_environment => environment,
@@ -294,7 +294,7 @@ class Puppet::Parser::Compiler
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
   # @return [Boolean] true if the Puppet Binder should be activated
   def is_binder_active?
-    should_be_active = Puppet[:binder] || Puppet[:parser] == 'future'
+    should_be_active = Puppet[:binder] || Puppet.future_parser?
     if should_be_active
       # TODO: this should be in a central place, not just for ParserFactory anymore...
       Puppet::Parser::ParserFactory.assert_rgen_installed()
@@ -447,7 +447,7 @@ class Puppet::Parser::Compiler
   # look for resources, because we want to consider those to be
   # parse errors.
   def fail_on_unevaluated_resource_collections
-    if Puppet[:parser] == 'future'
+    if Puppet.future_parser?
       remaining = @collections.collect(&:unresolved_resources).flatten.compact
     else
       remaining = @collections.collect(&:resources).flatten.compact

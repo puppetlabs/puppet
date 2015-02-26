@@ -9,7 +9,7 @@ module Puppet::Parser
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
-      if Puppet[:parser] == 'future'
+      if Puppet.future_parser?
         evaluating_parser(environment)
       else
         classic_parser(environment)
@@ -66,7 +66,7 @@ module Puppet::Parser
     end
 
     def self.code_merger
-      if Puppet[:parser] == 'future'
+      if Puppet.future_parser?
         Puppet::Pops::Parser::CodeMerger.new
       else
         Puppet::Parser::CodeMerger.new

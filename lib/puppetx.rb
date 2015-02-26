@@ -31,7 +31,7 @@ module Puppetx
   # @api public
   module Puppet
 
-    if ::Puppet[:binder] || ::Puppet[:parser] == 'future'
+    if ::Puppet[:binder] || ::Puppet.future_parser?
         # Extension-points are registered here:
         # - If in a Ruby submodule it is best to create it here
         # - The class does not have to be required; it will be auto required when the binder
@@ -68,7 +68,7 @@ module Puppetx
 
     # @api public
     module SyntaxCheckers
-      if ::Puppet[:binder] || ::Puppet[:parser] == 'future'
+      if ::Puppet[:binder] || ::Puppet.future_parser?
 
         # Classes in this name-space are lazily loaded as they may be overridden and/or never used
         # (Lazy loading is done by binding to the name of a class instead of a Class instance).

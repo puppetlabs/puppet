@@ -7,7 +7,7 @@ class Puppet::Parser::Relationship
     # This if statement is needed because the 3x parser cannot load
     # Puppet::Pops. This logic can be removed for 4.0 when the 3x AST
     # is removed (when Pops is always used).
-    if !(Puppet[:parser] == 'future')
+    if !(Puppet.future_parser?)
       case resources
       when Puppet::Parser::Collector
         resources.collected.values

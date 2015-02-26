@@ -210,7 +210,7 @@ class Puppet::Pops::Binder::Lookup
       # way, and should instead be turned into :undef.
       # TODO PUPPET4: Simply return the result
       #
-      Puppet[:parser] == 'future' ? result : nil_as_undef(result)
+      Puppet.future_parser? ? result : nil_as_undef(result)
     end
   end
 end

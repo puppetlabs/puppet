@@ -489,7 +489,7 @@ config_version=$vardir/random/scripts
         env = Puppet::Node::Environment.create(:cached, [])
         mocked_loader = mock('loader')
         mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env,'current', 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 
@@ -515,7 +515,7 @@ config_version=$vardir/random/scripts
         env = Puppet::Node::Environment.create(:cached, [])
         mocked_loader = mock('loader')
         mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env,'current', 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 
