@@ -15,22 +15,21 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
     dispatch :hiera do
       scope_param
       param 'String',:key
-      param 'Any',   :default
-      param 'Any',   :override
-      arg_count(1,3)
+      optional_param 'Any',   :default
+      optional_param 'Any',   :override
     end
 
     dispatch :hiera_block1 do
       scope_param
-      param 'String',        :key
-      required_block_param 'Callable[1,1]', :default_block
+      param 'String',              :key
+      block_param 'Callable[1,1]', :default_block
     end
 
     dispatch :hiera_block2 do
       scope_param
-      param 'String',                       :key
-      param 'Any',                          :override
-      required_block_param 'Callable[1,1]', :default_block
+      param 'String',              :key
+      param 'Any',                 :override
+      block_param 'Callable[1,1]', :default_block
     end
   end
 

@@ -165,26 +165,24 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
 
   dispatch :lookup_1 do
     scope_param
-    param name_t, :name
-    param value_type_t, :value_type
-    param merge_t, :merge
-    arg_count(1, 3)
+    param           name_t,       :name
+    optional_param  value_type_t, :value_type
+    optional_param  merge_t,      :merge
   end
 
   dispatch :lookup_2 do
     scope_param
-    param name_t, :name
-    param value_type_t, :value_type
-    param merge_t, :merge
+    param  name_t,         :name
+    param  value_type_t,   :value_type
+    param  merge_t,        :merge
     param default_value_t, :default_value
   end
 
   dispatch :lookup_3 do
     scope_param
-    param name_t, :name
-    param value_type_t, :value_type
-    param merge_t, :merge
-    arg_count(1, 3)
+    param           name_t,       :name
+    optional_param  value_type_t, :value_type
+    optional_param  merge_t,      :merge
     required_block_param block_t, :block
   end
 

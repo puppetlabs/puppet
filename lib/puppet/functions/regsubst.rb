@@ -37,20 +37,18 @@
 #
 Puppet::Functions.create_function(:regsubst) do
   dispatch :regsubst_string do
-    param 'Variant[Array[String],String]',  :target
-    param 'String',                         :pattern
-    param 'String',                         :replacement
-    param 'Optional[Pattern[/^[GEIM]*$/]]', :flags
-    param "Enum['N','E','S','U']",          :encoding
-    arg_count(3, 5)
+    param          'Variant[Array[String],String]',  :target
+    param          'String',                         :pattern
+    param          'String',                         :replacement
+    optional_param 'Optional[Pattern[/^[GEIM]*$/]]', :flags
+    optional_param "Enum['N','E','S','U']",          :encoding
   end
 
   dispatch :regsubst_regexp do
-    param 'Variant[Array[String],String]',  :target
-    param 'Variant[Regexp,Type[Regexp]]',   :pattern
-    param 'String',                         :replacement
-    param 'Pattern[/^G?$/]',                :flags
-    arg_count(3, 4)
+    param          'Variant[Array[String],String]',  :target
+    param          'Variant[Regexp,Type[Regexp]]',   :pattern
+    param          'String',                         :replacement
+    optional_param 'Pattern[/^G?$/]',                :flags
   end
 
   def regsubst_string(target, pattern, replacement, flags = nil, encoding = nil)

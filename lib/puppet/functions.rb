@@ -55,13 +55,13 @@
 # @example Dispatching to different methods by type
 #   Puppet::Functions.create_function('math::min') do
 #     dispatch :numeric_min do
-#       param 'Numeric', 'a'
-#       param 'Numeric', 'b'
+#       param 'Numeric', :a
+#       param 'Numeric', :b
 #     end
 #
 #     dispatch :string_min do
-#       param 'String', 'a'
-#       param 'String', 'b'
+#       param 'String', :a
+#       param 'String', :b
 #     end
 #
 #     def numeric_min(a, b)
@@ -80,28 +80,53 @@
 # be the same as the number of parameters, and all of the parameters are of
 # type 'Any'.
 #
-# To express that the last parameter captures the rest, the method
-# `last_captures_rest` can be called. This indicates that the last parameter is
-# a varargs parameter and will be passed to the implementing method as an array
-# of the given type.
+# The following methods can be used to define a parameter
 #
-# When defining a dispatch for a function, the resulting dispatch matches
-# against the specified argument types and min/max occurrence of optional
-# entries. When the dispatch makes the call to the implementation method the
-# arguments are simply passed and it is the responsibility of the method's
-# implementor to ensure it can handle those arguments (i.e. there is no check
-# that what was declared as optional actually has a default value, and that
-# a "captures rest" is declared using a `*`).
+#  - _param_ - the argument must be given in the call.
+#  - _optional_param_ - the argument may be missing in the call. May not be followed by a required parameter
+#  - _repeated_param_ - the type specifies a repeating type that occurs 0 to "infinite" number of times. It may only appear last or just before a block parameter.
+#  - _block_param_ - a block must be given in the call. May only appear last.
+#  - _optional_block_param_ - a block may be given in the call. May only appear last.
 #
-# @example Varargs
+# The method name _required_param_ is an alias for _param_ and _required_block_param_ is an alias for _block_param_
+#
+# A parameter definition takes 2 arguments:
+#  - _type_ A string that must conform to a type in the puppet language
+#  - _name_ A symbol denoting the parameter name
+#
+# Both arguments are optional when defining a block parameter. The _type_ defaults to "Callable"
+# and the _name_ to :block.
+#
+# Note that the dispatch definition is used to match arguments given in a call to the function with the defined
+# parameters. It then dispatches the call to the implementation method simply passing the given arguments on to
+# that method without any further processing and it is the responsibility of that method's implementor to ensure
+# that it can handle those arguments.
+#
+# @example Variable number of arguments
 #   Puppet::Functions.create_function('foo') do
 #     dispatch :foo do
-#       param 'Numeric', 'first'
-#       param 'Numeric', 'values'
-#       last_captures_rest
+#       param 'Numeric', :first
+#       repeated_param 'Numeric', :values
 #     end
 #
 #     def foo(first, *values)
+#       # do something
+#     end
+#   end
+#
+# There is no requirement for direct mapping between parameter definitions and the parameters in the
+# receiving implementation method so the following example is also legal. Here the dispatch will ensure
+# that `*values` in the receiver will be an array with at least one entry of type String and that any
+# remaining entries are of type Numeric:
+#
+# @example Inexact mapping or parameters
+#   Puppet::Functions.create_function('foo') do
+#     dispatch :foo do
+#       param 'String', :first
+#       repeated_param 'Numeric', :values
+#     end
+#
+#     def foo(*values)
 #       # do something
 #     end
 #   end
@@ -243,29 +268,51 @@ module Puppet::Functions
       @dispatcher = dispatcher
     end
 
-    # Defines a positional parameter with type and name
+    # Defines a required positional parameter with _type_ and _name_.
     #
     # @param type [String] The type specification for the parameter.
     # @param name [Symbol] The name of the parameter. This is primarily used
-    #   for error message output and does not have to match the name of the
-    #   parameter on the implementation method.
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
     # @return [Void]
     #
     # @api public
     def param(type, name)
-      raise ArgumentError, 'Parameters cannot be added after a block_param' unless @block_type.nil?
-      unless type.is_a?(String)
-        raise ArgumentError, "Type signature argument must be a String reference to a Puppet Data Type. Got #{type.class}"
-      end
+      internal_param(type, name)
+      raise ArgumentError, 'A required parameter cannot be added after an optional parameter' if @min != @max
+      @min += 1
+      @max += 1
+    end
+    alias required_param param
 
-      unless name.is_a?(Symbol)
-        raise ArgumentError, "Parameter name argument must be a Symbol. Got #{type.class}"
-      end
+    # Defines an optional positional parameter with _type_ and _name_.
+    # May not be followed by a required parameter.
+    #
+    # @param type [String] The type specification for the parameter.
+    # @param name [Symbol] The name of the parameter. This is primarily used
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
+    # @return [Void]
+    #
+    # @api public
+    def optional_param(type, name)
+      internal_param(type, name)
+      @max += 1
+    end
 
-      @types << type
-      @names << name
-      # mark what should be picked for this position when dispatching
-      @weaving << @names.size()-1
+    # Defines a repeated positional parameter with _type_ and _name_ that may occur 0 to "infinite" number of times.
+    # It may only appear last or just before a block parameter.
+    #
+    # @param type [String] The type specification for the parameter.
+    # @param name [Symbol] The name of the parameter. This is primarily used
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
+    # @return [Void]
+    #
+    # @api public
+    def repeated_param(type, name)
+      internal_param(type, name)
+      @max = :default
     end
 
     # Defines one required block parameter that may appear last. If type and name is missing the
@@ -273,7 +320,7 @@ module Puppet::Functions
     # parameter is given, then that is the name and the type is "Callable".
     #
     # @api public
-    def required_block_param(*type_and_name)
+    def block_param(*type_and_name)
       case type_and_name.size
       when 0
         # the type must be an independent instance since it will be contained in another type
@@ -305,6 +352,7 @@ module Puppet::Functions
         raise ArgumentError, 'Attempt to redefine block'
       end
     end
+    alias required_block_param block_param
 
     # Defines one optional block parameter that may appear last. If type or name is missing the
     # defaults are "any callable", and the name is "block". The implementor of the dispatch target
@@ -317,36 +365,26 @@ module Puppet::Functions
       @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
-    # Specifies the min and max occurrence of arguments (of the specified types)
-    # if something other than the exact count from the number of specified
-    # types). The max value may be specified as :default if an infinite number of
-    # arguments are supported. When max is > than the number of specified
-    # types, the last specified type repeats.
-    #
-    # @api public
-    def arg_count(min_occurs, max_occurs)
-      @min = min_occurs
-      @max = max_occurs
-      unless min_occurs.is_a?(Integer) && min_occurs >= 0
-        raise ArgumentError, "min arg_count of function parameter must be an Integer >=0, got #{min_occurs.class} '#{min_occurs}'"
-      end
-      if max_occurs == :default
-        @last_captures = true
-      else
-        unless max_occurs.is_a?(Integer) && max_occurs >= min_occurs
-          raise ArgumentError, "max arg_count of function parameter must be :default (infinite) or an Integer >= min arg_count, got min: '#{min_occurs}, max: '#{max_occurs}'"
-        end
-      end
-    end
-
-    # Specifies that the last argument captures the rest.
-    #
-    # @api public
-    def last_captures_rest
-      @last_captures = true
-    end
-
     private
+
+    # @api private
+    def internal_param(type, name)
+      raise ArgumentError, 'Parameters cannot be added after a block parameter' unless @block_type.nil?
+      raise ArgumentError, 'Parameters cannot be added after a repeated parameter' if @max == :default
+
+      if name.is_a?(String)
+        raise ArgumentError, "Parameter name argument must be a Symbol. Got #{name.class}"
+      end
+
+      if type.is_a?(String)
+        @types << type
+        @names << name
+        # mark what should be picked for this position when dispatching
+        @weaving << @names.size()-1
+      else
+        raise ArgumentError, "Parameter 'type' must be a String reference to a Puppet Data Type. Got #{type.class}"
+      end
+    end
 
     # @api private
     def dispatch(meth_name, &block)
@@ -358,14 +396,13 @@ module Puppet::Functions
       @names = []
       @weaving = []
       @injections = []
-      @min = nil
-      @max = nil
-      @last_captures = false
+      @min = 0
+      @max = 0
       @block_type = nil
       @block_name = nil
       self.instance_eval &block
       callable_t = create_callable(@types, @block_type, @min, @max)
-      @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
+      @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @max == :default)
     end
 
     # Handles creation of a callable type from strings specifications of puppet
@@ -379,7 +416,8 @@ module Puppet::Functions
         @type_parser.parse(t)
       end
 
-      if !(from.nil? && to.nil?)
+      if from != to
+        # :optional and/or :repeated parameters are present.
         mapped_types << from
         mapped_types << to
       end
