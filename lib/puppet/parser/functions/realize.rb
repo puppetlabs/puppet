@@ -8,6 +8,7 @@ Puppet::Parser::Functions::newfunction(:realize, :arity => -2, :doc => "Make a v
     reference; e.g.: `realize User[luke]`." ) do |vals|
 
     vals = [vals] unless vals.is_a?(Array)
+
     coll = Puppet::Pops::Evaluator::Collectors::FixedSetCollector.new(self, vals.flatten)
     compiler.add_collection(coll)
 end

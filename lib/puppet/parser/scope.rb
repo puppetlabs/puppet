@@ -404,7 +404,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-        throw :undefined_variable
+      throw :undefined_variable
     else
       nil
     end

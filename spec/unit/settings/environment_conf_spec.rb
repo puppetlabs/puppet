@@ -33,7 +33,7 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.config_version).to eq(File.expand_path('/some/version.sh'))
     end
 
-    it "read an environment_timeout from config" do
+    it "reads an environment_timeout from config" do
       setup_environment_conf(config, :environment_timeout => '3m')
 
       expect(envconf.environment_timeout).to eq(180)
