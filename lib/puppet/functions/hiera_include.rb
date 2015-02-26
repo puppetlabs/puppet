@@ -1,4 +1,4 @@
-require 'hiera_puppet'
+require 'hiera/puppet_function'
 
 # @see lib/puppet/parser/functions/hiera_include.rb for documentation
 # TODO: Move docs here when the format has been determined.
