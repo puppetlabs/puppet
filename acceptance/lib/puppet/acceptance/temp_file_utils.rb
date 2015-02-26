@@ -60,6 +60,13 @@ module Puppet
         end
       end
 
+      def dir_exists?(host, dir_path)
+        host.execute("test -d \"#{dir_path}\"",
+                     :acceptable_exit_codes => [0, 1])  do |result|
+          return result.exit_code == 0
+        end
+      end
+
       def file_contents(host, file_path)
         host.execute("cat \"#{file_path}\"") do |result|
           return result.stdout
