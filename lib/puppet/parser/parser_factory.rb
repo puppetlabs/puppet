@@ -54,7 +54,7 @@ module Puppet::Parser
     end
 
     def self.code_merger
-        Puppet::Pops::Parser::CodeMerger.new
+      Puppet::Pops::Parser::CodeMerger.new
     end
   end
 end
