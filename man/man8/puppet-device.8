@@ -1,13 +1,13 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-DEVICE" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-DEVICE" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-device\fR \- Manage remote network devices
 .
 .SH "SYNOPSIS"
-Retrieves all configurations from the puppet master and apply them to the remote devices configured in /etc/puppet/device\.conf\.
+Retrieves all configurations from the puppet master and apply them to the remote devices configured in /etc/puppetlabs/puppet/device\.conf\.
 .
 .P
 Currently must be run out periodically, using cron or something similar\.
@@ -19,7 +19,7 @@ puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-V|\-\-version] [\-h|\
 Once the client has a signed certificate for a given remote device, it will retrieve its configuration and apply it\.
 .
 .SH "USAGE NOTES"
-One need a /etc/puppet/device\.conf file with the following content:
+One need a /etc/puppetlabs/puppet/device\.conf file with the following content:
 .
 .P
 [remote\.device\.fqdn] type \fItype\fR url \fIurl\fR

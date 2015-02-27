@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CERTIFICATE_REQUEST" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-CERTIFICATE_REQUEST" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-certificate_request\fR \- Manage certificate requests\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request find [\-\-terminus TERMINUS] [\-\-extra HASH] \fIhost\fR
+puppet certificate_request find [\-\-terminus TERMINUS] [\-\-extra HASH] [\fIhost\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -64,6 +64,9 @@ Retrieve a single CSR\.
 .
 .IP
 A single certificate request\. When used from the Ruby API, returns a Puppet::SSL::CertificateRequest object\.
+.
+.IP
+Defaults to the current nodes certname\.
 .
 .TP
 \fBinfo\fR \- Print the default terminus class for this face\.

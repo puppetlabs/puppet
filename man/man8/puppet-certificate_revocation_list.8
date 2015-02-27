@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CERTIFICATE_REVOCATION_LIST" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-CERTIFICATE_REVOCATION_LIST" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-certificate_revocation_list\fR \- Manage the list of revoked certificates\.
@@ -76,7 +76,7 @@ Although this action always deletes the CRL from the specified terminus, it requ
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_revocation_list find [\-\-terminus TERMINUS] [\-\-extra HASH] \fIdummy_text\fR
+puppet certificate_revocation_list find [\-\-terminus TERMINUS] [\-\-extra HASH] [\fIkey\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -94,7 +94,7 @@ The certificate revocation list\. When used from the Ruby API: returns an OpenSS
 \fBNOTES\fR
 .
 .IP
-Although this action always returns the CRL from the specified terminus, it requires a dummy argument; this is a known bug\.
+Although this action always returns the CRL from the specified terminus\.
 .
 .TP
 \fBinfo\fR \- Print the default terminus class for this face\.
@@ -116,7 +116,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 Retrieve a copy of the puppet master\'s CRL:
 .
 .P
-$ puppet certificate_revocation_list find crl \-\-terminus rest
+$ puppet certificate_revocation_list find \-\-terminus rest
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:

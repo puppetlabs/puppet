@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-MODULE" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-MODULE" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-module\fR \- Creates, installs and searches for modules on the Puppet Forge\.
@@ -57,7 +57,7 @@ puppet module build [\fIpath\fR]
 Prepares a local module for release on the Puppet Forge by building a ready\-to\-upload archive file\.
 .
 .IP
-This action uses the Modulefile in the module directory to set metadata used by the Forge\. See \fIhttp://links\.puppetlabs\.com/modulefile\fR for more about writing modulefiles\.
+This action uses the metadata\.json file in the module directory to set metadata used by the Forge\. See \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/modules_publishing\.html\fR for more about writing metadata\.json files\.
 .
 .IP
 After being built, the release archive file can be found in the module\'s \fBpkg\fR directory\.
@@ -274,7 +274,7 @@ $ cd /Users/kelseyhightower/puppetlabs\-apache $ puppet module build notice: Bui
 Show modified files of an installed module:
 .
 .P
-$ puppet module changes /etc/puppet/modules/vcsrepo/ warning: 1 files modified lib/puppet/provider/vcsrepo\.rb
+$ puppet module changes /etc/puppetlabs/code/modules/vcsrepo/ warning: 1 files modified lib/puppet/provider/vcsrepo\.rb
 .
 .P
 \fBgenerate\fR
@@ -292,7 +292,7 @@ Puppet uses Semantic Versioning (semver\.org) to version modules\. What version 
 Who wrote this module? [puppetlabs] \-\->
 .
 .P
-What license does this module code fall under? [Apache 2\.0] \-\->
+What license does this module code fall under? [Apache\-2\.0] \-\->
 .
 .P
 How would you describe this module in a single sentence? \-\->
@@ -307,7 +307,7 @@ Where can others go to learn more about this module? \-\->
 Where can others go to file issues about this module? \-\->
 .
 .P
-{ "name": "puppetlabs\-ssh", "version": "0\.1\.0", "author": "puppetlabs", "summary": null, "license": "Apache 2\.0", "source": "", "project_page": null, "issues_url": null, "dependencies": [ { "name": "puppetlabs\-stdlib", "version_requirement": ">= 1\.0\.0" } ]
+{ "name": "puppetlabs\-ssh", "version": "0\.1\.0", "author": "puppetlabs", "summary": null, "license": "Apache\-2\.0", "source": "", "project_page": null, "issues_url": null, "dependencies": [ { "name": "puppetlabs\-stdlib", "version_requirement": ">= 1\.0\.0" } ]
 .
 .SH "}"
 About to generate this metadata; continue? [n/Y] \-\->
@@ -322,43 +322,43 @@ Notice: Generating module at /Users/username/Projects/puppet/puppetlabs\-ssh\.\.
 Install a module:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo Preparing to install into /etc/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo Preparing to install into /etc/puppetlabs/code/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppetlabs/code/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a module to a specific environment:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo \-\-environment development Preparing to install into /etc/puppet/environments/development/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppet/environments/development/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo \-\-environment development Preparing to install into /etc/puppetlabs/code/environments/development/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppetlabs/code/environments/development/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a specific module version:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo \-v 0\.0\.4 Preparing to install into /etc/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo \-v 0\.0\.4 Preparing to install into /etc/puppetlabs/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppetlabs/code/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a module into a specific directory:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo \-\-target\-dir=/usr/share/puppet/modules Preparing to install into /usr/share/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /usr/share/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo \-\-target\-dir=/opt/puppetlabs/puppet/modules Preparing to install into /opt/puppetlabs/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /opt/puppetlabs/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a module into a specific directory and check for dependencies in other directories:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo \-\-target\-dir=/usr/share/puppet/modules \-\-modulepath /etc/puppet/modules Preparing to install into /usr/share/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /usr/share/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo \-\-target\-dir=/opt/puppetlabs/puppet/modules \-\-modulepath /etc/puppetlabs/code/modules Preparing to install into /opt/puppetlabs/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /opt/puppetlabs/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a module from a release archive:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo\-0\.0\.4\.tar\.gz Preparing to install into /etc/puppet/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo\-0\.0\.4\.tar\.gz Preparing to install into /etc/puppetlabs/code/modules \.\.\. Downloading from http://forgeapi\.puppetlabs\.com \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppetlabs/code/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 Install a module from a release archive and ignore dependencies:
 .
 .P
-$ puppet module install puppetlabs\-vcsrepo\-0\.0\.4\.tar\.gz \-\-ignore\-dependencies Preparing to install into /etc/puppet/modules \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppet/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
+$ puppet module install puppetlabs\-vcsrepo\-0\.0\.4\.tar\.gz \-\-ignore\-dependencies Preparing to install into /etc/puppetlabs/code/modules \.\.\. Installing \-\- do not interrupt \.\.\. /etc/puppetlabs/code/modules └── puppetlabs\-vcsrepo (v0\.0\.4)
 .
 .P
 \fBlist\fR
@@ -367,25 +367,25 @@ $ puppet module install puppetlabs\-vcsrepo\-0\.0\.4\.tar\.gz \-\-ignore\-depend
 List installed modules:
 .
 .P
-$ puppet module list /etc/puppet/modules ├── bodepd\-create_resources (v0\.0\.1) ├── puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-mysql (v0\.0\.1) ├── puppetlabs\-sqlite (v0\.0\.1) └── puppetlabs\-stdlib (v2\.2\.1) /usr/share/puppet/modules (no modules installed)
+$ puppet module list /etc/puppetlabs/code/modules ├── bodepd\-create_resources (v0\.0\.1) ├── puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-mysql (v0\.0\.1) ├── puppetlabs\-sqlite (v0\.0\.1) └── puppetlabs\-stdlib (v2\.2\.1) /opt/puppetlabs/puppet/modules (no modules installed)
 .
 .P
 List installed modules in a tree view:
 .
 .P
-$ puppet module list \-\-tree /etc/puppet/modules └─┬ puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-stdlib (v2\.2\.1) ├─┬ puppetlabs\-mysql (v0\.0\.1) │ └── bodepd\-create_resources (v0\.0\.1) └── puppetlabs\-sqlite (v0\.0\.1) /usr/share/puppet/modules (no modules installed)
+$ puppet module list \-\-tree /etc/puppetlabs/code/modules └─┬ puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-stdlib (v2\.2\.1) ├─┬ puppetlabs\-mysql (v0\.0\.1) │ └── bodepd\-create_resources (v0\.0\.1) └── puppetlabs\-sqlite (v0\.0\.1) /opt/puppetlabs/puppet/modules (no modules installed)
 .
 .P
 List installed modules from a specified environment:
 .
 .P
-$ puppet module list \-\-environment production /etc/puppet/modules ├── bodepd\-create_resources (v0\.0\.1) ├── puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-mysql (v0\.0\.1) ├── puppetlabs\-sqlite (v0\.0\.1) └── puppetlabs\-stdlib (v2\.2\.1) /usr/share/puppet/modules (no modules installed)
+$ puppet module list \-\-environment production /etc/puppetlabs/code/modules ├── bodepd\-create_resources (v0\.0\.1) ├── puppetlabs\-bacula (v0\.0\.2) ├── puppetlabs\-mysql (v0\.0\.1) ├── puppetlabs\-sqlite (v0\.0\.1) └── puppetlabs\-stdlib (v2\.2\.1) /opt/puppetlabs/puppet/modules (no modules installed)
 .
 .P
 List installed modules from a specified modulepath:
 .
 .P
-$ puppet module list \-\-modulepath /usr/share/puppet/modules /usr/share/puppet/modules (no modules installed)
+$ puppet module list \-\-modulepath /opt/puppetlabs/puppet/modules /opt/puppetlabs/puppet/modules (no modules installed)
 .
 .P
 \fBsearch\fR
@@ -403,25 +403,25 @@ $ puppet module search puppetlabs NAME DESCRIPTION AUTHOR KEYWORDS bacula This i
 Uninstall a module:
 .
 .P
-$ puppet module uninstall puppetlabs\-ssh Removed /etc/puppet/modules/ssh (v1\.0\.0)
+$ puppet module uninstall puppetlabs\-ssh Removed /etc/puppetlabs/code/modules/ssh (v1\.0\.0)
 .
 .P
 Uninstall a module from a specific directory:
 .
 .P
-$ puppet module uninstall puppetlabs\-ssh \-\-modulepath /usr/share/puppet/modules Removed /usr/share/puppet/modules/ssh (v1\.0\.0)
+$ puppet module uninstall puppetlabs\-ssh \-\-modulepath /opt/puppetlabs/puppet/modules Removed /opt/puppetlabs/puppet/modules/ssh (v1\.0\.0)
 .
 .P
 Uninstall a module from a specific environment:
 .
 .P
-$ puppet module uninstall puppetlabs\-ssh \-\-environment development Removed /etc/puppet/environments/development/modules/ssh (v1\.0\.0)
+$ puppet module uninstall puppetlabs\-ssh \-\-environment development Removed /etc/puppetlabs/code/environments/development/modules/ssh (v1\.0\.0)
 .
 .P
 Uninstall a specific version of a module:
 .
 .P
-$ puppet module uninstall puppetlabs\-ssh \-\-version 2\.0\.0 Removed /etc/puppet/modules/ssh (v2\.0\.0)
+$ puppet module uninstall puppetlabs\-ssh \-\-version 2\.0\.0 Removed /etc/puppetlabs/code/modules/ssh (v2\.0\.0)
 .
 .P
 \fBupgrade\fR
@@ -430,19 +430,19 @@ $ puppet module uninstall puppetlabs\-ssh \-\-version 2\.0\.0 Removed /etc/puppe
 upgrade an installed module to the latest version
 .
 .P
-$ puppet module upgrade puppetlabs\-apache /etc/puppet/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.4\.0)
+$ puppet module upgrade puppetlabs\-apache /etc/puppetlabs/puppet/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.4\.0)
 .
 .P
 upgrade an installed module to a specific version
 .
 .P
-$ puppet module upgrade puppetlabs\-apache \-\-version 2\.1\.0 /etc/puppet/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.1\.0)
+$ puppet module upgrade puppetlabs\-apache \-\-version 2\.1\.0 /etc/puppetlabs/puppet/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.1\.0)
 .
 .P
 upgrade an installed module for a specific environment
 .
 .P
-$ puppet module upgrade puppetlabs\-apache \-\-environment test /usr/share/puppet/environments/test/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.4\.0)
+$ puppet module upgrade puppetlabs\-apache \-\-environment test /etc/puppetlabs/code/environments/test/modules └── puppetlabs\-apache (v1\.0\.0 \-> v2\.4\.0)
 .
 .SH "COPYRIGHT AND LICENSE"
 Copyright 2012 by Puppet Labs Apache 2 license; see COPYING

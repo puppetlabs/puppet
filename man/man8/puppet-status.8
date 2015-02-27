@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-STATUS" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-STATUS" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-status\fR \- View puppet server status\.
@@ -48,7 +48,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status [\-\-terminus TERMINUS] [\-\-extra HASH] \fIdummy_text\fR
+puppet status [\-\-terminus TERMINUS] [\-\-extra HASH] [\fIkey\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -71,9 +71,6 @@ A "true" response or a low\-level connection error\. When used from the Ruby API
 .IP
 This action requires that the server\'s \fBauth\.conf\fR file allow find access to the \fBstatus\fR REST terminus\. Puppet agent does not use this facility, and it is turned off by default\. See \fIhttp://docs\.puppetlabs\.com/guides/rest_auth_conf\.html\fR for more details\.
 .
-.IP
-Although this action always returns an unnamed status object, it requires a dummy argument\. This is a known bug\.
-.
 .TP
 \fBinfo\fR \- Print the default terminus class for this face\.
 \fBSYNOPSIS\fR
@@ -94,7 +91,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 Check the status of the configured puppet master:
 .
 .P
-$ puppet status find x \-\-terminus rest
+$ puppet status find \-\-terminus rest
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:
