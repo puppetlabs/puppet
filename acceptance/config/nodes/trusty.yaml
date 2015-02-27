@@ -10,7 +10,8 @@ HOSTS:
     distmoduledir: /etc/puppetlabs/code/modules
     hieraconf:     /etc/puppetlabs/code/hiera.yaml
     puppetconfdir: /etc/puppetlabs/puppet
-    puppetserver-confdir: /etc/puppetserver/conf.d/
+    puppetpath: /etc/puppetlabs/puppet
+    puppetserver-confdir: /etc/puppetlabs/puppetserver/conf.d
     puppetbindir:  /opt/puppetlabs/puppet/bin
     puppetvardir:  /opt/puppetlabs/puppet/cache
     sitemoduledir: /opt/puppetlabs/puppet/modules
@@ -24,6 +25,7 @@ HOSTS:
     distmoduledir: /etc/puppetlabs/code/modules
     hieraconf:     /etc/puppetlabs/code/hiera.yaml
     puppetconfdir: /etc/puppetlabs/puppet
+    puppetpath: /etc/puppetlabs/puppet
     puppetbindir:  /opt/puppetlabs/puppet/bin
     puppetvardir:  /opt/puppetlabs/puppet/cache
     sitemoduledir: /opt/puppetlabs/puppet/modules
