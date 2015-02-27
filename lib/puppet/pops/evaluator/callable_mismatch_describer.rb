@@ -140,7 +140,7 @@ module Puppet::Pops::Evaluator::CallableMismatchDescriber
     # stringify generalized versions or it will display Integer[10,10] for "10", String['the content'] etc.
     # note that type must be copied since generalize is a mutating operation
     tc = Puppet::Pops::Types::TypeCalculator
-    result = types.map { |t| tc.string(tc.generalize!(t.copy)) }.join(', ')
+    result = types.map { |t| tc.string(tc.generalize(t)) }.join(', ')
 
     # Add {from, to} for the last type
     # This works for both Array and Tuple since it describes the allowed count of the "last" type element

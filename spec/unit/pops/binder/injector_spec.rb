@@ -594,11 +594,11 @@ describe 'Injector' do
       it "should fail attempts to append, perform  uniq or flatten on type incompatible multibind hash" do
         hash_of_integer = type_factory.hash_of(type_factory.integer())
         ids = ["ducks1", "ducks2", "ducks3"]
-        mb = bindings.multibind(ids[0]).type(hash_of_integer.copy).name('broken_family0')
+        mb = bindings.multibind(ids[0]).type(hash_of_integer).name('broken_family0')
         mb.producer_options(:conflict_resolution => :append)
-        mb = bindings.multibind(ids[1]).type(hash_of_integer.copy).name('broken_family1')
+        mb = bindings.multibind(ids[1]).type(hash_of_integer).name('broken_family1')
         mb.producer_options(:flatten => :true)
-        mb = bindings.multibind(ids[2]).type(hash_of_integer.copy).name('broken_family2')
+        mb = bindings.multibind(ids[2]).type(hash_of_integer).name('broken_family2')
         mb.producer_options(:uniq => :true)
 
         injector = injector(binder.new(factory.layered_bindings(test_layer_with_bindings(bindings.model))))

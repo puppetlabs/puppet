@@ -5,7 +5,7 @@ class Puppet::Pops::Parser::Locator
   # performed of the given source string.
   #
   def self.locator(string, file, index = nil, char_offsets = false)
-    if(char_offsets)
+    if char_offsets
       LocatorForChars.new(string, file, index);
     else
       Locator19.new(string, file, index)

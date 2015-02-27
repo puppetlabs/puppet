@@ -3,12 +3,6 @@
 #
 class Puppet::Pops::Binder::KeyFactory
 
-  attr_reader :type_calculator
-  # @api public
-  def initialize(type_calculator = Puppet::Pops::Types::TypeCalculator.new())
-    @type_calculator = type_calculator
-  end
-
   # @api public
   def binding_key(binding)
     named_key(binding.type, binding.name)
@@ -16,12 +10,12 @@ class Puppet::Pops::Binder::KeyFactory
 
   # @api public
   def named_key(type, name)
-    [(@type_calculator.assignable?(@type_calculator.data, type) ? @type_calculator.data : type), name]
+    [(Puppet::Pops::Types::PDataType::DEFAULT.assignable?(type) ? Puppet::Pops::Types::PDataType::DEFAULT : type), name]
   end
 
   # @api public
   def data_key(name)
-    [@type_calculator.data, name]
+    [Puppet::Pops::Types::PDataType::DEFAULT, name]
   end
 
   # @api public
@@ -49,7 +43,7 @@ class Puppet::Pops::Binder::KeyFactory
   # @api public
   def is_data?(key)
     return false unless key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PAnyType)
-    type_calculator.assignable?(type_calculator.data(), key[0])
+    Puppet::Pops::Types::PDataType::DEFAULT.assignable?(key[0])
   end
 
   # @api public

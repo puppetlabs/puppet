@@ -11,9 +11,8 @@ class Puppet::Pops::Types::TypeParser
 
   # @api public
   def initialize
-    @parser = Puppet::Pops::Parser::Parser.new()
-    @type_transformer = Puppet::Pops::Visitor.new(nil, "interpret", 0, 0)
-    @undef_t = TYPES.undef
+    @parser = Puppet::Pops::Parser::Parser.new
+    @type_transformer = Puppet::Pops::Visitor.new(nil, 'interpret', 0, 0)
   end
 
   # Produces a *puppet type* based on the given string.
@@ -113,87 +112,87 @@ class Puppet::Pops::Types::TypeParser
   # @api private
   def interpret_QualifiedReference(name_ast)
     case name_ast.value
-    when "integer"
+    when 'integer'
       TYPES.integer
 
-    when "float"
+    when 'float'
       TYPES.float
 
-    when "numeric"
+    when 'numeric'
         TYPES.numeric
 
-    when "string"
+    when 'string'
       TYPES.string
 
-    when "enum"
+    when 'enum'
       TYPES.enum
 
-    when "boolean"
+    when 'boolean'
       TYPES.boolean
 
-    when "pattern"
+    when 'pattern'
       TYPES.pattern
 
-    when "regexp"
+    when 'regexp'
       TYPES.regexp
 
-    when "data"
+    when 'data'
       TYPES.data
 
-    when "array"
+    when 'array'
       TYPES.array_of_data
 
-    when "hash"
+    when 'hash'
       TYPES.hash_of_data
 
-    when "class"
-      TYPES.host_class()
+    when 'class'
+      TYPES.host_class
 
-    when "resource"
-      TYPES.resource()
+    when 'resource'
+      TYPES.resource
 
-    when "collection"
-      TYPES.collection()
+    when 'collection'
+      TYPES.collection
 
-    when "scalar"
-      TYPES.scalar()
+    when 'scalar'
+      TYPES.scalar
 
-    when "catalogentry"
-      TYPES.catalog_entry()
+    when 'catalogentry'
+      TYPES.catalog_entry
 
-    when "undef"
-      TYPES.undef()
+    when 'undef'
+      TYPES.undef
 
-    when "notundef"
+    when 'notundef'
       TYPES.not_undef()
 
-    when "default"
+    when 'default'
       TYPES.default()
+ 
+    when 'any'
+      TYPES.any
 
-    when "any"
-      TYPES.any()
+    when 'variant'
+      TYPES.variant
 
-    when "variant"
-      TYPES.variant()
+    when 'optional'
+      TYPES.optional
 
-    when "optional"
-      TYPES.optional()
+    when 'runtime'
+      TYPES.runtime
 
-    when "runtime"
-      TYPES.runtime()
+    when 'type'
+      TYPES.type_type
 
-    when "type"
-      TYPES.type_type()
+    when 'tuple'
+      TYPES.tuple
 
-    when "tuple"
-      TYPES.tuple()
+    when 'struct'
+      TYPES.struct
 
-    when "struct"
-      TYPES.struct()
-
-    when "callable"
+    when 'callable'
       # A generic callable as opposed to one that does not accept arguments
-      TYPES.all_callables()
+      TYPES.all_callables
 
     else
       TYPES.resource(name_ast.value)
@@ -209,118 +208,112 @@ class Puppet::Pops::Types::TypeParser
     end
 
     case parameterized_ast.left_expr.value
-    when "array"
+    when 'array'
       case parameters.size
       when 1
       when 2
         size_type =
-        if parameters[1].is_a?(Puppet::Pops::Types::PIntegerType)
-          parameters[1].copy
-        else
-          assert_range_parameter(parameters[1])
-          TYPES.range(parameters[1], :default)
-        end
+          if parameters[1].is_a?(Puppet::Pops::Types::PIntegerType)
+            parameters[1]
+          else
+            assert_range_parameter(parameters[1])
+            TYPES.range(parameters[1], :default)
+          end
       when 3
         assert_range_parameter(parameters[1])
         assert_range_parameter(parameters[2])
         size_type = TYPES.range(parameters[1], parameters[2])
       else
-        raise_invalid_parameters_error("Array", "1 to 3", parameters.size)
+        raise_invalid_parameters_error('Array', '1 to 3', parameters.size)
       end
       assert_type(parameters[0])
-      t = TYPES.array_of(parameters[0])
-      t.size_type = size_type if size_type
-      t
+      TYPES.array_of(parameters[0], size_type)
 
-    when "hash"
-      result = case parameters.size
+    when 'hash'
+      case parameters.size
       when 2
         assert_type(parameters[0])
         assert_type(parameters[1])
         TYPES.hash_of(parameters[1], parameters[0])
       when 3
         size_type =
-        if parameters[2].is_a?(Puppet::Pops::Types::PIntegerType)
-          parameters[2].copy
-        else
-          assert_range_parameter(parameters[2])
-          TYPES.range(parameters[2], :default)
-        end
+          if parameters[2].is_a?(Puppet::Pops::Types::PIntegerType)
+            parameters[2]
+          else
+            assert_range_parameter(parameters[2])
+            TYPES.range(parameters[2], :default)
+          end
         assert_type(parameters[0])
         assert_type(parameters[1])
-        TYPES.hash_of(parameters[1], parameters[0])
+        TYPES.hash_of(parameters[1], parameters[0], size_type)
       when 4
         assert_range_parameter(parameters[2])
         assert_range_parameter(parameters[3])
-        size_type = TYPES.range(parameters[2], parameters[3])
         assert_type(parameters[0])
         assert_type(parameters[1])
-        TYPES.hash_of(parameters[1], parameters[0])
+        TYPES.hash_of(parameters[1], parameters[0], TYPES.range(parameters[2], parameters[3]))
       else
-        raise_invalid_parameters_error("Hash", "2 to 4", parameters.size)
+        raise_invalid_parameters_error('Hash', '2 to 4', parameters.size)
       end
-      result.size_type = size_type if size_type
-      result
 
-    when "collection"
+    when 'collection'
       size_type = case parameters.size
-      when 1
-        if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
-          parameters[0].copy
-        else
+        when 1
+          if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
+            parameters[0].copy
+          else
+            assert_range_parameter(parameters[0])
+            TYPES.range(parameters[0], :default)
+          end
+        when 2
           assert_range_parameter(parameters[0])
-          TYPES.range(parameters[0], :default)
+          assert_range_parameter(parameters[1])
+          TYPES.range(parameters[0], parameters[1])
+        else
+          raise_invalid_parameters_error('Collection', '1 to 2', parameters.size)
         end
-      when 2
-        assert_range_parameter(parameters[0])
-        assert_range_parameter(parameters[1])
-        TYPES.range(parameters[0], parameters[1])
-      else
-        raise_invalid_parameters_error("Collection", "1 to 2", parameters.size)
-      end
-      result = TYPES.collection
-      result.size_type = size_type
-      result
+      TYPES.collection(size_type)
 
-    when "class"
+    when 'class'
       if parameters.size != 1
-        raise_invalid_parameters_error("Class", 1, parameters.size)
+        raise_invalid_parameters_error('Class', 1, parameters.size)
       end
       TYPES.host_class(parameters[0])
 
-    when "resource"
+    when 'resource'
       if parameters.size == 1
         TYPES.resource(parameters[0])
       elsif parameters.size != 2
-        raise_invalid_parameters_error("Resource", "1 or 2", parameters.size)
+        raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)
       else
         TYPES.resource(parameters[0], parameters[1])
       end
 
-    when "regexp"
+    when 'regexp'
       # 1 parameter being a string, or regular expression
-      raise_invalid_parameters_error("Regexp", "1", parameters.size) unless parameters.size == 1
+      raise_invalid_parameters_error('Regexp', '1', parameters.size) unless parameters.size == 1
       TYPES.regexp(parameters[0])
 
-    when "enum"
+    when 'enum'
       # 1..m parameters being strings
-      raise_invalid_parameters_error("Enum", "1 or more", parameters.size) unless parameters.size >= 1
+      raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
       TYPES.enum(*parameters)
 
-    when "pattern"
+    when 'pattern'
       # 1..m parameters being strings or regular expressions
-      raise_invalid_parameters_error("Pattern", "1 or more", parameters.size) unless parameters.size >= 1
+      raise_invalid_parameters_error('Pattern', '1 or more', parameters.size) unless parameters.size >= 1
       TYPES.pattern(*parameters)
 
-    when "variant"
+    when 'variant'
       # 1..m parameters being strings or regular expressions
-      raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size >= 1
+      raise_invalid_parameters_error('Variant', '1 or more', parameters.size) unless parameters.size >= 1
       TYPES.variant(*parameters)
 
-    when "tuple"
+    when 'tuple'
       # 1..m parameters being types (last two optionally integer or literal default
-      raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size >= 1
+      raise_invalid_parameters_error('Tuple', '1 or more', parameters.size) unless parameters.size >= 1
       length = parameters.size
+      size_type = nil
       if TYPES.is_range_parameter?(parameters[-2])
         # min, max specification
         min = parameters[-2]
@@ -329,30 +322,28 @@ class Puppet::Pops::Types::TypeParser
         max = parameters[-1]
         max = max == :default ? nil : max
         parameters = parameters[0, length-2]
+        size_type = TYPES.range(min, max)
       elsif TYPES.is_range_parameter?(parameters[-1])
         min = parameters[-1]
         min = (min == :default || min == 'default') ? 0 : min
         max = nil
         parameters = parameters[0, length-1]
+        size_type = TYPES.range(min, max)
       end
-      t = TYPES.tuple(*parameters)
-      if min || max
-        TYPES.constrain_size(t, min, max)
-      end
-      t
+      TYPES.tuple(parameters, size_type)
 
-    when "callable"
+    when 'callable'
       # 1..m parameters being types (last three optionally integer or literal default, and a callable)
       TYPES.callable(*parameters)
 
-    when "struct"
+    when 'struct'
       # 1..m parameters being types (last two optionally integer or literal default
-      raise_invalid_parameters_error("Struct", "1", parameters.size) unless parameters.size == 1
+      raise_invalid_parameters_error('Struct', '1', parameters.size) unless parameters.size == 1
       h = parameters[0]
       raise_invalid_type_specification_error unless h.is_a?(Hash)
       TYPES.struct(h)
 
-    when "integer"
+    when 'integer'
       if parameters.size == 1
         case parameters[0]
         when Integer
@@ -361,12 +352,12 @@ class Puppet::Pops::Types::TypeParser
           TYPES.integer # unbound
         end
       elsif parameters.size != 2
-        raise_invalid_parameters_error("Integer", "1 or 2", parameters.size)
+        raise_invalid_parameters_error('Integer', '1 or 2', parameters.size)
      else
        TYPES.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
-    when "float"
+    when 'float'
       if parameters.size == 1
         case parameters[0]
         when Integer, Float
@@ -375,12 +366,12 @@ class Puppet::Pops::Types::TypeParser
           TYPES.float # unbound
         end
       elsif parameters.size != 2
-        raise_invalid_parameters_error("Float", "1 or 2", parameters.size)
+        raise_invalid_parameters_error('Float', '1 or 2', parameters.size)
      else
        TYPES.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
-    when "string"
+    when 'string'
       size_type =
       case parameters.size
       when 1
@@ -395,24 +386,22 @@ class Puppet::Pops::Types::TypeParser
         assert_range_parameter(parameters[1])
         TYPES.range(parameters[0], parameters[1])
       else
-        raise_invalid_parameters_error("String", "1 to 2", parameters.size)
+        raise_invalid_parameters_error('String', '1 to 2', parameters.size)
       end
-      result = TYPES.string
-      result.size_type = size_type
-      result
+      TYPES.string(size_type)
 
-    when "optional"
+    when 'optional'
       if parameters.size != 1
-        raise_invalid_parameters_error("Optional", 1, parameters.size)
+        raise_invalid_parameters_error('Optional', 1, parameters.size)
       end
       param = parameters[0]
       assert_type(param) unless param.is_a?(String)
       TYPES.optional(param)
 
-    when "any", "data", "catalogentry", "boolean", "scalar", "undef", "numeric", "default"
+    when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default'
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
-    when "notundef"
+    when 'notundef'
       case parameters.size
       when 0
         TYPES.not_undef
@@ -424,15 +413,15 @@ class Puppet::Pops::Types::TypeParser
         raise_invalid_parameters_error("NotUndef", "0 to 1", parameters.size)
       end
 
-    when "type"
+    when 'type'
       if parameters.size != 1
-        raise_invalid_parameters_error("Type", 1, parameters.size)
+        raise_invalid_parameters_error('Type', 1, parameters.size)
       end
       assert_type(parameters[0])
       TYPES.type_type(parameters[0])
 
-    when "runtime"
-      raise_invalid_parameters_error("Runtime", "2", parameters.size) unless parameters.size == 2
+    when 'runtime'
+      raise_invalid_parameters_error('Runtime', '2', parameters.size) unless parameters.size == 2
       TYPES.runtime(*parameters)
 
     else
@@ -476,6 +465,6 @@ class Puppet::Pops::Types::TypeParser
 
   def original_text_of(ast)
     position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_text()
+    position.extract_text
   end
 end

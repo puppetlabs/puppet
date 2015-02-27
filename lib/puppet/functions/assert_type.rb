@@ -42,7 +42,7 @@ Puppet::Functions.create_function(:assert_type) do
         # Do not give all the details - i.e. format as Integer, instead of Integer[n, n] for exact value, which
         # is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output.
         #
-        actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
+        actual = Puppet::Pops::Types::TypeCalculator.generalize(inferred_type)
         raise Puppet::Pops::Types::TypeAssertionError.new("assert_type(): Expected type #{type} does not match actual: #{actual}", type,actual)
       end
     end
