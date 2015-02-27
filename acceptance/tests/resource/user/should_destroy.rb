@@ -10,5 +10,8 @@ agents.each do |agent|
   on agent, puppet_resource('user', name, 'ensure=absent')
 
   step "verify the user was deleted"
+  fail_test "User #{name} was not deleted" if agent.user_list.include? name
+
+  step "delete the user, if any"
   agent.user_absent(name)
 end
