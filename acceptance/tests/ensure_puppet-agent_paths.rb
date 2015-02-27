@@ -84,3 +84,34 @@ agents.each do |agent|
   end
 end
 
+
+# mco.bat removed until it's added back to the MSI
+public_binaries = {
+  :posix => ['puppet', 'facter', 'hiera', 'mco', 'cfacter'],
+  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'cfacter.bat']
+}
+locations = {:posix => {:aio => '/opt/puppetlabs/bin',                     :git => '/usr/bin'},
+             :win   => {:aio => 'C:/Program Files/Puppet Labs/Puppet/bin', :git => '/usr/bin'}}
+
+step 'test puppet binaries exist'
+agents.each do |agent|
+  os = agent['platform'] =~ /win/ ? :win : :posix
+  type = @options[:type] == 'aio' ? :aio : :git
+
+  dir = locations[os][type]
+  # Filter out cfacter outside of aio, as we don't install it as part of Puppet acceptance runs yet.
+  public_binaries[os].select {|v| type == :aio || v !~ /cfacter/}.each do |binary|
+    path = File.join(dir, binary)
+    case os
+    when :win
+      if !file_exists?(agent, path)
+        fail_test("Failed to find expected binary '#{path}' on agent '#{agent}'")
+      end
+    when :posix
+      if !link_exists?(agent, path)
+        fail_test("Failed to find expected symbolic link '#{path}' on agent '#{agent}'")
+      end
+    end
+  end
+end
+
