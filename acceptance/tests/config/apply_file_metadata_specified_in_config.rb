@@ -10,7 +10,7 @@ initialize_temp_dirs()
 agents.each do |agent|
   logdir = get_test_file_path(agent, 'log')
 
-  create_test_file(agent, 'site.pp', <<-SITE, :owner => 'root', :group => 'root')
+  create_test_file(agent, 'site.pp', <<-SITE)
   node default {
     notify { puppet_run: }
   }

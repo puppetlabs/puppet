@@ -21,23 +21,6 @@ require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
 
-user = "user#{rand(999999).to_i}"
-group = "group#{rand(999999).to_i}"
-
-teardown do
-  hosts.each do |host|
-    host.user_absent(user)
-    host.group_absent(group)
-  end
-end
-
-step "Setup: Create test user and group" do
-  hosts.each do |host|
-    host.user_present(user)
-    host.group_present(group)
-  end
-end
-
 agents.each do |agent|
   # The modulepath to use in environment 'dev'
   envs_path = get_test_file_path(agent, 'environments')
@@ -47,6 +30,8 @@ agents.each do |agent|
 
   # make sure that we use the modulepath from the dev environment
   puppetconf = get_test_file_path(agent, 'puppet.conf')
+  user = agent.puppet['user']
+  group = agent.puppet['group']
   # Setting user/group ensures that when puppet apply's Configurer use()'s the
   # settings, that it doesn't default to owning them as root, which can have an
   # impact on following tests.
