@@ -1,7 +1,6 @@
 {
   :type => 'aio',
   :pre_suite => [
-    'setup/common/pre-suite/001_PkgBuildSetup.rb',
     'setup/aio/pre-suite/010_Install.rb',
     'setup/aio/pre-suite/015_PackageHostsPresets.rb',
     'setup/common/pre-suite/025_StopFirewall.rb',
