@@ -78,10 +78,8 @@ class ModifiesModeTest < ActionModeTest
 
     @start_mode = start_mode
 
-    user = 'symbolictestuser'
-    group = 'symbolictestgroup'
-    agent.user_present(user)
-    agent.group_present(group)
+    user = agent.puppet['user']
+    group = agent.puppet['group'] || user
 
     testcase.on(agent, "touch #{@file} && chown #{user}:#{group} #{@file} && chmod #{start_mode.to_s(8)} #{@file}")
     testcase.on(agent, "mkdir -p #{@dir} && chown #{user}:#{group} #{@dir} && chmod #{start_mode.to_s(8)} #{@dir}")
