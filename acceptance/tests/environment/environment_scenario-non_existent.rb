@@ -10,20 +10,20 @@ step "setup environments"
 
 stub_forge_on(master)
 
-testdir = create_tmpdir_for_user master, "confdir"
-puppet_conf_backup_dir = create_tmpdir_for_user(master, "puppet-conf-backup-dir")
+testdir = create_tmpdir_for_user master, "codedir"
+puppet_code_backup_dir = create_tmpdir_for_user(master, "puppet-code-backup-dir")
 
 apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
 
 step "Test"
 master_opts = {
   'main' => {
-    'environmentpath' => '$confdir/environments',
+    'environmentpath' => '$codedir/environments',
   }
 }
-general = [ master_opts, testdir, puppet_conf_backup_dir, { :directory_environments => true } ]
+general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
 env = 'doesnotexist'
-path = master['puppetpath']
+path = master.puppet('master')['codedir']
 
 results = use_an_environment(env, "non existent environment", *general)
 

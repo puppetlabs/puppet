@@ -227,7 +227,7 @@ module Puppet
         master_puppet_conf = master_opts.dup # shallow clone
 
         results = {}
-        safely_shadow_directory_contents_and_yield(master, master['puppetpath'], envdir) do
+        safely_shadow_directory_contents_and_yield(master, master.puppet('master')['codedir'], envdir) do
 
           config_print = options[:config_print]
           directory_environments = options[:directory_environments]
