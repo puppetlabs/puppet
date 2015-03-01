@@ -40,6 +40,9 @@ end
 
 # Setup repo and package
 hosts_to_test.each do |agent|
+  # (SERVER-360) Install dependencies requires for repository and package setup
+  install_package agent, 'createrepo'
+  install_package agent, 'rpm-build'
   clean_rpm agent, rpm_options
   setup_rpm agent, rpm_options
   send_rpm agent, rpm_options
