@@ -45,8 +45,9 @@ test_name "Install packages and repositories on target machines..." do
 
   step "Hosts: create basic puppet.conf" do
     hosts.each do |host|
-      on host, "mkdir -p #{host['puppetpath']}"
-      puppetconf = File.join(host['puppetpath'], 'puppet.conf')
+      confdir = host.puppet['confdir']
+      on host, "mkdir -p #{confdir}"
+      puppetconf = File.join(confdir, 'puppet.conf')
 
       if host['roles'].include?('agent')
         on host, "echo '[agent]' > #{puppetconf} && " +
