@@ -7,7 +7,7 @@ module Puppet
       def setup(agent)
         required_packages = ['createrepo', 'rpm-build']
         required_packages.each do |pkg|
-          unless ((on agent, "#{pkg} --version", :acceptable_exit_codes => (0..255)).exit_code == 0) then
+          unless ((on agent, "yum list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0) then
             on agent, "yum install -y #{pkg}"
           end
         end
