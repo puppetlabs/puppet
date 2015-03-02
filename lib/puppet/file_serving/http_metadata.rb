@@ -15,7 +15,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
       checksum = checksum.unpack("m0").first.unpack("H*").first
       @checksum_type = 'md5'
       @checksum = "{md5}#{checksum}"
-    elsif mtime = DateTime.httpdate(http_response['last-modified'])
+    elsif mtime = DateTime.httpdate(http_response['last-modified']).to_time
       @checksum_type = 'mtime'
       @checksum = "{mtime}#{mtime}"
     else
