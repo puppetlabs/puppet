@@ -31,7 +31,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
     instances = []
 
     begin
-      execpipe([command(:rcctl), :status]) do |process|
+      execpipe([command(:rcctl), :getall]) do |process|
         process.each_line do |line|
           match = /^(.*?)(?:_flags)?=(.*)$/.match(line)
           attributes_hash = {
@@ -51,10 +51,10 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   end
 
   def enabled?
-    output = execute([command(:rcctl), "status", @resource[:name]],
-                     :failonfail => false, :combine => false, :squelch => false).chomp
+    output = execute([command(:rcctl), "get", @resource[:name], "status"],
+                     :failonfail => false, :combine => false, :squelch => false)
 
-    if output == 'NO'
+    if output.exitstatus == 1
       self.debug("Is disabled")
       return :false
     else
@@ -65,10 +65,9 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   def enable
     self.debug("Enabling")
+    rcctl(:enable, @resource[:name])
     if @resource[:flags]
-      rcctl(:enable, @resource[:name], :flags, @resource[:flags])
-    else
-      rcctl(:enable, @resource[:name])
+      rcctl(:set, @resource[:name], :flags, @resource[:flags])
     end
   end
 
@@ -86,15 +85,15 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   # Uses the wrapper to prevent failure when the service is not running;
   # rcctl(8) return non-zero in that case.
   def flags
-    output = execute([command(:rcctl), "status", @resource[:name]],
+    output = execute([command(:rcctl), "get", @resource[:name], "flags"],
                      :failonfail => false, :combine => false, :squelch => false).chomp
-    self.debug("Flags are: #{output}")
+    self.debug("Flags are: \"#{output}\"")
     output
   end
 
   def flags=(value)
     self.debug("Changing flags from #{flags} to #{value}")
-    rcctl(:enable, @resource[:name], :flags, value)
+    rcctl(:set, @resource[:name], :flags, value)
     # If the service is already running, force a restart as the flags have been changed.
     rcctl(:restart, @resource[:name]) if running?
   end
