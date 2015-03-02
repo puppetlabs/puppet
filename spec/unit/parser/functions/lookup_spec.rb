@@ -17,6 +17,10 @@ describe "lookup function" do
     expect do
       scope.function_lookup([])
     end.to raise_error(ArgumentError, /Wrong number of arguments/)
+
+    expect do
+      scope.function_lookup([1,2])
+    end.to raise_error(Puppet::ParseError, /given 'name' argument, has wrong type/)
   end
 
   it "looks up a value that exists" do

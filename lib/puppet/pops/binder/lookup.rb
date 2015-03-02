@@ -78,7 +78,7 @@ class Puppet::Pops::Binder::Lookup
 
     t = type_calculator.infer(options[:name])
     if ! type_calculator.assignable?(name_type, t)
-      fail("given 'name' argument, #{type_mismatch(type_calculator, options[:name], t)}")
+      fail("given 'name' argument, #{type_mismatch(type_calculator, name_type, t)}")
     end
 
     # unless a type is already given (future case), parse the type (or default 'Data'), fails if invalid type is given
