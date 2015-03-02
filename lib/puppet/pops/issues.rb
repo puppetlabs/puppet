@@ -507,11 +507,11 @@ module Puppet::Pops::Issues
   end
 
   IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
-    "This #{label.label(semantic)} is not productive. A non productive construct may only be placed last in a block/sequence"
+    "This #{label.label(semantic)} has no effect. A value-producing expression without other effect may only be placed last in a block/sequence"
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
+    "This #{label.label(semantic)} has no effect. #{label.a_an_uc(container)} can not end with a value-producing expression without other effect"
   end
 
   RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
