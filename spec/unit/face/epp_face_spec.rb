@@ -150,7 +150,7 @@ describe Puppet::Face[:epp, :current] do
       dir = dir_containing('templates', { template_name => "<% 1 2 3 %>" })
       template = File.join(dir, template_name)
       expect(eppface.dump(template, :validate => true)).to eq("")
-      expect(@logs.join).to match(/This Literal Integer is not productive.* line 1:4/)
+      expect(@logs.join).to match(/This Literal Integer has no effect.* line 1:4/)
     end
 
     it "validated content by default" do
@@ -158,7 +158,7 @@ describe Puppet::Face[:epp, :current] do
       dir = dir_containing('templates', { template_name => "<% 1 2 3 %>" })
       template = File.join(dir, template_name)
       expect(eppface.dump(template)).to eq("")
-      expect(@logs.join).to match(/This Literal Integer is not productive.* line 1:4/)
+      expect(@logs.join).to match(/This Literal Integer has no effect.* line 1:4/)
     end
 
     it "informs the user of files that don't exist" do
