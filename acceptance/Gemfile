@@ -12,7 +12,7 @@ def location_for(place, fake_version = nil)
   end
 end
 
-gem "beaker", *location_for(ENV['BEAKER_VERSION'] || '~> 2.2')
+gem "beaker", *location_for(ENV['BEAKER_VERSION'] || 'git://github.com/puppetlabs/beaker#31bc7aa4405ac4fa0a2896be1c644dee34a0ea3e')
 gem "rake", "~> 10.1"
 gem "httparty", :require => false
 gem 'uuidtools', :require => false
