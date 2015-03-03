@@ -279,6 +279,12 @@ describe "Puppet Network Format" do
       end
     end
 
+    [true, false, nil, Object.new].each do |input|
+      it "renders #{input.class} using PSON" do
+        expect(subject.render(input)).to eq(input.to_pson)
+      end
+    end
+
     [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
       it "should render #{input.inspect} as one item per line" do
         expect(subject.render(input)).to eq(input.collect { |item| item.to_s + "\n" }.join(''))
@@ -289,9 +295,9 @@ describe "Puppet Network Format" do
       expect(subject.render({})).to eq('')
     end
 
-    it "should render a non-trivially-keyed Hash as pretty printed JSON" do
+    it "should render a non-trivially-keyed Hash as pretty printed PSON" do
       hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-      expect(subject.render(hash)).to eq(JSON.pretty_generate(hash).chomp)
+      expect(subject.render(hash)).to eq(PSON.pretty_generate(hash).chomp)
     end
 
     it "should render a {String,Numeric}-keyed Hash into a table" do
