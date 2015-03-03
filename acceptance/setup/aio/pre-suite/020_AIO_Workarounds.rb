@@ -1,10 +1,3 @@
-step "(PUP-4004) Set permissions on puppetserver directories that currently live in the agent cache dir"
-%w[reports server_data yaml bucket].each do |dir|
-  on master, "install --directory /opt/puppetlabs/puppet/cache/#{dir}"
-end
-on master, "chown -R puppet:puppet /opt/puppetlabs/puppet/cache"
-on master, "chmod -R 750 /opt/puppetlabs/puppet/cache"
-
 # The AIO puppet-agent package does not create the puppet user or group, but
 # puppet-server does. However, some puppet acceptance tests assume the user
 # is present. This is a temporary setup step to create the puppet user and
