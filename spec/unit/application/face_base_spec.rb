@@ -325,9 +325,9 @@ describe Puppet::Application::FaceBase do
         end
       end
 
-      it "should render a non-trivially-keyed Hash with using pretty printed JSON" do
+      it "should render a non-trivially-keyed Hash with using pretty printed PSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        expect(app.render(hash, {})).to eq(JSON.pretty_generate(hash).chomp)
+        expect(app.render(hash, {})).to eq(PSON.pretty_generate(hash).chomp)
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do

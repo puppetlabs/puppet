@@ -151,7 +151,7 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    return JSON.pretty_generate(datum)
+    return PSON.pretty_generate(datum)
   end
 
   def render_multiple(data)
