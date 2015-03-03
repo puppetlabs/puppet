@@ -113,8 +113,18 @@ describe "when performing lookup" do
       expect(resources).to include('global_e1_module_e2_env_e3')
     end
 
-    it "can pass merge parameter in the form of a hash with a 'strategy'" do
+    it "can pass merge parameter in the form of a hash with a 'strategy=>unique'" do
+      resources = assemble_and_compile('${r[0]}_${r[1]}', "'c'", 'Array[String]', "{strategy => 'unique'}")
+      expect(resources).to include('env_c_module_c')
+    end
+
+    it "can pass merge parameter in the form of a hash with 'strategy=>hash'" do
       resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'hash'}")
+      expect(resources).to include('env_e1_module_e2_env_e3')
+    end
+
+    it "can pass merge parameter in the form of a hash with a 'strategy=>deep'" do
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'deep'}")
       expect(resources).to include('env_e1_module_e2_env_e3')
     end
 

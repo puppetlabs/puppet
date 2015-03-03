@@ -26,7 +26,7 @@ module Puppet::Pops::Types::TypeAsserter
   def self.assert_instance_of(subject, expected_type, value, nil_ok = false)
     if !(value.nil? && nil_ok)
       tc = Puppet::Pops::Types::TypeCalculator.singleton
-      check_assignability(tc, subject, expected_type, tc.infer(value), true)
+      check_assignability(tc, subject, expected_type, tc.infer_set(value), true)
     end
     value
   end
