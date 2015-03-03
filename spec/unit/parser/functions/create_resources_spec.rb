@@ -63,7 +63,7 @@ describe 'function for dynamically creating resources' do
     it 'should fail to add non-existing type' do
       expect do
         @scope.function_create_resources(['create-resource-foo', { 'foo' => {} }])
-      end.to raise_error(ArgumentError, /Invalid resource type create-resource-foo/)
+      end.to raise_error(/Invalid resource type create-resource-foo/)
     end
 
     it 'should be able to add edges' do
@@ -169,7 +169,7 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'blah'=>{'one'=>'two'}})
         MANIFEST
-      end.to raise_error(Puppet::Error, 'Could not find declared class blah at line 1 on node foonode')
+      end.to raise_error(/Could not find declared class blah at line 1 on node foonode/)
     end
 
     it 'should be able to add edges' do
