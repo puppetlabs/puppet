@@ -169,7 +169,7 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'blah'=>{'one'=>'two'}})
         MANIFEST
-      end.to raise_error(Puppet::Error, /Could not find declared class blah at line 1:11 on node foonode/)
+      end.to raise_error(/Could not find declared class blah at line 1:11 on node foonode/)
     end
 
     it 'should be able to add edges' do
