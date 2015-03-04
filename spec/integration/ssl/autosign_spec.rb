@@ -106,9 +106,9 @@ describe "autosigning" do
       it "pulls extension attributes from the csr_attributes file into the certificate" do
         csr = Puppet::SSL::CertificateRequest.indirection.find(host.name)
         expect(csr.request_extensions).to have(3).items
-        expect(csr.request_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdef')
-        expect(csr.request_extensions).to include('oid' => 'pp_instance_id', 'value' => '1234')
-        expect(csr.request_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value')
+        expect(csr.request_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdef', 'raw' => "\f\x06abcdef")
+        expect(csr.request_extensions).to include('oid' => 'pp_instance_id', 'value' => '1234', 'raw' => "\f\x041234")
+        expect(csr.request_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value', 'raw' => "\f\nsome-value")
       end
 
       it "copies extension requests to certificate" do

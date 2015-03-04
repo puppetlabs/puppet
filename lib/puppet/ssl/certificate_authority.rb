@@ -19,7 +19,7 @@ class Puppet::SSL::CertificateAuthority
   # Adding an extension to this whitelist simply means we will consider it
   # further, not that we will always accept a certificate with an extension
   # requested on this list.
-  RequestExtensionWhitelist = %w{subjectAltName}
+  RequestExtensionWhitelist = %w{subjectAltName extendedKeyUsage}
 
   require 'puppet/ssl/certificate_factory'
   require 'puppet/ssl/inventory'
@@ -124,10 +124,15 @@ class Puppet::SSL::CertificateAuthority
     san = options[:dns_alt_names]
 
     host = Puppet::SSL::Host.new(name)
-    host.generate_certificate_request(:dns_alt_names => san)
+    host.generate_certificate_request(:dns_alt_names => san,
+                                      :request_pkinit_client => options[:request_pkinit_client],
+                                      :request_pkinit_kdc => options[:request_pkinit_kdc])
     # CSR may have been implicitly autosigned, generating a certificate
     # Or sign explicitly
-    host.certificate || sign(name, !!san)
+    # !!san, options: implicitly allow if request contains it (!?)
+    host.certificate || sign(name, { :allow_dns_alt_names => !!san,
+                             :allow_pkinit_client => options[:request_pkinit_client],
+                             :allow_pkinit_kdc => options[:request_pkinit_kdc] } )
   end
 
   # Generate our CA certificate.
@@ -145,7 +150,7 @@ class Puppet::SSL::CertificateAuthority
     request.generate(host.key)
 
     # Create a self-signed certificate.
-    @certificate = sign(host.name, false, request)
+    @certificate = sign(host.name, {}, request)
 
     # And make sure we initialize our CRL.
     crl
@@ -271,7 +276,7 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Sign a given certificate request.
-  def sign(hostname, allow_dns_alt_names = false, self_signing_csr = nil)
+  def sign(hostname, options = {}, self_signing_csr = nil)
     # This is a self-signed certificate
     if self_signing_csr
       # # This is a self-signed certificate, which is for the CA.  Since this
@@ -282,7 +287,7 @@ class Puppet::SSL::CertificateAuthority
       cert_type = :ca
       issuer = csr.content
     else
-      allow_dns_alt_names = true if hostname == Puppet[:certname].downcase
+      options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
       unless csr = Puppet::SSL::CertificateRequest.indirection.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
@@ -292,7 +297,7 @@ class Puppet::SSL::CertificateAuthority
 
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
-      check_internal_signing_policies(hostname, csr, allow_dns_alt_names) or
+      check_internal_signing_policies(hostname, csr, options) or
         raise CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!"
     end
 
@@ -320,7 +325,7 @@ class Puppet::SSL::CertificateAuthority
     cert
   end
 
-  def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
+  def check_internal_signing_policies(hostname, csr, options)
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.reject do |x|
       RequestExtensionWhitelist.include? x["oid"] or
@@ -359,19 +364,51 @@ class Puppet::SSL::CertificateAuthority
     unless csr.subject_alt_names.empty?
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.
-      unless allow_dns_alt_names
+      unless options[:allow_dns_alt_names]
         raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{csr.name}` to sign this request."
       end
 
       # If subjectAltNames are present, validate that they are only for DNS
-      # labels, not any other kind.
-      unless csr.subject_alt_names.all? {|x| x =~ /^DNS:/ }
-        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}.  To continue, this CSR needs to be cleaned."
+      # and PKINIT labels, not any other kind.
+      unless csr.subject_alt_names.all? {|x| x =~ /^DNS:/ or x =~ /^PKINIT-/ }
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a subjectAltName outside the DNS and PKINIT label spaces: #{csr.subject_alt_names.join(', ')}.  To continue, this CSR needs to be cleaned."
       end
 
       # Check for wildcards in the subjectAltName fields too.
       if csr.subject_alt_names.any? {|x| x.include? '*' }
         raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}  To continue, this CSR needs to be cleaned."
+      end
+
+      if csr.subject_alt_names.any? {|x| x =~ /^PKINIT-KDC:/ }
+        unless csr.extended_key_usages.include? Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_KDC
+          raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a PKINIT extension for KDCs (#{csr.subject_alt_names.join(', ')}) but not the necessary extended key usage (#{Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_KDC}). To continue, this CSR needs to be cleaned."
+        end
+
+        unless options[:allow_pkinit_kdc]
+          raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a PKINIT extension for KDCs (#{csr.subject_alt_names.join(', ')}), which is disallowed. Use `puppet cert --allow-pkinit-kdc sign #{csr.name}` to sign this request."
+        end
+      end
+
+      if csr.subject_alt_names.any? {|x| x =~ /^PKINIT-Client:/ }
+        unless csr.extended_key_usages.include? Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_CLIENT
+          raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a PKINIT extension for Kerberos clients (#{csr.subject_alt_names.join(', ')}) but not the necessary extended key usage (#{Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_CLIENT}). To continue, this CSR needs to be cleaned."
+        end
+
+        unless options[:allow_pkinit_client]
+          raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a PKINIT extension for Kerberos clients (#{csr.subject_alt_names.join(', ')}), which is disallowed. Use `puppet cert --allow-pkinit-client sign #{csr.name}` to sign this request."
+        end
+      end
+    end
+
+    csr.extended_key_usages.each do |usage|
+      if usage == Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_KDC and
+         csr.subject_alt_names.none? {|x| x =~ /^PKINIT-KDC:/ }
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains an extended key usage for Kerberos KDCs using PKINIT but no KDC principals, which is disallowed. To continue, this CSR needs to be cleaned."
+      end
+
+      if usage == Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_CLIENT and
+         csr.subject_alt_names.none? {|x| x =~ /^PKINIT-Client:/ }
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains an extended key usage for Kerberos clients doing PKINIT but no client principals, which is disallowed. To continue, this CSR needs to be cleaned."
       end
     end
 

@@ -248,8 +248,8 @@ describe Puppet::SSL::CertificateRequest do
 
         exts = request.request_extensions
 
-        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi')
-        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e')
+        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi', "raw" => "\f\x02pi")
+        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e', "raw" => "\f\x01e")
       end
 
       it "defines the extensions as non-critical" do
@@ -276,9 +276,10 @@ describe Puppet::SSL::CertificateRequest do
                          :extension_requests => extension_data)
         exts = request.request_extensions
 
-        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi')
-        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e')
-        expect(exts).to include('oid' => 'subjectAltName', 'value' => 'DNS:first.tld, DNS:myname, DNS:second.tld')
+        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi', "raw"=>"\f\x02pi")
+        expect(exts).to include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e', "raw" => "\f\x01e")
+        expect(exts).to include('oid' => 'subjectAltName', 'value' => 'DNS:first.tld, DNS:myname, DNS:second.tld',
+                                'raw' => ["301f820966697273742e746c6482066d796e616d65820a7365636f6e642e746c64"].pack("H*"))
 
         expect(request.subject_alt_names).to eq ['DNS:first.tld', 'DNS:myname', 'DNS:second.tld']
       end

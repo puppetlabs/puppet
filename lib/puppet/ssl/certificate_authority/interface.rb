@@ -161,7 +161,7 @@ module Puppet
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
           list.each do |host|
-            ca.sign(host, options[:allow_dns_alt_names])
+            ca.sign(host, options)
           end
         end
 

@@ -80,7 +80,7 @@ module Puppet::SSL::CertificateFactory
 
     # Extract the requested extensions from the CSR.
     requested_exts = csr.request_extensions.inject({}) do |hash, re|
-      hash[re["oid"]] = [re["value"], re["critical"]]
+      hash[re["oid"]] = [re["value"], re["raw"], re["critical"]]
       hash
     end
 
@@ -109,6 +109,15 @@ module Puppet::SSL::CertificateFactory
 
     exts = [defaults, requested_exts, extensions, override].
       inject({}) {|ret, val| ret.merge(val) }
+
+    # special case PKINIT: We've carefully vetted the CSR in the CA for
+    # extendedKeyUsages but they have just been overwritten. Add them back in.
+    if csr.subject_alt_names.any? {|x| x =~ /^PKINIT-Client:/ }
+      exts["extendedKeyUsage"][0].push(Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_CLIENT)
+    end
+    if csr.subject_alt_names.any? {|x| x =~ /^PKINIT-KDC:/ }
+      exts["extendedKeyUsage"][0].push(Puppet::SSL::CertificateRequest::PKINIT_KEY_USAGE_KDC)
+    end
 
     cert.extensions = exts.map do |oid, val|
       generate_extension(ef, oid, *val)
@@ -194,7 +203,7 @@ module Puppet::SSL::CertificateFactory
   # @return [OpenSSL::X509::Extension]
   #
   # @api private
-  def self.generate_extension(ef, oid, val, crit = false)
+  def self.generate_extension(ef, oid, val, raw = nil, crit = false)
 
     val = val.join(', ') unless val.is_a? String
 
@@ -203,7 +212,11 @@ module Puppet::SSL::CertificateFactory
     # always do. --daniel 2011-10-18
     crit = false if oid == "subjectAltName"
 
-    if Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
+    # subjectAltNames can contain Kerberos PKINIT extensions. So we need to
+    # pass them raw.
+    if oid == "subjectAltName"
+      OpenSSL::X509::Extension.new(oid, raw, crit)
+    elsif Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
       # Attempt to create a X509v3 certificate extension. Standard certificate
       # extensions may need access to the associated subject certificate and
       # issuing certificate, so must be created by the OpenSSL::X509::ExtensionFactory

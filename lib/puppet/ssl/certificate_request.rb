@@ -169,18 +169,108 @@ DOC
       # fixed component in the sequence.
       case ext_values.length
       when 2
-        {"oid" => ext_values[0].value, "value" => value}
+        {"oid" => ext_values[0].value, "value" => value, "raw" => ext_values[1].value}
       when 3
-        {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value}
+        {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value, "raw" => ext_values[2].value}
       else
         raise Puppet::Error, "In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}"
       end
     end
   end
 
+  PKINIT_KEY_USAGE_CLIENT = "1.3.6.1.5.2.3.4"
+  PKINIT_KEY_USAGE_KDC = "1.3.6.1.5.2.3.5"
+  PKINIT_SAN_OID = '1.3.6.1.5.2.2'
+
+  def get_pkinit_principal(san)
+    # verify PKINIT ASN.1 up to the realm part
+    unless san.is_a? OpenSSL::ASN1::ASN1Data and
+      san.value[0].is_a? OpenSSL::ASN1::ObjectId and
+      san.value[0].value == PKINIT_SAN_OID and
+      san.value[1].is_a? OpenSSL::ASN1::ASN1Data and
+      san.value[1].value[0].is_a? OpenSSL::ASN1::Sequence
+      san.value[1].value[0].value[0].is_a? OpenSSL::ASN1::ASN1Data and
+      san.value[1].value[0].value[0].value[0].is_a? OpenSSL::ASN1::GeneralString and
+      san.value[1].value[0].value[0].value[0].value
+      return nil
+    end
+
+    # extract realm and go on to verify client part up to the principal primary
+    realm = san.value[1].value[0].value[0].value[0].value
+    client = san.value[1].value[0].value[1]
+    unless client.is_a? OpenSSL::ASN1::ASN1Data and
+      client.value[0].is_a? OpenSSL::ASN1::Sequence and
+      client.value[0].value[0].is_a? OpenSSL::ASN1::ASN1Data and
+      client.value[0].value[0].value[0].is_a? OpenSSL::ASN1::Integer and
+      client.value[0].value[0].value[0].value == 1 and
+      client.value[0].value[1].is_a? OpenSSL::ASN1::ASN1Data and
+      client.value[0].value[1].value[0].is_a? OpenSSL::ASN1::Sequence and
+      client.value[0].value[1].value[0].value[0].is_a? OpenSSL::ASN1::GeneralString and
+      client.value[0].value[1].value[0].value[0].value
+      return nil
+    end
+
+    # extract primary and possibly *one* instance
+    princ_parts = client.value[0].value[1].value[0].value
+    principal = princ_parts[0].value
+    instance = princ_parts[1]
+    if instance
+      unless instance.is_a? OpenSSL::ASN1::GeneralString and
+        instance.value and
+        # we don't sign anything with multiple instances
+        not princ_parts[2]
+        return nil
+      end
+
+      principal = principal + "/" + instance.value
+    end
+
+    # return <primary>[/<instance>]@<realm>
+    return principal + "@" + realm
+  end
+
+  def decode_subject_alt_name(sander)
+    sanasn1 = OpenSSL::ASN1.decode(sander)
+    unless sanasn1.is_a? OpenSSL::ASN1::Sequence and
+      sanasn1.value.all? {|x| x.is_a? OpenSSL::ASN1::ASN1Data }
+      return nil
+    end
+
+    alt_names = Array.new
+    sanasn1.value.each do |san|
+      # DNS:
+      if san.tag == 2
+        alt_names << "DNS:" + san.value
+      elsif san.tag == 0
+        principal = get_pkinit_principal(san)
+        return nil unless principal
+
+        if principal =~ /^krbtgt\//
+          # that's our own syntax until OpenSSL starts to support it somehow
+          alt_names << "PKINIT-KDC:" + principal
+        else
+          alt_names << "PKINIT-Client:" + principal
+        end
+      else
+        return nil
+      end
+    end
+
+    return alt_names
+  end
+
   def subject_alt_names
     @subject_alt_names ||= request_extensions.
       select {|x| x["oid"] == "subjectAltName" }.
+      map {|x| decode_subject_alt_name(x["raw"]) }.
+      flatten.
+      sort.
+      uniq
+  end
+
+  def extended_key_usages
+    @extended_key_usages ||= request_extensions.
+      select {|x| x["oid"] == "extendedKeyUsage" }.
       map {|x| x["value"].split(/\s*,\s*/) }.
       flatten.
       sort.
@@ -244,6 +334,28 @@ DOC
     'subjectAltName', '2.5.29.17',
   ]
 
+  def build_pkinit_asn1(realm, princ_parts)
+    # build up ASN.1 structure
+    # Seems totally encrypted? Yep, it's ASN.1!
+    OpenSSL::ASN1::Sequence.new( [
+      OpenSSL::ASN1::ObjectId.new(PKINIT_SAN_OID),
+      OpenSSL::ASN1::Sequence.new( [
+        # Yay, the realm!
+        OpenSSL::ASN1::GeneralString.new(realm,
+          0, :EXPLICIT, :CONTEXT_SPECIFIC),
+        OpenSSL::ASN1::Sequence.new( [
+          OpenSSL::ASN1::Integer.new(1,
+            0, :EXPLICIT, :CONTEXT_SPECIFIC),
+          OpenSSL::ASN1::Sequence.new(
+            princ_parts.map {|x|
+              # Whoopie, a client principal!
+              OpenSSL::ASN1::GeneralString.new(x)
+            } ,1, :EXPLICIT, :CONTEXT_SPECIFIC)
+        ], 1, :EXPLICIT, :CONTEXT_SPECIFIC),
+      ], 0, :EXPLICIT, :CONTEXT_SPECIFIC),
+    ], 0, :IMPLICIT )
+  end
+
   # @api private
   def extension_request_attribute(options)
     extensions = []
@@ -263,12 +375,43 @@ DOC
       end
     end
 
-    if options[:dns_alt_names]
-      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
-      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      alt_names_ext = extension_factory.create_extension("subjectAltName", names, false)
+    # if we need to request pkinit extensions, we have to craft the whole
+    # subjectAltName ASN.1 structure ourselves because the extension factory
+    # only deals in string values and supports only the DNS:<fqdn> syntax
+    if options[:request_pkinit_client] or
+      options[:request_pkinit_kdc] or
+      options[:dns_alt_names]
+      altnames = Array.new
 
-      extensions << alt_names_ext
+      # subjectAltNames are simple:
+      if options[:dns_alt_names]
+        names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+        names = names.sort.uniq
+
+        names.each do |name|
+          altnames << OpenSSL::ASN1::IA5String(name, 2, :IMPLICIT)
+        end
+      end
+
+      princ = (options[:certname] || name)
+      realm = (options[:kerberos_realm] || princ.sub(/^[^\.]+\./, "")).upcase
+
+      if options[:request_pkinit_client]
+        altnames << build_pkinit_asn1(realm, [ princ ] )
+        extensions << extension_factory.create_extension("extendedKeyUsage", PKINIT_KEY_USAGE_CLIENT, true)
+      end
+      if options[:request_pkinit_kdc]
+        altnames << build_pkinit_asn1(realm, [ "krbtgt", realm ] )
+        extensions << extension_factory.create_extension("extendedKeyUsage", PKINIT_KEY_USAGE_KDC, true)
+      end
+
+      extensions << OpenSSL::X509::Extension.new(
+        OpenSSL::ASN1::Sequence.new( [
+          OpenSSL::ASN1::ObjectId.new('subjectAltName'),
+          OpenSSL::ASN1::OctetString.new(
+            OpenSSL::ASN1::Sequence.new(altnames).to_der ) ] ) )
+
+      # piece of cake! :)
     end
 
     unless extensions.empty?
