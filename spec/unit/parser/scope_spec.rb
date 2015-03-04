@@ -281,6 +281,11 @@ describe Puppet::Parser::Scope do
       it "should raise an error when unknown qualified variable is looked up" do
         expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
       end
+
+      it "should not raise an error when built in variable is looked up" do
+        expect { @scope['caller_module_name'] }.to_not raise_error
+        expect { @scope['module_name'] }.to_not raise_error
+      end
     end
   end
 
