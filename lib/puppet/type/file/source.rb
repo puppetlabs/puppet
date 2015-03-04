@@ -18,7 +18,7 @@ module Puppet
       Windows mapped drives). This attribute is mutually exclusive with
       `content` and `target`.
 
-      The available URI schemes are *puppet* and *file*. *Puppet*
+      The available URI schemes are *puppet*, *s3* and *file*. *Puppet*
       URIs will retrieve files from Puppet's built-in file server, and are
       usually formatted as:
 
@@ -33,6 +33,8 @@ module Puppet
       directories if the `recurse` attribute is set to `true` or `remote`. If
       a source directory contains symlinks, use the `links` attribute to
       specify whether to recreate links or follow them.
+
+      *s3* will source files from an Amazon s3 bucket
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
@@ -63,7 +65,7 @@ module Puppet
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
         self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet}.include?(uri.scheme)
+        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet s3}.include?(uri.scheme)
       end
     end
 
@@ -100,7 +102,14 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
+      options = {
+        :environment          => resource.catalog.environment_instance,
+        :links                => resource[:links],
+      }
+
+      options[:region] = resource[:region] unless not resource[:region]
+
+      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, options)
         self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -173,6 +182,8 @@ module Puppet
             :links                => resource[:links],
             :source_permissions   => resource[:source_permissions]
           }
+
+          options[:region] = resource[:region] unless not resource[:region]
 
           if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             @metadata = data
@@ -254,5 +265,9 @@ module Puppet
 
     defaultto :ignore
     newvalues(:use, :use_when_creating, :ignore)
+  end
+
+  Puppet::Type.type(:file).newparam(:region) do
+    desc 'Set the region to run the AWS api calls against'
   end
 end

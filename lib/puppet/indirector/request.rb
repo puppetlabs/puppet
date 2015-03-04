@@ -12,7 +12,7 @@ class Puppet::Indirector::Request
 
   attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
 
-  attr_accessor :server, :port, :uri, :protocol
+  attr_accessor :server, :port, :uri, :protocol, :bucket, :region
 
   attr_reader :indirection_name
 
@@ -233,7 +233,11 @@ class Puppet::Indirector::Request
       return
     end
 
-    @server = uri.host if uri.host
+    if uri.scheme != "s3"
+      @server = uri.host if uri.host
+    else
+      @bucket = uri.host if uri.host
+    end
 
     # If the URI class can look up the scheme, it will provide a port,
     # otherwise it will default to '0'.
@@ -245,7 +249,7 @@ class Puppet::Indirector::Request
 
     @protocol = uri.scheme
 
-    if uri.scheme == 'puppet'
+    if %w{puppet s3}.include?(uri.scheme)
       @key = URI.unescape(uri.path.sub(/^\//, ''))
       return
     end
