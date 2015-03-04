@@ -10,6 +10,6 @@ class Puppet::Indirector::FileContent::S3 < Puppet::Indirector::S3
 
     def find(request)
       response = super
-      model.from_raw(response.body)
+      model.from_binary(response.body)
     end
 end
