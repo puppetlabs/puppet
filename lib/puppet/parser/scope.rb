@@ -184,9 +184,24 @@ class Puppet::Parser::Scope
 
   # Returns true if the variable of the given name is set to any value (including nil)
   #
+  # @return [Boolean] if variable exists or not
+  #
   def exist?(name)
-    next_scope = inherited_scope || enclosing_scope
-    effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
+    # Note !! ensure the answer is boolean
+    !! if name =~ /^(.*)::(.+)$/
+      class_name = $1
+      variable_name = $2
+      return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
+
+      # lookup class, but do not care if it is not evaluated since that will result
+      # in it not existing anyway. (Tests may run with just scopes and no evaluated classes).
+      klass = find_hostclass(class_name)
+      other_scope = klass.nil? ? nil : class_scope(klass)
+      other_scope && other_scope.exist?(variable_name)
+    else
+      next_scope = inherited_scope || enclosing_scope
+      effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
+    end
   end
 
   # Returns true if the given name is bound in the current (most nested) scope for assignments.
