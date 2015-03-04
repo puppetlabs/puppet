@@ -136,7 +136,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   }
 MANIFEST
 
-step "when using a puppet:/// URI with a master/agent setup"
+step "When using a puppet:/// URI with a master/agent setup"
 master_opts = {
   'main' => {
     'environmentpath' => "#{env_dir}",
@@ -152,11 +152,11 @@ with_puppet_running_on(master, master_opts, testdir) do
 
       checksums.each do |checksum_type|
         on agent, "cat #{file_to_check}#{checksum_type}" do
-          assert_match(/the content is present/, stdout, "Result file not created")
+          assert_match(/the content is present/, stdout, "Result file not created #{checksum_type}")
         end
 
         on agent, "cat #{dir_to_check}#{checksum_type}/source_dir_file" do
-          assert_match(/the content is present/, stdout, "Result file not created")
+          assert_match(/the content is present/, stdout, "Result file not created #{checksum_type}")
         end
       end
     end
@@ -168,7 +168,14 @@ with_puppet_running_on(master, master_opts, testdir) do
   end
 
   step "touch files and verify they're updated with ctime/mtime"
-  sleep(1)
+  # wait until we're not at the file's mtime
+  #   mod_dir_source_file is the last file modified
+  #   This stat will not work on most BSDs
+  dir_file_mtime = on(master, "stat --format '%Y' #{mod_source_dir_file}").stdout.chomp
+  master_time    = on(master, 'date +%s').stdout.chomp
+  until master_time > dir_file_mtime do
+    master_time  = on(master, 'date +%s').stdout.chomp
+  end
   on master, "touch #{mod_source_file} #{mod_source_dir_file}"
   agents.each do |agent|
     on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
@@ -182,43 +189,51 @@ with_puppet_running_on(master, master_opts, testdir) do
   end
 end
 
-new_mod_manifest = <<EOF
-class source_test_module {
-#{mod_manifest_entry}
-}
-EOF
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   file { '#{mod_manifest_file}':
     ensure => file,
     mode => '0644',
-    content => '#{new_mod_manifest}',
+    content => '#{mod_manifest}',
   }
 MANIFEST
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
-step "when using a puppet://$server/ URI with a master/agent setup"
+step "When using puppet apply"
 agents.each do |agent|
   step "Setup testing local file sources"
   a_testdir = agent.tmpdir('local_source_file_test')
 
   source = "#{a_testdir}/source_mod/files/source"
-  target = "#{a_testdir}/target"
+  checksums.each do |checksum_type|
+    target = "#{a_testdir}/target#{checksum_type}"
+    checksum = if checksum_type then "checksum => #{checksum_type}," else "" end
 
-  on agent, "mkdir -p #{File.dirname(source)}"
-  create_remote_file agent, source, 'Yay, this is the local file.'
+    on agent, "mkdir -p #{File.dirname(source)}"
+    create_remote_file agent, source, 'Yay, this is the local file.'
 
-  step "Using a local file path"
-  apply_manifest_on agent, "file { '#{target}': source => '#{source}', ensure => present }"
-  on agent, "cat #{target}" do
-    assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
-  end
+    step "Using a local file path (#{checksum})"
+    manifest = %(file { '#{target}': source => '#{source}', ensure => present, #{checksum} })
+    apply_manifest_on agent, manifest
+    on agent, "cat #{target}" do
+      assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+    end
+    step "second run should not update file (#{checksum})"
+    apply_manifest_on agent, manifest do
+      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    end
 
-  step "Using a puppet:/// URI with puppet apply"
-  on agent, "rm -rf #{target}"
 
-  manifest = %{"file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => 'present' }"}
-  on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
-  on agent, "cat #{target}" do
-    assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+    step "Using a puppet:/// URI (#{checksum})"
+    on agent, "rm -rf #{target}"
+
+    manifest = %("file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => present, #{checksum} }")
+    on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
+    on agent, "cat #{target}" do
+      assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+    end
+    step "second run should not update file (#{checksum})"
+    on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}}) do
+      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    end
   end
 end
