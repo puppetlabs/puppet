@@ -290,6 +290,11 @@ describe Puppet::Parser::Scope do
       it "should throw a symbol when unknown qualified variable is looked up" do
         expect { @scope['nowhere::john_doe'] }.to throw_symbol(:undefined_variable)
       end
+
+      it "should not raise an error when built in variable is looked up" do
+        expect { @scope['caller_module_name'] }.to_not raise_error
+        expect { @scope['module_name'] }.to_not raise_error
+      end
     end
   end
 

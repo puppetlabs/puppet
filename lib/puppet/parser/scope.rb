@@ -23,6 +23,9 @@ class Puppet::Parser::Scope
 
   AST = Puppet::Parser::AST
 
+  # Variables that always exist with nil value even if not set
+  BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
+
   Puppet::Util.logmethods(self)
 
   include Puppet::Util::Errors
@@ -189,6 +192,8 @@ class Puppet::Parser::Scope
     !! if name =~ /^(.*)::(.+)$/
       class_name = $1
       variable_name = $2
+      return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
+
       # lookup class, but do not care if it is not evaluated since that will result
       # in it not existing anyway. (Tests may run with just scopes and no evaluated classes).
       klass = find_hostclass(class_name)
@@ -196,7 +201,7 @@ class Puppet::Parser::Scope
       other_scope && other_scope.exist?(variable_name)
     else
       next_scope = inherited_scope || enclosing_scope
-      effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name)
+      effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
     end
   end
 
@@ -403,6 +408,10 @@ class Puppet::Parser::Scope
   end
 
   def variable_not_found(name, reason=nil)
+    # Built in variables always exist
+    if BUILT_IN_VARS.include?(name)
+      return nil
+    end
     if Puppet[:strict_variables]
       throw :undefined_variable
     else
