@@ -124,57 +124,20 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=loaded\nUnitFileState=enabled\n"
+      provider.expects(:systemctl).with('is-enabled', 'sshd.service').returns 'enabled'
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=loaded\nUnitFileState=disabled\n"
+      provider.expects(:systemctl).with('is-enabled', 'sshd.service').raises Puppet::ExecutionFailure, "Execution of '/bin/systemctl is-enabled sshd.service' returned 1: disabled"
       expect(provider.enabled?).to eq(:false)
-    end
-
-    it "should return :false if the service is masked and the resource is attempting to be disabled" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=masked\nUnitFileState=\n"
-      expect(provider.enabled?).to eq(:false)
-    end
-
-    it "should return :mask if the service is masked and the resource is attempting to be masked" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=masked\nUnitFileState=\n"
-      expect(provider.enabled?).to eq(:mask)
     end
   end
 
   describe "#enable" do
     it "should run systemctl enable to enable a service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('unmask', 'sshd.service')
       provider.expects(:systemctl).with('enable', 'sshd.service')
       provider.enable
     end
@@ -185,14 +148,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:disable, 'sshd.service')
       provider.disable
-    end
-  end
-  
-  describe "#mask" do
-    it "should run systemctl mask to mask a service" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('mask', 'sshd.service')
-      provider.mask
     end
   end
 
