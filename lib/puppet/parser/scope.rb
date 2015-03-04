@@ -22,6 +22,9 @@ class Puppet::Parser::Scope
 
   AST = Puppet::Parser::AST
 
+  # Variables that always exist with nil value even if not set
+  BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
+
   Puppet::Util.logmethods(self)
 
   include Puppet::Util::Errors
@@ -183,7 +186,7 @@ class Puppet::Parser::Scope
   #
   def exist?(name)
     next_scope = inherited_scope || enclosing_scope
-    effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name)
+    effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
   end
 
   # Returns true if the given name is bound in the current (most nested) scope for assignments.
@@ -400,6 +403,10 @@ class Puppet::Parser::Scope
   end
 
   def variable_not_found(name, reason=nil)
+    # Built in variables always exist
+    if BUILT_IN_VARS.include?(name)
+      return nil
+    end
     if Puppet[:strict_variables]
       if Puppet.future_parser?
         throw :undefined_variable
