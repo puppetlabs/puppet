@@ -25,18 +25,18 @@ describe Puppet::ModuleTool::Metadata do
       let(:data) { { 'name' => 'billgates-mymodule' } }
 
       it "extracts the author name from the name field" do
-        subject.to_hash['author'].should == 'billgates'
+        expect(subject.to_hash['author']).to eq('billgates')
       end
 
       it "extracts a module name from the name field" do
-        subject.module_name.should == 'mymodule'
+        expect(subject.module_name).to eq('mymodule')
       end
 
       context "and existing author" do
         before { metadata.update('author' => 'foo') }
 
         it "avoids overwriting the existing author" do
-          subject.to_hash['author'].should == 'foo'
+          expect(subject.to_hash['author']).to eq('foo')
         end
       end
     end
@@ -45,14 +45,14 @@ describe Puppet::ModuleTool::Metadata do
       let(:data) { { 'name' => 'billgates-mymodule', 'author' => 'foo' } }
 
       it "use the author name from the author field" do
-        subject.to_hash['author'].should == 'foo'
+        expect(subject.to_hash['author']).to eq('foo')
       end
 
       context "and preexisting author" do
         before { metadata.update('author' => 'bar') }
 
         it "avoids overwriting the existing author" do
-          subject.to_hash['author'].should == 'foo'
+          expect(subject.to_hash['author']).to eq('foo')
         end
       end
     end
@@ -122,11 +122,11 @@ describe Puppet::ModuleTool::Metadata do
           before { metadata.update('source' => 'https://github.com/billgates/amazingness') }
 
           it "predicts a default project_page" do
-            subject.to_hash['project_page'].should == 'https://github.com/billgates/amazingness'
+            expect(subject.to_hash['project_page']).to eq('https://github.com/billgates/amazingness')
           end
 
           it "predicts a default issues_url" do
-            subject.to_hash['issues_url'].should == 'https://github.com/billgates/amazingness/issues'
+            expect(subject.to_hash['issues_url']).to eq('https://github.com/billgates/amazingness/issues')
           end
         end
 
@@ -134,11 +134,11 @@ describe Puppet::ModuleTool::Metadata do
           before { metadata.update('source' => 'github.com/billgates/amazingness') }
 
           it "predicts a default project_page" do
-            subject.to_hash['project_page'].should == 'https://github.com/billgates/amazingness'
+            expect(subject.to_hash['project_page']).to eq('https://github.com/billgates/amazingness')
           end
 
           it "predicts a default issues_url" do
-            subject.to_hash['issues_url'].should == 'https://github.com/billgates/amazingness/issues'
+            expect(subject.to_hash['issues_url']).to eq('https://github.com/billgates/amazingness/issues')
           end
         end
       end
@@ -147,11 +147,11 @@ describe Puppet::ModuleTool::Metadata do
         before { metadata.update('source' => 'https://notgithub.com/billgates/amazingness') }
 
         it "does not predict a default project_page" do
-          subject.to_hash['project_page'].should be nil
+          expect(subject.to_hash['project_page']).to be nil
         end
 
         it "does not predict a default issues_url" do
-          subject.to_hash['issues_url'].should be nil
+          expect(subject.to_hash['issues_url']).to be nil
         end
       end
 
@@ -159,11 +159,11 @@ describe Puppet::ModuleTool::Metadata do
         before { metadata.update('source' => 'my brain') }
 
         it "does not predict a default project_page" do
-          subject.to_hash['project_page'].should be nil
+          expect(subject.to_hash['project_page']).to be nil
         end
 
         it "does not predict a default issues_url" do
-          subject.to_hash['issues_url'].should be nil
+          expect(subject.to_hash['issues_url']).to be nil
         end
       end
 
@@ -173,7 +173,7 @@ describe Puppet::ModuleTool::Metadata do
       let(:data) { {'dependencies' => [{'name' => 'puppetlabs-goodmodule'}] }}
 
       it "adds the dependency" do
-        subject.dependencies.size.should == 1
+        expect(subject.dependencies.size).to eq(1)
       end
     end
 
@@ -189,7 +189,7 @@ describe Puppet::ModuleTool::Metadata do
       let(:data) { {'dependencies' => [{'name' => 'puppetlabs-badmodule', 'version_requirement' => '>= 2.0.0'}] }}
 
       it "adds the dependency" do
-        subject.dependencies.size.should == 1
+        expect(subject.dependencies.size).to eq(1)
       end
     end
 
@@ -221,7 +221,7 @@ describe Puppet::ModuleTool::Metadata do
 
       it "with the same version does not add another dependency" do
         metadata.add_dependency('puppetlabs-origmodule', '1.0.0')
-        subject.dependencies.size.should == 1
+        expect(subject.dependencies.size).to eq(1)
       end
     end
   end
@@ -233,17 +233,17 @@ describe Puppet::ModuleTool::Metadata do
 
     it 'returns a hyphenated string containing namespace and module name' do
       data = metadata.update('name' => 'foo-bar')
-      data.dashed_name.should == 'foo-bar'
+      expect(data.dashed_name).to eq('foo-bar')
     end
 
     it 'properly handles slash-separated names' do
       data = metadata.update('name' => 'foo/bar')
-      data.dashed_name.should == 'foo-bar'
+      expect(data.dashed_name).to eq('foo-bar')
     end
 
     it 'is unaffected by author name' do
       data = metadata.update('name' => 'foo/bar', 'author' => 'me')
-      data.dashed_name.should == 'foo-bar'
+      expect(data.dashed_name).to eq('foo-bar')
     end
   end
 
@@ -258,12 +258,12 @@ describe Puppet::ModuleTool::Metadata do
 
     it 'returns a hyphenated string containing module name and version' do
       data = metadata.update('name' => 'foo/bar', 'version' => '1.0.0')
-      data.release_name.should == 'foo-bar-1.0.0'
+      expect(data.release_name).to eq('foo-bar-1.0.0')
     end
 
     it 'is unaffected by author name' do
       data = metadata.update('name' => 'foo/bar', 'version' => '1.0.0', 'author' => 'me')
-      data.release_name.should == 'foo-bar-1.0.0'
+      expect(data.release_name).to eq('foo-bar-1.0.0')
     end
   end
 
@@ -271,18 +271,18 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata.to_hash }
 
     it "contains the default set of keys" do
-      subject.keys.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
+      expect(subject.keys.sort).to eq(%w[ name version author summary license source issues_url project_page dependencies ].sort)
     end
 
     describe "['license']" do
       it "defaults to Apache 2" do
-        subject['license'].should == "Apache 2.0"
+        expect(subject['license']).to eq("Apache-2.0")
       end
     end
 
     describe "['dependencies']" do
       it "defaults to an empty set" do
-        subject['dependencies'].should == Set.new
+        expect(subject['dependencies']).to eq(Set.new)
       end
     end
 
@@ -290,11 +290,11 @@ describe Puppet::ModuleTool::Metadata do
       subject { metadata.update('license' => 'MIT', 'non-standard' => 'yup').to_hash }
 
       it "overrides the defaults" do
-        subject['license'].should == 'MIT'
+        expect(subject['license']).to eq('MIT')
       end
 
       it 'contains unanticipated values' do
-        subject['non-standard'].should == 'yup'
+        expect(subject['non-standard']).to eq('yup')
       end
     end
   end

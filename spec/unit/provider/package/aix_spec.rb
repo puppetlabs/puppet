@@ -13,7 +13,7 @@ describe provider_class do
 
   [:install, :uninstall, :latest, :query, :update].each do |method|
     it "should have a #{method} method" do
-      @provider.should respond_to(method)
+      expect(@provider).to respond_to(method)
     end
   end
 
@@ -91,12 +91,12 @@ mypackage                 1.2.3.3         Already superseded by 1.2.3.4
     it "should return the current version when no later version is present" do
       @provider.stubs(:latest_info).returns(nil)
       @provider.stubs(:properties).returns( { :ensure => "1.2.3.4" } )
-      @provider.latest.should == "1.2.3.4"
+      expect(@provider.latest).to eq("1.2.3.4")
     end
 
     it "should return the latest version of a package" do
       @provider.stubs(:latest_info).returns( { :version => "1.2.3.5" } )
-      @provider.latest.should == "1.2.3.5"
+      expect(@provider.latest).to eq("1.2.3.5")
     end
   end
 

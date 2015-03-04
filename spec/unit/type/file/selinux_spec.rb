@@ -14,14 +14,14 @@ require 'spec_helper'
 
     it "retrieve on #{param} should return :absent if the file isn't statable" do
       @resource.expects(:stat).returns nil
-      @sel.retrieve.should == :absent
+      expect(@sel.retrieve).to eq(:absent)
     end
 
     it "should retrieve nil for #{param} if there is no SELinux support" do
       stat = stub 'stat', :ftype => "foo"
       @resource.expects(:stat).returns stat
       @sel.expects(:get_selinux_current_context).with(@path).returns nil
-      @sel.retrieve.should be_nil
+      expect(@sel.retrieve).to be_nil
     end
 
     it "should retrieve #{param} if a SELinux context is found with a range" do
@@ -34,7 +34,7 @@ require 'spec_helper'
         when :seltype; "type_t"
         when :selrange; "s0"
       end
-      @sel.retrieve.should == expectedresult
+      expect(@sel.retrieve).to eq(expectedresult)
     end
 
     it "should retrieve #{param} if a SELinux context is found without a range" do
@@ -47,12 +47,12 @@ require 'spec_helper'
         when :seltype; "type_t"
         when :selrange; nil
       end
-      @sel.retrieve.should == expectedresult
+      expect(@sel.retrieve).to eq(expectedresult)
     end
 
     it "should handle no default gracefully" do
       @sel.expects(:get_selinux_default_context).with(@path).returns nil
-      @sel.default.must be_nil
+      expect(@sel.default).to be_nil
     end
 
     it "should be able to detect matchpathcon defaults" do
@@ -64,12 +64,12 @@ require 'spec_helper'
         when :seltype; "type_t"
         when :selrange; "s0"
       end
-      @sel.default.must == expectedresult
+      expect(@sel.default).to eq(expectedresult)
     end
 
     it "should return nil for defaults if selinux_ignore_defaults is true" do
       @resource[:selinux_ignore_defaults] = :true
-      @sel.default.must be_nil
+      expect(@sel.default).to be_nil
     end
 
     it "should be able to set a new context" do
@@ -82,7 +82,7 @@ require 'spec_helper'
     it "should do nothing for safe_insync? if no SELinux support" do
       @sel.should = %{newcontext}
       @sel.expects(:selinux_support?).returns false
-      @sel.safe_insync?("oldcontext").should == true
+      expect(@sel.safe_insync?("oldcontext")).to eq(true)
     end
   end
 end

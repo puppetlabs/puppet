@@ -19,7 +19,7 @@ describe Puppet::SSL::CertificateAuthority do
   end
 
   it "should have a class method for returning a singleton instance" do
-    Puppet::SSL::CertificateAuthority.should respond_to(:instance)
+    expect(Puppet::SSL::CertificateAuthority).to respond_to(:instance)
   end
 
   describe "when finding an existing instance" do
@@ -33,11 +33,11 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should return an instance" do
-        Puppet::SSL::CertificateAuthority.instance.should equal(@ca)
+        expect(Puppet::SSL::CertificateAuthority.instance).to equal(@ca)
       end
 
       it "should always return the same instance" do
-        Puppet::SSL::CertificateAuthority.instance.should equal(Puppet::SSL::CertificateAuthority.instance)
+        expect(Puppet::SSL::CertificateAuthority.instance).to equal(Puppet::SSL::CertificateAuthority.instance)
       end
     end
 
@@ -48,7 +48,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         ca = mock('ca')
         Puppet::SSL::CertificateAuthority.expects(:new).never
-        Puppet::SSL::CertificateAuthority.instance.should be_nil
+        expect(Puppet::SSL::CertificateAuthority.instance).to be_nil
       end
     end
 
@@ -59,7 +59,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         ca = mock('ca')
         Puppet::SSL::CertificateAuthority.expects(:new).never
-        Puppet::SSL::CertificateAuthority.instance.should be_nil
+        expect(Puppet::SSL::CertificateAuthority.instance).to be_nil
       end
     end
   end
@@ -74,7 +74,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should always set its name to the value of :certname" do
       Puppet[:certname] = "ca_testing"
 
-      Puppet::SSL::CertificateAuthority.new.name.should == "ca_testing"
+      expect(Puppet::SSL::CertificateAuthority.new.name).to eq("ca_testing")
     end
 
     it "should create an SSL::Host instance whose name is the 'ca_name'" do
@@ -130,7 +130,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should return any found CRL instance" do
       crl = mock 'crl'
       Puppet::SSL::CertificateRevocationList.indirection.expects(:find).returns crl
-      @ca.crl.should equal(crl)
+      expect(@ca.crl).to equal(crl)
     end
 
     it "should create, generate, and save a new CRL instance of no CRL can be found" do
@@ -142,7 +142,7 @@ describe Puppet::SSL::CertificateAuthority do
       crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
       Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(crl)
 
-      @ca.crl.should equal(crl)
+      expect(@ca.crl).to equal(crl)
     end
   end
 
@@ -261,28 +261,28 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should use a certificate type of :ca" do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
-          args[0].should == :ca
+          expect(args[0]).to eq(:ca)
         end.returns @cert.content
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the provided CSR as the CSR" do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
-          args[1].should == @request
+          expect(args[1]).to eq(@request)
         end.returns @cert.content
         @ca.sign(@name, :ca, @request)
       end
 
       it "should use the provided CSR's content as the issuer" do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
-          args[2].subject.to_s.should == "/CN=myhost"
+          expect(args[2].subject.to_s).to eq("/CN=myhost")
         end.returns @cert.content
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the next serial as the serial number" do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
-          args[3].should == @serial
+          expect(args[3]).to eq(@serial)
         end.returns @cert.content
         @ca.sign(@name, :ca, @request)
       end
@@ -586,7 +586,7 @@ describe Puppet::SSL::CertificateAuthority do
       @ca.stubs(:next_serial).returns @serial
       Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
       Puppet::SSL::Certificate.indirection.stubs :save
-      @ca.sign(@name).should equal(@cert)
+      expect(@ca.sign(@name)).to equal(@cert)
     end
 
     it "should add the certificate to its inventory" do
@@ -599,7 +599,7 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should have a method for triggering autosigning of available CSRs" do
-      @ca.should respond_to(:autosign)
+      expect(@ca).to respond_to(:autosign)
     end
 
     describe "when autosigning certificates" do
@@ -727,7 +727,7 @@ describe Puppet::SSL::CertificateAuthority do
       req2 = stub 'req2', :name => "two"
       Puppet::SSL::CertificateRequest.indirection.expects(:search).with("*").returns [req1, req2]
 
-      @ca.waiting?.should == %w{one two}
+      expect(@ca.waiting?).to eq(%w{one two})
     end
 
     it "should delegate removing hosts to the Host class" do
@@ -737,33 +737,33 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should be able to verify certificates" do
-      @ca.should respond_to(:verify)
+      expect(@ca).to respond_to(:verify)
     end
 
     it "should list certificates as the sorted list of all existing signed certificates" do
       cert1 = stub 'cert1', :name => "cert1"
       cert2 = stub 'cert2', :name => "cert2"
       Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
-      @ca.list.should == %w{cert1 cert2}
+      expect(@ca.list).to eq(%w{cert1 cert2})
     end
 
     it "should list the full certificates" do
       cert1 = stub 'cert1', :name => "cert1"
       cert2 = stub 'cert2', :name => "cert2"
       Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
-      @ca.list_certificates.should == [cert1, cert2]
+      expect(@ca.list_certificates).to eq([cert1, cert2])
     end
 
     describe "and printing certificates" do
       it "should return nil if the certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
-        @ca.print("myhost").should be_nil
+        expect(@ca.print("myhost")).to be_nil
       end
 
       it "should print certificates by calling :to_text on the host's certificate" do
         cert1 = stub 'cert1', :name => "cert1", :to_text => "mytext"
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns cert1
-        @ca.print("myhost").should == "mytext"
+        expect(@ca.print("myhost")).to eq("mytext")
       end
     end
 
@@ -873,7 +873,7 @@ describe Puppet::SSL::CertificateAuthority do
 
           @store.expects(:verify).with("mycert").returns false
 
-          @ca.certificate_is_alive?(@cert).should be_false
+          expect(@ca.certificate_is_alive?(@cert)).to be_falsey
         end
 
         it "should return true if verification passes" do
@@ -881,7 +881,7 @@ describe Puppet::SSL::CertificateAuthority do
 
           @store.expects(:verify).with("mycert").returns true
 
-          @ca.certificate_is_alive?(@cert).should be_true
+          expect(@ca.certificate_is_alive?(@cert)).to be_truthy
         end
 
         it "should used a cached instance of the x509 store" do
@@ -994,7 +994,7 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should be able to generate a complete new SSL host" do
-      @ca.should respond_to(:generate)
+      expect(@ca).to respond_to(:generate)
     end
   end
 end

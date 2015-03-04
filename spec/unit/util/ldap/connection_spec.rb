@@ -34,25 +34,25 @@ describe Puppet::Util::Ldap::Connection do
 
   describe "when creating connections" do
     it "should require the host and port" do
-      lambda { Puppet::Util::Ldap::Connection.new("myhost") }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Ldap::Connection.new("myhost") }.to raise_error(ArgumentError)
     end
 
     it "should allow specification of a user and password" do
-      lambda { Puppet::Util::Ldap::Connection.new("myhost", "myport", :user => "blah", :password => "boo") }.should_not raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :user => "blah", :password => "boo") }.not_to raise_error
     end
 
     it "should allow specification of ssl" do
-      lambda { Puppet::Util::Ldap::Connection.new("myhost", "myport", :ssl => :tsl) }.should_not raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :ssl => :tsl) }.not_to raise_error
     end
 
     it "should support requiring a new connection" do
-      lambda { Puppet::Util::Ldap::Connection.new("myhost", "myport", :reset => true) }.should_not raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :reset => true) }.not_to raise_error
     end
 
     it "should fail if ldap is unavailable" do
       Puppet.features.expects(:ldap?).returns(false)
 
-      lambda { Puppet::Util::Ldap::Connection.new("host", "port") }.should raise_error(Puppet::Error)
+      expect { Puppet::Util::Ldap::Connection.new("host", "port") }.to raise_error(Puppet::Error)
     end
 
     it "should use neither ssl nor tls by default" do
@@ -109,7 +109,7 @@ describe Puppet::Util::Ldap::Connection do
   end
 
   it "should have a class-level method for creating a default connection" do
-    Puppet::Util::Ldap::Connection.should respond_to(:instance)
+    expect(Puppet::Util::Ldap::Connection).to respond_to(:instance)
   end
 
   describe "when creating a default connection" do

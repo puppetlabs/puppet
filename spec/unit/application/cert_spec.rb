@@ -9,54 +9,54 @@ describe Puppet::Application::Cert => true do
   end
 
   it "should operate in master run_mode" do
-    @cert_app.class.run_mode.name.should equal(:master)
+    expect(@cert_app.class.run_mode.name).to equal(:master)
   end
 
   it "should declare a main command" do
-    @cert_app.should respond_to(:main)
+    expect(@cert_app).to respond_to(:main)
   end
 
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject{ |m| m == :destroy }.each do |method|
     it "should declare option --#{method}" do
-      @cert_app.should respond_to("handle_#{method}".to_sym)
+      expect(@cert_app).to respond_to("handle_#{method}".to_sym)
     end
   end
 
   it "should set log level to info with the --verbose option" do
     @cert_app.handle_verbose(0)
-    Puppet::Log.level.should == :info
+    expect(Puppet::Log.level).to eq(:info)
   end
 
   it "should set log level to debug with the --debug option" do
     @cert_app.handle_debug(0)
-    Puppet::Log.level.should == :debug
+    expect(Puppet::Log.level).to eq(:debug)
   end
 
   it "should set the fingerprint digest with the --digest option" do
     @cert_app.handle_digest(:digest)
-    @cert_app.digest.should == :digest
+    expect(@cert_app.digest).to eq(:digest)
   end
 
   it "should set cert_mode to :destroy for --clean" do
     @cert_app.handle_clean(0)
-    @cert_app.subcommand.should == :destroy
+    expect(@cert_app.subcommand).to eq(:destroy)
   end
 
   it "should set all to true for --all" do
     @cert_app.handle_all(0)
-    @cert_app.all.should be_true
+    expect(@cert_app.all).to be_truthy
   end
 
   it "should set signed to true for --signed" do
     @cert_app.handle_signed(0)
-    @cert_app.signed.should be_true
+    expect(@cert_app.signed).to be_truthy
   end
 
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
     it "should set cert_mode to #{method} with option --#{method}" do
       @cert_app.send("handle_#{method}".to_sym, nil)
 
-      @cert_app.subcommand.should == method
+      expect(@cert_app.subcommand).to eq(method)
     end
   end
 
@@ -188,9 +188,9 @@ describe Puppet::Application::Cert => true do
 
           @cert_app.command_line.stubs(:args).returns(args)
           @cert_app.parse_options
-          @cert_app.subcommand.should == cmd.to_sym
+          expect(@cert_app.subcommand).to eq(cmd.to_sym)
 
-          args.should == ["fun.example.com"]
+          expect(args).to eq(["fun.example.com"])
         end
       end
     end
@@ -201,9 +201,9 @@ describe Puppet::Application::Cert => true do
 
         @cert_app.command_line.stubs(:args).returns(args)
         @cert_app.parse_options
-        @cert_app.subcommand.should == :destroy
+        expect(@cert_app.subcommand).to eq(:destroy)
 
-        args.should == ["fun.example.com"]
+        expect(args).to eq(["fun.example.com"])
       end
     end
 
@@ -214,7 +214,7 @@ describe Puppet::Application::Cert => true do
       @cert_app.expects(:puts).with("I called for help!")
 
       expect { @cert_app.parse_options }.to exit_with 0
-      @cert_app.subcommand.should be_nil
+      expect(@cert_app.subcommand).to be_nil
     end
   end
 end

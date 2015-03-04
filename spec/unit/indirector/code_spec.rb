@@ -18,14 +18,14 @@ describe Puppet::Indirector::Code do
   end
 
   it "should not have a find() method defined" do
-    @searcher.should_not respond_to(:find)
+    expect(@searcher).not_to respond_to(:find)
   end
 
   it "should not have a save() method defined" do
-    @searcher.should_not respond_to(:save)
+    expect(@searcher).not_to respond_to(:save)
   end
 
   it "should not have a destroy() method defined" do
-    @searcher.should_not respond_to(:destroy)
+    expect(@searcher).not_to respond_to(:destroy)
   end
 end

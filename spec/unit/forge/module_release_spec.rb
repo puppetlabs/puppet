@@ -49,7 +49,7 @@ describe Puppet::Forge::ModuleRelease do
     describe '#tmpfile' do
       it 'should be opened in binary mode' do
         Puppet::Forge::Cache.stubs(:base_path).returns(Dir.tmpdir)
-        release.send(:tmpfile).binmode?.should be_true
+        expect(release.send(:tmpfile).binmode?).to be_truthy
       end
     end
 

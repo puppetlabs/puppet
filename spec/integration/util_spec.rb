@@ -9,7 +9,7 @@ describe Puppet::Util do
     it "should properly allow stdout and stderr to share a file" do
       command = "ruby -e '(1..10).each {|i| (i%2==0) ? $stdout.puts(i) : $stderr.puts(i)}'"
 
-      Puppet::Util::Execution.execute(command, :combine => true).split.should =~ [*'1'..'10']
+      expect(Puppet::Util::Execution.execute(command, :combine => true).split).to match_array([*'1'..'10'])
     end
 
     it "should return output and set $CHILD_STATUS" do
@@ -17,15 +17,15 @@ describe Puppet::Util do
 
       output = Puppet::Util::Execution.execute(command, {:failonfail => false})
 
-      output.should == "foo\n"
-      $CHILD_STATUS.exitstatus.should == 42
+      expect(output).to eq("foo\n")
+      expect($CHILD_STATUS.exitstatus).to eq(42)
     end
 
     it "should raise an error if non-zero exit status is returned" do
       command = "ruby -e 'exit 43'"
 
       expect { Puppet::Util::Execution.execute(command) }.to raise_error(Puppet::ExecutionFailure, /Execution of '#{command}' returned 43: /)
-      $CHILD_STATUS.exitstatus.should == 43
+      expect($CHILD_STATUS.exitstatus).to eq(43)
     end
 
     it "replace_file should preserve original ACEs from existing replaced file on Windows",
@@ -51,7 +51,7 @@ describe Puppet::Util do
 
       replaced_sd = Puppet::Util::Windows::Security.get_security_descriptor(file)
 
-      replaced_sd.dacl.should == expected_sd.dacl
+      expect(replaced_sd.dacl).to eq(expected_sd.dacl)
     end
 
     it "replace_file should use reasonable default ACEs on a new file on Windows",
@@ -74,7 +74,7 @@ describe Puppet::Util do
 
       new_sd = Puppet::Util::Windows::Security.get_security_descriptor(new_file_path)
 
-      new_sd.dacl.should == expected_sd.dacl
+      expect(new_sd.dacl).to eq(expected_sd.dacl)
     end
   end
 
@@ -89,7 +89,7 @@ describe Puppet::Util do
     end
 
     actual_content = File.read(destination_file)
-    actual_content.should == expected_content
+    expect(actual_content).to eq(expected_content)
   end
 
   it "replace_file should work with filenames that include special characters (PUP-1389)", :if => Puppet.features.microsoft_windows? do
@@ -106,6 +106,6 @@ describe Puppet::Util do
     end
 
     actual_content = File.read(destination_file)
-    actual_content.should == expected_content
+    expect(actual_content).to eq(expected_content)
   end
 end

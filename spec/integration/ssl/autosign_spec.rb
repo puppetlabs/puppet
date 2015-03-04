@@ -121,7 +121,7 @@ describe "autosigning" do
       it "does not copy custom attributes to certificate" do
         cert = ca.sign(host.name)
         cert.custom_extensions.each do |ext|
-          expect(Puppet::SSL::Oids.subtree_of?('1.3.6.1.4.1.34380.2', ext['oid'])).to be_false
+          expect(Puppet::SSL::Oids.subtree_of?('1.3.6.1.4.1.34380.2', ext['oid'])).to be_falsey
         end
       end
     end

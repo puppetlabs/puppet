@@ -26,8 +26,8 @@ module Puppet
 
       This will fetch a file from a module on the puppet master (or from a
       local module when using puppet apply). Given a `modulepath` of
-      `/etc/puppetlabs/puppet/modules`, the example above would resolve to
-      `/etc/puppetlabs/puppet/modules/name_of_module/files/filename`.
+      `/etc/puppetlabs/code/modules`, the example above would resolve to
+      `/etc/puppetlabs/code/modules/name_of_module/files/filename`.
 
       Unlike `content`, the `source` attribute can be used to recursively copy
       directories if the `recurse` attribute is set to `true` or `remote`. If
@@ -180,6 +180,7 @@ module Puppet
           options = {
             :environment          => resource.catalog.environment_instance,
             :links                => resource[:links],
+            :checksum_type        => resource[:checksum],
             :source_permissions   => resource[:source_permissions]
           }
 

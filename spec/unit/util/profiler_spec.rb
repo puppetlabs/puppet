@@ -6,27 +6,27 @@ describe Puppet::Util::Profiler do
 
   it "supports adding profilers" do
     subject.add_profiler(profiler)
-    subject.current[0].should == profiler
+    expect(subject.current[0]).to eq(profiler)
   end
 
   it "supports removing profilers" do
     subject.add_profiler(profiler)
     subject.remove_profiler(profiler)
-    subject.current.length.should == 0
+    expect(subject.current.length).to eq(0)
   end
 
   it "supports clearing profiler list" do
     subject.add_profiler(profiler)
     subject.clear
-    subject.current.length.should == 0
+    expect(subject.current.length).to eq(0)
   end
 
   it "supports profiling" do
     subject.add_profiler(profiler)
     subject.profile("hi", ["mymetric"]) {}
-    profiler.context[:metric_id].should == ["mymetric"]
-    profiler.context[:description].should == "hi"
-    profiler.description.should == "hi"
+    expect(profiler.context[:metric_id]).to eq(["mymetric"])
+    expect(profiler.context[:description]).to eq("hi")
+    expect(profiler.description).to eq("hi")
   end
 
   class TestProfiler

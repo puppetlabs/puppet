@@ -47,7 +47,7 @@ describe Puppet::Util::Backups do
       bucket.expects(:backup).raises ArgumentError
       Puppet::FileSystem.expects(:exist?).with(path).returns(true)
 
-      lambda { file.perform_backup }.should raise_error(ArgumentError)
+      expect { file.perform_backup }.to raise_error(ArgumentError)
     end
 
     describe "and local backup is configured" do
@@ -70,7 +70,7 @@ describe Puppet::Util::Backups do
         FileUtils.expects(:cp_r).never
         Puppet::FileSystem.expects(:exist?).with(path).returns(true)
 
-        lambda { file.perform_backup }.should raise_error(Puppet::Error)
+        expect { file.perform_backup }.to raise_error(Puppet::Error)
       end
 
       it "should not try to remove backups that don't exist" do
@@ -86,14 +86,14 @@ describe Puppet::Util::Backups do
         FileUtils.expects(:cp_r).with(path, backup, :preserve => true)
         Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
 
-        file.perform_backup.should be_true
+        expect(file.perform_backup).to be_truthy
       end
 
       it "should propagate exceptions if no backup can be created" do
         FileUtils.expects(:cp_r).raises ArgumentError
 
         Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
-        lambda { file.perform_backup }.should raise_error(Puppet::Error)
+        expect { file.perform_backup }.to raise_error(Puppet::Error)
       end
     end
   end

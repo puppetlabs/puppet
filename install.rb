@@ -199,8 +199,20 @@ def prepare_installation
     opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
       InstallOptions.destdir = destdir
     end
-    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
+    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppetlabs/puppet') do |configdir|
       InstallOptions.configdir = configdir
+    end
+    opts.on('--codedir[=OPTIONAL]', 'Installation directory for code files', 'Default /etc/puppetlabs/code') do |codedir|
+      InstallOptions.codedir = codedir
+    end
+    opts.on('--vardir[=OPTIONAL]', 'Installation directory for var files', 'Default /opt/puppetlabs/puppet/cache') do |vardir|
+      InstallOptions.vardir = vardir
+    end
+    opts.on('--rundir[=OPTIONAL]', 'Installation directory for state files', 'Default /var/run/puppetlabs') do |rundir|
+      InstallOptions.rundir = rundir
+    end
+    opts.on('--logdir[=OPTIONAL]', 'Installation directory for log files', 'Default /var/log/puppetlabs') do |logdir|
+      InstallOptions.logdir = logdir
     end
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
@@ -255,7 +267,39 @@ def prepare_installation
     end
     configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
-    configdir = "/etc/puppet"
+    configdir = "/etc/puppetlabs/puppet"
+  end
+
+  if not InstallOptions.codedir.nil?
+    codedir = InstallOptions.codedir
+  elsif $operatingsystem == "windows"
+    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "code")
+  else
+    codedir = "/etc/puppetlabs/code"
+  end
+
+  if not InstallOptions.vardir.nil?
+    vardir = InstallOptions.vardir
+  elsif $operatingsystem == "windows"
+    vardir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "cache")
+  else
+    vardir = "/opt/puppetlabs/puppet/cache"
+  end
+
+  if not InstallOptions.rundir.nil?
+    rundir = InstallOptions.rundir
+  elsif $operatingsystem == "windows"
+    rundir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "run")
+  else
+    rundir = "/var/run/puppetlabs"
+  end
+
+  if not InstallOptions.logdir.nil?
+    logdir = InstallOptions.logdir
+  elsif $operatingsystem == "windows"
+    logdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "log")
+  else
+    logdir = "/var/log/puppetlabs"
   end
 
   if not InstallOptions.bindir.nil?
@@ -296,20 +340,32 @@ def prepare_installation
   end
 
   configdir = join(destdir, configdir)
+  codedir = join(destdir, codedir)
+  vardir = join(destdir, vardir)
+  rundir = join(destdir, rundir)
+  logdir = join(destdir, logdir)
   bindir = join(destdir, bindir)
   mandir = join(destdir, mandir)
   sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(codedir)
   FileUtils.makedirs(bindir)
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
+  FileUtils.makedirs(vardir)
+  FileUtils.makedirs(rundir)
+  FileUtils.makedirs(logdir)
 
   InstallOptions.site_dir = sitelibdir
+  InstallOptions.codedir = codedir
   InstallOptions.config_dir = configdir
-  InstallOptions.bin_dir  = bindir
-  InstallOptions.lib_dir  = libdir
-  InstallOptions.man_dir  = mandir
+  InstallOptions.bin_dir = bindir
+  InstallOptions.lib_dir = libdir
+  InstallOptions.man_dir = mandir
+  InstallOptions.var_dir = vardir
+  InstallOptions.run_dir = rundir
+  InstallOptions.log_dir = logdir
 end
 
 ##
@@ -410,7 +466,7 @@ end
 # Change directory into the puppet root so we don't get the wrong files for install.
 FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
-  configs = glob(%w{conf/auth.conf})
+  configs = glob(%w{conf/auth.conf conf/puppet.conf})
   bins  = glob(%w{bin/*})
   rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }

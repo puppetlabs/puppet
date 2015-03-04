@@ -16,11 +16,11 @@ describe Puppet::Node::Plain do
   end
 
   it "merges facts into the node" do
-    node_indirection.find(request).parameters.should include(fact_values)
+    expect(node_indirection.find(request).parameters).to include(fact_values)
   end
 
   it "should set the node environment from the request" do
-    node_indirection.find(request).environment.should == environment
+    expect(node_indirection.find(request).environment).to eq(environment)
   end
 
 end

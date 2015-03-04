@@ -14,8 +14,10 @@ rescue LoadError
 end
 
 require 'puppet'
-gem 'rspec', '>=2.0.0'
+gem 'rspec', '>=3.1.0'
 require 'rspec/expectations'
+require 'rspec/its'
+require 'rspec/collection_matchers'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
@@ -31,7 +33,6 @@ require 'puppet_spec/files'
 require 'puppet_spec/settings'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
-require 'monkey_patches/alias_should_to_must'
 require 'puppet/test/test_helper'
 
 Pathname.glob("#{dir}/shared_contexts/*.rb") do |file|
@@ -98,7 +99,7 @@ RSpec.configure do |config|
     Puppet::Test::TestHelper.after_all_tests()
   end
 
-  config.before :each do
+  config.before :each do |test|
     # Disabling garbage collection inside each test, and only running it at
     # the end of each block, gives us an ~ 15 percent speedup, and more on
     # some platforms *cough* windows *cough* that are a little slower.
@@ -120,6 +121,14 @@ RSpec.configure do |config|
     # redirecting logging away from console, because otherwise the test output will be
     #  obscured by all of the log output
     @logs = []
+    if ENV["PUPPET_TEST_LOG_LEVEL"]
+      Puppet::Util::Log.level = ENV["PUPPET_TEST_LOG_LEVEL"].intern
+    end
+    if ENV["PUPPET_TEST_LOG"]
+      Puppet::Util::Log.newdestination(ENV["PUPPET_TEST_LOG"])
+      m = test.metadata
+      Puppet.notice("*** BEGIN TEST #{m[:file_path]}:#{m[:line_number]}")
+    end
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
 
     @log_level = Puppet::Util::Log.level
@@ -127,6 +136,7 @@ RSpec.configure do |config|
     base = PuppetSpec::Files.tmpdir('tmp_settings')
     Puppet[:vardir] = File.join(base, 'var')
     Puppet[:confdir] = File.join(base, 'etc')
+    Puppet[:codedir] = File.join(base, 'code')
     Puppet[:logdir] = "$vardir/log"
     Puppet[:rundir] = "$vardir/run"
     Puppet[:hiera_config] = File.join(base, 'hiera')
@@ -174,7 +184,7 @@ RSpec.configure do |config|
 
     def profile
       result = RubyProf.profile { yield }
-      name = example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
+      name = RSpec.current_example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
       printer = RubyProf::CallTreePrinter.new(result)
       open(File.join(ENV['PROFILEOUT'],"callgrind.#{name}.#{Time.now.to_i}.trace"), "w") do |f|
         printer.print(f)

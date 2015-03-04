@@ -15,15 +15,15 @@ describe Puppet::Provider::Package::Windows::ExePackage do
       subject.expects(:valid?).returns(true)
 
       pkg = subject.from_registry('', {'DisplayName' => name, 'DisplayVersion' => version, 'UninstallString' => uninstall})
-      pkg.name.should == name
-      pkg.version.should == version
-      pkg.uninstall_string.should == uninstall
+      expect(pkg.name).to eq(name)
+      expect(pkg.version).to eq(version)
+      expect(pkg.uninstall_string).to eq(uninstall)
     end
 
     it 'should return nil if it is not a valid executable' do
       subject.expects(:valid?).returns(false)
 
-      subject.from_registry('', {}).should be_nil
+      expect(subject.from_registry('', {})).to be_nil
     end
   end
 
@@ -43,21 +43,21 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     }.each_pair do |k, arr|
       it "should accept '#{k}' with value '#{arr[0]}'" do
         values[k] = arr[0]
-        subject.valid?(name, values).should be_true
+        expect(subject.valid?(name, values)).to be_truthy
       end
 
       it "should reject '#{k}' with value '#{arr[1]}'" do
         values[k] = arr[1]
-        subject.valid?(name, values).should be_false
+        expect(subject.valid?(name, values)).to be_falsey
       end
     end
 
     it 'should reject packages whose name starts with "KBXXXXXX"' do
-      subject.valid?('KB890830', values).should be_false
+      expect(subject.valid?('KB890830', values)).to be_falsey
     end
 
     it 'should accept packages whose name does not start with "KBXXXXXX"' do
-      subject.valid?('My Update (KB890830)', values).should be_true
+      expect(subject.valid?('My Update (KB890830)', values)).to be_truthy
     end
   end
 
@@ -65,11 +65,11 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     let(:pkg) { subject.new(name, version, uninstall) }
 
     it 'should match product name' do
-      pkg.match?({:name => name}).should be_true
+      expect(pkg.match?({:name => name})).to be_truthy
     end
 
     it 'should return false otherwise' do
-      pkg.match?({:name => 'not going to find it'}).should be_false
+      expect(pkg.match?({:name => 'not going to find it'})).to be_falsey
     end
   end
 
@@ -77,22 +77,24 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     it 'should install using the source' do
       cmd = subject.install_command({:source => source})
 
-      cmd.should == ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', source]
+      expect(cmd).to eq(['cmd.exe', '/c', 'start', '"puppet-install"', '/w', source])
     end
   end
 
   context '#uninstall_command' do
     ['C:\uninstall.exe', 'C:\Program Files\uninstall.exe'].each do |exe|
       it "should quote #{exe}" do
-        subject.new(name, version, exe).uninstall_command.should ==
+        expect(subject.new(name, version, exe).uninstall_command).to eq(
           ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w', "\"#{exe}\""]
+        )
       end
     end
 
     ['"C:\Program Files\uninstall.exe"', '"C:\Program Files (x86)\Git\unins000.exe" /SILENT"'].each do |exe|
       it "should not quote #{exe}" do
-        subject.new(name, version, exe).uninstall_command.should ==
+        expect(subject.new(name, version, exe).uninstall_command).to eq(
           ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w', exe]
+        )
       end
     end
   end

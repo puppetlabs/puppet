@@ -25,12 +25,12 @@ describe 'The Evaluating Parser' do
   end
 
   def test(x)
-    evaluator.evaluate_string(scope, quote(x)).should == x
+    expect(evaluator.evaluate_string(scope, quote(x))).to eq(x)
   end
 
   def test_interpolate(x, y)
     scope['a'] = 'expansion'
-    evaluator.evaluate_string(scope, quote(x)).should == y
+    expect(evaluator.evaluate_string(scope, quote(x))).to eq(y)
   end
 
   context 'when evaluating' do

@@ -26,7 +26,7 @@ describe Puppet::Settings do
     )
     settings.use(:main)
 
-    expect(File.directory?(settings[:maindir])).to be_true
+    expect(File.directory?(settings[:maindir])).to be_truthy
   end
 
   it "should make its directories with the correct modes" do

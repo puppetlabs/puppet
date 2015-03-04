@@ -34,50 +34,50 @@
 Puppet::Functions.create_function(:map) do
   dispatch :map_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :map_Hash_1 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
   dispatch :map_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :map_Enumerable_1 do
     param 'Any', :enumerable
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
-  def map_Hash_1(hash, pblock)
-    hash.map {|x, y| pblock.call([x, y]) }
+  def map_Hash_1(hash)
+    hash.map {|x, y| yield([x, y]) }
   end
 
-  def map_Hash_2(hash, pblock)
-      hash.map {|x, y| pblock.call(x, y) }
+  def map_Hash_2(hash)
+      hash.map {|x, y| yield(x, y) }
   end
 
-  def map_Enumerable_1(enumerable, pblock)
+  def map_Enumerable_1(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
-      loop { result << pblock.call(enum.next) }
+      loop { result << yield(enum.next) }
     rescue StopIteration
     end
     result
   end
 
-  def map_Enumerable_2(enumerable, pblock)
+  def map_Enumerable_2(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
       loop do
-        result << pblock.call(index, enum.next)
+        result << yield(index, enum.next)
         index = index +1
       end
     rescue StopIteration

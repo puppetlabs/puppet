@@ -31,7 +31,7 @@ apply_manifest_on(master, <<-MANIFEST)
 File {
   ensure => directory,
   owner => #{master_user},
-  group => #{master['group']},
+  group => #{master.puppet['group']},
   mode => "0770",
 }
 

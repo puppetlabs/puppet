@@ -30,20 +30,20 @@ Puppet::Functions.create_function(:assert_type) do
   # @param type [Type] the type the value must be an instance of
   # @param value [Object] the value to assert
   #
-  def assert_type(type, value, block=nil)
+  def assert_type(type, value)
     unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
       inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value)
-      if block
+      if block_given?
         # Give the inferred type to allow richer comparisson in the given block (if generalized
         # information is lost).
         #
-        value = block.call(nil, type, inferred_type)
+        value = yield(type, inferred_type)
       else
         # Do not give all the details - i.e. format as Integer, instead of Integer[n, n] for exact value, which
         # is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output.
         #
         actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
-        raise Puppet::ParseError, "assert_type(): Expected type #{type} does not match actual: #{actual}"
+        raise Puppet::Pops::Types::TypeAssertionError.new("assert_type(): Expected type #{type} does not match actual: #{actual}", type,actual)
       end
     end
     value
@@ -52,8 +52,8 @@ Puppet::Functions.create_function(:assert_type) do
   # @param type_string [String] the type the value must be an instance of given in String form
   # @param value [Object] the value to assert
   #
-  def assert_type_s(type_string, value)
+  def assert_type_s(type_string, value, &proc)
     t = Puppet::Pops::Types::TypeParser.new.parse(type_string)
-    assert_type(t, value)
+    block_given? ? assert_type(t, value, &proc) : assert_type(t, value)
   end
 end

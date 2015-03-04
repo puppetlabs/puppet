@@ -2,14 +2,13 @@ require 'net/http'
 require 'uri'
 
 require 'puppet/network/http'
-require 'puppet/network/http/api/v3/indirected_routes'
 require 'puppet/network/http_pool'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   include Puppet::Network::HTTP::Compression.module
 
-  IndirectedRoutes = Puppet::Network::HTTP::API::V3::IndirectedRoutes
+  IndirectedRoutes = Puppet::Network::HTTP::API::IndirectedRoutes
 
   class << self
     attr_reader :server_setting, :port_setting
@@ -44,7 +43,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   # Provide appropriate headers.
   def headers
-    add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
+    common_headers = {
+      "Accept"                                     => model.supported_formats.join(", "),
+      Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
+    }
+
+    add_accept_encoding(common_headers)
   end
 
   def add_profiling_header(headers)

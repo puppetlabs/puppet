@@ -12,27 +12,27 @@ describe Puppet::Type.type(:file).attrclass(:noop) do
   end
 
   it "should accept true as a value" do
-    lambda { @file[:noop] = true }.should_not raise_error
+    expect { @file[:noop] = true }.not_to raise_error
   end
 
   it "should accept false as a value" do
-    lambda { @file[:noop] = false }.should_not raise_error
+    expect { @file[:noop] = false }.not_to raise_error
   end
 
   describe "when set on a resource" do
     it "should default to the :noop setting" do
       Puppet[:noop] = true
-      @file.noop.should == true
+      expect(@file.noop).to eq(true)
     end
 
     it "should prefer true values from the attribute" do
       @file[:noop] = true
-      @file.noop.should be_true
+      expect(@file.noop).to be_truthy
     end
 
     it "should prefer false values from the attribute" do
       @file[:noop] = false
-      @file.noop.should be_false
+      expect(@file.noop).to be_falsey
     end
   end
 end

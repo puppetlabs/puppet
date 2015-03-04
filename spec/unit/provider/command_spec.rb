@@ -57,6 +57,6 @@ describe Puppet::Provider::Command do
 
     command = Puppet::Provider::Command.new(name, executable, resolver, executor)
 
-    lambda { command.execute() }.should raise_error(Puppet::Error, "Command #{name} is missing")
+    expect { command.execute() }.to raise_error(Puppet::Error, "Command #{name} is missing")
   end
 end

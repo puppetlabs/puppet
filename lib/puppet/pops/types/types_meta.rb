@@ -36,7 +36,7 @@ module Puppet::Pops::Types
 
   # @api public
   #
-  class PNilType < PAnyType
+  class PUndefType < PAnyType
   end
 
 
@@ -212,7 +212,7 @@ module Puppet::Pops::Types
     has_attr 'title', String
   end
 
-  # Represents a type that accept PNilType instead of the type parameter
+  # Represents a type that accept PUndefType instead of the type parameter
   # required_type - is a short hand for Variant[T, Undef]
   # @api public
   #

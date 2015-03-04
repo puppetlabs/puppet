@@ -45,11 +45,11 @@ describe Puppet::Agent do
   end
 
   it "should set its client class at initialization" do
-    Puppet::Agent.new("foo", false).client_class.should == "foo"
+    expect(Puppet::Agent.new("foo", false).client_class).to eq("foo")
   end
 
   it "should include the Locker module" do
-    Puppet::Agent.ancestors.should be_include(Puppet::Agent::Locker)
+    expect(Puppet::Agent.ancestors).to be_include(Puppet::Agent::Locker)
   end
 
   it "should create an instance of its client class and run it when asked to run" do
@@ -69,7 +69,7 @@ describe Puppet::Agent do
     @agent.expects(:lockfile).returns(lockfile)
     lockfile.expects(:locked?).returns true
 
-    @agent.should be_running
+    expect(@agent).to be_running
   end
 
   describe "when being run" do
@@ -149,7 +149,7 @@ describe Puppet::Agent do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client
 
-      client.expects(:run).with { @agent.client.should equal(client); true }
+      client.expects(:run).with { expect(@agent.client).to equal(client); true }
       @agent.run
     end
 
@@ -166,7 +166,7 @@ describe Puppet::Agent do
       AgentTestClient.expects(:new).returns client
 
       @agent.expects(:lock).returns(:result)
-      @agent.run.should == :result
+      expect(@agent.run).to eq(:result)
     end
 
     describe "when should_fork is true", :if => Puppet.features.posix? do
@@ -204,17 +204,17 @@ describe Puppet::Agent do
 
       it "should re-raise exit happening in the child" do
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -1)]
-        lambda { @agent.run }.should raise_error(SystemExit)
+        expect { @agent.run }.to raise_error(SystemExit)
       end
 
       it "should re-raise NoMoreMemory happening in the child" do
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -2)]
-        lambda { @agent.run }.should raise_error(NoMemoryError)
+        expect { @agent.run }.to raise_error(NoMemoryError)
       end
 
       it "should return the child exit code" do
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 777)]
-        @agent.run.should == 777
+        expect(@agent.run).to eq(777)
       end
 
       it "should return the block exit code as the child exit code" do
@@ -229,7 +229,7 @@ describe Puppet::Agent do
     describe "on Windows", :if => Puppet.features.microsoft_windows? do
       it "should never fork" do
         agent = Puppet::Agent.new(AgentTestClient, true)
-        expect(agent.should_fork).to be_false
+        expect(agent.should_fork).to be_falsey
       end
     end
   end
@@ -268,7 +268,7 @@ describe Puppet::Agent do
     it "should mark that it has splayed" do
       @agent.stubs(:sleep)
       @agent.splay
-      @agent.should be_splayed
+      expect(@agent).to be_splayed
     end
   end
 
@@ -282,11 +282,11 @@ describe Puppet::Agent do
       end
 
       it 'should be false for :stopping?' do
-        @agent.stopping?.should be_false
+        expect(@agent.stopping?).to be_falsey
       end
 
       it 'should be false for :needing_restart?' do
-        @agent.needing_restart?.should be_false
+        expect(@agent.needing_restart?).to be_falsey
       end
     end
 
@@ -299,11 +299,11 @@ describe Puppet::Agent do
       end
 
       it 'should be true for :stopping?' do
-        @agent.stopping?.should be_true
+        expect(@agent.stopping?).to be_truthy
       end
 
       it 'should be false for :needing_restart?' do
-        @agent.needing_restart?.should be_false
+        expect(@agent.needing_restart?).to be_falsey
       end
     end
 
@@ -316,11 +316,11 @@ describe Puppet::Agent do
       end
 
       it 'should be false for :stopping?' do
-        @agent.stopping?.should be_false
+        expect(@agent.stopping?).to be_falsey
       end
 
       it 'should be true for :needing_restart?' do
-        @agent.needing_restart?.should be_true
+        expect(@agent.needing_restart?).to be_truthy
       end
     end
   end

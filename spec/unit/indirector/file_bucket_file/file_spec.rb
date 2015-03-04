@@ -20,7 +20,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       it "should return a result whose content is empty" do
         bucket_file = Puppet::FileBucket::File.new('stuff')
         result = Puppet::FileBucket::File.indirection.save(bucket_file, "md5/c13d88cb4cb02003daedb8a84e5d272a")
-        result.contents.should be_empty
+        expect(result.contents).to be_empty
       end
 
       it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
@@ -36,8 +36,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         children.each { |child| Process.wait(child) }
 
         paths = File.read("#{Puppet[:bucketdir]}/9/8/b/f/7/d/8/c/98bf7d8c15784f0a3d63204441e1e2aa/paths").lines.to_a
-        paths.length.should == 1
-        Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing").should be_true
+        expect(paths.length).to eq(1)
+        expect(Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing")).to be_truthy
       end
 
       it "fails if the contents collide with existing contents" do
@@ -67,16 +67,16 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
             contents_file = "#{dir_path}/contents"
             paths_file = "#{dir_path}/paths"
-            Puppet::FileSystem.binread(contents_file).should == plaintext
-            Puppet::FileSystem.read(paths_file).should == "foo/bar\n"
+            expect(Puppet::FileSystem.binread(contents_file)).to eq(plaintext)
+            expect(Puppet::FileSystem.read(paths_file)).to eq("foo/bar\n")
           end
 
           it "should leave the paths file alone if the path is already stored" do
             checksum = save_bucket_file(plaintext, "/foo/bar")
             checksum = save_bucket_file(plaintext, "/foo/bar")
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
-            File.read("#{dir_path}/paths").should == "foo/bar\n"
+            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+            expect(File.read("#{dir_path}/paths")).to eq("foo/bar\n")
           end
 
           it "should store an additional path if the new path differs from those already stored" do
@@ -85,8 +85,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             checksum = save_bucket_file(plaintext, "/foo/baz")
 
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
-            File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
+            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+            expect(File.read("#{dir_path}/paths")).to eq("foo/bar\nfoo/baz\n")
           end
         end
       end
@@ -97,8 +97,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             checksum = save_bucket_file(plaintext, "")
 
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
-            File.read("#{dir_path}/paths").should == ""
+            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+            expect(File.read("#{dir_path}/paths")).to eq("")
           end
         end
       end
@@ -111,15 +111,15 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
         describe "when supplying a path" do
           it "should return false/nil if the file isn't bucketed" do
-            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar").should == false
-            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar").should == nil
+            expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar")).to eq(false)
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar")).to eq(nil)
           end
 
           it "should return false/nil if the file is bucketed but with a different path" do
             checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
 
-            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/baz").should == false
-            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/baz").should == nil
+            expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(false)
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(nil)
           end
 
           it "should return true/file if the file is already bucketed with the given path" do
@@ -127,10 +127,10 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
             checksum = save_bucket_file(contents, '/foo/bar')
 
-            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/bar").should == true
+            expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/bar")).to eq(true)
             find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
-            find_result.checksum.should == "{#{digest_algorithm}}#{checksum}"
-            find_result.to_s.should == contents
+            expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
+            expect(find_result.to_s).to eq(contents)
           end
         end
 
@@ -140,8 +140,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               trailing_string = trailing_slash ? '/' : ''
 
               it "should return false/nil if the file isn't bucketed" do
-                Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}").should == false
-                Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}").should == nil
+                expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}")).to eq(false)
+                expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}")).to eq(nil)
               end
 
               it "should return true/file if the file is already bucketed" do
@@ -151,10 +151,10 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
                 checksum = save_bucket_file(contents, '/foo/bar')
 
-                Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}#{trailing_string}").should == true
+                expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}#{trailing_string}")).to eq(true)
                 find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}#{trailing_string}")
-                find_result.checksum.should == "{#{digest_algorithm}}#{checksum}"
-                find_result.to_s.should == contents
+                expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
+                expect(find_result.to_s).to eq(contents)
               end
             end
           end
@@ -169,7 +169,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
         it "should generate an empty string if there is no diff" do
           checksum = save_bucket_file("I'm the contents of a file")
-          Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum).should == ''
+          expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum)).to eq('')
         end
 
         it "should generate a proper diff if there is a diff" do
@@ -177,7 +177,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           checksum2 = save_bucket_file("foo\nbiz\nbaz")
 
           diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
-          diff.should == "2c2\n< bar\n---\n> biz\n"
+          expect(diff).to eq("2c2\n< bar\n---\n> biz\n")
         end
 
         it "should raise an exception if the hash to diff against isn't found" do
@@ -191,7 +191,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         it "should return nil if the hash to diff from isn't found" do
           checksum = save_bucket_file("whatever")
 
-          Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}", :diff_with => checksum).should == nil
+          expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}", :diff_with => checksum)).to eq(nil)
         end
       end
     end
@@ -243,19 +243,19 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
                 make_bucketed_file
 
                 if supply_path
-                  @store.find(@request).should == nil
-                  @store.head(@request).should == false # because path didn't match
+                  expect(@store.find(@request)).to eq(nil)
+                  expect(@store.head(@request)).to eq(false) # because path didn't match
                 else
                   bucketfile = @store.find(@request)
-                  bucketfile.should be_a(Puppet::FileBucket::File)
-                  bucketfile.contents.should == plaintext
-                  @store.head(@request).should == true
+                  expect(bucketfile).to be_a(Puppet::FileBucket::File)
+                  expect(bucketfile.contents).to eq(plaintext)
+                  expect(@store.head(@request)).to eq(true)
                 end
               end
 
               it "should return nil if no file is found" do
-                @store.find(@request).should be_nil
-                @store.head(@request).should == false
+                expect(@store.find(@request)).to be_nil
+                expect(@store.head(@request)).to eq(false)
               end
             end
 
@@ -275,7 +275,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
                 request = Puppet::Indirector::Request.new(:indirection_name, :save, key, file_instance)
 
                 @store.save(request)
-                Puppet::FileSystem.binread("#{@dir}/contents").should == plaintext
+                expect(Puppet::FileSystem.binread("#{@dir}/contents")).to eq(plaintext)
               end
             end
           end

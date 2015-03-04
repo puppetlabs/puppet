@@ -48,7 +48,7 @@ describe Puppet::SSL::CertificateRevocationList do
   end
 
   it "should only support the text format" do
-    @class.supported_formats.should == [:s]
+    expect(@class.supported_formats).to eq([:s])
   end
 
   describe "when converting from a string" do
@@ -67,11 +67,11 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should always use 'crl' for its name" do
-      @crl.name.should == "crl"
+      expect(@crl.name).to eq("crl")
     end
 
     it "should have a content attribute" do
-      @crl.should respond_to(:content)
+      expect(@crl).to respond_to(:content)
     end
   end
 
@@ -81,15 +81,15 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should set its issuer to the subject of the passed certificate" do
-      @crl.generate(@cert, @key).issuer.to_s.should == @cert.subject.to_s
+      expect(@crl.generate(@cert, @key).issuer.to_s).to eq(@cert.subject.to_s)
     end
 
     it "should set its version to 1" do
-      @crl.generate(@cert, @key).version.should == 1
+      expect(@crl.generate(@cert, @key).version).to eq(1)
     end
 
     it "should create an instance of OpenSSL::X509::CRL" do
-      @crl.generate(@cert, @key).should be_an_instance_of(OpenSSL::X509::CRL)
+      expect(@crl.generate(@cert, @key)).to be_an_instance_of(OpenSSL::X509::CRL)
     end
 
     it "should add an extension for the CRL number" do
@@ -107,25 +107,25 @@ describe Puppet::SSL::CertificateRevocationList do
     it "returns the last update time in UTC" do
       # http://tools.ietf.org/html/rfc5280#section-5.1.2.4
       thisUpdate = @crl.generate(@cert, @key).last_update
-      thisUpdate.should be_utc
+      expect(thisUpdate).to be_utc
       expects_time_close_to_now(thisUpdate)
     end
 
     it "returns the next update time in UTC 5 years from now" do
       # http://tools.ietf.org/html/rfc5280#section-5.1.2.5
       nextUpdate = @crl.generate(@cert, @key).next_update
-      nextUpdate.should be_utc
+      expect(nextUpdate).to be_utc
       expects_time_close_to_five_years(nextUpdate)
     end
 
     it "should verify using the CA public_key" do
-      @crl.generate(@cert, @key).verify(@key.public_key).should be_true
+      expect(@crl.generate(@cert, @key).verify(@key.public_key)).to be_truthy
     end
 
     it "should set the content to the generated crl" do
       # this test shouldn't be needed since we test the return of generate() which should be the content field
       @crl.generate(@cert, @key)
-      @crl.content.should be_an_instance_of(OpenSSL::X509::CRL)
+      expect(@crl.content).to be_an_instance_of(OpenSSL::X509::CRL)
     end
   end
 

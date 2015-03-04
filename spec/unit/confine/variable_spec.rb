@@ -5,19 +5,19 @@ require 'puppet/confine/variable'
 
 describe Puppet::Confine::Variable do
   it "should be named :variable" do
-    Puppet::Confine::Variable.name.should == :variable
+    expect(Puppet::Confine::Variable.name).to eq(:variable)
   end
 
   it "should require a value" do
-    lambda { Puppet::Confine::Variable.new }.should raise_error(ArgumentError)
+    expect { Puppet::Confine::Variable.new }.to raise_error(ArgumentError)
   end
 
   it "should always convert values to an array" do
-    Puppet::Confine::Variable.new("/some/file").values.should be_instance_of(Array)
+    expect(Puppet::Confine::Variable.new("/some/file").values).to be_instance_of(Array)
   end
 
   it "should have an accessor for its name" do
-    Puppet::Confine::Variable.new(:bar).should respond_to(:name)
+    expect(Puppet::Confine::Variable.new(:bar)).to respond_to(:name)
   end
 
   describe "when testing values" do
@@ -41,39 +41,39 @@ describe Puppet::Confine::Variable do
     it "should be valid if the value matches the facter value" do
       @confine.expects(:test_value).returns "foo"
 
-      @confine.should be_valid
+      expect(@confine).to be_valid
     end
 
     it "should return false if the value does not match the facter value" do
       @confine.expects(:test_value).returns "fee"
 
-      @confine.should_not be_valid
+      expect(@confine).not_to be_valid
     end
 
     it "should be case insensitive" do
       @confine.expects(:test_value).returns "FOO"
 
-      @confine.should be_valid
+      expect(@confine).to be_valid
     end
 
     it "should not care whether the value is a string or symbol" do
       @confine.expects(:test_value).returns "FOO"
 
-      @confine.should be_valid
+      expect(@confine).to be_valid
     end
 
     it "should produce a message that the fact value is not correct" do
       @confine = Puppet::Confine::Variable.new(%w{bar bee})
       @confine.name = "eh"
       message = @confine.message("value")
-      message.should be_include("facter")
-      message.should be_include("bar,bee")
+      expect(message).to be_include("facter")
+      expect(message).to be_include("bar,bee")
     end
 
     it "should be valid if the test value matches any of the provided values" do
       @confine = Puppet::Confine::Variable.new(%w{bar bee})
       @confine.expects(:test_value).returns "bee"
-      @confine.should be_valid
+      expect(@confine).to be_valid
     end
   end
 
@@ -89,7 +89,7 @@ describe Puppet::Confine::Variable do
       c3.name = "tres"
       c3.expects(:valid?).returns false
 
-      Puppet::Confine::Variable.summarize([c1, c2, c3]).should == {"uno" => %w{one}, "tres" => %w{three}}
+      expect(Puppet::Confine::Variable.summarize([c1, c2, c3])).to eq({"uno" => %w{one}, "tres" => %w{three}})
     end
 
     it "should combine the values of multiple confines with the same fact" do
@@ -100,7 +100,7 @@ describe Puppet::Confine::Variable do
       c2.name = "uno"
       c2.expects(:valid?).returns false
 
-      Puppet::Confine::Variable.summarize([c1, c2]).should == {"uno" => %w{one two}}
+      expect(Puppet::Confine::Variable.summarize([c1, c2])).to eq({"uno" => %w{one two}})
     end
   end
 end

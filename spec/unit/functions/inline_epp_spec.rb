@@ -11,26 +11,26 @@ describe "the inline_epp function" do
   context "when accessing scope variables as $ variables" do
     it "looks up the value from the scope" do
       scope["what"] = "are belong"
-      eval_template("all your base <%= $what %> to us").should == "all your base are belong to us"
+      expect(eval_template("all your base <%= $what %> to us")).to eq("all your base are belong to us")
     end
 
     it "get nil accessing a variable that does not exist" do
-      eval_template("<%= $kryptonite == undef %>").should == "true"
+      expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
     end
 
     it "get nil accessing a variable that is undef" do
       scope['undef_var'] = :undef
-      eval_template("<%= $undef_var == undef %>").should == "true"
+      expect(eval_template("<%= $undef_var == undef %>")).to eq("true")
     end
 
     it "gets shadowed variable if args are given" do
       scope['phantom'] = 'of the opera'
-      eval_template_with_args("<%= $phantom == dragos %>", 'phantom' => 'dragos').should == "true"
+      expect(eval_template_with_args("<%= $phantom == dragos %>", 'phantom' => 'dragos')).to eq("true")
     end
 
     it "gets shadowed variable if args are given and parameters are specified" do
       scope['x'] = 'wrong one'
-      eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct').should == "true"
+      expect(eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct')).to eq("true")
     end
 
     it "raises an error if required variable is not given" do
@@ -59,18 +59,18 @@ describe "the inline_epp function" do
   end
 
   it "renders a block expression" do
-    eval_template_with_args("<%= { $y = $x $x + 1} %>", 'x' => 2).should == "3"
+    expect(eval_template_with_args("<%= { $y = $x $x + 1} %>", 'x' => 2)).to eq("3")
   end
 
   # although never a problem with epp
   it "is not interfered with by having a variable named 'string' (#14093)" do
     scope['string'] = "this output should not be seen"
-    eval_template("some text that is static").should == "some text that is static"
+    expect(eval_template("some text that is static")).to eq("some text that is static")
   end
 
   it "has access to a variable named 'string' (#14093)" do
     scope['string'] = "the string value"
-    eval_template("string was: <%= $string %>").should == "string was: the string value"
+    expect(eval_template("string was: <%= $string %>")).to eq("string was: the string value")
   end
 
 

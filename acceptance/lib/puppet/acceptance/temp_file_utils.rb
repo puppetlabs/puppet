@@ -17,8 +17,8 @@ module Puppet
 
         # set default options
         options[:mkdirs] ||= false
-        options[:owner] ||= host['user']
-        options[:group] ||= host['group']
+        options[:owner] ||= host.puppet['user']
+        options[:group] ||= host.puppet['group']
         options[:mode] ||= "755"
 
         file_path = get_test_file_path(host, file_rel_path)
@@ -55,6 +55,20 @@ module Puppet
 
       def file_exists?(host, file_path)
         host.execute("test -f \"#{file_path}\"",
+                     :acceptable_exit_codes => [0, 1])  do |result|
+          return result.exit_code == 0
+        end
+      end
+
+      def dir_exists?(host, dir_path)
+        host.execute("test -d \"#{dir_path}\"",
+                     :acceptable_exit_codes => [0, 1])  do |result|
+          return result.exit_code == 0
+        end
+      end
+
+      def link_exists?(host, link_path)
+        host.execute("test -L \"#{link_path}\"",
                      :acceptable_exit_codes => [0, 1])  do |result|
           return result.exit_code == 0
         end

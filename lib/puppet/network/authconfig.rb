@@ -1,34 +1,42 @@
 require 'puppet/network/rights'
+require 'puppet/network/http'
 
 module Puppet
   class ConfigurationError < Puppet::Error; end
   class Network::AuthConfig
     attr_accessor :rights
 
-    def self.url_prefix
-      Puppet[:master_url_prefix]
+    def self.master_url_prefix
+      Puppet::Network::HTTP::MASTER_URL_PREFIX
+    end
+
+    def self.ca_url_prefix
+      Puppet::Network::HTTP::CA_URL_PREFIX
     end
 
     def self.default_acl
       [
-      # API V2.0
-      { :acl => "#{url_prefix}/v2.0/environments", :method => :find, :allow => '*', :authenticated => true },
+      # Master API V3
+      { :acl => "#{master_url_prefix}/v3/environments", :method => :find, :allow => '*', :authenticated => true },
 
-      # API V3
-      { :acl => "~ ^#{url_prefix}\/v3\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
-      { :acl => "~ ^#{url_prefix}\/v3\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^#{master_url_prefix}\/v3\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^#{master_url_prefix}\/v3\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^#{master_url_prefix}\/v3\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
+
       # this one will allow all file access, and thus delegate
       # to fileserver.conf
-      { :acl => "#{url_prefix}/v3/file" },
-      { :acl => "#{url_prefix}/v3/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-      { :acl => "~ ^#{url_prefix}\/v3\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
+      { :acl => "#{master_url_prefix}/v3/file" },
+
+      { :acl => "#{master_url_prefix}/v3/status", :method => [:find], :authenticated => true },
+
+      # CA API V1
+      { :acl => "#{ca_url_prefix}/v1/certificate_revocation_list/ca", :method => :find, :authenticated => true },
+
       # These allow `auth any`, because if you can do them anonymously you
       # should probably also be able to do them when trusted.
-      { :acl => "#{url_prefix}/v3/certificate/ca", :method => :find, :authenticated => :any },
-      { :acl => "#{url_prefix}/v3/certificate/", :method => :find, :authenticated => :any },
-      { :acl => "#{url_prefix}/v3/certificate_request", :method => [:find, :save], :authenticated => :any },
-      { :acl => "#{url_prefix}/v3/status", :method => [:find], :authenticated => true },
-      { :acl => "#{url_prefix}/v3/environments", :method => :find, :allow => '*', :authenticated => true },
+      { :acl => "#{ca_url_prefix}/v1/certificate/ca", :method => :find, :authenticated => :any },
+      { :acl => "#{ca_url_prefix}/v1/certificate/", :method => :find, :authenticated => :any },
+      { :acl => "#{ca_url_prefix}/v1/certificate_request", :method => [:find, :save], :authenticated => :any },
       ]
       end
 

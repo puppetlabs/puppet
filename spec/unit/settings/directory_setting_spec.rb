@@ -22,7 +22,7 @@ describe Puppet::Settings::DirectorySetting do
     end
 
     it "should return :directory as its type" do
-      @dir.type.should == :directory
+      expect(@dir.type).to eq(:directory)
     end
 
 

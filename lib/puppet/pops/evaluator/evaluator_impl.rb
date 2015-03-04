@@ -49,9 +49,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
-
-    # Initialize the runtime module
-    Puppet::Pops::Evaluator::Runtime3Support.instance_method(:initialize).bind(self).call()
   end
 
   # @api private
@@ -759,12 +756,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
-
-    evaluated_arguments = unfold([], o.arguments, scope)
-
-    # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    call_function_with_block(name, unfold([], o.arguments, scope), o, scope)
   end
 
   # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
@@ -779,13 +771,18 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = name.value # the string function name
-
-    evaluated_arguments = unfold([receiver], o.arguments || [], scope)
-
-    # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    call_function_with_block(name, unfold([receiver], o.arguments || [], scope), o, scope)
   end
+
+  def call_function_with_block(name, evaluated_arguments, o, scope)
+    if o.lambda.nil?
+      call_function(name, evaluated_arguments, o, scope)
+    else
+      closure = Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope)
+      call_function(name, evaluated_arguments, o, scope, &Puppet::Pops::Evaluator::PuppetProc.new(closure) { |*args| closure.call(*args) })
+    end
+  end
+  private :call_function_with_block
 
   # @example
   #   $x ? { 10 => true, 20 => false, default => 0 }

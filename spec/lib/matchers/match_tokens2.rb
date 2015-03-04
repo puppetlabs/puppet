@@ -12,7 +12,7 @@ RSpec::Matchers.define :match_tokens2 do | *expected |
     end
   end
 
-  def failure_message_for_should
+  def failure_message
     msg = ["Expected (#{expected.size}):"]
     expected.each {|e| msg << e.to_s }
 

@@ -5,22 +5,22 @@ require 'puppet/indirector/report/rest'
 
 describe Puppet::Transaction::Report::Rest do
   it "should be a subclass of Puppet::Indirector::REST" do
-    Puppet::Transaction::Report::Rest.superclass.should equal(Puppet::Indirector::REST)
+    expect(Puppet::Transaction::Report::Rest.superclass).to equal(Puppet::Indirector::REST)
   end
 
   it "should use the :report_server setting in preference to :server" do
     Puppet.settings[:server] = "server"
     Puppet.settings[:report_server] = "report_server"
-    Puppet::Transaction::Report::Rest.server.should == "report_server"
+    expect(Puppet::Transaction::Report::Rest.server).to eq("report_server")
   end
 
   it "should have a value for report_server and report_port" do
-    Puppet::Transaction::Report::Rest.server.should_not be_nil
-    Puppet::Transaction::Report::Rest.port.should_not be_nil
+    expect(Puppet::Transaction::Report::Rest.server).not_to be_nil
+    expect(Puppet::Transaction::Report::Rest.port).not_to be_nil
   end
 
   it "should use the :report SRV service" do
-    Puppet::Transaction::Report::Rest.srv_service.should == :report
+    expect(Puppet::Transaction::Report::Rest.srv_service).to eq(:report)
   end
 
   let(:model) { Puppet::Transaction::Report }
@@ -61,7 +61,7 @@ describe Puppet::Transaction::Report::Rest do
       response = mock_response('200', body, 'text/pson')
       connection.expects(:put).returns response
 
-      terminus.save(request).should == ["store", "http"]
+      expect(terminus.save(request)).to eq(["store", "http"])
     end
   end
 end

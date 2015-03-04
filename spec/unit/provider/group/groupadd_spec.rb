@@ -59,7 +59,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
         resource[:gid] = 505
         provider.stubs(:findgroup).returns(true)
-        lambda { provider.create }.should raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
+        expect { provider.create }.to raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
      end
     end
 

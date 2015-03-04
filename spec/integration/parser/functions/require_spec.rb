@@ -18,10 +18,10 @@ describe "The require function" do
     @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass")
 
     @scope.function_require(["requiredclass"])
-    @scope.resource["require"].should_not be_nil
+    expect(@scope.resource["require"]).not_to be_nil
     ref = @scope.resource["require"].shift
-    ref.type.should == "Class"
-    ref.title.should == "Requiredclass"
+    expect(ref.type).to eq("Class")
+    expect(ref.title).to eq("Requiredclass")
   end
 
   it "should queue relationships between the 'required' class and our classes" do
@@ -31,13 +31,13 @@ describe "The require function" do
     @scope.function_require(["requiredclass1"])
     @scope.function_require(["requiredclass2"])
 
-    @scope.resource["require"].should_not be_nil
+    expect(@scope.resource["require"]).not_to be_nil
 
     (ref1,ref2) = @scope.resource["require"]
-    ref1.type.should == "Class"
-    ref1.title.should == "Requiredclass1"
-    ref2.type.should == "Class"
-    ref2.title.should == "Requiredclass2"
+    expect(ref1.type).to eq("Class")
+    expect(ref1.title).to eq("Requiredclass1")
+    expect(ref2.type).to eq("Class")
+    expect(ref2.title).to eq("Requiredclass2")
   end
 
 end

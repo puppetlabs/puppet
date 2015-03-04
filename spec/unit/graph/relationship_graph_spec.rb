@@ -220,7 +220,7 @@ describe Puppet::Graph::RelationshipGraph do
         file { "#{parent}": require => File["#{child}"] }
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge("File[#{child}]", "File[#{parent}]")
+      expect(relationship_graph).to enforce_order_with_edge("File[#{child}]", "File[#{parent}]")
     end
 
     it "creates automatic relationships defined by the type" do
@@ -230,7 +230,7 @@ describe Puppet::Graph::RelationshipGraph do
         file { "#{parent}": }
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge("File[#{parent}]", "File[#{child}]")
+      expect(relationship_graph).to enforce_order_with_edge("File[#{parent}]", "File[#{child}]")
     end
   end
 
@@ -250,7 +250,7 @@ describe Puppet::Graph::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge(
+      expect(relationship_graph).to enforce_order_with_edge(
         admissible_sentinel_of("class[A]"),
         completed_sentinel_of("class[A]"))
     end
@@ -262,7 +262,7 @@ describe Puppet::Graph::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.should_not enforce_order_with_edge(
+      expect(relationship_graph).not_to enforce_order_with_edge(
         admissible_sentinel_of("class[A]"),
         completed_sentinel_of("class[A]"))
     end
@@ -276,7 +276,7 @@ describe Puppet::Graph::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge(
+      expect(relationship_graph).to enforce_order_with_edge(
         admissible_sentinel_of("class[A]"),
         "Notify[class a]")
     end
@@ -290,7 +290,7 @@ describe Puppet::Graph::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge(
+      expect(relationship_graph).to enforce_order_with_edge(
           "Notify[class a]",
           completed_sentinel_of("class[A]"))
     end
@@ -308,7 +308,7 @@ describe Puppet::Graph::RelationshipGraph do
         b { "testing": }
       MANIFEST
 
-      relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:component)) }.should be_empty
+      expect(relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:component)) }).to be_empty
     end
 
     it "should remove all Stage resources from the dependency graph" do
@@ -316,7 +316,7 @@ describe Puppet::Graph::RelationshipGraph do
         notify { "class a": }
       MANIFEST
 
-      relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:stage)) }.should be_empty
+      expect(relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:stage)) }).to be_empty
     end
 
     it "should retain labels on non-containment edges" do
@@ -332,10 +332,10 @@ describe Puppet::Graph::RelationshipGraph do
         Class[a] ~> b { "testing": }
       MANIFEST
 
-      relationship_graph.edges_between(
+      expect(relationship_graph.edges_between(
         vertex_called(relationship_graph, completed_sentinel_of("class[A]")),
-        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label.
-        should == {:callback => :refresh, :event => :ALL_EVENTS}
+        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label).
+        to eq({:callback => :refresh, :event => :ALL_EVENTS})
     end
 
     it "should not add labels to edges that have none" do
@@ -351,10 +351,10 @@ describe Puppet::Graph::RelationshipGraph do
         Class[a] -> b { "testing": }
       MANIFEST
 
-      relationship_graph.edges_between(
+      expect(relationship_graph.edges_between(
         vertex_called(relationship_graph, completed_sentinel_of("class[A]")),
-        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label.
-        should be_empty
+        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label).
+        to be_empty
     end
 
     it "should copy notification labels to all created edges" do
@@ -370,10 +370,10 @@ describe Puppet::Graph::RelationshipGraph do
         Class[a] ~> b { "testing": }
       MANIFEST
 
-      relationship_graph.edges_between(
+      expect(relationship_graph.edges_between(
         vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")),
-        vertex_called(relationship_graph, "Notify[define b]"))[0].label.
-        should == {:callback => :refresh, :event => :ALL_EVENTS}
+        vertex_called(relationship_graph, "Notify[define b]"))[0].label).
+        to eq({:callback => :refresh, :event => :ALL_EVENTS})
     end
   end
 

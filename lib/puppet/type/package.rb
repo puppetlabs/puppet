@@ -20,6 +20,13 @@ module Puppet
       requires in order to function, and you must meet those requirements
       to use a given provider.
 
+      You can declare multiple package resources with the same `name`, as long
+      as they specify different providers and have unique titles.
+
+      Note that you must use the _title_ to make a reference to a package
+      resource; `Package[<NAME>]` is not a synonym for `Package[<TITLE>]` like
+      it is for many other resource types.
+
       **Autorequires:** If Puppet is managing the files specified as a
       package's `adminfile`, `responsefile`, or `source`, the package
       resource will autorequire those files."
@@ -203,9 +210,9 @@ module Puppet
     newparam(:name) do
       desc "The package name.  This is the name that the packaging
       system uses internally, which is sometimes (especially on Solaris)
-      a name that is basically useless to humans.  If you want to
-      abstract package installation, then you can use aliases to provide
-      a common name to packages:
+      a name that is basically useless to humans.  If a package goes by
+      several names, you can use a single title and then set the name
+      conditionally:
 
           # In the 'openssl' class
           $ssl = $operatingsystem ? {
@@ -213,11 +220,9 @@ module Puppet
             default => openssl
           }
 
-          # It is not an error to set an alias to the same value as the
-          # object name.
-          package { $ssl:
-            ensure => installed,
-            alias  => openssl
+          package { 'openssl':
+            name   => $ssl,
+            ensure => installed
           }
 
           . etc. .
@@ -227,12 +232,10 @@ module Puppet
             default => openssh
           }
 
-          # Use the alias to specify a dependency, rather than
-          # having another selector to figure it out again.
-          package { $ssh:
+          package { 'openssh':
+            name    => $ssh
             ensure  => installed,
-            alias   => openssh,
-            require => Package[openssl]
+            require => Package['openssl']
           }
 
       "
@@ -343,10 +346,19 @@ module Puppet
     end
 
     newparam(:source) do
-      desc "Where to find the actual package. This must be a local file
-        (or on a network file system) or a URL that your specific
-        packaging type understands; Puppet will not retrieve files for you,
-        although you can manage packages as `file` resources."
+      desc "Where to find the package file. This is only used by providers that don't
+        automatically download packages from a central repository. (For example:
+        the `yum` and `apt` providers ignore this attribute, but the `rpm` and
+        `dpkg` providers require it.)
+
+        Different providers accept different values for `source`. Most providers
+        accept paths to local files stored on the target system. Some providers
+        may also accept URLs or network drive paths. Puppet will not
+        automatically retrieve source files for you, and usually just passes the
+        value of `source` to the package installation command.
+
+        You can use a `file` resource if you need to manually copy package files
+        to the target system."
 
       validate do |value|
         provider.validate_source(value)
@@ -363,10 +375,14 @@ module Puppet
 
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
-        This is currently only used on Solaris.  The value will be
-        validated according to system rules, which in the case of
-        Solaris means that it should either be a fully qualified path
-        or it should be in `/var/sadm/install/admin`."
+
+        This attribute is only used on Solaris. Its value should be a path to a
+        local file stored on the target system. Solaris's package tools expect
+        either an absolute file path or a relative path to a file in
+        `/var/sadm/install/admin`.
+
+        The value of `adminfile` will be passed directly to the `pkgadd` or
+        `pkgrm` command with the `-a <ADMINFILE>` option."
     end
 
     newparam(:responsefile) do

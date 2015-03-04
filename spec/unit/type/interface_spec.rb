@@ -4,24 +4,24 @@ require 'spec_helper'
 describe Puppet::Type.type(:interface) do
 
   it "should have a 'name' parameter'" do
-    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1")[:name].should == "FastEthernet 0/1"
+    expect(Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1")[:name]).to eq("FastEthernet 0/1")
   end
 
   it "should have a 'device_url' parameter'" do
-    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :device_url => :device)[:device_url].should == :device
+    expect(Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :device_url => :device)[:device_url]).to eq(:device)
   end
 
   it "should have an ensure property" do
-    Puppet::Type.type(:interface).attrtype(:ensure).should == :property
+    expect(Puppet::Type.type(:interface).attrtype(:ensure)).to eq(:property)
   end
 
   it "should be applied on device" do
-    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1").must be_appliable_to_device
+    expect(Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1")).to be_appliable_to_device
   end
 
   [:description, :speed, :duplex, :native_vlan, :encapsulation, :mode, :allowed_trunk_vlans, :etherchannel, :ipaddress].each do |p|
     it "should have a #{p} property" do
-      Puppet::Type.type(:interface).attrtype(p).should == :property
+      expect(Puppet::Type.type(:interface).attrtype(p)).to eq(:property)
     end
   end
 
@@ -90,7 +90,7 @@ describe Puppet::Type.type(:interface) do
       end
 
       it "should munge ip addresses to a computer format" do
-        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ipaddress => "192.168.0.1/24")[:ipaddress].should == [[24, IPAddr.new('192.168.0.1'), nil]]
+        expect(Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ipaddress => "192.168.0.1/24")[:ipaddress]).to eq([[24, IPAddr.new('192.168.0.1'), nil]])
       end
     end
   end

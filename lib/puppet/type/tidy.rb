@@ -20,6 +20,9 @@ Puppet::Type.newtype(:tidy) do
     desc "The path to the file or directory to manage.  Must be fully
       qualified."
     isnamevar
+    munge do |value|
+      File.expand_path(value)
+    end
   end
 
   newparam(:recurse) do

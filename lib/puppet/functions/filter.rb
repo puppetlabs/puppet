@@ -36,40 +36,46 @@
 Puppet::Functions.create_function(:filter) do
   dispatch :filter_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :filter_Hash_1 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
   dispatch :filter_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :filter_Enumerable_1 do
     param 'Any', :enumerable
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
-  def filter_Hash_1(hash, pblock)
-    hash.select {|x, y| pblock.call([x, y]) }
+  def filter_Hash_1(hash)
+    result = hash.select {|x, y| yield([x, y]) }
+    # Ruby 1.8.7 returns Array
+    result = Hash[result] unless result.is_a? Hash
+    result
   end
 
-  def filter_Hash_2(hash, pblock)
-    hash.select {|x, y| pblock.call(x, y) }
+  def filter_Hash_2(hash)
+    result = hash.select {|x, y| yield(x, y) }
+    # Ruby 1.8.7 returns Array
+    result = Hash[result] unless result.is_a? Hash
+    result
   end
 
-  def filter_Enumerable_1(enumerable, pblock)
+  def filter_Enumerable_1(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
       loop do
         it = enum.next
-        if pblock.call(it) == true
+        if yield(it) == true
           result << it
         end
       end
@@ -78,14 +84,14 @@ Puppet::Functions.create_function(:filter) do
     result
   end
 
-  def filter_Enumerable_2(enumerable, pblock)
+  def filter_Enumerable_2(enumerable)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
     begin
       loop do
         it = enum.next
-        if pblock.call(index, it) == true
+        if yield(index, it) == true
           result << it
         end
         index += 1

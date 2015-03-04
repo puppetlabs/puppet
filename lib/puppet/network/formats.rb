@@ -64,8 +64,7 @@ end
 
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
-# A very low-weight format so it'll never get chosen automatically.
-Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weight => 1) do
+Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1) do
   def intern_multiple(klass, text)
     raise NotImplementedError
   end
@@ -152,7 +151,7 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    return json.render(datum)
+    return PSON.pretty_generate(datum)
   end
 
   def render_multiple(data)

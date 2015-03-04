@@ -11,9 +11,6 @@ the following three types:
 * directory
 * symbolic link
 
-Note that an `:environment` must be specified in the endpoint, but is actually ignored since the puppet file server
-is not environment-specific.  (In fact, the specified `:environment` does even need to be valid.)
-
 The endpoint path includes a `:mount` which can be one of three types:
 
 * custom file serving mounts as specified in fileserver.conf -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-files-from-custom-mount-points)
@@ -26,7 +23,7 @@ Find
 
 Get file metadata for a single file
 
-    GET /:environment/file_metadata/:mount/path/to/file
+    GET /puppet/v3/file_metadata/:mount/path/to/file?environment=:environment
 
 ### Supported HTTP Methods
 
@@ -44,7 +41,7 @@ None
 
 #### File metadata found for a file
 
-    GET /env/file_metadata/modules/example/just_a_file.txt
+    GET /puppet/v3/file_metadata/modules/example/just_a_file.txt?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -59,14 +56,14 @@ None
         "links": "manage",
         "mode": 420,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "path": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
         "relative_path": null,
         "type": "file"
     }
 
 #### File metadata found for a directory
 
-    GET /env/file_metadata/modules/example/subdirectory
+    GET /puppet/v3/file_metadata/modules/example/subdirectory?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -81,14 +78,14 @@ None
         "links": "manage",
         "mode": 493,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/subdirectory",
+        "path": "/etc/puppetlabs/code/modules/example/files/subdirectory",
         "relative_path": null,
         "type": "directory"
     }
 
 #### File metadata found for a link
 
-    GET /env/file_metadata/modules/example/link_to_file.txt
+    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -98,19 +95,19 @@ None
             "type": "md5",
             "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
         },
-        "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+        "destination": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
         "group": 20,
         "links": "manage",
         "mode": 493,
         "owner": 501,
-        "path": "/etc/puppet/conf/modules/example/files/link_to_file.txt",
+        "path": "/etc/puppetlabs/code/modules/example/files/link_to_file.txt",
         "relative_path": null,
         "type": "link"
     }
 
 #### File not found
 
-    GET /env/file_metadata/modules/example/does_not_exist
+    GET /puppet/v3/file_metadata/modules/example/does_not_exist?environment=env
 
     HTTP/1.1 404 Not Found
 
@@ -121,7 +118,7 @@ Search
 
 Get a list of metadata for multiple files
 
-    GET /env/file_metadatas/foo.txt
+    GET /puppet/v3/file_metadatas/foo.txt?environment=env
 
 ### Supported HTTP Methods
 
@@ -141,7 +138,7 @@ Accept: pson, text/pson
 
 #### Basic search
 
-    GET /env/file_metadatas/modules/example?recurse=yes
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=yes
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -157,7 +154,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -171,7 +168,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -180,12 +177,12 @@ Accept: pson, text/pson
                 "type": "md5",
                 "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "destination": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
             "group": 20,
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "link"
         },
@@ -199,7 +196,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "subdirectory",
             "type": "directory"
         },
@@ -213,7 +210,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "subdirectory/another_file.txt",
             "type": "file"
         }
@@ -221,7 +218,7 @@ Accept: pson, text/pson
 
 #### Search ignoring 'sub*' and links = manage
 
-    GET /env/file_metadatas/modules/example?recurse=true&ignore=sub*&links=manage
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=manage
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -237,7 +234,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -251,7 +248,7 @@ Accept: pson, text/pson
             "links": "manage",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -260,12 +257,12 @@ Accept: pson, text/pson
                 "type": "md5",
                 "value": "{md5}d0a10f45491acc8743bc5a82b228f89e"
             },
-            "destination": "/etc/puppet/conf/modules/example/files/just_a_file.txt",
+            "destination": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
             "group": 20,
             "links": "manage",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "link"
         }
@@ -284,7 +281,7 @@ is identical to the above example, except for:
 
 ` `
 
-    GET /env/file_metadatas/modules/example?recurse=true&ignore=sub*&links=follow
+    GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=follow
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -300,7 +297,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 493,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": ".",
             "type": "directory"
         },
@@ -314,7 +311,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "just_a_file.txt",
             "type": "file"
         },
@@ -328,7 +325,7 @@ is identical to the above example, except for:
             "links": "follow",
             "mode": 420,
             "owner": 501,
-            "path": "/etc/puppet/conf/modules/example/files",
+            "path": "/etc/puppetlabs/code/modules/example/files",
             "relative_path": "link_to_file.txt",
             "type": "file"
         }
@@ -337,16 +334,16 @@ is identical to the above example, except for:
 Schema
 ------
 
-The representation of file metadata conforms to the schema at {file:api/schemas/file_metadata.json api/schemas/file_metadata.json}.
+The representation of file metadata conforms to the schema at [api/schemas/file_metadata.json](../schemas/file_metadata.json).
 
 Sample Module
 -------------
 
 The examples above use this (faux) module:
 
-    /etc/puppet/conf/modules/example/
+    /etc/puppetlabs/code/modules/example/
       files/
         just_a_file.txt
-        link_to_file.txt -> /etc/puppet/conf/modules/example/files/just_a_file.txt
+        link_to_file.txt -> /etc/puppetlabs/code/modules/example/files/just_a_file.txt
         subdirectory/
           another_file.txt

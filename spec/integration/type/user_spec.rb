@@ -22,12 +22,12 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
 
     it "should purge authorized ssh keys" do
       apply_compiled_manifest(manifest)
-      File.read(tempfile).should_not =~ /key-name/
+      expect(File.read(tempfile)).not_to match(/key-name/)
     end
 
     it "should purge keys with spaces in the comment string" do
       apply_compiled_manifest(manifest)
-      File.read(tempfile).should_not =~ /key name/
+      expect(File.read(tempfile)).not_to match(/key name/)
     end
 
     context "with other prefetching resources evaluated first" do
@@ -35,7 +35,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
 
       it "should purge authorized ssh keys" do
         apply_compiled_manifest(manifest)
-        File.read(tempfile).should_not =~ /key-name/
+        expect(File.read(tempfile)).not_to match(/key-name/)
       end
     end
 
@@ -50,7 +50,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
 
       it "should purge authorized ssh keys" do
         apply_compiled_manifest(manifest)
-        File.read(tempfile).should_not =~ /KEY-DATA/
+        expect(File.read(tempfile)).not_to match(/KEY-DATA/)
       end
     end
   end

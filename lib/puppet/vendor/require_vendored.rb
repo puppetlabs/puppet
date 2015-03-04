@@ -4,3 +4,4 @@
 # The vendored library 'semantic' is loaded on demand.
 # The vendored library 'rgen' is loaded on demand.
 # The vendored library 'pathspec' is loaded on demand.
+# The vendored library 'deep_merge' is loaded on demand.

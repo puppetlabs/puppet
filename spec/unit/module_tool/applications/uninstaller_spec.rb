@@ -40,7 +40,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
   context "when the module is not installed" do
     it "should fail" do
-      subject.should include :result => :failure
+      expect(subject).to include :result => :failure
     end
   end
 
@@ -51,7 +51,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
     before { preinstall('pmtacceptance-apache', '0.0.4') }
 
     it "should uninstall the module" do
-      subject[:affected_modules].first.forge_name.should == "pmtacceptance/stdlib"
+      expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
     end
 
     it "should only uninstall the requested module" do
@@ -62,7 +62,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       before { preinstall('pmtacceptance-stdlib', '2.0.0', :into => secondary_dir) }
 
       it "should fail if a module exists twice in the modpath" do
-        subject.should include :result => :failure
+        expect(subject).to include :result => :failure
       end
     end
 
@@ -72,8 +72,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       end
 
       it "should uninstall the module if the version matches" do
-        subject[:affected_modules].length.should == 1
-        subject[:affected_modules].first.version.should == "1.0.0"
+        expect(subject[:affected_modules].length).to eq(1)
+        expect(subject[:affected_modules].first.version).to eq("1.0.0")
       end
 
       context 'but not matched' do
@@ -82,7 +82,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         end
 
         it "should not uninstall the module if the version does not match" do
-          subject.should include :result => :failure
+          expect(subject).to include :result => :failure
         end
       end
     end
@@ -91,7 +91,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       before { File.unlink(File.join(primary_dir, 'stdlib', 'metadata.json')) }
 
       it "should not uninstall the module" do
-        application.run[:result].should == :failure
+        expect(application.run[:result]).to eq(:failure)
       end
     end
 
@@ -101,7 +101,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       end
 
       it "should not uninstall the module" do
-        subject.should include :result => :failure
+        expect(subject).to include :result => :failure
       end
     end
 
@@ -109,7 +109,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       before { preinstall('pmtacceptance-apache', '0.10.0') }
 
       it "should not uninstall the module" do
-        subject.should include :result => :failure
+        expect(subject).to include :result => :failure
       end
     end
 
@@ -124,13 +124,13 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         end
 
         it 'overwrites the installed module with the greatest version matching that range' do
-          subject.should include :result => :success
+          expect(subject).to include :result => :success
         end
       end
 
       context 'without local changes' do
         it 'overwrites the installed module with the greatest version matching that range' do
-          subject.should include :result => :success
+          expect(subject).to include :result => :success
         end
       end
     end
@@ -147,8 +147,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         end
 
         it "should ignore local changes" do
-          subject[:affected_modules].length.should == 1
-          subject[:affected_modules].first.forge_name.should == "pmtacceptance/stdlib"
+          expect(subject[:affected_modules].length).to eq(1)
+          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
         end
       end
 
@@ -156,8 +156,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         before { preinstall('pmtacceptance-apache', '0.10.0') }
 
         it "should ignore broken dependencies" do
-          subject[:affected_modules].length.should == 1
-          subject[:affected_modules].first.forge_name.should == "pmtacceptance/stdlib"
+          expect(subject[:affected_modules].length).to eq(1)
+          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
         end
       end
     end

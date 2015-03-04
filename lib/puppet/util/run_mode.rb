@@ -31,11 +31,11 @@ module Puppet
       end
 
       def run_dir
-        "$vardir/run"
+        RunMode[name].run_dir
       end
 
       def log_dir
-        "$vardir/log"
+        RunMode[name].log_dir
       end
 
       private
@@ -55,27 +55,51 @@ module Puppet
 
     class UnixRunMode < RunMode
       def conf_dir
-        which_dir("/etc/puppet", "~/.puppet")
+        which_dir("/etc/puppetlabs/puppet", "~/.puppet")
+      end
+
+      def code_dir
+        which_dir("/etc/puppetlabs/code", "~/.puppet/code")
       end
 
       def var_dir
-        which_dir("/var/lib/puppet", "~/.puppet/var")
+        which_dir("/opt/puppetlabs/puppet/cache", "~/.puppet/var")
+      end
+
+      def run_dir
+        which_dir("/var/run/puppetlabs", "~/.puppet/var/run")
+      end
+
+      def log_dir
+        which_dir("/var/log/puppetlabs", "~/.puppet/var/log")
       end
     end
 
     class WindowsRunMode < RunMode
       def conf_dir
-        which_dir(File.join(windows_common_base("etc")), "~/.puppet")
+        which_dir(File.join(windows_common_base("puppet/etc")), "~/.puppet")
+      end
+
+      def code_dir
+        which_dir(File.join(windows_common_base("code")), "~/.puppet/code")
       end
 
       def var_dir
-        which_dir(File.join(windows_common_base("var")), "~/.puppet/var")
+        which_dir(File.join(windows_common_base("puppet/cache")), "~/.puppet/var")
+      end
+
+      def run_dir
+        which_dir(File.join(windows_common_base("puppet/var/run")), "~/.puppet/var/run")
+      end
+
+      def log_dir
+        which_dir(File.join(windows_common_base("puppet/var/log")), "~/.puppet/var/log")
       end
 
     private
 
       def windows_common_base(*extra)
-        [Dir::COMMON_APPDATA, "PuppetLabs", "puppet"] + extra
+        [Dir::COMMON_APPDATA, "PuppetLabs"] + extra
       end
     end
   end

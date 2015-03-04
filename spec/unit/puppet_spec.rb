@@ -9,34 +9,34 @@ describe Puppet do
 
   context "#version" do
     it "should be valid semver" do
-      SemVer.should be_valid Puppet.version
+      expect(SemVer).to be_valid Puppet.version
     end
   end
 
   Puppet::Util::Log.eachlevel do |level|
     it "should have a method for sending '#{level}' logs" do
-      Puppet.should respond_to(level)
+      expect(Puppet).to respond_to(level)
     end
   end
 
   it "should be able to change the path" do
     newpath = ENV["PATH"] + File::PATH_SEPARATOR + "/something/else"
     Puppet[:path] = newpath
-    ENV["PATH"].should == newpath
+    expect(ENV["PATH"]).to eq(newpath)
   end
 
   it "should change $LOAD_PATH when :libdir changes" do
     one = tmpdir('load-path-one')
     two = tmpdir('load-path-two')
-    one.should_not == two
+    expect(one).not_to eq(two)
 
     Puppet[:libdir] = one
-    $LOAD_PATH.should include one
-    $LOAD_PATH.should_not include two
+    expect($LOAD_PATH).to include one
+    expect($LOAD_PATH).not_to include two
 
     Puppet[:libdir] = two
-    $LOAD_PATH.should_not include one
-    $LOAD_PATH.should include two
+    expect($LOAD_PATH).not_to include one
+    expect($LOAD_PATH).to include two
   end
 
   context "newtype" do

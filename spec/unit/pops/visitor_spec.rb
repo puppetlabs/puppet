@@ -29,7 +29,7 @@ describe Puppet::Pops::Visitor do
     it "should select the expected method when there are no arguments" do
       duck = Duck.new
       duck_processor = DuckProcessor.new
-      duck_processor.hi(duck).should == "Hi Duck"
+      expect(duck_processor.hi(duck)).to eq("Hi Duck")
     end
 
     it "should fail if there are too many arguments" do
@@ -40,12 +40,12 @@ describe Puppet::Pops::Visitor do
 
     it "should select method for superclass" do
       duck_processor = DuckProcessor.new
-      duck_processor.hi(42).should == "Howdy Fixnum"
+      expect(duck_processor.hi(42)).to eq("Howdy Fixnum")
     end
 
     it "should select method for superclass" do
       duck_processor = DuckProcessor.new
-      duck_processor.hi(42.0).should == "Howdy Float"
+      expect(duck_processor.hi(42.0)).to eq("Howdy Float")
     end
 
     it "should fail if class not handled" do
@@ -76,7 +76,7 @@ describe Puppet::Pops::Visitor do
     it "should select the expected method when there are is one arguments" do
       duck = Duck.new
       duck_processor = DuckProcessor2.new
-      duck_processor.hi(duck, "water").should == "Hi Duck, drink=water, eat=grain"
+      expect(duck_processor.hi(duck, "water")).to eq("Hi Duck, drink=water, eat=grain")
     end
 
     it "should fail if there are too many arguments" do

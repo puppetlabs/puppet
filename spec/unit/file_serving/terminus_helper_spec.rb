@@ -17,6 +17,25 @@ describe Puppet::FileServing::TerminusHelper do
     Puppet::FileServing::Fileset.stubs(:new).with("/my/file", {}).returns(@fileset)
   end
 
+  it "should find a file with absolute path" do
+    file = stub 'file', :collect => nil
+    file.expects(:collect).with(nil)
+    @model.expects(:new).with("/my/file", {:relative_path => nil}).returns(file)
+    @helper.path2instance(@request, "/my/file")
+  end
+
+  it "should pass through links, checksum_type, and source_permissions" do
+    file = stub 'file', :checksum_type= => nil, :links= => nil, :collect => nil
+    [[:checksum_type, :sha256], [:links, true]].each {|k, v|
+      file.expects(k.to_s+'=').with(v)
+      @request.options[k] = v
+    }
+    @request.options[:source_permissions] = :yes
+    file.expects(:collect).with(:yes)
+    @model.expects(:new).with("/my/file", {:relative_path => :file}).returns(file)
+    @helper.path2instance(@request, "/my/file", {:relative_path => :file})
+  end
+
   it "should use a fileset to find paths" do
     @fileset = stub 'fileset', :files => [], :path => "/my/files"
     Puppet::FileServing::Fileset.expects(:new).with { |key, options| key == "/my/file" }.returns(@fileset)

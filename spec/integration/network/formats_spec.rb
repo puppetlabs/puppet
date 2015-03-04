@@ -36,11 +36,11 @@ describe Puppet::Network::FormatHandler.format(:s) do
   end
 
   it "should support certificates" do
-    @format.should be_supported(Puppet::SSL::Certificate)
+    expect(@format).to be_supported(Puppet::SSL::Certificate)
   end
 
   it "should not support catalogs" do
-    @format.should_not be_supported(Puppet::Resource::Catalog)
+    expect(@format).not_to be_supported(Puppet::Resource::Catalog)
   end
 end
 
@@ -51,41 +51,41 @@ describe Puppet::Network::FormatHandler.format(:pson) do
 
   it "should be able to render an instance to pson" do
     instance = PsonIntTest.new("foo")
-    PsonIntTest.canonical_order(@pson.render(instance)).should == PsonIntTest.canonical_order('{"type":"PsonIntTest","data":["foo"]}' )
+    expect(PsonIntTest.canonical_order(@pson.render(instance))).to eq(PsonIntTest.canonical_order('{"type":"PsonIntTest","data":["foo"]}' ))
   end
 
   it "should be able to render arrays to pson" do
-    @pson.render([1,2]).should == '[1,2]'
+    expect(@pson.render([1,2])).to eq('[1,2]')
   end
 
   it "should be able to render arrays containing hashes to pson" do
-    @pson.render([{"one"=>1},{"two"=>2}]).should == '[{"one":1},{"two":2}]'
+    expect(@pson.render([{"one"=>1},{"two"=>2}])).to eq('[{"one":1},{"two":2}]')
   end
 
   it "should be able to render multiple instances to pson" do
     one = PsonIntTest.new("one")
     two = PsonIntTest.new("two")
 
-    PsonIntTest.canonical_order(@pson.render([one,two])).should == PsonIntTest.canonical_order('[{"type":"PsonIntTest","data":["one"]},{"type":"PsonIntTest","data":["two"]}]')
+    expect(PsonIntTest.canonical_order(@pson.render([one,two]))).to eq(PsonIntTest.canonical_order('[{"type":"PsonIntTest","data":["one"]},{"type":"PsonIntTest","data":["two"]}]'))
   end
 
   it "should be able to intern pson into an instance" do
-    @pson.intern(PsonIntTest, '{"type":"PsonIntTest","data":["foo"]}').should == PsonIntTest.new("foo")
+    expect(@pson.intern(PsonIntTest, '{"type":"PsonIntTest","data":["foo"]}')).to eq(PsonIntTest.new("foo"))
   end
 
   it "should be able to intern pson with no class information into an instance" do
-    @pson.intern(PsonIntTest, '["foo"]').should == PsonIntTest.new("foo")
+    expect(@pson.intern(PsonIntTest, '["foo"]')).to eq(PsonIntTest.new("foo"))
   end
 
   it "should be able to intern multiple instances from pson" do
-    @pson.intern_multiple(PsonIntTest, '[{"type": "PsonIntTest", "data": ["one"]},{"type": "PsonIntTest", "data": ["two"]}]').should == [
+    expect(@pson.intern_multiple(PsonIntTest, '[{"type": "PsonIntTest", "data": ["one"]},{"type": "PsonIntTest", "data": ["two"]}]')).to eq([
       PsonIntTest.new("one"), PsonIntTest.new("two")
-    ]
+    ])
   end
 
   it "should be able to intern multiple instances from pson with no class information" do
-    @pson.intern_multiple(PsonIntTest, '[["one"],["two"]]').should == [
+    expect(@pson.intern_multiple(PsonIntTest, '[["one"],["two"]]')).to eq([
       PsonIntTest.new("one"), PsonIntTest.new("two")
-    ]
+    ])
   end
 end

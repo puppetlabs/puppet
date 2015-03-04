@@ -1,5 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+
+require 'puppet_spec/handler'
+
 require 'puppet/indirector_testing'
 
 require 'puppet/network/authorization'
@@ -17,7 +20,7 @@ describe Puppet::Network::HTTP::Handler do
     {
       :accept_header => "pson",
       :content_type_header => "text/pson",
-      :http_method => method,
+      :method => method,
       :path => path,
       :params => {},
       :client_cert => nil,
@@ -26,7 +29,7 @@ describe Puppet::Network::HTTP::Handler do
     }
   end
 
-  let(:handler) { TestingHandler.new() }
+  let(:handler) { PuppetSpec::Handler.new() }
 
   describe "the HTTP Handler" do
     def respond(text)
@@ -34,7 +37,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "hands the request to the first route that matches the request path" do
-      handler = TestingHandler.new(
+      handler = PuppetSpec::Handler.new(
         Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("skipped")),
         Puppet::Network::HTTP::Route.path(%r{^/vtest}).get(respond("used")),
         Puppet::Network::HTTP::Route.path(%r{^/vtest/foo}).get(respond("ignored")))
@@ -49,14 +52,14 @@ describe Puppet::Network::HTTP::Handler do
 
     it "raises an error if multiple routes with the same path regex are registered" do
       expect do
-        handler = TestingHandler.new(
+        handler = PuppetSpec::Handler.new(
           Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("ignored")),
           Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored")))
       end.to raise_error(ArgumentError)
     end
 
     it "raises an HTTP not found error if no routes match" do
-      handler = TestingHandler.new
+      handler = PuppetSpec::Handler.new
 
       req = a_request("GET", "/vtest/foo")
       res = {}
@@ -72,7 +75,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "returns a structured error response with a stacktrace when the server encounters an internal error" do
-      handler = TestingHandler.new(
+      handler = PuppetSpec::Handler.new(
         Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise StandardError.new("the sky is falling!")}))
 
       req = a_request("GET", "/vtest/foo")
@@ -85,7 +88,7 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:content_type_header]).to eq("application/json")
       expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
       expect(res_body["message"]).to eq("Server Error: the sky is falling!")
-      expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_true
+      expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_truthy
       expect(res_body["stacktrace"][0]).to match("spec/unit/network/http/handler_spec.rb")
       expect(res[:status]).to eq(500)
     end
@@ -106,7 +109,7 @@ describe Puppet::Network::HTTP::Handler do
       request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
-      p = HandlerTestProfiler.new
+      p = PuppetSpec::HandlerProfiler.new
 
       Puppet::Util::Profiler.expects(:add_profiler).with { |profiler|
         profiler.is_a? Puppet::Util::Profiler::WallClock
@@ -130,13 +133,13 @@ describe Puppet::Network::HTTP::Handler do
 
     it "should raise an error if the request is formatted in an unknown format" do
       handler.stubs(:content_type_header).returns "unknown format"
-      lambda { handler.request_format(request) }.should raise_error
+      expect { handler.request_format(request) }.to raise_error
     end
 
     it "should still find the correct format if content type contains charset information" do
       request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
                                                    {}, 'GET', '/', nil)
-      request.format.should == "s"
+      expect(request.format).to eq("s")
     end
 
     # PUP-3272
@@ -164,65 +167,13 @@ describe Puppet::Network::HTTP::Handler do
     it "should return the look-up result" do
       Resolv.stubs(:getname).with("1.2.3.4").returns("host.domain.com")
 
-      handler.resolve_node(:ip => "1.2.3.4").should == "host.domain.com"
+      expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("host.domain.com")
     end
 
     it "should return the ip address if resolving fails" do
       Resolv.stubs(:getname).with("1.2.3.4").raises(RuntimeError, "no such host")
 
-      handler.resolve_node(:ip => "1.2.3.4").should == "1.2.3.4"
-    end
-  end
-
-  class TestingHandler
-    include Puppet::Network::HTTP::Handler
-
-    def initialize(* routes)
-      register(routes)
-    end
-
-    def set_content_type(response, format)
-     response[:content_type_header] = format
-    end
-
-    def set_response(response, body, status = 200)
-      response[:body] = body
-      response[:status] = status
-    end
-
-    def http_method(request)
-      request[:http_method]
-    end
-
-    def path(request)
-      request[:path]
-    end
-
-    def params(request)
-      request[:params]
-    end
-
-    def client_cert(request)
-      request[:client_cert]
-    end
-
-    def body(request)
-      request[:body]
-    end
-
-    def headers(request)
-      request[:headers] || {}
-    end
-  end
-
-  class HandlerTestProfiler
-    def start(metric, description)
-    end
-
-    def finish(context, metric, description)
-    end
-
-    def shutdown()
+      expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("1.2.3.4")
     end
   end
 end

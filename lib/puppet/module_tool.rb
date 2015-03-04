@@ -39,8 +39,7 @@ module Puppet
     end
 
     # Find the module root when given a path by checking each directory up from
-    # its current location until it finds one that contains a file called
-    # 'Modulefile'.
+    # its current location until it finds one that satisfies is_module_root?
     #
     # @param path [Pathname, String] path to start from
     # @return [Pathname, nil] the root path of the module directory or nil if
@@ -56,14 +55,14 @@ module Puppet
     end
 
     # Analyse path to see if it is a module root directory by detecting a
-    # file named 'metadata.json' or 'Modulefile' in the directory.
+    # file named 'metadata.json'
     #
     # @param path [Pathname, String] path to analyse
     # @return [Boolean] true if the path is a module root, false otherwise
     def self.is_module_root?(path)
       path = Pathname.new(path) if path.class == String
 
-      FileTest.file?(path + 'metadata.json') || FileTest.file?(path + 'Modulefile')
+      FileTest.file?(path + 'metadata.json')
     end
 
     # Builds a formatted tree from a list of node hashes containing +:text+
@@ -168,7 +167,7 @@ module Puppet
     #         unparsed range expression.
     def self.parse_module_dependency(where, dep)
       dep_name = dep['name'].tr('/', '-')
-      range = dep['version_requirement'] || dep['versionRequirement'] || '>= 0.0.0'
+      range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
         parsed_range = Semantic::VersionRange.parse(range)
@@ -189,6 +188,5 @@ require 'puppet/module_tool/checksums'
 require 'puppet/module_tool/contents_description'
 require 'puppet/module_tool/dependency'
 require 'puppet/module_tool/metadata'
-require 'puppet/module_tool/modulefile'
 require 'puppet/forge/cache'
 require 'puppet/forge'

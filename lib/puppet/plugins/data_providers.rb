@@ -77,14 +77,14 @@ class Puppet::Plugins::DataProviders
   end
 
   class ModuleDataProvider
-    def lookup(name, scope)
-      nil
+    def lookup(name, scope, merge)
+      throw :no_such_key
     end
   end
 
   class EnvironmentDataProvider
-    def lookup(name, scope)
-      nil
+    def lookup(name, scope, merge)
+      throw :no_such_key
     end
   end
 end

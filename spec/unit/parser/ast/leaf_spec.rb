@@ -19,7 +19,7 @@ describe Puppet::Parser::AST::Leaf do
   end
 
   it "should have a match method" do
-    @leaf.should respond_to(:match)
+    expect(@leaf).to respond_to(:match)
   end
 
   it "should delegate match to ==" do
@@ -56,7 +56,7 @@ describe Puppet::Parser::AST::Regex do
     it "should return self" do
       val = Puppet::Parser::AST::Regex.new :value => "/ab/"
 
-      val.evaluate(@scope).should === val
+      expect(val.evaluate(@scope)).to be === val
     end
   end
 
@@ -93,11 +93,11 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should raise an error if hostname is not valid" do
-    lambda { Puppet::Parser::AST::HostName.new( :value => "not a hostname!" ) }.should raise_error
+    expect { Puppet::Parser::AST::HostName.new( :value => "not a hostname!" ) }.to raise_error
   end
 
   it "should not raise an error if hostname is a regex" do
-    lambda { Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/test/") ) }.should_not raise_error
+    expect { Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/test/") ) }.not_to raise_error
   end
 
   it "should stringify the value" do
@@ -117,7 +117,7 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should evaluate to its value" do
-    @host.evaluate(@scope).should == @value
+    expect(@host.evaluate(@scope)).to eq(@value)
   end
 
   it "should delegate eql? to the underlying value if it is an HostName" do

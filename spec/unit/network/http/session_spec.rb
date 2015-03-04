@@ -15,7 +15,7 @@ describe Puppet::Network::HTTP::Session do
   it 'provides access to its connection' do
     session = create_session(connection)
 
-    session.connection.should == connection
+    expect(session.connection).to eq(connection)
   end
 
   it 'expires a connection whose expiration time is in the past' do
@@ -23,14 +23,14 @@ describe Puppet::Network::HTTP::Session do
     past = now - 1
 
     session = create_session(connection, past)
-    session.expired?(now).should be_true
+    expect(session.expired?(now)).to be_truthy
   end
 
   it 'expires a connection whose expiration time is now' do
     now = Time.now
 
     session = create_session(connection, now)
-    session.expired?(now).should be_true
+    expect(session.expired?(now)).to be_truthy
   end
 
   it 'does not expire a connection whose expiration time is in the future' do
@@ -38,6 +38,6 @@ describe Puppet::Network::HTTP::Session do
     future = now + 1
 
     session = create_session(connection, future)
-    session.expired?(now).should be_false
+    expect(session.expired?(now)).to be_falsey
   end
 end

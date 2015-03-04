@@ -14,11 +14,11 @@ RSpec::Matchers.define :allow do |params|
     end
   end
 
-  failure_message_for_should do |instance|
+  failure_message do |instance|
     "expected #{params[2][:node]}/#{params[2][:ip]} to be allowed"
   end
 
-  failure_message_for_should_not do |instance|
+  failure_message_when_negated do |instance|
     "expected #{params[2][:node]}/#{params[2][:ip]} to be forbidden"
   end
 end
@@ -61,7 +61,7 @@ describe Puppet::Network::AuthConfig do
     it "should not match IP addresses" do
       add_rule("allow 10.1.1.1")
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
 
     it "should not accept CIDR IPv4 address" do
@@ -85,13 +85,13 @@ describe Puppet::Network::AuthConfig do
     it "should support hostname" do
       add_rule("allow host.domain.com")
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should support wildcard host" do
       add_rule("allow *.domain.com")
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it 'should warn about missing path before allow_ip in stanza' do
@@ -109,51 +109,51 @@ describe Puppet::Network::AuthConfig do
     it "should support hostname backreferences" do
       add_regex_rule('^/test/([^/]+)$', "allow $1.domain.com")
 
-      @auth.should allow(request(:key => 'host'))
+      expect(@auth).to allow(request(:key => 'host'))
     end
 
     it "should support opaque strings" do
       add_rule("allow this-is-opaque@or-not")
 
-      @auth.should allow(request(:node => 'this-is-opaque@or-not'))
+      expect(@auth).to allow(request(:node => 'this-is-opaque@or-not'))
     end
 
     it "should support opaque strings and backreferences" do
       add_regex_rule('^/test/([^/]+)$', "allow $1")
 
-      @auth.should allow(request(:key => 'this-is-opaque@or-not', :node => 'this-is-opaque@or-not'))
+      expect(@auth).to allow(request(:key => 'this-is-opaque@or-not', :node => 'this-is-opaque@or-not'))
     end
 
     it "should support hostname ending with '.'" do
       pending('bug #7589')
       add_rule("allow host.domain.com.")
 
-      @auth.should allow(request(:node => 'host.domain.com.'))
+      expect(@auth).to allow(request(:node => 'host.domain.com.'))
     end
 
     it "should support hostname ending with '.' and backreferences" do
       pending('bug #7589')
       add_regex_rule('^/test/([^/]+)$',"allow $1")
 
-      @auth.should allow(request(:node => 'host.domain.com.'))
+      expect(@auth).to allow(request(:node => 'host.domain.com.'))
     end
 
     it "should support trailing whitespace" do
       add_rule('allow host.domain.com    ')
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should support inlined comments" do
       add_rule('allow host.domain.com # will it work?')
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should deny non-matching host" do
       add_rule("allow inexistent")
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
   end
 
@@ -161,33 +161,33 @@ describe Puppet::Network::AuthConfig do
     it "should not warn when matches against IP addresses fail" do
       add_rule("allow_ip 10.1.1.2")
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
 
-      @logs.should_not be_any {|log| log.level == :warning and log.message =~ /Authentication based on IP address is deprecated/}
+      expect(@logs).not_to be_any {|log| log.level == :warning and log.message =~ /Authentication based on IP address is deprecated/}
     end
 
     it "should support IPv4 address" do
       add_rule("allow_ip 10.1.1.1")
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should support CIDR IPv4 address" do
       add_rule("allow_ip 10.0.0.0/8")
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should support wildcard IPv4 address" do
       add_rule("allow_ip 10.1.1.*")
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should support IPv6 address" do
       add_rule("allow_ip 2001:DB8::8:800:200C:417A")
 
-      @auth.should allow(request(:ip => '2001:DB8::8:800:200C:417A'))
+      expect(@auth).to allow(request(:ip => '2001:DB8::8:800:200C:417A'))
     end
 
     it "should support hostname" do
@@ -204,7 +204,7 @@ describe Puppet::Network::AuthConfig do
         allow *.domain.com
       EOALLOWRULE
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
 
     it "denies denied hosts after allowing them" do
@@ -213,7 +213,7 @@ describe Puppet::Network::AuthConfig do
         deny host.domain.com
       EOALLOWRULE
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
 
     it "should not deny based on IP" do
@@ -222,7 +222,7 @@ describe Puppet::Network::AuthConfig do
         allow host.domain.com
       EOALLOWRULE
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
 
     it "should not deny based on IP (ordering #2)" do
@@ -231,7 +231,7 @@ describe Puppet::Network::AuthConfig do
         deny 10.1.1.1
       EOALLOWRULE
 
-      @auth.should allow(request)
+      expect(@auth).to allow(request)
     end
   end
 
@@ -242,7 +242,7 @@ describe Puppet::Network::AuthConfig do
         allow host.domain.com
       EOALLOWRULE
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
 
     it "should deny based on IP (ordering #2)" do
@@ -251,7 +251,7 @@ describe Puppet::Network::AuthConfig do
         deny_ip 10.1.1.1
       EOALLOWRULE
 
-      @auth.should_not allow(request)
+      expect(@auth).not_to allow(request)
     end
   end
 end

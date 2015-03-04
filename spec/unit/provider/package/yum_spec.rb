@@ -4,6 +4,8 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:package).provider(:yum)
 
 describe provider_class do
+  include PuppetSpec::Fixtures
+
   let(:name) { 'mypackage' }
   let(:resource) do
     Puppet::Type.type(:package).new(
@@ -28,15 +30,15 @@ describe provider_class do
   end
 
   describe 'provider features' do
-    it { should be_versionable }
-    it { should be_install_options }
-    it { should be_virtual_packages }
+    it { is_expected.to be_versionable }
+    it { is_expected.to be_install_options }
+    it { is_expected.to be_virtual_packages }
   end
 
   # provider should repond to the following methods
    [:install, :latest, :update, :purge, :install_options].each do |method|
      it "should have a(n) #{method}" do
-       provider.should respond_to(method)
+       expect(provider).to respond_to(method)
     end
   end
 
@@ -44,59 +46,59 @@ describe provider_class do
 
     it 'should parse full simple evr' do
       v = provider.yum_parse_evr('0:1.2.3-4.el5')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == '4.el5'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.el5')
     end
 
     it 'should parse version only' do
       v = provider.yum_parse_evr('1.2.3')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == nil
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq(nil)
     end
 
     it 'should parse version-release' do
       v = provider.yum_parse_evr('1.2.3-4.5.el6')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == '4.5.el6'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.5.el6')
     end
 
     it 'should parse release with git hash' do
       v = provider.yum_parse_evr('1.2.3-4.1234aefd')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == '4.1234aefd'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.1234aefd')
     end
 
     it 'should parse single integer versions' do
       v = provider.yum_parse_evr('12345')
-      v[:epoch].should == '0'
-      v[:version].should == '12345'
-      v[:release].should == nil
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('12345')
+      expect(v[:release]).to eq(nil)
     end
 
     it 'should parse text in the epoch to 0' do
       v = provider.yum_parse_evr('foo0:1.2.3-4')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == '4'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4')
     end
 
     it 'should parse revisions with text' do
       v = provider.yum_parse_evr('1.2.3-SNAPSHOT20140107')
-      v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == 'SNAPSHOT20140107'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('SNAPSHOT20140107')
     end
 
     # test cases for PUP-682
     it 'should parse revisions with text and numbers' do
       v = provider.yum_parse_evr('2.2-SNAPSHOT20121119105647')
-      v[:epoch].should == '0'
-      v[:version].should == '2.2'
-      v[:release].should == 'SNAPSHOT20121119105647'
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('2.2')
+      expect(v[:release]).to eq('SNAPSHOT20121119105647')
     end
 
   end
@@ -107,44 +109,44 @@ describe provider_class do
     it 'should evaluate identical version-release as equal' do
       v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
                                   {:epoch => '0', :version => '1.2.3', :release => '1.el5'})
-      v.should == 0
+      expect(v).to eq(0)
     end
 
     it 'should evaluate identical version as equal' do
       v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
                                   {:epoch => '0', :version => '1.2.3', :release => nil})
-      v.should == 0
+      expect(v).to eq(0)
     end
 
     it 'should evaluate identical version but older release as less' do
       v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
                                   {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      v.should == -1
+      expect(v).to eq(-1)
     end
 
     it 'should evaluate identical version but newer release as greater' do
       v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '3.el5'},
                                   {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      v.should == 1
+      expect(v).to eq(1)
     end
 
     it 'should evaluate a newer epoch as greater' do
       v = provider.yum_compareEVR({:epoch => '1', :version => '1.2.3', :release => '4.5'},
                                   {:epoch => '0', :version => '1.2.3', :release => '4.5'})
-      v.should == 1
+      expect(v).to eq(1)
     end
 
     # these tests describe PUP-1244 logic yet to be implemented
     it 'should evaluate any version as equal to the same version followed by release' do
       v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
                                   {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      v.should == 0
+      expect(v).to eq(0)
     end
 
     # test cases for PUP-682
     it 'should evaluate same-length numeric revisions numerically' do
-      provider.yum_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
-                               {:epoch => '0', :version => '2.2', :release => '406'}).should == -1
+      expect(provider.yum_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
+                               {:epoch => '0', :version => '2.2', :release => '406'})).to eq(-1)
     end
 
   end
@@ -153,17 +155,17 @@ describe provider_class do
 
     it 'should treat two nil values as equal' do
       v = provider.compare_values(nil, nil)
-      v.should == 0
+      expect(v).to eq(0)
     end
 
     it 'should treat a nil value as less than a non-nil value' do
       v = provider.compare_values(nil, '0')
-      v.should == -1
+      expect(v).to eq(-1)
     end
 
     it 'should treat a non-nil value as greater than a nil value' do
       v = provider.compare_values('0', nil)
-      v.should == 1
+      expect(v).to eq(1)
     end
 
     it 'should pass two non-nil values on to rpmvercmp' do
@@ -241,7 +243,7 @@ describe provider_class do
   end
 
   it 'should be versionable' do
-    provider.should be_versionable
+    expect(provider).to be_versionable
   end
 
   describe 'determining the latest version available for a package' do
@@ -293,7 +295,7 @@ describe provider_class do
 
       it 'returns version of the currently installed package' do
         provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        provider.latest.should == '3.4.5'
+        expect(provider.latest).to eq('3.4.5')
       end
     end
 
@@ -310,7 +312,7 @@ describe provider_class do
 
       it 'includes the epoch in the version string' do
         described_class.stubs(:latest_package_version).with(name, [], [], []).returns(latest_version)
-        provider.latest.should == '1:2.3.4-5'
+        expect(provider.latest).to eq('1:2.3.4-5')
       end
     end
   end
@@ -440,63 +442,58 @@ describe provider_class do
   end
 
   describe "parsing the output of check-update" do
-    let(:check_update) do
-      # Trailing whitespace is intentional
-      <<-EOD
-Loaded plugins: fastestmirror
-Determining fastest mirrors
- * base: centos.sonn.com
- * epel: ftp.osuosl.org
- * extras: mirror.web-ster.com
- * updates: centos.sonn.com
 
-curl.i686                               7.32.0-10.fc20           updates        
-curl.x86_64                             7.32.0-10.fc20           updates        
-gawk.i686                               4.1.0-3.fc20             updates        
-dhclient.i686                           12:4.1.1-38.P1.fc20      updates        
-selinux-policy.noarch                   3.12.1-163.fc20          updates-testing
-      EOD
+    describe "with no multiline entries" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-simple.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it 'creates an entry for each package keyed on the package name' do
+        expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+        expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+        expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+        expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      end
+
+      it 'creates an entry for each package keyed on the package name and package architecture' do
+        expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
+        expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+        expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+        expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+        expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      end
     end
 
-    it 'creates an entry for each package keyed on the package name' do
-      output = described_class.parse_updates(check_update)
-      expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
-      expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
-      expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
-      expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
-    end
+    describe "with multiline entries" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-multiline.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
 
-    it 'creates an entry for each package keyed on the package name and package architecture' do
-      output = described_class.parse_updates(check_update)
-      expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
-      expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
-      expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
-      expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
-      expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+      it "parses multi-line values as a single package tuple" do
+        expect(output['libpcap']).to eq([{:name => 'libpcap', :epoch => '14', :version => '1.4.0', :release => '1.20130826git2dbcaa1.el6', :arch => 'x86_64'}])
+      end
     end
   end
 
   describe "parsing a line from yum check-update" do
     it "splits up the package name and architecture fields" do
-      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+      checkupdate = %w[curl.i686 7.32.0-10.fc20]
 
-      parsed = described_class.update_to_hash(checkupdate)
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:name]).to eq 'curl'
       expect(parsed[:arch]).to eq 'i686'
     end
 
     it "splits up the epoch, version, and release fields" do
-      checkupdate = "dhclient.i686                            12:4.1.1-38.P1.el6.centos       base"
-      parsed = described_class.update_to_hash(checkupdate)
+      checkupdate = %w[dhclient.i686 12:4.1.1-38.P1.el6.centos]
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:epoch]).to eq '12'
       expect(parsed[:version]).to eq '4.1.1'
       expect(parsed[:release]).to eq '38.P1.el6.centos'
     end
 
     it "sets the epoch to 0 when an epoch is not specified" do
-      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+      checkupdate = %w[curl.i686 7.32.0-10.fc20]
 
-      parsed = described_class.update_to_hash(checkupdate)
+      parsed = described_class.update_to_hash(*checkupdate)
       expect(parsed[:epoch]).to eq '0'
       expect(parsed[:version]).to eq '7.32.0'
       expect(parsed[:release]).to eq '10.fc20'

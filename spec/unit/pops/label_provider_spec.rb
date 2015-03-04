@@ -5,27 +5,27 @@ describe Puppet::Pops::LabelProvider do
   let(:labeler) { Puppet::Pops::LabelProvider.new }
 
   it "prefixes words that start with a vowel with an 'an'" do
-    labeler.a_an('owl').should == 'an owl'
+    expect(labeler.a_an('owl')).to eq('an owl')
   end
 
   it "prefixes words that start with a consonant with an 'a'" do
-    labeler.a_an('bear').should == 'a bear'
+    expect(labeler.a_an('bear')).to eq('a bear')
   end
 
   it "prefixes non-word characters with an 'a'" do
-    labeler.a_an('[] expression').should == 'a [] expression'
+    expect(labeler.a_an('[] expression')).to eq('a [] expression')
   end
 
   it "ignores a single quote leading the word" do
-    labeler.a_an("'owl'").should == "an 'owl'"
+    expect(labeler.a_an("'owl'")).to eq("an 'owl'")
   end
 
   it "ignores a double quote leading the word" do
-    labeler.a_an('"owl"').should == 'an "owl"'
+    expect(labeler.a_an('"owl"')).to eq('an "owl"')
   end
 
   it "capitalizes the indefinite article for a word when requested" do
-    labeler.a_an_uc('owl').should == 'An owl'
+    expect(labeler.a_an_uc('owl')).to eq('An owl')
   end
 
   it "raises an error when missing a character to work with" do

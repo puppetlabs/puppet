@@ -17,7 +17,7 @@ describe "RGen extensions to core classes" do
     # When this fails it means that rgen has incorrectly implemented
     # method_missing on array and is returning an array for to_str instead of
     # failing as is expected allowing stringification to occur
-    [[]].join(":").should == ""
-    ["1", []].join(":").should == "1:"
+    expect([[]].join(":")).to eq("")
+    expect(["1", []].join(":")).to eq("1:")
   end
 end

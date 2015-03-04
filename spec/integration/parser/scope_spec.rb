@@ -5,7 +5,7 @@ describe "Two step scoping for variables" do
   include PuppetSpec::Compiler
   def expect_the_message_to_be(message, node = Puppet::Node.new('the node'))
     catalog = compile_to_catalog(yield, node)
-    catalog.resource('Notify', 'something')[:message].should == message
+    expect(catalog.resource('Notify', 'something')[:message]).to eq(message)
   end
 
   before :each do

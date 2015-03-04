@@ -20,7 +20,7 @@ describe provider_class do
   end
 
   it "should be versionable" do
-    provider_class.should be_versionable
+    expect(provider_class).to be_versionable
   end
 
   it "should use :install to update" do
@@ -49,18 +49,18 @@ Version table:
 *** 1:1.1
   100 /var/lib/dpkg/status"
 
-    provider.latest.should == "1:1.1"
+    expect(provider.latest).to eq("1:1.1")
   end
 
   it "should print and error and return nil if no policy is found" do
     provider.expects(:aptcache).with(:policy, name).returns "#{name}:"
 
     provider.expects(:err)
-    provider.latest.should be_nil
+    expect(provider.latest).to be_nil
   end
 
   it "should be able to preseed" do
-    provider.should respond_to(:run_preseed)
+    expect(provider).to respond_to(:run_preseed)
   end
 
   it "should preseed with the provided responsefile when preseeding is called for" do

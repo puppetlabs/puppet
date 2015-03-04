@@ -19,7 +19,7 @@ describe Puppet::Network::Server do
     end
 
     it "should not be listening after initialization" do
-      Puppet::Network::Server.new(address, port).should_not be_listening
+      expect(Puppet::Network::Server.new(address, port)).not_to be_listening
     end
 
     it "should use the :main setting section" do
@@ -40,7 +40,7 @@ describe Puppet::Network::Server do
     end
 
     it "should indicate that it is not listening" do
-      server.should_not be_listening
+      expect(server).not_to be_listening
     end
 
     it "should not allow server to be stopped" do
@@ -60,7 +60,7 @@ describe Puppet::Network::Server do
     end
 
     it "should indicate that it is listening" do
-      server.should be_listening
+      expect(server).to be_listening
     end
 
     it "should not allow server to be started again" do

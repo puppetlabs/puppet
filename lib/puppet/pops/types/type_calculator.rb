@@ -196,7 +196,7 @@ class Puppet::Pops::Types::TypeCalculator
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
     data_variant.addTypes(Types::PScalarType.new)
-    data_variant.addTypes(Types::PNilType.new)
+    data_variant.addTypes(Types::PUndefType.new)
     data_variant.addTypes(@data_tuple_t.copy)
     @data_variant_t = data_variant
 
@@ -211,7 +211,7 @@ class Puppet::Pops::Types::TypeCalculator
     non_empty_string.size_type.to = nil # infinity
     @non_empty_string_t = non_empty_string
 
-    @nil_t = Types::PNilType.new
+    @nil_t = Types::PUndefType.new
   end
 
   # Convenience method to get a data type for comparisons
@@ -321,7 +321,7 @@ class Puppet::Pops::Types::TypeCalculator
     when c == Regexp
       type = Types::PRegexpType.new()
     when c == NilClass
-      type = Types::PNilType.new()
+      type = Types::PUndefType.new()
     when c == FalseClass, c == TrueClass
       type = Types::PBooleanType.new()
     when c == Class
@@ -429,6 +429,14 @@ class Puppet::Pops::Types::TypeCalculator
     return x < y ? x <= o && y >= o : y <= o && x >= o
   end
 
+  # @api private
+  def instance_of_PStringType(t, o)
+    return false unless o.is_a?(String)
+    # true if size compliant
+    size_t = t.size_type || @collection_default_size_t
+    instance_of_PIntegerType(size_t, o.size)
+  end
+
   def instance_of_PTupleType(t, o)
     return false unless o.is_a?(Array)
     # compute the tuple's min/max size, and check if that size matches
@@ -462,12 +470,12 @@ class Puppet::Pops::Types::TypeCalculator
     instance_of(@data_variant_t, o)
   end
 
-  def instance_of_PNilType(t, o)
+  def instance_of_PUndefType(t, o)
     o.nil? || o == :undef
   end
 
   def instance_of_POptionalType(t, o)
-    instance_of_PNilType(t, o) || instance_of(t.optional_type, o)
+    instance_of_PUndefType(t, o) || instance_of(t.optional_type, o)
   end
 
   def instance_of_PVariantType(t, o)
@@ -496,11 +504,11 @@ class Puppet::Pops::Types::TypeCalculator
     return t.is_a?(Types::PAnyType)
   end
 
-  # Answers if t represents the puppet type PNilType
+  # Answers if t represents the puppet type PUndefType
   # @api public
   #
   def is_pnil?(t)
-    return t.nil? || t.is_a?(Types::PNilType)
+    return t.nil? || t.is_a?(Types::PUndefType)
   end
 
   # Answers, 'What is the common type of t1 and t2?'
@@ -786,7 +794,33 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_NilClass(o)
-    Types::PNilType.new()
+    Types::PUndefType.new()
+  end
+
+  # @api private
+  # @param o [Proc]
+  def infer_Proc(o)
+    min = 0
+    max = 0
+    mapped_types = o.parameters.map do |p|
+      case p[0]
+      when :rest
+        max = :default
+        break @t
+      when :req
+        min += 1
+      end
+      max += 1
+      @t
+    end
+    mapped_types << min
+    mapped_types << max
+    Types::TypeFactory.callable(*mapped_types)
+  end
+
+  # @api private
+  def infer_PuppetProc(o)
+    infer_Closure(o.closure)
   end
 
   # Inference of :default as PDefaultType, and all other are Ruby[Symbol]
@@ -830,7 +864,7 @@ class Puppet::Pops::Types::TypeCalculator
     type = Types::PArrayType.new()
     type.element_type =
     if o.empty?
-      Types::PNilType.new()
+      Types::PUndefType.new()
     else
       infer_and_reduce_type(o)
     end
@@ -842,8 +876,8 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_Hash(o)
     type = Types::PHashType.new()
     if o.empty?
-      ktype = Types::PNilType.new()
-      etype = Types::PNilType.new()
+      ktype = Types::PUndefType.new()
+      etype = Types::PUndefType.new()
     else
       ktype = infer_and_reduce_type(o.keys())
       etype = infer_and_reduce_type(o.values())
@@ -870,7 +904,7 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_set_Array(o)
     if o.empty?
       type = Types::PArrayType.new()
-      type.element_type = Types::PNilType.new()
+      type.element_type = Types::PUndefType.new()
       type.size_type = size_as_type(o)
     else
       type = Types::PTupleType.new()
@@ -880,19 +914,33 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def infer_set_Hash(o)
-    type = Types::PHashType.new()
     if o.empty?
-      ktype = Types::PNilType.new()
-      vtype = Types::PNilType.new()
+      type = Types::PHashType.new
+      type.key_type = Types::PUndefType.new
+      type.element_type = Types::PUndefType.new
+      type.size_type = size_as_type(o)
     else
-      ktype = Types::PVariantType.new()
-      ktype.types = o.keys.map() {|k| infer_set(k) }
-      etype = Types::PVariantType.new()
-      etype.types = o.values.map() {|e| infer_set(e) }
+      if o.keys.find {|k| !instance_of_PStringType(@non_empty_string_t, k) }
+        type = Types::PHashType.new
+        ktype = Types::PVariantType.new
+        ktype.types = o.keys.map {|k| infer_set(k) }
+        etype = Types::PVariantType.new
+        etype.types = o.values.map {|e| infer_set(e) }
+        type.key_type = unwrap_single_variant(ktype)
+        type.element_type = unwrap_single_variant(etype)
+        type.size_type = size_as_type(o)
+      else
+        elements = []
+        o.each_pair do |k,v|
+          element = Types::PStructElement.new
+          element.name = k
+          element.type = infer_set(v)
+          elements << element
+        end
+        type = Types::PStructType.new
+        type.elements = elements
+      end
     end
-    type.key_type = unwrap_single_variant(ktype)
-    type.element_type = unwrap_single_variant(etype)
-    type.size_type = size_as_type(o)
     type
   end
 
@@ -916,9 +964,9 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PNilType(t, t2)
+  def assignable_PUndefType(t, t2)
     # Only undef/nil is assignable to nil type
-    t2.is_a?(Types::PNilType)
+    t2.is_a?(Types::PUndefType)
   end
 
   # Anything is assignable to a Unit type
@@ -1012,22 +1060,33 @@ class Puppet::Pops::Types::TypeCalculator
     if args_tuple.size_type
       raise ArgumentError, "Callable tuple may not have a size constraint when used as args"
     end
-    # Assume no block was given - i.e. it is nil, and its type is PNilType
-    block_t = @nil_t
-    if self.class.is_kind_of_callable?(args_tuple.types.last)
-      # a split is needed to make it possible to use required, optional, and varargs semantics
-      # of the tuple type.
-      #
-      args_tuple = args_tuple.copy
-      # to drop the callable, it must be removed explicitly since this is an rgen array
-      args_tuple.removeTypes(block_t = args_tuple.types.last())
-    else
-      # no block was given, if it is required, the below will fail
+
+    params_tuple = callable_t.param_types
+    param_block_t = callable_t.block_type
+    arg_types = args_tuple.types
+    arg_block_t = arg_types.last()
+    if self.class.is_kind_of_callable?(arg_block_t)
+      # Can't pass a block to a callable that doesn't accept one
+      return false if param_block_t.nil?
+
+      # Check that the block is of the right tyṕe
+      return false unless assignable?(param_block_t, arg_block_t)
+
+      # Check other arguments
+      arg_count = arg_types.size - 1
+      params_size_t = params_tuple.size_type || Types::TypeFactory.range(*params_tuple.size_range)
+      return false unless assignable?(params_size_t, Types::TypeFactory.range(arg_count, arg_count))
+
+      ctypes = params_tuple.types
+      args_assignable = false
+      arg_count.times do |index|
+        return false unless assignable?((ctypes[index] || ctypes[-1]), arg_types[index])
+      end
+      return true
     end
-    # unless argument types match parameter types
-    return false unless assignable?(callable_t.param_types, args_tuple)
-    # can the given block be *called* with a signature requirement specified by callable_t?
-    assignable?(callable_t.block_type || @nil_t, block_t)
+
+    # Check that tuple is assignable and that the block (if declared) is optional
+    assignable?(params_tuple, args_tuple) &&  (param_block_t.nil? || assignable?(param_block_t, @nil_t))
   end
 
   # @api private
@@ -1051,8 +1110,8 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(callable_t.block_type || @nil_t, @nil_t)
   end
 
-  def callable_PNilType(nil_t, callable_t)
-    # if callable_t is Optional (or indeed PNilType), this means that 'missing callable' is accepted
+  def callable_PUndefType(nil_t, callable_t)
+    # if callable_t is Optional (or indeed PUndefType), this means that 'missing callable' is accepted
     assignable?(callable_t, nil_t)
   end
 
@@ -1126,22 +1185,23 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   #
   def assignable_PStructType(t, t2)
-    return true if t == t2 || t.elements.empty? && (t2.is_a?(Types::PHashType))
-    h = t.hashed_elements
     if t2.is_a?(Types::PStructType)
+      h = t.hashed_elements
       h2 = t2.hashed_elements
-      h.size == h2.size && h.all? {|k, v| assignable?(v, h2[k]) }
+      (h2.keys - h.keys).empty? && h.all? {|k, v| v2 = h2[k]; assignable?(v, v2.nil? ? @nil_t : v2) }
     elsif t2.is_a?(Types::PHashType)
       size_t2 = t2.size_type || @collection_default_size_t
       size_t = Types::PIntegerType.new
-      size_t.from = size_t.to = h.size
+      elements = t.elements
+      size_t.from = elements.count {|e| !assignable?(e.type, @nil_t) }
+      size_t.to = elements.size
       # compatible size
       # hash key type must be string of min 1 size
       # hash value t must be assignable to each key
       element_type = t2.element_type
       assignable_PIntegerType(size_t, size_t2) &&
-        assignable?(@non_empty_string_t, t2.key_type) &&
-        h.all? {|k,v| assignable?(v, element_type) }
+        (size_t2.to == 0 || assignable?(@non_empty_string_t, t2.key_type)) &&
+          elements.all? {|e| assignable?(e.type, element_type) }
     else
       false
     end
@@ -1149,7 +1209,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_POptionalType(t, t2)
-    return true if t2.is_a?(Types::PNilType)
+    return true if t2.is_a?(Types::PUndefType)
     if t2.is_a?(Types::POptionalType)
       assignable?(t.optional_type, t2.optional_type)
     else
@@ -1362,6 +1422,7 @@ class Puppet::Pops::Types::TypeCalculator
   def assignable_PHashType(t, t2)
     case t2
     when Types::PHashType
+      return true if (t.size_type.nil? || t.size_type.from == 0) && t2.is_the_empty_hash?
       return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
       assignable_PCollectionType(t, t2)
     when Types::PStructType
@@ -1371,10 +1432,10 @@ class Puppet::Pops::Types::TypeCalculator
       size_t = t.size_type || @collection_default_size_t
       min, max = size_t.range
       struct_size = t2.elements.size
+      key_type = t.key_type
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        assignable?(t.key_type, @non_empty_string_t)  &&
-        t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
+        t2.elements.all? {|e| instance_of(key_type, e.name) && assignable?(element_type, e.type) })
     else
       false
     end
@@ -1451,7 +1512,7 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PAnyType(t)     ; "Any"     ; end
 
   # @api private
-  def string_PNilType(t)     ; 'Undef'   ; end
+  def string_PUndefType(t)     ; 'Undef'   ; end
 
   # @api private
   def string_PDefaultType(t) ; 'Default' ; end

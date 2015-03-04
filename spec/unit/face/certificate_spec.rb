@@ -22,7 +22,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
   end
 
   it "should have a ca-location option" do
-    subject.should be_option :ca_location
+    expect(subject).to be_option :ca_location
   end
 
   it "should set the ca location when invoked" do
@@ -67,8 +67,8 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       it "should generate a CSR for this host" do
         subject.generate(hostname, options)
 
-        csr.content.subject.to_s.should == "/CN=#{Puppet[:certname]}"
-        csr.name.should == Puppet[:certname]
+        expect(csr.content.subject.to_s).to eq("/CN=#{Puppet[:certname]}")
+        expect(csr.name).to eq(Puppet[:certname])
       end
 
       it "should add dns_alt_names from the global config if not otherwise specified" do
@@ -78,7 +78,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
         expected = %W[DNS:from DNS:the DNS:config DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+        expect(csr.subject_alt_names).to match_array(expected)
       end
 
       it "should add the provided dns_alt_names if they are specified" do
@@ -88,7 +88,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
         expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+        expect(csr.subject_alt_names).to match_array(expected)
       end
     end
 
@@ -98,8 +98,8 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       it "should generate a CSR for the specified host" do
         subject.generate(hostname, options)
 
-        csr.content.subject.to_s.should == "/CN=#{hostname}"
-        csr.name.should == hostname
+        expect(csr.content.subject.to_s).to eq("/CN=#{hostname}")
+        expect(csr.name).to eq(hostname)
       end
 
       it "should fail if a CSR already exists for the host" do
@@ -115,7 +115,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
         subject.generate(hostname, options)
 
-        csr.subject_alt_names.should be_empty
+        expect(csr.subject_alt_names).to be_empty
       end
 
       it "should add the provided dns_alt_names if they are specified" do
@@ -125,7 +125,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
         expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+        expect(csr.subject_alt_names).to match_array(expected)
       end
       
       it "should use the global setting if set by CLI" do
@@ -135,7 +135,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
         
         expected = %W[DNS:from DNS:the DNS:cli DNS:#{hostname}]
         
-        csr.subject_alt_names.should =~ expected
+        expect(csr.subject_alt_names).to match_array(expected)
       end
       
       it "should generate an error if both set on CLI" do
@@ -157,9 +157,9 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
       subject.sign(hostname, options)
 
-      host.certificate_request.should be_nil
-      host.certificate.should be_a(Puppet::SSL::Certificate)
-      host.state.should == 'signed'
+      expect(host.certificate_request).to be_nil
+      expect(host.certificate).to be_a(Puppet::SSL::Certificate)
+      expect(host.state).to eq('signed')
     end
 
     it "should fail if there is no waiting certificate request" do
@@ -180,7 +180,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
           end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError,
                              /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{hostname}` to sign this request./i)
 
-          host.state.should == 'requested'
+          expect(host.state).to eq('requested')
         end
 
         it "should sign the request if allow_dns_alt_names is set" do
@@ -188,7 +188,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
             subject.sign(hostname, options.merge(:allow_dns_alt_names => true))
           end.not_to raise_error
 
-          host.state.should == 'signed'
+          expect(host.state).to eq('signed')
         end
       end
 
@@ -200,13 +200,13 @@ describe Puppet::Face[:certificate, '0.0.1'] do
         it "should sign the request if allow_dns_alt_names is set" do
           expect { subject.sign(hostname, options.merge(:allow_dns_alt_names => true)) }.not_to raise_error
 
-          host.state.should == 'signed'
+          expect(host.state).to eq('signed')
         end
 
         it "should sign the request if allow_dns_alt_names is not set" do
           expect { subject.sign(hostname, options) }.not_to raise_error
 
-          host.state.should == 'signed'
+          expect(host.state).to eq('signed')
         end
       end
     end

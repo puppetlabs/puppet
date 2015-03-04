@@ -574,7 +574,7 @@ config_version=$vardir/random/scripts
         (@config_version ? " with config_version #{@config_version}" : "")
     end
 
-    failure_message_for_should do |env|
+    failure_message do |env|
       "expected <#{env.name}: modulepath = [#{env.full_modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
     end
   end
@@ -600,7 +600,7 @@ config_version=$vardir/random/scripts
         (@global_module_path ? " with global_module_path [#{@global_module_path.join(', ')}]" : "")
     end
 
-    failure_message_for_should do |env_conf|
+    failure_message do |env_conf|
       "expected #{env_conf.inspect} to be #{description}"
     end
   end

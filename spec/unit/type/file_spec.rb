@@ -17,59 +17,59 @@ describe Puppet::Type.type(:file) do
     describe "on POSIX systems", :if => Puppet.features.posix? do
       it "should remove trailing slashes" do
         file[:path] = "/foo/bar/baz/"
-        file[:path].should == "/foo/bar/baz"
+        expect(file[:path]).to eq("/foo/bar/baz")
       end
 
       it "should remove double slashes" do
         file[:path] = "/foo/bar//baz"
-        file[:path].should == "/foo/bar/baz"
+        expect(file[:path]).to eq("/foo/bar/baz")
       end
 
       it "should remove triple slashes" do
         file[:path] = "/foo/bar///baz"
-        file[:path].should == "/foo/bar/baz"
+        expect(file[:path]).to eq("/foo/bar/baz")
       end
 
       it "should remove trailing double slashes" do
         file[:path] = "/foo/bar/baz//"
-        file[:path].should == "/foo/bar/baz"
+        expect(file[:path]).to eq("/foo/bar/baz")
       end
 
       it "should leave a single slash alone" do
         file[:path] = "/"
-        file[:path].should == "/"
+        expect(file[:path]).to eq("/")
       end
 
       it "should accept and collapse a double-slash at the start of the path" do
         file[:path] = "//tmp/xxx"
-        file[:path].should == '/tmp/xxx'
+        expect(file[:path]).to eq('/tmp/xxx')
       end
 
       it "should accept and collapse a triple-slash at the start of the path" do
         file[:path] = "///tmp/xxx"
-        file[:path].should == '/tmp/xxx'
+        expect(file[:path]).to eq('/tmp/xxx')
       end
     end
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       it "should remove trailing slashes" do
         file[:path] = "X:/foo/bar/baz/"
-        file[:path].should == "X:/foo/bar/baz"
+        expect(file[:path]).to eq("X:/foo/bar/baz")
       end
 
       it "should remove double slashes" do
         file[:path] = "X:/foo/bar//baz"
-        file[:path].should == "X:/foo/bar/baz"
+        expect(file[:path]).to eq("X:/foo/bar/baz")
       end
 
       it "should remove trailing double slashes" do
         file[:path] = "X:/foo/bar/baz//"
-        file[:path].should == "X:/foo/bar/baz"
+        expect(file[:path]).to eq("X:/foo/bar/baz")
       end
 
       it "should leave a drive letter with a slash alone" do
         file[:path] = "X:/"
-        file[:path].should == "X:/"
+        expect(file[:path]).to eq("X:/")
       end
 
       it "should not accept a drive letter without a slash" do
@@ -79,27 +79,27 @@ describe Puppet::Type.type(:file) do
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
         it "should remove trailing slashes" do
           file[:path] = "//localhost/foo/bar/baz/"
-          file[:path].should == "//localhost/foo/bar/baz"
+          expect(file[:path]).to eq("//localhost/foo/bar/baz")
         end
 
         it "should remove double slashes" do
           file[:path] = "//localhost/foo/bar//baz"
-          file[:path].should == "//localhost/foo/bar/baz"
+          expect(file[:path]).to eq("//localhost/foo/bar/baz")
         end
 
         it "should remove trailing double slashes" do
           file[:path] = "//localhost/foo/bar/baz//"
-          file[:path].should == "//localhost/foo/bar/baz"
+          expect(file[:path]).to eq("//localhost/foo/bar/baz")
         end
 
         it "should remove a trailing slash from a sharename" do
           file[:path] = "//localhost/foo/"
-          file[:path].should == "//localhost/foo"
+          expect(file[:path]).to eq("//localhost/foo")
         end
 
         it "should not modify a sharename" do
           file[:path] = "//localhost/foo"
-          file[:path].should == "//localhost/foo"
+          expect(file[:path]).to eq("//localhost/foo")
         end
       end
     end
@@ -109,20 +109,20 @@ describe Puppet::Type.type(:file) do
     [false, 'false', :false].each do |value|
       it "should disable backup if the value is #{value.inspect}" do
         file[:backup] = value
-        file[:backup].should == false
+        expect(file[:backup]).to eq(false)
       end
     end
 
     [true, 'true', '.puppet-bak'].each do |value|
       it "should use .puppet-bak if the value is #{value.inspect}" do
         file[:backup] = value
-        file[:backup].should == '.puppet-bak'
+        expect(file[:backup]).to eq('.puppet-bak')
       end
     end
 
     it "should use the provided value if it's any other string" do
       file[:backup] = "over there"
-      file[:backup].should == "over there"
+      expect(file[:backup]).to eq("over there")
     end
 
     it "should fail if backup is set to anything else" do
@@ -134,13 +134,13 @@ describe Puppet::Type.type(:file) do
 
   describe "the recurse parameter" do
     it "should default to recursion being disabled" do
-      file[:recurse].should be_false
+      expect(file[:recurse]).to be_falsey
     end
 
     [true, "true", "remote"].each do |value|
       it "should consider #{value} to enable recursion" do
         file[:recurse] = value
-        file[:recurse].should be_true
+        expect(file[:recurse]).to be_truthy
       end
     end
 
@@ -152,7 +152,7 @@ describe Puppet::Type.type(:file) do
     [false, "false"].each do |value|
       it "should consider #{value} to disable recursion" do
         file[:recurse] = value
-        file[:recurse].should be_false
+        expect(file[:recurse]).to be_falsey
       end
     end
   end
@@ -160,12 +160,12 @@ describe Puppet::Type.type(:file) do
   describe "the recurselimit parameter" do
     it "should accept integers" do
       file[:recurselimit] = 12
-      file[:recurselimit].should == 12
+      expect(file[:recurselimit]).to eq(12)
     end
 
     it "should munge string numbers to number numbers" do
       file[:recurselimit] = '12'
-      file[:recurselimit].should == 12
+      expect(file[:recurselimit]).to eq(12)
     end
 
     it "should fail if given a non-number" do
@@ -179,34 +179,34 @@ describe Puppet::Type.type(:file) do
     [true, :true, :yes].each do |value|
       it "should consider #{value} to be true" do
         file[:replace] = value
-        file[:replace].should be_true
+        expect(file[:replace]).to be_truthy
       end
     end
 
     [false, :false, :no].each do |value|
       it "should consider #{value} to be false" do
         file[:replace] = value
-        file[:replace].should be_false
+        expect(file[:replace]).to be_falsey
       end
     end
   end
 
   describe ".instances" do
     it "should return an empty array" do
-      described_class.instances.should == []
+      expect(described_class.instances).to eq([])
     end
   end
 
   describe "#bucket" do
     it "should return nil if backup is off" do
       file[:backup] = false
-      file.bucket.should == nil
+      expect(file.bucket).to eq(nil)
     end
 
     it "should not return a bucket if using a file extension for backup" do
       file[:backup] = '.backup'
 
-      file.bucket.should == nil
+      expect(file.bucket).to eq(nil)
     end
 
     it "should return the default filebucket if using the 'puppet' filebucket" do
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
       bucket = stub('bucket')
       file.stubs(:default_bucket).returns bucket
 
-      file.bucket.should == bucket
+      expect(file.bucket).to eq(bucket)
     end
 
     it "should fail if using a remote filebucket and no catalog exists" do
@@ -235,7 +235,7 @@ describe Puppet::Type.type(:file) do
       filebucket = Puppet::Type.type(:filebucket).new(:name => 'my_bucket')
       catalog.add_resource(filebucket)
 
-      file.bucket.should == filebucket.bucket
+      expect(file.bucket).to eq(filebucket.bucket)
     end
   end
 
@@ -250,30 +250,30 @@ describe Puppet::Type.type(:file) do
       file[:owner] = 1001
       FileTest.stubs(:writable?).with(File.dirname file[:path]).returns true
 
-      file.asuser.should == 1001
+      expect(file.asuser).to eq(1001)
     end
 
     it "should return nil if the desired owner can't write to the parent directory" do
       file[:owner] = 1001
       FileTest.stubs(:writable?).with(File.dirname file[:path]).returns false
 
-      file.asuser.should == nil
+      expect(file.asuser).to eq(nil)
     end
 
     it "should return nil if not managing owner" do
-      file.asuser.should == nil
+      expect(file.asuser).to eq(nil)
     end
   end
 
   describe "#exist?" do
     it "should be considered existent if it can be stat'ed" do
       file.expects(:stat).returns mock('stat')
-      file.must be_exist
+      expect(file).to be_exist
     end
 
     it "should be considered nonexistent if it can not be stat'ed" do
       file.expects(:stat).returns nil
-      file.must_not be_exist
+      expect(file).to_not be_exist
     end
   end
 
@@ -289,7 +289,7 @@ describe Puppet::Type.type(:file) do
 
       file[:recurse] = true
 
-      file.eval_generate.should == [resource]
+      expect(file.eval_generate).to eq([resource])
     end
 
     it "should not recurse if recursion is disabled" do
@@ -297,7 +297,7 @@ describe Puppet::Type.type(:file) do
 
       file[:recurse] = false
 
-      file.eval_generate.should == []
+      expect(file.eval_generate).to eq([])
     end
   end
 
@@ -309,9 +309,9 @@ describe Puppet::Type.type(:file) do
 
       ancestors = file.ancestors
 
-      ancestors.should_not be_empty
+      expect(ancestors).not_to be_empty
       ancestors.reverse.each_with_index do |path,i|
-        path.should == File.join(*pieces[0..i])
+        expect(path).to eq(File.join(*pieces[0..i]))
       end
     end
   end
@@ -327,11 +327,11 @@ describe Puppet::Type.type(:file) do
       FileUtils.touch(path)
       stat1 = file.stat
 
-      file.stat.should equal(stat1)
+      expect(file.stat).to equal(stat1)
 
       file.flush
 
-      file.stat.should_not equal(stat1)
+      expect(file.stat).not_to equal(stat1)
     end
   end
 
@@ -339,17 +339,17 @@ describe Puppet::Type.type(:file) do
     it "should remove a trailing slash from the title to create the path" do
       title = File.expand_path("/abc/\n\tdef/")
       file = described_class.new(:title => title)
-      file[:path].should == title
+      expect(file[:path]).to eq(title)
     end
 
     it "should set a desired 'ensure' value if none is set and 'content' is set" do
       file = described_class.new(:path => path, :content => "/foo/bar")
-      file[:ensure].should == :file
+      expect(file[:ensure]).to eq(:file)
     end
 
     it "should set a desired 'ensure' value if none is set and 'target' is set", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file = described_class.new(:path => path, :target => File.expand_path(__FILE__))
-      file[:ensure].should == :link
+      expect(file[:ensure]).to eq(:link)
     end
   end
 
@@ -362,9 +362,9 @@ describe Puppet::Type.type(:file) do
 
       file.mark_children_for_purging(children)
 
-      children.length.should == 3
+      expect(children.length).to eq(3)
       children.values.each do |child|
-        child[:ensure].should == :absent
+        expect(child[:ensure]).to eq(:absent)
       end
     end
 
@@ -373,7 +373,7 @@ describe Puppet::Type.type(:file) do
 
       file.mark_children_for_purging('foo' => child)
 
-      child[:ensure].should == :present
+      expect(child[:ensure]).to eq(:present)
     end
   end
 
@@ -381,8 +381,8 @@ describe Puppet::Type.type(:file) do
     it "should create a new resource relative to the parent" do
       child = file.newchild('bar')
 
-      child.must be_a(described_class)
-      child[:path].should == File.join(file[:path], 'bar')
+      expect(child).to be_a(described_class)
+      expect(child[:path]).to eq(File.join(file[:path], 'bar'))
     end
 
     {
@@ -397,7 +397,7 @@ describe Puppet::Type.type(:file) do
         # or it wouldn't be copied regardless.
         file = described_class.new(:path => path, param => value)
         child = file.newchild('bar')
-        child[param].should_not == value
+        expect(child[param]).not_to eq(value)
       end
     end
 
@@ -406,13 +406,13 @@ describe Puppet::Type.type(:file) do
 
       child = parent.newchild("my/path")
 
-      child[:owner].should == 'root'
-      child[:group].should == 'wheel'
+      expect(child[:owner]).to eq('root')
+      expect(child[:group]).to eq('wheel')
     end
 
     it "should not copy default values to the new child" do
       child = file.newchild("my/path")
-      child.original_parameters.should_not include(:backup)
+      expect(child.original_parameters).not_to include(:backup)
     end
 
     it "should not copy values to the child which were set by the source" do
@@ -430,19 +430,19 @@ describe Puppet::Type.type(:file) do
 
   describe "#purge?" do
     it "should return false if purge is not set" do
-      file.must_not be_purge
+      expect(file).to_not be_purge
     end
 
     it "should return true if purge is set to true" do
       file[:purge] = true
 
-      file.must be_purge
+      expect(file).to be_purge
     end
 
     it "should return false if purge is set to false" do
       file[:purge] = false
 
-      file.must_not be_purge
+      expect(file).to_not be_purge
     end
   end
 
@@ -486,7 +486,7 @@ describe Puppet::Type.type(:file) do
       two = stub 'two', :[] => "/one/two"
       three = stub 'three', :[] => "/three"
       file.expects(:recurse_local).returns(:one => one, :two => two, :three => three)
-      file.recurse.should == [one, two, three]
+      expect(file.recurse).to eq([one, two, three])
     end
 
     describe "and purging is enabled" do
@@ -499,7 +499,7 @@ describe Puppet::Type.type(:file) do
         file.expects(:recurse_local).returns("local" => local)
 
         file.recurse
-        local[:ensure].should == :absent
+        expect(local[:ensure]).to eq(:absent)
       end
 
       it "should not remove files that exist in the remote repository" do
@@ -512,7 +512,7 @@ describe Puppet::Type.type(:file) do
 
         file.recurse
 
-        remote[:ensure].should_not == :absent
+        expect(remote[:ensure]).not_to eq(:absent)
       end
     end
 
@@ -527,7 +527,7 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource(foo)
       catalog.add_resource(bar)
 
-      file.remove_less_specific_files([foo, bar, baz]).should == [baz]
+      expect(file.remove_less_specific_files([foo, bar, baz])).to eq([baz])
     end
   end
 
@@ -540,7 +540,7 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource(foo)
       catalog.add_resource(bar)
 
-      file.remove_less_specific_files([foo, bar, baz]).should == [baz]
+      expect(file.remove_less_specific_files([foo, bar, baz])).to eq([baz])
     end
 
   end
@@ -548,17 +548,17 @@ describe Puppet::Type.type(:file) do
   describe "#recurse?" do
     it "should be true if recurse is true" do
       file[:recurse] = true
-      file.must be_recurse
+      expect(file).to be_recurse
     end
 
     it "should be true if recurse is remote" do
       file[:recurse] = :remote
-      file.must be_recurse
+      expect(file).to be_recurse
     end
 
     it "should be false if recurse is false" do
       file[:recurse] = false
-      file.must_not be_recurse
+      expect(file).to_not be_recurse
     end
   end
 
@@ -602,21 +602,21 @@ describe Puppet::Type.type(:file) do
       file.stubs(:perform_recursion).returns [@first, @second]
       file.recurse_link("first" => @resource, "second" => file)
 
-      file[:ensure].should == :link
-      file[:target].should == "/my/second"
+      expect(file[:ensure]).to eq(:link)
+      expect(file[:target]).to eq("/my/second")
     end
 
     it "should :ensure to :directory if the file is a directory" do
       file.stubs(:perform_recursion).returns [@first, @second]
       file.recurse_link("first" => file, "second" => @resource)
 
-      file[:ensure].should == :directory
+      expect(file[:ensure]).to eq(:directory)
     end
 
     it "should return a hash with both created and existing resources with the relative paths as the hash keys" do
       file.expects(:perform_recursion).returns [@first, @second]
       file.stubs(:newchild).returns file
-      file.recurse_link("second" => @resource).should == {"second" => @resource, "first" => file}
+      expect(file.recurse_link("second" => @resource)).to eq({"second" => @resource, "first" => file})
     end
   end
 
@@ -633,7 +633,7 @@ describe Puppet::Type.type(:file) do
 
     it "should return an empty hash if the recursion returns nothing" do
       file.expects(:perform_recursion).returns nil
-      file.recurse_local.should == {}
+      expect(file.recurse_local).to eq({})
     end
 
     it "should create a new child resource with each generated metadata instance's relative path" do
@@ -653,7 +653,7 @@ describe Puppet::Type.type(:file) do
     it "should return a hash of the created resources with the relative paths as the hash keys" do
       file.expects(:perform_recursion).returns [@metadata]
       file.expects(:newchild).with("my/file").returns "fiebar"
-      file.recurse_local.should == {"my/file" => "fiebar"}
+      expect(file.recurse_local).to eq({"my/file" => "fiebar"})
     end
 
     it "should set checksum_type to none if this file checksum is none" do
@@ -664,7 +664,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#recurse_remote", :uses_checksums => true do
+  describe "#recurse_remote" do
     let(:my) { File.expand_path('/my') }
 
     before do
@@ -704,7 +704,7 @@ describe Puppet::Type.type(:file) do
     it "should create a new resource for any relative file paths that do not already have a resource" do
       file.stubs(:perform_recursion).returns [@first]
       file.expects(:newchild).with("first").returns @resource
-      file.recurse_remote({}).should == {"first" => @resource}
+      expect(file.recurse_remote({})).to eq({"first" => @resource})
     end
 
     it "should not create a new resource for any relative file paths that do already have a resource" do
@@ -718,18 +718,6 @@ describe Puppet::Type.type(:file) do
       @resource.stubs(:[]=)
       @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
       file.recurse_remote("first" => @resource)
-    end
-
-    # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
-    # filed, and when it's fixed, we'll just fix the whole flow.
-    with_digest_algorithms do
-      it "it should set the checksum type to #{metadata[:digest_algorithm]} if the remote file is a file" do
-        @first.stubs(:ftype).returns "file"
-        file.stubs(:perform_recursion).returns [@first]
-        @resource.stubs(:[]=)
-        @resource.expects(:[]=).with(:checksum, digest_algorithm.intern)
-        file.recurse_remote("first" => @resource)
-      end
     end
 
     it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
@@ -812,7 +800,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#perform_recursion" do
+  describe "#perform_recursion", :uses_checksums => true do
     it "should use Metadata to do its recursion" do
       Puppet::FileServing::Metadata.indirection.expects(:search)
       file.perform_recursion(file[:path])
@@ -825,7 +813,7 @@ describe Puppet::Type.type(:file) do
 
     it "should return the results of the metadata search" do
       Puppet::FileServing::Metadata.indirection.expects(:search).returns "foobar"
-      file.perform_recursion(file[:path]).should == "foobar"
+      expect(file.perform_recursion(file[:path])).to eq("foobar")
     end
 
     it "should pass its recursion value to the search" do
@@ -857,11 +845,19 @@ describe Puppet::Type.type(:file) do
       Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
       file.perform_recursion(file[:path])
     end
+
+    with_digest_algorithms do
+      it "it should pass its 'checksum' setting #{metadata[:digest_algorithm]} to the search" do
+        file[:source] = File.expand_path('/foo')
+        Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:checksum_type] == digest_algorithm.intern }
+        file.perform_recursion(file[:path])
+      end
+    end
   end
 
   describe "#remove_existing" do
     it "should do nothing if the file doesn't exist" do
-      file.remove_existing(:file).should == false
+      expect(file.remove_existing(:file)).to eq(false)
     end
 
     it "should fail if it can't backup the file" do
@@ -876,7 +872,7 @@ describe Puppet::Type.type(:file) do
         file[:force] = false
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
         file.expects(:perform_backup).never
-        file.remove_existing(:file).should == false
+        expect(file.remove_existing(:file)).to eq(false)
       end
 
       it "should backup directories if force is true" do
@@ -886,14 +882,14 @@ describe Puppet::Type.type(:file) do
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
         file.expects(:perform_backup).once.returns(true)
 
-        file.remove_existing(:file).should == true
+        expect(file.remove_existing(:file)).to eq(true)
       end
     end
 
     it "should not do anything if the file is already the right type and not a link" do
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
-      file.remove_existing(:file).should == false
+      expect(file.remove_existing(:file)).to eq(false)
     end
 
     it "should not remove directories and should not invalidate the stat unless force is set" do
@@ -903,8 +899,8 @@ describe Puppet::Type.type(:file) do
 
       file.remove_existing(:file)
 
-      file.instance_variable_get(:@stat).should == nil
-      @logs.should be_any {|log| log.level == :notice and log.message =~ /Not removing directory; use 'force' to override/}
+      expect(file.instance_variable_get(:@stat)).to eq(nil)
+      expect(@logs).to be_any {|log| log.level == :notice and log.message =~ /Not removing directory; use 'force' to override/}
     end
 
     it "should remove a directory if force is set" do
@@ -913,16 +909,16 @@ describe Puppet::Type.type(:file) do
 
       FileUtils.expects(:rmtree).with(file[:path])
 
-      file.remove_existing(:file).should == true
+      expect(file.remove_existing(:file)).to eq(true)
     end
 
     it "should remove an existing file" do
       file.stubs(:perform_backup).returns true
       FileUtils.touch(path)
 
-      file.remove_existing(:directory).should == true
+      expect(file.remove_existing(:directory)).to eq(true)
 
-      Puppet::FileSystem.exist?(file[:path]).should == false
+      expect(Puppet::FileSystem.exist?(file[:path])).to eq(false)
     end
 
     it "should remove an existing link", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
@@ -933,9 +929,9 @@ describe Puppet::Type.type(:file) do
       Puppet::FileSystem.symlink(target, path)
       file[:target] = target
 
-      file.remove_existing(:directory).should == true
+      expect(file.remove_existing(:directory)).to eq(true)
 
-      Puppet::FileSystem.exist?(file[:path]).should == false
+      expect(Puppet::FileSystem.exist?(file[:path])).to eq(false)
     end
 
     it "should fail if the file is not a file, link, or directory" do
@@ -951,8 +947,8 @@ describe Puppet::Type.type(:file) do
 
       Puppet::FileSystem.stubs(:unlink)
 
-      file.remove_existing(:directory).should == true
-      file.instance_variable_get(:@stat).should == :needs_stat
+      expect(file.remove_existing(:directory)).to eq(true)
+      expect(file.instance_variable_get(:@stat)).to eq(:needs_stat)
     end
   end
 
@@ -966,44 +962,44 @@ describe Puppet::Type.type(:file) do
 
   describe "#should_be_file?" do
     it "should have a method for determining if the file should be a normal file" do
-      file.must respond_to(:should_be_file?)
+      expect(file).to respond_to(:should_be_file?)
     end
 
     it "should be a file if :ensure is set to :file" do
       file[:ensure] = :file
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should be a file if :ensure is set to :present and the file exists as a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "file"))
       file[:ensure] = :present
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should not be a file if :ensure is set to something other than :file" do
       file[:ensure] = :directory
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
 
     it "should not be a file if :ensure is set to :present and the file exists but is not a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "directory"))
       file[:ensure] = :present
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
 
     it "should be a file if :ensure is not set and :content is" do
       file[:content] = "foo"
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should be a file if neither :ensure nor :content is set but the file exists as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "file"))
-      file.must be_should_be_file
+      expect(file).to be_should_be_file
     end
 
     it "should not be a file if neither :ensure nor :content is set but the file exists but not as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "directory"))
-      file.must_not be_should_be_file
+      expect(file).to_not be_should_be_file
     end
   end
 
@@ -1020,19 +1016,19 @@ describe Puppet::Type.type(:file) do
     it "should stat the target if it is following links" do
       file[:links] = :follow
 
-      file.stat.ftype.should == 'file'
+      expect(file.stat.ftype).to eq('file')
     end
 
     it "should stat the link if is it not following links" do
       file[:links] = :manage
 
-      file.stat.ftype.should == 'link'
+      expect(file.stat.ftype).to eq('link')
     end
 
     it "should return nil if the file does not exist" do
       file[:path] = make_absolute('/foo/bar/baz/non-existent')
 
-      file.stat.should be_nil
+      expect(file.stat).to be_nil
     end
 
     it "should return nil if the file cannot be stat'ed" do
@@ -1043,7 +1039,7 @@ describe Puppet::Type.type(:file) do
 
       file[:path] = child
 
-      file.stat.should be_nil
+      expect(file.stat).to be_nil
 
       # chmod it back so we can clean it up
       File.chmod(0777, dir)
@@ -1055,15 +1051,15 @@ describe Puppet::Type.type(:file) do
       impossible_child = File.join(regular_file, 'some_file')
 
       file[:path] = impossible_child
-      file.stat.should be_nil
+      expect(file.stat).to be_nil
     end
 
     it "should return the stat instance" do
-      file.stat.should be_a(File::Stat)
+      expect(file.stat).to be_a(File::Stat)
     end
 
     it "should cache the stat instance" do
-      file.stat.should equal(file.stat)
+      expect(file.stat).to equal(file.stat)
     end
   end
 
@@ -1175,17 +1171,21 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not fail if the checksum is correct" do
-      file.instance_eval do
-        parameter(:checksum).stubs(:sum_file).returns('anything!')
-        fail_if_checksum_is_wrong(self[:path], 'anything!').should == nil
-      end
+      expect do
+        file.instance_eval do
+          parameter(:checksum).stubs(:sum_file).returns('anything!')
+          fail_if_checksum_is_wrong(self[:path], 'anything!')
+        end
+      end.not_to raise_error
     end
 
     it "should not fail if the checksum is absent" do
-      file.instance_eval do
-        parameter(:checksum).stubs(:sum_file).returns(nil)
-        fail_if_checksum_is_wrong(self[:path], 'anything!').should == nil
-      end
+      expect do
+        file.instance_eval do
+          parameter(:checksum).stubs(:sum_file).returns(nil)
+          fail_if_checksum_is_wrong(self[:path], 'anything!')
+        end
+      end.not_to raise_error
     end
   end
 
@@ -1203,17 +1203,17 @@ describe Puppet::Type.type(:file) do
     it "should be true if the file has specified content" do
       file[:content] = 'some content'
 
-      file.send(:write_temporary_file?).should be_true
+      expect(file.send(:write_temporary_file?)).to be_truthy
     end
 
     it "should be true if the file has specified source" do
       file[:source] = File.expand_path('/tmp/foo')
 
-      file.send(:write_temporary_file?).should be_true
+      expect(file.send(:write_temporary_file?)).to be_truthy
     end
 
     it "should be false if the file has neither content nor source" do
-      file.send(:write_temporary_file?).should be_false
+      expect(file.send(:write_temporary_file?)).to be_falsey
     end
   end
 
@@ -1248,9 +1248,9 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
-        reqs.size.must == 1
-        reqs[0].source.must == file
-        reqs[0].target.must == link
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(file)
+        expect(reqs[0].target).to eq(link)
       end
 
       it "should require file resource when specified with the ensure property" do
@@ -1259,15 +1259,15 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
-        reqs.size.must == 1
-        reqs[0].source.must == file
-        reqs[0].target.must == link
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(file)
+        expect(reqs[0].target).to eq(link)
       end
 
       it "should not require target if target is not managed", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         link = described_class.new(:path => File.expand_path('/foo'), :ensure => :link, :target => '/bar')
         catalog.add_resource link
-        link.autorequire.size.should == 0
+        expect(link.autorequire.size).to eq(0)
       end
     end
 
@@ -1277,8 +1277,8 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.add_resource dir
         reqs = file.autorequire
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
+        expect(reqs[0].source).to eq(dir)
+        expect(reqs[0].target).to eq(file)
       end
 
       it "should autorequire its nearest ancestor directory" do
@@ -1288,20 +1288,20 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource dir
         catalog.add_resource grandparent
         reqs = file.autorequire
-        reqs.length.must == 1
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
+        expect(reqs.length).to eq(1)
+        expect(reqs[0].source).to eq(dir)
+        expect(reqs[0].target).to eq(file)
       end
 
       it "should not autorequire anything when there is no nearest ancestor directory" do
         catalog.add_resource file
-        file.autorequire.should be_empty
+        expect(file.autorequire).to be_empty
       end
 
       it "should not autorequire its parent dir if its parent dir is itself" do
         file[:path] = File.expand_path('/')
         catalog.add_resource file
-        file.autorequire.should be_empty
+        expect(file.autorequire).to be_empty
       end
 
       describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
@@ -1312,8 +1312,8 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource file
             catalog.add_resource dir
             reqs = file.autorequire
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+            expect(reqs[0].source).to eq(dir)
+            expect(reqs[0].target).to eq(file)
           end
 
           it "should autorequire its nearest ancestor directory" do
@@ -1324,22 +1324,22 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource dir
             catalog.add_resource grandparent
             reqs = file.autorequire
-            reqs.length.must == 1
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+            expect(reqs.length).to eq(1)
+            expect(reqs[0].source).to eq(dir)
+            expect(reqs[0].target).to eq(file)
           end
 
           it "should not autorequire anything when there is no nearest ancestor directory" do
             file = described_class.new(:path => "//localhost/foo/bar/baz/qux")
             catalog.add_resource file
-            file.autorequire.should be_empty
+            expect(file.autorequire).to be_empty
           end
 
           it "should not autorequire its parent dir if its parent dir is itself" do
             file = described_class.new(:path => "//localhost/foo")
             catalog.add_resource file
             puts file.autorequire
-            file.autorequire.should be_empty
+            expect(file.autorequire).to be_empty
           end
         end
       end
@@ -1375,16 +1375,17 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       # I convert them to strings so they display correctly if there's an error.
-      (Puppet::FileSystem.stat(@target).mode & 007777).to_s(8).should == '644'
+      expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('644')
     end
 
     it "should manage the mode of the followed link" do
-      pending("Windows cannot presently manage the mode when following symlinks",
-        :if => Puppet.features.microsoft_windows?) do
+      if Puppet.features.microsoft_windows?
+        skip "Windows cannot presently manage the mode when following symlinks"
+      else
         @link_resource[:links] = :follow
         catalog.apply
 
-        (Puppet::FileSystem.stat(@target).mode & 007777).to_s(8).should == '755'
+        expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('755')
       end
     end
   end
@@ -1457,8 +1458,8 @@ describe Puppet::Type.type(:file) do
 
       report = catalog.apply.report
 
-      report.resource_statuses["File[#{path}]"].should_not be_failed
-      File.read(path).should == 'content'
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(File.read(path)).to eq('content')
     end
 
     it "should not log errors if creating a new file with ensure present and no content" do
@@ -1468,8 +1469,8 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      Puppet::FileSystem.exist?(path).should be_true
-      @logs.should_not be_any {|l| l.level != :notice }
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
+      expect(@logs).not_to be_any {|l| l.level != :notice }
     end
   end
 
@@ -1478,14 +1479,14 @@ describe Puppet::Type.type(:file) do
       file[:source] = File.expand_path('/foo')
       file[:checksum] = :md5lite
 
-      file[:checksum].should == :md5lite
+      expect(file[:checksum]).to eq(:md5lite)
     end
 
     it 'should use the specified checksum when source is last' do
       file[:checksum] = :md5lite
       file[:source] = File.expand_path('/foo')
 
-      file[:checksum].should == :md5lite
+      expect(file[:checksum]).to eq(:md5lite)
     end
   end
 

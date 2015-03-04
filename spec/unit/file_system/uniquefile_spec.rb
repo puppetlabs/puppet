@@ -29,7 +29,7 @@ describe Puppet::FileSystem::Uniquefile do
       file.path
     end
 
-    expect(Puppet::FileSystem.exist?(filename)).to be_false
+    expect(Puppet::FileSystem.exist?(filename)).to be_falsey
   end
 
   it "unlinks the temporary file even if the block raises an error" do
@@ -43,7 +43,7 @@ describe Puppet::FileSystem::Uniquefile do
     rescue
     end
 
-    expect(Puppet::FileSystem.exist?(filename)).to be_false
+    expect(Puppet::FileSystem.exist?(filename)).to be_falsey
   end
 
 

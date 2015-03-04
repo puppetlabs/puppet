@@ -7,7 +7,7 @@ require 'puppet/parameter/value_collection'
 #
 class Puppet::Parameter::Value
   attr_reader :name, :options, :event
-  attr_accessor :block, :call, :method, :required_features, :invalidate_refreshes
+  attr_accessor :block, :method, :required_features, :invalidate_refreshes
 
   # Adds an alias for this value.
   # Makes the given _name_ be an alias for this acceptable value.
@@ -47,8 +47,6 @@ class Puppet::Parameter::Value
     end
 
     @aliases = []
-
-    @call = :instead
   end
 
   # Checks if the given value matches the acceptance rules (literal value, regular expression, or one

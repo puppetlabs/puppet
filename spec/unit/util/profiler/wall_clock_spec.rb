@@ -8,6 +8,6 @@ describe Puppet::Util::Profiler::WallClock do
 
     message = profiler.do_finish(profiler.start(["foo", "bar"], "Testing"), ["foo", "bar"], "Testing")[:msg]
 
-    message.should =~ /took \d\.\d{4} seconds/
+    expect(message).to match(/took \d\.\d{4} seconds/)
   end
 end

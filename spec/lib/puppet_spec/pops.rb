@@ -6,10 +6,10 @@ module PuppetSpec::Pops
     match do |actual|
       actual.diagnostics.index { |i| i.issue == expected } != nil
     end
-    failure_message_for_should do |actual|
+    failure_message do |actual|
       "expected Acceptor[#{actual.diagnostics.collect { |i| i.issue.issue_code }.join(',')}] to contain issue #{expected.issue_code}"
     end
-    failure_message_for_should_not do |actual|
+    failure_message_when_negated do |actual|
       "expected Acceptor[#{actual.diagnostics.collect { |i| i.issue.issue_code }.join(',')}] to not contain issue #{expected.issue_code}"
     end
   end

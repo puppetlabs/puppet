@@ -13,7 +13,7 @@ describe Puppet::Application::Resource do
   describe "in preinit" do
     it "should init extra_params to empty array" do
       @resource_app.preinit
-      @resource_app.extra_params.should == []
+      expect(@resource_app.extra_params).to eq([])
     end
   end
 
@@ -38,7 +38,7 @@ describe Puppet::Application::Resource do
       @resource_app.extra_params = [ :param1 ]
       @resource_app.handle_param("whatever")
 
-      @resource_app.extra_params.should == [ :param1, :whatever ]
+      expect(@resource_app.extra_params).to eq([ :param1, :whatever ])
     end
 
     it "should get a parameter in the printed data if extra_params are passed" do
@@ -68,14 +68,14 @@ describe Puppet::Application::Resource do
     it "should set log level to debug if --debug was passed" do
       @resource_app.options.stubs(:[]).with(:debug).returns(true)
       @resource_app.setup
-      Puppet::Log.level.should == :debug
+      expect(Puppet::Log.level).to eq(:debug)
     end
 
     it "should set log level to info if --verbose was passed" do
       @resource_app.options.stubs(:[]).with(:debug).returns(false)
       @resource_app.options.stubs(:[]).with(:verbose).returns(true)
       @resource_app.setup
-      Puppet::Log.level.should == :info
+      expect(Puppet::Log.level).to eq(:info)
     end
 
   end
@@ -99,13 +99,13 @@ describe Puppet::Application::Resource do
 
     it "should raise an error if no type is given" do
       @resource_app.command_line.stubs(:args).returns([])
-      lambda { @resource_app.main }.should raise_error(RuntimeError, "You must specify the type to display")
+      expect { @resource_app.main }.to raise_error(RuntimeError, "You must specify the type to display")
     end
 
     it "should raise an error if the type is not found" do
       Puppet::Type.stubs(:type).returns(nil)
 
-      lambda { @resource_app.main }.should raise_error(RuntimeError, 'Could not find type mytype')
+      expect { @resource_app.main }.to raise_error(RuntimeError, 'Could not find type mytype')
     end
 
     it "should search for resources" do
@@ -138,7 +138,7 @@ describe Puppet::Application::Resource do
     it "should raise an exception if no file specified" do
       @resource_app.command_line.stubs(:args).returns(['file'])
 
-      lambda { @resource_app.main }.should raise_error(RuntimeError, /Listing all file instances is not supported/)
+      expect { @resource_app.main }.to raise_error(RuntimeError, /Listing all file instances is not supported/)
     end
 
     it "should output a file resource when given a file path" do
@@ -148,7 +148,7 @@ describe Puppet::Application::Resource do
 
       @resource_app.command_line.stubs(:args).returns(['file', path])
       @resource_app.expects(:puts).with do |args|
-        args.should =~ /file \{ '#{Regexp.escape(path)}'/m
+        expect(args).to match(/file \{ '#{Regexp.escape(path)}'/m)
       end
 
       @resource_app.main

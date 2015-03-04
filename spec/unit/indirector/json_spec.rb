@@ -19,19 +19,19 @@ describe Puppet::Indirector::JSON do
     it "uses the :server_datadir setting if this is the master" do
       Puppet.run_mode.stubs(:master?).returns(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.json')
-      subject.path('testing').should == expected
+      expect(subject.path('testing')).to eq(expected)
     end
 
     it "uses the :client_datadir setting if this is not the master" do
       Puppet.run_mode.stubs(:master?).returns(false)
       expected = File.join(Puppet[:client_datadir], 'indirector_testing', 'testing.json')
-      subject.path('testing').should == expected
+      expect(subject.path('testing')).to eq(expected)
     end
 
     it "overrides the default extension with a supplied value" do
       Puppet.run_mode.stubs(:master?).returns(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.not-json')
-      subject.path('testing', '.not-json').should == expected
+      expect(subject.path('testing', '.not-json')).to eq(expected)
     end
 
     ['../foo', '..\\foo', './../foo', '.\\..\\foo',
@@ -66,14 +66,14 @@ describe Puppet::Indirector::JSON do
 
     it "data saves and then loads again correctly" do
       subject.save(indirection.request(:save, 'example', model.new('banana')))
-      subject.find(indirection.request(:find, 'example', nil)).value.should == 'banana'
+      expect(subject.find(indirection.request(:find, 'example', nil)).value).to eq('banana')
     end
 
     context "#find" do
       let :request do indirection.request(:find, 'example', nil) end
 
       it "returns nil if the file doesn't exist" do
-        subject.find(request).should be_nil
+        expect(subject.find(request)).to be_nil
       end
 
       it "raises a descriptive error when the file can't be read" do
@@ -97,8 +97,8 @@ describe Puppet::Indirector::JSON do
       it "should return an instance of the indirected object when valid" do
         with_content(model.new(1).to_pson) do
           instance = subject.find(request)
-          instance.should be_an_instance_of model
-          instance.value.should == 1
+          expect(instance).to be_an_instance_of model
+          expect(instance.value).to eq(1)
         end
       end
     end
@@ -110,7 +110,7 @@ describe Puppet::Indirector::JSON do
       it "should save the instance of the request as JSON to disk" do
         subject.save(request)
         content = File.read(file)
-        content.should =~ /"value"\s*:\s*4/
+        expect(content).to match(/"value"\s*:\s*4/)
       end
 
       it "should create the indirection directory if required" do
@@ -119,7 +119,7 @@ describe Puppet::Indirector::JSON do
 
         subject.save(request)
 
-        File.should be_directory(target)
+        expect(File).to be_directory(target)
       end
     end
 
@@ -130,12 +130,12 @@ describe Puppet::Indirector::JSON do
         with_content('hello') do
           subject.destroy(request)
         end
-        Puppet::FileSystem.exist?(file).should be_false
+        expect(Puppet::FileSystem.exist?(file)).to be_falsey
       end
 
       it "silently succeeds when files don't exist" do
         Puppet::FileSystem.unlink(file) rescue nil
-        subject.destroy(request).should be_true
+        expect(subject.destroy(request)).to be_truthy
       end
 
       it "raises an informative error for other failures" do
@@ -166,27 +166,27 @@ describe Puppet::Indirector::JSON do
     end
 
     it "returns an empty array when nothing matches the key as a glob" do
-      subject.search(request('*')).should == []
+      expect(subject.search(request('*'))).to eq([])
     end
 
     it "returns an array with one item if one item matches" do
       create_file('foo.json', 'foo')
       create_file('bar.json', 'bar')
-      subject.search(request('f*')).map(&:value).should == ['foo']
+      expect(subject.search(request('f*')).map(&:value)).to eq(['foo'])
     end
 
     it "returns an array of items when more than one item matches" do
       create_file('foo.json', 'foo')
       create_file('bar.json', 'bar')
       create_file('baz.json', 'baz')
-      subject.search(request('b*')).map(&:value).should =~ ['bar', 'baz']
+      expect(subject.search(request('b*')).map(&:value)).to match_array(['bar', 'baz'])
     end
 
     it "only items with the .json extension" do
       create_file('foo.json', 'foo-json')
       create_file('foo.pson', 'foo-pson')
       create_file('foo.json~', 'foo-backup')
-      subject.search(request('f*')).map(&:value).should == ['foo-json']
+      expect(subject.search(request('f*')).map(&:value)).to eq(['foo-json'])
     end
   end
 end

@@ -45,7 +45,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   describe ".instances" do
 
     it "should have an instances method" do
-      described_class.should respond_to(:instances)
+      expect(described_class).to respond_to(:instances)
     end
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
@@ -59,7 +59,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       end
 
       Puppet::FileSystem.stubs(:symlink?).returns false # stub('file', :symlink? => false)
-      described_class.instances.map(&:name).should == [
+      expect(described_class.instances.map(&:name)).to eq([
         'alsasound',
         'bootmisc',
         'hwclock',
@@ -68,7 +68,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         'vixie-cron',
         'wpa_supplicant',
         'xdm-setup'
-      ]
+      ])
     end
   end
 
@@ -115,21 +115,21 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     ['hostname', 'net.lo', 'procfs'].each do |service|
       it "should consider service #{service} in runlevel boot as enabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :true
+        expect(provider.enabled?).to eq(:true)
       end
     end
 
     ['alsasound', 'xdm', 'netmount'].each do |service|
       it "should consider service #{service} in runlevel default as enabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :true
+        expect(provider.enabled?).to eq(:true)
       end
     end
 
     ['rsyncd', 'lighttpd', 'mysql'].each do |service|
       it "should consider unused service #{service} as disabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
-        provider.enabled?.should == :false
+        expect(provider.enabled?).to eq(:false)
       end
     end
 
@@ -166,7 +166,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the status command returns with a zero exitcode" do
@@ -174,7 +174,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -183,14 +183,14 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:getpid).returns 1000
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if no pid can be found" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:getpid).returns nil
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
     end
 
@@ -200,7 +200,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if <initscript> status exits with a non-zero exitcode" do
@@ -208,7 +208,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
     end
   end

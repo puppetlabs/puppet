@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-FACTS" "8" "December 2014" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-FACTS" "8" "February 2015" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-facts\fR \- Retrieve and store facts\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts find [\-\-terminus TERMINUS] [\-\-extra HASH] \fInode_certname\fR
+puppet facts [\-\-terminus TERMINUS] [\-\-extra HASH] [\fInode_certname\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -107,7 +107,7 @@ API only: create or overwrite an object\. As the Faces framework does not curren
 Get facts from the local system:
 .
 .P
-$ puppet facts find x
+$ puppet facts find
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:

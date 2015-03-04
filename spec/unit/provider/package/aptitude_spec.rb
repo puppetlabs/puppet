@@ -7,7 +7,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
     type.new(:name => 'faff', :provider => :aptitude, :source => '/tmp/faff.deb')
   end
 
-  it { should be_versionable }
+  it { is_expected.to be_versionable }
 
   context "when retrieving ensure" do
     let(:dpkgquery_path) { '/bin/dpkg-query' }

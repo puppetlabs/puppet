@@ -6,19 +6,19 @@ describe Puppet::Settings::TerminusSetting do
 
   describe "#munge" do
     it "converts strings to symbols" do
-      setting.munge("string").should == :string
+      expect(setting.munge("string")).to eq(:string)
     end
 
     it "converts '' to nil" do
-      setting.munge('').should be_nil
+      expect(setting.munge('')).to be_nil
     end
 
     it "preserves symbols" do
-      setting.munge(:symbol).should == :symbol
+      expect(setting.munge(:symbol)).to eq(:symbol)
     end
 
     it "preserves nil" do
-      setting.munge(nil).should be_nil
+      expect(setting.munge(nil)).to be_nil
     end
 
     it "does not allow unknown types through" do

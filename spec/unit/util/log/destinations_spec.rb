@@ -10,7 +10,7 @@ describe Puppet::Util::Log.desttypes[:report] do
   end
 
   it "should require a report at initialization" do
-    @dest.new("foo").report.should == "foo"
+    expect(@dest.new("foo").report).to eq("foo")
   end
 
   it "should send new messages to the report" do
@@ -34,17 +34,17 @@ describe Puppet::Util::Log.desttypes[:file] do
   end
 
   it "should default to autoflush false" do
-    @class.new(tmpfile('log')).autoflush.should == true
+    expect(@class.new(tmpfile('log')).autoflush).to eq(true)
   end
 
   describe "when matching" do
     shared_examples_for "file destination" do
       it "should match an absolute path" do
-        @class.match?(abspath).should be_true
+        expect(@class.match?(abspath)).to be_truthy
       end
 
       it "should not match a relative path" do
-        @class.match?(relpath).should be_false
+        expect(@class.match?(relpath)).to be_falsey
       end
     end
 
@@ -119,7 +119,7 @@ describe Puppet::Util::Log.desttypes[:syslog] do
     it "should not be a suitable log destination" do
       Puppet.features.stubs(:syslog?).returns(false)
 
-      klass.suitable?(:syslog).should be_false
+      expect(klass.suitable?(:syslog)).to be_falsey
     end
   end
 end
@@ -134,12 +134,12 @@ describe Puppet::Util::Log.desttypes[:logstash_event] do
     it "format should fix the hash to have the correct structure" do
       dest = described_class.new
       result = dest.format(@msg)
-      result["version"].should == 1
-      result["level"].should   == :info
-      result["message"].should == "So long, and thanks for all the fish."
-      result["source"].should  == "a dolphin"
+      expect(result["version"]).to eq(1)
+      expect(result["level"]).to   eq(:info)
+      expect(result["message"]).to eq("So long, and thanks for all the fish.")
+      expect(result["source"]).to  eq("a dolphin")
       # timestamp should be within 10 seconds
-      Time.parse(result["@timestamp"]).should >= ( Time.now - 10 )
+      expect(Time.parse(result["@timestamp"])).to be >= ( Time.now - 10 )
     end
 
     it "format returns a structure that can be converted to json" do
@@ -159,41 +159,35 @@ end
 describe Puppet::Util::Log.desttypes[:console] do
   let (:klass) { Puppet::Util::Log.desttypes[:console] }
 
-  describe "when color is available" do
-    before :each do
-      subject.stubs(:console_has_color?).returns(true)
-    end
+  it "should support color output" do
+    Puppet[:color] = true
+    expect(subject.colorize(:red, 'version')).to eq("\e[0;31mversion\e[0m")
+  end
 
-    it "should support color output" do
-      Puppet[:color] = true
-      subject.colorize(:red, 'version').should == "\e[0;31mversion\e[0m"
-    end
+  it "should withhold color output when not appropriate" do
+    Puppet[:color] = false
+    expect(subject.colorize(:red, 'version')).to eq("version")
+  end
 
-    it "should withhold color output when not appropriate" do
-      Puppet[:color] = false
-      subject.colorize(:red, 'version').should == "version"
-    end
+  it "should handle multiple overlapping colors in a stack-like way" do
+    Puppet[:color] = true
+    vstring = subject.colorize(:red, 'version')
+    expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m")
+  end
 
-    it "should handle multiple overlapping colors in a stack-like way" do
-      Puppet[:color] = true
-      vstring = subject.colorize(:red, 'version')
-      subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m"
-    end
+  it "should handle resets in a stack-like way" do
+    Puppet[:color] = true
+    vstring = subject.colorize(:reset, 'version')
+    expect(subject.colorize(:green, "(#{vstring})")).to eq("\e[0;32m(\e[mversion\e[0;32m)\e[0m")
+  end
 
-    it "should handle resets in a stack-like way" do
-      Puppet[:color] = true
-      vstring = subject.colorize(:reset, 'version')
-      subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[mversion\e[0;32m)\e[0m"
-    end
+  it "should include the log message's source/context in the output when available" do
+    Puppet[:color] = false
+    $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
 
-    it "should include the log message's source/context in the output when available" do
-      Puppet[:color] = false
-      $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
-
-      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
-      dest = klass.new
-      dest.handle(msg)
-    end
+    msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
+    dest = klass.new
+    dest.handle(msg)
   end
 end
 
@@ -212,7 +206,7 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
   end
 
   it "supports the eventlog feature" do
-    expect(Puppet.features.eventlog?).to be_true
+    expect(Puppet.features.eventlog?).to be_truthy
   end
 
   it "logs to the Application event log" do

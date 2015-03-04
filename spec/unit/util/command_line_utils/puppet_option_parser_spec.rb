@@ -76,7 +76,7 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
 
     option_parser.parse(args)
 
-    args.length.should == 1
+    expect(args.length).to eq(1)
   end
 
   # The ruby stdlib OptionParser has an awesome "feature" that you cannot disable, whereby if
@@ -124,6 +124,6 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
 
     option_parser.parse(arguments)
 
-    seen_value.should == expected_value
+    expect(seen_value).to eq(expected_value)
   end
 end

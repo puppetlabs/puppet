@@ -85,7 +85,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     expect(func.call({}, 10,20)).to eql(10)
   end
 
@@ -93,7 +93,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
@@ -108,7 +108,7 @@ actual:
     f = create_min_function_class()
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
-    expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
@@ -149,7 +149,7 @@ actual:
       f = create_min_function_class_using_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10, 10, 10)
       end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
@@ -164,7 +164,7 @@ actual:
       f = create_function_with_optionals_and_varargs()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       signature = 'Any x, Any y, Any a?, Any b?, Any c{0,}'
       expect do
         func.call({}, 10)
@@ -180,7 +180,7 @@ actual:
       f = create_function_with_optionals_and_varargs_via_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10)
       end.to raise_error(ArgumentError,
@@ -191,6 +191,13 @@ actual:
   min(Integer) - arg count {1}")
     end
 
+    it 'a function can use inexact argument mapping' do
+      f = create_function_with_inexact_dispatch
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 3,4,5)).to eql([Fixnum, Fixnum, Fixnum])
+      expect(func.call({}, 'Apple', 'Banana')).to eql([String, String])
+    end
+
     it 'a function can be created using dispatch and called' do
       f = create_min_function_class_disptaching_to_two_methods()
       func = f.new(:closure_scope, :loader)
@@ -198,11 +205,19 @@ actual:
       expect(func.call({}, 'Apple', 'Banana')).to eql('Apple')
     end
 
+    it 'a function can not be created with parameters declared after a repeated parameter' do
+      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 'Parameters cannot be added after a repeated parameter')
+    end
+
+    it 'a function can not be created with required parameters declared after optional ones' do
+      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
+    end
+
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
       f = create_min_function_class_disptaching_to_two_methods()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10, 10, 10)
       end.to raise_error(ArgumentError,
@@ -273,15 +288,12 @@ actual:
 
     context 'supports lambdas' do
       it 'such that, a required block can be defined and given as an argument' do
-        # use a Function as callable
-        the_callable = create_min_function_class().new(:closure_scope, :loader)
         the_function = create_function_with_required_block_all_defaults().new(:closure_scope, :loader)
-        result = the_function.call({}, 10, the_callable)
-        expect(result).to be(the_callable)
+        result = the_function.call({}, 7) { |a,b| a < b ? a : b }
+        expect(result).to eq(7)
       end
 
       it 'such that, a missing required block when called raises an error' do
-        # use a Function as callable
         the_function = create_function_with_required_block_all_defaults().new(:closure_scope, :loader)
         expect do
           the_function.call({}, 10)
@@ -294,17 +306,19 @@ actual:
       end
 
       it 'such that, an optional block can be defined and given as an argument' do
-        # use a Function as callable
-        the_callable = create_min_function_class().new(:closure_scope, :loader)
         the_function = create_function_with_optional_block_all_defaults().new(:closure_scope, :loader)
-        result = the_function.call({}, 10, the_callable)
-        expect(result).to be(the_callable)
+        result = the_function.call({}, 4) { |a,b| a < b ? a : b }
+        expect(result).to eql(4)
       end
 
       it 'such that, an optional block can be omitted when called and gets the value nil' do
-        # use a Function as callable
         the_function = create_function_with_optional_block_all_defaults().new(:closure_scope, :loader)
-        expect(the_function.call({}, 10)).to be_nil
+        expect(the_function.call({}, 2)).to be_nil
+      end
+
+      it 'such that, a scope can be injected and a block can be used' do
+        the_function = create_function_with_scope_required_block_all_defaults().new(:closure_scope, :loader)
+        expect(the_function.call({}, 1) { |a,b| a < b ? a : b }).to eql(1)
       end
     end
 
@@ -314,14 +328,14 @@ actual:
         signatures = fc.signatures
         expect(signatures.size).to eql(1)
         signature = signatures[0]
-        expect(signature.last_captures_rest?).to be_true
+        expect(signature.last_captures_rest?).to be_truthy
       end
 
       it 'about optional and required parameters' do
         fc = create_function_with_optionals_and_varargs
         signature = fc.signatures[0]
         expect(signature.args_range).to eql( [2, Float::INFINITY ] )
-        expect(signature.infinity?(signature.args_range[1])).to be_true
+        expect(signature.infinity?(signature.args_range[1])).to be_truthy
       end
 
       it 'about block not being allowed' do
@@ -445,9 +459,9 @@ actual:
             # block called 'the_block', and using "all_callables"
             required_block_param #(all_callables(), 'the_block')
           end
-          def test(x, block)
+          def test(x)
             # call the block with x
-            block.call(x)
+            yield(x)
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)
@@ -544,13 +558,54 @@ actual:
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
-        param 'Numeric', :a
-        param 'Numeric', :b
-        param 'Numeric', :c
-        arg_count 2, :default
+        optional_param 'Numeric', :a
+        optional_param 'Numeric', :b
+        repeated_param 'Numeric', :c
       end
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_inexact_dispatch
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        param 'Numeric', :x
+        param 'Numeric', :y
+        repeated_param 'Numeric', :z
+      end
+      dispatch :t1 do
+        param 'String', :x
+        param 'String', :y
+        repeated_param 'String', :z
+      end
+      def t1(first, *x)
+        [first.class, *x.map {|e|e.class}]
+      end
+    end
+  end
+
+  def create_function_with_rq_after_opt
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        optional_param 'Numeric', :x
+        param 'Numeric', :y
+      end
+      def t1(*x)
+        x
+      end
+    end
+  end
+
+  def create_function_with_param_after_repeated
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        repeated_param 'Numeric', :x
+        param 'Numeric', :y
+      end
+      def t1(*x)
+        x
       end
     end
   end
@@ -592,11 +647,24 @@ actual:
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
+        block_param
+      end
+      def test(x)
+        yield(8,x)
+      end
+    end
+  end
+
+  def create_function_with_scope_required_block_all_defaults
+    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+      dispatch :test do
+        scope_param
+        param 'Integer', :x
+        # use defaults, any callable, name is 'block'
         required_block_param
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(scope, x)
+        yield(3,x)
       end
     end
   end
@@ -608,9 +676,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param :the_block
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -621,9 +688,8 @@ actual:
         param 'Integer', :x
         required_block_param
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -635,9 +701,8 @@ actual:
         # use defaults, any callable, name is 'block'
         required_block_param('Callable', :the_block)
       end
-      def test(x, block)
-        # returns the block to make it easy to test what it got when called
-        block
+      def test(x)
+        yield
       end
     end
   end
@@ -649,10 +714,8 @@ actual:
         # use defaults, any callable, name is 'block'
         optional_block_param
       end
-      def test(x, block=nil)
-        # returns the block to make it easy to test what it got when called
-        # a default of nil must be used or the call will fail with a missing parameter
-        block
+      def test(x)
+        yield(5,x) if block_given?
       end
     end
   end

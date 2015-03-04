@@ -79,77 +79,77 @@ describe 'The bindings checker' do
 
   it 'should complain about missing producer and type' do
     validate(binding())
-    acceptor.should have_issue(Issues::MISSING_PRODUCER)
-    acceptor.should have_issue(Issues::MISSING_TYPE)
+    expect(acceptor).to have_issue(Issues::MISSING_PRODUCER)
+    expect(acceptor).to have_issue(Issues::MISSING_TYPE)
   end
 
   context 'when checking array multibinding' do
     it 'should complain about non array producers' do
       validate(bad_array_multibinding())
-      acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
+      expect(acceptor).to have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
     end
   end
 
   context 'when checking hash multibinding' do
     it 'should complain about non hash producers' do
       validate(bad_hash_multibinding())
-      acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
+      expect(acceptor).to have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
     end
   end
 
   context 'when checking bindings' do
     it 'should not accept zero bindings' do
       validate(bindings())
-      acceptor.should have_issue(Issues::MISSING_BINDINGS)
+      expect(acceptor).to have_issue(Issues::MISSING_BINDINGS)
     end
 
     it 'should accept non-zero bindings' do
       validate(bindings(ok_binding))
-      acceptor.errors_or_warnings?.should() == false
+      expect(acceptor.errors_or_warnings?).to eq(false)
     end
 
     it 'should check contained bindings' do
       validate(bindings(bad_array_multibinding()))
-      acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
+      expect(acceptor).to have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
     end
   end
 
   context 'when checking named bindings' do
     it 'should accept named bindings' do
       validate(named_bindings('garfield', ok_binding))
-      acceptor.errors_or_warnings?.should() == false
+      expect(acceptor.errors_or_warnings?).to eq(false)
     end
 
     it 'should not accept unnamed bindings' do
       validate(named_bindings(nil, ok_binding))
-      acceptor.should have_issue(Issues::MISSING_BINDINGS_NAME)
+      expect(acceptor).to have_issue(Issues::MISSING_BINDINGS_NAME)
     end
 
     it 'should do generic bindings check' do
       validate(named_bindings('garfield'))
-      acceptor.should have_issue(Issues::MISSING_BINDINGS)
+      expect(acceptor).to have_issue(Issues::MISSING_BINDINGS)
     end
   end
 
   context 'when checking layered bindings' do
     it 'should not accept zero layers' do
       validate(layered_bindings())
-      acceptor.should have_issue(Issues::MISSING_LAYERS)
+      expect(acceptor).to have_issue(Issues::MISSING_LAYERS)
     end
 
     it 'should accept non-zero layers' do
       validate(layered_bindings(layer('foo', named_bindings('bar', ok_binding))))
-      acceptor.errors_or_warnings?.should() == false
+      expect(acceptor.errors_or_warnings?).to eq(false)
     end
 
     it 'should not accept unnamed layers' do
       validate(layered_bindings(layer(nil, named_bindings('bar', ok_binding))))
-      acceptor.should have_issue(Issues::MISSING_LAYER_NAME)
+      expect(acceptor).to have_issue(Issues::MISSING_LAYER_NAME)
     end
 
     it 'should accept layers without bindings' do
       validate(layered_bindings(layer('foo')))
-      acceptor.should_not have_issue(Issues::MISSING_BINDINGS_IN_LAYER)
+      expect(acceptor).not_to have_issue(Issues::MISSING_BINDINGS_IN_LAYER)
     end
   end
 end

@@ -8,13 +8,13 @@
 # Default-Stop:      0 1 6
 ### END INIT INFO
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/puppet
+PATH=/opt/puppetlabs/puppet/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/opt/puppetlabs/puppet/bin/puppet
 DAEMON_OPTS=""
 NAME="agent"
 PROCNAME="puppet"
 DESC="puppet agent"
-PIDFILE="/var/run/puppet/${NAME}.pid"
+PIDFILE="/var/run/puppetlabs/${NAME}.pid"
 
 test -x $DAEMON || exit 0
 
@@ -47,6 +47,13 @@ start_puppet_agent() {
 stop_puppet_agent() {
     start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile $PIDFILE --name $PROCNAME
     rm -f "$PIDFILE"
+}
+
+restart_puppet_agent() {
+    log_begin_msg "Restarting $DESC"
+    stop_puppet_agent
+    start_puppet_agent
+    log_end_msg $?
 }
 
 status_puppet_agent() {
@@ -107,13 +114,15 @@ case "$1" in
         status_puppet_agent
     ;;
     restart|force-reload)
-        log_begin_msg "Restarting $DESC"
-        stop_puppet_agent
-        start_puppet_agent
-        log_end_msg $?
+        restart_puppet_agent
+    ;;
+    condrestart)
+        if status_puppet_agent >/dev/null 2>&1; then
+            restart_puppet_agent
+        fi
     ;;
     *)
-        echo "Usage: $0 {start|stop|status|restart|force-reload|reload}" >&2
+        echo "Usage: $0 {start|stop|status|restart|condrestart|force-reload|reload}" >&2
         exit 1
     ;;
 esac

@@ -40,25 +40,21 @@ class Puppet::Pops::Functions::Function
   # is defined) is available via the method `closure_scope`).
   #
   # @api public
-  def call(scope, *args)
-    self.class.dispatcher.dispatch(self, scope, args)
+  def call(scope, *args, &block)
+    self.class.dispatcher.dispatch(self, scope, args, &block)
   end
 
   # Allows the implementation of a function to call other functions by name. The callable functions
-  # are those visible to the same loader that loaded this function (the calling function).
+  # are those visible to the same loader that loaded this function (the calling function). The
+  # referenced function is called with the calling functions closure scope as the caller's scope.
+  #
+  # @param function_name [String] The name of the function
+  # @param *args [Object] splat of arguments
+  # @return [Object] The result returned by the called function
   #
   # @api public
-  def call_function(function_name, *args)
-    if the_loader = loader
-      func = the_loader.load(:function, function_name)
-      if func
-        return func.call(closure_scope, *args)
-      end
-    end
-    # Raise a generic error to allow upper layers to fill in the details about where in a puppet manifest this
-    # error originates. (Such information is not available here).
-    #
-    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
+  def call_function(function_name, *args, &block)
+    internal_call_function(closure_scope, function_name, args, &block)
   end
 
   # The dispatcher for the function
@@ -74,4 +70,40 @@ class Puppet::Pops::Functions::Function
   def self.signatures
     @dispatcher.signatures
   end
+
+  protected
+
+  # Allows the implementation of a function to call other functions by name and pass the caller
+  # scope. The callable functions are those visible to the same loader that loaded this function
+  # (the calling function).
+  #
+  # @param scope [Puppet::Parser::Scope] The caller scope
+  # @param function_name [String] The name of the function
+  # @param args [Array] array of arguments
+  # @return [Object] The result returned by the called function
+  #
+  # @api public
+  def internal_call_function(scope, function_name, args, &block)
+
+    the_loader = loader
+    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - no loader specified" unless the_loader
+
+    func = the_loader.load(:function, function_name)
+    return func.call(scope, *args, &block) if func
+
+    # Check if a 3x function is present. Raise a generic error if it's not to allow upper layers to fill in the details
+    # about where in a puppet manifest this error originates. (Such information is not available here).
+    loader_scope = closure_scope
+    func_3x = Puppet::Parser::Functions.function(function_name, loader_scope.environment) if loader_scope.is_a?(Puppet::Parser::Scope)
+    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found" unless func_3x
+
+    # Call via 3x API
+    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
+    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, loader_scope, ''), &block)
+
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
+  end
+
 end

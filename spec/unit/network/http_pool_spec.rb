@@ -11,9 +11,9 @@ describe Puppet::Network::HttpPool do
   describe "when managing http instances" do
     it "should return an http instance created with the passed host and port" do
       http = Puppet::Network::HttpPool.http_instance("me", 54321)
-      http.should be_an_instance_of Puppet::Network::HTTP::Connection
-      http.address.should == 'me'
-      http.port.should    == 54321
+      expect(http).to be_an_instance_of Puppet::Network::HTTP::Connection
+      expect(http.address).to eq('me')
+      expect(http.port).to    eq(54321)
     end
 
     it "should support using an alternate http client implementation" do
@@ -29,21 +29,21 @@ describe Puppet::Network::HttpPool do
         orig_class = Puppet::Network::HttpPool.http_client_class
         Puppet::Network::HttpPool.http_client_class = FooClient
         http = Puppet::Network::HttpPool.http_instance("me", 54321)
-        http.should be_an_instance_of FooClient
-        http.host.should == 'me'
-        http.port.should == 54321
+        expect(http).to be_an_instance_of FooClient
+        expect(http.host).to eq('me')
+        expect(http.port).to eq(54321)
       ensure
         Puppet::Network::HttpPool.http_client_class = orig_class
       end
     end
 
     it "should enable ssl on the http instance by default" do
-      Puppet::Network::HttpPool.http_instance("me", 54321).should be_use_ssl
+      expect(Puppet::Network::HttpPool.http_instance("me", 54321)).to be_use_ssl
     end
 
     it "can set ssl using an option" do
-      Puppet::Network::HttpPool.http_instance("me", 54321, false).should_not be_use_ssl
-      Puppet::Network::HttpPool.http_instance("me", 54321, true).should be_use_ssl
+      expect(Puppet::Network::HttpPool.http_instance("me", 54321, false)).not_to be_use_ssl
+      expect(Puppet::Network::HttpPool.http_instance("me", 54321, true)).to be_use_ssl
     end
 
     describe 'peer verification' do
@@ -91,8 +91,8 @@ describe Puppet::Network::HttpPool do
     end
 
     it "should not cache http instances" do
-      Puppet::Network::HttpPool.http_instance("me", 54321).
-        should_not equal(Puppet::Network::HttpPool.http_instance("me", 54321))
+      expect(Puppet::Network::HttpPool.http_instance("me", 54321)).
+        not_to equal(Puppet::Network::HttpPool.http_instance("me", 54321))
     end
   end
 end

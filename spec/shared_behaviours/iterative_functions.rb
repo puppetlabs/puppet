@@ -5,7 +5,7 @@ shared_examples_for 'all iterative functions hash handling' do |func|
       {a=>1}.#{func} |$v| { notify { "${v[0]} ${v[1]}": } }
     MANIFEST
 
-    catalog.resource(:notify, "a 1").should_not be_nil
+    expect(catalog.resource(:notify, "a 1")).not_to be_nil
   end
 end
 

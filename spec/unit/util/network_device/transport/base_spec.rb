@@ -30,12 +30,12 @@ describe Puppet::Util::NetworkDevice::Transport::Base do
 
     it "should yield telnet output to the given block" do
       @transport.expects(:expect).yields("output")
-      @transport.command("line") { |out| out.should == "output" }
+      @transport.command("line") { |out| expect(out).to eq("output") }
     end
 
     it "should return telnet output to the caller" do
       @transport.expects(:expect).returns("output")
-      @transport.command("line").should == "output"
+      expect(@transport.command("line")).to eq("output")
     end
   end
 end

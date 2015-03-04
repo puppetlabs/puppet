@@ -24,11 +24,14 @@ class Puppet::Pops::Visitor
 
   # Visit the configured receiver
   def visit(thing, *args)
-    visit_this(@receiver, thing, *args)
+    visit_this(@receiver, thing, args)
   end
 
+  DOUBLE_COLON = '::'
+  NO_ARGS = [].freeze
+
   # Visit an explicit receiver
-  def visit_this(receiver, thing, *args)
+  def visit_this(receiver, thing, args)
     raise "Visitor Error: Too few arguments passed. min = #{@min_args}" unless args.length >= @min_args
     if @max_args
       raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
@@ -37,7 +40,7 @@ class Puppet::Pops::Visitor
       return receiver.send(method_name, thing, *args)
     else
       thing.class.ancestors().each do |ancestor|
-        method_name = :"#{@message}_#{ancestor.name.split(/::/).last}"
+        method_name = :"#{@message}_#{ancestor.name.split(DOUBLE_COLON).last}"
         next unless receiver.respond_to?(method_name, true)
         @cache[thing.class] = method_name
         return receiver.send(method_name, thing, *args)
@@ -53,7 +56,7 @@ class Puppet::Pops::Visitor
     if method_name = @cache[thing.class]
       return receiver.send(method_name, thing)
     end
-    visit_this(receiver, thing)
+    visit_this(receiver, thing, NO_ARGS)
   end
 
   # Visit an explicit receiver with 1 args
@@ -63,7 +66,7 @@ class Puppet::Pops::Visitor
     if method_name = @cache[thing.class]
       return receiver.send(method_name, thing, arg)
     end
-    visit_this(receiver, thing, arg)
+    visit_this(receiver, thing, [arg])
   end
 
   # Visit an explicit receiver with 2 args
@@ -73,7 +76,7 @@ class Puppet::Pops::Visitor
     if method_name = @cache[thing.class]
       return receiver.send(method_name, thing, arg1, arg2)
     end
-    visit_this(receiver, thing, arg1, arg2)
+    visit_this(receiver, thing, [arg1, arg2])
   end
 
   # Visit an explicit receiver with 3 args
@@ -83,7 +86,7 @@ class Puppet::Pops::Visitor
     if method_name = @cache[thing.class]
       return receiver.send(method_name, thing, arg1, arg2, arg3)
     end
-    visit_this(receiver, thing, arg1, arg2, arg3)
+    visit_this(receiver, thing, [arg1, arg2, arg3])
   end
 
 end

@@ -5,7 +5,7 @@ require 'puppet/provider/exec'
 describe Puppet::Provider::Exec do
   describe "#extractexe" do
     it "should return the first element of an array" do
-      subject.extractexe(['one', 'two']).should == 'one'
+      expect(subject.extractexe(['one', 'two'])).to eq('one')
     end
 
     {
@@ -27,7 +27,7 @@ describe Puppet::Provider::Exec do
       ['', ' and args', ' "and args"', " 'and args'"].each do |args|
         command = base_command + args
         it "should extract #{exe.inspect} from #{command.inspect}" do
-          subject.extractexe(command).should == exe
+          expect(subject.extractexe(command)).to eq(exe)
         end
       end
     end

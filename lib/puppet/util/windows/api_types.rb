@@ -42,6 +42,7 @@ module Puppet::Util::Windows::APITypes
 
     alias_method :read_dword, :read_uint32
     alias_method :read_win32_ulong, :read_uint32
+    alias_method :read_qword, :read_uint64
 
     alias_method :read_hresult, :read_int32
 
@@ -52,10 +53,10 @@ module Puppet::Util::Windows::APITypes
     alias_method :read_wchar, :read_uint16
     alias_method :read_word,  :read_uint16
 
-    def read_wide_string(char_length)
+    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
-      str.encode(Encoding.default_external)
+      str.encode(dst_encoding)
     end
 
     def read_arbitrary_wide_string_up_to(max_char_length = 512)
@@ -139,6 +140,7 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :pointer, :lpcvoid
   FFI.typedef :pointer, :lpvoid
   FFI.typedef :pointer, :lpword
+  FFI.typedef :pointer, :lpbyte
   FFI.typedef :pointer, :lpdword
   FFI.typedef :pointer, :pdword
   FFI.typedef :pointer, :phandle
@@ -227,6 +229,18 @@ module Puppet::Util::Windows::APITypes
         Time.local(self[:wYear], self[:wMonth], self[:wDay],
           self[:wHour], self[:wMinute], self[:wSecond], self[:wMilliseconds] * 1000)
       end
+    end
+
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx
+    # Contains a 64-bit value representing the number of 100-nanosecond
+    # intervals since January 1, 1601 (UTC).
+    # typedef struct _FILETIME {
+    #   DWORD dwLowDateTime;
+    #   DWORD dwHighDateTime;
+    # } FILETIME, *PFILETIME;
+    class FILETIME < FFI::Struct
+      layout :dwLowDateTime, :dword,
+             :dwHighDateTime, :dword
     end
 
     ffi_convention :stdcall

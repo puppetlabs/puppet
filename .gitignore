@@ -22,3 +22,6 @@ puppet-acceptance/
 .idea/
 .ruby-version
 .ruby-gemset
+acceptance/junit
+acceptance/log
+acceptance/.bundle

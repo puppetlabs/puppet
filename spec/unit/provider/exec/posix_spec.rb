@@ -114,7 +114,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
       provider.run(command)
 
-      @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
+      expect(@logs.map {|l| "#{l.level}: #{l.message}" }).to eq(["warning: Overriding environment setting 'WHATEVER' with '/foo'"])
     end
 
     it "should set umask before execution if umask parameter is in use" do
@@ -141,14 +141,14 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
         orig_env.keys.each do |var|
           output, status = provider.run(command % var)
-          output.strip.should == orig_env[var]
+          expect(output.strip).to eq(orig_env[var])
         end
 
         # now, once more... but with our sentinel values
         Puppet::Util.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             output, status = provider.run(command % var)
-            output.strip.should == locale_sentinel_env[var]
+            expect(output.strip).to eq(locale_sentinel_env[var])
           end
         end
       end
@@ -156,9 +156,9 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       it "should respect locale overrides in user's 'environment' configuration" do
         provider.resource[:environment] = ['LANG=C', 'LC_ALL=C']
         output, status = provider.run(command % 'LANG')
-        output.strip.should == 'C'
+        expect(output.strip).to eq('C')
         output, status = provider.run(command % 'LC_ALL')
-        output.strip.should == 'C'
+        expect(output.strip).to eq('C')
       end
     end
 
@@ -177,14 +177,14 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
           # with this environment, we loop over the vars in question
           Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
             # ensure that our temporary environment is set up as we expect
-            ENV[var].should == user_sentinel_env[var]
+            expect(ENV[var]).to eq(user_sentinel_env[var])
 
             # run an "exec" via the provider and ensure that it unsets the vars
             output, status = provider.run(command % var)
-            output.strip.should == ""
+            expect(output.strip).to eq("")
 
             # ensure that after the exec, our temporary env is still intact
-            ENV[var].should == user_sentinel_env[var]
+            expect(ENV[var]).to eq(user_sentinel_env[var])
           end
 
         end
@@ -201,7 +201,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
           # run an 'exec' to get the value of each variable
           output, status = provider.run(command % var)
           # ensure that it matches our expected sentinel value
-          output.strip.should == sentinel_value
+          expect(output.strip).to eq(sentinel_value)
         end
       end
     end

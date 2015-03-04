@@ -57,3 +57,15 @@ The tests can be run with the following rake task:
 To run a single file's worth of tests (much faster!), give the filename:
 
     bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb
+
+When tests fail, it is often useful to capture Puppet's log of a test
+run. The test harness pays attention to two environment variables that can
+be used to send logs to a file, and to adjust the log level:
+
+* `PUPPET_TEST_LOG`: when set, must be an absolute path to a file. Puppet's
+  log messages will be sent to that file. Note that the log file will
+  contain lots of spurious warnings `Unable to set ownership of log file`
+  - you can safely ignore them.
+* `PUPPET_TEST_LOG_LEVEL`: change the log level to adjust how much detail
+  is captured. It defaults to `notice`; useful values include `info` and
+  `debug`.

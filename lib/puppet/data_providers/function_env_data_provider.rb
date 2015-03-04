@@ -11,9 +11,11 @@ module Puppet::DataProviders; end
 class Puppet::DataProviders::FunctionEnvDataProvider < Puppet::Plugins::DataProviders::EnvironmentDataProvider
   include Puppet::DataProviders::DataFunctionSupport
 
-  def lookup(name, scope)
+  def lookup(name, scope, merge)
     begin
-      data('environment', scope)[name]
+      hash = data('environment', scope)
+      throw :no_such_key unless hash.include?(name)
+      hash[name]
     rescue *Puppet::Error => detail
       raise Puppet::DataBinding::LookupError.new(detail.message, detail)
     end

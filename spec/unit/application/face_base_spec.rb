@@ -23,7 +23,7 @@ describe Puppet::Application::FaceBase do
       option = mock('ca option', :optparse_args => ["--ca"])
       Puppet.settings.expects(:each).yields(:ca, option)
 
-      app.find_global_settings_argument("--ca-location").should be_nil
+      expect(app.find_global_settings_argument("--ca-location")).to be_nil
     end
   end
 
@@ -47,12 +47,12 @@ describe Puppet::Application::FaceBase do
       end
 
       it "should set the face based on the type" do
-        app.face.name.should == :basetest
+        expect(app.face.name).to eq(:basetest)
       end
 
       it "should find the action" do
-        app.action.should be
-        app.action.name.should == :foo
+        expect(app.action).to be
+        expect(app.action.name).to eq(:foo)
       end
     end
 
@@ -61,7 +61,7 @@ describe Puppet::Application::FaceBase do
 
       expect { app.run }.to exit_with(1)
 
-      @logs.map(&:message).should == ["'basetest' has no 'banana' action.  See `puppet help basetest`."]
+      expect(@logs.map(&:message)).to eq(["'basetest' has no 'banana' action.  See `puppet help basetest`."])
     end
 
     it "should use the default action if not given any arguments" do
@@ -70,8 +70,8 @@ describe Puppet::Application::FaceBase do
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
       app.stubs(:main)
       app.run
-      app.action.should == action
-      app.arguments.should == [ { } ]
+      expect(app.action).to eq(action)
+      expect(app.arguments).to eq([ { } ])
     end
 
     it "should use the default action if not given a valid one" do
@@ -80,8 +80,8 @@ describe Puppet::Application::FaceBase do
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
       app.stubs(:main)
       app.run
-      app.action.should == action
-      app.arguments.should == [ 'bar', { } ]
+      expect(app.action).to eq(action)
+      expect(app.arguments).to eq([ 'bar', { } ])
     end
 
     it "should have no action if not given a valid one and there is no default action" do
@@ -89,7 +89,7 @@ describe Puppet::Application::FaceBase do
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
       app.stubs(:main)
       expect { app.run }.to exit_with(1)
-      @logs.first.message.should =~ /has no 'bar' action./
+      expect(@logs.first.message).to match(/has no 'bar' action./)
     end
 
     [%w{something_I_cannot_do},
@@ -99,7 +99,7 @@ describe Puppet::Application::FaceBase do
         Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
         app.stubs(:main)
         expect { app.run }.to exit_with(1)
-        @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
+        expect(@logs.first.message).to match(/has no 'something_I_cannot_do' action/)
       end
     end
 
@@ -110,7 +110,7 @@ describe Puppet::Application::FaceBase do
         Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
         app.stubs(:main)
         expect { app.run }.to exit_with(1)
-        @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
+        expect(@logs.first.message).to match(/has no 'something_I_cannot_do' action/)
       end
     end
 
@@ -142,16 +142,16 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == { :mandatory => "--bar" }
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({ :mandatory => "--bar" })
     end
 
     it "should accept --bar as an argument to a mandatory option before action" do
       app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == { :mandatory => "--bar" }
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({ :mandatory => "--bar" })
     end
 
     it "should not skip when --foo=bar is given" do
@@ -164,32 +164,32 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == {}
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({})
     end
 
     it "does not skip when a puppet global setting is given as two items" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == {}
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({})
     end
 
     it "should not add :debug to the application-level options" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --debug}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == {}
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({})
     end
 
     it "should not add :verbose to the application-level options" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --verbose}
       app.preinit
       app.parse_options
-      app.action.name.should == :foo
-      app.options.should == {}
+      expect(app.action.name).to eq(:foo)
+      expect(app.options).to eq({})
     end
 
     { "boolean options before" => %w{--trace foo},
@@ -200,7 +200,7 @@ describe Puppet::Application::FaceBase do
         Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
-        Puppet[:trace].should be_true
+        expect(Puppet[:trace]).to be_truthy
       end
     end
 
@@ -212,7 +212,7 @@ describe Puppet::Application::FaceBase do
         Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
-        Puppet[:syslogfacility].should == "user1"
+        expect(Puppet[:syslogfacility]).to eq("user1")
       end
     end
 
@@ -220,7 +220,7 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{--verbose return_true}
       app.preinit
       app.parse_options
-      app.face.name.should == :basetest
+      expect(app.face.name).to eq(:basetest)
     end
   end
 
@@ -230,7 +230,7 @@ describe Puppet::Application::FaceBase do
       app.preinit
       app.parse_options
       app.setup
-      app.arguments.should == [{ :mandatory => "--bar" }]
+      expect(app.arguments).to eq([{ :mandatory => "--bar" }])
     end
 
     it "should pass positional arguments" do
@@ -239,7 +239,7 @@ describe Puppet::Application::FaceBase do
       app.preinit
       app.parse_options
       app.setup
-      app.arguments.should == ['bar', 'baz', 'quux', { :mandatory => "--bar" }]
+      expect(app.arguments).to eq(['bar', 'baz', 'quux', { :mandatory => "--bar" }])
     end
   end
 
@@ -315,19 +315,19 @@ describe Puppet::Application::FaceBase do
 
       ["hello", 1, 1.0].each do |input|
         it "should just return a #{input.class.name}" do
-          app.render(input, {}).should == input
+          expect(app.render(input, {})).to eq(input)
         end
       end
 
       [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
         it "should render Array as one item per line" do
-          app.render(input, {}).should == input.collect { |item| item.to_s + "\n" }.join('')
+          expect(app.render(input, {})).to eq(input.collect { |item| item.to_s + "\n" }.join(''))
         end
       end
 
-      it "should render a non-trivially-keyed Hash with using JSON" do
+      it "should render a non-trivially-keyed Hash with using pretty printed PSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        app.render(hash, {}).should == hash.to_pson.chomp
+        expect(app.render(hash, {})).to eq(PSON.pretty_generate(hash).chomp)
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -337,7 +337,7 @@ describe Puppet::Application::FaceBase do
 
         # Gotta love ASCII-betical sort order.  Hope your objects are better
         # structured for display than my test one is. --daniel 2011-04-18
-        app.render(hash, {}).should == <<EOT
+        expect(app.render(hash, {})).to eq <<EOT
 5      5
 6.0    6
 four   #{object.to_pson.chomp}
@@ -353,7 +353,7 @@ EOT
           "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
           "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
         }
-        app.render(hash, {}).should == <<EOT
+        expect(app.render(hash, {})).to eq <<EOT
 number  {"1"=>"1111111111111111111111111111111111111111",
          "2"=>"2222222222222222222222222222222222222222",
          "3"=>"3333333333333333333333333333333333333333"}
@@ -371,7 +371,7 @@ EOT
 
         it "should invoke the action rendering hook while rendering" do
           app.action.set_rendering_method_for(:console, proc { |value| "bi-winning!" })
-          app.render("bi-polar?", {}).should == "bi-winning!"
+          expect(app.render("bi-polar?", {})).to eq("bi-winning!")
         end
 
         it "should invoke the action rendering hook with args and options while rendering" do
@@ -381,16 +381,16 @@ EOT
             :console,
             proc { |value, name, options| "I'm #{name}, no wait, I'm #{options[:altername]}" }
           )
-          app.render("bi-polar?", ['bob', {:altername => 'sue'}]).should == "I'm bob, no wait, I'm sue"
+          expect(app.render("bi-polar?", ['bob', {:altername => 'sue'}])).to eq("I'm bob, no wait, I'm sue")
         end
       end
 
       it "should render JSON when asked for json" do
         app.render_as = :json
         json = app.render({ :one => 1, :two => 2 }, {})
-        json.should =~ /"one":\s*1\b/
-        json.should =~ /"two":\s*2\b/
-        PSON.parse(json).should == { "one" => 1, "two" => 2 }
+        expect(json).to match(/"one":\s*1\b/)
+        expect(json).to match(/"two":\s*2\b/)
+        expect(PSON.parse(json)).to eq({ "one" => 1, "two" => 2 })
       end
     end
 
@@ -418,6 +418,20 @@ EOT
       expect {
         expect { app.run }.to exit_with(0)
       }.to have_printed(/you invoked the 's' rendering hook/)
+    end
+  end
+
+  describe "#help" do
+    it "should generate help for --help" do
+      app.command_line.stubs(:args).returns %w{--help}
+      Puppet::Face[:help, :current].expects(:help)
+      expect { app.run }.to exit_with(0)
+    end
+
+    it "should generate help for -h" do
+      app.command_line.stubs(:args).returns %w{-h}
+      Puppet::Face[:help, :current].expects(:help)
+      expect { app.run }.to exit_with(0)
     end
   end
 end

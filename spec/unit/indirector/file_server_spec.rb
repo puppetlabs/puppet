@@ -43,7 +43,7 @@ describe Puppet::Indirector::FileServer do
     it "should return nil if it cannot find the mount" do
       @configuration.expects(:split_path).with(@request).returns(nil, nil)
 
-      @file_server.find(@request).should be_nil
+      expect(@file_server.find(@request)).to be_nil
     end
 
     it "should use the mount to find the full path" do
@@ -67,7 +67,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns nil
 
-      @file_server.find(@request).should be_nil
+      expect(@file_server.find(@request)).to be_nil
     end
 
     it "should create an instance with the found path" do
@@ -75,9 +75,9 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
-      @file_server.find(@request).should equal(@instance)
+      expect(@file_server.find(@request)).to equal(@instance)
     end
 
     it "should set 'links' on the instance if it is set in the request options" do
@@ -86,11 +86,11 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
       @instance.expects(:links=).with(true)
 
-      @file_server.find(@request).should equal(@instance)
+      expect(@file_server.find(@request)).to equal(@instance)
     end
 
     it "should collect the instance" do
@@ -99,11 +99,11 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
-      @model.expects(:new).with("/my/file").returns @instance
+      @model.expects(:new).with("/my/file", {:relative_path => nil}).returns @instance
 
       @instance.expects(:collect)
 
-      @file_server.find(@request).should equal(@instance)
+      expect(@file_server.find(@request)).to equal(@instance)
     end
   end
 
@@ -122,7 +122,7 @@ describe Puppet::Indirector::FileServer do
     it "should return nil if it cannot search the mount" do
       @configuration.expects(:split_path).with(@request).returns(nil, nil)
 
-      @file_server.search(@request).should be_nil
+      expect(@file_server.search(@request)).to be_nil
     end
 
     it "should use the mount to search for the full paths" do
@@ -146,7 +146,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:search).with { |key, request| key == "rel/path" }.returns nil
 
-      @file_server.search(@request).should be_nil
+      expect(@file_server.search(@request)).to be_nil
     end
 
     it "should create a fileset with each returned path and merge them" do
@@ -183,9 +183,9 @@ describe Puppet::Indirector::FileServer do
 
       # order can't be guaranteed
       result = @file_server.search(@request)
-      result.should be_include(one)
-      result.should be_include(two)
-      result.length.should == 2
+      expect(result).to be_include(one)
+      expect(result).to be_include(two)
+      expect(result.length).to eq(2)
     end
 
     it "should set 'links' on the instances if it is set in the request options" do
@@ -202,6 +202,24 @@ describe Puppet::Indirector::FileServer do
       one.expects(:links=).with true
 
       @request.options[:links] = true
+
+      @file_server.search(@request)
+    end
+
+    it "should set 'checksum_type' on the instances if it is set in the request options" do
+      @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+      @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
+
+      Puppet::FileSystem.stubs(:exist?).returns true
+
+      Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
+
+      one = stub 'one', :collect => nil
+      @model.expects(:new).with("/one", :relative_path => "one").returns one
+
+      one.expects(:checksum_type=).with :checksum
+      @request.options[:checksum_type] = :checksum
 
       @file_server.search(@request)
     end
@@ -236,12 +254,12 @@ describe Puppet::Indirector::FileServer do
 
     it "should return false when destroying" do
       @request.method = :destroy
-      @file_server.should_not be_authorized(@request)
+      expect(@file_server).not_to be_authorized(@request)
     end
 
     it "should return false when saving" do
       @request.method = :save
-      @file_server.should_not be_authorized(@request)
+      expect(@file_server).not_to be_authorized(@request)
     end
 
     it "should use the configuration to find the mount and relative path" do
@@ -253,11 +271,11 @@ describe Puppet::Indirector::FileServer do
     it "should return false if it cannot find the mount" do
       @configuration.expects(:split_path).with(@request).returns(nil, nil)
 
-      @file_server.should_not be_authorized(@request)
+      expect(@file_server).not_to be_authorized(@request)
     end
 
     it "should return the results of asking the mount whether the node and IP are authorized" do
-      @file_server.authorized?(@request).should == "something"
+      expect(@file_server.authorized?(@request)).to eq("something")
     end
   end
 end

@@ -40,40 +40,40 @@ describe Puppet::Resource::TypeCollection do
     end
 
     it "should return nil when a class can't be found or loaded" do
-      @code.find_hostclass('nosuchclass').should be_nil
+      expect(@code.find_hostclass('nosuchclass')).to be_nil
     end
 
     it "should load the module's init file first" do
       name = "simple"
       mk_module(name, :init => [name])
-      @code.find_hostclass(name).name.should == name
+      expect(@code.find_hostclass(name).name).to eq(name)
     end
 
     it "should be able to load definitions from the module base file" do
       name = "simpdef"
       mk_module(name, :define => true, :init => [name])
-      @code.find_definition(name).name.should == name
+      expect(@code.find_definition(name).name).to eq(name)
     end
 
     it "should be able to load qualified classes from the module base file" do
       mk_module('both', :init => %w{both both::sub})
-      @code.find_hostclass("both::sub").name.should == "both::sub"
+      expect(@code.find_hostclass("both::sub").name).to eq("both::sub")
     end
 
     it "should be able load classes from a separate file" do
       mk_module('separate', :init => %w{separate}, :sub => %w{separate::sub})
-      @code.find_hostclass("separate::sub").name.should == "separate::sub"
+      expect(@code.find_hostclass("separate::sub").name).to eq("separate::sub")
     end
 
     it "should not fail when loading from a separate file if there is no module file" do
       mk_module('alone', :sub => %w{alone::sub})
-      lambda { @code.find_hostclass("alone::sub") }.should_not raise_error
+      expect { @code.find_hostclass("alone::sub") }.not_to raise_error
     end
 
     it "should be able to load definitions from their own file" do
       name = "mymod"
       mk_module(name, :define => true, :mydefine => ["mymod::mydefine"])
-      @code.find_definition("mymod::mydefine").name.should == "mymod::mydefine"
+      expect(@code.find_definition("mymod::mydefine").name).to eq("mymod::mydefine")
     end
   end
 end

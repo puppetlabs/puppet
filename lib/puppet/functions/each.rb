@@ -39,58 +39,58 @@
 Puppet::Functions.create_function(:each) do
   dispatch :foreach_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :foreach_Hash_1 do
     param 'Hash[Any, Any]', :hash
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
   dispatch :foreach_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param 'Callable[2,2]', :block
+    block_param 'Callable[2,2]', :block
   end
 
   dispatch :foreach_Enumerable_1 do
     param 'Any', :enumerable
-    required_block_param 'Callable[1,1]', :block
+    block_param 'Callable[1,1]', :block
   end
 
-  def foreach_Hash_1(hash, pblock)
+  def foreach_Hash_1(hash)
     enumerator = hash.each_pair
     hash.size.times do
-      pblock.call(enumerator.next)
+      yield(enumerator.next)
     end
     # produces the receiver
     hash
   end
 
-  def foreach_Hash_2(hash, pblock)
+  def foreach_Hash_2(hash)
     enumerator = hash.each_pair
     hash.size.times do
-      pblock.call(*enumerator.next)
+      yield(*enumerator.next)
     end
     # produces the receiver
     hash
   end
 
-  def foreach_Enumerable_1(enumerable, pblock)
+  def foreach_Enumerable_1(enumerable)
     enum = asserted_enumerable(enumerable)
       begin
-        loop { pblock.call(enum.next) }
+        loop { yield(enum.next) }
       rescue StopIteration
       end
     # produces the receiver
     enumerable
   end
 
-  def foreach_Enumerable_2(enumerable, pblock)
+  def foreach_Enumerable_2(enumerable)
     enum = asserted_enumerable(enumerable)
     index = 0
     begin
       loop do
-        pblock.call(index, enum.next)
+        yield(index, enum.next)
         index += 1
       end
     rescue StopIteration

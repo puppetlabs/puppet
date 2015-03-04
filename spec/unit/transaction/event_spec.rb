@@ -18,45 +18,45 @@ describe Puppet::Transaction::Event do
   it "should support resource" do
     event = Puppet::Transaction::Event.new
     event.resource = TestResource.new
-    event.resource.should == "Foo[bar]"
+    expect(event.resource).to eq("Foo[bar]")
   end
 
   it "should always convert the property to a string" do
-    Puppet::Transaction::Event.new(:property => :foo).property.should == "foo"
+    expect(Puppet::Transaction::Event.new(:property => :foo).property).to eq("foo")
   end
 
   it "should always convert the resource to a string" do
-    Puppet::Transaction::Event.new(:resource => TestResource.new).resource.should == "Foo[bar]"
+    expect(Puppet::Transaction::Event.new(:resource => TestResource.new).resource).to eq("Foo[bar]")
   end
 
   it "should produce the message when converted to a string" do
     event = Puppet::Transaction::Event.new
     event.expects(:message).returns "my message"
-    event.to_s.should == "my message"
+    expect(event.to_s).to eq("my message")
   end
 
   it "should support 'status'" do
     event = Puppet::Transaction::Event.new
     event.status = "success"
-    event.status.should == "success"
+    expect(event.status).to eq("success")
   end
 
   it "should fail if the status is not to 'audit', 'noop', 'success', or 'failure" do
     event = Puppet::Transaction::Event.new
-    lambda { event.status = "foo" }.should raise_error(ArgumentError)
+    expect { event.status = "foo" }.to raise_error(ArgumentError)
   end
 
   it "should support tags" do
-    Puppet::Transaction::Event.ancestors.should include(Puppet::Util::Tagging)
+    expect(Puppet::Transaction::Event.ancestors).to include(Puppet::Util::Tagging)
   end
 
   it "should create a timestamp at its creation time" do
-    Puppet::Transaction::Event.new.time.should be_instance_of(Time)
+    expect(Puppet::Transaction::Event.new.time).to be_instance_of(Time)
   end
 
   describe "audit property" do
     it "should default to false" do
-      Puppet::Transaction::Event.new.audited.should == false
+      expect(Puppet::Transaction::Event.new.audited).to eq(false)
     end
   end
 
@@ -93,7 +93,7 @@ describe Puppet::Transaction::Event do
     end
 
     it "should set the tags to the event tags" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:tags].to_a.should =~ %w{one two} }
+      Puppet::Util::Log.expects(:new).with { |args| expect(args[:tags].to_a).to match_array(%w{one two}) }
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 
@@ -129,7 +129,7 @@ describe Puppet::Transaction::Event do
                                              :message => "Help I'm trapped in a spec test",
                                              :name => :mode_changed, :previous_value => 6, :property => :mode,
                                              :status => 'success')
-      event.to_yaml_properties.should =~ Puppet::Transaction::Event::YAML_ATTRIBUTES
+      expect(event.to_yaml_properties).to match_array(Puppet::Transaction::Event::YAML_ATTRIBUTES)
     end
   end
 
@@ -151,15 +151,15 @@ describe Puppet::Transaction::Event do
 
       tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
 
-      tripped.audited.should == event.audited
-      tripped.property.should == event.property
-      tripped.previous_value.should == event.previous_value
-      tripped.desired_value.should == event.desired_value
-      tripped.historical_value.should == event.historical_value
-      tripped.message.should == event.message
-      tripped.name.should == event.name
-      tripped.status.should == event.status
-      tripped.time.should == event.time
+      expect(tripped.audited).to eq(event.audited)
+      expect(tripped.property).to eq(event.property)
+      expect(tripped.previous_value).to eq(event.previous_value)
+      expect(tripped.desired_value).to eq(event.desired_value)
+      expect(tripped.historical_value).to eq(event.historical_value)
+      expect(tripped.message).to eq(event.message)
+      expect(tripped.name).to eq(event.name)
+      expect(tripped.status).to eq(event.status)
+      expect(tripped.time).to eq(event.time)
   end
 
   it "should round trip an event for an inspect report through pson" do
@@ -178,15 +178,15 @@ describe Puppet::Transaction::Event do
 
       tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
 
-      tripped.desired_value.should be_nil
-      tripped.historical_value.should be_nil
-      tripped.name.should be_nil
+      expect(tripped.desired_value).to be_nil
+      expect(tripped.historical_value).to be_nil
+      expect(tripped.name).to be_nil
 
-      tripped.audited.should == event.audited
-      tripped.property.should == event.property
-      tripped.previous_value.should == event.previous_value
-      tripped.message.should == event.message
-      tripped.status.should == event.status
-      tripped.time.should == event.time
+      expect(tripped.audited).to eq(event.audited)
+      expect(tripped.property).to eq(event.property)
+      expect(tripped.previous_value).to eq(event.previous_value)
+      expect(tripped.message).to eq(event.message)
+      expect(tripped.status).to eq(event.status)
+      expect(tripped.time).to eq(event.time)
   end
 end

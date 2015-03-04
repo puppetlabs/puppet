@@ -14,29 +14,29 @@ describe Puppet::Util::POSIX do
 
   [:group, :gr].each do |name|
     it "should return :gid as the field for #{name}" do
-      @posix.idfield(name).should == :gid
+      expect(@posix.idfield(name)).to eq(:gid)
     end
 
     it "should return :getgrgid as the id method for #{name}" do
-      @posix.methodbyid(name).should == :getgrgid
+      expect(@posix.methodbyid(name)).to eq(:getgrgid)
     end
 
     it "should return :getgrnam as the name method for #{name}" do
-      @posix.methodbyname(name).should == :getgrnam
+      expect(@posix.methodbyname(name)).to eq(:getgrnam)
     end
   end
 
   [:user, :pw, :passwd].each do |name|
     it "should return :uid as the field for #{name}" do
-      @posix.idfield(name).should == :uid
+      expect(@posix.idfield(name)).to eq(:uid)
     end
 
     it "should return :getpwuid as the id method for #{name}" do
-      @posix.methodbyid(name).should == :getpwuid
+      expect(@posix.methodbyid(name)).to eq(:getpwuid)
     end
 
     it "should return :getpwnam as the name method for #{name}" do
-      @posix.methodbyname(name).should == :getpwnam
+      expect(@posix.methodbyname(name)).to eq(:getpwnam)
     end
   end
 
@@ -46,7 +46,7 @@ describe Puppet::Util::POSIX do
     end
 
     it "should fail if no id was passed" do
-      lambda { @posix.get_posix_field("asdf", "bar", nil) }.should raise_error(Puppet::DevError)
+      expect { @posix.get_posix_field("asdf", "bar", nil) }.to raise_error(Puppet::DevError)
     end
 
     describe "and the id is an integer" do
@@ -54,7 +54,7 @@ describe Puppet::Util::POSIX do
         Puppet[:maximum_uid] = 100
         Puppet.expects(:err)
 
-        @posix.get_posix_field("asdf", "bar", 200).should be_nil
+        expect(@posix.get_posix_field("asdf", "bar", 200)).to be_nil
       end
 
       it "should use the method return by :methodbyid and return the specified field" do
@@ -62,7 +62,7 @@ describe Puppet::Util::POSIX do
 
         @thing.expects(:field).returns "myval"
 
-        @posix.get_posix_field(:gr, :field, 200).should == "myval"
+        expect(@posix.get_posix_field(:gr, :field, 200)).to eq("myval")
       end
 
       it "should return nil if the method throws an exception" do
@@ -70,7 +70,7 @@ describe Puppet::Util::POSIX do
 
         @thing.expects(:field).never
 
-        @posix.get_posix_field(:gr, :field, 200).should be_nil
+        expect(@posix.get_posix_field(:gr, :field, 200)).to be_nil
       end
     end
 
@@ -80,7 +80,7 @@ describe Puppet::Util::POSIX do
 
         @thing.expects(:field).returns "myval"
 
-        @posix.get_posix_field(:gr, :field, "asdf").should == "myval"
+        expect(@posix.get_posix_field(:gr, :field, "asdf")).to eq("myval")
       end
 
       it "should return nil if the method throws an exception" do
@@ -88,7 +88,7 @@ describe Puppet::Util::POSIX do
 
         @thing.expects(:field).never
 
-        @posix.get_posix_field(:gr, :field, "asdf").should be_nil
+        expect(@posix.get_posix_field(:gr, :field, "asdf")).to be_nil
       end
     end
   end
@@ -115,14 +115,14 @@ describe Puppet::Util::POSIX do
         @posix.expects(:get_posix_field).once.returns nil
         @posix.expects(:search_posix_field).never
 
-        @posix.gid(100).should be_nil
+        expect(@posix.gid(100)).to be_nil
       end
 
       it "should use the found name to look up the id" do
         @posix.expects(:get_posix_field).with(:group, :name, 100).returns "asdf"
         @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 100
 
-        @posix.gid(100).should == 100
+        expect(@posix.gid(100)).to eq(100)
       end
 
       # LAK: This is because some platforms have a broken Etc module that always return
@@ -133,7 +133,7 @@ describe Puppet::Util::POSIX do
 
         @posix.expects(:search_posix_field).with(:group, :gid, 100).returns "asdf"
 
-        @posix.gid(100).should == "asdf"
+        expect(@posix.gid(100)).to eq("asdf")
       end
     end
 
@@ -148,14 +148,14 @@ describe Puppet::Util::POSIX do
         @posix.expects(:get_posix_field).once.returns nil
         @posix.expects(:search_posix_field).never
 
-        @posix.gid("asdf").should be_nil
+        expect(@posix.gid("asdf")).to be_nil
       end
 
       it "should use the found gid to look up the nam" do
         @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 100
         @posix.expects(:get_posix_field).with(:group, :name, 100).returns "asdf"
 
-        @posix.gid("asdf").should == 100
+        expect(@posix.gid("asdf")).to eq(100)
       end
 
       it "should use :search_posix_field if the discovered name does not match the passed-in name" do
@@ -164,7 +164,7 @@ describe Puppet::Util::POSIX do
 
         @posix.expects(:search_posix_field).with(:group, :gid, "asdf").returns "asdf"
 
-        @posix.gid("asdf").should == "asdf"
+        expect(@posix.gid("asdf")).to eq("asdf")
       end
     end
   end
@@ -191,14 +191,14 @@ describe Puppet::Util::POSIX do
         @posix.expects(:get_posix_field).once.returns nil
         @posix.expects(:search_posix_field).never
 
-        @posix.uid(100).should be_nil
+        expect(@posix.uid(100)).to be_nil
       end
 
       it "should use the found name to look up the id" do
         @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "asdf"
         @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 100
 
-        @posix.uid(100).should == 100
+        expect(@posix.uid(100)).to eq(100)
       end
 
       # LAK: This is because some platforms have a broken Etc module that always return
@@ -209,7 +209,7 @@ describe Puppet::Util::POSIX do
 
         @posix.expects(:search_posix_field).with(:passwd, :uid, 100).returns "asdf"
 
-        @posix.uid(100).should == "asdf"
+        expect(@posix.uid(100)).to eq("asdf")
       end
     end
 
@@ -224,14 +224,14 @@ describe Puppet::Util::POSIX do
         @posix.expects(:get_posix_field).once.returns nil
         @posix.expects(:search_posix_field).never
 
-        @posix.uid("asdf").should be_nil
+        expect(@posix.uid("asdf")).to be_nil
       end
 
       it "should use the found uid to look up the nam" do
         @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 100
         @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "asdf"
 
-        @posix.uid("asdf").should == 100
+        expect(@posix.uid("asdf")).to eq(100)
       end
 
       it "should use :search_posix_field if the discovered name does not match the passed-in name" do
@@ -240,12 +240,12 @@ describe Puppet::Util::POSIX do
 
         @posix.expects(:search_posix_field).with(:passwd, :uid, "asdf").returns "asdf"
 
-        @posix.uid("asdf").should == "asdf"
+        expect(@posix.uid("asdf")).to eq("asdf")
       end
     end
   end
 
   it "should be able to iteratively search for posix values" do
-    @posix.should respond_to(:search_posix_field)
+    expect(@posix).to respond_to(:search_posix_field)
   end
 end

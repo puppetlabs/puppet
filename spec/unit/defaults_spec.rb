@@ -12,7 +12,7 @@ describe "Defaults" do
           Facter.stubs(:value).with(:kernelmajversion).returns("5300")
         end
         it "should be empty" do
-          Puppet.default_diffargs.should == ""
+          expect(Puppet.default_diffargs).to eq("")
         end
       end
       [ "",
@@ -26,7 +26,7 @@ describe "Defaults" do
           end
 
           it "should be '-u'" do
-            Puppet.default_diffargs.should == "-u"
+            expect(Puppet.default_diffargs).to eq("-u")
           end
         end
       end
@@ -37,7 +37,7 @@ describe "Defaults" do
       end
 
       it "should be '-u'" do
-        Puppet.default_diffargs.should == "-u"
+        expect(Puppet.default_diffargs).to eq("-u")
       end
     end
   end
@@ -49,18 +49,18 @@ describe "Defaults" do
     end
 
     it 'should default to false' do
-      Puppet.settings[:cfacter].should be_false
+      expect(Puppet.settings[:cfacter]).to be_falsey
     end
 
     it 'should raise an error if cfacter is not installed' do
       Puppet.features.stubs(:cfacter?).returns false
-      lambda { Puppet.settings[:cfacter] = true }.should raise_exception ArgumentError, 'cfacter version 0.2.0 or later is not installed.'
+      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'cfacter version 0.2.0 or later is not installed.'
     end
 
     it 'should raise an error if facter has already evaluated facts' do
       Facter[:facterversion]
       Puppet.features.stubs(:cfacter?).returns true
-      lambda { Puppet.settings[:cfacter] = true }.should raise_exception ArgumentError, 'facter has already evaluated facts.'
+      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'facter has already evaluated facts.'
     end
 
     it 'should initialize cfacter when set to true' do

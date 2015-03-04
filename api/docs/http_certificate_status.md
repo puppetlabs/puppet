@@ -11,7 +11,7 @@ on the request. Certificates are global.
 Find
 ----
 
-    GET /:environment/certificate_status/:certname
+    GET /puppet-ca/v1/certificate_status/:certname?environment=:environment
     Accept: pson
 
 Retrieve information about the specified certificate. Similar to `puppet
@@ -20,7 +20,7 @@ cert --list :certname`.
 Search
 -----
 
-    GET /:environment/certificate_statuses/:any_key
+    GET /puppet-ca/v1/certificate_statuses/:any_key?environment=:environment
     Accept: pson
 
 Retrieve information about all known certificates. Similar to `puppet
@@ -29,7 +29,7 @@ cert --list --all`. A key is required but is ignored.
 Save
 ----
 
-    PUT /:environment/certificate_status/:certname
+    PUT /puppet-ca/v1/certificate_status/:certname?environment=:environment
     Content-Type: text/pson
 
 Change the status of the specified certificate. The desired state
@@ -45,7 +45,7 @@ host - see the DELETE request for more information.
 Delete
 -----
 
-    DELETE /:environment/certificate_status/:hostname
+    DELETE /puppet-ca/v1/certificate_status/:hostname?environment=:environment
     Accept: pson
 
 Cause the certificate authority to discard all SSL information regarding
@@ -83,9 +83,9 @@ incomplete.
 
 #### Certificate information
 
-    GET /env/certificate_status/mycertname
+    GET /puppet-ca/v1/certificate_status/mycertname?environment=env
 
-    HTTP/1.1 200 OK 
+    HTTP/1.1 200 OK
     Content-Type: text/pson
 
     {
@@ -104,7 +104,7 @@ incomplete.
 
 #### Revoking a certificate
 
-    PUT /production/certificate_status/mycertname HTTP/1.1
+    PUT /puppet-ca/v1/certificate_status/mycertname?environment=production HTTP/1.1
     Content-Type: text/pson
     Content-Length: 27
 
@@ -115,7 +115,7 @@ This has no meaningful return value.
 
 #### Deleting the certificate information
 
-    DELETE /production/certificate_status/mycertname HTTP/1.1
+    DELETE /puppet-ca/v1/certificate_status/mycertname?environment=production HTTP/1.1
 
 Gets the response:
 

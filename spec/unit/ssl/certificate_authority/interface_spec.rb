@@ -59,17 +59,17 @@ describe Puppet::SSL::CertificateAuthority::Interface do
   describe "when initializing" do
     it "should set its method using its settor" do
       instance = @class.new(:generate, :to => :all)
-      instance.method.should == :generate
+      expect(instance.method).to eq(:generate)
     end
 
     it "should set its subjects using the settor" do
       instance = @class.new(:generate, :to => :all)
-      instance.subjects.should == :all
+      expect(instance.subjects).to eq(:all)
     end
 
     it "should set the digest if given" do
       interface = @class.new(:generate, :to => :all, :digest => :digest)
-      interface.digest.should == :digest
+      expect(interface.digest).to eq(:digest)
     end
   end
 
@@ -78,11 +78,11 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       instance = @class.new(:generate, :to => :all)
       instance.method = :list
 
-      instance.method.should == :list
+      expect(instance.method).to eq(:list)
     end
 
     it "should fail if the method isn't a member of the INTERFACE_METHODS array" do
-      lambda { @class.new(:thing, :to => :all) }.should raise_error(ArgumentError, /Invalid method thing to apply/)
+      expect { @class.new(:thing, :to => :all) }.to raise_error(ArgumentError, /Invalid method thing to apply/)
     end
   end
 
@@ -91,16 +91,16 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       instance = @class.new(:generate, :to => :all)
       instance.subjects = :signed
 
-      instance.subjects.should == :signed
+      expect(instance.subjects).to eq(:signed)
     end
 
     it "should fail if the subjects setting isn't :all or an array" do
-      lambda { @class.new(:generate, :to => "other") }.should raise_error(ArgumentError, /Subjects must be an array or :all; not other/)
+      expect { @class.new(:generate, :to => "other") }.to raise_error(ArgumentError, /Subjects must be an array or :all; not other/)
     end
   end
 
   it "should have a method for triggering the application" do
-    @class.new(:generate, :to => :all).should respond_to(:apply)
+    expect(@class.new(:generate, :to => :all)).to respond_to(:apply)
   end
 
   describe "when applying" do
@@ -112,14 +112,14 @@ describe Puppet::SSL::CertificateAuthority::Interface do
     describe "with an empty array specified and the method is not list" do
       it "should fail" do
         @applier = @class.new(:sign, :to => [])
-        lambda { @applier.apply(@ca) }.should raise_error(ArgumentError)
+        expect { @applier.apply(@ca) }.to raise_error(ArgumentError)
       end
     end
 
     describe ":generate" do
       it "should fail if :all was specified" do
         @applier = @class.new(:generate, :to => :all)
-        lambda { @applier.apply(@ca) }.should raise_error(ArgumentError)
+        expect { @applier.apply(@ca) }.to raise_error(ArgumentError)
       end
 
       it "should call :generate on the CA for each host specified" do
@@ -193,7 +193,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           @ca.stubs(:waiting?).returns([])
 
           @applier = @class.new(:sign, :to => :all)
-          lambda { @applier.apply(@ca) }.should raise_error(Puppet::SSL::CertificateAuthority::Interface::InterfaceError)
+          expect { @applier.apply(@ca) }.to raise_error(Puppet::SSL::CertificateAuthority::Interface::InterfaceError)
         end
       end
     end

@@ -12,7 +12,7 @@ describe Puppet::Type.type(:zone) do
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
-      described_class.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+      expect(described_class.attrclass(parameter).ancestors).to be_include(Puppet::Parameter)
     end
   end
 
@@ -20,7 +20,7 @@ describe Puppet::Type.type(:zone) do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      described_class.attrclass(property).ancestors.should be_include(Puppet::Property)
+      expect(described_class.attrclass(property).ancestors).to be_include(Puppet::Property)
     end
   end
 
@@ -30,10 +30,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns []
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(nil).should be_true
+        expect(prop.insync?(nil)).to be_truthy
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(:absent).should be_true
+        expect(prop.insync?(:absent)).to be_truthy
       end
     end
   end
@@ -43,10 +43,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns ['a','b']
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(nil).should be_false
+        expect(prop.insync?(nil)).to be_falsey
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(:absent).should be_false
+        expect(prop.insync?(:absent)).to be_falsey
       end
     end
   end
@@ -56,10 +56,10 @@ describe Puppet::Type.type(:zone) do
         prop.stubs(:should).returns ['a','b']
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(['b', 'a']).should be_true
+        expect(prop.insync?(['b', 'a'])).to be_truthy
       end
       [inherit, ip, dataset].each do |prop|
-        prop.insync?(['a']).should be_false
+        expect(prop.insync?(['a'])).to be_falsey
       end
     end
   end
@@ -115,7 +115,7 @@ describe Puppet::Type.type(:zone) do
 
 
     relationship_graph.populate_from(catalog)
-    relationship_graph.dependencies(zone).should == [zfs]
+    expect(relationship_graph.dependencies(zone)).to eq([zfs])
   end
   describe Puppet::Zone::StateMachine do
     let (:sm) { Puppet::Zone::StateMachine.new }
@@ -129,43 +129,43 @@ describe Puppet::Type.type(:zone) do
     context ":insert_state" do
       it "should insert state in correct order" do
         sm.insert_state :dummy, :left => :right
-        sm.index(:dummy).should == 4
+        expect(sm.index(:dummy)).to eq(4)
       end
     end
     context ":alias_state" do
       it "should alias state" do
         sm.alias_state :dummy, :running
-        sm.name(:dummy).should == :running
+        expect(sm.name(:dummy)).to eq(:running)
       end
     end
     context ":name" do
       it "should get an aliased state correctly" do
         sm.alias_state :dummy, :running
-        sm.name(:dummy).should == :running
+        expect(sm.name(:dummy)).to eq(:running)
       end
       it "should get an un aliased state correctly" do
-        sm.name(:dummy).should == :dummy
+        expect(sm.name(:dummy)).to eq(:dummy)
       end
     end
     context ":index" do
       it "should return the state index correctly" do
         sm.insert_state :dummy, :left => :right
-        sm.index(:dummy).should == 4
+        expect(sm.index(:dummy)).to eq(4)
       end
     end
     context ":sequence" do
       it "should correctly return the actions to reach state specified" do
-        sm.sequence(:absent, :running).map{|p|p[:up]}.should ==  [:configure,:install,:start]
+        expect(sm.sequence(:absent, :running).map{|p|p[:up]}).to eq([:configure,:install,:start])
       end
       it "should correctly return the actions to reach state specified(2)" do
-        sm.sequence(:running, :absent).map{|p|p[:down]}.should == [:stop, :uninstall, :destroy]
+        expect(sm.sequence(:running, :absent).map{|p|p[:down]}).to eq([:stop, :uninstall, :destroy])
       end
     end
     context ":cmp" do
       it "should correctly compare state sequence values" do
-        sm.cmp?(:absent, :running).should == true
-        sm.cmp?(:running, :running).should == false
-        sm.cmp?(:running, :absent).should == false
+        expect(sm.cmp?(:absent, :running)).to eq(true)
+        expect(sm.cmp?(:running, :running)).to eq(false)
+        expect(sm.cmp?(:running, :absent)).to eq(false)
       end
     end
   end

@@ -12,7 +12,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
   describe "when initializing" do
     it "should set its path to the inventory file" do
       Puppet[:cert_inventory] = cert_inventory
-      @class.new.path.should == cert_inventory
+      expect(@class.new.path).to eq(cert_inventory)
     end
   end
 
@@ -82,45 +82,45 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
       end
 
       it "should print the serial number as a 4 digit hex number in the first field" do
-        @inventory.format(@cert).split[0].should == "0x000f" # 15 in hex
+        expect(@inventory.format(@cert).split[0]).to eq("0x000f") # 15 in hex
       end
 
       it "should print the not_before date in '%Y-%m-%dT%H:%M:%S%Z' format in the second field" do
         @cert.not_before.expects(:strftime).with('%Y-%m-%dT%H:%M:%S%Z').returns "before_time"
 
-        @inventory.format(@cert).split[1].should == "before_time"
+        expect(@inventory.format(@cert).split[1]).to eq("before_time")
       end
 
       it "should print the not_after date in '%Y-%m-%dT%H:%M:%S%Z' format in the third field" do
         @cert.not_after.expects(:strftime).with('%Y-%m-%dT%H:%M:%S%Z').returns "after_time"
 
-        @inventory.format(@cert).split[2].should == "after_time"
+        expect(@inventory.format(@cert).split[2]).to eq("after_time")
       end
 
       it "should print the subject in the fourth field" do
-        @inventory.format(@cert).split[3].should == "mycert"
+        expect(@inventory.format(@cert).split[3]).to eq("mycert")
       end
 
       it "should add a carriage return" do
-        @inventory.format(@cert).should =~ /\n$/
+        expect(@inventory.format(@cert)).to match(/\n$/)
       end
 
       it "should produce a line consisting of the serial number, start date, expiration date, and subject" do
         # Just make sure our serial and subject bracket the lines.
-        @inventory.format(@cert).should =~ /^0x.+mycert$/
+        expect(@inventory.format(@cert)).to match(/^0x.+mycert$/)
       end
     end
 
     describe "and finding serial numbers" do
       it "should return an empty array if the inventory file is missing" do
         Puppet::FileSystem.expects(:exist?).with(cert_inventory).returns false
-        @inventory.serials(:whatever).should be_empty
+        expect(@inventory.serials(:whatever)).to be_empty
       end
 
       it "should return the all the serial numbers from the lines matching the provided name" do
         File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n", "0x002 blah blah /CN=me\n"]
 
-        @inventory.serials("me").should == [15, 2]
+        expect(@inventory.serials("me")).to eq([15, 2])
       end
     end
   end

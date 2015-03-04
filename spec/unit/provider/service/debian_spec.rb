@@ -33,15 +33,15 @@ describe provider_class do
   end
 
   it "should have an enabled? method" do
-    @provider.should respond_to(:enabled?)
+    expect(@provider).to respond_to(:enabled?)
   end
 
   it "should have an enable method" do
-    @provider.should respond_to(:enable)
+    expect(@provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    @provider.should respond_to(:disable)
+    expect(@provider).to respond_to(:disable)
   end
 
   describe "when enabling" do
@@ -79,28 +79,36 @@ describe provider_class do
     it "should return true when invoke-rc.d exits with 104 status" do
       @provider.stubs(:system)
       $CHILD_STATUS.stubs(:exitstatus).returns(104)
-      @provider.enabled?.should == :true
+      expect(@provider.enabled?).to eq(:true)
     end
 
     it "should return true when invoke-rc.d exits with 106 status" do
       @provider.stubs(:system)
       $CHILD_STATUS.stubs(:exitstatus).returns(106)
-      @provider.enabled?.should == :true
+      expect(@provider.enabled?).to eq(:true)
     end
 
-    context "when invoke-rc.d exits with 105 status" do
+    shared_examples "manually queries service status" do |status|
       it "links count is 4" do
         @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        $CHILD_STATUS.stubs(:exitstatus).returns(status)
         @provider.stubs(:get_start_link_count).returns(4)
-        @provider.enabled?.should == :true
+        expect(@provider.enabled?).to eq(:true)
       end
       it "links count is less than 4" do
         @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        $CHILD_STATUS.stubs(:exitstatus).returns(status)
         @provider.stubs(:get_start_link_count).returns(3)
-        @provider.enabled?.should == :false
+        expect(@provider.enabled?).to eq(:false)
       end
+    end
+
+    context "when invoke-rc.d exits with 101 status" do
+      it_should_behave_like "manually queries service status", 101
+    end
+
+    context "when invoke-rc.d exits with 105 status" do
+      it_should_behave_like "manually queries service status", 105
     end
 
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
@@ -108,7 +116,7 @@ describe provider_class do
       it "should return false when invoke-rc.d exits with #{exitstatus} status" do
         @provider.stubs(:system)
         $CHILD_STATUS.stubs(:exitstatus).returns(exitstatus)
-        @provider.enabled?.should == :false
+        expect(@provider.enabled?).to eq(:false)
       end
     end
   end

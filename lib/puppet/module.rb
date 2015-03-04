@@ -33,6 +33,25 @@ class Puppet::Module
     env.module(modname)
   end
 
+  def self.is_module_directory?(name, path)
+    # it must be a directory
+    fullpath = File.join(path, name)
+    return false unless Puppet::FileSystem.directory?(fullpath)
+    return is_module_directory_name?(name)
+  end
+
+  def self.is_module_directory_name?(name)
+    # it must match an installed module name according to forge validator
+    return true if name =~ /^[a-z][a-z0-9_]*$/
+    return false
+  end
+
+  def self.is_module_namespaced_name?(name)
+    # it must match the full module name according to forge validator
+    return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/   
+    return false
+  end
+
   attr_reader :name, :environment, :path, :metadata
   attr_writer :environment
 
@@ -124,12 +143,9 @@ class Puppet::Module
         end
       end
 
-      # NOTICE: The fallback to `versionRequirement` is something we'd like to
-      # not have to support, but we have a reasonable number of releases that
-      # don't use `version_requirement`. When we can deprecate this, we should.
       if attr == :dependencies
         value.each do |dep|
-          dep['version_requirement'] ||= dep['versionRequirement'] || '>= 0.0.0'
+          dep['version_requirement'] ||= '>= 0.0.0'
         end
       end
 
@@ -242,7 +258,8 @@ class Puppet::Module
     return unmet_dependencies unless dependencies
 
     dependencies.each do |dependency|
-      forge_name = dependency['name']
+      name = dependency['name']
+      forge_name = name.tr('-', '/')
       version_string = dependency['version_requirement'] || '>= 0.0.0'
 
       dep_mod = begin
@@ -252,7 +269,7 @@ class Puppet::Module
       end
 
       error_details = {
-        :name => forge_name,
+        :name => name,
         :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
         :parent => {
           :name => self.forge_name,
@@ -322,6 +339,8 @@ class Puppet::Module
   end
 
   def assert_validity
-    raise InvalidName, "Invalid module name #{name}; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
+    if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
+      raise InvalidName, "Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'"
+    end
   end
 end

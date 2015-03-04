@@ -1,7 +1,6 @@
 {
   :type => 'foss-packages',
   :pre_suite => [
-    'setup/common/pre-suite/001_PkgBuildSetup.rb',
     'setup/packages/pre-suite/010_Install.rb',
     'setup/packages/pre-suite/015_PackageHostsPresets.rb',
     'setup/common/pre-suite/025_StopFirewall.rb',

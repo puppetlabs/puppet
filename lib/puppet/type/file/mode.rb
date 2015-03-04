@@ -10,7 +10,7 @@ module Puppet
 
     desc <<-'EOT'
       The desired permissions mode for the file, in symbolic or numeric
-      notation. This value should be specified as a quoted string; do not use
+      notation. This value **must** be specified as a string; do not use
       un-quoted numbers to represent file modes.
 
       The `file` type uses traditional Unix permission schemes and translates
@@ -19,16 +19,22 @@ module Puppet
       you can leave `mode` unmanaged and use
       [the puppetlabs/acl module.](https://forge.puppetlabs.com/puppetlabs/acl)
 
-      Numeric modes should use the standard four-digit octal notation of
-      `<setuid/setgid/sticky><owner><group><other>` (e.g. 0644). Each of the
-      "owner," "group," and "other" digits should be a sum of the
-      permissions for that class of users, where read = 4, write = 2, and
-      execute/search = 1. When setting numeric permissions for
-      directories, Puppet sets the search permission wherever the read
-      permission is set.
+      Numeric modes should use the standard octal notation of
+      `<SETUID/SETGID/STICKY><OWNER><GROUP><OTHER>` (e.g. '0644').
+
+      * Each of the "owner," "group," and "other" digits should be a sum of the
+        permissions for that class of users, where read = 4, write = 2, and
+        execute/search = 1.
+      * The setuid/setgid/sticky digit is also a sum, where setuid = 4, setgid = 2,
+        and sticky = 1.
+      * The setuid/setgid/sticky digit is optional. If it is absent, Puppet will
+        clear any existing setuid/setgid/sticky permissions. (So to make your intent
+        clear, you should use at least four digits for numeric modes.)
+      * When specifying numeric permissions for directories, Puppet sets the search
+        permission wherever the read permission is set.
 
       Symbolic modes should be represented as a string of comma-separated
-      permission clauses, in the form `<who><op><perm>`:
+      permission clauses, in the form `<WHO><OP><PERM>`:
 
       * "Who" should be u (user), g (group), o (other), and/or a (all)
       * "Op" should be = (set exact permissions), + (add select permissions),

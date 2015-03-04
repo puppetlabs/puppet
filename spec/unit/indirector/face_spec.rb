@@ -12,10 +12,10 @@ describe Puppet::Indirector::Face do
     instance
   end
 
-  it { should be_option :extra }
+  it { is_expected.to be_option :extra }
 
   it "should be able to return a list of indirections" do
-    Puppet::Indirector::Face.indirections.should be_include("catalog")
+    expect(Puppet::Indirector::Face.indirections).to be_include("catalog")
   end
 
   it "should return the sorted to_s list of terminus classes" do
@@ -24,24 +24,24 @@ describe Puppet::Indirector::Face do
       :compiler,
       :rest
    ])
-    Puppet::Indirector::Face.terminus_classes(:catalog).should == [
+    expect(Puppet::Indirector::Face.terminus_classes(:catalog)).to eq([
       'compiler',
       'rest',
       'yaml'
-    ]
+    ])
   end
 
   describe "as an instance" do
     it "should be able to determine its indirection" do
       # Loading actions here can get, um, complicated
       Puppet::Face.stubs(:load_actions)
-      Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection.should equal(Puppet::Resource::Catalog.indirection)
+      expect(Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection).to equal(Puppet::Resource::Catalog.indirection)
     end
   end
 
   [:find, :search, :save, :destroy].each do |method|
     it "should define a '#{method}' action" do
-      Puppet::Indirector::Face.should be_action(method)
+      expect(Puppet::Indirector::Face).to be_action(method)
     end
 
     it "should call the indirection method with options when the '#{method}' action is invoked" do
@@ -61,7 +61,7 @@ describe Puppet::Indirector::Face do
 
   it "should be able to override its indirection name" do
     subject.set_indirection_name :foo
-    subject.indirection_name.should == :foo
+    expect(subject.indirection_name).to eq(:foo)
   end
 
   it "should be able to set its terminus class" do
@@ -70,6 +70,6 @@ describe Puppet::Indirector::Face do
   end
 
   it "should define a class-level 'info' action" do
-    Puppet::Indirector::Face.should be_action(:info)
+    expect(Puppet::Indirector::Face).to be_action(:info)
   end
 end

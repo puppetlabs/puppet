@@ -17,11 +17,16 @@ build_dmg: TRUE
 msi_name: 'puppet-agent'
 build_msi:
   puppet_for_the_win:
-    ref: '59031fc0783c70706d1faa774ce4c9cfd74e2965'
+    ref: '52e81967253924428bb0b1e7e1a11e8678d68378'
     repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
   facter:
-    ref: 'refs/tags/2.3.0'
+    ref: 'refs/tags/2.4.0'
     repo: 'git://github.com/puppetlabs/facter.git'
+  cfacter:
+    archive:
+      x86: 'cfacter-0.3.0-x86.zip'
+      x64: 'cfacter-0.3.0-x64.zip'
+    path: 'http://builds.puppetlabs.lan/cfacter/0.3.0/artifacts/windows'
   hiera:
     ref: 'refs/tags/1.3.4'
     repo: 'git://github.com/puppetlabs/hiera.git'
@@ -30,8 +35,8 @@ build_msi:
     repo: 'git://github.com/puppetlabs/marionette-collective.git'
   sys:
     ref:
-      x86: '57068e7b7c87288c51ff39d96c80cfb509a42091'
-      x64: '531319f5c121e98990772e018eb9781bf7dc6316'
+      x86: 'aac9e790c9c3e59175e9d528f8aa517bb6caed76'
+      x64: '9e70b6ac8474678487f4330fecc2179158ae62f3'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'

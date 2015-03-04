@@ -12,7 +12,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
 
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
-      it { should respond_to method.to_sym }
+      it { is_expected.to respond_to method.to_sym }
     end
   end
 
@@ -25,12 +25,12 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should return stopped if not listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
       provider.expects(:jobsearch).with(nil).returns({'com.bar.is_not_running' => "/Library/LaunchDaemons/com.bar.is_not_running"})
-      provider.prefetch({}).last.status.should eq :stopped
+      expect(provider.prefetch({}).last.status).to eq :stopped
     end
     it "should return running if listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
       provider.expects(:jobsearch).with(nil).returns({'com.bar.is_running' => "/Library/LaunchDaemons/com.bar.is_running"})
-      provider.prefetch({}).last.status.should eq :running
+      expect(provider.prefetch({}).last.status).to eq :running
     end
     after :each do
       provider.instance_variable_set(:@job_list, nil)
@@ -199,7 +199,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
     it "should return the cached value when available" do
       provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
-      provider.make_label_to_path_map.should eq({'xx'=>'yy'})
+      expect(provider.make_label_to_path_map).to eq({'xx'=>'yy'})
     end
     describe "when successful" do
       let(:launchd_dir) { '/Library/LaunchAgents' }
@@ -212,11 +212,11 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.expects(:read_plist).with(plist).returns({'Label'=>'foo.bar.service'})
       end
       it "should read the plists and return their contents" do
-        provider.make_label_to_path_map.should eq({label=>plist})
+        expect(provider.make_label_to_path_map).to eq({label=>plist})
       end
       it "should re-read the plists and return their contents when refreshed" do
         provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
-        provider.make_label_to_path_map(true).should eq({label=>plist})
+        expect(provider.make_label_to_path_map(true)).to eq({label=>plist})
       end
     end
   end
@@ -226,16 +226,16 @@ describe Puppet::Type.type(:service).provider(:launchd) do
                  "org.mozilla.python" => "/path/to/python.plist"} }
     it "returns the entire map with no args" do
       provider.expects(:make_label_to_path_map).returns(map)
-      provider.jobsearch.should == map
+      expect(provider.jobsearch).to eq(map)
     end
     it "returns a singleton hash when given a label" do
       provider.expects(:make_label_to_path_map).returns(map)
-      provider.jobsearch("org.mozilla.puppet").should == { "org.mozilla.puppet" => "/path/to/puppet.plist" }
+      expect(provider.jobsearch("org.mozilla.puppet")).to eq({ "org.mozilla.puppet" => "/path/to/puppet.plist" })
     end
     it "refreshes the label_to_path_map when label is not found" do
       provider.expects(:make_label_to_path_map).with().returns({})
       provider.expects(:make_label_to_path_map).with(true).returns(map)
-      provider.jobsearch("org.mozilla.puppet").should == { "org.mozilla.puppet" => "/path/to/puppet.plist" }
+      expect(provider.jobsearch("org.mozilla.puppet")).to eq({ "org.mozilla.puppet" => "/path/to/puppet.plist" })
     end
     it "raises Puppet::Error when the label is still not found" do
       provider.expects(:make_label_to_path_map).with().returns(map)

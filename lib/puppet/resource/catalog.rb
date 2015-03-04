@@ -305,13 +305,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def resource(type, title = nil)
     # Always create a resource reference, so that it always
     # canonicalizes how we are referring to them.
+    attributes = { :environment => environment_instance }
     if title
-      res = Puppet::Resource.new(type, title)
+      res = Puppet::Resource.new(type, title, attributes)
     else
       # If they didn't provide a title, then we expect the first
       # argument to be of the form 'Class[name]', which our
       # Reference class canonicalizes for us.
-      res = Puppet::Resource.new(nil, type)
+      res = Puppet::Resource.new(nil, type, attributes)
     end
     res.catalog = self
     title_key      = [res.type, res.title.to_s]
@@ -405,7 +406,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # If the block result is false, the resource will
   # be kept otherwise it will be skipped
   def filter(&block)
-    to_catalog :to_resource, &block
+    # to_catalog must take place in a context where current_environment is set to the same env as the
+    # environment set in the catalog (if it is set)
+    # See PUP-3755
+    if environment_instance
+      Puppet.override({:current_environment => environment_instance}) do
+        to_catalog :to_resource, &block
+      end
+    else
+      # If catalog has no environment_instance, hope that the caller has made sure the context has the
+      # correct current_environment
+      to_catalog :to_resource, &block
+    end
   end
 
   # Store the classes in the classfile.

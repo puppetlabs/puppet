@@ -48,7 +48,7 @@ describe Puppet::Type.type(:user).provider(:openbsd) do
     it "should return an array with the full command and expiry as MM/DD/YY" do
       Facter.stubs(:value).with(:osfamily).returns('OpenBSD')
       resource[:expiry] = "1997-06-01"
-      provider.addcmd.must == ['/usr/sbin/useradd', '-e', 'June 01 1997', 'myuser']
+      expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', 'June 01 1997', 'myuser'])
     end
   end
 

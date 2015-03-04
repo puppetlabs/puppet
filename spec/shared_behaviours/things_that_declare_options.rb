@@ -2,7 +2,7 @@
 shared_examples_for "things that declare options" do
   it "should support options without arguments" do
     thing = add_options_to { option "--bar" }
-    thing.should be_option :bar
+    expect(thing).to be_option :bar
   end
 
   it "should support options with an empty block" do
@@ -11,14 +11,14 @@ shared_examples_for "things that declare options" do
         # this section deliberately left blank
       end
     end
-    thing.should be
-    thing.should be_option :foo
+    expect(thing).to be
+    expect(thing).to be_option :foo
   end
 
   { "--foo=" => :foo }.each do |input, option|
     it "should accept #{name.inspect}" do
       thing = add_options_to { option input }
-      thing.should be_option option
+      expect(thing).to be_option option
     end
   end
 
@@ -32,7 +32,7 @@ shared_examples_for "things that declare options" do
       end
     end
 
-    thing.get_option(:foo).description.should == text
+    expect(thing.get_option(:foo).description).to eq(text)
   end
 
   it "should list all the options" do
@@ -43,7 +43,7 @@ shared_examples_for "things that declare options" do
       option "-f"
       option "--baz"
     end
-    thing.options.should == [:foo, :bar, :quux, :f, :baz]
+    expect(thing.options).to eq([:foo, :bar, :quux, :f, :baz])
   end
 
   it "should detect conflicts in long options" do
@@ -103,7 +103,7 @@ shared_examples_for "things that declare options" do
     expect do
       thing = add_options_to do option "--foo=[baz]", "--bar=[baz]" end
       [:foo, :bar].each do |name|
-        thing.should be_option name
+        expect(thing).to be_option name
       end
     end.to raise_error(ArgumentError, /optional arguments are not supported/)
   end
@@ -111,12 +111,12 @@ shared_examples_for "things that declare options" do
   describe "#takes_argument?" do
     it "should detect an argument being absent" do
       thing = add_options_to do option "--foo" end
-      thing.get_option(:foo).should_not be_takes_argument
+      expect(thing.get_option(:foo)).not_to be_takes_argument
     end
     ["=FOO", " FOO"].each do |input|
       it "should detect an argument given #{input.inspect}" do
         thing = add_options_to do option "--foo#{input}" end
-        thing.get_option(:foo).should be_takes_argument
+        expect(thing.get_option(:foo)).to be_takes_argument
       end
     end
   end
@@ -124,15 +124,15 @@ shared_examples_for "things that declare options" do
   describe "#optional_argument?" do
     it "should be false if no argument is present" do
       option = add_options_to do option "--foo" end.get_option(:foo)
-      option.should_not be_takes_argument
-      option.should_not be_optional_argument
+      expect(option).not_to be_takes_argument
+      expect(option).not_to be_optional_argument
     end
 
     ["=FOO", " FOO"].each do |input|
       it "should be false if the argument is mandatory (like #{input.inspect})" do
         option = add_options_to do option "--foo#{input}" end.get_option(:foo)
-      option.should be_takes_argument
-      option.should_not be_optional_argument
+      expect(option).to be_takes_argument
+      expect(option).not_to be_optional_argument
       end
     end
 
@@ -140,8 +140,8 @@ shared_examples_for "things that declare options" do
       it "should fail if the argument is optional (like #{input.inspect})" do
         expect do
           option = add_options_to do option "--foo#{input}" end.get_option(:foo)
-          option.should be_takes_argument
-          option.should be_optional_argument
+          expect(option).to be_takes_argument
+          expect(option).to be_optional_argument
         end.to raise_error(ArgumentError, /optional arguments are not supported/)
       end
     end
@@ -150,7 +150,7 @@ shared_examples_for "things that declare options" do
   describe "#default_to" do
     it "should not have a default value by default" do
       option = add_options_to do option "--foo" end.get_option(:foo)
-      option.should_not be_has_default
+      expect(option).not_to be_has_default
     end
 
     it "should accept a block for the default value" do
@@ -162,7 +162,7 @@ shared_examples_for "things that declare options" do
         end
       end.get_option(:foo)
 
-      option.should be_has_default
+      expect(option).to be_has_default
     end
 
     it "should invoke the block when asked for the default value" do
@@ -175,9 +175,9 @@ shared_examples_for "things that declare options" do
         end
       end.get_option(:foo)
 
-      option.should be_has_default
-      option.default.should be_true
-      invoked.should be_true
+      expect(option).to be_has_default
+      expect(option.default).to be_truthy
+      expect(invoked).to be_truthy
     end
 
     it "should return the value of the block when asked for the default" do
@@ -189,8 +189,8 @@ shared_examples_for "things that declare options" do
         end
       end.get_option(:foo)
 
-      option.should be_has_default
-      option.default.should == 12
+      expect(option).to be_has_default
+      expect(option.default).to eq(12)
     end
 
     it "should invoke the block every time the default is requested" do
@@ -206,9 +206,9 @@ shared_examples_for "things that declare options" do
       second = option.default.object_id
       third  = option.default.object_id
 
-      first.should_not == second
-      first.should_not == third
-      second.should_not == third
+      expect(first).not_to eq(second)
+      expect(first).not_to eq(third)
+      expect(second).not_to eq(third)
     end
 
     it "should fail if the option has a default and is required" do

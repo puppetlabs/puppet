@@ -90,7 +90,7 @@ Puppet::Type.newtype(:file) do
       filebucket resource and a resource default for the `backup` attribute
       in site.pp:
 
-          # /etc/puppet/manifests/site.pp
+          # /etc/puppetlabs/puppet/manifests/site.pp
           filebucket { 'main':
             path   => false,                # This is required for remote filebuckets.
             server => 'puppet.example.com', # Optional; defaults to the configured puppet master.
@@ -379,6 +379,11 @@ Puppet::Type.newtype(:file) do
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
 
+    if @parameters[:content] && @parameters[:content].actual_content
+      # Now that we know the checksum, update content (in case it was created before checksum was known).
+      @parameters[:content].value = @parameters[:checksum].sum(@parameters[:content].actual_content)
+    end
+
     provider.validate if provider.respond_to?(:validate)
   end
 
@@ -651,10 +656,6 @@ Puppet::Type.newtype(:file) do
       end
       children[meta.relative_path] ||= newchild(meta.relative_path)
       children[meta.relative_path][:source] = meta.source
-      if meta.ftype == "file"
-        children[meta.relative_path][:checksum] = Puppet[:digest_algorithm].to_sym
-      end
-
       children[meta.relative_path].parameter(:source).metadata = meta
     end
 

@@ -12,7 +12,7 @@ class Puppet::Pops::Model::TreeDumper
   end
 
   def do_dump(o)
-    @@dump_visitor.visit_this(self, o)
+    @@dump_visitor.visit_this_0(self, o)
   end
 
   def indent

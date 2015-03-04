@@ -21,7 +21,7 @@ describe provider_class do
 
   it "should have an install method" do
     @provider = provider_class.new
-    @provider.should respond_to(:install)
+    expect(@provider).to respond_to(:install)
   end
 
   describe "when installing" do

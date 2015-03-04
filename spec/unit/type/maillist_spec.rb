@@ -33,8 +33,8 @@ describe maillist do
     @provider.stubs(:aliases).returns({"test1" => 'this will get included', "test2" => 'this will dropped', "test3" => 'this will get included'})
 
     generated = @maillist.generate
-    generated.map{ |x| x.name  }.sort.should == ['test1', 'test3']
-    generated.map{ |x| x.class }.should      == [Puppet::Type::Mailalias, Puppet::Type::Mailalias]
+    expect(generated.map{ |x| x.name  }.sort).to eq(['test1', 'test3'])
+    expect(generated.map{ |x| x.class }).to      eq([Puppet::Type::Mailalias, Puppet::Type::Mailalias])
 
   end
 

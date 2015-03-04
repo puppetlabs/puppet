@@ -21,15 +21,15 @@ describe Puppet::SSL::Certificate do
   end
 
   it "should be extended with the Indirector module" do
-    @class.singleton_class.should be_include(Puppet::Indirector)
+    expect(@class.singleton_class).to be_include(Puppet::Indirector)
   end
 
   it "should indirect certificate" do
-    @class.indirection.name.should == :certificate
+    expect(@class.indirection.name).to eq(:certificate)
   end
 
   it "should only support the text format" do
-    @class.supported_formats.should == [:s]
+    expect(@class.supported_formats).to eq([:s])
   end
 
   describe "when converting from a string" do
@@ -53,7 +53,7 @@ describe Puppet::SSL::Certificate do
       cert2 = stub 'cert2'
       @class.expects(:from_s).with("cert2").returns cert2
 
-      @class.from_multiple_s("cert1\n---\ncert2").should == [cert1, cert2]
+      expect(@class.from_multiple_s("cert1\n---\ncert2")).to eq([cert1, cert2])
     end
   end
 
@@ -63,13 +63,13 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should return an empty string when it has no certificate" do
-      @certificate.to_s.should == ""
+      expect(@certificate.to_s).to eq("")
     end
 
     it "should convert the certificate to pem format" do
       certificate = mock 'certificate', :to_pem => "pem"
       @certificate.content = certificate
-      @certificate.to_s.should == "pem"
+      expect(@certificate.to_s).to eq("pem")
     end
 
     it "should be able to convert multiple instances to a string" do
@@ -77,7 +77,7 @@ describe Puppet::SSL::Certificate do
       @certificate.expects(:to_s).returns "cert1"
       cert2.expects(:to_s).returns "cert2"
 
-      @class.to_multiple_s([@certificate, cert2]).should == "cert1\n---\ncert2"
+      expect(@class.to_multiple_s([@certificate, cert2])).to eq("cert1\n---\ncert2")
 
     end
   end
@@ -99,27 +99,27 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should have a name attribute" do
-      @certificate.name.should == "myname"
+      expect(@certificate.name).to eq("myname")
     end
 
     it "should convert its name to a string and downcase it" do
-      @class.new(:MyName).name.should == "myname"
+      expect(@class.new(:MyName).name).to eq("myname")
     end
 
     it "should have a content attribute" do
-      @certificate.should respond_to(:content)
+      expect(@certificate).to respond_to(:content)
     end
 
     describe "#subject_alt_names" do
       it "should list all alternate names when the extension is present" do
         certificate = build_cert(:dns_alt_names => 'foo, bar,baz')
-        certificate.subject_alt_names.
-          should =~ ['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux']
+        expect(certificate.subject_alt_names).
+          to match_array(['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux'])
       end
 
       it "should return an empty list of names if the extension is absent" do
         certificate = build_cert({})
-        certificate.subject_alt_names.should be_empty
+        expect(certificate.subject_alt_names).to be_empty
       end
     end
 
@@ -148,7 +148,7 @@ describe Puppet::SSL::Certificate do
     it "should return a nil expiration if there is no actual certificate" do
       @certificate.stubs(:content).returns nil
 
-      @certificate.expiration.should be_nil
+      expect(@certificate.expiration).to be_nil
     end
 
     it "should use the expiration of the certificate as its expiration date" do
@@ -157,7 +157,7 @@ describe Puppet::SSL::Certificate do
 
       cert.expects(:not_after).returns "sometime"
 
-      @certificate.expiration.should == "sometime"
+      expect(@certificate.expiration).to eq("sometime")
     end
 
     it "should be able to read certificates from disk" do
@@ -165,15 +165,15 @@ describe Puppet::SSL::Certificate do
       File.expects(:read).with(path).returns("my certificate")
       certificate = mock 'certificate'
       OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(certificate)
-      @certificate.read(path).should equal(certificate)
-      @certificate.content.should equal(certificate)
+      expect(@certificate.read(path)).to equal(certificate)
+      expect(@certificate.content).to equal(certificate)
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
       real_certificate = mock 'certificate'
       real_certificate.expects(:to_text).returns "certificatetext"
       @certificate.content = real_certificate
-      @certificate.to_text.should == "certificatetext"
+      expect(@certificate.to_text).to eq("certificatetext")
     end
 
     it "should parse the old non-DER encoded extension values" do

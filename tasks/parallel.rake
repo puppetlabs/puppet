@@ -158,8 +158,6 @@ else
       # Responsible for parallelizing spec testing.
       #
       class Parallelizer
-        include ::RSpec::Core::Formatters::Helpers
-
         # Number of processes to use
         attr_reader :process_count
         # Approximate size of each group of tests
@@ -341,7 +339,7 @@ else
           end
 
           # Print out the run time
-          puts "\nFinished in #{format_duration(Time.now - @start_time)}"
+          puts "\nFinished in #{::RSpec::Core::Formatters::Helpers.format_duration(Time.now - @start_time)}"
 
           # Count all of the examples
           examples = 0
@@ -373,8 +371,8 @@ else
         end
 
         def summary_count_line(examples, failures, pending)
-          summary = pluralize(examples, "example")
-          summary << ", " << pluralize(failures, "failure")
+          summary = ::RSpec::Core::Formatters::Helpers.pluralize(examples, "example")
+          summary << ", " << ::RSpec::Core::Formatters::Helpers.pluralize(failures, "failure")
           summary << ", #{pending} pending" if pending > 0
           summary
         end
@@ -389,7 +387,6 @@ else
       config.error_stream = $stderr
       config.output_stream = $stdout
       options = ::RSpec::Core::ConfigurationOptions.new []
-      options.parse_options
       options.configure config
       config.color
     end

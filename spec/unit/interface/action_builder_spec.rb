@@ -10,8 +10,8 @@ describe Puppet::Interface::ActionBuilder do
     action = Puppet::Interface::ActionBuilder.build(face, :foo) do
       when_invoked do |options| true end
     end
-    action.should be_a(Puppet::Interface::Action)
-    action.name.should == :foo
+    expect(action).to be_a(Puppet::Interface::Action)
+    expect(action.name).to eq(:foo)
   end
 
   it "should define a method on the face which invokes the action" do
@@ -19,7 +19,7 @@ describe Puppet::Interface::ActionBuilder do
       action(:foo) { when_invoked { |options| "invoked the method" } }
     end
 
-    face.foo.should == "invoked the method"
+    expect(face.foo).to eq("invoked the method")
   end
 
   it "should require a block" do
@@ -41,7 +41,7 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         method = self.method(:option)
       end
-      method.should be_an_instance_of Method
+      expect(method).to be_an_instance_of Method
     end
 
     it "should define an option without a block" do
@@ -49,7 +49,7 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         option "--bar"
       end
-      action.should be_option :bar
+      expect(action).to be_option :bar
     end
 
     it "should accept an empty block" do
@@ -59,7 +59,7 @@ describe Puppet::Interface::ActionBuilder do
           # This space left deliberately blank.
         end
       end
-      action.should be_option :bar
+      expect(action).to be_option :bar
     end
   end
 
@@ -69,7 +69,7 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         summary "this is some text"
       end
-      action.summary.should == "this is some text"
+      expect(action.summary).to eq("this is some text")
     end
   end
 
@@ -79,14 +79,14 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         default
       end
-      action.default.should be_true
+      expect(action.default).to be_truthy
     end
 
     it "should not be default by, er, default. *cough*" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
         when_invoked do |options| true end
       end
-      action.default.should be_false
+      expect(action.default).to be_falsey
     end
   end
 
@@ -144,7 +144,7 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         when_rendering :json do |a| true end
       end
-      action.when_rendering(:json).should be_an_instance_of Method
+      expect(action.when_rendering(:json)).to be_an_instance_of Method
     end
 
     it "should fail if you try to set the same rendering twice" do
@@ -163,8 +163,8 @@ describe Puppet::Interface::ActionBuilder do
         when_rendering :json do |a| true end
         when_rendering :yaml do |a| true end
       end
-      action.when_rendering(:json).should be_an_instance_of Method
-      action.when_rendering(:yaml).should be_an_instance_of Method
+      expect(action.when_rendering(:json)).to be_an_instance_of Method
+      expect(action.when_rendering(:yaml)).to be_an_instance_of Method
     end
 
     it "should be bound to the face when called" do
@@ -172,7 +172,7 @@ describe Puppet::Interface::ActionBuilder do
         when_invoked do |options| true end
         when_rendering :json do |a| self end
       end
-      action.when_rendering(:json).call(true).should == face
+      expect(action.when_rendering(:json).call(true)).to eq(face)
     end
   end
 
@@ -181,7 +181,7 @@ describe Puppet::Interface::ActionBuilder do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
         when_invoked do |options| true end
       end
-      action.render_as.should be_nil
+      expect(action.render_as).to be_nil
     end
 
     it "should fail if not rendering format is given" do
@@ -199,7 +199,7 @@ describe Puppet::Interface::ActionBuilder do
           when_invoked do |options| true end
           render_as name
         end
-        action.render_as.should == name
+        expect(action.render_as).to eq(name)
       end
     end
 

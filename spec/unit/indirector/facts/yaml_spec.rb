@@ -6,21 +6,21 @@ require 'puppet/indirector/facts/yaml'
 
 describe Puppet::Node::Facts::Yaml do
   it "should be a subclass of the Yaml terminus" do
-    Puppet::Node::Facts::Yaml.superclass.should equal(Puppet::Indirector::Yaml)
+    expect(Puppet::Node::Facts::Yaml.superclass).to equal(Puppet::Indirector::Yaml)
   end
 
   it "should have documentation" do
-    Puppet::Node::Facts::Yaml.doc.should_not be_nil
-    Puppet::Node::Facts::Yaml.doc.should_not be_empty
+    expect(Puppet::Node::Facts::Yaml.doc).not_to be_nil
+    expect(Puppet::Node::Facts::Yaml.doc).not_to be_empty
   end
 
   it "should be registered with the facts indirection" do
     indirection = Puppet::Indirector::Indirection.instance(:facts)
-    Puppet::Node::Facts::Yaml.indirection.should equal(indirection)
+    expect(Puppet::Node::Facts::Yaml.indirection).to equal(indirection)
   end
 
   it "should have its name set to :yaml" do
-    Puppet::Node::Facts::Yaml.name.should == :yaml
+    expect(Puppet::Node::Facts::Yaml.name).to eq(:yaml)
   end
 
   describe "#search" do
@@ -33,7 +33,7 @@ describe Puppet::Node::Facts::Yaml do
           YAML.stubs(:load_file).with(key).returns value
         end
       end
-      Puppet::Node::Facts::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
+      expect(Puppet::Node::Facts::Yaml.new.search(request)).to match_array(matching.values.map {|facts| facts.name})
     end
 
     it "should return node names that match the search query options" do

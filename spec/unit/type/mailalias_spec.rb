@@ -15,21 +15,21 @@ describe Puppet::Type.type(:mailalias) do
   end
 
   it "should be initially absent as a recipient" do
-    recipient_resource.retrieve_resource[:recipient].should == :absent
+    expect(recipient_resource.retrieve_resource[:recipient]).to eq(:absent)
   end
 
   it "should be initially absent as an included file" do
-    file_resource.retrieve_resource[:file].should == :absent
+    expect(file_resource.retrieve_resource[:file]).to eq(:absent)
   end
 
   it "should try and set the recipient when it does the sync" do
-    recipient_resource.retrieve_resource[:recipient].should == :absent
+    expect(recipient_resource.retrieve_resource[:recipient]).to eq(:absent)
     recipient_resource.property(:recipient).expects(:set).with(["yay"])
     recipient_resource.property(:recipient).sync
   end
 
   it "should try and set the included file when it does the sync" do
-    file_resource.retrieve_resource[:file].should == :absent
+    expect(file_resource.retrieve_resource[:file]).to eq(:absent)
     file_resource.property(:file).expects(:set).with(tmpfile_path)
     file_resource.property(:file).sync
   end

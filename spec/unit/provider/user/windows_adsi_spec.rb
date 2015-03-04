@@ -26,25 +26,25 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       stub_users = names.map{|n| stub(:name => n)}
       connection.stubs(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(stub_users)
 
-      described_class.instances.map(&:name).should =~ names
+      expect(described_class.instances.map(&:name)).to match(names)
     end
   end
 
   it "should provide access to a Puppet::Util::Windows::ADSI::User object" do
-    provider.user.should be_a(Puppet::Util::Windows::ADSI::User)
+    expect(provider.user).to be_a(Puppet::Util::Windows::ADSI::User)
   end
 
   describe "when managing groups" do
     it 'should return the list of groups as a comma-separated list' do
       provider.user.stubs(:groups).returns ['group1', 'group2', 'group3']
 
-      provider.groups.should == 'group1,group2,group3'
+      expect(provider.groups).to eq('group1,group2,group3')
     end
 
     it "should return absent if there are no groups" do
       provider.user.stubs(:groups).returns []
 
-      provider.groups.should == ''
+      expect(provider.groups).to eq('')
     end
 
     it 'should be able to add a user to a set of groups' do
@@ -103,7 +103,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       resource[:password] = 'plaintext'
       provider.user.expects(:password_is?).with('plaintext').returns true
 
-      provider.password.should == 'plaintext'
+      expect(provider.password).to eq('plaintext')
 
     end
 
@@ -111,7 +111,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       resource[:password] = 'plaintext'
       provider.user.expects(:password_is?).with('plaintext').returns false
 
-      provider.password.should be_nil
+      expect(provider.password).to be_nil
     end
 
     it 'should not create a user if a group by the same name exists' do
@@ -124,10 +124,10 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   it 'should be able to test whether a user exists' do
     Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
     Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection')
-    provider.should be_exists
+    expect(provider).to be_exists
 
     Puppet::Util::Windows::ADSI.stubs(:connect).returns nil
-    provider.should_not be_exists
+    expect(provider).not_to be_exists
   end
 
   it 'should be able to delete a user' do
@@ -156,7 +156,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   it "should return the user's SID as uid" do
     Puppet::Util::Windows::SID.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
 
-    provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
+    expect(provider.uid).to eq('S-1-5-21-1362942247-2130103807-3279964888-1111')
   end
 
   it "should fail when trying to manage the uid property" do

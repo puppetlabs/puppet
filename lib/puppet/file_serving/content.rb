@@ -12,20 +12,18 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
   attr_writer :content
 
   def self.supported_formats
-    [:raw]
+    [:binary]
   end
 
-  def self.from_raw(content)
+  def self.from_binary(content)
     instance = new("/this/is/a/fake/path")
     instance.content = content
     instance
   end
 
-  # BF: we used to fetch the file content here, but this is counter-productive
-  # for puppetmaster streaming of file content. So collect just returns itself
+  # This is no longer used, but is still called by the file server implementations when interacting
+  # with their model abstraction.
   def collect(source_permissions = nil)
-    return if stat.ftype == "directory"
-    self
   end
 
   # Read the content of our file in.
@@ -39,7 +37,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
     @content
   end
 
-  def to_raw
+  def to_binary
     File.new(full_path, "rb")
   end
 end

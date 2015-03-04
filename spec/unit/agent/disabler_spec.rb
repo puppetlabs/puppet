@@ -20,7 +20,7 @@ describe Puppet::Agent::Disabler do
   ##  the tests. --cprice 2012-04-16
 
   it "should use an JsonLockfile instance as its disable_lockfile" do
-    @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::JsonLockfile)
+    expect(@disabler.send(:disable_lockfile)).to be_instance_of(Puppet::Util::JsonLockfile)
   end
 
   it "should use puppet's :agent_disabled_lockfile' setting to determine its lockfile path" do
@@ -33,7 +33,7 @@ describe Puppet::Agent::Disabler do
   end
 
   it "should reuse the same lock file each time" do
-    @disabler.send(:disable_lockfile).should equal(@disabler.send(:disable_lockfile))
+    expect(@disabler.send(:disable_lockfile)).to equal(@disabler.send(:disable_lockfile))
   end
 
   it "should lock the file when disabled" do
@@ -59,6 +59,6 @@ describe Puppet::Agent::Disabler do
 
     msg = "I'm busy, go away"
     @disabler.disable(msg)
-    @disabler.disable_message.should == msg
+    expect(@disabler.disable_message).to eq(msg)
   end
 end

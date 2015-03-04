@@ -51,80 +51,50 @@ class Puppet::Application::Doc < Puppet::Application
   def help
     <<-'HELP'
 
-puppet-doc(8) -- Generate Puppet documentation and references
+puppet-doc(8) -- Generate Puppet references
 ========
 
 SYNOPSIS
 --------
 Generates a reference for all Puppet types. Largely meant for internal
-Puppet Labs use.
+Puppet Labs use. (Deprecated)
 
 
 USAGE
 -----
-puppet doc [-a|--all] [-h|--help] [-l|--list] [-o|--outputdir <rdoc-outputdir>]
-  [-m|--mode text|pdf|rdoc] [-r|--reference <reference-name>]
-  [--charset <charset>]
+puppet doc [-h|--help] [-l|--list]
+  [-r|--reference <reference-name>]
 
 
 DESCRIPTION
 -----------
-If mode is not 'rdoc', then this command generates a Markdown document
+This deprecated command generates a Markdown document to stdout
 describing all installed Puppet types or all allowable arguments to
 puppet executables. It is largely meant for internal use and is used to
 generate the reference document available on the Puppet Labs web site.
 
-In 'rdoc' mode, this command generates an html RDoc hierarchy describing
-the manifests that are in 'manifest' and 'modulepath' configuration
-directives. The generated documentation directory is doc by default but
-can be changed with the 'outputdir' option.
+For Puppet module documentation (and all other use cases) this command
+has been superseded by the "puppet-strings"
+module - see https://github.com/puppetlabs/puppetlabs-strings for more information.
+
+This command (puppet-doc) will be removed once the
+puppetlabs internal documentation processing pipeline is completely based
+on puppet-strings.
 
 OPTIONS
 -------
-* --all:
-  Output the docs for all of the reference types. In 'rdoc' mode, this also
-  outputs documentation for all resources.
 
 * --help:
   Print this help message
-
-* --outputdir:
-  Used only in 'rdoc' mode. The directory to which the rdoc output should
-  be written.
-
-* --mode:
-  Determine the output mode. Valid modes are 'text', 'pdf' and 'rdoc'. The 'pdf'
-  mode creates PDF formatted files in the /tmp directory. The default mode is
-  'text'.
 
 * --reference:
   Build a particular reference. Get a list of references by running
   'puppet doc --list'.
 
-* --charset:
-  Used only in 'rdoc' mode. It sets the charset used in the html files produced.
-
-* --modulepath:
-  Used only in 'rdoc' mode. The directory or directories to scan for modules.
-  May be used in place of --environment.  If both settings are provided,
-  --modulepath will take precedence.
-
-* --environment:
-  Used only in 'rdoc' mode. The configuration environment from which
-  to read the modulepath setting.
-
 
 EXAMPLE
 -------
     $ puppet doc -r type > /tmp/type_reference.markdown
-
-or
-
-    $ puppet doc --outputdir /tmp/rdoc --mode rdoc --modulepath /path/to/modules
-
-or
-
-    $ puppet doc -m pdf -r configuration
 
 
 AUTHOR

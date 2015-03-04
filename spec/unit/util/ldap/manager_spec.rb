@@ -24,39 +24,39 @@ describe Puppet::Util::Ldap::Manager do
   end
 
   it "should return self when specifying objectclasses" do
-    @manager.manages(:one, :two).should equal(@manager)
+    expect(@manager.manages(:one, :two)).to equal(@manager)
   end
 
   it "should allow specification of what objectclasses are managed" do
-    @manager.manages(:one, :two).objectclasses.should == [:one, :two]
+    expect(@manager.manages(:one, :two).objectclasses).to eq([:one, :two])
   end
 
   it "should return self when specifying the relative base" do
-    @manager.at("yay").should equal(@manager)
+    expect(@manager.at("yay")).to equal(@manager)
   end
 
   it "should allow specification of the relative base" do
-    @manager.at("yay").location.should == "yay"
+    expect(@manager.at("yay").location).to eq("yay")
   end
 
   it "should return self when specifying the attribute map" do
-    @manager.maps(:one => :two).should equal(@manager)
+    expect(@manager.maps(:one => :two)).to equal(@manager)
   end
 
   it "should allow specification of the rdn attribute" do
-    @manager.named_by(:uid).rdn.should == :uid
+    expect(@manager.named_by(:uid).rdn).to eq(:uid)
   end
 
   it "should allow specification of the attribute map" do
-    @manager.maps(:one => :two).puppet2ldap.should == {:one => :two}
+    expect(@manager.maps(:one => :two).puppet2ldap).to eq({:one => :two})
   end
 
   it "should have a no-op 'and' method that just returns self" do
-    @manager.and.should equal(@manager)
+    expect(@manager.and).to equal(@manager)
   end
 
   it "should allow specification of generated attributes" do
-    @manager.generates(:thing).should be_instance_of(Puppet::Util::Ldap::Generator)
+    expect(@manager.generates(:thing)).to be_instance_of(Puppet::Util::Ldap::Generator)
   end
 
   describe "when generating attributes" do
@@ -72,7 +72,7 @@ describe Puppet::Util::Ldap::Manager do
     end
 
     it "should return the generator from the :generates method" do
-      @manager.generates(:myparam).should equal(@generator)
+      expect(@manager.generates(:myparam)).to equal(@generator)
     end
 
     it "should not replace already present values" do
@@ -83,7 +83,7 @@ describe Puppet::Util::Ldap::Manager do
 
       @manager.generate attrs
 
-      attrs["myparam"].should == "testing"
+      expect(attrs["myparam"]).to eq("testing")
     end
 
     it "should look for the parameter as a string, not a symbol" do
@@ -92,12 +92,12 @@ describe Puppet::Util::Ldap::Manager do
       attrs = {"one" => "yay"}
       @manager.generate attrs
 
-      attrs["myparam"].should == %w{double yay}
+      expect(attrs["myparam"]).to eq(%w{double yay})
     end
 
     it "should fail if a source is specified and no source value is not defined" do
       @manager.generates(:myparam)
-      lambda { @manager.generate "two" => "yay" }.should raise_error(ArgumentError)
+      expect { @manager.generate "two" => "yay" }.to raise_error(ArgumentError)
     end
 
     it "should use the source value to generate the new value if a source attribute is specified" do
@@ -119,7 +119,7 @@ describe Puppet::Util::Ldap::Manager do
 
       attrs = {"one" => "two"}
       @manager.generate(attrs)
-      attrs["myparam"].should == ["test"]
+      expect(attrs["myparam"]).to eq(["test"])
     end
 
     it "should add the result to the passed-in attribute hash" do
@@ -128,90 +128,90 @@ describe Puppet::Util::Ldap::Manager do
 
       attrs = {"one" => "two"}
       @manager.generate(attrs)
-      attrs["myparam"].should == %w{test}
+      expect(attrs["myparam"]).to eq(%w{test})
     end
   end
 
   it "should be considered invalid if it is missing a location" do
     @manager.manages :me
     @manager.maps :me => :you
-    @manager.should_not be_valid
+    expect(@manager).not_to be_valid
   end
 
   it "should be considered invalid if it is missing an objectclass list" do
     @manager.maps :me => :you
     @manager.at "ou=yayness"
-    @manager.should_not be_valid
+    expect(@manager).not_to be_valid
   end
 
   it "should be considered invalid if it is missing an attribute map" do
     @manager.manages :me
     @manager.at "ou=yayness"
-    @manager.should_not be_valid
+    expect(@manager).not_to be_valid
   end
 
   it "should be considered valid if it has an attribute map, location, and objectclass list" do
     @manager.maps :me => :you
     @manager.manages :me
     @manager.at "ou=yayness"
-    @manager.should be_valid
+    expect(@manager).to be_valid
   end
 
   it "should calculate an instance's dn using the :ldapbase setting and the relative base" do
     Puppet[:ldapbase] = "dc=testing"
     @manager.at "ou=mybase"
-    @manager.dn("me").should == "cn=me,ou=mybase,dc=testing"
+    expect(@manager.dn("me")).to eq("cn=me,ou=mybase,dc=testing")
   end
 
   it "should use the specified rdn when calculating an instance's dn" do
     Puppet[:ldapbase] = "dc=testing"
     @manager.named_by :uid
     @manager.at "ou=mybase"
-    @manager.dn("me").should =~ /^uid=me/
+    expect(@manager.dn("me")).to match(/^uid=me/)
   end
 
   it "should calculate its base using the :ldapbase setting and the relative base" do
     Puppet[:ldapbase] = "dc=testing"
     @manager.at "ou=mybase"
-    @manager.base.should == "ou=mybase,dc=testing"
+    expect(@manager.base).to eq("ou=mybase,dc=testing")
   end
 
   describe "when generating its search filter" do
     it "should using a single 'objectclass=<name>' filter if a single objectclass is specified" do
       @manager.manages("testing")
-      @manager.filter.should == "objectclass=testing"
+      expect(@manager.filter).to eq("objectclass=testing")
     end
 
     it "should create an LDAP AND filter if multiple objectclasses are specified" do
       @manager.manages "testing", "okay", "done"
-      @manager.filter.should == "(&(objectclass=testing)(objectclass=okay)(objectclass=done))"
+      expect(@manager.filter).to eq("(&(objectclass=testing)(objectclass=okay)(objectclass=done))")
     end
   end
 
   it "should have a method for converting a Puppet attribute name to an LDAP attribute name as a string" do
     @manager.maps :puppet_attr => :ldap_attr
-    @manager.ldap_name(:puppet_attr).should == "ldap_attr"
+    expect(@manager.ldap_name(:puppet_attr)).to eq("ldap_attr")
   end
 
   it "should have a method for converting an LDAP attribute name to a Puppet attribute name" do
     @manager.maps :puppet_attr => :ldap_attr
-    @manager.puppet_name(:ldap_attr).should == :puppet_attr
+    expect(@manager.puppet_name(:ldap_attr)).to eq(:puppet_attr)
   end
 
   it "should have a :create method for creating ldap entries" do
-    @manager.should respond_to(:create)
+    expect(@manager).to respond_to(:create)
   end
 
   it "should have a :delete method for deleting ldap entries" do
-    @manager.should respond_to(:delete)
+    expect(@manager).to respond_to(:delete)
   end
 
   it "should have a :modify method for modifying ldap entries" do
-    @manager.should respond_to(:modify)
+    expect(@manager).to respond_to(:modify)
   end
 
   it "should have a method for finding an entry by name in ldap" do
-    @manager.should respond_to(:find)
+    expect(@manager).to respond_to(:find)
   end
 
   describe "when converting ldap entries to hashes for providers" do
@@ -222,23 +222,23 @@ describe Puppet::Util::Ldap::Manager do
     end
 
     it "should set the name to the short portion of the dn" do
-      @result[:name].should == "one"
+      expect(@result[:name]).to eq("one")
     end
 
     it "should remove the objectclasses" do
-      @result["objectclass"].should be_nil
+      expect(@result["objectclass"]).to be_nil
     end
 
     it "should remove any attributes that are not mentioned in the map" do
-      @result["three"].should be_nil
+      expect(@result["three"]).to be_nil
     end
 
     it "should rename convert to symbols all attributes to their puppet names" do
-      @result[:uno].should == %w{two}
+      expect(@result[:uno]).to eq(%w{two})
     end
 
     it "should set the value of all unset puppet attributes as :absent" do
-      @result[:dos].should == :absent
+      expect(@result[:dos]).to eq(:absent)
     end
   end
 
@@ -326,7 +326,7 @@ describe Puppet::Util::Ldap::Manager do
 
     it "should close the connection even if there's an exception in the passed block" do
       @conn.expects(:close)
-      lambda { @manager.connect { |c| raise ArgumentError } }.should raise_error(ArgumentError)
+      expect { @manager.connect { |c| raise ArgumentError } }.to raise_error(ArgumentError)
     end
   end
 
@@ -428,7 +428,7 @@ describe Puppet::Util::Ldap::Manager do
         @manager.expects(:dn).with("myname").returns "mydn"
         @conn.expects(:search2).raises LDAP::ResultError
 
-        @manager.find("myname").should be_nil
+        expect(@manager.find("myname")).to be_nil
       end
 
       it "should return a converted provider hash if the result is found" do
@@ -438,7 +438,7 @@ describe Puppet::Util::Ldap::Manager do
 
         @manager.expects(:entry2provider).with(result).returns "myprovider"
 
-        @manager.find("myname").should == "myprovider"
+        expect(@manager.find("myname")).to eq("myprovider")
       end
     end
 
@@ -477,7 +477,7 @@ describe Puppet::Util::Ldap::Manager do
       it "should return nil if no result is found" do
         @conn.expects(:search2)
 
-        @manager.search.should be_nil
+        expect(@manager.search).to be_nil
       end
 
       it "should return an array of the found results converted to provider hashes" do
@@ -487,7 +487,7 @@ describe Puppet::Util::Ldap::Manager do
 
         @manager.expects(:entry2provider).with(one).returns "myprov"
 
-        @manager.search.should == ["myprov"]
+        expect(@manager.search).to eq(["myprov"])
       end
     end
   end

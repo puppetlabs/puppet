@@ -54,7 +54,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "/.*/"          => /.*/
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
   end
@@ -87,7 +87,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3] + {'a' => 1, 'b'=>2}"                    => [1,2,3,['a',1],['b',2]],
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -119,7 +119,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "{'a'=>1, 'b'=>2, 'c'=>3} - 'c'"           => {'a'=>1, 'b'=>2},
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -187,7 +187,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "true == false"  => false,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -222,7 +222,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3] =~ Array[Integer[1,10]]" => true,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -282,7 +282,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Integer in {'a'=>1}"           => false,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -295,7 +295,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "if /b/ in [pineapple, bananas] {$0}" => 'b',
     }.each do |source, result|
       it "sets match variables for a regexp search using in such that '#{source}' produces '#{result}'" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -312,13 +312,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     }.each do |general, specials|
       specials.each do |special |
         it "should compute that #{general} > #{special}" do
-          parser.evaluate_string(scope, "#{general} > #{special}", __FILE__).should == true
+          expect(parser.evaluate_string(scope, "#{general} > #{special}", __FILE__)).to eq(true)
         end
         it "should compute that  #{special} < #{general}" do
-          parser.evaluate_string(scope, "#{special} < #{general}", __FILE__).should == true
+          expect(parser.evaluate_string(scope, "#{special} < #{general}", __FILE__)).to eq(true)
         end
         it "should compute that #{general} != #{special}" do
-          parser.evaluate_string(scope, "#{special} != #{general}", __FILE__).should == true
+          expect(parser.evaluate_string(scope, "#{special} != #{general}", __FILE__)).to eq(true)
         end
       end
     end
@@ -332,7 +332,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       'Integer[1,10] == Integer[1,10]' => true,
     }.each do |source, result|
         it "should parse and evaluate the integer range comparison expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -353,7 +353,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
          "8 << 1" => 16,
       }.each do |source, result|
           it "should parse and evaluate the expression '#{source}' to #{result}" do
-            parser.evaluate_string(scope, source, __FILE__).should == result
+            expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
           end
         end
 
@@ -367,7 +367,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "-6.0/3.0 "  => -2.0,
       }.each do |source, result|
           it "should parse and evaluate the expression '#{source}' to #{result}" do
-            parser.evaluate_string(scope, source, __FILE__).should == result
+            expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
           end
         end
 
@@ -403,14 +403,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'+02' + '04'"    => 6,
       }.each do |source, result|
           it "should parse and evaluate the expression '#{source}' to #{result}" do
-            parser.evaluate_string(scope, source, __FILE__).should == result
+            expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
           end
         end
 
       {
         "'0888' + '010'"   => :error,
         "'0xWTF' + '010'"  => :error,
-        "'0x12.3' + '010'" => :error,
         "'0x12.3' + '010'" => :error,
         '"-\n 2" + "2"'    => :error,
         '"-\v 2" + "2"'    => :error,
@@ -433,7 +432,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = $b = 5; $a == $b"      => true,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -467,7 +466,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = unless true {2} else {5} $a"        => 5,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -496,7 +495,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -512,7 +511,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "ringo ? *[paul, john, ringo, george] => 'beatle'"  => 'beatle',
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -528,7 +527,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "*'a'"                 => ['a']
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -566,7 +565,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,*[2,3],4][1]"  => 2,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -583,7 +582,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = {} $a[free_lunch] == undef"       => true,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -618,7 +617,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'abcd'[2,-3]"  => '',
    }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -644,7 +643,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "String[Integer[1]]"              => types.constrain_size(types.string,1, :default),
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
       end
     end
 
@@ -702,7 +701,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     context "on catalog types" do
       it "[n] gets resource parameter [n]" do
         source = "notify { 'hello': message=>'yo'} Notify[hello][message]"
-        parser.evaluate_string(scope, source, __FILE__).should == 'yo'
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq('yo')
       end
 
       it "[n] gets class parameter [n]" do
@@ -718,7 +717,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
                          :environments => Puppet::Environments::Static.new(@node.environment)
         }, "gets class parameter test") do
           scope.known_resource_types.import_ast(ast, '')
-          ast.code.safeevaluate(scope).should == 'chocolate'
+          expect(ast.code.safeevaluate(scope)).to eq('chocolate')
         end
       end
 
@@ -746,7 +745,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
          Notify[foo][tag]"                                                      => "by_override",
       }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -847,7 +846,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "false or true  or '0xwtf' + 1"  => true,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -862,8 +861,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   context "When evaluator performs operations on literal undef" do
     it "computes non existing hash lookup as undef" do
-      parser.evaluate_string(scope, "{a => 1}[b] == undef", __FILE__).should == true
-      parser.evaluate_string(scope, "undef == {a => 1}[b]", __FILE__).should == true
+      expect(parser.evaluate_string(scope, "{a => 1}[b] == undef", __FILE__)).to eq(true)
+      expect(parser.evaluate_string(scope, "undef == {a => 1}[b]", __FILE__)).to eq(true)
     end
   end
 
@@ -883,7 +882,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           populate
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -906,8 +905,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           param 'Integer', :count
           required_block_param
         end
-        def test(count, block)
-          block.call(*[].fill(10, 0, count))
+        def test(count)
+          yield(*[].fill(10, 0, count))
         end
       end
       the_func = fc.new({}, env_loader)
@@ -923,8 +922,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           param 'Any', :lambda_arg
           required_block_param
         end
-        def test(lambda_arg, block)
-          block.call(lambda_arg)
+        def test(lambda_arg)
+          yield(lambda_arg)
         end
       end
       the_func = fc.new({}, env_loader)
@@ -965,25 +964,25 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     context 'using the 3x function api' do
       it 'can call a 3x function' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
-        parser.evaluate_string(scope, "bazinga(42)", __FILE__).should == 42
+        expect(parser.evaluate_string(scope, "bazinga(42)", __FILE__)).to eq(42)
       end
 
       it 'maps :undef to empty string' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }
-        parser.evaluate_string(scope, "$a = {} bazinga($a[nope])", __FILE__).should == ''
-        parser.evaluate_string(scope, "bazinga(undef)", __FILE__).should == ''
+        expect(parser.evaluate_string(scope, "$a = {} bazinga($a[nope])", __FILE__)).to eq('')
+        expect(parser.evaluate_string(scope, "bazinga(undef)", __FILE__)).to eq('')
       end
 
       it 'does not map :undef to empty string in arrays' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0][0] }
-        parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__).should == :undef
-        parser.evaluate_string(scope, "bazinga([undef])", __FILE__).should == :undef
+        expect(parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "bazinga([undef])", __FILE__)).to eq(:undef)
       end
 
       it 'does not map :undef to empty string in hashes' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0]['a'] }
-        parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__).should == :undef
-        parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__).should == :undef
+        expect(parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__)).to eq(:undef)
       end
     end
   end
@@ -1011,7 +1010,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           populate
-          parser.evaluate_string(scope, source, __FILE__).should == result
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -1023,7 +1022,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       alt_results = ["value is {a => 1, b => 2} yo", "value is {b => 2, a => 1} yo" ]
       populate
       parse_result = parser.evaluate_string(scope, source, __FILE__)
-      alt_results.include?(parse_result).should == true
+      expect(alt_results.include?(parse_result)).to eq(true)
     end
 
     it 'should accept a variable with leading underscore when used directly' do
@@ -1034,6 +1033,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it 'should accept a variable with leading underscore when used as an expression' do
       source = '$_x = 10; "${_x}"'
       expect(parser.evaluate_string(scope, source, __FILE__)).to eql('10')
+    end
+
+    it 'should accept a numeric variable expressed as $n' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${$2}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('123')
+    end
+
+    it 'should accept a numeric variable expressed as just an integer' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${2}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('123')
+    end
+
+    it 'should accept a numeric variable expressed as $n in an access operation' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${$0[4,3]}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('23d')
+    end
+
+    it 'should accept a numeric variable expressed as just an integer in an access operation' do
+      source = '$x = "abc123def" =~ /(abc)(123)(def)/; "${0[4,3]}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('23d')
     end
 
     {
@@ -1064,7 +1083,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       '$a = $1'   => nil,
     }.each do |source, value|
       it "it is ok to reference numeric unassigned variables '#{source}'" do
-        parser.evaluate_string(scope, source, __FILE__).should == value
+        expect(parser.evaluate_string(scope, source, __FILE__)).to eq(value)
       end
     end
 
@@ -1083,7 +1102,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         '$__a = 1'   => 1,
       }.each do |source, value|
         it "as in this example '#{source}'" do
-          parser.evaluate_string(scope, source, __FILE__).should == value
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(value)
         end
       end
     end
@@ -1093,48 +1112,48 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it 'should form a relation with File[a] -> File[b]' do
       source = "File[a] -> File[b]"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'b'])
+      expect(scope.compiler).to have_relationship(['File', 'a', '->', 'File', 'b'])
     end
 
     it 'should form a relation with resource -> resource' do
       source = "notify{a:} -> notify{b:}"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
+      expect(scope.compiler).to have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
     end
 
     it 'should form a relation with [File[a], File[b]] -> [File[x], File[y]]' do
       source = "[File[a], File[b]] -> [File[x], File[y]]"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'x'])
-      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'x'])
-      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'y'])
-      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'y'])
+      expect(scope.compiler).to have_relationship(['File', 'a', '->', 'File', 'x'])
+      expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'x'])
+      expect(scope.compiler).to have_relationship(['File', 'a', '->', 'File', 'y'])
+      expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'y'])
     end
 
     it 'should tolerate (eliminate) duplicates in operands' do
       source = "[File[a], File[a]] -> File[x]"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'x'])
-      scope.compiler.relationships.size.should == 1
+      expect(scope.compiler).to have_relationship(['File', 'a', '->', 'File', 'x'])
+      expect(scope.compiler.relationships.size).to eq(1)
     end
 
     it 'should form a relation with <-' do
       source = "File[a] <- File[b]"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'a'])
+      expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'a'])
     end
 
     it 'should form a relation with <-' do
       source = "File[a] <~ File[b]"
       parser.evaluate_string(scope, source, __FILE__)
-      scope.compiler.should have_relationship(['File', 'b', '~>', 'File', 'a'])
+      expect(scope.compiler).to have_relationship(['File', 'b', '~>', 'File', 'a'])
     end
   end
 
   context "When evaluating heredoc" do
     it "evaluates plain heredoc" do
       src = "@(END)\nThis is\nheredoc text\nEND\n"
-      parser.evaluate_string(scope, src).should == "This is\nheredoc text\n"
+      expect(parser.evaluate_string(scope, src)).to eq("This is\nheredoc text\n")
     end
 
     it "parses heredoc with margin" do
@@ -1145,7 +1164,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "   | END",
       ""
       ].join("\n")
-      parser.evaluate_string(scope, src).should == "This is\nheredoc text\n"
+      expect(parser.evaluate_string(scope, src)).to eq("This is\nheredoc text\n")
     end
 
     it "parses heredoc with margin and right newline trim" do
@@ -1156,7 +1175,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "   |- END",
       ""
       ].join("\n")
-      parser.evaluate_string(scope, src).should == "This is\nheredoc text"
+      expect(parser.evaluate_string(scope, src)).to eq("This is\nheredoc text")
     end
 
     it "parses escape specification" do
@@ -1165,7 +1184,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       Tex\\tt\\n
       |- END
       CODE
-      parser.evaluate_string(scope, src).should == "Tex\tt\\n"
+      expect(parser.evaluate_string(scope, src)).to eq("Tex\tt\\n")
     end
 
     it "parses syntax checked specification" do
@@ -1174,7 +1193,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       ["foo", "bar"]
       |- END
       CODE
-      parser.evaluate_string(scope, src).should == '["foo", "bar"]'
+      expect(parser.evaluate_string(scope, src)).to eq('["foo", "bar"]')
     end
 
     it "parses syntax checked specification with error and reports it" do
@@ -1193,7 +1212,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       Hello $name
       |- END
       CODE
-      parser.evaluate_string(scope, src).should == "Hello Fjodor"
+      expect(parser.evaluate_string(scope, src)).to eq("Hello Fjodor")
     end
 
   end
@@ -1315,7 +1334,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
-    failure_message_for_should do |actual|
+    failure_message do |actual|
       "Relationship #{expected[0]}[#{expected[1]}] #{expected[2]} #{expected[3]}[#{expected[4]}] but was unknown to compiler"
     end
   end

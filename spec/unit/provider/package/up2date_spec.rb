@@ -17,7 +17,7 @@ describe 'up2date package provider' do
       it "should be the default provider on #{osfamily} #{release}" do
         Facter.expects(:value).with(:osfamily).returns(osfamily)
         Facter.expects(:value).with(:lsbdistrelease).returns(release)
-        subject.default?.should be_true
+        expect(subject.default?).to be_truthy
       end
     end
   end

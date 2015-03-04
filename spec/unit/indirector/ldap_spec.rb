@@ -36,13 +36,13 @@ describe Puppet::Indirector::Ldap do
     end
 
     it "should fail if no block is passed to the ldapsearch method" do
-      proc { @searcher.ldapsearch("blah") }.should raise_error(ArgumentError)
+      expect { @searcher.ldapsearch("blah") }.to raise_error(ArgumentError)
     end
 
     it "should use the results of the ldapbase method as the ldap search base" do
       @searcher.stubs(:search_base).returns("mybase")
       @connection.expects(:search).with do |*args|
-        args[0].should == "mybase"
+        expect(args[0]).to eq("mybase")
         true
       end
       @searcher.find @request
@@ -51,13 +51,13 @@ describe Puppet::Indirector::Ldap do
     it "should default to the value of the :search_base setting as the result of the ldapbase method" do
       Puppet[:ldapbase] = "myldapbase"
       searcher = @ldap_class.new
-      searcher.search_base.should == "myldapbase"
+      expect(searcher.search_base).to eq("myldapbase")
     end
 
     it "should use the results of the :search_attributes method as the list of attributes to return" do
       @searcher.stubs(:search_attributes).returns(:myattrs)
       @connection.expects(:search).with do |*args|
-        args[3].should == :myattrs
+        expect(args[3]).to eq(:myattrs)
         true
       end
       @searcher.find @request
@@ -65,7 +65,7 @@ describe Puppet::Indirector::Ldap do
 
     it "should use depth 2 when searching" do
       @connection.expects(:search).with do |*args|
-        args[1].should == 2
+        expect(args[1]).to eq(2)
         true
       end
       @searcher.find @request
@@ -98,36 +98,36 @@ describe Puppet::Indirector::Ldap do
         count += 1
         raise ArgumentError, "yay"
       end
-      proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
-      count.should == 2
+      expect { @searcher.find(@request) }.to raise_error(Puppet::Error)
+      expect(count).to eq(2)
     end
 
     it "should return true if an entry is found" do
       @connection.expects(:search).yields("result")
-      @searcher.ldapsearch("whatever") { |r| }.should be_true
+      expect(@searcher.ldapsearch("whatever") { |r| }).to be_truthy
     end
   end
 
   describe "when connecting to ldap", :if => Puppet.features.ldap? do
     it "should create and start a Util::Ldap::Connection instance" do
-      conn = mock 'connection', :connection => "myconn", :start => nil
+      conn = double 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
-      @searcher.connection.should == "myconn"
+      expect(@searcher.connection).to eq("myconn")
     end
 
     it "should only create the ldap connection when asked for it the first time" do
-      conn = mock 'connection', :connection => "myconn", :start => nil
+      conn = double 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
       @searcher.connection
     end
 
     it "should cache the connection" do
-      conn = mock 'connection', :connection => "myconn", :start => nil
+      conn = double 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
-      @searcher.connection.should equal(@searcher.connection)
+      expect(@searcher.connection).to equal(@searcher.connection)
     end
   end
 

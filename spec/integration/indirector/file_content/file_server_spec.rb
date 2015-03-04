@@ -32,10 +32,10 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result = Puppet::FileServing::Content.indirection.search("plugins", :environment => env, :recurse => true)
 
-    result.should_not be_nil
-    result.length.should == 2
-    result.map {|x| x.should be_instance_of(Puppet::FileServing::Content) }
-    result.find {|x| x.relative_path == 'file.rb' }.content.should == "1\r\n"
+    expect(result).not_to be_nil
+    expect(result.length).to eq(2)
+    result.map {|x| expect(x).to be_instance_of(Puppet::FileServing::Content) }
+    expect(result.find {|x| x.relative_path == 'file.rb' }.content).to eq("1\r\n")
   end
 
   it "should find file content in modules" do
@@ -52,9 +52,9 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result = Puppet::FileServing::Content.indirection.find("modules/mymod/myfile", :environment => env)
 
-    result.should_not be_nil
-    result.should be_instance_of(Puppet::FileServing::Content)
-    result.content.should == "1\r\n"
+    expect(result).not_to be_nil
+    expect(result).to be_instance_of(Puppet::FileServing::Content)
+    expect(result.content).to eq("1\r\n")
   end
 
   it "should find file content in files when node name expansions are used" do
@@ -84,8 +84,8 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result = Puppet::FileServing::Content.indirection.find("one/myfile", :environment => env, :node => "mynode")
 
-    result.should_not be_nil
-    result.should be_instance_of(Puppet::FileServing::Content)
-    result.content.should == "1\r\n"
+    expect(result).not_to be_nil
+    expect(result).to be_instance_of(Puppet::FileServing::Content)
+    expect(result.content).to eq("1\r\n")
   end
 end

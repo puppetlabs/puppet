@@ -20,7 +20,7 @@ describe provider_class do
     end
 
     it "should run pw with no additional flags when no properties are given" do
-      provider.addcmd.must == [provider_class.command(:pw), "groupadd", "testgroup"]
+      expect(provider.addcmd).to eq([provider_class.command(:pw), "groupadd", "testgroup"])
       provider.expects(:execute).with([provider_class.command(:pw), "groupadd", "testgroup"], kind_of(Hash))
       provider.create
     end
@@ -53,7 +53,7 @@ describe provider_class do
   describe "when deleting groups" do
     it "should run pw with no additional flags" do
       provider.expects(:exists?).returns true
-      provider.deletecmd.must == [provider_class.command(:pw), "groupdel", "testgroup"]
+      expect(provider.deletecmd).to eq([provider_class.command(:pw), "groupdel", "testgroup"])
       provider.expects(:execute).with([provider_class.command(:pw), "groupdel", "testgroup"])
       provider.delete
     end
@@ -61,7 +61,7 @@ describe provider_class do
 
   describe "when modifying groups" do
     it "should run pw with the correct arguments" do
-      provider.modifycmd("gid", 12345).must == [provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345]
+      expect(provider.modifycmd("gid", 12345)).to eq([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
       provider.expects(:execute).with([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
       provider.gid = 12345
     end

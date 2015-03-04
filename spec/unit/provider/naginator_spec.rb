@@ -16,7 +16,7 @@ describe Puppet::Provider::Naginator do
     nagios_type.stubs :attr_accessor
     Nagios::Base.expects(:type).with(:test).returns nagios_type
 
-    @class.nagios_type.should equal(nagios_type)
+    expect(@class.nagios_type).to equal(nagios_type)
   end
 
   it "should use the Nagios type to determine whether an attribute is valid" do
@@ -26,7 +26,7 @@ describe Puppet::Provider::Naginator do
 
     nagios_type.expects(:parameters).returns [:foo, :bar]
 
-    @class.valid_attr?(:test, :foo).should be_true
+    expect(@class.valid_attr?(:test, :foo)).to be_truthy
   end
 
   it "should use Naginator to parse configuration snippets" do
@@ -34,25 +34,25 @@ describe Puppet::Provider::Naginator do
     parser.expects(:parse).with("my text").returns "my instances"
     Nagios::Parser.expects(:new).returns(parser)
 
-    @class.parse("my text").should == "my instances"
+    expect(@class.parse("my text")).to eq("my instances")
   end
 
   it "should join Nagios::Base records with '\\n' when asked to convert them to text" do
     @class.expects(:header).returns "myheader\n"
 
-    @class.to_file([:one, :two]).should == "myheader\none\ntwo"
+    expect(@class.to_file([:one, :two])).to eq("myheader\none\ntwo")
   end
 
   it "should be able to prefetch instance from configuration files" do
-    @class.should respond_to(:prefetch)
+    expect(@class).to respond_to(:prefetch)
   end
 
   it "should be able to generate a list of instances" do
-    @class.should respond_to(:instances)
+    expect(@class).to respond_to(:instances)
   end
 
   it "should never skip records" do
-    @class.should_not be_skip_record("foo")
+    expect(@class).not_to be_skip_record("foo")
   end
 end
 
@@ -60,7 +60,7 @@ describe Nagios::Base do
   it "should not turn set parameters into arrays #17871" do
     obj = Nagios::Base.create('host')
     obj.host_name = "my_hostname"
-    obj.host_name.should == "my_hostname"
+    expect(obj.host_name).to eq("my_hostname")
   end
 end
 

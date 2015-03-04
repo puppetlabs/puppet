@@ -14,45 +14,45 @@ describe Puppet::Application::Doc do
   end
 
   it "should declare an other command" do
-    @doc.should respond_to(:other)
+    expect(@doc).to respond_to(:other)
   end
 
   it "should declare a rdoc command" do
-    @doc.should respond_to(:rdoc)
+    expect(@doc).to respond_to(:rdoc)
   end
 
   it "should declare a fallback for unknown options" do
-    @doc.should respond_to(:handle_unknown)
+    expect(@doc).to respond_to(:handle_unknown)
   end
 
   it "should declare a preinit block" do
-    @doc.should respond_to(:preinit)
+    expect(@doc).to respond_to(:preinit)
   end
 
   describe "in preinit" do
     it "should set references to []" do
       @doc.preinit
 
-      @doc.options[:references].should == []
+      expect(@doc.options[:references]).to eq([])
     end
 
     it "should init mode to text" do
       @doc.preinit
 
-      @doc.options[:mode].should == :text
+      expect(@doc.options[:mode]).to eq(:text)
     end
 
     it "should init format to to_markdown" do
       @doc.preinit
 
-      @doc.options[:format].should == :to_markdown
+      expect(@doc.options[:format]).to eq(:to_markdown)
     end
   end
 
   describe "when handling options" do
     [:all, :outputdir, :verbose, :debug, :charset].each do |option|
       it "should declare handle_#{option} method" do
-        @doc.should respond_to("handle_#{option}".to_sym)
+        expect(@doc).to respond_to("handle_#{option}".to_sym)
       end
 
       it "should store argument value when calling handle_#{option}" do
@@ -65,7 +65,7 @@ describe Puppet::Application::Doc do
       Puppet::Util::Reference.stubs(:method_defined?).with('to_format').returns(true)
 
       @doc.handle_format('format')
-      @doc.options[:format].should == 'to_format'
+      expect(@doc.options[:format]).to eq('to_format')
     end
 
     it "should raise an error if the format is not valid" do
@@ -77,14 +77,14 @@ describe Puppet::Application::Doc do
       Puppet::Util::Reference.stubs(:modes).returns(stub('mode', :include? => true))
 
       @doc.handle_mode('mode')
-      @doc.options[:mode].should == :mode
+      expect(@doc.options[:mode]).to eq(:mode)
     end
 
     it "should store the mode if :rdoc" do
       Puppet::Util::Reference.modes.stubs(:include?).with('rdoc').returns(false)
 
       @doc.handle_mode('rdoc')
-      @doc.options[:mode].should == :rdoc
+      expect(@doc.options[:mode]).to eq(:rdoc)
     end
 
     it "should raise an error if the mode is not valid" do
@@ -108,7 +108,7 @@ describe Puppet::Application::Doc do
 
       @doc.handle_reference('ref2')
 
-      @doc.options[:references].should == [:ref1,:ref2]
+      expect(@doc.options[:references]).to eq([:ref1,:ref2])
     end
   end
 
@@ -124,7 +124,7 @@ describe Puppet::Application::Doc do
       @doc.stubs(:setup_rdoc)
 
       @doc.setup
-      @doc.options[:mode].should == :rdoc
+      expect(@doc.options[:mode]).to eq(:rdoc)
     end
 
     it "should call setup_rdoc in rdoc mode" do
@@ -155,7 +155,7 @@ describe Puppet::Application::Doc do
 
         it "should set log level to debug" do
           @doc.setup
-          Puppet::Util::Log.level.should == :debug
+          expect(Puppet::Util::Log.level).to eq(:debug)
         end
 
         it "should set log destination to console" do
@@ -171,7 +171,7 @@ describe Puppet::Application::Doc do
 
         it "should set log level to info" do
           @doc.setup
-          Puppet::Util::Log.level.should == :info
+          expect(Puppet::Util::Log.level).to eq(:info)
         end
 
         it "should set log destination to console" do
@@ -188,7 +188,7 @@ describe Puppet::Application::Doc do
 
         it "should set log level to warning" do
           @doc.setup
-          Puppet::Util::Log.level.should == :warning
+          expect(Puppet::Util::Log.level).to eq(:warning)
         end
 
         it "should set log destination to console" do
@@ -208,12 +208,12 @@ describe Puppet::Application::Doc do
         Puppet::Util::Reference.stubs(:references).returns([:static,:dynamic])
 
         @doc.setup_reference
-        @doc.options[:references].should == [:static]
+        expect(@doc.options[:references]).to eq([:static])
       end
 
       it "should default to :type if no references" do
         @doc.setup_reference
-        @doc.options[:references].should == [:type]
+        expect(@doc.options[:references]).to eq([:type])
       end
     end
 
@@ -225,7 +225,7 @@ describe Puppet::Application::Doc do
 
           @doc.setup_rdoc
 
-          @doc.unknown_args[0][:arg].should == File.expand_path('path')
+          expect(@doc.unknown_args[0][:arg]).to eq(File.expand_path('path'))
         end
 
         it "should give them to Puppet.settings" do
@@ -237,7 +237,7 @@ describe Puppet::Application::Doc do
       end
 
       it "should operate in master run_mode" do
-        @doc.class.run_mode.name.should == :master
+        expect(@doc.class.run_mode.name).to eq(:master)
 
         @doc.setup_rdoc
       end

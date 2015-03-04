@@ -15,8 +15,8 @@ gem_executables: 'puppet'
 gem_default_executables: 'puppet'
 gem_forge_project: 'puppet'
 gem_runtime_dependencies:
-  facter: ['> 1.6', '< 3']
-  hiera: '~> 1.0'
+  facter: ['> 2.0', '< 4']
+  hiera: ['> 1.0', '< 3']
   json_pure:
 gem_rdoc_options:
   - --title
@@ -34,7 +34,6 @@ gem_platform_dependencies:
       win32-process: '~> 0.7.4'
       win32-security: '~> 0.2.5'
       win32-service: '~> 0.8.6'
-      win32console:  '1.3.2'
       minitar: '~> 0.5.4'
   x64-mingw32:
     gem_runtime_dependencies:

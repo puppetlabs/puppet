@@ -4,11 +4,11 @@ require 'puppet/face'
 
 describe Puppet::Face[:help, '0.0.1'] do
   it "has a help action" do
-    subject.should be_action :help
+    expect(subject).to be_action :help
   end
 
   it "has a default action of help" do
-    subject.get_action('help').should be_default
+    expect(subject.get_action('help')).to be_default
   end
 
   it "accepts a call with no arguments" do
@@ -31,8 +31,9 @@ describe Puppet::Face[:help, '0.0.1'] do
   end
 
   it "treats :current and 'current' identically" do
-    subject.help(:help, :version => :current).should ==
+    expect(subject.help(:help, :version => :current)).to eq(
       subject.help(:help, :version => 'current')
+    )
   end
 
   it "raises an error when the face is unavailable" do
@@ -43,8 +44,8 @@ describe Puppet::Face[:help, '0.0.1'] do
 
   it "finds a face by version" do
     face = Puppet::Face[:huzzah, :current]
-    subject.help(:huzzah, :version => face.version).
-      should == subject.help(:huzzah, :version => :current)
+    expect(subject.help(:huzzah, :version => face.version)).
+      to eq(subject.help(:huzzah, :version => :current))
   end
 
   context "when listing subcommands" do
@@ -60,7 +61,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     # something odd in your set of face, and we skip testing things that
     # matter. --daniel 2011-04-10
     it "has at least one face with a summary" do
-      Puppet::Face.faces.should be_any do |name|
+      expect(Puppet::Face.faces).to be_any do |name|
         Puppet::Face[name, :current].summary
       end
     end
@@ -78,27 +79,27 @@ describe Puppet::Face[:help, '0.0.1'] do
         face = Puppet::Face[name, :current]
         summary = face.summary
 
-        subject.should =~ %r{ #{name} }
-        summary and subject.should =~ %r{ #{name} +#{summary}}
+        expect(subject).to match(%r{ #{name} })
+        summary and expect(subject).to match(%r{ #{name} +#{summary}})
       end
     end
 
     context "face summaries" do
       it "can generate face summaries" do
         faces = Puppet::Face.faces
-        faces.length.should > 0
+        expect(faces.length).to be > 0
         faces.each do |name|
-          Puppet::Face[name, :current].should have_a_summary
+          expect(Puppet::Face[name, :current]).to have_a_summary
         end
       end
     end
 
     it "lists all legacy applications" do
       Puppet::Face[:help, :current].legacy_applications.each do |appname|
-        subject.should =~ %r{ #{appname} }
+        expect(subject).to match(%r{ #{appname} })
 
         summary = Puppet::Face[:help, :current].horribly_extract_summary_from(appname)
-        summary and subject.should =~ %r{ #{summary}\b}
+        summary and expect(subject).to match(%r{ #{summary}\b})
       end
     end
   end
@@ -109,14 +110,14 @@ describe Puppet::Face[:help, '0.0.1'] do
     # If we don't, these tests are ... less than useful, because they assume
     # it.  When this breaks you should consider ditching the entire feature
     # and tests, but if not work out how to fake one. --daniel 2011-04-11
-    it { should have_at_least(1).item }
+    it { is_expected.to have_at_least(1).item }
 
     # Meh.  This is nasty, but we can't control the other list; the specific
     # bug that caused these to be listed is annoyingly subtle and has a nasty
     # fix, so better to have a "fail if you do something daft" trigger in
     # place here, I think. --daniel 2011-04-11
     %w{face_base indirection_base}.each do |name|
-      it { should_not include name }
+      it { is_expected.not_to include name }
     end
   end
 
@@ -130,9 +131,9 @@ describe Puppet::Face[:help, '0.0.1'] do
     # test and all. --daniel 2011-04-11
     it "returns the legacy help when given the subcommand" do
       help = subject.help(appname)
-      help.should =~ /puppet-#{appname}/
+      expect(help).to match(/puppet-#{appname}/)
       %w{SYNOPSIS USAGE DESCRIPTION OPTIONS COPYRIGHT}.each do |heading|
-        help.should =~ /^#{heading}$/
+        expect(help).to match(/^#{heading}$/)
       end
     end
 

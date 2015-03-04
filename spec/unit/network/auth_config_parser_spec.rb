@@ -11,25 +11,25 @@ describe Puppet::Network::AuthConfigParser do
 
   describe "Basic Parser" do
     it "should accept a string by default" do
-      described_class.new(fake_authconfig).parse.should be_a_kind_of Puppet::Network::AuthConfig
+      expect(described_class.new(fake_authconfig).parse).to be_a_kind_of Puppet::Network::AuthConfig
     end
   end
 
   describe "when parsing rights" do
     it "skips comments" do
-      described_class.new('  # comment\n').parse_rights.should be_empty
+      expect(described_class.new('  # comment\n').parse_rights).to be_empty
     end
 
     it "increments line number even on commented lines" do
-      described_class.new("  # comment\npath /").parse_rights['/'].line.should == 2
+      expect(described_class.new("  # comment\npath /").parse_rights['/'].line).to eq(2)
     end
 
     it "skips blank lines" do
-      described_class.new('  ').parse_rights.should be_empty
+      expect(described_class.new('  ').parse_rights).to be_empty
     end
 
     it "increments line number even on blank lines" do
-      described_class.new("  \npath /").parse_rights['/'].line.should == 2
+      expect(described_class.new("  \npath /").parse_rights['/'].line).to eq(2)
     end
 
     it "does not throw an error if the same path appears twice" do
@@ -39,11 +39,11 @@ describe Puppet::Network::AuthConfigParser do
     end
 
     it "should create a new right for each found path line" do
-      described_class.new('path /certificates').parse_rights['/certificates'].should be
+      expect(described_class.new('path /certificates').parse_rights['/certificates']).to be
     end
 
     it "should create a new right for each found regex line" do
-      described_class.new('path ~ .rb$').parse_rights['.rb$'].should be
+      expect(described_class.new('path ~ .rb$').parse_rights['.rb$']).to be
     end
 
     it "should strip whitespace around ACE" do

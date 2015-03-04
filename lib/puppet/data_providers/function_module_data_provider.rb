@@ -12,7 +12,7 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
   MODULE_NAME = 'module_name'.freeze
   include Puppet::DataProviders::DataFunctionSupport
 
-  def lookup(name, scope)
+  def lookup(name, scope, merge)
     # If the module name does not exist, this call is not from within a module, and should be ignored.
     unless scope.exist?(MODULE_NAME)
       return nil
@@ -23,7 +23,9 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
     #
     module_name = scope[MODULE_NAME]
     begin
-      data(module_name, scope)[name]
+      hash = data(module_name, scope)
+      throw :no_such_key unless hash.include?(name)
+      hash[name]
     rescue *Puppet::Error => detail
       raise Puppet::DataBinding::LookupError.new(detail.message, detail)
     end

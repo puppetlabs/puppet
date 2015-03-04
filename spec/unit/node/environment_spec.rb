@@ -15,7 +15,7 @@ describe Puppet::Node::Environment do
 
   context 'the environment' do
     it "converts an environment to string when converting to YAML" do
-      env.to_yaml.should match(/--- testing/)
+      expect(env.to_yaml).to match(/--- testing/)
     end
 
     describe ".create" do
@@ -260,6 +260,7 @@ describe Puppet::Node::Environment do
 
           it "ignores modules with invalid names" do
             PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('.foo', first_modulepath)
             PuppetSpec::Modules.generate_files('foo2', first_modulepath)
             PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
@@ -270,7 +271,7 @@ describe Puppet::Node::Environment do
             PuppetSpec::Modules.generate_files('foo-', first_modulepath)
             PuppetSpec::Modules.generate_files('foo--bar', first_modulepath)
 
-            expect(env.modules_by_path[first_modulepath].collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
+            expect(env.modules_by_path[first_modulepath].collect{|mod| mod.name}.sort).to eq(%w{foo foo2 foo_bar})
           end
 
         end
@@ -390,13 +391,14 @@ describe Puppet::Node::Environment do
 
           it "ignores modules with invalid names" do
             PuppetSpec::Modules.generate_files('foo', first_modulepath)
+            PuppetSpec::Modules.generate_files('.foo', first_modulepath)
             PuppetSpec::Modules.generate_files('foo2', first_modulepath)
             PuppetSpec::Modules.generate_files('foo-bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
             PuppetSpec::Modules.generate_files('foo bar', first_modulepath)
 
-            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo foo-bar foo2 foo_bar})
+            expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{foo foo2 foo_bar})
           end
 
           it "creates modules with the correct environment" do
@@ -475,7 +477,7 @@ describe Puppet::Node::Environment do
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)
-        expect(env.known_resource_types.parse_failed?).to be_true
+        expect(env.known_resource_types.parse_failed?).to be_truthy
       end
     end
   end

@@ -6,7 +6,6 @@ require 'rgen/metamodel_builder'
 #
 class Puppet::Pops::Binder::BindingsLoader
   @confdir = Puppet.settings[:confdir]
-#  @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings", :wrap => false)
 
   # Returns a XXXXX given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.
@@ -43,10 +42,6 @@ class Puppet::Pops::Binder::BindingsLoader
 
   def self.loader()
     @autoloader ||= Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings")
-#    unless Puppet.settings[:confdir] == @confdir
-#      @confdir = Puppet.settings[:confdir] == @confdir
-#    end
-#    @autoloader
   end
 
   def self.provide_from_string(scope, name)
@@ -64,7 +59,7 @@ class Puppet::Pops::Binder::BindingsLoader
 
     unless result
       # Attempt to load it using the auto loader
-      paths_for_name(name).find {|path| loader.load(path) }
+      paths_for_name(name).find {|path| loader.load(path, Puppet.lookup(:current_environment)) }
       result = Puppet::Bindings.resolve(scope, name)
     end
     result

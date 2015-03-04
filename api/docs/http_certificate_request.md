@@ -12,7 +12,7 @@ Find
 
 Get a submitted CSR
 
-    GET /:environment/certificate_request/:nodename
+    GET /puppet-ca/v1/certificate_request/:nodename?environment=:environment
     Accept: s
 
 Save
@@ -20,7 +20,7 @@ Save
 
 Submit a CSR
 
-    PUT /:environment/certificate_request/:nodename
+    PUT /puppet-ca/v1/certificate_request/:nodename?environment=:environment
     Content-Type: text/plain
 
 Note: The `:nodename` must match the Common Name on the submitted CSR.
@@ -33,7 +33,7 @@ Search
 
 List submitted CSRs
 
-    GET /:environment/certificate_requests/:ignored_pattern
+    GET /puppet-ca/v1/certificate_requests/:ignored_pattern?environment=:environment
     Accept: s
 
 The `:ignored_pattern` parameter is not used, but must still be provided.
@@ -43,7 +43,7 @@ Destroy
 
 Delete a submitted CSR
 
-    DELETE /:environment/certificate_request/:nodename
+    DELETE /puppet-ca/v1/certificate_request/:nodename?environment=:environment
     Accept: s
 
 ### Supported HTTP Methods
@@ -68,7 +68,7 @@ None
 
 #### CSR found
 
-    GET /env/certificate_request/agency
+    GET /puppet-ca/v1/certificate_request/agency?environment=env
 
     HTTP/1.1 200 OK
     Content-Type: text/plain
@@ -87,7 +87,7 @@ None
 
 #### CSR not found
 
-    GET /env/certificate_request/does_not_exist
+    GET /puppet-ca/v1/certificate_request/does_not_exist?environment=env
 
     HTTP/1.1 404 Not Found
     Content-Type: text/plain
@@ -96,16 +96,16 @@ None
 
 #### No node name given
 
-    GET /env/certificate_request/
+    GET /puppet-ca/v1/certificate_request?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
-    No request key specified in /env/certificate_request/
+    No request key specified in /puppet-ca/v1/certificate_request
 
 #### Delete a CSR that exists
 
-    DELETE /production/certificate_request/agency
+    DELETE /puppet-ca/v1/certificate_request/agency?environment=production
     Accept: s
 
     HTTP/1.1 200 OK
@@ -115,7 +115,7 @@ None
 
 #### Delete a CSR that does not exists
 
-    DELETE /production/certificate_request/missing
+    DELETE /puppet-ca/v1/certificate_request/missing?environment=production
     Accept: s
 
     HTTP/1.1 200 OK
@@ -125,7 +125,7 @@ None
 
 #### Retrieve all CSRs
 
-     GET /production/certificate_requests/ignored
+     GET /puppet-ca/v1/certificate_requests/ignored?environment=production
      Accept: s
 
      HTTP/1.1 200 OK

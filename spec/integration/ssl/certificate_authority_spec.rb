@@ -24,7 +24,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
   it "should be able to generate a new host certificate" do
     ca.generate("newhost")
 
-    Puppet::SSL::Certificate.indirection.find("newhost").should be_instance_of(Puppet::SSL::Certificate)
+    expect(Puppet::SSL::Certificate.indirection.find("newhost")).to be_instance_of(Puppet::SSL::Certificate)
   end
 
   it "should be able to revoke a host certificate" do
@@ -41,7 +41,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
 
       ca.sign("luke.madstop.com")
 
-      Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
+      expect(Puppet::SSL::Certificate.indirection.find("luke.madstop.com")).to be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should be able to sign multiple certificates" do
@@ -51,8 +51,8 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
       ca.sign("luke.madstop.com")
       ca.sign("other.madstop.com")
 
-      Puppet::SSL::Certificate.indirection.find("other.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
-      Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
+      expect(Puppet::SSL::Certificate.indirection.find("other.madstop.com")).to be_instance_of(Puppet::SSL::Certificate)
+      expect(Puppet::SSL::Certificate.indirection.find("luke.madstop.com")).to be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should save the signed certificate to the :signeddir" do
@@ -61,7 +61,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
       ca.sign("luke.madstop.com")
 
       client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
-      File.read(client_cert).should == Puppet::SSL::Certificate.indirection.find("luke.madstop.com").content.to_s
+      expect(File.read(client_cert)).to eq(Puppet::SSL::Certificate.indirection.find("luke.madstop.com").content.to_s)
     end
 
     it "should save valid certificates" do
@@ -75,7 +75,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
         ca_cert = Puppet[:cacert]
         client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
         output = %x{openssl verify -CAfile #{ca_cert} #{client_cert}}
-        $CHILD_STATUS.should == 0
+        expect($CHILD_STATUS).to eq(0)
       end
     end
 
@@ -120,7 +120,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
       end
       ca.revoke("luke.madstop.com")
 
-      ca.crl.content.revoked.map { |r| r.serial }.should == [2,3,4] # ca has serial 1
+      expect(ca.crl.content.revoked.map { |r| r.serial }).to eq([2,3,4]) # ca has serial 1
     end
 
   end
@@ -136,7 +136,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     certs = hosts.collect { |host| Puppet::SSL::Certificate.indirection.find(host.name).content }
     serial_numbers = certs.collect(&:serial)
 
-    serial_numbers.sort.should == [2, 3, 4, 5, 6] # serial 1 is the ca certificate
+    expect(serial_numbers.sort).to eq([2, 3, 4, 5, 6]) # serial 1 is the ca certificate
   end
 
   def certificate_request_for(hostname)

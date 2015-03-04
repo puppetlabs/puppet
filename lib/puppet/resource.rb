@@ -219,6 +219,7 @@ class Puppet::Resource
         self[p] = v
       end
     else
+      environment = attributes[:environment]
       if type.is_a?(Class) && type < Puppet::Type
         # Set the resource type to avoid an expensive `known_resource_types`
         # lookup.
@@ -421,10 +422,16 @@ class Puppet::Resource
 
   def lookup_with_databinding(name, scope)
     begin
-      Puppet::DataBinding.indirection.find(
-        name,
-        :environment => scope.environment.to_s,
-        :variables => scope)
+      found = false
+      value = catch(:no_such_key) do
+        v = Puppet::DataBinding.indirection.find(
+          name,
+          :environment => scope.environment.to_s,
+          :variables => scope)
+        found = true
+        v
+      end
+      found ? value : nil
     rescue Puppet::DataBinding::LookupError => e
       raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
     end
@@ -432,12 +439,24 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def lookup_in_environment(name, scope)
-    Puppet::DataProviders.lookup_in_environment(name, scope)
+    found = false
+    value = catch(:no_such_key) do
+      v = Puppet::DataProviders.lookup_in_environment(name, scope, nil)
+      found = true
+      v
+    end
+    found ? value : nil
   end
   private :lookup_in_environment
 
   def lookup_in_module(name, scope)
-    Puppet::DataProviders.lookup_in_module(name, scope)
+    found = false
+    value = catch(:no_such_key) do
+      v = Puppet::DataProviders.lookup_in_module(name, scope, nil)
+      found = true
+      v
+    end
+    found ? value : nil
   end
   private :lookup_in_module
 

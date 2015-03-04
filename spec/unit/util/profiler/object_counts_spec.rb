@@ -7,6 +7,6 @@ describe Puppet::Util::Profiler::ObjectCounts do
 
     message = profiler.finish(profiler.start)
 
-    message.should =~ / T_STRING: \d+, /
+    expect(message).to match(/ T_STRING: \d+, /)
   end
 end

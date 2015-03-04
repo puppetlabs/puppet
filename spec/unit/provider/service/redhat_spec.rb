@@ -27,7 +27,7 @@ describe provider_class, :if => Puppet.features.posix? do
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
-      provider_class.default?.should be_true
+      expect(provider_class.default?).to be_truthy
     end
   end
 
@@ -45,7 +45,7 @@ describe provider_class, :if => Puppet.features.posix? do
         @class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
       end
       results = (@services-@not_services).collect {|x| "#{x}_instance"}
-      @class.instances.should == results
+      expect(@class.instances).to eq(results)
     end
     it "should call service status when initialized from provider" do
       @resource.stubs(:[]).with(:status).returns nil
@@ -67,7 +67,7 @@ describe provider_class, :if => Puppet.features.posix? do
   end
 
   it "should have an enabled? method" do
-    @provider.should respond_to(:enabled?)
+    expect(@provider).to respond_to(:enabled?)
   end
 
   describe "when checking enabled? on Suse" do
@@ -77,31 +77,31 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should check for on" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  on"
-      @provider.enabled?.should == :true
+      expect(@provider.enabled?).to eq(:true)
     end
 
     it "should check for off" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  off"
-      @provider.enabled?.should == :false
+      expect(@provider.enabled?).to eq(:false)
     end
 
     it "should check for unknown service" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}: unknown service"
-      @provider.enabled?.should == :false
+      expect(@provider.enabled?).to eq(:false)
     end
   end
 
   it "should have an enable method" do
-    @provider.should respond_to(:enable)
+    expect(@provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    @provider.should respond_to(:disable)
+    expect(@provider).to respond_to(:disable)
   end
 
   [:start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
-      @provider.should respond_to(method)
+      expect(@provider).to respond_to(method)
     end
     describe "when running #{method}" do
 
@@ -131,24 +131,24 @@ describe provider_class, :if => Puppet.features.posix? do
       it "should consider the process running if the command returns 0" do
         @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
         $CHILD_STATUS.stubs(:exitstatus).returns(0)
-        @provider.status.should == :running
+        expect(@provider.status).to eq(:running)
       end
       [-10,-1,1,10].each { |ec|
         it "should consider the process stopped if the command returns something non-0" do
           @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
           $CHILD_STATUS.stubs(:exitstatus).returns(ec)
-          @provider.status.should == :stopped
+          expect(@provider.status).to eq(:stopped)
         end
       }
     end
     describe "when hasstatus is not :true" do
       it "should consider the service :running if it has a pid" do
         @provider.expects(:getpid).returns "1234"
-        @provider.status.should == :running
+        expect(@provider.status).to eq(:running)
       end
       it "should consider the service :stopped if it doesn't have a pid" do
         @provider.expects(:getpid).returns nil
-        @provider.status.should == :stopped
+        expect(@provider.status).to eq(:stopped)
       end
     end
   end

@@ -8,7 +8,7 @@ Find
 
 Get status for a master
 
-    GET /:environment/status/:name
+    GET /puppet/v3/status/:name?environment=:environment
 
 The `:environment` and `:name` sections of the URL are both ignored, but a
 value must be provided for both.
@@ -27,7 +27,7 @@ None
 
 ### Example Response
 
-    GET /env/status/whatever
+    GET /puppet/v3/status/whatever?environment=env
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -38,4 +38,4 @@ Schema
 ------
 
 The returned status conforms to the
-{file:api/schemas/status.json api/schemas/status.json} schema.
+[api/schemas/status.json](../schemas/status.json) schema.

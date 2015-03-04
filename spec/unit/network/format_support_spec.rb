@@ -31,13 +31,13 @@ describe Puppet::Network::FormatHandler do
     end
 
     it "should return all supported formats in decreasing order of weight" do
-      FormatTester.supported_formats.should == [:two, :three, :one]
+      expect(FormatTester.supported_formats).to eq([:two, :three, :one])
     end
   end
 
   it "should return the first format as the default format" do
     FormatTester.expects(:supported_formats).returns [:one, :two]
-    FormatTester.default_format.should == :one
+    expect(FormatTester.default_format).to eq(:one)
   end
 
   describe "with a preferred serialization format setting" do
@@ -54,7 +54,7 @@ describe Puppet::Network::FormatHandler do
       end
 
       it "should return the preferred serialization format first" do
-        FormatTester.supported_formats.should == [:one, :two]
+        expect(FormatTester.supported_formats).to eq([:one, :two])
       end
     end
 
@@ -64,7 +64,7 @@ describe Puppet::Network::FormatHandler do
       end
 
       it "should return the default format first" do
-        FormatTester.supported_formats.should == [:two, :one]
+        expect(FormatTester.supported_formats).to eq([:two, :one])
       end
 
       it "should log a debug message" do
@@ -140,7 +140,7 @@ describe Puppet::Network::FormatHandler do
 
     it "should list as supported a format that reports itself supported" do
       format.expects(:supported?).returns true
-      FormatTester.new.support_format?(:foo).should be_true
+      expect(FormatTester.new.support_format?(:foo)).to be_truthy
     end
 
     it "should raise a FormatError when a rendering error is encountered" do
@@ -156,21 +156,21 @@ describe Puppet::Network::FormatHandler do
       tester = FormatTester.new
       format.expects(:render).with(tester).returns "foo"
 
-      tester.render(:foo).should == "foo"
+      expect(tester.render(:foo)).to eq("foo")
     end
 
     it "should call the format-specific converter when asked to convert to a given format by mime-type" do
       tester = FormatTester.new
       format.expects(:render).with(tester).returns "foo"
 
-      tester.render("text/foo").should == "foo"
+      expect(tester.render("text/foo")).to eq("foo")
     end
 
     it "should call the format converter when asked to convert to a given format instance" do
       tester = FormatTester.new
       format.expects(:render).with(tester).returns "foo"
 
-      tester.render(format).should == "foo"
+      expect(tester.render(format)).to eq("foo")
     end
 
     it "should render to the default format if no format is provided when rendering" do
@@ -185,7 +185,7 @@ describe Puppet::Network::FormatHandler do
       tester = FormatTester.new
       format.expects(:mime).returns "text/foo"
 
-      tester.mime(:foo).should == "text/foo"
+      expect(tester.mime(:foo)).to eq("text/foo")
     end
 
     it "should return the default format mime-type if no format is provided" do
@@ -193,7 +193,7 @@ describe Puppet::Network::FormatHandler do
       tester = FormatTester.new
 
       format.expects(:mime).returns "text/foo"
-      tester.mime.should == "text/foo"
+      expect(tester.mime).to eq("text/foo")
     end
   end
 end

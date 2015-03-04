@@ -29,7 +29,7 @@ describe 'Puppet::Parser::AST::BlockExpression' do
   def assert_all_at_same_depth(*probes)
     depth0 = probes[0].call_depth
     probes.drop(1).each do |p|
-      p.call_depth.should == depth0
+      expect(p.call_depth).to eq(depth0)
     end
   end
 

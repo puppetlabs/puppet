@@ -90,8 +90,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     body = str.partition(/^\s*\n/m).last
 
     updates = Hash.new { |h, k| h[k] = [] }
-    body.lines.each do |line|
-      hash = update_to_hash(line)
+    body.split.each_slice(3) do |tuple|
+      hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
       short_name = hash[:name]
@@ -104,8 +104,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     updates
   end
 
-  def self.update_to_hash(line)
-    pkgname, pkgversion, *_ = line.split(/\s+/)
+  def self.update_to_hash(pkgname, pkgversion)
     name, arch = pkgname.split('.')
 
     match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)

@@ -9,16 +9,16 @@ describe Puppet::Application::Describe do
   end
 
   it "should declare a main command" do
-    @describe.should respond_to(:main)
+    expect(@describe).to respond_to(:main)
   end
 
   it "should declare a preinit block" do
-    @describe.should respond_to(:preinit)
+    expect(@describe).to respond_to(:preinit)
   end
 
   [:providers,:list,:meta].each do |option|
     it "should declare handle_#{option} method" do
-      @describe.should respond_to("handle_#{option}".to_sym)
+      expect(@describe).to respond_to("handle_#{option}".to_sym)
     end
 
     it "should store argument value when calling handle_#{option}" do
@@ -32,7 +32,7 @@ describe Puppet::Application::Describe do
     it "should set options[:parameters] to true" do
       @describe.preinit
 
-      @describe.options[:parameters].should be_true
+      expect(@describe.options[:parameters]).to be_truthy
     end
   end
 
@@ -40,7 +40,7 @@ describe Puppet::Application::Describe do
     it "should set options[:parameters] to false" do
       @describe.handle_short(nil)
 
-      @describe.options[:parameters].should be_false
+      expect(@describe.options[:parameters]).to be_falsey
     end
   end
 
@@ -49,7 +49,7 @@ describe Puppet::Application::Describe do
       @describe.command_line.stubs(:args).returns(['1','2'])
       @describe.setup
 
-      @describe.options[:types].should == ['1','2']
+      expect(@describe.options[:types]).to eq(['1','2'])
     end
   end
 

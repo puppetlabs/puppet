@@ -28,7 +28,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
 
     @provider.stubs(:execute).returns(lsgroup_all_example)
 
-    @provider.groupname_by_id(100).should == 'guest'
+    expect(@provider.groupname_by_id(100)).to eq('guest')
   end
 
   it "should be able to list all users" do
@@ -36,7 +36,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
 
     provider_class.stubs(:execute).returns(lsuser_all_example)
 
-    provider_class.list_all.should == ['root', 'guest']
+    expect(provider_class.list_all).to eq(['root', 'guest'])
   end
 
   describe "#managed_attribute_keys" do
@@ -58,26 +58,26 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
 
       it "should return only the keys of the attribute key=value pair from manifest" do
         keys = @provider.managed_attribute_keys(existing_attributes)
-        keys.should be_include(:rlogin)
-        keys.should be_include(:login)
-        keys.should_not be_include(:su)
+        expect(keys).to be_include(:rlogin)
+        expect(keys).to be_include(:login)
+        expect(keys).not_to be_include(:su)
       end
 
       it "should strip spaces from symbols" do
         keys = @provider.managed_attribute_keys(existing_attributes)
-        keys.should be_include(:login)
-        keys.should_not be_include(:"login ")
+        expect(keys).to be_include(:login)
+        expect(keys).not_to be_include(:"login ")
       end
 
       it "should have the same count as that from the manifest" do
         keys = @provider.managed_attribute_keys(existing_attributes)
-        keys.size.should == attribute_array.size
+        expect(keys.size).to eq(attribute_array.size)
       end
 
       it "should convert the keys to symbols" do
         keys = @provider.managed_attribute_keys(existing_attributes)
         all_symbols = keys.all? {|k| k.is_a? Symbol}
-        all_symbols.should be_true
+        expect(all_symbols).to be_truthy
       end
     end
 
@@ -86,15 +86,15 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
 
       it "should return the keys in supplied hash" do
         keys = @provider.managed_attribute_keys(existing_attributes)
-        keys.should_not be_include(:rlogin)
-        keys.should be_include(:login)
-        keys.should be_include(:su)
+        expect(keys).not_to be_include(:rlogin)
+        expect(keys).to be_include(:login)
+        expect(keys).to be_include(:su)
       end
 
       it "should convert the keys to symbols" do
         keys = @provider.managed_attribute_keys(existing_attributes)
         all_symbols = keys.all? {|k| k.is_a? Symbol}
-        all_symbols.should be_true
+        expect(all_symbols).to be_truthy
       end
     end
   end
@@ -104,28 +104,28 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(true)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      expect(@provider.should_include?(:rlogin, managed_keys)).to be_falsey
     end
 
     it "should exclude keys explicitly ignored" do
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([:rlogin])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      expect(@provider.should_include?(:rlogin, managed_keys)).to be_falsey
     end
 
     it "should exclude keys not specified in manifest" do
       managed_keys = [:su]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_false
+      expect(@provider.should_include?(:rlogin, managed_keys)).to be_falsey
     end
 
     it "should include keys specified in manifest if not translated or ignored" do
       managed_keys = [:rlogin]
       @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
       @provider.class.stubs(:attribute_ignore).returns([])
-      @provider.should_include?(:rlogin, managed_keys).should be_true
+      expect(@provider.should_include?(:rlogin, managed_keys)).to be_truthy
     end
   end
   describe "when handling passwords" do
@@ -149,14 +149,14 @@ smith:
       @provider.stubs(:open_security_passwd).returns(StringIO.new(passwd_without_spaces))
       @resource.stubs(:[]).returns('smith')
 
-      @provider.password.should == 'MGURSj.F056Dj'
+      expect(@provider.password).to eq('MGURSj.F056Dj')
     end
 
     it "should be able to read the hashed password, even with trailing spaces" do
       @provider.stubs(:open_security_passwd).returns(StringIO.new(passwd_with_spaces))
       @resource.stubs(:[]).returns('smith')
 
-      @provider.password.should == 'MGURSj.F056Dj'
+      expect(@provider.password).to eq('MGURSj.F056Dj')
     end
   end
 end

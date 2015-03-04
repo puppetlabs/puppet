@@ -40,27 +40,27 @@ describe provider_class do
   end
 
   it "should have a restart method" do
-    @provider.should respond_to(:restart)
+    expect(@provider).to respond_to(:restart)
   end
 
   it "should have a start method" do
-    @provider.should respond_to(:start)
+    expect(@provider).to respond_to(:start)
   end
 
   it "should have a stop method" do
-    @provider.should respond_to(:stop)
+    expect(@provider).to respond_to(:stop)
   end
 
   it "should have an enabled? method" do
-    @provider.should respond_to(:enabled?)
+    expect(@provider).to respond_to(:enabled?)
   end
 
   it "should have an enable method" do
-    @provider.should respond_to(:enable)
+    expect(@provider).to respond_to(:enable)
   end
 
   it "should have a disable method" do
-    @provider.should respond_to(:disable)
+    expect(@provider).to respond_to(:disable)
   end
 
   describe "when starting" do
@@ -132,7 +132,7 @@ describe provider_class do
     it "should return true if it is running" do
       @provider.stubs(:status).returns(:running)
 
-      @provider.enabled?.should == :true
+      expect(@provider.enabled?).to eq(:true)
     end
 
     [true, false].each do |t|
@@ -141,7 +141,7 @@ describe provider_class do
         path = File.join(@servicedir,"myservice")
         Puppet::FileSystem.expects(:symlink?).with(path).returns(t)
 
-        @provider.enabled?.should == "#{t}".to_sym
+        expect(@provider.enabled?).to eq("#{t}".to_sym)
       end
     end
   end
@@ -156,15 +156,15 @@ describe provider_class do
   describe "when checking status" do
     it "and svstat fails, properly raise a Puppet::Error" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).raises(Puppet::ExecutionFailure, "failure")
-      lambda { @provider.status }.should raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: failure')
+      expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: failure')
     end
     it "and svstat returns up, then return :running" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: up (pid 454) 954326 seconds")
-      @provider.status.should == :running
+      expect(@provider.status).to eq(:running)
     end
     it "and svstat returns not running, then return :stopped" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: supervise not running")
-      @provider.status.should  == :stopped
+      expect(@provider.status).to  eq(:stopped)
     end
   end
 

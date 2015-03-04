@@ -13,7 +13,7 @@ describe zpool do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      zpool.attrclass(property).ancestors.should be_include(Puppet::Property)
+      expect(zpool.attrclass(property).ancestors).to be_include(Puppet::Property)
     end
   end
 
@@ -21,7 +21,7 @@ describe zpool do
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
-      zpool.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+      expect(zpool.attrclass(parameter).ancestors).to be_include(Puppet::Parameter)
     end
   end
 end
@@ -37,27 +37,27 @@ describe vdev_property do
 
   it "should be insync if the devices are the same" do
     @property.should = ["dev1 dev2"]
-    @property.safe_insync?(["dev2 dev1"]).must be_true
+    expect(@property.safe_insync?(["dev2 dev1"])).to be_truthy
   end
 
   it "should be out of sync if the devices are not the same" do
     @property.should = ["dev1 dev3"]
-    @property.safe_insync?(["dev2 dev1"]).must be_false
+    expect(@property.safe_insync?(["dev2 dev1"])).to be_falsey
   end
 
   it "should be insync if the devices are the same and the should values are comma separated" do
     @property.should = ["dev1", "dev2"]
-    @property.safe_insync?(["dev2 dev1"]).must be_true
+    expect(@property.safe_insync?(["dev2 dev1"])).to be_truthy
   end
 
   it "should be out of sync if the device is absent and should has a value" do
     @property.should = ["dev1", "dev2"]
-    @property.safe_insync?(:absent).must be_false
+    expect(@property.safe_insync?(:absent)).to be_falsey
   end
 
   it "should be insync if the device is absent and should is absent" do
     @property.should = [:absent]
-    @property.safe_insync?(:absent).must be_true
+    expect(@property.safe_insync?(:absent)).to be_truthy
   end
 end
 
@@ -72,38 +72,38 @@ describe multi_vdev_property do
 
   it "should be insync if the devices are the same" do
     @property.should = ["dev1 dev2"]
-    @property.safe_insync?(["dev2 dev1"]).must be_true
+    expect(@property.safe_insync?(["dev2 dev1"])).to be_truthy
   end
 
   it "should be out of sync if the devices are not the same" do
     @property.should = ["dev1 dev3"]
-    @property.safe_insync?(["dev2 dev1"]).must be_false
+    expect(@property.safe_insync?(["dev2 dev1"])).to be_falsey
   end
 
   it "should be out of sync if the device is absent and should has a value" do
     @property.should = ["dev1", "dev2"]
-    @property.safe_insync?(:absent).must be_false
+    expect(@property.safe_insync?(:absent)).to be_falsey
   end
 
   it "should be insync if the device is absent and should is absent" do
     @property.should = [:absent]
-    @property.safe_insync?(:absent).must be_true
+    expect(@property.safe_insync?(:absent)).to be_truthy
   end
 
   describe "when there are multiple lists of devices" do
     it "should be in sync if each group has the same devices" do
       @property.should = ["dev1 dev2", "dev3 dev4"]
-      @property.safe_insync?(["dev2 dev1", "dev3 dev4"]).must be_true
+      expect(@property.safe_insync?(["dev2 dev1", "dev3 dev4"])).to be_truthy
     end
 
     it "should be out of sync if any group has the different devices" do
       @property.should = ["dev1 devX", "dev3 dev4"]
-      @property.safe_insync?(["dev2 dev1", "dev3 dev4"]).must be_false
+      expect(@property.safe_insync?(["dev2 dev1", "dev3 dev4"])).to be_falsey
     end
 
     it "should be out of sync if devices are in the wrong group" do
       @property.should = ["dev1 dev2", "dev3 dev4"]
-      @property.safe_insync?(["dev2 dev3", "dev1 dev4"]).must be_false
+      expect(@property.safe_insync?(["dev2 dev3", "dev1 dev4"])).to be_falsey
     end
   end
 end

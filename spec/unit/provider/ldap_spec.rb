@@ -13,12 +13,12 @@ describe Puppet::Provider::Ldap do
     Puppet::Util::Ldap::Manager.expects(:new).returns manager
     @class.stubs :mk_resource_methods
     manager.expects(:manages).with(:one)
-    @class.manages(:one).should equal(manager)
-    @class.manager.should equal(manager)
+    expect(@class.manages(:one)).to equal(manager)
+    expect(@class.manager).to equal(manager)
   end
 
   it "should be able to prefetch instances from ldap" do
-    @class.should respond_to(:prefetch)
+    expect(@class).to respond_to(:prefetch)
   end
 
   it "should create its resource getter/setter methods when the manager is defined" do
@@ -26,11 +26,11 @@ describe Puppet::Provider::Ldap do
     Puppet::Util::Ldap::Manager.expects(:new).returns manager
     @class.expects :mk_resource_methods
     manager.stubs(:manages)
-    @class.manages(:one).should equal(manager)
+    expect(@class.manages(:one)).to equal(manager)
   end
 
   it "should have an instances method" do
-    @class.should respond_to(:instances)
+    expect(@class).to respond_to(:instances)
   end
 
   describe "when providing a list of instances" do
@@ -44,12 +44,12 @@ describe Puppet::Provider::Ldap do
       @class.expects(:new).with("two").returns(2)
       @class.expects(:new).with("three").returns(3)
 
-      @class.instances.should == [1,2,3]
+      expect(@class.instances).to eq([1,2,3])
     end
   end
 
   it "should have a prefetch method" do
-    @class.should respond_to(:prefetch)
+    expect(@class).to respond_to(:prefetch)
   end
 
   describe "when prefetching" do
@@ -108,13 +108,13 @@ describe Puppet::Provider::Ldap do
 
   describe "when being initialized" do
     it "should fail if no manager has been defined" do
-      lambda { @class.new }.should raise_error(Puppet::DevError)
+      expect { @class.new }.to raise_error(Puppet::DevError)
     end
 
     it "should fail if the manager is invalid" do
       manager = stub "manager", :valid? => false
       @class.stubs(:manager).returns manager
-      lambda { @class.new }.should raise_error(Puppet::DevError)
+      expect { @class.new }.to raise_error(Puppet::DevError)
     end
 
     describe "with a hash" do
@@ -132,19 +132,19 @@ describe Puppet::Provider::Ldap do
 
       it "should store a copy of the hash as its ldap_properties" do
         instance = @class.new(:one => :two)
-        instance.ldap_properties.should == {:one => :two}
+        expect(instance.ldap_properties).to eq({:one => :two})
       end
 
       it "should only store the first value of each value array for those attributes that do not match all values" do
         @property_class.expects(:array_matching).returns :first
         instance = @class.new(:one => %w{two three})
-        instance.properties.should == {:one => "two"}
+        expect(instance.properties).to eq({:one => "two"})
       end
 
       it "should store the whole value array for those attributes that match all values" do
         @property_class.expects(:array_matching).returns :all
         instance = @class.new(:one => %w{two three})
-        instance.properties.should == {:one => %w{two three}}
+        expect(instance.properties).to eq({:one => %w{two three}})
       end
 
       it "should only use the first value for attributes that are not properties" do
@@ -153,7 +153,7 @@ describe Puppet::Provider::Ldap do
         @property_class.stubs(:array_matching).returns :all
 
         instance = @class.new(:one => %w{two three}, :a => %w{b c})
-        instance.properties.should == {:one => %w{two three}, :a => "b"}
+        expect(instance.properties).to eq({:one => %w{two three}, :a => "b"})
       end
 
       it "should discard any properties not valid in the resource class" do
@@ -161,7 +161,7 @@ describe Puppet::Provider::Ldap do
         @property_class.stubs(:array_matching).returns :all
 
         instance = @class.new(:one => %w{two three}, :a => %w{b})
-        instance.properties.should == {:one => %w{two three}}
+        expect(instance.properties).to eq({:one => %w{two three}})
       end
     end
   end
@@ -178,25 +178,25 @@ describe Puppet::Provider::Ldap do
     end
 
     it "should have a method for creating the ldap entry" do
-      @instance.should respond_to(:create)
+      expect(@instance).to respond_to(:create)
     end
 
     it "should have a method for removing the ldap entry" do
-      @instance.should respond_to(:delete)
+      expect(@instance).to respond_to(:delete)
     end
 
     it "should have a method for returning the class's manager" do
-      @instance.manager.should equal(@manager)
+      expect(@instance.manager).to equal(@manager)
     end
 
     it "should indicate when the ldap entry already exists" do
       @instance = @class.new(:ensure => :present)
-      @instance.exists?.should be_true
+      expect(@instance.exists?).to be_truthy
     end
 
     it "should indicate when the ldap entry does not exist" do
       @instance = @class.new(:ensure => :absent)
-      @instance.exists?.should be_false
+      expect(@instance.exists?).to be_falsey
     end
 
     describe "is being flushed" do
@@ -221,7 +221,7 @@ describe Puppet::Provider::Ldap do
 
       it "should set its :ensure value to :present" do
         @instance.create
-        @instance.properties[:ensure].should == :present
+        expect(@instance.properties[:ensure]).to eq(:present)
       end
 
       it "should set all of the other attributes from the resource" do
@@ -229,15 +229,15 @@ describe Puppet::Provider::Ldap do
         @resource.expects(:should).with(:two).returns "twoval"
 
         @instance.create
-        @instance.properties[:one].should == "oneval"
-        @instance.properties[:two].should == "twoval"
+        expect(@instance.properties[:one]).to eq("oneval")
+        expect(@instance.properties[:two]).to eq("twoval")
       end
     end
 
     describe "is being deleted" do
       it "should set its :ensure value to :absent" do
         @instance.delete
-        @instance.properties[:ensure].should == :absent
+        expect(@instance.properties[:ensure]).to eq(:absent)
       end
     end
   end

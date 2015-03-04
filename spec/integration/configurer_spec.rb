@@ -49,19 +49,19 @@ describe Puppet::Configurer do
       # sticky bit only applies to directories in windows
       file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
 
-      Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8).should == file_mode
+      expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8)).to eq(file_mode)
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|
         summary = YAML.load(fd.read)
       end
 
-      summary.should be_a(Hash)
+      expect(summary).to be_a(Hash)
       %w{time changes events resources}.each do |key|
-        summary.should be_key(key)
+        expect(summary).to be_key(key)
       end
-      summary["time"].should be_key("notify")
-      summary["time"]["last_run"].should be_between(t1, t2)
+      expect(summary["time"]).to be_key("notify")
+      expect(summary["time"]["last_run"]).to be_between(t1, t2)
     end
   end
 end

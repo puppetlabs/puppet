@@ -15,7 +15,7 @@ describe Puppet::Provider::Package::Windows::Package do
     it 'should generate an empty enumeration' do
       subject.expects(:with_key)
 
-      subject.to_a.should be_empty
+      expect(subject.to_a).to be_empty
     end
 
     it 'should yield each package it finds' do
@@ -28,7 +28,7 @@ describe Puppet::Provider::Package::Windows::Package do
         yielded = pkg
       end
 
-      yielded.should == package
+      expect(yielded).to eq(package)
     end
   end
 
@@ -52,7 +52,7 @@ describe Puppet::Provider::Package::Windows::Package do
 
       keys = []
       subject.with_key { |key, values| keys << key }
-      keys.should be_empty
+      expect(keys).to be_empty
     end
 
     it 'should raise other types of exceptions' do
@@ -76,15 +76,15 @@ describe Puppet::Provider::Package::Windows::Package do
       let (:klass) { Puppet::Provider::Package::Windows::MsiPackage }
 
       it 'should accept source ending in .msi' do
-        subject.installer_class({:source => 'foo.msi'}).should == klass
+        expect(subject.installer_class({:source => 'foo.msi'})).to eq(klass)
       end
 
       it 'should accept quoted source ending in .msi' do
-        subject.installer_class({:source => '"foo.msi"'}).should == klass
+        expect(subject.installer_class({:source => '"foo.msi"'})).to eq(klass)
       end
 
       it 'should accept source case insensitively' do
-        subject.installer_class({:source => '"foo.MSI"'}).should == klass
+        expect(subject.installer_class({:source => '"foo.MSI"'})).to eq(klass)
       end
 
       it 'should reject source containing msi in the name' do
@@ -105,37 +105,37 @@ describe Puppet::Provider::Package::Windows::Package do
 
   context '::munge' do
     it 'should shell quote strings with spaces and fix forward slashes' do
-      subject.munge('c:/windows/the thing').should == '"c:\windows\the thing"'
+      expect(subject.munge('c:/windows/the thing')).to eq('"c:\windows\the thing"')
     end
     it 'should leave properly formatted paths alone' do
-      subject.munge('c:\windows\thething').should == 'c:\windows\thething'
+      expect(subject.munge('c:\windows\thething')).to eq('c:\windows\thething')
     end
   end
 
   context '::replace_forward_slashes' do
     it 'should replace forward with back slashes' do
-      subject.replace_forward_slashes('c:/windows/thing/stuff').should == 'c:\windows\thing\stuff'
+      expect(subject.replace_forward_slashes('c:/windows/thing/stuff')).to eq('c:\windows\thing\stuff')
     end
   end
 
   context '::quote' do
     it 'should shell quote strings with spaces' do
-      subject.quote('foo bar').should == '"foo bar"'
+      expect(subject.quote('foo bar')).to eq('"foo bar"')
     end
 
     it 'should shell quote strings with spaces and quotes' do
-      subject.quote('"foo bar" baz').should == '"\"foo bar\" baz"'
+      expect(subject.quote('"foo bar" baz')).to eq('"\"foo bar\" baz"')
     end
 
     it 'should not shell quote strings without spaces' do
-      subject.quote('"foobar"').should == '"foobar"'
+      expect(subject.quote('"foobar"')).to eq('"foobar"')
     end
   end
 
   it 'should implement instance methods' do
     pkg = subject.new('orca', '5.0')
 
-    pkg.name.should == 'orca'
-    pkg.version.should == '5.0'
+    expect(pkg.name).to eq('orca')
+    expect(pkg.version).to eq('5.0')
   end
 end

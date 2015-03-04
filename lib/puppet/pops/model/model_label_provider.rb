@@ -11,7 +11,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   # If a Class is given, its name is used as label
   #
   def label o
-    @@label_visitor.visit(o)
+    @@label_visitor.visit_this_0(self, o)
   end
 
   def label_Factory o                     ; label(o.current)                    end
@@ -45,7 +45,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_LiteralRegularExpression o    ; "Regular Expression"                end
   def label_Nop o                         ; "Nop Expression"                    end
   def label_NamedAccessExpression o       ; "'.' expression"                    end
-  def label_NilClass o                    ; "Nil Object"                        end
+  def label_NilClass o                    ; "Undef Value"                       end
   def label_NotExpression o               ; "'not' expression"                  end
   def label_VariableExpression o          ; "Variable"                          end
   def label_TextExpression o              ; "Expression in Interpolated String" end

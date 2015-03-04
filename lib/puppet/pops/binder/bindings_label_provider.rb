@@ -10,7 +10,7 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   # @return [String] a human readable label
   #
   def label o
-   @@label_visitor.visit(o)
+   @@label_visitor.visit_this_0(self, o)
   end
 
   def label_PAnyType o                          ; "#{Puppet::Pops::Types::TypeFactory.label(o)}" end

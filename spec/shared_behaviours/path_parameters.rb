@@ -49,7 +49,7 @@ shared_examples_for "all pathname parameters with arrays" do |win32|
               to raise_error Puppet::Error, /fully qualified/
           else
             instance = instance(data)
-            instance[@param].should == data
+            expect(instance[@param]).to eq(data)
           end
         end
 
@@ -59,7 +59,7 @@ shared_examples_for "all pathname parameters with arrays" do |win32|
               to raise_error Puppet::Error, /fully qualified/
           else
             instance = instance(data + data)
-            instance[@param].should == (data + data)
+            expect(instance[@param]).to eq(data + data)
           end
         end
       end
@@ -95,7 +95,7 @@ shared_examples_for "all path parameters" do |param, options|
     it "should accept a fully qualified path" do
       path = File.join('', 'foo')
       instance = instance(path)
-      instance[@param].should == path
+      expect(instance[@param]).to eq(path)
     end
 
     it "should give a useful error when the path is not absolute" do
@@ -134,7 +134,7 @@ shared_examples_for "all path parameters" do |param, options|
     it "also accepts Unix style path separators" do
       path = 'C:/Program Files'
       instance = instance(path)
-      instance[@param].should == path
+      expect(instance[@param]).to eq(path)
     end
 
     { "Unix" => '/', "Win32" => '\\' }.each do |style, slash|
@@ -142,7 +142,7 @@ shared_examples_for "all path parameters" do |param, options|
         it "should accept drive letter '#{drive}' with #{style} path separators " do
           path = "#{drive}:#{slash}Program Files"
           instance = instance(path)
-          instance[@param].should == path
+          expect(instance[@param]).to eq(path)
         end
       end
     end
@@ -153,7 +153,7 @@ shared_examples_for "all path parameters" do |param, options|
     }.each do |name, path|
       it "should accept #{name} as absolute" do
         instance = instance(path)
-        instance[@param].should == path
+        expect(instance[@param]).to eq(path)
       end
     end
   end

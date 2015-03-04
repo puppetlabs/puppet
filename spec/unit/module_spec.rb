@@ -22,7 +22,7 @@ describe Puppet::Module do
     env = Puppet::Node::Environment.create(:myenv, [])
     env.expects(:module).with(name).returns "yep"
     Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
-      Puppet::Module.find(name, "myenv").should == "yep"
+      expect(Puppet::Module.find(name, "myenv")).to eq("yep")
     end
   end
 
@@ -30,49 +30,112 @@ describe Puppet::Module do
     env = Puppet::Node::Environment.create(:myenv, [])
     env.expects(:module).with(name).returns nil
     Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
-      Puppet::Module.find(name, "myenv").should be_nil
+      expect(Puppet::Module.find(name, "myenv")).to be_nil
+    end
+  end
+
+  describe "is_module_directory?" do
+    let(:first_modulepath) { tmpdir('firstmodules') }
+    let(:not_a_module) { tmpfile('thereisnomodule', first_modulepath) }
+
+    it "should return false for a non-directory" do
+      expect(Puppet::Module.is_module_directory?('thereisnomodule', first_modulepath)).to be_falsey
+    end
+
+    it "should return true for a well named directories" do
+      PuppetSpec::Modules.generate_files('foo', first_modulepath)
+      PuppetSpec::Modules.generate_files('foo2', first_modulepath)
+      PuppetSpec::Modules.generate_files('foo_bar', first_modulepath)
+      expect(Puppet::Module.is_module_directory?('foo', first_modulepath)).to be_truthy
+      expect(Puppet::Module.is_module_directory?('foo2', first_modulepath)).to be_truthy
+      expect(Puppet::Module.is_module_directory?('foo_bar', first_modulepath)).to be_truthy
+    end
+
+    it "should return false for badly named directories" do
+      PuppetSpec::Modules.generate_files('foo=bar', first_modulepath)
+      PuppetSpec::Modules.generate_files('.foo', first_modulepath)
+      expect(Puppet::Module.is_module_directory?('foo=bar', first_modulepath)).to be_falsey
+      expect(Puppet::Module.is_module_directory?('.foo', first_modulepath)).to be_falsey
+    end
+  end
+
+  describe "is_module_directory_name?" do
+    it "should return true for a valid directory module name" do
+      expect(Puppet::Module.is_module_directory_name?('foo')).to be_truthy
+      expect(Puppet::Module.is_module_directory_name?('foo2')).to be_truthy
+      expect(Puppet::Module.is_module_directory_name?('foo_bar')).to be_truthy
+    end
+
+    it "should return false for badly formed directory module names" do
+      expect(Puppet::Module.is_module_directory_name?('foo-bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo=bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo.bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('-foo')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo-')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('foo--bar')).to be_falsey
+      expect(Puppet::Module.is_module_directory_name?('.foo')).to be_falsey
+    end
+  end
+
+  describe "is_module_namespaced_name?" do
+    it "should return true for a valid namespaced module name" do
+      expect(Puppet::Module.is_module_namespaced_name?('foo-bar')).to be_truthy
+    end
+
+    it "should return false for badly formed namespaced module names" do
+      expect(Puppet::Module.is_module_namespaced_name?('foo')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('.foo-bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo2')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo_bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo=bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo.bar')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('-foo')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo-')).to be_falsey
+      expect(Puppet::Module.is_module_namespaced_name?('foo--bar')).to be_falsey
     end
   end
 
   describe "attributes" do
     it "should support a 'version' attribute" do
       mod.version = 1.09
-      mod.version.should == 1.09
+      expect(mod.version).to eq(1.09)
     end
 
     it "should support a 'source' attribute" do
       mod.source = "http://foo/bar"
-      mod.source.should == "http://foo/bar"
+      expect(mod.source).to eq("http://foo/bar")
     end
 
     it "should support a 'project_page' attribute" do
       mod.project_page = "http://foo/bar"
-      mod.project_page.should == "http://foo/bar"
+      expect(mod.project_page).to eq("http://foo/bar")
     end
 
     it "should support an 'author' attribute" do
       mod.author = "Luke Kanies <luke@madstop.com>"
-      mod.author.should == "Luke Kanies <luke@madstop.com>"
+      expect(mod.author).to eq("Luke Kanies <luke@madstop.com>")
     end
 
     it "should support a 'license' attribute" do
       mod.license = "GPL2"
-      mod.license.should == "GPL2"
+      expect(mod.license).to eq("GPL2")
     end
 
     it "should support a 'summary' attribute" do
       mod.summary = "GPL2"
-      mod.summary.should == "GPL2"
+      expect(mod.summary).to eq("GPL2")
     end
 
     it "should support a 'description' attribute" do
       mod.description = "GPL2"
-      mod.description.should == "GPL2"
+      expect(mod.description).to eq("GPL2")
     end
 
     it "should support specifying a compatible puppet version" do
       mod.puppetversion = "0.25"
-      mod.puppetversion.should == "0.25"
+      expect(mod.puppetversion).to eq("0.25")
     end
   end
 
@@ -85,7 +148,7 @@ describe Puppet::Module do
   it "should fail if the specified puppet version is not compatible" do
     mod.puppetversion = "0.25"
     Puppet.stubs(:version).returns "0.24"
-    lambda { mod.validate_puppet_version }.should raise_error(Puppet::Module::IncompatibleModule)
+    expect { mod.validate_puppet_version }.to raise_error(Puppet::Module::IncompatibleModule)
   end
 
   describe "when finding unmet dependencies" do
@@ -93,6 +156,33 @@ describe Puppet::Module do
       Puppet::FileSystem.unstub(:exist?)
       @modpath = tmpdir('modpath')
       Puppet.settings[:modulepath] = @modpath
+    end
+
+    it "should resolve module dependencies using forge names" do
+      parent = PuppetSpec::Modules.create(
+        'parent',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => [{
+            "name" => "foo/child"
+          }]
+        },
+        :environment => env
+      )
+      child = PuppetSpec::Modules.create(
+        'child',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => []
+        },
+        :environment => env
+      )
+
+      env.expects(:module_by_forge_name).with('foo/child').returns(child)
+
+      expect(parent.unmet_dependencies).to eq([])
     end
 
     it "should list modules that are missing" do
@@ -106,15 +196,19 @@ describe Puppet::Module do
             "version_requirement" => ">= 2.2.0",
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
-      mod.unmet_dependencies.should == [{
+
+      env.expects(:module_by_forge_name).with('baz/foobar').returns(nil)
+
+      expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :name   => "baz/foobar",
         :version_constraint => ">= 2.2.0",
         :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
         :mod_details => { :installed_version => nil }
-      }]
+      }])
     end
 
     it "should list modules that are missing and have invalid names" do
@@ -128,15 +222,19 @@ describe Puppet::Module do
             "version_requirement" => ">= 2.2.0",
             "name" => "baz/foobar=bar"
           }]
-        }
+        },
+        :environment => env
       )
-      mod.unmet_dependencies.should == [{
+
+      env.expects(:module_by_forge_name).with('baz/foobar=bar').returns(nil)
+
+      expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :name   => "baz/foobar=bar",
         :version_constraint => ">= 2.2.0",
         :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
         :mod_details => { :installed_version => nil }
-      }]
+      }])
     end
 
     it "should list modules with unmet version requirement" do
@@ -176,21 +274,21 @@ describe Puppet::Module do
         :environment => env
       )
 
-      mod.unmet_dependencies.should == [{
+      expect(mod.unmet_dependencies).to eq([{
         :reason => :version_mismatch,
         :name   => "baz/foobar",
         :version_constraint => ">= 2.2.0",
         :parent => { :version => "v9.9.9", :name => "puppetlabs/test_gte_req" },
         :mod_details => { :installed_version => "2.0.0" }
-      }]
+      }])
 
-      mod2.unmet_dependencies.should == [{
+      expect(mod2.unmet_dependencies).to eq([{
         :reason => :version_mismatch,
         :name   => "baz/foobar",
         :version_constraint => "v1.0.0",
         :parent => { :version => "v9.9.9", :name => "puppetlabs/test_specific_req" },
         :mod_details => { :installed_version => "2.0.0" }
-      }]
+      }])
 
     end
 
@@ -217,7 +315,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      mod.unmet_dependencies.should be_empty
+      expect(mod.unmet_dependencies).to be_empty
     end
 
     it "should consider a dependency without a semantic version to be unmet" do
@@ -245,13 +343,13 @@ describe Puppet::Module do
         :environment => env
       )
 
-      mod.unmet_dependencies.should == [{
+      expect(mod.unmet_dependencies).to eq([{
         :reason => :non_semantic_version,
         :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
         :mod_details => { :installed_version => "5.1" },
         :name => "baz/foobar",
         :version_constraint => ">= 0.0.0"
-      }]
+      }])
     end
 
     it "should have valid dependencies when no dependencies have been specified" do
@@ -263,7 +361,7 @@ describe Puppet::Module do
         }
       )
 
-      mod.unmet_dependencies.should == []
+      expect(mod.unmet_dependencies).to eq([])
     end
 
     it "should only list unmet dependencies" do
@@ -300,13 +398,13 @@ describe Puppet::Module do
         :environment => env
       )
 
-      mod.unmet_dependencies.should == [{
+      expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :mod_details => { :installed_version => nil },
         :parent => { :version => "v9.9.9", :name => "puppetlabs/#{name}" },
         :name => "baz/notsatisfied",
         :version_constraint => ">= 2.2.0"
-      }]
+      }])
     end
 
     it "should be empty when all dependencies are met" do
@@ -348,7 +446,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      mod.unmet_dependencies.should be_empty
+      expect(mod.unmet_dependencies).to be_empty
     end
   end
 
@@ -363,33 +461,33 @@ describe Puppet::Module do
   end
 
   it "should return nil if asked for a module whose name is 'nil'" do
-    Puppet::Module.find(nil, "myenv").should be_nil
+    expect(Puppet::Module.find(nil, "myenv")).to be_nil
   end
 
   it "should provide support for logging" do
-    Puppet::Module.ancestors.should be_include(Puppet::Util::Logging)
+    expect(Puppet::Module.ancestors).to be_include(Puppet::Util::Logging)
   end
 
   it "should be able to be converted to a string" do
-    mod.to_s.should == "Module #{name}(#{path})"
+    expect(mod.to_s).to eq("Module #{name}(#{path})")
   end
 
   it "should fail if its name is not alphanumeric" do
-    lambda { Puppet::Module.new(".something", "/path", env) }.should raise_error(Puppet::Module::InvalidName)
+    expect { Puppet::Module.new(".something", "/path", env) }.to raise_error(Puppet::Module::InvalidName)
   end
 
   it "should require a name at initialization" do
-    lambda { Puppet::Module.new }.should raise_error(ArgumentError)
+    expect { Puppet::Module.new }.to raise_error(ArgumentError)
   end
 
   it "should accept an environment at initialization" do
-    Puppet::Module.new("foo", "/path", env).environment.should == env
+    expect(Puppet::Module.new("foo", "/path", env).environment).to eq(env)
   end
 
   describe '#modulepath' do
     it "should return the directory the module is installed in, if a path exists" do
       mod = Puppet::Module.new("foo", "/a/foo", env)
-      mod.modulepath.should == '/a'
+      expect(mod.modulepath).to eq('/a')
     end
   end
 
@@ -405,36 +503,36 @@ describe Puppet::Module do
     it "should be able to return individual #{filetype}" do
       module_file = File.join(path, dirname, "my/file")
       Puppet::FileSystem.expects(:exist?).with(module_file).returns true
-      mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should == module_file
+      expect(mod.send(filetype.to_s.sub(/s$/, ''), "my/file")).to eq(module_file)
     end
 
     it "should consider #{filetype} to be present if their base directory exists" do
       module_file = File.join(path, dirname)
       Puppet::FileSystem.expects(:exist?).with(module_file).returns true
-      mod.send(filetype.to_s + "?").should be_true
+      expect(mod.send(filetype.to_s + "?")).to be_truthy
     end
 
     it "should consider #{filetype} to be absent if their base directory does not exist" do
       module_file = File.join(path, dirname)
       Puppet::FileSystem.expects(:exist?).with(module_file).returns false
-      mod.send(filetype.to_s + "?").should be_false
+      expect(mod.send(filetype.to_s + "?")).to be_falsey
     end
 
     it "should return nil if asked to return individual #{filetype} that don't exist" do
       module_file = File.join(path, dirname, "my/file")
       Puppet::FileSystem.expects(:exist?).with(module_file).returns false
-      mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
+      expect(mod.send(filetype.to_s.sub(/s$/, ''), "my/file")).to be_nil
     end
 
     it "should return the base directory if asked for a nil path" do
       base = File.join(path, dirname)
       Puppet::FileSystem.expects(:exist?).with(base).returns true
-      mod.send(filetype.to_s.sub(/s$/, ''), nil).should == base
+      expect(mod.send(filetype.to_s.sub(/s$/, ''), nil)).to eq(base)
     end
   end
 
   it "should return the path to the plugin directory" do
-    mod.plugin_directory.should == File.join(path, "lib")
+    expect(mod.plugin_directory).to eq(File.join(path, "lib"))
   end
 end
 
@@ -449,7 +547,7 @@ describe Puppet::Module, "when finding matching manifests" do
     Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
     FileTest.stubs(:directory?).returns false
 
-    @mod.match_manifests(@pq_glob_with_extension).should == %w{foo bar}
+    expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{foo bar})
   end
 
   it "should not return directories" do
@@ -457,31 +555,31 @@ describe Puppet::Module, "when finding matching manifests" do
 
     FileTest.expects(:directory?).with("foo").returns false
     FileTest.expects(:directory?).with("bar").returns true
-    @mod.match_manifests(@pq_glob_with_extension).should == %w{foo}
+    expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{foo})
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
     Puppet::FileSystem.expects(:exist?).with("/a/manifests/init.pp").returns(true)
 
-    @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
+    expect(@mod.match_manifests(nil)).to eq(%w{/a/manifests/init.pp})
   end
 
   it "should return all manifests matching the glob pattern in all existing paths" do
     Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{a b})
 
-    @mod.match_manifests(@pq_glob_with_extension).should == %w{a b}
+    expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{a b})
   end
 
   it "should match the glob pattern plus '.pp' if no extension is specified" do
     Dir.expects(:glob).with("/a/manifests/yay/foo.pp").returns(%w{yay})
 
-    @mod.match_manifests("yay/foo").should == %w{yay}
+    expect(@mod.match_manifests("yay/foo")).to eq(%w{yay})
   end
 
   it "should return an empty array if no manifests matched" do
     Dir.expects(:glob).with(@fq_glob_with_extension).returns([])
 
-    @mod.match_manifests(@pq_glob_with_extension).should == []
+    expect(@mod.match_manifests(@pq_glob_with_extension)).to eq([])
   end
 
   it "should raise an error if the pattern tries to leave the manifest directory" do
@@ -499,7 +597,7 @@ describe Puppet::Module do
   end
 
   it "should use 'License' in its current path as its metadata file" do
-    @module.license_file.should == "#{@modpath}/mymod/License"
+    expect(@module.license_file).to eq("#{@modpath}/mymod/License")
   end
 
   it "should cache the license file" do
@@ -509,49 +607,37 @@ describe Puppet::Module do
   end
 
   it "should use 'metadata.json' in its current path as its metadata file" do
-    @module.metadata_file.should == "#{@modpath}/mymod/metadata.json"
+    expect(@module.metadata_file).to eq("#{@modpath}/mymod/metadata.json")
   end
 
   it "should have metadata if it has a metadata file and its data is not empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
 
-    @module.should be_has_metadata
+    expect(@module).to be_has_metadata
   end
 
   it "should have metadata if it has a metadata file and its data is not empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
 
-    @module.should be_has_metadata
+    expect(@module).to be_has_metadata
   end
 
   it "should not have metadata if has a metadata file and its data is empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file).returns "/*
-+-----------------------------------------------------------------------+
-|                                                                       |
-|                    ==> DO NOT EDIT THIS FILE! <==                     |
-|                                                                       |
-|   You should edit the `Modulefile` and run `puppet-module build`      |
-|   to generate the `metadata.json` file for your releases.             |
-|                                                                       |
-+-----------------------------------------------------------------------+
-*/
-
-{}"
-
-    @module.should_not be_has_metadata
+    File.stubs(:read).with(@module.metadata_file).returns "This is some invalid json.\n"
+    expect(@module).not_to be_has_metadata
   end
 
   it "should know if it is missing a metadata file" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns false
 
-    @module.should_not be_has_metadata
+    expect(@module).not_to be_has_metadata
   end
 
   it "should be able to parse its metadata file" do
-    @module.should respond_to(:load_metadata)
+    expect(@module).to respond_to(:load_metadata)
   end
 
   it "should parse its metadata file on initialization if it is present" do
@@ -565,7 +651,7 @@ describe Puppet::Module do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns(my_fixture('trailing-comma.json'))
 
-    @module.has_metadata?.should be_false
+    expect(@module.has_metadata?).to be_falsey
   end
 
   def a_module_with_metadata(data)
@@ -593,14 +679,14 @@ describe Puppet::Module do
     %w{source author version license}.each do |attr|
       it "should set #{attr} if present in the metadata file" do
         @module.load_metadata
-        @module.send(attr).should == @data[attr.to_sym]
+        expect(@module.send(attr)).to eq(@data[attr.to_sym])
       end
 
       it "should fail if #{attr} is not present in the metadata file" do
         @data.delete(attr.to_sym)
         @text = @data.to_pson
         File.stubs(:read).with("/my/file").returns @text
-        lambda { @module.load_metadata }.should raise_error(
+        expect { @module.load_metadata }.to raise_error(
           Puppet::Module::MissingMetadata,
           "No #{attr} module metadata provided for foo"
         )
@@ -609,41 +695,7 @@ describe Puppet::Module do
 
     it "should set puppetversion if present in the metadata file" do
       @module.load_metadata
-      @module.puppetversion.should == @data[:puppetversion]
-    end
-
-    context "when versionRequirement is used for dependency version info" do
-      before do
-        @data = {
-          :license       => "GPL2",
-          :author        => "luke",
-          :version       => "1.0",
-          :source        => "http://foo/",
-          :puppetversion => "0.25",
-          :dependencies  => [
-            {
-              "versionRequirement" => "0.0.1",
-              "name" => "pmtacceptance/stdlib"
-            },
-            {
-              "versionRequirement" => "0.1.0",
-              "name" => "pmtacceptance/apache"
-            }
-          ]
-        }
-        @module = a_module_with_metadata(@data)
-      end
-
-      it "should set the dependency version_requirement key" do
-        @module.load_metadata
-        @module.dependencies[0]['version_requirement'].should == "0.0.1"
-      end
-
-      it "should set the version_requirement key for all dependencies" do
-        @module.load_metadata
-        @module.dependencies[0]['version_requirement'].should == "0.0.1"
-        @module.dependencies[1]['version_requirement'].should == "0.1.0"
-      end
+      expect(@module.puppetversion).to eq(@data[:puppetversion])
     end
   end
 
@@ -663,10 +715,10 @@ describe Puppet::Module do
     foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
 
     IO.binwrite(foo_path, 'notfoo')
-    Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
+    expect(Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path)).not_to eq(foo_checksum)
 
     IO.binwrite(foo_path, 'foo')
-    Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
+    expect(Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path)).to eq(foo_checksum)
   end
 
   it "should know what other modules require it" do
@@ -702,7 +754,7 @@ describe Puppet::Module do
       },
       :environment => env
     )
-    dependable.required_by.should =~ [
+    expect(dependable.required_by).to match_array([
       {
         "name"    => "beggar/needy",
         "version" => "9.9.9",
@@ -713,6 +765,6 @@ describe Puppet::Module do
         "version" => "9.9.9",
         "version_requirement" => "< 5.0.0"
       }
-    ]
+    ])
   end
 end

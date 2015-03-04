@@ -4,14 +4,24 @@ module Puppet
       # Utilities for creating a basic rpm package and using it in tests
       @@defaults = {:repo => '/tmp/rpmrepo', :pkg => 'mypkg', :publisher => 'tstpub.lan', :version => '1.0'}
 
+      def setup(agent)
+        required_packages = ['createrepo', 'rpm-build']
+        required_packages.each do |pkg|
+          unless ((on agent, "yum list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0) then
+            on agent, "yum install -y #{pkg}"
+          end
+        end
+      end
+
       def clean_rpm(agent, o={})
         o = @@defaults.merge(o)
-        on agent, "rm -rf #{o[:repo]}"
-        on agent, "yum remove -y #{o[:pkg]}"
-        on agent, "rm -f /etc/yum.repos.d/#{o[:publisher]}.repo"
+        on agent, "rm -rf #{o[:repo]}", :acceptable_exit_codes => (0..255)
+        on agent, "yum remove -y #{o[:pkg]}", :acceptable_exit_codes => (0..255)
+        on agent, "rm -f /etc/yum.repos.d/#{o[:publisher]}.repo", :acceptable_exit_codes => (0..255)
       end
 
       def setup_rpm(agent, o={})
+        setup(agent)
         o = @@defaults.merge(o)
         on agent, "mkdir -p #{o[:repo]}/{RPMS,SRPMS,BUILD,SOURCES,SPECS}"
         on agent, "echo '%_topdir #{o[:repo]}' > ~/.rpmmacros"
@@ -27,6 +37,7 @@ EOF
       end
 
       def send_rpm(agent, o={})
+        setup(agent)
         o = @@defaults.merge(o)
         on agent, "mkdir -p #{o[:repo]}/#{o[:pkg]}-#{o[:version]}/usr/bin"
         on agent, "cat <<EOF > #{o[:repo]}/#{o[:pkg]}

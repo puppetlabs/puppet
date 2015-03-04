@@ -9,6 +9,6 @@ describe Puppet::Reports, " when using report types" do
   end
 
   it "should load report types as modules" do
-    Puppet::Reports.report(:store).should be_instance_of(Module)
+    expect(Puppet::Reports.report(:store)).to be_instance_of(Module)
   end
 end

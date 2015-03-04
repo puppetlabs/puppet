@@ -9,18 +9,18 @@ describe Puppet::SSL::CertificateRequest::Rest do
   end
 
   it "should be a sublcass of Puppet::Indirector::REST" do
-    Puppet::SSL::CertificateRequest::Rest.superclass.should equal(Puppet::Indirector::REST)
+    expect(Puppet::SSL::CertificateRequest::Rest.superclass).to equal(Puppet::Indirector::REST)
   end
 
   it "should set server_setting to :ca_server" do
-    Puppet::SSL::CertificateRequest::Rest.server_setting.should == :ca_server
+    expect(Puppet::SSL::CertificateRequest::Rest.server_setting).to eq(:ca_server)
   end
 
   it "should set port_setting to :ca_port" do
-    Puppet::SSL::CertificateRequest::Rest.port_setting.should == :ca_port
+    expect(Puppet::SSL::CertificateRequest::Rest.port_setting).to eq(:ca_port)
   end
 
   it "should use the :ca SRV service" do
-    Puppet::SSL::CertificateRequest::Rest.srv_service.should == :ca
+    expect(Puppet::SSL::CertificateRequest::Rest.srv_service).to eq(:ca)
   end
 end

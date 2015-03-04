@@ -23,7 +23,7 @@ describe Puppet::Application::Apply do
 
   [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
     it "should declare handle_#{option} method" do
-      @apply.should respond_to("handle_#{option}".to_sym)
+      expect(@apply).to respond_to("handle_#{option}".to_sym)
     end
 
     it "should store argument value when calling handle_#{option}" do
@@ -71,17 +71,17 @@ describe Puppet::Application::Apply do
       it "should set options[:verbose] to true" do
         @apply.setup_test
 
-        @apply.options[:verbose].should == true
+        expect(@apply.options[:verbose]).to eq(true)
       end
       it "should set options[:show_diff] to true" do
         Puppet.settings.override_default(:show_diff, false)
         @apply.setup_test
-        Puppet[:show_diff].should == true
+        expect(Puppet[:show_diff]).to eq(true)
       end
       it "should set options[:detailed_exitcodes] to true" do
         @apply.setup_test
 
-        @apply.options[:detailed_exitcodes].should == true
+        expect(@apply.options[:detailed_exitcodes]).to eq(true)
       end
     end
 
@@ -100,13 +100,13 @@ describe Puppet::Application::Apply do
     it "should set log level to debug if --debug was passed" do
       @apply.options[:debug] = true
       @apply.setup
-      Puppet::Log.level.should == :debug
+      expect(Puppet::Log.level).to eq(:debug)
     end
 
     it "should set log level to info if --verbose was passed" do
       @apply.options[:verbose] = true
       @apply.setup
-      Puppet::Log.level.should == :info
+      expect(Puppet::Log.level).to eq(:info)
     end
 
     it "should print puppet config if asked to in Puppet config" do
@@ -145,7 +145,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should set default_file_terminus to `file_server` to be local" do
-      @apply.app_defaults[:default_file_terminus].should == :file_server
+      expect(@apply.app_defaults[:default_file_terminus]).to eq(:file_server)
     end
   end
 
@@ -227,7 +227,7 @@ describe Puppet::Application::Apply do
       it "should raise an error if a file is passed on command line and the file does not exist" do
         noexist = tmpfile('noexist.pp')
         @apply.command_line.stubs(:args).returns([noexist])
-        lambda { @apply.main }.should raise_error(RuntimeError, "Could not find file #{noexist}")
+        expect { @apply.main }.to raise_error(RuntimeError, "Could not find file #{noexist}")
       end
 
       it "should set the manifest to the first file and warn other files will be skipped" do
@@ -239,14 +239,14 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
 
         msg = @logs.find {|m| m.message =~ /Only one file can be applied per run/ }
-        msg.message.should == 'Only one file can be applied per run.  Skipping starwarsI, starwarsII'
-        msg.level.should == :warning
+        expect(msg.message).to eq('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
+        expect(msg.level).to eq(:warning)
       end
 
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 
-        lambda { @apply.main }.should raise_error(RuntimeError, /Could not find node/)
+        expect { @apply.main }.to raise_error(RuntimeError, /Could not find node/)
       end
 
       it "should load custom classes if loadclasses" do
@@ -327,12 +327,12 @@ describe Puppet::Application::Apply do
 
         it "should set the facts name based on the node_name_fact" do
           expect { @apply.main }.to exit_with 0
-          @facts.name.should == 'other_node_name'
+          expect(@facts.name).to eq('other_node_name')
         end
 
         it "should set the node_name_value based on the node_name_fact" do
           expect { @apply.main }.to exit_with 0
-          Puppet[:node_name_value].should == 'other_node_name'
+          expect(Puppet[:node_name_value]).to eq('other_node_name')
         end
 
         it "should merge in our node the loaded facts" do
@@ -340,13 +340,13 @@ describe Puppet::Application::Apply do
 
           expect { @apply.main }.to exit_with 0
 
-          @node.parameters['key'].should == 'value'
+          expect(@node.parameters['key']).to eq('value')
         end
 
         it "should raise an error if we can't find the facts" do
           Puppet::Node::Facts.indirection.expects(:find).returns(nil)
 
-          lambda { @apply.main }.should raise_error
+          expect { @apply.main }.to raise_error
         end
       end
 
@@ -422,7 +422,7 @@ describe Puppet::Application::Apply do
 
       it "should fail helpfully if deserializing fails" do
         @apply.options[:catalog] = temporary_catalog('something syntactically invalid')
-        lambda { @apply.apply }.should raise_error(Puppet::Error)
+        expect { @apply.apply }.to raise_error(Puppet::Error)
       end
 
       it "should convert plain data structures into a catalog if deserialization does not do so" do

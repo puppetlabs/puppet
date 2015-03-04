@@ -101,7 +101,7 @@ EOL
     results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
     results.each do |obj|
       it "should have the proper base type" do
-        obj.should be_a_kind_of(Nagios::Base)
+        expect(obj).to be_a_kind_of(Nagios::Base)
       end
     end
   end
@@ -131,13 +131,13 @@ EOL
     it "should ignore it if it is a comment" do
       parser =  Nagios::Parser.new
       results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
-      results[0].use.should eql("linux-server")
+      expect(results[0].use).to eql("linux-server")
     end
 
     it "should parse correctly if it is escaped" do
       parser =  Nagios::Parser.new
       results = parser.parse(ESCAPED_SEMICOLON)
-      results[0].command_line.should eql("$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\";\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$")
+      expect(results[0].command_line).to eql("$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\";\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$")
     end
   end
 
@@ -154,13 +154,13 @@ EOL
     it "should ignore it at the beginning of a line" do
       parser =  Nagios::Parser.new
       results = parser.parse(LINE_COMMENT_SNIPPET)
-      results[0].command_line.should eql("command_line")
+      expect(results[0].command_line).to eql("command_line")
     end
 
     it "should let it go anywhere else" do
       parser =  Nagios::Parser.new
       results = parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
-      results[0].command_line.should eql("/usr/local/bin/riseup-nagios-client.pl \"$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ \#$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$\"")
+      expect(results[0].command_line).to eql("/usr/local/bin/riseup-nagios-client.pl \"$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ \#$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$\"")
     end
 
   end
@@ -176,7 +176,7 @@ EOL
     it "should parse correctly" do
       parser =  Nagios::Parser.new
       results = parser.parse(ANOTHER_ESCAPED_SEMICOLON)
-      results[0].command_line.should eql("LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'")
+      expect(results[0].command_line).to eql("LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'")
     end
   end
 
@@ -188,7 +188,7 @@ EOL
     nagios_type = Nagios::Base.create(:command)
     nagios_type.command_name = results[0].command_name
     nagios_type.command_line = results[0].command_line
-    nagios_type.to_s.should eql(ANOTHER_ESCAPED_SEMICOLON)
+    expect(nagios_type.to_s).to eql(ANOTHER_ESCAPED_SEMICOLON)
   end
 
 end
@@ -199,14 +199,14 @@ describe "Nagios generator" do
     param = '$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\";" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$'
     nagios_type = Nagios::Base.create(:command)
     nagios_type.command_line = param
-    nagios_type.to_s.should eql("define command {\n\tcommand_line                   $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\"\\;\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$\n}\n")
+    expect(nagios_type.to_s).to eql("define command {\n\tcommand_line                   $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\"\\;\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$\n}\n")
   end
 
   it "should escape ';' if it is not already the case" do
     param = "LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'"
     nagios_type = Nagios::Base.create(:command)
     nagios_type.command_line = param
-    nagios_type.to_s.should eql("define command {\n\tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'\n}\n")
+    expect(nagios_type.to_s).to eql("define command {\n\tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'\n}\n")
   end
 
   it "should be idempotent" do
@@ -215,7 +215,7 @@ describe "Nagios generator" do
     nagios_type.command_line = param
     parser =  Nagios::Parser.new
     results = parser.parse(nagios_type.to_s)
-    results[0].command_line.should eql(param)
+    expect(results[0].command_line).to eql(param)
   end
 
   it "should accept FixNum params and convert to string" do
@@ -224,7 +224,7 @@ describe "Nagios generator" do
     nagios_type.first_notification = param
     parser =  Nagios::Parser.new
     results = parser.parse(nagios_type.to_s)
-    results[0].first_notification.should eql(param.to_s)
+    expect(results[0].first_notification).to eql(param.to_s)
   end
 end
 
@@ -233,59 +233,59 @@ describe "Nagios resource types" do
     puppet_type = Puppet::Type.type("nagios_#{name}")
 
     it "should have a valid type for #{name}" do
-      puppet_type.should_not be_nil
+      expect(puppet_type).not_to be_nil
     end
 
     next unless puppet_type
 
     describe puppet_type do
       it "should be defined as a Puppet resource type" do
-        puppet_type.should_not be_nil
+        expect(puppet_type).not_to be_nil
       end
 
       it "should have documentation" do
-        puppet_type.instance_variable_get("@doc").should_not == ""
+        expect(puppet_type.instance_variable_get("@doc")).not_to eq("")
       end
 
       it "should have #{nagios_type.namevar} as its key attribute" do
-        puppet_type.key_attributes.should == [nagios_type.namevar]
+        expect(puppet_type.key_attributes).to eq([nagios_type.namevar])
       end
 
       it "should have documentation for its #{nagios_type.namevar} parameter" do
-        puppet_type.attrclass(nagios_type.namevar).instance_variable_get("@doc").should_not be_nil
+        expect(puppet_type.attrclass(nagios_type.namevar).instance_variable_get("@doc")).not_to be_nil
       end
 
       it "should have an ensure property" do
-        puppet_type.should be_validproperty(:ensure)
+        expect(puppet_type).to be_validproperty(:ensure)
       end
 
       it "should have a target property" do
-        puppet_type.should be_validproperty(:target)
+        expect(puppet_type).to be_validproperty(:target)
       end
 
       it "should have documentation for its target property" do
-        puppet_type.attrclass(:target).instance_variable_get("@doc").should_not be_nil
+        expect(puppet_type.attrclass(:target).instance_variable_get("@doc")).not_to be_nil
       end
 
       [ :owner, :group, :mode ].each do |fileprop|
         it "should have a #{fileprop} parameter" do
-          puppet_type.parameters.should be_include(fileprop)
+          expect(puppet_type.parameters).to be_include(fileprop)
         end
       end
 
       nagios_type.parameters.reject { |param| param == nagios_type.namevar or param.to_s =~ /^[0-9]/ }.each do |param|
         it "should have a #{param} property" do
-          puppet_type.should be_validproperty(param)
+          expect(puppet_type).to be_validproperty(param)
         end
 
         it "should have documentation for its #{param} property" do
-          puppet_type.attrclass(param).instance_variable_get("@doc").should_not be_nil
+          expect(puppet_type.attrclass(param).instance_variable_get("@doc")).not_to be_nil
         end
       end
 
       nagios_type.parameters.find_all { |param| param.to_s =~ /^[0-9]/ }.each do |param|
         it "should have not have a #{param} property" do
-          puppet_type.should_not be_validproperty(:param)
+          expect(puppet_type).not_to be_validproperty(:param)
         end
       end
     end

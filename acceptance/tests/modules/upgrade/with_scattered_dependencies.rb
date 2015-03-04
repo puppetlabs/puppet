@@ -6,8 +6,6 @@ step 'Setup'
 
 stub_forge_on(master)
 testdir = master.tmpdir('scattereddeps')
-on master, "mkdir -p #{master['distmoduledir']}"
-on master, "mkdir -p #{master['sitemoduledir']}"
 on master, "mkdir -p #{testdir}/modules"
 
 teardown do

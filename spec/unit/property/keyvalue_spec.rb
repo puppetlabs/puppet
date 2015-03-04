@@ -8,7 +8,7 @@ klass = Puppet::Property::KeyValue
 describe klass do
 
   it "should be a subclass of Property" do
-    klass.superclass.must == Puppet::Property
+    expect(klass.superclass).to eq(Puppet::Property)
   end
 
   describe "as an instance" do
@@ -20,15 +20,15 @@ describe klass do
     end
 
     it "should have a , as default delimiter" do
-      @property.delimiter.should == ";"
+      expect(@property.delimiter).to eq(";")
     end
 
     it "should have a = as default separator" do
-      @property.separator.should == "="
+      expect(@property.separator).to eq("=")
     end
 
     it "should have a :membership as default membership" do
-      @property.membership.should == :key_value_membership
+      expect(@property.membership).to eq(:key_value_membership)
     end
 
     it "should return the same value passed into should_to_s" do
@@ -39,7 +39,7 @@ describe klass do
       s = @property.is_to_s({"foo" => "baz" , "bar" => "boo"})
 
       # We can't predict the order the hash is processed in...
-      ["foo=baz;bar=boo", "bar=boo;foo=baz"].should be_include s
+      expect(["foo=baz;bar=boo", "bar=boo;foo=baz"]).to be_include s
     end
 
     describe "when calling inclusive?" do
@@ -52,35 +52,35 @@ describe klass do
       it "should return true when @resource[membership] == inclusive" do
         @property.stubs(:membership).returns(:key_value_membership)
         @resource.stubs(:[]).with(:key_value_membership).returns(:inclusive)
-        @property.inclusive?.must == true
+        expect(@property.inclusive?).to eq(true)
       end
 
       it "should return false when @resource[membership] != inclusive" do
         @property.stubs(:membership).returns(:key_value_membership)
         @resource.stubs(:[]).with(:key_value_membership).returns(:minimum)
-        @property.inclusive?.must == false
+        expect(@property.inclusive?).to eq(false)
       end
     end
 
     describe "when calling process_current_hash" do
       it "should return {} if hash is :absent" do
-        @property.process_current_hash(:absent).must == {}
+        expect(@property.process_current_hash(:absent)).to eq({})
       end
 
       it "should set every key to nil if inclusive?" do
         @property.stubs(:inclusive?).returns(true)
-        @property.process_current_hash({:foo => "bar", :do => "re"}).must == { :foo => nil, :do => nil }
+        expect(@property.process_current_hash({:foo => "bar", :do => "re"})).to eq({ :foo => nil, :do => nil })
       end
 
       it "should return the hash if !inclusive?" do
         @property.stubs(:inclusive?).returns(false)
-        @property.process_current_hash({:foo => "bar", :do => "re"}).must == {:foo => "bar", :do => "re"}
+        expect(@property.process_current_hash({:foo => "bar", :do => "re"})).to eq({:foo => "bar", :do => "re"})
       end
     end
 
     describe "when calling should" do
       it "should return nil if @should is nil" do
-        @property.should.must == nil
+        expect(@property.should).to eq(nil)
       end
 
       it "should call process_current_hash" do
@@ -94,14 +94,14 @@ describe klass do
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:retrieve).returns({:do => "re", :mi => "fa" })
         @property.expects(:inclusive?).returns(true)
-        @property.should.must == { :foo => "baz", :bar => "boo", :do => nil, :mi => nil }
+        expect(@property.should).to eq({ :foo => "baz", :bar => "boo", :do => nil, :mi => nil })
       end
 
       it "should return the hashed @should + the unique values of retrieve if !inclusive" do
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:retrieve).returns({:foo => "diff", :do => "re", :mi => "fa"})
         @property.expects(:inclusive?).returns(false)
-        @property.should.must == { :foo => "baz", :bar => "boo", :do => "re", :mi => "fa" }
+        expect(@property.should).to eq({ :foo => "baz", :bar => "boo", :do => "re", :mi => "fa" })
       end
     end
 
@@ -132,7 +132,7 @@ describe klass do
 
     describe "when calling hashify" do
       it "should return the array hashified" do
-        @property.hashify(["foo=baz", "bar=boo"]).must == { :foo => "baz", :bar => "boo" }
+        expect(@property.hashify(["foo=baz", "bar=boo"])).to eq({ :foo => "baz", :bar => "boo" })
       end
     end
 
@@ -156,14 +156,14 @@ describe klass do
         @provider.stubs(:prop_name).returns({ :foo => "baz", :bar => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:inclusive?).returns(true)
-        @property.safe_insync?({ :foo => "baz", :bar => "boo" }).must == true
+        expect(@property.safe_insync?({ :foo => "baz", :bar => "boo" })).to eq(true)
       end
 
       it "should return false if prepared value != should value" do
         @provider.stubs(:prop_name).returns({ "foo" => "bee", "bar" => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:inclusive?).returns(true)
-        @property.safe_insync?({ "foo" => "bee", "bar" => "boo" }).must == false
+        expect(@property.safe_insync?({ "foo" => "bee", "bar" => "boo" })).to eq(false)
       end
     end
   end

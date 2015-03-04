@@ -86,7 +86,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.variant(*types)
     t = Types::PVariantType.new()
-    types.each {|v| t.addTypes(type_of(v)) }
+    t.types = types.map {|v| type_of(v) }
     t
   end
 
@@ -97,7 +97,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.struct(name_type_hash = {})
     t = Types::PStructType.new
-    name_type_hash.map do |name, type|
+    t.elements = name_type_hash.map do |name, type|
       elem = Types::PStructElement.new
       if name.is_a?(String) && name.empty?
         raise ArgumentError, "An empty String can not be used where a String[1, default] is expected"
@@ -105,13 +105,13 @@ module Puppet::Pops::Types::TypeFactory
       elem.name = name
       elem.type = type_of(type)
       elem
-    end.each {|elem| t.addElements(elem) }
+    end
     t
   end
 
   def self.tuple(*types)
     t = Types::PTupleType.new
-    types.each {|elem| t.addTypes(type_of(elem)) }
+    t.types = types.map {|elem| type_of(elem) }
     t
   end
 
@@ -264,7 +264,7 @@ module Puppet::Pops::Types::TypeFactory
   # Creates an instance of the Undef type
   # @api public
   def self.undef()
-    Types::PNilType.new()
+    Types::PUndefType.new()
   end
 
   # Creates an instance of the Default type

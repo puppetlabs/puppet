@@ -12,39 +12,39 @@ describe Puppet::Network::AuthStore do
 
   describe "when checking if the acl has some entries" do
     it "should be empty if no ACE have been entered" do
-      @authstore.should be_empty
+      expect(@authstore).to be_empty
     end
 
     it "should not be empty if it is a global allow" do
       @authstore.allow('*')
 
-      @authstore.should_not be_empty
+      expect(@authstore).not_to be_empty
     end
 
     it "should not be empty if at least one allow has been entered" do
       @authstore.allow_ip('1.1.1.*')
 
-      @authstore.should_not be_empty
+      expect(@authstore).not_to be_empty
     end
 
     it "should not be empty if at least one deny has been entered" do
       @authstore.deny_ip('1.1.1.*')
 
-      @authstore.should_not be_empty
+      expect(@authstore).not_to be_empty
     end
   end
 
   describe "when checking global allow" do
     it "should not be enabled by default" do
-      @authstore.should_not be_globalallow
-      @authstore.should_not be_allowed('foo.bar.com', '192.168.1.1')
+      expect(@authstore).not_to be_globalallow
+      expect(@authstore).not_to be_allowed('foo.bar.com', '192.168.1.1')
     end
 
     it "should always allow when enabled" do
       @authstore.allow('*')
 
-      @authstore.should be_globalallow
-      @authstore.should be_allowed('foo.bar.com', '192.168.1.1')
+      expect(@authstore).to be_globalallow
+      expect(@authstore).to be_allowed('foo.bar.com', '192.168.1.1')
     end
   end
 
@@ -55,12 +55,12 @@ describe Puppet::Network::AuthStore do
     end
     ['host5.other-domain.com', 'test-host12.other-domain.net', 'foo.some-domain.com'].each { |name|
       it "should allow the host #{name}" do
-        @authstore.should be_allowed(name, @ip)
+        expect(@authstore).to be_allowed(name, @ip)
       end
     }
     ['host0.some-other-domain.com',''].each { |name|
       it "should not allow the host #{name}" do
-        @authstore.should_not be_allowed(name, @ip)
+        expect(@authstore).not_to be_allowed(name, @ip)
       end
     }
   end
@@ -74,10 +74,10 @@ describe Puppet::Network::AuthStore::Declaration do
         @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,ip)
       end
       it "should match the specified IP" do
-        @declaration.should be_match('www.testsite.org',ip)
+        expect(@declaration).to be_match('www.testsite.org',ip)
       end
       it "should not match other IPs" do
-        @declaration.should_not be_match('www.testsite.org','200.101.99.98')
+        expect(@declaration).not_to be_match('www.testsite.org','200.101.99.98')
       end
     end
 
@@ -88,15 +88,15 @@ describe Puppet::Network::AuthStore::Declaration do
           @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,@ip_pattern)
         end
         it "should match an IP in the range" do
-          @declaration.should be_match('www.testsite.org',ip)
+          expect(@declaration).to be_match('www.testsite.org',ip)
         end
         it "should not match other IPs" do
-          @declaration.should_not be_match('www.testsite.org','200.101.99.98')
+          expect(@declaration).not_to be_match('www.testsite.org','200.101.99.98')
         end
         it "should not match IPs that differ in the last non-wildcard segment" do
           other = ip.split('.')
           other[n-1].succ!
-          @declaration.should_not be_match('www.testsite.org',other.join('.'))
+          expect(@declaration).not_to be_match('www.testsite.org',other.join('.'))
         end
       end
     }
@@ -180,7 +180,7 @@ describe Puppet::Network::AuthStore::Declaration do
   ].each { |invalid_ip|
     describe "when the pattern is an invalid IPv6 address such as #{invalid_ip}" do
       it "should raise an exception" do
-        lambda { Puppet::Network::AuthStore::Declaration.new(:allow,invalid_ip) }.should raise_error
+        expect { Puppet::Network::AuthStore::Declaration.new(:allow,invalid_ip) }.to raise_error
       end
     end
   }
@@ -283,10 +283,10 @@ describe Puppet::Network::AuthStore::Declaration do
         @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,ip)
       end
       it "should match the specified IP" do
-        @declaration.should be_match('www.testsite.org',ip)
+        expect(@declaration).to be_match('www.testsite.org',ip)
       end
       it "should not match other IPs" do
-        @declaration.should_not be_match('www.testsite.org','200.101.99.98')
+        expect(@declaration).not_to be_match('www.testsite.org','200.101.99.98')
       end
     end unless ip =~ /:.*\./ # Hybrid IPs aren't supported by ruby's ipaddr
   }
@@ -301,14 +301,13 @@ describe Puppet::Network::AuthStore::Declaration do
 
       issue_7477 = !(IPAddr.new(ip) rescue false)
 
-      it "should match the specified IP" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
-        declaration.should be_match('www.testsite.org',ip)
-      end
-      it "should not match other IPs" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
-        declaration.should_not be_match('www.testsite.org','200.101.99.98')
-      end
+      describe "on rubies with a fix for issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
+        it "should match the specified IP" do
+          expect(declaration).to be_match('www.testsite.org',ip)
+        end
+        it "should not match other IPs" do
+          expect(declaration).not_to be_match('www.testsite.org','200.101.99.98')
+        end
     end
   }
 
@@ -323,11 +322,11 @@ describe Puppet::Network::AuthStore::Declaration do
         @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@host)
       end
       it "should match the specified PQDN" do
-        @declaration.should be_match(@host,'200.101.99.98')
+        expect(@declaration).to be_match(@host,'200.101.99.98')
       end
       it "should not match a similar FQDN" do
         pending "FQDN consensus"
-        @declaration.should_not be_match(@host+'.','200.101.99.98')
+        expect(@declaration).not_to be_match(@host+'.','200.101.99.98')
       end
     end
   }
@@ -340,15 +339,15 @@ describe Puppet::Network::AuthStore::Declaration do
           @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@pattern)
         end
         it "should match #{host}" do
-          @declaration.should be_match(host,'1.2.3.4')
+          expect(@declaration).to be_match(host,'1.2.3.4')
         end
         it "should not match www.testsite.gov" do
-          @declaration.should_not be_match('www.testsite.gov','200.101.99.98')
+          expect(@declaration).not_to be_match('www.testsite.gov','200.101.99.98')
         end
         it "should not match hosts that differ in the first non-wildcard segment" do
           other = host.split('.')
           other[-n].succ!
-          @declaration.should_not be_match(other.join('.'),'1.2.3.4')
+          expect(@declaration).not_to be_match(other.join('.'),'1.2.3.4')
         end
       end
     }
@@ -361,10 +360,10 @@ describe Puppet::Network::AuthStore::Declaration do
     end
     it "should match the specified FQDN" do
       pending "FQDN consensus"
-      @declaration.should be_match(@host,'200.101.99.98')
+      expect(@declaration).to be_match(@host,'200.101.99.98')
     end
     it "should not match a similar PQDN" do
-      @declaration.should_not be_match(@host[0..-2],'200.101.99.98')
+      expect(@declaration).not_to be_match(@host[0..-2],'200.101.99.98')
     end
   end
 
@@ -377,7 +376,7 @@ describe Puppet::Network::AuthStore::Declaration do
       @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,'$1')
     end
     it "should match an IP with the appropriate interpolation" do
-      @declaration.interpolate(@item.match(@pattern)).should be_match(@host,'10.0.0.5')
+      expect(@declaration.interpolate(@item.match(@pattern))).to be_match(@host,'10.0.0.5')
     end
   end
 
@@ -389,7 +388,7 @@ describe Puppet::Network::AuthStore::Declaration do
       @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,'$1')
     end
     it "should match a name with the appropriate interpolation" do
-      @declaration.interpolate(@item.match(@pattern)).should be_match(@host,'10.0.0.5')
+      expect(@declaration.interpolate(@item.match(@pattern))).to be_match(@host,'10.0.0.5')
     end
   end
 
@@ -401,7 +400,7 @@ describe Puppet::Network::AuthStore::Declaration do
       @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,'$1')
     end
     it "should match a name with the appropriate interpolation" do
-      @declaration.interpolate(@item.match(@pattern)).should be_match(@host,'10.0.0.5')
+      expect(@declaration.interpolate(@item.match(@pattern))).to be_match(@host,'10.0.0.5')
     end
   end
 
@@ -412,13 +411,13 @@ describe Puppet::Network::AuthStore::Declaration do
       @opaque    = Puppet::Network::AuthStore::Declaration.new(:allow,'hey_dude')
     end
     it "should consider ip addresses before host names" do
-      (@ip < @host_name).should be_true
+      expect(@ip < @host_name).to be_truthy
     end
     it "should consider ip addresses before opaque strings" do
-      (@ip < @opaque).should be_true
+      expect(@ip < @opaque).to be_truthy
     end
     it "should consider host_names before opaque strings" do
-      (@host_name < @opaque).should be_true
+      expect(@host_name < @opaque).to be_truthy
     end
   end
 end

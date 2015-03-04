@@ -37,10 +37,10 @@ Puppet::Functions.create_function(:scanf) do
     optional_block_param
   end
 
-  def scanf(data, format, block=nil)
+  def scanf(data, format)
     result = data.scanf(format)
-    if !block.nil?
-      result = block.call(result)
+    if block_given?
+      result = yield(result)
     end
     result
   end

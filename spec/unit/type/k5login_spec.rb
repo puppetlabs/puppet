@@ -8,12 +8,12 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
   context "the type class" do
     subject { described_class }
-    it { should be_validattr :ensure }
-    it { should be_validattr :path }
-    it { should be_validattr :principals }
-    it { should be_validattr :mode }
+    it { is_expected.to be_validattr :ensure }
+    it { is_expected.to be_validattr :path }
+    it { is_expected.to be_validattr :principals }
+    it { is_expected.to be_validattr :mode }
     # We have one, inline provider implemented.
-    it { should be_validattr :provider }
+    it { is_expected.to be_validattr :provider }
   end
 
   let(:path) { tmpfile('k5login') }
@@ -41,12 +41,12 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
     context "when the file is missing" do
       it "should initially be absent" do
         File.delete(path)
-        resource.retrieve[:ensure].must == :absent
+        expect(resource.retrieve[:ensure]).to eq(:absent)
       end
 
       it "should create the file when synced" do
         resource(:ensure => 'present').parameter(:ensure).sync
-        Puppet::FileSystem.exist?(path).should be_true
+        expect(Puppet::FileSystem.exist?(path)).to be_truthy
       end
     end
 
@@ -55,17 +55,17 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
         subject { resource.retrieve }
 
         it "should retrieve its properties correctly with zero principals" do
-          subject[:ensure].should == :present
-          subject[:principals].should == []
+          expect(subject[:ensure]).to eq(:present)
+          expect(subject[:principals]).to eq([])
           # We don't really care what the mode is, just that it got it
-          subject[:mode].should_not be_nil
+          expect(subject[:mode]).not_to be_nil
         end
 
         context "with one principal" do
           subject { resource(:content => "daniel@EXAMPLE.COM\n").retrieve }
 
           it "should retrieve its principals correctly" do
-            subject[:principals].should == ["daniel@EXAMPLE.COM"]
+            expect(subject[:principals]).to eq(["daniel@EXAMPLE.COM"])
           end
         end
 
@@ -76,28 +76,28 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
           end
 
           it "should retrieve its principals correctly" do
-            subject[:principals].should == ["daniel@EXAMPLE.COM", "george@EXAMPLE.COM"]
+            expect(subject[:principals]).to eq(["daniel@EXAMPLE.COM", "george@EXAMPLE.COM"])
           end
         end
       end
 
       it "should remove the file ensure is absent" do
         resource(:ensure => 'absent').property(:ensure).sync
-        Puppet::FileSystem.exist?(path).should be_false
+        expect(Puppet::FileSystem.exist?(path)).to be_falsey
       end
 
       it "should write one principal to the file" do
-        File.read(path).should == ""
+        expect(File.read(path)).to eq("")
         resource(:principals => ["daniel@EXAMPLE.COM"]).property(:principals).sync
-        File.read(path).should == "daniel@EXAMPLE.COM\n"
+        expect(File.read(path)).to eq("daniel@EXAMPLE.COM\n")
       end
 
       it "should write multiple principals to the file" do
         content = ["daniel@EXAMPLE.COM", "george@EXAMPLE.COM"]
 
-        File.read(path).should == ""
+        expect(File.read(path)).to eq("")
         resource(:principals => content).property(:principals).sync
-        File.read(path).should == content.join("\n") + "\n"
+        expect(File.read(path)).to eq(content.join("\n") + "\n")
       end
 
       describe "when setting the mode" do
@@ -106,7 +106,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
           it "should update the mode to #{mode}" do
             resource(:mode => mode).property(:mode).sync
 
-            (Puppet::FileSystem.stat(path).mode & 07777).to_s(8).should == mode
+            expect((Puppet::FileSystem.stat(path).mode & 07777).to_s(8)).to eq(mode)
           end
         end
       end

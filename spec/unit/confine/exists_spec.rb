@@ -10,14 +10,14 @@ describe Puppet::Confine::Exists do
   end
 
   it "should be named :exists" do
-    Puppet::Confine::Exists.name.should == :exists
+    expect(Puppet::Confine::Exists.name).to eq(:exists)
   end
   
   it "should not pass if exists is nil" do
     confine = Puppet::Confine::Exists.new(nil)
     confine.label = ":exists => nil"
     confine.expects(:pass?).with(nil)
-    confine.should_not be_valid
+    expect(confine).not_to be_valid
   end
 
   it "should use the 'pass?' method to test validity" do
@@ -26,21 +26,21 @@ describe Puppet::Confine::Exists do
   end
 
   it "should return false if the value is false" do
-    @confine.pass?(false).should be_false
+    expect(@confine.pass?(false)).to be_falsey
   end
 
   it "should return false if the value does not point to a file" do
     Puppet::FileSystem.expects(:exist?).with("/my/file").returns false
-    @confine.pass?("/my/file").should be_false
+    expect(@confine.pass?("/my/file")).to be_falsey
   end
 
   it "should return true if the value points to a file" do
     Puppet::FileSystem.expects(:exist?).with("/my/file").returns true
-    @confine.pass?("/my/file").should be_true
+    expect(@confine.pass?("/my/file")).to be_truthy
   end
 
   it "should produce a message saying that a file is missing" do
-    @confine.message("/my/file").should be_include("does not exist")
+    expect(@confine.message("/my/file")).to be_include("does not exist")
   end
 
   describe "and the confine is for binaries" do
@@ -52,12 +52,12 @@ describe Puppet::Confine::Exists do
 
     it "should return false if no executable can be found" do
       @confine.expects(:which).with("/my/file").returns nil
-      @confine.pass?("/my/file").should be_false
+      expect(@confine.pass?("/my/file")).to be_falsey
     end
 
     it "should return true if the executable can be found" do
       @confine.expects(:which).with("/my/file").returns "/my/file"
-      @confine.pass?("/my/file").should be_true
+      expect(@confine.pass?("/my/file")).to be_truthy
     end
   end
 
@@ -67,7 +67,7 @@ describe Puppet::Confine::Exists do
     Puppet::FileSystem.expects(:exist?).with("/four").returns false
 
     confine = Puppet::Confine::Exists.new %w{/one /two /three /four}
-    confine.summary.should == %w{/two /four}
+    expect(confine.summary).to eq(%w{/two /four})
   end
 
   it "should summarize multiple instances by returning a flattened array of their summaries" do
@@ -75,6 +75,6 @@ describe Puppet::Confine::Exists do
     c2 = mock '2', :summary => %w{two}
     c3 = mock '3', :summary => %w{three}
 
-    Puppet::Confine::Exists.summarize([c1, c2, c3]).should == %w{one two three}
+    expect(Puppet::Confine::Exists.summarize([c1, c2, c3])).to eq(%w{one two three})
   end
 end

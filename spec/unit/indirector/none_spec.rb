@@ -22,12 +22,12 @@ describe Puppet::Indirector::None do
   end
 
   it "should not be the default data_binding_terminus" do
-    Puppet.settings[:data_binding_terminus].should_not == 'none'
+    expect(Puppet.settings[:data_binding_terminus]).not_to eq('none')
   end
 
   describe "the behavior of the find method" do
     it "should just return nil" do
-      @data_binder.find(request).should be_nil
+      expect(@data_binder.find(request)).to be_nil
     end
   end
 end

@@ -9,19 +9,19 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
   # this is the default from spec_helper, but it keeps getting reset at odd times
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
 
-  it "defaults to serializing to `:s`" do
-    expect(Puppet::FileBucket::File.default_format).to eq(:s)
+  it "defaults to serializing to `:binary`" do
+    expect(Puppet::FileBucket::File.default_format).to eq(:binary)
   end
 
-  it "accepts s" do
-    expect(Puppet::FileBucket::File.supported_formats).to include(:s)
+  it "accepts binary" do
+    expect(Puppet::FileBucket::File.supported_formats).to include(:binary)
   end
 
   describe "making round trips through network formats" do
     with_digest_algorithms do
-      it "can make a round trip through `s`" do
+      it "can make a round trip through `binary`" do
         file = Puppet::FileBucket::File.new(plaintext)
-        tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+        tripped = Puppet::FileBucket::File.convert_from(:binary, file.render)
         expect(tripped.contents).to eq(plaintext)
       end
     end
@@ -41,20 +41,20 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     it "it uses #{metadata[:digest_algorithm]} as the configured digest algorithm" do
       file = Puppet::FileBucket::File.new(plaintext)
 
-      file.contents.should == plaintext
-      file.checksum_type.should == digest_algorithm
-      file.checksum.should == "{#{digest_algorithm}}#{checksum}"
-      file.name.should == "#{digest_algorithm}/#{checksum}"
+      expect(file.contents).to eq(plaintext)
+      expect(file.checksum_type).to eq(digest_algorithm)
+      expect(file.checksum).to eq("{#{digest_algorithm}}#{checksum}")
+      expect(file.name).to eq("#{digest_algorithm}/#{checksum}")
     end
   end
 
   describe "when using back-ends" do
     it "should redirect using Puppet::Indirector" do
-      Puppet::Indirector::Indirection.instance(:file_bucket_file).model.should equal(Puppet::FileBucket::File)
+      expect(Puppet::Indirector::Indirection.instance(:file_bucket_file).model).to equal(Puppet::FileBucket::File)
     end
 
     it "should have a :save instance method" do
-      Puppet::FileBucket::File.indirection.should respond_to(:save)
+      expect(Puppet::FileBucket::File.indirection).to respond_to(:save)
     end
   end
 end

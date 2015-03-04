@@ -60,11 +60,11 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
     it "should list the instances correctly" do
       described_class.expects(:adm).with(:list, "-cp").returns("0:dummy:running:/::native:shared")
       instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
-      instances.size.should == 1
-      instances[0].should == {
+      expect(instances.size).to eq(1)
+      expect(instances[0]).to eq({
         :name=>"dummy",
         :ensure=>:running,
-      }
+      })
     end
   end
   context "#setconfig" do
@@ -107,14 +107,14 @@ net:
     EOF
     it "should correctly parse zone info" do
       provider.expects(:zonecfg).with(:info).returns(zone_info)
-      provider.getconfig.should == {
+      expect(provider.getconfig).to eq({
         :brand=>"native",
         :autoboot=>"true",
         :"ip-type"=>"shared",
         :zonename=>"dummy",
         "net"=>[{:physical=>"ex0001", :address=>"1.1.1.1"}, {:physical=>"ex0002", :address=>"1.1.1.2"}],
         :zonepath=>"/dummy/z"
-      }
+      })
     end
   end
   context "#flush" do
@@ -154,16 +154,16 @@ net:
   end
   context "#line2hash" do
     it "should parse lines correctly" do
-      described_class.line2hash('0:dummy:running:/z::native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+      expect(described_class.line2hash('0:dummy:running:/z::native:shared')).to eq({:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"})
     end
     it "should parse lines correctly(2)" do
-      described_class.line2hash('0:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+      expect(described_class.line2hash('0:dummy:running:/z:ipkg:native:shared')).to eq({:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"})
     end
     it "should parse lines correctly(3)" do
-      described_class.line2hash('-:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"}
+      expect(described_class.line2hash('-:dummy:running:/z:ipkg:native:shared')).to eq({:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"})
     end
     it "should parse lines correctly(3)" do
-      described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
+      expect(described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive')).to eq({:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"})
     end
   end
   context "#multi_conf" do
@@ -176,18 +176,18 @@ net:
         when :rm; 'rm:' + str
         end
       end
-      provider.multi_conf(:ip, should, &p).should == "rm:2.2.2.2\nadd:3.3.3.3"
+      expect(provider.multi_conf(:ip, should, &p)).to eq("rm:2.2.2.2\nadd:3.3.3.3")
     end
   end
   context "single props" do
     {:iptype => /set ip-type/, :autoboot => /set autoboot/, :path => /set zonepath/, :pool => /set pool/, :shares => /add rctl/}.each do |p, v|
       it "#{p.to_s}: should correctly return conf string" do
-        provider.send(p.to_s + '_conf', 'dummy').should =~ v
+        expect(provider.send(p.to_s + '_conf', 'dummy')).to match(v)
       end
       it "#{p.to_s}: should correctly set property string" do
         provider.expects((p.to_s + '_conf').intern).returns('dummy')
         provider.expects(:setconfig).with('dummy').returns('dummy2')
-        provider.send(p.to_s + '=', 'dummy').should == 'dummy2'
+        expect(provider.send(p.to_s + '=', 'dummy')).to eq('dummy2')
       end
 
     end

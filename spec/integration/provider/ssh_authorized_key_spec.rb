@@ -68,7 +68,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
   def check_fake_key(username, expected_content)
     filename = (username == :root ? fake_rootfile : fake_userfile )
     content = File.readlines(filename).map(&:chomp).sort.reject{ |x| x =~ /^# HEADER:/ }
-    content.join("\n").should == expected_content.sort.join("\n")
+    expect(content.join("\n")).to eq(expected_content.sort.join("\n"))
   end
 
   def run_in_catalog(*resources)
@@ -99,7 +99,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
   describe "when managing one resource" do
 
     describe "with ensure set to absent" do
-      let :example do
+      let :resource do
         Puppet::Type.type(:ssh_authorized_key).new(
           :name     => 'root@hostname',
           :type     => :rsa,
@@ -112,19 +112,19 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
 
       it "should not modify root's keyfile if resource is currently not present" do
         create_fake_key(:root, sample_lines)
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines)
       end
 
       it "remove the key from root's keyfile if resource is currently present" do
         create_fake_key(:root, sample_lines + ["ssh-rsa #{sample_rsa_keys[0]} root@hostname"])
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines)
       end
     end
 
     describe "when ensure is present" do
-      let :example do
+      let :resource do
         Puppet::Type.type(:ssh_authorized_key).new(
           :name     => 'root@hostname',
           :type     => :rsa,
@@ -140,26 +140,26 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
 
       it "should add the key if it is not present" do
         create_fake_key(:root, sample_lines)
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines + ["ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
       end
 
       it "should modify the type if type is out of sync" do
         create_fake_key(:root,sample_lines + [ "ssh-dss #{sample_rsa_keys[0]} root@hostname" ])
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines + [ "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
       end
 
       it "should modify the key if key is out of sync" do
         create_fake_key(:root,sample_lines + [ "ssh-rsa #{sample_rsa_keys[1]} root@hostname" ])
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines + [ "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
       end
 
       it "should remove the key from old file if target is out of sync" do
         create_fake_key(:user, [ sample_lines[0], "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
         create_fake_key(:root, [ sample_lines[1], sample_lines[2] ])
-        run_in_catalog(example, dummy)
+        run_in_catalog(resource, dummy)
         check_fake_key(:user, [ sample_lines[0] ])
         #check_fake_key(:root, [ sample_lines[1], sample_lines[2], "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
       end
@@ -167,15 +167,15 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
       it "should add the key to new file if target is out of sync" do
         create_fake_key(:user, [ sample_lines[0], "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
         create_fake_key(:root, [ sample_lines[1], sample_lines[2] ])
-        run_in_catalog(example, dummy)
+        run_in_catalog(resource, dummy)
         #check_fake_key(:user, [ sample_lines[0] ])
         check_fake_key(:root, [ sample_lines[1], sample_lines[2], "ssh-rsa #{sample_rsa_keys[0]} root@hostname" ])
       end
 
       it "should modify options if options are out of sync" do
-        example[:options]=[ 'from="*.domain1,host1.domain2"', 'no-port-forwarding', 'no-pty' ]
+        resource[:options]=[ 'from="*.domain1,host1.domain2"', 'no-port-forwarding', 'no-pty' ]
         create_fake_key(:root, sample_lines + [ "from=\"*.false,*.false2\",no-port-forwarding,no-pty ssh-rsa #{sample_rsa_keys[0]} root@hostname"])
-        run_in_catalog(example)
+        run_in_catalog(resource)
         check_fake_key(:root, sample_lines + [ "from=\"*.domain1,host1.domain2\",no-port-forwarding,no-pty ssh-rsa #{sample_rsa_keys[0]} root@hostname"] )
       end
     end

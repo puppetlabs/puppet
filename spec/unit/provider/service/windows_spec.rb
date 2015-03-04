@@ -28,7 +28,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       list_of_services = ['snmptrap', 'svchost', 'sshd'].map { |s| stub('service', :service_name => s) }
       Win32::Service.expects(:services).returns(list_of_services)
 
-      described_class.instances.map(&:name).should =~ ['snmptrap', 'svchost', 'sshd']
+      expect(described_class.instances.map(&:name)).to match_array(['snmptrap', 'svchost', 'sshd'])
     end
   end
 
@@ -109,7 +109,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       it "should report a #{state} service as stopped" do
         status.current_state = state
 
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
     end
 
@@ -117,7 +117,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       it "should report a #{state} service as running" do
         status.current_state = state
 
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -153,13 +153,13 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
     it "should report a service with a startup type of manual as manual" do
       config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DEMAND_START)
 
-      provider.enabled?.should == :manual
+      expect(provider.enabled?).to eq(:manual)
     end
 
     it "should report a service with a startup type of disabled as false" do
       config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
 
-      provider.enabled?.should == :false
+      expect(provider.enabled?).to eq(:false)
     end
 
     it "raises an error if the service doesn't exist" do
@@ -178,7 +178,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
         it "should report a service with a startup type of '#{start_type}' as true" do
           config.start_type = start_type
 
-          provider.enabled?.should == :true
+          expect(provider.enabled?).to eq(:true)
         end
       end
     end

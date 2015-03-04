@@ -16,7 +16,10 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    hiera.lookup(request.key, nil, Hiera::Scope.new(request.options[:variables]), nil, nil)
+    not_found = Object.new
+    value = hiera.lookup(request.key, not_found, Hiera::Scope.new(request.options[:variables]), nil, nil)
+    throw :no_such_key if value.equal?(not_found)
+    value
   rescue *DataBindingExceptions => detail
     raise Puppet::DataBinding::LookupError.new(detail.message, detail)
   end

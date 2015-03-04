@@ -1,0 +1,5 @@
+Puppet::Functions.create_function(:'environment::f<%= n %>') do
+  def f<%= n %>
+    <% if n > 0 %>call_function(:'environment::f<%= n-1 %>')<% else %>'environment::f<%= n %>'<% end %>
+  end
+end

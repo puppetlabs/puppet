@@ -8,7 +8,7 @@ describe provider_class do
 
   describe "Puppet provider interface" do
     it "can return the list of all packages" do
-      provider_class.should respond_to(:instances)
+      expect(provider_class).to respond_to(:instances)
     end
   end
 
@@ -50,18 +50,18 @@ describe provider_class do
 
     it "returns an array of providers for each package" do
       instances = provider_class.instances
-      instances.should have(2).items
+      expect(instances).to have(2).items
       instances.each do |instance|
-        instance.should be_a(provider_class)
+        expect(instance).to be_a(provider_class)
       end
     end
 
     it "populates each provider with an installed package" do
       zlib_provider, zziplib_provider = provider_class.instances
-      zlib_provider.get(:name).should == "zlib"
-      zlib_provider.get(:ensure).should == "1.2.3"
-      zziplib_provider.get(:name).should == "zziplib"
-      zziplib_provider.get(:ensure).should == "0.13.59"
+      expect(zlib_provider.get(:name)).to eq("zlib")
+      expect(zlib_provider.get(:ensure)).to eq("1.2.3")
+      expect(zziplib_provider.get(:name)).to eq("zziplib")
+      expect(zziplib_provider.get(:ensure)).to eq("0.13.59")
     end
   end
 
@@ -77,7 +77,7 @@ describe provider_class do
 
       it "returns installed version" do
         subject.expects(:properties).returns( { :ensure => "7.2.446" } )
-        subject.latest.should == "7.2.446"
+        expect(subject.latest).to eq("7.2.446")
       end
     end
 
@@ -87,7 +87,7 @@ describe provider_class do
       end
 
       it "returns the version to be installed" do
-        subject.latest.should == "7.2.447"
+        expect(subject.latest).to eq("7.2.447")
       end
     end
 
@@ -98,7 +98,7 @@ describe provider_class do
 
       it "returns current version" do
         subject.expects(:properties).returns( { :ensure => "7.2.446" } )
-        subject.latest.should == "7.2.446"
+        expect(subject.latest).to eq("7.2.446")
       end
     end
 
@@ -120,7 +120,7 @@ SEARCH
 
       it "returns the newest available version" do
         provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
-        subject.latest.should == "7.3"
+        expect(subject.latest).to eq("7.3")
       end
     end
 
@@ -140,9 +140,9 @@ SEARCH
       let(:package) { "vim-7.2.446 =        Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
+        expect(provider_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
                                                              :status => "=" ,
-                                                             :ensure => "7.2.446" }
+                                                             :ensure => "7.2.446" })
       end
     end
 
@@ -150,9 +150,9 @@ SEARCH
       let(:package) { "ruby18-puppet-0.25.5nb1 > Configuration management framework written in Ruby" }
 
       it "extracts the name and status" do
-        provider_class.parse_pkgin_line(package).should == { :name =>  "ruby18-puppet",
+        expect(provider_class.parse_pkgin_line(package)).to eq({ :name =>  "ruby18-puppet",
                                                              :status => ">" ,
-                                                             :ensure => "0.25.5nb1" }
+                                                             :ensure => "0.25.5nb1" })
       end
     end
 
@@ -160,9 +160,9 @@ SEARCH
       let(:package) { "vim-7.2.446          Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
+        expect(provider_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
                                                              :status => nil ,
-                                                             :ensure => "7.2.446" }
+                                                             :ensure => "7.2.446" })
       end
 
     end
@@ -171,7 +171,7 @@ SEARCH
       let(:package) { "" }
 
       it "returns nil" do
-        provider_class.parse_pkgin_line(package).should be_nil
+        expect(provider_class.parse_pkgin_line(package)).to be_nil
       end
     end
   end

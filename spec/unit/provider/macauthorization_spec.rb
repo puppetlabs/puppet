@@ -40,19 +40,19 @@ describe provider_class do
   end
 
   it "should have a create method" do
-    @provider.should respond_to(:create)
+    expect(@provider).to respond_to(:create)
   end
 
   it "should have a destroy method" do
-    @provider.should respond_to(:destroy)
+    expect(@provider).to respond_to(:destroy)
   end
 
   it "should have an exists? method" do
-    @provider.should respond_to(:exists?)
+    expect(@provider).to respond_to(:exists?)
   end
 
   it "should have a flush method" do
-    @provider.should respond_to(:flush)
+    expect(@provider).to respond_to(:flush)
   end
 
   properties = [  :allow_root, :authenticate_user, :auth_class, :comment,
@@ -61,11 +61,11 @@ describe provider_class do
 
   properties.each do |prop|
     it "should have a #{prop.to_s} method" do
-      @provider.should respond_to(prop.to_s)
+      expect(@provider).to respond_to(prop.to_s)
     end
 
     it "should have a #{prop.to_s}= method" do
-      @provider.should respond_to(prop.to_s + "=")
+      expect(@provider).to respond_to(prop.to_s + "=")
     end
   end
 

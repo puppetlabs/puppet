@@ -25,8 +25,8 @@ describe Puppet::Indirector, "when configuring routes" do
 
     Puppet::Indirector.configure_routes(routes)
 
-    Puppet::Node.indirection.terminus_class.should == "exec"
-    Puppet::Node.indirection.cache_class.should    == "plain"
+    expect(Puppet::Node.indirection.terminus_class).to eq("exec")
+    expect(Puppet::Node.indirection.cache_class).to    eq("plain")
   end
 
   it "should fail when given an invalid indirection" do
@@ -71,7 +71,7 @@ describe Puppet::Indirector, " when available to a model" do
   end
 
   it "should provide a way for the model to register an indirection under a name" do
-    @thingie.should respond_to(:indirects)
+    expect(@thingie).to respond_to(:indirects)
   end
 end
 
@@ -98,7 +98,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
   it "should create an indirection instance to manage each indirecting model" do
     @indirection = @thingie.indirects(:test)
-    @indirection.should be_instance_of(Puppet::Indirector::Indirection)
+    expect(@indirection).to be_instance_of(Puppet::Indirector::Indirection)
   end
 
   it "should not allow a model to register under multiple names" do
@@ -109,7 +109,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
   it "should make the indirection available via an accessor" do
     @indirection = @thingie.indirects :first
-    @thingie.indirection.should equal(@indirection)
+    expect(@thingie.indirection).to equal(@indirection)
   end
 
   it "should pass any provided options to the indirection during initialization" do
@@ -120,7 +120,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
   it "should extend the class to handle serialization" do
     @indirection = @thingie.indirects :first
-    @thingie.should respond_to(:convert_from)
+    expect(@thingie).to respond_to(:convert_from)
   end
 
   after do
@@ -141,7 +141,7 @@ describe Puppet::Indirector, "when redirecting a model" do
   end
 
   it "should include the Envelope module in the model" do
-    @thingie.ancestors.should be_include(Puppet::Indirector::Envelope)
+    expect(@thingie.ancestors).to be_include(Puppet::Indirector::Envelope)
   end
 
   after do

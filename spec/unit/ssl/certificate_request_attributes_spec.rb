@@ -22,7 +22,7 @@ describe Puppet::SSL::CertificateRequestAttributes do
 
   describe "loading" do
     it "returns nil when loading from a non-existent file" do
-      expect(csr_attributes.load).to be_false
+      expect(csr_attributes.load).to be_falsey
     end
 
     context "with an available attributes file" do
@@ -32,7 +32,7 @@ describe Puppet::SSL::CertificateRequestAttributes do
       end
 
       it "loads csr attributes from a file when the file is present" do
-        expect(csr_attributes.load).to be_true
+        expect(csr_attributes.load).to be_truthy
       end
 
       it "exposes custom_attributes" do

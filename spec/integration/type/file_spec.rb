@@ -12,6 +12,7 @@ end
 
 describe Puppet::Type.type(:file), :uses_checksums => true do
   include PuppetSpec::Files
+  include_context 'with supported checksum types'
 
   let(:catalog) { Puppet::Resource::Catalog.new }
   let(:path) do
@@ -87,9 +88,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     catalog.add_resource described_class.new :path => source, :mode => '0755'
 
     status = catalog.apply.report.resource_statuses["File[#{source}]"]
-    status.should_not be_failed
-    status.should_not be_changed
-    Puppet::FileSystem.exist?(source).should be_false
+    expect(status).not_to be_failed
+    expect(status).not_to be_changed
+    expect(Puppet::FileSystem.exist?(source)).to be_falsey
   end
 
   describe "when ensure is absent" do
@@ -97,15 +98,15 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       FileUtils.touch(path)
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
-      report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_falsey
     end
 
     it "should do nothing if file is not present" do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
-      report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_falsey
     end
 
     # issue #14599
@@ -113,7 +114,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       FileUtils.touch(path)
       catalog.add_resource(described_class.new(:path => File.join(path,'no_such_file'), :ensure => :absent, :backup => :false))
       report = catalog.apply.report
-      report.resource_statuses["File[#{File.join(path,'no_such_file')}]"].should_not be_failed
+      expect(report.resource_statuses["File[#{File.join(path,'no_such_file')}]"]).not_to be_failed
     end
   end
 
@@ -129,7 +130,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      get_owner(target).should == owner
+      expect(get_owner(target)).to eq(owner)
     end
 
     it "should set the group" do
@@ -143,7 +144,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      get_group(target).should == group
+      expect(get_group(target)).to eq(group)
     end
 
     describe "when setting mode" do
@@ -155,7 +156,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
           catalog.apply
 
-          (get_mode(target) & 07777).should == 0700
+          expect(get_mode(target) & 07777).to eq(0700)
         end
 
         it "should set executable bits for existing readable directories" do
@@ -164,7 +165,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => '0644')
           catalog.apply
 
-          (get_mode(target) & 07777).should == 0755
+          expect(get_mode(target) & 07777).to eq(0755)
         end
 
         it "should not set executable bits for unreadable directories" do
@@ -173,7 +174,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            (get_mode(target) & 07777).should == 0300
+            expect(get_mode(target) & 07777).to eq(0300)
           ensure
             # so we can cleanup
             set_mode(0700, target)
@@ -185,7 +186,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
           catalog.apply
 
-          (get_mode(target) & 07777).should == 0775
+          expect(get_mode(target) & 07777).to eq(0775)
         end
 
         it "should set executable bits when overwriting a non-executable file" do
@@ -195,8 +196,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           catalog.add_resource described_class.new(:path => target_path, :ensure => :directory, :mode => '0666', :backup => false)
           catalog.apply
 
-          (get_mode(target_path) & 07777).should == 0777
-          File.should be_directory(target_path)
+          expect(get_mode(target_path) & 07777).to eq(0777)
+          expect(File).to be_directory(target_path)
         end
       end
 
@@ -205,7 +206,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => '0666')
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0666
+          expect(get_mode(path) & 07777).to eq(0666)
         end
 
         it "should not set executable bits when replacing an executable directory (#10365)" do
@@ -217,7 +218,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0666
+          expect(get_mode(path) & 07777).to eq(0666)
         end
       end
 
@@ -249,7 +250,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
             catalog.apply
 
-            Puppet::FileSystem.exist?(link).should be_false
+            expect(Puppet::FileSystem.exist?(link)).to be_falsey
           end
 
           it "should create a link to the target if ensure is omitted" do
@@ -257,9 +258,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource described_class.new(:path => link, :target => link_target)
             catalog.apply
 
-            Puppet::FileSystem.exist?(link).should be_true
-            Puppet::FileSystem.lstat(link).ftype.should == 'link'
-            Puppet::FileSystem.readlink(link).should == link_target
+            expect(Puppet::FileSystem.exist?(link)).to be_truthy
+            expect(Puppet::FileSystem.lstat(link).ftype).to eq('link')
+            expect(Puppet::FileSystem.readlink(link)).to eq(link_target)
           end
         end
 
@@ -293,8 +294,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 07777).should == 0777
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 07777).to eq(0777)
               end
 
               it "should set the executable bits when overwriting the destination (#10315)" do
@@ -303,8 +304,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow, :backup => false)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 07777).should == 0777
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 07777).to eq(0777)
               end
             end
 
@@ -322,8 +323,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 07777).should == 0777
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 07777).to eq(0777)
               end
 
               it "should set executable bits when overwriting the destination" do
@@ -332,8 +333,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0666', :links => :follow, :backup => false)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 07777).should == 0777
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 07777).to eq(0777)
               end
             end
           end
@@ -351,8 +352,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               catalog.apply
 
-              File.should be_file(path)
-              (get_mode(path) & 07777).should == 0600
+              expect(File).to be_file(path)
+              expect(get_mode(path) & 07777).to eq(0600)
             end
 
             it "should overwrite the file" do
@@ -361,8 +362,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               catalog.apply
 
-              File.should be_file(path)
-              (get_mode(path) & 07777).should == 0600
+              expect(File).to be_file(path)
+              expect(get_mode(path) & 07777).to eq(0600)
             end
           end
 
@@ -387,8 +388,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 07777).should == 0700
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 07777).to eq(0700)
               end
 
               it "should overwrite the destination and apply executable bits" do
@@ -397,8 +398,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
                 catalog.apply
 
-                File.should be_directory(path)
-                (get_mode(path) & 0111).should == 0100
+                expect(File).to be_directory(path)
+                expect(get_mode(path) & 0111).to eq(0100)
               end
             end
           end
@@ -408,24 +409,24 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when writing files" do
-    with_digest_algorithms do
+    shared_examples "files are backed up" do |resource_options|
       it "should backup files to a filebucket when one is configured" do
         filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
+        file = described_class.new({:path => path, :backup => "mybucket", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource filebucket
 
         File.open(file[:path], "w") { |f| f.write("bar") }
 
-        d = digest(IO.binread(file[:path]))
+        d = filebucket_digest.call(IO.binread(file[:path]))
 
         catalog.apply
 
-        filebucket.bucket.getfile(d).should == "bar"
+        expect(filebucket.bucket.getfile(d)).to eq("bar")
       end
 
       it "should backup files in the local directory when a backup string is provided" do
-        file = described_class.new :path => path, :backup => ".bak", :content => "foo"
+        file = described_class.new({:path => path, :backup => ".bak", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
 
         File.open(file[:path], "w") { |f| f.puts "bar" }
@@ -433,14 +434,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
 
         backup = file[:path] + ".bak"
-        Puppet::FileSystem.exist?(backup).should be_true
-        File.read(backup).should == "bar\n"
+        expect(Puppet::FileSystem.exist?(backup)).to be_truthy
+        expect(File.read(backup)).to eq("bar\n")
       end
 
       it "should fail if no backup can be performed" do
         dir = tmpdir("backups")
 
-        file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
+        file = described_class.new({:path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
 
         File.open(file[:path], 'w') { |f| f.puts "bar" }
@@ -452,7 +453,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
         catalog.apply
 
-        File.read(file[:path]).should == "bar\n"
+        expect(File.read(file[:path])).to eq("bar\n")
       end
 
       it "should not backup symlinks", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
@@ -460,23 +461,23 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         dest1 = tmpfile("dest1")
         dest2 = tmpfile("dest2")
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
+        file = described_class.new({:path => link, :target => dest2, :ensure => :link, :backup => "mybucket"}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource bucket
 
         File.open(dest1, "w") { |f| f.puts "whatever" }
         Puppet::FileSystem.symlink(dest1, link)
 
-        d = digest(File.read(file[:path]))
+        d = filebucket_digest.call(File.read(file[:path]))
 
         catalog.apply
 
-        Puppet::FileSystem.readlink(link).should == dest2
-        Puppet::FileSystem.exist?(bucket[:path]).should be_false
+        expect(Puppet::FileSystem.readlink(link)).to eq(dest2)
+        expect(Puppet::FileSystem.exist?(bucket[:path])).to be_falsey
       end
 
       it "should backup directories to the local filesystem by copying the whole directory" do
-        file = described_class.new :path => path, :backup => ".bak", :content => "foo", :force => true
+        file = described_class.new({:path => path, :backup => ".bak", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
 
         Dir.mkdir(path)
@@ -487,14 +488,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
 
         backup = "#{path}.bak"
-        FileTest.should be_directory(backup)
+        expect(FileTest).to be_directory(backup)
 
-        File.read(File.join(backup, "foo")).should == "yay"
+        expect(File.read(File.join(backup, "foo"))).to eq("yay")
       end
 
       it "should backup directories to filebuckets by backing up each file separately" do
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-        file = described_class.new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
+        file = described_class.new({:path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
         catalog.add_resource bucket
 
@@ -505,13 +506,28 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         File.open(barfile, "w") { |f| f.print "baryay" }
 
 
-        food = digest(File.read(foofile))
-        bard = digest(File.read(barfile))
+        food = filebucket_digest.call(File.read(foofile))
+        bard = filebucket_digest.call(File.read(barfile))
 
         catalog.apply
 
-        bucket.bucket.getfile(food).should == "fooyay"
-        bucket.bucket.getfile(bard).should == "baryay"
+        expect(bucket.bucket.getfile(food)).to eq("fooyay")
+        expect(bucket.bucket.getfile(bard)).to eq("baryay")
+      end
+    end
+
+    with_digest_algorithms do
+      it_should_behave_like "files are backed up", {} do
+        let(:filebucket_digest) { method(:digest) }
+      end
+    end
+
+    CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+      describe "when checksum_type is #{checksum_type}" do
+        # FileBucket uses the globally configured default for lookup by digest, which right now is MD5.
+        it_should_behave_like "files are backed up", {:checksum => checksum_type} do
+          let(:filebucket_digest) { Proc.new {|x| Puppet::Util::Checksums.md5(x)} }
+        end
       end
     end
   end
@@ -549,7 +565,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.add_resource @file
 
-      lambda { @file.eval_generate }.should_not raise_error
+      expect { @file.eval_generate }.not_to raise_error
     end
 
     it "should be able to recursively set properties on existing files" do
@@ -568,14 +584,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      @dirs.should_not be_empty
+      expect(@dirs).not_to be_empty
       @dirs.each do |path|
-        (get_mode(path) & 007777).should == 0755
+        expect(get_mode(path) & 007777).to eq(0755)
       end
 
-      @files.should_not be_empty
+      expect(@files).not_to be_empty
       @files.each do |path|
-        (get_mode(path) & 007777).should == 0644
+        expect(get_mode(path) & 007777).to eq(0644)
       end
     end
 
@@ -595,13 +611,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       @dirs.each do |path|
         link_path = path.sub(source, dest)
 
-        Puppet::FileSystem.lstat(link_path).should be_directory
+        expect(Puppet::FileSystem.lstat(link_path)).to be_directory
       end
 
       @files.each do |path|
         link_path = path.sub(source, dest)
 
-        Puppet::FileSystem.lstat(link_path).ftype.should == "link"
+        expect(Puppet::FileSystem.lstat(link_path).ftype).to eq("link")
       end
     end
 
@@ -621,13 +637,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       @dirs.each do |path|
         newpath = path.sub(source, dest)
 
-        Puppet::FileSystem.lstat(newpath).should be_directory
+        expect(Puppet::FileSystem.lstat(newpath)).to be_directory
       end
 
       @files.each do |path|
         newpath = path.sub(source, dest)
 
-        Puppet::FileSystem.lstat(newpath).ftype.should == "file"
+        expect(Puppet::FileSystem.lstat(newpath).ftype).to eq("file")
       end
     end
 
@@ -648,7 +664,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      (get_mode(file) & 007777).should == 0644
+      expect(get_mode(file) & 007777).to eq(0644)
     end
 
     it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
@@ -664,10 +680,63 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      (get_mode(generated) & 007777).should == 0700
+      expect(get_mode(generated) & 007777).to eq(0700)
     end
 
     describe "when recursing remote directories" do
+      describe "for the 2nd time" do
+        with_checksum_types "one", "x" do
+          let(:target_file) { File.join(path, 'x') }
+          let(:second_catalog) { Puppet::Resource::Catalog.new }
+          before(:each) do
+            @options = {
+              :path => path,
+              :ensure => :directory,
+              :backup => false,
+              :recurse => true,
+              :checksum => checksum_type,
+              :source => env_path
+            }
+          end
+
+          it "should not update the target directory" do
+            # Ensure the test believes the source file was written in the past.
+            FileUtils.touch checksum_file, :mtime => Time.now - 20
+            catalog.add_resource Puppet::Type.send(:newfile, @options)
+            catalog.apply
+            expect(File).to be_directory(path)
+            expect(Puppet::FileSystem.exist?(target_file)).to be_truthy
+
+            # The 2nd time the resource should not change.
+            second_catalog.add_resource Puppet::Type.send(:newfile, @options)
+            result = second_catalog.apply
+            status = result.report.resource_statuses["File[#{target_file}]"]
+            expect(status).not_to be_failed
+            expect(status).not_to be_changed
+          end
+
+          it "should update the target directory if contents change" do
+            pending "a way to appropriately mock ctime checks for a particular file" if checksum_type == 'ctime'
+
+            catalog.add_resource Puppet::Type.send(:newfile, @options)
+            catalog.apply
+            expect(File).to be_directory(path)
+            expect(Puppet::FileSystem.exist?(target_file)).to be_truthy
+
+            # Change the source file.
+            File.open(checksum_file, "wb") { |f| f.write "some content" }
+            FileUtils.touch target_file, :mtime => Time.now - 20
+
+            # The 2nd time should update the resource.
+            second_catalog.add_resource Puppet::Type.send(:newfile, @options)
+            result = second_catalog.apply
+            status = result.report.resource_statuses["File[#{target_file}]"]
+            expect(status).not_to be_failed
+            expect(status).to be_changed
+          end
+        end
+      end
+
       describe "when sourceselect first" do
         describe "for a directory" do
           it "should recursively copy the first directory that exists" do
@@ -688,9 +757,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            File.should be_directory(path)
-            Puppet::FileSystem.exist?(File.join(path, 'one')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'three', 'four')).should be_true
+            expect(File).to be_directory(path)
+            expect(Puppet::FileSystem.exist?(File.join(path, 'one'))).to be_falsey
+            expect(Puppet::FileSystem.exist?(File.join(path, 'three', 'four'))).to be_truthy
           end
 
           it "should recursively copy an empty directory" do
@@ -710,8 +779,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            File.should be_directory(path)
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_false
+            expect(File).to be_directory(path)
+            expect(Puppet::FileSystem.exist?(File.join(path, 'a'))).to be_falsey
           end
 
           it "should only recurse one level" do
@@ -735,9 +804,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_false
+            expect(Puppet::FileSystem.exist?(File.join(path, 'a'))).to be_truthy
+            expect(Puppet::FileSystem.exist?(File.join(path, 'a', 'b'))).to be_falsey
+            expect(Puppet::FileSystem.exist?(File.join(path, 'z'))).to be_falsey
           end
         end
 
@@ -757,7 +826,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            File.read(path).should == 'yay'
+            expect(File.read(path)).to eq('yay')
           end
 
           it "should copy an empty file" do
@@ -775,7 +844,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             catalog.apply
 
-            File.read(path).should == ''
+            expect(File.read(path)).to eq('')
           end
         end
       end
@@ -807,9 +876,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource obj
             catalog.apply
 
-            File.read(File.join(dest, 'a')).should == one
-            File.read(File.join(dest, 'b')).should == two
-            File.read(File.join(dest, 'c')).should == three
+            expect(File.read(File.join(dest, 'a'))).to eq(one)
+            expect(File.read(File.join(dest, 'b'))).to eq(two)
+            expect(File.read(File.join(dest, 'c'))).to eq(three)
           end
 
           it "should only recurse one level from each valid source" do
@@ -834,10 +903,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             catalog.add_resource obj
             catalog.apply
 
-            Puppet::FileSystem.exist?(File.join(path, 'a')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'a', 'b')).should be_false
-            Puppet::FileSystem.exist?(File.join(path, 'z')).should be_true
-            Puppet::FileSystem.exist?(File.join(path, 'z', 'y')).should be_false
+            expect(Puppet::FileSystem.exist?(File.join(path, 'a'))).to be_truthy
+            expect(Puppet::FileSystem.exist?(File.join(path, 'a', 'b'))).to be_falsey
+            expect(Puppet::FileSystem.exist?(File.join(path, 'z'))).to be_truthy
+            expect(Puppet::FileSystem.exist?(File.join(path, 'z', 'y'))).to be_falsey
           end
         end
       end
@@ -863,18 +932,18 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     it "should add each generated resource to the catalog" do
       catalog.apply do |trans|
-        catalog.resource(:file, File.join(path, "one")).must be_a(described_class)
-        catalog.resource(:file, File.join(path, "two")).must be_a(described_class)
+        expect(catalog.resource(:file, File.join(path, "one"))).to be_a(described_class)
+        expect(catalog.resource(:file, File.join(path, "two"))).to be_a(described_class)
       end
     end
 
     it "should have an edge to each resource in the relationship graph" do
       catalog.apply do |trans|
         one = catalog.resource(:file, File.join(path, "one"))
-        catalog.relationship_graph.should be_edge(@file, one)
+        expect(catalog.relationship_graph).to be_edge(@file, one)
 
         two = catalog.resource(:file, File.join(path, "two"))
-        catalog.relationship_graph.should be_edge(@file, two)
+        expect(catalog.relationship_graph).to be_edge(@file, two)
       end
     end
   end
@@ -887,7 +956,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      File.read(dest).should == "foo"
+      expect(File.read(dest)).to eq("foo")
     end
 
     it "should be able to copy files with spaces in their names" do
@@ -897,7 +966,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      File.read(dest).should == "foo"
+      expect(File.read(dest)).to eq("foo")
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
@@ -907,32 +976,38 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       catalog.apply
 
-      File.read(dest).should == "foo"
+      expect(File.read(dest)).to eq("foo")
     end
   end
 
-  it "should create a file with content if ensure is omitted" do
-    catalog.add_resource described_class.new(
-      :path => path,
-      :content => "this is some content, yo"
-    )
+  CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
+    before(:each) do
+      @options = {:path => path, :content => "this is some content, yo", :checksum => checksum_type}
+    end
+    it "should create a file with content if ensure is omitted" do
+      catalog.add_resource described_class.send(:new, @options)
+      catalog.apply
+      expect(File.read(path)).to eq("this is some content, yo")
 
-    catalog.apply
+      second_catalog = Puppet::Resource::Catalog.new
+      second_catalog.add_resource described_class.send(:new, @options)
+      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).not_to be_failed
+      expect(status).not_to be_changed
+    end
 
-    File.read(path).should == "this is some content, yo"
-  end
+    it "should create files with content if both content and ensure are set" do
+      @options[:ensure] = "file"
+      catalog.add_resource described_class.send(:new, @options)
+      catalog.apply
+      expect(File.read(path)).to eq("this is some content, yo")
 
-  it "should create files with content if both content and ensure are set" do
-    file = described_class.new(
-      :path    => path,
-      :ensure  => "file",
-      :content => "this is some content, yo"
-    )
-
-    catalog.add_resource file
-    catalog.apply
-
-    File.read(path).should == "this is some content, yo"
+      second_catalog = Puppet::Resource::Catalog.new
+      second_catalog.add_resource described_class.send(:new, @options)
+      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).not_to be_failed
+      expect(status).not_to be_changed
+    end
   end
 
   it "should delete files with sources but that are set for deletion" do
@@ -949,60 +1024,65 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     catalog.add_resource file
     catalog.apply
 
-    Puppet::FileSystem.exist?(dest).should be_false
+    expect(Puppet::FileSystem.exist?(dest)).to be_falsey
   end
 
   describe "when sourcing" do
-    let(:source) { tmpfile_with_contents("source_default_values", "yay") }
-
-    describe "on POSIX systems", :if => Puppet.features.posix? do
-      it "should apply the source metadata values" do
-        set_mode(0770, source)
-
-        file = described_class.new(
+    with_checksum_types "source", "default_values" do
+      before(:each) do
+        set_mode(0770, checksum_file)
+        @options = {
           :path   => path,
           :ensure => :file,
-          :source => source,
-          :source_permissions => :use,
+          :source => checksum_file,
+          :checksum => checksum_type,
           :backup => false
-        )
+        }
+      end
+      describe "on POSIX systems", :if => Puppet.features.posix? do
+        it "should apply the source metadata values" do
+          @options[:source_permissions] = :use
 
-        catalog.add_resource file
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(get_owner(path)).to eq(get_owner(checksum_file))
+          expect(get_group(path)).to eq(get_group(checksum_file))
+          expect(get_mode(path) & 07777).to eq(0770)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+      end
+
+      it "should override the default metadata values" do
+        @options[:mode] = '0440'
+
+        catalog.add_resource described_class.send(:new, @options)
         catalog.apply
+        expect(get_mode(path) & 07777).to eq(0440)
 
-        get_owner(path).should == get_owner(source)
-        get_group(path).should == get_group(source)
-        (get_mode(path) & 07777).should == 0770
+        second_catalog = Puppet::Resource::Catalog.new
+        second_catalog.add_resource described_class.send(:new, @options)
+        status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+        expect(status).not_to be_failed
+        expect(status).not_to be_changed
       end
     end
 
-    it "should override the default metadata values" do
-      set_mode(0770, source)
-
-      file = described_class.new(
-         :path   => path,
-         :ensure => :file,
-         :source => source,
-         :backup => false,
-         :mode => '0440'
-       )
-
-      catalog.add_resource file
-      catalog.apply
-
-      (get_mode(path) & 07777).should == 0440
-    end
-
+    let(:source) { tmpfile_with_contents("source_default_values", "yay") }
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
-        aces.should_not be_empty
+        expect(aces).not_to be_empty
 
         aces.each do |ace|
-          ace.mask.should == Puppet::Util::Windows::File::FILE_ALL_ACCESS
-          (ace.flags & inherited_ace).should_not == inherited_ace
+          expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_ALL_ACCESS)
+          expect(ace.flags & inherited_ace).not_to eq(inherited_ace)
         end
       end
 
@@ -1014,12 +1094,12 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
-        aces.should_not be_empty
+        expect(aces).not_to be_empty
 
-        aces.any? do |ace|
+        expect(aces.any? do |ace|
           ace.mask == Puppet::Util::Windows::File::FILE_ALL_ACCESS &&
             (ace.flags & inherited_ace) == inherited_ace
-        end.should be_true
+        end).to be_truthy
       end
 
       def expects_at_least_one_inherited_system_ace_grants_full_access(path)
@@ -1084,10 +1164,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             it "should allow the user to explicitly set the mode to 4" do
               system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
+              expect(system_aces).not_to be_empty
 
               system_aces.each do |ace|
-                ace.mask.should == Puppet::Util::Windows::File::FILE_GENERIC_READ
+                expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ)
               end
             end
 
@@ -1096,7 +1176,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.apply
 
               system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.size.should == 1
+              expect(system_aces.size).to eq(1)
             end
           end
 
@@ -1171,11 +1251,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
               it "should allow the user to explicitly set the mode to 4" do
                 system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                system_aces.should_not be_empty
+                expect(system_aces).not_to be_empty
 
                 system_aces.each do |ace|
                   # unlike files, Puppet sets execute bit on directories that are readable
-                  ace.mask.should == Puppet::Util::Windows::File::FILE_GENERIC_READ | Puppet::Util::Windows::File::FILE_GENERIC_EXECUTE
+                  expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ | Puppet::Util::Windows::File::FILE_GENERIC_EXECUTE)
                 end
               end
 
@@ -1184,7 +1264,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.apply
 
                 system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                system_aces.size.should == 1
+                expect(system_aces.size).to eq(1)
               end
             end
 
@@ -1244,15 +1324,15 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     it "should still copy remote files" do
-      File.read(@copiedfile).should == 'funtest'
+      expect(File.read(@copiedfile)).to eq('funtest')
     end
 
     it "should not purge managed, local files" do
-      File.read(@localfile).should == 'rahtest'
+      expect(File.read(@localfile)).to eq('rahtest')
     end
 
     it "should purge files that are neither remote nor otherwise managed" do
-      Puppet::FileSystem.exist?(@purgee).should be_false
+      expect(Puppet::FileSystem.exist?(@purgee)).to be_falsey
     end
   end
 
@@ -1261,16 +1341,16 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env false"))
       Puppet::Util::Execution.expects(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).raises(Puppet::ExecutionFailure, "Failed")
       report = catalog.apply.report
-      report.resource_statuses["File[#{path}]"].should be_failed
-      Puppet::FileSystem.exist?(path).should be_false
+      expect(report.resource_statuses["File[#{path}]"]).to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_falsey
     end
 
     it "should succeed the file resource if command succeeds" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env true"))
       Puppet::Util::Execution.expects(:execute).with("/usr/bin/env true", {:combine => true, :failonfail => true}).returns ''
       report = catalog.apply.report
-      report.resource_statuses["File[#{path}]"].should_not be_failed
-      Puppet::FileSystem.exist?(path).should be_true
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
     end
   end
 
