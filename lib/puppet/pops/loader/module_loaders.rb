@@ -175,7 +175,9 @@ module Puppet::Pops::Loader::ModuleLoaders
     # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
     #
     def private_loader
-      @private_loader ||= @loaders.private_loader_for_module(module_name)
+      # The system loader has a nil module_name and it does not have a private_loader as there are no functions
+      # that can only by called by puppet runtime - if so, it acts as the privuate loader directly.
+      @private_loader ||= ((module_name.nil? && self) || @loaders.private_loader_for_module(module_name))
     end
   end
 

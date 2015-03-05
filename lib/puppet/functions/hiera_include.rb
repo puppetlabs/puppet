@@ -1,4 +1,4 @@
-require 'hiera_puppet'
+require 'hiera/puppet_function'
 
 # Assigns classes to a node using an array merge lookup that retrieves the value for a user-specified key
 #   from a Hiera data source.
