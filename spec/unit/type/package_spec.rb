@@ -122,7 +122,6 @@ describe Puppet::Type.type(:package) do
         Puppet::Type.type(:package).new(:name => ["error"])
       end.to raise_error(Puppet::ResourceError, /Name must be a String/)
     end
-
   end
 
   module PackageEvaluationTesting

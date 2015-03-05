@@ -231,6 +231,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_UnfoldExpression(o, scope)
     candidate = evaluate(o.expr, scope)
     case candidate
+    when nil
+      []
     when Array
       candidate
     when Hash
