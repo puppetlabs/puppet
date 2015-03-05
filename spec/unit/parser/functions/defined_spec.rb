@@ -55,6 +55,11 @@ describe "the 'defined' function" do
       expect(@scope.function_defined(['$x'])).to be_true
     end
 
+    it "is true when ::variable exists in scope" do
+      @compiler.topscope['x'] = 'something'
+      expect(@scope.function_defined(['$::x'])).to be_true
+    end
+
     it "is true when at least one variable exists in scope" do
       @scope['x'] = 'something'
       expect(@scope.function_defined(['$y', '$x', '$z'])).to be_true
