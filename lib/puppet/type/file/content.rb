@@ -4,10 +4,10 @@ require 'tempfile'
 require 'date'
 
 require 'puppet/util/checksums'
+require 'puppet/util/http_proxy'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
 require 'puppet/network/http/compression'
-require 'puppet/network/http/proxy_helper'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do
@@ -223,7 +223,7 @@ module Puppet
 
     def get_from_http_source(source, &block)
       uri = URI(source)
-      proxy = Puppet::Network::HTTP::ProxyHelper.get_http_object(uri)
+      proxy = Puppet::Util::HttpProxy.get_http_object(uri)
       response = proxy.send(:get, uri.path, { 'Accept' => 'raw'})
     end
 

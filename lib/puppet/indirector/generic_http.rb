@@ -1,5 +1,5 @@
 require 'puppet/file_serving/terminus_helper'
-require 'puppet/network/http/proxy_helper'
+require 'puppet/util/http_proxy'
 
 class Puppet::Indirector::GenericHttp < Puppet::Indirector::Terminus
   desc "Retrieve data from a remote HTTP server."
@@ -14,7 +14,7 @@ class Puppet::Indirector::GenericHttp < Puppet::Indirector::Terminus
     uri = URI( unescape_url(request.key) )
     method = self.class.http_method
 
-    proxy = Puppet::Network::HTTP::ProxyHelper.get_http_object(uri)
+    proxy = Puppet::Util::HttpProxy.get_http_object(uri)
 
     response = proxy.send(method, uri.path)
 

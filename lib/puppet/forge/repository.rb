@@ -5,7 +5,6 @@ require 'puppet/util/http_proxy'
 require 'puppet/forge'
 require 'puppet/forge/errors'
 require 'puppet/network/http'
-require 'puppet/network/http/proxy_helper'
 
 class Puppet::Forge
   # = Repository
@@ -91,7 +90,7 @@ class Puppet::Forge
     # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
     #  verifying the remote SSL certificate
     def read_response(request, io = nil)
-      http_object = Puppet::Network::HTTP::ProxyHelper.get_http_object(@uri)
+      http_object = Puppet::Util::HttpProxy.get_http_object(uri)
 
       http_object.start do |http|
         response = http.request(request)
