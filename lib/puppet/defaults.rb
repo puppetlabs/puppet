@@ -452,7 +452,7 @@ module Puppet
       a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
     },
     :environment_timeout => {
-      :default    => "3m",
+      :default    => "0",
       :type       => :ttl,
       :desc       => "The time to live for a cached environment.
       #{AS_DURATION}
