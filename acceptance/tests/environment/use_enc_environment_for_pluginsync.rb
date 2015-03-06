@@ -3,7 +3,7 @@ test_name "Agent should use environment given by ENC for pluginsync"
 testdir = create_tmpdir_for_user master, 'respect_enc_test'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
-#!#{master['puppetbindir']}/ruby
+#!#{master['privatebindir']}/ruby
 puts <<YAML
 parameters:
 environment: special
