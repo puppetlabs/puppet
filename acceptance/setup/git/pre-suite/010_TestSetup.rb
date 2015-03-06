@@ -50,10 +50,10 @@ test_name "Install packages and repositories on target machines..." do
       puppetconf = File.join(confdir, 'puppet.conf')
 
       if host['roles'].include?('agent')
-        on host, "echo '[agent]' > #{puppetconf} && " +
-                 "echo server=#{master} >> #{puppetconf}"
+        on host, "echo '[agent]' > '#{puppetconf}' && " +
+                 "echo server=#{master} >> '#{puppetconf}'"
       else
-        on host, "touch #{puppetconf}"
+        on host, "touch '#{puppetconf}'"
       end
     end
   end
