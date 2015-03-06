@@ -75,9 +75,9 @@ end
 
 step 'test configprint outputs'
 agents.each do |agent|
-  config_options(agent[:platform]).each do |config_option|
-    on(agent, puppet_agent('--configprint ' "#{config_option[:name]}")) do
-      assert_match(config_option[:expected], stdout)
+  on(agent, puppet_agent('--configprint all')) do
+    config_options(agent[:platform]).each do |config_option|
+      assert_match("#{config_option[:name]} = #{config_option[:expected]}", stdout)
     end
   end
 end
