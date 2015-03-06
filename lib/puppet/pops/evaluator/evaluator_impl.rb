@@ -74,14 +74,43 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       @@eval_visitor.visit_this_1(self, target, scope)
 
     rescue Puppet::Pops::SemanticError => e
-      # a raised issue may not know the semantic target
+      # A raised issue may not know the semantic target, use errors call stack, but fill in the 
+      # rest from a supplied semantic object, or the target instruction if there is not semantic
+      # object.
+      #
       fail(e.issue, e.semantic || target, e.options, e)
 
-    rescue StandardError => e
-      if e.is_a? Puppet::ParseError
-        # ParseError's are supposed to be fully configured with location information
+    rescue Puppet::PreformattedError => e
+      # Already formatted with location information, and with the wanted call stack.
+      # Note this is currently a specialized ParseError, so rescue-order is important
+      #
+      raise e
+
+    rescue Puppet::ParseError => e
+      # ParseError may be raised in ruby code without knowing the location
+      # in puppet code.
+      # Accept a ParseError that has file or line information available
+      # as an error that should be used verbatim. (Tests typically run without
+      # setting a file name).
+      # ParseError can supply an original - it is impossible to determine which
+      # call stack that should be propagated, using the ParseError's backtrace.
+      #
+      if e.file || e.line
         raise e
+      else
+        # Since it had no location information, threat it as user intended a general purpose
+        # error. Pass on its call stack.
+        fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
       end
+
+
+    rescue Puppet::Error => e
+      # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
+      # call stack instead
+      fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e.original || e)
+
+    rescue StandardError => e
+      # All other errors, use its message and call stack
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
     end
   end
