@@ -102,6 +102,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @resource.stubs(:[]).with(:links).returns :manage
       @resource.stubs(:[]).with(:source_permissions).returns :use
       @resource.stubs(:[]).with(:checksum).returns :checksum
+      @resource.stubs(:[]).with(:region).returns nil
     end
 
     it "should return already-available metadata" do
