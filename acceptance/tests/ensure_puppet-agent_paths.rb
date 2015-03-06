@@ -109,10 +109,9 @@ agents.each do |agent|
 end
 
 
-# mco.bat removed until it's added back to the MSI
 public_binaries = {
   :posix => ['puppet', 'facter', 'hiera', 'mco', 'cfacter'],
-  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'cfacter.bat']
+  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'mco.bat', 'cfacter.bat']
 }
 
 def locations(platform, ruby_arch, type)
