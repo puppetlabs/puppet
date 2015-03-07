@@ -1,6 +1,7 @@
 require 'open-uri'
 require 'open3'
 require 'uri'
+require 'puppet/acceptance/common_utils'
 
 module Puppet
   module Acceptance
@@ -231,13 +232,7 @@ module Puppet
         gem_source = ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
         hosts.each do |host|
-          case host['platform']
-          when /windows/
-            gem = 'cmd /c gem'
-          else
-            gem = 'gem'
-          end
-
+          gem = Puppet::Acceptance::CommandUtils.gem_command(host)
           on host, "#{gem} source --clear-all"
           on host, "#{gem} source --add #{gem_source}"
         end
@@ -257,7 +252,8 @@ module Puppet
         # make sure install is sane, beaker has already added puppet and ruby
         # to PATH in ~/.ssh/environment
         on host, puppet('--version')
-        on host, 'ruby --version'
+        ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
+        on host, "#{ruby} --version"
       end
     end
   end
