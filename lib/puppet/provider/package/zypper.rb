@@ -12,6 +12,13 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
   defaultfor :operatingsystem => [:suse, :sles, :sled, :opensuse]
   confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
 
+  # @api private
+  # Reset the latest version hash to nil
+  # needed for spec tests to clear cached value
+  def self.reset!
+    @latest_versions = nil
+  end
+
   def self.latest_package_version(package)
     if @latest_versions.nil?
       @latest_versions = list_updates
