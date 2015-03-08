@@ -146,6 +146,39 @@ module Puppet
         end
       end
 
+      # Return a string of the puppet manifest for file_path on host
+      #
+      # Example of return value:
+      #
+      # "file { '/root':
+      #    ensure   => 'directory',
+      #    group    => '0',
+      #    mode     => '0550',
+      #    owner    => '0',
+      #    selrange => 's0',
+      #    selrole  => 'object_r',
+      #    seltype  => 'admin_home_t',
+      #    seluser  => 'system_u',
+      #  }"
+      #
+      # @param host [Beaker host object] the host to query
+      # @param file_path [String] the path to the file to be queried
+      # @return [String] puppet manifest for file resource
+      def get_file_manifest(host, file_path)
+        manifest = on(host, puppet("resource file #{file_path}")).stdout
+
+        # need to strip out the read-only attributes (ctime, mtime, type)
+        # in order to use it to apply
+        a = manifest.split(',')
+        new_a = []
+        a.each do |l|
+          unless l =~ /time|type/
+            new_a << l
+          end
+        end
+        return new_a.join(',')
+      end
+
       # a silly variable for keeping track of whether or not all of the tests passed...
       @all_tests_passed = false
     end
