@@ -17,9 +17,35 @@ module Puppet
 
         # set default options
         options[:mkdirs] ||= false
-        options[:owner] ||= host.puppet['user']
-        options[:group] ||= host.puppet['group']
         options[:mode] ||= "755"
+        unless options[:owner]
+          if host['roles'].include?('master') then
+            options[:owner] = host.puppet['user']
+          else
+            case host['platform']
+            when /windows/
+              options[:owner] = 'Administrator'
+            else
+              options[:owner] = 'root'
+            end
+          end
+        end
+        unless options[:group]
+          if host['roles'].include?('master') then
+            options[:group] = host.puppet['group']
+          else
+            case host['platform']
+            when /windows/
+              options[:group] = 'Administrators'
+            when /aix/
+              options[:group] = 'system'
+            when /osx|bsd/
+              options[:group] = 'wheel'
+            else
+              options[:owner] = 'root'
+            end
+          end
+        end
 
         file_path = get_test_file_path(host, file_rel_path)
 
