@@ -113,7 +113,6 @@ class Puppet::Transaction
       end
 
       resource_status(resource).failed = true
-      mark_failed(resource)
     end
 
     canceled_resource_handler = lambda do |resource|
@@ -200,27 +199,18 @@ class Puppet::Transaction
 
   private
 
-  def mark_failed(resource)
-    relationship_graph.dependents(resource).each do |dependent|
-      resource_status(dependent).dependency_failed = true
-    end
-  end
-
   # Apply all changes for a resource
   def apply(resource, ancestor = nil)
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
-    if status.failed?
-      mark_failed(resource)
-    else
-      event_manager.queue_events(ancestor || resource, status.events)
-    end
+    event_manager.queue_events(ancestor || resource, status.events) unless status.failed?
   rescue => detail
     resource.err "Could not evaluate: #{detail}"
   end
 
   # Evaluate a single resource.
   def eval_resource(resource, ancestor = nil)
+    propagate_failure(resource)
     if skip?(resource)
       resource_status(resource).skipped = true
       resource.debug("Resource is being skipped, unscheduling all events")
@@ -238,7 +228,21 @@ class Puppet::Transaction
 
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
-    return (s = resource_status(resource) and s.dependency_failed?)
+    s = resource_status(resource) and s.dependency_failed?
+  end
+
+  # We need to know if a resource has any failed dependencies before
+  # we try to process it. We keep track of this by keeping a
+  # `dependency_failed` flag on each resource and incrementally
+  # computing it as the OR of the flag of each dependency. We have to
+  # do this as-we-go instead of up-front at failure time because the
+  # graph may be mutated as we walk it.
+  def propagate_failure(resource)
+    relationship_graph.direct_dependencies_of(resource).each do |dep|
+      if (s = resource_status(dep)) and (s.failed? || s.dependency_failed?)
+        resource_status(resource).dependency_failed = true
+      end
+    end
   end
 
   # A general method for recursively generating new resources from a
