@@ -108,6 +108,15 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
   end
 
+  # Allow Gem version expressions in ensure
+  def insync?(is)
+    begin
+      Gem::Dependency.new('', resource[:ensure]).match?('', is)
+    rescue
+      false
+    end
+  end
+
   def latest
     # This always gets the latest version available.
     gemlist_options = {:justme => resource[:name]}
