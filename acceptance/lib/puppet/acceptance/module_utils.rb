@@ -15,12 +15,8 @@ module Puppet
       # @param host [String] hostname
       # @return [Array] paths for found modulepath
       def get_modulepaths_for_host (host)
-        separator = ':'
-        if host['platform'] =~ /windows/
-          separator = ';'
-        end
         environment = on(host, puppet("config print environment")).stdout.chomp
-        on(host, puppet("config print modulepath --environment #{environment}")).stdout.chomp.split(separator)
+        on(host, puppet("config print modulepath --environment #{environment}")).stdout.chomp.split(host['pathseparator'])
       end
 
       # Return a string of the default (first) path in modulepath for a given host.
