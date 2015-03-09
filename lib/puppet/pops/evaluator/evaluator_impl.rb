@@ -98,7 +98,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       if e.file || e.line
         raise e
       else
-        # Since it had no location information, threat it as user intended a general purpose
+        # Since it had no location information, treat it as user intended a general purpose
         # error. Pass on its call stack.
         fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
       end
