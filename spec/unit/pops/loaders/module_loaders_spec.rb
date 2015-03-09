@@ -57,6 +57,11 @@ describe 'FileBased module loader' do
     expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
   end
 
+  it 'system loader has itself as private loader' do
+    module_loader = Puppet::Pops::Loader::ModuleLoaders.system_loader_from(static_loader, loaders)
+    expect(module_loader.private_loader).to be(module_loader)
+  end
+
   it 'makes parent loader win over entries in child' do
     module_dir = dir_containing('testmodule', {
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
