@@ -17,9 +17,35 @@ module Puppet
 
         # set default options
         options[:mkdirs] ||= false
-        options[:owner] ||= host.puppet['user']
-        options[:group] ||= host.puppet['group']
         options[:mode] ||= "755"
+        unless options[:owner]
+          if host['roles'].include?('master') then
+            options[:owner] = host.puppet['user']
+          else
+            case host['platform']
+            when /windows/
+              options[:owner] = 'Administrator'
+            else
+              options[:owner] = 'root'
+            end
+          end
+        end
+        unless options[:group]
+          if host['roles'].include?('master') then
+            options[:group] = host.puppet['group']
+          else
+            case host['platform']
+            when /windows/
+              options[:group] = 'Administrators'
+            when /aix/
+              options[:group] = 'system'
+            when /osx|bsd/
+              options[:group] = 'wheel'
+            else
+              options[:owner] = 'root'
+            end
+          end
+        end
 
         file_path = get_test_file_path(host, file_rel_path)
 
@@ -118,6 +144,39 @@ module Puppet
         @all_hosts.each do |host|
           on(host, "rm -rf #{@host_test_tmp_dirs[host.name]}")
         end
+      end
+
+      # Return a string of the puppet manifest for file_path on host
+      #
+      # Example of return value:
+      #
+      # "file { '/root':
+      #    ensure   => 'directory',
+      #    group    => '0',
+      #    mode     => '0550',
+      #    owner    => '0',
+      #    selrange => 's0',
+      #    selrole  => 'object_r',
+      #    seltype  => 'admin_home_t',
+      #    seluser  => 'system_u',
+      #  }"
+      #
+      # @param host [Beaker host object] the host to query
+      # @param file_path [String] the path to the file to be queried
+      # @return [String] puppet manifest for file resource
+      def get_file_manifest(host, file_path)
+        manifest = on(host, puppet("resource file #{file_path}")).stdout
+
+        # need to strip out the read-only attributes (ctime, mtime, type)
+        # in order to use it to apply
+        a = manifest.split(',')
+        new_a = []
+        a.each do |l|
+          unless l =~ /time|type/
+            new_a << l
+          end
+        end
+        return new_a.join(',')
       end
 
       # a silly variable for keeping track of whether or not all of the tests passed...

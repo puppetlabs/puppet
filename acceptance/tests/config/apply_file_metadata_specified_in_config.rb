@@ -8,6 +8,8 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs()
 
 agents.each do |agent|
+  logdir_orig = get_file_manifest(agent,agent.puppet['logdir'])
+
   logdir = get_test_file_path(agent, 'log')
 
   create_test_file(agent, 'site.pp', <<-SITE)
@@ -22,5 +24,10 @@ agents.each do |agent|
 
   on(agent, "stat --format '%U:%G %a' #{logdir}") do
     assert_match(/root:root 700/, stdout)
+  end
+
+  teardown do
+    on(agent, puppet('config', 'set', 'logdir', "'#{logdir} { owner = root, group = root, mode = 0700 }'", '--confdir', get_test_file_path(agent, '')))
+    on(agent, puppet("apply -e \"#{logdir_orig}\""))
   end
 end

@@ -33,6 +33,8 @@ end
 
 step "when the user and group are missing"
 agents.each do |agent|
+  logdir_orig = get_file_manifest(agent, agent.puppet['logdir'])
+
   logdir = missing_directory_for(agent, 'log')
 
   on agent, puppet('apply',
@@ -44,10 +46,15 @@ agents.each do |agent|
     assert_match(/puppet_run/, stdout)
     assert_ownership(agent, logdir, 'root', 'root')
   end
+  teardown do
+    on(agent, puppet("apply -e \"#{logdir_orig}\""))
+  end
 end
 
 step "when the user and group exist"
 agents.each do |agent|
+  logdir_orig = get_file_manifest(agent, agent.puppet['logdir'])
+
   logdir = missing_directory_for(agent, 'log')
 
   on agent, puppet('resource', 'user', 'existinguser', 'ensure=present')
@@ -61,5 +68,8 @@ agents.each do |agent|
 
     assert_match(/puppet_run/, stdout)
     assert_ownership(agent, logdir, 'existinguser', 'existinggroup')
+  end
+  teardown do
+    on(agent, puppet("apply -e \"#{logdir_orig}\""))
   end
 end
