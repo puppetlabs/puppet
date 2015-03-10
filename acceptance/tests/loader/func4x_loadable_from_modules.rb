@@ -80,4 +80,9 @@ SOURCE
     assert_match(/^Generated, 1 => 10, 2 => 20, 3 => 30$/, stdout, "Generated the wrong content")
   end
 
+  teardown do
+    # Run apply against standard puppet.conf to restore ownership of logdir
+    on agent, puppet('apply', '-e', "'notify {\"hello\":}'")
+  end
+
 end
