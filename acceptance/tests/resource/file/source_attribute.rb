@@ -89,6 +89,7 @@ node default {
 }
 EOF
 
+# apply manifests to setup environment and modules
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
     ensure => directory,
@@ -189,51 +190,62 @@ with_puppet_running_on(master, master_opts, testdir) do
   end
 end
 
-apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-  file { '#{mod_manifest_file}':
-    ensure => file,
-    mode => '0644',
-    content => '#{mod_manifest}',
-  }
-MANIFEST
-
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
 step "When using puppet apply"
 agents.each do |agent|
   step "Setup testing local file sources"
-  a_testdir = agent.tmpdir('local_source_file_test')
 
-  source = "#{a_testdir}/source_mod/files/source"
+  # create one larger manifest with all the files so we don't have to run
+  # puppet apply per each checksum_type
+  localsource_testdir = agent.tmpdir('local_source_file_test')
+  source = "#{localsource_testdir}/source_mod/files/source"
+  on agent, "mkdir -p #{File.dirname(source)}"
+  #TODO: make file bigger than 512 then change it if md5lite
+  create_remote_file agent, source, 'Yay, this is the local file.'
+
+  local_apply_manifest = ""
+  target = {}
   checksums.each do |checksum_type|
-    target = "#{a_testdir}/target#{checksum_type}"
+    target[checksum_type] = "#{localsource_testdir}/target#{checksum_type}"
     checksum = if checksum_type then "checksum => #{checksum_type}," else "" end
+    local_apply_manifest.concat("file { '#{target[checksum_type]}': source => '#{source}', ensure => present, #{checksum} }\n")
+  end
 
-    on agent, "mkdir -p #{File.dirname(source)}"
-    create_remote_file agent, source, 'Yay, this is the local file.'
+  apply_manifest_on agent, local_apply_manifest
 
-    step "Using a local file path (#{checksum})"
-    manifest = %(file { '#{target}': source => '#{source}', ensure => present, #{checksum} })
-    apply_manifest_on agent, manifest
-    on agent, "cat #{target}" do
+  checksums.each do |checksum_type|
+    step "Using a local file path with checksum type: #{checksum_type}"
+    on agent, "cat #{target[checksum_type]}" do
       assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
     end
-    step "second run should not update file (#{checksum})"
-    apply_manifest_on agent, manifest do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
-    end
+  end
 
+  step "second run should not update any files"
+  apply_manifest_on agent, local_apply_manifest do
+    assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+  end
 
-    step "Using a puppet:/// URI (#{checksum})"
-    on agent, "rm -rf #{target}"
+  local_module_manifest = ""
+  create_remote_file agent, source, 'Yay, this is the local file.'
+  checksums.each do |checksum_type|
+    on agent, "rm -rf #{target[checksum_type]}"
+    checksum = if checksum_type then "checksum => #{checksum_type}," else "" end
+    local_module_manifest.concat("file { '#{target[checksum_type]}': source => 'puppet:///modules/source_mod/source', ensure => present, #{checksum} }\n")
+  end
 
-    manifest = %("file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => present, #{checksum} }")
-    on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
-    on agent, "cat #{target}" do
+  localsource_test_manifest = agent.tmpfile('local_source_test_manifest')
+  create_remote_file agent, localsource_test_manifest, local_module_manifest
+  on agent, puppet( %{apply --modulepath=#{localsource_testdir} #{localsource_test_manifest}} )
+
+  checksums.each do |checksum_type|
+    step "Using a puppet:/// URI with checksum type: #{checksum_type}"
+    on agent, "cat #{target[checksum_type]}" do
       assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
     end
-    step "second run should not update file (#{checksum})"
-    on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}}) do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
-    end
+  end
+
+  step "second run should not update any files using apply with puppet:/// URI source"
+  on agent, puppet( %{apply --modulepath=#{localsource_testdir} #{localsource_test_manifest}} ) do
+    assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
   end
 end
