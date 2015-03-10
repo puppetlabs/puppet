@@ -15,7 +15,7 @@ if master.is_pe?
 else
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
-#!#{master['puppetbindir']}/ruby
+#!#{master['privatebindir']}/ruby
 puts <<YAML
 parameters:
 environment: special

@@ -37,7 +37,7 @@ if master.is_pe?
       json = JSON.load(result)
       puts json.first["receive-time"]
     EOS
-    on(puppetdb, "#{master[:puppetbindir]}/ruby -e '#{time_query_script}'").output.chomp
+    on(puppetdb, "#{master[:privatebindir]}/ruby -e '#{time_query_script}'").output.chomp
   end
 
   last_times = {}

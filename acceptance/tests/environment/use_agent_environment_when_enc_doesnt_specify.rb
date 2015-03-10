@@ -7,7 +7,7 @@ classify_nodes_as_agent_specified_if_classifer_present
 testdir = create_tmpdir_for_user master, 'use_agent_env'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
-#!#{master['puppetbindir']}/ruby
+#!#{master['privatebindir']}/ruby
 puts <<YAML
 parameters:
 YAML

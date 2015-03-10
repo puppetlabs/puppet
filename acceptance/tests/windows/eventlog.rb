@@ -2,12 +2,15 @@ test_name "Write to Windows eventlog"
 
 confine :to, :platform => 'windows'
 
+require 'puppet/acceptance/common_utils'
+extend Puppet::Acceptance::CommandUtils
+
 require 'puppet/acceptance/windows_utils'
 extend Puppet::Acceptance::WindowsUtils
 
 agents.each do |agent|
   # get remote time
-  now = on(agent, "#{ruby_cmd(agent)} -e \"puts Time.now.utc.strftime('%m/%d/%Y %H:%M:%S')\"").stdout.chomp
+  now = on(agent, "#{ruby_command(agent)} -e \"puts Time.now.utc.strftime('%m/%d/%Y %H:%M:%S')\"").stdout.chomp
 
   # it should fail to start since parent directories don't exist
   confdir = "/does/not/exist"

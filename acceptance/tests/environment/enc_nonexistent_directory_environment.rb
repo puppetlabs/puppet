@@ -37,7 +37,7 @@ else
     file { "#{testdir}/enc.rb":
       ensure  => file,
       mode    => '0775',
-      content => '#!#{master['puppetbindir']}/ruby
+      content => '#!#{master['privatebindir']}/ruby
         puts "environment: doesnotexist"
       ';
     }
