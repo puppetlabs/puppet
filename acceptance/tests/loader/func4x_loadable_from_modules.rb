@@ -30,14 +30,7 @@ agents.each do |agent|
 
   # make sure that we use the modulepath from the dev environment
   puppetconf = get_test_file_path(agent, 'puppet.conf')
-  user = agent.puppet['user']
-  group = agent.puppet['group']
-  # Setting user/group ensures that when puppet apply's Configurer use()'s the
-  # settings, that it doesn't default to owning them as root, which can have an
-  # impact on following tests.
   on agent, puppet("config", "set", "environmentpath", envs_path, "--section", "main", "--config", puppetconf)
-  on agent, puppet("config", "set", "user", user, "--section", "main", "--config", puppetconf)
-  on agent, puppet("config", "set", "group", group, "--section", "main", "--config", puppetconf)
   on agent, puppet("config", "set", "environment", "dev", "--section", "user", "--config", puppetconf)
 
   # Where the functions in the written modules should go
