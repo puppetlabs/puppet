@@ -200,8 +200,9 @@ agents.each do |agent|
   localsource_testdir = agent.tmpdir('local_source_file_test')
   source = "#{localsource_testdir}/source_mod/files/source"
   on agent, "mkdir -p #{File.dirname(source)}"
-  #TODO: make file bigger than 512 then change it if md5lite
-  create_remote_file agent, source, 'Yay, this is the local file.'
+  # don't put a 'z' in this content
+  source_content = 'Yay, this is the local file. I have to be bigger than 512 bytes so that my masters. yadda yadda yadda not a nice thing. lorem ipsem. alice bob went to fetch a pail of water. Lorem ipsum dolor sit amet, pede ipsum nam wisi lectus eget, sociis sed, commodo vitae velit eleifend. Vestibulum orci feugiat erat etiam pellentesque sed, imperdiet a integer nulla, mi tincidunt suscipit. Nec sed, mi tortor, in a consequat mattis proin scelerisque eleifend. In lectus magna quam. Magna quam vitae sociosqu. Adipiscing laoreet.'
+  create_remote_file agent, source, source_content
 
   local_apply_manifest = ""
   target = {}
@@ -214,7 +215,7 @@ agents.each do |agent|
   apply_manifest_on agent, local_apply_manifest
 
   checksums.each do |checksum_type|
-    step "Using a local file path with checksum type: #{checksum_type}"
+    step "Using a local file path. #{checksum_type}"
     on agent, "cat #{target[checksum_type]}" do
       assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
     end
@@ -225,8 +226,16 @@ agents.each do |agent|
     assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
   end
 
+  # changes in source file producing updates is tested elsewhere
+  step "subsequent run should not update file using <checksum>lite if only after byte 512 is changed"
+  byte_after_md5lite = 513
+  source_content[byte_after_md5lite] = 'z'
+  create_remote_file agent, source, source_content
+  apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
+    assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+  end
+
   local_module_manifest = ""
-  create_remote_file agent, source, 'Yay, this is the local file.'
   checksums.each do |checksum_type|
     on agent, "rm -rf #{target[checksum_type]}"
     checksum = if checksum_type then "checksum => #{checksum_type}," else "" end
