@@ -55,7 +55,7 @@ class Puppet::Pops::Lookup
   end
 
   def self.search_and_merge(name, scope, merge, not_found)
-    in_global = lambda { lookup_with_databinding(name, scope) }
+    in_global = lambda { lookup_with_databinding(name, scope, merge) }
     in_env = lambda { Puppet::DataProviders.lookup_in_environment(name, scope, merge) }
     in_module = lambda { Puppet::DataProviders.lookup_in_module(name, scope, merge) }
 
@@ -74,9 +74,9 @@ class Puppet::Pops::Lookup
   end
   private_class_method :search_and_merge
 
-  def self.lookup_with_databinding(key, scope)
+  def self.lookup_with_databinding(key, scope, merge)
     begin
-      Puppet::DataBinding.indirection.find(key, { :environment => scope.environment.to_s, :variables => scope })
+      Puppet::DataBinding.indirection.find(key, { :environment => scope.environment.to_s, :variables => scope, :merge => merge })
     rescue Puppet::DataBinding::LookupError => e
       raise Puppet::Error, "Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e
     end
