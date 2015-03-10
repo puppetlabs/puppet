@@ -178,6 +178,30 @@ describe "when performing lookup" do
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
+    it 'will propagate resolution_type :array to Hiera when merge == \'unique\''  do
+      Hiera.any_instance.expects(:lookup).with('c', anything, anything, anything, :array).returns(['global_c'])
+      resources = assemble_and_compile('${r[0]}_${r[1]}_${r[2]}', "'c'", 'Array[String]', "'unique'")
+      expect(resources).to include('global_c_env_c_module_c')
+    end
+
+    it 'will propagate a Hash resolution_type with :behavior => :native to Hiera when merge == \'hash\''  do
+      Hiera.any_instance.expects(:lookup).with('e', anything, anything, anything, { :behavior => :native }).returns({ 'k1' => 'global_e1' })
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'hash'}")
+      expect(resources).to include('global_e1_module_e2_env_e3')
+    end
+
+    it 'will propagate a Hash resolution_type with :behavior => :deeper to Hiera when merge == \'deep\''  do
+      Hiera.any_instance.expects(:lookup).with('f', anything, anything, anything, { :behavior => :deeper }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
+      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'f'", 'Hash[String,Hash[String,String]]', "'deep'")
+      expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
+    end
+
+    it 'will propagate a Hash resolution_type with symbolic deep merge options to Hiera'  do
+      Hiera.any_instance.expects(:lookup).with('f', anything, anything, anything, { :behavior => :deeper, :knockout_prefix => '--' }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
+      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'f'", 'Hash[String,Hash[String,String]]', "{ 'strategy' => 'deep', 'knockout_prefix' => '--' }")
+      expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
+    end
+
     context 'with provided default' do
       it 'will return default when lookup fails' do
         resources = assemble_and_compile('${r}', "'x'", 'String', 'undef', "'dflt_x'")
