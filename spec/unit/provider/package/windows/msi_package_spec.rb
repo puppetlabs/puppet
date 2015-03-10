@@ -48,7 +48,6 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
 
     {
       'DisplayName'      => ['My App', ''],
-      'SystemComponent'  => [nil, 1],
       'WindowsInstaller' => [1, nil],
     }.each_pair do |k, arr|
       it "should accept '#{k}' with value '#{arr[0]}'" do

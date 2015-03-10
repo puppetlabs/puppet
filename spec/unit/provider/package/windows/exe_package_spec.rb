@@ -34,7 +34,6 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     {
       'DisplayName'      => ['My App', ''],
       'UninstallString'  => ['E:\uninstall.exe', ''],
-      'SystemComponent'  => [nil, 1],
       'WindowsInstaller' => [nil, 1],
       'ParentKeyName'    => [nil, 'Uber Product'],
       'Security Update'  => [nil, 'KB890830'],
