@@ -4,6 +4,8 @@ require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/graph'
 
+require 'puppet/resource/capability_finder'
+
 # This class models a node catalog.  It is the thing meant to be passed
 # from server to client, and it contains all of the information in the
 # catalog, including the resources and the relationships between them.
@@ -313,7 +315,15 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     res.catalog = self
     title_key      = [res.type, res.title.to_s]
     uniqueness_key = [res.type, res.uniqueness_key].flatten
-    @resource_table[title_key] || @resource_table[uniqueness_key]
+    result = @resource_table[title_key] || @resource_table[uniqueness_key]
+    if ! result && res.resource_type && res.resource_type.is_capability?
+      # @todo lutter 2015-03-10: this assumes that it is legal to just
+      # mention a capability resource in code and have it automatically
+      # made available, even if the current component does not require it
+      result = Puppet::Resource::CapabilityFinder.find(environment, res)
+      add_resource(result) if result
+    end
+    result
   end
 
   def resource_refs

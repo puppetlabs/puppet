@@ -391,6 +391,14 @@ class Puppet::Resource::Type
     end
   end
 
+  # Returns boolean true if an instance of this type is a capability. This
+  # implementation always returns false. This "duck-typing" interface is
+  # shared among other classes and makes it easier to detect capabilities
+  # when they are intermixed with non capability instances.
+  def is_capability?
+    false
+  end
+
   private
 
   def convert_from_ast(name)
