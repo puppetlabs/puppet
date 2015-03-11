@@ -260,7 +260,7 @@ module Puppet::Util::Windows
 
         if result != FFI::ERROR_SUCCESS
           msg = "Failed to delete registry value #{name} at #{key.keyname}"
-          raise Puppet::Util::Windows::Error.new(msg)
+          raise Puppet::Util::Windows::Error.new(msg, result)
         end
       end
 
@@ -274,8 +274,8 @@ module Puppet::Util::Windows
         result = RegDeleteKeyExW(key.hkey, name_ptr, regsam, 0)
 
         if result != FFI::ERROR_SUCCESS
-          msg = "Failed to delete registry value #{name} at #{key.keyname}"
-          raise Puppet::Util::Windows::Error.new(msg)
+          msg = "Failed to delete registry key #{name} at #{key.keyname}"
+          raise Puppet::Util::Windows::Error.new(msg, result)
         end
       end
 
