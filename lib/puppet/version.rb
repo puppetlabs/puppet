@@ -7,7 +7,7 @@
 
 
 module Puppet
-  PUPPETVERSION = '3.7.4'
+  PUPPETVERSION = '4.0.0-rc1'
 
   ##
   # version is a public API method intended to always provide a fast and
