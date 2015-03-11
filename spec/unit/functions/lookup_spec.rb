@@ -67,198 +67,198 @@ describe "when performing lookup" do
 
   context 'using normal parameters' do
     it 'can lookup value provided by the environment' do
-      resources = assemble_and_compile('${r}', "'a'")
+      resources = assemble_and_compile('${r}', "'abc::a'")
       expect(resources).to include('env_a')
     end
 
     it 'can lookup value provided by the module' do
-      resources = assemble_and_compile('${r}', "'b'")
+      resources = assemble_and_compile('${r}', "'abc::b'")
       expect(resources).to include('module_b')
     end
 
     it 'can lookup value provided in global scope' do
-      Hiera.any_instance.expects(:lookup).with('a', any_parameters).returns('global_a')
-      resources = assemble_and_compile('${r}', "'a'")
+      Hiera.any_instance.expects(:lookup).with('abc::a', any_parameters).returns('global_a')
+      resources = assemble_and_compile('${r}', "'abc::a'")
       expect(resources).to include('global_a')
     end
 
     it 'will stop at first found name when several names are provided' do
-      resources = assemble_and_compile('${r}', "['b', 'a']")
+      resources = assemble_and_compile('${r}', "['abc::b', 'abc::a']")
       expect(resources).to include('module_b')
     end
 
     it 'can lookup value provided by the module that is overriden by environment' do
-      resources = assemble_and_compile('${r}', "'c'")
+      resources = assemble_and_compile('${r}', "'abc::c'")
       expect(resources).to include('env_c')
     end
 
     it "can 'unique' merge values provided by both the module and the environment" do
-      resources = assemble_and_compile('${r[0]}_${r[1]}', "'c'", 'Array[String]', "'unique'")
+      resources = assemble_and_compile('${r[0]}_${r[1]}', "'abc::c'", 'Array[String]', "'unique'")
       expect(resources).to include('env_c_module_c')
     end
 
     it "can 'hash' merge values provided by the environment only" do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'d'", 'Hash[String,String]', "'hash'")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::d'", 'Hash[String,String]', "'hash'")
       expect(resources).to include('env_d1_env_d2_env_d3')
     end
 
     it "can 'hash' merge values provided by both the environment and the module" do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "'hash'")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "'hash'")
       expect(resources).to include('env_e1_module_e2_env_e3')
     end
 
     it "can 'hash' merge values provided by global, environment, and module" do
-      Hiera.any_instance.expects(:lookup).with('e', any_parameters).returns({ 'k1' => 'global_e1' })
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "'hash'")
+      Hiera.any_instance.expects(:lookup).with('abc::e', any_parameters).returns({ 'k1' => 'global_e1' })
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "'hash'")
       expect(resources).to include('global_e1_module_e2_env_e3')
     end
 
     it "can pass merge parameter in the form of a hash with a 'strategy=>unique'" do
-      resources = assemble_and_compile('${r[0]}_${r[1]}', "'c'", 'Array[String]', "{strategy => 'unique'}")
+      resources = assemble_and_compile('${r[0]}_${r[1]}', "'abc::c'", 'Array[String]', "{strategy => 'unique'}")
       expect(resources).to include('env_c_module_c')
     end
 
     it "can pass merge parameter in the form of a hash with 'strategy=>hash'" do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'hash'}")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{strategy => 'hash'}")
       expect(resources).to include('env_e1_module_e2_env_e3')
     end
 
     it "can pass merge parameter in the form of a hash with a 'strategy=>deep'" do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'deep'}")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{strategy => 'deep'}")
       expect(resources).to include('env_e1_module_e2_env_e3')
     end
 
     it "will fail unless merge in the form of a hash contains a 'strategy'" do
       expect do
-        assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{merge_key => 'hash'}")
+        assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{merge_key => 'hash'}")
       end.to raise_error(Puppet::ParseError, /hash given as 'merge' must contain the name of a strategy/)
     end
 
     it 'will raise an exception when value is not found for single key and no default is provided' do
       expect do
-        assemble_and_compile('${r}', "'x'")
-      end.to raise_error(Puppet::ParseError, /did not find a value for the name 'x'/)
+        assemble_and_compile('${r}', "'abc::x'")
+      end.to raise_error(Puppet::ParseError, /did not find a value for the name 'abc::x'/)
     end
 
     it 'can lookup an undef value' do
-      resources = assemble_and_compile('${r}', "'n'")
+      resources = assemble_and_compile('${r}', "'abc::n'")
       expect(resources).to include('no_value')
     end
 
     it 'will not replace an undef value with a given default' do
-      resources = assemble_and_compile('${r}', "'n'", 'undef', 'undef', '"default_n"')
+      resources = assemble_and_compile('${r}', "'abc::n'", 'undef', 'undef', '"default_n"')
       expect(resources).to include('no_value')
     end
 
     it 'will not accept a succesful lookup of an undef value when the type rejects it' do
       expect do
-        assemble_and_compile('${r}', "'n'", 'String')
+        assemble_and_compile('${r}', "'abc::n'", 'String')
       end.to raise_error(Puppet::ParseError, /found value has wrong type/)
     end
 
     it 'will raise an exception when value is not found for array key and no default is provided' do
       expect do
-        assemble_and_compile('${r}', "['x', 'y']")
-      end.to raise_error(Puppet::ParseError, /did not find a value for any of the names \['x', 'y'\]/)
+        assemble_and_compile('${r}', "['abc::x', 'abc::y']")
+      end.to raise_error(Puppet::ParseError, /did not find a value for any of the names \['abc::x', 'abc::y'\]/)
     end
 
     it 'can lookup and deep merge shallow values provided by the environment only' do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'d'", 'Hash[String,String]', "'deep'")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::d'", 'Hash[String,String]', "'deep'")
       expect(resources).to include('env_d1_env_d2_env_d3')
     end
 
     it 'can lookup and deep merge shallow values provided by both the module and the environment' do
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "'deep'")
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "'deep'")
       expect(resources).to include('env_e1_module_e2_env_e3')
     end
 
     it 'can lookup and deep merge deep values provided by global, environment, and module' do
-      Hiera.any_instance.expects(:lookup).with('f', any_parameters).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
-      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'f'", 'Hash[String,Hash[String,String]]', "'deep'")
+      Hiera.any_instance.expects(:lookup).with('abc::f', any_parameters).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
+      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
     it 'will propagate resolution_type :array to Hiera when merge == \'unique\''  do
-      Hiera.any_instance.expects(:lookup).with('c', anything, anything, anything, :array).returns(['global_c'])
-      resources = assemble_and_compile('${r[0]}_${r[1]}_${r[2]}', "'c'", 'Array[String]', "'unique'")
+      Hiera.any_instance.expects(:lookup).with('abc::c', anything, anything, anything, :array).returns(['global_c'])
+      resources = assemble_and_compile('${r[0]}_${r[1]}_${r[2]}', "'abc::c'", 'Array[String]', "'unique'")
       expect(resources).to include('global_c_env_c_module_c')
     end
 
     it 'will propagate a Hash resolution_type with :behavior => :native to Hiera when merge == \'hash\''  do
-      Hiera.any_instance.expects(:lookup).with('e', anything, anything, anything, { :behavior => :native }).returns({ 'k1' => 'global_e1' })
-      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'e'", 'Hash[String,String]', "{strategy => 'hash'}")
+      Hiera.any_instance.expects(:lookup).with('abc::e', anything, anything, anything, { :behavior => :native }).returns({ 'k1' => 'global_e1' })
+      resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{strategy => 'hash'}")
       expect(resources).to include('global_e1_module_e2_env_e3')
     end
 
     it 'will propagate a Hash resolution_type with :behavior => :deeper to Hiera when merge == \'deep\''  do
-      Hiera.any_instance.expects(:lookup).with('f', anything, anything, anything, { :behavior => :deeper }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
-      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'f'", 'Hash[String,Hash[String,String]]', "'deep'")
+      Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
+      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
     it 'will propagate a Hash resolution_type with symbolic deep merge options to Hiera'  do
-      Hiera.any_instance.expects(:lookup).with('f', anything, anything, anything, { :behavior => :deeper, :knockout_prefix => '--' }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
-      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'f'", 'Hash[String,Hash[String,String]]', "{ 'strategy' => 'deep', 'knockout_prefix' => '--' }")
+      Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper, :knockout_prefix => '--' }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
+      resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "{ 'strategy' => 'deep', 'knockout_prefix' => '--' }")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
     context 'with provided default' do
       it 'will return default when lookup fails' do
-        resources = assemble_and_compile('${r}', "'x'", 'String', 'undef', "'dflt_x'")
+        resources = assemble_and_compile('${r}', "'abc::x'", 'String', 'undef', "'dflt_x'")
         expect(resources).to include('dflt_x')
       end
 
       it 'can precede default parameter with undef as the value_type and undef as the merge type' do
-        resources = assemble_and_compile('${r}', "'x'", 'undef', 'undef', "'dflt_x'")
+        resources = assemble_and_compile('${r}', "'abc::x'", 'undef', 'undef', "'dflt_x'")
         expect(resources).to include('dflt_x')
       end
 
       it 'can use array' do
-        resources = assemble_and_compile('${r[0]}_${r[1]}', "'x'", 'Array[String]', 'undef', "['dflt_x', 'dflt_y']")
+        resources = assemble_and_compile('${r[0]}_${r[1]}', "'abc::x'", 'Array[String]', 'undef', "['dflt_x', 'dflt_y']")
         expect(resources).to include('dflt_x_dflt_y')
       end
 
       it 'can use hash' do
-        resources = assemble_and_compile('${r[a]}_${r[b]}', "'x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 'dflt_y'}")
+        resources = assemble_and_compile('${r[a]}_${r[b]}', "'abc::x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 'dflt_y'}")
         expect(resources).to include('dflt_x_dflt_y')
       end
 
       it 'fails unless default is an instance of value_type' do
         expect do
-          assemble_and_compile('${r[a]}_${r[b]}', "'x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 32}")
+          assemble_and_compile('${r[a]}_${r[b]}', "'abc::x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 32}")
         end.to raise_error(Puppet::ParseError, /default_value value has wrong type/)
       end
     end
 
     context 'with a default block' do
       it 'will be called when lookup fails' do
-        resources = assemble_and_compile_with_block('${r}', "'dflt_x'", "'x'")
+        resources = assemble_and_compile_with_block('${r}', "'dflt_x'", "'abc::x'")
         expect(resources).to include('dflt_x')
       end
 
       it 'will not called when lookup succeeds but the found value is nil' do
-        resources = assemble_and_compile_with_block('${r}', "'dflt_x'", "'n'")
+        resources = assemble_and_compile_with_block('${r}', "'dflt_x'", "'abc::n'")
         expect(resources).to include('no_value')
       end
 
       it 'can use array' do
-        resources = assemble_and_compile_with_block('${r[0]}_${r[1]}', "['dflt_x', 'dflt_y']", "'x'")
+        resources = assemble_and_compile_with_block('${r[0]}_${r[1]}', "['dflt_x', 'dflt_y']", "'abc::x'")
         expect(resources).to include('dflt_x_dflt_y')
       end
 
       it 'can use hash' do
-        resources = assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 'dflt_y'}", "'x'")
+        resources = assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 'dflt_y'}", "'abc::x'")
         expect(resources).to include('dflt_x_dflt_y')
       end
 
       it 'can return undef from block' do
-        resources = assemble_and_compile_with_block('${r}', 'undef', "'x'")
+        resources = assemble_and_compile_with_block('${r}', 'undef', "'abc::x'")
         expect(resources).to include('no_value')
       end
 
       it 'fails unless block returns an instance of value_type' do
         expect do
-          assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 32}", "'x'", 'Hash[String,String]')
+          assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 32}", "'abc::x'", 'Hash[String,String]')
         end.to raise_error(Puppet::ParseError, /default_block value has wrong type/)
       end
 
@@ -276,49 +276,89 @@ describe "when performing lookup" do
 
   context 'when passing a hash as the only parameter' do
     it 'can pass a single name correctly' do
-      resources = assemble_and_compile('${r}', "{name => 'a'}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::a'}")
       expect(resources).to include('env_a')
     end
 
     it 'can pass a an array of names correctly' do
-      resources = assemble_and_compile('${r}', "{name => ['b', 'a']}")
+      resources = assemble_and_compile('${r}', "{name => ['abc::b', 'abc::a']}")
       expect(resources).to include('module_b')
     end
 
     it 'can pass an override map and find values there even though they would be found' do
-      resources = assemble_and_compile('${r}', "{name => 'a', override => { a => 'override_a'}}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::a', override => { abc::a => 'override_a'}}")
       expect(resources).to include('override_a')
     end
 
     it 'can pass an default_values_hash and find values there correctly' do
-      resources = assemble_and_compile('${r}', "{name => 'x', default_values_hash => { x => 'extra_x'}}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::x', default_values_hash => { abc::x => 'extra_x'}}")
       expect(resources).to include('extra_x')
     end
 
     it 'can pass an default_values_hash but not use it when value is found elsewhere' do
-      resources = assemble_and_compile('${r}', "{name => 'a', default_values_hash => { a => 'extra_a'}}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::a', default_values_hash => { abc::a => 'extra_a'}}")
       expect(resources).to include('env_a')
     end
 
     it 'can pass an default_values_hash but not use it when value is found elsewhere even when found value is undef' do
-      resources = assemble_and_compile('${r}', "{name => 'n', default_values_hash => { n => 'extra_n'}}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::n', default_values_hash => { abc::n => 'extra_n'}}")
       expect(resources).to include('no_value')
     end
 
     it 'can pass an override and an default_values_hash and find the override value' do
-      resources = assemble_and_compile('${r}', "{name => 'x', override => { x => 'override_x'}, default_values_hash => { x => 'extra_x'}}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::x', override => { abc::x => 'override_x'}, default_values_hash => { abc::x => 'extra_x'}}")
       expect(resources).to include('override_x')
     end
 
     it 'will raise an exception when value is not found for single key and no default is provided' do
       expect do
-        assemble_and_compile('${r}', "{name => 'x'}")
-      end.to raise_error(Puppet::ParseError, /did not find a value for the name 'x'/)
+        assemble_and_compile('${r}', "{name => 'abc::x'}")
+      end.to raise_error(Puppet::ParseError, /did not find a value for the name 'abc::x'/)
     end
 
     it 'will not raise an exception when value is not found default value is nil' do
-      resources = assemble_and_compile('${r}', "{name => 'x', default_value => undef}")
+      resources = assemble_and_compile('${r}', "{name => 'abc::x', default_value => undef}")
       expect(resources).to include('no_value')
+    end
+  end
+
+  context 'when accessing from outside a module' do
+    it 'will raise an exception when key in the function provided module data is not prefixed' do
+      Puppet[:code] = "include bad_data\nlookup(bad_data::b)"
+      expect do
+        compiler.compile()
+      end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
+    end
+
+    it 'will resolve global, environment, and module correctly' do
+      Hiera.any_instance.expects(:lookup).with('bca::e', any_parameters).returns({ 'k1' => 'global_e1' })
+      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+        include bca
+        $r = lookup(bca::e, Hash[String,String], hash)
+        notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
+      END
+      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      expect(resources).to include('global_e1_module_bca_e2_env_bca_e3')
+    end
+
+    it 'will resolve global and environment correctly when module has no provider' do
+      Hiera.any_instance.expects(:lookup).with('no_provider::e', any_parameters).returns({ 'k1' => 'global_e1' })
+      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+        include no_provider
+        $r = lookup(no_provider::e, Hash[String,String], hash)
+        notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
+      END
+      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      expect(resources).to include('global_e1__env_no_provider_e3') # k2 is missing
+    end
+  end
+
+  context 'when accessing bad data' do
+    it 'will raise an exception when key in the function provided module data is not prefixed' do
+      Puppet[:code] = 'include bad_data'
+      expect do
+        compiler.compile()
+      end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
     end
   end
 end

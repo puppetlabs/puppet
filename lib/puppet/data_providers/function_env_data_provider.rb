@@ -21,7 +21,7 @@ class Puppet::DataProviders::FunctionEnvDataProvider < Puppet::Plugins::DataProv
     end
   end
 
-  def loader(scope)
+  def loader(key, scope)
     # This loader allows the data function to be private or public in the environment
     scope.compiler.loaders.private_environment_loader
   end
