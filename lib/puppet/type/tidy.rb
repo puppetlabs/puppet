@@ -253,7 +253,7 @@ Puppet::Type.newtype(:tidy) do
     else
       files = [self[:path]]
     end
-    result = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }.each { |file| notice "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
+    result = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.
