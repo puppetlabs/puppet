@@ -169,7 +169,11 @@ Licensed under the Apache 2.0 License
     end
     devices.each_value do |device|
       begin
-        Puppet.info "starting applying configuration to #{device.name} at #{device.url}"
+        device_url = URI.parse(device.url)
+        # Handle nil scheme & port
+        scheme = "#{device_url.scheme}://" if device_url.scheme
+        port = ":#{device_url.port}" if device_url.port
+        Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
 
         # override local $vardir and $certname
         Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
