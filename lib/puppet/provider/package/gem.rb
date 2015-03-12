@@ -122,7 +122,12 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def uninstall
-    gemcmd "uninstall", "-x", "-a", resource[:name]
+    command = [command(:gemcmd), "uninstall"]
+    command << "-x" << "-a" << resource[:name]
+    output = execute(command)
+    
+    # Apparently some stupid gem versions don't exit non-0 on failure
+    self.fail "Could not uninstall: #{output.chomp}" if output.include?("ERROR")
   end
 
   def update
