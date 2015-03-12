@@ -118,10 +118,8 @@ describe 'Lexer2' do
   end
 
   [ '_x::y', 'x::_y'].each do |string|
-    it "should consider the bare word '#{string}' to be a bad NAME" do
-      expect {
-        tokens_scanned_from(string)
-      }.to raise_error(/Illegal fully qualified name/)
+    it "should consider the bare word '#{string}' to be a WORD" do
+      tokens_scanned_from(string).should match_tokens2(:WORD)
     end
   end
 
