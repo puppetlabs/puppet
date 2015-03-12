@@ -207,21 +207,33 @@ describe 'Lexer2' do
     end
   end
 
-  { '"a$x b"'  => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   ' b',  {:line => 1, :pos=>5, :length=>3 }]],
+  { '"a$x b"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   ' b',  {:line => 1, :pos=>5, :length=>3 }]],
 
-    '"a$x.b"'  => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   '.b',  {:line => 1, :pos=>5, :length=>3 }]],
+    '"a$x.b"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   '.b',  {:line => 1, :pos=>5, :length=>3 }]],
 
-    '"$x.b"'   => [[:DQPRE,    '',    {:line => 1, :pos=>1, :length=>1 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>2, :length=>2 }],
-                   [:DQPOST,   '.b',  {:line => 1, :pos=>4, :length=>3 }]],
+    '"$x.b"'      => [[:DQPRE,    '',    {:line => 1, :pos=>1, :length=>1 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>2, :length=>2 }],
+                      [:DQPOST,   '.b',  {:line => 1, :pos=>4, :length=>3 }]],
 
-    '"a$x"'    => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   '',    {:line => 1, :pos=>5, :length=>1 }]],
+    '"a$x"'       => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>5, :length=>1 }]],
+
+    '"a${x}"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>5, :length=>1 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>7, :length=>1 }]],
+
+    '"a${_x}"'    => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, '_x',  {:line => 1, :pos=>5, :length=>2 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>8, :length=>1 }]],
+
+    '"a${y::_x}"' => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, 'y::_x',  {:line => 1, :pos=>5, :length=>5 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>11, :length=>1 }]],
   }.each do |source, expected|
     it "should lex an interpolated variable 'x' from #{source}" do
       tokens_scanned_from(source).should match_tokens2(*expected)
