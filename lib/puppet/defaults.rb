@@ -74,7 +74,7 @@ module Puppet
     :logdir => {
         :default  => nil,
         :type     => :directory,
-        :mode     => "0750",
+        :mode     => "0755",
         :owner    => "service",
         :group    => "service",
         :desc     => "The directory in which to store log files",
