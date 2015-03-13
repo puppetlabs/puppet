@@ -18,6 +18,7 @@ ARGV << "--confdir" << "/etc/puppetlabs/puppet"
 ARGV << "--vardir"  << "/opt/puppetlabs/server/data/puppetmaster"
 ARGV << "--logdir"  << "/var/log/puppetlabs/puppetmaster"
 ARGV << "--rundir"  << "/var/run/puppetlabs/puppetmaster"
+ARGV << "--codedir"  << "/etc/puppetlabs/code"
 
 # always_cache_features is a performance improvement and safe for a master to
 # apply. This is intended to allow agents to recognize new features that may be
