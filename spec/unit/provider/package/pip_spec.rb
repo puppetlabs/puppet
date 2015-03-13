@@ -193,6 +193,15 @@ describe provider_class do
       @provider.install
     end
 
+    it "should handle install options" do
+      @resource[:ensure] = :installed
+      @resource[:source] = nil
+      @resource[:install_options] = [{"--timeout" => "10"}, "--no-index"]
+      @provider.expects(:lazy_pip).
+        with("install", "-q", "--timeout=10", "--no-index", "fake_package")
+      @provider.install
+    end
+
   end
 
   describe "uninstall" do
