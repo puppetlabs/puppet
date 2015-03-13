@@ -233,6 +233,17 @@ context 'uninstalling myresource' do
         provider.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
         provider.uninstall
       end
+
+      it "should not append uninstall_options by default" do
+        provider.expects(:execute).with { |args| args.length == 5 }.returns ""
+        provider.uninstall
+      end
+
+      it "should allow setting an uninstall_options parameter" do
+        resource[:uninstall_options] = [ '--ignore-dependencies', {'--version' => '0.1.1' } ]
+        provider.expects(:execute).with { |args| args[5] == '--ignore-dependencies' && args[6] == '--version=0.1.1' }.returns ''
+        provider.uninstall
+      end
     end
   end
 end
