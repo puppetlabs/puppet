@@ -187,3 +187,52 @@ context 'installing myresource' do
     end
   end
 end
+
+context 'uninstalling myresource' do
+  describe provider_class do
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name     => 'myresource',
+        :ensure   => :absent
+      )
+    end
+
+    let(:provider) do
+      provider = provider_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before :each do
+      resource.provider = provider
+    end
+
+    describe "when uninstalling" do
+      it "should use the path to the gem" do
+        provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
+        provider.uninstall
+      end
+
+      it "should specify that the gem is being uninstalled" do
+        provider.expects(:execute).with { |args| args[1] == "uninstall" }.returns ""
+        provider.uninstall
+      end
+
+      it "should specify that the relevant executables should be removed without confirmation" do
+        provider.expects(:execute).with { |args| args[2] == "--executables" }.returns ""
+        provider.uninstall
+      end
+
+      it "should specify that all the matching versions should be removed" do
+        provider.expects(:execute).with { |args| args[3] == "--all" }.returns ""
+        provider.uninstall
+      end
+
+      it "should specify the package name" do
+        provider.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
+        provider.uninstall
+      end
+    end
+  end
+end
