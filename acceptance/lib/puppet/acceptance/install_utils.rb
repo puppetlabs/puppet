@@ -126,7 +126,6 @@ module Puppet
         case platform
           when /^(fedora|el|centos)-(\d+)-(.+)$/
             variant = (($1 == 'centos') ? 'el' : $1)
-            fedora_prefix = ((variant == 'fedora') ? 'f' : '')
             version = $2
             arch = $3
 
@@ -136,12 +135,11 @@ module Puppet
               platform_configs_dir
             )
 
-            pattern = "pl-%s%s-%s-%s%s-%s.repo"
+            pattern = "pl-%s%s-%s-%s-%s.repo"
             repo_filename = pattern % [
               project,
               sha ? '-' + sha : '',
               variant,
-              fedora_prefix,
               version,
               arch
             ]
@@ -151,23 +149,21 @@ module Puppet
               platform_configs_dir
             )
 
-            link = "http://%s/%s/%s/repos/%s/%s%s/products/%s/" % [
+            link = "http://%s/%s/%s/repos/%s/%s/products/%s/" % [
               tld,
               project,
               sha,
               variant,
-              fedora_prefix,
               version,
               arch
             ]
 
             if not link_exists?(link)
-              link = "http://%s/%s/%s/repos/%s/%s%s/devel/%s/" % [
+              link = "http://%s/%s/%s/repos/%s/%s/devel/%s/" % [
                 tld,
                 project,
                 sha,
                 variant,
-                fedora_prefix,
                 version,
                 arch
               ]
