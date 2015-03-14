@@ -64,7 +64,7 @@ module Puppet::Pops::Parser::HeredocSupport
     # and it should start scanning after the first found \n (or if not found == error).
 
     if ctx[:newline_jump]
-      scn.pos = lexing_context[:newline_jump]
+      scn.pos = @lexing_context[:newline_jump]
     else
       scn.scan_until(/\n/) || lex_error("Heredoc without any following lines of text")
     end
