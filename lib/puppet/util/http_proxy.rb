@@ -96,4 +96,36 @@ module Puppet::Util::HttpProxy
 
     proxy
   end
+
+  # Retrieve a document through HTTP(s), following redirects if necessary.
+  # 
+  # Based on the the client implementation in the HTTP pool.
+  #
+  # @see Puppet::Network::HTTP::Connection#request_with_redirects
+  #
+  # @param [URI] uri The address of the resource to retrieve.
+  # @param [symbol] method The name of the Net::HTTP method to use, typically :get, :head, :post etc.
+  # @param [FixNum] redirect_limit The number of redirections that can be followed.
+  # @return [Net::HTTPResponse] a response object
+  def self.request_with_redirects(uri, method, redirect_limit = 10)
+    current_uri = uri
+    response = nil
+
+    0.upto(redirect_limit) do |redirection|
+      return response if response
+
+      proxy = get_http_object(current_uri)
+      response = proxy.send(method, current_uri.path)
+
+      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+
+      if [301, 302, 307].include?(response.code.to_i)
+        # handle the redirection
+        current_uri = URI.parse(response['location'])
+        response = nil
+      end
+    end
+
+    raise RedirectionLimitExceededException, "Too many HTTP redirections for #{uri}"
+  end
 end
