@@ -8,7 +8,14 @@ module Puppet
 
     newproperty(:message) do
       desc "The message to be sent to the log."
+
       def sync
+
+        case @resource["fail"]
+        when :true
+          self.fail self.should
+        end
+
         case @resource["withpath"]
         when :true
           send(@resource[:loglevel], self.should)
@@ -31,6 +38,13 @@ module Puppet
 
     newparam(:withpath) do
       desc "Whether to show the full object path. Defaults to false."
+      defaultto :false
+
+      newvalues(:true, :false)
+    end
+
+    newparam(:fail) do
+      desc "Triggers failure of the current puppet run. Defaults to false."
       defaultto :false
 
       newvalues(:true, :false)
