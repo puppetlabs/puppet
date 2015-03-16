@@ -692,6 +692,15 @@ describe provider_class do
       expect(@provider.execute_changes).to eq(:executed)
     end
 
+    it "should handle rename commands" do
+      @resource[:changes] = "rename Jar/Jar Binks"
+      @resource[:context] = "/foo/"
+      @augeas.expects(:rename).with("/foo/Jar/Jar", "Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      expect(@provider.execute_changes).to eq(:executed)
+    end
+
     it "should handle setm commands" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
       @resource[:context] = "/foo/"

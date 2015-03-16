@@ -41,6 +41,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "clearm" => [ :path, :string ],
     "touch" => [ :path ],
     "mv" => [ :path, :path ],
+    "rename" => [ :path, :string ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
     "defvar" => [ :string, :path ],
@@ -501,6 +502,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "mv", "move"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.mv(cmd_array[0], cmd_array[1])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+          when "rename"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.rename(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           else fail("Command '#{command}' is not supported")
         end
