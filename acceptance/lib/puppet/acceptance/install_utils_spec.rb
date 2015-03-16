@@ -151,7 +151,7 @@ describe 'InstallUtils' do
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{repo_dir}")
       testcase.expects(:link_exists?).returns( true )
-  
+
       testcase.expects(:on).with(host, regexp_matches(/rm.*repo; rm.*rpm; rm.*#{repo_dir}/))
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{rpm_file}", '/root')
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{repo_file}", '/root')
@@ -196,10 +196,10 @@ describe 'InstallUtils' do
         ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-fedora-f20-x86_64.repo",
+          "pl-puppet-abcdef10-fedora-20-x86_64.repo",
         ],
         :repo_dir => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/f20/products/x86_64/",
+          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/20/products/x86_64/",
           "x86_64",
         ],
       },
