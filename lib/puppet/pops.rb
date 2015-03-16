@@ -119,6 +119,10 @@ module Puppet
       require 'puppet/pops/functions/dispatch'
       require 'puppet/pops/functions/dispatcher'
     end
+
+    module Migration
+      require 'puppet/pops/migration/migration_checker'
+    end
   end
 
   require 'puppet/parser/ast/pops_bridge'
