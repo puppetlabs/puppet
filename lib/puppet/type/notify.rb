@@ -6,6 +6,10 @@ module Puppet
   Type.newtype(:notify) do
     @doc = "Sends an arbitrary message to the agent run-time log."
 
+    def refresh
+      self.property(:message).sync
+    end
+
     newproperty(:message) do
       desc "The message to be sent to the log."
       def sync
@@ -23,6 +27,7 @@ module Puppet
       end
 
       def insync?(is)
+        return true if @resource["refreshonly"] == :true
         false
       end
 
@@ -33,6 +38,12 @@ module Puppet
       desc "Whether to show the full object path. Defaults to false."
       defaultto :false
 
+      newvalues(:true, :false)
+    end
+
+    newparam(:refreshonly) do
+      desc "Will cause the resource to be executed on refresh events only. Defaults to false."
+      defaultto :false
       newvalues(:true, :false)
     end
 
