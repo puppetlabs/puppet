@@ -79,8 +79,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "can return an iterator for all set parameters" do
-    resource = Puppet::Type.type(:notify).new(:name=>'foo',:message=>'bar',:tag=>'baz',:require=> "File['foo']")
-    params = [:name, :message, :withpath, :loglevel, :tag, :require]
+    resource = Puppet::Type.type(:notify).new(:name=>'foo',:message=>'bar',:tag=>'baz',:fail=>false,:require=> "File['foo']")
+    params = [:name, :message, :withpath, :loglevel, :tag, :fail, :require]
     resource.eachparameter { |param|
       expect(params).to be_include(param.to_s.to_sym)
     }
