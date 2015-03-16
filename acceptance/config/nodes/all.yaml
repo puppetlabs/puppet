@@ -3,9 +3,9 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: el-6-x86_64
+    platform: el-7-x86_64
     hypervisor: vcloud
-    template: redhat-6-x86_64
+    template: redhat-7-x86_64
   rhel-agent:
     roles:
       - agent
@@ -15,15 +15,15 @@ HOSTS:
   fedora-agent:
     roles:
       - agent
-    platform: fedora-18-i386
+    platform: fedora-20-i386
     hypervisor: vcloud
-    template: fedora-18-i386
+    template: fedora-20-i386
   ubuntu-agent:
     roles:
       - agent
-    platform: ubuntu-lucid-i386
+    platform: ubuntu-precise-i386
     hypervisor: vcloud
-    template: ubuntu-1004-i386
+    template: ubuntu-1204-i386
   wheezy-agent:
     roles:
       - agent
@@ -33,9 +33,9 @@ HOSTS:
   centos-agent:
     roles:
       - agent
-    platform: centos-5-i386
+    platform: centos-6-i386
     hypervisor: vcloud
-    template: centos-5-i386
+    template: centos-6-i386
   solaris-agent:
     roles:
       - agent
@@ -46,8 +46,9 @@ HOSTS:
     roles:
       - agent
     platform: windows-2003r2-32
-    hypervisor: vsphere
-    snapshot: git
+    ruby_arch: x86
+    hypervisor: vcloud
+    template: win-2003r2-i386
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic

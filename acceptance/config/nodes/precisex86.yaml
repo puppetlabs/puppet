@@ -3,15 +3,15 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: centos-5-x86_64
+    platform: el-7-x86_64
     hypervisor: vcloud
-    template: centos-5-x86_64
+    template: redhat-7-x86_64
   agent:
     roles:
       - agent
-    platform: centos-5-i386
+    platform: ubuntu-precise-i386
     hypervisor: vcloud
-    template: centos-5-i386
+    template: ubuntu-1204-i386
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic

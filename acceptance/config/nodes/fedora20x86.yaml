@@ -2,21 +2,17 @@ HOSTS:
   master:
     roles:
       - master
-      - database
       - agent
-      - dashboard
-    platform: el-7-i386
+    platform: el-7-x86_64
     hypervisor: vcloud
-    template: redhat-7-i386
-  win2003r2-ruby193-2:
+    template: redhat-7-x86_64
+  agent:
     roles:
       - agent
-    platform: windows-2003r2-32
-    hypervisor: vsphere
-    snapshot: git
+    platform: fedora-20-i386
+    hypervisor: vcloud
+    template: fedora-20-i386
 CONFIG:
-  nfs_server: NONE
-  consoleport: 443
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
   folder: Delivery/Quality Assurance/FOSS/Dynamic

@@ -3,15 +3,15 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: ubuntu-precise-x86_64
+    platform: el-7-x86_64
     hypervisor: vcloud
-    template: ubuntu-1204-x86_64
+    template: redhat-7-x86_64
   agent:
     roles:
       - agent
-    platform: ubuntu-precise-i386
+    platform: debian-squeeze-x86_64
     hypervisor: vcloud
-    template: ubuntu-1204-i386
+    template: debian-6-x86_64
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic

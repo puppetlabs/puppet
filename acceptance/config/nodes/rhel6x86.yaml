@@ -3,9 +3,9 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: el-6-x86_64
+    platform: el-7-x86_64
     hypervisor: vcloud
-    template: redhat-6-x86_64
+    template: redhat-7-x86_64
   agent:
     roles:
       - agent
