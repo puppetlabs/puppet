@@ -2,16 +2,15 @@ HOSTS:
   master:
     roles:
       - master
-      - agent
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
   agent:
     roles:
       - agent
-    platform: el-5-x86_64
+    platform: debian-squeeze-x86_64
     hypervisor: vcloud
-    template: redhat-5-x86_64
+    template: debian-6-x86_64
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
