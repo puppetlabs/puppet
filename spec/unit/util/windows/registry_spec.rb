@@ -111,6 +111,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
       let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
       let (:subkey_name) { "PuppetRegistryTest" }
       let (:guid) { SecureRandom.uuid }
+      let (:regsam) { Puppet::Util::Windows::Registry::KEY32 }
 
       after(:each) do
         # Ruby 2.1.5 has bugs with deleting registry keys due to using ANSI
@@ -118,8 +119,8 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
         # https://github.com/ruby/ruby/blob/v2_1_5/ext/win32/lib/win32/registry.rb#L323-L329
         # therefore, use our own built-in registry helper code
 
-        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
-          subject.delete_key(reg, subkey_name)
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS | regsam) do |reg|
+          subject.delete_key(reg, subkey_name, regsam)
         end
       end
 
@@ -145,7 +146,7 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
         Win32::Registry.expects(:each_key).never
         Win32::Registry.expects(:each_value).never
 
-        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS | regsam) do |reg|
           reg.write("#{guid}", Win32::Registry::REG_SZ, utf_16_str)
 
           # trigger Puppet::Util::Windows::Registry FFI calls
