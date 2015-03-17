@@ -14,6 +14,8 @@ class Puppet::Pops::Validation::Checker4_0
   Model = Puppet::Pops::Model
 
   attr_reader :acceptor
+  attr_reader :migration_checker
+
   # Initializes the validator with a diagnostics producer. This object must respond to
   # `:will_accept?` and `:accept`.
   #
@@ -30,7 +32,7 @@ class Puppet::Pops::Validation::Checker4_0
     @acceptor = diagnostics_producer
 
     # Use null migration checker unless given in context
-    @migration_checker ||= Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() }
+    @migration_checker ||= (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
   end
 
   # Validates the entire model by visiting each model element and calling `check`.
@@ -362,6 +364,14 @@ class Puppet::Pops::Validation::Checker4_0
 
   def check_LiteralList(o)
     o.values.each {|v| rvalue(v) }
+  end
+
+  def check_LiteralFloat(o)
+    migration_checker.report_ambiguous_float(o)
+  end
+
+  def check_LiteralInteger(o)
+    migration_checker.report_ambiguous_integer(o)
   end
 
   def check_NodeDefinition(o)
