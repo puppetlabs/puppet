@@ -80,9 +80,20 @@ class Puppet::Util::Log
   # Create a new log message.  The primary role of this method is to
   # avoid creating log messages below the loglevel.
   def Log.create(hash)
-    raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
-    raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
-    @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
+    level = hash[:level]
+    raise Puppet::DevError, "Logs require a level which is a symbol or string" unless level.respond_to? "to_sym"
+
+    level = level.to_sym
+    index = @levels.index(level)
+    raise Puppet::DevError, "Invalid log level #{level}" if index.nil?
+
+    if index >= @loglevel
+      log = Puppet::Util::Log.new(hash)
+      newmessage(log)
+      log
+    else
+      nil
+    end
   end
 
   def Log.destinations
@@ -238,44 +249,40 @@ class Puppet::Util::Log
   end
 
   def self.from_data_hash(data)
-    obj = allocate
-    obj.initialize_from_hash(data)
-    obj
+    symkeyed_data = {}
+    data.each_pair { |k,v| symkeyed_data[k.to_sym] = v }
+    new(symkeyed_data)
   end
 
-  attr_accessor :time, :remote, :file, :line, :source
-  attr_reader :level, :message
+  attr_reader :level, :message, :time, :file, :line, :source
 
   def initialize(args)
-    self.level = args[:level]
-    self.message = args[:message]
-    self.source = args[:source] || "Puppet"
+    level = args[:level]
+    raise ArgumentError, "Puppet::Util::Log requires a log level" if level.nil?
+    raise ArgumentError, "Puppet::Util::Log requires that log level is a symbol or string" unless level.respond_to? "to_sym"
 
-    @time = Time.now
+    level = level.to_sym
+    raise ArgumentError, "Invalid log level #{level}" unless self.class.validlevel?(level)
+    @level = level
+    # Tag myself with my log level
+    tag(level)
 
-    if tags = args[:tags]
-      tags.each { |t| self.tag(t) }
-    end
+    message = args[:message]
+    raise ArgumentError, "Puppet::Util::Log requires a message" if message.nil?
+    @message = message.to_s
 
-    [:file, :line].each do |attr|
-      next unless value = args[attr]
-      send(attr.to_s + "=", value)
-    end
+    file = args[:file]
+    @file = file unless file.nil?
+    line = args[:line]
+    @line = line unless line.nil?
+    self.source = args[:source]
 
-    Log.newmessage(self)
-  end
+    tags = args[:tags]
+    tags.each { |t| tag(t) } unless tags.nil?
 
-  def initialize_from_hash(data)
-    @level = data['level'].intern
-    @message = data['message']
-    @source = data['source']
-    @tags = Puppet::Util::TagSet.new(data['tags'])
-    @time = data['time']
-    if @time.is_a? String
-      @time = Time.parse(@time)
-    end
-    @file = data['file'] if data['file']
-    @line = data['line'] if data['line']
+    time = args[:time]
+    time = Time.parse(time) if time.is_a?(String)
+    @time = time || Time.now
   end
 
   def to_hash
@@ -298,32 +305,16 @@ class Puppet::Util::Log
     to_data_hash.to_pson(*args)
   end
 
-  def message=(msg)
-    raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
-    @message = msg.to_s
-  end
-
-  def level=(level)
-    raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
-    raise ArgumentError, "Puppet::Util::Log requires a symbol or string" unless level.respond_to? "to_sym"
-    @level = level.to_sym
-    raise ArgumentError, "Invalid log level #{@level}" unless self.class.validlevel?(@level)
-
-    # Tag myself with my log level
-    tag(level)
-  end
-
   # If they pass a source in to us, we make sure it is a string, and
   # we retrieve any tags we can.
   def source=(source)
     if source.respond_to?(:path)
-      @source = source.path
       source.tags.each { |t| tag(t) }
-      self.file = source.file
-      self.line = source.line
-    else
-      @source = source.to_s
+      @file ||= source.file
+      @line ||= source.line
+      source = source.path
     end
+    @source = source.nil? ? 'Puppet' : source.to_s
   end
 
   def to_report
@@ -333,7 +324,6 @@ class Puppet::Util::Log
   def to_s
     message
   end
-
 end
 
 # This is for backward compatibility from when we changed the constant to Puppet::Util::Log
