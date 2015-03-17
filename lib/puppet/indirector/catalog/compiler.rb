@@ -91,15 +91,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     benchmark(:notice, str) do
       Puppet::Util::Profiler.profile(str, [:compiler, :compile, node.environment, node.name]) do
-        begin
-          config = Puppet::Parser::Compiler.compile(node)
-        rescue Puppet::Error => detail
-          Puppet.err(detail.to_s) if networked?
-          raise
-        end
+        config = Puppet::Parser::Compiler.compile(node)
       end
     end
-
     config
   end
 

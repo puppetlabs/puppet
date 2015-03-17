@@ -103,7 +103,10 @@ describe 'function for dynamically creating resources' do
 
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.to raise_error(Puppet::Error, 'Must pass one to Foocreateresource[blah] on node foonode')
+      }.to raise_error(Puppet::ExternalFileError, 'Must pass one to Foocreateresource[blah]') do |e|
+          expect(e.node).to be_a(Puppet::Node)
+          expect(e.node.name).to eq('foonode')
+      end
     end
 
     it 'should be able to add multiple defines' do
@@ -169,7 +172,12 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'blah'=>{'one'=>'two'}})
         MANIFEST
-      end.to raise_error(/Could not find declared class blah at line 1 on node foonode/)
+      end.to raise_error(Puppet::ExternalFileError, /Could not find declared class blah/) do |e|
+          expect(e.node).to be_a(Puppet::Node)
+          expect(e.node.name).to eq('foonode')
+          expect(e.line).to eq(1)
+          expect(e.pos).to eq(11)
+      end
     end
 
     it 'should be able to add edges' do

@@ -146,7 +146,7 @@ describe "Puppet::Parser::Compiler" do
         Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
         raise "compilation should have raised Puppet::Error"
       rescue Puppet::Error => e
-        e.message.should =~ /at line 2/
+        e.line.should eq(2)
       end
     end
   end

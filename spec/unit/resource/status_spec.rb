@@ -83,21 +83,21 @@ describe Puppet::Resource::Status do
     end
 
     it "should set the tags to the event tags" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:tags] == %w{one two} }
+      Puppet::Util::Log.expects(:create).with { |args| args[:tags] == %w{one two} }
       @status.stubs(:tags).returns %w{one two}
       @status.send_log :notice, "my message"
     end
 
     [:file, :line].each do |attr|
       it "should pass the #{attr}" do
-        Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
+        Puppet::Util::Log.expects(:create).with { |args| args[attr] == "my val" }
         @status.send(attr.to_s + "=", "my val")
         @status.send_log :notice, "my message"
       end
     end
 
     it "should use the source description as the source" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "my source" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "my source" }
       @status.stubs(:source_description).returns "my source"
       @status.send_log :notice, "my message"
     end
