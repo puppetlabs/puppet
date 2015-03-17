@@ -53,6 +53,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
+
+    # Use null migration checker unless given in context
+    @migration_checker ||= Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() }
   end
 
   # @api private
