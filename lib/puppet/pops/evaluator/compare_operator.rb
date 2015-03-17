@@ -19,6 +19,8 @@ class Puppet::Pops::Evaluator::CompareOperator
     @@compare_visitor ||= Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
     @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 2, 2)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
+    # Use null migration checker unless given in context
+    @migration_checker ||= Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() }
   end
 
   def equals (a, b)

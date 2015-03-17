@@ -28,6 +28,9 @@ class Puppet::Pops::Validation::Checker4_0
     @@idem_visitor        ||= Puppet::Pops::Visitor.new(self, "idem", 0, 0)
 
     @acceptor = diagnostics_producer
+
+    # Use null migration checker unless given in context
+    @migration_checker ||= Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() }
   end
 
   # Validates the entire model by visiting each model element and calling `check`.
