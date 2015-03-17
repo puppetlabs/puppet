@@ -71,5 +71,13 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
         parser.evaluate_string(scope, "$a = [1.0,2.0,3.1415]", __FILE__)
       end
     end
+
+    it "is called for boolean coercion of String" do
+      migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
+      migration_checker.expects(:report_empty_string_true).times(2)
+      Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$a = ('a' and '')", __FILE__)
+      end
+    end
   end
 end

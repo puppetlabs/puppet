@@ -10,4 +10,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   def report_ambiguous_float(o)
   end
+
+  def report_empty_string_true(value, o)
+  end
 end
