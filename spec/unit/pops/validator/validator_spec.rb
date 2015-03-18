@@ -19,9 +19,8 @@ describe "validating 4x" do
   end
 
   it 'should raise error for illegal names' do
-    pending "validation was too strict, now too relaxed - validation missing"
-    expect(validate(fqn('Aaa'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_NAME)
-    expect(validate(fqn('AAA'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_NAME)
+    expect(validate(parse('class aaa::_bbb {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('class Aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
 
   it 'should raise error for illegal variable names' do
@@ -174,6 +173,29 @@ describe "validating 4x" do
       it "produces an error when $#{word} is used as a parameter in a class" do
         source = "class x ($#{word}) {}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_NUMERIC_PARAMETER)
+      end
+    end
+  end
+
+  context 'top level constructs in conditionals' do
+    ['class', 'define', 'node'].each do |word|
+      it "produces an error when $#{word} is nested in an if expression" do
+        source = "if true { #{word} x {} }"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+      end
+    end
+
+    ['class', 'define', 'node'].each do |word|
+      it "produces an error when $#{word} is nested in an if-else expression" do
+        source = "if false {} else { #{word} x {} }"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+      end
+    end
+
+    ['class', 'define', 'node'].each do |word|
+      it "produces an error when $#{word} is nested in an unless expression" do
+        source = "unless false { #{word} x {} }"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
       end
     end
   end
