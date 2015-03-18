@@ -93,7 +93,7 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
         end
       end
 
-      it "all case expressions are checked for UC_bareword" do
+      it "all case options are checked for UC_bareword" do
         migration_checker = mock()
         migration_checker.expects(:report_uc_bareword_type).times(4)
         migration_checker.expects(:report_option_type_mismatch).times(4)
@@ -161,6 +161,7 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
       it "'a' in [true,false]" do
         migration_checker = mock()
         migration_checker.expects(:report_uc_bareword_type).once
+        migration_checker.expects(:report_in_expression).once
         Puppet.override({:migration_checker => migration_checker}, "migration-context") do
           Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "'a' in [true, false]", __FILE__)
         end

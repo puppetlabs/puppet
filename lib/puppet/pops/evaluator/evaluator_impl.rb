@@ -520,6 +520,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     left = evaluate(o.left_expr, scope)
     right = evaluate(o.right_expr, scope)
     @migration_checker.report_uc_bareword_type(left, o.left_expr)
+    @migration_checker.report_in_expression(o)
     @@compare_operator.include?(right, left, scope)
   end
 
