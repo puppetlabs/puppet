@@ -35,49 +35,123 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
   end
 
   let(:scope) { @scope }
-  let(:parser) { @parser}
 
-  context "when there is no MigrationChecker in the PuppetContext" do
+  describe "when there is no MigrationChecker in the PuppetContext" do
     it "a null implementation of the MigrationChecker gets created (once per impl that needs one)" do
       migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
       Puppet::Pops::Migration::MigrationChecker.expects(:new).at_least_once.returns(migration_checker)
       Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "1", __FILE__).should == 1
+      Puppet::Pops::Migration::MigrationChecker.unstub(:new)
     end
   end
 
-  context "when there is a MigrationChecker in the Puppet Context" do
+  describe "when there is a MigrationChecker in the Puppet Context" do
     it "does not create any MigrationChecker instances when parsing and evaluating" do
-      migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
+      migration_checker = mock()
       Puppet::Pops::Migration::MigrationChecker.expects(:new).never
       Puppet.override({:migration_checker => migration_checker}, "test-context") do
-        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "1", __FILE__).should == 1
+        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "true", __FILE__)
       end
+      Puppet::Pops::Migration::MigrationChecker.unstub(:new)
     end
   end
 
-  context "when validating parsed code" do
+  describe "when validating parsed code" do
     it "is called for each integer" do
-      migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
+      migration_checker = mock()
       migration_checker.expects(:report_ambiguous_integer).times(3)
       Puppet.override({:migration_checker => migration_checker}, "migration-context") do
-        parser.evaluate_string(scope, "$a = [1,2,3]", __FILE__)
+        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$a = [1,2,3]", __FILE__)
       end
     end
 
     it "is called for each float" do
-      migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
+      migration_checker = mock()
       migration_checker.expects(:report_ambiguous_float).times(3)
       Puppet.override({:migration_checker => migration_checker}, "migration-context") do
-        parser.evaluate_string(scope, "$a = [1.0,2.0,3.1415]", __FILE__)
+        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$a = [1.0,2.0,3.1415]", __FILE__)
       end
     end
+  end
 
+  describe "when evaluating code" do
     it "is called for boolean coercion of String" do
-      migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
+      migration_checker = mock()
       migration_checker.expects(:report_empty_string_true).times(2)
       Puppet.override({:migration_checker => migration_checker}, "migration-context") do
         Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$a = ('a' and '')", __FILE__)
       end
     end
+
+    context "with a case expression" do
+      it "the test expression is checked for UC_bareword" do
+        migration_checker = mock()
+        migration_checker.expects(:report_uc_bareword_type).once
+        Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "case Foo { default: {}}", __FILE__)
+        end
+      end
+
+      it "all case expressions are checked for UC_bareword" do
+        migration_checker = mock()
+        migration_checker.expects(:report_uc_bareword_type).times(4)
+        Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, 
+            "case true { Foo, Bar: {} Fee, 'not': {}}", __FILE__)
+        end
+      end
+    end
+
+    context "with a selector expression" do
+      it "the test expression is checked for UC_bareword" do
+        migration_checker = mock()
+        migration_checker.expects(:report_uc_bareword_type).once
+        Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "Foo ? { default => false}", __FILE__)
+        end
+      end
+
+      it "all options are checked for UC_bareword" do
+        migration_checker = mock()
+        migration_checker.expects(:report_uc_bareword_type).times(3)
+        Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, 
+            "true ? { Foo => false, Bar => false, 'not' => false, default => true}", __FILE__)
+        end
+      end
+    end
+
+    context "with a comparison of" do
+      ['==', '!=', '<', '>', '<=', '>='].each do |operator|
+        it "'a' #{operator} 'b'" do
+          migration_checker = mock()
+          migration_checker.expects(:report_uc_bareword_type).twice
+          Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+            Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "'a' #{operator} 'b'", __FILE__)
+          end
+        end
+      end
+
+      ['=~', '!~'].each do |operator|
+        it "'a' #{operator} /.*/" do
+          migration_checker = mock()
+          migration_checker.expects(:report_uc_bareword_type).once
+          Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+            Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "'a' #{operator} /.*/", __FILE__)
+          end
+        end
+      end
+    end
+
+    context "with an in operator" do
+      it "'a' in [true,false]" do
+        migration_checker = mock()
+        migration_checker.expects(:report_uc_bareword_type).once
+        Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "'a' in [true, false]", __FILE__)
+        end
+      end
+    end
+
   end
 end
