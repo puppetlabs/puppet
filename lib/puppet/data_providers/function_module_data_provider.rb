@@ -13,17 +13,19 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
   include Puppet::DataProviders::DataFunctionSupport
 
   def lookup(name, scope, merge)
-    # If the module name does not exist, this call is not from within a module, and should be ignored.
-    unless scope.exist?(MODULE_NAME)
-      return nil
-    end
-    # Get the module name. Calls to the lookup method should only be performed for modules that have opted in
-    # by specifying that they use the 'function' implementation as the module_data provider. Thus, this will error
-    # out if a module specified 'function' but did not provide a function called <module-name>::data
-    #
-    module_name = scope[MODULE_NAME]
+    # Do not attempt to do a lookup in a module unless the name is qualified.
+    qual_index = name.index('::')
+    throw :no_such_key if qual_index.nil?
+    module_name = name[0..qual_index-1]
     begin
-      hash = data(module_name, scope)
+      hash = data(module_name, scope) do | data |
+        module_prefix = "#{module_name}::"
+        data.each_pair do |k,v|
+          unless k.is_a?(String) && k.start_with?(module_prefix)
+            raise Puppet::Error, "Module data for module '#{module_name}' must use keys qualified with the name of the module"
+          end
+        end
+      end
       throw :no_such_key unless hash.include?(name)
       hash[name]
     rescue *Puppet::Error => detail
@@ -31,14 +33,7 @@ class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataP
     end
   end
 
-  def loader(scope)
-    loaders = scope.compiler.loaders
-    if scope.exist?(MODULE_NAME)
-      loaders.private_loader_for_module(scope[MODULE_NAME])
-    else
-      # Produce the environment's loader when not in a module
-      # This loader allows the data function to be private or public in the environment
-      loaders.private_environment_loader
-    end
+  def loader(key, scope)
+    scope.compiler.loaders.private_loader_for_module(key)
   end
 end

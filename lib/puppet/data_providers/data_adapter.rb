@@ -29,7 +29,12 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def module_provider(module_name)
-    @data[module_name] ||= initialize_module_provider(module_name)
+    # Test if the key is present for the given module_name. It might be there even if the
+    # value is nil (which indicates that no module provider is configured for the given name)
+    unless @data.include?(module_name)
+      @data[module_name] = initialize_module_provider(module_name)
+    end
+    @data[module_name]
   end
 
   def self.create_adapter(environment)

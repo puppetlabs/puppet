@@ -1,0 +1,2 @@
+class no_provider {
+}
