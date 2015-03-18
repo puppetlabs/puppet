@@ -119,7 +119,7 @@ describe 'Lexer2' do
 
   [ '_x::y', 'x::_y'].each do |string|
     it "should consider the bare word '#{string}' to be a WORD" do
-      tokens_scanned_from(string).should match_tokens2(:WORD)
+      expect(tokens_scanned_from(string)).to match_tokens2(:WORD)
     end
   end
 

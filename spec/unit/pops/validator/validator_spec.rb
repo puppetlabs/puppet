@@ -19,9 +19,8 @@ describe "validating 4x" do
   end
 
   it 'should raise error for illegal names' do
-    pending "validation was too strict, now too relaxed - validation missing"
-    expect(validate(fqn('Aaa'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_NAME)
-    expect(validate(fqn('AAA'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_NAME)
+    expect(validate(parse('class aaa::_bbb {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('class Aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
 
   it 'should raise error for illegal variable names' do

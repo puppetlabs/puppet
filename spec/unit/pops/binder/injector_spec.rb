@@ -607,24 +607,6 @@ describe 'Injector' do
         expect { injector.lookup(scope, 'broken_family2')}.to raise_error(/:uniq/)
       end
 
-      it "a higher priority contribution is selected when resolution is :priority" do
-        hash_of_duck = type_factory.hash_of(duck_type)
-        multibind_id = "ducks"
-
-        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
-
-        mb1 = bindings.bind.in_multibind(multibind_id)
-        pending 'priority based on layers not added, and priority on category removed'
-        mb1.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Huey')
-
-        mb2 = bindings.bind.in_multibind(multibind_id)
-        mb2.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Dewey')
-
-        binder.define_layers(layered_bindings)
-
-        expect(injector(binder).lookup(scope, hash_of_duck, "donalds_nephews")['nephew'].name).to eq('Huey')
-      end
-
       it "a higher priority contribution wins when resolution is :merge" do
         # THIS TEST MAY DEPEND ON HASH ORDER SINCE PRIORITY BASED ON CATEGORY IS REMOVED
         hash_of_data = type_factory.hash_of_data()
