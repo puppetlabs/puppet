@@ -25,4 +25,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   def report_in_expression(o)
   end
+
+  def report_array_last_in_block(o)
+  end
 end

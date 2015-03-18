@@ -208,6 +208,7 @@ class Puppet::Pops::Validation::Checker4_0
         break # only flag the first
       end
     end
+    @migration_checker.report_array_last_in_block(o.statements[-1])
   end
 
   def check_CallNamedFunctionExpression(o)
