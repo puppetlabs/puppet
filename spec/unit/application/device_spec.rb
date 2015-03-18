@@ -126,7 +126,6 @@ describe Puppet::Application::Device do
   describe "during setup" do
     before :each do
       @device.options.stubs(:[])
-      Puppet.stubs(:info)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
@@ -297,8 +296,8 @@ describe Puppet::Application::Device do
         Puppet[:confdir] = make_absolute("/dummy")
         Puppet[:certname] = "certname"
         @device_hash = {
-          "device1" => OpenStruct.new(:name => "device1", :url => "url", :provider => "cisco"),
-          "device2" => OpenStruct.new(:name => "device2", :url => "url", :provider => "cisco"),
+          "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+          "device2" => OpenStruct.new(:name => "device2", :url => "https://user:pass@testhost/some/path", :provider => "rest"),
         }
         Puppet::Util::NetworkDevice::Config.stubs(:devices).returns(@device_hash)
         Puppet.stubs(:[]=)
@@ -333,6 +332,12 @@ describe Puppet::Application::Device do
       it "should initialize the device singleton" do
         Puppet::Util::NetworkDevice.expects(:init).with(@device_hash["device1"]).then.with(@device_hash["device2"])
         expect { @device.main }.to exit_with 1
+      end
+
+      it "should print the device url scheme, host, and port" do
+        Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
+        Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
+        @device.main
       end
 
       it "should setup the SSL context" do
