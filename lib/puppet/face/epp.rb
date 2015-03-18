@@ -325,7 +325,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           begin
             buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
           rescue Puppet::ParseError => detail
-            Puppet.err(detail.message)
+            Puppet.log_exception(detail)
             status = false
           end
         end
@@ -354,7 +354,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       if show_filename
         Puppet.err("--- #{filename}")
       end
-      Puppet.err(detail.message)
+      Puppet.log_exception(detail)
       ""
     end
   end

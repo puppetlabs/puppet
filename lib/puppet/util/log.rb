@@ -18,11 +18,11 @@ class Puppet::Util::Log
   @desttypes = {}
 
   # Create a new destination type.
-  def self.newdesttype(name, options = {}, &block)
+  def self.newdesttype(name, options = {}, parent = nil, &block)
 
     dest = genclass(
       name,
-      :parent     => Puppet::Util::Log::Destination,
+      :parent     => parent || Puppet::Util::Log::Destination,
       :prefix     => "Dest",
       :block      => block,
       :hash       => @desttypes,
@@ -80,9 +80,20 @@ class Puppet::Util::Log
   # Create a new log message.  The primary role of this method is to
   # avoid creating log messages below the loglevel.
   def Log.create(hash)
-    raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
-    raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
-    @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
+    level = hash[:level]
+    raise Puppet::DevError, "Logs require a level which is a symbol or string" unless level.respond_to? "to_sym"
+
+    level = level.to_sym
+    index = @levels.index(level)
+    raise Puppet::DevError, "Invalid log level #{level}" if index.nil?
+
+    if index >= @loglevel
+      log = Puppet::Util::Log.new(hash)
+      newmessage(log)
+      log
+    else
+      nil
+    end
   end
 
   def Log.destinations
@@ -238,44 +249,41 @@ class Puppet::Util::Log
   end
 
   def self.from_data_hash(data)
-    obj = allocate
-    obj.initialize_from_hash(data)
-    obj
+    symkeyed_data = {}
+    data.each_pair { |k,v| symkeyed_data[k.to_sym] = v }
+    new(symkeyed_data)
   end
 
-  attr_accessor :time, :remote, :file, :line, :source
-  attr_reader :level, :message
+  attr_reader :level, :message, :issue_code, :time, :file, :line, :pos, :backtrace, :source, :node, :environment
 
   def initialize(args)
-    self.level = args[:level]
-    self.message = args[:message]
-    self.source = args[:source] || "Puppet"
+    level = args[:level]
+    raise ArgumentError, "Puppet::Util::Log requires a log level" if level.nil?
+    raise ArgumentError, "Puppet::Util::Log requires that log level is a symbol or string" unless level.respond_to? "to_sym"
 
-    @time = Time.now
+    level = level.to_sym
+    raise ArgumentError, "Invalid log level #{level}" unless self.class.validlevel?(level)
+    @level = level
+    # Tag myself with my log level
+    tag(level)
 
-    if tags = args[:tags]
-      tags.each { |t| self.tag(t) }
+    message = args[:message]
+    raise ArgumentError, "Puppet::Util::Log requires a message" if message.nil?
+    @message = message.to_s
+
+    # Avoid setting these instance variables. We don't want them defined unless they exist
+    [:backtrace, :environment, :node, :issue_code, :file, :line, :pos].each do |attr|
+      value = args[attr]
+      instance_variable_set("@#{attr}", value) unless value.nil?
     end
 
-    [:file, :line].each do |attr|
-      next unless value = args[attr]
-      send(attr.to_s + "=", value)
-    end
+    self.source = args[:source]
+    tags = args[:tags]
+    tags.each { |t| tag(t) } unless tags.nil?
 
-    Log.newmessage(self)
-  end
-
-  def initialize_from_hash(data)
-    @level = data['level'].intern
-    @message = data['message']
-    @source = data['source']
-    @tags = Puppet::Util::TagSet.new(data['tags'])
-    @time = data['time']
-    if @time.is_a? String
-      @time = Time.parse(@time)
-    end
-    @file = data['file'] if data['file']
-    @line = data['line'] if data['line']
+    time = args[:time]
+    time = Time.parse(time) if time.is_a?(String)
+    @time = time || Time.now
   end
 
   def to_hash
@@ -283,47 +291,34 @@ class Puppet::Util::Log
   end
 
   def to_data_hash
-    {
+    hash = {
       'level' => @level,
       'message' => @message,
       'source' => @source,
       'tags' => @tags,
       'time' => @time.iso8601(9),
-      'file' => @file,
-      'line' => @line,
     }
+    [:backtrace, :environment, :node, :issue_code, :file, :line, :pos].each do |attr|
+      iv = "@#{attr}"
+      hash[attr.to_s] = instance_variable_get(iv) if instance_variable_defined?(iv)
+    end
+    hash
   end
 
   def to_pson(*args)
     to_data_hash.to_pson(*args)
   end
 
-  def message=(msg)
-    raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
-    @message = msg.to_s
-  end
-
-  def level=(level)
-    raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
-    raise ArgumentError, "Puppet::Util::Log requires a symbol or string" unless level.respond_to? "to_sym"
-    @level = level.to_sym
-    raise ArgumentError, "Invalid log level #{@level}" unless self.class.validlevel?(@level)
-
-    # Tag myself with my log level
-    tag(level)
-  end
-
   # If they pass a source in to us, we make sure it is a string, and
   # we retrieve any tags we can.
   def source=(source)
     if source.respond_to?(:path)
-      @source = source.path
       source.tags.each { |t| tag(t) }
-      self.file = source.file
-      self.line = source.line
-    else
-      @source = source.to_s
+      @file ||= source.file
+      @line ||= source.line
+      source = source.path
     end
+    @source = source.nil? ? 'Puppet' : source.to_s
   end
 
   def to_report
@@ -331,9 +326,24 @@ class Puppet::Util::Log
   end
 
   def to_s
-    message
+    msg = @message
+    @file = nil if (@file.is_a?(String) && @file.empty?)
+    if @file and @line and @pos
+      msg = "#{msg} at #{@file}:#{@line}:#{@pos}"
+    elsif @file and @line
+      msg ="#{msg} at #{@file}:#{@line}"
+    elsif @line and @pos
+      msg ="#{msg} at line #{@line}:#{@pos}"
+    elsif @line
+      msg ="#{msg} at line #{@line}"
+    elsif @file
+      msg ="#{msg} in #{@file}"
+    end
+    msg = "Could not parse for environment #{@environment}: #{msg}" if @environment
+    msg = "#{msg} on node #{@node}" if @node
+    msg = ([msg] + @backtrace).join("\n") if @backtrace
+    msg
   end
-
 end
 
 # This is for backward compatibility from when we changed the constant to Puppet::Util::Log

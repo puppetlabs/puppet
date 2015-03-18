@@ -12,37 +12,40 @@ module Puppet
     # This module implements logging with a filename and line number. Use this
     # for errors that need to report a location in a non-ruby file that we
     # parse.
-    attr_accessor :line, :file, :pos
+    attr_accessor :file, :issue_code, :environment, :node
+    attr_reader :line, :pos
 
-    # May be called with 3 arguments for message, file, line, and exception, or
-    # 4 args including the position on the line.
+    # Creates an error that contains external file information and optional issue code
     #
-    def initialize(message, file=nil, line=nil, pos=nil, original=nil)
+    # @param message [String] The error message
+    # @param file [String] Path to the file where the error was found
+    # @param line [Integer,String] The line number in the _file_
+    # @param pos [Integer,String] The position on the _line_
+    # @param original [Exception] Original exception
+    # @param issue_code [Symbol]
+    #
+    # @see Puppet::Pops::Issues::Issue
+    #
+    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code=nil)
       if pos.kind_of? Exception
         original = pos
         pos = nil
       end
       super(message, original)
+      @issue_code = issue_code
       @file = file unless (file.is_a?(String) && file.empty?)
-      @line = line
-      @pos = pos
+      self.line = line if line
+      self.pos = pos if pos
     end
-    def to_s
-      msg = super
-      @file = nil if (@file.is_a?(String) && @file.empty?)
-      if @file and @line and @pos
-        "#{msg} at #{@file}:#{@line}:#{@pos}"
-      elsif @file and @line
-        "#{msg} at #{@file}:#{@line}"
-      elsif @line and @pos
-          "#{msg} at line #{@line}:#{@pos}"
-      elsif @line
-        "#{msg} at line #{@line}"
-      elsif @file
-        "#{msg} in #{@file}"
-      else
-        msg
-      end
+
+    def line=(line)
+      line = line.to_i if line
+      @line = line
+    end
+
+    def pos=(pos)
+      pos = pos.to_i if pos
+      @pos = pos
     end
   end
 

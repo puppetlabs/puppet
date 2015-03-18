@@ -7,13 +7,13 @@ describe Puppet::Util::Log do
   include PuppetSpec::Files
 
   def log_notice(message)
-    Puppet::Util::Log.new(:level => :notice, :message => message)
+    Puppet::Util::Log.create(:level => :notice, :message => message)
   end
 
   it "should write a given message to the specified destination" do
     arraydest = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
-    Puppet::Util::Log.new(:level => :notice, :message => "foo")
+    Puppet::Util::Log.create(:level => :notice, :message => "foo")
     message = arraydest.last.message
     expect(message).to eq("foo")
   end
@@ -179,11 +179,10 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.stubs(:newmessage)
     end
 
-    [:level, :message, :time, :remote].each do |attr|
+    [:level, :message, :time].each do |attr|
       it "should have a #{attr} attribute" do
         log = Puppet::Util::Log.new :level => :notice, :message => "A test message"
         expect(log).to respond_to(attr)
-        expect(log).to respond_to(attr.to_s + "=")
       end
     end
 
@@ -240,16 +239,12 @@ describe Puppet::Util::Log do
       expect(log.tags).to be_include("bar")
     end
 
-    it "should use a passed-in source" do
-      Puppet::Util::Log.any_instance.expects(:source=).with "foo"
-      Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
+    it "should use file if provided" do
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => 'foo').file).to eq('foo')
     end
 
-    [:file, :line].each do |attr|
-      it "should use #{attr} if provided" do
-        Puppet::Util::Log.any_instance.expects(attr.to_s + "=").with "foo"
-        Puppet::Util::Log.new(:level => "notice", :message => :foo, attr => "foo")
-      end
+    it "should use line if provided" do
+      expect(Puppet::Util::Log.new(:level => "notice", :message => :foo, :line => 32).line).to eq(32)
     end
 
     it "should default to 'Puppet' as its source" do
@@ -258,7 +253,7 @@ describe Puppet::Util::Log do
 
     it "should register itself with Log" do
       Puppet::Util::Log.expects(:newmessage)
-      Puppet::Util::Log.new(:level => "notice", :message => :foo)
+      Puppet::Util::Log.create(:level => "notice", :message => :foo)
     end
 
     it "should update Log autoflush when Puppet[:autoflush] is set" do
@@ -315,14 +310,12 @@ describe Puppet::Util::Log do
         source = Puppet::Type.type(:file).new :path => path
         source.tags = ["tag", "tag2"]
 
-        log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
-        log.expects(:tag).with("file")
-        log.expects(:tag).with("tag")
-        log.expects(:tag).with("tag2")
-
-        log.source = source
+        log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
 
         expect(log.source).to eq("/File[#{path}]")
+        expect(log.tags).to include('file')
+        expect(log.tags).to include('tag')
+        expect(log.tags).to include('tag2')
       end
 
       it "should copy over any file and line information" do
@@ -350,7 +343,7 @@ describe Puppet::Util::Log do
       expect(log.to_yaml_properties).not_to include('@version')
     end
 
-    it "should include attributes @level, @message, @source, @tags, and @time" do
+    it "should include attributes @level, @message, @source, @tags and @time" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
       expect(log.to_yaml_properties).to match_array([:@level, :@message, :@source, :@tags, :@time])
     end

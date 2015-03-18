@@ -46,8 +46,44 @@ module Puppet::Util::Logging
   #    wish to log a message at all; in this case it is likely that you are only calling this method in order
   #    to take advantage of the backtrace logging.
   def log_exception(exception, message = :default, options = {})
-    err(format_exception(exception, message, Puppet[:trace] || options[:trace]))
+    trace = Puppet[:trace] || options[:trace]
+    if message == :default && exception.is_a?(Puppet::ExternalFileError)
+      # Retain all detailed info and keep plain message and stacktrace separate
+      backtrace = []
+      build_exception_trace(backtrace, exception, trace)
+      Puppet::Util::Log.create({
+          :level => :err,
+          :source => log_source,
+          :message => exception.message,
+          :issue_code => exception.issue_code,
+          :backtrace => backtrace.empty? ? nil : backtrace,
+          :file => exception.file,
+          :line => exception.line,
+          :pos => exception.pos,
+          :environment => exception.environment.nil? ? nil : exception.environment.name,
+          :node => exception.node.nil? ? nil : exception.node.name
+        }.merge(log_metadata))
+    else
+      err(format_exception(exception, message, trace))
+    end
   end
+
+  def build_exception_trace(arr, exception, trace = true)
+    if trace and exception.backtrace
+      exception.backtrace.each do |line|
+        arr << line =~ /^(.+):(\d+.*)$/ ? ("#{Pathname($1).realpath}:#{$2}" rescue line) : line
+      end
+    end
+    if exception.respond_to?(:original)
+      original =  exception.original
+      unless original.nil?
+        arr << 'Wrapped exception:'
+        arr << original.message
+        build_exception_trace(arr, original, trace)
+      end
+    end
+  end
+  private :build_exception_trace
 
   def format_exception(exception, message = :default, trace = true)
     arr = []
@@ -64,10 +100,10 @@ module Puppet::Util::Logging
       arr << Puppet::Util.pretty_backtrace(exception.backtrace)
     end
     if exception.respond_to?(:original) and exception.original
-      arr << "Wrapped exception:"
+      arr << 'Wrapped exception:'
       arr << format_exception(exception.original, :default, trace)
     end
-    arr.flatten.join("\n")
+    arr.join("\n")
   end
 
   def log_and_raise(exception, message)

@@ -488,6 +488,10 @@ class Puppet::Node::Environment
         parser.parse
       end
     end
+  rescue Puppet::ExternalFileError => parse_error
+    @known_resource_types.parse_failed = true
+    parse_error.environment = self
+    raise parse_error
   rescue => detail
     @known_resource_types.parse_failed = true
 

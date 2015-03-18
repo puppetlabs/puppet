@@ -323,14 +323,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
       it "should print the locations of the original duplicated resource" do
         @catalog.add_resource(orig)
 
-        expect { @catalog.add_resource(dupe) }.to raise_error { |error|
-          expect(error).to be_a Puppet::Resource::Catalog::DuplicateResourceError
-
+        expect { @catalog.add_resource(dupe) }.to raise_error(Puppet::Resource::Catalog::DuplicateResourceError) do |error|
           expect(error.message).to match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
           expect(error.message).to match %r[in file /path/to/orig/file:42]
           expect(error.message).to match %r[cannot redeclare]
-          expect(error.message).to match %r[at /path/to/dupe/file:314]
-        }
+          expect(error.file).to eq('/path/to/dupe/file')
+          expect(error.line).to eq(314)
+        end
       end
     end
 

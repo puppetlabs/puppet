@@ -592,10 +592,12 @@ describe "Two step scoping for variables" do
 
       expect {
         compile_to_catalog("$var = 'top scope'", enc_node)
-      }.to raise_error(
-      Puppet::Error,
-      /Cannot reassign variable var at line 1(\:6)? on node the_node/
-      )
+      }.to raise_error(Puppet::ExternalFileError, /Cannot reassign variable var/) do |e|
+        expect(e.node).to be_a(Puppet::Node)
+        expect(e.node.name).to eq('the_node')
+        expect(e.line).to eq(1)
+        expect(e.pos).to eq(6)
+      end
     end
 
     it "evaluates enc classes in top scope when there is no node" do

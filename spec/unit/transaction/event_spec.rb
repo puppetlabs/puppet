@@ -73,49 +73,49 @@ describe Puppet::Transaction::Event do
     end
 
     it "should set the level to 'notice' if the event status is 'success' and no resource is available" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+      Puppet::Util::Log.expects(:create).with { |args| args[:level] == :notice }
       Puppet::Transaction::Event.new(:status => "success").send_log
     end
 
     it "should set the level to 'notice' if the event status is 'noop'" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+      Puppet::Util::Log.expects(:create).with { |args| args[:level] == :notice }
       Puppet::Transaction::Event.new(:status => "noop").send_log
     end
 
     it "should set the level to 'err' if the event status is 'failure'" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :err }
+      Puppet::Util::Log.expects(:create).with { |args| args[:level] == :err }
       Puppet::Transaction::Event.new(:status => "failure").send_log
     end
 
     it "should set the 'message' to the event log" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:message] == "my message" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:message] == "my message" }
       Puppet::Transaction::Event.new(:message => "my message").send_log
     end
 
     it "should set the tags to the event tags" do
-      Puppet::Util::Log.expects(:new).with { |args| expect(args[:tags].to_a).to match_array(%w{one two}) }
+      Puppet::Util::Log.expects(:create).with { |args| expect(args[:tags].to_a).to match_array(%w{one two}) }
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 
     [:file, :line].each do |attr|
       it "should pass the #{attr}" do
-        Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
+        Puppet::Util::Log.expects(:create).with { |args| args[attr] == "my val" }
         Puppet::Transaction::Event.new(attr => "my val").send_log
       end
     end
 
     it "should use the source description as the source if one is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "/my/param" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "/my/param" }
       Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no source description is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "foo" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "foo" }
       Puppet::Transaction::Event.new(:resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no property or source description is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "Foo[bar]" }
       Puppet::Transaction::Event.new(:resource => TestResource.new).send_log
     end
   end
