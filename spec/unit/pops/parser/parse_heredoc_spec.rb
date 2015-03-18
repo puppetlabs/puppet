@@ -114,4 +114,25 @@ describe "egrammar parsing heredoc" do
     ].join("\n"))
   end
 
+  it 'parses multiple heredocs on the same line' do
+    src = <<-CODE
+    notice({ @(foo) => @(bar) })
+    hello
+    -foo
+    world
+    -bar
+    notice '!'
+    CODE
+    expect(dump(parse(src))).to eq([
+      '(block',
+      '  (invoke notice ({} ((@()',
+      '    (sublocated \'    hello\')',
+      '  ) (@()',
+      '    (sublocated \'    world\')',
+      '  ))))',
+      '  (invoke notice \'!\')',
+      ')'
+    ].join("\n"))
+  end
+
 end
