@@ -67,8 +67,6 @@ shared_examples_for "a trigger that handles start_date and start_time" do
       })
     end
   end
-
-
   
   describe 'the given start_time' do
     before :each do
@@ -1151,7 +1149,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
   end
-  
+
   describe '#normalized_date' do
     it 'should format the date without leading zeros' do
       expect(described_class.normalized_date('2011-01-01')).to eq('2011-1-1')
