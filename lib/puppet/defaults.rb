@@ -1418,14 +1418,27 @@ EOT
     :graph => {
       :default  => false,
       :type     => :boolean,
-      :desc     => "Whether to create dot graph files for the different
-        configuration graphs.  These dot files can be interpreted by tools
-        like OmniGraffle or dot (which is part of ImageMagick).",
+      :desc     => "Whether to create .dot graph files, which let you visualize the
+        dependency and containment relationships in Puppet's catalog. You
+        can load and view these files with tools like
+        [OmniGraffle](http://www.omnigroup.com/applications/omnigraffle/) (OS X)
+        or [graphviz](http://www.graphviz.org/) (multi-platform).
+
+        Graph files are created when _applying_ a catalog, so this setting
+        should be used on nodes running `puppet agent` or `puppet apply`.
+
+        The `graphdir` setting determines where Puppet will save graphs. Note
+        that we don't save graphs for historical runs; Puppet will replace the
+        previous .dot files with new ones every time it applies a catalog.
+
+        See your graphing software's documentation for details on opening .dot
+        files. If you're using GraphViz's `dot` command, you can do a quick PNG
+        render with `dot -Tpng <DOT FILE> -o <OUTPUT FILE>`.",
     },
     :graphdir => {
       :default    => "$statedir/graphs",
       :type       => :directory,
-      :desc       => "Where to store dot-outputted graphs.",
+      :desc       => "Where to save .dot-format graphs (when the `graph` setting is enabled).",
     },
     :waitforcert => {
       :default  => "2m",
