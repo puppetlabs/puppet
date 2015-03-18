@@ -585,13 +585,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           case c
           when Puppet::Pops::Model::LiteralDefault
             the_default = co.then_expr
-            is_match?(test, evaluate(c, scope), c, scope)
+            is_match?(test, evaluate(c, scope), c, co, scope)
           when Puppet::Pops::Model::UnfoldExpression
             # not ideal for error reporting, since it is not known which unfolded result
             # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-            evaluate(c, scope).any? {|v| is_match?(test, v, c, scope) }
+            evaluate(c, scope).any? {|v| is_match?(test, v, c, co, scope) }
           else
-            is_match?(test, evaluate(c, scope), c, scope)
+            is_match?(test, evaluate(c, scope), c, co, scope)
           end
         end
         result = evaluate(co.then_expr, scope)
@@ -919,9 +919,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         when Puppet::Pops::Model::UnfoldExpression
           # not ideal for error reporting, since it is not known which unfolded result
           # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-          evaluate(me, scope).any? {|v| is_match?(test, v, me, scope) }
+          evaluate(me, scope).any? {|v| is_match?(test, v, me, s, scope) }
         else
-          is_match?(test, evaluate(me, scope), me, scope)
+          is_match?(test, evaluate(me, scope), me, s, scope)
         end
       end
       if selected
@@ -1161,7 +1161,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # This is the type of matching performed in a case option, using == for every type
   # of value except regular expression where a match is performed.
   #
-  def is_match? left, right, o, scope
+  def is_match?(left, right, o, option_expr, scope)
+    @migration_checker.report_option_type_mismatch(left, right, option_expr, o)
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
