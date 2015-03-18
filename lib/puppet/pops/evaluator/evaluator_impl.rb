@@ -407,6 +407,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     left = evaluate(o.left_expr, scope)
     right = evaluate(o.right_expr, scope)
 
+    @migration_checker.report_uc_bareword_type(left, o.left_expr)
+    @migration_checker.report_uc_bareword_type(right, o.right_expr)
+
     begin
     # Left is a type
     if left.is_a?(Puppet::Pops::Types::PAnyType)
@@ -481,6 +484,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     left = evaluate(o.left_expr, scope)
     pattern = evaluate(o.right_expr, scope)
 
+    @migration_checker.report_uc_bareword_type(left, o.left_expr)
+
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
     if pattern.is_a?(Puppet::Pops::Types::PAnyType)
       # evaluate as instance? of type check
@@ -510,6 +515,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_InExpression o, scope
     left = evaluate(o.left_expr, scope)
     right = evaluate(o.right_expr, scope)
+    @migration_checker.report_uc_bareword_type(left, o.left_expr)
     @@compare_operator.include?(right, left, scope)
   end
 
@@ -565,6 +571,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.test, scope)
+      @migration_checker.report_uc_bareword_type(test, o.test)
+
       result = nil
       the_default = nil
       if o.options.find do |co|
@@ -895,6 +903,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
+      @migration_checker.report_uc_bareword_type(test, o.left_expr)
+
       the_default = nil
       selected = o.selectors.find do |s|
         me = s.matching_expr
@@ -1154,6 +1164,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       set_match_data(matched, scope) # creates or clears ephemeral
       !!matched # convert to boolean
     elsif right.is_a?(Puppet::Pops::Types::PAnyType)
+      @migration_checker.report_uc_bareword_type(right, o)
+
       # right is a type and left is not - check if left is an instance of the given type
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).

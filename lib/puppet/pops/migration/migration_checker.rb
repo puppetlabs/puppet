@@ -13,4 +13,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   def report_empty_string_true(value, o)
   end
+
+  def report_uc_bareword_type(value, o)
+  end
 end
