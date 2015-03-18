@@ -469,7 +469,10 @@ describe Puppet::Node::Environment do
         Puppet[:code] = "oops {"
         expect do
           env.known_resource_types
-        end.to raise_error(Puppet::Error, /Could not parse for environment #{env.name}/)
+        end.to raise_error(Puppet::ParseError, 'Syntax error at end of file') do |e|
+          expect(e.environment).to be_a(Puppet::Node::Environment)
+          expect(e.environment.name).to eq(env.name)
+        end
       end
 
       it "should mark the type collection as needing a reparse when there is an error parsing" do

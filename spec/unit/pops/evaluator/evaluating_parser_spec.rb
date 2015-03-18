@@ -903,7 +903,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
     it "provides location information on error in unparenthesized call logic" do
-    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /line 1\:1/)
+    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError) do |e|
+      expect(e.line).to eq(1)
+      expect(e.pos).to eq(1)
+      end
     end
 
     it 'defaults can be given in a lambda and used only when arg is missing' do
@@ -1227,38 +1230,46 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   context "Handles Deprecations and Discontinuations" do
     it 'of import statements' do
       source = "\nimport foo"
-      # Error references position 5 at the opening '{'
-      # Set file to nil to make it easier to match with line number (no file name in output)
-      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.*line 2:1/)
+      expect { parser.evaluate_string(scope, source) }.to raise_error(Puppet::ParseError, /'import' has been discontinued/) do |e|
+        expect(e.line).to eq(2)
+        expect(e.pos).to eq(1)
+      end
     end
   end
 
   context "Detailed Error messages are reported" do
     it 'for illegal type references' do
       source = '1+1 { "title": }'
-      # Error references position 5 at the opening '{'
-      # Set file to nil to make it easier to match with line number (no file name in output)
       expect { parser.evaluate_string(scope, source) }.to raise_error(
-        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.*line 1:2/)
+        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource/) do |e|
+        expect(e.line).to eq(1)
+        expect(e.pos).to eq(2)
+      end
     end
 
     it 'for non r-value producing <| |>' do
-      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value/) do |e|
+        expect(e.line).to eq(1)
+        expect(e.pos).to eq(6)
+      end
     end
 
     it 'for non r-value producing <<| |>>' do
-      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value/) do |e|
+        expect(e.line).to eq(1)
+        expect(e.pos).to eq(6)
+      end
     end
 
     it 'for non r-value producing define' do
-      Puppet.expects(:err).with("Invalid use of expression. A 'define' expression does not produce a value at line 1:6")
-      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, "Invalid use of expression. A 'define' expression does not produce a value"))
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, 'Classes, definitions, and nodes may only appear at toplevel or inside other classes'))
       expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
     end
 
     it 'for non r-value producing class' do
-      Puppet.expects(:err).with("Invalid use of expression. A Host Class Definition does not produce a value at line 1:6")
-      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, 'Invalid use of expression. A Host Class Definition does not produce a value'))
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, 'Classes, definitions, and nodes may only appear at toplevel or inside other classes'))
       expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
     end
 
@@ -1272,15 +1283,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'for multiple errors with a summary exception' do
-      Puppet.expects(:err).with("Invalid use of expression. A Node Definition does not produce a value at line 1:6")
-      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, 'Invalid use of expression. A Node Definition does not produce a value'))
+      Puppet::Util::Log.expects(:create).with(has_entry(:message, 'Classes, definitions, and nodes may only appear at toplevel or inside other classes'))
       expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
     end
 
     it 'for a bad hostname' do
       expect {
         parser.parse_string("node 'macbook+owned+by+name' { }", nil)
-      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.*at line 1:6/)
+      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters/) do |e|
+        expect(e.line).to eq(1)
+        expect(e.pos).to eq(6)
+      end
     end
 
     it 'for a hostname with interpolation' do
@@ -1290,7 +1304,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       SOURCE
       expect {
         parser.parse_string(source, nil)
-      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:23/)
+      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node/) do |e|
+        expect(e.line).to eq(2)
+        expect(e.pos).to eq(23)
+      end
     end
 
   end

@@ -43,11 +43,11 @@ Puppet::Util::Log.newdesttype :syslog do
   end
 end
 
-Puppet::Util::Log.newdesttype :file do
+file_dest = Puppet::Util::Log.newdesttype :file do
   require 'fileutils'
 
   def self.match?(obj)
-    Puppet::Util.absolute_path?(obj)
+    Puppet::Util.absolute_path?(obj) && !(obj =~ /\.json$/)
   end
 
   def close
@@ -94,6 +94,32 @@ Puppet::Util::Log.newdesttype :file do
     @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
 
     @file.flush if @autoflush
+  end
+end
+
+# Inherits all behavior from the `:file` type. It matches all files with extension '.json' and will output
+# the message as a json structure.
+Puppet::Util::Log.newdesttype(:json_file, {}, file_dest) do
+  # Returns true for any string that is an absolute path that ends with '.json'
+  def self.match?(obj)
+    'console.json' == obj || Puppet::Util.absolute_path?(obj) && obj =~ /\.json$/
+  end
+
+  def initialize(path)
+    if 'console.json' == path
+      @file = $stderr
+      @autoflush = true
+    else
+      super
+    end
+  end
+
+  # Outputs the log message as a JSON structure
+  # @param msg [Puppet::Util::Log] The log message
+  def handle(msg)
+    JSON.dump(msg, @file)
+    @file.puts
+    flush if autoflush
   end
 end
 

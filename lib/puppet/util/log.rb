@@ -18,11 +18,11 @@ class Puppet::Util::Log
   @desttypes = {}
 
   # Create a new destination type.
-  def self.newdesttype(name, options = {}, &block)
+  def self.newdesttype(name, options = {}, parent = nil, &block)
 
     dest = genclass(
       name,
-      :parent     => Puppet::Util::Log::Destination,
+      :parent     => parent || Puppet::Util::Log::Destination,
       :prefix     => "Dest",
       :block      => block,
       :hash       => @desttypes,
@@ -254,7 +254,7 @@ class Puppet::Util::Log
     new(symkeyed_data)
   end
 
-  attr_reader :level, :message, :time, :file, :line, :source
+  attr_reader :level, :message, :issue_code, :time, :file, :line, :pos, :backtrace, :source, :node, :environment
 
   def initialize(args)
     level = args[:level]
@@ -271,12 +271,13 @@ class Puppet::Util::Log
     raise ArgumentError, "Puppet::Util::Log requires a message" if message.nil?
     @message = message.to_s
 
-    file = args[:file]
-    @file = file unless file.nil?
-    line = args[:line]
-    @line = line unless line.nil?
-    self.source = args[:source]
+    # Avoid setting these instance variables. We don't want them defined unless they exist
+    [:backtrace, :environment, :node, :issue_code, :file, :line, :pos].each do |attr|
+      value = args[attr]
+      instance_variable_set("@#{attr}", value) unless value.nil?
+    end
 
+    self.source = args[:source]
     tags = args[:tags]
     tags.each { |t| tag(t) } unless tags.nil?
 
@@ -290,15 +291,18 @@ class Puppet::Util::Log
   end
 
   def to_data_hash
-    {
+    hash = {
       'level' => @level,
       'message' => @message,
       'source' => @source,
       'tags' => @tags,
       'time' => @time.iso8601(9),
-      'file' => @file,
-      'line' => @line,
     }
+    [:backtrace, :environment, :node, :issue_code, :file, :line, :pos].each do |attr|
+      iv = "@#{attr}"
+      hash[attr.to_s] = instance_variable_get(iv) if instance_variable_defined?(iv)
+    end
+    hash
   end
 
   def to_pson(*args)
@@ -322,7 +326,23 @@ class Puppet::Util::Log
   end
 
   def to_s
-    message
+    msg = @message
+    @file = nil if (@file.is_a?(String) && @file.empty?)
+    if @file and @line and @pos
+      msg = "#{msg} at #{@file}:#{@line}:#{@pos}"
+    elsif @file and @line
+      msg ="#{msg} at #{@file}:#{@line}"
+    elsif @line and @pos
+      msg ="#{msg} at line #{@line}:#{@pos}"
+    elsif @line
+      msg ="#{msg} at line #{@line}"
+    elsif @file
+      msg ="#{msg} in #{@file}"
+    end
+    msg = "Could not parse for environment #{@environment}: #{msg}" if @environment
+    msg = "#{msg} on node #{@node}" if @node
+    msg = ([msg] + @backtrace).join("\n") if @backtrace
+    msg
   end
 end
 
