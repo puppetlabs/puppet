@@ -581,6 +581,7 @@ node_definition_expression
 #   TODO: The error that "class" is not a valid classname is bad - classname rule is also used for other things
 classname
   : NAME
+  | WORD
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>

@@ -118,10 +118,8 @@ describe 'Lexer2' do
   end
 
   [ '_x::y', 'x::_y'].each do |string|
-    it "should consider the bare word '#{string}' to be a bad NAME" do
-      expect {
-        tokens_scanned_from(string)
-      }.to raise_error(/Illegal fully qualified name/)
+    it "should consider the bare word '#{string}' to be a WORD" do
+      tokens_scanned_from(string).should match_tokens2(:WORD)
     end
   end
 
@@ -209,21 +207,33 @@ describe 'Lexer2' do
     end
   end
 
-  { '"a$x b"'  => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   ' b',  {:line => 1, :pos=>5, :length=>3 }]],
+  { '"a$x b"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   ' b',  {:line => 1, :pos=>5, :length=>3 }]],
 
-    '"a$x.b"'  => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   '.b',  {:line => 1, :pos=>5, :length=>3 }]],
+    '"a$x.b"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   '.b',  {:line => 1, :pos=>5, :length=>3 }]],
 
-    '"$x.b"'   => [[:DQPRE,    '',    {:line => 1, :pos=>1, :length=>1 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>2, :length=>2 }],
-                   [:DQPOST,   '.b',  {:line => 1, :pos=>4, :length=>3 }]],
+    '"$x.b"'      => [[:DQPRE,    '',    {:line => 1, :pos=>1, :length=>1 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>2, :length=>2 }],
+                      [:DQPOST,   '.b',  {:line => 1, :pos=>4, :length=>3 }]],
 
-    '"a$x"'    => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
-                   [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
-                   [:DQPOST,   '',    {:line => 1, :pos=>5, :length=>1 }]],
+    '"a$x"'       => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>2 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>3, :length=>2 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>5, :length=>1 }]],
+
+    '"a${x}"'     => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, 'x',   {:line => 1, :pos=>5, :length=>1 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>7, :length=>1 }]],
+
+    '"a${_x}"'    => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, '_x',  {:line => 1, :pos=>5, :length=>2 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>8, :length=>1 }]],
+
+    '"a${y::_x}"' => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, 'y::_x',  {:line => 1, :pos=>5, :length=>5 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>11, :length=>1 }]],
   }.each do |source, expected|
     it "should lex an interpolated variable 'x' from #{source}" do
       expect(tokens_scanned_from(source)).to match_tokens2(*expected)
