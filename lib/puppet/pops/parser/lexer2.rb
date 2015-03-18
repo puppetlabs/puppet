@@ -160,9 +160,9 @@ class Puppet::Pops::Parser::Lexer2
   # a letter a-z and may not contain dashes (\w includes letters, digits and _).
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
-  PATTERN_NAME           = %r{((::)?[a-z][\w]*)(::[a-z][\w]*)*}
+  PATTERN_NAME           = %r{^((::)?[a-z][\w]*)(::[a-z][\w]*)*$}
 
-  PATTERN_BARE_WORD      = %r{[a-z_](?:[\w-]*[\w])?}
+  PATTERN_BARE_WORD     = %r{((?:::){0,1}(?:[a-z_](?:[\w-]*[\w])?))+}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}
@@ -536,10 +536,13 @@ class Puppet::Pops::Parser::Lexer2
             lex_error("Illegal fully qualified class reference")
           end
         else
-          # NAME or error
-          value = scn.scan(PATTERN_NAME)
+          value = scn.scan(PATTERN_BARE_WORD)
           if value
-            emit_completed([:NAME, value.freeze, scn.pos-before], before)
+            if value =~ PATTERN_NAME
+              emit_completed([:NAME, value.freeze, scn.pos-before], before)
+            else
+              emit_completed([:WORD, value.freeze, scn.pos - before], before)
+            end
           else
             # move to faulty position ('::' was ok)
             scn.pos = scn.pos + 2
@@ -580,25 +583,20 @@ class Puppet::Pops::Parser::Lexer2
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'
-      value = scn.scan(PATTERN_NAME)
-      # NAME or false start because followed by hyphen(s), underscore or word
-      if value && !scn.match?(/^-+\w/)
+
+      value = scn.scan(PATTERN_BARE_WORD)
+      if value && value =~ PATTERN_NAME
         emit_completed(KEYWORDS[value] || [:NAME, value.freeze, scn.pos - before], before)
+      elsif value
+        emit_completed([:WORD, value.freeze, scn.pos - before], before)
       else
-        # Restart and check entire pattern (for ease of detecting non allowed trailing hyphen)
-        scn.pos = before
-        value = scn.scan(PATTERN_BARE_WORD)
-        # If the WORD continues with :: it must be a correct fully qualified name
-        if value && !(fully_qualified = scn.match?(/::/))
-          emit_completed([:WORD, value.freeze, scn.pos - before], before)
+        # move to faulty position ([a-z_] was ok)
+        scn.pos = scn.pos + 1
+        fully_qualified = scn.match?(/::/)
+        if fully_qualified
+          lex_error("Illegal fully qualified name")
         else
-          # move to faulty position ([a-z_] was ok)
-          scn.pos = scn.pos + 1
-          if fully_qualified
-            lex_error("Illegal fully qualified name")
-          else
-            lex_error("Illegal name or bare word")
-          end
+          lex_error("Illegal name or bare word")
         end
       end
 
