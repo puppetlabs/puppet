@@ -452,10 +452,33 @@ module Puppet
     :environment_timeout => {
       :default    => "0",
       :type       => :ttl,
-      :desc       => "The time to live for a cached environment.
+      :desc       => "How long the Puppet master should cache data it loads from an
+      environment.
       #{AS_DURATION}
-      This setting can also be set to `unlimited`, which causes the environment to
-      be cached until the master is restarted."
+      A value of `0` will disable caching. This setting can also be set to
+      `unlimited`, which will cache environments until the master is restarted
+      or told to refresh the cache.
+
+      You should change this setting once your Puppet deployment is doing
+      non-trivial work. We chose the default value of `0` because it lets new
+      users update their code without any extra steps, but it lowers the
+      performance of your Puppet master.
+
+      We recommend setting this to `unlimited` and explicitly refreshing your
+      Puppet master as part of your code deployment process.
+
+      * With Puppet Server, you should refresh environments by calling the
+        `environment-cache` API endpoint. See the docs for the Puppet Server
+        administrative API.
+      * With a Rack Puppet master, you should restart the web server or the
+        application server. Passenger lets you touch a `restart.txt` file to
+        refresh an application without restarting Apache; see the Passenger docs
+        for details.
+
+      We don't recommend using any value other than `0` or `unlimited`, since
+      most Puppet masters use a pool of Ruby interpreters which all have their
+      own cache timers. When these timers drift out of sync, agents can be served
+      inconsistent catalogs."
     },
     :environment_data_provider => {
       :default    => "none",
