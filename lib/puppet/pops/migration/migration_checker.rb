@@ -22,4 +22,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   def report_option_type_mismatch(test_value, option_value, option_expr, matching_expr)
   end
+
+  def report_in_expression(o)
+  end
 end
