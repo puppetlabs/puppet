@@ -72,6 +72,15 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
         Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$a = [1.0,2.0,3.1415]", __FILE__)
       end
     end
+
+    it "last expressions in blocks are checked" do
+      migration_checker = mock()
+      migration_checker.expects(:report_array_last_in_block).twice  # the program itself is a block too
+      Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+        Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "$b = {} if true { $a = $b [false] }", __FILE__)
+      end
+    end
+
   end
 
   describe "when evaluating code" do
@@ -167,6 +176,5 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
         end
       end
     end
-
   end
 end
