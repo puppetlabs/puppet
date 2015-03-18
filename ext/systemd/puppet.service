@@ -7,6 +7,7 @@ After=basic.target network.target puppetmaster.service
 EnvironmentFile=-/etc/sysconfig/puppetagent
 EnvironmentFile=-/etc/sysconfig/puppet
 ExecStart=/usr/bin/puppet agent ${PUPPET_EXTRA_OPTS} --no-daemonize
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target
