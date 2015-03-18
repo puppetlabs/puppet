@@ -582,6 +582,7 @@ node_definition_expression
 classname
   : NAME
   | WORD
+  | CLASSREF
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
