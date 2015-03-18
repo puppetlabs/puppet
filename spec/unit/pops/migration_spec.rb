@@ -122,7 +122,18 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
     end
 
     context "with a comparison of" do
-      ['==', '!=', '<', '>', '<=', '>='].each do |operator|
+      ['==', '!=', ].each do |operator|
+        it "'a' #{operator} 'b'" do
+          migration_checker = mock()
+          migration_checker.expects(:report_uc_bareword_type).twice
+          migration_checker.expects(:report_equality_type_mismatch).once
+          Puppet.override({:migration_checker => migration_checker}, "migration-context") do
+            Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "'a' #{operator} 'b'", __FILE__)
+          end
+        end
+      end
+
+      ['<', '>', '<=', '>='].each do |operator|
         it "'a' #{operator} 'b'" do
           migration_checker = mock()
           migration_checker.expects(:report_uc_bareword_type).twice

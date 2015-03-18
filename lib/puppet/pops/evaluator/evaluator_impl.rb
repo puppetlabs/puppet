@@ -415,9 +415,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     if left.is_a?(Puppet::Pops::Types::PAnyType)
       case o.operator
       when :'=='
+        @migration_checker.report_equality_type_mismatch(left, right, o)
         @@type_calculator.equals(left,right)
 
       when :'!='
+        @migration_checker.report_equality_type_mismatch(left, right, o)
         !@@type_calculator.equals(left,right)
 
       when :'<'
@@ -438,8 +440,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     else
       case o.operator
       when :'=='
+        @migration_checker.report_equality_type_mismatch(left, right, o)
         @@compare_operator.equals(left,right)
       when :'!='
+        @migration_checker.report_equality_type_mismatch(left, right, o)
         ! @@compare_operator.equals(left,right)
       when :'<'
         @@compare_operator.compare(left,right) < 0

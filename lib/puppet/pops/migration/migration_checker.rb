@@ -16,4 +16,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   def report_uc_bareword_type(value, o)
   end
+
+  def report_equality_type_mismatch(left, right, o)
+  end
 end
