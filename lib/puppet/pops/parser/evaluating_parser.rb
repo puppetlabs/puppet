@@ -63,6 +63,10 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   def evaluator
+    # Do not use the cached evaluator if this is a migration run
+    if (Puppet.lookup(:migration_checker) { nil })
+      return Puppet::Pops::Evaluator::EvaluatorImpl.new()
+    end
     @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
     @@evaluator
   end
