@@ -68,7 +68,7 @@ module Puppet
       if currentvalue == :absent
         return "defined content as '#{newvalue}'"
       elsif newvalue == :absent
-        return "undefined content from '#{currentvalue}'"
+        return "removed file with content '#{currentvalue}'"
       else
         return "content changed '#{currentvalue}' to '#{newvalue}'"
       end

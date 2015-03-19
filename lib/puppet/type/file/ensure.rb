@@ -114,8 +114,14 @@ module Puppet
       value
     end
 
+    @old_checksum = nil
+
     def change_to_s(currentvalue, newvalue)
-      return super unless [:file, :present].include?(newvalue)
+      return super unless [:file, :present, :absent].include?(newvalue)
+
+      # The change message for removal of directories
+      # and links is handled by the parent class.
+      return super if newvalue == :absent && @old_checksum.nil?
 
       return super unless property = @resource.property(:content)
 
@@ -127,7 +133,9 @@ module Puppet
         should = property.should
       end
       if should == :absent
-        is = property.retrieve
+        # When this method is run, the file has already been
+        # deleted, so we need to manually cache the checksum.
+        is = @old_checksum
       else
         is = :absent
       end
@@ -175,6 +183,19 @@ module Puppet
     end
 
     def sync
+      if self.should == :absent && !@resource.bucket.nil?
+        # Make a dummy content property so that Puppet
+        # will generate a content object, which we can
+        # use to the checksum of the current file.
+        @resource[:content] = :absent
+        # Make sure we're using the same hash as the
+        # bucket, so that our log is actually useful.
+        # This may need to change when PUP-4329 is fixed.
+        @resource[:checksum] = Puppet[:digest_algorithm].to_sym
+        # Note that content.retrieve will be `nil` unless
+        # the current file is a normal file.
+        @old_checksum = @resource.property(:content).retrieve
+      end
       @resource.remove_existing(self.should)
       if self.should == :absent
         return :file_removed

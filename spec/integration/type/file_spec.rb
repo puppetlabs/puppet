@@ -1158,6 +1158,38 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(logs).to be_empty
         end
       end
+
+      context "ensure is absent" do
+        let(:expected_checksum) do
+          expected_type = Puppet[:digest_algorithm]
+          expected_value = CHECKSUM_TYPES_TO_TRY.find { |type, value| type == expected_type }[1]
+          "{#{expected_type}}#{expected_value}"
+        end
+
+        # This may need to change when PUP-4329 is fixed
+        it "should log the content checksum using the system checksum type" do
+          filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+          target = tmpfile_with_contents('target', CHECKSUM_PLAINTEXT)
+          file_options = @options.merge({
+            :ensure => :absent,
+            :path => target,
+            :backup => "mybucket"
+          })
+
+          catalog.add_resource described_class.send(:new, file_options)
+          catalog.add_resource filebucket
+
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{target}]/ensure")
+          expect(report.logs.first.message).to eq("removed file with content '#{expected_checksum}'")
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, file_options)
+          second_catalog.add_resource filebucket
+          logs = second_catalog.apply.report.logs
+          expect(logs).to be_empty
+        end
+      end
     end
   end
 
