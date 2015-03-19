@@ -26,7 +26,10 @@ describe Puppet::Parser::Resource::Param do
     it "includes file/line context in errors" do
       expect {
         Puppet::Parser::Resource::Param.new(:file => 'foo.pp', :line => 42)
-      }.to raise_error(Puppet::Error, /foo.pp:42/)
+        }.to raise_error(Puppet::ExternalFileError) do |e|
+          expect(e.file).to eq('foo.pp')
+          expect(e.line).to eq(42)
+        end
     end
   end
 end
