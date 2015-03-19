@@ -337,7 +337,7 @@ describe Puppet::Application::Device do
       it "should print the device url scheme, host, and port" do
         Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
         Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should setup the SSL context" do
