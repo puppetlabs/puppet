@@ -169,7 +169,8 @@ module Puppet
 
     newproperty(:options) do
       desc "Mount options for the mounts, as they would
-        appear in the fstab."
+        appear in the fstab. AIX options other than dev,
+        nodename, or vfs may be defined here."
 
       validate do |value|
         raise Puppet::Error, "option must not contain whitespace: #{value}" if value =~ /\s/

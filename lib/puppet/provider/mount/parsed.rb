@@ -4,6 +4,7 @@ require 'puppet/provider/mount'
 fstab = nil
 case Facter.value(:osfamily)
 when "Solaris"; fstab = "/etc/vfstab"
+when "AIX"; fstab = "/etc/filesystems"
 else
   fstab = "/etc/fstab"
 end
@@ -25,7 +26,12 @@ Puppet::Type.type(:mount).provide(
     @fields = [:device, :name, :fstype, :options, :dump, :pass]
   end
 
-  text_line :comment, :match => /^\s*#/
+  if Facter.value(:osfamily) == "AIX"
+    # * is the comment character on AIX /etc/filesystems
+    text_line :comment, :match => /^\s*\*/
+  else
+    text_line :comment, :match => /^\s*#/
+  end
   text_line :blank, :match => /^\s*$/
 
   optional_fields  = @fields - [:device, :name, :blockdevice]
@@ -36,7 +42,93 @@ Puppet::Type.type(:mount).provide(
   field_pattern = '(\s*(?>\S+))'
   text_line :incomplete, :match => /^(?!#{field_pattern}{#{mandatory_fields.length}})/
 
-  record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
+  case Facter.value(:osfamily)
+  when "AIX"
+    # The only field that is actually ordered is :name. See `man filesystems` on AIX
+    @fields = [:name, :account, :boot, :check, :dev, :free, :mount, :nodename,
+               :options, :quota, :size, :type, :vfs, :vol, :log]
+    self.line_separator = "\n"
+    # Override lines and use scan instead of split, because we DON'T want to
+    # remove the separators
+    def self.lines(text)
+      # Separate base on comments, blank lines, or a mountpoint followed by
+      # anything that isn't a mountpoint, comment, or blank line.
+      ret = text.scan(%r{(^\s*\*.*?$|^\s*?$|^\S+:(?:(?!(?:^\S+:|^\s+\*|^\s*$)).)*)}m).flatten
+      ret.reject { |line| line.match(/^\* HEADER/) }
+    end
+    def self.header
+      super.gsub(/^#/,'*')
+    end
+
+    record_line self.name,
+      :fields    => @fields,
+      :separator => /\n/,
+      :block_eval => :instance do
+
+      def post_parse(result)
+        property_map = {
+          :dev      => :device,
+          :nodename => :device,
+          :options  => :options,
+          :vfs      => :fstype,
+        }
+        # Result is modified in-place instead of being returned; icky!
+        memo = result.dup
+        result.clear
+        special_options = Array.new
+        result[:name] = memo[:name].sub(%r{:$},'')
+        result[:record_type] = memo[:record_type]
+        memo.each do |_,k_v|
+          if k_v and k_v.is_a?(String) and k_v.match("=")
+            attr_name, attr_value = k_v.split("=",2).map(&:strip)
+            if attr_map_name = property_map[attr_name.to_sym]
+              # These are normal "options" options (see `man filesystems`)
+              result[attr_map_name] = attr_value
+            else
+              # These /etc/filesystem attributes have no mount resource simile,
+              # so are added to the "options" property for puppet's sake
+              special_options << "#{attr_name}=#{attr_value}"
+            end
+          end
+        end
+        result[:options] = [result[:options],special_options.sort].flatten.compact.join(',')
+      end
+      def to_line(result)
+        output = Array.new
+        output << "#{result[:name]}:"
+        if result[:device] and result[:device].match(%r{^/})
+          output << "\tdev\t\t= #{result[:device]}"
+        elsif result[:device]
+          output << "\tdev\t\t= #{result[:name]}"
+          output << "\tnodename\t= #{result[:device]}"
+        else
+          raise ArgumentError, "Field 'device' is required"
+        end
+        if result[:fstype]
+          output << "\tvfs\t\t= #{result[:fstype]}"
+        else
+          raise ArgumentError, "Field 'fstype' is required"
+        end
+        if result[:options]
+          options = result[:options].split(',')
+          special_options = options.select do |x|
+            x.match('=') and
+              ["account", "boot", "check", "free", "mount", "size", "type",
+               "vol", "log", "quota"].include? x.split('=').first
+          end
+          options = options - special_options
+          special_options.sort.each do |x|
+            k, v = x.split("=")
+            output << "\t#{k}\t\t= #{v}"
+          end
+          output << "\toptions\t\t= #{options.sort.join(",")}" unless options.empty?
+        end
+        output.join("\n")
+      end
+    end
+  else
+    record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
+  end
 
   # Every entry in fstab is :unmounted until we can prove different
   def self.prefetch_hook(target_records)
