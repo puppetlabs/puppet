@@ -208,7 +208,6 @@ class Puppet::Pops::Validation::Checker4_0
         break # only flag the first
       end
     end
-    @migration_checker.report_array_last_in_block(o.statements[-1])
   end
 
   def check_CallNamedFunctionExpression(o)
@@ -365,14 +364,6 @@ class Puppet::Pops::Validation::Checker4_0
 
   def check_LiteralList(o)
     o.values.each {|v| rvalue(v) }
-  end
-
-  def check_LiteralFloat(o)
-    migration_checker.report_ambiguous_float(o)
-  end
-
-  def check_LiteralInteger(o)
-    migration_checker.report_ambiguous_integer(o)
   end
 
   def check_NodeDefinition(o)

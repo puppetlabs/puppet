@@ -417,7 +417,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     when :undef
       false
     when String
-      @migration_checker.report_empty_string_true(value, o)
       true
     else
       !!value

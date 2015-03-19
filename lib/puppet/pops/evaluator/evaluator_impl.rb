@@ -51,6 +51,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
 
     # Use null migration checker unless given in context
+    # (Unused in this version of puppet, but kept for next major release)
     @migration_checker ||= (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
   end
 
@@ -403,19 +404,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     left = evaluate(o.left_expr, scope)
     right = evaluate(o.right_expr, scope)
 
-    @migration_checker.report_uc_bareword_type(left, o.left_expr)
-    @migration_checker.report_uc_bareword_type(right, o.right_expr)
-
     begin
     # Left is a type
     if left.is_a?(Puppet::Pops::Types::PAnyType)
       case o.operator
       when :'=='
-        @migration_checker.report_equality_type_mismatch(left, right, o)
         @@type_calculator.equals(left,right)
 
       when :'!='
-        @migration_checker.report_equality_type_mismatch(left, right, o)
         !@@type_calculator.equals(left,right)
 
       when :'<'
@@ -436,10 +432,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     else
       case o.operator
       when :'=='
-        @migration_checker.report_equality_type_mismatch(left, right, o)
         @@compare_operator.equals(left,right)
       when :'!='
-        @migration_checker.report_equality_type_mismatch(left, right, o)
         ! @@compare_operator.equals(left,right)
       when :'<'
         @@compare_operator.compare(left,right) < 0
@@ -484,8 +478,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     left = evaluate(o.left_expr, scope)
     pattern = evaluate(o.right_expr, scope)
 
-    @migration_checker.report_uc_bareword_type(left, o.left_expr)
-
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
     if pattern.is_a?(Puppet::Pops::Types::PAnyType)
       # evaluate as instance? of type check
@@ -515,8 +507,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_InExpression o, scope
     left = evaluate(o.left_expr, scope)
     right = evaluate(o.right_expr, scope)
-    @migration_checker.report_uc_bareword_type(left, o.left_expr)
-    @migration_checker.report_in_expression(o)
     @@compare_operator.include?(right, left, scope)
   end
 
@@ -572,7 +562,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.test, scope)
-      @migration_checker.report_uc_bareword_type(test, o.test)
 
       result = nil
       the_default = nil
@@ -840,7 +829,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
-      @migration_checker.report_uc_bareword_type(test, o.left_expr)
 
       the_default = nil
       selected = o.selectors.find do |s|
@@ -1095,15 +1083,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # of value except regular expression where a match is performed.
   #
   def is_match?(left, right, o, option_expr, scope)
-    @migration_checker.report_option_type_mismatch(left, right, option_expr, o)
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
       set_match_data(matched, scope) # creates or clears ephemeral
       !!matched # convert to boolean
     elsif right.is_a?(Puppet::Pops::Types::PAnyType)
-      @migration_checker.report_uc_bareword_type(right, o)
-
       # right is a type and left is not - check if left is an instance of the given type
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).
