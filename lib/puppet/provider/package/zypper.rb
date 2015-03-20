@@ -35,10 +35,9 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     end
 
     #This has been tested with following zypper versions
-    #SLE 10.2: 0.6.104
-    #SLE 11.0: 1.0.8
-    #OpenSuse 10.2: 0.6.13
-    #OpenSuse 11.2: 1.2.8
+    #SLE 10.4: 0.6.201
+    #SLE 11.3: 1.6.307
+    #SLE 12.0: 1.11.14
     #Assume that this will work on newer zypper versions
 
     #extract version numbers and convert to integers
@@ -52,13 +51,24 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       quiet = '--quiet'
     end
 
-    options = [quiet, :install]
+    inst_opts = []
+    inst_opts = install_options if resource[:install_options]
+
+
+    options = []
+    options << quiet
+    options << '--no-gpg-check' unless inst_opts.delete('--no-gpg-check').nil?
+    options << :install
 
     #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
     options << '--auto-agree-with-licenses' unless major < 1 and minor <= 6 and patch <= 13
     options << '--no-confirm'
-    options << '--name' unless @resource.allow_virtual? || should
-    options += install_options if resource[:install_options]
+    options += inst_opts unless inst_opts.empty?
+
+    # Zypper 0.6.201 doesn't recognize '--name'
+    # It is unclear where this functionality was introduced, but it
+    # is present as early as 1.0.13
+    options << '--name' unless major < 1 || @resource.allow_virtual? || should
     options << wanted
 
     zypper *options
