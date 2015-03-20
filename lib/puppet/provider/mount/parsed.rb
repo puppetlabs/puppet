@@ -53,7 +53,7 @@ Puppet::Type.type(:mount).provide(
     def self.lines(text)
       # Separate base on comments, blank lines, or a mountpoint followed by
       # anything that isn't a mountpoint, comment, or blank line.
-      ret = text.scan(%r{(^\s*\*.*?$|^\s*?$|^\S+:(?:(?!(?:^\S+:|^\s+\*|^\s*$)).)*)}m).flatten
+      ret = text.scan(%r{(^\s*\*.*?$|^\s*?$|^\S+:(?:(?!(?:^\S+:|^\s*\*|^\s*$)).)*)}m).flatten
       ret.reject { |line| line.match(/^\* HEADER/) }
     end
     def self.header
@@ -68,16 +68,20 @@ Puppet::Type.type(:mount).provide(
       def post_parse(result)
         property_map = {
           :dev      => :device,
-          :nodename => :device,
+          :nodename => :nodename,
           :options  => :options,
           :vfs      => :fstype,
         }
         # Result is modified in-place instead of being returned; icky!
         memo = result.dup
         result.clear
+        # Save the line for later, just in case it is unparsable
+        result[:line] = @fields.collect do |field|
+          memo[field] if memo[field] != :absent
+        end.compact.join("\n")
+        result[:record_type] = memo[:record_type]
         special_options = Array.new
         result[:name] = memo[:name].sub(%r{:$},'')
-        result[:record_type] = memo[:record_type]
         memo.each do |_,k_v|
           if k_v and k_v.is_a?(String) and k_v.match("=")
             attr_name, attr_value = k_v.split("=",2).map(&:strip)
@@ -89,25 +93,42 @@ Puppet::Type.type(:mount).provide(
               # so are added to the "options" property for puppet's sake
               special_options << "#{attr_name}=#{attr_value}"
             end
+            if result[:nodename]
+              result[:device] = "#{result[:nodename]}:#{result[:device]}"
+              result.delete(:nodename)
+            end
           end
         end
         result[:options] = [result[:options],special_options.sort].flatten.compact.join(',')
+        if ! result[:device]
+          result[:device] = :absent
+          Puppet.err "Prefetch: Mount[#{result[:name]}]: Field 'device' is missing"
+        end
+        if ! result[:fstype]
+          result[:fstype] = :absent
+          Puppet.err "Prefetch: Mount[#{result[:name]}]: Field 'fstype' is missing"
+        end
       end
       def to_line(result)
         output = Array.new
         output << "#{result[:name]}:"
         if result[:device] and result[:device].match(%r{^/})
           output << "\tdev\t\t= #{result[:device]}"
-        elsif result[:device]
-          output << "\tdev\t\t= #{result[:name]}"
-          output << "\tnodename\t= #{result[:device]}"
+        elsif result[:device] and result[:device] != :absent
+          nodename, path = result[:device].split(":")
+          output << "\tdev\t\t= #{path}"
+          output << "\tnodename\t= #{nodename}"
         else
-          raise ArgumentError, "Field 'device' is required"
+          # Just skip this entry; it was malformed to begin with
+          Puppet.err "Mount[#{result[:name]}]: Field 'device' is required"
+          return result[:line]
         end
-        if result[:fstype]
+        if result[:fstype] and result[:fstype] != :absent
           output << "\tvfs\t\t= #{result[:fstype]}"
         else
-          raise ArgumentError, "Field 'fstype' is required"
+          # Just skip this entry; it was malformed to begin with
+          Puppet.err "Mount[#{result[:name]}]: Field 'device' is required"
+          return result[:line]
         end
         if result[:options]
           options = result[:options].split(',')
@@ -123,7 +144,11 @@ Puppet::Type.type(:mount).provide(
           end
           output << "\toptions\t\t= #{options.sort.join(",")}" unless options.empty?
         end
-        output.join("\n")
+        if result[:line] and result[:line].split("\n").sort == output.sort
+          return result[:line]
+        else
+          return output.join("\n")
+        end
       end
     end
   else
