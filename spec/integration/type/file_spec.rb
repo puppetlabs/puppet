@@ -1090,7 +1090,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.add_resource resource
         catalog.apply
         expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
-	#File.read(httppath).should =~ /DOCTYPE html/
+        File.read(httppath).should == "Content via HTTP\n"
+        #raise File.read(httppath,15).inspect
       end
     end
 
