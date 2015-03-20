@@ -62,19 +62,19 @@ describe "Puppet::Pops::IssueReporter" do
     end
 
     it "emits warnings if told to emit them" do
-      Puppet.expects(:warning).twice.with(regexp_matches(/warning1|deprecation1/))
+      Puppet::Log.expects(:create).twice.with(has_entries(:level => :warning, :message => regexp_matches(/warning1|deprecation1/)))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
 
     it "does not emit warnings if not told to emit them" do
-      Puppet.expects(:warning).never
+      Puppet::Log.expects(:create).never
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, {})
     end
 
     it "emits no warnings if :max_warnings is 0" do
       acceptor.accept( warning(2) )
       Puppet[:max_warnings] = 0
-      Puppet.expects(:warning).once.with(regexp_matches(/deprecation1/))
+      Puppet::Log.expects(:create).once.with(has_entries(:level => :warning, :message => regexp_matches(/deprecation1/)))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
 
@@ -82,20 +82,20 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( warning(2) )
       acceptor.accept( warning(3) )
       Puppet[:max_warnings] = 1
-      Puppet.expects(:warning).twice.with(regexp_matches(/warning1|deprecation1/))
+      Puppet::Log.expects(:create).twice.with(has_entries(:level => :warning, :message => regexp_matches(/warning1|deprecation1/)))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
 
     it "does not emit more deprecations warnings than the max deprecation warnings" do
       acceptor.accept( deprecation(2) )
       Puppet[:max_deprecations] = 0
-      Puppet.expects(:warning).once.with(regexp_matches(/warning1/))
+      Puppet::Log.expects(:create).once.with(has_entries(:level => :warning, :message => regexp_matches(/warning1/)))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
 
     it "does not emit deprecation warnings, but does emit regular warnings if disable_warnings includes deprecations" do
       Puppet[:disable_warnings] = 'deprecations'
-      Puppet.expects(:warning).once.with(regexp_matches(/warning1/))
+      Puppet::Log.expects(:create).once.with(has_entries(:level => :warning, :message => regexp_matches(/warning1/)))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
   end
@@ -103,7 +103,7 @@ describe "Puppet::Pops::IssueReporter" do
   context "given errors" do
     it "logs nothing, but raises the given :message if :emit_errors is repressing error logging" do
       acceptor.accept( error(1) )
-      Puppet.expects(:err).never
+      Puppet::Log.expects(:create).never
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_errors => false, :message => 'special'})
       end.to raise_error(Puppet::ParseError, 'special')
@@ -111,7 +111,7 @@ describe "Puppet::Pops::IssueReporter" do
 
     it "prefixes :message if a single error is raised" do
       acceptor.accept( error(1) )
-      Puppet.expects(:err).never
+      Puppet::Log.expects(:create).never
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :message => 'special'})
       end.to raise_error(Puppet::ParseError, /special error1/)
@@ -119,7 +119,7 @@ describe "Puppet::Pops::IssueReporter" do
 
     it "logs nothing and raises immediately if there is only one error" do
       acceptor.accept( error(1) )
-      Puppet.expects(:err).never
+      Puppet::Log.expects(:create).never
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /error1/)
@@ -129,7 +129,7 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( error(1) )
       acceptor.accept( error(2) )
       Puppet[:max_errors] = 0
-      Puppet.expects(:err).never
+      Puppet::Log.expects(:create).never
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /error1/)
@@ -138,7 +138,7 @@ describe "Puppet::Pops::IssueReporter" do
     it "logs the :message if there is more than one allowed error" do
       acceptor.accept( error(1) )
       acceptor.accept( error(2) )
-      Puppet.expects(:err).times(3).with(regexp_matches(/error1|error2|special/))
+      Puppet::Log.expects(:create).times(3).with(has_entries(:level => :err, :message => regexp_matches(/error1|error2|special/)))
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :message => 'special'})
       end.to raise_error(Puppet::ParseError, /Giving up/)
@@ -149,7 +149,7 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( error(2) )
       acceptor.accept( error(3) )
       Puppet[:max_errors] = 2
-      Puppet.expects(:err).times(2).with(regexp_matches(/error1|error2/))
+      Puppet::Log.expects(:create).times(2).with(has_entries(:level => :err, :message => regexp_matches(/error1|error2/)))
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /3 errors.*Giving up/)
@@ -160,7 +160,7 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( error(2) )
       acceptor.accept( error(3) )
       Puppet[:max_errors] = 4
-      Puppet.expects(:err).times(3).with(regexp_matches(/error[123]/))
+      Puppet::Log.expects(:create).times(3).with(has_entries(:level => :err, :message => regexp_matches(/error[123]/)))
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /3 errors.*Giving up/)
@@ -170,7 +170,7 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( error(1) )
       acceptor.accept( error(2) )
       Puppet[:disable_warnings] = 'deprecations'
-      Puppet.expects(:err).times(2).with(regexp_matches(/error1|error2/))
+      Puppet::Log.expects(:create).times(2).with(has_entries(:level => :err, :message => regexp_matches(/error1|error2/)))
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /Giving up/)
@@ -186,8 +186,8 @@ describe "Puppet::Pops::IssueReporter" do
       acceptor.accept( error(3) )
       acceptor.accept( deprecation(1) )
       Puppet[:max_errors] = 2
-      Puppet.expects(:warning).twice.with(regexp_matches(/warning1|deprecation1/))
-      Puppet.expects(:err).times(2).with(regexp_matches(/error[123]/))
+      Puppet::Log.expects(:create).twice.with(has_entries(:level => :warning, :message => regexp_matches(/warning1|deprecation1/)))
+      Puppet::Log.expects(:create).twice.with(has_entries(:level => :err, :message => regexp_matches(/error[123]/)))
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
       end.to raise_error(Puppet::ParseError, /3 errors.*2 warnings.*Giving up/)

@@ -54,8 +54,34 @@ module Puppet
     include ExternalFileError
   end
 
+  # Contains an issue code and can be annotated with an environment and a node
+  class ParseErrorWithIssue < Puppet::ParseError
+    attr_reader :issue_code, :basic_message
+    attr_accessor :environment, :node
+
+    # @param message [String] The error message
+    # @param file [String] The path to the file where the error was found
+    # @param line [Integer] The line in the file
+    # @param pos [Integer] The position on the line
+    # @param original [Exception] Original exception
+    # @param issue_code [Symbol] The issue code
+    #
+    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil)
+      super(message, file, line, pos, original)
+      @issue_code = issue_code
+      @basic_message = message
+    end
+
+    def to_s
+      msg = super
+      msg = "Could not parse for environment #{environment}: #{msg}" if environment
+      msg = "#{msg} on node #{node}" if node
+      msg
+    end
+  end
+
   # An error that already contains location information in the message text
-  class PreformattedError < Puppet::ParseError
+  class PreformattedError < Puppet::ParseErrorWithIssue
   end
 
   # An error class for when I don't know what happened.  Automatically

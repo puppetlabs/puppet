@@ -244,7 +244,7 @@ class Puppet::Util::Log
     self.from_data_hash(data)
   end
 
-  attr_accessor :time, :remote, :file, :line, :source
+  attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node
   attr_reader :level, :message
 
   def initialize(args)
@@ -258,9 +258,10 @@ class Puppet::Util::Log
       tags.each { |t| self.tag(t) }
     end
 
-    [:file, :line].each do |attr|
+    # Don't add these unless defined (preserve 3.x API as much as possible)
+    [:file, :line, :pos, :issue_code, :environment, :node].each do |attr|
       next unless value = args[attr]
-      send(attr.to_s + "=", value)
+      send(attr.to_s + '=', value)
     end
 
     Log.newmessage(self)
@@ -275,8 +276,11 @@ class Puppet::Util::Log
     if @time.is_a? String
       @time = Time.parse(@time)
     end
-    @file = data['file'] if data['file']
-    @line = data['line'] if data['line']
+    # Don't add these unless defined (preserve 3.x API as much as possible)
+    %w(file line pos issue_code environment node).each do |name|
+      next unless value = data[name]
+      send(name + '=', value)
+    end
   end
 
   def to_hash
@@ -284,15 +288,22 @@ class Puppet::Util::Log
   end
 
   def to_data_hash
-    {
+    hash = {
       'level' => @level,
       'message' => @message,
       'source' => @source,
-      'tags' => @tags,
+      'tags' => @tags.to_a,
       'time' => @time.iso8601(9),
       'file' => @file,
       'line' => @line,
     }
+    # Don't add these unless defined (preserve 3.x API as much as possible)
+    # TODO: Should apply to file and line also but making them optional in the hash would change 3x API
+    %w(pos issue_code environment node).each do |name|
+      attr_name = "@#{name}"
+      hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
+    end
+    hash
   end
 
   def to_pson(*args)
