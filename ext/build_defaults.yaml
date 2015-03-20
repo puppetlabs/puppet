@@ -35,8 +35,8 @@ build_msi:
     repo: 'git://github.com/puppetlabs/marionette-collective.git'
   sys:
     ref:
-      x86: 'aac9e790c9c3e59175e9d528f8aa517bb6caed76'
-      x64: '9e70b6ac8474678487f4330fecc2179158ae62f3'
+      x86: '8db9d84da9950760144b5dfcd807213eecee4842'
+      x64: '12030f11e9bb2f085c68108bff34be6956b25df9'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
