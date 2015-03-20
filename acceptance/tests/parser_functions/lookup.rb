@@ -7,6 +7,7 @@ testdir = master.tmpdir('lookup')
 step 'Setup'
 
 module_name                     = "data_module"
+module_name2                    = "other_module"
 
 env_data_implied_key            = "env_data_implied"
 env_data_implied_value          = "env_implied_a"
@@ -17,6 +18,7 @@ module_data_implied_key         = "module_data_implied"
 module_data_implied_value       = "module_implied_b"
 module_data_key                 = "module_data"
 module_data_value               = "module_b"
+module_data_value_other         = "other_module_b"
 
 env_data_override_implied_key   = "env_data_override_implied"
 env_data_override_implied_value = "env_override_implied_c"
@@ -27,6 +29,52 @@ hiera_data_implied_key          = "apache_server_port_implied"
 hiera_data_implied_value        = "8080"
 hiera_data_key                  = "apache_server_port"
 hiera_data_value                = "9090"
+
+
+def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
+                       module_data_implied_value, module_data_key, module_data_value)
+  if module_name
+    module_files_manifest = <<PP
+      # the binding to specify the function to provide data for this module
+      file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/bindings/#{module_name}/default.rb':
+        ensure => file,
+        content => "
+          Puppet::Bindings.newbindings('#{module_name}::default') do
+            # In the default bindings for this module
+            bind {
+              # bind its name to the 'puppet' module data provider
+              name         '#{module_name}'
+              to           'function'
+              in_multibind 'puppet::module_data'
+           }
+          end
+        ",
+        mode => "0640",
+      }
+
+      # the function to provide data for this module
+      file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/functions/#{module_name}/data.rb':
+        ensure => file,
+        content => "
+          Puppet::Functions.create_function(:'#{module_name}::data') do
+            def data()
+              { '#{module_name}::#{module_data_implied_key}' => '#{module_data_implied_value}',
+                '#{module_name}::#{module_data_key}' => '#{module_data_value}'
+              }
+            end
+          end
+        ",
+        mode => "0640",
+      }
+PP
+    module_files_manifest
+  end
+end
+
+module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
+                       module_data_implied_value, module_data_key, module_data_value)
+module_manifest2 = mod_manifest_entry(module_name2, testdir, module_data_implied_key,
+                       module_data_implied_value, module_data_key, module_data_value_other)
 
 apply_manifest_on(master, <<-PP, :catch_failures => true)
 File {
@@ -55,12 +103,14 @@ file {
   '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/bindings/#{module_name}':;
   '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/functions':;
   '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/functions/#{module_name}':;
-  '#{testdir}/environments/sample':;
-  '#{testdir}/environments/sample/modules':;
-  '#{testdir}/environments/sample/modules/dataprovider':;
-  '#{testdir}/environments/sample/modules/dataprovider/lib':;
-  '#{testdir}/environments/sample/modules/dataprovider/lib/puppet_x':;
-  '#{testdir}/environments/sample/modules/dataprovider/lib/puppet_x/helindbe':;
+  '#{testdir}/environments/production/modules/#{module_name2}':;
+  '#{testdir}/environments/production/modules/#{module_name2}/manifests':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib/puppet':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib/puppet/bindings':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib/puppet/bindings/#{module_name2}':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib/puppet/functions':;
+  '#{testdir}/environments/production/modules/#{module_name2}/lib/puppet/functions/#{module_name2}':;
 }
 
 file { '#{testdir}/hiera.yaml':
@@ -116,37 +166,10 @@ file { '#{testdir}/environments/production/lib/puppet/functions/environment/data
   mode => "0640",
 }
 
-# the binding to specify the function to provide data for this module
-file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/bindings/#{module_name}/default.rb':
-  ensure => file,
-  content => "
-    Puppet::Bindings.newbindings('#{module_name}::default') do
-      # In the default bindings for this module
-      bind {
-        # bind its name to the 'puppet' module data provider
-        name         '#{module_name}'
-        to           'function'
-        in_multibind 'puppet::module_data'
-     }
-    end
-  ",
-  mode => "0640",
-}
-
-# the function to provide data for this module
-file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/functions/#{module_name}/data.rb':
-  ensure => file,
-  content => "
-    Puppet::Functions.create_function(:'#{module_name}::data') do
-      def data()
-        { '#{module_name}::#{module_data_implied_key}' => '#{module_data_implied_value}',
-          '#{module_data_key}' => '#{module_data_value}'
-        }
-      end
-    end
-  ",
-  mode => "0640",
-}
+# place module file segments here
+#{module_manifest1}
+# same key, different module and values
+#{module_manifest2}
 
 file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init.pp':
   ensure => file,
@@ -162,8 +185,12 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
 
       # lookup data from the module databinding
       notify { "#{module_data_implied_key} $#{module_data_implied_key}": }
-      $lookup_module = lookup("#{module_data_key}")
+      $lookup_module = lookup("#{module_name}::#{module_data_key}")
       notify { "#{module_data_key} $lookup_module": }
+
+      # lookup data from another modules databinding
+      $lookup_module2 = lookup("#{module_name2}::#{module_data_key}")
+      notify { "#{module_data_key} $lookup_module2": }
 
       # ensure env can override module
       notify { "#{env_data_override_implied_key} $#{env_data_override_implied_key}": }
@@ -205,6 +232,8 @@ with_puppet_running_on master, master_opts, testdir do
 
     assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
     assert_match("#{module_data_key} #{module_data_value}", stdout)
+
+    assert_match("#{module_data_key} #{module_data_value_other}", stdout)
 
     assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
     assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
