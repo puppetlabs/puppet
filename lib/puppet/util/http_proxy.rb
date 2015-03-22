@@ -107,23 +107,29 @@ module Puppet::Util::HttpProxy
   # @param [symbol] method The name of the Net::HTTP method to use, typically :get, :head, :post etc.
   # @param [FixNum] redirect_limit The number of redirections that can be followed.
   # @return [Net::HTTPResponse] a response object
-  def self.request_with_redirects(uri, method, redirect_limit = 10)
+  def self.request_with_redirects(uri, method, redirect_limit = 10, &block)
     current_uri = uri
     response = nil
 
     0.upto(redirect_limit) do |redirection|
-      return response if response
-
       proxy = get_http_object(current_uri)
-      response = proxy.send(method, current_uri.path)
-
-      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+      response = proxy.send(:head, current_uri.path)
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
         current_uri = URI.parse(response['location'])
-        response = nil
+        next
       end
+
+      if block_given?
+        response = proxy.send("request_#{method}".to_sym, current_uri.path, &block)
+      else
+        response = proxy.send(method, current_uri.path)
+      end
+
+      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+
+      return response
     end
 
     raise RedirectionLimitExceededException, "Too many HTTP redirections for #{uri}"

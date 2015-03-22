@@ -222,7 +222,7 @@ module Puppet
     end
 
     def get_from_http_source(source, &block)
-      proxy = Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get)
+      Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get, &block)
     end
 
     def get_from_source(source_or_content, &block)
