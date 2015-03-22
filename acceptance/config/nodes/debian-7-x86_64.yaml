@@ -1,13 +1,14 @@
+---
 HOSTS:
   master:
     roles:
-      - master
+    - master
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
   agent:
     roles:
-      - agent
+    - agent
     platform: debian-wheezy-x86_64
     hypervisor: vcloud
     template: debian-7-x86_64

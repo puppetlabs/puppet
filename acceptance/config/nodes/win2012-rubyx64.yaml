@@ -1,13 +1,14 @@
+---
 HOSTS:
   master:
     roles:
-      - master
+    - master
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
   agent-2012-x86_64-rubyx64:
     roles:
-      - agent
+    - agent
     platform: windows-2012-64
     ruby_arch: x64
     hypervisor: vcloud
