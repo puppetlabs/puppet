@@ -105,6 +105,14 @@ describe Puppet::Network::HTTP::Connection do
     let (:host) { "my_server" }
     let (:port) { 8140 }
 
+    before :all do
+      WebMock.disable!
+    end
+
+    after :all do
+      WebMock.enable!
+    end
+
     it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
       connection = Puppet::Network::HTTP::Connection.new(
         host, port,
