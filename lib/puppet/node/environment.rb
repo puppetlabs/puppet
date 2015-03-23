@@ -568,6 +568,10 @@ class Puppet::Node::Environment
         parser.parse
       end
     end
+  rescue Puppet::ParseErrorWithIssue => detail
+    @known_resource_types.parse_failed = true
+    detail.environment = self.name
+    raise
   rescue => detail
     @known_resource_types.parse_failed = true
 
