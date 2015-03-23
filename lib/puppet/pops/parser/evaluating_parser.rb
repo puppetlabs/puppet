@@ -65,7 +65,7 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   def convert_to_3x(object, scope)
-    val = @@evaluator.convert(object, scope, nil)
+    val = evaluator.convert(object, scope, nil)
   end
 
   def validate(parse_result)

@@ -55,7 +55,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
 
     # Use null migration checker unless given in context
-    @migration_checker ||= (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
+    @migration_checker = (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
   end
 
   # @api private
