@@ -51,9 +51,28 @@ Puppet::Type.type(:mount).provide(
     # Override lines and use scan instead of split, because we DON'T want to
     # remove the separators
     def self.lines(text)
-      # Separate base on comments, blank lines, or a mountpoint followed by
-      # anything that isn't a mountpoint, comment, or blank line.
-      ret = text.scan(%r{(^\s*\*.*?$|^\s*?$|^\S+:(?:(?!(?:^\S+:|^\s*\*|^\s*$)).)*)}m).flatten
+      lines = text.split("\n")
+      filesystem_stanza = false
+      filesystem_index = 0
+      ret = Array.new
+      lines.each_with_index do |line,i|
+        if line.match(%r{^\S+:})
+          # Begin new filesystem stanza and save the index
+          ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
+          filesystem_stanza = Array(line)
+          filesystem_index = i
+          nil
+        elsif line.match(%r{^(\s*\*.*|\s*)$})
+          # Just a comment or blank line; add in place
+          ret[i] = line
+        else
+          # Non-comments or blank lines must be part of a stanza
+          filesystem_stanza << line
+        end
+      end
+      # Add the final stanza to the return
+      ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
+      ret = ret.compact.flatten
       ret.reject { |line| line.match(/^\* HEADER/) }
     end
     def self.header
