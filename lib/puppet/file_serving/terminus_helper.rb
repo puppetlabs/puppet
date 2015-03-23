@@ -29,4 +29,16 @@ module Puppet::FileServing::TerminusHelper
       path2instance(request, base_path, :ignore_source_permissions => true, :relative_path => file)
     end
   end
+
+  def unescape_url(url)
+    url.sub(/^url=/,'')
+  end
+
+  def self.escape_url(url)
+    if url =~ /^https?:/
+      "url=#{url}"
+    else
+      url
+    end
+  end
 end

@@ -1073,6 +1073,27 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
+
+    describe "from http servers", :vcr => true do
+      let(:http_source) { "http://my-server/file" }
+      let(:httppath) { "#{path}http" }
+      let(:resource) do
+        described_class.new(
+          :path   => httppath,
+          :ensure => :file,
+          :source => http_source,
+          :backup => false
+        )
+      end
+
+      it "should fetch the file if it is not on the local disk" do
+        catalog.add_resource resource
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+        expect(File.read(httppath)).to eq "Content via HTTP\n"
+      end
+    end
+
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE

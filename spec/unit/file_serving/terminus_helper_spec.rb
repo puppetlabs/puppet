@@ -110,4 +110,29 @@ describe Puppet::FileServing::TerminusHelper do
       @helper.path2instances(@request, "/my/file")
     end
   end
+
+  describe "::escape_url" do
+    it "should prefix http URLs" do
+      described_class.escape_url('http://foo.bar').should == 'url=http://foo.bar'
+    end
+    it "should prefix https URLs" do
+      described_class.escape_url('https://foo.bar').should == 'url=https://foo.bar'
+    end
+    it "should leave non-http keys alone" do
+      %w{ftp://foo.bar gopher://foo.bar ymmv://foo.bar some-non-URL}.each do |key|
+        described_class.escape_url(key).should == key
+      end
+    end
+  end
+
+  describe "#unescape_url" do
+    it "should remove the 'url=' prefix from indirector keys" do
+      @helper.unescape_url('url=result').should == 'result'
+    end
+    it "should not try to remove other prefixes" do
+      %w{urlstring=foobar /catalog/url=foobar key-without-prefix}.each do |key|
+        @helper.unescape_url(key).should == key
+      end
+    end
+  end
 end
