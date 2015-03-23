@@ -27,6 +27,10 @@ Puppet::Type.newtype(:scheduled_task) do
     isnamevar
   end
 
+  newproperty(:comment) do
+    desc "The comment for the scheduled task."
+  end
+  
   newproperty(:command) do
     desc "The full path to the application to run, without any arguments."
 
@@ -102,6 +106,9 @@ Puppet::Type.newtype(:scheduled_task) do
           * `start_date` ---  The date when the trigger should first become active.
             Defaults to the current date. You should format dates as YYYY-MM-DD,
             although other date formats may work. (Under the hood, this uses `Date.parse`.)
+          * `minutes_interval` --- The repeat interval in minutes.
+          * `minutes_duration` --- The duration in minutes, needs to be greater than the
+            minutes_interval.
       * For `daily` triggers:
           * `every` --- How often the task should run, as a number of days. Defaults
             to 1. ("2" means every other day, "3" means every three days, etc.)
@@ -127,6 +134,7 @@ Puppet::Type.newtype(:scheduled_task) do
             when the task should run. Must be one of `first`, `second`, `third`,
             `fourth`, `fifth`, or `last`.
 
+
       Examples:
 
           # Run at 8am on the 1st, 15th, and last day of the month in January, March,
@@ -138,7 +146,7 @@ Puppet::Type.newtype(:scheduled_task) do
             months     => [1,3,5,7,9,11], # Defaults to all
             on         => [1, 15, last],  # Must be specified
           }
-
+ 
           # Run at 8am on the first Monday of the month for January, March, and May,
           # starting after August 31st, 2011.
           trigger => {
@@ -148,6 +156,15 @@ Puppet::Type.newtype(:scheduled_task) do
             months           => [1,3,5],      # Defaults to all
             which_occurrence => first,        # Must be specified
             day_of_week      => [mon],        # Must be specified
+          }
+
+          # Run daily repeating every 30 minutes between 9am and 5pm (480 minutes) starting after August 31st, 2011.
+          trigger => {
+            schedule         => daily,
+            start_date       => '2011-08-31', # Defaults to current date
+            start_time       => '8:00',       # Must be specified
+            minutes_interval => 30,
+            minutes_duration => 480,
           }
 
     EOT
