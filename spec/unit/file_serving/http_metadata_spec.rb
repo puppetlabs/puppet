@@ -9,7 +9,7 @@ describe Puppet::FileServing::HttpMetadata do
   let(:foobar) { File.expand_path('/foo/bar') }
 
   it "should be a subclass of Metadata" do
-    described_class.superclass.should equal(Puppet::FileServing::Metadata)
+    expect( described_class.superclass ).to be Puppet::FileServing::Metadata
   end
 
   describe "when initializing" do
@@ -20,18 +20,18 @@ describe Puppet::FileServing::HttpMetadata do
     end
 
     it "can be instantiated from a HTTP response object" do
-      described_class.new(http_response).should_not be nil
+      expect( described_class.new(http_response) ).to_not be_nil
     end
 
     it "represents a plain file" do
-      described_class.new(http_response).ftype.should == 'file'
+      expect( described_class.new(http_response).ftype ).to eq 'file'
     end
 
     it "carries no information on owner, group and mode" do
       metadata = described_class.new(http_response)
-      metadata.owner.should be_nil
-      metadata.group.should be_nil
-      metadata.mode.should be_nil
+      expect( metadata.owner ).to be_nil
+      expect( metadata.group ).to be_nil
+      expect( metadata.mode ).to be_nil
     end
 
     context "with no Content-MD5 header from the server" do
@@ -45,7 +45,7 @@ describe Puppet::FileServing::HttpMetadata do
         http_response.stubs(:[]).with('last-modified').returns(time.strftime("%a, %d %b %Y %T GMT"))
         metadata = described_class.new(http_response)
         expect( metadata.checksum_type ).to eq 'mtime'
-        expect( metadata.checksum.should ).to eq "{mtime}#{time.to_time}"
+        expect( metadata.checksum ).to eq "{mtime}#{time.to_time}"
       end
     end
 
@@ -59,8 +59,8 @@ describe Puppet::FileServing::HttpMetadata do
 
       it "should use the md5 checksum" do
         metadata = described_class.new(http_response)
-        metadata.checksum_type.should == 'md5'
-        metadata.checksum.should == "{md5}#{hex}"
+        expect( metadata.checksum_type ).to eq 'md5'
+        expect( metadata.checksum ).to eq "{md5}#{hex}"
       end
     end
   end
