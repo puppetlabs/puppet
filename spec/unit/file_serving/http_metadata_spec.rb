@@ -44,8 +44,8 @@ describe Puppet::FileServing::HttpMetadata do
         # HTTP uses "GMT" not "UTC"
         http_response.stubs(:[]).with('last-modified').returns(time.strftime("%a, %d %b %Y %T GMT"))
         metadata = described_class.new(http_response)
-        metadata.checksum_type.should == 'mtime'
-        metadata.checksum.should == "{mtime}#{time.to_datetime}"
+        expect( metadata.checksum_type ).to eq 'mtime'
+        expect( metadata.checksum.should ).to eq "{mtime}#{time.to_time}"
       end
     end
 
