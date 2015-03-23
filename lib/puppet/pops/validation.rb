@@ -93,6 +93,7 @@ module Puppet::Pops::Validation
     @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
+    # @param [Symbol] specifies default severity if :error is not wanted as the default
     # @api public
     #
     def initialize(default_severity = :error)
