@@ -61,6 +61,8 @@ Puppet::Type.type(:mount).provide(
           ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
           filesystem_stanza = Array(line)
           filesystem_index = i
+          # Eat the preceeding blank line
+          ret[i-1] = nil if i > 0 and ret[i-1] and ret[i-1].match(%r{^\s*$})
           nil
         elsif line.match(%r{^(\s*\*.*|\s*)$})
           # Just a comment or blank line; add in place
@@ -100,7 +102,7 @@ Puppet::Type.type(:mount).provide(
         end.compact.join("\n")
         result[:record_type] = memo[:record_type]
         special_options = Array.new
-        result[:name] = memo[:name].sub(%r{:$},'')
+        result[:name] = memo[:name].sub(%r{:\s*$},'').strip
         memo.each do |_,k_v|
           if k_v and k_v.is_a?(String) and k_v.match("=")
             attr_name, attr_value = k_v.split("=",2).map(&:strip)
@@ -134,6 +136,11 @@ Puppet::Type.type(:mount).provide(
         if result[:device] and result[:device].match(%r{^/})
           output << "\tdev\t\t= #{result[:device]}"
         elsif result[:device] and result[:device] != :absent
+          if ! result[:device].match(%{^.+:/})
+            # Just skip this entry; it was malformed to begin with
+            Puppet.err "Mount[#{result[:name]}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>"
+            return result[:line]
+          end
           nodename, path = result[:device].split(":")
           output << "\tdev\t\t= #{path}"
           output << "\tnodename\t= #{nodename}"
@@ -164,9 +171,9 @@ Puppet::Type.type(:mount).provide(
           output << "\toptions\t\t= #{options.sort.join(",")}" unless options.empty?
         end
         if result[:line] and result[:line].split("\n").sort == output.sort
-          return result[:line]
+          return "\n#{result[:line]}"
         else
-          return output.join("\n")
+          return "\n#{output.join("\n")}"
         end
       end
     end
