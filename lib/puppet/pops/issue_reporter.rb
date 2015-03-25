@@ -11,19 +11,14 @@ class Puppet::Pops::IssueReporter
   def self.assert_and_report(acceptor, options)
     return unless acceptor
 
-    max_errors = Puppet[:max_errors]
-    max_warnings = Puppet[:max_warnings]
-    max_deprecations =
-    if Puppet[:disable_warnings].include?('deprecations')
-      0
-    else
-      Puppet[:max_deprecations]
-    end
+    max_errors       = options[:max_errors]   || Puppet[:max_errors]
+    max_warnings     = options[:max_warnings] || Puppet[:max_warnings]
+    max_deprecations = options[:max_deprecations] || (Puppet[:disable_warnings].include?('deprecations') ? 0 : Puppet[:max_deprecations])
 
-    emit_warnings = options[:emit_warnings] || false
-    emit_errors = options[:emit_errors].nil? ? true : !!options[:emit_errors]
-    emit_message = options[:message]
-    emit_exception = options[:exception_class] || Puppet::ParseErrorWithIssue
+    emit_warnings    = options[:emit_warnings] || false
+    emit_errors      = options[:emit_errors].nil? ? true : !!options[:emit_errors]
+    emit_message     = options[:message]
+    emit_exception   = options[:exception_class] || Puppet::ParseErrorWithIssue
 
     # If there are warnings output them
     warnings = acceptor.warnings
