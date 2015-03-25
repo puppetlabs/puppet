@@ -3,6 +3,9 @@ require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 
 describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet.features.microsoft_windows? do
+  before :each do
+    Facter.clear
+  end
 
   let :vfstab_sample do
     "/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0 \t\t    /  \t    ufs     1 no\t-"
@@ -16,6 +19,11 @@ describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet.features
   it "should default to /etc/vfstab on Solaris" do
     pending "This test only works on Solaris" unless Facter.value(:osfamily) == 'Solaris'
     described_class.default_target.should == '/etc/vfstab'
+  end
+
+  it "should default to /etc/vfstab on Solaris" do
+    pending "This test only works on AIX" unless Facter.value(:osfamily) == 'AIX'
+    described_class.default_target.should == '/etc/filesystems'
   end
 
   it "should default to /etc/fstab on anything else" do
@@ -160,10 +168,14 @@ FSTAB
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('aix.mount')))
       mounts = described_class.mountinstances
       mounts[0].should == { :name => '/', :mounted => :yes }
-      mounts[1].should == { :name => '/tmp', :mounted => :yes }
-      mounts[2].should == { :name => '/home', :mounted => :yes }
-      mounts[3].should == { :name => '/usr', :mounted => :yes }
-      mounts[4].should == { :name => '/usr/code', :mounted => :yes }
+      mounts[1].should == { :name => '/usr', :mounted => :yes }
+      mounts[2].should == { :name => '/var', :mounted => :yes }
+      mounts[3].should == { :name => '/tmp', :mounted => :yes }
+      mounts[4].should == { :name => '/home', :mounted => :yes }
+      mounts[5].should == { :name => '/admin', :mounted => :yes }
+      mounts[6].should == { :name => '/proc', :mounted => :yes }
+      mounts[7].should == { :name => '/opt', :mounted => :yes }
+      mounts[8].should == { :name => '/srv/aix', :mounted => :yes }
     end
 
     it "should raise an error if a line is not understandable" do
@@ -173,7 +185,21 @@ FSTAB
 
   end
 
-  it "should support AIX's paragraph based /etc/filesystems"
+  it "should support AIX's paragraph based /etc/filesystems" do
+    pending "This test only works on AIX" unless Facter.value(:osfamily) == 'AIX'
+    Facter.stubs(:value).with(:osfamily).returns 'AIX'
+    described_class.stubs(:default_target).returns my_fixture('aix.filesystems')
+    described_class.stubs(:mountcmd).returns File.read(my_fixture('aix.mount'))
+    instances = described_class.instances
+    instances[0].name.should == "/"
+    instances[0].device.should == "/dev/hd4"
+    instances[0].fstype.should == "jfs2"
+    instances[0].options.should == "check=false,free=true,log=NULL,mount=automatic,quota=no,type=bootfs,vol=root"
+    instances[11].name.should == "/srv/aix"
+    instances[11].device.should == "mynode"
+    instances[11].fstype.should == "nfs"
+    instances[11].options.should == "vers=2,account=false,log=NULL,mount=true"
+  end
 
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')
