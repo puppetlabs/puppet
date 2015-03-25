@@ -168,7 +168,7 @@ Puppet::Type.type(:mount).provide(
             k, v = x.split("=")
             output << "\t#{k}\t\t= #{v}"
           end
-          output << "\toptions\t\t= #{options.sort.join(",")}" unless options.empty?
+          output << "\toptions\t\t= #{options.join(",")}" unless options.empty?
         end
         if result[:line] and result[:line].split("\n").sort == output.sort
           return "\n#{result[:line]}"
