@@ -94,19 +94,39 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when ensure is absent" do
-    it "should remove the file if present" do
-      FileUtils.touch(path)
+    before(:each) do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
-      report = catalog.apply.report
-      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
-      expect(Puppet::FileSystem.exist?(path)).to be_falsey
     end
 
-    it "should do nothing if file is not present" do
-      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
-      report = catalog.apply.report
-      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
-      expect(Puppet::FileSystem.exist?(path)).to be_falsey
+    context "file is present" do
+      before(:each) do
+        FileUtils.touch(path)
+      end
+
+      it "should remove the file" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_falsey
+      end
+
+      it "should log that the file was removed" do
+        logs = catalog.apply.report.logs
+        expect(logs.first.source).to eq("/File[#{path}]/ensure")
+        expect(logs.first.message).to eq("removed")
+      end
+    end
+
+    context "file is not present" do
+      it "should do nothing" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_falsey
+      end
+
+      it "should log nothing" do
+        logs = catalog.apply.report.logs
+        expect(logs).to be_empty
+      end
     end
 
     # issue #14599
@@ -356,14 +376,26 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               expect(get_mode(path) & 07777).to eq(0600)
             end
 
-            it "should overwrite the file" do
-              FileUtils.touch(path)
+            context "overwriting a file" do
+              before :each do
+                FileUtils.touch(path)
+                File.chmod(0644, path)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
+              end
 
-              catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
-              catalog.apply
+              it "should overwrite the file" do
+                catalog.apply
 
-              expect(File).to be_file(path)
-              expect(get_mode(path) & 07777).to eq(0600)
+                expect(File).to be_file(path)
+                expect(get_mode(path) & 07777).to eq(0600)
+              end
+
+              it "should log that the mode changed" do
+                report = catalog.apply.report
+
+                expect(report.logs.first.message).to eq("mode changed '0644' to '0600'")
+                expect(report.logs.first.source).to eq("/File[#{path}]/mode")
+              end
             end
           end
 
@@ -981,32 +1013,84 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
-    before(:each) do
-      @options = {:path => path, :content => "this is some content, yo", :checksum => checksum_type}
-    end
-    it "should create a file with content if ensure is omitted" do
-      catalog.add_resource described_class.send(:new, @options)
-      catalog.apply
-      expect(File.read(path)).to eq("this is some content, yo")
+    describe "when checksum_type is #{checksum_type}" do
+      before(:each) do
+        @options = {:path => path, :content => CHECKSUM_PLAINTEXT, :checksum => checksum_type}
+      end
 
-      second_catalog = Puppet::Resource::Catalog.new
-      second_catalog.add_resource described_class.send(:new, @options)
-      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
-      expect(status).not_to be_failed
-      expect(status).not_to be_changed
-    end
+      context "when changing the content" do
+        before :each do
+          FileUtils.touch(path)
+          catalog.add_resource described_class.send(:new, @options)
+        end
 
-    it "should create files with content if both content and ensure are set" do
-      @options[:ensure] = "file"
-      catalog.add_resource described_class.send(:new, @options)
-      catalog.apply
-      expect(File.read(path)).to eq("this is some content, yo")
+        it "should overwrite contents" do
+          catalog.apply
+          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+        end
 
-      second_catalog = Puppet::Resource::Catalog.new
-      second_catalog.add_resource described_class.send(:new, @options)
-      status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
-      expect(status).not_to be_failed
-      expect(status).not_to be_changed
+        it "should log that content changed" do
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{path}]/content")
+          expect(report.logs.first.message).to match(/content changed '{#{checksum_type}}[0-9a-f]*' to '{#{checksum_type}}#{checksum}'/)
+        end
+      end
+
+      context "ensure is omitted" do
+        it "should create a file with content" do
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+
+        it "should log the content checksum" do
+          catalog.add_resource described_class.send(:new, @options)
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{path}]/ensure")
+          expect(report.logs.first.message).to eq("defined content as '{#{checksum_type}}#{checksum}'")
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          logs = second_catalog.apply.report.logs
+          expect(logs).to be_empty
+        end
+      end
+
+      context "both content and ensure are set" do
+        before(:each) do
+          @options[:ensure] = "file"
+        end
+
+        it "should create files with content" do
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+
+        it "should log the content checksum" do
+          catalog.add_resource described_class.send(:new, @options)
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{path}]/ensure")
+          expect(report.logs.first.message).to eq("defined content as '{#{checksum_type}}#{checksum}'")
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          logs = second_catalog.apply.report.logs
+          expect(logs).to be_empty
+        end
+      end
     end
   end
 
