@@ -576,6 +576,14 @@ module Puppet
       :default => '$trusted_node_data',
       :type    => :boolean,
       :desc    => "When true, also prevents $trusted and $facts from being overridden in any scope",
+    },
+    :preview_outputdir => {
+      :default => '$vardir/preview',
+      :type     => :directory,
+      :mode     => "0750",
+      :owner    => "service",
+      :group    => "service",
+      :desc    => "The directory where catalog previews per node are generated."
     }
   )
   Puppet.define_settings(:module_tool,
