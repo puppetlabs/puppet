@@ -115,9 +115,10 @@ parameter, so you can specify '--server <servername>' as an argument.
 
 * --detailed-exitcodes:
   Provide transaction information via exit codes. If this is enabled, an exit
-  code of '2' means there were changes, an exit code of '4' means there were
-  failures during the transaction, and an exit code of '6' means there were both
-  changes and failures.
+  code of '1' means at least one device had a compile failure, an exit code of
+  '2' means at least one device had resource changes, and an exit code of '4'
+  means at least one device had resource failures. Exit codes of '3', '5', '6',
+  or '7' means that a bitwise combination of the preceeding exit codes happened.
 
 * --help:
   Print this help message
@@ -167,9 +168,13 @@ Licensed under the Apache 2.0 License
       Puppet.err "No device found in #{Puppet[:deviceconfig]}"
       exit(1)
     end
-    devices.each_value do |device|
+    returns = devices.collect do |devicename,device|
       begin
-        Puppet.info "starting applying configuration to #{device.name} at #{device.url}"
+        device_url = URI.parse(device.url)
+        # Handle nil scheme & port
+        scheme = "#{device_url.scheme}://" if device_url.scheme
+        port = ":#{device_url.port}" if device_url.port
+        Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
 
         # override local $vardir and $certname
         Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
@@ -192,12 +197,24 @@ Licensed under the Apache 2.0 License
         configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
       rescue => detail
         Puppet.log_exception(detail)
+        # If we rescued an error, then we return 1 as the exit code
+        1
       ensure
         Puppet[:vardir] = vardir
         Puppet[:confdir] = confdir
         Puppet[:certname] = certname
         Puppet::SSL::Host.reset
       end
+    end
+    if ! returns or returns.compact.empty?
+      exit(1)
+    elsif options[:detailed_exitcodes]
+      # Bitwise OR the return codes together, puppet style
+      exit(returns.compact.reduce(:|))
+    elsif returns.include? 1
+      exit(1)
+    else
+      exit(0)
     end
   end
 

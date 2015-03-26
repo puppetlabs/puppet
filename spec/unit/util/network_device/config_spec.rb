@@ -70,6 +70,12 @@ describe Puppet::Util::NetworkDevice::Config do
       expect(config.devices['router.puppetlabs.com'].url).to eq('ssh://test/')
     end
 
+    it "should error with a malformed device url" do
+      write_device_config('[router.puppetlabs.com]', 'type cisco', 'url ssh://test node/')
+
+      expect { config.devices['router.puppetlabs.com'] }.to raise_error Puppet::Error
+    end
+
     it "should parse the debug mode" do
       write_device_config('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/', 'debug')
 

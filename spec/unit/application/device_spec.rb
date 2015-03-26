@@ -126,7 +126,6 @@ describe Puppet::Application::Device do
   describe "during setup" do
     before :each do
       @device.options.stubs(:[])
-      Puppet.stubs(:info)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
@@ -271,6 +270,7 @@ describe Puppet::Application::Device do
     before :each do
       @device.options.stubs(:[]).with(:fingerprint).returns(false)
       Puppet.stubs(:notice)
+      @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
       @device.options.stubs(:[]).with(:client)
       Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
     end
@@ -283,7 +283,7 @@ describe Puppet::Application::Device do
     it "should get the device list" do
       device_hash = stub_everything 'device hash'
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      @device.main
+      expect { @device.main }.to exit_with 1
     end
 
     it "should exit if the device list is empty" do
@@ -296,8 +296,8 @@ describe Puppet::Application::Device do
         Puppet[:confdir] = make_absolute("/dummy")
         Puppet[:certname] = "certname"
         @device_hash = {
-          "device1" => OpenStruct.new(:name => "device1", :url => "url", :provider => "cisco"),
-          "device2" => OpenStruct.new(:name => "device2", :url => "url", :provider => "cisco"),
+          "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+          "device2" => OpenStruct.new(:name => "device2", :url => "https://user:pass@testhost/some/path", :provider => "rest"),
         }
         Puppet::Util::NetworkDevice::Config.stubs(:devices).returns(@device_hash)
         Puppet.stubs(:[]=)
@@ -310,38 +310,76 @@ describe Puppet::Application::Device do
 
       it "should set vardir to the device vardir" do
         Puppet.expects(:[]=).with(:vardir, make_absolute("/dummy/devices/device1"))
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should set confdir to the device confdir" do
         Puppet.expects(:[]=).with(:confdir, make_absolute("/dummy/devices/device1"))
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should set certname to the device certname" do
         Puppet.expects(:[]=).with(:certname, "device1")
         Puppet.expects(:[]=).with(:certname, "device2")
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should make sure all the required folders and files are created" do
         Puppet.settings.expects(:use).with(:main, :agent, :ssl).twice
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should initialize the device singleton" do
         Puppet::Util::NetworkDevice.expects(:init).with(@device_hash["device1"]).then.with(@device_hash["device2"])
-        @device.main
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should print the device url scheme, host, and port" do
+        Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
+        Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
+        expect { @device.main }.to exit_with 1
       end
 
       it "should setup the SSL context" do
         @device.expects(:setup_host).twice
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
 
       it "should launch a configurer for this device" do
         @configurer.expects(:run).twice
-        @device.main
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "exits 1 when configurer raises error" do
+        @configurer.stubs(:run).raises(Puppet::Error).then.returns(0)
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "exits 0 when run happens without puppet errors but with failed run" do
+        @configurer.stubs(:run).returns(6,2)
+        expect { @device.main }.to exit_with 0
+      end
+
+      it "exits 2 when --detailed-exitcodes and successful runs" do
+        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+        @configurer.stubs(:run).returns(0,2)
+        expect { @device.main }.to exit_with 2
+      end
+
+      it "exits 1 when --detailed-exitcodes and failed parse" do
+        @configurer = stub_everything 'configurer'
+        Puppet::Configurer.stubs(:new).returns(@configurer)
+        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+        @configurer.stubs(:run).returns(6,1)
+        expect { @device.main }.to exit_with 7
+      end
+
+      it "exits 6 when --detailed-exitcodes and failed run" do
+        @configurer = stub_everything 'configurer'
+        Puppet::Configurer.stubs(:new).returns(@configurer)
+        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+        @configurer.stubs(:run).returns(6,2)
+        expect { @device.main }.to exit_with 6
       end
 
       [:vardir, :confdir].each do |setting|
@@ -369,7 +407,7 @@ describe Puppet::Application::Device do
           end
 
 
-          @device.main
+          expect { @device.main }.to exit_with 1
 
           expect(found_devices).to eq(all_devices)
         end
@@ -399,7 +437,7 @@ describe Puppet::Application::Device do
         end
 
 
-        @device.main
+        expect { @device.main }.to exit_with 1
 
         # make sure that we were called with each of the defined devices
         expect(found_devices).to eq(all_devices)
@@ -408,7 +446,7 @@ describe Puppet::Application::Device do
       it "should expire all cached attributes" do
         Puppet::SSL::Host.expects(:reset).twice
 
-        @device.main
+        expect { @device.main }.to exit_with 1
       end
     end
   end
