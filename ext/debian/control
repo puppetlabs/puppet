@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Puppet Labs <info@puppetlabs.com>
 Uploaders: Micah Anderson <micah@debian.org>, Andrew Pollock <apollock@debian.org>, Nigel Kersten <nigel@explanatorygap.net>, Stig Sandbeck Mathisen <ssm@debian.org>
-Build-Depends-Indep: ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1.9.1 | libruby (>= 1:1.9.3.4), facter (>= 1.7.0), hiera (>= 1.0.0)
+Build-Depends-Indep: ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1.9.1 | libruby (>= 1:1.9.3.4), facter (>= 1.7.0), hiera (>= 2.0.0)
 Build-Depends: debhelper (>= 7.0.0), openssl
 Standards-Version: 3.9.1
 Vcs-Git: git://github.com/puppetlabs/puppet
@@ -11,7 +11,7 @@ Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet-common
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1.9.1 | libruby (>= 1:1.9.3.4), ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.7.0), libjson-ruby | ruby-json
+Depends: ${misc:Depends}, ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1.9.1 | libruby (>= 1:1.9.3.4), ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 2.0.0), facter (>= 1.7.0), libjson-ruby | ruby-json
 Recommends: lsb-release, debconf-utils
 Suggests: ruby-selinux | libselinux-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
