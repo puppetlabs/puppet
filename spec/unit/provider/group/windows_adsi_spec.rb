@@ -34,32 +34,64 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
     let(:user1) { stub(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
     let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
+    let(:user3) { stub(:account => 'user3', :domain => '.', :to_s => 'user3sid') }
 
     before :each do
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user1').returns(user1)
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user2').returns(user2)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user3').returns(user3)
     end
 
     describe "#members_insync?" do
       it "should return false when current is nil" do
         provider.members_insync?(nil, ['user2']).should be_false
       end
+
       it "should return false when should is nil" do
         provider.members_insync?(['user1'], nil).should be_false
       end
+
       it "should return false for differing lists of members" do
         provider.members_insync?(['user1'], ['user2']).should be_false
         provider.members_insync?(['user1'], []).should be_false
         provider.members_insync?([], ['user2']).should be_false
       end
+
       it "should return true for same lists of members" do
         provider.members_insync?(['user1', 'user2'], ['user1', 'user2']).should be_true
       end
+
       it "should return true for same lists of unordered members" do
         provider.members_insync?(['user1', 'user2'], ['user2', 'user1']).should be_true
       end
+
       it "should return true for same lists of members irrespective of duplicates" do
         provider.members_insync?(['user1', 'user2', 'user2'], ['user2', 'user1', 'user1']).should be_true
+      end
+
+      context "when auth_membership => true" do
+        before :each do
+          # this is also the default
+          resource[:auth_membership] = true
+        end
+
+        it "should return false when should user(s) are not the only items in the current" do
+          provider.members_insync?(['user1', 'user2'], ['user1']).should be_false
+        end
+      end
+
+      context "when auth_membership => false" do
+        before :each do
+          resource[:auth_membership] = false
+        end
+
+        it "should return true when current user(s) contains at least the should list" do
+          provider.members_insync?(['user1','user2'], ['user1']).should be_true
+          end
+
+        it "should return true when current user(s) contains at least the should list, even unordered" do
+          provider.members_insync?(['user3','user1','user2'], ['user2','user1']).should be_true
+        end
       end
     end
 
@@ -119,7 +151,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       create = sequence('create')
       group.expects(:commit).in_sequence(create)
-      group.expects(:set_members).with(['user1', 'user2']).in_sequence(create)
+      group.expects(:set_members).with(['user1', 'user2'], true).in_sequence(create)
 
       provider.create
     end

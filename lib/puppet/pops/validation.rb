@@ -93,11 +93,12 @@ module Puppet::Pops::Validation
     @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
+    # @param [Symbol] specifies default severity if :error is not wanted as the default
     # @api public
     #
-    def initialize
+    def initialize(default_severity = :error)
       # If diagnose is not set, the default is returned by the block
-      @severities = Hash.new :error
+      @severities = Hash.new default_severity
     end
 
     # Returns the severity of the given issue.
@@ -226,6 +227,28 @@ module Puppet::Pops::Validation
       # TODO: Currently unused, the intention is to provide more information (stack backtrace, etc.) when
       # debugging or similar - this to catch internal problems reported as higher level issues.
       @exception = exception
+    end
+
+    # Two diagnostics are considered equal if the have the same issue, location and severity
+    # (arguments and exception are ignored)
+    #
+    def ==(o)
+      self.class            == o.class             &&
+        same_position?(o)                          &&
+        issue.issue_code    == o.issue.issue_code  &&
+        file                == o.file              &&
+        severity            == o.severity
+    end
+    alias eql? ==
+
+    # Position is equal if the diagnostic is not located or if referring to the same offset
+    def same_position?(o)
+      source_pos.nil? && o.source_pos.nil? || source_pos.offset == o.source_pos.offset
+    end
+    private :same_position?
+
+    def hash
+      @hash ||= [file, source_pos.offset, issue.issue_code, severity].hash
     end
   end
 

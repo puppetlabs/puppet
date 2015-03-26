@@ -32,6 +32,10 @@ class Puppet::Parser::Compiler
     end
 
     new(node).compile {|resulting_catalog| resulting_catalog.to_resource }
+  rescue Puppet::ParseErrorWithIssue => detail
+    detail.node = node.name
+    Puppet.log_exception(detail)
+    raise
   rescue => detail
     message = "#{detail} on node #{node.name}"
     Puppet.log_exception(detail, message)
