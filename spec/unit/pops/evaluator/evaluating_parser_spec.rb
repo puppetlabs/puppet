@@ -473,6 +473,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "unless false {5}"                => 5,
       "unless true {5}"                 => nil,
       "unless true {2} else {5}"        => 5,
+      "unless true {} else {5}"         => 5,
       "$a = if true {5} $a"                     => 5,
       "$a = if false {5} $a"                    => nil,
       "$a = if false {2} else {5} $a"           => 5,
