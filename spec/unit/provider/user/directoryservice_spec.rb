@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 # encoding: ASCII-8BIT
 require 'spec_helper'
-require 'facter/util/plist'
+require 'plist'
 
 describe Puppet::Type.type(:user).provider(:directoryservice) do
   let(:username) { 'nonexistent_user' }

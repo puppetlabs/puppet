@@ -1,6 +1,6 @@
 require 'puppet'
 require 'puppet/provider/nameservice'
-require 'facter/util/plist'
+require 'plist'
 require 'fileutils'
 
 class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameService
