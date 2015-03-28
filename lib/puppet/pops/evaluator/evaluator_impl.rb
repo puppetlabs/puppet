@@ -1145,21 +1145,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # of value except regular expression where a match is performed.
   #
   def is_match? left, right, o, scope
-    if right.is_a?(Regexp)
-      return false unless left.is_a? String
-      matched = right.match(left)
-      set_match_data(matched, scope) # creates or clears ephemeral
-      !!matched # convert to boolean
-    elsif right.is_a?(Puppet::Pops::Types::PAnyType)
-      # right is a type and left is not - check if left is an instance of the given type
-      # (The reverse is not terribly meaningful - computing which of the case options that first produces
-      # an instance of a given type).
-      #
-      @@type_calculator.instance?(right, left)
-    else
-      # Handle equality the same way as the language '==' operator (case insensitive etc.)
-      @@compare_operator.equals(left,right)
-    end
+    @@compare_operator.match(left, right, scope)
   end
 
   def with_guarded_scope(scope)
