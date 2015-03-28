@@ -71,7 +71,7 @@ module Puppet
       end
 
       def log_dir
-        which_dir("/var/log/puppetlabs", "~/.puppet/var/log")
+        which_dir("/var/log/puppetlabs/puppet", "~/.puppet/var/log")
       end
     end
 

@@ -5,7 +5,7 @@
 #PUPPET_PORT=8140
 
 # Where to log to. Specify syslog to send log messages to the system log.
-#PUPPET_LOG=/var/log/puppet/puppet.log
+#PUPPET_LOG=/var/log/puppetlabs/puppet/puppet.log
 
 # You may specify other parameters to the puppet client here
 #PUPPET_EXTRA_OPTS=--waitforcert=500

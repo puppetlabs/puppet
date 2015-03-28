@@ -26,7 +26,7 @@ def config_options(platform)
     codedir = '/etc/puppetlabs/code'
     confdir = '/etc/puppetlabs/puppet'
     vardir = '/opt/puppetlabs/puppet/cache'
-    logdir = '/var/log/puppetlabs'
+    logdir = '/var/log/puppetlabs/puppet'
     rundir = '/var/run/puppetlabs'
     sep = ":"
   end
