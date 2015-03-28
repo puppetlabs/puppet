@@ -211,7 +211,7 @@ def prepare_installation
     opts.on('--rundir[=OPTIONAL]', 'Installation directory for state files', 'Default /var/run/puppetlabs') do |rundir|
       InstallOptions.rundir = rundir
     end
-    opts.on('--logdir[=OPTIONAL]', 'Installation directory for log files', 'Default /var/log/puppetlabs') do |logdir|
+    opts.on('--logdir[=OPTIONAL]', 'Installation directory for log files', 'Default /var/log/puppetlabs/puppet') do |logdir|
       InstallOptions.logdir = logdir
     end
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
@@ -299,7 +299,7 @@ def prepare_installation
   elsif $operatingsystem == "windows"
     logdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "log")
   else
-    logdir = "/var/log/puppetlabs"
+    logdir = "/var/log/puppetlabs/puppet"
   end
 
   if not InstallOptions.bindir.nil?

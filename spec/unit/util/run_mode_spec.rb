@@ -86,8 +86,8 @@ describe Puppet::Util::RunMode do
 
     describe "#log_dir" do
       describe "when run as root" do
-        it "has logdir /var/log/puppetlabs" do
-          as_root { expect(@run_mode.log_dir).to eq(File.expand_path('/var/log/puppetlabs')) }
+        it "has logdir /var/log/puppetlabs/puppet" do
+          as_root { expect(@run_mode.log_dir).to eq(File.expand_path('/var/log/puppetlabs/puppet')) }
         end
       end
 
