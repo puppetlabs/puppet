@@ -73,7 +73,7 @@ module Puppet::Pops::Parser::HeredocSupport
     heredoc_line = locator.line_for_offset(heredoc_offset)-1
 
     # Compute message to emit if there is no end (to make it refer to the opening heredoc position).
-    eof_message = positioned_message("Heredoc without end-tagged line")
+    eof_error = create_lex_error("Heredoc without end-tagged line")
 
     # Text from this position (+ lexing contexts offset for any preceding heredoc) is heredoc until a line
     # that terminates the heredoc is found.
@@ -82,7 +82,8 @@ module Puppet::Pops::Parser::HeredocSupport
     endline_pattern = /([[:blank:]]*)(?:([|])[[:blank:]]*)?(?:(\-)[[:blank:]]*)?#{Regexp.escape(endtag)}[[:blank:]]*\r?(?:\n|\z)/
     lines = []
     while !scn.eos? do
-      one_line = scn.scan_until(/(?:\n|\z)/) || lexer.lex_error_without_pos(eof_message)
+      one_line = scn.scan_until(/(?:\n|\z)/)
+      raise eof_error unless one_line
       if md = one_line.match(endline_pattern)
         leading      = md[1]
         has_margin   = md[2] == '|'
@@ -116,7 +117,7 @@ module Puppet::Pops::Parser::HeredocSupport
         lines << one_line
       end
     end
-    lex_error_without_pos(eof_message)
+    raise eof_error
   end
 
   # Produces the heredoc text string given the individual (unprocessed) lines as an array.

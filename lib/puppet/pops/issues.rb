@@ -545,4 +545,21 @@ module Puppet::Pops::Issues
   MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
     "Unfolding of attributes from Hash can only be used once per resource body"
   end
+
+  SYNTAX_ERROR = hard_issue :SYNTAX_ERROR, :where do
+    "Syntax error at #{where}"
+  end
+
+  LEX_ERROR = hard_issue :LEX_ERROR do
+    # Error here for completeness. It's never printed
+    "Unable to create lexical token stream"
+  end
+
+  ILLEGAL_UNICODE_ESCAPE = issue :ILLEGAL_UNICODE_ESCAPE do
+    "Unicode escape '\\u' was not followed by 4 hex digits"
+  end
+
+  UNRECOGNIZED_ESCAPE = issue :UNRECOGNIZED_ESCAPE, :ch do
+    "Unrecognized escape sequence '\\#{ch}'"
+  end
 end

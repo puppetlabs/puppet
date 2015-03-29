@@ -244,7 +244,7 @@ class Puppet::Util::Log
     self.from_data_hash(data)
   end
 
-  attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node
+  attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node, :backtrace
   attr_reader :level, :message
 
   def initialize(args)
@@ -259,7 +259,7 @@ class Puppet::Util::Log
     end
 
     # Don't add these unless defined (preserve 3.x API as much as possible)
-    [:file, :line, :pos, :issue_code, :environment, :node].each do |attr|
+    [:file, :line, :pos, :issue_code, :environment, :node, :backtrace].each do |attr|
       next unless value = args[attr]
       send(attr.to_s + '=', value)
     end
@@ -277,7 +277,7 @@ class Puppet::Util::Log
       @time = Time.parse(@time)
     end
     # Don't add these unless defined (preserve 3.x API as much as possible)
-    %w(file line pos issue_code environment node).each do |name|
+    %w(file line pos issue_code environment node backtrace).each do |name|
       next unless value = data[name]
       send(name + '=', value)
     end
@@ -288,18 +288,26 @@ class Puppet::Util::Log
   end
 
   def to_data_hash
-    hash = {
+    {
       'level' => @level,
-      'message' => @message,
+      'message' => to_s,
       'source' => @source,
       'tags' => @tags.to_a,
       'time' => @time.iso8601(9),
       'file' => @file,
       'line' => @line,
     }
-    # Don't add these unless defined (preserve 3.x API as much as possible)
-    # TODO: Should apply to file and line also but making them optional in the hash would change 3x API
-    %w(pos issue_code environment node).each do |name|
+  end
+
+  def to_structured_hash
+    hash = {
+      'level' => @level,
+      'message' => @message,
+      'source' => @source,
+      'tags' => @tags.to_a,
+      'time' => @time.iso8601(9),
+    }
+    %w(file line pos issue_code environment node backtrace).each do |name|
       attr_name = "@#{name}"
       hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
     end
@@ -343,7 +351,30 @@ class Puppet::Util::Log
   end
 
   def to_s
-    message
+    msg = message
+
+    # Issue based messages do not have details in the message. It
+    # must be appended here
+    unless issue_code.nil?
+      msg = "Could not parse for environment #{environment}: #{msg}" unless environment.nil?
+      if file && line && pos
+        msg = "#{msg} at #{file}:#{line}:#{pos}"
+      elsif file and line
+        msg = "#{msg}  at #{file}:#{line}"
+      elsif line && pos
+        msg = "#{msg}  at line #{line}:#{pos}"
+      elsif line
+        msg = "#{msg}  at line #{line}"
+      elsif file
+        msg = "#{msg}  in #{file}"
+      end
+      msg = "#{msg} on node #{node}" unless node.nil?
+      if @backtrace.is_a?(Array)
+        msg += "\n"
+        msg += @backtrace.join("\n")
+      end
+    end
+    msg
   end
 
 end

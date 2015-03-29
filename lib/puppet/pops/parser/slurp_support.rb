@@ -7,6 +7,7 @@
 # TODO: More detailed performance analysis of excessive character escaping and interpolation.
 #
 module Puppet::Pops::Parser::SlurpSupport
+  include Puppet::Pops::Parser::LexerSupport
 
   SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
@@ -79,14 +80,18 @@ module Puppet::Pops::Parser::SlurpSupport
         when 't'   ; "\t"
         when 's'   ; " "
         when 'u'
-          Puppet.warning(positioned_message("Unicode escape '\\u' was not followed by 4 hex digits"))
+          issue = Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE
+          lex_warning(issue.format, issue.issue_code)
           "\\u"
         when "\n"  ; ''
         when "\r\n"; ''
         else      ch
         end
       else
-        Puppet.warning(positioned_message("Unrecognized escape sequence '\\#{ch}'")) unless ignore_invalid_escapes
+        unless ignore_invalid_escapes
+          issue = Puppet::Pops::Issues::UNRECOGNIZED_ESCAPE
+          lex_warning(issue.format(:ch => ch), issue.issue_code)
+        end
         "\\#{ch}"
       end
     }

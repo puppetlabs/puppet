@@ -3,18 +3,6 @@
 #
 module Puppet::Pops::Parser::LexerSupport
 
-  # Formats given message by appending file, line and position if available.
-  def positioned_message(msg, pos = nil)
-    result = [msg]
-    file = @locator.file
-    line = @locator.line_for_offset(pos || @scanner.pos)
-    pos =  @locator.pos_on_line(pos || @scanner.pos)
-
-    result << "in file #{file}" if file && file.is_a?(String) && !file.empty?
-    result << "at line #{line}:#{pos}"
-    result.join(" ")
-  end
-
   # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
   def followed_by
     return "<eof>" if @scanner.eos?
@@ -36,12 +24,46 @@ module Puppet::Pops::Parser::LexerSupport
 
   # Raises a Puppet::LexError with the given message
   def lex_error_without_pos msg
-    raise Puppet::LexError.new(msg)
+    raise Puppet::ParseErrorWithIssue.new(msg, nil, nil, nil, nil, Puppet::Pops::Issues::LEX_ERROR.issue_code)
   end
 
   # Raises a Puppet::LexError with the given message
   def lex_error(msg, pos=nil)
-    raise Puppet::LexError.new(positioned_message(msg, pos))
+    raise create_lex_error(msg, pos)
+  end
+
+  def filename
+    file = @locator.file
+    file.is_a?(String) && !file.empty? ? file : nil
+  end
+
+  def line(pos)
+    @locator.line_for_offset(pos || @scanner.pos)
+  end
+
+  def position(pos)
+    @locator.pos_on_line(pos || @scanner.pos)
+  end
+
+  def lex_warning(msg, issue_code, pos=nil)
+    Puppet::Util::Log.create({
+        :level => :warning,
+        :message => msg,
+        :issue_code => issue_code,
+        :file => filename,
+        :line => line(pos),
+        :pos => position(pos),
+      })
+  end
+
+  def create_lex_error(msg, pos = nil)
+    Puppet::ParseErrorWithIssue.new(
+        msg,
+        filename,
+        line(pos),
+        position(pos),
+        nil,
+        Puppet::Pops::Issues::LEX_ERROR.issue_code)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.

@@ -93,11 +93,8 @@ class Puppet::Pops::Parser::Parser
     else
       value_at = "'#{value[:value]}'"
     end
-    if @yydebug
-      error = "Syntax error at #{value_at}, token: #{token}"
-    else
-      error = "Syntax error at #{value_at}"
-    end
+    error = Puppet::Pops::Issues::SYNTAX_ERROR.format(:where => value_at)
+    error = "#{error}, token: #{token}" if @yydebug
 
     # Note, old parser had processing of "expected token here" - do not try to reinstate:
     # The 'expected' is only of value at end of input, otherwise any parse error involving a
@@ -110,19 +107,19 @@ class Puppet::Pops::Parser::Parser
     # must be handled by the grammar. The lexer may have enqueued tokens far ahead - the lexer's opinion about this
     # is not trustworthy.
     #
-
-    except = Puppet::ParseError.new(error)
+    file = nil
+    line = nil
+    pos  = nil
     if token != 0
-      path        = value[:file]
-      except.line = value[:line]
-      except.pos  = value[:pos]
+      file = value[:file]
+      line = value[:line]
+      pos  = value[:pos]
     else
       # At end of input, use what the lexer thinks is the source file
-      path        = lexer.file
+      file = lexer.file
     end
-    except.file = path if path.is_a?(String) && !path.empty?
-
-    raise except
+    file = nil unless file.is_a?(String) && !file.empty?
+    raise Puppet::ParseErrorWithIssue.new(error, file, line, pos, nil, issue_code = Puppet::Pops::Issues::SYNTAX_ERROR.issue_code)
   end
 
   # Parses a String of pp DSL code.
