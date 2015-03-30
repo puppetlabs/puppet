@@ -23,13 +23,13 @@ module Puppet::Pops::Parser::LexerSupport
   end
 
   # Raises a Puppet::LexError with the given message
-  def lex_error_without_pos msg
-    raise Puppet::ParseErrorWithIssue.new(msg, nil, nil, nil, nil, Puppet::Pops::Issues::LEX_ERROR.issue_code)
+  def lex_error_without_pos(issue, args = {})
+    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code)
   end
 
-  # Raises a Puppet::LexError with the given message
-  def lex_error(msg, pos=nil)
-    raise create_lex_error(msg, pos)
+  # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
+  def lex_error(issue, args = {}, pos=nil)
+    raise create_lex_error(issue, args, pos)
   end
 
   def filename
@@ -45,25 +45,29 @@ module Puppet::Pops::Parser::LexerSupport
     @locator.pos_on_line(pos || @scanner.pos)
   end
 
-  def lex_warning(msg, issue_code, pos=nil)
+  def lex_warning(issue, args = {}, pos=nil)
     Puppet::Util::Log.create({
         :level => :warning,
-        :message => msg,
-        :issue_code => issue_code,
+        :message => issue.format(args),
+        :issue_code => issue.issue_code,
         :file => filename,
         :line => line(pos),
         :pos => position(pos),
       })
   end
 
-  def create_lex_error(msg, pos = nil)
+  # @param issue [Puppet::Pops::Issues::Issue] the issue
+  # @param args [Hash<Symbol,String>] Issue arguments
+  # @param pos [Integer]
+  # @return [Puppet::ParseErrorWithIssue] the created error
+  def create_lex_error(issue, args = {}, pos = nil)
     Puppet::ParseErrorWithIssue.new(
-        msg,
+        issue.format(args),
         filename,
         line(pos),
         position(pos),
         nil,
-        Puppet::Pops::Issues::LEX_ERROR.issue_code)
+        issue.issue_code)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
@@ -71,13 +75,13 @@ module Puppet::Pops::Parser::LexerSupport
   #
   def assert_numeric(value, length)
     if value =~ /^0[xX].*$/
-      lex_error("Not a valid hex number #{value}", length)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      lex_error(Puppet::Pops::Issues::INVALID_HEX_NUMBER, {:value => value}, length)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
     elsif value =~ /^0[^.].*$/
-      lex_error("Not a valid octal number #{value}", length)   unless value =~ /^0[0-7]+$/
+      lex_error(Puppet::Pops::Issues::INVALID_OCTAL_NUMBER, {:value => value}, length)   unless value =~ /^0[0-7]+$/
 
     else
-      lex_error("Not a valid decimal number #{value}", length) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
+      lex_error(Puppet::Pops::Issues::INVALID_DECIMAL_NUMBER, {:value => value}, length) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
     end
   end
 
