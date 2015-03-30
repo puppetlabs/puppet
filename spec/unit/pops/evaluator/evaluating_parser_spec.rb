@@ -517,6 +517,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "case undef {
          *undef : { 'no' }
          default :{ 'yes' }}"                                => 'yes',
+
+      "case [green, 2, whatever] {
+         [/ee/, Integer[0,10], default] : { 'yes' }
+         default :{ 'no' }}"                                => 'yes',
+
+      "case {a=>1, b=>2, whatever=>3, extra => ignored} {
+         { a => Integer[0,5],
+           b => Integer[0,5],
+           whatever => default
+         }       : { 'yes' }
+         default : { 'no' }}"                               => 'yes',
+
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
@@ -535,6 +547,19 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "ringo ? *[paul, john, ringo, george] => 'beatle'"  => 'beatle',
       "undef ? undef => 'yes'"                            => 'yes',
       "undef ? {*undef => 'no', default => 'yes'}"        => 'yes',
+
+      "[green, 2, whatever] ? {
+         [/ee/, Integer[0,10], default
+         ]       => 'yes',
+         default => 'no'}"                                => 'yes',
+
+      "{a=>1, b=>2, whatever=>3, extra => ignored} ?
+         {{ a => Integer[0,5],
+           b => Integer[0,5],
+           whatever => default
+         }       => 'yes',
+         default => 'no' }"                               => 'yes',
+
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
