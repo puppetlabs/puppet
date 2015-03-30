@@ -1,4 +1,5 @@
 module Puppet::Pops::Parser::HeredocSupport
+  include Puppet::Pops::Parser::LexerSupport
 
   # Pattern for heredoc `@(endtag[:syntax][/escapes])
   # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
@@ -14,7 +15,7 @@ module Puppet::Pops::Parser::HeredocSupport
 
     # scanner is at position before @(
     # find end of the heredoc spec
-    str = scn.scan_until(/\)/) || lexer.lex_error(Puppet::Pops::Issues::HEREDOC_UNCLOSED_PARENTHESIS, :followed_by => followed_by)
+    str = scn.scan_until(/\)/) || lex_error(Puppet::Pops::Issues::HEREDOC_UNCLOSED_PARENTHESIS, :followed_by => followed_by)
     pos_after_heredoc = scn.pos
 
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
@@ -32,7 +33,7 @@ module Puppet::Pops::Parser::HeredocSupport
       endtag = $1.strip
     end
 
-    lexer.lex_error(Puppet::Pops::Issues::HEREDOC_MISSING_ENDTAG) unless endtag.length >= 1
+    lex_error(Puppet::Pops::Issues::HEREDOC_MISSING_ENDTAG) unless endtag.length >= 1
 
     resulting_escapes = []
     if escapes
