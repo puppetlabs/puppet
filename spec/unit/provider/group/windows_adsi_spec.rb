@@ -184,6 +184,14 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     provider.delete
   end
 
+  it 'should not run commit on a deleted group' do
+    connection.expects(:Delete).with('group', 'testers')
+    connection.expects(:SetInfo).never
+
+    provider.delete
+    provider.flush
+  end
+
   it "should report the group's SID as gid" do
     Puppet::Util::Windows::SID.expects(:name_to_sid).with('testers').returns('S-1-5-32-547')
     provider.gid.should == 'S-1-5-32-547'

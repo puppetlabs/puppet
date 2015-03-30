@@ -136,6 +136,14 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
     provider.delete
   end
 
+  it 'should not run commit on a deleted user' do
+    connection.expects(:Delete).with('user', 'testuser')
+    connection.expects(:SetInfo).never
+
+    provider.delete
+    provider.flush
+  end
+
   it 'should delete the profile if managehome is set' do
     resource[:managehome] = true
 
