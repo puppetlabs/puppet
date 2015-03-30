@@ -594,10 +594,6 @@ module Puppet::Pops::Issues
     "Unrecognized escape sequence '\\#{ch}'"
   end
 
-  UNRECOGNIZED_QUOTE = hard_issue :UNRECOGNIZED_QUOTE, :followed_by do
-    "Unclosed quote after \"'\" followed by '#{followed_by}'"
-  end
-
   UNCLOSED_QUOTE = hard_issue :UNCLOSED_QUOTE, :after, :followed_by do
     "Unclosed quote after #{after} followed by '#{followed_by}'"
   end
@@ -624,10 +620,6 @@ module Puppet::Pops::Issues
 
   HEREDOC_WITHOUT_END_TAGGED_LINE = hard_issue :HEREDOC_WITHOUT_END_TAGGED_LINE do
     'Heredoc without end-tagged line'
-  end
-
-  HEREDOC_MISSING_END_TAG = hard_issue :HEREDOC_MISSING_END_TAG do
-    'Missing end tag in heredoc'
   end
 
   HEREDOC_INVALID_ESCAPE = hard_issue :HEREDOC_INVALID_ESCAPE, :actual do

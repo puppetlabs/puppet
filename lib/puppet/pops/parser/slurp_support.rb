@@ -21,7 +21,7 @@ module Puppet::Pops::Parser::SlurpSupport
     # skip the leading '
     @scanner.pos += 1
     str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes)
-    lex_error(Puppet::Pops::Issues::UNRECOGNIZED_QUOTE, :followed_by => followed_by) unless str
+    lex_error(Puppet::Pops::Issues::UNCLOSED_QUOTE, :after => "\"'\"", :followed_by => followed_by) unless str
     str[0..-2] # strip closing "'" from result
   end
 
