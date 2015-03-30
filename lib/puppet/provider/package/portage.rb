@@ -132,7 +132,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   private
   def self.eix_search_format
-    "'<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>'"
+    "'<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>\n'"
   end
 
   def self.eix_result_format
