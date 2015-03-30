@@ -8,17 +8,27 @@ step 'Setup'
 
 module_name                     = "data_module"
 module_name2                    = "other_module"
+hash_name                       = "hash_name"
+array_key                       = "array_key"
 
 env_data_implied_key            = "env_data_implied"
 env_data_implied_value          = "env_implied_a"
 env_data_key                    = "env_data"
 env_data_value                  = "env_a"
+env_hash_key                    = "env_hash_key"
+env_hash_value                  = "env_class_a"
+env_array_value0                = "env_array_a"
+env_array_value1                = "env_array_b"
 
 module_data_implied_key         = "module_data_implied"
 module_data_implied_value       = "module_implied_b"
 module_data_key                 = "module_data"
 module_data_value               = "module_b"
 module_data_value_other         = "other_module_b"
+module_hash_key                 = "module_hash_key"
+module_hash_value               = "module_class_b"
+module_array_value0             = "module_array_a"
+module_array_value1             = "module_array_b"
 
 env_data_override_implied_key   = "env_data_override_implied"
 env_data_override_implied_value = "env_override_implied_c"
@@ -29,10 +39,17 @@ hiera_data_implied_key          = "apache_server_port_implied"
 hiera_data_implied_value        = "8080"
 hiera_data_key                  = "apache_server_port"
 hiera_data_value                = "9090"
+hiera_hash_key                  = "hiera_hash_key"
+hiera_hash_value                = "hiera_class_c"
+hiera_array_value0              = "hiera_array_a"
+hiera_array_value1              = "hiera_array_b"
 
 
 def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key, module_data_value)
+                       module_data_implied_value, module_data_key,
+                       module_data_value, hash_name, module_hash_key,
+                       module_hash_value, array_key, module_array_value0,
+                       module_array_value1)
   if module_name
     module_files_manifest = <<PP
       # the binding to specify the function to provide data for this module
@@ -59,7 +76,9 @@ def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
           Puppet::Functions.create_function(:'#{module_name}::data') do
             def data()
               { '#{module_name}::#{module_data_implied_key}' => '#{module_data_implied_value}',
-                '#{module_name}::#{module_data_key}' => '#{module_data_value}'
+                '#{module_name}::#{module_data_key}' => '#{module_data_value}',
+                '#{module_name}::#{hash_name}' => {'#{module_hash_key}' => '#{module_hash_value}'},
+                '#{module_name}::#{array_key}' => ['#{module_array_value0}', '#{module_array_value1}']
               }
             end
           end
@@ -72,9 +91,13 @@ PP
 end
 
 module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key, module_data_value)
+                       module_data_implied_value, module_data_key, module_data_value,
+                       hash_name, module_hash_key, module_hash_value, array_key,
+                       module_array_value0, module_array_value1)
 module_manifest2 = mod_manifest_entry(module_name2, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key, module_data_value_other)
+                       module_data_implied_value, module_data_key, module_data_value_other,
+                       hash_name, module_hash_key, module_hash_value, array_key,
+                       module_array_value0, module_array_value1)
 
 apply_manifest_on(master, <<-PP, :catch_failures => true)
 File {
@@ -133,6 +156,11 @@ file { '#{testdir}/hieradata/global.yaml':
   content => "---
     #{hiera_data_key}: #{hiera_data_value}
     #{module_name}::#{hiera_data_implied_key}: #{hiera_data_implied_value}
+    #{module_name}::#{hash_name}:
+        #{hiera_hash_key}: #{hiera_hash_value}
+    #{module_name}::#{array_key}:
+        - #{hiera_array_value0}
+        - #{hiera_array_value1}
   ",
   mode => "0640",
 }
@@ -158,7 +186,9 @@ file { '#{testdir}/environments/production/lib/puppet/functions/environment/data
         { '#{module_name}::#{env_data_implied_key}' => '#{env_data_implied_value}',
           '#{module_name}::#{env_data_override_implied_key}' => '#{env_data_override_implied_value}',
           '#{env_data_key}' => '#{env_data_value}',
+          '#{module_name}::#{hash_name}' => {'#{env_hash_key}' => '#{env_hash_value}'},
           '#{env_data_override_key}' => '#{env_data_override_value}',
+          '#{module_name}::#{array_key}' => ['#{env_array_value0}', '#{env_array_value1}']
         }
       end
     end
@@ -201,6 +231,16 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
       notify { "#{hiera_data_implied_key} $#{hiera_data_implied_key}": }
       $lookup_port = lookup("#{hiera_data_key}")
       notify { "#{hiera_data_key} $lookup_port": }
+
+      # should be able to merge hashes across sources
+      #   this mimicks/covers behavior for including classes
+      $lookup_hash = lookup("#{module_name}::#{hash_name}",Hash[String,String],\\'hash\\')
+      notify { "#{hash_name} $lookup_hash": }
+
+      # should be able to make an array across sources
+      #   this mimicks/covers behavior for including classes
+      $lookup_array = lookup("#{module_name}::#{array_key}",Array[String],\\'unique\\')
+      notify { "yep": message => "#{array_key} $lookup_array" }
     }',
   mode => "0640",
 }
@@ -240,5 +280,9 @@ with_puppet_running_on master, master_opts, testdir do
 
     assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
     assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
+
+    assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
+
+    assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
   end
 end
