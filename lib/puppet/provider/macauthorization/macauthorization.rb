@@ -1,5 +1,5 @@
 require 'facter'
-require 'facter/util/plist'
+require 'puppet/vendor/plist'
 require 'puppet'
 require 'tempfile'
 

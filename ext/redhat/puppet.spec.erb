@@ -39,7 +39,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  facter >= 1:1.7.0
 # Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
 BuildRequires:  ruby >= 1.8.7
-BuildRequires:  hiera >= 1.0.0
+BuildRequires:  hiera >= 2.0.0
 BuildArch:      noarch
 Requires:       ruby >= 1.8
 Requires:       ruby-shadow
@@ -58,7 +58,7 @@ Requires:       facter >= 1:1.7.0
 # Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
 # Ruby 1.8.7 available for el5 at: yum.puppetlabs.com/el/5/devel/$ARCH
 Requires:       ruby >= 1.8.7
-Requires:       hiera >= 1.0.0
+Requires:       hiera >= 2.0.0
 Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}

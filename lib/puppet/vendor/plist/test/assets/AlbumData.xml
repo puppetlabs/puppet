@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Application Version</key>
+	<string>5.0.4 (263)</string>
+	<key>Archive Path</key>
+	<string>/Users/username/Pictures/iPhoto Library</string>
+	<key>List of Albums</key>
+	<array>
+		<dict>
+			<key>AlbumId</key>
+			<integer>999000</integer>
+			<key>AlbumName</key>
+			<string>Library</string>
+			<key>KeyList</key>
+			<array>
+				<string>7</string>
+			</array>
+			<key>Master</key>
+			<true/>
+			<key>PhotoCount</key>
+			<integer>1</integer>
+			<key>PlayMusic</key>
+			<string>YES</string>
+			<key>RepeatSlideShow</key>
+			<string>YES</string>
+			<key>SecondsPerSlide</key>
+			<integer>3</integer>
+			<key>SlideShowUseTitles</key>
+			<false/>
+			<key>SongPath</key>
+			<string></string>
+			<key>TransitionDirection</key>
+			<integer>0</integer>
+			<key>TransitionName</key>
+			<string>Dissolve</string>
+			<key>TransitionSpeed</key>
+			<real>1</real>
+		</dict>
+		<dict>
+			<key>Album Type</key>
+			<string>Special Roll</string>
+			<key>AlbumId</key>
+			<integer>999001</integer>
+			<key>AlbumName</key>
+			<string>Last Roll</string>
+			<key>Filter Mode</key>
+			<string>All</string>
+			<key>Filters</key>
+			<array>
+				<dict>
+					<key>Count</key>
+					<integer>1</integer>
+					<key>Operation</key>
+					<string>In Last</string>
+					<key>Type</key>
+					<string>Roll</string>
+				</dict>
+			</array>
+			<key>KeyList</key>
+			<array>
+				<string>7</string>
+			</array>
+			<key>PhotoCount</key>
+			<integer>1</integer>
+			<key>PlayMusic</key>
+			<string>YES</string>
+			<key>RepeatSlideShow</key>
+			<string>YES</string>
+			<key>SecondsPerSlide</key>
+			<integer>3</integer>
+			<key>SlideShowUseTitles</key>
+			<false/>
+			<key>SongPath</key>
+			<string></string>
+			<key>TransitionDirection</key>
+			<integer>0</integer>
+			<key>TransitionName</key>
+			<string>Dissolve</string>
+			<key>TransitionSpeed</key>
+			<real>1</real>
+		</dict>
+		<dict>
+			<key>Album Type</key>
+			<string>Special Month</string>
+			<key>AlbumId</key>
+			<integer>999002</integer>
+			<key>AlbumName</key>
+			<string>Last 12 Months</string>
+			<key>Filter Mode</key>
+			<string>All</string>
+			<key>Filters</key>
+			<array/>
+			<key>KeyList</key>
+			<array>
+				<string>7</string>
+			</array>
+			<key>PhotoCount</key>
+			<integer>1</integer>
+			<key>PlayMusic</key>
+			<string>YES</string>
+			<key>RepeatSlideShow</key>
+			<string>YES</string>
+			<key>SecondsPerSlide</key>
+			<integer>3</integer>
+			<key>SlideShowUseTitles</key>
+			<false/>
+			<key>SongPath</key>
+			<string></string>
+			<key>TransitionDirection</key>
+			<integer>0</integer>
+			<key>TransitionName</key>
+			<string>Dissolve</string>
+			<key>TransitionSpeed</key>
+			<real>1</real>
+		</dict>
+		<dict>
+			<key>Album Type</key>
+			<string>Regular</string>
+			<key>AlbumId</key>
+			<integer>9</integer>
+			<key>AlbumName</key>
+			<string>An Album</string>
+			<key>KeyList</key>
+			<array>
+				<string>7</string>
+			</array>
+			<key>PhotoCount</key>
+			<integer>1</integer>
+			<key>PlayMusic</key>
+			<string>YES</string>
+			<key>RepeatSlideShow</key>
+			<string>YES</string>
+			<key>SecondsPerSlide</key>
+			<integer>3</integer>
+			<key>SlideShowUseTitles</key>
+			<false/>
+			<key>SongPath</key>
+			<string></string>
+			<key>TransitionDirection</key>
+			<integer>0</integer>
+			<key>TransitionName</key>
+			<string>Dissolve</string>
+			<key>TransitionSpeed</key>
+			<real>1</real>
+		</dict>
+	</array>
+	<key>List of Keywords</key>
+	<dict/>
+	<key>List of Rolls</key>
+	<array>
+		<dict>
+			<key>Album Type</key>
+			<string>Regular</string>
+			<key>AlbumId</key>
+			<integer>6</integer>
+			<key>AlbumName</key>
+			<string>Roll 1</string>
+			<key>KeyList</key>
+			<array>
+				<string>7</string>
+			</array>
+			<key>Parent</key>
+			<integer>999000</integer>
+			<key>PhotoCount</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>Major Version</key>
+	<integer>2</integer>
+	<key>Master Image List</key>
+	<dict>
+		<key>7</key>
+		<dict>
+			<key>Aspect Ratio</key>
+			<real>1</real>
+			<key>Caption</key>
+			<string>fallow_keep.png.450x450.2005-12-04</string>
+			<key>Comment</key>
+			<string>a comment</string>
+			<key>DateAsTimerInterval</key>
+			<real>158341389</real>
+			<key>ImagePath</key>
+			<string>/Users/username/Pictures/iPhoto Library/2006/01/07/fallow_keep.png.450x450.2005-12-04.jpg</string>
+			<key>MediaType</key>
+			<string>Image</string>
+			<key>MetaModDateAsTimerInterval</key>
+			<real>158341439.728129</real>
+			<key>ModDateAsTimerInterval</key>
+			<real>158341389</real>
+			<key>Rating</key>
+			<integer>0</integer>
+			<key>Roll</key>
+			<integer>6</integer>
+			<key>ThumbPath</key>
+			<string>/Users/username/Pictures/iPhoto Library/2006/01/07/Thumbs/7.jpg</string>
+		</dict>
+	</dict>
+	<key>Minor Version</key>
+	<integer>0</integer>
+</dict>
+</plist>
