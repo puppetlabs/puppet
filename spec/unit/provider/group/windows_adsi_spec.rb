@@ -162,6 +162,18 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         /Cannot create group if user 'testers' exists./ )
     end
 
+    it "should fail with an actionable message when trying to create an active directory group" do
+      resource[:name] = 'DOMAIN\testdomaingroup'
+      Puppet::Util::Windows::ADSI::User.expects(:exists?).with(resource[:name]).returns(false)
+      connection.expects(:Create)
+      connection.expects(:SetInfo).raises( WIN32OLERuntimeError.new("(in OLE method `SetInfo': )\n    OLE error code:8007089A in Active Directory\n      The specified username is invalid.\r\n\n    HRESULT error code:0x80020009\n      Exception occurred."))
+
+      expect{ provider.create }.to raise_error(
+                                       Puppet::Error,
+                                       /not able to create\/delete domain groups/
+                                   )
+    end
+
     it 'should commit a newly created group' do
       provider.group.expects( :commit )
 
