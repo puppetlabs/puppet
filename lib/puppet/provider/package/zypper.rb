@@ -12,6 +12,37 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
   defaultfor :operatingsystem => [:suse, :sles, :sled, :opensuse]
   confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
 
+  # @api private
+  # Reset the latest version hash to nil
+  # needed for spec tests to clear cached value
+  def self.reset!
+    @latest_versions = nil
+  end
+
+  def self.latest_package_version(package)
+    if @latest_versions.nil?
+      @latest_versions = list_updates
+    end
+
+    @latest_versions[package]
+  end
+
+  def self.list_updates
+    output = zypper 'list-updates'
+
+    avail_updates = {}
+
+    # split up columns
+    output.lines.each do |line|
+      pkg_ver = line.split(/\s*\|\s*/)
+      # ignore zypper headers
+      next unless pkg_ver[0] == 'v'
+      avail_updates[pkg_ver[2]] = pkg_ver[4]
+    end
+
+    avail_updates
+  end
+
   #on zypper versions <1.0, the version option returns 1
   #some versions of zypper output on stderr
   def zypper_version
@@ -72,16 +103,10 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   # What's the latest package version available?
   def latest
-    #zypper can only get a list of *all* available packages?
-    output = zypper "list-updates"
-
-    if output =~ /#{Regexp.escape @resource[:name]}\s*\|.*?\|\s*([^\s\|]+)/
-      return $1
-    else
+    return self.class.latest_package_version(@resource[:name]) ||
       # zypper didn't find updates, pretend the current
       # version is the latest
-      return @property_hash[:ensure]
-    end
+      @property_hash[:ensure]
   end
 
   def update

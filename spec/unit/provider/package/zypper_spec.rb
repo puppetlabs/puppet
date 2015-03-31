@@ -115,12 +115,32 @@ describe provider_class do
   end
 
   describe "when getting latest version" do
-    it "should return a version string with valid list-updates data from SLES11sp1" do
-      fake_data = File.read(my_fixture('zypper-list-updates-SLES11sp1.out'))
+    after do described_class.reset! end
+    context "when the package has available update" do
+      it "should return a version string with valid list-updates data from SLES11sp1" do
+        fake_data = File.read(my_fixture('zypper-list-updates-SLES11sp1.out'))
+        @resource.stubs(:[]).with(:name).returns "at"
+        described_class.expects(:zypper).with("list-updates").returns fake_data
+        expect(@provider.latest).to eq("3.1.8-1069.18.2")
+      end
+    end
 
-      @resource.stubs(:[]).with(:name).returns "at"
-      @provider.expects(:zypper).with("list-updates").returns fake_data
-      expect(@provider.latest).to eq("3.1.8-1069.18.2")
+    context "when the package is in the latest version" do
+      it "should return nil with valid list-updates data from SLES11sp1" do
+        fake_data = File.read(my_fixture('zypper-list-updates-SLES11sp1.out'))
+        @resource.stubs(:[]).with(:name).returns "zypper-log"
+        described_class.expects(:zypper).with("list-updates").returns fake_data
+        expect(@provider.latest).to eq(nil)
+      end
+    end
+
+    context "when there are no updates available" do
+      it "should return nil" do
+        fake_data_empty = File.read(my_fixture('zypper-list-updates-empty.out'))
+        @resource.stubs(:[]).with(:name).returns "at"
+        described_class.expects(:zypper).with("list-updates").returns fake_data_empty
+        expect(@provider.latest).to eq(nil)
+      end
     end
   end
 
