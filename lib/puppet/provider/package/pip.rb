@@ -7,9 +7,13 @@ require 'xmlrpc/client'
 Puppet::Type.type(:package).provide :pip,
   :parent => ::Puppet::Provider::Package do
 
-  desc "Python packages via `pip`."
+  desc "Python packages via `pip`.
 
-  has_feature :installable, :uninstallable, :upgradeable, :versionable
+  This provider supports the `install_options` attribute, which allows command-line flags to be passed to pip.
+  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+  or an array where each element is either a string or a hash."
+
+  has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options
 
   # Parse lines of output from `pip freeze`, which are structured as
   # _package_==_version_.
@@ -71,6 +75,7 @@ Puppet::Type.type(:package).provide :pip,
   # gives the fully-qualified URL to the repository.
   def install
     args = %w{install -q}
+    args +=  install_options if @resource[:install_options]
     if @resource[:source]
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
@@ -114,5 +119,9 @@ Puppet::Type.type(:package).provide :pip,
     else
       raise e, 'Could not locate the pip command.', e.backtrace
     end
+  end
+
+  def install_options
+    join_options(@resource[:install_options])
   end
 end
