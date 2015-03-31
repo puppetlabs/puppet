@@ -112,7 +112,25 @@ describe Puppet::Util::Log do
       expect(log.backtrace).to be_nil
     end
 
-    it 'excludes backtrace for ParseErrorWithIssue from log message when trace is enabled' do
+    it 'excludes backtrace for RuntimeError in log message when trace is disabled' do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match('/log_spec.rb')
+      expect(log.backtrace).to be_nil
+    end
+
+    it "backtrace is Array in 'backtrace' and excluded from 'message' when logging ParseErrorWithIssue with trace enabled" do
       logs = []
       destination = Puppet::Test::LogCollector.new(logs)
 
@@ -128,6 +146,24 @@ describe Puppet::Util::Log do
       log = logs[0]
       expect(log.message).to_not match('/log_spec.rb')
       expect(log.backtrace).to be_a(Array)
+    end
+
+    it "backtrace is excluded when logging ParseErrorWithIssue with trace disabled" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match('/log_spec.rb')
+      expect(log.backtrace).to be_nil
     end
 
     it 'includes position details for ParseError in log message' do
