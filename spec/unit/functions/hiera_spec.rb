@@ -26,16 +26,18 @@ describe 'when calling' do
       expect(hiera.call(scope, 'key')).to eql('foo_result')
     end
 
-    it 'should propagate optional default' do
-      dflt = 'the_default'
-      Hiera.any_instance.expects(:lookup).with { |*args| args[1].should be(dflt) }.returns('foo_result')
-      expect(hiera.call(scope, 'key', dflt)).to eql('foo_result')
-    end
-
     it 'should propagate optional override' do
       ovr = 'the_override'
       Hiera.any_instance.expects(:lookup).with { |*args| args[3].should be(ovr) }.returns('foo_result')
       expect(hiera.call(scope, 'key', nil, ovr)).to eql('foo_result')
+    end
+
+    it 'should return default value nil when key is not found' do
+       expect(hiera.call(scope, 'foo', nil)).to be_nil
+    end
+
+    it "should return default value '' when key is not found" do
+      expect(hiera.call(scope, 'foo', '')).to eq('')
     end
 
     it 'should use default block' do
