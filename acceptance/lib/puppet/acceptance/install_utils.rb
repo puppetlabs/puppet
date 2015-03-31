@@ -151,7 +151,7 @@ module Puppet
               platform_configs_dir
             )
 
-            link = "http://%s/%s/%s/repos/%s/%s%s/products/%s/" % [
+            link = "http://%s/%s/%s/repos/%s/%s%s/PC1/%s/" % [
               tld,
               project,
               sha,
@@ -162,6 +162,20 @@ module Puppet
             ]
 
             if not link_exists?(link)
+              logger.notify("Could not find PC1 repository at: #{link}")
+              link = "http://%s/%s/%s/repos/%s/%s%s/products/%s/" % [
+                tld,
+                project,
+                sha,
+                variant,
+                fedora_prefix,
+                version,
+                arch
+              ]
+            end
+
+            if not link_exists?(link)
+              logger.notify("Could not find repository at: #{link}")
               link = "http://%s/%s/%s/repos/%s/%s%s/devel/%s/" % [
                 tld,
                 project,
@@ -172,9 +186,12 @@ module Puppet
                 arch
               ]
             end
+
             if not link_exists?(link)
               raise "Unable to reach a repo directory at #{link}"
             end
+
+            logger.notify("fetching repository from #{link}")
             repo_dir = fetch_remote_dir(link, platform_configs_dir)
             repo_loc = "/root/#{project}"
 
@@ -194,6 +211,7 @@ module Puppet
             version = $2
             arch = $3
 
+            # If this isn't outdated yet it will be by end of week (4/3/2015)
             deb = fetch(
               "http://apt.puppetlabs.com/",
               "puppetlabs-release-%s.deb" % version,
@@ -216,8 +234,13 @@ module Puppet
             scp_to host, list, repo_loc
             scp_to host, repo_dir, repo_loc
 
+            pc1_check = on(host,
+                           "[[ -d /root/#{project}/#{version}/pool/PC1 ]]",
+                           :acceptable_exit_codes => [0,1])
+
+            repo_name =  pc1_check.exit_code == 0 ? 'PC1' : 'main'
             on host, "cp #{repo_loc}/*.list /etc/apt/sources.list.d"
-            on host, "find /etc/apt/sources.list.d/ -name \"*.list\" -exec sed -i \"s/deb\\s\\+http:\\/\\/#{tld}.*$/deb file:\\/\\/\\/root\\/#{project}\\/#{version} #{version} main/\" {} \\;"
+            on host, "find /etc/apt/sources.list.d/ -name \"*.list\" -exec sed -i \"s/deb\\s\\+http:\\/\\/#{tld}.*$/deb file:\\/\\/\\/root\\/#{project}\\/#{version} #{version} #{repo_name}/\" {} \\;"
             on host, "dpkg -i --force-all #{repo_loc}/*.deb"
             on host, "apt-get update"
           else
