@@ -169,14 +169,11 @@ with_puppet_running_on(master, master_opts, testdir) do
   end
 
   step "touch files and verify they're updated with ctime/mtime"
-  # wait until we're not at the file's mtime
-  #   mod_dir_source_file is the last file modified
-  #   This stat will not work on most BSDs
-  dir_file_mtime = on(master, "stat --format '%Y' #{mod_source_dir_file}").stdout.chomp
-  master_time    = on(master, 'date +%s').stdout.chomp
-  until master_time > dir_file_mtime do
-    master_time  = on(master, 'date +%s').stdout.chomp
-  end
+  # wait until we're not at the mtime of files on the agents
+  # this could be done cross-platform using Puppet, but a single puppet query is unlikely to be less than a second,
+  # and iterating over all agents would be much slower
+  sleep(1)
+
   on master, "touch #{mod_source_file} #{mod_source_dir_file}"
   agents.each do |agent|
     on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
