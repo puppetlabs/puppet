@@ -56,7 +56,7 @@ class Puppet::Module
   attr_writer :environment
 
   attr_accessor :dependencies, :forge_name
-  attr_accessor :source, :author, :version, :license, :puppetversion, :summary, :description, :project_page
+  attr_accessor :source, :author, :version, :license, :summary, :description, :project_page
 
   def initialize(name, path, environment)
     @name = name
@@ -66,8 +66,6 @@ class Puppet::Module
     assert_validity
 
     load_metadata if has_metadata?
-
-    validate_puppet_version
 
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
   end
@@ -136,11 +134,9 @@ class Puppet::Module
     @metadata = data = JSON.parse(File.read(metadata_file))
     @forge_name = data['name'].gsub('-', '/') if data['name']
 
-    [:source, :author, :version, :license, :puppetversion, :dependencies].each do |attr|
+    [:source, :author, :version, :license, :dependencies].each do |attr|
       unless value = data[attr.to_s]
-        unless attr == :puppetversion
-          raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
-        end
+        raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
       end
 
       if attr == :dependencies
@@ -305,11 +301,6 @@ class Puppet::Module
     end
 
     unmet_dependencies
-  end
-
-  def validate_puppet_version
-    return unless puppetversion and puppetversion != Puppet.version
-    raise IncompatibleModule, "Module #{self.name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
   end
 
   def ==(other)
