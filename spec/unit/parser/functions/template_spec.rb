@@ -82,7 +82,7 @@ describe "the template function" do
   end
 
   def eval_template(content)
-    File.stubs(:read).with("template").returns(content)
+    Puppet::FileSystem.stubs(:read_preserve_line_endings).with("template").returns(content)
     Puppet::Parser::Files.stubs(:find_template).returns("template")
     scope.function_template(['template'])
   end
