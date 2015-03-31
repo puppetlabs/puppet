@@ -17,7 +17,11 @@ describe provider_class do
     provider
   end
 
-  let(:puppet_gem) { '/opt/puppetlabs/puppet/bin/gem' }
+  if Puppet.features.microsoft_windows?
+    let(:puppet_gem) { 'gem' }
+  else
+    let(:puppet_gem) { '/opt/puppetlabs/puppet/bin/gem' }
+  end
 
   before :each do
     resource.provider = provider
