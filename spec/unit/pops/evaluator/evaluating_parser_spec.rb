@@ -1125,7 +1125,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "a lex error should be raised for '$foo::::bar'" do
-      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::LexError, /Illegal fully qualified name at line 1:7/)
+      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::ParseErrorWithIssue, /Illegal fully qualified name at line 1:7/)
     end
 
     { '$a = $0'   => nil,

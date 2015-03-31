@@ -274,7 +274,7 @@ class Puppet::Pops::Parser::Lexer2
     ctx   = @lexing_context
     queue = @token_queue
 
-    lex_error_without_pos("Internal Error: No string or file given to lexer to process.") unless scn
+    lex_error_without_pos(Puppet::Pops::Issues::NO_INPUT_TO_LEXER) unless scn
 
     scn.skip(PATTERN_WS)
 
@@ -533,7 +533,7 @@ class Puppet::Pops::Parser::Lexer2
           else
             # move to faulty position ('::<uc-letter>' was ok)
             scn.pos = scn.pos + 3
-            lex_error("Illegal fully qualified class reference")
+            lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE)
           end
         else
           value = scn.scan(PATTERN_BARE_WORD)
@@ -546,7 +546,7 @@ class Puppet::Pops::Parser::Lexer2
           else
             # move to faulty position ('::' was ok)
             scn.pos = scn.pos + 2
-            lex_error("Illegal fully qualified name")
+            lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
           end
         end
       else
@@ -578,7 +578,7 @@ class Puppet::Pops::Parser::Lexer2
       else
         # move to faulty position ([0-9] was ok)
         scn.pos = scn.pos + 1
-        lex_error("Illegal number")
+        lex_error(Puppet::Pops::Issues::ILLEGAL_NUMBER)
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -594,9 +594,9 @@ class Puppet::Pops::Parser::Lexer2
         scn.pos = scn.pos + 1
         fully_qualified = scn.match?(/::/)
         if fully_qualified
-          lex_error("Illegal fully qualified name")
+          lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
         else
-          lex_error("Illegal name or bare word")
+          lex_error(Puppet::Pops::Issues::ILLEGAL_NAME_OR_BARE_WORD)
         end
       end
 
@@ -608,7 +608,7 @@ class Puppet::Pops::Parser::Lexer2
       else
         # move to faulty position ([A-Z] was ok)
         scn.pos = scn.pos + 1
-        lex_error("Illegal class reference")
+        lex_error(Puppet::Pops::Issues::ILLEGAL_CLASS_REFERENCE)
       end
 
     when "\n"

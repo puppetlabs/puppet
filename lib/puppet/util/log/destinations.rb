@@ -107,7 +107,7 @@ Puppet::Util::Log.newdesttype :file do
   def handle(msg)
     if @json > 0
       @json > 1 ? @file.puts(',') : @json = 2
-      JSON.dump(msg.to_hash, @file)
+      JSON.dump(msg.to_structured_hash, @file)
     else
       @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
     end

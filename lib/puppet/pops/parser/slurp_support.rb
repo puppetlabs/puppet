@@ -7,6 +7,7 @@
 # TODO: More detailed performance analysis of excessive character escaping and interpolation.
 #
 module Puppet::Pops::Parser::SlurpSupport
+  include Puppet::Pops::Parser::LexerSupport
 
   SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
@@ -19,7 +20,8 @@ module Puppet::Pops::Parser::SlurpSupport
   def slurp_sqstring
     # skip the leading '
     @scanner.pos += 1
-    str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes) || lex_error("Unclosed quote after \"'\" followed by '#{followed_by}'")
+    str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes)
+    lex_error(Puppet::Pops::Issues::UNCLOSED_QUOTE, :after => "\"'\"", :followed_by => followed_by) unless str
     str[0..-2] # strip closing "'" from result
   end
 
@@ -28,7 +30,7 @@ module Puppet::Pops::Parser::SlurpSupport
     last = scn.matched
     str = slurp(scn, SLURP_DQ_PATTERN, DQ_ESCAPES, false)
     unless str
-      lex_error("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'")
+      lex_error(Puppet::Pops::Issues::UNCLOSED_QUOTE, :after => format_quote(last), :followed_by => followed_by)
     end
 
     # Terminator may be a single char '"', '$', or two characters '${' group match 1 (scn[1]) from the last slurp holds this
@@ -79,14 +81,14 @@ module Puppet::Pops::Parser::SlurpSupport
         when 't'   ; "\t"
         when 's'   ; " "
         when 'u'
-          Puppet.warning(positioned_message("Unicode escape '\\u' was not followed by 4 hex digits"))
+          lex_warning(Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE)
           "\\u"
         when "\n"  ; ''
         when "\r\n"; ''
         else      ch
         end
       else
-        Puppet.warning(positioned_message("Unrecognized escape sequence '\\#{ch}'")) unless ignore_invalid_escapes
+        lex_warning(Puppet::Pops::Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes
         "\\#{ch}"
       end
     }
