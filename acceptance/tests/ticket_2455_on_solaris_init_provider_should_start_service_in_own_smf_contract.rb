@@ -95,11 +95,7 @@ step "Start master"
     fixture_service = 'sleepy_daemon'
     fixture_service_stop = '/etc/init.d/sleepy_daemon stop'
 
-      arch = on(agent, facter('architecture')).stdout.chomp
-      plat = on(agent, facter('osfamily')).stdout.chomp
-
-      skip_test unless plat == "Solaris"
-
+      skip_test unless agent['platform'] =~ /solaris/
 
       step "Setup fixture service on #{agent}"
         sleepy_daemon_path = "/tmp/sleepy_daemon"
@@ -109,8 +105,8 @@ step "Start master"
         on(agent, "chmod +x #{sleepy_daemon_path} #{sleepy_daemon_initscript_path}")
 
       step "Start the fixture service on #{agent} "
-        on(agent, "puppet resource service #{fixture_service} provider=init ensure=stopped")
-        on(agent, "puppet resource service #{fixture_service} provider=init ensure=running")
+        on(agent, puppet("resource service #{fixture_service} provider=init ensure=stopped"))
+        on(agent, puppet("resource service #{fixture_service} provider=init ensure=running"))
 
         assert_match(/ensure changed 'stopped' to 'running'/, stdout, "The fixture service #{fixture_service} is not in a testable state on #{agent}.")
 
