@@ -115,7 +115,7 @@ module Puppet
     end
 
     def change_to_s(currentvalue, newvalue)
-      return super unless newvalue.to_s == "file"
+      return super unless [:file, :present].include?(newvalue)
 
       return super unless property = @resource.property(:content)
 
