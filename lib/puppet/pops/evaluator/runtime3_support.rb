@@ -409,15 +409,17 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   # This is the same type of "truth" as used in the current Puppet DSL.
   #
-  def is_true? o
+  def is_true?(value, o)
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
-    case o
+    case value
     # Support :undef since it may come from a 3x structure
     when :undef
       false
+    when String
+      true
     else
-      !!o
+      !!value
     end
   end
 

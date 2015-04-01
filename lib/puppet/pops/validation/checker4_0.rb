@@ -14,6 +14,8 @@ class Puppet::Pops::Validation::Checker4_0
   Model = Puppet::Pops::Model
 
   attr_reader :acceptor
+  attr_reader :migration_checker
+
   # Initializes the validator with a diagnostics producer. This object must respond to
   # `:will_accept?` and `:accept`.
   #
@@ -28,6 +30,9 @@ class Puppet::Pops::Validation::Checker4_0
     @@idem_visitor        ||= Puppet::Pops::Visitor.new(self, "idem", 0, 0)
 
     @acceptor = diagnostics_producer
+
+    # Use null migration checker unless given in context
+    @migration_checker = (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
   end
 
   # Validates the entire model by visiting each model element and calling `check`.

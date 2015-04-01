@@ -49,6 +49,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
+
+    # Use null migration checker unless given in context
+    @migration_checker = (Puppet.lookup(:migration_checker) { Puppet::Pops::Migration::MigrationChecker.new() })
   end
 
   # @api private
@@ -250,7 +253,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def eval_NotExpression(o, scope)
-    ! is_true?(evaluate(o.expr, scope))
+    ! is_true?(evaluate(o.expr, scope), o.expr)
   end
 
   def eval_UnaryMinusExpression(o, scope)
@@ -511,7 +514,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # b is only evaluated if a is true
   #
   def eval_AndExpression o, scope
-    is_true?(evaluate(o.left_expr, scope)) ? is_true?(evaluate(o.right_expr, scope)) : false
+    is_true?(evaluate(o.left_expr, scope), o.left_expr) ? is_true?(evaluate(o.right_expr, scope), o.right_expr) : false
   end
 
   # @example
@@ -519,7 +522,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # b is only evaluated if a is false
   #
   def eval_OrExpression o, scope
-    is_true?(evaluate(o.left_expr, scope)) ? true : is_true?(evaluate(o.right_expr, scope))
+    is_true?(evaluate(o.left_expr, scope), o.left_expr) ? true : is_true?(evaluate(o.right_expr, scope), o.right_expr)
   end
 
   # Evaluates each entry of the literal list and creates a new Array
@@ -558,6 +561,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.test, scope)
+
       result = nil
       the_default = nil
       if o.options.find do |co|
@@ -566,13 +570,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           case c
           when Puppet::Pops::Model::LiteralDefault
             the_default = co.then_expr
-            is_match?(test, evaluate(c, scope), c, scope)
+            is_match?(test, evaluate(c, scope), c, co, scope)
           when Puppet::Pops::Model::UnfoldExpression
             # not ideal for error reporting, since it is not known which unfolded result
             # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-            evaluate(c, scope).any? {|v| is_match?(test, v, c, scope) }
+            evaluate(c, scope).any? {|v| is_match?(test, v, c, co, scope) }
           else
-            is_match?(test, evaluate(c, scope), c, scope)
+            is_match?(test, evaluate(c, scope), c, co, scope)
           end
         end
         result = evaluate(co.then_expr, scope)
@@ -824,6 +828,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
+
       the_default = nil
       selected = o.selectors.find do |s|
         me = s.matching_expr
@@ -834,9 +839,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         when Puppet::Pops::Model::UnfoldExpression
           # not ideal for error reporting, since it is not known which unfolded result
           # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-          evaluate(me, scope).any? {|v| is_match?(test, v, me, scope) }
+          evaluate(me, scope).any? {|v| is_match?(test, v, me, s, scope) }
         else
-          is_match?(test, evaluate(me, scope), me, scope)
+          is_match?(test, evaluate(me, scope), me, s, scope)
         end
       end
       if selected
@@ -864,7 +869,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates Puppet DSL `if`
   def eval_IfExpression o, scope
     with_guarded_scope(scope) do
-      if is_true?(evaluate(o.test, scope))
+      if is_true?(evaluate(o.test, scope), o.test)
         evaluate(o.then_expr, scope)
       else
         evaluate(o.else_expr, scope)
@@ -875,7 +880,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates Puppet DSL `unless`
   def eval_UnlessExpression o, scope
     with_guarded_scope(scope) do
-      unless is_true?(evaluate(o.test, scope))
+      unless is_true?(evaluate(o.test, scope), o.test)
         evaluate(o.then_expr, scope)
       else
         evaluate(o.else_expr, scope)
@@ -1076,7 +1081,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # This is the type of matching performed in a case option, using == for every type
   # of value except regular expression where a match is performed.
   #
-  def is_match? left, right, o, scope
+  def is_match?(left, right, o, option_expr, scope)
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
