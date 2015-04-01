@@ -243,6 +243,12 @@ describe Puppet::Application::Apply do
         expect(msg.level).to eq(:warning)
       end
 
+      it "should splay" do
+        @apply.expects(:splay)
+
+        expect { @apply.main }.to exit_with 0
+      end
+
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 

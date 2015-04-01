@@ -3,6 +3,8 @@ require 'puppet/configurer'
 require 'puppet/util/profiler/aggregate'
 
 class Puppet::Application::Apply < Puppet::Application
+  require 'puppet/util/splayer'
+  include Puppet::Util::Splayer
 
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
@@ -175,6 +177,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
     end
 
+    # splay if needed
+    splay
+
     unless Puppet[:node_name_fact].empty?
       # Collect our facts.
       unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
@@ -252,6 +257,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   # Enable all of the most common test options.
   def setup_test
+    Puppet.settings.handlearg("--no-splay")
     Puppet.settings.handlearg("--show_diff")
     options[:verbose] = true
     options[:detailed_exitcodes] = true
