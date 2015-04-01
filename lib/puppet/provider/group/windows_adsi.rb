@@ -9,6 +9,13 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   has_features :manages_members
 
+  attr_accessor :deleted
+
+  def initialize(value={})
+    super(value)
+    @deleted = false
+  end
+
   def members_insync?(current, should)
     return false unless current
 
@@ -72,11 +79,13 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   def delete
     Puppet::Util::Windows::ADSI::Group.delete(@resource[:name])
+
+    @deleted = true
   end
 
   # Only flush if we created or modified a group, not deleted
   def flush
-    @group.commit if @group
+    @group.commit if @group && !@deleted
   end
 
   def gid
