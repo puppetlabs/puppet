@@ -8,12 +8,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     interpreted as the path to a local gem file.  If source is not present at all,
     the gem will be installed from the default gem repositories.
 
-    This provider supports the `install_options` and `uninstall_options` attributes,
-    which allow command-line flags to be passed to the gem command.
+    This provider supports the `install_options` attribute, which allows command-line flags to be passed to the gem command.
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options, :uninstall_options
+  has_feature :versionable, :install_options
 
   commands :gemcmd => "gem"
 
@@ -123,15 +122,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def uninstall
-    command = [command(:gemcmd), "uninstall"]
-    command << "--executables" << "--all" << resource[:name]
-
-    command += uninstall_options if resource[:uninstall_options]
-
-    output = execute(command)
-
-    # Apparently some stupid gem versions don't exit non-0 on failure
-    self.fail "Could not uninstall: #{output.chomp}" if output.include?("ERROR")
+    gemcmd "uninstall", "-x", "-a", resource[:name]
   end
 
   def update
@@ -140,9 +131,5 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def install_options
     join_options(resource[:install_options])
-  end
-
-  def uninstall_options
-    join_options(resource[:uninstall_options])
   end
 end
