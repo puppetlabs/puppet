@@ -168,8 +168,11 @@ module Puppet
     end
 
     newproperty(:options) do
-      desc "Mount options for the mounts, as they would
-        appear in the fstab."
+      desc "Mount options for the mounts, comma-separated as they would appear
+      in the fstab on Linux. AIX options other than dev, nodename, or vfs may
+      be defined here. If specified, AIX options of account, boot, check, free,
+      mount, size, type, vol, log, and quota must be alphabetically sorted at
+      the end of the list."
 
       validate do |value|
         raise Puppet::Error, "option must not contain whitespace: #{value}" if value =~ /\s/
@@ -253,8 +256,16 @@ module Puppet
       newvalues(:true, :false)
       defaultto do
         case Facter.value(:operatingsystem)
-        when "FreeBSD", "Darwin", "AIX", "DragonFly", "OpenBSD"
+        when "FreeBSD", "Darwin", "DragonFly", "OpenBSD"
           false
+        when "AIX"
+          if Facter.value(:kernelmajversion) == "5300"
+            false
+          elsif resource[:device] and resource[:device].match(%r{^[^/]+:/})
+            false
+          else
+            true
+          end
         else
           true
         end
