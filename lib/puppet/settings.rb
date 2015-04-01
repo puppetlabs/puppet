@@ -1014,7 +1014,7 @@ Generated on #{Time.now}.
   #    --config)
   # 2. If we're running as a root process, use the system puppet.conf
   #    (usually /etc/puppetlabs/puppet/puppet.conf)
-  # 3. Otherwise, use the user puppet.conf (usually ~/.puppet/puppet.conf)
+  # 3. Otherwise, use the user puppet.conf (usually ~/.puppetlabs/etc/puppet/puppet.conf)
   #
   # @api private
   # @todo this code duplicates {Puppet::Util::RunMode#which_dir} as described
