@@ -161,7 +161,14 @@ module Puppet::Util::Windows::ADSI
     def commit
       begin
         native_user.SetInfo unless native_user.nil?
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
+        if e.message =~ /8007089A/m
+          raise Puppet::Error.new(
+           "Puppet is not able to create/delete domain users with the user resource.\nPlease see http://links.puppetlabs.com/windows_usersgroups for details.",
+           e
+          )
+        end
+
         raise Puppet::Error.new( "User update failed: #{e}", e )
       end
       self
@@ -328,7 +335,14 @@ module Puppet::Util::Windows::ADSI
     def commit
       begin
         native_group.SetInfo unless native_group.nil?
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
+        if e.message =~ /8007089A/m
+          raise Puppet::Error.new(
+            "Puppet is not able to create/delete domain groups with the group resource.\nPlease see http://links.puppetlabs.com/windows_usersgroups for details.",
+            e
+          )
+        end
+
         raise Puppet::Error.new( "Group update failed: #{e}", e )
       end
       self
