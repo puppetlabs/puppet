@@ -22,9 +22,6 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
     # Cannot use munge of the group property to canonicalize @should
     # since the default array_matching comparison is not commutative
-    should_empty = should.nil? or should.empty?
-
-    return false if current.empty? != should_empty
 
     # dupes automatically weeded out when hashes built
     current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
@@ -33,6 +30,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     if @resource[:auth_membership]
       current_users == specified_users
     else
+      return true if specified_users.empty?
       (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
     end
   end

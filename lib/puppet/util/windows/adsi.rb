@@ -388,19 +388,27 @@ module Puppet::Util::Windows::ADSI
     end
 
     def set_members(desired_members, inclusive = true)
-      return if desired_members.nil? or desired_members.empty?
+      return if desired_members.nil?
 
       current_hash = Hash[ self.member_sids.map { |sid| [sid.to_s, sid] } ]
       desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members
-      members_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
-      add_member_sids(*members_to_add)
+      if !desired_members.empty?
+        members_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
+        add_member_sids(*members_to_add)
+      end
 
-      # Then we remove all extra members
-      members_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+      # Then we remove all extra members if inclusive
+      if inclusive
+        if desired_members.empty?
+          members_to_remove = (current_hash.keys).map { |sid| current_hash[sid] }
+        else
+          members_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+        end
 
-      remove_member_sids(*members_to_remove) if inclusive
+        remove_member_sids(*members_to_remove)
+      end
     end
 
     def self.create(name)
