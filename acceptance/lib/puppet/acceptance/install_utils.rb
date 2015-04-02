@@ -162,6 +162,17 @@ module Puppet
             ]
 
             if not link_exists?(link)
+              link = "http://%s/%s/%s/repos/%s/%s%s/PC1/%s/" % [
+                tld,
+                project,
+                sha,
+                variant,
+                fedora_prefix,
+                version,
+                arch
+              ]
+            end
+            if not link_exists?(link)
               link = "http://%s/%s/%s/repos/%s/%s%s/devel/%s/" % [
                 tld,
                 project,
