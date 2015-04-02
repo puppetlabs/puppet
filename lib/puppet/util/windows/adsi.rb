@@ -15,7 +15,7 @@ module Puppet::Util::Windows::ADSI
     def connect(uri)
       begin
         WIN32OLE.connect(uri)
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
         raise Puppet::Error.new( "ADSI connection error: #{e}", e )
       end
     end
@@ -293,7 +293,7 @@ module Puppet::Util::Windows::ADSI
     def self.delete(sid)
       begin
         Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
-      rescue => e
+      rescue WIN32OLERuntimeError => e
         # http://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
         # Prior to Vista SP1, there's no builtin way to programmatically
         # delete user profiles (except for delprof.exe). So try to delete
