@@ -55,12 +55,12 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     # so we don't need to check for them
 
     if desc =~ /^(\S+)\s+\((.+)\)/
-      name = $1
+      gem_name = $1
       versions = $2.split(/,\s*/)
       {
-        :name     => name,
+        :name     => gem_name,
         :ensure   => versions.map{|v| v.split[0]},
-        :provider => :gem
+        :provider => name
       }
     else
       Puppet.warning "Could not match #{desc}" unless desc.chomp.empty?
