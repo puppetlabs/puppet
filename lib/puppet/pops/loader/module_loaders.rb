@@ -176,7 +176,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     #
     def private_loader
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
-      # that can only by called by puppet runtime - if so, it acts as the privuate loader directly.
+      # that can only by called by puppet runtime - if so, it acts as the private loader directly.
       @private_loader ||= ((module_name.nil? && self) || @loaders.private_loader_for_module(module_name))
     end
   end
