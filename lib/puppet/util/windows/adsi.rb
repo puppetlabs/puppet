@@ -15,7 +15,7 @@ module Puppet::Util::Windows::ADSI
     def connect(uri)
       begin
         WIN32OLE.connect(uri)
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
         raise Puppet::Error.new( "ADSI connection error: #{e}", e )
       end
     end
@@ -161,7 +161,15 @@ module Puppet::Util::Windows::ADSI
     def commit
       begin
         native_user.SetInfo unless native_user.nil?
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
+        # ERROR_BAD_USERNAME 2202L from winerror.h
+        if e.message =~ /8007089A/m
+          raise Puppet::Error.new(
+           "Puppet is not able to create/delete domain users with the user resource.",
+           e
+          )
+        end
+
         raise Puppet::Error.new( "User update failed: #{e}", e )
       end
       self
@@ -285,7 +293,7 @@ module Puppet::Util::Windows::ADSI
     def self.delete(sid)
       begin
         Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
-      rescue => e
+      rescue WIN32OLERuntimeError => e
         # http://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
         # Prior to Vista SP1, there's no builtin way to programmatically
         # delete user profiles (except for delprof.exe). So try to delete
@@ -328,7 +336,15 @@ module Puppet::Util::Windows::ADSI
     def commit
       begin
         native_group.SetInfo unless native_group.nil?
-      rescue Exception => e
+      rescue WIN32OLERuntimeError => e
+        # ERROR_BAD_USERNAME 2202L from winerror.h
+        if e.message =~ /8007089A/m
+          raise Puppet::Error.new(
+            "Puppet is not able to create/delete domain groups with the group resource.",
+            e
+          )
+        end
+
         raise Puppet::Error.new( "Group update failed: #{e}", e )
       end
       self
