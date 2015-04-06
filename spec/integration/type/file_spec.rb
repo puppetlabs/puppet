@@ -93,6 +93,43 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     expect(Puppet::FileSystem.exist?(source)).to be_falsey
   end
 
+  describe "when ensure is present using an empty file" do
+    before(:each) do
+      catalog.add_resource(described_class.new(:path => path, :ensure => :present, :backup => :false))
+    end
+
+    context "file is present" do
+      before(:each) do
+        FileUtils.touch(path)
+      end
+
+      it "should do nothing" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_truthy
+      end
+
+      it "should log nothing" do
+        logs = catalog.apply.report.logs
+        expect(logs).to be_empty
+      end
+    end
+
+    context "file is not present" do
+      it "should create the file" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_truthy
+      end
+
+      it "should log that the file was created" do
+        logs = catalog.apply.report.logs
+        expect(logs.first.source).to eq("/File[#{path}]/ensure")
+        expect(logs.first.message).to eq("created")
+      end
+    end
+  end
+
   describe "when ensure is absent" do
     before(:each) do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
