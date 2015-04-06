@@ -346,11 +346,11 @@ module Puppet::Util::Windows::ADSI
     end
 
     def uri
-      self.class.uri(name)
+      self.class.uri(sid.account, sid.domain)
     end
 
     def native_group
-      @native_group ||= Puppet::Util::Windows::ADSI.connect(uri)
+      @native_group ||= Puppet::Util::Windows::ADSI.connect(self.class.uri(*self.class.parse_name(name)))
     end
 
     def sid
