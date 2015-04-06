@@ -93,6 +93,43 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     expect(Puppet::FileSystem.exist?(source)).to be_falsey
   end
 
+  describe "when ensure is present using an empty file" do
+    before(:each) do
+      catalog.add_resource(described_class.new(:path => path, :ensure => :present, :backup => :false))
+    end
+
+    context "file is present" do
+      before(:each) do
+        FileUtils.touch(path)
+      end
+
+      it "should do nothing" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_truthy
+      end
+
+      it "should log nothing" do
+        logs = catalog.apply.report.logs
+        expect(logs).to be_empty
+      end
+    end
+
+    context "file is not present" do
+      it "should create the file" do
+        report = catalog.apply.report
+        expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+        expect(Puppet::FileSystem.exist?(path)).to be_truthy
+      end
+
+      it "should log that the file was created" do
+        logs = catalog.apply.report.logs
+        expect(logs.first.source).to eq("/File[#{path}]/ensure")
+        expect(logs.first.message).to eq("created")
+      end
+    end
+  end
+
   describe "when ensure is absent" do
     before(:each) do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
@@ -235,7 +272,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           FileUtils.mkdir(path)
           set_mode(0777, path)
 
-          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => '0666', :backup => false, :force => true)
           catalog.apply
 
           expect(get_mode(path) & 07777).to eq(0666)
@@ -1033,6 +1070,36 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           report = catalog.apply.report
           expect(report.logs.first.source).to eq("/File[#{path}]/content")
           expect(report.logs.first.message).to match(/content changed '{#{checksum_type}}[0-9a-f]*' to '{#{checksum_type}}#{checksum}'/)
+        end
+      end
+
+      context "ensure is present" do
+        before(:each) do
+          @options[:ensure] = "present"
+        end
+
+        it "should create a file with content" do
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+
+        it "should log the content checksum" do
+          catalog.add_resource described_class.send(:new, @options)
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{path}]/ensure")
+          expect(report.logs.first.message).to eq("defined content as '{#{checksum_type}}#{checksum}'")
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          logs = second_catalog.apply.report.logs
+          expect(logs).to be_empty
         end
       end
 
