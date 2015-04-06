@@ -221,6 +221,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def groups
+      # https://msdn.microsoft.com/en-us/library/aa746342.aspx
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
       native_user.Groups.each {|g| groups << g.Name} rescue nil
@@ -241,21 +242,50 @@ module Puppet::Util::Windows::ADSI
     end
     alias remove_from_group remove_from_groups
 
+
+    def add_group_sids(*sids)
+      group_names = []
+      sids.each do |sid|
+        group_names << Puppet::Util::Windows::SID.sid_to_name(sid)
+      end
+
+      add_to_groups(*group_names)
+    end
+
+    def remove_group_sids(*sids)
+      group_names = []
+      sids.each do |sid|
+        group_names << Puppet::Util::Windows::SID.sid_to_name(sid)
+      end
+
+      remove_from_groups(*group_names)
+    end
+
+    def group_sids
+      self.class.get_sids(native_user.Groups)
+    end
+
     def set_groups(desired_groups, minimum = true)
       return if desired_groups.nil? or desired_groups.empty?
+      # this needs fixed up once PUP-3653 is merged up
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
-      current_groups = self.groups
+      current_hash = Hash[ self.group_sids.map { |sid| [sid.to_s, sid] } ]
+      desired_hash = self.class.name_sid_hash(desired_groups)
 
       # First we add the user to all the groups it should be in but isn't
-      groups_to_add = desired_groups - current_groups
-      add_to_groups(*groups_to_add)
+      if !desired_groups.empty?
+        groups_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
+        add_group_sids(*groups_to_add)
+      end
 
       # Then we remove the user from all groups it is in but shouldn't be, if
       # that's been requested
-      groups_to_remove = current_groups - desired_groups
-      remove_from_groups(*groups_to_remove) unless minimum
+      if !minimum
+        groups_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+        remove_group_sids(*groups_to_remove)
+      end
     end
 
     def self.create(name)
