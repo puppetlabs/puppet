@@ -35,11 +35,13 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     let(:user1) { stub(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
     let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
     let(:user3) { stub(:account => 'user3', :domain => '.', :to_s => 'user3sid') }
+    let(:invalid_user) { SecureRandom.uuid }
 
     before :each do
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user1').returns(user1)
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user2').returns(user2)
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user3').returns(user3)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with(invalid_user).returns(nil)
     end
 
     describe "#members_insync?" do
@@ -156,6 +158,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       end
       it "should return a user string like DOMAIN\\USER,DOMAIN2\\USER2" do
         expect(provider.members_to_s(['user1', 'user2'])).to eq('.\user1,.\user2')
+      end
+      it "should raise an error on a bad username" do
+        expect{ provider.members_to_s([invalid_user]) }.to raise_error(Puppet::Util::Windows::Error,
+          /Could not resolve username: #{invalid_user} to a SID/ )
       end
     end
   end
