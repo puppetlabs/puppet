@@ -153,10 +153,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def texecute(type, command, fof = true, squelch = false, combine = true)
-    if type =~ /^start/
-      if Facter.value(:operatingsystem) == "Solaris"
+    if type =~ /^start/ && Facter.value(:osfamily) == "Solaris"
         command =  ["/usr/bin/ctrun -l none", command].flatten.join(" ")
-      end
     end
     super(type, command, fof, squelch, combine)
   end
