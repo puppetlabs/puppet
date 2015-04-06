@@ -41,7 +41,6 @@ Puppet::Type.type(:user).provide :windows_adsi do
     if @resource[:membership] == :inclusive
       current_users == specified_users
     else
-      return true if specified_users.empty?
       (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
     end
   end
