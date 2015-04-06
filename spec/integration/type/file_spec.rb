@@ -1036,6 +1036,36 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
       end
 
+      context "ensure is present" do
+        before(:each) do
+          @options[:ensure] = "present"
+        end
+
+        it "should create a file with content" do
+          catalog.add_resource described_class.send(:new, @options)
+          catalog.apply
+          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          status = second_catalog.apply.report.resource_statuses["File[#{path}]"]
+          expect(status).not_to be_failed
+          expect(status).not_to be_changed
+        end
+
+        it "should log the content checksum" do
+          catalog.add_resource described_class.send(:new, @options)
+          report = catalog.apply.report
+          expect(report.logs.first.source).to eq("/File[#{path}]/ensure")
+          expect(report.logs.first.message).to eq("defined content as '{#{checksum_type}}#{checksum}'")
+
+          second_catalog = Puppet::Resource::Catalog.new
+          second_catalog.add_resource described_class.send(:new, @options)
+          logs = second_catalog.apply.report.logs
+          expect(logs).to be_empty
+        end
+      end
+
       context "ensure is omitted" do
         it "should create a file with content" do
           catalog.add_resource described_class.send(:new, @options)
