@@ -20,6 +20,7 @@ describe provider_class, :if => Puppet.features.posix? do
     FileTest.stubs(:file?).with('/sbin/service').returns true
     FileTest.stubs(:executable?).with('/sbin/service').returns true
     Facter.stubs(:value).with(:operatingsystem).returns('CentOS')
+    Facter.stubs(:value).with(:osfamily).returns 'RedHat'
   end
 
   osfamily = [ 'RedHat', 'Suse' ]

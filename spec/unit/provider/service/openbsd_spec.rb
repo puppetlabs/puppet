@@ -12,6 +12,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     Facter.stubs(:value).with(:operatingsystem).returns :openbsd
     FileTest.stubs(:file?).with('/usr/sbin/rcctl').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/rcctl').returns true
+    Facter.stubs(:value).with(:osfamily).returns 'OpenBSD'
   end
 
   describe "#instances" do
