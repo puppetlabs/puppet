@@ -39,6 +39,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
+      if !sid
+        resource.debug("#{user_name} (unresolvable to SID)")
+        next user_name
+      end
+
       if sid.account =~ /\\/
         account, _ = Puppet::Util::Windows::ADSI::User.parse_name(sid.account)
       else
@@ -48,6 +53,10 @@ Puppet::Type.type(:group).provide :windows_adsi do
       "#{sid.domain}\\#{account}"
     end
     return users.join(',')
+  end
+
+  def member_valid?(user_name)
+    ! Puppet::Util::Windows::SID.name_to_sid_object(user_name).nil?
   end
 
   def group
