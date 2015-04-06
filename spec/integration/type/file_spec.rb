@@ -272,7 +272,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           FileUtils.mkdir(path)
           set_mode(0777, path)
 
-          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => '0666', :backup => false, :force => true)
           catalog.apply
 
           expect(get_mode(path) & 07777).to eq(0666)
