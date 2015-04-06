@@ -72,14 +72,6 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group3').returns(group3)
     end
 
-    it "should return false when current is nil" do
-      expect(provider.groups_insync?(nil, ['group2'])).to be_falsey
-    end
-
-    it "should return true when should is nil" do
-      expect(provider.groups_insync?(['group1'], nil)).to be_truthy
-    end
-
     it "should return true for same lists of members" do
       expect(provider.groups_insync?(['group1', 'group2'], ['group1', 'group2'])).to be_truthy
     end
@@ -92,9 +84,29 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       expect(provider.groups_insync?(['group1', 'group2', 'group2'], ['group2', 'group1', 'group1'])).to be_truthy
     end
 
+    it "should return true when current and should groups are empty lists" do
+      expect(provider.groups_insync?([], [])).to be_truthy
+    end
+
+    # invalid scenarios
+    #it "should return true when current and should groups are nil lists" do
+    #it "should return true when current groups is nil and should groups is empty" do
+
+    it "should return true when current groups is empty and should groups is nil" do
+      expect(provider.groups_insync?([], nil)).to be_truthy
+    end
+
     context "when membership => inclusive" do
       before :each do
         resource[:membership] = :inclusive
+      end
+
+      it "should return false when current is nil" do
+        expect(provider.groups_insync?(nil, ['group2'])).to be_falsey
+      end
+
+      it "should return false when should is nil" do
+        expect(provider.groups_insync?(['group1'], nil)).to be_falsey
       end
 
       it "should return false when current contains different users than should" do
@@ -118,6 +130,14 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       before :each do
         # this is also the default
         resource[:membership] = :minimum
+      end
+
+      it "should return false when current is nil" do
+        expect(provider.groups_insync?(nil, ['group2'])).to be_falsey
+      end
+
+      it "should return true when should is nil" do
+        expect(provider.groups_insync?(['group1'], nil)).to be_truthy
       end
 
       it "should return false when current contains different users than should" do
