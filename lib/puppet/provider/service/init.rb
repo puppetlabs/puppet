@@ -152,6 +152,13 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     (@resource[:hasrestart] == :true) && [initscript, :restart]
   end
 
+  def texecute(type, command, fof = true, squelch = false, combine = true)
+    if type == :start && Facter.value(:osfamily) == "Solaris"
+        command =  ["/usr/bin/ctrun -l none", command].flatten.join(" ")
+    end
+    super(type, command, fof, squelch, combine)
+  end
+
   # If it was specified that the init script has a 'status' command, then
   # we just return that; otherwise, we return false, which causes it to
   # fallback to other mechanisms.

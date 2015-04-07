@@ -10,6 +10,7 @@ describe provider_class do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :openbsd
+    Facter.stubs(:value).with(:osfamily).returns 'OpenBSD'
   end
 
   let :rcscripts do
