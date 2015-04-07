@@ -254,8 +254,16 @@ module Puppet
       newvalues(:true, :false)
       defaultto do
         case Facter.value(:operatingsystem)
-        when "FreeBSD", "Darwin", "AIX", "DragonFly", "OpenBSD"
+        when "FreeBSD", "Darwin", "DragonFly", "OpenBSD"
           false
+        when "AIX"
+          if Facter.value(:kernelmajversion) == "5300"
+            false
+          elsif resource[:device] and resource[:device].match(%r{^[^/]+:/})
+            false
+          else
+            true
+          end
         else
           true
         end

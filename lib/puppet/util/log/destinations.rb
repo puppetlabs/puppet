@@ -65,6 +65,8 @@ Puppet::Util::Log.newdesttype :file do
 
   def initialize(path)
     @name = path
+    @json = path.end_with?('.json') ? 1 : 0
+
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
@@ -74,7 +76,21 @@ Puppet::Util::Log.newdesttype :file do
     end
 
     # create the log file, if it doesn't already exist
-    file = File.open(path, File::WRONLY|File::CREAT|File::APPEND)
+    need_array_start = false
+    if @json == 1
+      need_array_start = true
+      if File.exists?(path)
+        sz = File.size(path)
+        need_array_start = sz == 0
+
+        # Assume that entries have been written and that a comma
+        # is needed before next entry
+        @json = 2 if sz > 2
+      end
+    end
+
+    file = File.open(path,  File::WRONLY|File::CREAT|File::APPEND)
+    file.puts('[') if need_array_start
 
     # Give ownership to the user and group puppet will run as
     if Puppet.features.root? && !Puppet::Util::Platform.windows?
@@ -91,7 +107,12 @@ Puppet::Util::Log.newdesttype :file do
   end
 
   def handle(msg)
-    @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
+    if @json > 0
+      @json > 1 ? @file.puts(',') : @json = 2
+      JSON.dump(msg.to_structured_hash, @file)
+    else
+      @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
+    end
 
     @file.flush if @autoflush
   end

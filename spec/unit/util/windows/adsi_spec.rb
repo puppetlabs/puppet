@@ -381,7 +381,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should warn on 2003" do
-      connection.expects(:Delete).raises(RuntimeError,
+      connection.expects(:Delete).raises(WIN32OLERuntimeError,
  "Delete (WIN32OLERuntimeError)
     OLE error code:80041010 in SWbemServicesEx
       Invalid class

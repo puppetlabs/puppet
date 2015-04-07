@@ -15,7 +15,7 @@ describe "the 'file' function" do
 
   def with_file_content(content)
     path = tmpfile('file-function')
-    file = File.new(path, 'w')
+    file = File.new(path, 'wb')
     file.sync = true
     file.print content
     yield path
@@ -24,6 +24,12 @@ describe "the 'file' function" do
   it "should read a file" do
     with_file_content('file content') do |name|
       expect(scope.function_file([name])).to eq("file content")
+    end
+  end
+
+  it "should read a file keeping line endings intact" do
+    with_file_content("file content\r\n") do |name|
+      expect(scope.function_file([name])).to eq("file content\r\n")
     end
   end
 

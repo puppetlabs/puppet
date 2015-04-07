@@ -35,7 +35,7 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
     it "a null implementation of the MigrationChecker gets created (once per impl that needs one)" do
       migration_checker = Puppet::Pops::Migration::MigrationChecker.new()
       Puppet::Pops::Migration::MigrationChecker.expects(:new).at_least_once.returns(migration_checker)
-      Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "1", __FILE__).should == 1
+      expect(Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "1", __FILE__)).to eq(1)
       Puppet::Pops::Migration::MigrationChecker.unstub(:new)
     end
   end

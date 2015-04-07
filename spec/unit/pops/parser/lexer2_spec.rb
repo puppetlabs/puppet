@@ -361,6 +361,63 @@ describe 'Lexer2' do
         [:DQPOST, " After"]
         )
     end
+
+    context 'with bad syntax' do
+      def expect_issue(code, issue)
+        expect { tokens_scanned_from(code) }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
+          expect(e.issue_code).to be(issue.issue_code)
+        }
+      end
+
+      it 'detects and reports HEREDOC_UNCLOSED_PARENTHESIS' do
+        code = <<-CODE
+        @(END:syntax/t
+        Text
+        |- END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_UNCLOSED_PARENTHESIS)
+      end
+
+      it 'detects and reports HEREDOC_WITHOUT_END_TAGGED_LINE' do
+        code = <<-CODE
+        @(END:syntax/t)
+        Text
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_WITHOUT_END_TAGGED_LINE)
+      end
+
+      it 'detects and reports HEREDOC_INVALID_ESCAPE' do
+        code = <<-CODE
+        @(END:syntax/x)
+        Text
+        |- END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_INVALID_ESCAPE)
+      end
+
+      it 'detects and reports HEREDOC_INVALID_SYNTAX' do
+        code = <<-CODE
+        @(END:syntax/t/p)
+        Text
+        |- END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_INVALID_SYNTAX)
+      end
+
+      it 'detects and reports HEREDOC_WITHOUT_TEXT' do
+        code = '@(END:syntax/t)'
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_WITHOUT_TEXT)
+      end
+
+      it 'detects and reports HEREDOC_MULTIPLE_AT_ESCAPES' do
+        code = <<-CODE
+        @(END:syntax/tst)
+        Tex\\tt\\n
+        |- END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_MULTIPLE_AT_ESCAPES)
+      end
+    end
   end
 
   context 'when dealing with multi byte characters' do
@@ -482,6 +539,71 @@ describe 'Lexer2' do
       [:RENDER_STRING, "<% this is escaped epp %>\n"]
       )
     end
+
+    context 'with bad epp syntax' do
+      def expect_issue(code, issue)
+        expect { epp_tokens_scanned_from(code) }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
+          expect(e.issue_code).to be(issue.issue_code)
+        }
+      end
+
+      it 'detects and reports EPP_UNBALANCED_TAG' do
+        expect_issue('<% asf', Puppet::Pops::Issues::EPP_UNBALANCED_TAG)
+      end
+
+      it 'detects and reports EPP_UNBALANCED_COMMENT' do
+        expect_issue('<%# asf', Puppet::Pops::Issues::EPP_UNBALANCED_COMMENT)
+      end
+
+      it 'detects and reports EPP_UNBALANCED_EXPRESSION' do
+        expect_issue('asf <%', Puppet::Pops::Issues::EPP_UNBALANCED_EXPRESSION)
+      end
+    end
+  end
+
+  context 'when parsing bad code' do
+    def expect_issue(code, issue)
+      expect { tokens_scanned_from(code) }.to raise_error(Puppet::ParseErrorWithIssue) do |e|
+        expect(e.issue_code).to be(issue.issue_code)
+      end
+    end
+
+    it 'detects and reports issue ILLEGAL_CLASS_REFERENCE' do
+      expect_issue('A::3', Puppet::Pops::Issues::ILLEGAL_CLASS_REFERENCE)
+    end
+
+    it 'detects and reports issue ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE' do
+      expect_issue('::A::3', Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE)
+    end
+
+    it 'detects and reports issue ILLEGAL_FULLY_QUALIFIED_NAME' do
+      expect_issue('::a::3', Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
+    end
+
+    it 'detects and reports issue ILLEGAL_NUMBER' do
+     expect_issue('3g', Puppet::Pops::Issues::ILLEGAL_NUMBER)
+    end
+
+    it 'detects and reports issue INVALID_HEX_NUMBER' do
+      expect_issue('0x3g', Puppet::Pops::Issues::INVALID_HEX_NUMBER)
+    end
+
+    it 'detects and reports issue INVALID_OCTAL_NUMBER' do
+      expect_issue('038', Puppet::Pops::Issues::INVALID_OCTAL_NUMBER)
+    end
+
+    it 'detects and reports issue INVALID_DECIMAL_NUMBER' do
+      expect_issue('4.3g', Puppet::Pops::Issues::INVALID_DECIMAL_NUMBER)
+    end
+
+    it 'detects and reports issue NO_INPUT_TO_LEXER' do
+      expect { Puppet::Pops::Parser::Lexer2.new.fullscan }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
+        expect(e.issue_code).to be(Puppet::Pops::Issues::NO_INPUT_TO_LEXER.issue_code)
+      }
+    end
+
+    it 'detects and reports issue UNCLOSED_QUOTE' do
+      expect_issue('"asd', Puppet::Pops::Issues::UNCLOSED_QUOTE)
+    end
   end
 end
-

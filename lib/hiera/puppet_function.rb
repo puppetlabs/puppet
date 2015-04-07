@@ -12,10 +12,15 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
       param 'Tuple[String, Any, Any, 1, 3]', :args
     end
 
-    dispatch :hiera do
+    dispatch :hiera_no_default do
       scope_param
       param 'String',:key
-      optional_param 'Any',   :default
+    end
+
+    dispatch :hiera_with_default do
+      scope_param
+      param 'String',:key
+      param 'Any',   :default
       optional_param 'Any',   :override
     end
 
@@ -37,8 +42,14 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
     hiera(scope, *args)
   end
 
-  def hiera(scope, key, default = nil, override = nil)
-    post_lookup(key, lookup(scope, key, default, override))
+  def hiera_no_default(scope, key)
+    post_lookup(key, lookup(scope, key, nil, nil))
+  end
+
+  def hiera_with_default(scope, key, default, override = nil)
+    undefined = (@@undefined_value ||= Object.new)
+    result = lookup(scope, key, undefined, override)
+    post_lookup(key, result.equal?(undefined) ? default : result)
   end
 
   def hiera_block1(scope, key, &default_block)

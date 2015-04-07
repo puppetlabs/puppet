@@ -80,7 +80,7 @@ describe provider_class do
       @resource.stubs(:should).with(:ensure).returns :latest
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "0.6.104"
-      @provider.expects(:zypper).with('--terse', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', 'mypackage')
+      @provider.expects(:zypper).with('--terse', :install, '--auto-agree-with-licenses', '--no-confirm', 'mypackage')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -101,7 +101,7 @@ describe provider_class do
       @resource.stubs(:should).with(:ensure).returns :latest
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "0.6.13"
-      @provider.expects(:zypper).with('--terse', :install, '--no-confirm', '--name', 'mypackage')
+      @provider.expects(:zypper).with('--terse', :install, '--no-confirm', 'mypackage')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -144,13 +144,24 @@ describe provider_class do
     end
   end
 
-  it "should install a virtual package" do
-    @resource.stubs(:should).with(:ensure).returns :installed
-    @resource.stubs(:allow_virtual?).returns true
-    @provider.stubs(:zypper_version).returns "0.6.13"
-    @provider.expects(:zypper).with('--terse', :install, '--no-confirm', 'mypackage')
-    @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
-    @provider.install
+  describe "should install a virtual package" do
+    it "when zypper version = 0.6.13" do
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @resource.stubs(:allow_virtual?).returns true
+      @provider.stubs(:zypper_version).returns "0.6.13"
+      @provider.expects(:zypper).with('--terse', :install, '--no-confirm', 'mypackage')
+      @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
+      @provider.install
+    end
+
+    it "when zypper version >= 1.0.0" do
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @resource.stubs(:allow_virtual?).returns true
+      @provider.stubs(:zypper_version).returns "1.2.8"
+      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', 'mypackage')
+      @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
+      @provider.install
+    end
   end
 
   describe "when installing with zypper install options" do
@@ -161,8 +172,8 @@ describe provider_class do
       @resource.stubs(:allow_virtual?).returns false
       @provider.stubs(:zypper_version).returns "1.2.8"
 
-      @provider.expects(:zypper).with('--quiet', :install,
-        '--auto-agree-with-licenses', '--no-confirm', '--no-gpg-check', '-p=/vagrant/files/localrepo/', 'php5-5.4.10-4.5.6')
+      @provider.expects(:zypper).with('--quiet', '--no-gpg-check', :install,
+        '--auto-agree-with-licenses', '--no-confirm', '-p=/vagrant/files/localrepo/', 'php5-5.4.10-4.5.6')
       @provider.expects(:query).returns "php5 0 5.4.10 4.5.6 x86_64"
       @provider.install
     end
@@ -174,7 +185,7 @@ describe provider_class do
       @resource.stubs(:allow_virtual?).returns false
 
       @provider.stubs(:zypper_version).returns '1.2.8'
-      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', '--a=foo', '--b="quoted bar"', 'vim')
+      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--a=foo', '--b="quoted bar"', '--name', 'vim')
       @provider.expects(:query).returns 'package vim is not installed'
       @provider.install
     end
@@ -186,7 +197,7 @@ describe provider_class do
       @resource.stubs(:allow_virtual?).returns false
 
       @provider.stubs(:zypper_version).returns '1.2.8'
-      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', '--a', '--b', '--c', 'vim')
+      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--a', '--b', '--c', '--name', 'vim')
       @provider.expects(:query).returns 'package vim is not installed'
       @provider.install
     end
@@ -198,7 +209,7 @@ describe provider_class do
       @resource.stubs(:allow_virtual?).returns false
 
       @provider.stubs(:zypper_version).returns '1.2.8'
-      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--name', '--a --b --c', 'vim')
+      @provider.expects(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', '--a --b --c', '--name', 'vim')
       @provider.expects(:query).returns 'package vim is not installed'
       @provider.install
     end

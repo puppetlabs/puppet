@@ -75,6 +75,10 @@ class Puppet::FileSystem::FileImpl
     path.read
   end
 
+  def read_preserve_line_endings(path)
+    read(path)
+  end
+
   def binread(path)
     raise NotImplementedError
   end

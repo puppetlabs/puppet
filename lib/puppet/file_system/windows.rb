@@ -91,6 +91,14 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     Puppet::Util::Windows::Security.set_mode(mode, path.to_s)
   end
 
+  def read_preserve_line_endings(path)
+    contents = path.read( :mode => 'rb', :encoding => Encoding::UTF_8)
+    contents = path.read( :mode => 'rb', :encoding => Encoding::default_external) unless contents.valid_encoding?
+    contents = path.read unless contents.valid_encoding?
+
+    contents
+  end
+
   private
 
   def raise_if_symlinks_unsupported

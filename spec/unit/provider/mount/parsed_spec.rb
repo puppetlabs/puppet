@@ -8,6 +8,9 @@ require 'shared_behaviours/all_parsedfile_providers'
 # restore Solaris spec tests.
 
 describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet.features.microsoft_windows? do
+  before :each do
+    Facter.clear
+  end
 
   let :vfstab_sample do
     "/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0 \t\t    /  \t    ufs     1 no\t-"
@@ -24,6 +27,11 @@ describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet.features
     else
       expect(described_class.default_target).to eq('/etc/vfstab')
     end
+  end
+
+  it "should default to /etc/vfstab on Solaris" do
+    pending "This test only works on AIX" unless Facter.value(:osfamily) == 'AIX'
+    expect(described_class.default_target).to eq('/etc/filesystems')
   end
 
   it "should default to /etc/fstab on anything else" do
@@ -171,10 +179,14 @@ FSTAB
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('aix.mount')))
       mounts = described_class.mountinstances
       expect(mounts[0]).to eq({ :name => '/', :mounted => :yes })
-      expect(mounts[1]).to eq({ :name => '/tmp', :mounted => :yes })
-      expect(mounts[2]).to eq({ :name => '/home', :mounted => :yes })
-      expect(mounts[3]).to eq({ :name => '/usr', :mounted => :yes })
-      expect(mounts[4]).to eq({ :name => '/usr/code', :mounted => :yes })
+      expect(mounts[1]).to eq({ :name => '/usr', :mounted => :yes })
+      expect(mounts[2]).to eq({ :name => '/var', :mounted => :yes })
+      expect(mounts[3]).to eq({ :name => '/tmp', :mounted => :yes })
+      expect(mounts[4]).to eq({ :name => '/home', :mounted => :yes })
+      expect(mounts[5]).to eq({ :name => '/admin', :mounted => :yes })
+      expect(mounts[6]).to eq({ :name => '/proc', :mounted => :yes })
+      expect(mounts[7]).to eq({ :name => '/opt', :mounted => :yes })
+      expect(mounts[8]).to eq({ :name => '/srv/aix', :mounted => :yes })
     end
 
     it "should raise an error if a line is not understandable" do
@@ -184,7 +196,21 @@ FSTAB
 
   end
 
-  it "should support AIX's paragraph based /etc/filesystems"
+  it "should support AIX's paragraph based /etc/filesystems" do
+    pending "This test only works on AIX" unless Facter.value(:osfamily) == 'AIX'
+    Facter.stubs(:value).with(:osfamily).returns 'AIX'
+    described_class.stubs(:default_target).returns my_fixture('aix.filesystems')
+    described_class.stubs(:mountcmd).returns File.read(my_fixture('aix.mount'))
+    instances = described_class.instances
+    expect(instances[0].name).to eq("/")
+    expect(instances[0].device).to eq("/dev/hd4")
+    expect(instances[0].fstype).to eq("jfs2")
+    expect(instances[0].options).to eq("check=false,free=true,log=NULL,mount=automatic,quota=no,type=bootfs,vol=root")
+    expect(instances[11].name).to eq("/srv/aix")
+    expect(instances[11].device).to eq("mynode")
+    expect(instances[11].fstype).to eq("nfs")
+    expect(instances[11].options).to eq("vers=2,account=false,log=NULL,mount=true")
+  end
 
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')

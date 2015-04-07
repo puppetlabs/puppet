@@ -549,4 +549,96 @@ module Puppet::Pops::Issues
   ILLEGAL_CATALOG_RELATED_EXPRESSION = hard_issue :ILLEGAL_CATALOG_RELATED_EXPRESSION do
     "This #{label.label(semantic)} appears in a context where catalog related expressions are not allowed"
   end
+
+  SYNTAX_ERROR = hard_issue :SYNTAX_ERROR, :where do
+    "Syntax error at #{where}"
+  end
+
+  ILLEGAL_CLASS_REFERENCE = hard_issue :ILLEGAL_CLASS_REFERENCE do
+    'Illegal class reference'
+  end
+
+  ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE = hard_issue :ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE do
+    'Illegal fully qualified class reference'
+  end
+
+  ILLEGAL_FULLY_QUALIFIED_NAME = hard_issue :ILLEGAL_FULLY_QUALIFIED_NAME do
+    'Illegal fully qualified name'
+  end
+
+  ILLEGAL_NAME_OR_BARE_WORD = hard_issue :ILLEGAL_NAME_OR_BARE_WORD do
+    'Illegal name or bare word'
+  end
+
+  ILLEGAL_NUMBER = hard_issue :ILLEGAL_NUMBER, :value do
+    "Illegal number '#{value}'"
+  end
+
+  ILLEGAL_UNICODE_ESCAPE = issue :ILLEGAL_UNICODE_ESCAPE do
+    "Unicode escape '\\u' was not followed by 4 hex digits"
+  end
+
+  INVALID_HEX_NUMBER = hard_issue :INVALID_HEX_NUMBER, :value do
+    "Not a valid hex number #{value}"
+  end
+
+  INVALID_OCTAL_NUMBER = hard_issue :INVALID_OCTAL_NUMBER, :value do
+    "Not a valid octal number #{value}"
+  end
+
+  INVALID_DECIMAL_NUMBER = hard_issue :INVALID_DECIMAL_NUMBER, :value do
+    "Not a valid decimal number #{value}"
+  end
+
+  NO_INPUT_TO_LEXER = hard_issue :NO_INPUT_TO_LEXER do
+    "Internal Error: No string or file given to lexer to process."
+  end
+
+  UNRECOGNIZED_ESCAPE = issue :UNRECOGNIZED_ESCAPE, :ch do
+    "Unrecognized escape sequence '\\#{ch}'"
+  end
+
+  UNCLOSED_QUOTE = hard_issue :UNCLOSED_QUOTE, :after, :followed_by do
+    "Unclosed quote after #{after} followed by '#{followed_by}'"
+  end
+
+  EPP_INTERNAL_ERROR = hard_issue :EPP_INTERNAL_ERROR, :error do
+    "Internal error: #{error}"
+  end
+
+  EPP_UNBALANCED_TAG = hard_issue :EPP_UNBALANCED_TAG do
+    'Unbalanced epp tag, reached <eof> without closing tag.'
+  end
+
+  EPP_UNBALANCED_COMMENT = hard_issue :EPP_UNBALANCED_COMMENT do
+    'Reaching end after opening <%# without seeing %>'
+  end
+
+  EPP_UNBALANCED_EXPRESSION = hard_issue :EPP_UNBALANCED_EXPRESSION do
+    'Unbalanced embedded expression - opening <% and reaching end of input'
+  end
+
+  HEREDOC_UNCLOSED_PARENTHESIS = hard_issue :HEREDOC_UNCLOSED_PARENTHESIS, :followed_by do
+    "Unclosed parenthesis after '@(' followed by '#{followed_by}'"
+  end
+
+  HEREDOC_WITHOUT_END_TAGGED_LINE = hard_issue :HEREDOC_WITHOUT_END_TAGGED_LINE do
+    'Heredoc without end-tagged line'
+  end
+
+  HEREDOC_INVALID_ESCAPE = hard_issue :HEREDOC_INVALID_ESCAPE, :actual do
+    "Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '#{actual}'"
+  end
+
+  HEREDOC_INVALID_SYNTAX = hard_issue :HEREDOC_INVALID_SYNTAX do
+    'Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])'
+  end
+
+  HEREDOC_WITHOUT_TEXT = hard_issue :HEREDOC_WITHOUT_TEXT do
+    'Heredoc without any following lines of text'
+  end
+
+  HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
+    "An escape char for @() may only appear once. Got '#{escapes.join(', ')}'"
+  end
 end

@@ -143,12 +143,40 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'daily',
-            'every'      => '2',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'daily',
+            'every'            => '2',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
+          }])
+        end
+
+        it 'should handle a single daily with repeat trigger' do
+          @mock_task.expects(:trigger).with(0).returns({
+            'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_DAILY,
+            'start_year'       => 2011,
+            'start_month'      => 9,
+            'start_day'        => 12,
+            'start_hour'       => 13,
+            'start_minute'     => 20,
+            'minutes_interval' => 60,
+            'minutes_duration' => 180,
+            'flags'            => 0,
+            'type'             => { 'days_interval' => 2 },
+          })
+
+          expect(resource.provider.trigger).to eq([{
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'daily',
+            'every'            => '2',
+            'minutes_interval' => 60,
+            'minutes_duration' => 180,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
@@ -172,13 +200,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date'  => '2011-9-12',
-            'start_time'  => '13:20',
-            'schedule'    => 'weekly',
-            'every'       => '2',
-            'day_of_week' => ['sun', 'mon', 'wed', 'fri'],
-            'enabled'     => true,
-            'index'       => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'weekly',
+            'every'            => '2',
+            'day_of_week'      => ['sun', 'mon', 'wed', 'fri'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
@@ -205,13 +235,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'monthly',
-            'months'     => [1, 2, 8, 9, 12],
-            'on'         => [1, 3, 5, 15, 'last'],
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'monthly',
+            'months'           => [1, 2, 8, 9, 12],
+            'on'               => [1, 3, 5, 15, 'last'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
 
@@ -247,6 +279,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
             'months'           => [1, 2, 8, 9, 12],
             'which_occurrence' => 'first',
             'day_of_week'      => ['sun', 'mon', 'wed', 'fri'],
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
             'enabled'          => true,
             'index'            => 0,
           }])
@@ -264,11 +298,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           })
 
           expect(resource.provider.trigger).to eq([{
-            'start_date' => '2011-9-12',
-            'start_time' => '13:20',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-9-12',
+            'start_time'       => '13:20',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           }])
         end
       end
@@ -305,25 +341,98 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2012-11-14',
-            'start_time' => '15:22',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 1,
+            'start_date'       => '2012-11-14',
+            'start_time'       => '15:22',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 1,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
+          }
+        ])
+      end
+
+      it 'should handle multiple triggers with repeat triggers' do
+        @mock_task.expects(:trigger_count).returns(3)
+        @mock_task.expects(:trigger).with(0).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2011,
+          'start_month'      => 10,
+          'start_day'        => 13,
+          'start_hour'       => 14,
+          'start_minute'     => 21,
+          'minutes_interval' => 15,
+          'minutes_duration' => 60,
+          'flags'            => 0,
+        })
+        @mock_task.expects(:trigger).with(1).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2012,
+          'start_month'      => 11,
+          'start_day'        => 14,
+          'start_hour'       => 15,
+          'start_minute'     => 22,
+          'minutes_interval' => 30,
+          'minutes_duration' => 120,
+          'flags'            => 0,
+        })
+        @mock_task.expects(:trigger).with(2).returns({
+          'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
+          'start_year'       => 2013,
+          'start_month'      => 12,
+          'start_day'        => 15,
+          'start_hour'       => 16,
+          'start_minute'     => 23,
+          'minutes_interval' => 60,
+          'minutes_duration' => 240,
+          'flags'            => 0,
+        })
+
+        expect(resource.provider.trigger).to match_array([
+          {
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 15,
+            'minutes_duration' => 60,
+            'enabled'          => true,
+            'index'            => 0,
+          },
+          {
+            'start_date'       => '2012-11-14',
+            'start_time'       => '15:22',
+            'schedule'         => 'once',
+            'minutes_interval' => 30,
+            'minutes_duration' => 120,
+            'enabled'          => true,
+            'index'            => 1,
+          },
+          {
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 60,
+            'minutes_duration' => 240,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
@@ -354,18 +463,22 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
@@ -396,18 +509,22 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         expect(resource.provider.trigger).to match_array([
           {
-            'start_date' => '2011-10-13',
-            'start_time' => '14:21',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 0,
+            'start_date'       => '2011-10-13',
+            'start_time'       => '14:21',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 0,
           },
           {
-            'start_date' => '2013-12-15',
-            'start_time' => '16:23',
-            'schedule'   => 'once',
-            'enabled'    => true,
-            'index'      => 2,
+            'start_date'       => '2013-12-15',
+            'start_time'       => '16:23',
+            'schedule'         => 'once',
+            'minutes_interval' => 0,
+            'minutes_duration' => 0,
+            'enabled'          => true,
+            'index'            => 2,
           }
         ])
       end
@@ -529,11 +646,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       })
 
       mock_task_trigger = {
-        'start_date' => '2011-10-13',
-        'start_time' => '14:21',
-        'schedule'   => 'once',
-        'enabled'    => true,
-        'index'      => 0,
+        'start_date'       => '2011-10-13',
+        'start_time'       => '14:21',
+        'schedule'         => 'once',
+        'minutes_interval' => 0,
+        'minutes_duration' => 0,
+        'enabled'          => true,
+        'index'            => 0,
       }
 
       expect(resource.provider.trigger).to eq([mock_task_trigger])
@@ -542,11 +661,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       resource.provider.clear_task
 
       expect(resource.provider.trigger).to eq([{
-        'start_date' => '2012-11-14',
-        'start_time' => '15:22',
-        'schedule'   => 'once',
-        'enabled'    => true,
-        'index'      => 0,
+        'start_date'       => '2012-11-14',
+        'start_time'       => '15:22',
+        'schedule'         => 'once',
+        'minutes_interval' => 0,
+        'minutes_duration' => 0,
+        'enabled'          => true,
+        'index'            => 0,
       }])
     end
   end
@@ -1044,6 +1165,127 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
     let(:provider) { described_class.new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe') }
     let(:trigger)  { provider.translate_hash_to_trigger(@puppet_trigger) }
+
+    context "working with repeat every x triggers" do
+      before :each do
+        @puppet_trigger['schedule'] = 'once'
+      end
+
+      it 'should succeed if minutes_interval is equal to 0' do
+        @puppet_trigger['minutes_interval'] = '0'
+
+        expect(trigger['minutes_interval']).to eq(0)
+      end
+
+      it 'should default minutes_duration to a full day when minutes_interval is greater than 0 without setting minutes_duration' do
+        @puppet_trigger['minutes_interval'] = '1'
+
+        expect(trigger['minutes_duration']).to eq(1440)
+      end
+
+      it 'should succeed if minutes_interval is greater than 0 and minutes_duration is also set' do
+        @puppet_trigger['minutes_interval'] = '1'
+        @puppet_trigger['minutes_duration'] = '2'
+
+        expect(trigger['minutes_interval']).to eq(1)
+      end
+
+      it 'should fail if minutes_interval is less than 0' do
+        @puppet_trigger['minutes_interval'] = '-1'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_interval must be an integer greater or equal to 0'
+        )
+      end
+
+      it 'should fail if minutes_interval is not an integer' do
+        @puppet_trigger['minutes_interval'] = 'abc'
+        expect { trigger }.to raise_error(ArgumentError)
+      end
+
+      it 'should succeed if minutes_duration is equal to 0' do
+        @puppet_trigger['minutes_duration'] = '0'
+        expect(trigger['minutes_duration']).to eq(0)
+      end
+
+      it 'should succeed if minutes_duration is greater than 0' do
+        @puppet_trigger['minutes_duration'] = '1'
+        expect(trigger['minutes_duration']).to eq(1)
+      end
+
+      it 'should fail if minutes_duration is less than 0' do
+        @puppet_trigger['minutes_duration'] = '-1'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_duration must be an integer greater than minutes_interval and equal to or greater than 0'
+        )
+      end
+
+      it 'should fail if minutes_duration is not an integer' do
+        @puppet_trigger['minutes_duration'] = 'abc'
+        expect { trigger }.to raise_error(ArgumentError)
+      end
+
+      it 'should succeed if minutes_duration is equal to a full day' do
+        @puppet_trigger['minutes_duration'] = '1440'
+        expect(trigger['minutes_duration']).to eq(1440)
+      end
+
+      it 'should succeed if minutes_duration is equal to three days' do
+        @puppet_trigger['minutes_duration'] = '4320'
+        expect(trigger['minutes_duration']).to eq(4320)
+      end
+
+      it 'should succeed if minutes_duration is greater than minutes_duration' do
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '11'
+
+        expect(trigger['minutes_interval']).to eq(10)
+        expect(trigger['minutes_duration']).to eq(11)
+      end
+
+      it 'should fail if minutes_duration is equal to minutes_interval' do
+        # On Windows 2003, the duration must be greater than the interval
+        # on other platforms the values can be equal.
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '10'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_duration must be an integer greater than minutes_interval and equal to or greater than 0'
+        )
+      end
+
+      it 'should succeed if minutes_duration and minutes_interval are both set to 0' do
+        @puppet_trigger['minutes_interval'] = '0'
+        @puppet_trigger['minutes_duration'] = '0'
+
+        expect(trigger['minutes_interval']).to eq(0)
+        expect(trigger['minutes_duration']).to eq(0)
+      end
+
+      it 'should fail if minutes_duration is less than minutes_interval' do
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '9'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_duration must be an integer greater than minutes_interval and equal to or greater than 0'
+        )
+      end
+
+      it 'should fail if minutes_duration is less than minutes_interval and set to 0' do
+        @puppet_trigger['minutes_interval'] = '10'
+        @puppet_trigger['minutes_duration'] = '0'
+
+        expect { trigger }.to raise_error(
+          Puppet::Error,
+          'minutes_interval cannot be set without minutes_duration also being set to a number greater than 0'
+        )
+      end
+    end
 
     describe 'when given a one-time trigger' do
       before :each do

@@ -505,6 +505,31 @@ module Puppet
         :desc     => "Freezes the 'main' class, disallowing any code to be added to it.  This
           essentially means that you can't have any code outside of a node,
           class, or definition other than in the site manifest.",
+    },
+    :stringify_facts => {
+      :default => true,
+      :type    => :boolean,
+      :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or
+        hashes as fact values. (DEPRECATED) This option will be removed in Puppet 4.0.",
+    },
+    :trusted_node_data => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "Stores trusted node data in a hash called $trusted.
+        When true also prevents $trusted from being overridden in any scope.",
+    },
+    :immutable_node_data => {
+      :default => '$trusted_node_data',
+      :type    => :boolean,
+      :desc    => "When true, also prevents $trusted and $facts from being overridden in any scope",
+    },
+    :preview_outputdir => {
+      :default => '$vardir/preview',
+      :type     => :directory,
+      :mode     => "0750",
+      :owner    => "service",
+      :group    => "service",
+      :desc    => "The directory where catalog previews per node are generated."
     }
   )
   Puppet.define_settings(:module_tool,

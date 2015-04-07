@@ -1927,7 +1927,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 352)
 
 module_eval(<<'.,.,', 'egrammar.ra', 356)
   def _reduce_105(val, _values, result)
-          result = Factory.UNLESS(val[1], nil, nil)
+          result = Factory.UNLESS(val[1], nil, val[4])
       loc result, val[0], val[4]
     
     result

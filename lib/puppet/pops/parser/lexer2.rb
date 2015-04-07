@@ -275,7 +275,7 @@ class Puppet::Pops::Parser::Lexer2
     ctx   = @lexing_context
     queue = @token_queue
 
-    lex_error_without_pos("Internal Error: No string or file given to lexer to process.") unless scn
+    lex_error_without_pos(Puppet::Pops::Issues::NO_INPUT_TO_LEXER) unless scn
 
     scn.skip(PATTERN_WS)
 
@@ -527,13 +527,13 @@ class Puppet::Pops::Parser::Lexer2
         if la2 >= 'A' && la2 <= 'Z'
           # CLASSREF or error
           value = scn.scan(PATTERN_CLASSREF)
-          if value
+          if value && scn.peek(2) != '::'
             after = scn.pos
             emit_completed([:CLASSREF, value.freeze, after-before], before)
           else
             # move to faulty position ('::<uc-letter>' was ok)
             scn.pos = scn.pos + 3
-            lex_error("Illegal fully qualified class reference")
+            lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE)
           end
         else
           value = scn.scan(PATTERN_BARE_WORD)
@@ -546,7 +546,7 @@ class Puppet::Pops::Parser::Lexer2
           else
             # move to faulty position ('::' was ok)
             scn.pos = scn.pos + 2
-            lex_error("Illegal fully qualified name")
+            lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
           end
         end
       else
@@ -573,13 +573,30 @@ class Puppet::Pops::Parser::Lexer2
       value = scn.scan(PATTERN_NUMBER)
       if value
         length = scn.pos - before
-        assert_numeric(value, length)
+        assert_numeric(value, before)
         emit_completed([:NUMBER, value.freeze, length], before)
       else
-        # move to faulty position ([0-9] was ok)
         invalid_number = scn.scan_until(PATTERN_NON_WS)
+        if before > 1
+          after = scn.pos
+          scn.pos = before - 1
+          if scn.peek(1) == '.'
+            # preceded by a dot. Is this a bad decimal number then?
+            scn.pos = before - 2
+            while scn.peek(1) =~ /^\d$/
+              invalid_number = nil
+              before = scn.pos
+              break if before == 0
+              scn.pos = scn.pos - 1
+            end
+          end
+          scn.pos = before
+          invalid_number = scn.peek(after - before) unless invalid_number
+        end
+        length = scn.pos - before
+        assert_numeric(invalid_number, before)
         scn.pos = before + 1
-        lex_error("Illegal number '#{invalid_number}'")
+        lex_error(Puppet::Pops::Issues::ILLEGAL_NUMBER, {:value => invalid_number})
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -595,21 +612,21 @@ class Puppet::Pops::Parser::Lexer2
         scn.pos = scn.pos + 1
         fully_qualified = scn.match?(/::/)
         if fully_qualified
-          lex_error("Illegal fully qualified name")
+          lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
         else
-          lex_error("Illegal name or bare word")
+          lex_error(Puppet::Pops::Issues::ILLEGAL_NAME_OR_BARE_WORD)
         end
       end
 
     when 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
       value = scn.scan(PATTERN_CLASSREF)
-      if value
+      if value && scn.peek(2) != '::'
         emit_completed([:CLASSREF, value.freeze, scn.pos - before], before)
       else
         # move to faulty position ([A-Z] was ok)
         scn.pos = scn.pos + 1
-        lex_error("Illegal class reference")
+        lex_error(Puppet::Pops::Issues::ILLEGAL_CLASS_REFERENCE)
       end
 
     when "\n"

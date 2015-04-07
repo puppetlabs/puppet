@@ -17,6 +17,7 @@ class Puppet::Pops::Evaluator::CompareOperator
   def initialize
     @@equals_visitor  ||= Puppet::Pops::Visitor.new(self, "equals", 1, 1)
     @@compare_visitor ||= Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
+    @@match_visitor ||= Puppet::Pops::Visitor.new(self, "match", 2, 2)
     @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 2, 2)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
   end
@@ -29,6 +30,11 @@ class Puppet::Pops::Evaluator::CompareOperator
   # Comparison of String vs. Numeric always compares using numeric.
   def compare(a, b)
     @@compare_visitor.visit_this_1(self, a, b)
+  end
+
+  # Performs a match of a and b, and returns true if b matches a
+  def match(a, b, scope)
+    @@match_visitor.visit_this_2(self, b, a, scope)
   end
 
   # Answers is b included in a
@@ -148,5 +154,42 @@ class Puppet::Pops::Evaluator::CompareOperator
 
   def include_Hash(a, b, scope)
     include?(a.keys, b, scope)
+  end
+
+  # Matches in general by using == operator
+  def match_Object(pattern, a, scope)
+    equals(a, pattern)
+  end
+
+  # Matches only against strings
+  def match_Regexp(regexp, left, scope)
+    return false unless left.is_a? String
+    matched = regexp.match(left)
+    set_match_data(matched, scope) # creates or clears ephemeral
+    !!matched # convert to boolean
+  end
+
+  def match_PAnyType(any_type, left, scope)
+    # right is a type and left is not - check if left is an instance of the given type
+    # (The reverse is not terribly meaningful - computing which of the case options that first produces
+    # an instance of a given type).
+    #
+    @type_calculator.instance?(any_type, left)
+  end
+
+  def match_Array(array, left, scope)
+    return false unless left.is_a?(Array)
+    return false unless left.length == array.length
+    array.each_with_index.all? { | pattern, index| match(left[index], pattern, scope) }
+  end
+
+  def match_Hash(hash, left, scope)
+    return false unless left.is_a?(Hash)
+    hash.all? {|x,y| match(left[x], y, scope) }
+  end
+
+  def match_Symbol(symbol, left, scope)
+    return true if symbol == :default
+    equals(left, default, scope)
   end
 end

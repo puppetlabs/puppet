@@ -243,7 +243,7 @@ class Puppet::Util::Log
     obj
   end
 
-  attr_accessor :time, :remote, :file, :line, :source
+  attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node, :backtrace
   attr_reader :level, :message
 
   def initialize(args)
@@ -257,9 +257,10 @@ class Puppet::Util::Log
       tags.each { |t| self.tag(t) }
     end
 
-    [:file, :line].each do |attr|
+    # Don't add these unless defined (preserve 3.x API as much as possible)
+    [:file, :line, :pos, :issue_code, :environment, :node, :backtrace].each do |attr|
       next unless value = args[attr]
-      send(attr.to_s + "=", value)
+      send(attr.to_s + '=', value)
     end
 
     Log.newmessage(self)
@@ -274,8 +275,11 @@ class Puppet::Util::Log
     if @time.is_a? String
       @time = Time.parse(@time)
     end
-    @file = data['file'] if data['file']
-    @line = data['line'] if data['line']
+    # Don't add these unless defined (preserve 3.x API as much as possible)
+    %w(file line pos issue_code environment node backtrace).each do |name|
+      next unless value = data[name]
+      send(name + '=', value)
+    end
   end
 
   def to_hash
@@ -285,13 +289,28 @@ class Puppet::Util::Log
   def to_data_hash
     {
       'level' => @level,
-      'message' => @message,
+      'message' => to_s,
       'source' => @source,
-      'tags' => @tags,
+      'tags' => @tags.to_a,
       'time' => @time.iso8601(9),
       'file' => @file,
       'line' => @line,
     }
+  end
+
+  def to_structured_hash
+    hash = {
+      'level' => @level,
+      'message' => @message,
+      'source' => @source,
+      'tags' => @tags.to_a,
+      'time' => @time.iso8601(9),
+    }
+    %w(file line pos issue_code environment node backtrace).each do |name|
+      attr_name = "@#{name}"
+      hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
+    end
+    hash
   end
 
   def to_pson(*args)
@@ -331,7 +350,30 @@ class Puppet::Util::Log
   end
 
   def to_s
-    message
+    msg = message
+
+    # Issue based messages do not have details in the message. It
+    # must be appended here
+    unless issue_code.nil?
+      msg = "Could not parse for environment #{environment}: #{msg}" unless environment.nil?
+      if file && line && pos
+        msg = "#{msg} at #{file}:#{line}:#{pos}"
+      elsif file and line
+        msg = "#{msg}  at #{file}:#{line}"
+      elsif line && pos
+        msg = "#{msg}  at line #{line}:#{pos}"
+      elsif line
+        msg = "#{msg}  at line #{line}"
+      elsif file
+        msg = "#{msg}  in #{file}"
+      end
+      msg = "#{msg} on node #{node}" unless node.nil?
+      if @backtrace.is_a?(Array)
+        msg += "\n"
+        msg += @backtrace.join("\n")
+      end
+    end
+    msg
   end
 
 end

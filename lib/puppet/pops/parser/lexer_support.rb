@@ -3,18 +3,6 @@
 #
 module Puppet::Pops::Parser::LexerSupport
 
-  # Formats given message by appending file, line and position if available.
-  def positioned_message(msg, pos = nil)
-    result = [msg]
-    file = @locator.file
-    line = @locator.line_for_offset(pos || @scanner.pos)
-    pos =  @locator.pos_on_line(pos || @scanner.pos)
-
-    result << "in file #{file}" if file && file.is_a?(String) && !file.empty?
-    result << "at line #{line}:#{pos}"
-    result.join(" ")
-  end
-
   # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
   def followed_by
     return "<eof>" if @scanner.eos?
@@ -35,27 +23,68 @@ module Puppet::Pops::Parser::LexerSupport
   end
 
   # Raises a Puppet::LexError with the given message
-  def lex_error_without_pos msg
-    raise Puppet::LexError.new(msg)
+  def lex_error_without_pos(issue, args = {})
+    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code)
   end
 
-  # Raises a Puppet::LexError with the given message
-  def lex_error(msg, pos=nil)
-    raise Puppet::LexError.new(positioned_message(msg, pos))
+  # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
+  def lex_error(issue, args = {}, pos=nil)
+    raise create_lex_error(issue, args, pos)
+  end
+
+  def filename
+    file = @locator.file
+    file.is_a?(String) && !file.empty? ? file : nil
+  end
+
+  def line(pos)
+    @locator.line_for_offset(pos || @scanner.pos)
+  end
+
+  def position(pos)
+    @locator.pos_on_line(pos || @scanner.pos)
+  end
+
+  def lex_warning(issue, args = {}, pos=nil)
+    Puppet::Util::Log.create({
+        :level => :warning,
+        :message => issue.format(args),
+        :issue_code => issue.issue_code,
+        :file => filename,
+        :line => line(pos),
+        :pos => position(pos),
+      })
+  end
+
+  # @param issue [Puppet::Pops::Issues::Issue] the issue
+  # @param args [Hash<Symbol,String>] Issue arguments
+  # @param pos [Integer]
+  # @return [Puppet::ParseErrorWithIssue] the created error
+  def create_lex_error(issue, args = {}, pos = nil)
+    Puppet::ParseErrorWithIssue.new(
+        issue.format(args),
+        filename,
+        line(pos),
+        position(pos),
+        nil,
+        issue.issue_code)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
   # An error is raised if the given value does not comply.
   #
-  def assert_numeric(value, length)
-    if value =~ /^0[xX].*$/
-      lex_error("Not a valid hex number #{value}", length)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+  def assert_numeric(value, pos)
+    if value =~ /^0[xX]/
+      lex_error(Puppet::Pops::Issues::INVALID_HEX_NUMBER, {:value => value}, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
-    elsif value =~ /^0[^.].*$/
-      lex_error("Not a valid octal number #{value}", length)   unless value =~ /^0[0-7]+$/
+    elsif value =~ /^0[^.]/
+      lex_error(Puppet::Pops::Issues::INVALID_OCTAL_NUMBER, {:value => value}, pos)   unless value =~ /^0[0-7]+$/
+
+    elsif value =~ /^\d+[eE.]/
+      lex_error(Puppet::Pops::Issues::INVALID_DECIMAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
 
     else
-      lex_error("Not a valid decimal number #{value}", length) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
+      lex_error(Puppet::Pops::Issues::ILLEGAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+$/
     end
   end
 

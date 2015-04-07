@@ -51,6 +51,12 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         expect(provider.members_insync?(['user1'], nil)).to be_falsey
       end
 
+      it "should return false for differing lists of members" do
+        expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
+        expect(provider.members_insync?(['user1'], [])).to be_falsey
+        expect(provider.members_insync?([], ['user2'])).to be_falsey
+      end
+
       it "should return true for same lists of members" do
         expect(provider.members_insync?(['user1', 'user2'], ['user1', 'user2'])).to be_truthy
       end
@@ -109,6 +115,31 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return true when current user(s) contains at least the should list, even unordered" do
           expect(provider.members_insync?(['user3','user1','user2'], ['user2','user1'])).to be_truthy
+        end
+      end
+
+      context "when auth_membership => true" do
+        before :each do
+          # this is also the default
+          resource[:auth_membership] = true
+        end
+
+        it "should return false when should user(s) are not the only items in the current" do
+          provider.members_insync?(['user1', 'user2'], ['user1']).should be_false
+        end
+      end
+
+      context "when auth_membership => false" do
+        before :each do
+          resource[:auth_membership] = false
+        end
+
+        it "should return true when current user(s) contains at least the should list" do
+          provider.members_insync?(['user1','user2'], ['user1']).should be_true
+          end
+
+        it "should return true when current user(s) contains at least the should list, even unordered" do
+          provider.members_insync?(['user3','user1','user2'], ['user2','user1']).should be_true
         end
       end
     end
@@ -185,6 +216,18 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         /Cannot create group if user 'testers' exists./ )
     end
 
+    it "should fail with an actionable message when trying to create an active directory group" do
+      resource[:name] = 'DOMAIN\testdomaingroup'
+      Puppet::Util::Windows::ADSI::User.expects(:exists?).with(resource[:name]).returns(false)
+      connection.expects(:Create)
+      connection.expects(:SetInfo).raises( WIN32OLERuntimeError.new("(in OLE method `SetInfo': )\n    OLE error code:8007089A in Active Directory\n      The specified username is invalid.\r\n\n    HRESULT error code:0x80020009\n      Exception occurred."))
+
+      expect{ provider.create }.to raise_error(
+                                       Puppet::Error,
+                                       /not able to create\/delete domain groups/
+                                   )
+    end
+
     it 'should commit a newly created group' do
       provider.group.expects( :commit )
 
@@ -205,6 +248,14 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     connection.expects(:Delete).with('group', 'testers')
 
     provider.delete
+  end
+
+  it 'should not run commit on a deleted group' do
+    connection.expects(:Delete).with('group', 'testers')
+    connection.expects(:SetInfo).never
+
+    provider.delete
+    provider.flush
   end
 
   it "should report the group's SID as gid" do

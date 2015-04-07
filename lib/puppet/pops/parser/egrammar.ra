@@ -354,7 +354,7 @@ unless_expression
       loc result, val[0], val[4]
     }
   | UNLESS expression LBRACE RBRACE unless_else {
-      result = Factory.UNLESS(val[1], nil, nil)
+      result = Factory.UNLESS(val[1], nil, val[4])
       loc result, val[0], val[4]
     }
 

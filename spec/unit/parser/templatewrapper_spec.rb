@@ -94,7 +94,7 @@ describe Puppet::Parser::TemplateWrapper do
     Puppet::Parser::Files.stubs(:find_template).
       with(name, anything()).
       returns(full_name)
-    File.stubs(:read).with(full_name).returns(contents)
+    Puppet::FileSystem.stubs(:read_preserve_line_endings).with(full_name).returns(contents)
 
     full_name
   end

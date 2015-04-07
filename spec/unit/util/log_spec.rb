@@ -93,7 +93,120 @@ describe Puppet::Util::Log do
 
       expect(logs.collect(&:message)).to include("Inner block", "Outer block")
     end
+
+    it 'includes backtrace for RuntimeError in log message when trace is enabled' do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e, :default, :trace => true)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to match('/log_spec.rb')
+      expect(log.backtrace).to be_nil
+    end
+
+    it 'excludes backtrace for RuntimeError in log message when trace is disabled' do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match('/log_spec.rb')
+      expect(log.backtrace).to be_nil
+    end
+
+    it "backtrace is Array in 'backtrace' and excluded from 'message' when logging ParseErrorWithIssue with trace enabled" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e, :default, :trace => true)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match('/log_spec.rb')
+      expect(log.backtrace).to be_a(Array)
+    end
+
+    it "backtrace is excluded when logging ParseErrorWithIssue with trace disabled" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match('/log_spec.rb')
+      expect(log.backtrace).to be_nil
+    end
+
+    it 'includes position details for ParseError in log message' do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise Puppet::ParseError.new('Oops', '/tmp/test.pp', 30, 15)
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to match(/ at \/tmp\/test\.pp:30:15/)
+      expect(log.message).to be(log.to_s)
+    end
+
+    it 'excludes position details for ParseErrorWithIssue from log message' do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+      end
+      expect(logs.size).to eq(1)
+      log = logs[0]
+      expect(log.message).to_not match(/ at \/tmp\/test\.pp:30:15/)
+      expect(log.to_s).to match(/ at \/tmp\/test\.pp:30:15/)
+      expect(log.issue_code).to eq(:SYNTAX_ERROR)
+      expect(log.file).to eq('/tmp/test.pp')
+      expect(log.line).to eq(30)
+      expect(log.pos).to eq(15)
+    end
   end
+
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new

@@ -8,6 +8,11 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   has_features :manages_homedir, :manages_passwords
 
+  def initialize(value={})
+    super(value)
+    @deleted = false
+  end
+
   def user
     @user ||= Puppet::Util::Windows::ADSI::User.new(@resource[:name])
   end
@@ -47,11 +52,13 @@ Puppet::Type.type(:user).provide :windows_adsi do
     if sid
       Puppet::Util::Windows::ADSI::UserProfile.delete(sid)
     end
+
+    @deleted = true
   end
 
   # Only flush if we created or modified a user, not deleted
   def flush
-    @user.commit if @user
+    @user.commit if @user && !@deleted
   end
 
   def comment
