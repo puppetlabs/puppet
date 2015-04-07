@@ -69,6 +69,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         provider.members_insync?(['user1', 'user2', 'user2'], ['user2', 'user1', 'user1']).should be_true
       end
 
+      it "should return true when current user(s) and should user(s) are empty lists" do
+        provider.members_insync?([], []).should be_true
+      end
+
       context "when auth_membership => true" do
         before :each do
           # this is also the default
@@ -77,6 +81,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return false when should user(s) are not the only items in the current" do
           provider.members_insync?(['user1', 'user2'], ['user1']).should be_false
+        end
+
+        it "should return false when current user(s) is not empty and should is an empty list" do
+          provider.members_insync?(['user1','user2'], []).should be_false
         end
       end
 
@@ -87,7 +95,11 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return true when current user(s) contains at least the should list" do
           provider.members_insync?(['user1','user2'], ['user1']).should be_true
-          end
+        end
+
+        it "should return true when current user(s) is not empty and should is an empty list" do
+          provider.members_insync?(['user1','user2'], []).should be_true
+        end
 
         it "should return true when current user(s) contains at least the should list, even unordered" do
           provider.members_insync?(['user3','user1','user2'], ['user2','user1']).should be_true
