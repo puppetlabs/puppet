@@ -127,4 +127,8 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     @property_hash[:latest]
   end
 
+  def origin
+    @property_hash[:origin]
+  end
+
 end

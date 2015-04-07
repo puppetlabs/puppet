@@ -6,6 +6,7 @@ provider_class = Puppet::Type.type(:package).provider(:pkgng)
 
 describe provider_class do
   let(:name) { 'bash' }
+  let(:installed_name) { 'zsh' }
   let(:pkgng) { 'pkgng' }
 
   let(:resource) do
@@ -15,7 +16,7 @@ describe provider_class do
 
   let(:installed_resource) do
     # When zsh is present
-    Puppet::Type.type(:package).new(:name => 'zsh', :provider => pkgng)
+    Puppet::Type.type(:package).new(:name => installed_name, :provider => pkgng)
   end
 
   let(:latest_resource) do
@@ -129,20 +130,10 @@ describe provider_class do
   end
 
   describe "latest" do
-    # Test commented out because it's bogus. It should read:
-    #
-    #   provider.latest.should_not be_nil
-    #
-    # or with newer rspec
-    #
-    #   expect(provider.latest).not_to be_nil
-    #
-    # but neither of them works because provider.latest returns nil. This
-    # is logged as issue PUP-4382
-    #
-    # it("should retrieve the correct version of the latest package") {
-    #  provider.latest.should_not nil
-    #}
+    it "should retrieve the correct version of the latest package" do
+      provider_class.prefetch( { installed_name => installed_resource })
+      expect(installed_resource.provider.latest).not_to be_nil
+    end
 
     it "should set latest to newer package version when available" do
       instances = provider_class.instances
