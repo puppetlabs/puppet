@@ -67,11 +67,12 @@ module Puppet::Pops::Parser::SlurpSupport
     # Process unicode escapes first as they require getting 4 hex digits
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
-      str.gsub!(/\\u([\da-fA-F]{4})/m) {
-        [$1.hex].pack("U")
+      str.gsub!(/\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) {
+        [($1 || $2).hex].pack("U")
       }
     end
 
+    begin
     str.gsub!(/\\([^\r\n]|(?:\r?\n))/m) {
       ch = $1
       if escapes.include? ch
@@ -92,6 +93,16 @@ module Puppet::Pops::Parser::SlurpSupport
         "\\#{ch}"
       end
     }
+    rescue ArgumentError => e
+      # A invalid byte sequence may be the result of faulty input as well, but that could not possibly
+      # have reached this far... Unfortunately there is no more specific error and a match on message is
+      # required to differentiate from other internal problems.
+      if e.message =~ /invalid byte sequence/
+        lex_error(Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE)
+      else
+        raise e
+      end
+    end
     str
   end
 end

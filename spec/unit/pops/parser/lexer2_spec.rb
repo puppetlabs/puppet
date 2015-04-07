@@ -433,6 +433,18 @@ describe 'Lexer2' do
         tokens_scanned_from(code).should match_tokens2([:STRING, "x\u2713y"])
       end
     end
+    it 'should support unicode characters in long form' do
+      code = <<-CODE
+      "x\\u{1f452}y"
+      CODE
+      if Puppet::Pops::Parser::Locator::RUBYVER < Puppet::Pops::Parser::Locator::RUBY_1_9_3
+        # Ruby 1.8.7 reports the multibyte char as several octal characters
+        tokens_scanned_from(code).should match_tokens2([:STRING, "x\360\237\221\222y"])
+      else
+        # >= Ruby 1.9.3 reports \u
+        tokens_scanned_from(code).should match_tokens2([:STRING, "x\u{1f452}y"])
+      end
+    end
 
     it 'should not select LISTSTART token when preceded by multibyte chars' do
       # This test is sensitive to the number of multibyte characters and position of the expressions
