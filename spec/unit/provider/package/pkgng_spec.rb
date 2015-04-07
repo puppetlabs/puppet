@@ -49,24 +49,24 @@ describe provider_class do
     it "should return the empty set if no packages are listed" do
       provider_class.stubs(:get_query).returns('')
       provider_class.stubs(:get_version_list).returns('')
-      provider_class.instances.should be_empty
+      expect(provider_class.instances).to be_empty
     end
 
     it "should return all packages when invoked" do
-      provider_class.instances.map(&:name).sort.should ==
-        %w{ca_root_nss curl nmap pkg gnupg mcollective zsh tac_plus}.sort
+      expect(provider_class.instances.map(&:name).sort).to eq(
+        %w{ca_root_nss curl nmap pkg gnupg mcollective zsh tac_plus}.sort)
     end
 
     it "should set latest to current version when no upgrade available" do
       nmap = provider_class.instances.find {|i| i.properties[:origin] == 'security/nmap' }
 
-      nmap.properties[:version].should == nmap.properties[:latest]
+      expect(nmap.properties[:version]).to eq(nmap.properties[:latest])
     end
 
     describe "version" do
       it "should retrieve the correct version of the current package" do
         zsh = provider_class.instances.find {|i| i.properties[:origin] == 'shells/zsh' }
-        zsh.properties[:version].should == '5.0.2_1'
+        expect( zsh.properties[:version]).to eq('5.0.2_1')
       end
     end
   end
@@ -129,14 +129,25 @@ describe provider_class do
   end
 
   describe "latest" do
-    it "should retrieve the correct version of the latest package" do
-      provider.latest.should_not nil
-    end
+    # Test commented out because it's bogus. It should read:
+    #
+    #   provider.latest.should_not be_nil
+    #
+    # or with newer rspec
+    #
+    #   expect(provider.latest).not_to be_nil
+    #
+    # but neither of them works because provider.latest returns nil. This
+    # is logged as issue PUP-4382
+    #
+    # it("should retrieve the correct version of the latest package") {
+    #  provider.latest.should_not nil
+    #}
 
     it "should set latest to newer package version when available" do
       instances = provider_class.instances
       curl = instances.find {|i| i.properties[:origin] == 'ftp/curl' }
-      curl.properties[:latest].should == "7.33.0_2"
+      expect(curl.properties[:latest]).to eq('7.33.0_2')
     end
 
     it "should call update to upgrade the version" do
@@ -155,12 +166,12 @@ describe provider_class do
   describe "get_latest_version" do
     it "should rereturn nil when the current package is the latest" do
       nmap_latest_version = provider_class.get_latest_version('security/nmap')
-      nmap_latest_version.should be_nil
+      expect(nmap_latest_version).to be_nil
     end
 
     it "should match the package name exactly" do
       bash_comp_latest_version = provider_class.get_latest_version('shells/bash-completion')
-      bash_comp_latest_version.should == "2.1_3"
+      expect(bash_comp_latest_version).to eq('2.1_3')
     end
   end
 
