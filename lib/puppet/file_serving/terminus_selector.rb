@@ -15,6 +15,8 @@ module Puppet::FileServing::TerminusSelector
     case request.protocol
     when "file"
       :file
+    when "s3"
+      :s3
     when "puppet"
       if request.server
         :rest

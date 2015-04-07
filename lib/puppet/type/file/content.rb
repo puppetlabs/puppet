@@ -185,6 +185,8 @@ module Puppet
         yield source_or_content
       elsif content_is_really_a_checksum? && source_or_content.nil?
         yield read_file_from_filebucket
+      elsif source_or_content.respond_to?(:metadata) && source_or_content.metadata.respond_to?(:source) && source_or_content.metadata.source =~ /^s3?:/
+        yield source_or_content.content.read { |chunk| yield chunk }
       elsif source_or_content.nil?
         yield ''
       elsif Puppet[:default_file_terminus] == :file_server
