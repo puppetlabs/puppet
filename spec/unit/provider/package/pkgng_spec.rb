@@ -6,6 +6,7 @@ provider_class = Puppet::Type.type(:package).provider(:pkgng)
 
 describe provider_class do
   let(:name) { 'bash' }
+  let(:installed_name) { 'zsh' }
   let(:pkgng) { 'pkgng' }
 
   let(:resource) do
@@ -15,7 +16,7 @@ describe provider_class do
 
   let(:installed_resource) do
     # When zsh is present
-    Puppet::Type.type(:package).new(:name => 'zsh', :provider => pkgng)
+    Puppet::Type.type(:package).new(:name => installed_name, :provider => pkgng)
   end
 
   let(:latest_resource) do
@@ -24,6 +25,7 @@ describe provider_class do
   end
 
   let (:provider) { resource.provider }
+  let (:installed_provider) { installed_resource.provider }
 
   def run_in_catalog(*resources)
     catalog = Puppet::Resource::Catalog.new
@@ -110,16 +112,10 @@ describe provider_class do
   end
 
   context "#query" do
-    # This is being commented out as I am not sure how to test the code when
-    # using prefetching.  I somehow need to pass a fake resources object into
-    # #prefetch so that it can build the @property_hash, but I am not sure how.
-    #
-    #it "should return the installed version if present" do
-    #  fixture = File.read('spec/fixtures/pkg.query')
-    #  provider_class.stub(:get_resource_info) { fixture }
-    #  resource[:name] = 'zsh'
-    #  expect(provider.query).to eq({:version=>'5.0.2'})
-    #end
+    it "should return the installed version if present" do
+      provider_class.prefetch({installed_name => installed_resource})
+      expect(installed_provider.query).to eq({:version=>'5.0.2_1'})
+    end
 
     it "should return nil if not present" do
       fixture = File.read(my_fixture('pkg.query_absent'))
@@ -129,20 +125,10 @@ describe provider_class do
   end
 
   describe "latest" do
-    # Test commented out because it's bogus. It should read:
-    #
-    #   provider.latest.should_not be_nil
-    #
-    # or with newer rspec
-    #
-    #   expect(provider.latest).not_to be_nil
-    #
-    # but neither of them works because provider.latest returns nil. This
-    # is logged as issue PUP-4382
-    #
-    # it("should retrieve the correct version of the latest package") {
-    #  provider.latest.should_not nil
-    #}
+    it "should retrieve the correct version of the latest package" do
+      provider_class.prefetch( { installed_name => installed_resource })
+      expect(installed_provider.latest).not_to be_nil
+    end
 
     it "should set latest to newer package version when available" do
       instances = provider_class.instances
