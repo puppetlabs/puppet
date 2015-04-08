@@ -193,9 +193,15 @@ module Puppet::Pops::Parser::InterpolationSupport
         token_name = token[0]
         ctx[:after] = token_name
         if token_name == :RBRACE && ctx[:brace_count] == brace_count
-          if queue.size - queue_size == 1
+          qlength = queue.size - queue_size
+          if qlength == 1
             # Single token is subject to replacement
             queue[-1] = transform_to_variable(queue[-1])
+          elsif qlength > 1 && [:DOT, :LBRACK].include?(queue[queue_size + 1][0])
+            # A first word, number of name token followed by '[' or '.' is subject to replacement
+            # But not for other operators such as ?, +, - etc. where user must use a $ before the name
+            # to get a variable
+            queue[queue_size] = transform_to_variable(queue[queue_size])
           end
           return
         end
