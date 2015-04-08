@@ -111,7 +111,7 @@ describe "validating 4x" do
   end
 
   context 'for reserved words' do
-    ['function', 'private', 'type', 'attr'].each do |word|
+    ['private', 'type', 'attr'].each do |word|
       it "produces an error for the word '#{word}'" do
         source = "$a = #{word}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_WORD)
