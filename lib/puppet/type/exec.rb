@@ -416,6 +416,12 @@ module Puppet
         which is to say that it must be fully qualified if the path is not set.
         It also uses the same provider as the main command, so any behavior
         that differs by provider will match.
+
+        Also note that unless can take an array as its value, e.g.:
+
+            unless => ["test -f /tmp/file1", "test -f /tmp/file2"]
+
+        This will only run the exec if _all_ conditions in the array return false.
       EOT
 
       validate do |cmds|
