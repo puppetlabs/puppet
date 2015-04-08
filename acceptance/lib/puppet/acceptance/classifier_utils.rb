@@ -17,6 +17,24 @@ module Puppet
         @classifier_utils_tmpdirs ||= []
       end
 
+      # PE creates a "Production environment" group during installation which
+      # all nodes are a member of by default.  This method just looks up this
+      # group and returns its uuid so that other methods may reference it.
+      def get_production_environment_group_uuid
+        step "Get classifier groups so we can locate the 'Production environment' group"
+        response = classifier_handle.get("/v1/groups")
+        assert_equal(200, response.code, "Unable to get classifer groups: #{response.body}")
+
+        groups_json = response.body
+        groups = JSON.parse(groups_json)
+
+        if production_environment = groups.find { |g| g['name'] == 'Production environment' }
+          production_environment['id']
+        else
+          nil
+        end
+      end
+
       # Create a Classifier Group which by default will apply to all of the passed
       # nodes.  The Group will merge in the passed group_hash which will be converted
       # into the json body for a Classifier PUT /v1/groups/:id request.
@@ -47,9 +65,13 @@ module Puppet
           r << ["~", "name", name]
           r
         end
+        # In order to override the environment for test nodes, we need the
+        # groups we create to be a child of this "Production environment" group,
+        # otherwise we get a classification error from the conflicting groups.
+        parent = get_production_environment_group_uuid || Puppet::Acceptance::ClassifierUtils::DEFAULT_GROUP_ID 
         body = {
           "description" => "A classification group for the following acceptance test nodes: (#{hostnames.join(", ")})",
-          "parent" => "#{Puppet::Acceptance::ClassifierUtils::DEFAULT_GROUP_ID}",
+          "parent" => parent,
           "rule" => rule,
           "classes" => {}
         }.merge group_hash
