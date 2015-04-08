@@ -228,21 +228,43 @@ class Puppet::Transaction
 
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
-    s = resource_status(resource) and s.dependency_failed?
+    # When we introduced the :whit into the graph, to reduce the combinatorial
+    # explosion of edges, we also ended up reporting failures for containers
+    # like class and stage.  This is undesirable; while just skipping the
+    # output isn't perfect, it is RC-safe. --daniel 2011-06-07
+    suppress_report = (resource.class == Puppet::Type.type(:whit))
+
+    s = resource_status(resource)
+    if s && s.dependency_failed?
+      # See above. --daniel 2011-06-06
+      unless suppress_report then
+        s.failed_dependencies.each do |dep|
+          resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+        end
+      end
+    end
+
+    s && s.dependency_failed?
   end
 
   # We need to know if a resource has any failed dependencies before
-  # we try to process it. We keep track of this by keeping a
-  # `dependency_failed` flag on each resource and incrementally
-  # computing it as the OR of the flag of each dependency. We have to
-  # do this as-we-go instead of up-front at failure time because the
-  # graph may be mutated as we walk it.
+  # we try to process it. We keep track of this by keeping a list on
+  # each resource of the failed dependencies, and incrementally
+  # computing it as the union of the failed dependencies of each
+  # first-order dependency. We have to do this as-we-go instead of
+  # up-front at failure time because the graph may be mutated as we
+  # walk it.
   def propagate_failure(resource)
+    failed = Set.new
     relationship_graph.direct_dependencies_of(resource).each do |dep|
-      if (s = resource_status(dep)) and (s.failed? || s.dependency_failed?)
-        resource_status(resource).dependency_failed = true
+      if (s = resource_status(dep))
+        failed.merge(s.failed_dependencies) if s.dependency_failed?
+        if s.failed?
+          failed.add(dep)
+        end
       end
     end
+    resource_status(resource).failed_dependencies = failed.to_a
   end
 
   # A general method for recursively generating new resources from a

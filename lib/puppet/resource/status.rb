@@ -83,13 +83,13 @@ module Puppet
       #     while evaluating `@real_resource`.
       attr_reader :events
 
-      # @!attribute [rw] dependency_failed
-      #   @return [Boolean] A cache of whether some dependency of this
-      #     resource is known to have failed.
-      attr_accessor :dependency_failed
+      # @!attribute [rw] failed_dependencies
+      #   @return [Array<Puppet::Resource>] A cache of all
+      #   dependencies of this resource that failed to apply.
+      attr_accessor :failed_dependencies
 
       def dependency_failed?
-        dependency_failed
+        failed_dependencies && !failed_dependencies.empty?
       end
 
       # A list of instance variables that should be serialized with this object
