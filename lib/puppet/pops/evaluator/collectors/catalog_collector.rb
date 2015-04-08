@@ -22,4 +22,8 @@ class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Eval
       resource.type == t && (q ?  q.call(resource) : true)
     end
   end
+
+  def to_s
+    "Catalog-Collector[#{@type.to_s}]"
+  end
 end

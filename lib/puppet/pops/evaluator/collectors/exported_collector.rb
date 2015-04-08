@@ -63,4 +63,8 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
 
     resources
   end
+
+  def to_s
+    "Exported-Collector[#{@type.to_s}]"
+  end
 end
