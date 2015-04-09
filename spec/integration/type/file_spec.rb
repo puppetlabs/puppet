@@ -1528,4 +1528,134 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     raise "Got #{status_failures.length} failure(s) while applying: #{status_fail_msg}"
   end
+
+  describe "copying a file that is a link to a file", :if => Puppet.features.manages_symlinks? do
+    let(:target) { tmpfile('target') }
+    let(:link) { tmpfile('link') }
+    let(:copy) { tmpfile('copy') }
+    it "should copy the target of the link if :links => follow" do
+      catalog.add_resource described_class.new(
+        :name => target,
+        :ensure => "present",
+        :content => "Jenny I got your number / I need to make you mine")
+      catalog.add_resource described_class.new(
+        :name => link,
+        :ensure => "link",
+        :target => target)
+      catalog.add_resource described_class.new(
+        :name => copy,
+        :ensure => "present",
+        :source => link,
+        :links => "follow")
+      catalog.apply
+      expect(Puppet::FileSystem.file?(copy))
+      expect(File.read(target)).to eq(File.read(copy))
+    end
+
+    it "should copy the link itself if :links => manage" do
+      catalog.add_resource described_class.new(
+        :name => target,
+        :ensure => "present",
+        :content => "Jenny I got your number / I need to make you mine")
+      catalog.add_resource described_class.new(
+        :name => link,
+        :ensure => "link",
+        :target => target)
+      # FIXME: do I need to clean up from the previous test?
+      catalog.add_resource described_class.new(
+        :name => copy,
+        :ensure => "present",
+        :source => link,
+        :links => "manage")
+      catalog.apply
+      expect(Puppet::FileSystem.symlink?(copy))
+      expect(File.read(link)).to eq(File.read(copy))
+    end
+  end
+
+  describe "copying a file that is a link to a directory", :if => Puppet.features.manages_symlinks? do
+    let(:target) { tmpdir('target') }
+    let(:link) { tmpfile('link') }
+    let(:copy) { tmpfile('copy') }
+    context "when the recurse attribute is false" do
+      it "should copy the top-level directory if :links => follow" do
+        catalog.add_resource described_class.new(
+          :name => target,
+          :ensure => "directory")
+        catalog.add_resource described_class.new(
+          :name => link,
+          :ensure => "link",
+          :target => target)
+        catalog.add_resource described_class.new(
+          :name => copy,
+          :ensure => "present",
+          :source => link,
+          :recurse => false,
+          :links => "follow")
+        catalog.apply
+        expect(Puppet::FileSystem.directory?(copy))
+        expect(File).to be_directory(copy)
+      end
+    
+      it "should copy the link itself if :links => manage" do
+        catalog.add_resource described_class.new(
+          :name => target,
+          :ensure => "directory")
+        catalog.add_resource described_class.new(
+          :name => link,
+          :ensure => "link",
+          :target => target)
+        catalog.add_resource described_class.new(
+          :name => copy,
+          :ensure => "present",
+          :source => link,
+          :recurse => false,
+          :links => "manage")
+        catalog.apply
+        expect(Puppet::FileSystem.symlink?(copy))
+        expect(Dir.entries(link)).to eq(Dir.entries(copy))
+        expect(File).to be_symlink(copy)
+      end
+    end
+  
+    context "and the recurse attribute is true" do
+      it "should recursively copy the directory if :links => follow" do
+        catalog.add_resource described_class.new(
+          :name => target,
+          :ensure => "directory")
+        catalog.add_resource described_class.new(
+          :name => link,
+          :ensure => "link",
+          :target => target)
+        catalog.add_resource described_class.new(
+          :name => copy,
+          :ensure => "present",
+          :source => link,
+          :recurse => true,
+          :links => "follow")
+        catalog.apply
+        expect(Puppet::FileSystem.directory?(copy))
+        expect(Dir.entries(target)).to eq(Dir.entries(copy))
+      end
+
+      it "should copy the link itself if :links => manage" do
+        catalog.add_resource described_class.new(
+          :name => target,
+          :ensure => "directory")
+        catalog.add_resource described_class.new(
+          :name => link,
+          :ensure => "link",
+          :target => target)
+        catalog.add_resource described_class.new(
+          :name => copy,
+          :ensure => "present",
+          :source => link,
+          :recurse => true,
+          :links => "manage")
+        catalog.apply
+        expect(Puppet::FileSystem.symlink?(copy))
+        expect(Dir.entries(link)).to eq(Dir.entries(copy))
+      end
+    end
+  end
 end
