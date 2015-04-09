@@ -1,5 +1,7 @@
 test_name "(PUP-2455) Service provider should start Solaris init service in its own SMF contract"
 
+skip_test unless agents.any? {|agent| agent['platform'] =~ /solaris/ }
+
 sleepy_daemon_script = <<SCRIPT
 #!/usr/bin/env ruby
 while true
@@ -87,7 +89,7 @@ step "Start master"
     fixture_service = 'sleepy_daemon'
     fixture_service_stop = '/etc/init.d/sleepy_daemon stop'
 
-      skip_test unless agent['platform'] =~ /solaris/
+      next unless agent['platform'] =~ /solaris/
 
       step "Setup fixture service on #{agent}"
         sleepy_daemon_path = "/tmp/sleepy_daemon"
