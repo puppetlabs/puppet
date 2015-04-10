@@ -19,6 +19,11 @@ describe provider_class do
     provider
   end
 
+  it "should be the default provider on :osfamily => Debian" do
+    Facter.expects(:value).with(:osfamily).returns("Debian")
+    expect(described_class.default?).to be_truthy
+  end
+
   it "should be versionable" do
     expect(provider_class).to be_versionable
   end
