@@ -117,7 +117,7 @@ Puppet::Type.type(:package).provide :pip,
       self.class.commands :pip => pathname
       pip *args
     else
-      raise e, 'Could not locate the pip command.', e.backtrace
+      raise e, "Could not locate the #{self.class.cmd} command.", e.backtrace
     end
   end
 

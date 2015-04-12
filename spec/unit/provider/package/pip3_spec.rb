@@ -1,8 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:pip)
-osfamilies = { ['RedHat', '6'] => 'pip-python', ['RedHat', '7'] => 'pip', ['Not RedHat', nil] => 'pip' }
+provider_class = Puppet::Type.type(:package).provider(:pip3)
+osfamilies = { ['All', nil] => 'pip3' }
 
 describe provider_class do
 
@@ -21,7 +21,7 @@ describe provider_class do
       expect(provider_class.parse("real_package==1.2.5")).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
-        :provider => :pip,
+        :provider => :pip3,
       })
     end
 
@@ -32,21 +32,10 @@ describe provider_class do
   end
 
   describe "cmd" do
-    it "should return pip-python on RedHat < 7 systems" do
-      Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("6")
-      expect(provider_class.cmd).to eq('pip-python')
-    end
 
-    it "should return pip on RedHat >= 7 systems" do
-      Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-      expect(provider_class.cmd).to eq('pip')
-    end
-
-    it "should return pip by default" do
+    it "should return pip3 by default" do
       Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
-      expect(provider_class.cmd).to eq('pip')
+      expect(provider_class.cmd).to eq('pip3')
     end
 
   end
@@ -57,10 +46,10 @@ describe provider_class do
       it "should return an array on #{osfamily} when #{pip_cmd} is present" do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
-        provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
+        provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/pip3")
         p = stub("process")
         p.expects(:collect).yields("real_package==1.2.5")
-        provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+        provider_class.expects(:execpipe).with("/fake/bin/pip3 freeze").yields(p)
         provider_class.instances
       end
 
@@ -80,17 +69,17 @@ describe provider_class do
       @resource[:name] = "real_package"
     end
 
-    it "should return a hash when pip and the package are present" do
+    it "should return a hash when pip3 and the package are present" do
       provider_class.expects(:instances).returns [provider_class.new({
         :ensure   => "1.2.5",
         :name     => "real_package",
-        :provider => :pip,
+        :provider => :pip3,
       })]
 
       expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
-        :provider => :pip,
+        :provider => :pip3,
       })
     end
 
@@ -105,13 +94,13 @@ describe provider_class do
       provider_class.expects(:instances).returns [provider_class.new({
         :ensure   => "1.2.5",
         :name     => "real_package",
-        :provider => :pip,
+        :provider => :pip3,
       })]
 
       expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
-        :provider => :pip,
+        :provider => :pip3,
       })
     end
 
@@ -230,7 +219,7 @@ describe provider_class do
       Puppet::Type::Package::ProviderPip.instance_variable_set(:@confine_collection, nil)
     end
 
-    it "should succeed if pip is present" do
+    it "should succeed if pip3 is present" do
       @provider.stubs(:pip).returns(nil)
       @provider.method(:lazy_pip).call "freeze"
     end
@@ -240,7 +229,7 @@ describe provider_class do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
         @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
-        @provider.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
+        @provider.expects(:which).with(pip_cmd).returns("/fake/bin/pip3")
         @provider.method(:lazy_pip).call "freeze"
       end
 
