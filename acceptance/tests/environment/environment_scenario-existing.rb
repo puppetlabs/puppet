@@ -56,4 +56,4 @@ expectations = {
   },
 }
 
-review_results(results, expectations)
+assert_review(review_results(results, expectations))
