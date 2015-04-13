@@ -15,7 +15,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   context "#octet_string_to_sid_object" do
     it "should properly convert an array of bytes for the local Administrator SID" do
       host = '.'
-      username = 'Administrator'
+      username = ENV['USERNAME']
       admin = WIN32OLE.connect("WinNT://#{host}/#{username},user")
       converted = subject.octet_string_to_sid_object(admin.objectSID)
 
