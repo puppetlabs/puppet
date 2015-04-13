@@ -30,8 +30,10 @@ module Puppet::Pops::Loader::ModuleLoaders
     Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        nil,
-                                                       puppet_lib,
-                                                       'puppet_system')
+                                                       puppet_lib,   # may or may not have a 'lib' above 'puppet'
+                                                       'puppet_system',
+                                                        [:func_4x]   # only load ruby functions from "puppet"
+                                                       )
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
@@ -39,7 +41,8 @@ module Puppet::Pops::Loader::ModuleLoaders
                                                        loaders,
                                                        module_name,
                                                        File.join(module_path, 'lib'),
-                                                       module_name)
+                                                       module_name
+                                                       )
   end
 
   class AbstractPathBasedModuleLoader < Puppet::Pops::Loader::BaseLoader
@@ -66,13 +69,21 @@ module Puppet::Pops::Loader::ModuleLoaders
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that is used for human identification (useful when module_name is nil)
     #
-    def initialize(parent_loader, loaders, module_name, path, loader_name)
+    def initialize(parent_loader, loaders, module_name, path, loader_name, loadables)
       super parent_loader, loader_name
 
       @module_name = module_name
       @path = path
       @smart_paths = Puppet::Pops::Loader::LoaderPaths::SmartPaths.new(self)
       @loaders = loaders
+      @loadables = loadables
+      unless (loadables - LOADABLE_KINDS).empty?
+        raise ArgumentError, "given loadables are not of supported loadable kind"
+      end
+    end
+
+    def loadables
+      @loadables
     end
 
     # Finds typed/named entity in this module
@@ -195,7 +206,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that identifies the loader
     #
-    def initialize(parent_loader, loaders, module_name, path, loader_name)
+    def initialize(parent_loader, loaders, module_name, path, loader_name, loadables = LOADABLE_KINDS)
       super
       @path_index = Set.new()
     end
@@ -246,9 +257,9 @@ module Puppet::Pops::Loader::ModuleLoaders
     # * gem_ref - [URI, String] gem reference to the root of the module (URI, gem://gemname/optional/path/in/gem), or
     #     just the gem's name as a String.
     #
-    def initialize(parent_loader, loaders, module_name, gem_ref, loader_name)
+    def initialize(parent_loader, loaders, module_name, gem_ref, loader_name, loadables = LOADABLE_KINDS)
       @gem_ref = gem_ref
-      super parent_loader, loaders, module_name, gem_dir(gem_ref), loader_name
+      super parent_loader, loaders, module_name, gem_dir(gem_ref), loader_name, loadables
     end
 
     def to_s()

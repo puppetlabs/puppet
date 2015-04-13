@@ -49,6 +49,10 @@ class Puppet::Pops::Functions::Dispatcher
     @dispatchers << Puppet::Pops::Functions::Dispatch.new(type, method_name, param_names, block_name, injections, weaving, last_captures)
   end
 
+  def add(a_dispatch)
+    @dispatchers << a_dispatch
+  end
+
   # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
   #
   # @api private

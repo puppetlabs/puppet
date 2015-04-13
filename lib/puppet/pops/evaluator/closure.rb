@@ -39,8 +39,14 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     if tc.callable?(type, final_args)
       @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
     else
-      raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+      raise ArgumentError, "#{closure_name} called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string(closure_name, final_args, [self])}"
     end
+  end
+
+  # @api private
+  def invoke(instance, calling_scope, args, &block)
+    # instance.send(@method_name, *weave(calling_scope, args), &block)
+    call(*args)
   end
 
   # Call closure with argument assignment by name
@@ -73,7 +79,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       tc = Puppet::Pops::Types::TypeCalculator
       final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
       if !tc.callable?(type, final_args)
-        raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+        raise ArgumentError, "#{closure_name} called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string(closure_name, final_args, [self])}"
       end
     else
       scope_hash = args_hash
@@ -113,6 +119,24 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   def block_name
     # TODO: Lambda's does not support blocks yet. This is a placeholder
     'unsupported_block'
+  end
+
+  CLOSURE_NAME = 'lambda'.freeze
+
+  # @api public
+  def closure_name()
+    CLOSURE_NAME
+  end
+
+  class Named < Puppet::Pops::Evaluator::Closure
+    def initialize(name, evaluator, model, scope)
+      @name = name
+      super(evaluator, model, scope)
+    end
+
+    def closure_name
+      @name
+    end
   end
 
   private

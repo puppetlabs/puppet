@@ -21,6 +21,9 @@
 #
 class Puppet::Pops::Loader::Loader
 
+  # Describes the kinds of things that loaders can load
+  LOADABLE_KINDS = [:func_4x, :func_4xpp].freeze
+
   # Produces the value associated with the given name if already loaded, or available for loading
   # by this loader, one of its parents, or other loaders visible to this loader.
   # This is the method an external party should use to "get" the named element.
@@ -117,6 +120,14 @@ class Puppet::Pops::Loader::Loader
   #
   def get_entry(typed_name)
     raise NotImplementedError.new
+  end
+
+  # A loader is by default a loader for all kinds of loadables. An implementation may override
+  # if it cannot load all kinds.
+  #
+  # @api private
+  def loadables
+    LOADABLE_KINDS
   end
 
   # An entry for one entity loaded by the loader.

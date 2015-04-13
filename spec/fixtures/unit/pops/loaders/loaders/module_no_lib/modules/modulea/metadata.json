@@ -1,0 +1,19 @@
+{
+  "name": "test-modulea",
+  "author": "test",
+  "description": "",
+  "license": "",
+  "project_page": "",
+  "source": "",
+  "summary": "",
+  "version": "1.0.0",
+  "checksums": {
+    "Modulefile": "55ef13d250cf6c477561becd8f2edcbe",
+    "functions/func_a.pp": "4a1f48920cd37c487dbf7468a5e78364",
+    "functions/modulea/func_a.pp": "296a3330c602b919ae063d6d6fde2460",
+    "lib/puppet/functions/modulea/rb_func_a.rb": "d5b3b83f77b742292008cd06361d6673",
+    "lib/puppet/functions/rb_func_a.rb": "a255470197127a6e512c9ab9dbd914c1",
+    "manifests/init.pp": "e50d8b91b632fb8357f021e6e0b6e043"
+  },
+  "dependencies": []
+}
