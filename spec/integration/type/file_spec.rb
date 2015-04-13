@@ -416,7 +416,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             context "overwriting a file" do
               before :each do
                 FileUtils.touch(path)
-                File.chmod(0644, path)
+                set_mode(0644, path)
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               end
 
@@ -1063,7 +1063,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
         it "should overwrite contents" do
           catalog.apply
-          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+          expect(Puppet::FileSystem.binread(path)).to eq(CHECKSUM_PLAINTEXT)
         end
 
         it "should log that content changed" do
@@ -1081,7 +1081,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should create a file with content" do
           catalog.add_resource described_class.send(:new, @options)
           catalog.apply
-          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+          expect(Puppet::FileSystem.binread(path)).to eq(CHECKSUM_PLAINTEXT)
 
           second_catalog = Puppet::Resource::Catalog.new
           second_catalog.add_resource described_class.send(:new, @options)
@@ -1107,7 +1107,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should create a file with content" do
           catalog.add_resource described_class.send(:new, @options)
           catalog.apply
-          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+          expect(Puppet::FileSystem.binread(path)).to eq(CHECKSUM_PLAINTEXT)
 
           second_catalog = Puppet::Resource::Catalog.new
           second_catalog.add_resource described_class.send(:new, @options)
@@ -1137,7 +1137,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should create files with content" do
           catalog.add_resource described_class.send(:new, @options)
           catalog.apply
-          expect(File.read(path)).to eq(CHECKSUM_PLAINTEXT)
+          expect(Puppet::FileSystem.binread(path)).to eq(CHECKSUM_PLAINTEXT)
 
           second_catalog = Puppet::Resource::Catalog.new
           second_catalog.add_resource described_class.send(:new, @options)
