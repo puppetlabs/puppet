@@ -51,12 +51,6 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         expect(provider.members_insync?(['user1'], nil)).to be_falsey
       end
 
-      it "should return false for differing lists of members" do
-        expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
-        expect(provider.members_insync?(['user1'], [])).to be_falsey
-        expect(provider.members_insync?([], ['user2'])).to be_falsey
-      end
-
       it "should return true for same lists of members" do
         expect(provider.members_insync?(['user1', 'user2'], ['user1', 'user2'])).to be_truthy
       end
@@ -115,31 +109,6 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return true when current user(s) contains at least the should list, even unordered" do
           expect(provider.members_insync?(['user3','user1','user2'], ['user2','user1'])).to be_truthy
-        end
-      end
-
-      context "when auth_membership => true" do
-        before :each do
-          # this is also the default
-          resource[:auth_membership] = true
-        end
-
-        it "should return false when should user(s) are not the only items in the current" do
-          provider.members_insync?(['user1', 'user2'], ['user1']).should be_false
-        end
-      end
-
-      context "when auth_membership => false" do
-        before :each do
-          resource[:auth_membership] = false
-        end
-
-        it "should return true when current user(s) contains at least the should list" do
-          provider.members_insync?(['user1','user2'], ['user1']).should be_true
-          end
-
-        it "should return true when current user(s) contains at least the should list, even unordered" do
-          provider.members_insync?(['user3','user1','user2'], ['user2','user1']).should be_true
         end
       end
     end
