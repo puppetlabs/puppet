@@ -1,5 +1,5 @@
 require 'puppet'
-require 'facter/util/plist'
+require 'plist'
 require 'base64'
 
 Puppet::Type.type(:user).provide :directoryservice do
@@ -175,7 +175,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   # The plist embedded in the ShadowHashData key is a binary plist. The
-  # facter/util/plist library doesn't read binary plists, so we need to
+  # plist library doesn't read binary plists, so we need to
   # extract the binary plist, convert it to XML, and return it.
   def self.get_embedded_binary_plist(shadow_hash_data)
     embedded_binary_plist = Array(shadow_hash_data['dsAttrTypeNative:ShadowHashData'][0].delete(' ')).pack('H*')

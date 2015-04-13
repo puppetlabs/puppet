@@ -6,7 +6,7 @@
 require 'spec_helper'
 
 require 'puppet'
-require 'facter/util/plist'
+require 'plist'
 
 provider_class = Puppet::Type.type(:macauthorization).provider(:macauthorization)
 

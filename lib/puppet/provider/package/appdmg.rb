@@ -50,7 +50,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
 
   def self.installpkgdmg(source, name)
     require 'open-uri'
-    require 'facter/util/plist'
+    require 'plist'
     cached_source = source
     tmpdir = Dir.mktmpdir
     begin

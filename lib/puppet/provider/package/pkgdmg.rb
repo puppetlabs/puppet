@@ -9,7 +9,7 @@
 # in /var/db/.puppet_pkgdmg_installed_<name>
 
 require 'puppet/provider/package'
-require 'facter/util/plist'
+require 'plist'
 require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do

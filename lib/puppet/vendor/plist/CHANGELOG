@@ -1,0 +1,82 @@
+= plist - All-purpose Property List manipulation library
+
+2006-09-20 (r80):
+ * tweak a comment in generator.rb to make it clear that we're not using Base64.b64encode because it's broken.
+
+=== Release version 3.0.0!
+
+2006-09-20 (r77 - r79):
+ * move IndentedString inside Plist::Emit and :nodoc: it
+ * Tag 3.0.0! (from rev 78)
+
+2006-09-19 (r73 - r75):
+ * Really fix the rakefile this time (apparently I deleted some code that I needed...)
+ * alter the fix_whitespace rake task to ignore the assets directory
+ * cleanup whitespace
+
+2006-09-18 (r70 - r72):
+ * Update this file ;)
+ * Fix Rakefile
+   * gem install -t now works correctly
+   * Remove super-sekr1t rdoc staging area from rdoc publishing task
+
+2006-09-15 (r64 - r69):
+* Change behavior of empty collection elements to match What Apple Does
+* Fix some gem packaging infrastructure
+
+2006-09-13 (r61 - r63):
+* Merge generator injection removal branch into trunk!
+
+2006-09-13 (r52 - r60):
+* Fix indentation/newlines in generator (finally!)
+* Refix indentation to be more faithful to the way Apple emits their plists
+* Remove horrific regex and replace it with proper comment parsing
+* Empty plists return nil when parsed
+* Sort hash keys before emitting (now we can test multi-element hashes!)
+* Inject #<=> into Symbol so that sorting Symbol-keyed hashes won't freak out
+
+2006-09-12 (r47 - r51):
+* More test rejiggering
+* New tests to expose some bugs
+
+2006-09-10 (r33 - r46):
+* Update tests for new generator code
+* Rejigger some tests
+* Make the generator try to call #to_plist_node on any object it tries to serialize, thus allowing class authors to define how their objects will be serialized
+* Marshal.dump unrecognized objects into <data> elements
+* Make the parser strip out comments and Marshal.load <data> elements if possible
+* Update some rdoc
+
+=== Release version 2.1.1!
+
+2006-09-10 (r31 - r32):
+* Added encoding / decoding for entities (&amp; etc)
+* Changed parsing of <data> elements to return StringIO objects
+* Fixed bug with empty <key> tags
+
+2006-08-24 (r25 - r30):
+* Invert ownership of methods in the generator, allowing us to remove the self.extend(self)
+* New branch to remove method inject from parser
+
+2006-08-23 (r22 - r24):
+* Add rcov task to Rakefile
+* Add some tests
+
+2006-08-20 (r9 - r21):
+* Add a bunch of rdoc and rdoc infrastructure
+* Add rake task to clean up errant whitespace
+* Spin off a branch to remove a bunch of method injection in the generator code
+* Rename some tests for clarity's sake
+* Replace NARF generation code with Ben's generation code
+  * Update tests
+  * This broke indentation (will be fixed later)
+* Add Plist::Emit.dump, so you can dump objects which don't include Plist::Emit, update tests to match
+* Fix a bug with the method that wraps output in the plist header/footer
+
+2006-08-19 (r1 - r8):
+* The beginnings of merging the plist project into the NARF plist library (under the plist project's name)
+  * fancier project infrastructure (more tests, Rakefile, the like)
+  * Add/update copyright notices in the source files
+  * Move a bunch of documentation out to README
+  * Split library into chunks
+* Properly delete files when cleaning up from tests
