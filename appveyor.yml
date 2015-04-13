@@ -1,0 +1,10 @@
+version: 4.0.0.{build}
+platform:
+    - x64
+install:
+    - SET PATH=C:\Ruby215\bin;%PATH%
+    - gem install bundler --quiet --no-ri --no-rdoc
+    - bundle install --without development
+build: off
+test_script:
+    - bundle exec rspec spec
