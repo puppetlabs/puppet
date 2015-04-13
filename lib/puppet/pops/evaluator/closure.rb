@@ -43,10 +43,12 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     end
   end
 
+  # This method makes a Closure compatible with a Dispatch. This is used when the closure is wrapped in a Function
+  # and the function is called. (Saves an extra Dispatch that just delegates to a Closure and avoids having two
+  # checks of the argument type/arity validity).
   # @api private
   def invoke(instance, calling_scope, args, &block)
-    # instance.send(@method_name, *weave(calling_scope, args), &block)
-    call(*args)
+    call(*args, &block)
   end
 
   # Call closure with argument assignment by name
