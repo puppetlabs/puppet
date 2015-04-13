@@ -416,7 +416,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             context "overwriting a file" do
               before :each do
                 FileUtils.touch(path)
-                File.chmod(0644, path)
+                set_mode(0644, path)
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => '0600', :links => :follow)
               end
 
