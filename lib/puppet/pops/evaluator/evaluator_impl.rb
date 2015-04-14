@@ -575,6 +575,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
             # not ideal for error reporting, since it is not known which unfolded result
             # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
             evaluate(c, scope).any? {|v| is_match?(test, v, c, co, scope) }
+          when Puppet::Pops::Model::LambdaExpression
+            # Call the lambda with the evaluated test expression splatted onto the lambdas parameters
+            closure = Puppet::Pops::Evaluator::Closure.new(self, c, scope)
+            !!closure.call(*test)
           else
             is_match?(test, evaluate(c, scope), c, co, scope)
           end
