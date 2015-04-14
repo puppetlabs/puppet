@@ -6,7 +6,7 @@ notify { "a1": require => Notify["a2"] }
 notify { "a2": require => Notify["a1"] }
 EOT
 
-apply_manifest_on(agents, manifest) do
+apply_manifest_on(agents, manifest, :acceptable_exit_codes => [1]) do
   assert_match(/Found 1 dependency cycle/, stderr,
                "found and reported the cycle correctly")
 end
@@ -20,7 +20,7 @@ notify { "b1": require => Notify["b2"] }
 notify { "b2": require => Notify["b1"] }
 EOT
 
-apply_manifest_on(agents, manifest) do
+apply_manifest_on(agents, manifest, :acceptable_exit_codes => [1]) do
   assert_match(/Found 2 dependency cycles/, stderr,
                "found and reported the cycle correctly")
 end
