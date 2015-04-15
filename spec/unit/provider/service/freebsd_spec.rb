@@ -7,6 +7,7 @@ describe provider_class do
   before :each do
     @provider = provider_class.new
     @provider.stubs(:initscript)
+    Facter.stubs(:value).with(:osfamily).returns 'FreeBSD'
   end
 
   it "should correctly parse rcvar for FreeBSD < 7" do

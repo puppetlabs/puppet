@@ -234,6 +234,19 @@ describe 'Lexer2' do
     '"a${y::_x}"' => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
                       [:VARIABLE, 'y::_x',  {:line => 1, :pos=>5, :length=>5 }],
                       [:DQPOST,   '',    {:line => 1, :pos=>11, :length=>1 }]],
+
+    '"a${_x[1]}"' => [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, '_x',  {:line => 1, :pos=>5, :length=>2 }],
+                      [:LBRACK,   '[',   {:line => 1, :pos=>7, :length=>1 }],
+                      [:NUMBER,   '1',   {:line => 1, :pos=>8, :length=>1 }],
+                      [:RBRACK,   ']',   {:line => 1, :pos=>9, :length=>1 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>11, :length=>1 }]],
+
+    '"a${_x.foo}"'=> [[:DQPRE,    'a',   {:line => 1, :pos=>1, :length=>4 }],
+                      [:VARIABLE, '_x',  {:line => 1, :pos=>5, :length=>2 }],
+                      [:DOT,      '.',   {:line => 1, :pos=>7, :length=>1 }],
+                      [:NAME,     'foo', {:line => 1, :pos=>8, :length=>3 }],
+                      [:DQPOST,   '',    {:line => 1, :pos=>12, :length=>1 }]],
   }.each do |source, expected|
     it "should lex an interpolated variable 'x' from #{source}" do
       expect(tokens_scanned_from(source)).to match_tokens2(*expected)

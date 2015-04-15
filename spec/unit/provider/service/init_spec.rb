@@ -213,5 +213,23 @@ describe Puppet::Type.type(:service).provider(:init) do
         provider.restart
       end
     end
+
+    describe "when starting a service on Solaris" do
+      it "should use ctrun" do
+        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        provider.expects(:execute).with('/usr/bin/ctrun -l none /service/path/myservice start', {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).returns("")
+        $CHILD_STATUS.stubs(:exitstatus).returns(0)
+        provider.start
+      end
+    end
+
+    describe "when starting a service on RedHat" do
+      it "should not use ctrun" do
+        Facter.stubs(:value).with(:osfamily).returns 'RedHat'
+        provider.expects(:execute).with(['/service/path/myservice', :start], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).returns("")
+        $CHILD_STATUS.stubs(:exitstatus).returns(0)
+        provider.start
+      end
+    end
   end
 end

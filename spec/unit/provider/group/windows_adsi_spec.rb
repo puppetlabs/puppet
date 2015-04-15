@@ -47,10 +47,6 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         expect(provider.members_insync?(nil, ['user2'])).to be_falsey
       end
 
-      it "should return false when should is nil" do
-        expect(provider.members_insync?(['user1'], nil)).to be_falsey
-      end
-
       it "should return true for same lists of members" do
         expect(provider.members_insync?(['user1', 'user2'], ['user1', 'user2'])).to be_truthy
       end
@@ -63,6 +59,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         expect(provider.members_insync?(['user1', 'user2', 'user2'], ['user2', 'user1', 'user1'])).to be_truthy
       end
 
+      it "should return true when current user(s) and should user(s) are empty lists" do
+        expect(provider.members_insync?([], [])).to be_truthy
+      end
+
       context "when auth_membership => true" do
         before :each do
           resource[:auth_membership] = true
@@ -70,6 +70,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return false when current contains different users than should" do
           expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
+        end
+
+        it "should return false when should is nil" do
+          expect(provider.members_insync?(['user1'], nil)).to be_falsey
         end
 
         it "should return false when current contains members and should is empty" do
@@ -83,6 +87,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         it "should return false when should user(s) are not the only items in the current" do
           expect(provider.members_insync?(['user1', 'user2'], ['user1'])).to be_falsey
         end
+
+        it "should return false when current user(s) is not empty and should is an empty list" do
+          expect(provider.members_insync?(['user1','user2'], [])).to be_falsey
+        end
       end
 
       context "when auth_membership => false" do
@@ -95,6 +103,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
         end
 
+        it "should return true when should is nil" do
+          expect(provider.members_insync?(['user1'], nil)).to be_truthy
+        end
+
         it "should return true when current contains members and should is empty" do
           expect(provider.members_insync?(['user1'], [])).to be_truthy
         end
@@ -105,7 +117,11 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return true when current user(s) contains at least the should list" do
           expect(provider.members_insync?(['user1','user2'], ['user1'])).to be_truthy
-          end
+        end
+
+        it "should return true when current user(s) is not empty and should is an empty list" do
+          expect(provider.members_insync?(['user1','user2'], [])).to be_truthy
+        end
 
         it "should return true when current user(s) contains at least the should list, even unordered" do
           expect(provider.members_insync?(['user3','user1','user2'], ['user2','user1'])).to be_truthy

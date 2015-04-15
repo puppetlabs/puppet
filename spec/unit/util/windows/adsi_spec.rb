@@ -270,38 +270,118 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         expect(group.members).to match(names)
       end
 
-      it "should be able to add a list of users to a group" do
-        names = ['DOMAIN\user1', 'user2']
-        sids = [
-          stub(:account => 'user1', :domain => 'DOMAIN'),
-          stub(:account => 'user2', :domain => 'testcomputername'),
-          stub(:account => 'user3', :domain => 'DOMAIN2'),
-        ]
+      context "calling .set_members" do
+        it "should set the members of a group to only desired_members when inclusive" do
+          names = ['DOMAIN\user1', 'user2']
+          sids = [
+              stub(:account => 'user1', :domain => 'DOMAIN'),
+              stub(:account => 'user2', :domain => 'testcomputername'),
+              stub(:account => 'user3', :domain => 'DOMAIN2'),
+          ]
 
-        # use stubbed objectSid on member to return stubbed SID
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+          # use stubbed objectSid on member to return stubbed SID
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
 
-        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
-        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
 
-        Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
-        Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
+          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
+          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
 
-        members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
-        adsi_group.expects(:Members).returns members
+          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
+          adsi_group.expects(:Members).returns members
 
-        adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
-        adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
+          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
+          adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
 
-        group.set_members(['user2', 'DOMAIN2\user3'])
-      end
+          group.set_members(['user2', 'DOMAIN2\user3'])
+        end
 
-      it "should raise an error when a username does not resolve to a SID" do
-        expect {
-          adsi_group.expects(:Members).returns []
-          group.set_members(['foobar'])
-        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+        it "should add the desired_members to an existing group when not inclusive" do
+          names = ['DOMAIN\user1', 'user2']
+          sids = [
+              stub(:account => 'user1', :domain => 'DOMAIN'),
+              stub(:account => 'user2', :domain => 'testcomputername'),
+              stub(:account => 'user3', :domain => 'DOMAIN2'),
+          ]
+
+          # use stubbed objectSid on member to return stubbed SID
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+
+          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+
+          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
+
+          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
+          adsi_group.expects(:Members).returns members
+
+          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user').never
+
+          adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
+
+          group.set_members(['user2', 'DOMAIN2\user3'],false)
+        end
+
+        it "should return immediately when desired_members is nil" do
+          adsi_group.expects(:Members).never
+
+          adsi_group.expects(:Remove).never
+          adsi_group.expects(:Add).never
+
+          group.set_members(nil)
+        end
+
+        it "should remove all members when desired_members is empty and inclusive" do
+          names = ['DOMAIN\user1', 'user2']
+          sids = [
+              stub(:account => 'user1', :domain => 'DOMAIN'),
+              stub(:account => 'user2', :domain => 'testcomputername')
+          ]
+
+          # use stubbed objectSid on member to return stubbed SID
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+
+          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
+          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[1]).returns("WinNT://testcomputername/user2,user")
+
+          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
+          adsi_group.expects(:Members).returns members
+
+          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
+          adsi_group.expects(:Remove).with('WinNT://testcomputername/user2,user')
+
+          group.set_members([])
+        end
+
+        it "should do nothing when desired_members is empty and not inclusive" do
+          names = ['DOMAIN\user1', 'user2']
+          sids = [
+              stub(:account => 'user1', :domain => 'DOMAIN'),
+              stub(:account => 'user2', :domain => 'testcomputername')
+          ]
+          # use stubbed objectSid on member to return stubbed SID
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+
+          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
+          adsi_group.expects(:Members).returns members
+
+          adsi_group.expects(:Remove).never
+          adsi_group.expects(:Add).never
+
+          group.set_members([],false)
+        end
+
+        it "should raise an error when a username does not resolve to a SID" do
+          expect {
+            adsi_group.expects(:Members).returns []
+            group.set_members(['foobar'])
+          }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+        end
       end
 
       it "should generate the correct URI" do

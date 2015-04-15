@@ -10,6 +10,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :openbsd
+    Facter.stubs(:value).with(:osfamily).returns 'OpenBSD'
     FileTest.stubs(:file?).with('/usr/sbin/rcctl').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/rcctl').returns true
   end
