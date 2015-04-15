@@ -583,6 +583,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       if o.options.find do |co|
         # the first case option that matches
         if co.values.find do |c|
+          c = unwind_parentheses(c)
           case c
           when Puppet::Pops::Model::LiteralDefault
             the_default = co.then_expr
@@ -816,13 +817,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
     end
-    receiver = evaluate(o.functor_expr.left_expr, scope)
+    receiver = unfold([], [o.functor_expr.left_expr], scope)
     name = o.functor_expr.right_expr
     unless name.is_a? Puppet::Pops::Model::QualifiedName
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
-    call_function_with_block(name, unfold([receiver], o.arguments || [], scope), o, scope)
+    call_function_with_block(name, unfold(receiver, o.arguments || [], scope), o, scope)
   end
 
   def call_function_with_block(name, evaluated_arguments, o, scope)
@@ -912,7 +913,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
       the_default = nil
       selected = o.selectors.find do |s|
-        me = s.matching_expr
+        me = unwind_parentheses(s.matching_expr)
         case me
         when Puppet::Pops::Model::LiteralDefault
           the_default = s.value_expr
@@ -1188,6 +1189,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def unfold(result, array, scope)
     array.each do |x|
+      x = unwind_parentheses(x)
       if x.is_a?(Puppet::Pops::Model::UnfoldExpression)
         result.concat(evaluate(x, scope))
       else
@@ -1198,4 +1200,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
   private :unfold
 
+  def unwind_parentheses(o)
+    return o unless o.is_a?(Puppet::Pops::Model::ParenthesizedExpression)
+    unwind_parentheses(o.expr)
+  end
+  private :unwind_parentheses
 end
