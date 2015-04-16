@@ -167,7 +167,7 @@ Puppet::Type.newtype(:yumrepo) do
   newproperty(:includepkgs) do
     desc "List of shell globs. If this is set, only packages
       matching one of the globs will be considered for
-      update or install from this repo. #{ABSENT_DOC}"
+      update or install from this repository. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
   end
@@ -302,7 +302,7 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:s3_enabled) do
-    desc "Access the repo via S3.
+    desc "Access the repository via S3.
       #{YUM_BOOLEAN_DOC}
       #{ABSENT_DOC}"
 
@@ -327,14 +327,14 @@ Puppet::Type.newtype(:yumrepo) do
 
   newproperty(:sslclientcert) do
     desc "Path  to the SSL client certificate yum should use to connect
-      to repos/remote sites. #{ABSENT_DOC}"
+      to repositories/remote sites. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
   end
 
   newproperty(:sslclientkey) do
     desc "Path to the SSL client key yum should use to connect
-      to repos/remote sites. #{ABSENT_DOC}"
+      to repositories/remote sites. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
   end
@@ -370,7 +370,7 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:deltarpm_percentage) do
-    desc "Percentage value that determines when to use deltas for this repo.
+    desc "Percentage value that determines when to use deltas for this repository.
       When the delta is larger than this percentage value of the package, the
       delta is not used.
       #{ABSENT_DOC}"
