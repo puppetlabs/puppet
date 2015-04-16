@@ -1592,7 +1592,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :recurse => false,
           :links => "follow")
         catalog.apply
-        expect(Puppet::FileSystem.directory?(copy))
+        expect(Puppet::FileSystem).to be_symlink(copy)
       end
     
       it "should copy the link itself if :links => manage" do
