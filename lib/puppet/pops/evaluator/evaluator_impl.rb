@@ -179,6 +179,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
+  # An array is assignable if all entries are lvalues
+  def lvalue_LiteralList(o, scope)
+    o.values.map {|x| lvalue(x, scope) }
+  end
+
   # Assign value to named variable.
   # The '$' sign is never part of the name.
   # @example In Puppet DSL
@@ -205,6 +210,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def assign_Object(name, value, o, scope)
     fail(Issues::ILLEGAL_ASSIGNMENT, o)
+  end
+
+  def assign_Array(lvalues, values, o, scope)
+    values = [values] unless values.is_a?(Array)
+    if values.size != lvalues.size
+      fail(Issues::ILLEGL_MULTI_ASSIGNMENT_SIZE, o, :expected =>lvalues.size, :actual => values.size)
+    end
+    lvalues.zip(values).map { |lval, val| assign(lval, val, o, scope) }
   end
 
   def eval_Factory(o, scope)

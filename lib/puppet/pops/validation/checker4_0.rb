@@ -130,6 +130,10 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def assign_LiteralList(o, via_index)
+    o.values.each {|x| assign(x) }
+  end
+
   def assign_Object(o, via_index)
     # Can not assign to anything else (differentiate if this is via index or not)
     # i.e. 10 = 'hello' vs. 10['x'] = 'hello' (the root is reported as being in error in both cases)

@@ -430,18 +430,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = 5; $a"                 => 5,
       "$a = 5; $b = 6; $a"         => 5,
       "$a = $b = 5; $a == $b"      => true,
+      "[$a] = 1 $a"                              => 1,
+      "[$a] = [1] $a"                            => 1,
+      "[$a, $b] = [1,2] $a+$b"                   => 3,
+      "[$a, [$b, $c]] = [1,[2, 3]] $a+$b+$c"     => 6,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
-    {
-      "[a,b,c] = [1,2,3]"               => /attempt to assign to 'an Array Expression'/,
-      "[a,b,c] = {b=>2,c=>3,a=>1}"      => /attempt to assign to 'an Array Expression'/,
-    }.each do |source, result|
-        it "should parse and evaluate the expression '#{source}' to error with #{result}" do
-          expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError, result)
+    [
+      "[a,b,c] = [1,2,3]",
+      "[a,b,c] = {b=>2,c=>3,a=>1}",
+      "[$a, $b] = 1",
+      "[$a, $b] = [1,2,3]",
+      "[$a, [$b,$c]] = [1,[2]]",
+      "[$a, [$b,$c]] = [1,[2,3,4]]",
+    ].each do |source|
+        it "should parse and evaluate the expression '#{source}' to error" do
+          expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError)
         end
       end
   end
