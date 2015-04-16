@@ -10,7 +10,7 @@ end
 SCRIPT
 
 sleepy_daemon_initscript = <<INITSCRIPT
-#!/bin/sh
+#!/usr/bin/bash
 FIXTURESERVICE="/tmp/sleepy_daemon"
 start(){
     $FIXTURESERVICE &
@@ -18,7 +18,9 @@ start(){
 
 stop(){
     FIXTUREPID=`ps -ef | grep "$FIXTURESERVICE" | grep -v grep | awk '{print $2}'`
-    kill -9 $FIXTUREPID
+    if [ "x$FIXTUREPID" != "x" ]; then
+      kill -9 ${FIXTUREPID}
+    fi
 }
 
 status(){
@@ -112,14 +114,14 @@ step "Start master"
       if agent.is_pe?
 
         step "Stop puppet on #{agent}"
-          on(agent, "svcadm disable #{agent_service};sleep 70;svcadm disable #{agent_service}")
+          on(agent, "svcadm disable pe-puppet;sleep 70;svcadm disable pe-puppet")
 
         step "Stop fixture service on #{agent}"
           on(agent, "#{fixture_service_stop}")
 
         step "Enable puppet service on #{agent}"
-          on(agent, "svcadm enable #{agent_service};sleep 10") do
-            puppet_ctid = on(agent, "svcs -Ho CTID #{agent_service} | awk '{print $1}'").stdout.chomp.to_i
+          on(agent, "svcadm enable pe-puppet;sleep 10") do
+            puppet_ctid = on(agent, "svcs -Ho CTID pe-puppet | awk '{print $1}'").stdout.chomp.to_i
             service_ctid = on(agent, "ps -eo ctid,args | grep #{fixture_service} | grep -v grep | awk '{print $1}'").stdout.chomp.to_i
 
           step "Compare SMF contract ids for puppet and #{fixture_service} on #{agent}"
