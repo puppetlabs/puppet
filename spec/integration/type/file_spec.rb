@@ -1548,7 +1548,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         :source => link,
         :links => "follow")
       catalog.apply
-      expect(Puppet::FileSystem.file?(copy))
+      expect(Puppet::FileSystem).to be_file(copy)
       expect(File.read(target)).to eq(File.read(copy))
     end
 
@@ -1567,7 +1567,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         :source => link,
         :links => "manage")
       catalog.apply
-      expect(Puppet::FileSystem.symlink?(copy))
+      expect(Puppet::FileSystem).to be_symlink(copy)
       expect(File.read(link)).to eq(File.read(copy))
     end
   end
@@ -1592,7 +1592,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :recurse => false,
           :links => "follow")
         catalog.apply
-        expect(Puppet::FileSystem.directory?(copy))
+        expect(Puppet::FileSystem).to be_directory(copy)
       end
     
       it "should copy the link itself if :links => manage" do
@@ -1610,7 +1610,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :recurse => false,
           :links => "manage")
         catalog.apply
-        expect(Puppet::FileSystem.symlink?(copy))
+        expect(Puppet::FileSystem).to be_symlink(copy)
         expect(Dir.entries(link)).to eq(Dir.entries(copy))
       end
     end
@@ -1631,7 +1631,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :recurse => true,
           :links => "follow")
         catalog.apply
-        expect(Puppet::FileSystem.directory?(copy))
+        expect(Puppet::FileSystem).to be_directory(copy)
         expect(Dir.entries(target)).to eq(Dir.entries(copy))
       end
 
@@ -1650,7 +1650,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :recurse => true,
           :links => "manage")
         catalog.apply
-        expect(Puppet::FileSystem.symlink?(copy))
+        expect(Puppet::FileSystem).to be_symlink(copy)
         expect(Dir.entries(link)).to eq(Dir.entries(copy))
       end
     end
