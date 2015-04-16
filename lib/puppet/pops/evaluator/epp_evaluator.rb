@@ -24,10 +24,15 @@ class Puppet::Pops::Evaluator::EppEvaluator
       raise ArgumentError, "epp(): the first argument must be a String with the filename, got a #{file.class}"
     end
 
-    file = file + ".epp" unless file =~ /\.epp$/
+    unless Puppet::FileSystem.exist?(file)
+      unless file =~ /\.epp$/
+        file = file + ".epp"
+      end
+    end
+
     scope.debug "Retrieving epp template #{file}"
     template_file = Puppet::Parser::Files.find_template(file, env_name)
-    unless template_file
+    if template_file.nil? ||  !Puppet::FileSystem.exist?(template_file)
       raise Puppet::ParseError, "Could not find template '#{file}'"
     end
 
