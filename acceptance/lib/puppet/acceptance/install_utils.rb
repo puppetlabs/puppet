@@ -167,19 +167,17 @@ module Puppet
             end
 
             logger.notify("fetching repository from #{link}")
-            repo_dir = fetch_remote_dir(host, link, platform_configs_dir)
             repo_loc = "/root/#{project}"
 
             on host, "rm -rf #{repo_loc}"
             on host, "mkdir -p #{repo_loc}"
 
             fetch_remote_dir(host, link, repo_loc)
-            curl_on(host, "#{rpm_url} -o #{repo_loc}/#{URI(rpm_url).path.split('/').last}")
             curl_on(host, "#{repo_url} -o #{repo_loc}/#{URI(repo_url).path.split('/').last}")
 
             on host, "cp #{repo_loc}/*.repo /etc/yum.repos.d"
             on host, "find /etc/yum.repos.d/ -name \"*.repo\" -exec sed -i \"s/baseurl\\s*=\\s*http:\\/\\/#{tld}.*$/baseurl=file:\\/\\/\\/root\\/#{project}\\/#{arch}/\" {} \\;"
-            on host, "rpm -Uvh --force #{repo_loc}/*.rpm"
+            on host, "rpm -Uvh --force #{rpm_url}"
 
           when /^(debian|ubuntu)-([^-]+)-(.+)$/
             variant = $1
