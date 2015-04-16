@@ -174,6 +174,11 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
 
+  # Assignment can only be made to certain types of left hand expressions such as variables.
+  ILLEGAL_ASSIGNMENT_CONTEXT = hard_issue :ILLEGAL_ASSIGNMENT_CONTEXT do
+    "Assignment not allowed here"
+  end
+
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
     "The numeric parameter name '$#{name}' cannot be used (clashes with numeric match result variables)"
