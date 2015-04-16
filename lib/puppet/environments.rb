@@ -190,7 +190,7 @@ module Puppet::Environments
 
     private
 
-    def create_environment(name, setting_values = nil)
+    def create_environment(name)
       env_symbol = name.intern
       setting_values = Puppet.settings.values(env_symbol, Puppet.settings.preferred_run_mode)
       Puppet::Node::Environment.create(
