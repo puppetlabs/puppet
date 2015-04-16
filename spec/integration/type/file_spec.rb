@@ -1561,7 +1561,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         :name => link,
         :ensure => "link",
         :target => target)
-      # FIXME: do I need to clean up from the previous test?
       catalog.add_resource described_class.new(
         :name => copy,
         :ensure => "present",
@@ -1594,7 +1593,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :links => "follow")
         catalog.apply
         expect(Puppet::FileSystem.directory?(copy))
-        expect(File).to be_directory(copy)
       end
     
       it "should copy the link itself if :links => manage" do
@@ -1614,7 +1612,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
         expect(Puppet::FileSystem.symlink?(copy))
         expect(Dir.entries(link)).to eq(Dir.entries(copy))
-        expect(File).to be_symlink(copy)
       end
     end
   
