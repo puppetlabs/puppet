@@ -38,7 +38,7 @@ describe "transformation to Puppet AST for function calls" do
 
         "info bar"         => '(invoke info bar)',
         "notice bar"       => '(invoke notice bar)',
-        "error bar"        => '(invoke error bar)',
+        "err bar"          => '(invoke err bar)',
         "warning bar"      => '(invoke warning bar)',
         "debug bar"        => '(invoke debug bar)',
 

@@ -773,7 +773,7 @@ class Puppet::Pops::Model::Factory
     'info'    => true,
     'notice'  => true,
     'warning' => true,
-    'error'   => true,
+    'err'     => true,
 
     'fail'    => true,
     'import'  => true  # discontinued, but transform it to make it call error reporting function
