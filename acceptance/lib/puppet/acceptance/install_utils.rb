@@ -55,26 +55,8 @@ module Puppet
         return true
       end
 
-      def fetch(base_url, file_name, dst_dir)
-        FileUtils.makedirs(dst_dir)
-        src = "#{base_url}/#{file_name}"
-        dst = File.join(dst_dir, file_name)
-        if File.exists?(dst)
-          logger.notify "Already fetched #{dst}"
-        else
-          logger.notify "Fetching: #{src}"
-          logger.notify "  and saving to #{dst}"
-          open(src) do |remote|
-            File.open(dst, "w") do |file|
-              FileUtils.copy_stream(remote, file)
-            end
-          end
-        end
-        return dst
-      end
-
-      def fetch_remote_dir(url, dst_dir)
-        logger.notify "fetch_remote_dir (url: #{url}, dst_dir #{dst_dir})"
+      def fetch_remote_dir(host, url, dst_dir)
+        logger.notify "fetch_remote_dir (host #{host}, url #{url}, dst_dir #{dst_dir})"
         if url[-1, 1] !~ /\//
           url += '/'
         end
@@ -84,6 +66,7 @@ module Puppet
         #determine directory structure to cut
         #only want to keep the last directory, thus cut total number of dirs - 2 (hostname + last dir name)
         cut = chunks.length - 2
+        host.install_package("wget")
         wget_command = "wget -nv -P #{dst_dir} --reject \"index.html*\",\"*.gif\" --cut-dirs=#{cut} -np -nH --no-check-certificate -r #{url}"
 
         logger.notify "Fetching remote directory: #{url}"
@@ -91,7 +74,7 @@ module Puppet
         logger.notify "  using command: #{wget_command}"
 
         #in ruby 1.9+ we can upgrade this to popen3 to gain access to the subprocess pid
-        result = `#{wget_command} 2>&1`
+        result = on(host, "#{wget_command} 2>&1").stdout
         result.each_line do |line|
           logger.debug(line)
         end
@@ -116,9 +99,8 @@ module Puppet
         end
       end
 
-      def install_repos_on(host, project, sha, repo_configs_dir)
+      def install_repos_on(host, project, sha)
         platform = host['platform'].with_version_codename
-        platform_configs_dir = File.join(repo_configs_dir,platform)
         tld     = sha == 'nightly' ? 'nightlies.puppetlabs.com' : 'builds.puppetlabs.lan'
         project = sha == 'nightly' ? project + '-latest'        :  project
         sha     = sha == 'nightly' ? nil                        :  sha
@@ -130,11 +112,7 @@ module Puppet
             version = $2
             arch = $3
 
-            rpm = fetch(
-              "http://yum.puppetlabs.com",
-              "puppetlabs-release-%s-%s.noarch.rpm" % [variant, version],
-              platform_configs_dir
-            )
+            rpm_url = "http://yum.puppetlabs.com/puppetlabs-release-%s-%s.noarch.rpm" % [variant, version]
 
             pattern = "pl-%s%s-%s-%s%s-%s.repo"
             repo_filename = pattern % [
@@ -145,11 +123,7 @@ module Puppet
               version,
               arch
             ]
-            repo = fetch(
-              "http://%s/%s/%s/repo_configs/rpm/" % [tld, project, sha],
-              repo_filename,
-              platform_configs_dir
-            )
+            repo_url = "http://%s/%s/%s/repo_configs/rpm/" % [tld, project, sha] + repo_filename
 
             link = "http://%s/%s/%s/repos/%s/%s%s/PC1/%s/" % [
               tld,
@@ -192,19 +166,17 @@ module Puppet
             end
 
             logger.notify("fetching repository from #{link}")
-            repo_dir = fetch_remote_dir(link, platform_configs_dir)
             repo_loc = "/root/#{project}"
 
             on host, "rm -rf #{repo_loc}"
             on host, "mkdir -p #{repo_loc}"
 
-            scp_to host, rpm, repo_loc
-            scp_to host, repo, repo_loc
-            scp_to host, repo_dir, repo_loc
+            fetch_remote_dir(host, link, repo_loc)
+            curl_on(host, "#{repo_url} -o #{repo_loc}/#{URI(repo_url).path.split('/').last}")
 
             on host, "cp #{repo_loc}/*.repo /etc/yum.repos.d"
             on host, "find /etc/yum.repos.d/ -name \"*.repo\" -exec sed -i \"s/baseurl\\s*=\\s*http:\\/\\/#{tld}.*$/baseurl=file:\\/\\/\\/root\\/#{project}\\/#{arch}/\" {} \\;"
-            on host, "rpm -Uvh --force #{repo_loc}/*.rpm"
+            on host, "rpm -Uvh --force #{rpm_url}"
 
           when /^(debian|ubuntu)-([^-]+)-(.+)$/
             variant = $1
@@ -212,27 +184,18 @@ module Puppet
             arch = $3
 
             # If this isn't outdated yet it will be by end of week (4/3/2015)
-            deb = fetch(
-              "http://apt.puppetlabs.com/",
-              "puppetlabs-release-%s.deb" % version,
-              platform_configs_dir
-            )
+            deb_url = "http://apt.puppetlabs.com/puppetlabs-release-%s.deb" % version
 
-            list = fetch(
-              "http://%s/%s/%s/repo_configs/deb/" % [tld, project, sha],
-              "pl-%s%s-%s.list" % [project, sha ? '-' + sha : '', version],
-              platform_configs_dir
-            )
+            list_url = "http://%s/%s/%s/repo_configs/deb/" % [tld, project, sha] + "pl-%s%s-%s.list" % [project, sha ? '-' + sha : '', version]
 
-            repo_dir = fetch_remote_dir("http://%s/%s/%s/repos/apt/%s" % [tld, project, sha, version], platform_configs_dir)
             repo_loc = "/root/#{project}"
 
             on host, "rm -rf #{repo_loc}"
             on host, "mkdir -p #{repo_loc}"
 
-            scp_to host, deb, repo_loc
-            scp_to host, list, repo_loc
-            scp_to host, repo_dir, repo_loc
+            repo_dir = fetch_remote_dir(host, "http://%s/%s/%s/repos/apt/%s" % [tld, project, sha, version], repo_loc)
+            curl_on(host, "#{deb_url} -o #{repo_loc}/#{URI(deb_url).path.split('/').last}")
+            curl_on(host, "#{list_url} -o #{repo_loc}/#{URI(list_url).path.split('/').last}")
 
             pc1_check = on(host,
                            "[[ -d /root/#{project}/#{version}/pool/PC1 ]]",
