@@ -3,15 +3,15 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: fedora-18-x86_64
+    platform: fedora-21-x86_64
     hypervisor: vcloud
-    template: fedora-18-x86_64
+    template: fedora-21-x86_64
   agent:
     roles:
       - agent
-    platform: fedora-18-i386
+    platform: fedora-21-i386
     hypervisor: vcloud
-    template: fedora-18-i386
+    template: fedora-21-i386
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
