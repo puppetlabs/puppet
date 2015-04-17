@@ -13,18 +13,6 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   let(:unknown_name) { 'chewbacca' }
 
   context "#octet_string_to_sid_object" do
-    it "should properly convert an array of bytes for the local Administrator SID" do
-      host = '.'
-      # Bringing the ADSI module in isn't ideal, but we're leaving re-arranging the modules
-      # for a future breaking release.
-      username = Puppet::Util::Windows::ADSI::User.current_user_name
-      admin = WIN32OLE.connect("WinNT://#{host}/#{username},user")
-      converted = subject.octet_string_to_sid_object(admin.objectSID)
-
-      expect(converted).to eq(Win32::Security::SID.new(username, host))
-      expect(converted).to be_an_instance_of Win32::Security::SID
-    end
-
     it "should properly convert an array of bytes for a well-known SID" do
       bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
       converted = subject.octet_string_to_sid_object(bytes)
