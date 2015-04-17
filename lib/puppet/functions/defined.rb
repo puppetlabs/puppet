@@ -65,15 +65,14 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         if m = /^\$(.+)$/.match(val)
           scope.exist?(m[1])
         else
-          val = case val
+          case val
           when ''
             next nil
           when 'main'
-            ''
+            scope.compiler.findresource(:class, '') # scope.find_hostclass('')
           else
-            val
+            scope.find_resource_type(val) || scope.find_definition(val) || scope.compiler.findresource(:class, val)
           end
-          scope.find_resource_type(val) || scope.find_definition(val) || scope.find_hostclass(val)
         end
       when Puppet::Resource
         scope.compiler.findresource(val.type, val.title)

@@ -41,6 +41,7 @@ describe "the 'defined' function" do
 
   it "is true when the name is defined as a class" do
     newclass 'yayness'
+    newresource(:class, 'yayness')
     expect(func.call(@scope, "yayness")).to be_true
   end
 
@@ -148,6 +149,9 @@ describe "the 'defined' function" do
   end
 
   it "is true if referencing 'main'" do
+    # mimic what compiler does with "main" in intial import
+    newclass ''
+    newresource :class, ''
     expect(func.call(@scope, 'main')).to be_true
   end
 
