@@ -200,6 +200,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if options[:rack]
       start_rack_master
     else
+      Puppet.deprecation_warning("The WEBrick Puppet master server is deprecated and will be removed in a future release.")
       start_webrick_master
     end
   end
