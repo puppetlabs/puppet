@@ -119,11 +119,19 @@ describe "the 'defined' function" do
     expect(func.call(@scope, resource_type)).to be_false
   end
 
-  it "is true when a future class reference type is provided" do
-    @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "cowabunga")
-
-    class_type = Puppet::Pops::Types::TypeFactory.host_class("cowabunga")
+  it "is true when a future class reference type is provided (and class is included)" do
+    name = "cowabunga"
+    newclass name
+    newresource(:class, name)
+    class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
     expect(func.call(@scope, class_type)).to be_true
+  end
+
+  it "is false when a future class reference type is provided (and class is not included)" do
+    name = "cowabunga"
+    newclass name
+    class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+    expect(func.call(@scope, class_type)).to be_false
   end
 
   it "raises an argument error if you ask if Class is defined" do
@@ -131,7 +139,7 @@ describe "the 'defined' function" do
     expect { func.call(@scope, class_type) }.to raise_error(ArgumentError, /reference to all.*class/)
   end
 
-  it "is false if referencing nil" do
+  it "raises error if referencing undef" do
   expect{func.call(@scope, nil)}.to raise_error(ArgumentError, /mis-matched arguments/)
   end
 

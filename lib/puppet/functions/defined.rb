@@ -88,7 +88,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
 
       when Puppet::Pops::Types::PHostClassType
         raise  ArgumentError, "The given class type is a reference to all classes" if val.class_name.nil?
-        scope.find_hostclass(val.class_name)
+        scope.compiler.findresource(:class, val.class_name)
 
       else
         raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"
