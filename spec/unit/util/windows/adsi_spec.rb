@@ -197,24 +197,41 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
         before(:each) do
           user.expects(:group_sids).returns(group_sids.map {|s| s.objectSID})
-          Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
         end
 
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
             user.expects(:add_group_sids).with([-1])
             user.expects(:remove_group_sids).with([1])
 
             user.set_groups(groups_to_set, false)
           end
+
+          it "should remove all users from a group if desired is empty" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
+            user.expects(:add_group_sids).never
+            user.expects(:remove_group_sids).with([0], [1])
+
+            user.set_groups('', false)
+          end
         end
 
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
             user.expects(:add_group_sids).with([-1])
             user.expects(:remove_group_sids).never
 
             user.set_groups(groups_to_set, true)
+          end
+
+          it "should do nothing if desired is empty" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
+            user.expects(:remove_group_sids).never
+            user.expects(:add_group_sids).never
+
+            user.set_groups('', true)
           end
         end
       end
