@@ -1,47 +1,20 @@
 ---
 packaging_url: 'git://github.com/puppetlabs/packaging.git --branch=master'
 packaging_repo: 'packaging'
-default_cow: 'base-squeeze-i386.cow'
-cows: 'base-lucid-i386.cow base-precise-i386.cow base-squeeze-i386.cow base-stable-i386.cow base-testing-i386.cow base-trusty-i386.cow base-wheezy-i386.cow'
-pbuild_conf: '/etc/pbuilderrc'
 packager: 'puppetlabs'
-gpg_name: 'info@puppetlabs.com'
 gpg_key: '4BD6EC30'
+
+# These are the build targets used by the packaging repo. Uncomment to allow use.
+#final_mocks: 'pl-el-5-i386 pl-el-6-i386 pl-el-7-x86_64'
+#cows: 'base-lucid-i386.cow base-precise-i386.cow base-squeeze-i386.cow base-trusty-i386.cow base-wheezy-i386.cow'
+pbuild_conf: '/etc/pbuilderrc'
+
+build_gem: TRUE
+build_dmg: FALSE
 sign_tar: FALSE
-# a space separated list of mock configs
-final_mocks: 'pl-el-5-i386 pl-el-6-i386 pl-el-7-x86_64 pl-fedora-20-i386'
 yum_host: 'yum.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
-build_gem: TRUE
-build_dmg: TRUE
-msi_name: 'puppet-agent'
-build_msi:
-  puppet_for_the_win:
-    ref: '52e81967253924428bb0b1e7e1a11e8678d68378'
-    repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
-  facter:
-    ref: 'refs/tags/2.4.0'
-    repo: 'git://github.com/puppetlabs/facter.git'
-  cfacter:
-    archive:
-      x86: 'cfacter-0.3.0-x86.zip'
-      x64: 'cfacter-0.3.0-x64.zip'
-    path: 'http://builds.puppetlabs.lan/cfacter/0.3.0/artifacts/windows'
-  hiera:
-    ref: 'refs/tags/2.0.0'
-    repo: 'git://github.com/puppetlabs/hiera.git'
-  mcollective:
-    ref: 'refs/tags/2.7.0'
-    repo: 'git://github.com/puppetlabs/marionette-collective.git'
-  sys:
-    ref:
-      x86: '2f25839c5c11ec10b781debf4808095d6895a844'
-      x64: '017c63ca11e38f74b7e011ecd2006100452c620b'
-    repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
 apt_repo_path: '/opt/repository/incoming'
-ips_repo: '/var/pkgrepo'
-ips_store: '/opt/repository'
-ips_host: 'solaris-11-ips-repo.acctest.dc1.puppetlabs.net'
 tar_host: 'downloads.puppetlabs.com'
