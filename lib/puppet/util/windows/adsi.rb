@@ -265,8 +265,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def set_groups(desired_groups, minimum = true)
-      return if desired_groups.nil? or desired_groups.empty?
-      # this needs fixed up once PUP-3653 is merged up
+      return if desired_groups.nil?
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
@@ -282,7 +281,12 @@ module Puppet::Util::Windows::ADSI
       # Then we remove the user from all groups it is in but shouldn't be, if
       # that's been requested
       if !minimum
-        groups_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+        if desired_hash.empty?
+          groups_to_remove = current_hash.values
+        else
+          groups_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+        end
+
         remove_group_sids(*groups_to_remove)
       end
     end
