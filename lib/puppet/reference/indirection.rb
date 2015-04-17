@@ -58,7 +58,7 @@ Values fetched from the terminus are written to the cache.
 
 ### Interaction with REST
 
-REST endpoints have the form `/{environment}/{indirection}/{key}`, where the indirection can be singular or plural, following normal English spelling rules.
+REST endpoints have the form `/{prefix}/{version}/{indirection}/{key}?environment={environment}`, where the indirection can be singular or plural, following normal English spelling rules.
 On the server side, REST responses are generated from the locally-configured endpoints.
 
 ### Indirections and Termini
