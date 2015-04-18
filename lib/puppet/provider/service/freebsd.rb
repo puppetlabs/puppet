@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
   # Extract service name
   def service_name
-    extract_value_name('service', 0, /# (.*)/, '\1')
+    extract_value_name('service', 0, /# (.*)( : .*)?/, '\1')
   end
 
   # Extract rcvar name
