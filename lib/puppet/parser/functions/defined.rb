@@ -46,8 +46,22 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
       defined(undef)  # 3.x => true, 4.x => error
       defined('main') # 3.x => false, 4.x => true
 
+  With the future parser, it is also possible to ask specifically if a name is
+  a resource type (built in or defined), or a class, by giving its type:
+
+      defined(Type[Class['foo']])
+      defined(Type[Resource['foo']])
+
+  Which is different from asking:
+
+      defined('foo')
+
+  Since the later returns true if 'foo' is either a class, a built-in resource type, or a user defined
+  resource type, and a specific request like `Type[Class['foo']]` only returns true if `'foo'` is a class.
+
  - Since 2.7.0
- - Since 3.6.0 variable reference and future parser types") do |vals|
+ - Since 3.6.0 variable reference and future parser types
+ - Since 3.8.1 type specific requests with future parser") do |vals|
     vals = [vals] unless vals.is_a?(Array)
     vals.any? do |val|
       case val

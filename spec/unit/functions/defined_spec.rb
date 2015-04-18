@@ -39,48 +39,214 @@ describe "the 'defined' function" do
     resource
   end
 
-  it "is true when the name is defined as a class" do
-    newclass 'yayness'
-    newresource(:class, 'yayness')
-    expect(func.call(@scope, "yayness")).to be_true
-  end
+  #--- CLASS
+  #
+  context "can determine if a class" do
+    context "is defined" do
 
-  it "is true when the name is defined as a definition" do
-    newdefine "yayness"
-    expect(func.call(@scope, "yayness")).to be_true
-  end
+      it "by using the class name in string form" do
+        newclass 'yayness'
+        expect(func.call(@scope, "yayness")).to be_true
+      end
 
-  it "is true when the name is defined as a builtin type" do
-    expect(func.call(@scope, "file")).to be_true
-  end
-
-  it "is true when any of the provided names are defined" do
-    newdefine "yayness"
-    expect(func.call(@scope, "meh", "yayness", "booness")).to be_true
-  end
-
-  it "is false when a single given name is not defined" do
-    expect(func.call(@scope, "meh")).to be_false
-  end
-
-  it "is false when none of the names are defined" do
-    expect(func.call(@scope, "meh", "yayness", "booness")).to be_false
-  end
-
-  it "is true when a resource reference is provided and the resource is in the catalog" do
-    resource = newresource("file", "/my/file")
-    expect(func.call(@scope, resource)).to be_true
-  end
-
-  context "with string variable references" do
-    it "is true when variable exists in scope" do
-      @scope['x'] = 'something'
-      expect(func.call(@scope, '$x')).to be_true
+      it "by using a Type[Class[name]] type reference" do
+        name = 'yayness'
+        newclass name
+        class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(class_type)
+        expect(func.call(@scope, type_type)).to be_true
+      end
     end
 
-    it "is true when ::variable exists in scope" do
-      @compiler.topscope['x'] = 'something'
-      expect(func.call(@scope, '$::x')).to be_true
+    context "is not defined" do
+      it "by using the class name in string form" do
+        expect(func.call(@scope, "yayness")).to be_false
+      end
+
+      it "even if there is a define, by using a Type[Class[name]] type reference" do
+        name = 'yayness'
+        newdefine name
+        class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(class_type)
+        expect(func.call(@scope, type_type)).to be_false
+      end
+    end
+
+    context "is defined and realized" do
+      it "by using a Class[name] reference" do
+        name = "cowabunga"
+        newclass name
+        newresource(:class, name)
+        class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+        expect(func.call(@scope, class_type)).to be_true
+      end
+    end
+
+    context "is not realized" do
+      it "(although defined) by using a Class[name] reference" do
+        name = "cowabunga"
+        newclass name
+        class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+        expect(func.call(@scope, class_type)).to be_false
+      end
+
+      it "(and not defined) by using a Class[name] reference" do
+        name = "cowabunga"
+        class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
+        expect(func.call(@scope, class_type)).to be_false
+      end
+    end
+  end
+
+  #---RESOURCE TYPE
+  #
+  context "can determine if a resource type" do
+    context "is defined" do
+
+      it "by using the type name (of a built in type) in string form" do
+        expect(func.call(@scope, "file")).to be_true
+      end
+
+      it "by using the type name (of a resource type) in string form" do
+        newdefine 'yayness'
+        expect(func.call(@scope, "yayness")).to be_true
+      end
+
+      it "by using a File type reference (built in type)" do
+        resource_type = Puppet::Pops::Types::TypeFactory.resource('file')
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_true
+      end
+
+      it "by using a Type[File] type reference" do
+        resource_type = Puppet::Pops::Types::TypeFactory.resource('file')
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_true
+      end
+
+      it "by using a Resource[T] type reference (defined type)" do
+        name = 'yayness'
+        newdefine name
+        resource_type = Puppet::Pops::Types::TypeFactory.resource(name)
+        expect(func.call(@scope, resource_type)).to be_true
+      end
+
+      it "by using a Type[Resource[T]] type reference (defined type)" do
+        name = 'yayness'
+        newdefine name
+        resource_type = Puppet::Pops::Types::TypeFactory.resource(name)
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_true
+      end
+    end
+
+    context "is not defined" do
+      it "by using the resource name in string form" do
+        expect(func.call(@scope, "notatype")).to be_false
+      end
+
+      it "even if there is a class with the same name, by using a Type[Resource[T]] type reference" do
+        name = 'yayness'
+        newclass name
+        resource_type = Puppet::Pops::Types::TypeFactory.resource(name)
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_false
+      end
+    end
+
+    context "is defined and instance realized" do
+      it "by using a Resource[T, title] reference for a built in type" do
+        type_name = 'file'
+        title = '/tmp/myfile'
+        newdefine type_name
+        newresource(type_name, title)
+        class_type = Puppet::Pops::Types::TypeFactory.resource(type_name, title)
+        expect(func.call(@scope, class_type)).to be_true
+      end
+
+      it "by using a Resource[T, title] reference for a defined type" do
+        type_name = 'meme'
+        title = 'cowabunga'
+        newdefine type_name
+        newresource(type_name, title)
+        class_type = Puppet::Pops::Types::TypeFactory.resource(type_name, title)
+        expect(func.call(@scope, class_type)).to be_true
+      end
+    end
+
+    context "is not realized" do
+      it "(although defined) by using a Resource[T, title] reference or Type[Resource[T, title]] reference" do
+        type_name = 'meme'
+        title = "cowabunga"
+        newdefine type_name
+        resource_type = Puppet::Pops::Types::TypeFactory.resource(type_name, title)
+        expect(func.call(@scope, resource_type)).to be_false
+
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_false
+      end
+
+      it "(and not defined) by using a Resource[T, title] reference or Type[Resource[T, title]] reference" do
+        type_name = 'meme'
+        title = "cowabunga"
+        resource_type = Puppet::Pops::Types::TypeFactory.resource(type_name, title)
+        expect(func.call(@scope, resource_type)).to be_false
+
+        type_type = Puppet::Pops::Types::TypeFactory.type_type(resource_type)
+        expect(func.call(@scope, type_type)).to be_false
+      end
+    end
+  end
+
+  #---VARIABLES
+  #
+  context "can determine if a variable" do
+    context "is defined" do
+      it "by giving the variable in string form" do
+        @scope['x'] = 'something'
+        expect(func.call(@scope, '$x')).to be_true
+      end
+
+      it "by giving a :: prefixed variable in string form" do
+        @compiler.topscope['x'] = 'something'
+        expect(func.call(@scope, '$::x')).to be_true
+      end
+
+      it "by giving a numeric variable in string form (when there is a match scope)" do
+        # with no match scope, there are no numeric variables defined
+        expect(func.call(@scope, '$0')).to be_false
+        expect(func.call(@scope, '$42')).to be_false
+        pattern = Regexp.new(".*")
+        @scope.new_match_scope(pattern.match("anything"))
+
+        # with a match scope, all numeric variables are set (the match defines if they have a value or not, but they are defined)
+        # even if their value is undef.
+        expect(func.call(@scope, '$0')).to be_true
+        expect(func.call(@scope, '$42')).to be_true
+      end
+    end
+
+    context "is undefined" do
+      it "by giving a :: prefixed or regular variable in string form" do
+        expect(func.call(@scope, '$x')).to be_false
+        expect(func.call(@scope, '$::x')).to be_false
+      end
+    end
+  end
+
+  context "has any? semantics when given multiple arguments" do
+    it "and one of the names is a defined user defined type" do
+      newdefine "yayness"
+      expect(func.call(@scope, "meh", "yayness", "booness")).to be_true
+    end
+
+    it "and one of the names is a built type" do
+      expect(func.call(@scope, "meh", "file", "booness")).to be_true
+    end
+
+    it "and one of the names is a defined class" do
+      newclass "yayness"
+      expect(func.call(@scope, "meh", "yayness", "booness")).to be_true
     end
 
     it "is true when at least one variable exists in scope" do
@@ -88,51 +254,14 @@ describe "the 'defined' function" do
       expect(func.call(@scope, '$y', '$x', '$z')).to be_true
     end
 
-    it "is false when variable does not exist in scope" do
-      expect(func.call(@scope, '$x')).to be_false
+    it "is false when none of the names are defined" do
+      expect(func.call(@scope, "meh", "yayness", "booness")).to be_false
     end
   end
 
-  it "is true when a future resource type reference is provided, and the resource is in the catalog" do
-    resource = newresource("file", "/my/file")
-    resource_type = Puppet::Pops::Types::TypeFactory.resource('file', '/my/file')
-    expect(func.call(@scope, resource_type)).to be_true
-  end
-
-  it "raises an argument error if you ask if Resource is defined" do
+  it "raises an argument error when asking if Resource type is defined" do
     resource_type = Puppet::Pops::Types::TypeFactory.resource
     expect { func.call(@scope, resource_type)}.to raise_error(ArgumentError, /reference to all.*type/)
-  end
-
-  it "is true if referencing a built in type" do
-    resource_type = Puppet::Pops::Types::TypeFactory.resource('file')
-    expect(func.call(@scope, resource_type)).to be_true
-  end
-
-  it "is true if referencing a defined type" do
-    @scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "yayness")
-    resource_type = Puppet::Pops::Types::TypeFactory.resource('yayness')
-    expect(func.call(@scope, resource_type)).to be_true
-  end
-
-  it "is false if referencing an undefined type" do
-    resource_type = Puppet::Pops::Types::TypeFactory.resource('barbershops')
-    expect(func.call(@scope, resource_type)).to be_false
-  end
-
-  it "is true when a future class reference type is provided (and class is included)" do
-    name = "cowabunga"
-    newclass name
-    newresource(:class, name)
-    class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
-    expect(func.call(@scope, class_type)).to be_true
-  end
-
-  it "is false when a future class reference type is provided (and class is not included)" do
-    name = "cowabunga"
-    newclass name
-    class_type = Puppet::Pops::Types::TypeFactory.host_class(name)
-    expect(func.call(@scope, class_type)).to be_false
   end
 
   it "raises an argument error if you ask if Class is defined" do
@@ -141,7 +270,11 @@ describe "the 'defined' function" do
   end
 
   it "raises error if referencing undef" do
-  expect{func.call(@scope, nil)}.to raise_error(ArgumentError, /mis-matched arguments/)
+    expect{func.call(@scope, nil)}.to raise_error(ArgumentError, /mis-matched arguments/)
+  end
+
+  it "raises error if referencing a number" do
+    expect{func.call(@scope, 42)}.to raise_error(ArgumentError, /mis-matched arguments/)
   end
 
   it "is false if referencing empty string" do

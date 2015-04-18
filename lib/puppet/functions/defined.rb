@@ -16,7 +16,8 @@
 #     defined('$name')
 #
 # Resource declarations are checked using resource references, e.g.
-# `defined( File['/tmp/myfile'] )`. Checking whether a given resource
+# `defined( File['/tmp/myfile'] )`, or `defined( Class[myclass] )`.
+# Checking whether a given resource
 # has been declared is, unfortunately, dependent on the evaluation order of
 # the configuration, and the following code will not work:
 #
@@ -31,26 +32,41 @@
 # resources in the configuration graph (e.g. with `before` or `require`) does not
 # affect the behavior of `defined`.
 #
-# If the future parser is in effect, you may also search using types:
+# You may also search using types:
 #
 #     defined(Resource['file','/some/file'])
 #     defined(File['/some/file'])
 #     defined(Class['foo'])
 #
-# When used with the future parser (4.x), the `defined` function does not answer if data
-# types (e.g. `Integer`) are defined, and the rules for asking for undef, empty strings, and
-# the main class are different:
+# The `defined` function does not answer if data types (e.g. `Integer`) are defined.
+#
+# The rules for asking for undef, empty strings, and the main class are different from 3.x
+# (non future parser) and 4.x (with future parser or in Puppet 4.0.0 and later):
 #
 #     defined('')     # 3.x => true,  4.x => false
 #     defined(undef)  # 3.x => true,  4.x => error
 #     defined('main') # 3.x => false, 4.x => true
 #
+# With the future parser, it is also possible to ask specifically if a name is
+# a resource type (built in or defined), or a class, by giving its type:
+#
+#     defined(Type[Class['foo']])
+#     defined(Type[Resource['foo']])
+#
+# Which is different from asking:
+# 
+#     defined('foo')
+#
+# Since the later returns true if 'foo' is either a class, a built-in resource type, or a user defined
+# resource type, and a specific request like `Type[Class['foo']]` only returns true if `'foo'` is a class.
+#
 # @since 2.7.0
 # @since 3.6.0 variable reference and future parser types")
+# @since 3.8.1 type specific requests with future parser
 #
 Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunction) do
 
-  ARG_TYPE = 'Variant[String,Type[CatalogEntry]]'
+  ARG_TYPE = 'Variant[String,Type[CatalogEntry], Type[Type[CatalogEntry]]]'
 
   dispatch :is_defined do
     scope_param
@@ -69,12 +85,16 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           when ''
             next nil
           when 'main'
-            scope.compiler.findresource(:class, '') # scope.find_hostclass('')
+            # Find the main class (known as ''), it does not have to be in the catalog
+            scope.find_hostclass('') # scope.find_hostclass('')
           else
-            scope.find_resource_type(val) || scope.find_definition(val) || scope.compiler.findresource(:class, val)
+            # Find a resource type, definition or class definition
+            scope.find_resource_type(val) || scope.find_definition(val) || scope.find_hostclass(val)
+            #scope.compiler.findresource(:class, val)
           end
         end
       when Puppet::Resource
+        # Find instance of given resource type and title that is in the catalog
         scope.compiler.findresource(val.type, val.title)
 
       when Puppet::Pops::Types::PResourceType
@@ -89,6 +109,20 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         raise  ArgumentError, "The given class type is a reference to all classes" if val.class_name.nil?
         scope.compiler.findresource(:class, val.class_name)
 
+      when Puppet::Pops::Types::PType
+        case val.type
+        when Puppet::Pops::Types::PResourceType
+          # It is most reasonable to take Type[File] and Type[File[foo]] to mean the same as if not wrapped in a Type
+          # Since the difference between File and File[foo] already captures the distinction of type vs instance.
+          is_defined(scope, val.type)
+
+        when Puppet::Pops::Types::PHostClassType
+          # Interpreted as asking if a class (and nothing else) is defined without having to be included in the catalog
+          # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
+          #
+          raise  ArgumentError, "The given class type is a reference to all classes" if val.type.class_name.nil?
+          scope.find_hostclass(val.type.class_name)
+        end
       else
         raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"
       end
