@@ -185,17 +185,22 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::SSL::Host.ca_location = :only if Puppet::SSL::CertificateAuthority.ca?
 
     if Puppet.features.root?
-      begin
-        Puppet::Util.chuser
-      rescue => detail
-        Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
-        exit(39)
+      if Puppet::Type.type(:user).new(:name => Puppet[:user]).exists?
+        begin
+          Puppet::Util.chuser
+        rescue => detail
+          Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
+          exit(39)
+        end
+      else
+        raise Puppet::Error.new("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.")
       end
     end
 
     if options[:rack]
       start_rack_master
     else
+      Puppet.deprecation_warning("The WEBrick Puppet master server is deprecated and will be removed in a future release.")
       start_webrick_master
     end
   end

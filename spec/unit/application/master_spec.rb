@@ -314,10 +314,36 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         @master.main
       end
 
-      it "should drop privileges if running as root" do
-        Puppet.features.stubs(:root?).returns true
+      def a_user_type_for(username)
+        user = mock 'user'
+        Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == username }.returns user
+        user
+      end
 
+      context "user privileges" do
+        it "should drop privileges if running as root and the puppet user exists" do
+          Puppet.features.stubs(:root?).returns true
+          a_user_type_for("puppet").expects(:exists?).returns true
+
+          Puppet::Util.expects(:chuser)
+
+          @master.main
+        end
+
+        it "should exit and log an error if running as root and the puppet user does not exist" do
+          Puppet.features.stubs(:root?).returns true
+          a_user_type_for("puppet").expects(:exists?).returns false
+
+          expect { @master.main }.to raise_error(Puppet::Error, /Could not change user to puppet\. User does not exist and is required to continue\./)
+        end
+      end
+
+      it "should log a deprecation notice when running a WEBrick server" do
+        Puppet.features.stubs(:root?).returns true
+        a_user_type_for("puppet").expects(:exists?).returns true
         Puppet::Util.expects(:chuser)
+
+        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release.")
 
         @master.main
       end
