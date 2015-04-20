@@ -222,7 +222,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     else
       values = [values] unless values.is_a?(Array)
       if values.size != lvalues.size
-        fail(Issues::ILLEGL_MULTI_ASSIGNMENT_SIZE, o, :expected =>lvalues.size, :actual => values.size)
+        fail(Issues::ILLEGAL_MULTI_ASSIGNMENT_SIZE, o, :expected =>lvalues.size, :actual => values.size)
       end
       lvalues.zip(values).map { |lval, val| assign(lval, val, o, scope) }
     end

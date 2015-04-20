@@ -194,7 +194,7 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
-  ILLEGL_MULTI_ASSIGNMENT_SIZE = hard_issue :ILLEGL_MULTI_ASSIGNMENT_SIZE, :expected, :actual do
+  ILLEGAL_MULTI_ASSIGNMENT_SIZE = hard_issue :ILLEGAL_MULTI_ASSIGNMENT_SIZE, :expected, :actual do
     "Mismatched number of assignable entries and values, expected #{expected}, got #{actual}"
   end
 
