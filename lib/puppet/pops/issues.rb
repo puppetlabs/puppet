@@ -198,6 +198,10 @@ module Puppet::Pops::Issues
     "Mismatched number of assignable entries and values, expected #{expected}, got #{actual}"
   end
 
+  MISSING_MULTI_ASSIGNMENT_KEY = hard_issue :MISSING_MULTI_ASSIGNMENT_KEY, :key do
+    "No value for required key '#{key}' in assignment to variables from hash"
+  end
+
   APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
     "The operator '#{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals"
   end

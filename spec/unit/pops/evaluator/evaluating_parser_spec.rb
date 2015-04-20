@@ -437,6 +437,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[$a] = [1] $a"                            => 1,
       "[$a, $b] = [1,2] $a+$b"                   => 3,
       "[$a, [$b, $c]] = [1,[2, 3]] $a+$b+$c"     => 6,
+      "[$a] = {a => 1} $a"                       => 1,
+      "[$a, $b] = {a=>1,b=>2} $a+$b"             => 3,
+      "[$a, [$b, $c]] = {a=>1,[b,c] =>{b=>2, c=>3}} $a+$b+$c"     => 6,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
@@ -450,6 +453,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[$a, $b] = [1,2,3]",
       "[$a, [$b,$c]] = [1,[2]]",
       "[$a, [$b,$c]] = [1,[2,3,4]]",
+      "[$a, $b] = {a=>1}",
+      "[$a, [$b, $c]] = {a=>1, b =>{b=>2, c=>3}}",
     ].each do |source|
         it "should parse and evaluate the expression '#{source}' to error" do
           expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError)
