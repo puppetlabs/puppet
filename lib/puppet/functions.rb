@@ -331,6 +331,23 @@ module Puppet::Functions
       internal_param(type, name)
       @max = :default
     end
+    alias optional_repeated_param repeated_param
+
+    # Defines a repeated positional parameter with _type_ and _name_ that may occur 1 to "infinite" number of times.
+    # It may only appear last or just before a block parameter.
+    #
+    # @param type [String] The type specification for the parameter.
+    # @param name [Symbol] The name of the parameter. This is primarily used
+    #   for error message output and does not have to match an implementation
+    #   method parameter.
+    # @return [Void]
+    #
+    # @api public
+    def required_repeated_param(type, name)
+      internal_param(type, name)
+      @min += 1
+      @max = :default
+    end
 
     # Defines one required block parameter that may appear last. If type and name is missing the
     # default type is "Callable", and the name is "block". If only one

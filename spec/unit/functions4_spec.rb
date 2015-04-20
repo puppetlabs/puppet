@@ -177,7 +177,7 @@ actual:
     end
 
     it 'an error includes optional indicators and count for last element when defined via dispatch' do
-      f = create_function_with_optionals_and_varargs_via_dispatch()
+      f = create_function_with_optionals_and_repeated_via_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_true
@@ -189,6 +189,33 @@ expected:
   min(Numeric x, Numeric y, Numeric a?, Numeric b?, Numeric c{0,}) - arg count {2,}
 actual:
   min(Integer) - arg count {1}")
+    end
+
+    it 'can create optional repeated parameter' do
+      f = create_function_with_repeated
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({})).to eql(0)
+      expect(func.call({}, 1)).to eql(1)
+      expect(func.call({}, 1, 2)).to eql(2)
+
+      f = create_function_with_optional_repeated
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({})).to eql(0)
+      expect(func.call({}, 1)).to eql(1)
+      expect(func.call({}, 1, 2)).to eql(2)
+    end
+
+    it 'can create required repeated parameter' do
+      f = create_function_with_required_repeated
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 1)).to eql(1)
+      expect(func.call({}, 1, 2)).to eql(2)
+      expect { func.call({}) }.to raise_error(ArgumentError,
+"function 'count_args' called with mis-matched arguments
+expected:
+  count_args(Any c{1,}) - arg count {1,}
+actual:
+  count_args(Undef{0}) - arg count {0}")
     end
 
     it 'a function can use inexact argument mapping' do
@@ -563,7 +590,7 @@ actual:
     end
   end
 
-  def create_function_with_optionals_and_varargs_via_dispatch
+  def create_function_with_optionals_and_repeated_via_dispatch
     f = Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
@@ -574,6 +601,39 @@ actual:
       end
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_repeated
+    f = Puppet::Functions.create_function('count_args') do
+      dispatch :count_args do
+        repeated_param 'Any', :c
+      end
+      def count_args(*c)
+        c.size
+      end
+    end
+  end
+
+  def create_function_with_optional_repeated
+    f = Puppet::Functions.create_function('count_args') do
+      dispatch :count_args do
+        optional_repeated_param 'Any', :c
+      end
+      def count_args(*c)
+        c.size
+      end
+    end
+  end
+
+  def create_function_with_required_repeated
+    f = Puppet::Functions.create_function('count_args') do
+      dispatch :count_args do
+        required_repeated_param 'Any', :c
+      end
+      def count_args(*c)
+        c.size
       end
     end
   end
