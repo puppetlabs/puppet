@@ -71,6 +71,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3] != [1,2,3]"                              => false,
       "[1,2,3][2]"                                      => 3,
       "[1,2,3] + [4,5]"                                 => [1,2,3,4,5],
+      "[1,2,3, *[4,5]]"                                 => [1,2,3,4,5],
+      "[1,2,3, (*[4,5])]"                               => [1,2,3,4,5],
+      "[1,2,3, ((*[4,5]))]"                             => [1,2,3,4,5],
       "[1,2,3] + [[4,5]]"                               => [1,2,3,[4,5]],
       "[1,2,3] + 4"                                     => [1,2,3,4],
       "[1,2,3] << [4,5]"                                => [1,2,3,[4,5]],
@@ -494,6 +497,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "case ringo {
          *[paul, john, ringo, george] : { 'beatle' } }"      => 'beatle',
 
+      "case ringo {
+         (*[paul, john, ringo, george]) : { 'beatle' } }"    => 'beatle',
+
       "case undef {
          undef : { 'yes' } }"                                => 'yes',
 
@@ -528,6 +534,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'banana' ? { /.*(ana).*/  => $1 }"                 => 'ana',
       "[2] ? { Array[String] => yes, Array => yes}"       => 'yes',
       "ringo ? *[paul, john, ringo, george] => 'beatle'"  => 'beatle',
+      "ringo ? (*[paul, john, ringo, george]) => 'beatle'"=> 'beatle',
       "undef ? undef => 'yes'"                            => 'yes',
       "undef ? {*undef => 'no', default => 'yes'}"        => 'yes',
 
@@ -910,6 +917,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       'sprintf( "x%iy", $a )'                 => "x10y",
       # unfolds
       'sprintf( *["x%iy", $a] )'              => "x10y",
+      '( *["x%iy", $a] ).sprintf'             => "x10y",
+      '((*["x%iy", $a])).sprintf'             => "x10y",
       '"x%iy".sprintf( $a )'                  => "x10y",
       '$b.reduce |$memo,$x| { $memo + $x }'   => 6,
       'reduce($b) |$memo,$x| { $memo + $x }'  => 6,
