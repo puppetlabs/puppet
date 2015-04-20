@@ -41,6 +41,7 @@ module Puppet
     require 'puppet/pops/types/type_parser'
     require 'puppet/pops/types/class_loader'
     require 'puppet/pops/types/enumeration'
+    require 'puppet/pops/types/type_mismatch_describer'
 
     require 'puppet/pops/merge_strategy'
 
@@ -89,7 +90,6 @@ module Puppet
       require 'puppet/pops/evaluator/runtime3_support'
       require 'puppet/pops/evaluator/evaluator_impl'
       require 'puppet/pops/evaluator/epp_evaluator'
-      require 'puppet/pops/evaluator/callable_mismatch_describer'
       require 'puppet/pops/evaluator/collector_transformer'
       require 'puppet/pops/evaluator/puppet_proc'
       module Collectors

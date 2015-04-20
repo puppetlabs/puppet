@@ -106,6 +106,14 @@ module Puppet::Pops
 
       alias eql? ==
 
+      # Strips the class name from all module prefixes, the leading 'P' and the ending 'Type'. I.e.
+      # an instance of Puppet::Pops::Types::PVariantType will return 'Variant'
+      # @return [String] the simple name of this type
+      def simple_name
+        n = self.class.name
+        n[n.rindex('::')+3..n.size-5]
+      end
+
       def to_s
         Puppet::Pops::Types::TypeCalculator.string(self)
       end
@@ -197,6 +205,11 @@ module Puppet::Pops
 
       def ==(o)
         self.class == o.class && @type == o.type
+      end
+
+      def simple_name
+        # since this the class is inconsistently named PType and not PTypeType
+        'Type'
       end
 
       DEFAULT = PType.new(nil)
@@ -1035,7 +1048,6 @@ module Puppet::Pops
           end
         elsif o.is_a?(PArrayType)
           o_entry = o.element_type
-
           # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
           # was handled at the top of this method.
           #

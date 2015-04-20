@@ -78,7 +78,7 @@ describe "Parameter passing" do
   end
 
   it "errors when no parameter is provided and there is no default" do
-    expect_puppet_error(/^Must pass 'x' to A\[a\].*/) do <<-MANIFEST
+    expect_puppet_error(/A\[a\]: expects a value for parameter 'x'/) do <<-MANIFEST
         define a($x) { notify { 'something': message => $x }}
         a {'a': }
     MANIFEST

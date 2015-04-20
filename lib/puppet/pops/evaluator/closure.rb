@@ -27,7 +27,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   def call(*args)
     variable_bindings = combine_values_with_parameters(args)
 
-    tc = Puppet::Pops::Types::TypeCalculator
+    tc = Puppet::Pops::Types::TypeCalculator.singleton
     final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
       if param.captures_rest
         tmp_args.concat(variable_bindings[param.name])
@@ -36,10 +36,10 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       end
     end)
 
-    if tc.callable?(type, final_args)
+    if type.callable?(final_args)
       @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
     else
-      raise ArgumentError, "#{closure_name} called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string(closure_name, final_args, [self])}"
+      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
     end
   end
 
@@ -78,10 +78,10 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:name).join(" ,")}"
       end
 
-      tc = Puppet::Pops::Types::TypeCalculator
+      tc = Puppet::Pops::Types::TypeCalculator.singleton
       final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
-      if !tc.callable?(type, final_args)
-        raise ArgumentError, "#{closure_name} called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string(closure_name, final_args, [self])}"
+      if !type.callable?(final_args)
+        raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
       end
     else
       scope_hash = args_hash
@@ -199,7 +199,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       type = if param.type_expr
                @evaluator.evaluate(param.type_expr, @enclosing_scope)
              else
-               Puppet::Pops::Types::TypeFactory.any()
+               Puppet::Pops::Types::PAnyType::DEFAULT
              end
 
       if param.captures_rest && type.is_a?(Puppet::Pops::Types::PArrayType)
