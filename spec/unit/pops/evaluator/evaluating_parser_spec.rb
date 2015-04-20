@@ -526,6 +526,36 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
          }       : { 'yes' }
          default : { 'no' }}"                               => 'yes',
 
+      "case 1 {
+         |$x| { $x == 1 } : { yes }
+         default : { no }
+       }"                                                    => 'yes',
+
+      "case [1] {
+         |$x| { $x == 1 } : { yes }
+         default : { no }
+       }"                                                    => 'yes',
+
+      "case [1,2] {
+         |$x,$y| { $x < $y } : { yes }
+         default : { no }
+       }"                                                    => 'yes',
+
+      "case [2,1] {
+         |$x,$y| { $x < $y } : { yes }
+         default : { no }
+       }"                                                    => 'no',
+
+      "case [2,2] {
+         |$x,$y| { $x < $y },
+         |$x,$y| { $x == $y } : { yes }
+         default : { no }
+       }"                                                    => 'yes',
+
+      "case [1,2,3] {
+         |*$x| { $x.reduce |$a,$b| {$a+$b} == 6 } : { yes }
+         default : { no }
+       }"                                                    => 'yes',
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)

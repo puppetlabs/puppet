@@ -386,9 +386,17 @@ case_expression
 
   # Produced Model::CaseOption (aka When)
   case_option
-    : expressions COLON LBRACE options_statements RBRACE {
+    : option_expressions COLON LBRACE options_statements RBRACE {
         result = Factory.WHEN(val[0], val[3]); loc result, val[1], val[4]
       }
+
+  option_expressions
+    : option_expression                          { result = [val[0]] }
+    | option_expressions COMMA option_expression { result = val[0].push(val[2]) }
+
+  option_expression
+    : expression
+    | lambda
 
   options_statements
     : nil
