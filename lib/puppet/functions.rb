@@ -328,6 +328,7 @@ module Puppet::Functions
     # @api public
     def required_repeated_param(type, name)
       internal_param(type, name)
+      raise ArgumentError, 'A required repeated parameter cannot be added after an optional parameter' if @min != @max
       @min += 1
       @max = :default
     end
