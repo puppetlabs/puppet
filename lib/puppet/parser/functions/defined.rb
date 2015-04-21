@@ -38,9 +38,12 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
       defined(File[\'/some/file\'])
       defined(Class[\'foo\'])
 
-  When used with the future parser (4.x), the `defined` function does not answer if data
-  types (e.g. `Integer`) are defined, and the rules for asking for undef, empty strings, and
-  the main class are different:
+  The `defined` function does not answer if 4.x data types (e.g. `Integer`) are defined. If
+  given the string 'integer' the result is false, and if given a non CatalogEntry type,
+  an error is raised.
+
+  The rules for asking for undef, empty strings, and the main class are different from 3.x
+  (non future parser) and 4.x (with future parser or in Puppet 4.0.0 and later):
 
       defined('')     # 3.x => true, 4.x => false
       defined(undef)  # 3.x => true, 4.x => error

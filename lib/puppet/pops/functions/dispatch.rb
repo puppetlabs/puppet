@@ -72,7 +72,7 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
           # Careful so no new nil arguments are added since they would override default
           # parameter values in the received
           if knit < 0
-            idx = -knit -1
+            idx = -knit - 1
             new_args += args[idx..-1] if idx < args.size
           else
             new_args << args[knit] if knit < args.size

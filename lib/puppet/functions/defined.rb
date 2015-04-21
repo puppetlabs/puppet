@@ -38,7 +38,9 @@
 #     defined(File['/some/file'])
 #     defined(Class['foo'])
 #
-# The `defined` function does not answer if data types (e.g. `Integer`) are defined.
+# The `defined` function does not answer if data types (e.g. `Integer`) are defined. If
+# given the string 'integer' the result is false, and if given a non CatalogEntry type,
+# an error is raised.
 #
 # The rules for asking for undef, empty strings, and the main class are different from 3.x
 # (non future parser) and 4.x (with future parser or in Puppet 4.0.0 and later):
@@ -70,22 +72,22 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
 
   dispatch :is_defined do
     scope_param
-    optional_repeated_param ARG_TYPE, 'additional_args'
+    required_repeated_param ARG_TYPE, 'additional_args'
   end
 
   def is_defined(scope, *vals)
     vals.any? do |val|
       case val
       when String
-        if m = /^\$(.+)$/.match(val)
-          scope.exist?(m[1])
+        if val =~ /^\$(.+)$/
+          scope.exist?($1)
         else
           case val
           when ''
             next nil
           when 'main'
             # Find the main class (known as ''), it does not have to be in the catalog
-            scope.find_hostclass('') # scope.find_hostclass('')
+            scope.find_hostclass('')
           else
             # Find a resource type, definition or class definition
             scope.find_resource_type(val) || scope.find_definition(val) || scope.find_hostclass(val)
@@ -97,7 +99,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         scope.compiler.findresource(val.type, val.title)
 
       when Puppet::Pops::Types::PResourceType
-        raise ArgumentError, "The given resource type is a reference to all kind of types" if val.type_name.nil?
+        raise ArgumentError, 'The given resource type is a reference to all kind of types' if val.type_name.nil?
         if val.title.nil?
           scope.find_builtin_resource_type(val.type_name) || scope.find_definition(val.type_name)
         else
@@ -105,7 +107,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         end
 
       when Puppet::Pops::Types::PHostClassType
-        raise  ArgumentError, "The given class type is a reference to all classes" if val.class_name.nil?
+        raise  ArgumentError, 'The given class type is a reference to all classes' if val.class_name.nil?
         scope.compiler.findresource(:class, val.class_name)
 
       when Puppet::Pops::Types::PType
@@ -119,7 +121,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           # Interpreted as asking if a class (and nothing else) is defined without having to be included in the catalog
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
-          raise  ArgumentError, "The given class type is a reference to all classes" if val.type.class_name.nil?
+          raise  ArgumentError, 'The given class type is a reference to all classes' if val.type.class_name.nil?
           scope.find_hostclass(val.type.class_name)
         end
       else
