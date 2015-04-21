@@ -32,7 +32,6 @@ class Puppet::Provider::Package::Windows
     def self.valid?(name, values)
       # See http://community.spiceworks.com/how_to/show/2238
       !!(values['DisplayName'] and values['DisplayName'].length > 0 and
-         values['SystemComponent'] != 1 and # DWORD
          values['WindowsInstaller'] == 1 and # DWORD
          name =~ /\A\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}\Z/i)
     end

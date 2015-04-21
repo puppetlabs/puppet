@@ -20,7 +20,6 @@ class Puppet::Provider::Package::Windows
       # See http://community.spiceworks.com/how_to/show/2238
       !!(values['DisplayName'] and values['DisplayName'].length > 0 and
          values['UninstallString'] and values['UninstallString'].length > 0 and
-         values['SystemComponent'] != 1 and # DWORD
          values['WindowsInstaller'] != 1 and # DWORD
          name !~ /^KB[0-9]{6}/ and
          values['ParentKeyName'] == nil and
