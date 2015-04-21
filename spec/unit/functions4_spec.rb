@@ -240,6 +240,10 @@ actual:
       expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
     end
 
+    it 'a function can not be created with required repeated parameters declared after optional ones' do
+      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError, 'A required repeated parameter cannot be added after an optional parameter')
+    end
+
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
       f = create_min_function_class_disptaching_to_two_methods()
       # TODO: Bogus parameters, not yet used
@@ -663,6 +667,18 @@ actual:
         param 'Numeric', :y
       end
       def t1(*x)
+        x
+      end
+    end
+  end
+
+  def create_function_with_rq_repeated_after_opt
+    f = Puppet::Functions.create_function('t1') do
+      dispatch :t1 do
+        optional_param 'Numeric', :x
+        required_repeated_param 'Numeric', :y
+      end
+      def t1(x, *y)
         x
       end
     end
