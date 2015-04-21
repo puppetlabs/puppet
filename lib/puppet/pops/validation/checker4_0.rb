@@ -558,7 +558,7 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def hostname_Object(o, semantic)
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=> single_feature_name || 'hostname', :container=>semantic})
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature => 'hostname', :container => semantic})
   end
 
   #---QUERY CHECKS
