@@ -328,7 +328,7 @@ module Puppet::Functions
     #
     # @api public
     def repeated_param(type, name)
-      internal_param(type, name)
+      internal_param(type, name, true)
       @max = :default
     end
     alias optional_repeated_param repeated_param
@@ -344,7 +344,7 @@ module Puppet::Functions
     #
     # @api public
     def required_repeated_param(type, name)
-      internal_param(type, name)
+      internal_param(type, name, true)
       raise ArgumentError, 'A required repeated parameter cannot be added after an optional parameter' if @min != @max
       @min += 1
       @max = :default
@@ -403,14 +403,18 @@ module Puppet::Functions
     private
 
     # @api private
-    def internal_param(type, name)
+    def internal_param(type, name, repeat = false)
       raise ArgumentError, 'Parameters cannot be added after a block parameter' unless @block_type.nil?
       raise ArgumentError, 'Parameters cannot be added after a repeated parameter' if @max == :default
       if type.is_a?(String)
         @types << type
         @names << name
         # mark what should be picked for this position when dispatching
-        @weaving << @names.size()-1
+        if repeat
+          @weaving << -@names.size()
+        else
+          @weaving << @names.size()-1
+        end
       else
         raise ArgumentError, "Parameter 'type' must be a String reference to a Puppet Data Type. Got #{type.class}"
       end
