@@ -72,7 +72,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
 
   dispatch :is_defined do
     scope_param
-    required_repeated_param ARG_TYPE, 'additional_args'
+    required_repeated_param ARG_TYPE, :vals
   end
 
   def is_defined(scope, *vals)

@@ -768,8 +768,8 @@ actual:
     f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       dispatch :test do
         scope_param
-        param 'Any', 'extra'
-        repeated_param 'Any', 'the_block'
+        param 'Any', :extra
+        repeated_param 'Any', :the_block
       end
       def test(scope, *args)
         [scope, *args]
