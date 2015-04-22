@@ -1293,9 +1293,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it "parses interpolated heredoc expression" do
       src = <<-CODE
-      $name = 'Fjodor'
+      $pname = 'Fjodor'
       @("END")
-      Hello $name
+      Hello $pname
       |- END
       CODE
       expect(parser.evaluate_string(scope, src)).to eq("Hello Fjodor")
@@ -1363,8 +1363,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'for a hostname with interpolation' do
       source = <<-SOURCE.gsub(/^ {6}/,'')
-      $name = 'fred'
-      node "macbook-owned-by$name" { }
+      $pname = 'fred'
+      node "macbook-owned-by$pname" { }
       SOURCE
       expect {
         parser.parse_string(source, nil)

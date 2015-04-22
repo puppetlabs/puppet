@@ -115,9 +115,9 @@ class Puppet::Pops::Validation::Checker4_0
         acceptor.accept(Issues::CROSS_SCOPE_ASSIGNMENT, o, :name => varname_string)
       end
     end
+
     # TODO: Could scan for reassignment of the same variable if done earlier in the same container
     #       Or if assigning to a parameter (more work).
-    # TODO: Investigate if there are invalid cases for += assignment
   end
 
   def assign_AccessExpression(o, via_index)
