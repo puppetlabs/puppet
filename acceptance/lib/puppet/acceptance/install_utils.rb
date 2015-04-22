@@ -10,6 +10,7 @@ module Puppet
         :redhat        => /fedora|el|centos/,
         :debian        => /debian|ubuntu/,
         :debian_ruby18 => /debian|ubuntu-lucid|ubuntu-precise/,
+        :sles          => /sles/,
         :solaris_10    => /solaris-10/,
         :solaris_11    => /solaris-11/,
         :windows       => /windows/,
@@ -130,6 +131,12 @@ module Puppet
           version = $2
           arch = $3
 
+          # install repo so deps can be fulfilled when required
+          # todo: this should be moved outside of here so we don't reinstall with each repos installed
+          puppetlabs_repo_url = "http://yum.puppetlabs.com/puppetlabs-release-%s-%s.noarch.rpm" % [variant, version]
+          on host, "rpm -Uvh --force #{puppetlabs_repo_url}"
+
+          # grab the repo for SHA of project
           repo_filename = "pl-%s%s-%s-%s%s-%s.repo" % [
             project,
             sha ? '-' + sha : '',
@@ -145,6 +152,14 @@ module Puppet
           variant = $1
           version = $2
           arch = $3
+
+          # install repo so deps can be fulfilled when required
+          # todo: this should be moved outside of here so we don't reinstall with each repos installed
+          deb_filename = "puppetlabs-release-#{version}.deb"
+          puppetlabs_repo_url = "http://apt.puppetlabs.com/#{deb_filename}"
+          puppetlabs_repo_path = "/tmp/#{deb_filename}"
+          on host, "curl -o #{puppetlabs_repo_path} #{puppetlabs_repo_url}"
+          on host, "dpkg -i --force-all #{puppetlabs_repo_path}"
 
           list_filename = "pl-%s%s-%s.list" % [
             project,
