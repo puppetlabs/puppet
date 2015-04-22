@@ -162,11 +162,16 @@ module Puppet::Pops::Issues
 
   # Variables are immutable, cannot reassign in the same assignment scope
   ILLEGAL_REASSIGNMENT = hard_issue :ILLEGAL_REASSIGNMENT, :name do
-    "Cannot reassign variable #{name}"
+    if Puppet::Pops::Validation::Checker4_0::RESERVED_PARAMETERS[name]
+      "Cannot reassign built in (or already assigned) variable '$#{name}'"
+    else
+      "Cannot reassign variable '$#{name}'"
+    end
   end
 
+  # Variables facts and trusted
   ILLEGAL_RESERVED_ASSIGNMENT = hard_issue :ILLEGAL_RESERVED_ASSIGNMENT, :name do
-    "Attempt to assign to a reserved variable name: '#{name}'"
+    "Attempt to assign to a reserved variable name: '$#{name}'"
   end
 
   # Assignment cannot be made to numeric match result variables

@@ -192,7 +192,7 @@ describe Puppet::Parser::Scope do
       @scope["var"] = "childval"
       expect {
         @scope["var"] = "change"
-      }.to raise_error(Puppet::Error, "Cannot reassign variable var")
+      }.to raise_error(Puppet::Error, "Cannot reassign variable '$var'")
     end
 
     it "should be able to detect when variables are not set" do
@@ -305,7 +305,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("var", "1", :append => true)
       }.to raise_error(
         Puppet::ParseError,
-        "Cannot append, variable var is defined in this scope"
+        "Cannot append, variable '$var' is defined in this scope"
       )
     end
 

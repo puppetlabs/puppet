@@ -610,9 +610,9 @@ class Puppet::Parser::Scope
     table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
       if options[:append]
-        error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
+        error = Puppet::ParseError.new("Cannot append, variable '$#{name}' is defined in this scope")
       else
-        error = Puppet::ParseError.new("Cannot reassign variable #{name}")
+        error = Puppet::ParseError.new("Cannot reassign variable '$#{name}'")
       end
       error.file = options[:file] if options[:file]
       error.line = options[:line] if options[:line]

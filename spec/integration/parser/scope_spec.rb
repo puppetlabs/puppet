@@ -36,8 +36,30 @@ describe "Two step scoping for variables" do
     end
   end
 
-  it "when using a template ignores the dynamic value of the var when using the @varname syntax" do
-    expect_the_message_to_be('node_msg') do <<-MANIFEST
+    it "issues error about built-in variable when reassigning to name" do
+        enc_node = Puppet::Node.new("the_node", { :parameters => {  } })
+
+        expect {
+          compile_to_catalog("$name = 'never in a 0xF4240 years'", enc_node)
+        }.to raise_error(
+          Puppet::Error,
+          /Cannot reassign built in \(or already assigned\) variable '\$name' at line 1(\:7)? on node the_node/
+        )
+    end
+
+    it "issues error about built-in variable when reassigning to title" do
+        enc_node = Puppet::Node.new("the_node", { :parameters => {  } })
+
+        expect {
+          compile_to_catalog("$title = 'never in a 0xF4240 years'", enc_node)
+        }.to raise_error(
+          Puppet::Error,
+          /Cannot reassign built in \(or already assigned\) variable '\$title' at line 1(\:8)? on node the_node/
+        )
+    end
+
+    it "when using a template ignores the dynamic value of the var when using the @varname syntax" do
+      expect_the_message_to_be('node_msg') do <<-MANIFEST
           node default {
             $var = "node_msg"
             include foo
@@ -589,12 +611,11 @@ describe "Two step scoping for variables" do
 
     it "does not allow the enc to specify an existing top scope var" do
       enc_node = Puppet::Node.new("the_node", { :parameters => { "var" => 'from_enc' } })
-
       expect {
         compile_to_catalog("$var = 'top scope'", enc_node)
       }.to raise_error(
-      Puppet::Error,
-      /Cannot reassign variable var at line 1(\:6)? on node the_node/
+        Puppet::Error,
+        /Cannot reassign variable '\$var' at line 1(\:6)? on node the_node/
       )
     end
 
