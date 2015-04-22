@@ -50,7 +50,7 @@ describe 'loaders' do
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
   end
 
-  context "when loading from a module" do
+  context 'when loading from a module' do
     it 'loads a ruby function using a qualified or unqualified name' do
       loaders = Puppet::Pops::Loaders.new(environment_for(module_with_metadata))
       modulea_loader = loaders.public_loader_for_module('modulea')
@@ -115,7 +115,7 @@ describe 'loaders' do
     end
   end
 
-  context "when loading from a module with metadata" do
+  context 'when loading from a module with metadata' do
     it 'all dependent modules are visible' do
       env = environment_for(dependent_modules_with_metadata)
       loaders = Puppet::Pops::Loaders.new(env)
@@ -126,7 +126,7 @@ describe 'loaders' do
     end
   end
 
-  context "when loading from a module without metadata" do
+  context 'when loading from a module without metadata' do
     it 'loads a ruby function with a qualified name' do
       loaders = Puppet::Pops::Loaders.new(environment_for(module_without_metadata))
 
@@ -172,6 +172,12 @@ describe 'loaders' do
       Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
         function = loader.load_typed(typed_name(:function, 'user::puppetcaller4')).value
         expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
+      end
+    end
+    it 'a puppet function can be called from a 4x function' do
+      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
+        function = loader.load_typed(typed_name(:function, 'user::callingpuppet')).value
+        expect(function.call(scope)).to eql("Did you call to say you love me?")
       end
     end
 

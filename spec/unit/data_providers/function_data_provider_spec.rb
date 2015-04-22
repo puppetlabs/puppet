@@ -38,7 +38,7 @@ describe "when using function data provider" do
   # The result should be that the data set in the environment wins over those set in the
   # module.
   #
-  it 'it gets data from module and environment functions and combines them with env having higher precedence' do
+  it 'gets data from module and environment functions and combines them with env having higher precedence' do
     Puppet[:code] = 'include abc'
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
@@ -47,7 +47,7 @@ describe "when using function data provider" do
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
   end
 
-  it 'it gets data from module having a puppet function delivering module data' do
+  it 'gets data from module having a puppet function delivering module data' do
     Puppet[:code] = 'include xyz'
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)

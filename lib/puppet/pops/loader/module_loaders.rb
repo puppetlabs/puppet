@@ -78,7 +78,7 @@ module Puppet::Pops::Loader::ModuleLoaders
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
-        raise ArgumentError, "given loadables are not of supported loadable kind"
+        raise ArgumentError, 'given loadables are not of supported loadable kind'
       end
     end
 

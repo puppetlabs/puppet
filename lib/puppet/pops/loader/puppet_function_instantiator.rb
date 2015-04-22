@@ -10,7 +10,7 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
   # @param source_ref [URI, String] a reference to the source / origin of the puppet code to evaluate
   # @param pp_code_string [String] puppet code in a string
   #
-  # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
+  # @return [Puppet::Pops::Functions::Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, pp_code_string)
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
@@ -20,16 +20,16 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
     # Only one function is allowed (and no other definitions)
     case result.model.definitions.size
     when 0
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the function #{typed_name.name} - it is empty."
+      raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty."
     when 1
       # ok
     else
-      raise ArgumentError, "The code loaded from #{source_ref} must contain only the function #{typed_name.name} - it has additional definitions."
+      raise ArgumentError, "The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions."
     end
     the_function_definition = result.model.definitions[0]
 
     unless the_function_definition.is_a?(Puppet::Pops::Model::FunctionDefinition)
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the function #{typed_name.name} - no function found."
+      raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found."
     end
     unless the_function_definition.name == typed_name.name
       expected = typed_name.name
