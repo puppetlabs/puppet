@@ -19,4 +19,12 @@ describe Puppet::Node::Facts::Facter do
                              Puppet::Node.indirection.find('foo'))
     expect(cat.resource("Notify[AaBbCc]")).to be
   end
+
+  it "adds the puppetversion fact" do
+    Facter.stubs(:reset)
+
+    cat = compile_to_catalog('notify { $::puppetversion: }',
+                             Puppet::Node.indirection.find('foo'))
+    expect(cat.resource("Notify[#{Puppet.version.to_s}]")).to be
+  end
 end
