@@ -32,6 +32,14 @@ describe provider_class do
     @provider.stubs(:invoke_rc)
   end
 
+  operatingsystem = [ 'Debian', 'CumulusLinux' ]
+  operatingsystem.each do |os|
+    it "should be the default provider on #{os}" do
+      Facter.expects(:value).with(:operatingsystem).returns(os)
+      expect(provider_class.default?).to be_truthy
+    end
+  end
+
   it "should have an enabled? method" do
     expect(@provider).to respond_to(:enabled?)
   end
