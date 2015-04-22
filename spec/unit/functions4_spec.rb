@@ -218,6 +218,12 @@ actual:
   count_args(Undef{0}) - arg count {0}")
     end
 
+    it 'can create scope_param followed by repeated  parameter' do
+      f = create_function_with_scope_param_required_repeat
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 'yay', 1,2,3)).to eql([{}, 'yay',1,2,3])
+    end
+
     it 'a function can use inexact argument mapping' do
       f = create_function_with_inexact_dispatch
       func = f.new(:closure_scope, :loader)
@@ -754,6 +760,19 @@ actual:
       end
       def test(x)
         yield
+      end
+    end
+  end
+
+  def create_function_with_scope_param_required_repeat
+    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+      dispatch :test do
+        scope_param
+        param 'Any', 'extra'
+        repeated_param 'Any', 'the_block'
+      end
+      def test(scope, *args)
+        [scope, *args]
       end
     end
   end
