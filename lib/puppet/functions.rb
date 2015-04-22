@@ -256,6 +256,14 @@ module Puppet::Functions
     end
   end
 
+  # Base class for all functions implemented in the puppet language
+  class PuppetFunction < Function
+    def self.init_dispatch(a_closure)
+      # A closure is compatible with a dispatcher - they are both callable signatures
+      dispatcher.add(a_closure)
+    end
+  end
+
   # Public api methods of the DispatcherBuilder are available within dispatch()
   # blocks declared in a Puppet::Function.create_function() call.
   #

@@ -303,22 +303,34 @@ class Puppet::Pops::Validation::Checker4_0
     if RESERVED_TYPE_NAMES[o.name()]
       acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => o.name})
     end
+  end
 
-    if violator = ends_with_idem(o.body)
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
-    end
+  def check_FunctionDefinition(o)
+    # TODO PUP-2080: more strict rule for top - can only be contained in Program (for now)
+    #  sticking functions in classes would create functions in the class name space
+    #  but not be special in any other way
+    #
+    check_NamedDefinition(o)
   end
 
   def check_HostClassDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
     internal_check_reserved_params(o)
+    internal_check_no_idem_last(o)
   end
 
   def check_ResourceTypeDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
     internal_check_reserved_params(o)
+    internal_check_no_idem_last(o)
+  end
+
+  def internal_check_no_idem_last(o)
+    if violator = ends_with_idem(o.body)
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
+    end
   end
 
   def internal_check_capture_last(o)

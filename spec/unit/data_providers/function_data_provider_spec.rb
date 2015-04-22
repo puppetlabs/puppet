@@ -38,8 +38,17 @@ describe "when using function data provider" do
   # The result should be that the data set in the environment wins over those set in the
   # module.
   #
-  it 'it gets data from module and environment functions and combines them with env having higher precedence' do
+  it 'gets data from module and environment functions and combines them with env having higher precedence' do
     Puppet[:code] = 'include abc'
+    node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
+    compiler = Puppet::Parser::Compiler.new(node)
+    catalog = compiler.compile()
+    resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]"]
+    expect(resources_in(catalog)).to include(*resources_created_in_fixture)
+  end
+
+  it 'gets data from module having a puppet function delivering module data' do
+    Puppet[:code] = 'include xyz'
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
