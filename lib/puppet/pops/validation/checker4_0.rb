@@ -413,13 +413,12 @@ class Puppet::Pops::Validation::Checker4_0
       acceptor.accept(Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name)
     end
     return unless o.value
-    assignments =
+
     if o.value.is_a?(Puppet::Pops::Model::AssignmentExpression)
       [o.value]
-    else o.value
+    else
       o.value.eAllContents.select {|model| model.is_a? Puppet::Pops::Model::AssignmentExpression }
-    end
-    assignments.each do |assignment|
+    end.each do |assignment|
       acceptor.accept(Issues::ILLEGAL_ASSIGNMENT_CONTEXT, assignment)
     end
   end
