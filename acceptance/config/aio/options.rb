@@ -1,8 +1,6 @@
 {
   :type => 'aio',
   :is_puppetserver => true,
-  :puppetservice => 'puppetserver',
-  :'puppetserver-confdir' => '/etc/puppetlabs/puppetserver/conf.d',
   :pre_suite => [
     'setup/aio/pre-suite/010_Install.rb',
     'setup/aio/pre-suite/015_PackageHostsPresets.rb',
