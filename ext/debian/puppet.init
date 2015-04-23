@@ -22,26 +22,12 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
-is_true() {
-    if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
-       return 0
-    else
-        return 1
-    fi
-}
-
 reload_puppet_agent() {
     start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE --name $PROCNAME
 }
 
 start_puppet_agent() {
-    if is_true "$START" ; then
-        start-stop-daemon --start --quiet --pidfile $PIDFILE \
-          --startas $DAEMON -- $NAME $DAEMON_OPTS
-    else
-        echo ""
-        echo "puppet not configured to start, please edit /etc/default/puppet to enable"
-    fi
+    start-stop-daemon --start --quiet --pidfile $PIDFILE --startas $DAEMON -- $NAME $DAEMON_OPTS
 }
 
 stop_puppet_agent() {
