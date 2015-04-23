@@ -276,6 +276,32 @@ a single test to be run if only that test is failing, instead of running all
 17000+ tests each time something is changed. However, there are a number of ways
 that can make tests fail when run in isolation or out of order.
 
+#### Narrowing down a spec test with side effects
+
+If you do have a test that passes in isolation but fails when run as part of
+a full spec run, you can often narrow down the culprit by a two-step process.
+First, run:
+
+```
+bundle exec rake ci:spec
+```
+
+which should generate a spec_order.txt file.
+
+Second, run:
+
+```
+util/binary_search_specs.rb <full path to failing spec>
+```
+
+And it will (usually) tell you the test that makes the failing spec fail.
+
+The 'usually' caveat is because there can be spec failures that require
+specific ordering between > 2 spec files, and this tool only handles the
+case for 2 spec files. The > 2 case is rare and if you suspect you're in
+that boat, there isn't an established best practice, other than to ask
+for help on IRC or the mailing list.
+
 #### Using instance variables
 
 Puppet has a number of older tests that use `before` blocks and instance
