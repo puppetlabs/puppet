@@ -335,7 +335,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # TODO: Revisit and possible improve the accuracy.
     #
     file, line = extract_file_line(o)
-
+    # A *=> results in an array of arrays
+    evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Puppet::Pops::Types::PResourceType) && r.type_name != 'class'
         fail(Puppet::Pops::Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
