@@ -46,9 +46,9 @@ expectations = {
   },
   :puppet_agent => {
     :exit_code => 1,
-    :matches => [%r{Warning.*404.*Could not find environment '#{env}'},
+    :matches => [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
                  %r{Could not retrieve catalog; skipping run}],
   }
 }
 
-review_results(results,expectations)
+assert_review(review_results(results,expectations))

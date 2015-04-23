@@ -21,6 +21,13 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   # Lookup a host's facts up in Facter.
   def find(request)
     Facter.reset
+
+    # Add the puppetversion fact; this is done before generating the hash so it is
+    # accessible to custom facts.
+    Facter.add(:puppetversion) do
+      setcode { Puppet.version.to_s }
+    end
+
     self.class.setup_external_search_paths(request) if Puppet.features.external_facts?
     self.class.setup_search_paths(request)
 
