@@ -571,7 +571,7 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_UNICODE_ESCAPE = issue :ILLEGAL_UNICODE_ESCAPE do
-    "Unicode escape '\\u' was not followed by 4 hex digits"
+    "Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in {} or was > 10ffff"
   end
 
   INVALID_HEX_NUMBER = hard_issue :INVALID_HEX_NUMBER, :value do
