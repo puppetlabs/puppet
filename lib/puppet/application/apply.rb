@@ -219,28 +219,27 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         # Those that do not lead to an immediate exit are caught by the general
         # rule and gets logged.
         #
-        the_catalog =
+        catalog =
         begin
-          catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
-
-          # Translate it to a RAL catalog
-          catalog = catalog.to_ral
-
-          catalog.finalize
-
-          catalog.retrieval_duration = Time.now - starttime
-
-          if options[:write_catalog_summary]
-            catalog.write_class_file
-            catalog.write_resource_file
-          end
-          catalog
+          Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
         rescue Puppet::ParseErrorWithIssue, Puppet::Error
           # already logged and handled by the compiler for these two cases
           exit(1)
         end
 
-        exit_status = apply_catalog(the_catalog)
+        # Translate it to a RAL catalog
+        catalog = catalog.to_ral
+
+        catalog.finalize
+
+        catalog.retrieval_duration = Time.now - starttime
+
+        if options[:write_catalog_summary]
+          catalog.write_class_file
+          catalog.write_resource_file
+        end
+
+        exit_status = apply_catalog(catalog)
 
         if not exit_status
           exit(1)
