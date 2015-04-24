@@ -316,7 +316,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # for the type of the name.
     # Note, locations are available per parameter.
     #
-    scope.define_settings(capitalize_qualified_name(type_name), evaluated_parameters)
+    scope.define_settings(capitalize_qualified_name(type_name), evaluated_parameters.flatten)
   end
 
   # Capitalizes each segment of a qualified name
