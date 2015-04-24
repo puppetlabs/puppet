@@ -61,6 +61,41 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('specific manifest applied')
   end
 
+  context "handles errors" do
+    it "logs compile errors once" do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply.options[:code] = '08'
+      # Assert that it is not printed twice
+      expect { apply.run }.to have_printed(
+        /\A((?!valid octal.*valid octal).)*\Z/m
+        ).and_exit_with(1)
+      # Assert that it is printed once
+      expect { apply.run }.to have_printed(
+        /valid octal/
+        ).and_exit_with(1)
+    end
+
+    it "logs compile post processing errors once" do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply.options[:code] = "file { '/tmp/content_file_test.Q634Dlmtime':
+        content => 'This is the test file content',
+        ensure => present,
+        checksum => mtime
+      }"
+
+      # assert it is not printed twice
+      expect { apply.run }.to have_printed(
+        /\A((?!You cannot specify content when using checksum.*You cannot specify content when using checksum).)*\Z/m
+        ).and_exit_with(1)
+      # assert that it is printed once
+      expect { apply.run }.to have_printed(
+        /You cannot specify content when using checksum/
+        ).and_exit_with(1)
+    end
+  end
+
   context "with a module" do
     let(:modulepath) { tmpdir('modulepath') }
     let(:execute) { 'include amod' }
