@@ -58,10 +58,10 @@ end
 RSpec::Matchers.define :have_printed do |expected|
 
   case expected
-    when String, Regexp
-      expected = expected
-    else
-      expected = expected.to_s
+  when String, Regexp, Proc
+    expected = expected
+  else
+    expected = expected.to_s
   end
 
   chain :and_exit_with do |code|
@@ -79,6 +79,8 @@ RSpec::Matchers.define :have_printed do |expected|
         actual.include?(expected)
       when Regexp
         expected.match(actual)
+      when Proc
+        expected.call(actual)
       else
         raise ArgumentError, "No idea how to match a #{actual.class.name}"
     end
