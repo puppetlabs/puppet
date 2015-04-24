@@ -587,7 +587,7 @@ class Puppet::Parser::Scope
     }
   end
 
-  RESERVED_VARIABLE_NAMES = ['trusted', 'facts'].freeze
+  RESERVED_VARIABLE_NAMES = ['trusted', 'facts', 'server_facts'].freeze
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
@@ -634,6 +634,10 @@ class Puppet::Parser::Scope
 
   def set_facts(hash)
     setvar('facts', deep_freeze(hash), :privileged => true)
+  end
+
+  def set_server_facts(hash)
+    setvar('server_facts', deep_freeze(hash), :priviledged => true)
   end
 
   # Deeply freezes the given object. The object and its content must be of the types:

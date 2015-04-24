@@ -114,6 +114,18 @@ class Puppet::Node
     @parameters["environment"] ||= self.environment.name.to_s
   end
 
+  def add_server_facts(server_facts)
+   # Complete server facts
+
+   # Set the top scope variable $server facts if :trusted_server_facts is true
+   if Puppet[:trusted_server_facts]
+     @topscope.set_trusted(server_facts)
+   end
+
+    # Merge the server facts into the parameters for the node
+    merge(server_facts)
+  end
+
   # Calculate the list of names we might use for looking
   # up our node.  This is only used for AST nodes.
   def names
