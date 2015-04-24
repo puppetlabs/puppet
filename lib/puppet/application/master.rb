@@ -198,8 +198,10 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     if options[:rack]
+      Puppet.deprecation_warning("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
       start_rack_master
     else
+      Puppet.deprecation_warning("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
       start_webrick_master
     end
   end

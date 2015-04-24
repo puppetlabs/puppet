@@ -338,6 +338,12 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         end
       end
 
+      it "should log a deprecation notice when running a WEBrick server" do
+        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+
+        @master.main
+      end
+
       it "should daemonize if needed" do
         Puppet[:daemonize] = true
 
@@ -356,21 +362,25 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         before do
           require 'puppet/network/http/rack'
           Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
+
+          @master.options.stubs(:[]).with(:rack).returns(:true)
         end
 
         it "it should not start a daemon" do
-          @master.options.stubs(:[]).with(:rack).returns(:true)
-
           @daemon.expects(:start).never
 
           @master.main
         end
 
         it "it should return the app" do
-          @master.options.stubs(:[]).with(:rack).returns(:true)
-
           app = @master.main
           expect(app).to equal(@app)
+        end
+
+        it "should log a deprecation notice" do
+          Puppet.expects(:deprecation_warning).with("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+
+          @master.main
         end
       end
     end
