@@ -12,6 +12,8 @@ module Puppet::Pops::Parser::SlurpSupport
   SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
   SLURP_UQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*([$]\{?|\z)/
+  # unquoted, no escapes
+  SLURP_UQNE_PATTERN  = /([$]\{?|\z)/m
   SLURP_ALL_PATTERN = /.*(\z)/m
   SQ_ESCAPES = %w{ \\ ' }
   DQ_ESCAPES = %w{ \\  $ ' " r n t s u}+["\r\n", "\n"]
@@ -43,6 +45,7 @@ module Puppet::Pops::Parser::SlurpSupport
      scn = @scanner
      last = scn.matched
      ignore = true
+
      str = slurp(scn, @lexing_context[:uq_slurp_pattern], @lexing_context[:escapes], :ignore_invalid_escapes)
 
      # Terminator may be a single char '$', two characters '${', or empty string '' at the end of intput.
