@@ -187,12 +187,18 @@ class Puppet::Pops::Validation::Checker4_0
 
   def check_AttributesOperation(o)
     # Append operator use is constrained
-    parent = o.eContainer
-    parent = parent.eContainer unless parent.nil?
-    unless parent.is_a?(Model::ResourceExpression)
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, o, :operator=>'* =>')
+    parent1 = o.eContainer
+    case parent1
+    when Model::AbstractResource
+    when Model::CollectExpression
+    else
+      # protect against just testing a snippet that has no parent, error message will be a bit strange
+      # but it is not for a real program.
+      parent2 = parent1.nil? ? o : parent1.eContainer
+      unless parent2.is_a?(Model::AbstractResource)
+        acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator=>'* =>')
+      end
     end
-
     rvalue(o.expr)
   end
 

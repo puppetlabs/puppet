@@ -313,5 +313,12 @@ describe Puppet::Parser::Collector do
     end
 
     it_behaves_like "virtual resource collection"
+
+    it "collects and overrides attributes specified with a * => hash" do
+      expect_the_message_to_be(["overridden1"], <<-MANIFEST)
+        notify { "testing": message => "original" }
+        Notify <|  |> { * => { message => 'overridden1' }}
+      MANIFEST
+    end
   end
 end
