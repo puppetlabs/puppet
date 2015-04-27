@@ -162,7 +162,8 @@ module Puppet::Pops
     class PRegexpType < PScalarType
       module ClassModule
         def regexp_derived
-          @_regexp = Regexp.new(pattern) unless @_regexp && @_regexp.source == pattern
+          pattern_or_blank = pattern || ''
+          @_regexp = Regexp.new(pattern_or_blank) unless @_regexp && @_regexp.source == pattern_or_blank
           @_regexp
         end
 

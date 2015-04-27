@@ -43,4 +43,12 @@ describe 'the split function' do
   it 'should handle pattern in Regexp Type form' do
     expect(split('a,b',type_parser.parse('Regexp[/,/]'))).to eql(['a', 'b'])
   end
+
+  it 'should handle pattern in Regexp Type form with empty regular expression' do
+    expect(split('ab',type_parser.parse('Regexp[//]'))).to eql(['a', 'b'])
+  end
+
+  it 'should handle pattern in Regexp Type form with missing regular expression' do
+    expect(split('ab',type_parser.parse('Regexp'))).to eql(['a', 'b'])
+  end
 end
