@@ -42,6 +42,6 @@ Puppet::Functions.create_function(:split) do
   end
 
   def split_RegexpType(str, pattern)
-    str.split(pattern.pattern)
+    str.split(pattern.regexp)
   end
 end
