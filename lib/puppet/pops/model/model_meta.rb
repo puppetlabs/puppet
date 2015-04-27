@@ -258,7 +258,7 @@ module Puppet::Pops::Model
   class CollectExpression < Expression
     contains_one_uni 'type_expr', Expression, :lowerBound => 1
     contains_one_uni 'query', QueryExpression, :lowerBound => 1
-    contains_many_uni 'operations', AttributeOperation
+    contains_many_uni 'operations', AbstractAttributeOperation
   end
 
   class Parameter < Positioned
