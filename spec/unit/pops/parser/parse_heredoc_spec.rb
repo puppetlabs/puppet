@@ -77,11 +77,11 @@ describe "egrammar parsing heredoc" do
     Hello \\$name
     |- END
     CODE
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated (cat 'Hello \\' (str $name) ''))",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses interpolated heredoc expression containing escapes when escaping other things than $" do
@@ -90,11 +90,11 @@ describe "egrammar parsing heredoc" do
     Hello \\$name
     |- END
     CODE
-    dump(parse(src)).should == [
+    expect(dump(parse(src))).to eq([
       "(@()",
       "  (sublocated (cat 'Hello \\' (str $name) ''))",
       ")"
-    ].join("\n")
+    ].join("\n"))
   end
 
   it "parses with escaped newlines without preceding whitespace" do

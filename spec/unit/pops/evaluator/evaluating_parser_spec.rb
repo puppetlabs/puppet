@@ -1308,7 +1308,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       Hello\\ \\$name
       |- END
       CODE
-      parser.evaluate_string(scope, src).should == "Hello\\ \\Fjodor"
+      expect(parser.evaluate_string(scope, src)).to eq("Hello\\ \\Fjodor")
     end
 
   end
