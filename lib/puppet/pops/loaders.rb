@@ -12,9 +12,11 @@ class Puppet::Pops::Loaders
 
     # Create the set of loaders
     # 1. Puppet, loads from the "running" puppet - i.e. bundled functions, types, extension points and extensions
-    #    Does not change without rebooting the service running puppet.
+    #    These cannot be cached since a  loaded instance will be bound to its closure scope which holds on to
+    #    a compiler and all loaded types. Subsequent request would find remains of the environment that loaded
+    #    the content. PUP-4461.
     #
-    @@puppet_system_loader ||= create_puppet_system_loader()
+    @puppet_system_loader = create_puppet_system_loader()
 
     # 2. Environment loader - i.e. what is bound across the environment, may change for each setup
     #    TODO: loaders need to work when also running in an agent doing catalog application. There is no
@@ -30,7 +32,7 @@ class Puppet::Pops::Loaders
   #
   def self.clear
     @@static_loader = nil
-    @@puppet_system_loader = nil
+    @puppet_system_loader = nil
   end
 
   def static_loader
@@ -38,7 +40,7 @@ class Puppet::Pops::Loaders
   end
 
   def puppet_system_loader
-    @@puppet_system_loader
+    @puppet_system_loader
   end
 
   def public_loader_for_module(module_name)
