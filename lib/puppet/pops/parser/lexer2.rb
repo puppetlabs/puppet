@@ -214,7 +214,7 @@ class Puppet::Pops::Parser::Lexer2
     @scanner = StringScanner.new(string)
     @locator = locator || Puppet::Pops::Parser::Locator.locator(string, '')
     @lexing_context[:escapes] = escapes || UQ_ESCAPES
-    @lexing_context[:uq_slurp_pattern] = (interpolate || !escapes.empty?) ? SLURP_UQ_PATTERN : SLURP_ALL_PATTERN
+    @lexing_context[:uq_slurp_pattern] = interpolate ? (escapes.include?('$') ? SLURP_UQ_PATTERN : SLURP_UQNE_PATTERN) : SLURP_ALL_PATTERN
   end
 
   # Convenience method, and for compatibility with older lexer. Use the lex_file instead.
