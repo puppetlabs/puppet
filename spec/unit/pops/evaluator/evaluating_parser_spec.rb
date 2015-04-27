@@ -1273,6 +1273,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, src).should == "Hello Fjodor"
     end
 
+    it "parses interpolated heredoc expression with escapes" do
+      src = <<-CODE
+      $name = 'Fjodor'
+      @("END")
+      Hello\\ \\$name
+      |- END
+      CODE
+      parser.evaluate_string(scope, src).should == "Hello\\ \\Fjodor"
+    end
+
   end
   context "Handles Deprecations and Discontinuations" do
     it 'of import statements' do
