@@ -27,7 +27,7 @@ class Puppet::Pops::Evaluator::CollectorTransformer
 
     if !o.operations.empty?
       overrides = {
-        :parameters => o.operations.map{ |x| to_3x_param(x).evaluate(scope)},
+        :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
         :file       => file_path,
         :line       => [line_num, position],
         :source     => scope.source,
@@ -205,15 +205,5 @@ protected
 
   def match_Object(o, scope)
     raise ArgumentError, "Cannot transform object of class #{o.class}"
-  end
-
-  # Produces (name => expr) or (name +> expr)
-  def to_3x_param(o)
-    bridge = Puppet::Parser::AST::PopsBridge::Expression.new(:value => o.value_expr)
-    args = { :value => bridge }
-    args[:add] = true if o.operator == :'+>'
-    args[:param] = o.attribute_name
-    args= Puppet::Pops::Model::AstTransformer.new().merge_location(args, o)
-    Puppet::Parser::AST::ResourceParam.new(args)
   end
 end

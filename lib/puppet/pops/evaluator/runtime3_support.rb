@@ -316,7 +316,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # for the type of the name.
     # Note, locations are available per parameter.
     #
-    scope.define_settings(capitalize_qualified_name(type_name), evaluated_parameters)
+    scope.define_settings(capitalize_qualified_name(type_name), evaluated_parameters.flatten)
   end
 
   # Capitalizes each segment of a qualified name
@@ -335,7 +335,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # TODO: Revisit and possible improve the accuracy.
     #
     file, line = extract_file_line(o)
-
+    # A *=> results in an array of arrays
+    evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Puppet::Pops::Types::PResourceType) && r.type_name != 'class'
         fail(Puppet::Pops::Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
