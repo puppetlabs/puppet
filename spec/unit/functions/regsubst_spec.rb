@@ -66,6 +66,10 @@ describe 'the regsubst function' do
     it 'should accept Type[Regexp]' do
       expect(regsubst('abc', type_parser.parse("Regexp['b']"), '_')).to eql('a_c')
     end
+
+    it 'should treat Regexp as Regexp[//]' do
+      expect(regsubst('abc', type_parser.parse("Regexp"), '_', 'G')).to eql('_a_b_c_')
+    end
   end
 
   context 'when using an array target' do
