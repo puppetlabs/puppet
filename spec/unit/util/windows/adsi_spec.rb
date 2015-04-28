@@ -189,38 +189,49 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       end
 
       describe "when given a set of groups to which to add the user" do
+        let(:existing_groups) { ['group2','group3'] }
+        let(:group_sids) { existing_groups.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])} }
+
         let(:groups_to_set) { 'group1,group2' }
+        let(:desired_sids) { groups_to_set.split(',').each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i-1])} }
 
         before(:each) do
-          Puppet::Util::Windows::SID.stubs(:octet_string_to_sid_object).returns(sid)
-          user.expects(:groups).returns ['group2', 'group3']
+          user.expects(:group_sids).returns(group_sids.map {|s| s.objectSID})
         end
 
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
-            group1 = stub 'group1'
-            group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
-
-            group3 = stub 'group1'
-            group3.expects(:Remove).with("WinNT://testcomputername/#{username},user")
-
-            Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user").twice
-            Puppet::Util::Windows::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
-            Puppet::Util::Windows::ADSI.expects(:connect).with('WinNT://./group3,group').returns group3
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
+            user.expects(:add_group_sids).with([-1])
+            user.expects(:remove_group_sids).with([1])
 
             user.set_groups(groups_to_set, false)
+          end
+
+          it "should remove all users from a group if desired is empty" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
+            user.expects(:add_group_sids).never
+            user.expects(:remove_group_sids).with([0], [1])
+
+            user.set_groups('', false)
           end
         end
 
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
-            group1 = stub 'group1'
-            group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
-
-            Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user")
-            Puppet::Util::Windows::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
+            user.expects(:add_group_sids).with([-1])
+            user.expects(:remove_group_sids).never
 
             user.set_groups(groups_to_set, true)
+          end
+
+          it "should do nothing if desired is empty" do
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
+            user.expects(:remove_group_sids).never
+            user.expects(:add_group_sids).never
+
+            user.set_groups('', true)
           end
         end
       end
@@ -380,12 +391,15 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           expect {
             adsi_group.expects(:Members).returns []
             group.set_members(['foobar'])
-          }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+          }.to raise_error(Puppet::Error, /Could not resolve name: foobar/)
         end
       end
 
       it "should generate the correct URI" do
         Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+        adsi_group.expects(:objectSID).returns([0])
+        Socket.expects(:gethostname).returns('testcomputername')
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(stub(:account => groupname,:domain => 'testcomputername'))
         expect(group.uri).to eq("WinNT://./#{groupname},group")
       end
     end
