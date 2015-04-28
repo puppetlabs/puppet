@@ -21,9 +21,9 @@ HOSTS:
   ubuntu-agent:
     roles:
       - agent
-    platform: ubuntu-lucid-i386
+    platform: ubuntu-precise-i386
     hypervisor: vcloud
-    template: ubuntu-1004-i386
+    template: ubuntu-1204-i386
   wheezy-agent:
     roles:
       - agent
