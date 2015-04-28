@@ -124,9 +124,14 @@ parameter, so you can specify '--server <servername>' as an argument.
   Print this help message
 
 * --logdest:
-  Where to send messages.  Choose between syslog, the console, and a log file.
-  Defaults to sending messages to syslog, or the console if debugging or
-  verbosity is enabled.
+  Where to send log messages. Choose between 'syslog' (the POSIX syslog
+  service), 'console', or the path to a log file. If debugging or verbosity is
+  enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
+
+  A path ending with '.json' will receive structured output in JSON format. The
+  log file will not have an ending ']' automatically written to it due to the
+  appending nature of logging. It must be appended manually to make the content
+  valid JSON.
 
 * --verbose:
   Turn on verbose reporting.
