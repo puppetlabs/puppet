@@ -108,18 +108,23 @@ class Puppet::Node
   # Merge any random parameters into our parameter list.
   def merge(params)
     params.each do |name, value|
-      @parameters[name] = value unless @parameters.include?(name)
+      if @parameters.include?(name)
+        Puppet::Util::Warnings.warnonce("The node paramters #{name} for node #{@parameters["hostname"]} was already set to #{@parameters[name]}. It could not be set to #{value}")
+      else
+        @parameters[name] = value
+      end
     end
 
     @parameters["environment"] ||= self.environment.name.to_s
   end
 
   def add_server_facts(server_facts)
-   # Complete server facts
+   # Append the current environment to the list of server facts
+    complete_server_facts = server_facts.merge({ "environment" => self.environment.name.to_s})
 
-   # Set the top scope variable $server facts if :trusted_server_facts is true
+   # Set the top scope variable $server_facts if :trusted_server_facts is true
    if Puppet[:trusted_server_facts]
-     @topscope.set_trusted(server_facts)
+     @topscope.set_trusted(complete_server_facts)
    end
 
     # Merge the server facts into the parameters for the node

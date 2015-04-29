@@ -637,7 +637,7 @@ class Puppet::Parser::Scope
   end
 
   def set_server_facts(hash)
-    setvar('server_facts', deep_freeze(hash), :priviledged => true)
+    setvar('server_facts', deep_freeze(hash), :privileged => true)
   end
 
   # Deeply freezes the given object. The object and its content must be of the types:
