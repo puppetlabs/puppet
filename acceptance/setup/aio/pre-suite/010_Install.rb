@@ -14,7 +14,7 @@ step "Install repositories on target machines..." do
   end
 
   if master['passenger']
-    passenger_version = ENV['PASSENGER_VERSION'] || '940f74a0b0c6ef1bbdbaf6bd9fd9c3ed2a6b981c'
+    passenger_version = ENV['PASSENGER_VERSION'] || '3518347c3480172fcef41406cad31b7ed34cd14f'
     install_repos_on(master, 'puppet-master-passenger', passenger_version, repo_configs_dir)
   else
     server_version = ENV['SERVER_VERSION'] || 'nightly'
