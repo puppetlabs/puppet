@@ -598,7 +598,7 @@ class Puppet::Pops::Types::TypeCalculator
 
     if t1.is_a?(Types::PStringType) && t2.is_a?(Types::PStringType)
       t = Types::PStringType.new()
-      t.values = t1.values | t2.values
+      t.values = t1.values | t2.values unless t1.values.empty? || t2.values.empty?
       t.size_type = common_type(t1.size_type, t2.size_type) unless t1.size_type.nil? || t2.size_type.nil?
       return t
     end

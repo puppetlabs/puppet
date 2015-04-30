@@ -498,6 +498,16 @@ describe 'The type calculator' do
         expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
         expect(common_t.size_type).to be_nil
       end
+
+      it 'computes values to be empty of the types has empty values' do
+        t1 = string_t('apa')
+        t1.size_type = range_t(3,6)
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.values).to be_empty
+      end
     end
 
     it 'computes pattern commonality' do
