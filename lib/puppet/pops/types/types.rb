@@ -46,6 +46,18 @@ module Puppet::Pops
       end
     end
 
+    class PNotUndefType < PAnyType
+      module ClassModule
+        def hash
+          [self.class, type].hash
+        end
+
+        def ==(o)
+          self.class == o.class && type == o.type
+        end
+      end
+    end
+
     class PType < PAnyType
       module ClassModule
         def hash

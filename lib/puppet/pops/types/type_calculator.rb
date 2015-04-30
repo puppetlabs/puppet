@@ -269,14 +269,21 @@ class Puppet::Pops::Types::TypeCalculator
     if t2.is_a?(Class)
       t2 = type(t2)
     end
-    # Unit can be assigned to anything
-    return true if t2.class == Types::PUnitType
+    t2_class = t2.class
 
-    if t2.class == Types::PVariantType
+    # Unit can be assigned to anything
+    return true if t2_class == Types::PUnitType
+
+    if t2_class == Types::PVariantType
       # Assignable if all contained types are assignable
       t2.types.all? { |vt| @@assignable_visitor.visit_this_1(self, t, vt) }
     else
-      @@assignable_visitor.visit_this_1(self, t, t2)
+      # Turn NotUndef[T] into T when T is not assignable from Undef
+      if t2_class == Types::PNotUndefType && !(t2.type.nil? || assignable?(t2.type, @nil_t))
+        assignable?(t, t2.type)
+      else
+        @@assignable_visitor.visit_this_1(self, t, t2)
+      end
     end
  end
 
@@ -474,6 +481,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   def instance_of_PDataType(t, o)
     instance_of(@data_variant_t, o)
+  end
+
+  def instance_of_PNotUndefType(t, o)
+    !(o.nil? || o == :undef) && (t.type.nil? || instance_of(t.type, o))
   end
 
   def instance_of_PUndefType(t, o)
@@ -988,6 +999,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def assignable_PNotUndefType(t, t2)
+    !assignable?(t2, @nil_t) && (t.type.nil? || assignable?(t.type, t2))
+  end
+
+  # @api private
   def assignable_PUndefType(t, t2)
     # Only undef/nil is assignable to nil type
     t2.is_a?(Types::PUndefType)
@@ -1483,7 +1499,15 @@ class Puppet::Pops::Types::TypeCalculator
   # Data is assignable by other Data and by Array[Data] and Hash[Scalar, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
+    # We cannot put the NotUndefType[Data] in the @data_variant_t since that causes an endless recursion
+    case t2
+    when Types::PDataType
+      true
+    when Types::PNotUndefType
+      assignable?(t, t2.type || @t)
+    else
+      assignable?(@data_variant_t, t2)
+    end
   end
 
   # Assignable if t2's has the same runtime and the runtime name resolves to
@@ -1717,6 +1741,20 @@ class Puppet::Pops::Types::TypeCalculator
       end
     else
       "Resource"
+    end
+  end
+
+  # @api private
+  def string_PNotUndefType(t)
+    contained_type = t.type
+    if contained_type.nil? || contained_type.class == Puppet::Pops::Types::PAnyType
+      'NotUndef'
+    else
+      if contained_type.is_a?(Puppet::Pops::Types::PStringType) && contained_type.values.size == 1
+        "NotUndef['#{contained_type.values[0]}']"
+      else
+        "NotUndef[#{string(contained_type)}]"
+      end
     end
   end
 

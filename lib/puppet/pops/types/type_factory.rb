@@ -351,6 +351,22 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
+  # Produces a type for NotUndef[T]
+  # The given 'inst_type' can be a string in which case it will be converted into
+  # the type String[inst_type].
+  #
+  # @param inst_type [Type,String] the type to qualify
+  # @return [Puppet::Pops::Types::PNotUndefType] the NotUndef type
+  #
+  # @api public
+  #
+  def self.not_undef(inst_type = nil)
+    type = Types::PNotUndefType.new()
+    inst_type = string(inst_type) if inst_type.is_a?(String)
+    type.type = inst_type
+    type
+  end
+
   # Produces a type for Type[T]
   # @api public
   #
