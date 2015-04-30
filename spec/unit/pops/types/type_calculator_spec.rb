@@ -1281,6 +1281,13 @@ describe 'The type calculator' do
       calculator.instance?(range, 'abcd').should == false
     end
 
+    it 'should consider string values' do
+      string = string_t('a', 'b')
+      expect(calculator.instance?(string, 'a')).to eq(true)
+      expect(calculator.instance?(string, 'b')).to eq(true)
+      expect(calculator.instance?(string, 'c')).to eq(false)
+    end
+
     it 'should consider array in length range' do
       range = factory.constrain_size(array_t(integer_t), 1,3)
       calculator.instance?(range, [1]).should    == true
