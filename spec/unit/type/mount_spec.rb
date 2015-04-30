@@ -197,6 +197,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       it "should not support whitespace in fstype" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext 3') }.to raise_error Puppet::Error, /fstype.*whitespace/
       end
+
+      it "should not support an empty string in fstype" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => "") }.to raise_error Puppet::Error, /fstype.*empty string/
+      end
     end
 
     describe "for options" do
@@ -210,6 +214,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
       it "should not support whitespace in options" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :options => ['ro','foo bar','intr']) }.to raise_error Puppet::Error, /option.*whitespace/
+      end
+
+      it "should not support an empty string in options" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :options => "") }.to raise_error Puppet::Error, /option.*empty string/
       end
     end
 
