@@ -499,7 +499,7 @@ describe 'The type calculator' do
         expect(common_t.size_type).to be_nil
       end
 
-      it 'computes values to be empty of the types has empty values' do
+      it 'computes values to be empty if the one has empty values' do
         t1 = string_t('apa')
         t1.size_type = range_t(3,6)
         t2 = string_t
