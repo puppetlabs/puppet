@@ -587,7 +587,7 @@ class Puppet::Parser::Scope
     }
   end
 
-  RESERVED_VARIABLE_NAMES = ['trusted', 'facts', 'server_facts'].freeze
+  RESERVED_VARIABLE_NAMES = ['trusted', 'facts'].freeze
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
@@ -605,6 +605,11 @@ class Puppet::Parser::Scope
     # Check for reserved variable names
     if !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
+    end
+
+    # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
+    if Puppet[:trusted_server_facts] && name == 'server_facts' && !options[:privileged]
+      raise Puppet::ParseError, "Attempt to assign variable name: server_facts, which is reserved when the :trusted_server_facts setting is true"
     end
 
     table = effective_symtable(options[:ephemeral])
