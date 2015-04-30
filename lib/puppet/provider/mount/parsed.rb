@@ -178,7 +178,21 @@ Puppet::Type.type(:mount).provide(
       end
     end
   else
-    record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
+    record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields, :block_eval => :instance do
+      def pre_gen(record)
+        if !record[:options] || record[:options].empty?
+          if Facter.value(:kernel) == 'Linux'
+            record[:options] = 'defaults'
+          else
+            raise Puppet::Error, "Mount[#{record[:name]}]: Field 'options' is required"
+          end
+        end
+        if !record[:fstype] || record[:fstype].empty?
+          raise Puppet::Error, "Mount[#{record[:name]}]: Field 'fstype' is required"
+        end
+        record
+      end
+    end
   end
 
   # Every entry in fstab is :unmounted until we can prove different
