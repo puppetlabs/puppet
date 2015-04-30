@@ -163,6 +163,9 @@ class Puppet::Pops::Types::TypeParser
     when "undef"
       TYPES.undef()
 
+    when "notundef"
+      TYPES.not_undef()
+
     when "default"
       TYPES.default()
 
@@ -405,6 +408,18 @@ class Puppet::Pops::Types::TypeParser
 
     when "any", "data", "catalogentry", "boolean", "scalar", "undef", "numeric", "default"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
+
+    when "notundef"
+      case parameters.size
+      when 0
+        TYPES.not_undef
+      when 1
+        param = parameters[0]
+        assert_type(param) unless param.is_a?(String)
+        TYPES.not_undef(param)
+      else
+        raise_invalid_parameters_error("NotUndef", "0 to 1", parameters.size)
+      end
 
     when "type"
       if parameters.size != 1

@@ -374,6 +374,10 @@ module Puppet::Pops::Issues
     "#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected"
   end
 
+  BAD_NOT_UNDEF_SLICE_TYPE = issue :BAD_NOT_UNDEF_SLICE_TYPE, :base_type, :actual do
+    "#{base_type}[] argument must be a Type or a String. Got #{actual}"
+  end
+
   BAD_TYPE_SLICE_TYPE = issue :BAD_TYPE_SLICE_TYPE, :base_type, :actual do
     "#{base_type}[] arguments must be types. Got #{actual}"
   end
