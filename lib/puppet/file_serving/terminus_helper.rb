@@ -26,7 +26,8 @@ module Puppet::FileServing::TerminusHelper
     end
 
     Puppet::FileServing::Fileset.merge(*filesets).collect do |file, base_path|
-      path2instance(request, base_path, :ignore_source_permissions => true, :relative_path => file)
+      ignore_source_permissions = (!request.options[:source_permissions] || request.options[:source_permissions] == :ignore)
+      path2instance(request, base_path, :ignore_source_permissions => ignore_source_permissions, :relative_path => file)
     end
   end
 end
