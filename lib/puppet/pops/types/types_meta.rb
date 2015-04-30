@@ -27,6 +27,15 @@ module Puppet::Pops::Types
   class PAnyType < TypeModelObject
   end
 
+  # A type that is assignable from the same types as its contained `type` except the
+  # types assignable from {Puppet::Pops::Types::PUndefType}
+  #
+  # @api public
+  #
+  class PNotUndefType < PAnyType
+    contains_one_uni 'type', PAnyType
+  end
+
   # The type of types.
   # @api public
   #
