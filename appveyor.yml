@@ -1,10 +1,22 @@
-version: 4.0.0.{build}
-platform:
-    - x64
+version: 4.1.0.{build}
+skip_commits:
+  message: /(^\(?doc\)?.*|.*[A|a]cceptance [T|t]est.*)/
+clone_depth: 10
+init:
+  - SET
 install:
-    - SET PATH=C:\Ruby215\bin;%PATH%
-    - gem install bundler --quiet --no-ri --no-rdoc
-    - bundle install --without development
+  - SET PATH=C:\Ruby21-x64\bin;%PATH%
+  - gem install bundler --quiet --no-ri --no-rdoc
+  - bundle install --jobs 4 --retry 2 --without development
+  - type Gemfile.lock
+  - ruby -v
 build: off
 test_script:
-    - bundle exec rspec spec
+  - bundle exec rspec spec
+notifications:
+  - provider: Email
+    to:
+    - nobody@nowhere.com
+    on_build_success: false
+    on_build_failure: false
+    on_build_status_changed: false
