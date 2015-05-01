@@ -553,6 +553,13 @@ describe 'The type calculator' do
   context 'computes assignability' do
     include_context "types_setup"
 
+    it 'such that all types are assignable to themselves' do
+      all_types.each do |tc|
+        t = tc.new
+        expect(t).to be_assignable_to(t)
+      end
+    end
+
     context 'for Unit, such that' do
       it 'all types are assignable to Unit' do
         t = Puppet::Pops::Types::PUnitType.new()
@@ -578,7 +585,7 @@ describe 'The type calculator' do
       end
 
       it 'Any is not assignable to anything but Any' do
-        tested_types = all_types() - [Puppet::Pops::Types::PAnyType]
+        tested_types = all_types() - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType]
         t = Puppet::Pops::Types::PAnyType.new()
         tested_types.each { |t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -610,7 +617,7 @@ describe 'The type calculator' do
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PDataType] - scalar_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PDataType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -647,7 +654,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PDataType] - scalar_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PScalarType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -668,6 +675,7 @@ describe 'The type calculator' do
       it 'Numeric is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType,
           Puppet::Pops::Types::PScalarType,
           ] - numeric_types
@@ -689,7 +697,7 @@ describe 'The type calculator' do
       end
 
       it 'Collection is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType] - collection_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType] - collection_types
         t = Puppet::Pops::Types::PCollectionType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -708,6 +716,7 @@ describe 'The type calculator' do
       it 'Array is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
@@ -727,6 +736,7 @@ describe 'The type calculator' do
       it 'Hash is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
@@ -762,6 +772,7 @@ describe 'The type calculator' do
       it 'Tuple is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PTupleType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
@@ -781,6 +792,7 @@ describe 'The type calculator' do
       it 'Struct is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
@@ -792,7 +804,8 @@ describe 'The type calculator' do
         t = Puppet::Pops::Types::PCallableType.new()
         tested_types = all_types - [
           Puppet::Pops::Types::PCallableType,
-          Puppet::Pops::Types::PAnyType]
+          Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType]
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
