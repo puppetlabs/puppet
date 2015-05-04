@@ -2,19 +2,18 @@ require 'puppet/file_serving'
 require 'puppet/file_serving/fileset'
 
 # Define some common methods for FileServing termini.
+
 module Puppet::FileServing::TerminusHelper
   # Create model instance for a file in a file server.
   def path2instance(request, path, options = {})
     result = model.new(path, :relative_path => options[:relative_path])
-    result.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
     result.links = request.options[:links] if request.options[:links]
 
-    # :ignore_source_permissions is here pending investigation in PUP-3906.
-    if options[:ignore_source_permissions]
-      result.collect
-    else
-      result.collect(request.options[:source_permissions])
-    end
+    result.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
+    result.source_permissions = request.options[:source_permissions] if request.options[:source_permissions]
+
+    result.collect
+
     result
   end
 
@@ -26,8 +25,7 @@ module Puppet::FileServing::TerminusHelper
     end
 
     Puppet::FileServing::Fileset.merge(*filesets).collect do |file, base_path|
-      ignore_source_permissions = (!request.options[:source_permissions] || request.options[:source_permissions] == :ignore)
-      path2instance(request, base_path, :ignore_source_permissions => ignore_source_permissions, :relative_path => file)
+      path2instance(request, base_path, :relative_path => file)
     end
   end
 end
