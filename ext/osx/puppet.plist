@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>EnvironmentVariables</key>
+        <dict>
+                <key>PATH</key>
+                <string>/opt/puppetlabs/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+                <key>LANG</key>
+                <string>en_US.UTF-8</string>
+        </dict>
+        <key>Label</key>
+        <string>puppet</string>
+        <key>KeepAlive</key>
+        <true/>
+        <key>ProgramArguments</key>
+        <array>
+                <string>/opt/puppetlabs/bin/puppet</string>
+                <string>agent</string>
+                <string>--verbose</string>
+                <string>--no-daemonize</string>
+                <string>--logdest</string>
+                <string>console</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>StandardErrorPath</key>
+	<string>/var/log/puppetlabs/puppet/puppet.log</string>
+        <key>StandardOutPath</key>
+	<string>/var/log/puppetlabs/puppet/puppet.log</string>
+</dict>
+</plist>
