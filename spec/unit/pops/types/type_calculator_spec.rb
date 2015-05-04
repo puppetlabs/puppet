@@ -471,6 +471,45 @@ describe 'The type calculator' do
       expect(calculator.string(calculator.common_type(r1, r2))).to eq("Class")
     end
 
+    context 'of strings' do
+      it 'computes commonality' do
+        t1 = string_t('abc')
+        t2 = string_t('xyz')
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.values).to eq(['abc', 'xyz'])
+      end
+
+      it 'computes common size_type' do
+        t1 = string_t
+        t1.size_type = range_t(3,6)
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.size_type).to eq(range_t(2,6))
+      end
+
+      it 'computes common size_type to be undef when one of the types has no size_type' do
+        t1 = string_t
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.size_type).to be_nil
+      end
+
+      it 'computes values to be empty if the one has empty values' do
+        t1 = string_t('apa')
+        t1.size_type = range_t(3,6)
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.values).to be_empty
+      end
+    end
+
     it 'computes pattern commonality' do
       t1 = pattern_t('abc')
       t2 = pattern_t('xyz')
@@ -553,6 +592,13 @@ describe 'The type calculator' do
   context 'computes assignability' do
     include_context "types_setup"
 
+    it 'such that all types are assignable to themselves' do
+      all_types.each do |tc|
+        t = tc.new
+        expect(t).to be_assignable_to(t)
+      end
+    end
+
     context 'for Unit, such that' do
       it 'all types are assignable to Unit' do
         t = Puppet::Pops::Types::PUnitType.new()
@@ -577,8 +623,8 @@ describe 'The type calculator' do
         all_types.each { |t2| expect(t2.new).to be_assignable_to(t) }
       end
 
-      it 'Any is not assignable to anything but Any' do
-        tested_types = all_types() - [Puppet::Pops::Types::PAnyType]
+      it 'Any is not assignable to anything but Any and Optional (implied Optional[Any])' do
+        tested_types = all_types() - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType]
         t = Puppet::Pops::Types::PAnyType.new()
         tested_types.each { |t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -610,7 +656,7 @@ describe 'The type calculator' do
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PDataType] - scalar_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PDataType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -647,7 +693,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PDataType] - scalar_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PScalarType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -668,6 +714,7 @@ describe 'The type calculator' do
       it 'Numeric is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType,
           Puppet::Pops::Types::PScalarType,
           ] - numeric_types
@@ -689,7 +736,7 @@ describe 'The type calculator' do
       end
 
       it 'Collection is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType] - collection_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType] - collection_types
         t = Puppet::Pops::Types::PCollectionType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -708,6 +755,7 @@ describe 'The type calculator' do
       it 'Array is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -727,6 +775,7 @@ describe 'The type calculator' do
       it 'Hash is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -762,6 +811,7 @@ describe 'The type calculator' do
       it 'Tuple is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PTupleType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -781,6 +831,7 @@ describe 'The type calculator' do
       it 'Struct is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -792,8 +843,9 @@ describe 'The type calculator' do
         t = Puppet::Pops::Types::PCallableType.new()
         tested_types = all_types - [
           Puppet::Pops::Types::PCallableType,
-          Puppet::Pops::Types::PAnyType]
-        tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
+          Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType]
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
 
@@ -1279,6 +1331,13 @@ describe 'The type calculator' do
       expect(calculator.instance?(range, 'abc')).to  eq(true)
       expect(calculator.instance?(range, '')).to     eq(false)
       expect(calculator.instance?(range, 'abcd')).to eq(false)
+    end
+
+    it 'should consider string values' do
+      string = string_t('a', 'b')
+      expect(calculator.instance?(string, 'a')).to eq(true)
+      expect(calculator.instance?(string, 'b')).to eq(true)
+      expect(calculator.instance?(string, 'c')).to eq(false)
     end
 
     it 'should consider array in length range' do

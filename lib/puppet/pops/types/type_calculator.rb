@@ -433,8 +433,13 @@ class Puppet::Pops::Types::TypeCalculator
   def instance_of_PStringType(t, o)
     return false unless o.is_a?(String)
     # true if size compliant
-    size_t = t.size_type || @collection_default_size_t
-    instance_of_PIntegerType(size_t, o.size)
+    size_t = t.size_type
+    if size_t.nil? || instance_of_PIntegerType(size_t, o.size)
+      values = t.values
+      values.empty? || values.include?(o)
+    else
+      false
+    end
   end
 
   def instance_of_PTupleType(t, o)
@@ -597,7 +602,8 @@ class Puppet::Pops::Types::TypeCalculator
 
     if t1.is_a?(Types::PStringType) && t2.is_a?(Types::PStringType)
       t = Types::PStringType.new()
-      t.values = t1.values | t2.values
+      t.values = t1.values | t2.values unless t1.values.empty? || t2.values.empty?
+      t.size_type = common_type(t1.size_type, t2.size_type) unless t1.size_type.nil? || t2.size_type.nil?
       return t
     end
 
@@ -1210,8 +1216,9 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_POptionalType(t, t2)
     return true if t2.is_a?(Types::PUndefType)
+    return true if t.optional_type.nil?
     if t2.is_a?(Types::POptionalType)
-      assignable?(t.optional_type, t2.optional_type)
+      assignable?(t.optional_type, t2.optional_type || @t)
     else
       assignable?(t.optional_type, t2)
     end
@@ -1381,11 +1388,11 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PArrayType(t, t2)
     if t2.is_a?(Types::PArrayType)
-      return false unless assignable?(t.element_type, t2.element_type)
+      return false unless t.element_type.nil? || assignable?(t.element_type, t2.element_type || @t)
       assignable_PCollectionType(t, t2)
 
     elsif t2.is_a?(Types::PTupleType)
-      return false unless t2.types.all? {|t2_element| assignable?(t.element_type, t2_element) }
+      return false unless t.element_type.nil? || t2.types.all? {|t2_element| assignable?(t.element_type, t2_element) }
       t2_regular = t2.types[0..-2]
       t2_ranged = t2.types[-1]
       t2_from, t2_to = size_range(t2.size_type)
@@ -1423,7 +1430,8 @@ class Puppet::Pops::Types::TypeCalculator
     case t2
     when Types::PHashType
       return true if (t.size_type.nil? || t.size_type.from == 0) && t2.is_the_empty_hash?
-      return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
+      return false unless t.key_type.nil? || assignable?(t.key_type, t2.key_type || @t)
+      return false unless t.element_type.nil? || assignable?(t.element_type, t2.element_type || @t)
       assignable_PCollectionType(t, t2)
     when Types::PStructType
       # hash must accept String as key type
@@ -1435,7 +1443,7 @@ class Puppet::Pops::Types::TypeCalculator
       key_type = t.key_type
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        t2.elements.all? {|e| instance_of(key_type, e.name) && assignable?(element_type, e.type) })
+        t2.elements.all? {|e| (key_type.nil? || instance_of(key_type, e.name)) && (element_type.nil? || assignable?(element_type, e.type)) })
     else
       false
     end
