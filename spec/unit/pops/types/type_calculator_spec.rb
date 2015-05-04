@@ -584,7 +584,7 @@ describe 'The type calculator' do
         all_types.each { |t2| t2.new.should be_assignable_to(t) }
       end
 
-      it 'Any is not assignable to anything but Any' do
+      it 'Any is not assignable to anything but Any and Optional (implied Optional[Any])' do
         tested_types = all_types() - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType]
         t = Puppet::Pops::Types::PAnyType.new()
         tested_types.each { |t2| t.should_not be_assignable_to(t2.new) }
