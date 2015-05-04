@@ -163,7 +163,7 @@ describe "apply" do
 
     # When executing an ENC script, output cannot be captured using
     # expect { }.to have_printed(...)
-    # External node script execution will fail, likely due to the tempering
+    # External node script execution will fail, likely due to the tampering
     # with the basic file descriptors.
     # Workaround: Define a log destination and merely inspect logs.
     context "with an ENC",
@@ -195,11 +195,8 @@ describe "apply" do
         expect { apply.run }.to exit_with(0)
         logs = @logs.map(&:to_s)
         expect(logs).to include('amod class included')
-        expect(logs * "\n").to match /doesn't match server specified environment/
+        expect(logs).to include(match(/doesn't match server specified environment/))
       end
-
     end
-
   end
-
 end
