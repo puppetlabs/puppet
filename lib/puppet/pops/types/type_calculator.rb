@@ -434,8 +434,13 @@ class Puppet::Pops::Types::TypeCalculator
   def instance_of_PStringType(t, o)
     return false unless o.is_a?(String)
     # true if size compliant
-    size_t = t.size_type || @collection_default_size_t
-    instance_of_PIntegerType(size_t, o.size)
+    size_t = t.size_type
+    if size_t.nil? || instance_of_PIntegerType(size_t, o.size)
+      values = t.values
+      values.empty? || values.include?(o)
+    else
+      false
+    end
   end
 
   def instance_of_PTupleType(t, o)
