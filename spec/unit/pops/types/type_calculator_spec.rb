@@ -845,7 +845,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PCallableType,
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType]
-        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+        tested_types.each {|t2| expect(t).to_not be_assignable_to(t2.new) }
       end
     end
 
