@@ -45,10 +45,10 @@ describe "apply" do
      :if => !Puppet.features.microsoft_windows? do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     enc = file_containing("enc_script", <<-ENC)
-                                        #!/bin/sh
-                                        echo 'classes: []'
-                                        echo 'environment: special'
-                                        ENC
+#!/bin/sh
+echo 'classes: []'
+echo 'environment: special'
+ENC
     File.chmod(0755, enc)
 
     Dir.mkdir(File.join(Puppet[:environmentpath], "special"), 0755)
@@ -172,9 +172,9 @@ describe "apply" do
       let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
         result = file_containing("enc_script", <<-ENC)
-          #!/bin/sh
-          echo 'environment: spec'
-          ENC
+#!/bin/sh
+echo 'environment: spec'
+ENC
         File.chmod(0755, result)
         result
       end
