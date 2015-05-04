@@ -471,6 +471,45 @@ describe 'The type calculator' do
       calculator.string(calculator.common_type(r1, r2)).should == "Class"
     end
 
+    context 'of strings' do
+      it 'computes commonality' do
+        t1 = string_t('abc')
+        t2 = string_t('xyz')
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.values).to eq(['abc', 'xyz'])
+      end
+
+      it 'computes common size_type' do
+        t1 = string_t
+        t1.size_type = range_t(3,6)
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.size_type).to eq(range_t(2,6))
+      end
+
+      it 'computes common size_type to be undef when one of the types has no size_type' do
+        t1 = string_t
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.size_type).to be_nil
+      end
+
+      it 'computes values to be empty if the one has empty values' do
+        t1 = string_t('apa')
+        t1.size_type = range_t(3,6)
+        t2 = string_t
+        t2.size_type = range_t(2,4)
+        common_t = calculator.common_type(t1,t2)
+        expect(common_t.class).to eq(Puppet::Pops::Types::PStringType)
+        expect(common_t.values).to be_empty
+      end
+    end
+
     it 'computes pattern commonality' do
       t1 = pattern_t('abc')
       t2 = pattern_t('xyz')
