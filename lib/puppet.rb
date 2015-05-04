@@ -142,7 +142,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning("Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
     Puppet::Type.newtype(name, options, &block)
   end
 
