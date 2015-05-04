@@ -41,7 +41,7 @@ describe Puppet do
 
   context "newtype" do
     it "should issue a deprecation warning" do
-      subject.expects(:deprecation_warning).with("Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+      subject.expects(:deprecation_warning).with("Creating sometype via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
       subject.newtype("sometype")
     end
   end
