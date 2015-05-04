@@ -7,31 +7,46 @@ test_name "Install Packages"
 step "Install repositories on target machines..." do
 
   sha = ENV['SHA']
-  server_version = ENV['SERVER_VERSION'] ||= 'nightly'
   repo_configs_dir = 'repo-configs'
 
   hosts.each do |host|
     install_repos_on(host, 'puppet-agent', sha, repo_configs_dir)
   end
 
-  install_repos_on(master, 'puppetserver', server_version, repo_configs_dir)
+  if master['passenger']
+    passenger_version = ENV['PASSENGER_VERSION'] || '3518347c3480172fcef41406cad31b7ed34cd14f'
+    install_repos_on(master, 'puppet-master-passenger', passenger_version, repo_configs_dir)
+  else
+    server_version = ENV['SERVER_VERSION'] || 'nightly'
+    install_repos_on(master, 'puppetserver', server_version, repo_configs_dir)
+  end
 end
 
-
-MASTER_PACKAGES = {
-  :redhat => [
-    'puppetserver',
-  ],
-  :debian => [
-    'puppetserver',
-  ],
+if master['passenger']
+  MASTER_PACKAGES = {
+    :redhat => [
+      'puppet-master-passenger',
+    ],
+    :debian => [
+      'puppet-master-passenger',
+    ],
+  }
+else
+  MASTER_PACKAGES = {
+    :redhat => [
+      'puppetserver',
+    ],
+    :debian => [
+      'puppetserver',
+    ],
 #  :solaris => [
 #    'puppet-server',
 #  ],
 #  :windows => [
 #    'puppet-server',
 #  ],
-}
+  }
+end
 
 AGENT_PACKAGES = {
   :redhat => [

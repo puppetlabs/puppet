@@ -5,6 +5,7 @@ confine :to, :platform => 'ubuntu'
 
 # pick any ubuntu agent
 agent = agents.first
+skip_test "No suitable hosts found" if agent.nil?
 
 def manage_service_for(pkg, state, agent)
 
