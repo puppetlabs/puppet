@@ -114,13 +114,15 @@ class Puppet::Configurer
   # the options, then apply that one, otherwise retrieve it.
   def apply_catalog(catalog, options)
     report = options[:report]
-    report.configuration_version = catalog.version
+    begin
+      report.configuration_version = catalog.version
 
-    benchmark(:notice, "Applied catalog") do
-      catalog.apply(options)
+      benchmark(:notice, "Applied catalog") do
+        catalog.apply(options)
+      end
+    ensure
+      report.finalize_report
     end
-
-    report.finalize_report
     report
   end
 
