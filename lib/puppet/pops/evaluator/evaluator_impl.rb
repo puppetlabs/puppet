@@ -587,7 +587,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           case c
           when Puppet::Pops::Model::LiteralDefault
             the_default = co.then_expr
-            is_match?(test, evaluate(c, scope), c, co, scope)
+            next false
           when Puppet::Pops::Model::UnfoldExpression
             # not ideal for error reporting, since it is not known which unfolded result
             # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)

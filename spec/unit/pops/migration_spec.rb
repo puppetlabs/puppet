@@ -98,7 +98,7 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
         migration_checker.expects(:report_uc_bareword_type).once
         migration_checker.expects(:report_option_type_mismatch).once
         Puppet.override({:migration_checker => migration_checker}, "migration-context") do
-          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "case Foo { default: {}}", __FILE__)
+          Puppet::Pops::Parser::EvaluatingParser.new.evaluate_string(scope, "case Foo { 'Foo': {}}", __FILE__)
         end
       end
 
