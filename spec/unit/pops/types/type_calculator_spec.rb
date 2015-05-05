@@ -395,7 +395,7 @@ describe 'The type calculator' do
           t = calculator.infer_set({ 'mode' => 'read', 'path' => ['foo', 'fee' ] })
           expect(t.class).to eq(Puppet::Pops::Types::PStructType)
           expect(t.elements.size).to eq(2)
-          els = t.elements.map { |e| e.type }.sort {|a,b| a.to_s <=> b.to_s }
+          els = t.elements.map { |e| e.value_type }.sort {|a,b| a.to_s <=> b.to_s }
           els[0].class.should == Puppet::Pops::Types::PStringType
           els[1].class.should == Puppet::Pops::Types::PTupleType
         end
@@ -889,6 +889,35 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+
+      it 'Default key optionality is controlled by value assignability to undef' do
+        t1 = struct_t({'member' => string_t})
+        expect(t1.elements[0].key_type).to eq(string_t('member'))
+        t1 = struct_t({'member' => object_t})
+        expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
+      end
+
+      it "NotUndef['key'] becomes String['key'] (since its implied that String is required)" do
+        t1 = struct_t({not_undef_t('member') => string_t})
+        expect(t1.elements[0].key_type).to eq(string_t('member'))
+      end
+
+      it "Optional['key'] becomes Optional[String['key']]" do
+        t1 = struct_t({optional_t('member') => string_t})
+        expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
+      end
+
+      it 'Optional members are not required' do
+        t1 = struct_t({optional_t('optional_member') => string_t, not_undef_t('other_member') => string_t})
+        t2 = struct_t({not_undef_t('other_member') => string_t})
+        expect(t2).to be_assignable_to(t1)
+      end
+
+      it 'Required members not optional even when value is' do
+        t1 = struct_t({not_undef_t('required_member') => object_t, not_undef_t('other_member') => string_t})
+        t2 = struct_t({not_undef_t('other_member') => string_t})
+        expect(t2).not_to be_assignable_to(t1)
       end
     end
 
@@ -1494,6 +1523,26 @@ describe 'The type calculator' do
       it 'should not consider hash[cont,cont2] as instance of Struct[cont-t,optional[cont3-t]' do
         struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>optional_t(Float)})
         calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>'x'}).should == false
+      end
+
+      it 'should consider nil to be a valid element value' do
+        struct = struct_t({not_undef_t('a') => object_t, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(true)
+      end
+
+      it 'should consider nil to be a valid element value but subject to value type' do
+        struct = struct_t({not_undef_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(false)
+      end
+
+      it 'should consider nil to be a valid element value but subject to value type even when key is optional' do
+        struct = struct_t({optional_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(false)
+      end
+
+      it 'should consider a hash where optional key is missing as assignable even if value of optional key is required' do
+        struct = struct_t({optional_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'b'=>'a'})).to eq(true)
       end
     end
 

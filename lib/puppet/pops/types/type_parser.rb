@@ -13,6 +13,7 @@ class Puppet::Pops::Types::TypeParser
   def initialize
     @parser = Puppet::Pops::Parser::Parser.new()
     @type_transformer = Puppet::Pops::Visitor.new(nil, "interpret", 0, 0)
+    @undef_t = TYPES.undef
   end
 
   # Produces a *puppet type* based on the given string.
@@ -347,8 +348,9 @@ class Puppet::Pops::Types::TypeParser
     when "struct"
       # 1..m parameters being types (last two optionally integer or literal default
       raise_invalid_parameters_error("Struct", "1", parameters.size) unless parameters.size == 1
-      assert_struct_parameter(parameters[0])
-      TYPES.struct(parameters[0])
+      h = parameters[0]
+      raise_invalid_type_specification_error unless h.is_a?(Hash)
+      TYPES.struct(h)
 
     when "integer"
       if parameters.size == 1
@@ -451,15 +453,6 @@ class Puppet::Pops::Types::TypeParser
 
   def assert_range_parameter(t)
     raise_invalid_type_specification_error unless TYPES.is_range_parameter?(t)
-  end
-
-  def assert_struct_parameter(h)
-    raise_invalid_type_specification_error unless h.is_a?(Hash)
-    h.each do |k,v|
-      # TODO: Should have stricter name rule
-      raise_invalid_type_specification_error unless k.is_a?(String) && !k.empty?
-      assert_type(v)
-    end
   end
 
   def raise_invalid_type_specification_error
