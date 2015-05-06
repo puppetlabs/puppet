@@ -113,7 +113,7 @@ class Puppet::Node
   def merge(params)
     params.each do |name, value|
       if @parameters.include?(name)
-        Puppet::Util::Warnings.warnonce("The node paramter #{name} for node #{@parameters["hostname"]} was already set to #{@parameters[name]}. It could not be set to #{value}")
+        Puppet::Util::Warnings.warnonce("The node parameter #{name} for node #{@parameters["hostname"]} was already set to #{@parameters[name]}. It could not be set to #{value}")
       else
         @parameters[name] = value
       end

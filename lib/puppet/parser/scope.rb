@@ -609,7 +609,7 @@ class Puppet::Parser::Scope
 
     # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
     if Puppet[:trusted_server_facts] && name == 'server_facts' && !options[:privileged]
-      raise Puppet::ParseError, "Attempt to assign variable name: server_facts, which is reserved when the :trusted_server_facts setting is true"
+      raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
     table = effective_symtable(options[:ephemeral])

@@ -60,6 +60,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
         fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      elsif name == "server_facts" && Puppet[:trusted_server_facts]
+        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
       else
         fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
       end
