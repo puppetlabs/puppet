@@ -25,3 +25,5 @@ puppet-acceptance/
 acceptance/junit
 acceptance/log
 acceptance/.bundle
+# emacs backup files
+*~

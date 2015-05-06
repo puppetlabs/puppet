@@ -716,6 +716,42 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
     end
 
+    it "should not recursively manage files set to be ignored" do
+      srcdir = tmpfile("ignore_vs_recurse_1")
+      dstdir = tmpfile("ignore_vs_recurse_2")
+
+      FileUtils.mkdir_p(srcdir)
+      FileUtils.mkdir_p(dstdir)
+      
+      srcfile = File.join(srcdir, "file.src")
+      cpyfile = File.join(dstdir, "file.src")
+      ignfile = File.join(srcdir, "file.ign")
+      
+      File.open(srcfile, "w") { |f| f.puts "don't ignore me" }
+      File.open(ignfile, "w") { |f| f.puts "you better ignore me" }
+
+
+      catalog.add_resource described_class.new(
+                             :name => srcdir,
+                             :ensure => 'directory',
+                             :mode => '0755',)
+      
+      catalog.add_resource described_class.new(
+                             :name => dstdir,
+                             :ensure => 'directory',
+                             :mode => "755",
+                             :source => srcdir,
+                             :recurse => true,
+                             :ignore => '*.ign',)
+      
+      catalog.apply
+      expect(Puppet::FileSystem.exist?(srcdir)).to be_truthy
+      expect(Puppet::FileSystem.exist?(dstdir)).to be_truthy
+      expect(File.read(srcfile).strip).to eq("don't ignore me")
+      expect(File.read(cpyfile).strip).to eq("don't ignore me")
+      expect(Puppet::FileSystem.exist?("#{dstdir}/file.ign")).to be_falsey
+    end
+
     it "should not recursively manage files managed by a more specific explicit file" do
       dir = tmpfile("recursion_vs_explicit_1")
 
