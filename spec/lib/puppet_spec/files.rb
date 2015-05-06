@@ -43,6 +43,20 @@ module PuppetSpec::Files
     file
   end
 
+  def script_containing(name, contents) PuppetSpec::Files.script_containing(name, contents) end
+  def self.script_containing(name, contents)
+    file = tmpfile(name)
+    if Puppet.features.microsoft_windows?
+      file += '.bat'
+      text = contents[:windows]
+    else
+      text = contents[:posix]
+    end
+    File.open(file, 'wb') { |f| f.write(text) }
+    Puppet::FileSystem.chmod(0755, file)
+    file
+  end
+
   def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
   def self.tmpdir(name)
     dir = Dir.mktmpdir(name)
