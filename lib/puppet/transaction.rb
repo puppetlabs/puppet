@@ -210,6 +210,7 @@ class Puppet::Transaction
 
   # Evaluate a single resource.
   def eval_resource(resource, ancestor = nil)
+    propagate_failure(resource)
     if skip?(resource)
       resource_status(resource).skipped = true
       resource.debug("Resource is being skipped, unscheduling all events")
@@ -227,30 +228,43 @@ class Puppet::Transaction
 
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
-    # First make sure there are no failed dependencies.  To do this,
-    # we check for failures in any of the vertexes above us.  It's not
-    # enough to check the immediate dependencies, which is why we use
-    # a tree from the reversed graph.
-    found_failed = false
-
-
     # When we introduced the :whit into the graph, to reduce the combinatorial
     # explosion of edges, we also ended up reporting failures for containers
     # like class and stage.  This is undesirable; while just skipping the
     # output isn't perfect, it is RC-safe. --daniel 2011-06-07
     suppress_report = (resource.class == Puppet::Type.type(:whit))
 
-    relationship_graph.dependencies(resource).each do |dep|
-      next unless failed?(dep)
-      found_failed = true
-
+    s = resource_status(resource)
+    if s && s.dependency_failed?
       # See above. --daniel 2011-06-06
       unless suppress_report then
-        resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+        s.failed_dependencies.each do |dep|
+          resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+        end
       end
     end
 
-    found_failed
+    s && s.dependency_failed?
+  end
+
+  # We need to know if a resource has any failed dependencies before
+  # we try to process it. We keep track of this by keeping a list on
+  # each resource of the failed dependencies, and incrementally
+  # computing it as the union of the failed dependencies of each
+  # first-order dependency. We have to do this as-we-go instead of
+  # up-front at failure time because the graph may be mutated as we
+  # walk it.
+  def propagate_failure(resource)
+    failed = Set.new
+    relationship_graph.direct_dependencies_of(resource).each do |dep|
+      if (s = resource_status(dep))
+        failed.merge(s.failed_dependencies) if s.dependency_failed?
+        if s.failed?
+          failed.add(dep)
+        end
+      end
+    end
+    resource_status(resource).failed_dependencies = failed.to_a
   end
 
   # A general method for recursively generating new resources from a
