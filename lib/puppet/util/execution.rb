@@ -119,10 +119,10 @@ module Puppet::Util::Execution
   #   user id matches the effective user id of the current process.
   # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as. Will be ignored if the
   #   group id matches the effective group id of the current process.
-  # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output
+  # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output, if false stderr output is discarded
   # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
   #   supported.
-  # @option options [Boolean] :squelch (true) if true, ignore stdout / stderr completely.
+  # @option options [Boolean] :squelch (false) if true, ignore stdout / stderr completely.
   # @option options [Boolean] :override_locale (true) by default (and if this option is set to true), we will temporarily override
   #   the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
   #   This ensures that the output of the command will be formatted consistently, making it predictable for parsing.
