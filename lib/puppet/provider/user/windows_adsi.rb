@@ -18,7 +18,8 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def groups
-    user.groups.join(',')
+    @groups ||= Puppet::Util::Windows::ADSI::Group.name_sid_hash(user.groups)
+    @groups.keys
   end
 
   def groups=(groups)
@@ -44,6 +45,21 @@ Puppet::Type.type(:user).provide :windows_adsi do
       return true if specified_users.empty?
       (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
     end
+  end
+
+  def groups_to_s(groups)
+    return '' if groups.nil? || !groups.kind_of?(Array)
+    groups = groups.map do |group_name|
+      sid = Puppet::Util::Windows::SID.name_to_sid_object(group_name)
+      if sid.account =~ /\\/
+        account, _ = Puppet::Util::Windows::ADSI::Group.parse_name(sid.account)
+      else
+        account = sid.account
+      end
+      resource.debug("#{sid.domain}\\#{account} (#{sid.to_s})")
+      "#{sid.domain}\\#{account}"
+    end
+    return groups.join(',')
   end
 
   def create

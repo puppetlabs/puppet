@@ -275,6 +275,30 @@ module Puppet
         raise ArgumentError, "Group names must not be empty. If you want to specify \"no groups\" pass an empty array" if value.empty?
       end
 
+      def change_to_s(currentvalue, newvalue)
+        newvalue = newvalue.split(",") if newvalue != :absent
+
+        if provider.respond_to?(:groups_to_s)
+          # for Windows ADSI
+          # de-dupe the "newvalue" when the sync event message is generated,
+          # due to final retrieve called after the resource has been modified
+          newvalue = provider.groups_to_s(newvalue).split(',').uniq
+        end
+
+        super(currentvalue, newvalue)
+      end
+
+      # override Puppet::Property::List#retrieve
+      def retrieve
+        if provider.respond_to?(:groups_to_s)
+          # Windows ADSI groups returns SIDs, but retrieve needs names
+          # must return qualified names for SIDs for "is" value and puppet resource
+          return provider.groups_to_s(provider.groups).split(',')
+        end
+
+        super
+      end
+
       def insync?(current)
         if provider.respond_to?(:groups_insync?)
           return provider.groups_insync?(current, @should)

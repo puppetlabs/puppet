@@ -35,16 +35,18 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   end
 
   describe "when managing groups" do
-    it 'should return the list of groups as a comma-separated list' do
-      provider.user.stubs(:groups).returns ['group1', 'group2', 'group3']
+    it 'should return the list of groups as an array of strings' do
+      provider.user.stubs(:groups).returns nil
+      groups = {'group1' => nil, 'group2' => nil, 'group3' => nil}
+      Puppet::Util::Windows::ADSI::Group.expects(:name_sid_hash).returns(groups)
 
-      expect(provider.groups).to eq('group1,group2,group3')
+      expect(provider.groups).to eq(groups.keys)
     end
 
-    it "should return absent if there are no groups" do
+    it "should return an empty array if there are no groups" do
       provider.user.stubs(:groups).returns []
 
-      expect(provider.groups).to eq('')
+      expect(provider.groups).to eq([])
     end
 
     it 'should be able to add a user to a set of groups' do
