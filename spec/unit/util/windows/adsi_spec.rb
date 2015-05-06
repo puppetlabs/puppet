@@ -380,7 +380,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           expect {
             adsi_group.expects(:Members).returns []
             group.set_members(['foobar'])
-          }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+          }.to raise_error(Puppet::Error, /Could not resolve name: foobar/)
         end
       end
 
