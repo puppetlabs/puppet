@@ -1,5 +1,6 @@
 require 'openssl'
 require 'net/http'
+require 'puppet/util/http_proxy'
 
 # Factory for <tt>Net::HTTP</tt> objects.
 #
