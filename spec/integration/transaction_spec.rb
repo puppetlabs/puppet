@@ -352,10 +352,16 @@ describe Puppet::Transaction do
     )
 
     catalog = mk_catalog(exec, file1, file2)
-    catalog.apply
+    transaction = catalog.apply
 
     expect(Puppet::FileSystem.exist?(file1[:path])).to be_falsey
     expect(Puppet::FileSystem.exist?(file2[:path])).to be_falsey
+
+    expect(transaction.resource_status(file1).skipped).to be_truthy
+    expect(transaction.resource_status(file2).skipped).to be_truthy
+
+    expect(transaction.resource_status(file1).failed_dependencies).to eq([exec])
+    expect(transaction.resource_status(file2).failed_dependencies).to eq([exec])
   end
 
   it "on failure, skips dynamically-generated dependents" do
