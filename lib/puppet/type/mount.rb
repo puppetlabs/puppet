@@ -164,6 +164,7 @@ module Puppet
 
       validate do |value|
         raise Puppet::Error, "fstype must not contain whitespace: #{value}" if value =~ /\s/
+        raise Puppet::Error, "fstype must not be an empty string" if value.empty?
       end
     end
 
@@ -174,6 +175,7 @@ module Puppet
 
       validate do |value|
         raise Puppet::Error, "options must not contain whitespace: #{value}" if value =~ /\s/
+        raise Puppet::Error, "options must not be an empty string" if value.empty?
       end
     end
 
