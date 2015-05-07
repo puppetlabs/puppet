@@ -2,9 +2,9 @@
 # @api public
 #
 module Puppet::Pops::Types::TypeFactory
-  @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
-
   Types = Puppet::Pops::Types
+  @type_calculator = Types::TypeCalculator.singleton
+  @undef_t = Types::PUndefType.new
 
   # Produces the Integer type
   # @api public
@@ -66,9 +66,17 @@ module Puppet::Pops::Types::TypeFactory
   end
 
   # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
+  # If the given 'optional_type' argument is a String, then it will be
+  # converted into a String type that represents that string.
+  #
+  # @param optional_type [String,PAnyType,nil] the optional type
+  # @return [POptionalType] the created type
+  #
+  # @api public
+  #
   def self.optional(optional_type = nil)
     t = Types::POptionalType.new
-    t.optional_type = type_of(optional_type)
+    t.optional_type = optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)
     t
   end
 
@@ -91,19 +99,48 @@ module Puppet::Pops::Types::TypeFactory
   end
 
   # Produces the Struct type, either a non parameterized instance representing
-  # all structs (i.e. all hashes) or a hash with a given set of keys of String
-  # type (names), bound to a value of a given type. Type may be a Ruby Class, a
-  # Puppet Type, or an instance from which the type is inferred.
+  # all structs (i.e. all hashes) or a hash with entries where the key is
+  # either a literal String, an Enum with one entry, or a String representing exactly one value.
+  # The key type may also be wrapped in a NotUndef or an Optional.
   #
-  def self.struct(name_type_hash = {})
+  # The value can be a ruby class, a String (interpreted as the name of a ruby class) or
+  # a Type.
+  #
+  # @param hash [Hash<Object, Object>] key => value hash
+  # @return [PStructType] the created Struct type
+  #
+  def self.struct(hash = {})
+    tc = @type_calculator
     t = Types::PStructType.new
-    t.elements = name_type_hash.map do |name, type|
-      elem = Types::PStructElement.new
-      if name.is_a?(String) && name.empty?
-        raise ArgumentError, "An empty String can not be used where a String[1, default] is expected"
+    t.elements = hash.map do |key_type, value_type|
+      value_type = type_of(value_type)
+      raise ArgumentError, 'Struct element value_type must be a Type' unless value_type.is_a?(Types::PAnyType)
+
+      # TODO: Should have stricter name rule
+      if key_type.is_a?(String)
+        raise ArgumentError, 'Struct element key cannot be an empty String' if key_type.empty?
+        key_type = string(key_type)
+        # Must make key optional if the value can be Undef
+        key_type = optional(key_type) if tc.assignable?(value_type, @undef_t)
+      else
+        # assert that the key type is one of String[1], NotUndef[String[1]] and Optional[String[1]]
+        case key_type
+        when Types::PNotUndefType
+          # We can loose the NotUndef wrapper here since String[1] isn't optional anyway
+          key_type = key_type.type
+          s = key_type
+        when Types::POptionalType
+          s = key_type.optional_type
+        else
+          s = key_type
+        end
+        unless (s.is_a?(Puppet::Pops::Types::PStringType) || s.is_a?(Puppet::Pops::Types::PEnumType)) && s.values.size == 1 && !s.values[0].empty?
+          raise ArgumentError, 'Unable to extract a non-empty literal string from Struct member key type' if key_type.empty?
+        end
       end
-      elem.name = name
-      elem.type = type_of(type)
+      elem = Types::PStructElement.new
+      elem.key_type = key_type
+      elem.value_type = value_type
       elem
     end
     t
@@ -348,6 +385,22 @@ module Puppet::Pops::Types::TypeFactory
     type = Types::PHashType.new()
     type.key_type = scalar()
     type.element_type = data()
+    type
+  end
+
+  # Produces a type for NotUndef[T]
+  # The given 'inst_type' can be a string in which case it will be converted into
+  # the type String[inst_type].
+  #
+  # @param inst_type [Type,String] the type to qualify
+  # @return [Puppet::Pops::Types::PNotUndefType] the NotUndef type
+  #
+  # @api public
+  #
+  def self.not_undef(inst_type = nil)
+    type = Types::PNotUndefType.new()
+    inst_type = string(inst_type) if inst_type.is_a?(String)
+    type.type = inst_type
     type
   end
 

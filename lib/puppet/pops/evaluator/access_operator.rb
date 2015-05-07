@@ -262,6 +262,27 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+  def access_PNotUndefType(o, scope, keys)
+    keys.flatten!
+    case keys.size
+    when 0
+      TYPEFACTORY.not_undef
+    when 1
+      type = keys[0]
+      case type
+      when String
+        type = TYPEFACTORY.string(type)
+      when Puppet::Pops::Types::PAnyType
+        type = nil if type.class == Puppet::Pops::Types::PAnyType
+      else
+        fail(Puppet::Pops::Issues::BAD_NOT_UNDEF_SLICE_TYPE, @semantic.keys[0], {:base_type => 'NotUndef-Type', :actual => type.class})
+      end
+      TYPEFACTORY.not_undef(type)
+    else
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'NotUndef-Type', :min => 0, :max => 1, :actual => keys.size})
+    end
+  end
+
   def access_PType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
