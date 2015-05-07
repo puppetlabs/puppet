@@ -219,6 +219,12 @@ describe Puppet::Node, "when merging facts" do
     expect(@node.parameters["two"]).to eq("b")
   end
 
+  it "warns when a parameter value is not updated" do
+    @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
+    Puppet.expects(:warning).with('The node parameter \'one\' for node \'testnode\' was already set to \'a\'. It could not be set to \'b\'')
+    @node.merge "one" => "b"
+  end
+
   it "accepts arbitrary parameters to merge into its parameters" do
     @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
     @node.merge "two" => "three"

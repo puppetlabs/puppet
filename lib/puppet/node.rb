@@ -16,6 +16,8 @@ class Puppet::Node
   attr_accessor :name, :classes, :source, :ipaddress, :parameters, :trusted_data, :environment_name
   attr_reader :time, :facts
 
+  attr_reader :server_facts
+
   def self.from_data_hash(data)
     raise ArgumentError, "No name provided in serialized data" unless name = data['name']
 
@@ -86,6 +88,8 @@ class Puppet::Node
 
     @facts = options[:facts]
 
+    @server_facts = {}
+
     if env = options[:environment]
       self.environment = env
     end
@@ -108,10 +112,22 @@ class Puppet::Node
   # Merge any random parameters into our parameter list.
   def merge(params)
     params.each do |name, value|
-      @parameters[name] = value unless @parameters.include?(name)
+      if @parameters.include?(name)
+        Puppet::Util::Warnings.warnonce("The node parameter '#{name}' for node '#{@name}' was already set to '#{@parameters[name]}'. It could not be set to '#{value}'")
+      else
+        @parameters[name] = value
+      end
     end
 
     @parameters["environment"] ||= self.environment.name.to_s
+  end
+
+  def add_server_facts(facts)
+    # Append the current environment to the list of server facts
+    @server_facts = facts.merge({ "environment" => self.environment.name.to_s})
+
+    # Merge the server facts into the parameters for the node
+    merge(facts)
   end
 
   # Calculate the list of names we might use for looking
