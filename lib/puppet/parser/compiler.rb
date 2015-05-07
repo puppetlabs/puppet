@@ -560,6 +560,11 @@ class Puppet::Parser::Compiler
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]
     @topscope.set_trusted(node.trusted_data)
+
+    if Puppet[:trusted_server_facts]
+      @topscope.set_server_facts(node.server_facts)
+    end
+
     facts_hash = node.facts.nil? ? {} : node.facts.values
     @topscope.set_facts(facts_hash)
   end
