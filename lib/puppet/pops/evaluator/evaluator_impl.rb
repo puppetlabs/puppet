@@ -1108,7 +1108,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # of value except regular expression where a match is performed.
   #
   def is_match?(left, right, o, option_expr, scope)
-    @migration_checker.report_option_type_mismatch(left, right, option_expr, o)
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
@@ -1119,7 +1118,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).
       #
-      @migration_checker.report_uc_bareword_type(right, o)
       @@type_calculator.instance?(right, left)
     else
       # Handle equality the same way as the language '==' operator (case insensitive etc.)
