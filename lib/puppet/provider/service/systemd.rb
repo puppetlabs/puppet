@@ -8,6 +8,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   confine :exists => "/run/systemd/system"
 
   defaultfor :osfamily => [:archlinux]
+  defaultfor :osfamily => :debian
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora, :operatingsystemmajrelease => ["17", "18", "19", "20", "21"]
   defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["12", "13"]
