@@ -607,6 +607,11 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
+    # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
+    if Puppet[:trusted_server_facts] && name == 'server_facts' && !options[:privileged]
+      raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
+    end
+
     table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
       if options[:append]
@@ -634,6 +639,10 @@ class Puppet::Parser::Scope
 
   def set_facts(hash)
     setvar('facts', deep_freeze(hash), :privileged => true)
+  end
+
+  def set_server_facts(hash)
+    setvar('server_facts', deep_freeze(hash), :privileged => true)
   end
 
   # Deeply freezes the given object. The object and its content must be of the types:
