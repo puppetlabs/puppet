@@ -27,6 +27,15 @@ module Puppet::Pops::Types
   class PAnyType < TypeModelObject
   end
 
+  # A type that is assignable from the same types as its contained `type` except the
+  # types assignable from {Puppet::Pops::Types::PUndefType}
+  #
+  # @api public
+  #
+  class PNotUndefType < PAnyType
+    contains_one_uni 'type', PAnyType
+  end
+
   # The type of types.
   # @api public
   #
@@ -135,8 +144,10 @@ module Puppet::Pops::Types
   # @api public
   #
   class PStructElement < TypeModelObject
-    has_attr 'name', String, :lowerBound => 1
-    contains_one_uni 'type', PAnyType
+    # key_type must be either String[1] or Optional[String[1]] and the String[1] must
+    # have a values collection with exactly one element
+    contains_one_uni 'key_type', PAnyType, :lowerBound => 1
+    contains_one_uni 'value_type', PAnyType
   end
 
   # @api public
