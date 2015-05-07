@@ -530,6 +530,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
          [/ee/, Integer[0,10], default] : { 'yes' }
          default :{ 'no' }}"                                => 'yes',
 
+      "case [green, 2, whatever] {
+         default :{ 'no' }
+         [/ee/, Integer[0,10], default] : { 'yes' }}"        => 'yes',
+
       "case {a=>1, b=>2, whatever=>3, extra => ignored} {
          { a => Integer[0,5],
            b => Integer[0,5],
