@@ -268,14 +268,21 @@ class Puppet::Pops::Types::TypeCalculator
     if t2.is_a?(Class)
       t2 = type(t2)
     end
-    # Unit can be assigned to anything
-    return true if t2.class == Types::PUnitType
+    t2_class = t2.class
 
-    if t2.class == Types::PVariantType
+    # Unit can be assigned to anything
+    return true if t2_class == Types::PUnitType
+
+    if t2_class == Types::PVariantType
       # Assignable if all contained types are assignable
       t2.types.all? { |vt| @@assignable_visitor.visit_this_1(self, t, vt) }
     else
-      @@assignable_visitor.visit_this_1(self, t, t2)
+      # Turn NotUndef[T] into T when T is not assignable from Undef
+      if t2_class == Types::PNotUndefType && !(t2.type.nil? || assignable?(t2.type, @nil_t))
+        assignable?(t, t2.type)
+      else
+        @@assignable_visitor.visit_this_1(self, t, t2)
+      end
     end
  end
 
@@ -456,9 +463,18 @@ class Puppet::Pops::Types::TypeCalculator
 
   def instance_of_PStructType(t, o)
     return false unless o.is_a?(Hash)
-    h = t.hashed_elements
-    # all keys must be present and have a value (even if nil/undef)
-    (o.keys - h.keys).empty? && h.all? { |k,v| instance_of(v, o[k]) }
+    matched = 0
+    t.elements.all? do |e|
+      key = e.name
+      v = o[key]
+      if v.nil? && !o.include?(key)
+        # Entry is missing. Only OK when key is optional
+        assignable?(e.key_type, @nil_t)
+      else
+        matched += 1
+        instance_of(e.value_type, v)
+      end
+    end && matched == o.size
   end
 
   def instance_of_PHashType(t, o)
@@ -473,6 +489,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   def instance_of_PDataType(t, o)
     instance_of(@data_variant_t, o)
+  end
+
+  def instance_of_PNotUndefType(t, o)
+    !(o.nil? || o == :undef) && (t.type.nil? || instance_of(t.type, o))
   end
 
   def instance_of_PUndefType(t, o)
@@ -925,27 +945,23 @@ class Puppet::Pops::Types::TypeCalculator
       type.key_type = Types::PUndefType.new
       type.element_type = Types::PUndefType.new
       type.size_type = size_as_type(o)
-    else
-      if o.keys.find {|k| !instance_of_PStringType(@non_empty_string_t, k) }
-        type = Types::PHashType.new
-        ktype = Types::PVariantType.new
-        ktype.types = o.keys.map {|k| infer_set(k) }
-        etype = Types::PVariantType.new
-        etype.types = o.values.map {|e| infer_set(e) }
-        type.key_type = unwrap_single_variant(ktype)
-        type.element_type = unwrap_single_variant(etype)
-        type.size_type = size_as_type(o)
-      else
-        elements = []
-        o.each_pair do |k,v|
-          element = Types::PStructElement.new
-          element.name = k
-          element.type = infer_set(v)
-          elements << element
-        end
-        type = Types::PStructType.new
-        type.elements = elements
+    elsif o.keys.all? {|k| instance_of_PStringType(@non_empty_string_t, k) }
+      type = Types::PStructType.new
+      type.elements = o.map do |k,v|
+        element = Types::PStructElement.new
+        element.key_type = infer_String(k)
+        element.value_type = infer_set(v)
+        element
       end
+    else
+      type = Types::PHashType.new
+      ktype = Types::PVariantType.new
+      ktype.types = o.keys.map {|k| infer_set(k) }
+      etype = Types::PVariantType.new
+      etype.types = o.values.map {|e| infer_set(e) }
+      type.key_type = unwrap_single_variant(ktype)
+      type.element_type = unwrap_single_variant(etype)
+      type.size_type = size_as_type(o)
     end
     type
   end
@@ -967,6 +983,11 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PAnyType(t, t2)
     t2.is_a?(Types::PAnyType)
+  end
+
+  # @api private
+  def assignable_PNotUndefType(t, t2)
+    !assignable?(t2, @nil_t) && (t.type.nil? || assignable?(t.type, t2))
   end
 
   # @api private
@@ -1109,6 +1130,17 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # @api private
+  def self.is_kind_of_optional?(t, optional = true)
+    case t
+    when Types::POptionalType
+      true
+    when Types::PVariantType
+      t.types.all? {|t2| is_kind_of_optional?(t2, optional) }
+    else
+      false
+    end
+  end
 
   def callable_PArrayType(args_array, callable_t)
     return false unless assignable?(callable_t.param_types, args_array)
@@ -1192,22 +1224,34 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def assignable_PStructType(t, t2)
     if t2.is_a?(Types::PStructType)
-      h = t.hashed_elements
       h2 = t2.hashed_elements
-      (h2.keys - h.keys).empty? && h.all? {|k, v| v2 = h2[k]; assignable?(v, v2.nil? ? @nil_t : v2) }
+      matched = 0
+      t.elements.all? do |e1|
+        e2 = h2[e1.name]
+        if e2.nil?
+          assignable?(e1.key_type, @nil_t)
+        else
+          matched += 1
+          assignable?(e1.key_type, e2.key_type) && assignable?(e1.value_type, e2.value_type)
+        end
+      end && matched == h2.size
     elsif t2.is_a?(Types::PHashType)
-      size_t2 = t2.size_type || @collection_default_size_t
-      size_t = Types::PIntegerType.new
-      elements = t.elements
-      size_t.from = elements.count {|e| !assignable?(e.type, @nil_t) }
-      size_t.to = elements.size
-      # compatible size
-      # hash key type must be string of min 1 size
-      # hash value t must be assignable to each key
-      element_type = t2.element_type
-      assignable_PIntegerType(size_t, size_t2) &&
-        (size_t2.to == 0 || assignable?(@non_empty_string_t, t2.key_type)) &&
-          elements.all? {|e| assignable?(e.type, element_type) }
+      required = 0
+      required_elements_assignable = t.elements.all? do |e|
+        if assignable?(e.key_type, @nil_t)
+          true
+        else
+          required += 1
+          assignable?(e.value_type, t2.element_type)
+        end
+      end
+      if required_elements_assignable
+        size_t2 = t2.size_type || @collection_default_size_t
+        size_t = Types::PIntegerType.new
+        size_t.from = required
+        size_t.to = t.elements.size
+        assignable_PIntegerType(size_t, size_t2)
+      end
     else
       false
     end
@@ -1443,7 +1487,7 @@ class Puppet::Pops::Types::TypeCalculator
       key_type = t.key_type
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        t2.elements.all? {|e| (key_type.nil? || instance_of(key_type, e.name)) && (element_type.nil? || assignable?(element_type, e.type)) })
+        t2.elements.all? {|e| (key_type.nil? || instance_of(key_type, e.name)) && (element_type.nil? || assignable?(element_type, e.value_type)) })
     else
       false
     end
@@ -1475,7 +1519,15 @@ class Puppet::Pops::Types::TypeCalculator
   # Data is assignable by other Data and by Array[Data] and Hash[Scalar, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
+    # We cannot put the NotUndefType[Data] in the @data_variant_t since that causes an endless recursion
+    case t2
+    when Types::PDataType
+      true
+    when Types::PNotUndefType
+      assignable?(t, t2.type || @t)
+    else
+      assignable?(@data_variant_t, t2)
+    end
   end
 
   # Assignable if t2's has the same runtime and the runtime name resolves to
@@ -1646,7 +1698,16 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def string_PStructElement(t)
-    "'#{t.name}'=>#{string(t.type)}"
+    k = t.key_type
+    value_optional = assignable?(t.value_type, @nil_t)
+    key_string =
+      if k.is_a?(Types::POptionalType)
+        # Output as literal String
+        value_optional ? "'#{t.name}'" : string(k)
+      else
+        value_optional ? "NotUndef['#{t.name}']" : "'#{t.name}'"
+      end
+    "#{key_string}=>#{string(t.value_type)}"
   end
 
   # @api private
@@ -1709,6 +1770,20 @@ class Puppet::Pops::Types::TypeCalculator
       end
     else
       "Resource"
+    end
+  end
+
+  # @api private
+  def string_PNotUndefType(t)
+    contained_type = t.type
+    if contained_type.nil? || contained_type.class == Puppet::Pops::Types::PAnyType
+      'NotUndef'
+    else
+      if contained_type.is_a?(Puppet::Pops::Types::PStringType) && contained_type.values.size == 1
+        "NotUndef['#{contained_type.values[0]}']"
+      else
+        "NotUndef[#{string(contained_type)}]"
+      end
     end
   end
 

@@ -89,6 +89,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.optional(t)
   end
 
+  def not_undef_t(t = nil)
+    Puppet::Pops::Types::TypeFactory.not_undef(t)
+  end
+
   def undef_t
     Puppet::Pops::Types::TypeFactory.undef
   end
@@ -108,6 +112,7 @@ describe 'The type calculator' do
     def all_types
       [ Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PUndefType,
+        Puppet::Pops::Types::PNotUndefType,
         Puppet::Pops::Types::PDataType,
         Puppet::Pops::Types::PScalarType,
         Puppet::Pops::Types::PStringType,
@@ -184,6 +189,7 @@ describe 'The type calculator' do
       result << array_t(types::PDataType.new)
       result << types::TypeFactory.hash_of_data
       result << Puppet::Pops::Types::PUndefType
+      result << not_undef_t(types::PDataType.new)
       tmp = tuple_t(types::PDataType.new)
       result << (tmp)
       tmp.size_type = range_t(0, nil)
@@ -389,7 +395,7 @@ describe 'The type calculator' do
           t = calculator.infer_set({ 'mode' => 'read', 'path' => ['foo', 'fee' ] })
           expect(t.class).to eq(Puppet::Pops::Types::PStructType)
           expect(t.elements.size).to eq(2)
-          els = t.elements.map { |e| e.type }.sort {|a,b| a.to_s <=> b.to_s }
+          els = t.elements.map { |e| e.value_type }.sort {|a,b| a.to_s <=> b.to_s }
           expect(els[0].class).to eq(Puppet::Pops::Types::PStringType)
           expect(els[1].class).to eq(Puppet::Pops::Types::PTupleType)
         end
@@ -630,6 +636,48 @@ describe 'The type calculator' do
       end
     end
 
+    context "for NotUndef, such that" do
+      it 'all types except types assignable from Undef are assignable to NotUndef' do
+        t = not_undef_t
+        tc = Puppet::Pops::Types::TypeCalculator.singleton
+        undef_t = Puppet::Pops::Types::PUndefType.new()
+        all_types().each do |c|
+          t2 = c.new
+          if tc.assignable?(t2, undef_t)
+            expect(t2).not_to be_assignable_to(t)
+          else
+            expect(t2).to be_assignable_to(t)
+          end
+        end
+      end
+
+      it 'type NotUndef[T] is assignable from T unless T is assignable from Undef ' do
+        tc = Puppet::Pops::Types::TypeCalculator.singleton
+        undef_t = Puppet::Pops::Types::PUndefType.new()
+        all_types().select do |c|
+          t2 = c.new
+          not_undef_t = not_undef_t(t2)
+          if tc.assignable?(t2, undef_t)
+            expect(t2).not_to be_assignable_to(not_undef_t)
+          else
+            expect(t2).to be_assignable_to(not_undef_t)
+          end
+        end
+      end
+
+      it 'type T is assignable from NotUndef[T] unless T is assignable from Undef' do
+        tc = Puppet::Pops::Types::TypeCalculator.singleton
+        undef_t = Puppet::Pops::Types::PUndefType.new()
+        all_types().select do |c|
+          t2 = c.new
+          not_undef_t = not_undef_t(t2)
+          unless tc.assignable?(t2, undef_t)
+            expect(not_undef_t).to be_assignable_to(t2)
+          end
+        end
+      end
+    end
+
     context "for Data, such that" do
       it 'all scalars + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
@@ -693,7 +741,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PDataType] - scalar_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PNotUndefType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PScalarType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -715,6 +763,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PDataType,
           Puppet::Pops::Types::PScalarType,
           ] - numeric_types
@@ -736,7 +785,7 @@ describe 'The type calculator' do
       end
 
       it 'Collection is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType] - collection_types
+        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PNotUndefType] - collection_types
         t = Puppet::Pops::Types::PCollectionType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
       end
@@ -747,6 +796,7 @@ describe 'The type calculator' do
         t = Puppet::Pops::Types::PArrayType.new()
         tested_types = collection_types - [
           Puppet::Pops::Types::PCollectionType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PArrayType,
           Puppet::Pops::Types::PTupleType]
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -756,6 +806,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -776,6 +827,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -812,6 +864,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PTupleType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
@@ -832,9 +885,39 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType.new()
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2.new) }
+      end
+
+      it 'Default key optionality is controlled by value assignability to undef' do
+        t1 = struct_t({'member' => string_t})
+        expect(t1.elements[0].key_type).to eq(string_t('member'))
+        t1 = struct_t({'member' => object_t})
+        expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
+      end
+
+      it "NotUndef['key'] becomes String['key'] (since its implied that String is required)" do
+        t1 = struct_t({not_undef_t('member') => string_t})
+        expect(t1.elements[0].key_type).to eq(string_t('member'))
+      end
+
+      it "Optional['key'] becomes Optional[String['key']]" do
+        t1 = struct_t({optional_t('member') => string_t})
+        expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
+      end
+
+      it 'Optional members are not required' do
+        t1 = struct_t({optional_t('optional_member') => string_t, not_undef_t('other_member') => string_t})
+        t2 = struct_t({not_undef_t('other_member') => string_t})
+        expect(t2).to be_assignable_to(t1)
+      end
+
+      it 'Required members not optional even when value is' do
+        t1 = struct_t({not_undef_t('required_member') => object_t, not_undef_t('other_member') => string_t})
+        t2 = struct_t({not_undef_t('other_member') => string_t})
+        expect(t2).not_to be_assignable_to(t1)
       end
     end
 
@@ -844,7 +927,8 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PCallableType,
           Puppet::Pops::Types::PAnyType,
-          Puppet::Pops::Types::POptionalType]
+          Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType]
         tested_types.each {|t2| expect(t).to_not be_assignable_to(t2.new) }
       end
     end
@@ -1283,7 +1367,7 @@ describe 'The type calculator' do
       expect(calculator.instance?(Puppet::Pops::Types::POptionalType.new(), :undef)).to eq(true)
     end
 
-    it 'should not consider undef to be an instance of any other type than Any, NilType and Data' do
+    it 'should not consider undef to be an instance of any other type than Any, UndefType and Data' do
       types_to_test = all_types - [
         Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PUndefType,
@@ -1300,9 +1384,10 @@ describe 'The type calculator' do
       expect(calculator.instance?(Puppet::Pops::Types::PAnyType.new(), :default)).to eq(true)
     end
 
-    it 'should not consider "default" to be an instance of anything but Default, and Any' do
+    it 'should not consider "default" to be an instance of anything but Default, NotUndef, and Any' do
       types_to_test = all_types - [
         Puppet::Pops::Types::PAnyType,
+        Puppet::Pops::Types::PNotUndefType,
         Puppet::Pops::Types::PDefaultType,
         ]
 
@@ -1438,6 +1523,26 @@ describe 'The type calculator' do
       it 'should not consider hash[cont,cont2] as instance of Struct[cont-t,optional[cont3-t]' do
         struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>optional_t(Float)})
         expect(calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>'x'})).to eq(false)
+      end
+
+      it 'should consider nil to be a valid element value' do
+        struct = struct_t({not_undef_t('a') => object_t, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(true)
+      end
+
+      it 'should consider nil to be a valid element value but subject to value type' do
+        struct = struct_t({not_undef_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(false)
+      end
+
+      it 'should consider nil to be a valid element value but subject to value type even when key is optional' do
+        struct = struct_t({optional_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(false)
+      end
+
+      it 'should consider a hash where optional key is missing as assignable even if value of optional key is required' do
+        struct = struct_t({optional_t('a') => String, 'b'=>String})
+        expect(calculator.instance?(struct, {'b'=>'a'})).to eq(true)
       end
     end
 
@@ -1781,6 +1886,21 @@ describe 'The type calculator' do
     it "should yield Unit for a Unit type" do
       expect(calculator.string(unit_t)).to eql('Unit')
     end
+
+    it "should yield 'NotUndef' for a PNotUndefType" do
+      t = not_undef_t
+      expect(calculator.string(t)).to eq('NotUndef')
+    end
+
+    it "should yield 'NotUndef[T]' for a PNotUndefType[T]" do
+      t = not_undef_t(data_t)
+      expect(calculator.string(t)).to eq('NotUndef[Data]')
+    end
+
+    it "should yield 'NotUndef['string']' for a PNotUndefType['string']" do
+      t = not_undef_t('hey')
+      expect(calculator.string(t)).to eq("NotUndef['hey']")
+    end
   end
 
   context 'when processing meta type' do
@@ -2040,7 +2160,7 @@ describe 'The type calculator' do
   end
 
   matcher :be_assignable_to do |type|
-    calc = Puppet::Pops::Types::TypeCalculator.new
+    calc = Puppet::Pops::Types::TypeCalculator.singleton
 
     match do |actual|
       calc.assignable?(type, actual)

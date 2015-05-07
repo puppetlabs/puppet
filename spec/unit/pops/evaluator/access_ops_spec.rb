@@ -400,6 +400,25 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect {evaluate(expr)}.to raise_error(/Resource not found: File\['x'\]/)
     end
 
+    # NotUndef Type
+    #
+    it 'produces a NotUndef instance' do
+      type_expr = fqr('NotUndef')
+      expect(evaluate(type_expr)).to eql(Puppet::Pops::Types::TypeFactory.not_undef())
+    end
+
+    it 'produces a NotUndef instance with contained type' do
+      type_expr = fqr('NotUndef')[fqr('Integer')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.not_undef(tf.integer))
+    end
+
+    it 'produces a NotUndef instance with String type when given a literal String' do
+      type_expr = fqr('NotUndef')[literal('hey')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.not_undef(tf.string('hey')))
+    end
+
     # Type Type
     #
     it 'creates a Type instance when applied to a Type' do

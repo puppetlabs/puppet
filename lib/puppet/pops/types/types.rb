@@ -42,6 +42,18 @@ module Puppet::Pops
       end
     end
 
+    class PNotUndefType < PAnyType
+      module ClassModule
+        def hash
+          [self.class, type].hash
+        end
+
+        def ==(o)
+          self.class == o.class && type == o.type
+        end
+      end
+    end
+
     class PType < PAnyType
       module ClassModule
         def hash
@@ -217,11 +229,17 @@ module Puppet::Pops
     class PStructElement < TypeModelObject
       module ClassModule
         def hash
-          [self.class, type, name].hash
+          [self.class, value_type, key_type].hash
+        end
+
+        def name
+          k = key_type
+          k = k.optional_type if k.is_a?(POptionalType)
+          k.values[0]
         end
 
         def ==(o)
-          self.class == o.class && type == o.type && name == o.name
+          self.class == o.class && value_type == o.value_type && key_type == o.key_type
         end
       end
     end
@@ -230,7 +248,7 @@ module Puppet::Pops
     class PStructType < PAnyType
       module ClassModule
         def hashed_elements_derived
-          @_hashed ||= elements.reduce({}) {|memo, e| memo[e.name] = e.type; memo }
+          @_hashed ||= elements.reduce({}) {|memo, e| memo[e.name] = e; memo }
           @_hashed
         end
 
