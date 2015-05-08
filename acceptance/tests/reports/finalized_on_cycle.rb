@@ -1,4 +1,6 @@
 test_name "Reports are finalized on resource cycles"
+# PUP-4548: Skip Windows until PUP-4547 can be resolved.
+confine :except, :platform => 'windows'
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
@@ -24,7 +26,7 @@ agents.each do |agent|
   tmpdir = agent.tmpdir('report_finalized')
   check = "#{tmpdir}/check_report.rb"
   manifest = "#{tmpdir}/manifest.pp"
-  report = "#{agent.puppet['vardir']}/state/last_run_report.yaml"
+  report = agent.puppet['lastrunreport']
 
   create_remote_file(agent, check, check_script)
 
