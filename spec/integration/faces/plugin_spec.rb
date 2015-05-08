@@ -26,7 +26,6 @@ describe "Puppet plugin face" do
   end
 
   before do
-    FileUtils.mkdir(Puppet[:vardir])
     FileUtils.mkdir(File.join(Puppet[:vardir], 'lib'))
     FileUtils.mkdir(File.join(Puppet[:vardir], 'facts.d'))
     @termini_classes = {}

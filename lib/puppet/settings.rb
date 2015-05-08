@@ -3,6 +3,7 @@ require 'getoptlong'
 require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
 require 'forwardable'
+require 'fileutils'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -338,8 +339,26 @@ class Puppet::Settings
     call_hooks_deferred_to_application_initialization
     issue_deprecations
 
+    REQUIRED_APP_SETTINGS.each do |key|
+      create_ancestors(Puppet[key])
+    end
+
     @app_defaults_initialized = true
   end
+
+  # Create ancestor directories.
+  #
+  # @param dir [String] absolute path for a required application default directory
+  # @api private
+
+  def create_ancestors(dir)
+    parent_dir = File.dirname(dir)
+
+    if !File.exist?(parent_dir)
+      FileUtils.mkdir_p(parent_dir)
+    end
+  end
+  private :create_ancestors
 
   def call_hooks_deferred_to_application_initialization(options = {})
     @hooks_to_call_on_application_initialization.each do |setting|
