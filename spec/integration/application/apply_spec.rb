@@ -41,15 +41,11 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "applies a given file even when an ENC is configured and specifies an environment",
-     :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured and specifies an environment" do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
-    enc = file_containing("enc_script", <<-ENC)
-#!/bin/sh
-echo 'classes: []'
-echo 'environment: special'
-ENC
-    File.chmod(0755, enc)
+    enc = script_containing('enc_script',
+      :windows => '@echo classes: []' + "\n" + '@echo environment: special',
+      :posix   => '#!/bin/sh' + "\n" + 'echo "classes: []"' + "\n" + 'echo "environment: special"')
 
     Dir.mkdir(File.join(Puppet[:environmentpath], "special"), 0755)
 
@@ -166,17 +162,13 @@ ENC
     # External node script execution will fail, likely due to the tampering
     # with the basic file descriptors.
     # Workaround: Define a log destination and merely inspect logs.
-    context "with an ENC",
-        :if => !Puppet.features.microsoft_windows? do
+    context "with an ENC" do
       let(:logdest) { tmpfile('logdest') }
       let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
-        result = file_containing("enc_script", <<-ENC)
-#!/bin/sh
-echo 'environment: spec'
-ENC
-        File.chmod(0755, result)
-        result
+        script_containing('enc_script',
+          :windows => '@echo environment: spec',
+          :posix   => '#!/bin/sh' + "\n" + 'echo "environment: spec"')
       end
 
       before :each do
