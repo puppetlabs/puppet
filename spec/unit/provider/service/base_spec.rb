@@ -10,68 +10,79 @@ describe "base service provider" do
 
   let :type do Puppet::Type.type(:service) end
   let :provider do type.provider(:base) end
+  let(:executor) { Puppet::Util::Execution }
+  let(:start_command) { 'start' }
+  let(:status_command) { 'status' }
+  let(:stop_command) { 'stop' }
 
   subject { provider }
 
   context "basic operations" do
-    # Cross-platform file interactions.  Fun times.
-    Ruby = File.join(RbConfig::CONFIG["bindir"],
-                     RbConfig::CONFIG["RUBY_INSTALL_NAME"] +
-                     RbConfig::CONFIG["EXEEXT"])
-
-    Start  = [Ruby, '-rfileutils', '-e', 'FileUtils.touch(ARGV[0])']
-    Status = [Ruby, '-e' 'exit File.file?(ARGV[0])']
-    Stop   = [Ruby, '-e', 'File.exist?(ARGV[0]) and File.unlink(ARGV[0])']
-
-    let :flag do tmpfile('base-service-test') end
-
     subject do
-      type.new(:name  => "test", :provider => :base,
-               :start  => Start  + [flag],
-               :status => Status + [flag],
-               :stop   => Stop   + [flag]
+      type.new(
+         :name  => "test",
+         :provider => :base,
+         :start  => start_command,
+         :status => status_command,
+         :stop   => stop_command
       ).provider
     end
 
-    before :each do
-      Puppet::FileSystem.unlink(flag) if Puppet::FileSystem.exist?(flag)
+    def execute_command(command, options)
+      case command.shift
+      when start_command
+        expect(options[:failonfail]).to eq(true)
+        raise(Puppet::ExecutionFailure, 'failed to start') if @running
+        @running = true
+        return 'started'
+      when status_command
+        expect(options[:failonfail]).to eq(false)
+        $CHILD_STATUS.expects(:exitstatus).at_least(1).returns(@running ? 0 : 1)
+        return @running ? 'running' : 'not running'
+      when stop_command
+        expect(options[:failonfail]).to eq(true)
+        raise(Puppet::ExecutionFailure, 'failed to stop') unless @running
+        @running = false
+        return 'stopped'
+      else
+        raise "unexpected command execution: #{command}"
+      end
     end
 
-    it { should be }
+    before :each do
+      @running = false
+      executor.expects(:execute).at_least(1).with { |command, options| execute_command(command, options) }
+    end
 
     it "should invoke the start command if not running" do
-      File.should_not be_file(flag)
       subject.start
-      File.should be_file(flag)
     end
 
     it "should be stopped before being started" do
-      subject.status.should == :stopped
+      expect(subject.status).to eq(:stopped)
     end
 
     it "should be running after being started" do
       subject.start
-      subject.status.should == :running
+      expect(subject.status).to eq(:running)
     end
 
     it "should invoke the stop command when asked" do
       subject.start
-      subject.status.should == :running
+      expect(subject.status).to eq(:running)
       subject.stop
-      subject.status.should == :stopped
-      File.should_not be_file(flag)
+      expect(subject.status).to eq(:stopped)
     end
 
-    it "should start again even if already running" do
+    it "should raise an error if started twice" do
       subject.start
-      subject.expects(:ucommand).with(:start)
-      subject.start
+      expect {subject.start }.to raise_error(Puppet::Error, 'Could not start Service[test]: failed to start')
     end
 
-    it "should stop again even if already stopped" do
+    it "should raise an error if stopped twice" do
+      subject.start
       subject.stop
-      subject.expects(:ucommand).with(:stop)
-      subject.stop
+      expect {subject.stop }.to raise_error(Puppet::Error, 'Could not stop Service[test]: failed to stop')
     end
   end
 end
