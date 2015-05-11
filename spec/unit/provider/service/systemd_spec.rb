@@ -66,6 +66,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   it "should not be the default provider on sles11" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("11")
     expect(described_class.default?).not_to be_truthy
   end

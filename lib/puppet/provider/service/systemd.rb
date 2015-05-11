@@ -9,6 +9,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora, :operatingsystemmajrelease => ["17", "18", "19", "20", "21"]
   defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["12", "13"]
+  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => "8"
+  defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => "15.04"
 
   def self.instances
     i = []
@@ -25,6 +27,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     output = systemctl(:disable, @resource[:name])
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
+  end
+
+  def get_start_link_count
+    Dir.glob("/etc/rc*.d/S??#{@resource[:name]}").length
   end
 
   def enabled?
@@ -51,6 +57,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       # flapping when simply trying to disable a masked service.
       return :mask if (@resource[:enable] == :mask) && (svc_info[:LoadState] == 'masked')
       return :true if svc_info[:UnitFileState] == 'enabled'
+      if Facter.value(:osfamily) == :debian
+        ret = debian_enabled?(svc_info)
+        return ret if ret
+      end
     rescue Puppet::ExecutionFailure
       # The execution of the systemd command can fail for quite a few reasons.
       # In all of these cases, the failure of the query indicates that the
@@ -58,6 +68,29 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
 
     return :false
+  end
+
+  def debian_enabled?(svc_info)
+    # If UnitFileState == UnitFileState then we query the older way.
+    if svc_info[:UnitFileState] == 'UnitFileState'
+      system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+      if [104, 106].include?($CHILD_STATUS.exitstatus)
+        return :true
+      elsif [101, 105].include?($CHILD_STATUS.exitstatus)
+        # 101 is action not allowed, which means we have to do the check manually.
+        # 105 is unknown, which generally means the iniscript does not support query
+        # The debian policy states that the initscript should support methods of query
+        # For those that do not, peform the checks manually
+        # http://www.debian.org/doc/debian-policy/ch-opersys.html
+        if get_start_link_count >= 4
+          return :true
+        else
+          return :false
+        end
+      else
+        return :false
+      end
+    end
   end
 
   def status
