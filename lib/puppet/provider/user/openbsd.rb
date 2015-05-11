@@ -56,9 +56,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
 
   has_features :manages_homedir, :manages_expiry, :system_users
   has_features :manages_shell
-  if Puppet.features.libshadow?
-    has_features :manages_passwords, :manages_loginclass
-  end
+  has_features :manages_passwords, :manages_loginclass if Puppet.features.libshadow?
 
   def loginclass=(value)
     set("loginclass", value)
