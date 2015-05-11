@@ -361,10 +361,23 @@ class Puppet::Pops::Types::TypeCalculator
     # do nothing, there is nothing to change for most types
   end
 
+  # @return [Boolean] true if the given argument is contained in a struct element key
+  def is_struct_element_key?(o)
+    c = o.eContainer
+    if c.is_a?(Types::POptionalType)
+      o = c
+      c = c.eContainer
+    end
+    c.is_a?(Types::PStructElement) && c.key_type.equal?(o)
+  end
+  private :is_struct_element_key?
+
   def generalize_PStringType(o)
-    o.values = []
-    o.size_type = nil
-    []
+    # Skip generalization if the string is contained in a PStructElement key.
+    unless is_struct_element_key?(o)
+      o.values = []
+      o.size_type = nil
+    end
   end
 
   def generalize_PCollectionType(o)
@@ -1796,10 +1809,15 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def string_POptionalType(t)
-    if t.optional_type.nil?
+    optional_type = t.optional_type
+    if optional_type.nil?
       "Optional"
     else
-      "Optional[#{string(t.optional_type)}]"
+      if optional_type.is_a?(Puppet::Pops::Types::PStringType) && optional_type.values.size == 1
+        "Optional['#{optional_type.values[0]}']"
+      else
+        "Optional[#{string(optional_type)}]"
+      end
     end
   end
 
