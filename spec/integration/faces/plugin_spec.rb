@@ -26,7 +26,6 @@ describe "Puppet plugin face" do
   end
 
   before do
-    FileUtils.mkdir(Puppet[:vardir])
     FileUtils.mkdir(File.join(Puppet[:vardir], 'lib'))
     FileUtils.mkdir(File.join(Puppet[:vardir], 'facts.d'))
     @termini_classes = {}
@@ -37,9 +36,6 @@ describe "Puppet plugin face" do
   end
 
   after do
-    FileUtils.rmdir(File.join(Puppet[:vardir],'lib'))
-    FileUtils.rmdir(File.join(Puppet[:vardir],'facts.d'))
-    FileUtils.rmdir(Puppet[:vardir])
     INDIRECTED_CLASSES.each do |indirected|
       indirected.indirection.terminus_class = @termini_classes[indirected]
       indirected.indirection.termini.clear
