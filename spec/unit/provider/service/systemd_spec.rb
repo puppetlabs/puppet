@@ -66,9 +66,39 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   it "should not be the default provider on sles11" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("11")
     expect(described_class.default?).not_to be_truthy
   end
+
+  it "should not be the default provider on debian7" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("7")
+    expect(described_class.default?).not_to be_truthy
+  end
+
+  it "should be the default provider on debian8" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("8")
+    expect(described_class.default?).to be_truthy
+  end
+
+  it "should not be the default provider on ubuntu14.04" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:ubuntu)
+    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("14.04")
+    expect(described_class.default?).not_to be_truthy
+  end
+
+  it "should be the default provider on ubuntu15.04" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:ubuntu)
+    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("15.04")
+    expect(described_class.default?).to be_truthy
+  end
+
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
