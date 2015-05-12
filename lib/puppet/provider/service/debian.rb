@@ -10,6 +10,8 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
   EOT
 
+  confine :false => Puppet::FileSystem.exist?("/run/systemd/system")
+
   commands :update_rc => "/usr/sbin/update-rc.d"
   # note this isn't being used as a command until
   # http://projects.reductivelabs.com/issues/2538
