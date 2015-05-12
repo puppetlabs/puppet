@@ -83,6 +83,15 @@ module Puppet
       #     while evaluating `@real_resource`.
       attr_reader :events
 
+      # @!attribute [rw] failed_dependencies
+      #   @return [Array<Puppet::Resource>] A cache of all
+      #   dependencies of this resource that failed to apply.
+      attr_accessor :failed_dependencies
+
+      def dependency_failed?
+        failed_dependencies && !failed_dependencies.empty?
+      end
+
       # A list of instance variables that should be serialized with this object
       # when converted to YAML.
       YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count

@@ -41,18 +41,19 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured and specifies an environment" do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
-    site_manifest = file_containing("site_manifest.pp", "notice('the site manifest was applied instead')")
-    enc = file_containing("enc_script", "#!/bin/sh\necho 'classes: []'")
-    File.chmod(0755, enc)
+    enc = script_containing('enc_script',
+      :windows => '@echo classes: []' + "\n" + '@echo environment: special',
+      :posix   => '#!/bin/sh' + "\n" + 'echo "classes: []"' + "\n" + 'echo "environment: special"')
+
+    Dir.mkdir(File.join(Puppet[:environmentpath], "special"), 0755)
 
     special = Puppet::Node::Environment.create(:special, [])
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
-      Puppet[:manifest] = site_manifest
       puppet = Puppet::Application[:apply]
       puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
@@ -98,21 +99,25 @@ describe "apply" do
     end
   end
 
-  context "with a module" do
-    let(:modulepath) { tmpdir('modulepath') }
+  context "with a module in an environment" do
+    let(:envdir) { tmpdir('environments') }
+    let(:modulepath) { File.join(envdir, 'spec', 'modules') }
     let(:execute) { 'include amod' }
-    let(:args) { ['-e', execute, '--modulepath', modulepath] }
 
     before(:each) do
-      dir_contained_in(modulepath, {
-        "amod" => {
-          "manifests" => {
-            "init.pp" => "class amod{ notice('amod class included') }"
+      dir_contained_in(envdir, {
+        "spec" => {
+          "modules" => {
+            "amod" => {
+              "manifests" => {
+                "init.pp" => "class amod{ notice('amod class included') }"
+              }
+            }
           }
         }
       })
 
-      Puppet[:environmentpath] = dir_containing("environments", { Puppet[:environment] => {} })
+      Puppet[:environmentpath] = envdir
     end
 
     def init_cli_args_and_apply_app(args, execute)
@@ -122,31 +127,68 @@ describe "apply" do
       return puppet
     end
 
-    it "looks in --modulepath even when the default directory environment exists" do
-      apply = init_cli_args_and_apply_app(args, execute)
+    context "given the --modulepath option" do
+      let(:args) { ['-e', execute, '--modulepath', modulepath] }
 
-      expect do
-        expect { apply.run }.to exit_with(0)
-      end.to have_printed('amod class included')
+      it "looks in --modulepath even when the default directory environment exists" do
+        apply = init_cli_args_and_apply_app(args, execute)
+
+        expect do
+          expect { apply.run }.to exit_with(0)
+        end.to have_printed('amod class included')
+      end
+
+      it "looks in --modulepath even when given a specific directory --environment" do
+        args << '--environment' << 'production'
+        apply = init_cli_args_and_apply_app(args, execute)
+
+        expect do
+          expect { apply.run }.to exit_with(0)
+        end.to have_printed('amod class included')
+      end
+
+      it "looks in --modulepath when given multiple paths in --modulepath" do
+        args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
+        apply = init_cli_args_and_apply_app(args, execute)
+
+        expect do
+          expect { apply.run }.to exit_with(0)
+        end.to have_printed('amod class included')
+      end
     end
 
-    it "looks in --modulepath even when given a specific directory --environment" do
-      args << '--environment' << 'production'
-      apply = init_cli_args_and_apply_app(args, execute)
+    # When executing an ENC script, output cannot be captured using
+    # expect { }.to have_printed(...)
+    # External node script execution will fail, likely due to the tampering
+    # with the basic file descriptors.
+    # Workaround: Define a log destination and merely inspect logs.
+    context "with an ENC" do
+      let(:logdest) { tmpfile('logdest') }
+      let(:args) { ['-e', execute, '--logdest', logdest ] }
+      let(:enc) do
+        script_containing('enc_script',
+          :windows => '@echo environment: spec',
+          :posix   => '#!/bin/sh' + "\n" + 'echo "environment: spec"')
+      end
 
-      expect do
+      before :each do
+        Puppet[:node_terminus] = 'exec'
+        Puppet[:external_nodes] = enc
+      end
+
+      it "should use the environment that the ENC mandates" do
+        apply = init_cli_args_and_apply_app(args, execute)
         expect { apply.run }.to exit_with(0)
-      end.to have_printed('amod class included')
-    end
+        expect(@logs.map(&:to_s)).to include('amod class included')
+      end
 
-    it "looks in --modulepath when given multiple paths in --modulepath" do
-      args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
-      apply = init_cli_args_and_apply_app(args, execute)
-
-      expect do
+      it "should prefer the ENC environment over the configured one and emit a warning" do
+        apply = init_cli_args_and_apply_app(args + [ '--environment', 'production' ], execute)
         expect { apply.run }.to exit_with(0)
-      end.to have_printed('amod class included')
+        logs = @logs.map(&:to_s)
+        expect(logs).to include('amod class included')
+        expect(logs).to include(match(/doesn't match server specified environment/))
+      end
     end
   end
-
 end

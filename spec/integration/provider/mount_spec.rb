@@ -22,9 +22,9 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
     Puppet::Type.type(:mount).defaultprovider.stubs(:default_target).returns(@fake_fstab)
     Facter.stubs(:value).with(:hostname).returns('some_host')
     Facter.stubs(:value).with(:domain).returns('some_domain')
-    Facter.stubs(:value).with(:kernel).returns('Darwin')
-    Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
-    Facter.stubs(:value).with(:osfamily).returns('Darwin')
+    Facter.stubs(:value).with(:kernel).returns('Linux')
+    Facter.stubs(:value).with(:operatingsystem).returns('RedHat')
+    Facter.stubs(:value).with(:osfamily).returns('RedHat')
     Puppet::Util::ExecutionStub.set do |command, options|
       case command[0]
       when %r{/s?bin/mount}
@@ -35,24 +35,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
             ''
           end
         else
-          expect(command.length).to eq(4)
-          expect(command[1]).to eq('-o')
-
-          # update is a special option, used on bsd's
-          # strip it out and track as a local bool here
-          update = false
-          tmp_options = command[2].split(",")
-
-          if tmp_options.include?("update")
-            update = true
-            tmp_options.delete("update")
-          end
-          @current_options = tmp_options.join(",")
-
-          if !update
-            expect(@mounted).to eq(false) # verify that we don't try to call "mount" redundantly
-          end
-          expect(command[3]).to eq('/Volumes/foo_disk')
+          expect(command.last).to eq('/Volumes/foo_disk')
           @current_device = check_fstab(true)
           @mounted = true
           ''
@@ -123,27 +106,31 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
             end
             expected_fstab_data = (ensure_setting != :absent)
             describe "When setting ensure => #{ensure_setting}" do
-              ["local", "journaled"].each do |options_setting|
-                describe "When setting options => #{options_setting}" do
+              ["local", "journaled", "", nil].each do |options_setting|
+                describe "When setting options => '#{options_setting}'" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
                     if family == "Solaris"
                       skip("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb")
                     else
-                      @desired_options = options_setting
-                      run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
-                      expect(@mounted).to eq(expected_final_state)
-                      if expected_fstab_data
-                        expect(check_fstab(expected_fstab_data)).to eq("/dev/disk1s1")
+                      if options_setting && options_setting.empty?
+                        expect { run_in_catalog(:ensure=>ensure_setting, :options => options_setting) }.to raise_error Puppet::ResourceError
                       else
-                        expect(check_fstab(expected_fstab_data)).to eq(nil)
-                      end
-                      if @mounted
-                        if ![:defined, :present].include?(ensure_setting)
-                          expect(@current_options).to eq(@desired_options)
-                        elsif initial_fstab_entry
-                          expect(@current_options).to eq(@desired_options)
+                        if options_setting
+                          @desired_options = options_setting
+                          run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
                         else
-                          expect(@current_options).to eq('local') #Workaround for #6645
+                          if initial_fstab_entry
+                            @desired_options = @current_options
+                          else
+                            @desired_options = 'defaults'
+                          end
+                          run_in_catalog(:ensure=>ensure_setting)
+                        end
+                        expect(@mounted).to eq(expected_final_state)
+                        if expected_fstab_data
+                          expect(check_fstab(expected_fstab_data)).to eq("/dev/disk1s1")
+                        else
+                          expect(check_fstab(expected_fstab_data)).to eq(nil)
                         end
                       end
                     end

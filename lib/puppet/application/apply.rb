@@ -3,6 +3,8 @@ require 'puppet/configurer'
 require 'puppet/util/profiler/aggregate'
 
 class Puppet::Application::Apply < Puppet::Application
+  require 'puppet/util/splayer'
+  include Puppet::Util::Splayer
 
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
@@ -180,6 +182,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
     end
 
+    # splay if needed
+    splay
+
     unless Puppet[:node_name_fact].empty?
       # Collect our facts.
       unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
@@ -190,17 +195,25 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       facts.name = Puppet[:node_name_value]
     end
 
-    configured_environment = Puppet.lookup(:current_environment)
+    # Find our Node
+    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+      raise "Could not find node #{Puppet[:node_name_value]}"
+    end
+
+    configured_environment = node.environment || Puppet.lookup(:current_environment)
+
     apply_environment = manifest ?
       configured_environment.override_with(:manifest => manifest) :
       configured_environment
 
-    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
-      # Find our Node
-      unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-        raise "Could not find node #{Puppet[:node_name_value]}"
-      end
+    # Modify the node descriptor to use the special apply_environment.
+    # It is based on the actual environment from the node, or the locally
+    # configured environment if the node does not specify one.
+    # If a manifest file is passed on the command line, it overrides
+    # the :manifest setting of the apply_environment.
+    node.environment = apply_environment
 
+    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
       # Merge in the facts.
       node.merge(facts.values) if facts
 
@@ -268,6 +281,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   # Enable all of the most common test options.
   def setup_test
+    Puppet.settings.handlearg("--no-splay")
     Puppet.settings.handlearg("--show_diff")
     options[:verbose] = true
     options[:detailed_exitcodes] = true

@@ -77,6 +77,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
       end
 
       it "should use an http proxy host and port if specified" do
+        Puppet::Util::HttpProxy.expects(:no_proxy?).returns false
         Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
         Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
         Dir.expects(:mktmpdir).returns tmpdir
@@ -92,6 +93,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
       end
 
       it "should use an http proxy host only if specified" do
+        Puppet::Util::HttpProxy.expects(:no_proxy?).returns false
         Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
         Puppet::Util::HttpProxy.expects(:http_proxy_port).returns nil
         Dir.expects(:mktmpdir).returns tmpdir
@@ -106,6 +108,22 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         provider.install
       end
 
+      it "should not use the configured proxy if no_proxy contains a match for the destination" do
+        Puppet::Util::HttpProxy.expects(:no_proxy?).returns true
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).never
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).never
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          expect(args).not_to be_include 'some_host:some_port'
+          expect(args).not_to be_include '--proxy'
+          true
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
     end
   end
 

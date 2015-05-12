@@ -92,18 +92,9 @@ describe "the generate function" do
   end
 
   let :command do
-    cmd = tmpfile('function_generate')
-
-    if Puppet.features.microsoft_windows?
-      cmd += '.bat'
-      text = '@echo off' + "\n" + 'echo a-%1 b-%2'
-    else
-      text = '#!/bin/sh' + "\n" + 'echo a-$1 b-$2'
-    end
-
-    File.open(cmd, 'w') {|fh| fh.puts text }
-    File.chmod 0700, cmd
-    cmd
+    script_containing('function_generate',
+      :windows => '@echo off' + "\n" + 'echo a-%1 b-%2',
+      :posix   => '#!/bin/sh' + "\n" + 'echo a-$1 b-$2')
   end
 
   after :each do

@@ -110,8 +110,8 @@ end
 
 
 public_binaries = {
-  :posix => ['puppet', 'facter', 'hiera', 'mco', 'cfacter'],
-  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'mco.bat', 'cfacter.bat']
+  :posix => ['puppet', 'facter', 'hiera', 'mco'],
+  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'mco.bat']
 }
 
 def locations(platform, ruby_arch, type)
@@ -142,8 +142,7 @@ agents.each do |agent|
   dir = locations(agent[:platform], agent[:ruby_arch], @options[:type])
   os = agent['platform'] =~ /windows/ ? :win : :posix
 
-  # Filter out cfacter outside of aio, as we don't install it as part of Puppet acceptance runs yet.
-  public_binaries[os].select {|v| @options[:type] == 'aio' || v !~ /cfacter/}.each do |binary|
+  public_binaries[os].each do |binary|
     path = File.join(dir, binary)
     case os
     when :win
