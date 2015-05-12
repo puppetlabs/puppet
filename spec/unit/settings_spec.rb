@@ -118,6 +118,17 @@ describe Puppet::Settings do
 
       expect(@settings.preferred_run_mode).to eq(:master)
     end
+
+    it "creates ancestor directories for all required app settings" do
+      # initialize_app_defaults is called in spec_helper, before we even
+      # get here, but call it here to make it explicit what we're trying
+      # to do.
+      @settings.initialize_app_defaults(default_values)
+
+      Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
+        expect(File).to exist(File.dirname(Puppet[key]))
+      end
+    end
   end
 
   describe "#call_hooks_deferred_to_application_initialization" do
