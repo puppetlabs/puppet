@@ -2044,7 +2044,7 @@ describe 'The type calculator' do
       expect(generic.element_type.values).to eq([])
     end
 
-    it "a generic result is created by generalize! given an instance specific result for a Hash" do
+    it 'a generic result is created by generalize! given an instance specific result for a Hash' do
       generic = calculator.infer({'a' =>1,'b' => 2})
       expect(generic.key_type.values.sort).to eq(['a', 'b'])
       expect(generic.element_type.from).to eq(1)
@@ -2053,6 +2053,20 @@ describe 'The type calculator' do
       expect(generic.key_type.values).to eq([])
       expect(generic.element_type.from).to eq(nil)
       expect(generic.element_type.to).to eq(nil)
+    end
+
+    it 'ensures that Struct key types are not generalized' do
+      generic = calculator.generalize!(struct_t({'a' => object_t}))
+      expect(calculator.string(generic)).to eq("Struct[{'a'=>Any}]")
+      generic = calculator.generalize!(struct_t({not_undef_t('a') => object_t}))
+      expect(calculator.string(generic)).to eq("Struct[{NotUndef['a']=>Any}]")
+      generic = calculator.generalize!(struct_t({optional_t('a') => string_t}))
+      expect(calculator.string(generic)).to eq("Struct[{Optional['a']=>String}]")
+    end
+
+    it 'ensures that Struct value types are generalized' do
+      generic = calculator.generalize!(struct_t({'a' => range_t(1, 3)}))
+      expect(calculator.string(generic)).to eq("Struct[{'a'=>Integer}]")
     end
 
     it "does not reduce by combining types when using infer_set" do
