@@ -9,11 +9,12 @@ class Puppet::Agent
   require 'puppet/agent/disabler'
   include Puppet::Agent::Disabler
 
-  attr_reader :client_class, :client, :splayed, :should_fork
+  require 'puppet/util/splayer'
+  include Puppet::Util::Splayer
+
+  attr_reader :client_class, :client, :should_fork
 
   def initialize(client_class, should_fork=true)
-    @splayed = false
-
     @should_fork = can_fork? && should_fork
     @client_class = client_class
   end
@@ -58,22 +59,6 @@ class Puppet::Agent
 
   def stopping?
     Puppet::Application.stop_requested?
-  end
-
-  # Have we splayed already?
-  def splayed?
-    splayed
-  end
-
-  # Sleep when splay is enabled; else just return.
-  def splay(do_splay = Puppet[:splay])
-    return unless do_splay
-    return if splayed?
-
-    time = rand(Puppet[:splaylimit] + 1)
-    Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
-    sleep(time)
-    @splayed = true
   end
 
   def run_in_fork(forking = true)
