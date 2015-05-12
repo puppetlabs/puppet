@@ -23,6 +23,18 @@ describe Puppet::Provider::ParsedFile do
 
   let!(:provider) { parsed_type.provide(:parsedfile_provider, :parent => described_class) }
 
+  it "should have an order method" do
+    expect(described_class).to respond_to :order
+  end
+
+  describe "the order method" do
+    [ nil, 'a string', %w{an array}, { 'a' => 'hash' } ].each do |input|
+      it "should return its input (#{input.class})" do
+        expect(described_class.order(input)).to eq input
+      end
+    end
+  end
+
   describe "when looking up records loaded from disk" do
     it "should return nil if no records have been loaded" do
       expect(provider.record?("foo")).to be_nil
@@ -196,10 +208,16 @@ describe "A very basic provider based on ParsedFile" do
   end
 
   context "writing file contents back to disk" do
+    let(:input_records) { provider.parse(input_text) }
+
     it "should not change anything except from adding a header" do
-      input_records = provider.parse(input_text)
       expect(provider.to_file(input_records)).
         to match provider.header + input_text
+    end
+
+    it "should call the order method" do
+      provider.expects(:order).with(input_records).returns(input_records)
+      provider.to_file(input_records)
     end
   end
 

@@ -295,7 +295,7 @@ module Puppet::Util::FileParsing
 
   # Generate a file from a bunch of hash records.
   def to_file(records)
-    lines = records.collect { |record| to_line(record) }
+    lines = self.order(records).collect { |record| to_line(record) }
 
     text = lines.join(line_separator)
 

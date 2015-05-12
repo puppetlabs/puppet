@@ -391,6 +391,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     header + text
   end
 
+  def self.order(records)
+    return records
+  end
+
   def create
     @resource.class.validproperties.each do |property|
       if value = @resource.should(property)
