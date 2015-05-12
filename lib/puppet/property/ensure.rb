@@ -49,7 +49,7 @@ class Puppet::Property::Ensure < Puppet::Property
 
   def change_to_s(currentvalue, newvalue)
     begin
-      if currentvalue == :absent or currentvalue.nil?
+      if currentvalue == :absent || currentvalue.nil?
         return "created"
       elsif newvalue == :absent
         return "removed"

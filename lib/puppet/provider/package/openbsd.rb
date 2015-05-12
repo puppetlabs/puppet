@@ -78,10 +78,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
 
     output = Puppet::Util.withenv(e_vars) {pkginfo "-Q", query}
+    version = properties[:ensure]
 
     if output.nil? or output.size == 0 or output =~ /Error from /
       debug "Failed to query for #{resource[:name]}"
-      return properties[:ensure]
+      return version
     else
       # Remove all fuzzy matches first.
       output = output.split.select {|p| p =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*)/ }.join
@@ -90,22 +91,21 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if output =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*) \(installed\)$/
       debug "Package is already the latest available"
-      return properties[:ensure]
+      return version
     else
       match = /^(.*)-(\d[^-]*)[-]?(\w*)$/.match(output)
       debug "Latest available for #{resource[:name]}: #{match[2]}"
 
-      if properties[:ensure].to_sym == :absent
+      if version.to_sym == :absent || version.to_sym == :purged
         return match[2]
       end
 
-      vcmp = properties[:ensure].split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
+      vcmp = version.split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
       if vcmp > 0
-        debug "ensure: #{properties[:ensure]}"
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
-        debug "Package #{resource[:name]} #{properties[:ensure]} newer then available #{match[2]}"
-        return properties[:ensure]
+        debug "Package #{resource[:name]} #{version} newer then available #{match[2]}"
+        return version
       else
         return match[2]
       end
