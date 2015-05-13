@@ -5,15 +5,15 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   commands :pkgin => "pkgin"
 
-  defaultfor :operatingsystem => [ :dragonfly , :smartos ]
+  defaultfor :operatingsystem => [ :dragonfly , :smartos, :netbsd ]
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable
 
   def self.parse_pkgin_line(package)
 
     # e.g.
-    #   vim-7.2.446 =        Vim editor (vi clone) without GUI
-    match, name, version, status = *package.match(/(\S+)-(\S+)(?: (=|>|<))?\s+.+$/)
+    #   vim-7.2.446;Vim editor (vi clone) without GUI
+    match, name, version, status = *package.match(/([^\s;]+)-([^\s;]+)[;\s](=|>|<)?.+$/)
     if match
       {
         :name     => name,
