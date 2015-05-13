@@ -38,6 +38,8 @@ List submitted CSRs
 
 The `:ignored_pattern` parameter is not used, but must still be provided.
 
+**Note:** Puppet Server doesn't support the plural `certificate_requests` endpoint.
+
 Destroy
 ----
 
