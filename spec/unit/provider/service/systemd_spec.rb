@@ -35,7 +35,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       # In Ruby 1.8.7, the order of hash elements differs from 1.9+ and
       # caused short-circuiting of the logic used by default.all? in the
       # provider. As a workaround we need to use stubs() instead of
-      # expects() here. 
+      # expects() here.
       Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
       Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
@@ -51,7 +51,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       expect(described_class.default?).to be_truthy
     end
   end
-  
+
   it "should be the default provider on sles12" do
     Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
     Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("12")
@@ -217,7 +217,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider.disable
     end
   end
-  
+
   describe "#mask" do
     it "should run systemctl to disable and mask a service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
@@ -264,8 +264,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   end
 
   it "(#16451) has command systemctl without being fully qualified" do
-    expect(described_class.instance_variable_get(:@commands)).
-      to include(:systemctl => 'systemctl')
+    expect(described_class.instance_variable_get(:@commands)).to include(:systemctl => 'systemctl')
   end
-
 end
