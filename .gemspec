@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.version = mdata ? mdata[1] : version
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
+  s.required_ruby_version = Gem::Requirement.new(">= 1.9.3") if s.respond_to? :required_ruby_version=
   s.authors = ["Puppet Labs"]
   s.date = "2012-08-17"
   s.description = "Puppet, an automated configuration management tool"
