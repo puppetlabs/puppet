@@ -42,5 +42,5 @@ The `environment_timeout` attribute could also be the string "unlimited".
 Schema
 ------
 
-A environments response body adheres to the {file:api/schemas/environments.json
-api/schemas/environments.json} schema.
+An environments response body conforms to
+[the environments schema.](../schemas/environments.json)

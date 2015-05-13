@@ -147,7 +147,8 @@ escaping is still used/supported.
 Schema
 ------
 
-In the POST request body (or the GET query), the facts parameter should adhere to the
-[api/schemas/facts.json](../schemas/facts.json) schema.
+In the POST request body (or the GET query), the facts parameter should conform
+to [the facts schema.](../schemas/facts.json)
 
-A catalog response body should adhere to the [api/schemas/catalog.json](../schemas/catalog.json) schema.
+A catalog response body conforms to
+[the catalog schema.](../schemas/catalog.json)
