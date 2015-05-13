@@ -21,6 +21,6 @@ agents.each do |agent|
   # cygwin + ssh + wmic hangs trying to read stdin, so echo '' |
   on agent, "cmd /c echo '' | wmic ntevent where \"LogFile='Application' and SourceName='Puppet' and TimeWritten >= '#{now}'\"  get Message,Type /format:csv" do
     fail_test "Event not found in Application event log" unless
-      stdout =~ /Could not retrieve catalog.*skipping run,Error/mi
+      stdout =~ /Could not retrieve catalog.*skipping run.*,Error/mi
   end
 end
