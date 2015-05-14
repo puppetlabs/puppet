@@ -391,6 +391,11 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     header + text
   end
 
+  # Hook for ordering records right before writing them back to disk.
+  #
+  # @abstract The default behavior is to keep the original order, which
+  #   is generally preferable. Inheriting providers can override this method
+  #   to satisfy special ordering requirements in the managed files.
   def self.order(records)
     return records
   end

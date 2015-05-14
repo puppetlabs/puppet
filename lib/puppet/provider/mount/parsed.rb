@@ -272,6 +272,48 @@ Puppet::Type.type(:mount).provide(
     instances
   end
 
+  # Sort fstab entries so that
+  # a mount point is located inside another mount point appears later and
+  # a device that is located inside a mount point appears later.
+  #
+  # "Stable opportunistic insertion sort"
+  # Copy unsorted list A to sorted B by repeatedly
+  # * removing the first element from A
+  # * compare with each element in B, from first to last
+  # * insert before current element in B if smaller
+  # * insert at the end of B otherwise
+  # * finish if A is empty
+  # * repeat
+  #
+  # Stabilizes itself by inserting as late as possible.
+  #
+  # @note Does not really care about directory names and does substring
+  #   comparison only. So /media will be put before /mediastuff. This is
+  #   not necessary but will be rare and usually cause no harm, either.
+  #
+  # @api private
+  def self.order(records)
+    return records if records.empty?
+    # insert first record first
+    result = [ ]
+    # iterate over the rest
+    records.each do |a|
+      inserted = false
+      result.each_index do |i|
+        b = result[i]
+        # is a a leading substring of b?
+        if b[:name].index(a[:name]) == 0
+          result.insert(i, a)
+          inserted = true
+          break
+        end
+      end
+      next if inserted
+      result.push(a)
+    end
+    result
+  end
+
   def flush
     needs_mount = @property_hash.delete(:needs_mount)
     super

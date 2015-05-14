@@ -212,6 +212,13 @@ FSTAB
     expect(instances[11].options).to eq("vers=2,account=false,log=NULL,mount=true")
   end
 
+  describe "::order" do
+    it "should behave correctly with empty input" do
+      result = described_class.order([])
+      expect(result).to be_an Array
+    end
+  end
+
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')
 

@@ -1,9 +1,11 @@
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 require 'puppet/file_bucket/dipper'
 
 describe "mount provider (integration)", :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   family = Facter.value(:osfamily)
 
@@ -156,6 +158,62 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
       expect(@mounted).to eq(true)
       expect(@current_options).to eq('local')
       expect(check_fstab(true)).to eq("/dev/disk1s1")
+    end
+  end
+
+  describe "when updating existing fstabs" do
+    let(:tmp_fstab) { tmpfile('fstab_fixture') }
+
+    def compare(fixture)
+      wanted = File.read(my_fixture(fixture))
+      current = File.read(tmp_fstab).gsub(/# HEADER[^\n]*\n/, '')
+      expect(current).to eq(wanted)
+    end
+
+    before :each do
+      FileUtils.cp(my_fixture('ordering'), tmp_fstab)
+    end
+
+    { 'with unrelated entries' => {
+        :example => 'should append new entries',
+        :title => '/opt/data/log-archive',
+        :device => '/dev/vg0/log_archive',
+        :result => 'ordering-unrelated',
+      },
+      'with an inner mount point' => {
+        :example => 'should move the inner mount point',
+        :title => '/opt/data',
+        :device => '/dev/vg0/data',
+        :result => 'ordering-inner',
+      },
+      'with a previously unsorted fstab' => {
+        :example => 'should fix existing issues',
+        :original => 'unordered',
+        :title => '/opt/data/log-archive',
+        :device => '/dev/vg0/log_archive',
+        :result => 'unordered-fixed',
+      },
+    }.each do |context_descr, data|
+      context context_descr do
+
+        it data[:example] do
+          if data[:original]
+            FileUtils.cp(my_fixture(data[:original]), tmp_fstab)
+          end
+          manifest = <<-MANIFEST
+            mount {
+                '#{data[:title]}':
+                    ensure => 'present',
+                    device => '#{data[:device]}',
+                    fstype => 'ext4',
+                    options => 'defaults',
+                    target  => '#{tmp_fstab}',
+            }
+          MANIFEST
+          apply_with_error_check(manifest)
+          compare(data[:result])
+        end
+      end
     end
   end
 end
