@@ -488,7 +488,7 @@ class Puppet::Resource
       parameters.each do |name, value|
         next unless t = arg_types[name.to_s]  # untyped, and parameters are symbols here (aargh, strings in the type)
         unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
-          inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value.value)
+          inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
           actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
           fail Puppet::ParseError, "Expected parameter '#{name}' of '#{self}' to have type #{t.to_s}, got #{actual.to_s}"
         end

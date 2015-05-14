@@ -506,6 +506,15 @@ describe "Puppet::Parser::Compiler" do
         MANIFEST
         expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 'knock knock')
       end
+
+      it 'uses infer_set when reporting type mismatch' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Struct[{b => Integer, d=>String}] $a) { }
+            foo{ bar: a => {b => 5, c => 'stuff'}}
+          MANIFEST
+        end.to raise_error(/got Struct\[\{'b'=>Integer, 'c'=>String\}\]/)
+      end
     end
 
     context 'when using typed parameters in class' do
