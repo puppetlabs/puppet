@@ -5,6 +5,7 @@ After=basic.target network.target
 
 [Service]
 EnvironmentFile=-/etc/sysconfig/puppetmaster
+EnvironmentFile=-/etc/default/puppetmaster
 ExecStart=/usr/bin/puppet master $PUPPETMASTER_EXTRA_OPTS --no-daemonize
 
 [Install]
