@@ -254,12 +254,11 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_POptionalType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
+      type = keys[0]
+      unless type.is_a?(Puppet::Pops::Types::PAnyType) || type.is_a?(String)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
       end
-      result = Puppet::Pops::Types::POptionalType.new()
-      result.optional_type = keys[0]
-      result
+      TYPEFACTORY.optional(type)
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
     end
