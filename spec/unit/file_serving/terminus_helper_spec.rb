@@ -26,12 +26,11 @@ describe Puppet::FileServing::TerminusHelper do
 
   it "should pass through links, checksum_type, and source_permissions" do
     file = stub 'file', :checksum_type= => nil, :links= => nil, :collect => nil
-    [[:checksum_type, :sha256], [:links, true]].each {|k, v|
+    [[:checksum_type, :sha256], [:links, true], [:source_permissions, :use]].each {|k, v|
       file.expects(k.to_s+'=').with(v)
       @request.options[k] = v
     }
-    @request.options[:source_permissions] = :yes
-    file.expects(:collect).with(:yes)
+    file.expects(:collect)
     @model.expects(:new).with("/my/file", {:relative_path => :file}).returns(file)
     @helper.path2instance(@request, "/my/file", {:relative_path => :file})
   end
