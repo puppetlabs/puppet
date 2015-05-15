@@ -97,18 +97,18 @@ module Puppet::Util::Windows::ADSI
       [:lpwstr, :lpdword], :win32_bool
   end
 
-  class User
-    extend Enumerable
-    extend FFI::Library
+  module Shared
+    def uri(name, host = '.')
+      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
 
-    attr_accessor :native_user
-    attr_reader :name, :sid
-    def initialize(name, native_user = nil)
-      @name = name
-      @native_user = native_user
+      host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
+
+      account_type = self.name.split('::').last.downcase
+
+      Puppet::Util::Windows::ADSI.uri(name, account_type, host)
     end
 
-    def self.parse_name(name)
+    def parse_name(name)
       if name =~ /\//
         raise Puppet::Error.new( "Value must be in DOMAIN\\user style syntax" )
       end
@@ -120,20 +120,51 @@ module Puppet::Util::Windows::ADSI
       return account, domain
     end
 
+    def get_sids(adsi_child_collection)
+      sids = []
+      adsi_child_collection.each do |m|
+        sids << Puppet::Util::Windows::SID.octet_string_to_sid_object(m.objectSID)
+      end
+
+      sids
+    end
+
+    def name_sid_hash(names)
+      return {} if names.nil? || names.empty?
+
+      sids = names.map do |name|
+        sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
+        raise Puppet::Error.new( "Could not resolve name: #{name}" ) if !sid
+        [sid.to_s, sid]
+      end
+
+      Hash[ sids ]
+    end
+  end
+
+  class User
+    extend Enumerable
+    extend Puppet::Util::Windows::ADSI::Shared
+    extend FFI::Library
+
+    # https://msdn.microsoft.com/en-us/library/aa746340.aspx
+    # IADsUser interface
+
+    require 'puppet/util/windows/sid'
+
+    attr_accessor :native_user
+    attr_reader :name, :sid
+    def initialize(name, native_user = nil)
+      @name = name
+      @native_user = native_user
+    end
+
     def native_user
       @native_user ||= Puppet::Util::Windows::ADSI.connect(self.class.uri(*self.class.parse_name(@name)))
     end
 
     def sid
       @sid ||= Puppet::Util::Windows::SID.octet_string_to_sid_object(native_user.objectSID)
-    end
-
-    def self.uri(name, host = '.')
-      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
-
-      host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
-
-      Puppet::Util::Windows::ADSI.uri(name, 'user', host)
     end
 
     def uri
@@ -189,6 +220,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def groups
+      # https://msdn.microsoft.com/en-us/library/aa746342.aspx
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
       native_user.Groups.each {|g| groups << g.Name} rescue nil
@@ -209,21 +241,54 @@ module Puppet::Util::Windows::ADSI
     end
     alias remove_from_group remove_from_groups
 
+
+    def add_group_sids(*sids)
+      group_names = []
+      sids.each do |sid|
+        group_names << Puppet::Util::Windows::SID.sid_to_name(sid)
+      end
+
+      add_to_groups(*group_names)
+    end
+
+    def remove_group_sids(*sids)
+      group_names = []
+      sids.each do |sid|
+        group_names << Puppet::Util::Windows::SID.sid_to_name(sid)
+      end
+
+      remove_from_groups(*group_names)
+    end
+
+    def group_sids
+      self.class.get_sids(native_user.Groups)
+    end
+
     def set_groups(desired_groups, minimum = true)
-      return if desired_groups.nil? or desired_groups.empty?
+      return if desired_groups.nil?
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
-      current_groups = self.groups
+      current_hash = Hash[ self.group_sids.map { |sid| [sid.to_s, sid] } ]
+      desired_hash = self.class.name_sid_hash(desired_groups)
 
       # First we add the user to all the groups it should be in but isn't
-      groups_to_add = desired_groups - current_groups
-      add_to_groups(*groups_to_add)
+      if !desired_groups.empty?
+        groups_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
+        add_group_sids(*groups_to_add)
+      end
 
       # Then we remove the user from all groups it is in but shouldn't be, if
       # that's been requested
-      groups_to_remove = current_groups - desired_groups
-      remove_from_groups(*groups_to_remove) unless minimum
+      if !minimum
+        if desired_hash.empty?
+          groups_to_remove = current_hash.values
+        else
+          groups_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+        end
+
+        remove_group_sids(*groups_to_remove)
+      end
     end
 
     def self.create(name)
@@ -301,6 +366,10 @@ module Puppet::Util::Windows::ADSI
 
   class Group
     extend Enumerable
+    extend Puppet::Util::Windows::ADSI::Shared
+
+    # https://msdn.microsoft.com/en-us/library/aa706021.aspx
+    # IADsGroup interface
 
     attr_accessor :native_group
     attr_reader :name, :sid
@@ -310,17 +379,11 @@ module Puppet::Util::Windows::ADSI
     end
 
     def uri
-      self.class.uri(name)
-    end
-
-    def self.uri(name, host = '.')
-      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
-
-      Puppet::Util::Windows::ADSI.uri(name, 'group', host)
+      self.class.uri(sid.account, sid.domain)
     end
 
     def native_group
-      @native_group ||= Puppet::Util::Windows::ADSI.connect(uri)
+      @native_group ||= Puppet::Util::Windows::ADSI.connect(self.class.uri(*self.class.parse_name(name)))
     end
 
     def sid
@@ -344,18 +407,6 @@ module Puppet::Util::Windows::ADSI
       self
     end
 
-    def self.name_sid_hash(names)
-      return {} if names.nil? or names.empty?
-
-      sids = names.map do |name|
-        sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
-        raise Puppet::Error.new( "Could not resolve username: #{name}" ) if !sid
-        [sid.to_s, sid]
-      end
-
-      Hash[ sids ]
-    end
-
     def add_member_sids(*sids)
       sids.each do |sid|
         native_group.Add(Puppet::Util::Windows::ADSI.sid_uri(sid))
@@ -372,15 +423,12 @@ module Puppet::Util::Windows::ADSI
       # WIN32OLE objects aren't enumerable, so no map
       members = []
       native_group.Members.each {|m| members << m.Name}
+
       members
     end
 
     def member_sids
-      sids = []
-      native_group.Members.each do |m|
-        sids << Puppet::Util::Windows::SID.octet_string_to_sid_object(m.objectSID)
-      end
-      sids
+      self.class.get_sids(native_group.Members)
     end
 
     def set_members(desired_members, inclusive = true)

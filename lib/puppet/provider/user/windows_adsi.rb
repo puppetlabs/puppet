@@ -25,6 +25,26 @@ Puppet::Type.type(:user).provide :windows_adsi do
     user.set_groups(groups, @resource[:membership] == :minimum)
   end
 
+  def groups_insync?(current, should)
+    return false unless current
+
+    # By comparing account SIDs we don't have to worry about case
+    # sensitivity, or canonicalization of account names.
+
+    # Cannot use munge of the group property to canonicalize @should
+    # since the default array_matching comparison is not commutative
+
+    # dupes automatically weeded out when hashes built
+    current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
+    specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
+
+    if @resource[:membership] == :inclusive
+      current_users == specified_users
+    else
+      (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
+    end
+  end
+
   def create
     @user = Puppet::Util::Windows::ADSI::User.create(@resource[:name])
     @user.password = @resource[:password]

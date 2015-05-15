@@ -274,6 +274,14 @@ module Puppet
         raise ArgumentError, "Group names must be provided as an array, not a comma-separated list." if value.include?(",")
         raise ArgumentError, "Group names must not be empty. If you want to specify \"no groups\" pass an empty array" if value.empty?
       end
+
+      def insync?(current)
+        if provider.respond_to?(:groups_insync?)
+          return provider.groups_insync?(current, @should)
+        end
+
+        super(current)
+      end
     end
 
     newparam(:name) do
