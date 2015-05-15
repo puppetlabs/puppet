@@ -509,10 +509,12 @@ module Puppet
     :trusted_server_facts => {
       :default => false,
       :type    => :boolean,
-      :desc    => "Stores a trusted set of server-side global variables in a hash
-        called $server_facts, which cannot be cannot be overridden by client_facts
-        or logic in manifests. Makes it illegal to assign to the variable $server_facts
-        in any scope.",
+      :desc    => "When enabled, Puppet creates a protected top-scope variable called $server_facts.
+        This variable name can't be re-used in any local scope, and can't be overridden
+        by agent-provided facts.
+
+        The $server_facts variable is a hash, containing server-provided information
+        like the current node's environment and the version of Puppet running on the server.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',
