@@ -668,6 +668,7 @@ Puppet::Type.newtype(:file) do
       :links => self[:links],
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
       :recurselimit => self[:recurselimit],
+      :source_permissions => self[:source_permissions],
       :ignore => self[:ignore],
       :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none,
       :environment => catalog.environment_instance

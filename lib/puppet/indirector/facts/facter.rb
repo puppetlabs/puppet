@@ -22,14 +22,18 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   def find(request)
     Facter.reset
 
+    # Note: we need to setup puppet's external search paths before adding the puppetversion
+    # fact. This is because in Facter 2.x, the first `Facter.add` causes Facter to create
+    # its directory loaders which cannot be changed, meaning other external facts won't
+    # be resolved. (PUP-4607)
+    self.class.setup_external_search_paths(request) if Puppet.features.external_facts?
+    self.class.setup_search_paths(request)
+
     # Add the puppetversion fact; this is done before generating the hash so it is
     # accessible to custom facts.
     Facter.add(:puppetversion) do
       setcode { Puppet.version.to_s }
     end
-
-    self.class.setup_external_search_paths(request) if Puppet.features.external_facts?
-    self.class.setup_search_paths(request)
 
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
     result.add_local_facts

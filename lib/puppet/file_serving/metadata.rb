@@ -12,7 +12,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   extend Puppet::Indirector
   indirects :file_metadata, :terminus_class => :selector
 
-  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination
+  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination, :source_permissions
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
@@ -22,10 +22,16 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @checksum_type = type
   end
 
+  def source_permissions=(source_permissions)
+    raise(ArgumentError, "Unsupported source_permission #{source_permissions}") unless [:use, :use_when_creating, :ignore].include?(source_permissions.intern)
+
+    @source_permissions = source_permissions.intern
+  end
+
   class MetaStat
     extend Forwardable
 
-    def initialize(stat, source_permissions = nil)
+    def initialize(stat, source_permissions)
       @stat = stat
       @source_permissions_ignore = (!source_permissions || source_permissions == :ignore)
     end
@@ -50,7 +56,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       require 'puppet/util/windows/security'
     end
 
-    def initialize(stat, path, source_permissions = nil)
+    def initialize(stat, path, source_permissions)
       super(stat, source_permissions)
       @path = path
       raise(ArgumentError, "Unsupported Windows source permissions option #{source_permissions}") unless @source_permissions_ignore
@@ -66,13 +72,13 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     end
   end
 
-  def collect_stat(path, source_permissions)
+  def collect_stat(path)
     stat = stat()
 
     if Puppet.features.microsoft_windows?
-      WindowsStat.new(stat, path, source_permissions)
+      WindowsStat.new(stat, path, @source_permissions)
     else
-      MetaStat.new(stat, source_permissions)
+      MetaStat.new(stat, @source_permissions)
     end
   end
 
@@ -82,7 +88,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   def collect(source_permissions = nil)
     real_path = full_path
 
-    stat = collect_stat(real_path, source_permissions)
+    stat = collect_stat(real_path)
     @owner = stat.owner
     @group = stat.group
     @ftype = stat.ftype
@@ -130,7 +136,6 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
         },
         'type'         => ftype,
         'destination'  => destination,
-
       }
     )
   end

@@ -36,7 +36,7 @@ module Matchers; module Resource
       if resource = actual_catalog.resource(expected_resource)
         resource_match(expected_resource, resource)
       else
-        @mismatch = "expected #{@actual.to_dot} to include #{@expected[0]}"
+        @mismatch = "expected #{@actual.to_dot} to include #{expected_resource}"
         false
       end
     end
@@ -50,4 +50,25 @@ module Matchers; module Resource
       @mismatch
     end
   end
+
+
+  matcher :be_resource do |expected_resource|
+    def resource_match(expected_resource, actual_resource)
+      if actual_resource.ref == expected_resource
+        true
+      else
+        @mismatch = "expected #{expected_resource} but was #{actual_resource.ref}"
+        false
+      end
+    end
+
+    match do |actual_resource|
+      resource_match(expected_resource, actual_resource)
+    end
+
+    def failure_message
+      @mismatch
+    end
+  end
+
 end; end

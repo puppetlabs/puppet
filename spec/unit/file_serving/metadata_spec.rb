@@ -179,7 +179,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
 
       stat = Puppet::FileSystem.stat(path)
 
-      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
+      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path, :ignore)
 
       expect(win_stat.owner).to eq('S-1-5-32-544')
       expect(win_stat.group).to eq('S-1-0-0')

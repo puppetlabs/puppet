@@ -168,6 +168,8 @@ with_puppet_running_on(master, master_opts, testdir) do
     end
   end
 
+=begin
+# Disable flaky test until PUP-4115 is addressed.
   step "touch files and verify they're updated with ctime/mtime"
   # wait until we're not at the mtime of files on the agents
   # this could be done cross-platform using Puppet, but a single puppet query is unlikely to be less than a second,
@@ -185,6 +187,7 @@ with_puppet_running_on(master, master_opts, testdir) do
       end
     end
   end
+=end
 end
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
