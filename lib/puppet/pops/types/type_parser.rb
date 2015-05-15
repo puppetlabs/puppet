@@ -405,8 +405,9 @@ class Puppet::Pops::Types::TypeParser
       if parameters.size != 1
         raise_invalid_parameters_error("Optional", 1, parameters.size)
       end
-      assert_type(parameters[0])
-      TYPES.optional(parameters[0])
+      param = parameters[0]
+      assert_type(param) unless param.is_a?(String)
+      TYPES.optional(param)
 
     when "any", "data", "catalogentry", "boolean", "scalar", "undef", "numeric", "default"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
