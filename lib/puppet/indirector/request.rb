@@ -243,15 +243,14 @@ class Puppet::Indirector::Request
       @port = uri.port.to_i
     end
 
-    @protocol = uri.scheme
-
-    if uri.scheme == 'puppet'
-      @key = URI.unescape(uri.path.sub(/^\//, ''))
-      return
+    # filebucket:// is only used internally to pass request details
+    # from Dipper objects to the indirector. The wire always uses HTTPS.
+    if uri.scheme == 'filebucket'
+      @protocol = 'https'
+    else
+      @protocol = uri.scheme
     end
 
-    env, indirector, @key = URI.unescape(uri.path.sub(/^\//, '')).split('/',3)
-    @key ||= ''
-    self.environment = env unless env == ''
+    @key = URI.unescape(uri.path.sub(/^\//, ''))
   end
 end

@@ -22,7 +22,7 @@ class Puppet::FileBucket::Dipper
       @rest_path  = nil
     else
       @local_path = nil
-      @rest_path = "https://#{server}:#{port}/#{environment}/file_bucket_file/"
+      @rest_path = "filebucket://#{server}:#{port}/"
     end
     @checksum_type = Puppet[:digest_algorithm].to_sym
     @digest = method(@checksum_type)

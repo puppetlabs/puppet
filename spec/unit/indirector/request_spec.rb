@@ -116,32 +116,32 @@ describe Puppet::Indirector::Request do
       end
 
       it "should set the protocol to the URI scheme" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).protocol).to eq("http")
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/", nil).protocol).to eq("http")
       end
 
       it "should set the server if a server is provided" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).server).to eq("host")
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/", nil).server).to eq("host")
       end
 
       it "should set the server and port if both are provided" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host:543/an_environment", nil).port).to eq(543)
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host:543/", nil).port).to eq(543)
       end
 
       it "should default to the masterport if the URI scheme is 'puppet'" do
         Puppet[:masterport] = "321"
-        expect(Puppet::Indirector::Request.new(:ind, :method, "puppet://host/an_environment", nil).port).to eq(321)
+        expect(Puppet::Indirector::Request.new(:ind, :method, "puppet://host/", nil).port).to eq(321)
       end
 
       it "should use the provided port if the URI scheme is not 'puppet'" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment", nil).port).to eq(80)
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/", nil).port).to eq(80)
       end
 
-      it "should set the request key to the unescaped key part path from the URI" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/an_environment/terminus/stuff with spaces", nil).key).to eq("stuff with spaces")
+      it "should set the request key to the unescaped path from the URI" do
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff with spaces", nil).key).to eq("stuff with spaces")
       end
 
       it "should set the :uri attribute to the full URI" do
-        expect(Puppet::Indirector::Request.new(:ind, :method, "http:///an_environment/stu ff", nil).uri).to eq('http:///an_environment/stu ff')
+        expect(Puppet::Indirector::Request.new(:ind, :method, "http:///a/path/stu ff", nil).uri).to eq('http:///a/path/stu ff')
       end
 
       it "should not parse relative URI" do
