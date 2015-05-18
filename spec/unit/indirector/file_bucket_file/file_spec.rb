@@ -177,7 +177,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           checksum2 = save_bucket_file("foo\nbiz\nbaz")
 
           diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
-          expect(diff).to eq("2c2\n< bar\n---\n> biz\n")
+          expect(diff).to include("-bar\n+biz\n")
         end
 
         it "should raise an exception if the hash to diff against isn't found" do

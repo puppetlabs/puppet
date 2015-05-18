@@ -1,11 +1,13 @@
 require 'puppet/indirector/code'
 require 'puppet/file_bucket/file'
 require 'puppet/util/checksums'
+require 'puppet/util/diff'
 require 'fileutils'
 
 module Puppet::FileBucketFile
   class File < Puppet::Indirector::Code
     include Puppet::Util::Checksums
+    include Puppet::Util::Diff
 
     desc "Store files in a directory set based on their checksums."
 
@@ -18,7 +20,8 @@ module Puppet::FileBucketFile
         if request.options[:diff_with]
           other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
           raise "could not find diff_with #{request.options[:diff_with]}" unless Puppet::FileSystem.exist?(other_contents_file)
-          return `diff #{Puppet::FileSystem.path_string(contents_file).inspect} #{Puppet::FileSystem.path_string(other_contents_file).inspect}`
+          raise "Unable to diff on this platform" unless Puppet[:diff] != ""
+          return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
           Puppet.info "FileBucket read #{checksum}"
           model.new(Puppet::FileSystem.binread(contents_file))
