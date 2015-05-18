@@ -41,6 +41,18 @@ describe "apply" do
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
+  it "adds environment to the $server_facts variable if trusted_server_facts is true" do
+    manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
+    Puppet[:trusted_server_facts] = true
+
+    puppet = Puppet::Application[:apply]
+    puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+
+    expect { puppet.run_command }.to exit_with(0)
+
+    expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
+  end
+
   it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     site_manifest = file_containing("site_manifest.pp", "notice('the site manifest was applied instead')")
