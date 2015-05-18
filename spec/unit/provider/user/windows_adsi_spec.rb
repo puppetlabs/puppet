@@ -35,16 +35,18 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   end
 
   describe "when managing groups" do
-    it 'should return the list of groups as a comma-separated list' do
-      provider.user.stubs(:groups).returns ['group1', 'group2', 'group3']
+    it 'should return the list of groups as an array of strings' do
+      provider.user.stubs(:groups).returns nil
+      groups = {'group1' => nil, 'group2' => nil, 'group3' => nil}
+      Puppet::Util::Windows::ADSI::Group.expects(:name_sid_hash).returns(groups)
 
-      expect(provider.groups).to eq('group1,group2,group3')
+      expect(provider.groups).to eq(groups.keys)
     end
 
-    it "should return absent if there are no groups" do
+    it "should return an empty array if there are no groups" do
       provider.user.stubs(:groups).returns []
 
-      expect(provider.groups).to eq('')
+      expect(provider.groups).to eq([])
     end
 
     it 'should be able to add a user to a set of groups' do
@@ -57,6 +59,112 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       provider.user.expects(:set_groups).with('group1,group2', false)
 
       provider.groups = 'group1,group2'
+    end
+  end
+
+  describe "#groups_insync?" do
+
+    let(:group1) { stub(:account => 'group1', :domain => '.', :to_s => 'group1sid') }
+    let(:group2) { stub(:account => 'group2', :domain => '.', :to_s => 'group2sid') }
+    let(:group3) { stub(:account => 'group3', :domain => '.', :to_s => 'group3sid') }
+
+    before :each do
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group1').returns(group1)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group2').returns(group2)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group3').returns(group3)
+    end
+
+    it "should return true for same lists of members" do
+      expect(provider.groups_insync?(['group1', 'group2'], ['group1', 'group2'])).to be_truthy
+    end
+
+    it "should return true for same lists of unordered members" do
+      expect(provider.groups_insync?(['group1', 'group2'], ['group2', 'group1'])).to be_truthy
+    end
+
+    it "should return true for same lists of members irrespective of duplicates" do
+      expect(provider.groups_insync?(['group1', 'group2', 'group2'], ['group2', 'group1', 'group1'])).to be_truthy
+    end
+
+    it "should return true when current group(s) and should group(s) are empty lists" do
+      expect(provider.groups_insync?([], [])).to be_truthy
+    end
+
+    it "should return true when current groups is empty and should groups is nil" do
+      expect(provider.groups_insync?([], nil)).to be_truthy
+    end
+
+    context "when membership => inclusive" do
+      before :each do
+        resource[:membership] = :inclusive
+      end
+
+      it "should return false when current contains different groups than should" do
+        expect(provider.groups_insync?(['group1'], ['group2'])).to be_falsey
+      end
+
+      it "should return false when current is nil" do
+        expect(provider.groups_insync?(nil, ['group2'])).to be_falsey
+      end
+
+      it "should return false when should is nil" do
+        expect(provider.groups_insync?(['group1'], nil)).to be_falsey
+      end
+
+      it "should return false when current contains members and should is empty" do
+        expect(provider.groups_insync?(['group1'], [])).to be_falsey
+      end
+
+      it "should return false when current is empty and should contains members" do
+        expect(provider.groups_insync?([], ['group2'])).to be_falsey
+      end
+
+      it "should return false when should groups(s) are not the only items in the current" do
+        expect(provider.groups_insync?(['group1', 'group2'], ['group1'])).to be_falsey
+      end
+
+      it "should return false when current group(s) is not empty and should is an empty list" do
+        expect(provider.groups_insync?(['group1','group2'], [])).to be_falsey
+      end
+    end
+
+    context "when membership => minimum" do
+      before :each do
+        # this is also the default
+        resource[:membership] = :minimum
+      end
+
+      it "should return false when current contains different groups than should" do
+        expect(provider.groups_insync?(['group1'], ['group2'])).to be_falsey
+      end
+
+      it "should return false when current is nil" do
+        expect(provider.groups_insync?(nil, ['group2'])).to be_falsey
+      end
+
+      it "should return true when should is nil" do
+        expect(provider.groups_insync?(['group1'], nil)).to be_truthy
+      end
+
+      it "should return true when current contains members and should is empty" do
+        expect(provider.groups_insync?(['group1'], [])).to be_truthy
+      end
+
+      it "should return false when current is empty and should contains members" do
+        expect(provider.groups_insync?([], ['group2'])).to be_falsey
+      end
+
+      it "should return true when current group(s) contains at least the should list" do
+        expect(provider.groups_insync?(['group1','group2'], ['group1'])).to be_truthy
+      end
+
+      it "should return true when current group(s) is not empty and should is an empty list" do
+        expect(provider.groups_insync?(['group1','group2'], [])).to be_truthy
+      end
+
+      it "should return true when current group(s) contains at least the should list, even unordered" do
+        expect(provider.groups_insync?(['group3','group1','group2'], ['group2','group1'])).to be_truthy
+      end
     end
   end
 
