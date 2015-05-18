@@ -126,6 +126,116 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
     end
   end
+  it "should fail in an informative way when there are failures listing files on the server" do
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/unexistent/bucket")
+    Puppet::FileBucket::File.indirection.expects(:find).returns nil
+
+    expect { @dipper.list(nil, nil) }.to raise_error(Puppet::Error)
+  end
+
+  describe "listing files in local filebucket" do
+    with_digest_algorithms do
+      it "should list all files present" do
+        Puppet[:bucketdir] =  "/my/bucket"
+        file_bucket = tmpdir("bucket")
+
+        @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
+
+        onehour=60*60
+        twohours=onehour*2
+
+        #First File
+        file1 = make_tmp_file(plaintext)
+        expect(digest(plaintext)).to eq(checksum)
+        expect(@dipper.backup(file1)).to eq(checksum)
+        expected_list1_1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+
+        File.open(file1, 'w') {|f| f.write("Blahhhh")}
+        new_checksum = digest("Blahhhh")
+        expect(@dipper.backup(file1)).to eq(new_checksum)
+        expected_list1_2 = /#{new_checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+
+        #Second File
+        content = "DummyFileWithNonSenseTextInIt"
+        file2 = make_tmp_file(content)
+        checksum = digest(content)
+        expect(@dipper.backup(file2)).to eq(checksum)
+        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file2}\n/
+
+        #Third file : Same as the first one with a different path
+        file3 = make_tmp_file(plaintext)
+        checksum = digest(plaintext)
+        expect(digest(plaintext)).to eq(checksum)
+        expect(@dipper.backup(file3)).to eq(checksum)
+        date = Time.now
+        date_s = date.strftime("%F %T")
+        expected_list3 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file3}\n/
+
+        result = @dipper.list(nil, nil)
+        expect(result).to match(expected_list1_1)
+        expect(result).to match(expected_list1_2)
+        expect(result).to match(expected_list2)
+        expect(result).to match(expected_list3)
+
+      end
+      it "should filter with the provided dates" do
+        Puppet[:bucketdir] =  "/my/bucket"
+        file_bucket = tmpdir("bucket")
+
+        twentyminutes=60*20
+        thirtyminutes=60*30
+        onehour=60*60
+        twohours=onehour*2
+        threehours=onehour*3
+
+        # First File created now
+        @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
+        file1 = make_tmp_file(plaintext)
+
+        expect(digest(plaintext)).to eq(checksum)
+        expect(@dipper.backup(file1)).to eq(checksum)
+        expected_list1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+
+        # Second File created an hour ago
+        content = "DummyFileWithNonSenseTextInIt"
+        file2 = make_tmp_file(content)
+        checksum = digest(content)
+        expect(@dipper.backup(file2)).to eq(checksum)
+
+        # Modify mtime of the second file to be an hour ago
+        onehourago = Time.now - onehour
+        bucketed_paths_file = Dir.glob("#{file_bucket}/**/#{checksum}/paths")
+        FileUtils.touch(bucketed_paths_file, :mtime => onehourago)
+        onehourago_s = onehourago.strftime("%F %T")
+        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file2}\n/
+
+        now = Time.now
+
+
+        #Future
+        expect(@dipper.list((now + threehours).strftime("%F %T"), nil )).to eq("")
+
+        #Epoch -> Future = Everything (Sorted (desc) by date)
+        expect(@dipper.list(nil, (now + twohours).strftime("%F %T"))).to match(expected_list1)
+        expect(@dipper.list(nil, (now + twohours).strftime("%F %T"))).to match(expected_list2)
+
+        #Now+1sec -> Future = Nothing
+        expect(@dipper.list((now + 1).strftime("%F %T"), (now + twohours).strftime("%F %T"))).to eq("")
+
+        #Now-30mins -> Now-20mins = Nothing
+        expect(@dipper.list((now - thirtyminutes).strftime("%F %T"), (now - twentyminutes).strftime("%F %T"))).to eq("")
+
+        #Now-2hours -> Now-30mins = Second file only
+        expect(@dipper.list((now - twohours).strftime("%F %T"), (now - thirtyminutes).strftime("%F %T"))).to match(expected_list2)
+        expect(@dipper.list((now - twohours).strftime("%F %T"), (now - thirtyminutes).strftime("%F %T"))).not_to match(expected_list1)
+
+        #Now-30minutes -> Now = First file only
+        expect(@dipper.list((now - thirtyminutes).strftime("%F %T"), now.strftime("%F %T"))).to match(expected_list1)
+        expect(@dipper.list((now - thirtyminutes).strftime("%F %T"), now.strftime("%F %T"))).not_to match(expected_list2)
+
+      end
+    end
+  end
 
   describe "when diffing on a remote filebucket" do
     describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
@@ -160,7 +270,50 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         expect { @dipper.diff(wrong_checksum, nil, nil, nil) }.to raise_error(RuntimeError, "Diff is not supported on this platform")
       end
     end
+  end
 
+  describe "listing files in remote filebucket" do
+    with_digest_algorithms do
+      it "should list all files present" do
+        @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port=> "31337")
+
+        file = make_tmp_file(plaintext)
+        real_path = Pathname.new(file).realpath
+
+        date = Time.now.strftime("%F %T")
+
+        expect(digest(plaintext)).to eq(checksum)
+        expected_list = "#{checksum} #{date} #{file}\n"
+
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list)
+
+        expect(@dipper.list(nil, nil)).to eq(expected_list)
+
+      end
+      it "should filter with the provided dates" do
+        @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port=> "31337")
+
+        file = make_tmp_file(plaintext)
+        date = Time.now
+        date_s = date.strftime("%F %T")
+
+        expect(digest(plaintext)).to eq(checksum)
+
+        expected_list = "#{checksum} #{date_s} #{file}\n"
+
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns("")
+        expect(@dipper.list((date + 3).strftime("%F %T"), nil )).to eq("")
+
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list+expected_list)
+        expect(@dipper.list(nil, (date + 3).strftime("%F %T"))).to eq(expected_list + expected_list)
+
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list)
+        expect(@dipper.list(date_s, (date + 3).strftime("%F %T"))).to eq(expected_list)
+
+        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns("")
+        expect(@dipper.list((date + 1).strftime("%F %T"), (date + 3).strftime("%F %T"))).to eq("")
+      end
+    end
   end
 
   describe "backing up and retrieving local files" do
