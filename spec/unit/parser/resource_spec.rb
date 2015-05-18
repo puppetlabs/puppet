@@ -531,24 +531,6 @@ describe Puppet::Parser::Resource do
     end
   end
 
-  describe "when validating" do
-    it "should check each parameter" do
-      resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => stub("source")
-      resource[:one] = :two
-      resource[:three] = :four
-      resource.expects(:validate_parameter).with(:one)
-      resource.expects(:validate_parameter).with(:three)
-      resource.send(:validate)
-    end
-
-    it "should raise a parse error when there's a failure" do
-      resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => stub("source")
-      resource[:one] = :two
-      resource.expects(:validate_parameter).with(:one).raises ArgumentError
-      expect { resource.send(:validate) }.to raise_error(Puppet::ParseError)
-    end
-  end
-
   describe "when setting parameters" do
     before do
       @source = newclass "foobar"

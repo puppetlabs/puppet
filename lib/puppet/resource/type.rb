@@ -281,9 +281,10 @@ class Puppet::Resource::Type
     if parameters.nil?
       resource = scope.catalog.resource(resource_type, name)
       return resource unless resource.nil?
+    else
+      parameters = parameters.map {|k, v| Puppet::Parser::Resource::Param.new(:name => k, :value => v, :source => self)}
     end
-    resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
-    assign_parameter_values(parameters, resource)
+    resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self, :parameters => parameters)
     instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
     resource
@@ -312,7 +313,11 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
+  # @deprecated Not used by Puppet
+  # @api private
   def assign_parameter_values(parameters, resource)
+    Puppet.deprecation_warning('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.')
+
     return unless parameters
 
     # It'd be nice to assign default parameter values here,
@@ -330,57 +335,91 @@ class Puppet::Resource::Type
       fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}")
   end
 
-  # Set any arguments passed by the resource as variables in the scope.
+  # Validate and set any arguments passed by the resource as variables in the scope.
+  # @param resource [Puppet::Parser::Resource] the resource
+  # @param scope [Puppet::Parser::Scope] the scope
+  #
+  # @api private
   def set_resource_parameters(resource, scope)
-    set = {}
+    # Inject parameters from using external lookup
     resource.add_parameters_from_consume
-    resource.to_hash.each do |param, value|
-      param = param.to_sym
-      fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
+    inject_external_parameters(resource, scope)
 
-      exceptwrap { scope[param.to_s] = value }
-
-      set[param] = true
-    end
+    resource_hash = {}
+    resource.each { |k, v| resource_hash[k.to_s] = v.value unless k == :name || k == :title }
 
     if @type == :hostclass
-      scope[TITLE] = resource.title.to_s.downcase unless set.include? :title
-      scope[NAME] =  resource.name.to_s.downcase  unless set.include? :name
+      scope[TITLE] = resource.title.to_s.downcase
+      scope[NAME] =  resource.name.to_s.downcase
     else
-      scope[TITLE] = resource.title               unless set.include? :title
-      scope[NAME] =  resource.name                unless set.include? :name
+      scope[TITLE] = resource.title
+      scope[NAME] =  resource.name
     end
-    scope[MODULE_NAME] = module_name if module_name and ! set.include? :module_name
 
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope[CALLER_MODULE_NAME] = caller_name
+    modname = resource_hash[MODULE_NAME] || module_name
+    scope[MODULE_NAME] = modname unless modname.nil?
+    caller_name = resource_hash[CALLER_MODULE_NAME] || scope.parent_module_name
+    scope[CALLER_MODULE_NAME] = caller_name unless caller_name.nil?
+
+    scope.class_set(self.name,scope) if hostclass? || node?
+
+    assign_defaults(resource, scope, resource_hash)
+    validate_resource_hash(resource, resource_hash)
+    resource_hash.each { |param, value| exceptwrap { scope[param] = value }}
+  end
+
+  # Lookup and inject parameters from external scope
+  # @param resource [Puppet::Parser::Resource] the resource
+  # @param scope [Puppet::Parser::Scope] the scope
+  def inject_external_parameters(resource, scope)
+    # Only lookup parameters for host classes
+    return unless type == :hostclass
+    parameters = resource.parameters
+    arguments.each do |param_name, _|
+      name = param_name.to_sym
+      next if parameters.include?(name)
+      value = lookup_external_default_for(param_name, scope)
+      resource[name] = value unless value.nil?
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+  end
+  private :inject_external_parameters
 
-    # Evaluate the default parameters, now that all other variables are set
-    default_params = resource.set_default_parameters(scope)
-    default_params.each { |param| scope[param] = resource[param] }
+  def assign_defaults(resource, scope, resource_hash)
+    return unless resource.is_a?(Puppet::Parser::Resource)
+    parameters = resource.parameters
+    hashed_types = parameter_struct.hashed_elements
+    arguments.each do |param_name, default|
+      next if default.nil?
+      name = param_name.to_sym
+      param = parameters[name]
+      next unless param.nil? || param.value.nil?
 
-    # This has to come after the above parameters so that default values
-    # can use their values
-    resource.validate_complete
+      value = default.safeevaluate(scope)
+      resource[name] = value
+      resource_hash[param_name] = value
+    end
+  end
+  private :assign_defaults
+
+  def validate_resource_hash(resource, resource_hash)
+    Puppet::Pops::Types::TypeAsserter.validate_parameters(resource.to_s, parameter_struct, resource_hash)
+  end
+  private :validate_resource_hash
+
+  # Validate that all parameters given to the resource are correct
+  # @param resource [Puppet::Resource] the resource to validate
+  def validate_resource(resource)
+    validate_resource_hash(resource, Hash[resource.parameters.map { |name, value| [name.to_s, value.value] }])
   end
 
   # Check whether a given argument is valid.
   def valid_parameter?(param)
-    param = param.to_s
-
-    return true if param == NAME
-    # This hardcodes the knowledge that the 'nodes' parameter for
-    # application instances is magical
-    return true if param == NODES && application?
-    return true if Puppet::Type.metaparam?(param)
-    return false unless defined?(@arguments)
-    return(arguments.include?(param) ? true : false)
+    parameter_struct.hashed_elements.include?(param.to_s)
   end
 
   def set_arguments(arguments)
     @arguments = {}
+    @parameter_struct = nil
     return if arguments.nil?
 
     arguments.each do |arg, default|
@@ -396,6 +435,7 @@ class Puppet::Resource::Type
   #
   def set_argument_types(name_to_type_hash)
     @argument_types = {}
+    @parameter_struct = nil
     return unless name_to_type_hash
     name_to_type_hash.each do |name, t|
       # catch internal errors
@@ -469,4 +509,101 @@ class Puppet::Resource::Type
       raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
     end
   end
+
+  def parameter_struct
+    @parameter_struct ||= create_params_struct
+  end
+
+  def create_params_struct
+    arg_types = argument_types
+    type_factory = Puppet::Pops::Types::TypeFactory
+    members = { type_factory.optional(type_factory.string(nil, NAME)) =>  type_factory.any }
+
+    if application?
+      resource_type = type_factory.type_type(type_factory.resource)
+      members[type_factory.optional(type_factory.string(nil, NODES))] = type_factory.hash_of(type_factory.variant(
+          resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
+    end
+
+    Puppet::Type.eachmetaparam do |name|
+      # TODO: Once meta parameters are typed, this should change to reflect that type
+      members[name.to_s] = type_factory.any
+    end
+
+    arguments.each_pair do |name, default|
+      key_type = type_factory.string(nil, name.to_s)
+      key_type = type_factory.optional(key_type) unless default.nil?
+
+      arg_type = arg_types[name]
+      arg_type = type_factory.any if arg_type.nil?
+      members[key_type] = arg_type
+    end
+    type_factory.struct(members)
+  end
+  private :create_params_struct
+
+  # Consult external data bindings for class parameter values which must be
+  # namespaced in the backend.
+  #
+  # Example:
+  #
+  #   class foo($port=0){ ... }
+  #
+  # We make a request to the backend for the key 'foo::port' not 'foo'
+  #
+  def lookup_external_default_for(param, scope)
+    return unless type == :hostclass
+    qname = "#{name}::#{param}"
+    in_global = lambda { lookup_with_databinding(qname, scope) }
+    in_env = lambda { lookup_in_environment(qname, scope) }
+    in_module = lambda { lookup_in_module(qname, scope) }
+    lookup_search(in_global, in_env, in_module)
+  end
+  private :lookup_external_default_for
+
+  def lookup_search(*search_functions)
+    search_functions.each {|f| x = f.call(); return x unless x.nil? }
+    nil
+  end
+  private :lookup_search
+
+  def lookup_with_databinding(name, scope)
+    begin
+      found = false
+      value = catch(:no_such_key) do
+        v = Puppet::DataBinding.indirection.find(
+          name,
+          :environment => scope.environment.to_s,
+          :variables => scope)
+        found = true
+        v
+      end
+      found ? value : nil
+    rescue Puppet::DataBinding::LookupError => e
+      raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
+    end
+  end
+  private :lookup_with_databinding
+
+  def lookup_in_environment(name, scope)
+    found = false
+    value = catch(:no_such_key) do
+      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
+      found = true
+      v
+    end
+    found ? value : nil
+  end
+  private :lookup_in_environment
+
+  def lookup_in_module(name, scope)
+    found = false
+    value = catch(:no_such_key) do
+      v = Puppet::DataProviders.lookup_in_module(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
+      found = true
+      v
+    end
+    found ? value : nil
+  end
+  private :lookup_in_module
 end

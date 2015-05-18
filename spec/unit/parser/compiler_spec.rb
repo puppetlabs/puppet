@@ -633,7 +633,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass b to Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass 'b' to Class[Foo]")
     end
 
     it "should fail if invalid parameters are passed" do

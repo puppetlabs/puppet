@@ -80,7 +80,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
       else
-        finish
+        finish(false) # Call finish but do not validate
         resource_type.evaluate_code(self)
       end
     end
@@ -98,13 +98,18 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # Do any finishing work on this object, called before evaluation or
-  # before storage/translation.
-  def finish
+  # before storage/translation. The method does nothing the second time
+  # it is called on the same resource.
+  #
+  # @param do_validate [Boolean] true if validation should be performed
+  #
+  # @api private
+  def finish(do_validate = true)
     return if finished?
     @finished = true
     add_defaults
     add_scope_tags
-    validate
+    validate if do_validate
   end
 
   # Has this resource already been finished?
@@ -312,11 +317,15 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Make sure the resource's parameters are all valid for the type.
   def validate
-    @parameters.each do |name, param|
-      validate_parameter(name)
+    if builtin_type?
+      begin
+        @parameters.each { |name, value| validate_parameter(name) }
+      rescue => detail
+        self.fail Puppet::ParseError, detail.to_s + " on #{self}", detail
+      end
+    else
+      resource_type.validate_resource(self)
     end
-  rescue => detail
-    self.fail Puppet::ParseError, detail.to_s + " on #{self}", detail
   end
 
   def extract_parameters(params)

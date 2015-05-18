@@ -83,22 +83,6 @@ module Puppet
       end
     end
 
-    module Parser
-      require 'puppet/pops/parser/eparser'
-      require 'puppet/pops/parser/parser_support'
-      require 'puppet/pops/parser/locator'
-      require 'puppet/pops/parser/locatable'
-      require 'puppet/pops/parser/lexer2'
-      require 'puppet/pops/parser/evaluating_parser'
-      require 'puppet/pops/parser/epp_parser'
-      require 'puppet/pops/parser/code_merger'
-    end
-
-    module Validation
-      require 'puppet/pops/validation/checker4_0'
-      require 'puppet/pops/validation/validator_factory_4_0'
-    end
-
     module Evaluator
       require 'puppet/pops/evaluator/callable_signature'
       require 'puppet/pops/evaluator/runtime3_converter'
@@ -114,6 +98,22 @@ module Puppet
         require 'puppet/pops/evaluator/collectors/catalog_collector'
         require 'puppet/pops/evaluator/collectors/exported_collector'
       end
+    end
+
+    module Parser
+      require 'puppet/pops/parser/eparser'
+      require 'puppet/pops/parser/parser_support'
+      require 'puppet/pops/parser/locator'
+      require 'puppet/pops/parser/locatable'
+      require 'puppet/pops/parser/lexer2'
+      require 'puppet/pops/parser/evaluating_parser'
+      require 'puppet/pops/parser/epp_parser'
+      require 'puppet/pops/parser/code_merger'
+    end
+
+    module Validation
+      require 'puppet/pops/validation/checker4_0'
+      require 'puppet/pops/validation/validator_factory_4_0'
     end
 
     # Subsystem for puppet functions defined in ruby.
