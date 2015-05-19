@@ -56,7 +56,7 @@
 #     defined(Type[Resource['foo']])
 #
 # Which is different from asking:
-# 
+#
 #     defined('foo')
 #
 # Since the later returns true if 'foo' is either a class, a built-in resource type, or a user defined
@@ -68,11 +68,9 @@
 #
 Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunction) do
 
-  ARG_TYPE = 'Variant[String,Type[CatalogEntry], Type[Type[CatalogEntry]]]'
-
   dispatch :is_defined do
     scope_param
-    required_repeated_param ARG_TYPE, 'additional_args'
+    required_repeated_param 'Variant[String, Type[CatalogEntry], Type[Type[CatalogEntry]]]', :vals
   end
 
   def is_defined(scope, *vals)
