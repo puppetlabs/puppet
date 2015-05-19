@@ -125,3 +125,68 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
   end
 end
 
+describe Puppet::Type.type(:package), 'logging package state transitions' do
+
+  let(:catalog) { Puppet::Resource::Catalog.new }
+  let(:provider) { stub('provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :validate_source => nil) }
+
+  before :each do
+    provider.stubs(:satisfies?).with([:purgeable]).returns(true)
+    provider.class.stubs(:instances).returns([])
+    provider.stubs(:install).returns nil
+    provider.stubs(:uninstall).returns nil
+    provider.stubs(:purge).returns nil
+    Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(provider)
+  end
+
+  after :each do
+    Puppet::Type.type(:package).defaultprovider = nil
+  end
+
+  # Map of old state -> {new state -> change}
+  states = {
+    # 'installed' transitions to 'removed' or 'purged'
+    :installed => {
+      :installed => nil,
+      :absent    => 'removed',
+      :purged    => 'purged'
+    },
+    # 'absent' transitions to 'created' or 'purged'
+    :absent => {
+      :installed => 'created',
+      :absent    => nil,
+      :purged    => 'purged'
+    },
+    # 'purged' transitions to 'created'
+    :purged => {
+      :installed => 'created',
+      :absent    => nil,
+      :purged    => nil
+    }
+  }
+
+  states.each do |old, new_states|
+    describe "#{old} package" do
+
+      before :each do
+        provider.stubs(:properties).returns(:ensure => old)
+      end
+
+      new_states.each do |new, status|
+        it "ensure => #{new} should log #{status ? status : 'nothing'}" do
+          catalog.add_resource(described_class.new(:name => 'yay', :ensure => new))
+          catalog.apply
+
+          logs = catalog.apply.report.logs
+          if status
+            expect(logs.first.source).to eq("/Package[yay]/ensure")
+            expect(logs.first.message).to eq(status)
+          else
+            expect(logs.first).to be_nil
+          end
+        end
+      end
+    end
+  end
+end
+

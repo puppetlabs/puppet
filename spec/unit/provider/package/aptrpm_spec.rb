@@ -24,9 +24,9 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
       pkg.provider.expects(:rpm).with(*args)
     end
 
-    it "should report absent packages" do
+    it "should report purged packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
-      expect(pkg.property(:ensure).retrieve).to eq(:absent)
+      expect(pkg.property(:ensure).retrieve).to eq(:purged)
     end
 
     it "should report present packages correctly" do

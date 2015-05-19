@@ -174,10 +174,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # because of multiarch
       return "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
     else
-      # Yum didn't find updates, pretend the current
-      # version is the latest
-      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
-      return properties[:ensure]
+      # Yum didn't find updates, pretend the current version is the latest
+      version = properties[:ensure]
+      raise Puppet::DevError, "Tried to get latest on a missing package" if version == :absent || version == :purged
+      return version
     end
   end
 

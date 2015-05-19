@@ -16,8 +16,12 @@ class Puppet::Provider::Package < Puppet::Provider
   # Look up the current status.
   def properties
     if @property_hash.empty?
-      @property_hash = query || {:ensure => :absent}
-      @property_hash[:ensure] = :absent if @property_hash.empty?
+      # For providers that support purging, default to purged; otherwise default to absent
+      # Purged is the "most uninstalled" a package can be, so a purged package will be in-sync with
+      # either `ensure => absent` or `ensure => purged`; an absent package will be out of sync with `ensure => purged`.
+      default_status = self.class.feature?(:purgeable) ? :purged : :absent
+      @property_hash = query || { :ensure => ( default_status )}
+      @property_hash[:ensure] = default_status if @property_hash.empty?
     end
     @property_hash.dup
   end

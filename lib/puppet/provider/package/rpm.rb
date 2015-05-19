@@ -115,15 +115,14 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     unless source = @resource[:source]
       @resource.fail "RPMs must specify a package source"
     end
-    # RPM gets pissy if you try to install an already
-    # installed package
-    if @resource.should(:ensure) == @property_hash[:ensure] or
-      @resource.should(:ensure) == :latest && @property_hash[:ensure] == latest
-      return
-    end
+
+    version =  @property_hash[:ensure]
+
+    # RPM gets upset if you try to install an already installed package
+    return if @resource.should(:ensure) == version || (@resource.should(:ensure) == :latest && version == latest)
 
     flag = ["-i"]
-    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] and @property_hash[:ensure] != :absent
+    flag = ["-U", "--oldpackage"] if version && (version != :absent && version != :purged)
     flag += install_options if resource[:install_options]
     rpm flag, source
   end
@@ -184,14 +183,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     return 0 if str1 == str2
 
     front_strip_re = /^[^A-Za-z0-9~]+/
-    segment_re = /^[A-Za-z0-9]/
-    # these represent RPM rpmio/rpmstring.c functions
-    risalnum = /[A-Za-z0-9]/
-    risdigit = /^[0-9]+/
-    risalpha = /[A-Za-z]/
 
     while str1.length > 0 or str2.length > 0
-      # trim anything that's !risalnum() and != '~' off the beginning of each string
+      # trim anything that's in front_strip_re and != '~' off the beginning of each string
       str1 = str1.gsub(front_strip_re, '')
       str2 = str2.gsub(front_strip_re, '')
 
@@ -211,7 +205,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       # "grab first completely alpha or completely numeric segment"
       isnum = false
       # if the first char of str1 is a digit, grab the chunk of continuous digits from each string
-      if risdigit.match(str1)
+      if /^[0-9]+/.match(str1)
         if str1 =~ /^[0-9]+/
           segment1 = $~.to_s
           str1 = $~.post_match
