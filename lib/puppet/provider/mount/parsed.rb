@@ -287,6 +287,10 @@ Puppet::Type.type(:mount).provide(
   #
   # Stabilizes itself by inserting as late as possible.
   #
+  # A record is "smaller" than another if
+  # * the mount point of A is a leading substring of B's mount point
+  # * the mount point of A is a leading substring of B's device (B is a bind mount)
+  #
   # @note Does not really care about directory names and does substring
   #   comparison only. So /media will be put before /mediastuff. This is
   #   not necessary but will be rare and usually cause no harm, either.
@@ -302,7 +306,7 @@ Puppet::Type.type(:mount).provide(
       result.each_index do |i|
         b = result[i]
         # is a a leading substring of b?
-        if b[:name].index(a[:name]) == 0
+        if b[:name].index(a[:name]) == 0 || b[:device].index(a[:name])
           result.insert(i, a)
           inserted = true
           break

@@ -186,6 +186,13 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
         :device => '/dev/vg0/data',
         :result => 'ordering-inner',
       },
+      'with a newly contained bind mount' => {
+        :example => 'should move the bind mount',
+        :title => '/opt/temp',
+        :device => '/dev/vg0/temp',
+        :result => 'ordering-bind',
+        :result_unsorted => 'unordered-bind',
+      },
       'with a previously unsorted fstab' => {
         :example => 'should fix existing issues',
         :original => 'unordered',
