@@ -31,8 +31,9 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   def getpid
     @resource.fail "Either stop/status commands or a pattern must be specified" unless @resource[:pattern]
     regex = Regexp.new(@resource[:pattern])
+    ps = getps
     self.debug "Executing '#{ps}'"
-    IO.popen(getps) { |table|
+    IO.popen(ps) { |table|
       table.each_line { |line|
         if regex.match(line)
           self.debug "Process matched: #{line}"
@@ -62,7 +63,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       else
         return :stopped
       end
-    elsif pid = self.getpid
+    elsif pid = getpid
       self.debug "PID is #{pid}"
       return :running
     else
