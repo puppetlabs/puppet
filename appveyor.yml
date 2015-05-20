@@ -6,13 +6,18 @@ init:
   - SET
 install:
   - SET PATH=C:\Ruby21-x64\bin;%PATH%
+  - SET LOG_SPEC_ORDER=true
   - gem install bundler --quiet --no-ri --no-rdoc
   - bundle install --jobs 4 --retry 2 --without development
   - type Gemfile.lock
   - ruby -v
+  - cd
+  - bundle exec ruby -rwin32/dir -e 'puts Dir.pwd'
 build: off
 test_script:
   - bundle exec rspec spec
+on_failure:
+  - appveyor PushArtifact .\spec_order.txt
 notifications:
   - provider: Email
     to:
