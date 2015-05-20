@@ -154,8 +154,7 @@ class Puppet::Parser::Compiler
 
   # Constructs the overrides for the context
   def context_overrides()
-    if Puppet.future_parser?
-      require 'puppet/loaders'
+    if Puppet.future_parser?(environment)
       {
         :current_environment => environment,
         :global_scope => @topscope,             # 4x placeholder for new global scope
