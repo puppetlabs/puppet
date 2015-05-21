@@ -74,6 +74,22 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
   end
 
+  def insync?(is)
+    return false unless is && is != :absent
+
+    begin
+      dependency = Gem::Dependency.new('', resource[:ensure])
+    rescue Gem::Requirement::BadRequirementError
+      # Bad requirements will cause an error during gem command invocation, so just return not in sync
+      return false
+    end
+
+    is = [is] unless is.is_a? Array
+
+    # Check if any version matches the dependency
+    is.any? { |version| dependency.match?('', version) }
+  end
+
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
     command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
