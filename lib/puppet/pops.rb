@@ -128,4 +128,5 @@ module Puppet
   require 'puppet/parser/ast/pops_bridge'
   require 'puppet/bindings'
   require 'puppet/functions'
+  require 'puppet/loaders'
 end

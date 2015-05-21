@@ -259,8 +259,11 @@ module Puppet
   # The single instance used for normal operation
   @context = Puppet::Context.new(bootstrap_context)
 
-  def self.future_parser?
-    env = Puppet.lookup(:current_environment) { return Puppet[:parser] == 'future' }
+  # Is the future parser in effect for the given environment, or in :current_environment if no
+  # environment is given.
+  #
+  def self.future_parser?(in_environment = nil)
+    env = in_environment || Puppet.lookup(:current_environment) { return Puppet[:parser] == 'future' }
     env_conf = Puppet.lookup(:environments).get_conf(env.name)
 
     if env_conf.nil?
