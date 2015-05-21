@@ -8,7 +8,7 @@ install:
   - SET PATH=C:\Ruby21-x64\bin;%PATH%
   - SET LOG_SPEC_ORDER=true
   - gem install bundler --quiet --no-ri --no-rdoc
-  - bundle install --jobs 4 --retry 2 --without development
+  - bundle install --jobs 4 --retry 2 --without development extra
   - type Gemfile.lock
   - ruby -v
 build: off
