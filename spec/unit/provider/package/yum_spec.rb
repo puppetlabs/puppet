@@ -471,6 +471,17 @@ describe provider_class do
         expect(output['libpcap']).to eq([{:name => 'libpcap', :epoch => '14', :version => '1.4.0', :release => '1.20130826git2dbcaa1.el6', :arch => 'x86_64'}])
       end
     end
+
+    describe "with obsoleted packages" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-obsoletes.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it "ignores all entries including and after 'Obsoleting Packages'" do
+        expect(output).not_to include("Obsoleting")
+        expect(output).not_to include("NetworkManager-bluetooth.x86_64")
+        expect(output).not_to include("1:1.0.0-14.git20150121.b4ea599c.el7")
+      end
+    end
   end
 
   describe "parsing a line from yum check-update" do
