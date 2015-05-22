@@ -1,11 +1,12 @@
 [Unit]
 Description=Puppet agent
 Wants=basic.target
-After=basic.target network.target puppetmaster.service
+After=basic.target network.target
 
 [Service]
 EnvironmentFile=-/etc/sysconfig/puppetagent
 EnvironmentFile=-/etc/sysconfig/puppet
+EnvironmentFile=-/etc/default/puppet
 ExecStart=/opt/puppetlabs/puppet/bin/puppet agent $PUPPET_EXTRA_OPTS --no-daemonize
 KillMode=process
 
