@@ -87,6 +87,24 @@ Puppet::Type.newtype(:resources) do
     end
   end
 
+  newparam(:sort_output, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc "For resources that are kept in files, this flag controls whether Puppet
+      makes sure that the resources in the file or files are in a sensible order.
+      What this entails is specific to the respective provider.
+
+      This is currently implemented in the default mount provider only."
+
+    defaultto :false
+
+    validate do |value|
+      if munge(value)
+        unless @resource[:name].downcase == 'mount'
+          raise ArgumentError, "The sort_output flag is only supported by mount resources."
+        end
+      end
+    end
+  end
+
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
     @hascheck ||= respond_to?(@checkmethod)

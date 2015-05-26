@@ -195,6 +195,10 @@ Puppet::Type.type(:mount).provide(
     end
   end
 
+  # Class variable to store the catalog's choice about whether
+  # fstab entries should be sorted.
+  @sort_output = false
+
   # Every entry in fstab is :unmounted until we can prove different
   def self.prefetch_hook(target_records)
     target_records.collect do |record|
@@ -239,6 +243,15 @@ Puppet::Type.type(:mount).provide(
           mount.provider.set(:ensure => :mounted)
         end
       end
+    end
+    # Examine the catalog to determine whether the fstab should be ordered.
+    # Default is no sorting
+    @sort_output = false
+    return if !resources || resources.empty?
+    meta = resources.values[0].catalog.resource('resources', 'mount')
+    return unless meta
+    if meta[:sort_output]
+      @sort_output = true
     end
   end
 
@@ -298,6 +311,7 @@ Puppet::Type.type(:mount).provide(
   # @api private
   def self.order(records)
     return records if records.empty?
+    return records unless @sort_output;
     # insert first record first
     result = [ ]
     # iterate over the rest

@@ -163,6 +163,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
 
   describe "when updating existing fstabs" do
     let(:tmp_fstab) { tmpfile('fstab_fixture') }
+    let(:resources_manifest) { "resources { 'mount': sort_output => true }" }
 
     def compare(fixture)
       wanted = File.read(my_fixture(fixture))
@@ -179,12 +180,14 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
         :title => '/opt/data/log-archive',
         :device => '/dev/vg0/log_archive',
         :result => 'ordering-unrelated',
+        :result_unsorted => 'ordering-unrelated',
       },
       'with an inner mount point' => {
         :example => 'should move the inner mount point',
         :title => '/opt/data',
         :device => '/dev/vg0/data',
         :result => 'ordering-inner',
+        :result_unsorted => 'unordered-inner',
       },
       'with a newly contained bind mount' => {
         :example => 'should move the bind mount',
@@ -199,26 +202,43 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
         :title => '/opt/data/log-archive',
         :device => '/dev/vg0/log_archive',
         :result => 'unordered-fixed',
+        :result_unsorted => 'unordered-unfixed',
       },
     }.each do |context_descr, data|
       context context_descr do
+        [ true, false ].each do |set_order|
 
-        it data[:example] do
-          if data[:original]
-            FileUtils.cp(my_fixture(data[:original]), tmp_fstab)
+          if set_order
+            example_description = "and output ordering #{data[:example]}"
+          else
+            example_description = 'and no ordering should just append new entries'
           end
-          manifest = <<-MANIFEST
-            mount {
-                '#{data[:title]}':
-                    ensure => 'present',
-                    device => '#{data[:device]}',
-                    fstype => 'ext4',
-                    options => 'defaults',
-                    target  => '#{tmp_fstab}',
-            }
-          MANIFEST
-          apply_with_error_check(manifest)
-          compare(data[:result])
+
+          it example_description do
+            if data[:original]
+              FileUtils.cp(my_fixture(data[:original]), tmp_fstab)
+            end
+
+            manifest = <<-MANIFEST
+              mount {
+                  '#{data[:title]}':
+                      ensure => 'present',
+                      device => '#{data[:device]}',
+                      fstype => 'ext4',
+                      options => 'defaults',
+                      target  => '#{tmp_fstab}',
+              }
+            MANIFEST
+
+            if set_order
+              manifest += resources_manifest
+              apply_with_error_check(manifest)
+              compare(data[:result])
+            else
+              apply_with_error_check(manifest)
+              compare(data[:result_unsorted])
+            end
+          end
         end
       end
     end
