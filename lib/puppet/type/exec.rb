@@ -413,7 +413,8 @@ module Puppet
         `grep` determines it's already there.
 
         Note that this command follows the same rules as the main command,
-        which is to say that it must be fully qualified if the path is not set.
+        such as which user and group it's run as.
+        This also means it must be fully qualified if the path is not set.
         It also uses the same provider as the main command, so any behavior
         that differs by provider will match.
       EOT
@@ -456,7 +457,9 @@ module Puppet
         This would run `logrotate` only if that test returned true.
 
         Note that this command follows the same rules as the main command,
-        which is to say that it must be fully qualified if the path is not set.
+        such as which user and group it's run as.
+        This also means it must be fully qualified if the path is not set.
+
         It also uses the same provider as the main command, so any behavior
         that differs by provider will match.
 
