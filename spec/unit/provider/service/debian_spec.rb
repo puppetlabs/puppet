@@ -119,6 +119,14 @@ describe provider_class do
       it_should_behave_like "manually queries service status", 105
     end
 
+    context "when invoke-rc.d exits with 101 status" do
+      it_should_behave_like "manually queries service status", 101
+    end
+
+    context "when invoke-rc.d exits with 105 status" do
+      it_should_behave_like "manually queries service status", 105
+    end
+
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
     [-100, -1, 0, 1, 100, "foo", "", :true, :false].each do |exitstatus|
       it "should return false when invoke-rc.d exits with #{exitstatus} status" do
