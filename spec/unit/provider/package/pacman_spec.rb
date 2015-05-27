@@ -410,4 +410,59 @@ EOF
       expect(provider.latest).to eq('package1 1.0.0, package2 1.0.1')
     end
   end
+
+  describe 'when determining if a resource is a group' do
+    before do
+      described_class.unstub(:group?)
+    end
+
+    it 'should return false on non-zero pacman exit' do
+      executor.stubs(:execute).with(['/usr/bin/pacman', '-Sg', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).raises(Puppet::ExecutionFailure, 'error')
+      expect(described_class.group?('git')).to eq(false)
+    end
+
+    it 'should return false on empty pacman output' do
+      executor.stubs(:execute).with(['/usr/bin/pacman', '-Sg', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).returns ''
+      expect(described_class.group?('git')).to eq(false)
+    end
+
+    it 'should return true on non-empty pacman output' do
+      executor.stubs(:execute).with(['/usr/bin/pacman', '-Sg', 'vim-plugins'], {:failonfail => true, :combine => true, :custom_environment => {}}).returns 'vim-plugins vim-a'
+      expect(described_class.group?('vim-plugins')).to eq(true)
+    end
+  end
+
+  describe 'when querying installed groups' do
+    let(:installed_packages) { {'package1' => '1.0', 'package2' => '2.0', 'package3' => '3.0'} }
+    let(:groups) { [['foo package1'], ['foo package2'], ['bar package3'], ['bar package4'], ['baz package5']] }
+
+    it 'should raise an error on non-zero pacman exit without a filter' do
+      executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').returns 'error!'
+      $CHILD_STATUS.stubs(:exitstatus).returns 1
+      expect { described_class.get_installed_groups(installed_packages) }.to raise_error(Puppet::ExecutionFailure, 'error!')
+    end
+
+    it 'should return empty groups on non-zero pacman exit with a filter' do
+      executor.expects(:open).with('| /usr/bin/pacman -Sgg git 2>&1').returns ''
+      $CHILD_STATUS.stubs(:exitstatus).returns 1
+      expect(described_class.get_installed_groups(installed_packages, 'git')).to eq({})
+    end
+
+    it 'should return empty groups on empty pacman output' do
+      pipe = stub()
+      pipe.expects(:each_line)
+      executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').yields(pipe).returns ''
+      $CHILD_STATUS.stubs(:exitstatus).returns 0
+      expect(described_class.get_installed_groups(installed_packages)).to eq({})
+    end
+
+    it 'should return groups on non-empty pacman output' do
+      pipe = stub()
+      pipe.expects(:each_line).multiple_yields(*groups)
+      executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').yields(pipe).returns ''
+      $CHILD_STATUS.stubs(:exitstatus).returns 0
+      expect(described_class.get_installed_groups(installed_packages)).to eq({'foo' => 'package1 1.0, package2 2.0'})
+    end
+  end
+
 end

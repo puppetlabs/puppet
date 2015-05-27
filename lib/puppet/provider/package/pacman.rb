@@ -30,7 +30,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       !pacman("-Sg", name).empty?
     rescue Puppet::ExecutionFailure
-      fail("Error while determining if '#{@resource[:name]}' is a group")
+      # pacman returns an expected non-zero exit code when the name is not a group
+      false
     end
   end
 
@@ -74,10 +75,10 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   def self.get_installed_packages
     begin
       packages = {}
-      execpipe([command(:pacman), "-Q"]) do |process|
+      execpipe([command(:pacman), "-Q"]) do |pipe|
         # pacman -Q output is 'packagename version-rel'
         regex = %r{^(\S+)\s(\S+)}
-        process.each_line do |line|
+        pipe.each_line do |line|
           if match = regex.match(line)
             packages[match.captures[0]] = match.captures[1]
           else
@@ -98,8 +99,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       # Build a hash of group name => list of packages
       command = [command(:pacman), "-Sgg"]
       command << filter if filter
-      execpipe(command) do |process|
-        process.each_line do |line|
+      execpipe(command) do |pipe|
+        pipe.each_line do |line|
           name, package = line.split
           packages = (groups[name] ||= [])
           packages << package
@@ -115,11 +116,11 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       groups.each do |name, packages|
         groups[name] = packages.sort.map {|package| "#{package} #{installed_packages[package]}"}.join ', '
       end
-
-      groups
     rescue Puppet::ExecutionFailure
-      fail("Error while getting installed groups")
+      # pacman returns an expected non-zero exit code when the filter name is not a group
+      raise unless filter
     end
+    groups
   end
 
   # Because Archlinux is a rolling release based distro, installing a package
