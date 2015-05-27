@@ -26,14 +26,6 @@ win_fact =<<EOM
 echo foo=bar
 EOM
 
-if agent['platform'] =~ /windows/
-  fact_content = win_fact
-  extension = '.bat'
-else
-  fact_content = unix_fact
-  extension = '.sh'
-end
-
 apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
@@ -63,9 +55,15 @@ file { '#{codedir}/environments/production/modules/mymodule/manifests/init.pp':
   content => 'class mymodule {}',
 }
 
-file { '#{codedir}/environments/production/modules/mymodule/facts.d/external_fact#{extension}':
+file { '#{codedir}/environments/production/modules/mymodule/facts.d/unix_external_fact.sh':
   ensure  => file,
-  content => '#{fact_content}',
+  mode    => '755',
+  content => '#{unix_fact}',
+}
+file { '#{codedir}/environments/production/modules/mymodule/facts.d/win_external_fact.bat':
+  ensure  => file,
+  mode    => '644',
+  content => '#{win_fact}',
 }
 MANIFEST
 
@@ -94,7 +92,7 @@ with_puppet_running_on master, master_opts, codedir do
     next if agent['platform'] =~ /windows/
 
     step "In Linux, ensure the pluginsync'ed external fact has the same permissions as its source"
-    on(agent, puppet('resource', "file #{factsd}/external_fact#{extension}"))
+    on(agent, puppet('resource', "file #{factsd}/unix_external_fact.sh"))
     assert_match(/0755/, stdout)
 
     step "In Linux, ensure puppet apply uses the correct permissions"
