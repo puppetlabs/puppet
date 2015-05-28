@@ -304,6 +304,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       exit(1)
     end
 
+    Puppet.settings.use :main, :agent, :ssl
+
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 

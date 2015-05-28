@@ -947,6 +947,8 @@ Generated on #{Time.now}.
 
     return if sections.empty?
 
+    Puppet.debug("Applying settings catalog for sections #{sections.join(', ')}")
+
     begin
       catalog = to_catalog(*sections).to_ral
     rescue => detail

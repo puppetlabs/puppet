@@ -120,6 +120,13 @@ describe Puppet::Application::Apply do
       expect { @apply.setup }.to exit_with 1
     end
 
+    it "should use :main, :puppetd, and :ssl" do
+      Puppet.settings.unstub(:use)
+      Puppet.settings.expects(:use).with(:main, :agent, :ssl)
+
+      @apply.setup
+    end
+
     it "should tell the report handler to cache locally as yaml" do
       Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
 
