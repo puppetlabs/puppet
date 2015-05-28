@@ -551,6 +551,11 @@ class Puppet::Provider
     "#{@resource}(provider=#{self.class.name})"
   end
 
+  # @return [String] Returns a human readable string with information about the resource and the provider.
+  def inspect
+    to_s
+  end
+
   # Makes providers comparable.
   include Comparable
   # Compares this provider against another provider.
