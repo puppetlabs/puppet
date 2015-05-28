@@ -44,7 +44,8 @@ describe Puppet::FileServing::HttpMetadata do
         # HTTP uses "GMT" not "UTC"
         http_response.stubs(:[]).with('last-modified').returns(time.strftime("%a, %d %b %Y %T GMT"))
         metadata = described_class.new(http_response)
-        expect( metadata.checksum_type ).to eq 'mtime'
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :mtime
         expect( metadata.checksum ).to eq "{mtime}#{time.to_time}"
       end
     end
@@ -54,12 +55,14 @@ describe Puppet::FileServing::HttpMetadata do
       let(:base64) { Digest::MD5.new.base64digest input }
       let(:hex) { Digest::MD5.new.hexdigest input }
       before do
+        http_response.stubs(:[]).with('last-modified').returns nil
         http_response.stubs(:[]).with('content-md5').returns base64
       end
 
       it "should use the md5 checksum" do
         metadata = described_class.new(http_response)
-        expect( metadata.checksum_type ).to eq 'md5'
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :md5
         expect( metadata.checksum ).to eq "{md5}#{hex}"
       end
     end

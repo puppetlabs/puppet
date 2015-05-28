@@ -14,7 +14,10 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
     head = super
 
     if head.is_a?(Net::HTTPSuccess)
-      Puppet::FileServing::HttpMetadata.new(head)
+      metadata = Puppet::FileServing::HttpMetadata.new(head)
+      metadata.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
+      metadata.collect
+      metadata
     end
   end
 
