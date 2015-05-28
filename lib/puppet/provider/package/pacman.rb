@@ -28,7 +28,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # Checks if a given name is a group
   def self.group?(name)
     begin
-      !pacman("-Sg", name).empty?
+      !execpipe([command(:pacman), "-Sg"], false).empty? do |process|
+        process.read.chomp!
+      end
     rescue Puppet::ExecutionFailure
       fail("Error while determining if '#{@resource[:name]}' is a group")
     end
@@ -98,7 +100,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       # Build a hash of group name => list of packages
       command = [command(:pacman), "-Sgg"]
       command << filter if filter
-      execpipe(command) do |process|
+      execpipe(command, false) do |process|
         process.each_line do |line|
           name, package = line.split
           packages = (groups[name] ||= [])

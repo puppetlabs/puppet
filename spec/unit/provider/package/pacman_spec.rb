@@ -199,7 +199,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
   describe "when querying" do
     it "should query pacman" do
       executor.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      executor.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg', 'package'])
+      executor.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg', 'package'], false)
       provider.query
     end
 
@@ -211,7 +211,7 @@ otherpackage 1.2.3.4
 package 1.01.3-2
 yetanotherpackage 1.2.3.4
 EOF
-      executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).yields('')
+      executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package'], false).yields('')
 
       expect(provider.query).to eq({ :name => 'package', :ensure => '1.01.3-2', :provider => :pacman,  })
     end
@@ -230,7 +230,7 @@ EOF
     describe 'when querying a group' do
       before :each do
         executor.expects(:execpipe).with(['/usr/bin/pacman', '-Q']).yields('foo 1.2.3')
-        executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).yields('package foo')
+        executor.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package'], false).yields('package foo')
       end
 
       it 'should warn when allow_virtual is false' do
@@ -250,13 +250,13 @@ EOF
   describe "when determining instances" do
     it "should retrieve installed packages and groups" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'])
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'], false)
       described_class.instances
     end
 
     it "should return installed packages" do
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields("")
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'], false).yields("")
       instances = described_class.instances
 
       expect(instances.length).to eq(2)
@@ -279,7 +279,7 @@ EOF
 package1 1.00
 package2 1.00
 EOF
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields(<<EOF)
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'], false).yields(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -308,7 +308,7 @@ EOF
       described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q']).yields(<<EOF)
 package1 1.00
 EOF
-      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg']).yields(<<EOF)
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Sgg'], false).yields(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -324,7 +324,7 @@ EOF
     end
 
     it 'should sort package names for installed groups' do
-      described_class.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'group1']).yields(<<EOF)
+      described_class.expects(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'group1'], false).yields(<<EOF)
 group1 aa
 group1 b
 group1 a
