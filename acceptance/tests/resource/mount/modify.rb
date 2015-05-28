@@ -29,6 +29,9 @@ agents.each do |agent|
   step "(setup) create mount point"
   on(agent, "mkdir /#{name}", :acceptable_exit_codes => [0,1])
 
+  step "(setup) ensure loop kernel module is installed"
+  on(agent, "modprobe loop", :acceptable_exit_codes => (0..254))
+
   step "(setup) add entry to filesystem table"
   on(agent, "echo '/tmp/#{name}  /#{name}  ext3  loop  0  0' >> #{fstab}")
 
