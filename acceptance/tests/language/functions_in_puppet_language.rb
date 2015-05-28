@@ -1,6 +1,6 @@
-test_name 'Puppet executes functions written in the Puppet language' do
+test_name 'Puppet executes functions written in the Puppet language'
 
-confine :except, :platform => 'windows'
+confine :to, :platform => 'linux'
 
 step 'Create some functions' do
 
@@ -36,6 +36,7 @@ step 'Create some functions' do
       mode => '0755',
     }
 
+    # "Global" functions, no env
     file { '/etc/puppetlabs/code/modules/jenny/functions/mini.pp':
       content => 'function jenny::mini($a, $b) {if $a <= $b {$a} else {$b}}',
       require => File['/etc/puppetlabs/code/modules/jenny/functions'],
@@ -44,6 +45,8 @@ step 'Create some functions' do
       content => 'function jenny::nested::maxi($a, $b) {if $a >= $b {$a} else {$b}}',
       require => File['/etc/puppetlabs/code/modules/jenny/functions/nested'],
     }
+
+    # Module "one", "production" env
     file { '/etc/puppetlabs/code/environments/production/modules/one/functions/foo.pp':
       content => 'function one::foo() {"This is the one::foo() function in the production environment"}',
       require => File['/etc/puppetlabs/code/environments/production/modules/one/functions'],
@@ -52,6 +55,8 @@ step 'Create some functions' do
       content => 'class one { }',
       require => File['/etc/puppetlabs/code/environments/production/modules/one/manifests'],
     }
+
+    # Module "three", "production" env
     file { '/etc/puppetlabs/code/environments/production/modules/three/functions/baz.pp':
       content => 'function three::baz() {"This is the three::baz() function in the production environment"}',
       require => File['/etc/puppetlabs/code/environments/production/modules/three/functions'],
@@ -60,6 +65,8 @@ step 'Create some functions' do
       content => 'class three { }',
       require => File['/etc/puppetlabs/code/environments/production/modules/three/functions'],
     }
+
+    # Module "two", "tommy" env
     file { '/etc/puppetlabs/code/environments/tommy/modules/two/functions/bar.pp':
       content => 'function two::bar() {"This is the two::bar() function in the tommy environment"}',
       require => File['/etc/puppetlabs/code/environments/tommy/modules/two/functions'],
@@ -72,24 +79,45 @@ manifest = <<-MANIFEST
   notice 'jenny::mini(1, 2) =', jenny::mini(1,2)
   notice 'jenny::nested::maxi(1, 2) =', jenny::nested::maxi(1,2)
   notice 'one::foo() =', one::foo()
-  notice 'two::bar() =', two::bar()
   require 'one'; notice 'three::baz() =', three::baz()
 MANIFEST
 
-rc = apply_manifest_on(master, manifest, {:catch_failures => true, :acceptable_exit_codes => [0..254],})
-fail_test 'Failed to call a "global" function' unless \
-  unless rc.stdout.include?('jenny::mini(1, 2) = 1')
+rc = apply_manifest_on(master, manifest, {:accept_all_exit_codes => true,})
 
-fail_test 'Failed to call a "global" nested function' \
-  unless rc.stdout.include?('jenny::nested::maxi(1, 2) = 2')
+step 'Call a global function' do
+  fail_test 'Failed to call a "global" function' \
+    unless  rc.stdout.include?('jenny::mini(1, 2) = 1')
+  end
 
-fail_test 'Failed to call a function defined in the current environment' \
-  unless rc.stdout.include?('one::foo')
+step 'Call a global nested function' do
+  fail_test 'Failed to call a "global" nested function' \
+    unless rc.stdout.include?('jenny::nested::maxi(1, 2) = 2')
+  end
 
-fail_test 'Failed to call a function from an unrequired module' \
-  unless rc.stdout.include?('three::baz() = This is the three::baz function')
+step 'Call an env-specific function' do
+  fail_test 'Failed to call a function defined in the current environment' \
+    unless rc.stdout.include?('This is the one::foo() function in the production environment')
+  end
 
-fail_test 'Should not be able to call a function not defined in the current environment' \
-  unless rc.stderr.include?("Error: Evaluation Error: Unknown function: 'two::bar'")
-
+step 'Call a function defined in an un-included module' do
+  fail_test 'Failed to call a function defined in an un-required module' \
+    unless rc.stdout.include?('This is the three::baz() function in the production environment')
 end
+
+manifest = <<-MANIFEST.strip
+  notice "two::bar() =", two::bar()
+MANIFEST
+
+# This should fail
+step 'Call a function not defined in the current environment' do
+  rc = on master, puppet("apply -e '#{manifest}' --environment production"), {:accept_all_exit_codes => true,}
+  fail_test 'Should not be able to call a function not defined in the current environment' \
+    unless rc.stderr.include?("Error: Evaluation Error: Unknown function: 'two::bar'")
+end
+
+step 'Call an env-specific function in a non-default environment' do
+  rc = on master, puppet("apply -e '#{manifest}' --environment tommy")
+  fail_test 'Failed to call env-specific function from that environment' \
+    unless rc.stdout.include?('This is the two::bar() function in the tommy environment')
+end
+
