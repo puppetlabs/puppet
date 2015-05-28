@@ -44,6 +44,22 @@ OUTPUT
     expect(@provider.rcvar).to eq(['# ntpd', 'ntpd=YES'])
   end
 
+  it 'should parse service names with a description' do
+    @provider.stubs(:execute).returns <<OUTPUT
+# local_unbound : local caching forwarding resolver
+local_unbound_enable="YES"
+OUTPUT
+    expect(@provider.service_name).to eq('local_unbound')
+  end
+
+  it 'should parse service names without a description' do
+    @provider.stubs(:execute).returns <<OUTPUT
+# local_unbound
+local_unbound="YES"
+OUTPUT
+    expect(@provider.service_name).to eq('local_unbound')
+  end
+
   it "should find the right rcvar_value for FreeBSD < 7" do
     @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable=YES'])
 
