@@ -76,16 +76,26 @@ master_opts = {
 with_puppet_running_on master, master_opts, codedir do
   agents.each do |agent|
     factsd   = agent.tmpdir('facts.d')
+    pluginfactdest = agent.tmpdir('facts.d')
     tmpdir   = agent.tmpdir('tmpdir')
     testfile = File.join(tmpdir, 'testfile')
 
     teardown do
       on(master, "rm -rf #{codedir}")
       on(agent, "rm -rf #{factsd}")
+      on(agent, "rm -rf #{pluginfactdest}")
     end
 
     step "Pluginsync the external fact to the agent and ensure it resolves correctly"
-    on(agent, puppet('agent', "-t --server #{master} --pluginfactdest #{factsd}"), :acceptable_exit_codes => [2])
+    on(agent, puppet('agent', '-t', '--server', master, '--pluginfactdest', factsd), :acceptable_exit_codes => [2])
+    assert_match(/foo is bar/, stdout)
+
+    step "Use plugin face to download to the agent"
+    on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest))
+    assert_match(/Downloaded these plugins: .*external_fact/, stdout)
+
+    step "Ensure it resolves correctly"
+    on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'"))
     assert_match(/foo is bar/, stdout)
 
     # Linux specific tests
