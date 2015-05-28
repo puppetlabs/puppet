@@ -185,6 +185,76 @@ context 'installing myresource' do
         end
       end
     end
+
+    describe 'insync?' do
+      describe 'for array of versions' do
+        let(:is) { ['1.3.4', '3.6.1', '5.1.2'] }
+
+        it 'returns true for ~> 1.3' do
+          resource[:ensure] = '~> 1.3'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for ~> 2' do
+          resource[:ensure] = '~> 2'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns true for > 4' do
+          resource[:ensure] = '> 4'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns true for 3.6.1' do
+          resource[:ensure] = '3.6.1'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for 3.6.2' do
+          resource[:ensure] = '3.6.2'
+          expect(provider).to_not be_insync(is)
+        end
+      end
+
+      describe 'for string version' do
+        let(:is) { '1.3.4' }
+
+        it 'returns true for ~> 1.3' do
+          resource[:ensure] = '~> 1.3'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for ~> 2' do
+          resource[:ensure] = '~> 2'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns false for > 4' do
+          resource[:ensure] = '> 4'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns true for 1.3.4' do
+          resource[:ensure] = '1.3.4'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for 3.6.1' do
+          resource[:ensure] = '3.6.1'
+          expect(provider).to_not be_insync(is)
+        end
+      end
+
+      it 'should return false for bad version specifiers' do
+        resource[:ensure] = 'not a valid gem specifier'
+        expect(provider).to_not be_insync('1.0')
+      end
+
+      it 'should return false for :absent' do
+        resource[:ensure] = '~> 1.0'
+        expect(provider).to_not be_insync(:absent)
+      end
+    end
   end
 end
 
