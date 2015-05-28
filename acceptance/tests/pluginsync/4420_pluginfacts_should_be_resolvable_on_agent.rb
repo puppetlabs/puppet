@@ -95,9 +95,7 @@ with_puppet_running_on master, master_opts, codedir do
     assert_match(/Downloaded these plugins: .*external_fact/, stdout)
 
     step "Ensure it resolves correctly"
-    on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', <<-EOM))
-    notify { "foo is ${foo}": }
-    EOM
+    on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'"))
     assert_match(/foo is bar/, stdout)
 
     # Linux specific tests
