@@ -33,6 +33,15 @@ describe Puppet::Parser::Scope do
     end
   end
 
+  it "should generate a simple string when inspecting a scope" do
+    @scope.inspect.should eq("Scope()")
+  end
+
+  it "should generate a simple string when inspecting a scope with a resource" do
+    @scope.resource="foo::bar"
+    @scope.inspect.should eq("Scope(foo::bar)")
+  end
+
   it "should return a scope for use in a test harness" do
     expect(create_test_scope_for_node("node_name_foo")).to be_a_kind_of(Puppet::Parser::Scope)
   end
