@@ -1,7 +1,7 @@
 test_name 'PUP-3981 - C63215 - Build Module Should Ignore Module File'
 
 #Init
-temp_module_path = '/tmp/test'
+temp_module_path = master.tmpdir('build_ignore_module_file_test')
 metadata_json_file_path = File.join(temp_module_path, 'metadata.json')
 modulefile_file_path = File.join(temp_module_path, 'Modulefile')
 
@@ -32,9 +32,6 @@ teardown do
 end
 
 #Setup
-step 'Create Temporary Path for Module'
-on(master, "mkdir #{temp_module_path}")
-
 step 'Create "metadata.json" for Temporary Module'
 create_remote_file(master, metadata_json_file_path, metadata_json_file)
 

@@ -724,6 +724,8 @@ class Puppet::Parser::Scope
     "Scope(#{@resource})"
   end
 
+  alias_method :inspect, :to_s
+
   # remove ephemeral scope up to level
   # TODO: Who uses :all ? Remove ??
   #
