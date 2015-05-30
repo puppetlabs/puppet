@@ -41,7 +41,7 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
 
       it "access to global names works in local scope" do
         top_scope_block     = block( var('a').set(literal(2)+literal(2)))
-        local_scope_block   = block( var('a').set(var('::a')+literal(2)), var('::a'))
+        local_scope_block   = block( var('a').set(literal(100)), var('b').set(var('::a')+literal(2)), var('b'))
         evaluate_l(top_scope_block, local_scope_block).should == 6
       end
 
