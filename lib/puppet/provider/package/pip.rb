@@ -2,7 +2,7 @@
 # <http://pip.openplans.org/>
 
 require 'puppet/provider/package'
-require 'xmlrpc/client'
+require 'open-uri'
 
 Puppet::Type.type(:package).provide :pip,
   :parent => ::Puppet::Provider::Package do
@@ -56,11 +56,8 @@ Puppet::Type.type(:package).provide :pip,
   # cache of PyPI's package list so this operation will always have to
   # ask the web service.
   def latest
-    client = XMLRPC::Client.new2("http://pypi.python.org/pypi")
-    client.http_header_extra = {"Content-Type" => "text/xml"}
-    client.timeout = 10
-    result = client.call("package_releases", @resource[:name])
-    result.first
+    result = JSON.parse(open("https://pypi.python.org/pypi/#{@resource[:name]}/json").read)
+    result['releases'].first
   rescue Timeout::Error => detail
     raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}", detail.backtrace
   end
