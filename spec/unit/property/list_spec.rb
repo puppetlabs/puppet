@@ -169,5 +169,48 @@ describe list_class do
         @property.dearrayify(array)
       end
     end
+
+    describe "when calling is_but_shouldnt" do
+      describe "when membership is inclusive" do
+        before(:each) do
+          @property.stubs(:inclusive?).returns(true)
+        end
+
+        it "should return an empty list when membership matches system" do
+          @property.expects(:retrieve).returns(["foo", "bar"])
+          @property.should = ["bar","foo"]
+          expect(@property.is_but_shouldnt).to eq(Set.new())
+        end
+
+        it "should return the list of items to remove" do
+          @property.expects(:retrieve).returns(["foo", "bar", "baz"])
+          @property.should = ["bar","foo", "qux"]
+          expect(@property.is_but_shouldnt).to eq(Set.new(["baz"]))
+        end
+      end
+
+      describe "when membership is not inclusive" do
+        before(:each) do
+          @property.stubs(:inclusive?).returns(false)
+        end
+
+        it "should not call retrieve" do
+          @property.expects(:retrieve).never
+          @property.is_but_shouldnt
+        end
+
+        it "should return an empty list" do
+          expect(@property.is_but_shouldnt).to eq(Set.new())
+        end
+      end
+    end
+
+    describe "when calling should_but_isnt" do
+      it "should return the set of elements to add" do
+        @property.expects(:retrieve).returns(["foo", "bar", "qux"])
+        @property.should = ["baz", "bar", "foo"]
+        expect(@property.should_but_isnt).to eq(Set.new(["baz"]))
+      end
+    end
   end
 end

@@ -1,4 +1,5 @@
 require 'puppet/property'
+require 'set'
 
 module Puppet
   class Property
@@ -46,6 +47,20 @@ module Puppet
         members = add_should_with_current(members, retrieve) if ! inclusive?
 
         dearrayify(members)
+      end
+
+      # Returns any values from the list that were returned by
+      # retrieve but are not set as being managed.
+      def is_but_shouldnt
+        # We know that if inclusive is not set, we won't have to
+        # remove any values from the system.
+        inclusive? ? Set.new(retrieve) - Set.new(@should) : Set.new()
+      end
+
+      # Returns any values from the list that we are managing but that
+      # were not returned by retrieve
+      def should_but_isnt
+        Set.new(@should) - Set.new(retrieve)
       end
 
       def delimiter
