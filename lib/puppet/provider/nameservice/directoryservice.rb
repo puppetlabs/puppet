@@ -349,7 +349,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   # expects to be returned by modifycmd. Thus we don't bother defining modifycmd.
 
   def set(param, value)
-    self.class.validate(param, value)
+    self.class.validate(param, value, self)
     current_members = @property_value_cache_hash[:members]
     if param == :members
       # If we are meant to be authoritative for the group membership
