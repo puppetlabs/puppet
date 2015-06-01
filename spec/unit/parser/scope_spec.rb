@@ -34,12 +34,12 @@ describe Puppet::Parser::Scope do
   end
 
   it "should generate a simple string when inspecting a scope" do
-    @scope.inspect.should eq("Scope()")
+    expect(@scope.inspect).to eq("Scope()")
   end
 
   it "should generate a simple string when inspecting a scope with a resource" do
     @scope.resource="foo::bar"
-    @scope.inspect.should eq("Scope(foo::bar)")
+    expect(@scope.inspect).to eq("Scope(foo::bar)")
   end
 
   it "should return a scope for use in a test harness" do
