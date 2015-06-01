@@ -9,6 +9,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     described_class.stubs(:command).with(:localadd).returns '/usr/sbin/luseradd'
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/usermod'
     described_class.stubs(:command).with(:delete).returns '/usr/sbin/userdel'
+    described_class.stubs(:command).with(:gpasswd).returns '/usr/sbin/gpasswd'
   end
 
   let(:resource) do
@@ -121,10 +122,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         expect { provider.create }.to raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
       end
 
-      it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
+      it "should not use -G for luseradd and should call gpasswd after luseradd when groups property is set" do
         resource[:groups] = ['group1', 'group2']
         provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(includes('/usr/sbin/usermod'))
+        provider.expects(:execute).with(includes('/usr/sbin/gpasswd')).twice
         provider.create
       end
 
@@ -443,4 +444,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#groups=" do
+    it "should work if a user is already in an invalid group" do
+      provider.stubs(:groups).returns("A Space,foo,bar")
+      provider.expects(:execute).with(['/usr/sbin/gpasswd', 'baz', '--add', 'myuser'])
+      resource[:membership] = 'minimum'
+      resource[:groups] = ["foo", "bar", "baz"]
+      provider.groups = resource[:groups]
+    end
+  end
 end
