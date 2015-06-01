@@ -140,7 +140,7 @@ class Runtime3Converter
       when Puppet::Pops::Types::PResourceType
         type_name = split_type.type_name
         title = split_type.title
-        if type_name =~ /^(::)?[Cc]lass/
+        if type_name =~ /^(::)?[Cc]lass$/
           ['class', title.nil? ? nil : title.sub(/^::/, '')]
         else
           # Ensure that title is '' if nil
