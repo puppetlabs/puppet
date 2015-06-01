@@ -89,11 +89,14 @@ class Puppet::Provider::NameService < Puppet::Provider
       end
     end
 
-    def validate(name, value)
+    # This awful hack of passing `myself` is brought to you by the
+    # fact that this method isn't marked private, so I can't move it
+    # to be an instance method like I'd rather do - BER
+    def validate(name, value, myself=nil)
       name = name.intern if name.is_a? String
       if @checks.include? name
         block = @checks[name][:block]
-        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless block.call(value)
+        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless myself.instance_exec(value, &block)
       end
     end
 
@@ -279,7 +282,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def set(param, value)
-    self.class.validate(param, value)
+    self.class.validate(param, value, self)
     cmd = modifycmd(param, munge(param, value))
     raise Puppet::DevError, "Nameservice command must be an array" unless cmd.is_a?(Array)
     begin
