@@ -499,24 +499,36 @@ class Puppet::Parser::Scope
   def lookup_qualified_variable(class_name, variable_name, position)
     begin
       if lookup_as_local_name?(class_name, variable_name)
-        self[variable_name]
+        if is_topscope?
+          # This is the case where $::x is looked up from within the topscope itself, or from a local scope
+          # parented at the top scope. In this case, the lookup must ignore local and ephemeral scopes.
+          #
+          handle_not_found(class_name, variable_name, position) unless @symtable.include?(variable_name)
+          @symtable[variable_name]
+        else
+          self[variable_name]
+        end
       else
         qualified_scope(class_name).lookupvar(variable_name, position)
       end
     rescue RuntimeError => e
-      unless Puppet[:strict_variables]
-        # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
-        location = if position[:lineproc]
-                     " at #{position[:lineproc].call}"
-                   elsif position[:file] && position[:line]
-                     " at #{position[:file]}:#{position[:line]}"
-                   else
-                     ""
-                   end
-        warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
-      end
-      variable_not_found("#{class_name}::#{variable_name}", e.message)
+      handle_not_found(class_name, variable_name, position, e.message)
     end
+  end
+
+  def handle_not_found(class_name, variable_name, position, reason = nil)
+    unless Puppet[:strict_variables]
+      # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
+      location = if position[:lineproc]
+                   " at #{position[:lineproc].call}"
+                 elsif position[:file] && position[:line]
+                   " at #{position[:file]}:#{position[:line]}"
+                 else
+                   ""
+                 end
+      warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{reason}#{location}"
+    end
+    variable_not_found("#{class_name}::#{variable_name}", reason)
   end
 
   # Handles the special case of looking up fully qualified variable in not yet evaluated top scope
