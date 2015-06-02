@@ -561,7 +561,7 @@ describe 'Lexer2' do
       space-before-me-but-not-after   <%# This is an epp comment %>
       just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
@@ -577,7 +577,7 @@ describe 'Lexer2' do
       <%# This is an epp comment -%>
       just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2(
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
