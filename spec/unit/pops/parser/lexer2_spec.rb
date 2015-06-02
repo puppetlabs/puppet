@@ -524,7 +524,7 @@ describe 'Lexer2' do
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "just text\n"]
+      [:RENDER_STRING, "      just text\n"]
       )
     end
 
@@ -540,7 +540,39 @@ describe 'Lexer2' do
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "just text\n"]
+      [:RENDER_STRING, "      just text\n"]
+      )
+    end
+
+    it 'epp comments strips left whitespace when preceding is right trim' do
+      code = <<-CODE
+      This is <% $x=10 -%>
+      space-before-me-but-not-after   <%# This is an epp comment %>
+      just text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "      space-before-me-but-not-after\n      just text\n"]
+      )
+    end
+
+    it 'epp comments strips left whitespace on same line when preceding is not right trim' do
+      code = <<-CODE
+      This is <% $x=10 %>
+      <%# This is an epp comment -%>
+      just text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "\n      just text\n"]
       )
     end
 
@@ -555,7 +587,7 @@ describe 'Lexer2' do
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "<% this is escaped epp %>\n"]
+      [:RENDER_STRING, "      <% this is escaped epp %>\n"]
       )
     end
 
