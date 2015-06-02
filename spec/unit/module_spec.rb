@@ -132,23 +132,6 @@ describe Puppet::Module do
       mod.description = "GPL2"
       expect(mod.description).to eq("GPL2")
     end
-
-    it "should support specifying a compatible puppet version" do
-      mod.puppetversion = "0.25"
-      expect(mod.puppetversion).to eq("0.25")
-    end
-  end
-
-  it "should validate that the puppet version is compatible" do
-    mod.puppetversion = "0.25"
-    Puppet.expects(:version).returns "0.25"
-    mod.validate_puppet_version
-  end
-
-  it "should fail if the specified puppet version is not compatible" do
-    mod.puppetversion = "0.25"
-    Puppet.stubs(:version).returns "0.24"
-    expect { mod.validate_puppet_version }.to raise_error(Puppet::Module::IncompatibleModule)
   end
 
   describe "when finding unmet dependencies" do
@@ -670,7 +653,6 @@ describe Puppet::Module do
         :author        => "luke",
         :version       => "1.0",
         :source        => "http://foo/",
-        :puppetversion => "0.25",
         :dependencies  => []
       }
       @module = a_module_with_metadata(@data)
@@ -691,11 +673,6 @@ describe Puppet::Module do
           "No #{attr} module metadata provided for foo"
         )
       end
-    end
-
-    it "should set puppetversion if present in the metadata file" do
-      @module.load_metadata
-      expect(@module.puppetversion).to eq(@data[:puppetversion])
     end
   end
 

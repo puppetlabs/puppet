@@ -183,7 +183,7 @@ module Puppet::Pops::Parser::EppSupport
       until scanner.eos?
         part = @scanner.scan_until(/(<%)|\z/)
         if @skip_leading
-          part.gsub!(/^[ \t]*\r?\n?/,'')
+          part.sub!(/^[ \t]*\r?(?:\n|\z)?/,'')
           @skip_leading = false
         end
         # The spec for %%> is to transform it into a literal %>. This is done here, as %%> otherwise would go
@@ -208,7 +208,7 @@ module Puppet::Pops::Parser::EppSupport
           # trim trailing whitespace on same line from accumulated s
           # return text and signal switch to pp mode
           @scanner.getch # drop the -
-          s.gsub!(/\r?\n?[ \t]*<%\z/, '')
+          s.sub!(/[ \t]*<%\z/, '')
           @mode = :epp
           return s
 
@@ -240,6 +240,8 @@ module Puppet::Pops::Parser::EppSupport
             @mode = :error
             return s
           end
+          # Always trim leading whitespace on the same line when there is a comment
+          s.sub!(/[ \t]*\z/, '')
           @skip_leading = true if part.end_with?("-%>")
           # Continue scanning for more text
 
