@@ -1,6 +1,6 @@
 {
   :install => [
-    'facter#stable',
+    'facter#2.x',
     'hiera#stable',
     'puppet',
   ],
