@@ -86,7 +86,7 @@ def beaker_test(mode = :packages, options = {})
     # Build up project git urls based on git server and fork env variables or defaults
     final_options[:install].map! do |install|
       raise(ArgumentError, "Missing Git URL within options hash. Install URL is nil.") if install.nil?
-      if md = /^(\w+)#(\w+)$/.match(install)
+      if md = /^(\w+)#([\d.\w]+)$/.match(install)
         project, project_sha = md.captures
         "#{build_giturl(project)}##{project_sha}"
       elsif md = /^(\w+)$/.match(install)
