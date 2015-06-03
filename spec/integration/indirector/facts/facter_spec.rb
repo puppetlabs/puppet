@@ -86,17 +86,16 @@ describe Puppet::Node::Facts::Facter do
     end.to raise_error(Puppet::PreformattedError)
   end
 
-  it "the agent_specified_environment fact is nil when set in puppet.conf" do
+  it "adds the agent_specified_environment fact when set in puppet.conf" do
     FileUtils.mkdir_p(Puppet[:confdir])
     File.open(File.join(Puppet[:confdir], 'puppet.conf'), 'w') do |f|
       f.puts("environment=bar")
     end
 
     Puppet.initialize_settings
-    expect do
-      compile_to_catalog('notify { $::agent_specified_environment: }',
-                         Puppet::Node.indirection.find('foo'))
-    end.to raise_error(Puppet::PreformattedError)
+    cat = compile_to_catalog('notify { $::agent_specified_environment: }',
+                             Puppet::Node.indirection.find('foo'))
+    expect(cat.resource("Notify[bar]")).to be
   end
 
   it "adds the agent_specified_environment fact when set via command-line" do
@@ -104,5 +103,17 @@ describe Puppet::Node::Facts::Facter do
     cat = compile_to_catalog('notify { $::agent_specified_environment: }',
                              Puppet::Node.indirection.find('foo'))
     expect(cat.resource("Notify[bar]")).to be
+  end
+
+  it "adds the agent_specified_environment fact, preferring cli, when set in puppet.conf and via command-line" do
+    FileUtils.mkdir_p(Puppet[:confdir])
+    File.open(File.join(Puppet[:confdir], 'puppet.conf'), 'w') do |f|
+      f.puts("environment=bar")
+    end
+
+    Puppet.initialize_settings(['--environment', 'baz'])
+    cat = compile_to_catalog('notify { $::agent_specified_environment: }',
+                             Puppet::Node.indirection.find('foo'))
+    expect(cat.resource("Notify[baz]")).to be
   end
 end

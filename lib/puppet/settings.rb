@@ -749,13 +749,13 @@ class Puppet::Settings
 
   class SearchPathElement < Struct.new(:name, :type); end
 
-  # The order in which to search for values.
+  # The order in which to search for values, without defaults.
   #
   # @param environment [String,Symbol] symbolic reference to an environment name
   # @param run_mode [Symbol] symbolic reference to a Puppet run mode
   # @return [Array<SearchPathElement>]
   # @api private
-  def searchpath(environment = nil, run_mode = preferred_run_mode)
+  def configsearchpath(environment = nil, run_mode = preferred_run_mode)
     searchpath = [
       SearchPathElement.new(:memory, :values),
       SearchPathElement.new(:cli, :values),
@@ -763,6 +763,16 @@ class Puppet::Settings
     searchpath << SearchPathElement.new(environment.intern, :environment) if environment
     searchpath << SearchPathElement.new(run_mode, :section) if run_mode
     searchpath << SearchPathElement.new(:main, :section)
+  end
+
+  # The order in which to search for values.
+  #
+  # @param environment [String,Symbol] symbolic reference to an environment name
+  # @param run_mode [Symbol] symbolic reference to a Puppet run mode
+  # @return [Array<SearchPathElement>]
+  # @api private
+  def searchpath(environment = nil, run_mode = preferred_run_mode)
+    searchpath = configsearchpath(environment, run_mode)
     searchpath << SearchPathElement.new(:application_defaults, :values)
     searchpath << SearchPathElement.new(:overridden_defaults, :values)
   end
@@ -797,6 +807,34 @@ class Puppet::Settings
   def set_by_cli?(param)
     param = param.to_sym
     !@value_sets[:cli].lookup(param).nil?
+  end
+
+  # Get values from a search path entry.
+  # @api private
+  def searchpath_values(source)
+    case source.type
+    when :values
+      @value_sets[source.name]
+    when :section
+      if @configuration_file && section = @configuration_file.sections[source.name]
+        ValuesFromSection.new(source.name, section)
+      end
+    when :environment
+      ValuesFromEnvironmentConf.new(source.name)
+    else
+      raise(Puppet::DevError, "Unknown searchpath case: #{source.type} for the #{source} settings path element.")
+    end
+  end
+
+  # Allow later inspection to determine if the setting was set by user
+  # config, rather than a default setting.
+  def set_by_config?(param)
+    param = param.to_sym
+    configsearchpath.any? do |source|
+      if vals = searchpath_values(source)
+        vals.lookup(param)
+      end
+    end
   end
 
   # Patches the value for a param in a section.
@@ -1143,20 +1181,7 @@ Generated on #{Time.now}.
 
   # Yield each search source in turn.
   def value_sets_for(environment, mode)
-    searchpath(environment, mode).collect do |source|
-      case source.type
-      when :values
-        @value_sets[source.name]
-      when :section
-        if @configuration_file && section = @configuration_file.sections[source.name]
-          ValuesFromSection.new(source.name, section)
-        end
-      when :environment
-        ValuesFromEnvironmentConf.new(source.name)
-      else
-        raise(Puppet::DevError, "Unknown searchpath case: #{source.type} for the #{source} settings path element.")
-      end
-    end.compact
+    searchpath(environment, mode).collect { |source| searchpath_values(source) }.compact
   end
 
   # Read the file in.

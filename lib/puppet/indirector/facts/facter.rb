@@ -37,7 +37,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
     Facter.add(:agent_specified_environment) do
       setcode do
-        if Puppet.settings.set_by_cli?(:environment)
+        if Puppet.settings.set_by_config?(:environment)
           Puppet[:environment]
         end
       end
