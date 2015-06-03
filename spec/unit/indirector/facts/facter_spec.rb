@@ -43,10 +43,11 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
-    it 'should add the puppetversion fact' do
+    it 'should add the puppetversion and agent_specified_environment facts' do
       reset = sequence 'reset'
       Facter.expects(:reset).in_sequence(reset)
       Facter.expects(:add).with(:puppetversion)
+      Facter.expects(:add).with(:agent_specified_environment)
       @facter.find(@request)
     end
 

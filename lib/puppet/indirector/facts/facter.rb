@@ -35,6 +35,14 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       setcode { Puppet.version.to_s }
     end
 
+    Facter.add(:agent_specified_environment) do
+      setcode do
+        if Puppet.settings.set_by_cli?(:environment)
+          Puppet[:environment]
+        end
+      end
+    end
+
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
     result.add_local_facts
     result.sanitize
