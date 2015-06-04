@@ -1,5 +1,12 @@
 test_name 'Puppet executes functions written in the Puppet language'
 
+teardown do
+  on master, 'rm -rf /etc/puppetlabs/code/modules/jenny'
+  on master, 'rm -rf /etc/puppetlabs/code/environments/production/modules/one'
+  on master, 'rm -rf /etc/puppetlabs/code/environments/production/modules/three'
+  on master, 'rm -rf /etc/puppetlabs/code/environments/tommy'
+end
+
 step 'Create some functions' do
 
   manifest = <<-EOF
