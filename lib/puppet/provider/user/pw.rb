@@ -8,6 +8,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell
 
   defaultfor :operatingsystem => [:freebsd, :dragonfly]
+  confine    :operatingsystem => [:freebsd, :dragonfly]
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
