@@ -44,24 +44,29 @@ PACKAGES = {
 # pay off this tech debt when PUP-XXXX breaks distmoduledir and
 # sitemoduledir into individual settings (from modulepath) and
 # Beaker can properly introspect these settings
-hosts.each do |host|
-  case host['platform']
-  # TODO: verify if setting puppetbindir and privatebindir from
-  # FOSS_DEFAULTS is necessary (in previous testing it fixed nothing additional)
-  # i.e. for unix
-  # puppetbindir:      /usr/bin ->/opt/puppetlabs/bin 
-  # and privatebindir: /usr/bin ->  /opt/puppetlabs/puppet/bin
-  # for windows
-  # puppetbindir: /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin
-  # privatebindir: /usr/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/sys/ruby/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin
+add_aio_defaults_on(hosts)
 
-  when /windows/
-    host['distmoduledir'] = '`cygpath -smF 35`/PuppetLabs/code/modules'
-  else
-    host['distmoduledir'] = '/etc/puppetlabs/code/modules'
-    host['sitemoduledir'] = '/opt/puppetlabs/puppet/modules'
-  end
-end
+#hosts.each do |host|
+#  case host['platform']
+#  # TODO: verify if setting puppetbindir and privatebindir from
+#  # FOSS_DEFAULTS is necessary (in previous testing it fixed nothing additional)
+#  # i.e. for unix
+#  # puppetbindir:      /usr/bin ->/opt/puppetlabs/bin 
+#  # and privatebindir: /usr/bin ->  /opt/puppetlabs/puppet/bin
+#  # for windows
+#  # puppetbindir: /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin
+#  # privatebindir: /usr/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/sys/ruby/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin
+
+#  when /windows/
+#    host['privatebindir'] = '/cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/sys/ruby/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin'
+#    host['distmoduledir'] = '`cygpath -smF 35`/PuppetLabs/code/modules'
+#  else
+#    host['puppetbindir']  = '/opt/puppetlabs/bin'
+#    host['privatebindir'] = '/opt/puppetlabs/puppet/bin'
+#    host['distmoduledir'] = '/etc/puppetlabs/code/modules'
+#    host['sitemoduledir'] = '/opt/puppetlabs/puppet/modules'
+#  end
+#end
 
 hosts.each do |host|
   case host['platform']
