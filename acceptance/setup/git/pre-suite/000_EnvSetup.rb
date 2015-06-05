@@ -45,13 +45,14 @@ PACKAGES = {
 # sitemoduledir into individual settings (from modulepath) and
 # Beaker can properly introspect these settings
 add_aio_defaults_on(hosts)
+hosts.each { |host| host['type'] = 'foss' }
 
 #hosts.each do |host|
 #  case host['platform']
 #  # TODO: verify if setting puppetbindir and privatebindir from
 #  # FOSS_DEFAULTS is necessary (in previous testing it fixed nothing additional)
 #  # i.e. for unix
-#  # puppetbindir:      /usr/bin ->/opt/puppetlabs/bin 
+#  # puppetbindir:      /usr/bin ->/opt/puppetlabs/bin
 #  # and privatebindir: /usr/bin ->  /opt/puppetlabs/puppet/bin
 #  # for windows
 #  # puppetbindir: /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin
