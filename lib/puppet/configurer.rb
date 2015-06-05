@@ -45,8 +45,6 @@ class Puppet::Configurer
   end
 
   def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
-    Puppet.settings.use(:main, :ssl, :agent)
-
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
