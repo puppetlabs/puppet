@@ -39,8 +39,22 @@ PACKAGES = {
   ],
 }
 
+# override incorrect FOSS (git) defaults from Beaker with ones
+# that are applicable for AIO
+# pay off this tech debt when PUP-XXXX breaks distmoduledir and
+# sitemoduledir into individual settings (from modulepath) and
+# Beaker can properly introspect these settings
 hosts.each do |host|
   case host['platform']
+  # TODO: verify if setting puppetbindir and privatebindir from
+  # FOSS_DEFAULTS is necessary (in previous testing it fixed nothing additional)
+  # i.e. for unix
+  # puppetbindir:      /usr/bin ->/opt/puppetlabs/bin 
+  # and privatebindir: /usr/bin ->  /opt/puppetlabs/puppet/bin
+  # for windows
+  # puppetbindir: /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin
+  # privatebindir: /usr/bin -> /cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/sys/ruby/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin
+
   when /windows/
     host['distmoduledir'] = '`cygpath -smF 35`/PuppetLabs/code/modules'
   else
