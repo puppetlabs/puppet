@@ -531,6 +531,11 @@ describe Puppet::Configurer do
       Puppet::Node.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => anything)).twice
       @agent.run
     end
+
+    it "sends the configured environment in the request" do
+      Puppet::Node.indirection.expects(:find).with(anything, has_entries(:configured_environment => Puppet[:environment])).twice
+      @agent.run
+    end
   end
 
   describe "when retrieving a catalog" do

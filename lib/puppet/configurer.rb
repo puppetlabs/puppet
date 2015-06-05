@@ -159,6 +159,7 @@ class Puppet::Configurer
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
+              :configured_environment => Puppet[:environment],
               :ignore_cache => true,
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
@@ -196,6 +197,7 @@ class Puppet::Configurer
 
       query_options = get_facts(options) unless query_options
       query_options[:transaction_uuid] = @transaction_uuid
+      query_options[:configured_environment] = Puppet[:environment]
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
@@ -216,6 +218,7 @@ class Puppet::Configurer
 
         query_options = get_facts(options)
         query_options[:transaction_uuid] = @transaction_uuid
+        query_options[:configured_environment] = Puppet[:environment]
 
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
