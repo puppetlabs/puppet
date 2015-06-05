@@ -54,6 +54,7 @@ end
 
 describe Puppet::Type.type(:package), "when packages with the same name are sourced" do
   before :each do
+    Process.stubs(:euid).returns 0
     @provider = stub(
       'provider',
       :class           => Puppet::Type.type(:package).defaultprovider,
@@ -131,6 +132,7 @@ describe Puppet::Type.type(:package), 'logging package state transitions' do
   let(:provider) { stub('provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :validate_source => nil) }
 
   before :each do
+    Process.stubs(:euid).returns 0
     provider.stubs(:satisfies?).with([:purgeable]).returns(true)
     provider.class.stubs(:instances).returns([])
     provider.stubs(:install).returns nil
