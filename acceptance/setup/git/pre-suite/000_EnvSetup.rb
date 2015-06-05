@@ -41,6 +41,16 @@ PACKAGES = {
 
 hosts.each do |host|
   case host['platform']
+  when /windows/
+    host['distmoduledir'] = '`cygpath -smF 35`/PuppetLabs/code/modules'
+  else
+    host['distmoduledir'] = '/etc/puppetlabs/code/modules'
+    host['sitemoduledir'] = '/opt/puppetlabs/puppet/modules'
+  end
+end
+
+hosts.each do |host|
+  case host['platform']
   when  /solaris-10/
     on host, 'mkdir -p /var/lib'
     on host, 'ln -sf /opt/csw/bin/pkgutil /usr/bin/pkgutil'
