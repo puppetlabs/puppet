@@ -200,6 +200,22 @@ describe Puppet::Resource::Catalog::Compiler do
 
       compiler.find(request)
     end
+
+    it "should pass the configured_environment to the node indirection" do
+      environment = 'foo'
+      node = Puppet::Node.new("thing")
+      compiler = Puppet::Resource::Catalog::Compiler.new
+      compiler.stubs(:compile)
+      request = Puppet::Indirector::Request.new(:catalog, :find, "thing",
+                                                nil, :configured_environment => environment)
+
+      Puppet::Node.indirection.expects(:find).with(
+        "thing",
+        has_entries(:configured_environment => environment)
+      ).returns(node)
+
+      compiler.find(request)
+    end
   end
 
   describe "after finding nodes" do
