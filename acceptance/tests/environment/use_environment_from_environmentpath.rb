@@ -67,11 +67,10 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   EOS
 end
 
-master_user = on(master, puppet("master --configprint user")).stdout.strip
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => #{master_user},
+  owner => #{master.puppet['user']},
   group => #{master.puppet['group']},
   mode => "0770",
 }
