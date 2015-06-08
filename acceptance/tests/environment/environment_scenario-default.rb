@@ -23,9 +23,9 @@ master_opts = {
   }
 }
 general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
-env = nil
+env = 'production'
 
-results = use_an_environment(env, "default environment", *general)
+results = use_an_environment(nil, "default environment", *general)
 
 expectations = {
   :puppet_config => {

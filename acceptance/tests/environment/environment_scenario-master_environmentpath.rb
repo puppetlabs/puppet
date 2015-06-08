@@ -19,12 +19,12 @@ apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true
 step  "Test"
 master_opts = {
   'master' => {
-    'environmentpath' => '$codedir/environments',
+    'environmentpath' => "#{testdir}/environments",
   }
 }
 env = 'testing'
 
-results = use_an_environment("testing", "master environmentpath", master_opts, testdir, puppet_code_backup_dir, :directory_environments => true, :config_print => '--section=master')
+results = use_an_environment(env, "master environmentpath", master_opts, testdir, puppet_code_backup_dir, :directory_environments => true)
 
 expectations = {
   :puppet_config => {
@@ -35,22 +35,19 @@ expectations = {
   },
   :puppet_module_install => {
     :exit_code => 0,
-    :matches => [%r{Preparing to install into #{codedir}/modules},
+    :matches => [%r{Preparing to install into #{codedir}/environments/#{env}/modules},
                  %r{pmtacceptance-nginx}],
-    :expect_failure => true,
-    :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
+    :notes => "Runs in user mode and doesn't see the master environmentpath setting.",
   },
   :puppet_module_uninstall => {
     :exit_code => 0,
-    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{codedir}/modules}],
-    :expect_failure => true,
-    :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
+    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{codedir}/environments/#{env}/modules}],
+    :notes => "Runs in user mode and doesn't see the master environmentpath setting.",
   },
   :puppet_apply => {
     :exit_code => 0,
-    :matches => [%r{include default environment testing_mod}],
-    :expect_failure => true,
-    :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
+    :matches => [%r{include directory #{env} environment testing_mod}],
+    :notes => "Runs in user mode and doesn't see the master environmentpath setting.",
   },
   :puppet_agent => {
     :exit_code => 2,
