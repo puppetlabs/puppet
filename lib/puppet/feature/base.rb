@@ -77,6 +77,7 @@ Puppet.features.add(:manages_symlinks) do
           true
         rescue LoadError => err
           Puppet.debug("CreateSymbolicLink is not available")
+          Puppet.deprecation_warning("Windows 2003 and below versions are deprecated, and will be officially unsupported in the next major Puppet release.  Please plan accordingly and see http://links.puppetlabs.com/deprecate-windows-2003 for more information.")
           false
         end
       end
