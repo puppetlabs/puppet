@@ -93,27 +93,22 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value.is_a? Integer
   end
 
-  verify :groups, "Groups must not contain spaces" do |value|
-    prop = @resource.parameters[:groups]
-    changes = prop.should_but_isnt + prop.is_but_shouldnt
-    changes.all? do |change|
-      change !~ /\s/
-    end
-  end
-
   def groups=(value)
-    self.class.validate(:groups, value, self)
-
     prop = @resource.parameters[:groups]
     changes = []
+    failures = []
 
     prop.should_but_isnt.each do |group|
+      failures << group if group =~ /\s/
       changes << { :name => group, :action => '--add' }
     end
 
     prop.is_but_shouldnt.each do |group|
+      failures << group if group =~ /\s/
       changes << { :name => group, :action => '--delete' }
     end
+
+    raise ArgumentError, "Cannot change group membership when group contains a space: #{failures.join(',')}" unless failures.empty?
 
     changes.each do |group|
       cmd = [ command(:gpasswd),
