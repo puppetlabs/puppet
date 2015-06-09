@@ -54,8 +54,6 @@ with_puppet_running_on master, master_opts, testdir do
 file { "#{atmp}/special_testy":
   source => "puppet:///modules/amod/testy",
 }
-
-notify { "mytemp is ${::mytemp}": }
 END
     on master, "chmod 644 #{testdir}/environments/special/manifests/different.pp"
 

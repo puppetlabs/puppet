@@ -22,7 +22,7 @@ master_opts = {
   }
 }
 env = 'testing'
-path = master.puppet('master')['codedir']
+path = '/doesnotexist'
 
 results = use_an_environment(env, 'bad environmentpath', master_opts, testdir, puppet_conf_backup_dir, :directory_environments => true)
 
