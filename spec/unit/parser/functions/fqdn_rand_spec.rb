@@ -4,7 +4,11 @@ require 'puppet_spec/scope'
 
 describe "the fqdn_rand function" do
   include PuppetSpec::Scope
-  
+
+  it "returns an integer" do
+    expect(fqdn_rand(3)).to satisfy {|n| n.is_a?(Integer) }
+  end
+
   it "provides a random number strictly less than the given max" do
     expect(fqdn_rand(3)).to satisfy {|n| n.to_i < 3 }
   end
