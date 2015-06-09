@@ -62,7 +62,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   def title_key_for_ref( ref )
     s = ref.index('[')
-    e = ref.index(']')
+    e = ref.rindex(']')
     if s && e && e > s
       a = [ref[0, s], ref[s+1, e-s-1]]
     else
