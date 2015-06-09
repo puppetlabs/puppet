@@ -127,6 +127,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
       config.add_class("one")
       expect(config).to be_tagged("one")
     end
+
+    it "handles resource titles with brackets" do
+      config = Puppet::Resource::Catalog.new("mynode")
+      expect(config.title_key_for_ref("Notify[[foo]bar]")).to eql(["Notify", "[foo]bar"])
+    end
   end
 
   describe "when converting to a RAL catalog" do
