@@ -89,19 +89,11 @@ class Puppet::Provider::NameService < Puppet::Provider
       end
     end
 
-    # This awful hack of passing `myself` is brought to you by the
-    # fact that this method isn't marked private, so I can't move it
-    # to be an instance method like I'd rather do - BER
-    def validate(name, value, myself=nil)
+    def validate(name, value)
       name = name.intern if name.is_a? String
       if @checks.include? name
         block = @checks[name][:block]
-        if (myself)
-          result = myself.instance_exec(value, &block)
-        else
-          result = block.call(value)
-        end
-        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless result
+        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless block.call(value)
       end
     end
 
