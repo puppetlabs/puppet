@@ -27,7 +27,13 @@ module Puppet::Agent::Locker
     end
   end
 
+  # @deprecated
   def running?
+    Puppet.deprecation_warning <<-ENDHEREDOC
+Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.
+The only safe way to know if the lock is locked is to try lock and perform some
+action and then handle the LockError that may result.
+ENDHEREDOC
     lockfile.locked?
   end
 
