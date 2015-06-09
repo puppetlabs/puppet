@@ -17,15 +17,12 @@ PATH=/opt/puppetlabs/puppet/bin:/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
-lockfile=${LOCKFILE-/var/lock/subsys/puppet}
-pidfile=${PIDFILE-/var/run/puppetlabs/agent.pid}
-puppetd=${PUPPETD-/opt/puppetlabs/puppet/bin/puppet}
+lockfile=/var/lock/subsys/puppet
+pidfile=/var/run/puppetlabs/agent.pid
+puppetd=/opt/puppetlabs/puppet/bin/puppet
 RETVAL=0
 
 PUPPET_OPTS="agent "
-[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
-[ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
-[ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --masterport=${PUPPET_PORT}"
 
 # Determine if we can use the -p option to daemon, killproc, and status.
 # RHEL < 5 can't.
