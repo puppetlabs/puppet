@@ -179,7 +179,7 @@ class Puppet::Node::Environment
   #   Puppet[:disable_per_environment_manifest] is true, and this environment's
   #   original environment.conf had a manifest setting that is not the
   #   Puppet[:default_manifest].
-  # @api private 
+  # @api private
   def conflicting_manifest_settings?
     return false if !Puppet[:disable_per_environment_manifest]
     environment_conf = Puppet.lookup(:environments).get_conf(name)
@@ -318,13 +318,17 @@ class Puppet::Node::Environment
   def modules_by_path
     modules_by_path = {}
     modulepath.each do |path|
-      Dir.chdir(path) do
-        module_names = Dir.entries(path).select do |name|
-          Puppet::Module.is_module_directory?(name, path)
+      if Puppet::FileSystem.exist?(path)
+        Dir.chdir(path) do
+          module_names = Dir.entries(path).select do |name|
+            Puppet::Module.is_module_directory?(name, path)
+          end
+          modules_by_path[path] = module_names.sort.map do |name|
+            Puppet::Module.new(name, File.join(path, name), self)
+          end
         end
-        modules_by_path[path] = module_names.sort.map do |name|
-          Puppet::Module.new(name, File.join(path, name), self)
-        end
+      else
+        modules_by_path[path] = []
       end
     end
     modules_by_path
