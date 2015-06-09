@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     begin
       dependency = Gem::Dependency.new('', resource[:ensure])
-    rescue Gem::Requirement::BadRequirementError
+    rescue ArgumentError
       # Bad requirements will cause an error during gem command invocation, so just return not in sync
       return false
     end
