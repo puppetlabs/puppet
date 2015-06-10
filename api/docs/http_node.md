@@ -13,7 +13,7 @@ Find
 
 Retrieve data for a node
 
-  GET /puppet/v3/node/:certname?environment=:environment
+    GET /puppet/v3/node/:certname?environment=:environment
 
 
 ### Supported HTTP Methods
