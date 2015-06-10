@@ -38,6 +38,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
+      raise Puppet::Util::Windows::Error.new("Could not resolve username: #{user_name} to a SID") if !sid
       if sid.account =~ /\\/
         account, _ = Puppet::Util::Windows::ADSI::User.parse_name(sid.account)
       else

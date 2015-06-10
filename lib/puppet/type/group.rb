@@ -99,7 +99,12 @@ module Puppet
       def is_to_s(currentvalue)
         if provider.respond_to?(:members_to_s)
           currentvalue = '' if currentvalue.nil?
-          return provider.members_to_s(currentvalue.split(','))
+          currentvalue = currentvalue.is_a?(Array) ? currentvalue : currentvalue.split(',')
+
+          begin
+            return provider.members_to_s(currentvalue)
+          rescue Puppet::Util::Windows::Error
+          end
         end
 
         super(currentvalue)
