@@ -1,0 +1,19 @@
+---
+HOSTS:
+  master:
+    roles:
+    - master
+    platform: el-7-x86_64
+    hypervisor: vcloud
+    template: redhat-7-x86_64
+  agent:
+    roles:
+    - agent
+    platform: el-6-i386
+    hypervisor: vcloud
+    template: oracle-6-i386
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/
