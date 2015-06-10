@@ -99,12 +99,20 @@ module Puppet
       def is_to_s(currentvalue)
         if provider.respond_to?(:members_to_s)
           currentvalue = '' if currentvalue.nil?
-          return provider.members_to_s(currentvalue.split(','))
+          currentvalue = currentvalue.is_a?(Array) ? currentvalue : currentvalue.split(',')
+
+          return provider.members_to_s(currentvalue)
         end
 
         super(currentvalue)
       end
       alias :should_to_s :is_to_s
+
+      validate do |value|
+        if provider.respond_to?(:member_valid?)
+          return provider.member_valid?(value)
+        end
+      end
     end
 
     newparam(:auth_membership, :boolean => true, :parent => Puppet::Parameter::Boolean) do
