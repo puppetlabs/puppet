@@ -4,7 +4,7 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   "Usage: `fqdn_rand(MAX, [SEED])`. MAX is required and must be a positive
   integer; SEED is optional and may be any number or string.
 
-  Generates a random whole number greater than or equal to 0 and less than MAX,
+  Generates a random Integer number greater than or equal to 0 and less than MAX,
   combining the `$fqdn` fact and the value of SEED for repeatable randomness.
   (That is, each node will get a different random number from this function, but
   a given node's result will be the same every time unless its hostname changes.)
@@ -17,5 +17,5 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   `fqdn_rand(30, 'expensive job 2')` will produce totally different numbers.)") do |args|
     max = args.shift.to_i
     seed = Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex
-    Puppet::Util.deterministic_rand(seed,max)
+    Puppet::Util.deterministic_rand_int(seed,max)
 end
