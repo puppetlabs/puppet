@@ -32,6 +32,7 @@ The examples below use the POST method.
 ### Parameters
 
 Three parameters should be provided to the POST or GET:
+
 - `facts_format`: must be `pson`
 - `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
 doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
