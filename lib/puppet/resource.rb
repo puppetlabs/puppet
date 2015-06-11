@@ -430,6 +430,8 @@ class Puppet::Resource
     result.environment = environment
     result.instance_variable_set(:@rstype, resource_type)
 
+    future_parser_not_in_use = !Puppet.future_parser?(result.environment)
+
     to_hash.each do |p, v|
       if v.is_a?(Puppet::Resource)
         v = Puppet::Resource.new(v.type, v.title)
@@ -442,7 +444,7 @@ class Puppet::Resource
         end
       end
 
-      if !Puppet.future_parser?
+      if future_parser_not_in_use # !Puppet.future_parser?
         # If the value is an array with only one value, then
         # convert it to a single value.  This is largely so that
         # the database interaction doesn't have to worry about
