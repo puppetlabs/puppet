@@ -20,7 +20,8 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def to_s
-      Puppet::Pops::Model::ModelTreeDumper.new.dump(@value)
+      source_adapter = Puppet::Pops::Utils.find_closest_positioned(@value)
+      source_adapter ? source_adapter.extract_text() : nil
     end
 
     def evaluate(scope)
