@@ -292,7 +292,15 @@ module Util
       $stdout.reopen(stdout)
       $stderr.reopen(stderr)
 
-      3.upto(256){|fd| IO::new(fd).close rescue nil}
+      begin
+        Dir.foreach('/proc/self/fd') do |f|
+          if f != '.' && f != '..' && f.to_i >= 3
+            IO::new(f.to_i).close rescue nil
+          end
+        end
+      rescue Errno::ENOENT # /proc/self/fd not found
+        3.upto(256){|fd| IO::new(fd).close rescue nil}
+      end
 
       block.call if block
     end
