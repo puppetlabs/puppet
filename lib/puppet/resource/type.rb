@@ -73,8 +73,10 @@ class Puppet::Resource::Type
 
     # External documentation uses "parameters" but the internal name
     # is "arguments"
-    data['parameters'] = arguments.dup unless arguments.empty?
-
+    # Dump any arguments as source
+    data['parameters'] = Hash[arguments.map do |k,v|
+                                [k, v.respond_to?(:source_text) ? v.source_text : v]
+                              end]
     data['name'] = name
 
     unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
