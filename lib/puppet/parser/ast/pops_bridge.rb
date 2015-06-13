@@ -23,6 +23,11 @@ class Puppet::Parser::AST::PopsBridge
       Puppet::Pops::Model::ModelTreeDumper.new.dump(@value)
     end
 
+    def source_text
+      source_adapter = Puppet::Pops::Utils.find_closest_positioned(@value)
+      source_adapter ? source_adapter.extract_text() : nil
+    end
+
     def evaluate(scope)
       object = @@evaluator.evaluate(scope, @value)
       @@evaluator.convert_to_3x(object, scope)
