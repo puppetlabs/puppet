@@ -26,8 +26,8 @@ build_msi:
     repo: 'git://github.com/puppetlabs/hiera.git'
   sys:
     ref:
-      x86: '2f25839c5c11ec10b781debf4808095d6895a844'
-      x64: '017c63ca11e38f74b7e011ecd2006100452c620b'
+      x86: '766c286233138db2140ab3c3cdcc0de9c3041203'
+      x64: '808e292150274f7eaded27445ad33174a1410716'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
