@@ -31,14 +31,15 @@ specifically a CSR in PEM format.
 Search
 ----
 
+**Note:** The plural `certificate_requests` endpoint is a legacy feature. Puppet
+Server doesn't support it, and we don't plan to add support in the future.
+
 List submitted CSRs
 
     GET /puppet-ca/v1/certificate_requests/:ignored_pattern?environment=:environment
     Accept: s
 
 The `:ignored_pattern` parameter is not used, but must still be provided.
-
-**Note:** Puppet Server doesn't support the plural `certificate_requests` endpoint.
 
 Destroy
 ----
