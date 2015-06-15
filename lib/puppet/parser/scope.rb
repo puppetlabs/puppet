@@ -927,7 +927,7 @@ class Puppet::Parser::Scope
 
   # Calls a 3.x or 4.x function by name with arguments given in an array using the 4.x calling convention
   # and returns the result.
-  # Note that it is the caller's responsability to rescue the given ArgumentError and provide location information
+  # Note that it is the caller's responsibility to rescue the given ArgumentError and provide location information
   # to aid the user find the problem. The problem is otherwise reported against the source location that
   # invoked the function that ultimately called this method.
   #
