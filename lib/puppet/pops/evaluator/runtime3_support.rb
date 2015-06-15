@@ -231,6 +231,37 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
+  # Provides the ability to call a 3.x or 4.x function from the perspective of a 3.x function or ERB template.
+  # The arguments to the function must be an Array containing values compliant with the 4.x calling convention.
+  # If the targeted function is a 3.x function, the values will be transformed.
+  # @param name [String] the name of the function (without the 'function_' prefix used by scope)
+  # @param args [Array] arguments, may be empty
+  # @param scope [Object] the (runtime specific) scope where evaluation takes place
+  # @raise ArgumentError 'unknown function' if the function does not exist
+  #
+  def external_call_function(name, args, scope, &block)
+    # Call via 4x API if the function exists there
+    loaders = scope.compiler.loaders
+    # Since this is a call from non puppet code, it is not possible to relate it to a module loader
+    # It is known where the call originates by using the scope associated module - but this is the calling scope
+    # and it does not defined the visibility of functions from a ruby function's perspective. Instead,
+    # this is done from the perspective of the environment.
+    loader = loaders.private_environment_loader
+    if loader && func = loader.load(:function, name)
+      return func.call(scope, *args, &block)
+    end
+
+    # Call via 3x API if function exists there
+    raise ArgumentError, "Unknown function '#{name}'" unless Puppet::Parser::Functions.function(name)
+
+    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
+    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
+    result = scope.send("function_#{name}", mapped_args, &block)
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(name) ? result : nil
+  end
+
   def call_function(name, args, o, scope, &block)
     # Call via 4x API if the function exists there
     loaders = scope.compiler.loaders

@@ -34,7 +34,6 @@ describe "Two step scoping for variables" do
         MANIFEST
       end.to raise_error(/The operator '-=' is no longer supported/)
     end
-  end
 
     it "issues error about built-in variable when reassigning to name" do
         enc_node = Puppet::Node.new("the_node", { :parameters => {  } })
@@ -112,7 +111,26 @@ describe "Two step scoping for variables" do
           class bar inherits bar_bamama {
             notify { 'something': message => inline_template("<%= @var %>"), }
           }
-      MANIFEST
+        MANIFEST
+      end
+    end
+
+    describe 'handles 3.x/4.x functions' do
+      it 'can call a 3.x function via call_function' do
+        expect_the_message_to_be('yes') do <<-MANIFEST
+          $msg = inline_template('<%= scope().call_function("fqdn_rand", [30]).to_i <= 30 ? "yes" : "no" %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end
+      end
+
+      it 'it can call a 4.x function via call_function' do
+        expect_the_message_to_be('yes') do <<-MANIFEST
+          $msg = inline_template('<%= scope().call_function("with", ["yes"]) { |x| x } %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end
+      end
     end
   end
 
