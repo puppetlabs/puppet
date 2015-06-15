@@ -937,7 +937,7 @@ class Puppet::Parser::Scope
     if !Puppet.future_parser?(compiler.environment)
       return self.send("function_#{func_name}", args, &block)
     else
-      Puppet::Pops::Parser::EvaluatingParser.new.external_call(func_name, args, self, &block)
+      Puppet::Pops::Parser::EvaluatingParser.new.evaluator.external_call(func_name, args, self, &block)
     end
   end
 
