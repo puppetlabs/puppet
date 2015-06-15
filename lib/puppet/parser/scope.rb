@@ -925,6 +925,22 @@ class Puppet::Parser::Scope
     end
   end
 
+  # Calls a 3.x or 4.x function by name with arguments given in an array using the 4.x calling convention
+  # and returns the result.
+  # Note that it is the caller's responsibility to rescue the given ArgumentError and provide location information
+  # to aid the user find the problem. The problem is otherwise reported against the source location that
+  # invoked the function that ultimately called this method.
+  #
+  # @return [Object] the result of the called function
+  # @raise ArgumentError if the function does not exist
+  def call_function(func_name, args, &block)
+    if !Puppet.future_parser?(compiler.environment)
+      return self.send("function_#{func_name}", args, &block)
+    else
+      Puppet::Pops::Parser::EvaluatingParser.new.evaluator.external_call_function(func_name, args, self, &block)
+    end
+  end
+
   private
 
   def assert_class_and_title(type_name, title)

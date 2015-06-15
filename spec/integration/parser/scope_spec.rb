@@ -32,6 +32,25 @@ describe "Two step scoping for variables" do
         end
       end
     end
+
+    describe 'handles 3.x/4.x functions' do
+      it 'can call a 3.x function via call_function' do
+        expect_the_message_to_be('yes') do <<-MANIFEST
+          $msg = inline_template('<%= scope().call_function("fqdn_rand", [30]).to_i <= 30 ? "yes" : "no" %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end
+      end
+
+      it 'can cannot call a 4.x function via call_function' do
+        expect do 
+          catalog = compile_to_catalog(<<-MANIFEST)
+          $msg = inline_template('<%= scope().call_function("with", ["yes"]) { |x| x } %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end.to raise_error
+      end
+    end
   end
 
   context 'using future parser' do
@@ -118,6 +137,24 @@ describe "Two step scoping for variables" do
             notify { 'something': message => inline_template("<%= @var %>"), }
           }
         MANIFEST
+      end
+    end
+
+    describe 'handles 3.x/4.x functions' do
+      it 'can call a 3.x function via call_function' do
+        expect_the_message_to_be('yes') do <<-MANIFEST
+          $msg = inline_template('<%= scope().call_function("fqdn_rand", [30]).to_i <= 30 ? "yes" : "no" %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end
+      end
+
+      it 'it can call a 4.x function via call_function' do
+        expect_the_message_to_be('yes') do <<-MANIFEST
+          $msg = inline_template('<%= scope().call_function("with", ["yes"]) { |x| x } %>')
+          notify { 'something': message => $msg }
+          MANIFEST
+        end
       end
     end
   end
