@@ -1,5 +1,4 @@
 RSpec::Matchers.define :include_in_order do |*expected|
-  include RSpec::Matchers::Pretty
 
   match do |actual|
     elements = expected.dup
