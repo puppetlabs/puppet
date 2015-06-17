@@ -424,7 +424,7 @@ describe Puppet::Util::Log do
         end
       end
 
-      it "should set the source to 'path', when available" do
+      it "should set the source to a type's 'path', when available" do
         source = Puppet::Type.type(:file).new :path => path
         source.tags = ["tag", "tag2"]
 
@@ -436,6 +436,17 @@ describe Puppet::Util::Log do
         log.source = source
 
         expect(log.source).to eq("/File[#{path}]")
+      end
+
+      it "should set the source to a provider's type's 'path', when available" do
+        source = Puppet::Type.type(:file).new :path => path
+        source.tags = ["tag", "tag2"]
+
+        log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
+
+        log.source = source.provider
+
+        expect(log.source).to eq "File[#{path}](provider=posix)"
       end
 
       it "should copy over any file and line information" do

@@ -335,7 +335,7 @@ class Puppet::Util::Log
   # If they pass a source in to us, we make sure it is a string, and
   # we retrieve any tags we can.
   def source=(source)
-    if source.respond_to?(:path)
+    if defined?(Puppet::Type) && source.is_a?(Puppet::Type)
       @source = source.path
       source.tags.each { |t| tag(t) }
       self.file = source.file
