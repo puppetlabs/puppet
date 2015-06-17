@@ -447,7 +447,7 @@ describe Puppet::Util::Log do
 
         log.source = source.provider
 
-        log.source.should == "File[#{path}](provider=posix)"
+        log.source.should match Regexp.quote("File\[#{path}\]\(provider=")
       end
 
       it "should copy over any file and line information" do
