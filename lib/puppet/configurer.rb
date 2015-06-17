@@ -44,6 +44,18 @@ class Puppet::Configurer
     end
   end
 
+  def init_http_pool_monitoring(report, http_pool)
+    if http_pool.is_a? Puppet::Network::HTTP::Pool
+      http_pool.report = report
+    end
+  end
+
+  def terminate_http_pool_monitoring(http_pool)
+    if http_pool.is_a? Puppet::Network::HTTP::Pool
+      http_pool.report = nil
+    end
+  end
+
   def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
     @running = false
     @splayed = false
@@ -53,7 +65,7 @@ class Puppet::Configurer
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
-  def retrieve_catalog(query_options)
+  def retrieve_catalog(query_options, options)
     query_options ||= {}
     # First try it with no cache, then with the cache.
     unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(query_options)) or result = retrieve_new_catalog(query_options)
@@ -65,8 +77,10 @@ class Puppet::Configurer
     end
 
     return nil unless result
-
-    convert_catalog(result, @duration)
+    converted = nil
+    convert_time = thinmark { converted = convert_catalog(result, @duration) }
+    options[:report].add_times(:catalog_conversion, convert_time) if options[:report]
+    return converted
   end
 
   # Convert a plain resource catalog into our full host catalog.
@@ -81,8 +95,12 @@ class Puppet::Configurer
 
   def get_facts(options)
     if options[:pluginsync]
-      remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
-      download_plugins(remote_environment_for_plugins)
+      remote_environment_for_plugins = nil
+      pluginSyncTime = thinmark do
+        remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
+        download_plugins(remote_environment_for_plugins)
+      end
+      options[:report].add_times(:plugin_sync, pluginSyncTime)
     end
 
     facts_hash = {}
@@ -92,7 +110,8 @@ class Puppet::Configurer
       # get a hash with both of these pieces of information.
       #
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
-      facts_hash = facts_for_uploading
+      facterTime = thinmark { facts_hash = facts_for_uploading }
+      options[:report].add_times(:facter, facterTime)
     end
     facts_hash
   end
@@ -101,7 +120,7 @@ class Puppet::Configurer
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
 
-    unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
+    unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options, options))
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
@@ -145,6 +164,8 @@ class Puppet::Configurer
     # exceptions.
     options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
     report = options[:report]
+
+    init_http_pool_monitoring(report, Puppet.lookup(:http_pool))
     init_storage
 
     Puppet::Util::Log.newdestination(report)
@@ -159,12 +180,17 @@ class Puppet::Configurer
       # We only need to find out the environment to run in if we don't already have a catalog
       unless options[:catalog]
         begin
-          if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => Puppet::Node::Environment.remote(@environment),
-              :configured_environment => configured_environment,
-              :ignore_cache => true,
-              :transaction_uuid => @transaction_uuid,
-              :fail_on_404 => true)
+          node = nil
+          node_retr_time = thinmark do
+            node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+                                                 :environment => Puppet::Node::Environment.remote(@environment),
+                                                 :configured_environment => configured_environment,
+                                                 :ignore_cache => true,
+                                                 :transaction_uuid => @transaction_uuid,
+                                                 :fail_on_404 => true)
+          end
+          report.add_times(:node_retrieval, node_retr_time)
+          if node
 
             # If we have deserialized a node from a rest call, we want to set
             # an environment instance as a simple 'remote' environment reference.
@@ -235,6 +261,7 @@ class Puppet::Configurer
       Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
       return nil
     ensure
+      terminate_http_pool_monitoring(Puppet.lookup(:http_pool))
       execute_postrun_command or return nil
     end
   ensure
@@ -251,8 +278,10 @@ class Puppet::Configurer
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
-    save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
+    benchmark(:notice, "Saved & sent report") do
+      save_last_run_summary(report)
+      Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
+    end
   rescue => detail
     Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
