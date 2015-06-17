@@ -638,6 +638,20 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @resource.property(:ensure).stubs(:retrieve).returns :absent
     end
 
+    it "should always retrieve the ensure value by default" do
+      @ensurable_resource = Puppet::Type.type(:file).new(:name => "/not/existent", :mode => "0644")
+      Puppet::Type::File::Ensure.stubs(:ensure).returns :absent
+      Puppet::Type::File::Ensure.any_instance.expects(:retrieve).once
+      @ensurable_resource.retrieve_resource
+    end
+
+    it "should not retrieve the ensure value if specified" do
+      @ensurable_resource = Puppet::Type.type(:service).new(:name => "DummyService", :enable => true)
+      @ensurable_resource.properties.each { |prop| prop.stubs(:retrieve) }
+      Puppet::Type::Service::Ensure.any_instance.expects(:retrieve).never
+      @ensurable_resource.retrieve_resource
+    end
+
     it "should fail if its provider is unsuitable" do
       @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
       @resource.provider.class.expects(:suitable?).returns false
