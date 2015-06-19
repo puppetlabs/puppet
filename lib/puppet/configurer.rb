@@ -246,6 +246,7 @@ class Puppet::Configurer
   private :run_internal
 
   def send_report(report)
+    puts report.display_changes if Puppet[:show_changes]
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
     Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]

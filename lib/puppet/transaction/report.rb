@@ -240,6 +240,46 @@ class Puppet::Transaction::Report
     host
   end
 
+  # Provide a summary of the changes
+  def display_changes
+    changes = sumup()
+    return nil if changes.empty?
+    ret = ""
+    # display the different changes for each type
+    changes.keys.sort.each { |type|
+      ret += "%s:\n" % type
+      changes[type].keys.sort.each { |event|
+        # Count the number of occurences for each value in the changes[type][event]
+        count = changes[type][event].inject(Hash.new(0)) {|h,i| h[i] += 1; h }
+        ret += count.to_a.collect { |status, nb|
+          if nb > 1
+            "   %15s %s (%s)" % [status + ":", event, nb]
+          else
+            "   %15s %s" % [status + ":", event]
+          end
+        }.join("\n")
+        ret += "\n"
+      }
+    }
+    return ret
+  end
+
+   # Copy events in a structure that can be return with the report
+   def sumup()
+     changes= {}
+     resource_statuses.each do |name, status|
+       type = status.resource_type
+       next if ["Schedule","Filebucket"].include? type
+       title = status.title
+       changes[type] ||= {}
+       changes[type][title] ||= []
+       status.events.each { |event|
+         changes[type][title].push(event.status)
+       }
+     end
+     changes
+   end
+
   # Provide a human readable textual summary of this report.
   # @note This is intended for debugging purposes
   # @return [String] A string with a textual summary of this report.
