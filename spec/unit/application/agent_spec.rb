@@ -197,6 +197,11 @@ describe Puppet::Application::Agent do
       Puppet.stubs(:settraps)
     end
 
+    it "should not run with extra arguments" do
+      @puppetd.command_line.stubs(:args).returns(%w{disable})
+      expect{@puppetd.setup}.to raise_error ArgumentError, /does not take parameters/
+    end
+
     describe "with --test" do
       it "should call setup_test" do
         @puppetd.options[:test] = true
