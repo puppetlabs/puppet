@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/util/rdoc'
 
-describe "RDoc::Parser" do
+describe "RDoc::Parser", :unless => Puppet.features.microsoft_windows? do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 
