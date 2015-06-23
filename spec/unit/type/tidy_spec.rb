@@ -66,7 +66,7 @@ describe tidy do
       end
 
       it "should not allow arbitrary values" do
-        expect { @tidy[:recurse] = "whatever" }.to raise_error
+        expect { @tidy[:recurse] = "whatever" }.to raise_error(Puppet::ResourceError, /Parameter recurse failed/)
       end
     end
 
@@ -76,13 +76,13 @@ describe tidy do
       end
 
       it "should object if matches is given with recurse is not specified" do
-        expect { @tidy[:matches] = '*.doh' }.to raise_error
+        expect { @tidy[:matches] = '*.doh' }.to raise_error(Puppet::ResourceError, /Parameter matches failed/)
       end
       it "should object if matches is given and recurse is 0" do
-        expect { @tidy[:recurse] = 0; @tidy[:matches] = '*.doh' }.to raise_error
+        expect { @tidy[:recurse] = 0; @tidy[:matches] = '*.doh' }.to raise_error(Puppet::ResourceError, /Parameter matches failed/)
       end
       it "should object if matches is given and recurse is false" do
-        expect { @tidy[:recurse] = false; @tidy[:matches] = '*.doh' }.to raise_error
+        expect { @tidy[:recurse] = false; @tidy[:matches] = '*.doh' }.to raise_error(Puppet::ResourceError, /Parameter matches failed/)
       end
       it "should not object if matches is given and recurse is > 0" do
         expect { @tidy[:recurse] = 1; @tidy[:matches] = '*.doh' }.not_to raise_error

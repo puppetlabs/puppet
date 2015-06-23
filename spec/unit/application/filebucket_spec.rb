@@ -173,7 +173,7 @@ describe Puppet::Application::Filebucket do
     describe "the command backup" do
       it "should fail if no arguments are specified" do
         @filebucket.stubs(:args).returns([])
-        expect { @filebucket.backup }.to raise_error
+        expect { @filebucket.backup }.to raise_error(RuntimeError, /You must specify a file to back up/)
       end
 
       it "should call the client backup method for each given parameter" do

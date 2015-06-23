@@ -38,7 +38,7 @@ describe Puppet::Type.type(:vlan) do
     end
 
     it "should fail if vlan name is not a number" do
-      expect { Puppet::Type.type(:vlan).new(:name => "notanumber", :ensure => :present) }.to raise_error
+      expect { Puppet::Type.type(:vlan).new(:name => "notanumber", :ensure => :present) }.to raise_error(Puppet::ResourceError, /Parameter name failed on Vlan/)
     end
   end
 end

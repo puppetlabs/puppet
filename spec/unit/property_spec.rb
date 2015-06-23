@@ -230,7 +230,7 @@ describe Puppet::Property do
     it "should fail if the value is not a defined value or alias and does not match a regex" do
       subclass.newvalue(:foo)
 
-      expect { property.should = "bar" }.to raise_error
+      expect { property.should = "bar" }.to raise_error(Puppet::Error, /Invalid value "bar"./)
     end
 
     it "should succeeed if the value is one of the defined values" do

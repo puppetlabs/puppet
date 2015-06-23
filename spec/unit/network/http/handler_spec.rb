@@ -133,7 +133,7 @@ describe Puppet::Network::HTTP::Handler do
 
     it "should raise an error if the request is formatted in an unknown format" do
       handler.stubs(:content_type_header).returns "unknown format"
-      expect { handler.request_format(request) }.to raise_error
+      expect { handler.request_format(request) }.to raise_error(NameError, /undefined local variable or method/)
     end
 
     it "should still find the correct format if content type contains charset information" do

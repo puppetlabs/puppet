@@ -29,7 +29,7 @@ describe Puppet::Network::Rights do
   end
 
   it "should throw an error if type can't be determined" do
-    expect { @right.newright("name") }.to raise_error
+    expect { @right.newright("name") }.to raise_error(ArgumentError, /Unknown right type/)
   end
 
   describe "when creating new path ACLs" do
@@ -40,7 +40,7 @@ describe Puppet::Network::Rights do
     end
 
     it "should throw an error if the acl uri path is not absolute" do
-      expect { @right.newright("name")}.to raise_error
+      expect { @right.newright("name")}.to raise_error(ArgumentError, /Unknown right type/)
     end
 
     it "should create a new ACL with the correct path" do
@@ -351,7 +351,7 @@ describe Puppet::Network::Rights do
     it "should raise an error if the method is already filtered" do
       @acl.restrict_method(:save)
 
-      expect { @acl.restrict_method(:save) }.to raise_error
+      expect { @acl.restrict_method(:save) }.to raise_error(ArgumentError, /'save' is already in the '\/path'/)
     end
 
     it "should allow setting an environment filters" do

@@ -188,7 +188,7 @@ describe Puppet::Util::Storage do
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
-      expect { Puppet::Util::Storage.store }.to raise_error
+      expect { Puppet::Util::Storage.store }.to raise_error(Errno::EISDIR, /Is a directory/)
 
       Dir.rmdir(Puppet[:statefile])
     end

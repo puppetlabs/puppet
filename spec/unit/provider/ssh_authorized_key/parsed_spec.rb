@@ -261,7 +261,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
         @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :target => "/tmp/.ssh_dir/place_to_put_authorized_keys")
         @provider = provider_class.new(@resource)
 
-        expect { @provider.flush }.to raise_error
+        expect { @provider.flush }.to raise_error(Puppet::Error, /Cannot write SSH authorized keys without user/)
       end
     end
 

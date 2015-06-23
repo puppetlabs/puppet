@@ -180,7 +180,7 @@ describe Puppet::Network::AuthStore::Declaration do
   ].each { |invalid_ip|
     describe "when the pattern is an invalid IPv6 address such as #{invalid_ip}" do
       it "should raise an exception" do
-        expect { Puppet::Network::AuthStore::Declaration.new(:allow,invalid_ip) }.to raise_error
+        expect { Puppet::Network::AuthStore::Declaration.new(:allow,invalid_ip) }.to raise_error(Puppet::AuthStoreError, /Invalid pattern/)
       end
     end
   }

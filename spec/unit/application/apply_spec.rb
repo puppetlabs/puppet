@@ -359,7 +359,7 @@ describe Puppet::Application::Apply do
         it "should raise an error if we can't find the facts" do
           Puppet::Node::Facts.indirection.expects(:find).returns(nil)
 
-          expect { @apply.main }.to raise_error
+          expect { @apply.main }.to raise_error(RuntimeError, /Could not find facts/)
         end
       end
 
