@@ -47,7 +47,7 @@ describe Puppet::Face[:node, '0.0.1'] do
     end
 
     it "should not accept a call with no arguments" do
-      expect { subject.clean() }.to raise_error
+      expect { subject.clean() }.to raise_error(RuntimeError, /At least one node should be passed/)
     end
 
     it "should accept a node name" do

@@ -133,7 +133,7 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
     describe "when entering enable password" do
       it "should raise an error if no enable password has been set" do
         @cisco.enable_password = nil
-        expect{ @cisco.enable }.to raise_error
+        expect{ @cisco.enable }.to raise_error(RuntimeError, /Can't issue "enable" to enter privileged/)
       end
 
       it "should send the enable command and expect an enable prompt" do

@@ -422,7 +422,7 @@ describe Puppet::SSL::Host do
       @key.stubs(:generate)
       Puppet::SSL::Key.indirection.expects(:save).raises "eh"
 
-      expect { @host.generate_key }.to raise_error
+      expect { @host.generate_key }.to raise_error(RuntimeError)
       expect(@host.key).to be_nil
     end
 
@@ -496,7 +496,7 @@ describe Puppet::SSL::Host do
       Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
       terminus.expects(:save).with { |req| req.instance == @request && req.key == "myname" }.raises "eh"
 
-      expect { @host.generate_certificate_request }.to raise_error
+      expect { @host.generate_certificate_request }.to raise_error(RuntimeError)
 
       expect(@host.instance_eval { @certificate_request }).to be_nil
     end

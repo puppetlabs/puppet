@@ -147,7 +147,7 @@ describe Puppet::Application do
           # no-op
         end
       end
-    }.to raise_error
+    }.to raise_error(Puppet::Settings::ValidationError, /Invalid run mode/)
   end
 
   it "should have a run entry-point" do
@@ -468,7 +468,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.to raise_error
+      expect { @app.configure_indirector_routes }.to raise_error(Psych::SyntaxError, /mapping values are not allowed in this context/)
     end
   end
 
@@ -564,7 +564,7 @@ describe Puppet::Application do
             raise "I can't believe it, it works!"
           end
 
-          expect { @app.handle_test2 }.to raise_error
+          expect { @app.handle_test2 }.to raise_error(RuntimeError, /I can't believe it, it works!/)
         end
 
         it "should declare the option to OptionParser" do

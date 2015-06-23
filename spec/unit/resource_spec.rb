@@ -428,11 +428,11 @@ describe Puppet::Resource do
     end
 
     it "should fail if invalid parameters are used" do
-      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.to raise_error
+      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.to raise_error(ArgumentError, /Invalid parameter/)
     end
 
     it "should fail if the resource type cannot be resolved" do
-      expect { Puppet::Resource.new("nosuchtype", "/path", :strict => true) }.to raise_error
+      expect { Puppet::Resource.new("nosuchtype", "/path", :strict => true) }.to raise_error(ArgumentError, /Invalid resource type/)
     end
   end
 

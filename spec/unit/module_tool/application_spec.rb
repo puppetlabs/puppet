@@ -18,7 +18,7 @@ describe Puppet::ModuleTool::Applications::Application do
 
     bad_versions.each do |ver|
       it "should not accept version string #{ver}" do
-        expect { app.parse_filename("puppetlabs-ntp-#{ver}") }.to raise_error
+        expect { app.parse_filename("puppetlabs-ntp-#{ver}") }.to raise_error(ArgumentError, /(Invalid version format|Could not parse filename)/)
       end
     end
   end

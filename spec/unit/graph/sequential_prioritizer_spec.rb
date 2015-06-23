@@ -27,6 +27,6 @@ describe Puppet::Graph::SequentialPrioritizer do
   it "fails to prioritize a key contained in an unknown container" do
     expect do
       priorities.generate_priority_contained_in("unknown", "child 1")
-    end.to raise_error
+    end.to raise_error(NoMethodError, /`down' for nil/)
   end
 end

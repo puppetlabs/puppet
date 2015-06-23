@@ -9,7 +9,7 @@ describe Puppet::Util::Ldap::Generator do
   end
 
   it "should require a parameter name at initialization" do
-    expect { Puppet::Util::Ldap::Generator.new }.to raise_error
+    expect { Puppet::Util::Ldap::Generator.new }.to raise_error(ArgumentError, /wrong number of arguments/)
   end
 
   it "should always return its name as a string" do

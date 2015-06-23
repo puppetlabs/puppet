@@ -12,7 +12,9 @@ describe "Package provider" do
         options = {:name => "nosuch#{provider.name}", :provider => provider.name}
 
         pkg = Puppet::Type.newpackage(options)
-        expect { pkg.provider.install }.to raise_error
+        expect { pkg.provider.install }.to raise_error { |error|
+          expect(error).not_to eq("")
+        }
       end
 
       it "should be able to get a list of existing packages" do
