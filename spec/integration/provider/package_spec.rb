@@ -12,7 +12,7 @@ describe "Package provider" do
         options = {:name => "nosuch#{provider.name}", :provider => provider.name}
 
         pkg = Puppet::Type.newpackage(options)
-        expect { pkg.provider.install }.to raise_error
+        expect { pkg.provider.install }.to raise_error(/must specify a package source|Could not find a valid gem|Could not locate the pip\d? command/)
       end
 
       it "should be able to get a list of existing packages" do
