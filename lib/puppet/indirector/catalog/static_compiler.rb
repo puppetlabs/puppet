@@ -91,9 +91,10 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # @param resource [Puppet::Resource] The resource to add the metadata to
   # @param metadata [Puppet::FileServing::Metadata] The metadata of the given fileserver based file
   def replace_metadata(request, resource, metadata)
-    [:mode, :owner, :group].each do |param|
-      resource[param] ||= metadata.send(param)
+    [:owner, :group].each do |param|
+      resource[param] ||= metadata.send(param).to_s
     end
+    resource[:mode] ||= metadata.send(:mode).to_s(8)
 
     resource[:ensure] = metadata.ftype
     if metadata.ftype == "file"
