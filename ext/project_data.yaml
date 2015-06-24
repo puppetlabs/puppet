@@ -16,7 +16,7 @@ gem_default_executables: 'puppet'
 gem_forge_project: 'puppet'
 gem_runtime_dependencies:
   facter: ['> 2.0', '< 4']
-  hiera: ['>= 2.0', '< 3']
+  hiera: ['>= 2.0', '< 4']
   json_pure:
 gem_rdoc_options:
   - --title
