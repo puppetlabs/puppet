@@ -10,8 +10,7 @@ step "setup environments"
 
 stub_forge_on(master)
 
-codedir = master.puppet('master')['codedir']
-testdir = create_tmpdir_for_user master, "codedir"
+testdir = create_tmpdir_for_user(master, File.basename(__FILE__))
 puppet_code_backup_dir = create_tmpdir_for_user(master, "puppet-code-backup-dir")
 
 apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
@@ -20,7 +19,7 @@ step "Test"
 
 master_opts = {
   'main' => {
-    'environmentpath' => '$codedir/environments',
+    'environmentpath' => "#{testdir}/environments",
   }
 }
 general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
@@ -31,18 +30,18 @@ results = use_an_environment(env, "directory testing", *general)
 expectations = {
   :puppet_config => {
     :exit_code => 0,
-    :matches => [%r{manifest.*#{codedir}/environments/#{env}/manifests$},
-                 %r{modulepath.*#{codedir}/environments/#{env}/modules:.+},
+    :matches => [%r{manifest.*#{testdir}/environments/#{env}/manifests$},
+                 %r{modulepath.*#{testdir}/environments/#{env}/modules:.+},
                  %r{config_version = $}]
   },
   :puppet_module_install => {
     :exit_code => 0,
-    :matches => [%r{Preparing to install into #{codedir}/environments/#{env}/modules},
+    :matches => [%r{Preparing to install into #{testdir}/environments/#{env}/modules},
                  %r{pmtacceptance-nginx}],
   },
   :puppet_module_uninstall => {
     :exit_code => 0,
-    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{codedir}/environments/#{env}/modules}],
+    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{testdir}/environments/#{env}/modules}],
   },
   :puppet_apply => {
     :exit_code => 0,

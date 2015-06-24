@@ -10,7 +10,7 @@ step "setup environments"
 
 stub_forge_on(master)
 
-testdir = create_tmpdir_for_user master, "codedir"
+testdir = create_tmpdir_for_user(master, File.basename(__FILE__))
 puppet_code_backup_dir = create_tmpdir_for_user(master, "puppet-code-backup-dir")
 
 apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
@@ -18,7 +18,7 @@ apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true
 step "Test"
 master_opts = {
   'main' => {
-    'environmentpath' => '$codedir/environments',
+    'environmentpath' => "#{testdir}/environments",
   }
 }
 general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
