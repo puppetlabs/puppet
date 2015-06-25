@@ -16,6 +16,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   include PuppetSpec::Scope
   before(:each) do
     Puppet[:strict_variables] = true
+    Puppet[:data_binding_terminus] = 'none'
 
     # Tests needs a known configuration of node/scope/compiler since it parses and evaluates
     # snippets as the compiler will evaluate them, butwithout the overhead of compiling a complete
