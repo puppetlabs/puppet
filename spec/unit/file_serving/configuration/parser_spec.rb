@@ -33,16 +33,6 @@ describe Puppet::FileServing::Configuration::Parser do
       expect { @parser.parse }.not_to raise_error
     end
 
-    it "should create a new mount for each section in the configuration" do
-      mount1 = mock 'one', :validate => true
-      mount2 = mock 'two', :validate => true
-      Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
-      Puppet::FileServing::Mount::File.expects(:new).with("two").returns(mount2)
-      write_config_file "[one]\n[two]\n"
-      @parser.parse
-    end
-
-    # This test is almost the exact same as the previous one.
     it "should return a hash of the created mounts" do
       mount1 = mock 'one', :validate => true
       mount2 = mock 'two', :validate => true
@@ -108,29 +98,34 @@ describe Puppet::FileServing::Configuration::Parser do
       @parser.parse
     end
 
-    it "should tell the mount to allow any allow values from the section" do
-      write_config_file "[one]\nallow something\n"
+    [:allow,:deny].each { |acl_type|
+      it "should support inline comments in #{acl_type}" do
+        write_config_file "[one]\n#{acl_type} something \# will it work?\n"
 
       @mount.expects(:info)
-      @mount.expects(:allow).with("something")
+      @mount.expects(acl_type).with("something")
       @parser.parse
-    end
+      end
 
-    it "should support inline comments" do
-      write_config_file "[one]\nallow something \# will it work?\n"
+      it "should tell the mount to #{acl_type} from ACLs with varying spacing around commas" do
+        write_config_file "[one]\n#{acl_type} someone,sometwo, somethree , somefour ,somefive\n"
 
-      @mount.expects(:info)
-      @mount.expects(:allow).with("something")
-      @parser.parse
-    end
+        @mount.expects(:info).times(5)
+        @mount.expects(acl_type).times(5).with(any_of('someone','sometwo','somethree','somefour','somefive'))
+        @parser.parse
+      end
 
-    it "should tell the mount to deny any deny values from the section" do
-      write_config_file "[one]\ndeny something\n"
+      # each ip, with glob in the various octet positions
+      ['100','4','42','*'].permutation.map {|permutes| permutes.join('.') }.each { |ip_pattern|
+        it "should tell the mount to #{acl_type} from ACLs with glob at #{ip_pattern}" do
+          write_config_file "[one]\n#{acl_type} #{ip_pattern}\n"
 
-      @mount.expects(:info)
-      @mount.expects(:deny).with("something")
-      @parser.parse
-    end
+          @mount.expects(:info)
+          @mount.expects(acl_type).with(ip_pattern)
+          @parser.parse
+        end
+      }
+    }
 
     it "should return comprehensible error message, if failed on invalid attribute" do
       write_config_file "[one]\ndo something\n"
