@@ -43,8 +43,8 @@ Puppet::Functions.create_function(:hiera_include, Hiera::PuppetFunction) do
     :array
   end
 
-  def post_lookup(key, value)
+  def post_lookup(scope, key, value)
     raise Puppet::ParseError, "Could not find data item #{key}" if value.nil?
-    call_function('include', value) unless value.empty?
+    call_function_with_scope(scope, 'include', value) unless value.empty?
   end
 end
