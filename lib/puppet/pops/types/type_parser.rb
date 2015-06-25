@@ -260,7 +260,7 @@ class Puppet::Pops::Types::TypeParser
       size_type = case parameters.size
         when 1
           if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
-            parameters[0].copy
+            parameters[0]
           else
             assert_range_parameter(parameters[0])
             TYPES.range(parameters[0], :default)
@@ -376,7 +376,7 @@ class Puppet::Pops::Types::TypeParser
       case parameters.size
       when 1
         if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
-          parameters[0].copy
+          parameters[0]
         else
           assert_range_parameter(parameters[0])
           TYPES.range(parameters[0], :default)

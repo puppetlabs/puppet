@@ -121,7 +121,7 @@ module Puppet::Pops
       # @api private
       def class_from_string(str)
         begin
-          str.split(NAME_SEGMENT_SEPARATOR).inject(Object) do |memo, name_segment|
+          str.split(NAME_SEGMENT_SEPARATOR).reduce(Object) do |memo, name_segment|
             memo.const_get(name_segment)
           end
         rescue NameError
@@ -407,12 +407,28 @@ module Puppet::Pops
         end
       end
 
+      # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
+      # @return [Float,Integer]
       def from
         @from == -Float::INFINITY ? nil : @from
       end
 
+      # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
+      # @return [Float,Integer]
       def to
         @to == Float::INFINITY ? nil : @to
+      end
+
+      # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
+      # @return [Float,Integer]
+      def numeric_from
+        @from
+      end
+
+      # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
+      # @return [Float,Integer]
+      def numeric_to
+        @to
       end
 
       def hash
@@ -436,16 +452,6 @@ module Puppet::Pops
       protected
 
       # @api_private
-      def numeric_from
-        @from
-      end
-
-      # @api_private
-      def numeric_to
-        @to
-      end
-
-      # @api_private
       def _assignable?(o)
         return false unless o.is_a?(self.class)
         # If o min and max are within the range of t
@@ -458,6 +464,10 @@ module Puppet::Pops
     class PIntegerType < PNumericType
       # The integer type is enumerable when it defines a range
       include Enumerable
+
+      def enumerable?
+        @from != -Float::INFINITY && @to != Float::INFINITY
+      end
 
       def generalize
         DEFAULT
@@ -480,11 +490,13 @@ module Puppet::Pops
       end
 
       # Returns Enumerator if no block is given
-      # Returns self if size is infinity (does not yield)
+      # Returns nil if size is infinity (does not yield)
       def each
-        return self.to_enum unless block_given?
-        return nil if @from == -Float::INFINITY || @to == Float::INFINITY
-        @from.upto(@to) {|x| yield x }
+        if block_given?
+          enumerable? ? @from.upto(@to) { |x| yield x } : nil
+        else
+          to_enum
+        end
       end
 
       # Returns a range where both to and from are positive numbers. Negative

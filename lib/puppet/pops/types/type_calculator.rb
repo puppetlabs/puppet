@@ -260,8 +260,7 @@ class Puppet::Pops::Types::TypeCalculator
   # Generalizes value specific types. The generalized type is returned.
   # @api public
   def generalize(o)
-    o = o.generalize if o.is_a?(Types::PAnyType)
-    o
+    o.is_a?(Types::PAnyType) ? o.generalize : o
   end
 
   # Answers 'what is the single common Puppet Type describing o', or if o is an Array or Hash, what is the
@@ -269,17 +268,20 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def infer(o)
+    # Optimize the most common cases into direct calls.
     case o
-      when String
-        infer_String(o)
-      when Integer
-        infer_Integer(o)
-      when Array
-        infer_Array(o)
-      when Puppet::Pops::Evaluator::PuppetProc
-        infer_PuppetProc(o)
-      else
-        @@infer_visitor.visit_this_0(self, o)
+    when String
+      infer_String(o)
+    when Integer
+      infer_Integer(o)
+    when Array
+      infer_Array(o)
+    when Hash
+      infer_Hash(o)
+    when Puppet::Pops::Evaluator::PuppetProc
+      infer_PuppetProc(o)
+    else
+      @@infer_visitor.visit_this_0(self, o)
     end
   end
 
@@ -384,17 +386,16 @@ class Puppet::Pops::Types::TypeCalculator
     if t1.is_a?(Types::PResourceType) && t2.is_a?(Types::PResourceType)
       # only Resource[] unless the type name is the same
       return t1.type_name == t2.type_name ?  Types::PResourceType.new(t1.type_name, nil) : Types::PResourceType::DEFAULT
-      # the cross assignability test above has already determined that they do not have the same type and title
     end
 
     # Integers have range, expand the range to the common range
     if t1.is_a?(Types::PIntegerType) && t2.is_a?(Types::PIntegerType)
-      return Types::PIntegerType.new([t1.from, t2.from].min, [t1.to, t2.to].max)
+      return Types::PIntegerType.new([t1.numeric_from, t2.numeric_from].min, [t1.numeric_to, t2.numeric_to].max)
     end
 
     # Floats have range, expand the range to the common range
     if t1.is_a?(Types::PFloatType) && t2.is_a?(Types::PFloatType)
-      return Types::PFloatType.new([t1.from, t2.from].min, [t1.to, t2.to].max)
+      return Types::PFloatType.new([t1.numeric_from, t2.numeric_from].min, [t1.numeric_to, t2.numeric_to].max)
     end
 
     if t1.is_a?(Types::PStringType) && t2.is_a?(Types::PStringType)
@@ -514,7 +515,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def infer_and_reduce_type(enumerable)
-    reduce_type(enumerable.collect {|o| infer(o) })
+    reduce_type(enumerable.map {|o| infer(o) })
   end
 
   # The type of all classes is PType
