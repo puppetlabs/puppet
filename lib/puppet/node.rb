@@ -9,9 +9,6 @@ class Puppet::Node
   # the node sources.
   extend Puppet::Indirector
 
-  # Asymmetric serialization/deserialization required in this class via to/from datahash
-  include Puppet::Util::PsychSupport
-
   # Use the node source as the indirection terminus.
   indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
     A node is composed of its name, its facts, and its environment."
@@ -21,18 +18,13 @@ class Puppet::Node
 
   attr_reader :server_facts
 
-  def initialize_from_hash(data)
-    @name = data['name']
-    @classes = data['classes']
-    @parameters = data['parameters']
-    @environment_name = data['environment']
-  end
-
   def self.from_data_hash(data)
     raise ArgumentError, "No name provided in serialized data" unless name = data['name']
 
     node = new(name)
-    node.initialize_from_hash(data)
+    node.classes = data['classes']
+    node.parameters = data['parameters']
+    node.environment_name = data['environment']
     node
   end
 

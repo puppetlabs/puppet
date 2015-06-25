@@ -88,21 +88,6 @@ describe Puppet::Node do
     end
   end
 
-  describe "when serializing using yaml" do
-    before do
-      @node = Puppet::Node.new("mynode")
-    end
-
-    it "a node can roundtrip" do
-      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
-    end
-
-    it "limits the serialization of environment to be just the name" do
-      # it is something like 138 when serializing everything in a default environment
-      expect(@node.to_yaml.size).to be < 70
-    end
-  end
-
   describe "when converting to json" do
     before do
       @node = Puppet::Node.new("mynode")
