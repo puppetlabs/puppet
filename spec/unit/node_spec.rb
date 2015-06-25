@@ -103,6 +103,17 @@ describe Puppet::Node do
     end
   end
 
+  describe "when serializing using yaml and values classes and parameters are missing in deserialized hash" do
+    before do
+      @node = Puppet::Node.from_data_hash({'name' => "mynode"})
+    end
+
+    it "a node can roundtrip" do
+      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+    end
+
+  end
+
   describe "when converting to json" do
     before do
       @node = Puppet::Node.new("mynode")

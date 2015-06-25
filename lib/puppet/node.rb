@@ -23,8 +23,8 @@ class Puppet::Node
 
   def initialize_from_hash(data)
     @name = data['name']
-    @classes = data['classes']
-    @parameters = data['parameters']
+    @classes = data['classes'] || []
+    @parameters = data['parameters'] || {}
     @environment_name = data['environment']
   end
 
