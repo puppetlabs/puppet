@@ -108,7 +108,7 @@ describe 'when calling' do
 
     it 'should use the array resolution_type' do
       Hiera.any_instance.expects(:lookup).with { |*args| expect(args[4]).to be(:array) }.returns(%w[foo bar baz])
-      hiera_include.expects(:call_function).with('include', %w[foo bar baz])
+      hiera_include.expects(:call_function_with_scope).with(scope, 'include', %w[foo bar baz])
       hiera_include.call(scope, 'key', {'key' => 'foo_result'})
     end
 
@@ -118,7 +118,7 @@ describe 'when calling' do
     end
 
     it 'should use default block' do
-      hiera_include.expects(:call_function).with('include', %w[key foo])
+      hiera_include.expects(:call_function_with_scope).with(scope,'include', %w[key foo])
       hiera_include.call(scope, 'foo') { |k| ['key', k] }
     end
   end
