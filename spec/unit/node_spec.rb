@@ -103,6 +103,18 @@ describe Puppet::Node do
     end
   end
 
+  describe "when serializing using yaml and values classes and parameters are missing in deserialized hash" do
+    it "a node can roundtrip" do
+      @node = Puppet::Node.from_data_hash({'name' => "mynode"})
+      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+    end
+
+    it "errors if name is nil" do
+      expect { Puppet::Node.from_data_hash({ })}.to raise_error(ArgumentError, /No name provided in serialized data/)
+    end
+
+  end
+
   describe "when converting to json" do
     before do
       @node = Puppet::Node.new("mynode")
