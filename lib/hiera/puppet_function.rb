@@ -43,13 +43,13 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
   end
 
   def hiera_no_default(scope, key)
-    post_lookup(key, lookup(scope, key, nil, nil))
+    post_lookup(scope, key, lookup(scope, key, nil, nil))
   end
 
   def hiera_with_default(scope, key, default, override = nil)
     undefined = (@@undefined_value ||= Object.new)
     result = lookup(scope, key, undefined, override)
-    post_lookup(key, result.equal?(undefined) ? default : result)
+    post_lookup(scope, key, result.equal?(undefined) ? default : result)
   end
 
   def hiera_block1(scope, key, &default_block)
@@ -63,20 +63,20 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
   def common(scope, key, override, default_block)
     undefined = (@@undefined_value ||= Object.new)
     result = lookup(scope, key, undefined, override)
-    post_lookup(key, result.equal?(undefined) ? default_block.call(key) : result)
+    post_lookup(scope, key, result.equal?(undefined) ? default_block.call(key) : result)
   end
 
   private :common
 
   def lookup(scope, key, default, override)
-    HieraPuppet.lookup(key, default,scope, override, merge_type)
+    HieraPuppet.lookup(key, default, scope, override, merge_type)
   end
 
   def merge_type
     :priority
   end
 
-  def post_lookup(key, result)
+  def post_lookup(scope, key, result)
     result
   end
 end

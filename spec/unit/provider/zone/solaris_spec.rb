@@ -149,6 +149,25 @@ net:
         })
       end
     end
+    describe "with an invalid or unrecognized config" do
+      it "should produce an error message with provider context when given an invalid config" do
+        erroneous_zone_info =<<-EOF
+          physical: net1'
+        EOF
+
+        provider.expects(:zonecfg).with(:info).returns(erroneous_zone_info)
+        provider.expects('err').with("Ignoring '          physical: net1''")
+        provider.getconfig
+      end
+
+
+      it "should produce a debugging message with provider context when given an unrecognized config" do
+        unrecognized_zone_info = "dummy"
+        provider.expects(:zonecfg).with(:info).returns(unrecognized_zone_info)
+        provider.expects('debug').with("Ignoring zone output 'dummy'")
+        provider.getconfig
+      end
+    end
   end
   context "#flush" do
     it "should correctly execute pending commands" do

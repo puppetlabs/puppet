@@ -234,10 +234,10 @@ Puppet::Type.type(:zone).provide(:solaris) do
           end
           current[$1.intern] = $2
         else
-          Puppet.err "Ignoring '#{line}'"
+          err "Ignoring '#{line}'"
         end
       else
-        Puppet.debug "Ignoring zone output '#{line}'"
+        debug "Ignoring zone output '#{line}'"
       end
     end
 
