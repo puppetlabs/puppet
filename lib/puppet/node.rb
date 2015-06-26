@@ -22,15 +22,13 @@ class Puppet::Node
   attr_reader :server_facts
 
   def initialize_from_hash(data)
-    @name = data['name']
-    @classes = data['classes'] || []
+    @name       = data['name']       || (raise ArgumentError, "No name provided in serialized data")
+    @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
     @environment_name = data['environment']
   end
 
   def self.from_data_hash(data)
-    raise ArgumentError, "No name provided in serialized data" unless name = data['name']
-
     node = new(name)
     node.initialize_from_hash(data)
     node
