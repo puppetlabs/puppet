@@ -1,0 +1,24 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: http://my-server:8140/foo
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ! 'OK '
+    headers: {}
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Thu, 19 Mar 2015 22:44:49 GMT
+recorded_with: VCR 2.9.3

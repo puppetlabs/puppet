@@ -49,6 +49,9 @@ group(:development, :test) do
   gem "rubocop", "~> 0.26.1", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
+
+  gem 'webmock'
+  gem 'vcr', '~> 2.9'
 end
 
 group(:development) do
