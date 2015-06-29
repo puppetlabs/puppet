@@ -42,7 +42,7 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-  context "when methods that accept a block are called with a block", :vcr do
+  context "when handling requests", :vcr do
     let (:host) { "my-server" }
     let (:port) { 8140 }
     let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
