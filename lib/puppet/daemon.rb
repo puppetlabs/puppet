@@ -87,12 +87,9 @@ class Puppet::Daemon
 
   def reload
     return unless agent
-    if agent.running?
-      Puppet.notice "Not triggering already-running agent"
-      return
-    end
-
     agent.run({:splay => false})
+  rescue Puppet::LockError
+    Puppet.notice "Not triggering already-running agent"
   end
 
   def restart

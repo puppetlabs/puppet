@@ -1,4 +1,5 @@
 require 'puppet/util/pidlock'
+require 'puppet/error'
 
 # This module is responsible for encapsulating the logic for "locking" the
 # puppet agent during a catalog run; in other words, keeping track of enough
@@ -12,8 +13,8 @@ require 'puppet/util/pidlock'
 # For more information, please see docs on the website.
 #  http://links.puppetlabs.com/agent_lockfiles
 module Puppet::Agent::Locker
-  # Yield if we get a lock, else do nothing.  Return
-  # true/false depending on whether we get the lock.
+  # Yield if we get a lock, else raise Puppet::LockError. Return
+  # value of block yielded.
   def lock
     if lockfile.lock
       begin
@@ -21,10 +22,18 @@ module Puppet::Agent::Locker
       ensure
         lockfile.unlock
       end
+    else
+      fail Puppet::LockError, 'Failed to aquire lock'
     end
   end
 
+  # @deprecated
   def running?
+    Puppet.deprecation_warning <<-ENDHEREDOC
+Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.
+The only safe way to know if the lock is locked is to try lock and perform some
+action and then handle the LockError that may result.
+ENDHEREDOC
     lockfile.locked?
   end
 
