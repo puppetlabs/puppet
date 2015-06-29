@@ -65,7 +65,7 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
 
     it "should raise an error if shell channel creation fails" do
       @channel.expects(:send_channel_request).with("shell").yields(@channel, false)
-      expect { @transport.connect }.to raise_error
+      expect { @transport.connect }.to raise_error(RuntimeError, /failed to open ssh shell channel/)
     end
 
     it "should register an on_data and on_extended_data callback" do

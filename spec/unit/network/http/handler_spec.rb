@@ -131,11 +131,6 @@ describe Puppet::Network::HTTP::Handler do
       handler.process(request, response)
     end
 
-    it "should raise an error if the request is formatted in an unknown format" do
-      handler.stubs(:content_type_header).returns "unknown format"
-      expect { handler.request_format(request) }.to raise_error
-    end
-
     it "should still find the correct format if content type contains charset information" do
       request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
                                                    {}, 'GET', '/', nil)

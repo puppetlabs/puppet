@@ -777,7 +777,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should raise an error if the certificate or CSR cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
         Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myhost").returns nil
-        expect { @ca.fingerprint("myhost") }.to raise_error
+        expect { @ca.fingerprint("myhost") }.to raise_error(ArgumentError, /Could not find a certificate/)
       end
 
       it "should try to find a CSR if no certificate can be found" do
@@ -863,8 +863,10 @@ describe Puppet::SSL::CertificateAuthority do
         @cert.expects(:content).returns "mycert"
 
         @store.expects(:verify).with("mycert").returns false
+        @store.expects(:error)
+        @store.expects(:error_string)
 
-        expect { @ca.verify("me") }.to raise_error
+        expect { @ca.verify("me") }.to raise_error(Puppet::SSL::CertificateAuthority::CertificateVerificationError)
       end
 
       describe "certificate_is_alive?" do
@@ -963,7 +965,7 @@ describe Puppet::SSL::CertificateAuthority do
         @ca.inventory.expects(:serials).with("host").returns []
 
         @ca.crl.expects(:revoke).never
-        expect { @ca.revoke('host') }.to raise_error
+        expect { @ca.revoke('host') }.to raise_error(ArgumentError, /Could not find a serial number for host/)
       end
 
       context "revocation by serial number (#16798)" do

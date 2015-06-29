@@ -188,7 +188,11 @@ describe Puppet::Util::Storage do
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
-      expect { Puppet::Util::Storage.store }.to raise_error
+      if Puppet.features.microsoft_windows?
+        expect { Puppet::Util::Storage.store }.to raise_error(Puppet::Util::Windows::Error, /Access is denied/)
+      else
+        expect { Puppet::Util::Storage.store }.to raise_error(Errno::EISDIR, /Is a directory/)
+      end
 
       Dir.rmdir(Puppet[:statefile])
     end

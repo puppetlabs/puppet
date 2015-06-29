@@ -68,15 +68,15 @@ describe host do
     end
 
     it "should not accept malformed IPv4 addresses like 192.168.0.300" do
-      expect { @class.new(:name => "foo", :ip => '192.168.0.300') }.to raise_error
+      expect { @class.new(:name => "foo", :ip => '192.168.0.300') }.to raise_error(Puppet::ResourceError, /Parameter ip failed/)
     end
 
     it "should reject over-long IPv4 addresses" do
-      expect { @class.new(:name => "foo", :ip => '10.10.10.10.10') }.to raise_error
+      expect { @class.new(:name => "foo", :ip => '10.10.10.10.10') }.to raise_error(Puppet::ResourceError, /Parameter ip failed/)
     end
 
     it "should not accept malformed IP addresses like 2001:0dg8:85a3:08d3:1319:8a2e:0370:7344" do
-      expect { @class.new(:name => "foo", :ip => '2001:0dg8:85a3:08d3:1319:8a2e:0370:7344') }.to raise_error
+      expect { @class.new(:name => "foo", :ip => '2001:0dg8:85a3:08d3:1319:8a2e:0370:7344') }.to raise_error(Puppet::ResourceError, /Parameter ip failed/)
     end
 
     # Assorted, annotated IPv6 passes.
@@ -598,7 +598,7 @@ describe host do
      "::2222:3333:4444:5555:6666:7777:8888:",
     ].each do |ip|
       it "should reject #{ip.inspect} as an IPv6 address" do
-        expect { @class.new(:name => "foo", :ip => ip) }.to raise_error
+        expect { @class.new(:name => "foo", :ip => ip) }.to raise_error(Puppet::ResourceError, /Parameter ip failed/)
       end
     end
 

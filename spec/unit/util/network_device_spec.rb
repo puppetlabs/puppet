@@ -35,7 +35,7 @@ describe Puppet::Util::NetworkDevice do
 
     it "should raise an error if the remote device instance can't be created" do
       Puppet::Util::NetworkDevice.stubs(:require).raises("error")
-      expect { Puppet::Util::NetworkDevice.init(@device) }.to raise_error
+      expect { Puppet::Util::NetworkDevice.init(@device) }.to raise_error(RuntimeError, /Can't load test for name/)
     end
 
     it "should let caller to access the singleton device" do
