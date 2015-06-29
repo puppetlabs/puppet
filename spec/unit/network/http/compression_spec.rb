@@ -173,7 +173,7 @@ describe "http compression" do
       it "should raise the error the second time" do
         @inflater.stubs(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
         Zlib::Inflate.expects(:new).with.returns(@inflater)
-        expect { @adapter.uncompress("chunk") }.to raise_error
+        expect { @adapter.uncompress("chunk") }.to raise_error(Zlib::DataError, /not a zlib stream/)
       end
 
       it "should finish the stream on close" do

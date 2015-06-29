@@ -44,7 +44,7 @@ describe Puppet::Settings do
     it "should not allow specification of default values associated with a section as an array" do
       expect {
         @settings.define_settings(:section, :myvalue => ["defaultval", "my description"])
-      }.to raise_error
+      }.to raise_error(ArgumentError, /setting definition for 'myvalue' is not a hash!/)
     end
 
     it "should not allow duplicate parameter specifications" do

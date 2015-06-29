@@ -93,7 +93,7 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should raise an error if hostname is not valid" do
-    expect { Puppet::Parser::AST::HostName.new( :value => "not a hostname!" ) }.to raise_error
+    expect { Puppet::Parser::AST::HostName.new( :value => "not a hostname!" ) }.to raise_error(Puppet::DevError, /'not a hostname!' is not a valid hostname/)
   end
 
   it "should not raise an error if hostname is a regex" do

@@ -108,7 +108,7 @@ describe Puppet::Indirector::SslFile do
        "//?/c:/foo",
       ].each do |input|
         it "should resist directory traversal attacks (#{input.inspect})" do
-          expect { @searcher.path(input) }.to raise_error
+          expect { @searcher.path(input) }.to raise_error(ArgumentError, /invalid key/)
         end
       end
 

@@ -319,7 +319,7 @@ symlinkfile
       end
 
       it "give an error about symlinks" do
-        expect { builder.run }.to raise_error
+        expect { builder.run }.to raise_error(Puppet::ModuleTool::Errors::ModuleToolError, /Found symlinks/)
       end
     end
 

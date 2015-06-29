@@ -82,7 +82,7 @@ describe Puppet::Indirector::Yaml do
      "//?/c:/foo",
     ].each do |input|
       it "should resist directory traversal attacks (#{input.inspect})" do
-        expect { @store.path(input) }.to raise_error
+        expect { @store.path(input) }.to raise_error(ArgumentError)
       end
     end
   end
