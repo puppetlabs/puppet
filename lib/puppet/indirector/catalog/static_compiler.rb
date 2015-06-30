@@ -65,7 +65,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # from the resource, inserts the metadata into the file resource, and uploads
   # the file contents of the source to the file bucket.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource] The resource to replace the metadata in
   # @param file [Puppet::Type::File] The file RAL associated with the resource
   def find_and_replace_metadata(request, resource, file)
@@ -85,7 +85,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # This performs the actual metadata rewrite for the given file resource and
   # uploads the content of the source file to the filebucket.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource] The resource to add the metadata to
   # @param metadata [Puppet::FileServing::Metadata] The metadata of the given fileserver based file
   def replace_metadata(request, resource, metadata)
@@ -108,7 +108,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
 
   # Generate children resources for a recursive file and add them to the catalog.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param catalog [Puppet::Resource::Catalog]
   # @param resource [Puppet::Resource]
   # @param file [Puppet::Type::File] The file RAL associated with the resource
@@ -127,7 +127,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
 
   # Given a recursive file resource, recursively generate its children resources
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param catalog [Puppet::Resource::Catalog]
   # @param resource [Puppet::Resource]
   # @param file [Puppet::Type::File] The file RAL associated with the resource
@@ -194,6 +194,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # Retrieve the source of a file resource using a fileserver based source and
   # upload it to the filebucket.
   #
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource]
   def store_content(request, resource)
     @summer ||= Puppet::Util::Checksums
