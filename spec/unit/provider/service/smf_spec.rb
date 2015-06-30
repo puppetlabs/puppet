@@ -28,7 +28,7 @@ describe provider_class, :if => Puppet.features.posix? do
     end
 
     it "should get a list of services (excluding legacy)" do
-      provider_class.expects(:svcs).with().returns File.read(my_fixture('svcs.out'))
+      provider_class.expects(:svcs).with('-H').returns File.read(my_fixture('svcs.out'))
       instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       # we dont manage legacy
       expect(instances.size).to eq(2)
