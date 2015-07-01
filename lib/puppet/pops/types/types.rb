@@ -66,6 +66,12 @@ module Puppet::Pops
         false
       end
 
+      # Subclasses that are enumerable will override this method to return `true`
+      # @return [Boolean] false#
+      def enumerable?
+        is_a?(Enumerable)
+      end
+
       # Generalizes value specific types. Types that are not value specific will return `self` otherwize
       # the generalized type is returned.
       #
@@ -127,10 +133,6 @@ module Puppet::Pops
         rescue NameError
           return nil
         end
-      end
-
-      def min(a,b)
-        a <= b ? a : b
       end
 
       # Produces the tuple entry at the given index given a tuple type, its from/to constraints on the last
@@ -353,10 +355,22 @@ module Puppet::Pops
     # @api public
     #
     class PEnumType < PScalarType
+      include Enumerable
+
       attr_reader :values
 
       def initialize(values)
         @values = values.sort.freeze
+      end
+
+      # Returns Enumerator if no block is given, otherwise, calls the given
+      # block with each of the strings for this enum
+      def each
+        if block_given?
+          values.each { |x| yield x }
+        else
+          values.to_enum
+        end
       end
 
       def hash
@@ -797,8 +811,18 @@ module Puppet::Pops
     # @api public
     #
     class PStructType < PAnyType
+      include Enumerable
+
       def initialize(elements)
         @elements = elements.sort.freeze
+      end
+
+      def each
+        if block_given?
+          elements.each { |elem| yield elem }
+        else
+          elements.to_enum
+        end
       end
 
       def generalize
@@ -878,6 +902,8 @@ module Puppet::Pops
     # @api public
     #
     class PTupleType < PAnyType
+      include Enumerable
+
       # If set, describes min and max required of the given types - if max > size of
       # types, the last type entry repeats
       #
@@ -921,6 +947,16 @@ module Puppet::Pops
       def initialize(types, size_type = nil)
         @types = types
         @size_type = size_type.nil? ? nil : size_type.to_size
+      end
+
+      # Returns Enumerator for the types if no block is given, otherwise, calls the given
+      # block with each of the types in this tuple
+      def each
+        if block_given?
+          types.each { |x| yield x }
+        else
+          types.to_enum
+        end
       end
 
       def generalize
@@ -1006,7 +1042,7 @@ module Puppet::Pops
           return false if o_entry.nil?
           size_o = o.size_type || PCollectionType::DEFAULT_SIZE
           return false unless size_s.assignable?(size_o)
-          min(s_types.size, size_o.range[1]).times { |index| return false unless (s_types[index] || s_types[-1]).assignable?(o_entry) }
+          [s_types.size, size_o.range[1]].min.times { |index| return false unless (s_types[index] || s_types[-1]).assignable?(o_entry) }
           true
         else
           false
@@ -1259,10 +1295,20 @@ module Puppet::Pops
     # @api public
     #
     class PVariantType < PAnyType
+      include Enumerable
+
       attr_reader :types
 
       def initialize(types)
         @types = types.freeze
+      end
+
+      def each
+        if block_given?
+          types.each { |t| yield t }
+        else
+          types.to_enum
+        end
       end
 
       def generalize
