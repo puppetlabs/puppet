@@ -60,7 +60,7 @@ describe 'The type factory' do
     end
 
     it 'tuple() returns PTupleType' do
-      expect(Puppet::Pops::Types::TypeFactory.tuple().class()).to eq(Puppet::Pops::Types::PTupleType)
+      expect(Puppet::Pops::Types::TypeFactory.tuple.class()).to eq(Puppet::Pops::Types::PTupleType)
     end
 
     it 'undef() returns PUndefType' do
@@ -136,7 +136,7 @@ describe 'The type factory' do
     end
 
     it 'array_of(PIntegerType) returns PArrayType[PIntegerType]' do
-      at = Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::PIntegerType.new())
+      at = Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::PIntegerType::DEFAULT)
       expect(at.class()).to eq(Puppet::Pops::Types::PArrayType)
       expect(at.element_type.class).to eq(Puppet::Pops::Types::PIntegerType)
     end
@@ -162,16 +162,14 @@ describe 'The type factory' do
     end
 
     it 'a size constrained collection can be created from array' do
-      t = Puppet::Pops::Types::TypeFactory.array_of_data()
-      expect(Puppet::Pops::Types::TypeFactory.constrain_size(t, 1,2)).to eq(t)
+      t = Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(1,2))
       expect(t.size_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       expect(t.size_type.from).to eq(1)
       expect(t.size_type.to).to eq(2)
     end
 
     it 'a size constrained collection can be created from hash' do
-      t = Puppet::Pops::Types::TypeFactory.hash_of_data()
-      expect(Puppet::Pops::Types::TypeFactory.constrain_size(t, 1,2)).to eq(t)
+      t = Puppet::Pops::Types::TypeFactory.hash_of(Puppet::Pops::Types::TypeFactory.scalar, Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(1,2))
       expect(t.size_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       expect(t.size_type.from).to eq(1)
       expect(t.size_type.to).to eq(2)
@@ -252,11 +250,11 @@ describe 'The type factory' do
       end
 
       it 'the with_block methods decorates a Callable with a block_type' do
-        t = Puppet::Pops::Types::TypeFactory.callable()
-        t2 = Puppet::Pops::Types::TypeFactory.with_block(t)
+        t = Puppet::Pops::Types::TypeFactory.callable
+        t2 = Puppet::Pops::Types::TypeFactory.callable(t)
         block_t = t2.block_type
         # given t is returned after mutation
-        expect(t2).to be(t)
+        expect(block_t).to be(t)
         expect(block_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(block_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(block_t.param_types.types).to be_empty
@@ -264,13 +262,15 @@ describe 'The type factory' do
       end
 
       it 'the with_optional_block methods decorates a Callable with an optional block_type' do
-        t = Puppet::Pops::Types::TypeFactory.callable()
-        t2 = Puppet::Pops::Types::TypeFactory.with_optional_block(t)
+        b = Puppet::Pops::Types::TypeFactory.callable
+        t = Puppet::Pops::Types::TypeFactory.optional(b)
+        t2 = Puppet::Pops::Types::TypeFactory.callable(t)
         opt_t = t2.block_type
         expect(opt_t.class).to be(Puppet::Pops::Types::POptionalType)
         block_t = opt_t.optional_type
         # given t is returned after mutation
-        expect(t2).to be(t)
+        expect(opt_t).to be(t)
+        expect(block_t).to be(b)
         expect(block_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(block_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(block_t.param_types.types).to be_empty

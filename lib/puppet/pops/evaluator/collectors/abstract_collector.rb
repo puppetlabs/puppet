@@ -61,7 +61,7 @@ class Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
     return false if objects.empty?
 
-    objects.inject(@collected) { |c,o| c[o.ref]=o; c }
+    objects.reduce(@collected) { |c,o| c[o.ref]=o; c }
 
     objects
   end

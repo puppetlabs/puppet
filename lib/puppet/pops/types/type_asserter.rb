@@ -24,7 +24,7 @@ module Puppet::Pops::Types::TypeAsserter
   # @return The value argument
   #
   def self.assert_instance_of(subject, expected_type, value, nil_ok = false)
-    if !(value.nil? && nil_ok)
+    unless value.nil? && nil_ok
       tc = Puppet::Pops::Types::TypeCalculator.singleton
       check_assignability(tc, subject, expected_type, tc.infer_set(value), true)
     end
@@ -36,7 +36,7 @@ module Puppet::Pops::Types::TypeAsserter
       # Do not give all the details for inferred types - i.e. format as Integer, instead of Integer[n, n] for exact
       # value, which is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output).
       #
-      actual_type = Puppet::Pops::Types::TypeCalculator.generalize!(actual_type) if inferred
+      actual_type = Puppet::Pops::Types::TypeCalculator.generalize(actual_type) if inferred
       raise Puppet::Pops::Types::TypeAssertionError.new(
         "#{subject} value has wrong type, expected #{tc.string(expected_type)}, actual #{tc.string(actual_type)}", expected_type, actual_type)
     end

@@ -28,7 +28,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     variable_bindings = combine_values_with_parameters(args)
 
     tc = Puppet::Pops::Types::TypeCalculator
-    final_args = tc.infer_set(parameters.inject([]) do |tmp_args, param|
+    final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
       if param.captures_rest
         tmp_args.concat(variable_bindings[param.name])
       else

@@ -354,7 +354,7 @@ module Private
     def initialize
       @entries = []
       @key_factory = Puppet::Pops::Binder::KeyFactory.new()
-      @type_calculator = @key_factory.type_calculator
+      @type_calculator = Puppet::Pops::Types::TypeCalculator.singleton
     end
 
     def lookup(scope, *args, &block)
@@ -430,7 +430,7 @@ module Private
       # represented the same (but still opaque) way.
       #
       @key_factory         = configured_binder.key_factory()
-      @type_calculator     = key_factory.type_calculator()
+      @type_calculator     = Puppet::Pops::Types::TypeCalculator.singleton
       @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform", 2,  2)
       @recursion_lock = [ ]
     end
@@ -484,7 +484,7 @@ module Private
     def lookup_type(scope, type, name='')
       val = lookup_key(scope, named_key(type, name))
       return nil if val.nil?
-      unless key_factory.type_calculator.instance?(type, val)
+      unless type_calculator.instance?(type, val)
         raise ArgumentError, "Type error: incompatible type, #{type_error_detail(type, val)}"
       end
       val
@@ -510,7 +510,7 @@ module Private
         when Puppet::Pops::Binder::InjectorEntry
           val = produce(scope, entry)
           return nil if val.nil?
-          unless key_factory.type_calculator.instance?(entry.binding.type, val)
+          unless type_calculator.instance?(entry.binding.type, val)
             raise "Type error: incompatible type returned by producer, #{type_error_detail(entry.binding.type, val)}"
           end
           val

@@ -18,7 +18,7 @@ class Puppet::Pops::Lookup
   # @return [Object] The found value
   #
   def self.lookup(scope, name, value_type, default_value, has_default, override, default_values_hash, merge)
-    value_type = Puppet::Pops::Types::PDataType.new if value_type.nil?
+    value_type = Puppet::Pops::Types::PDataType::DEFAULT if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array
