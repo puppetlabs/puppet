@@ -159,6 +159,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.status
       end
 

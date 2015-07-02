@@ -99,6 +99,7 @@ _EOF_
   describe "when checking if it is enabled" do
     it "should execute the lsitab command" do
       @provider.expects(:execute).with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false})
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       @provider.enabled?
     end
 
