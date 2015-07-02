@@ -13,3 +13,6 @@ tmtags
 ## VIM
 *.swp
 tags
+
+## Yard gem
+.yardoc
