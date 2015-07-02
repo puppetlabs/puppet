@@ -1202,13 +1202,15 @@ describe Puppet::Parser::Compiler do
 
     it 'should recompute the version after input files are re-parsed' do
       Puppet[:code] = 'class foo { }'
-      Time.stubs(:now).returns(1)
+      first_time = Time.at(1)
+      second_time = Time.at(200)
+      Time.stubs(:now).returns(first_time)
       node = Puppet::Node.new('mynode')
-      expect(Puppet::Parser::Compiler.compile(node).version).to eq(1)
-      Time.stubs(:now).returns(2)
-      expect(Puppet::Parser::Compiler.compile(node).version).to eq(1) # no change because files didn't change
+      expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i)
+      Time.stubs(:now).returns(second_time)
+      expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i) # no change because files didn't change
       Puppet[:code] = nil
-      expect(Puppet::Parser::Compiler.compile(node).version).to eq(2)
+      expect(Puppet::Parser::Compiler.compile(node).version).to eq(second_time.to_i)
     end
 
     ['define', 'class', 'node'].each do |thing|
