@@ -360,7 +360,12 @@ module Puppet::Environments
       if result = @cache[name]
         return result.value
       elsif (result = @loader.get(name))
-        @cache[name] = entry(result)
+        cache_entry = entry(result)
+        unless cache_entry.is_a?(NotCachedEntry)
+          @cache_expiration_service.created(result)
+          @cache[name] = cache_entry
+          Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
+        end
         result
       end
     end
@@ -393,7 +398,6 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      @cache_expiration_service.created(env)
       ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
       case ttl
       when 0
@@ -427,12 +431,20 @@ module Puppet::Environments
       def expired?
         false
       end
+
+      def label
+        ""
+      end
     end
 
     # Always evicting entry
     class NotCachedEntry < Entry
       def expired?
         true
+      end
+
+      def label
+        "(ttl = 0 sec)"
       end
     end
 
@@ -441,10 +453,15 @@ module Puppet::Environments
       def initialize(value, ttl_seconds)
         super value
         @ttl = Time.now + ttl_seconds
+        @ttl_seconds = ttl_seconds
       end
 
       def expired?
         Time.now > @ttl
+      end
+
+      def label
+        "(ttl = #{@ttl_seconds} sec)"
       end
     end
   end
