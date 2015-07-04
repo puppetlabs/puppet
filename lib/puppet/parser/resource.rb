@@ -73,18 +73,15 @@ class Puppet::Parser::Resource < Puppet::Resource
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
-
     Puppet::Util::Profiler.profile("Evaluated resource #{self}", [:compiler, :evaluate_resource, self]) do
       @evaluated = true
-      if klass = resource_type and ! builtin_type?
-        finish
-        evaluated_code = klass.evaluate_code(self)
-
-        return evaluated_code
-      elsif builtin?
+      if builtin?
         devfail "Cannot evaluate a builtin type (#{type})"
-      else
+      elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
+      else
+        finish
+        resource_type.evaluate_code(self)
       end
     end
   end
@@ -115,9 +112,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished
   end
 
-  def initialize(*args)
-    raise ArgumentError, "Resources require a hash as last argument" unless args.last.is_a? Hash
-    raise ArgumentError, "Resources require a scope" unless args.last[:scope]
+  def initialize(type, title, attributes)
+    raise ArgumentError, 'Resources require a hash as last argument' unless attributes.is_a? Hash
+    raise ArgumentError, 'Resources require a scope' unless attributes[:scope]
     super
 
     @source ||= scope.source
@@ -271,7 +268,8 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def add_scope_tags
-    if scope_resource = scope.resource
+    scope_resource = scope.resource
+    unless scope_resource.nil? || scope_resource.equal?(self)
       merge_tags(scope_resource)
     end
   end

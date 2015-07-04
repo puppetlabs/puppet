@@ -105,9 +105,9 @@ describe Puppet::Parser::Resource do
       @arguments = {:scope => @scope}
     end
 
-    it "should fail unless #{name.to_s} is specified" do
+    it "should fail unless hash is specified" do
       expect {
-        Puppet::Parser::Resource.new('file', '/my/file')
+        Puppet::Parser::Resource.new('file', '/my/file', nil)
       }.to raise_error(ArgumentError, /Resources require a hash as last argument/)
     end
 

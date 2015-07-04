@@ -11,8 +11,11 @@ class Puppet::Resource
   include Puppet::Util::Tagging
 
   include Enumerable
-  attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
+  attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
   attr_reader :type, :title
+
+  # @deprecated
+  attr_accessor :validate_parameters
 
   require 'puppet/indirector'
   extend Puppet::Indirector

@@ -27,6 +27,14 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
+  NAME = 'name'.freeze
+  TITLE = 'title'.freeze
+  MODULE_NAME = 'module_name'.freeze
+  CALLER_MODULE_NAME = 'caller_module_name'.freeze
+  PARAMETERS = 'parameters'.freeze
+  KIND = 'kind'.freeze
+  NODES = 'nodes'.freeze
+  DOUBLE_COLON = '::'.freeze
   EMPTY_ARRAY = [].freeze
 
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
@@ -60,8 +68,8 @@ class Puppet::Resource::Type
   indirects :resource_type, :terminus_class => :parser
 
   def self.from_data_hash(data)
-    name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
-    kind = data.delete('kind') || "definition"
+    name = data.delete(NAME) or raise ArgumentError, 'Resource Type names must be specified'
+    kind = data.delete(KIND) || 'definition'
 
     unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
       raise ArgumentError, "Unsupported resource kind '#{kind}'"
@@ -86,15 +94,15 @@ class Puppet::Resource::Type
     # External documentation uses "parameters" but the internal name
     # is "arguments"
     # Dump any arguments as source
-    data['parameters'] = Hash[arguments.map do |k,v|
+    data[PARAMETERS] = Hash[arguments.map do |k,v|
                                 [k, v.respond_to?(:source_text) ? v.source_text : v]
                               end]
-    data['name'] = name
+    data[NAME] = name
 
     unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
       raise ArgumentError, "Unsupported resource kind '#{type}'"
     end
-    data['kind'] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
+    data[KIND] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
     data
   end
 
@@ -188,7 +196,7 @@ class Puppet::Resource::Type
 
     [:code, :doc, :line, :file, :parent].each do |param|
       next unless value = options[param]
-      send(param.to_s + "=", value)
+      send(param.to_s + '=', value)
     end
 
     set_arguments(options[:arguments])
@@ -260,7 +268,7 @@ class Puppet::Resource::Type
   # parameterized class, then all parameters take on their default
   # values.
   def ensure_in_catalog(scope, parameters=nil)
-    type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
+    raise ArgumentError, 'Cannot create resources for defined resource types' if type == :definition
     resource_type = type == :hostclass ? :class : :node
 
     # Do nothing if the resource already exists; this makes sure we don't
@@ -270,8 +278,9 @@ class Puppet::Resource::Type
     # if parameters are passed, we should still try to create the resource
     # even if it exists so that we can fail
     # this prevents us from being able to combine param classes with include
-    if resource = scope.catalog.resource(resource_type, name) and !parameters
-      return resource
+    if parameters.nil?
+      resource = scope.catalog.resource(resource_type, name)
+      return resource unless resource.nil?
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
     assign_parameter_values(parameters, resource)
@@ -335,16 +344,16 @@ class Puppet::Resource::Type
     end
 
     if @type == :hostclass
-      scope["title"] = resource.title.to_s.downcase unless set.include? :title
-      scope["name"] =  resource.name.to_s.downcase  unless set.include? :name
+      scope[TITLE] = resource.title.to_s.downcase unless set.include? :title
+      scope[NAME] =  resource.name.to_s.downcase  unless set.include? :name
     else
-      scope["title"] = resource.title               unless set.include? :title
-      scope["name"] =  resource.name                unless set.include? :name
+      scope[TITLE] = resource.title               unless set.include? :title
+      scope[NAME] =  resource.name                unless set.include? :name
     end
-    scope["module_name"] = module_name if module_name and ! set.include? :module_name
+    scope[MODULE_NAME] = module_name if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope["caller_module_name"] = caller_name
+      scope[CALLER_MODULE_NAME] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? or node?
 
@@ -361,10 +370,10 @@ class Puppet::Resource::Type
   def valid_parameter?(param)
     param = param.to_s
 
-    return true if param == "name"
+    return true if param == NAME
     # This hardcodes the knowledge that the 'nodes' parameter for
     # application instances is magical
-    return true if param == "nodes" && application?
+    return true if param == NODES && application?
     return true if Puppet::Type.metaparam?(param)
     return false unless defined?(@arguments)
     return(arguments.include?(param) ? true : false)
@@ -427,9 +436,9 @@ class Puppet::Resource::Type
 
   # Split an fq name into a namespace and name
   def namesplit(fullname)
-    ary = fullname.split("::")
+    ary = fullname.split(DOUBLE_COLON)
     n = ary.pop || ""
-    ns = ary.join("::")
+    ns = ary.join(DOUBLE_COLON)
     return ns, n
   end
 
