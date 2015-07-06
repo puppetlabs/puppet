@@ -243,11 +243,15 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-    "Illegal name. The given name #{name} does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\w*)*$/"
+    "Illegal name. The given name '#{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/"
+  end
+
+  ILLEGAL_PARAM_NAME = hard_issue :ILLEGAL_PARAM_NAME, :name do
+    "Illegal parameter name. The given name '#{name}' does not conform to the naming rule /^[a-z_]\\w*$/"
   end
 
   ILLEGAL_VAR_NAME = hard_issue :ILLEGAL_VAR_NAME, :name do
-    "Illegal variable name, The given name '#{name}' does not conform to the naming rule /^((::)?[a-z]\w*)*((::)?[a-z_]\w*)$/"
+    "Illegal variable name, The given name '#{name}' does not conform to the naming rule /^((::)?[a-z]\\w*)*((::)?[a-z_]\\w*)$/"
   end
 
   ILLEGAL_NUMERIC_VAR_NAME = hard_issue :ILLEGAL_NUMERIC_VAR_NAME, :name do
