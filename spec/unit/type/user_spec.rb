@@ -344,13 +344,20 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when managing comment on Ruby 1.9", :if => String.method_defined?(:encode) do
-    it "should force value encoding to ASCII-8BIT" do
-      value = 'abcd™'
-      expect(value.encoding).to eq(Encoding::UTF_8)
-      user = described_class.new(:name => 'foo', :comment => value)
-      expect(user[:comment].encoding).to eq(Encoding::ASCII_8BIT)
-      expect(user[:comment]).to eq(value.force_encoding(Encoding::ASCII_8BIT))
+  describe "when managing comment" do
+    before :each do
+      @value = 'abcd™'
+      expect(@value.encoding).to eq(Encoding::UTF_8)
+      @user = described_class.new(:name => 'foo', :comment => @value)
+    end
+
+    it "should be converted to ASCII_8BIT for ruby 1.9 / 2.0", :if => RUBY_VERSION < "2.1.0" && String.method_defined?(:encode) do
+      expect(@user[:comment].encoding).to eq(Encoding::ASCII_8BIT)
+      expect(@user[:comment]).to eq(@value.force_encoding(Encoding::ASCII_8BIT))
+    end
+
+    it "must not be converted for ruby >= 2.1", :if => RUBY_VERSION >= "2.1.0" do
+      expect(@user[:comment].encoding).to eq(Encoding::UTF_8)
     end
   end
 
