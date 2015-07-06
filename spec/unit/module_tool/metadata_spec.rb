@@ -9,7 +9,7 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata }
 
     %w[ name version author summary license source project_page issues_url
-    dependencies dashed_name release_name description ].each do |prop|
+    dependencies dashed_name release_name description data_provider].each do |prop|
       describe "##{prop}" do
         it "responds to the property" do
           subject.send(prop)
@@ -224,6 +224,39 @@ describe Puppet::ModuleTool::Metadata do
         expect(subject.dependencies.size).to eq(1)
       end
     end
+
+    context 'with valid data_provider' do
+      let(:data) { {'data_provider' => {'name' => 'the_name', 'arguments' => ['arg']} }}
+
+      it 'validates the provider correctly' do
+        expect { subject }.not_to raise_error
+      end
+
+      it 'returns the provider' do
+        expect(subject.data_provider).to eq({'name' => 'the_name', 'arguments' => ['arg']})
+      end
+    end
+
+    context 'with invalid data_provider' do
+      let(:data) { }
+
+      it "raises exception on missing 'name'" do
+        expect { metadata.update('data_provider' => {}) }.to raise_error(ArgumentError, /missing required field 'name'/)
+      end
+
+      it "raises exception on 'name' that do not start with a letter" do
+        expect { metadata.update('data_provider' => {'name' => '_the_name'}) }.to raise_error(ArgumentError, /field 'name' must begin with a letter/)
+        expect { metadata.update('data_provider' => {'name' => ''}) }.to raise_error(ArgumentError, /field 'name' must begin with a letter/)
+      end
+
+      it "raises exception on 'name' that contain non-alphanumeric characters" do
+        expect { metadata.update('data_provider' => {'name' => 'the::name'}) }.to raise_error(ArgumentError, /field 'name' contains non-alphanumeric characters/)
+      end
+
+      it "raises exception if 'arguments' is not an array" do
+        expect { metadata.update('data_provider' => {'name' => 'the_name', 'arguments' => 'hello'}) }.to raise_error(ArgumentError, /field 'arguments' must be an array/)
+      end
+    end
   end
 
   describe '#dashed_name' do
@@ -271,7 +304,7 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata.to_hash }
 
     it "contains the default set of keys" do
-      expect(subject.keys.sort).to eq(%w[ name version author summary license source issues_url project_page dependencies ].sort)
+      expect(subject.keys.sort).to eq(%w[ name version author summary license source issues_url project_page dependencies data_provider].sort)
     end
 
     describe "['license']" do
