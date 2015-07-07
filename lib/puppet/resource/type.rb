@@ -281,7 +281,7 @@ class Puppet::Resource::Type
     if parameters.nil?
       resource = scope.catalog.resource(resource_type, name)
       return resource unless resource.nil?
-    else
+    elsif parameters.is_a?(Hash)
       parameters = parameters.map {|k, v| Puppet::Parser::Resource::Param.new(:name => k, :value => v, :source => self)}
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self, :parameters => parameters)
