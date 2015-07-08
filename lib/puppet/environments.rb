@@ -282,10 +282,19 @@ module Puppet::Environments
       @cache_expiration_service || DefaultCacheExpirationService.new
     end
 
+    END_OF_TIME = Time.gm(7137) # the next Mesoamerican Long Count cycle-end after 2012 (5125-2012)
+    START_OF_TIME = Time.gm(1)
+
     def initialize(loader)
       @loader = loader
-      @cache = {}
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
+      @cache = {}
+
+      # Holds expiration times in sorted order - next to expire is first
+      @expirations = SortedSet.new
+
+      # Infinity since it there are no entries, this is a cache of the first to expire time
+      @next_expiration = END_OF_TIME
     end
 
     # @!macro loader_list
@@ -300,14 +309,33 @@ module Puppet::Environments
 
     # @!macro loader_get
     def get(name)
-      evict_if_expired(name)
+      # Aggressively evict all that has expired
+      # This strategy favors smaller memory footprint over environment
+      # retrieval time.
+      clear_all_expired
       if result = @cache[name]
+        # found in cache
         return result.value
       elsif (result = @loader.get(name))
-        @cache[name] = entry(result)
+        # environment loaded, cache it
+        cache_entry = entry(result)
+        @cache_expiration_service.created(result)
+        add_entry(name, cache_entry)
         result
       end
     end
+
+    # Adds a cache entry to the cache
+    def add_entry(name, cache_entry)
+      Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
+      @cache[name] = cache_entry
+      expires = cache_entry.expires
+      @expirations.add(expires)
+      if @next_expiration > expires
+        @next_expiration = expires
+      end
+    end
+    private :add_entry
 
     # Clears the cache of the environment with the given name.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
@@ -319,6 +347,25 @@ module Puppet::Environments
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear_all()
       @cache = {}
+      @expirations.clear
+      @next_expiration = END_OF_TIME
+    end
+
+    # Clears all environments that have expired, either by exceeding their time to live, or
+    # through an explicit eviction determined by the cache expiration service.
+    #
+    def clear_all_expired()
+      t = Time.now
+      return if t < @next_expiration && ! @cache.any? {|name, _| @cache_expiration_service.expired?(name.to_sym) }
+      to_expire = @cache.select { |name, entry| entry.expires < t || @cache_expiration_service.expired?(name.to_sym) }
+      to_expire.each do |name, entry|
+        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+        @cache_expiration_service.evicted(name)
+        clear(name)
+        @expirations.delete(entry.expires)
+        Puppet.settings.clear_environment_settings(name)
+      end
+      @next_expiration = @expirations.first || END_OF_TIME
     end
 
     # This implementation evicts the cache, and always gets the current
@@ -337,9 +384,7 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      @cache_expiration_service.created(env)
       ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
-      Puppet.debug {"Caching environment '#{env.name}' (cache ttl: #{ttl})"}
       case ttl
       when 0
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
@@ -373,12 +418,28 @@ module Puppet::Environments
       def expired?
         false
       end
+
+      def label
+        ""
+      end
+
+      def expires
+        END_OF_TIME
+      end
     end
 
     # Always evicting entry
     class NotCachedEntry < Entry
       def expired?
         true
+      end
+
+      def label
+        "(ttl = 0 sec)"
+      end
+
+      def expires
+        START_OF_TIME
       end
     end
 
@@ -387,10 +448,19 @@ module Puppet::Environments
       def initialize(value, ttl_seconds)
         super value
         @ttl = Time.now + ttl_seconds
+        @ttl_seconds = ttl_seconds
       end
 
       def expired?
         Time.now > @ttl
+      end
+
+      def label
+        "(ttl = #{@ttl_seconds} sec)"
+      end
+
+      def expires
+        @ttl
       end
     end
   end

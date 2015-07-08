@@ -147,10 +147,14 @@ describe Puppet::Type.type(:service).provider(:init) do
         expect(provider).to respond_to(method)
       end
       describe "when running #{method}" do
+        before :each do
+          $CHILD_STATUS.stubs(:exitstatus).returns(0)
+        end
 
         it "should use any provided explicit command" do
           resource[method] = "/user/specified/command"
           provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }
+
           provider.send(method)
         end
 
@@ -158,6 +162,7 @@ describe Puppet::Type.type(:service).provider(:init) do
           resource[:hasrestart] = :true
           resource[:hasstatus] = :true
           provider.expects(:execute).with { |command, *args| command ==  ["/service/path/myservice",method]}
+
           provider.send(method)
         end
       end
@@ -170,6 +175,7 @@ describe Puppet::Type.type(:service).provider(:init) do
         end
         it "should execute the command" do
           provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
+          $CHILD_STATUS.stubs(:exitstatus).returns(0)
           provider.status
         end
         it "should consider the process running if the command returns 0" do
