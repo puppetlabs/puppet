@@ -2,6 +2,30 @@ module Puppet
   module Acceptance
     module TempFileUtils
 
+      # Return the name of the root user, as appropriate for the platform.
+      def root_user(host)
+        case host['platform']
+        when /windows/
+          'Administrator'
+        else
+          'root'
+        end
+      end
+
+      # Return the name of the root group, as appropriate for the platform.
+      def root_group(host)
+        case host['platform']
+        when /windows/
+          'Administrators'
+        when /aix/
+          'system'
+        when /osx|bsd/
+          'wheel'
+        else
+          'root'
+        end
+      end
+
       # Create a file on the host.
       # Parameters:
       # [host] the host to create the file on
@@ -22,28 +46,14 @@ module Puppet
           if host['roles'].include?('master') then
             options[:owner] = host.puppet['user']
           else
-            case host['platform']
-            when /windows/
-              options[:owner] = 'Administrator'
-            else
-              options[:owner] = 'root'
-            end
+            options[:owner] = root_user(host)
           end
         end
         unless options[:group]
           if host['roles'].include?('master') then
             options[:group] = host.puppet['group']
           else
-            case host['platform']
-            when /windows/
-              options[:group] = 'Administrators'
-            when /aix/
-              options[:group] = 'system'
-            when /osx|bsd/
-              options[:group] = 'wheel'
-            else
-              options[:owner] = 'root'
-            end
+            options[:group] = root_group(host)
           end
         end
 
@@ -125,6 +135,23 @@ module Puppet
         on(host, "chmod #{mode} #{path}")
       end
 
+      # Returns an array containing the owner, group and mode of
+      # the file specified by path. The returned mode is an integer
+      # value containing only the file mode, excluding the type, e.g
+      # S_IFDIR 0040000
+      def stat(host, path)
+        stat_command = case agent['platform']
+                       when /osx/
+                         "stat -f '%Su:%Sg:%p'"
+                       else
+                         "stat --format '%U:%G:%a'"
+                       end
+
+        permissions = on(host, "#{stat_command} #{path}").stdout.chomp
+        owner, group, mode = permissions.split(':')
+
+        [owner, group, mode.to_i(8) & 07777]
+      end
 
       def initialize_temp_dirs()
         # pluck this out of the test case environment; not sure if there is a better way
