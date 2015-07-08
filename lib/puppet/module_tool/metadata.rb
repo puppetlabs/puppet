@@ -15,16 +15,15 @@ module Puppet::ModuleTool
     attr_accessor :module_name
 
     DEFAULTS = {
-      'name'          => nil,
-      'version'       => nil,
-      'author'        => nil,
-      'summary'       => nil,
-      'license'       => 'Apache-2.0',
-      'source'        => '',
-      'project_page'  => nil,
-      'issues_url'    => nil,
-      'dependencies'  => Set.new.freeze,
-      'data_provider' => nil,
+      'name'         => nil,
+      'version'      => nil,
+      'author'       => nil,
+      'summary'      => nil,
+      'license'      => 'Apache-2.0',
+      'source'       => '',
+      'project_page' => nil,
+      'issues_url'   => nil,
+      'dependencies' => Set.new.freeze,
     }
 
     def initialize
@@ -53,7 +52,6 @@ module Puppet::ModuleTool
       process_name(data) if data['name']
       process_version(data) if data['version']
       process_source(data) if data['source']
-      process_data_provider(data) if data['data_provider']
       merge_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
@@ -130,10 +128,6 @@ module Puppet::ModuleTool
       validate_version(data['version'])
     end
 
-    def process_data_provider(data)
-      validate_data_provider(data['data_provider'])
-    end
-
     # Do basic parsing of the source parameter.  If the source is hosted on
     # GitHub, we can predict sensible defaults for both project_page and
     # issues_url.
@@ -192,26 +186,6 @@ module Puppet::ModuleTool
 
       err = "version string cannot be parsed as a valid Semantic Version"
       raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"
-    end
-
-    # Validates that the given data provider is and object with a valid name and arguments
-    def validate_data_provider(data_provider)
-      err = nil
-      if data_provider.is_a?(Hash)
-        name = data_provider['name']
-        if name.nil?
-          err = "missing required field 'name'"
-        elsif name =~ /^[a-zA-Z][a-zA-Z0-9_]*$/
-          args = data_provider['arguments']
-          err = "the field 'arguments' must be an array" unless args.nil? || args.is_a?(Array)
-        else
-          suffix = name =~ /^[a-zA-Z]/ ? 'contains non-alphanumeric characters' : 'must begin with a letter'
-          err = "the field 'name' #{suffix}"
-        end
-      else
-        err = 'argument must be an object'
-      end
-      raise ArgumentError, "Invalid 'data_provider' field in metadata.json: #{err}" if err
     end
 
     # Validates that the version range can be parsed by Semantic.
