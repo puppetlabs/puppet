@@ -1,5 +1,7 @@
 test_name "Can enumerate environments via an HTTP endpoint"
 
+confine :except, :platform => /osx/ # see PUP-4820
+
 def master_port(agent)
   setting_on(agent, "agent", "masterport")
 end
