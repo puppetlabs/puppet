@@ -67,12 +67,20 @@ install_packages_on(master, MASTER_PACKAGES)
 install_packages_on(agents, AGENT_PACKAGES)
 
 agents.each do |agent|
-  if agent['platform'] =~ /windows/
+  case agent['platform']
+  when /windows/
     arch = agent[:ruby_arch] || 'x86'
     base_url = ENV['MSI_BASE_URL'] || "http://builds.puppetlabs.lan/puppet-agent/#{ENV['SHA']}/artifacts/windows"
     filename = ENV['MSI_FILENAME'] || "puppet-agent-#{arch}.msi"
 
     install_puppet_from_msi(agent, :url => "#{base_url}/#{filename}")
+  when /osx/
+    opts = {
+      :puppet_collection => 'PC1',
+      :puppet_agent_sha => ENV['SHA'],
+      :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
+    }
+    install_puppet_agent_dev_repo_on(agent, opts)
   end
 end
 

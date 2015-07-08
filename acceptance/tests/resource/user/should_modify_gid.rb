@@ -1,5 +1,6 @@
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
+confine :except, :platform => /osx/ # See PUP-4824
 
 user = "pl#{rand(99999).to_i}"
 group1 = "#{user}old"

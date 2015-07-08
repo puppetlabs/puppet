@@ -8,9 +8,9 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
 
 def assert_ownership(agent, location, expected_user, expected_group)
-  on(agent, "stat --format '%U:%G' #{location}") do
-    assert_match(/#{expected_user}:#{expected_group}/, stdout)
-  end
+  permissions = stat(agent, location)
+  assert_equal(expected_user, permissions[0], "Owner #{permissions[0]} does not match expected #{expected_user}")
+  assert_equal(expected_group, permissions[1], "Group #{permissions[1]} does not match expected #{expected_group}")
 end
 
 def missing_directory_for(agent, dir)
@@ -42,7 +42,7 @@ agents.each do |agent|
                    '--group', 'missinggroup') do
 
     assert_match(/puppet_run/, stdout)
-    assert_ownership(agent, logdir, 'root', 'root')
+    assert_ownership(agent, logdir, root_user(agent), root_group(agent))
   end
 end
 

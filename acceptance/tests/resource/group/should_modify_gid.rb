@@ -1,5 +1,6 @@
 test_name "should modify gid of existing group"
 confine :except, :platform => 'windows'
+confine :except, :platform => /osx/ # See PUP-4824
 
 name = "pl#{rand(999999).to_i}"
 gid1  = rand(999999).to_i

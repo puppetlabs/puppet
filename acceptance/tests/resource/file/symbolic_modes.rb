@@ -1,5 +1,8 @@
 test_name "file resource: symbolic modes"
 
+require 'puppet/acceptance/temp_file_utils'
+extend Puppet::Acceptance::TempFileUtils
+
 module FileModeAssertions
   include Beaker::DSL::Assertions
 
@@ -12,8 +15,8 @@ module FileModeAssertions
   end
 
   def assert_mode(agent, path, expected_mode)
-    current_mode = testcase.on(agent, "stat --format '%a' #{path}").stdout.chomp.to_i(8)
-    assert_equal(expected_mode, current_mode, "current mode #{current_mode.to_s(8)} doesn't match expected mode #{expected_mode.to_s(8)}")
+    permissions = testcase.stat(agent, path)
+    assert_equal(expected_mode, permissions[2], "current mode #{permissions[2].to_s(8)} doesn't match expected mode #{expected_mode.to_s(8)}")
   end
 
   def assert_mode_change(agent, manifest, path, symbolic_mode, start_mode, expected_mode)
