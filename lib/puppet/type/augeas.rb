@@ -73,9 +73,17 @@ Puppet::Type.newtype(:augeas) do
 
   newparam (:onlyif) do
     desc "Optional augeas command and comparisons to control the execution of this type.
+
+      Note: `values` is not an actual augeas API command. It calls `match` to retrieve an array of paths
+             in <MATCH_PATH> and then `get` to retrieve the values from each of the returned paths.
+
       Supported onlyif syntax:
 
       * `get <AUGEAS_PATH> <COMPARATOR> <STRING>`
+      * `values <MATCH_PATH> include <STRING>`
+      * `values <MATCH_PATH> not_include <STRING>`
+      * `values <MATCH_PATH> == <AN_ARRAY>`
+      * `values <MATCH_PATH> != <AN_ARRAY>`
       * `match <MATCH_PATH> size <COMPARATOR> <INT>`
       * `match <MATCH_PATH> include <STRING>`
       * `match <MATCH_PATH> not_include <STRING>`

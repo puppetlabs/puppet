@@ -195,6 +195,56 @@ describe provider_class do
     end
   end
 
+  describe "values filters" do
+    before do
+      augeas = stub("augeas", :match => ["set", "of", "values"])
+      augeas.stubs(:get).returns('set').then.returns('of').then.returns('values')
+      augeas.stubs("close")
+      @provider = provider_class.new(@resource)
+      @provider.aug = augeas
+    end
+
+    it "should return true for includes match" do
+      command = ["values", "fake value", "include values"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return false for includes non match" do
+      command = ["values", "fake value", "include JarJar"]
+      expect(@provider.process_values(command)).to eq(false)
+    end
+
+    it "should return true for includes match" do
+      command = ["values", "fake value", "not_include JarJar"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return false for includes non match" do
+      command = ["values", "fake value", "not_include values"]
+      expect(@provider.process_values(command)).to eq(false)
+    end
+
+    it "should return true for an array match" do
+      command = ["values", "fake value", "== ['set', 'of', 'values']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return false for an array non match" do
+      command = ["values", "fake value", "== ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_values(command)).to eq(false)
+    end
+
+    it "should return false for an array match with noteq" do
+      command = ["values", "fake value", "!= ['set', 'of', 'values']"]
+      expect(@provider.process_values(command)).to eq(false)
+    end
+
+    it "should return true for an array non match with noteq" do
+      command = ["values", "fake value", "!= ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+  end
+
   describe "match filters" do
     before do
       augeas = stub("augeas", :match => ["set", "of", "values"])
