@@ -9,7 +9,7 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata }
 
     %w[ name version author summary license source project_page issues_url
-    dependencies dashed_name release_name description ].each do |prop|
+    dependencies dashed_name release_name description data_provider].each do |prop|
       describe "##{prop}" do
         it "responds to the property" do
           subject.send(prop)
@@ -224,6 +224,35 @@ describe Puppet::ModuleTool::Metadata do
         expect(subject.dependencies.size).to eq(1)
       end
     end
+
+    context 'with valid data_provider' do
+      let(:data) { {'data_provider' => 'the_name'} }
+
+      it 'validates the provider correctly' do
+        expect { subject }.not_to raise_error
+      end
+
+      it 'returns the provider' do
+        expect(subject.data_provider).to eq('the_name')
+      end
+    end
+
+    context 'with invalid data_provider' do
+      let(:data) { }
+
+      it "raises exception unless argument starts with a letter" do
+        expect { metadata.update('data_provider' => '_the_name') }.to raise_error(ArgumentError, /field 'data_provider' must begin with a letter/)
+        expect { metadata.update('data_provider' => '') }.to raise_error(ArgumentError, /field 'data_provider' must begin with a letter/)
+      end
+
+      it "raises exception if argument contains non-alphanumeric characters" do
+        expect { metadata.update('data_provider' => 'the::name') }.to raise_error(ArgumentError, /field 'data_provider' contains non-alphanumeric characters/)
+      end
+
+      it "raises exception unless argument is a string" do
+        expect { metadata.update('data_provider' => 23) }.to raise_error(ArgumentError, /field 'data_provider' must be a string/)
+      end
+    end
   end
 
   describe '#dashed_name' do
@@ -271,7 +300,7 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata.to_hash }
 
     it "contains the default set of keys" do
-      expect(subject.keys.sort).to eq(%w[ name version author summary license source issues_url project_page dependencies ].sort)
+      expect(subject.keys.sort).to eq(%w[ name version author summary license source issues_url project_page dependencies data_provider].sort)
     end
 
     describe "['license']" do
