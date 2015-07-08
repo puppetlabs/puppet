@@ -2,6 +2,7 @@ test_name "concurrent catalog requests (PUP-2659)"
 
 # we're only testing the effects of loading a master with concurrent requests
 confine :except, :platform => 'windows'
+confine :except, :platform => /osx/ # see PUP-4820
 
 step "setup a manifest"
 

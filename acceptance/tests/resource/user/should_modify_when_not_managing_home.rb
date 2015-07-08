@@ -27,6 +27,9 @@ agents.each do |agent|
     home_prop = "home='#{profile_base(agent)}\\#{name}'"
   when /solaris/
     pending_test("managehome needs work on solaris")
+  when /osx/
+    skip_test("OSX doesn't support managehome")
+    # we don't get here
   end
 
   teardown do

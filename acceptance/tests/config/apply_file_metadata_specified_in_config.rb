@@ -16,11 +16,24 @@ agents.each do |agent|
   }
   SITE
 
-  on(agent, puppet('config', 'set', 'logdir', "'#{logdir} { owner = root, group = root, mode = 0700 }'", '--confdir', get_test_file_path(agent, '')))
+  user = root_user(agent)
+  group = root_group(agent)
+
+  # puppet only always the group to be 'root' or 'service', but not
+  # all platforms have a 'root' group, e.g. osx.
+  permissions =
+    if group == 'root'
+      "{ owner = #{user}, group = root, mode = 0700 }"
+    else
+      "{ owner = #{user}, mode = 0700 }"
+    end
+
+  on(agent, puppet('config', 'set', 'logdir', "'#{logdir} #{permissions}'", '--confdir', get_test_file_path(agent, '')))
 
   on(agent, puppet('apply', get_test_file_path(agent, 'site.pp'), '--confdir', get_test_file_path(agent, '')))
 
-  on(agent, "stat --format '%U:%G %a' #{logdir}") do
-    assert_match(/root:root 700/, stdout)
-  end
+  permissions = stat(agent, logdir)
+  assert_equal(user, permissions[0], "File owner #{permissions[0]} does not match expected user #{user}")
+  assert_equal(group, permissions[1], "File group #{permissions[1]} does not match expected group #{group}")
+  assert_equal(0700, permissions[2], "File mode #{permissions[2].to_s(8)} does not match expected mode 0700")
 end
