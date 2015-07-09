@@ -32,13 +32,17 @@ describe "when performing lookup" do
   end
 
   def assemble_and_compile_with_block(fmt, block, *lookup_args)
-    Puppet[:code] = <<-END.gsub(/^ {6}/, '')
+    compile_and_get_notifications <<-END.gsub(/^ {6}/, '')
       $args = [#{lookup_args.join(',')}]
       $block = #{block}
       include abc
       $r = if $abc::result == undef { 'no_value' } else { $abc::result }
       notify { \"#{fmt}\": }
     END
+  end
+
+  def compile_and_get_notifications(code)
+    Puppet[:code] = code
     compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
   end
 
@@ -73,6 +77,16 @@ describe "when performing lookup" do
 
     it 'can lookup value provided by the module' do
       resources = assemble_and_compile('${r}', "'abc::b'")
+      expect(resources).to include('module_b')
+    end
+
+    it "can lookup value provided by the module that has 'function' data_provider entry in metadata.json" do
+      resources = compile_and_get_notifications("$args = ['meta::b']\ninclude meta\nnotify { $meta::result: }\n")
+      expect(resources).to include('module_b')
+    end
+
+    it "can lookup value provided by the module that has 'sample' data_provider entry in metadata.json" do
+      resources = compile_and_get_notifications("$args = ['metawcp::b']\ninclude metawcp\nnotify { $metawcp::result: }\n")
       expect(resources).to include('module_b')
     end
 
@@ -332,23 +346,23 @@ describe "when performing lookup" do
 
     it 'will resolve global, environment, and module correctly' do
       Hiera.any_instance.expects(:lookup).with('bca::e', any_parameters).returns({ 'k1' => 'global_e1' })
-      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+      resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include bca
         $r = lookup(bca::e, Hash[String,String], hash)
         notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
       END
-      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      )
       expect(resources).to include('global_e1_module_bca_e2_env_bca_e3')
     end
 
     it 'will resolve global and environment correctly when module has no provider' do
       Hiera.any_instance.expects(:lookup).with('no_provider::e', any_parameters).returns({ 'k1' => 'global_e1' })
-      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+      resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include no_provider
         $r = lookup(no_provider::e, Hash[String,String], hash)
         notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
       END
-      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      )
       expect(resources).to include('global_e1__env_no_provider_e3') # k2 is missing
     end
   end
