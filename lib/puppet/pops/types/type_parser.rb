@@ -347,7 +347,7 @@ class Puppet::Pops::Types::TypeParser
       if parameters.size == 1
         case parameters[0]
         when Integer
-          TYPES.range(parameters[0], parameters[0])
+          TYPES.range(parameters[0], :default)
         when :default
           TYPES.integer # unbound
         end
@@ -361,7 +361,7 @@ class Puppet::Pops::Types::TypeParser
       if parameters.size == 1
         case parameters[0]
         when Integer, Float
-          TYPES.float_range(parameters[0], parameters[0])
+          TYPES.float_range(parameters[0], :default)
         when :default
           TYPES.float # unbound
         end

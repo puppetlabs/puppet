@@ -66,6 +66,14 @@ describe Puppet::Pops::Types::TypeParser do
     expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
   end
 
+  it 'interprets an Integer with one parameter to have unbounded upper range' do
+    expect(parser.parse('Integer[0]')).to eq(parser.parse('Integer[0,default]'))
+  end
+
+  it 'interprets a Float with one parameter to have unbounded upper range' do
+    expect(parser.parse('Float[0]')).to eq(parser.parse('Float[0,default]'))
+  end
+
   it "parses a parameterized type into the type object" do
     parameterized_array = types.array_of(types.integer)
     parameterized_hash = types.hash_of(types.integer, types.boolean)
