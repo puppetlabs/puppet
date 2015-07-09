@@ -42,21 +42,22 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def initialize_module_provider(module_name)
+    injector = Puppet.lookup(:injector) { nil }
+
     # Support running tests without an injector being configured == using a null implementation
-    unless injector = Puppet.lookup(:injector) { nil }
-      return Puppet::Plugins::DataProviders::ModuleDataProvider.new()
-    end
+    return Puppet::Plugins::DataProviders::ModuleDataProvider.new() unless injector
+
     # Get the registry of module to provider implementation name
     module_service_type = Puppet::Plugins::DataProviders.hash_of_per_module_data_provider
     module_service_name = Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY
-    module_service = Puppet.lookup(:injector).lookup(nil, module_service_type, module_service_name)
+    module_service = injector.lookup(nil, module_service_type, module_service_name)
     provider_name = module_service[module_name] || 'none'
 
     service_type = Puppet::Plugins::DataProviders.hash_of_module_data_providers
     service_name = Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
-    service = Puppet.lookup(:injector).lookup(nil, service_type, service_name)
+    service = injector.lookup(nil, service_type, service_name)
     provider = service[provider_name]
     unless provider
       raise Puppet::Error.new("Environment '#{@env.name}', cannot find module_data_provider '#{provider_name}'")
@@ -65,6 +66,11 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def initialize_env_provider
+    injector = Puppet.lookup(:injector) { nil }
+
+    # Support running tests without an injector being configured == using a null implementation
+    return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new() unless injector
+
     # Get the environment's configuration since we need to know which data provider
     # should be used (includes 'none' which gets a null implementation).
     #
@@ -77,11 +83,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     service_name = Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
-    # Support running tests without an injector being configured == using a null implementation
-    unless injector = Puppet.lookup(:injector) { nil }
-      return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new()
-    end
-    service = Puppet.lookup(:injector).lookup(nil, service_type, service_name)
+    service = injector.lookup(nil, service_type, service_name)
     provider = service[provider_name]
     unless provider
       raise Puppet::Error.new("Environment '#{@env.name}', cannot find environment_data_provider '#{provider_name}'")
