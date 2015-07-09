@@ -642,6 +642,8 @@ config_version=$vardir/random/scripts
     end
 
     def expired?(env_name)
+      # make expired? idempotent
+      return true if @expired_envs.include? (env_name)
       @expired_envs << env_name
       @expiration_sequence.pop
     end
