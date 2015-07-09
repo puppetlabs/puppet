@@ -177,6 +177,25 @@ describe "validating 4x" do
     end
   end
 
+  context 'for badly formed non-numeric parameter names' do
+    ['Ateam', 'a::team'].each do |word|
+      it "produces an error when $#{word} is used as a parameter in a class" do
+        source = "class x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_PARAM_NAME)
+      end
+
+      it "produces an error when $#{word} is used as a parameter in a define" do
+        source = "define x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_PARAM_NAME)
+      end
+
+      it "produces an error when $#{word} is used as a parameter in a lambda" do
+        source = "with() |$#{word}| {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_PARAM_NAME)
+      end
+    end
+  end
+
   context 'top level constructs in conditionals' do
     ['class', 'define', 'node'].each do |word|
       it "produces an error when $#{word} is nested in an if expression" do
