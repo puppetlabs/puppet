@@ -38,6 +38,9 @@ module Puppet::Pops::Patterns
   # Note, that only the final segment may start with an underscore.
   VAR_NAME = %r{\A(:?(::)?[a-z]\w*)*(:?(::)?[a-z_]\w*)\z}
 
+  # PARAM_NAME matches the name part of a parameter (The $ character is not included)
+  PARAM_NAME = %r{\A[a-z_]\w*\z}
+
   # A Numeric var name must be the decimal number 0, or a decimal number not starting with 0
   NUMERIC_VAR_NAME = %r{\A(?:0|(?:[1-9][0-9]*))\z}
 

@@ -433,6 +433,10 @@ class Puppet::Pops::Validation::Checker4_0
     if o.name =~ /^(?:0x)?[0-9]+$/
       acceptor.accept(Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name)
     end
+
+    unless o.name =~ Puppet::Pops::Patterns::PARAM_NAME
+      acceptor.accept(Issues::ILLEGAL_PARAM_NAME, o, :name => o.name)
+    end
     return unless o.value
 
     if o.value.is_a?(Puppet::Pops::Model::AssignmentExpression)
