@@ -15,15 +15,16 @@ module Puppet::ModuleTool
     attr_accessor :module_name
 
     DEFAULTS = {
-      'name'         => nil,
-      'version'      => nil,
-      'author'       => nil,
-      'summary'      => nil,
-      'license'      => 'Apache-2.0',
-      'source'       => '',
-      'project_page' => nil,
-      'issues_url'   => nil,
-      'dependencies' => Set.new.freeze,
+      'name'          => nil,
+      'version'       => nil,
+      'author'        => nil,
+      'summary'       => nil,
+      'license'       => 'Apache-2.0',
+      'source'        => '',
+      'project_page'  => nil,
+      'issues_url'    => nil,
+      'dependencies'  => Set.new.freeze,
+      'data_provider' => nil,
     }
 
     def initialize
@@ -52,6 +53,7 @@ module Puppet::ModuleTool
       process_name(data) if data['name']
       process_version(data) if data['version']
       process_source(data) if data['source']
+      process_data_provider(data) if data['data_provider']
       merge_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
@@ -128,6 +130,10 @@ module Puppet::ModuleTool
       validate_version(data['version'])
     end
 
+    def process_data_provider(data)
+      validate_data_provider(data['data_provider'])
+    end
+
     # Do basic parsing of the source parameter.  If the source is hosted on
     # GitHub, we can predict sensible defaults for both project_page and
     # issues_url.
@@ -186,6 +192,23 @@ module Puppet::ModuleTool
 
       err = "version string cannot be parsed as a valid Semantic Version"
       raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"
+    end
+
+    # Validates that the given _value_ is a symbolic name that starts with a letter
+    # and then contains only letters, digits, or underscore. Will raise an ArgumentError
+    # if that's not the case.
+    #
+    # @param value [Object] The value to be tested
+    def validate_data_provider(value)
+      err = nil
+      if value.is_a?(String)
+        unless value =~ /^[a-zA-Z][a-zA-Z0-9_]*$/
+          err = value =~ /^[a-zA-Z]/ ? 'contains non-alphanumeric characters' : 'must begin with a letter'
+        end
+      else
+        err = 'must be a string'
+      end
+      raise ArgumentError, "field 'data_provider' #{err}" if err
     end
 
     # Validates that the version range can be parsed by Semantic.
