@@ -5,10 +5,9 @@ test_name "Pluginsync'ed custom facts should be resolvable during application ru
 # pluginsync are resolvable by puppet applications besides agent/apply.
 #
 
-step "Create a codedir with a test module with external fact"
-codedir = master.tmpdir('4847-codedir')
-
 agents.each do |agent|
+  step "Create a codedir with a test module with external fact"
+  codedir = agent.tmpdir('4847-codedir')
   on agent, "mkdir -p #{codedir}/facts"
   on agent, "mkdir -p #{codedir}/lib/facter"
   on agent, "mkdir -p #{codedir}/lib/puppet/{type,provider/test4847}"
@@ -24,6 +23,7 @@ Puppet::Type.type(:test4847).provide(:only) do
   commands :anything => "#{codedir}/must_exist.exe"
   def self.instances
     warn "fact foo=\#{Facter.value('foo')}, snafu=\#{Facter.value('snafu')}"
+    []
   end
 end
 PROVIDER
@@ -64,7 +64,7 @@ MANIFEST
 
   on agent, puppet('resource', 'test4847',
                    '--libdir', File.join(codedir, 'lib'),
-                   '--factpath', File.join(codedir, 'facts')), :acceptable_exit_codes => [1] do
+                   '--factpath', File.join(codedir, 'facts')) do
     assert_match(/fact foo=bar, snafu=zifnab/, stderr)
   end
 
