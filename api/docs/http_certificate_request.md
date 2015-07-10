@@ -31,6 +31,9 @@ specifically a CSR in PEM format.
 Search
 ----
 
+**Note:** The plural `certificate_requests` endpoint is a legacy feature. Puppet
+Server doesn't support it, and we don't plan to add support in the future.
+
 List submitted CSRs
 
     GET /puppet-ca/v1/certificate_requests/:ignored_pattern?environment=:environment

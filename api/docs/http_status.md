@@ -37,5 +37,4 @@ None
 Schema
 ------
 
-The returned status conforms to the
-[api/schemas/status.json](../schemas/status.json) schema.
+A status response body conforms to [the status schema.](../schemas/status.json)
