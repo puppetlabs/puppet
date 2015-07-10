@@ -1,0 +1,58 @@
+test_name "Pluginsync'ed custom facts should be resolvable during application runs"
+
+#
+# This test is intended to ensure that custom facts downloaded onto an agent via
+# pluginsync are resolvable by puppet applications besides agent/apply.
+#
+
+step "Create a codedir with a test module with external fact"
+codedir = master.tmpdir('4847-codedir')
+
+agents.each do |agent|
+  on agent, "mkdir -p #{codedir}/lib/facter"
+
+  on agent, "mkdir -p #{codedir}/lib/puppet/{type,provider/test4847}"
+  on agent, "cat > #{codedir}/lib/puppet/type/test4847.rb", :stdin => <<TYPE
+Puppet::Type.newtype(:test4847) do
+  newparam(:name, :namevar => true)
+end
+TYPE
+
+  on agent, "cat > #{codedir}/lib/puppet/provider/test4847/only.rb", :stdin => <<PROVIDER
+Puppet::Type.type(:test4847).provide(:only) do
+  commands :anything => "#{codedir}/must_exist.exe"
+  def self.instances
+    warn "fact foo=\#{Facter.value('foo')}"
+  end
+end
+PROVIDER
+
+  fact = <<FACT
+Facter.add('foo') do
+  setcode do
+    'bar'
+  end
+end
+FACT
+
+  on agent, puppet('apply'), :stdin => <<MANIFEST
+  # The file name is chosen to work on Windows and *nix.
+  file { "#{codedir}/must_exist.exe":
+    ensure => file,
+    mode   => "0755",
+  }
+
+  file { "#{codedir}/lib/facter/foo.rb":
+    ensure  => file,
+    content => "#{fact}",
+  }
+MANIFEST
+
+  on agent, puppet('resource', 'test4847', '--libdir', "#{codedir}/lib"), :acceptable_exit_codes => [1] do
+    assert_match(/fact foo=bar/, stderr)
+  end
+
+  teardown do
+    on(agent, "rm -rf #{codedir}")
+  end
+end
