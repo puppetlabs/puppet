@@ -117,6 +117,10 @@ module Puppet
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end
+
+              # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
+              # pickup the new $LOAD_PATH.
+              Facter.reset
             end
           end
 
