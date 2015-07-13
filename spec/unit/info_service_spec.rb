@@ -222,5 +222,15 @@ describe "Puppet::InfoService" do
             } # end production env
          })
     end
+
+    it "produces empty {} if parsed result has no classes" do
+      files = ['nothing.pp'].map {|f| File.join(code_dir, f) }
+       result = Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(result).to eq({
+         "production"=>{
+            "#{code_dir}/nothing.pp"=> []
+              },
+         })
+    end
   end
 end
