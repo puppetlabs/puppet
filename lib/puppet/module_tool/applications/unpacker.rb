@@ -93,7 +93,7 @@ module Puppet::ModuleTool
       # @api private
       # @return [String] path to temporary unpacking location
       def tmpdir
-        @dir ||= Dir.mktmpdir('tmp-unpacker', Puppet::Forge::Cache.base_path)
+        @dir ||= Dir.mktmpdir('tmp', Puppet::Forge::Cache.base_path)
       end
     end
   end
