@@ -61,7 +61,7 @@ class Puppet::InfoService::ClassInformationService
         }
       end
     rescue StandardError => e
-      { f => { :error => e.message }}
+      {:error => e.message }
     end
   end
 

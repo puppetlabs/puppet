@@ -25,6 +25,12 @@ describe "Puppet::InfoService" do
         'fum.pp' => <<-CODE,
            class fum($fum_a) { }
         CODE
+        'nothing.pp' => <<-CODE,
+           # not much to see here, move along
+        CODE
+        'borked.pp' => <<-CODE,
+           class Borked($Herp+$Derp) {}
+        CODE
        })
     end
 
@@ -174,8 +180,8 @@ describe "Puppet::InfoService" do
         "production"=>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]},
         "test"      =>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}
        }
-     )
-   end
+      )
+    end
 
     it "produces expression string if a default value is not literal" do
       files = ['fee.pp'].map {|f| File.join(code_dir, f) }
@@ -191,19 +197,30 @@ describe "Puppet::InfoService" do
         })
      end
 
-     it "produces no type entry if type is not given" do
-       files = ['fum.pp'].map {|f| File.join(code_dir, f) }
+    it "produces no type entry if type is not given" do
+      files = ['fum.pp'].map {|f| File.join(code_dir, f) }
+      result = Puppet::InfoService.classes_per_environment({'production' => files })
+      expect(result).to eq({
+        "production"=>{
+           "#{code_dir}/fum.pp"=>[
+             {:name=>"fum",
+               :params=>[
+                 {:name=>"fum_a" }
+               ]},
+           ]} # end production env
+        })
+    end
+
+    it "produces error entry if file is broken" do
+      files = ['borked.pp'].map {|f| File.join(code_dir, f) }
        result = Puppet::InfoService.classes_per_environment({'production' => files })
        expect(result).to eq({
          "production"=>{
-            "#{code_dir}/fum.pp"=>[
-              {:name=>"fum",
-                :params=>[
-                  {:name=>"fum_a" }
-                ]},
-            ]} # end production env
+            "#{code_dir}/borked.pp"=>
+              {:error=>"Syntax error at '+' at #{code_dir}/borked.pp:1:30",
+              },
+            } # end production env
          })
-      end
-
+    end
   end
 end
