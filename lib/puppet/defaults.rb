@@ -531,7 +531,7 @@ module Puppet
       :desc     => "The module repository",
     },
     :module_working_dir => {
-        :default  => '$vardir/puppet-module',
+        :default  => (Puppet.features.microsoft_windows? ? Dir.tmpdir() : '$vardir/puppet-module'),
         :desc     => "The directory into which module tool data is stored",
     },
     :module_skeleton_dir => {
