@@ -36,7 +36,6 @@
 lockfile=/var/lock/subsys/puppet
 pidfile=/var/run/puppetlabs/agent.pid
 puppetd=/opt/puppetlabs/puppet/bin/puppet
-RETVAL=0
 
 PUPPET_OPTS="agent"
 
@@ -74,7 +73,7 @@ case "$1" in
                 rc_exit
             fi
         fi
-        startproc -f -w -p ${pidfile} $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} && touch ${lockfile}
+        startproc -f -w -p "${pidfile}" "${puppetd}" "${PUPPET_OPTS}" "${PUPPET_EXTRA_OPTS}" && touch "${lockfile}"
         # Remember status and be verbose
         rc_status -v
         ;;
@@ -83,7 +82,7 @@ case "$1" in
         ## Stop daemon with killproc(8) and if this fails
         ## set echo the echo return value.
 
-        killproc -QUIT -p ${pidfile} $puppetd && rm -f ${lockfile} ${pidfile}
+        killproc -QUIT -p "${pidfile}" "${puppetd}" && rm -f "${lockfile}" "${pidfile}"
 
         # Remember status and be verbose
         rc_status -v
@@ -112,7 +111,7 @@ case "$1" in
 
         echo -n "Reload service puppet"
         ## if it supports it:
-        killproc -HUP -p ${pidfile} $puppetd
+        killproc -HUP -p "${pidfile}" "${puppetd}"
         rc_status -v
         ;;
     reload)
@@ -121,7 +120,7 @@ case "$1" in
 
         # If it supports signalling:
         echo -n "Reload puppet services."
-        killproc -HUP -p ${pidfile} $puppetd
+        killproc -HUP -p "${pidfile}" "${puppetd}"
         rc_status -v
         ;;
     status)
@@ -137,7 +136,7 @@ case "$1" in
 
         # NOTE: checkproc returns LSB compliant status values.
         if [ -f "${pidfile}" ]; then
-            checkproc -p ${pidfile} $puppetd
+            checkproc -p "${pidfile}" "${puppetd}"
             rc_status -v
         else
             rc_failed 3
@@ -146,7 +145,7 @@ case "$1" in
         ;;
     once)
         shift
-        $puppetd ${PUPPET_OPTS} --onetime ${PUPPET_EXTRA_OPTS} $@
+        $puppetd "${PUPPET_OPTS}" --onetime "${PUPPET_EXTRA_OPTS}" $@
         ;;
     *)
         echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|once}"
