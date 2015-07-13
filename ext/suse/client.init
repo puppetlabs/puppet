@@ -63,9 +63,18 @@ case "$1" in
         ## Start daemon with startproc(8). If this fails
         ## the echo return value is set appropriate.
 
-        # startproc should return 0, even if service is
-        # already running to match LSB spec.
-        startproc -p ${pidfile} $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} && touch ${lockfile}
+        ## This accounts for the behavior of startproc on sles 10.
+        ## Check to see if a running process matches the contents
+        ## of the pidfile, and do nothing if true. Otherwise
+        ## force a process start
+        if [ -f "${pidfile}" ]; then
+            PID=$(cat "$pidfile")
+            if [ "$PID" -eq $(pgrep -f "$puppetd") ] ; then
+                rc_status -v
+                rc_exit
+            fi
+        fi
+        startproc -f -w -p ${pidfile} $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} && touch ${lockfile}
         # Remember status and be verbose
         rc_status -v
         ;;
@@ -127,8 +136,13 @@ case "$1" in
         # 3 - service not running
 
         # NOTE: checkproc returns LSB compliant status values.
-        checkproc -p ${pidfile} $puppetd
-        rc_status -v
+        if [ -f "${pidfile}" ]; then
+            checkproc -p ${pidfile} $puppetd
+            rc_status -v
+        else
+            rc_failed 3
+            rc_status -v
+        fi
         ;;
     once)
         shift
