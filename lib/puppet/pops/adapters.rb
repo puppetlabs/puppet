@@ -85,6 +85,18 @@ module Puppet::Pops::Adapters
       locator.string.slice(offset, length)
     end
 
+    def extract_tree_text
+      first = @adapted.offset
+      last = first + @adapted.length
+      @adapted.eAllContents.each do |m|
+        m_offset = m.offset
+        first = m_offset if m_offset < first
+        m_last = m_offset + m.length
+        last = m_last if m_last > last
+      end
+      locator.string.slice(first, last-first)
+    end
+
     # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n
     def to_uri
       f = locator.file
