@@ -229,11 +229,30 @@ describe Puppet::Util do
       (0..256).each {|n| IO.stubs(:new) }
     end
 
-    it "should close all open file descriptors except stdin/stdout/stderr" do
+    it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd exists" do
+      # This is ugly, but I can't really think of a better way to do it without
+      # letting it actually close fds, which seems risky
+      fds = [".", "..","0","1","2","3","5","100","1000"]
+      fds.each do |fd|
+        if fd == '.' || fd == '..'
+          next
+        elsif ['0', '1', '2'].include? fd
+          IO.expects(:new).with(fd.to_i).never
+        else
+          IO.expects(:new).with(fd.to_i).returns mock('io', :close)
+        end
+      end
+
+      Dir.stubs(:foreach).with('/proc/self/fd').multiple_yields(*fds)
+      Puppet::Util.safe_posix_fork
+    end
+
+    it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd doesn't exists" do
       # This is ugly, but I can't really think of a better way to do it without
       # letting it actually close fds, which seems risky
       (0..2).each {|n| IO.expects(:new).with(n).never}
-      (3..256).each {|n| IO.expects(:new).with(n).returns mock('io', :close) }
+      (3..256).each { |n| IO.expects(:new).with(n).returns mock('io', :close)  }
+      Dir.stubs(:foreach).with('/proc/self/fd') { raise Errno::ENOENT }
 
       Puppet::Util.safe_posix_fork
     end
