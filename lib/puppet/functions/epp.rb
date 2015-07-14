@@ -1,42 +1,34 @@
-# Evaluates an Embedded Puppet Template (EPP) file and returns the rendered text result as a String.
+# Evaluates an Embedded Puppet (EPP) template file and returns the rendered text
+# result as a String.
+#
+# `epp('<MODULE NAME>/<TEMPLATE FILE>', <PARAMETER HASH>)`
 #
 # The first argument to this function should be a `<MODULE NAME>/<TEMPLATE FILE>`
-# reference, which will load `<TEMPLATE FILE>` from a module's `templates`
-# directory. (For example, the reference `apache/vhost.conf.epp` will load the
-# file `<MODULES DIRECTORY>/apache/templates/vhost.conf.epp`.)
+# reference, which loads `<TEMPLATE FILE>` from `<MODULE NAME>`'s `templates`
+# directory. In most cases, the last argument is optional; if used, it should be a
+# [hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
+# pass to the template.
 #
-# The second argument is optional; if present, it should be a hash containing parameters for the
-# template. (See below.)
+# - See the [template](/puppet/latest/reference/lang_template.html) documentation
+# for general template usage information.
+# - See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
+# documentation for examples of EPP.
 #
-# EPP supports the following tags:
+# For example, to call the apache module's `templates/vhost/_docroot.epp`
+# template and pass the `docroot` and `virtual_docroot` parameters, call the `epp`
+# function like this:
 #
-# * `<%= puppet expression %>` - This tag renders the value of the expression it contains.
-# * `<% puppet expression(s) %>` - This tag will execute the expression(s) it contains, but renders nothing.
-# * `<%# comment %>` - The tag and its content renders nothing.
-# * `<%%` or `%%>` - Renders a literal `<%` or `%>` respectively.
-# * `<%-` - Same as `<%` but suppresses any leading whitespace.
-# * `-%>` - Same as `%>` but suppresses any trailing whitespace on the same line (including line break).
-# * `<%- |parameters| -%>` - When placed as the first tag declares the template's parameters.
+# `epp('apache/templates/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
+# 'virtual_docroot' => '/var/www/example' })`
 #
-# File based EPP supports the following visibilities of variables in scope:
+# Puppet produces a syntax error if you pass more parameters than are declared in
+# the template's parameter tag. When passing parameters to a template that
+# contains a parameter tag, use the same names as the tag's declared parameters.
 #
-# * Global scope (i.e. top + node scopes) - global scope is always visible
-# * Global + all given arguments - if the EPP template does not declare parameters, and arguments are given
-# * Global + declared parameters - if the EPP declares parameters, given argument names must match
+# Parameters are required only if they are declared in the called template's
+# parameter tag without default values. Puppet produces an error if the `epp`
+# function fails to pass any required parameter.
 #
-# EPP supports parameters by placing an optional parameter list as the very first element in the EPP. As an example,
-# `<%- |$x, $y, $z = 'unicorn'| -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
-# given as template arguments when calling `inline_epp`, and that `z` if not given as a template argument
-# defaults to `'unicorn'`. Template parameters are available as variables, e.g.arguments `$x`, `$y` and `$z` in the example.
-# Note that `<%-` must be used or any leading whitespace will be interpreted as text
-#
-# Arguments are passed to the template by calling `epp` with a Hash as the last argument, where parameters
-# are bound to values, e.g. `epp('...', {'x'=>10, 'y'=>20})`. Excess arguments may be given
-# (i.e. undeclared parameters) only if the EPP templates does not declare any parameters at all.
-# Template parameters shadow variables in outer scopes. File based epp does never have access to variables in the
-# scope where the `epp` function is called from.
-#
-# @see function inline_epp for examples of EPP
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:epp, Puppet::Functions::InternalFunction) do

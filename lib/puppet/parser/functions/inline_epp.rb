@@ -1,76 +1,51 @@
 Puppet::Parser::Functions::newfunction(:inline_epp, :type => :rvalue, :arity => -2, :doc =>
-"Evaluates an Embedded Puppet Template (EPP) string and returns the rendered text result as a String.
+"Evaluates an Embedded Puppet (EPP) template string and returns the rendered
+text result as a String.
 
-EPP support the following tags:
+`inline_epp('<EPP TEMPLATE STRING>', <PARAMETER HASH>)`
 
-* `<%= puppet expression %>` - This tag renders the value of the expression it contains.
-* `<% puppet expression(s) %>` - This tag will execute the expression(s) it contains, but renders nothing.
-* `<%# comment %>` - The tag and its content renders nothing.
-* `<%%` or `%%>` - Renders a literal `<%` or `%>` respectively.
-* `<%-` - Same as `<%` but suppresses any leading whitespace.
-* `-%>` - Same as `%>` but suppresses any trailing whitespace on the same line (including line break).
-* `<%- |parameters| -%>` - When placed as the first tag declares the template's parameters.
+The first argument to this function should be a string containing an EPP
+template. In most cases, the last argument is optional; if used, it should be a
+[hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
+pass to the template.
 
-Inline EPP supports the following visibilities of variables in scope which depends on how EPP parameters
-are used - see further below:
+- See the [template](/puppet/latest/reference/lang_template.html) documentation
+for general template usage information.
+- See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
+documentation for examples of EPP.
 
-* Global scope (i.e. top + node scopes) - global scope is always visible
-* Global + Enclosing scope - if the EPP template does not declare parameters, and no arguments are given
-* Global + all given arguments - if the EPP template does not declare parameters, and arguments are given
-* Global + declared parameters - if the EPP declares parameters, given argument names must match
+For example, to evaluate an inline EPP template and pass it the `docroot` and
+`virtual_docroot` parameters, call the `inline_epp` function like this:
 
-EPP supports parameters by placing an optional parameter list as the very first element in the EPP. As an example,
-`<%- |$x, $y, $z='unicorn'| -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
-given as template arguments when calling `inline_epp`, and that `z` if not given as a template argument
-defaults to `'unicorn'`. Template parameters are available as variables, e.g.arguments `$x`, `$y` and `$z` in the example.
-Note that `<%-` must be used or any leading whitespace will be interpreted as text
+`inline_epp('docroot: <%= $docroot %> Virtual docroot: <%= $virtual_docroot %>',
+{ 'docroot' => '/var/www/html', 'virtual_docroot' => '/var/www/example' })`
 
-Arguments are passed to the template by calling `inline_epp` with a Hash as the last argument, where parameters
-are bound to values, e.g. `inline_epp('...', {'x'=>10, 'y'=>20})`. Excess arguments may be given
-(i.e. undeclared parameters) only if the EPP templates does not declare any parameters at all.
-Template parameters shadow variables in outer scopes.
+Puppet produces a syntax error if you pass more parameters than are declared in
+the template's parameter tag. When passing parameters to a template that
+contains a parameter tag, use the same names as the tag's declared parameters.
 
-Note: An inline template is best stated using a single-quoted string, or a heredoc since a double-quoted string
-is subject to expression interpolation before the string is parsed as an EPP template. Here are examples
-(using heredoc to define the EPP text):
+Parameters are required only if they are declared in the called template's
+parameter tag without default values. Puppet produces an error if the
+`inline_epp` function fails to pass any required parameter.
 
-    # produces 'Hello local variable world!'
-    $x ='local variable'
-    inline_epptemplate(@(END:epp))
-    <%- |$x| -%>
-    Hello <%= $x %> world!
-    END
+An inline EPP template should be written as a single-quoted string or
+[heredoc](puppet/latest/reference/lang_data_string.html#heredocs).
+A double-quoted string is subject to expression interpolation before the string
+is parsed as an EPP template.
 
-    # produces 'Hello given argument world!'
-    $x ='local variable world'
-    inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%- |$x| -%>
-    Hello <%= $x %> world!
-    END
+For example, to evaluate an inline EPP template using a heredoc, call the
+`inline_epp` function like this:
 
-    # produces 'Hello given argument world!'
-    $x ='local variable world'
-    inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%- |$x| -%>
-    Hello <%= $x %>!
-    END
-
-    # results in error, missing value for y
-    $x ='local variable world'
-    inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%- |$x, $y| -%>
-    Hello <%= $x %>!
-    END
-
-    # Produces 'Hello given argument planet'
-    $x ='local variable world'
-    inline_epptemplate(@(END:epp), { x =>'given argument'})
-    <%- |$x, $y=planet| -%>
-    Hello <%= $x %> <%= $y %>!
-    END
+~~~ puppet
+# Outputs 'Hello given argument planet!'
+inline_epp(@(END), { x => 'given argument' })
+<%- | $x, $y = planet | -%>
+Hello <%= $x %> <%= $y %>!
+END
+~~~
 
 - Since 3.5
-- Requires Future Parser") do |arguments|
+- Requires [future parser](/puppet/3.8/reference/experiments_future.html) in Puppet 3.5 to 3.8") do |arguments|
 
   function_fail(["inline_epp() is only available when parser/evaluator future is in effect"])
 end
