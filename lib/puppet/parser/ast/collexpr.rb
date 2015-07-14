@@ -100,7 +100,7 @@ class CollExpr < AST::Branch
 
   def initialize(hash = {})
     super
-    if Puppet[:parser] == "future"
+    if Puppet.future_parser?
       @@compare_operator ||= Puppet::Pops::Evaluator::CompareOperator.new
     end
     raise ArgumentError, "Invalid operator #{@oper}" unless %w{== != and or}.include?(@oper)
