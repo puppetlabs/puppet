@@ -1539,7 +1539,7 @@ class Type
 
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1553,7 +1553,7 @@ class Type
 
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1571,7 +1571,7 @@ class Type
 
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1585,7 +1585,7 @@ class Type
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
