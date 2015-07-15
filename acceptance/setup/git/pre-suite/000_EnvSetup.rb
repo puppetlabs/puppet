@@ -46,6 +46,8 @@ PACKAGES = {
 hosts.each do |host|
   platform = host['platform'] =~ /windows/ ? 'windows' : 'unix'
 
+  host['puppetbindir'] = '/usr/bin' if platform == 'windows'
+
   # Beakers add_aio_defaults_on helper is not appropriate here as it
   # also alters puppetbindir / privatebindir to use package installed
   # paths rather than git installed paths
