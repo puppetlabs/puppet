@@ -6,8 +6,8 @@ script:
 notifications:
   email: false
 rvm:
-  - 2.2.0
-  - 2.1.5
+  - 2.2.2
+  - 2.1.6
   - 2.0.0
   - 1.9.3
 
