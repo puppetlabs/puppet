@@ -600,6 +600,16 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
       expect(resource.provider.exists?).to eq(true)
     end
+
+    it "uses SystemRoot in the path of Task folder" do
+      Win32::TaskScheduler.unstub(:new)
+      exists_test_task = Win32::TaskScheduler.new
+      Dir.stubs(:foreach).with('D:/WinNT/Tasks').returns([])
+
+      Puppet::Util.withenv('SystemRoot' => 'D:/WinNT') do
+        exists_test_task.exists?('Test Task')
+      end
+    end
   end
 
   describe '#clear_task' do
