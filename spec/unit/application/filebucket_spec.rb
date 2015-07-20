@@ -21,6 +21,10 @@ describe Puppet::Application::Filebucket do
     expect(@filebucket).to respond_to(:restore)
   end
 
+  it "should declare a diff command" do
+    expect(@filebucket).to respond_to(:diff)
+  end
+
   [:bucket, :debug, :local, :remote, :verbose].each do |option|
     it "should declare handle_#{option} method" do
       expect(@filebucket).to respond_to("handle_#{option}".to_sym)
@@ -198,6 +202,62 @@ describe Puppet::Application::Filebucket do
         @client.expects(:restore).with(file,md5)
 
         @filebucket.restore
+      end
+    end
+
+    describe "the command diff" do
+      it "should call the client diff method with 2 given checksums" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).returns(false)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(md5a,md5b, nil, nil)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with a path if the second argument is a file" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(true)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(md5a, nil, nil, md5b)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with a path if the first argument is a file" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(false)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(nil, md5b, md5a, nil)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with paths if the both arguments are files" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(true)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(nil, nil, md5a, md5b)
+
+        @filebucket.diff
+      end
+
+      it "should fail if only one checksum is given" do
+        md5a="DEADBEEF"
+        @filebucket.stubs(:args).returns([md5a])
+
+        expect { @filebucket.diff }.to raise_error Puppet::Error
       end
     end
 

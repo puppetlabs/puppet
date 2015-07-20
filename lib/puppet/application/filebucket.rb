@@ -43,6 +43,9 @@ restore:
   path to this argument; you are not restricted to restoring the content
   to its original location.
 
+diff:
+  Print a diff in unified format between two checksums in the filebucket or between a checksum and
+  its matching file.
 
 DESCRIPTION
 -----------
@@ -97,7 +100,14 @@ EXAMPLE
     $ puppet filebucket backup /etc/passwd
     /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
     $ puppet filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
-
+    ## Diff between two files in the filebucket
+    $ puppet filebucket -l diff d43a6ecaa892a1962398ac9170ea9bf2 7ae322f5791217e031dc60188f4521ef
+    1a2
+    > again
+    ## Diff between the file in the filebucket and the current one
+    $ puppet filebucket -l diff d43a6ecaa892a1962398ac9170ea9bf2 /tmp/testFile
+    1a2
+    > again
 
 AUTHOR
 ------
@@ -115,7 +125,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def run_command
     @args = command_line.args
     command = args.shift
-    return send(command) if %w{get backup restore}.include? command
+    return send(command) if %w{get backup restore diff}.include? command
     help
   end
 
@@ -146,6 +156,34 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     file = args.shift
     md5 = args.shift
     @client.restore(file, md5)
+  end
+
+  def diff
+    raise Puppet::Error, "Need exactly two arguments: filebucket diff <file_a> <file_b>" unless args.count == 2
+    left = args.shift
+    right = args.shift
+    if Puppet::FileSystem.exist?(left)
+      # It's a file
+      file_a = left
+      checksum_a = nil
+    else
+      file_a = nil
+      checksum_a = left
+    end
+    if Puppet::FileSystem.exist?(right)
+      # It's a file
+      file_b = right
+      checksum_b = nil
+    else
+      file_b = nil
+      checksum_b = right
+    end
+    if (checksum_a || file_a) && (checksum_b || file_b)
+      Puppet.info("Comparing #{checksum_a} #{checksum_b} #{file_a} #{file_b}")
+      print @client.diff(checksum_a, checksum_b, file_a, file_b)
+    else
+      raise Puppet::Error, "Need exactly two arguments: filebucket diff <file_a> <file_b>"
+    end
   end
 
   def setup
@@ -181,4 +219,3 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 end
-

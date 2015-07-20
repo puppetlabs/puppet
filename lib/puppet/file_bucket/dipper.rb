@@ -2,6 +2,8 @@ require 'pathname'
 require 'puppet/file_bucket'
 require 'puppet/file_bucket/file'
 require 'puppet/indirector/request'
+require 'puppet/util/diff'
+require 'tempfile'
 
 class Puppet::FileBucket::Dipper
   include Puppet::Util::Checksums
@@ -54,6 +56,46 @@ class Puppet::FileBucket::Dipper
       Puppet.log_exception(detail, message)
       raise Puppet::Error, message, detail.backtrace
     end
+  end
+
+  # Diffs two filebucket files identified by their sums
+  def diff(checksum_a, checksum_b, file_a, file_b)
+    raise RuntimeError, "Diff is not supported on this platform" if Puppet[:diff] == ""
+    if checksum_a
+      source_path = "#{@rest_path}#{@checksum_type}/#{checksum_a}"
+      if checksum_b
+        file_diff = Puppet::FileBucket::File.indirection.find(
+          source_path,
+          :bucket_path => @local_path,
+          :diff_with => checksum_b)
+      elsif file_b
+        tmp_file = ::Tempfile.new('diff')
+        begin
+          restore(tmp_file.path, checksum_a)
+          file_diff = Puppet::Util::Diff.diff(tmp_file.path, file_b)
+        ensure
+          tmp_file.close
+          tmp_file.unlink
+        end
+      else
+        raise Puppet::Error, "Please provide a file or checksum do diff with"
+      end
+    elsif file_a
+      if checksum_b
+        tmp_file = ::Tempfile.new('diff')
+        begin
+          restore(tmp_file.path, checksum_b)
+          file_diff = Puppet::Util::Diff.diff(file_a, tmp_file.path)
+        ensure
+          tmp_file.close
+          tmp_file.unlink
+        end
+      elsif file_b
+        file_diff = Puppet::Util::Diff.diff(file_a, file_b)
+      end
+    end
+    raise Puppet::Error, "Failed to diff files" unless file_diff
+    file_diff.to_s
   end
 
   # Retrieves a file by sum.
@@ -115,4 +157,3 @@ class Puppet::FileBucket::Dipper
   end
 
 end
-

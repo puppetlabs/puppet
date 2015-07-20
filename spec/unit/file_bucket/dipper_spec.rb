@@ -72,6 +72,97 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     expect { @dipper.backup(file) }.to raise_error(Puppet::Error)
   end
 
+  describe "when diffing on a local filebucket" do
+    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+      with_digest_algorithms do
+
+        it "should fail in an informative way when one or more checksum doesn't exists" do
+          @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
+          wrong_checksum = "DEADBEEF"
+
+          # First checksum fails
+          expect { @dipper.diff(wrong_checksum, "WEIRDCKSM", nil, nil) }.to raise_error(RuntimeError, "Invalid checksum #{wrong_checksum.inspect}")
+
+          file = make_tmp_file(plaintext)
+          @dipper.backup(file)
+
+          #Diff_with checksum fails
+          expect { @dipper.diff(checksum, wrong_checksum, nil, nil) }.to raise_error(RuntimeError, "could not find diff_with #{wrong_checksum}")
+        end
+
+        it "should properly diff files on the filebucket" do
+          file1 = make_tmp_file("OriginalContent")
+          file2 = make_tmp_file("ModifiedContent")
+          @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
+          checksum1 = @dipper.backup(file1)
+          checksum2 = @dipper.backup(file2)
+
+          # Diff without the context
+          diff12 = `diff -uN #{file1} #{file2} | sed '1,2d'`
+          diff21 = `diff -uN #{file2} #{file1} | sed '1,2d'`
+
+          expect(@dipper.diff(checksum1, checksum2, nil, nil)).to include(diff12)
+          expect(@dipper.diff(checksum1, nil, nil, file2)).to include(diff12)
+          expect(@dipper.diff(nil, checksum2, file1, nil)).to include(diff12)
+          expect(@dipper.diff(nil, nil, file1, file2)).to include(diff12)
+          expect(@dipper.diff(checksum2, checksum1, nil, nil)).to include(diff21)
+          expect(@dipper.diff(checksum2, nil, nil, file1)).to include(diff21)
+          expect(@dipper.diff(nil, checksum1, file2, nil)).to include(diff21)
+          expect(@dipper.diff(nil, nil, file2, file1)).to include(diff21)
+
+        end
+      end
+      describe "in windows environment", :if => Puppet.features.microsoft_windows? do
+        it "should fail in an informative way when trying to diff" do
+          @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
+          wrong_checksum = "DEADBEEF"
+
+          # First checksum fails
+          expect { @dipper.diff(wrong_checksum, "WEIRDCKSM", nil, nil) }.to raise_error(RuntimeError, "Diff is not supported on this platform")
+
+          # Diff_with checksum fails
+          expect { @dipper.diff(checksum, wrong_checksum, nil, nil) }.to raise_error(RuntimeError, "Diff is not supported on this platform")
+        end
+      end
+    end
+  end
+
+  describe "when diffing on a remote filebucket" do
+    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+      with_digest_algorithms do
+
+        it "should fail in an informative way when one or more checksum doesn't exists" do
+          @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
+          wrong_checksum = "DEADBEEF"
+
+          Puppet::FileBucketFile::Rest.any_instance.expects(:find).returns(nil)
+          expect { @dipper.diff(wrong_checksum, "WEIRDCKSM", nil, nil) }.to raise_error(Puppet::Error, "Failed to diff files")
+
+        end
+
+        it "should properly diff files on the filebucket" do
+
+          @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
+
+          Puppet::FileBucketFile::Rest.any_instance.expects(:find).returns("Probably valid diff")
+
+          expect(@dipper.diff("checksum1", "checksum2", nil, nil)).to eq("Probably valid diff")
+        end
+      end
+    end
+    describe "in windows environment", :if => Puppet.features.microsoft_windows? do
+      it "should fail in an informative way when trying to diff" do
+        @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
+        wrong_checksum = "DEADBEEF"
+
+        expect { @dipper.diff(wrong_checksum, "WEIRDCKSM", nil, nil) }.to raise_error(RuntimeError, "Diff is not supported on this platform")
+
+        expect { @dipper.diff(wrong_checksum, nil, nil, nil) }.to raise_error(RuntimeError, "Diff is not supported on this platform")
+      end
+    end
+
+  end
+
   describe "backing up and retrieving local files" do
     with_digest_algorithms do
       it "should backup files to a local bucket" do
@@ -173,4 +264,3 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     end
   end
 end
-
