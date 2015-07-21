@@ -2,11 +2,15 @@
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 test_name 'PUP-4033: Ensure aio path spec is honored'
 
+require 'puppet/acceptance/common_utils'
+extend Puppet::Acceptance::CommandUtils
+
 # include file_exists?
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 
-def config_options(platform)
+def config_options(agent)
+  platform = agent[:platform]
   case platform
   when /windows/
     if platform =~ /2003/
@@ -22,6 +26,8 @@ def config_options(platform)
     logdir = "#{puppetlabs_data}/puppet/var/log"
     rundir = "#{puppetlabs_data}/puppet/var/run"
     sep = ";"
+
+    module_working_dir = on(agent, "#{ruby_command(agent)} -e 'require \"tmpdir\"; print Dir.tmpdir'").stdout.chomp
   else
     codedir = '/etc/puppetlabs/code'
     confdir = '/etc/puppetlabs/puppet'
@@ -29,6 +35,8 @@ def config_options(platform)
     logdir = '/var/log/puppetlabs/puppet'
     rundir = '/var/run/puppetlabs'
     sep = ":"
+
+    module_working_dir = "#{vardir}/puppet-module"
   end
 
   [
@@ -60,7 +68,7 @@ def config_options(platform)
     {:name => :pluginfactdest,  :expected => "#{vardir}/facts.d",         :installed => :dir},
     {:name => :libdir,          :expected => "#{vardir}/lib",             :installed => :dir},
     {:name => :factpath,        :expected => "#{vardir}/lib/facter#{sep}#{vardir}/facts", :not_path => true},
-    {:name => :module_working_dir, :expected => "#{vardir}/puppet-module"},
+    {:name => :module_working_dir, :expected => module_working_dir},
     {:name => :reportdir,       :expected => "#{vardir}/reports"},
     {:name => :server_datadir,  :expected => "#{vardir}/server_data"},
     {:name => :statedir,        :expected => "#{vardir}/state",           :installed => :dir},
@@ -76,8 +84,9 @@ end
 step 'test configprint outputs'
 agents.each do |agent|
   on(agent, puppet_agent('--configprint all')) do
-    config_options(agent[:platform]).each do |config_option|
-      assert_match("#{config_option[:name]} = #{config_option[:expected]}", stdout)
+    output = stdout
+    config_options(agent).each do |config_option|
+      assert_match("#{config_option[:name]} = #{config_option[:expected]}", output)
     end
   end
 end
@@ -85,15 +94,16 @@ end
 step 'test puppet genconfig entries'
 agents.each do |agent|
   on(agent, puppet_agent('--genconfig')) do
-    config_options(agent[:platform]).each do |config_option|
-      assert_match("#{config_option[:name]} = #{config_option[:expected]}", stdout)
+    output = stdout
+    config_options(agent).each do |config_option|
+      assert_match("#{config_option[:name]} = #{config_option[:expected]}", output)
     end
   end
 end
 
 step 'test puppet config paths exist'
 agents.each do |agent|
-  config_options(agent[:platform]).select {|v| !v[:not_path] }.each do |config_option|
+  config_options(agent).select {|v| !v[:not_path] }.each do |config_option|
     path = config_option[:expected]
     case config_option[:installed]
     when :dir
