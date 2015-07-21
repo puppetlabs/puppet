@@ -54,8 +54,16 @@ stop() {
 }
 
 reload() {
-    echo -n $"Restarting puppet agent: "
+    echo -n $"Reloading puppet agent: "
     killproc $pidopts $puppetd -HUP
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
+rotate() {
+    echo -n $"Reopening log files for puppet agent: "
+    killproc $pidopts $puppetd -USR2
     RETVAL=$?
     echo
     return $RETVAL
@@ -91,6 +99,9 @@ case "$1" in
     restart)
         restart
     ;;
+    rotate)
+        rotate
+    ;;
     reload|force-reload)
         reload
     ;;
@@ -109,7 +120,7 @@ case "$1" in
         genconfig
     ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once|genconfig}"
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|rotate|once|genconfig}"
         exit 1
 esac
 
