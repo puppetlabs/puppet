@@ -14,6 +14,7 @@ rvm:
 env:
   - "CHECK=parallel:spec\\[2\\]"
   - "CHECK=rubocop"
+  - "CHECK=commits"
 
 matrix:
   exclude:
@@ -23,3 +24,9 @@ matrix:
       env: "CHECK=rubocop"
     - rvm: 1.9.3
       env: "CHECK=rubocop"
+    - rvm: 2.2.0
+      env: "CHECK=commits"
+    - rvm: 2.0.0
+      env: "CHECK=commits"
+    - rvm: 1.9.3
+      env: "CHECK=commits"
