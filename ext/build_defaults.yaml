@@ -16,7 +16,7 @@ build_gem: TRUE
 build_dmg: TRUE
 build_msi:
   puppet_for_the_win:
-    ref: '2476cd007b1b52fb1b9f22202b56218629626b5c'
+    ref: 'refs/tags/3.8.0'
     repo: 'git://github.com/puppetlabs/puppet_for_the_win.git'
   facter:
     ref: 'refs/tags/2.4.4'
@@ -26,8 +26,8 @@ build_msi:
     repo: 'git://github.com/puppetlabs/hiera.git'
   sys:
     ref:
-      x86: '766c286233138db2140ab3c3cdcc0de9c3041203'
-      x64: '808e292150274f7eaded27445ad33174a1410716'
+      x86: 'refs/tags/1.9.3-p551.4'
+      x64: 'refs/tags/2.0.0.7-x64'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
