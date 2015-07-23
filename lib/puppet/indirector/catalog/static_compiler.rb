@@ -41,6 +41,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     raise "Did not get catalog back" unless catalog.is_a?(model)
 
     catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
+      next if resource[:ensure] == 'absent'
+
       next unless source = resource[:source]
       next unless source =~ /^puppet:/
 
