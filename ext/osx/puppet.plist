@@ -10,7 +10,7 @@
                 <string>en_US.UTF-8</string>
         </dict>
         <key>Label</key>
-        <string>puppet</string>
+        <string>com.puppetlabs.puppet</string>
         <key>KeepAlive</key>
         <true/>
         <key>ProgramArguments</key>
@@ -25,8 +25,8 @@
         <key>RunAtLoad</key>
         <true/>
         <key>StandardErrorPath</key>
-	<string>/var/log/puppetlabs/puppet/puppet.log</string>
+        <string>/var/log/puppetlabs/puppet/puppet.log</string>
         <key>StandardOutPath</key>
-	<string>/var/log/puppetlabs/puppet/puppet.log</string>
+        <string>/var/log/puppetlabs/puppet/puppet.log</string>
 </dict>
 </plist>
