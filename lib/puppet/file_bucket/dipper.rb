@@ -151,6 +151,19 @@ class Puppet::FileBucket::Dipper
     end
   end
 
+  # List Filebucket content.
+  def list(fromdate, todate)
+    source_path = "#{@rest_path}#{@checksum_type}/"
+    file_bucket_list = Puppet::FileBucket::File.indirection.find(
+      source_path,
+      :bucket_path => @local_path,
+      :list_all => true,
+      :fromdate => fromdate,
+      :todate => todate)
+    raise Puppet::Error, "File not found" unless file_bucket_list
+    file_bucket_list.to_s
+  end
+
   private
   def absolutize_path( path )
     Pathname.new(path).realpath

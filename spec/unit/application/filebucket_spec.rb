@@ -25,7 +25,11 @@ describe Puppet::Application::Filebucket do
     expect(@filebucket).to respond_to(:diff)
   end
 
-  [:bucket, :debug, :local, :remote, :verbose].each do |option|
+  it "should declare a list command" do
+    expect(@filebucket).to respond_to(:list)
+  end
+
+  [:bucket, :debug, :local, :remote, :verbose, :fromdate, :todate].each do |option|
     it "should declare handle_#{option} method" do
       expect(@filebucket).to respond_to("handle_#{option}".to_sym)
     end
@@ -258,6 +262,28 @@ describe Puppet::Application::Filebucket do
         @filebucket.stubs(:args).returns([md5a])
 
         expect { @filebucket.diff }.to raise_error Puppet::Error
+      end
+    end
+    describe "the command list" do
+      it "should call the client list method with nil dates" do
+        @client.expects(:list).with(nil, nil)
+
+        @filebucket.list
+      end
+      it "should call the client list method with the given dates" do
+        # 3 Hours ago
+        threehours = 60*60*3
+        fromdate = (Time.now - threehours).strftime("%F %T")
+        # 1 Hour ago
+        onehour = 60*60
+        todate = (Time.now - onehour).strftime("%F %T")
+
+        @filebucket.options.stubs(:[]).with(:fromdate).returns(fromdate)
+        @filebucket.options.stubs(:[]).with(:todate).returns(todate)
+
+        @client.expects(:list).with(fromdate, todate)
+
+        @filebucket.list
       end
     end
 

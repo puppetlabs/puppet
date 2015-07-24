@@ -109,6 +109,49 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         let(:not_bucketed_plaintext) { "other stuff" }
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
+        describe "when listing the filebucket" do
+          it "should return false/nil when the bucket is empty" do
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar", :list_all => true)).to eq(nil)
+          end
+          it "should return the list of bucketed files in a human readable way" do
+            contents = "I'm the contents of a file"
+            checksum = save_bucket_file(contents, '/foo/bar1')
+            date = Time.now.strftime("%F %T")
+            expected_list1_1 = "#{checksum} #{date} foo/bar1\n"
+
+            contents = "I'm the contents of another file"
+            checksum = save_bucket_file(contents, '/foo/bar2')
+            expected_list2 = "#{checksum} #{date} foo/bar2\n"
+
+            contents = "I'm the modified content of a existing file"
+            checksum = save_bucket_file(contents, '/foo/bar1')
+            expected_list1_2 = "#{checksum} #{date} foo/bar1\n"
+
+            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar", :list_all => true)
+            # I should get the result in the right order
+            expect(find_result.to_s).to eq(expected_list1_1+expected_list1_2+expected_list2)
+          end
+          it "should fail in an informative way when provided dates are not in the right format" do
+            contents = "I'm the contents of a file"
+            save_bucket_file(contents, '/foo/bar1')
+            expect {
+              Puppet::FileBucket::File.indirection.find(
+                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                :list_all => true,
+                :todate => "0:0:0 1-1-1970",
+                :fromdate => "WEIRD"
+              )
+            }.to raise_error(Puppet::Error, /fromdate/)
+            expect {
+              Puppet::FileBucket::File.indirection.find(
+                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                :list_all => true,
+                :todate => "WEIRD",
+                :fromdate => Time.now
+              )
+            }.to raise_error(Puppet::Error, /todate/)
+          end
+        end
         describe "when supplying a path" do
           it "should return false/nil if the file isn't bucketed" do
             expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar")).to eq(false)
