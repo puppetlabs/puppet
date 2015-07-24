@@ -47,9 +47,9 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       file = resource.to_ral
 
       if file.recurse?
-        add_children(request.key, catalog, resource, file)
+        add_children(request, catalog, resource, file)
       else
-        find_and_replace_metadata(request.key, resource, file)
+        find_and_replace_metadata(request, resource, file)
       end
     end
 
@@ -65,10 +65,10 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # from the resource, inserts the metadata into the file resource, and uploads
   # the file contents of the source to the file bucket.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource] The resource to replace the metadata in
   # @param file [Puppet::Type::File] The file RAL associated with the resource
-  def find_and_replace_metadata(host, resource, file)
+  def find_and_replace_metadata(request, resource, file)
     # We remove URL info from it, so it forces a local copy
     # rather than routing through the network.
     # Weird, but true.
@@ -77,7 +77,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
 
     raise "Could not get metadata for #{resource[:source]}" unless metadata = file.parameter(:source).metadata
 
-    replace_metadata(host, resource, metadata)
+    replace_metadata(request, resource, metadata)
   end
 
   # Rewrite a given file resource with the metadata from a fileserver based file
@@ -85,10 +85,10 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # This performs the actual metadata rewrite for the given file resource and
   # uploads the content of the source file to the filebucket.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource] The resource to add the metadata to
   # @param metadata [Puppet::FileServing::Metadata] The metadata of the given fileserver based file
-  def replace_metadata(host, resource, metadata)
+  def replace_metadata(request, resource, metadata)
     [:mode, :owner, :group].each do |param|
       resource[param] ||= metadata.send(param)
     end
@@ -101,21 +101,21 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       end
     end
 
-    store_content(resource) if resource[:ensure] == "file"
+    store_content(request, resource) if resource[:ensure] == "file"
     old_source = resource.delete(:source)
-    Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
+    Puppet.info "Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'"
   end
 
   # Generate children resources for a recursive file and add them to the catalog.
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param catalog [Puppet::Resource::Catalog]
   # @param resource [Puppet::Resource]
   # @param file [Puppet::Type::File] The file RAL associated with the resource
-  def add_children(host, catalog, resource, file)
+  def add_children(request, catalog, resource, file)
     file = resource.to_ral
 
-    children = get_child_resources(host, catalog, resource, file)
+    children = get_child_resources(request, catalog, resource, file)
 
     remove_existing_resources(children, catalog)
 
@@ -127,13 +127,13 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
 
   # Given a recursive file resource, recursively generate its children resources
   #
-  # @param host [String] The host name of the node requesting this catalog
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param catalog [Puppet::Resource::Catalog]
   # @param resource [Puppet::Resource]
   # @param file [Puppet::Type::File] The file RAL associated with the resource
   #
   # @return [Array<Puppet::Resource>] The recursively generated File resources for the given resource
-  def get_child_resources(host, catalog, resource, file)
+  def get_child_resources(request, catalog, resource, file)
     sourceselect = file[:sourceselect]
     children = {}
 
@@ -161,7 +161,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     total.each do |meta|
       # This is the top-level parent directory
       if meta.relative_path == "."
-        replace_metadata(host, resource, meta)
+        replace_metadata(request, resource, meta)
         next
       end
       children[meta.relative_path] ||= Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
@@ -174,7 +174,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
           children[meta.relative_path][param] = value
         end
       end
-      replace_metadata(host, children[meta.relative_path], meta)
+      replace_metadata(request, children[meta.relative_path], meta)
     end
 
     children
@@ -194,8 +194,9 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # Retrieve the source of a file resource using a fileserver based source and
   # upload it to the filebucket.
   #
+  # @param request [Puppet::Indirector::Request] The request for the catalog
   # @param resource [Puppet::Resource]
-  def store_content(resource)
+  def store_content(request, resource)
     @summer ||= Puppet::Util::Checksums
 
     type = @summer.sumtype(resource[:content])
@@ -205,7 +206,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       Puppet.info "Content for '#{resource[:source]}' already exists"
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"
-      content = Puppet::FileServing::Content.indirection.find(resource[:source])
+      content = Puppet::FileServing::Content.indirection.find(resource[:source], {:environment => request.environment})
       file = Puppet::FileBucket::File.new(content.content)
       Puppet::FileBucket::File.indirection.save(file)
     end
