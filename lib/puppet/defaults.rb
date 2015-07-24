@@ -486,10 +486,6 @@ module Puppet
       :default    => "stomp",
       :desc       => "Which type of queue to use for asynchronous processing.",
     },
-    :queue_type => {
-      :default    => "stomp",
-      :desc       => "Which type of queue to use for asynchronous processing.",
-    },
     :queue_source => {
       :default    => "stomp://localhost:61613/",
       :desc       => "Which type of queue to use for asynchronous processing.  If your stomp server requires
