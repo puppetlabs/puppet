@@ -156,7 +156,16 @@ module Puppet
           on host, "curl -o /etc/apt/sources.list.d/#{list_filename} #{list_url}"
           on host, "apt-get update"
         else
-          host.logger.notify("No repository installation step for #{platform} yet...")
+          if project == 'puppet-agent'
+            opts = {
+              :puppet_collection => 'PC1',
+              :puppet_agent_sha => ENV['SHA'],
+              :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
+            }
+            install_puppet_agent_dev_repo_on(agent, opts)
+          else
+            fail_test("No repository installation step for #{platform} yet...")
+          end
         end
       end
 
