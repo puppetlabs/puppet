@@ -1195,6 +1195,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'y'])
     end
 
+    it 'should form a relation with 3.x resource -> resource' do
+      # Create a 3.x resource since this is the value given as arguments to defined type
+      scope['a_3x_resource']= Puppet::Parser::Resource.new('notify', 'a', {:scope => scope, :file => __FILE__, :line => 1})
+      source = "$a_3x_resource -> notify{b:}"
+      parser.evaluate_string(scope, source, __FILE__)
+      expect(scope.compiler).to have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
+    end
+
     it 'should tolerate (eliminate) duplicates in operands' do
       source = "[File[a], File[a]] -> File[x]"
       parser.evaluate_string(scope, source, __FILE__)
