@@ -155,7 +155,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
       # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
       real.slice(1)
     rescue NotCatalogTypeError => e
-      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
+      fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
     rescue IllegalRelationshipOperandError => e
       fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:operand => e.operand})
     end
