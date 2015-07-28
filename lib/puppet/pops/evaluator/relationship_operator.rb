@@ -48,6 +48,12 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     raise IllegalRelationshipOperandError.new(o)
   end
 
+  # A Resource is by definition a Catalog type, but of 3.x type
+  # @api private
+  def transform_Resource(o, scope)
+    Puppet::Pops::Types::TypeFactory.resource(o.type, o.title)
+  end
+
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
