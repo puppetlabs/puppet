@@ -146,38 +146,40 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         #First File
         file1 = make_tmp_file(plaintext)
+        real_path = Pathname.new(file1).realpath
         expect(digest(plaintext)).to eq(checksum)
         expect(@dipper.backup(file1)).to eq(checksum)
-        expected_list1_1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+        expected_list1_1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         File.open(file1, 'w') {|f| f.write("Blahhhh")}
         new_checksum = digest("Blahhhh")
         expect(@dipper.backup(file1)).to eq(new_checksum)
-        expected_list1_2 = /#{new_checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+        expected_list1_2 = /#{new_checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         #Second File
         content = "DummyFileWithNonSenseTextInIt"
         file2 = make_tmp_file(content)
+        real_path = Pathname.new(file2).realpath
         checksum = digest(content)
         expect(@dipper.backup(file2)).to eq(checksum)
-        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file2}\n/
+        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         #Third file : Same as the first one with a different path
         file3 = make_tmp_file(plaintext)
+        real_path = Pathname.new(file3).realpath
         checksum = digest(plaintext)
         expect(digest(plaintext)).to eq(checksum)
         expect(@dipper.backup(file3)).to eq(checksum)
         date = Time.now
-        date_s = date.strftime("%F %T")
-        expected_list3 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file3}\n/
+        expected_list3 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         result = @dipper.list(nil, nil)
         expect(result).to match(expected_list1_1)
         expect(result).to match(expected_list1_2)
         expect(result).to match(expected_list2)
         expect(result).to match(expected_list3)
-
       end
+
       it "should filter with the provided dates" do
         Puppet[:bucketdir] =  "/my/bucket"
         file_bucket = tmpdir("bucket")
@@ -191,14 +193,16 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         # First File created now
         @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
         file1 = make_tmp_file(plaintext)
+        real_path = Pathname.new(file1).realpath
 
         expect(digest(plaintext)).to eq(checksum)
         expect(@dipper.backup(file1)).to eq(checksum)
-        expected_list1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file1}\n/
+        expected_list1 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         # Second File created an hour ago
         content = "DummyFileWithNonSenseTextInIt"
         file2 = make_tmp_file(content)
+        real_path = Pathname.new(file2).realpath
         checksum = digest(content)
         expect(@dipper.backup(file2)).to eq(checksum)
 
@@ -206,11 +210,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         onehourago = Time.now - onehour
         bucketed_paths_file = Dir.glob("#{file_bucket}/**/#{checksum}/paths")
         FileUtils.touch(bucketed_paths_file, :mtime => onehourago)
-        onehourago_s = onehourago.strftime("%F %T")
-        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{file2}\n/
+        expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         now = Time.now
-
 
         #Future
         expect(@dipper.list((now + threehours).strftime("%F %T"), nil )).to eq("")
@@ -232,7 +234,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         #Now-30minutes -> Now = First file only
         expect(@dipper.list((now - thirtyminutes).strftime("%F %T"), now.strftime("%F %T"))).to match(expected_list1)
         expect(@dipper.list((now - thirtyminutes).strftime("%F %T"), now.strftime("%F %T"))).not_to match(expected_list2)
-
       end
     end
   end
