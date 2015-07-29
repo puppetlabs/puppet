@@ -274,6 +274,22 @@ class Puppet::Resource
     catalog ? catalog.resource(to_s) : nil
   end
 
+  # A resource is an application component if it exports or consumes
+  # one or more capabilities, or if it requires a capability resource
+  def is_application_component?
+    return true if ! export.empty? || self[:consume]
+    # Array(self[:require]) does not work for Puppet::Resource instances
+    req = self[:require] || []
+    req = [ req ] unless req.is_a?(Array)
+    req.any? { |r| r.is_capability? }
+  end
+
+  # A resource is a capability (instance) if its underlying type is a
+  # capability type
+  def is_capability?
+    resource_type and resource_type.is_capability?
+  end
+
   # The resource's type implementation
   # @return [Puppet::Type, Puppet::Resource::Type]
   # @api private
