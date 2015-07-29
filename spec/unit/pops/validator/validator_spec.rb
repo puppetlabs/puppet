@@ -119,6 +119,15 @@ describe "validating 4x" do
     end
   end
 
+  context 'for future reserved words' do
+    ['application', 'produces', 'consumes'].each do |word|
+      it "produces an issue for the word '#{word}'" do
+        source = "$a = #{word}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
+      end
+    end
+  end
+
   context 'for reserved type names' do
     [# type/Type, is a reserved name but results in syntax error because it is a keyword in lower case form
     'any',

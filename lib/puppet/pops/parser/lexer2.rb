@@ -131,7 +131,13 @@ class Puppet::Pops::Parser::Lexer2
     "type"     => [:TYPE,     'type',     4],
     "attr"     => [:ATTR,     'attr',     4],
     "private"  => [:PRIVATE,  'private',  7],
+    # The following tokens exist in reserved form. Later they will be made
+    # live subject to a feature switch.
+    "application"  => [:APPLICATION_R,  'application',  11],
+    "consumes"     => [:CONSUMES_R,  'consumes',  8],
+    "produces"     => [:PRODUCES_R,  'produces',  8],
   }
+
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
