@@ -16,7 +16,7 @@ describe 'BinderConfig' do
     expect(config.layering_config[0]['name']).to    be == 'site'
     expect(config.layering_config[0]['include']).to be == ['confdir:/default?optional']
     expect(config.layering_config[1]['name']).to    be == 'modules'
-    expect(config.layering_config[1]['include']).to be == ['module:/*::default']
+    expect(config.layering_config[1]['include']).to be == ['module:/*::default', 'module:/*::metadata']
   end
 
   it 'should load binder_config.yaml if it exists in confdir)' do
