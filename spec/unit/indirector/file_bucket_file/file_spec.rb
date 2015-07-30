@@ -113,24 +113,20 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           it "should return false/nil when the bucket is empty" do
             expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar", :list_all => true)).to eq(nil)
           end
+
           it "should return the list of bucketed files in a human readable way" do
-            contents = "I'm the contents of a file"
-            checksum = save_bucket_file(contents, '/foo/bar1')
-            date = Time.now.strftime("%F %T")
-            expected_list1_1 = "#{checksum} #{date} foo/bar1\n"
+            checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
+            checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')
+            checksum3 = save_bucket_file("I'm the modified content of a existing file", '/foo/bar1')
 
-            contents = "I'm the contents of another file"
-            checksum = save_bucket_file(contents, '/foo/bar2')
-            expected_list2 = "#{checksum} #{date} foo/bar2\n"
+            # Use the first checksum as we know it's stored in the bucket
+            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}/foo/bar1", :list_all => true)
 
-            contents = "I'm the modified content of a existing file"
-            checksum = save_bucket_file(contents, '/foo/bar1')
-            expected_list1_2 = "#{checksum} #{date} foo/bar1\n"
-
-            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar", :list_all => true)
-            # I should get the result in the right order
-            expect(find_result.to_s).to eq(expected_list1_1+expected_list1_2+expected_list2)
+            # The list is sort order from date and file name, so first and third checksums come before the second
+            date_pattern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+            expect(find_result.to_s).to match(Regexp.new("^#{checksum1} #{date_pattern} foo/bar1\\n#{checksum3} #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
           end
+
           it "should fail in an informative way when provided dates are not in the right format" do
             contents = "I'm the contents of a file"
             save_bucket_file(contents, '/foo/bar1')
@@ -152,6 +148,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             }.to raise_error(Puppet::Error, /todate/)
           end
         end
+
         describe "when supplying a path" do
           it "should return false/nil if the file isn't bucketed" do
             expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar")).to eq(false)
