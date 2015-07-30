@@ -21,6 +21,7 @@ token HEREDOC SUBLOCATE
 token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
 token PRIVATE ATTR TYPE
+token APPLICATION_R CONSUMES_R PRODUCES_R
 token LOW
 
 prechigh
@@ -631,6 +632,9 @@ reserved_word
   | PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | TYPE      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | APPLICATION_R { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+  | CONSUMES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+  | PRODUCES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
 
 #---LITERALS (dynamic and static)
 #

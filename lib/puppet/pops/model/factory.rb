@@ -151,8 +151,9 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  def build_ReservedWord(o, name)
+  def build_ReservedWord(o, name, future)
     o.word = name
+    o.future = future
     o
   end
 
@@ -638,8 +639,8 @@ class Puppet::Pops::Model::Factory
     LAMBDA(params, new(Model::EppExpression, parameters_specified, body))
   end
 
-  def self.RESERVED(name)
-    new(Model::ReservedWord, name)
+  def self.RESERVED(name, future=false)
+    new(Model::ReservedWord, name, future)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
