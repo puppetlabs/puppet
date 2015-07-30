@@ -10,7 +10,7 @@ module Puppet::DataProviders
 
   def self.lookup_in_environment(name, scope, merge)
     assert_loaded()
-    adapter = Puppet::DataProviders::DataAdapter.adapt(Puppet.lookup(:current_environment))
+    adapter = DataAdapter.adapt(Puppet.lookup(:current_environment))
     adapter.env_provider.lookup(name, scope, merge)
   end
 
@@ -23,7 +23,7 @@ module Puppet::DataProviders
     module_name = name[0..qual_index-1]
 
     assert_loaded()
-    adapter = Puppet::DataProviders::DataAdapter.adapt(Puppet.lookup(:current_environment))
+    adapter = DataAdapter.adapt(Puppet.lookup(:current_environment))
     data_provider = adapter.module_provider(module_name)
     throw :no_such_key if data_provider.nil?
     data_provider.lookup(name, scope, merge)

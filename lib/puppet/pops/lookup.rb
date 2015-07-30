@@ -33,13 +33,13 @@ class Puppet::Pops::Lookup
 
     # Use the 'default_values_hash' map as a last resort if nothing is found
     if result_with_name[1].equal?(not_found) && !default_values_hash.empty?
-      result_with_name = names.reduce(result_with_name) do |memo, key|
+        result_with_name = names.reduce(result_with_name) do |memo, key|
         value = default_values_hash.include?(key) ? assert_type('default_values_hash', value_type, default_values_hash[key]) : not_found
-        memo = [ key, value ]
-        break memo unless value.equal?(not_found)
-        memo
+          memo = [ key, value ]
+          break memo unless value.equal?(not_found)
+          memo
+        end
       end
-    end
 
     answer = result_with_name[1]
     if answer.equal?(not_found)

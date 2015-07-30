@@ -1,6 +1,8 @@
 # A DataAdapter adapts an object with a Hash of data
 #
 class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
+  include Puppet::Plugins::DataProviders
+
   attr_accessor :data
   attr_accessor :env_provider
 
@@ -45,16 +47,16 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     injector = Puppet.lookup(:injector) { nil }
 
     # Support running tests without an injector being configured == using a null implementation
-    return Puppet::Plugins::DataProviders::ModuleDataProvider.new() unless injector
+    return ModuleDataProvider.new() unless injector
 
     # Get the registry of module to provider implementation name
-    module_service_type = Puppet::Plugins::DataProviders.hash_of_per_module_data_provider
-    module_service_name = Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY
+    module_service_type = Registry.hash_of_per_module_data_provider
+    module_service_name = PER_MODULE_DATA_PROVIDER_KEY
     module_service = injector.lookup(nil, module_service_type, module_service_name)
     provider_name = module_service[module_name] || 'none'
 
-    service_type = Puppet::Plugins::DataProviders.hash_of_module_data_providers
-    service_name = Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY
+    service_type = Registry.hash_of_module_data_providers
+    service_name = MODULE_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
     service = injector.lookup(nil, service_type, service_name)
@@ -69,7 +71,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     injector = Puppet.lookup(:injector) { nil }
 
     # Support running tests without an injector being configured == using a null implementation
-    return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new() unless injector
+    return EnvironmentDataProvider.new() unless injector
 
     # Get the environment's configuration since we need to know which data provider
     # should be used (includes 'none' which gets a null implementation).
@@ -79,8 +81,8 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     # Get the data provider and find the bound implementation
     # TODO: PUP-1640, drop the nil check when legacy env support is dropped
     provider_name = env_conf.nil? ? 'none' : env_conf.environment_data_provider
-    service_type = Puppet::Plugins::DataProviders.hash_of_environment_data_providers
-    service_name = Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY
+    service_type = Registry.hash_of_environment_data_providers
+    service_name = ENV_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
     service = injector.lookup(nil, service_type, service_name)
