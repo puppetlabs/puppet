@@ -1,18 +1,30 @@
 module Puppet::Plugins::DataProviders
   module DataProvider
-    # Performs a lookup.
+    # Performs a lookup with an endless recursion check.
     #
     # @param key [String] The key to lookup
-    # @param scope [Puppet::Parser::Scope] The scope to use for the lookup
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     #
     # @api public
-    def lookup(key, scope, merge)
-      hash = data(data_key(key), scope)
+    def lookup(name, lookup_invocation, merge)
+      lookup_invocation.check(name) { unchecked_lookup(name, lookup_invocation, merge) }
+    end
+
+    # Performs a lookup with the assumption that a recursive check has been made.
+    #
+    # @param key [String] The key to lookup
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+    #
+    # @api public
+    def unchecked_lookup(key, lookup_invocation, merge)
+      hash = data(data_key(key), lookup_invocation)
       value = hash[key]
       throw :no_such_key unless value || hash.include?(key)
       value
     end
+    protected :unchecked_lookup
 
     # Gets the data from the compiler, or initializes it by calling #initialize_data if not present in the compiler.
     # This means, that data is initialized once per compilation, and the data is cached for as long as the compiler
@@ -22,14 +34,15 @@ module Puppet::Plugins::DataProviders
     # If data is obtained using the #initialize_data method it will be sent to the #validate_data for validation
     #
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
-    # @param scope [Puppet::Parser::Scope] The scope to use for the lookup
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
     #
     # @api public
-    def data(data_key, scope)
-      compiler = scope.compiler
+    def data(data_key, lookup_invocation)
+      compiler = lookup_invocation.scope.compiler
       adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
-      adapter.data[data_key] ||= validate_data(initialize_data(data_key, scope), data_key)
+      adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation), data_key)
     end
     protected :data
 
@@ -47,11 +60,11 @@ module Puppet::Plugins::DataProviders
     # Should be reimplemented by subclass to provide the hash that corresponds to the given name.
     #
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
-    # @param scope [Puppet::Parser::Scope] The scope to use for the lookup
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
     # @return [Hash] The hash of values
     #
     # @api public
-    def initialize_data(data_key, scope)
+    def initialize_data(data_key, lookup_invocation)
       {}
     end
     protected :initialize_data

@@ -1,7 +1,8 @@
 module Puppet::DataProviders::DataFunctionSupport
-  def initialize_data(data_key, scope)
+  def initialize_data(data_key, lookup_invocation)
     name = "#{data_key}::data"
-      Puppet::Util::Profiler.profile("Called #{name}", [ :functions, name ]) do
+    scope = lookup_invocation.scope
+    Puppet::Util::Profiler.profile("Called #{name}", [ :functions, name ]) do
       loader = loader(data_key, scope)
       if loader && func = loader.load(:function, name)
         # function found, call without arguments, must return a Hash

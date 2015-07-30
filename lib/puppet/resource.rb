@@ -441,7 +441,7 @@ class Puppet::Resource
   def lookup_in_environment(name, scope)
     found = false
     value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_environment(name, scope, nil)
+      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::DataBinding::LookupInvocation.new(scope), nil)
       found = true
       v
     end
@@ -452,7 +452,7 @@ class Puppet::Resource
   def lookup_in_module(name, scope)
     found = false
     value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_module(name, scope, nil)
+      v = Puppet::DataProviders.lookup_in_module(name, Puppet::DataBinding::LookupInvocation.new(scope), nil)
       found = true
       v
     end

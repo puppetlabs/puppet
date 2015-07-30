@@ -202,23 +202,27 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
   end
 
   def lookup_1(scope, name, value_type=nil, merge=nil)
-    Puppet::Pops::Lookup.lookup(scope, name, value_type, nil, false, {}, {}, merge)
+    do_lookup(scope, name, value_type, nil, false, {}, {}, merge)
   end
 
   def lookup_2(scope, name, value_type, merge, default_value)
-    Puppet::Pops::Lookup.lookup(scope, name, value_type, default_value, true, {}, {}, merge)
+    do_lookup(scope, name, value_type, default_value, true, {}, {}, merge)
   end
 
   def lookup_3(scope, name, value_type=nil, merge=nil, &block)
-    Puppet::Pops::Lookup.lookup(scope, name, value_type, nil, false, {}, {}, merge, &block)
+    do_lookup(scope, name, value_type, nil, false, {}, {}, merge, &block)
   end
 
   def lookup_4(scope, options_hash, &block)
-    Puppet::Pops::Lookup.lookup(scope, options_hash['name'], *hash_args(options_hash), &block)
+    do_lookup(scope, options_hash['name'], *hash_args(options_hash), &block)
   end
 
   def lookup_5(scope, name, options_hash, &block)
-    Puppet::Pops::Lookup.lookup(scope, name, *hash_args(options_hash), &block)
+    do_lookup(scope, name, *hash_args(options_hash), &block)
+  end
+
+  def do_lookup(scope, name, value_type, default_value, has_default, override, default_values_hash, merge, &block)
+    Puppet::Pops::Lookup.lookup(name, value_type, default_value, has_default, merge, Puppet::DataBinding::LookupInvocation.new(scope, override, default_values_hash), &block)
   end
 
   def hash_args(options_hash)
