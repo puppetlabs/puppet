@@ -544,6 +544,10 @@ module Puppet::Pops::Issues
     "Use of reserved word: #{word}, must be quoted if intended to be a String value"
   end
 
+  FUTURE_RESERVED_WORD = issue :FUTURE_RESERVED_WORD, :word do
+    "Use of future reserved word: '#{word}', must later be quoted if intended to be a String value"
+  end
+
   RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
     "The name: '#{name}' is already defined by Puppet and can not be used as the name of #{label.a_an(semantic)}."
   end

@@ -23,7 +23,9 @@ class Puppet::Pops::Validation::ValidatorFactory_4_0 < Puppet::Pops::Validation:
     p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
     p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
 
-    p[Issues::NAME_WITH_HYPHEN]             = :error
+    p[Issues::FUTURE_RESERVED_WORD]          = :deprecation
+
+    p[Issues::NAME_WITH_HYPHEN]              = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
     p
   end

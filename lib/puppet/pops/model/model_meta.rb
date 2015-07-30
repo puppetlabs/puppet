@@ -467,9 +467,12 @@ module Puppet::Pops::Model
     has_attr 'value', String, :lowerBound => 1
   end
 
-  # Represents a parsed reserved word
+  # Represents a parsed reserved word. If the 'future' attribute is true
+  # the ReserwedWord functions as a deprecation warning + string value
+  #
   class ReservedWord < LiteralValue
     has_attr 'word', String, :lowerBound => 1
+    has_attr 'future', Boolean
   end
 
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).

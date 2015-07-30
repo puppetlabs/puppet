@@ -20,7 +20,8 @@ module Puppet
     :cfacter => {
         :default => false,
         :type    => :boolean,
-        :desc    => 'Whether or not to use the native facter (cfacter) implementation instead of the Ruby one (facter). Defaults to false.',
+        :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
+          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.',
         :hook    => proc do |value|
           return unless value
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
