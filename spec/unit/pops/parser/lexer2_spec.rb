@@ -91,8 +91,21 @@ describe 'Lexer2' do
     "true"     => :BOOLEAN,
     "in"       => :IN,
     "unless"   => :UNLESS,
+    "private"  => :PRIVATE,
+    "type"     => :TYPE,
+    "attr"     => :ATTR,
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
+      expect(tokens_scanned_from(string)).to match_tokens2(name)
+    end
+  end
+
+  {
+    "application"  => :APPLICATION_R,
+    "consumes"     => :CONSUMES_R,
+    "produces"     => :PRODUCES_R,
+  }.each do |string, name|
+    it "should lex a (future reserved) keyword from '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2(name)
     end
   end

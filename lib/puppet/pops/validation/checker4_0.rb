@@ -495,7 +495,11 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_ReservedWord(o)
-    acceptor.accept(Issues::RESERVED_WORD, o, :word => o.word)
+    if o.future
+      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, :word => o.word)
+    else
+      acceptor.accept(Issues::RESERVED_WORD, o, :word => o.word)
+    end
   end
 
   def check_SelectorExpression(o)
