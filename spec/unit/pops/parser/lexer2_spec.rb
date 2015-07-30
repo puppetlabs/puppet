@@ -100,13 +100,42 @@ describe 'Lexer2' do
     end
   end
 
-  {
-    "application"  => :APPLICATION_R,
-    "consumes"     => :CONSUMES_R,
-    "produces"     => :PRODUCES_R,
-  }.each do |string, name|
-    it "should lex a (future reserved) keyword from '#{string}'" do
-      expect(tokens_scanned_from(string)).to match_tokens2(name)
+  context 'when app_management is off (by default)' do
+    {
+      "application"  => :APPLICATION_R,
+      "consumes"     => :CONSUMES_R,
+      "produces"     => :PRODUCES_R,
+    }.each do |string, name|
+      it "should lex a (future reserved) keyword from '#{string}'" do
+        expect(tokens_scanned_from(string)).to match_tokens2(name)
+      end
+    end
+  end
+
+  context 'when app_managment is (turned) on' do
+    # Horrible things have to be done to test this as the Lexer sets up the KEYWORD table as a frozen constant,
+    # and this list depends on the Puppet[:app_management] setting. These 'before all' and 'after all' clauses
+    # forces Ruby to reload the Lexer
+    before(:all) do
+      Puppet[:app_management] = true
+      Puppet::Pops::Parser.send(:remove_const, :Lexer2)
+      load 'puppet/pops/parser/lexer2.rb'
+    end
+
+    after(:all) do
+      Puppet[:app_management] = false
+      Puppet::Pops::Parser.send(:remove_const, :Lexer2)
+      load 'puppet/pops/parser/lexer2.rb'
+    end
+
+    {
+      "application"  => :APPLICATION,
+      "consumes"     => :CONSUMES,
+      "produces"     => :PRODUCES,
+    }.each do |string, name|
+      it "should lex a keyword from '#{string}'" do
+        expect(tokens_scanned_from(string)).to match_tokens2(name)
+      end
     end
   end
 
