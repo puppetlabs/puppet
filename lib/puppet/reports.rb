@@ -54,7 +54,11 @@ class Puppet::Reports
   def self.register_report(name, options = {}, &block)
     name = name.intern
 
-    mod = genmodule(name, :extend => Puppet::Util::Docs, :hash => instance_hash(:report), :block => block)
+    mod = genmodule(name,
+                    :extend    => Puppet::Util::Docs,
+                    :hash      => instance_hash(:report),
+                    :overwrite => true,
+                    :block     => block)
 
     mod.useyaml = true if options[:useyaml]
 

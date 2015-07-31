@@ -43,6 +43,11 @@ describe Puppet::Reports, " when registering report types" do
     Puppet::Reports.register_report(:testing) { }
   end
 
+  it "should allow a failed report to be redefined" do
+    expect { Puppet::Reports.register_report(:testing) { raise 'failed report' } }.to raise_error(RuntimeError)
+    Puppet::Reports.register_report(:testing) { }
+  end
+
   it "should extend the report type with the Puppet::Util::Docs module" do
     mod = stub 'module', :define_method => true
 
