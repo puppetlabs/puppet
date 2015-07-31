@@ -1344,6 +1344,33 @@ describe Puppet::Type.type(:file) do
         end
       end
     end
+
+    describe "execs" do
+      it "should autorequire an exec that 'creates' it" do
+        exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH'], :creates => path
+        catalog.add_resource file
+        catalog.add_resource exec
+        reqs = file.autorequire
+        expect(reqs[0].source).to eq(exec)
+        expect(reqs[0].target).to eq(file)
+      end
+
+      it "should not autorequire an exec that does not 'create' anything" do
+        exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH']
+        catalog.add_resource file
+        catalog.add_resource exec
+        reqs = file.autorequire
+        expect(reqs.length).to eq(0)
+      end
+
+      it "should not autorequire an exec that does not 'create' it" do
+        exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH'], :creates => "#{path}-different"
+        catalog.add_resource file
+        catalog.add_resource exec
+        reqs = file.autorequire
+        expect(reqs.length).to eq(0)
+      end
+    end
   end
 
   describe "when managing links", :if => Puppet.features.manages_symlinks? do
@@ -1501,5 +1528,4 @@ describe Puppet::Type.type(:file) do
       end
     end
   end
-
 end

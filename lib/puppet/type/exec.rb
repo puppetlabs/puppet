@@ -49,7 +49,10 @@ module Puppet
       **Autorequires:** If Puppet is managing an exec's cwd or the executable
       file used in an exec's command, the exec resource will autorequire those
       files. If Puppet is managing the user that an exec should run as, the
-      exec resource will autorequire that user."
+      exec resource will autorequire that user.
+
+      **Autobefores:** If puppet is managing the file that this exec creates,
+      the exec resource will autobefores it."
 
     # Create a new check mechanism.  It's basically just a parameter that
     # provides one extra 'check' method.
@@ -539,11 +542,14 @@ module Puppet
           reqs += line.scan(file_regex)
         end
       }
+    end
 
-      # For some reason, the += isn't causing a flattening
-      reqs.flatten!
-
-      reqs
+    autobefore(:file) do
+      if self[:creates]
+        self[:creates]
+      else
+        nil
+      end
     end
 
     autorequire(:user) do
