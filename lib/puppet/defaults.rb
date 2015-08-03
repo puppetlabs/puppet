@@ -526,6 +526,15 @@ module Puppet
       :desc    => "The directory where catalog previews per node are generated."
     }
   )
+
+  define_settings(:main,
+      :app_management => {
+          :default  => false,
+          :type     => :boolean,
+          :desc     => "Whether the application management feature is on or off. A change of this setting requires a reboot.",
+      }
+  )
+
   Puppet.define_settings(:module_tool,
     :module_repository  => {
       :default  => 'https://forgeapi.puppetlabs.com',

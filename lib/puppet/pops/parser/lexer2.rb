@@ -107,6 +107,12 @@ class Puppet::Pops::Parser::Lexer2
   # is not used, but is kept here for documentation purposes.
   TOKEN_OTHER        = [:OTHER,  nil,  0]
 
+  APP_MANAGEMENT_TOKENS = if Puppet[:app_management]
+    {:APPLICATION => :APPLICATION, :CONSUMES => :CONSUMES, :PRODUCES => :PRODUCES }
+  else
+    {:APPLICATION => :APPLICATION_R, :CONSUMES => :CONSUMES_R, :PRODUCES => :PRODUCES_R }
+  end
+
   # Keywords are all singleton tokens with pre calculated lengths.
   # Booleans are pre-calculated (rather than evaluating the strings "false" "true" repeatedly.
   #
@@ -131,11 +137,10 @@ class Puppet::Pops::Parser::Lexer2
     "type"     => [:TYPE,     'type',     4],
     "attr"     => [:ATTR,     'attr',     4],
     "private"  => [:PRIVATE,  'private',  7],
-    # The following tokens exist in reserved form. Later they will be made
-    # live subject to a feature switch.
-    "application"  => [:APPLICATION_R,  'application',  11],
-    "consumes"     => [:CONSUMES_R,  'consumes',  8],
-    "produces"     => [:PRODUCES_R,  'produces',  8],
+     # Feature-switched tokens; either reserved, or real tokens
+    "application"  => [APP_MANAGEMENT_TOKENS[:APPLICATION],  'application',  11],
+    "consumes"     => [APP_MANAGEMENT_TOKENS[:CONSUMES],  'consumes',  8],
+    "produces"     => [APP_MANAGEMENT_TOKENS[:PRODUCES],  'produces',  8],
   }
 
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
