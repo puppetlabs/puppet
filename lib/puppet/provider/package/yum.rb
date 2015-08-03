@@ -151,9 +151,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    args = ["-d", "0", "-e", "0", "-y", install_options, operation, wanted].compact
-    yum *args
+    # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;
+    # ensure we capture output to check for errors.
+    no_debug = if Facter.value(:operatingsystemmajrelease).to_i > 5 then ["-d", "0"] else [] end
+    args = no_debug + ["-e", "0", "-y", install_options, operation, wanted].compact
+    output = yum *args
 
+    if output =~ /^No package #{wanted} available\.$/
+      raise Puppet::Error, "Could not find package #{wanted}"
+    end
 
     # If a version was specified, query again to see if it is a matching version
     if should

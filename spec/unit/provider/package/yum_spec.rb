@@ -181,12 +181,27 @@ describe provider_class do
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       provider.stubs(:which).with("rpm").returns("/bin/rpm")
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns('6')
     end
 
     it 'should call yum install for :installed' do
       resource.stubs(:should).with(:ensure).returns :installed
       provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
       provider.install
+    end
+
+    context 'on el-5' do
+      before(:each) do
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('5')
+      end
+
+      it 'should catch yum install failures when status code is wrong' do
+        resource.stubs(:should).with(:ensure).returns :installed
+        provider.expects(:yum).with('-e', '0', '-y', :install, name).returns("No package #{name} available.")
+        expect {
+          provider.install
+        }.to raise_error(Puppet::Error, "Could not find package #{name}")
+      end
     end
 
     it 'should use :install to update' do

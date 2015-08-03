@@ -1,9 +1,6 @@
 test_name "ticket 1073: common package name in two different providers should be allowed"
 
-hosts_to_test = agents.select do |agent|
-  agent['platform'].match /(?:centos|el-|fedora)/
-end
-skip_test "No suitable hosts found" if hosts_to_test.empty?
+confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils
@@ -39,13 +36,13 @@ def verify_absent(hosts, pkg)
 end
 
 # Setup repo and package
-hosts_to_test.each do |agent|
+agents.each do |agent|
   clean_rpm agent, rpm_options
   setup_rpm agent, rpm_options
   send_rpm agent, rpm_options
 end
 
-verify_absent hosts_to_test, 'guid'
+verify_absent agents, 'guid'
 
 # Test error trying to install duplicate packages
 collide1_manifest = <<MANIFEST
@@ -53,22 +50,22 @@ collide1_manifest = <<MANIFEST
   package {'other-guid': name => 'guid', ensure => present}
 MANIFEST
 
-apply_manifest_on(hosts_to_test, collide1_manifest, :acceptable_exit_codes => [1]).each do |result|
+apply_manifest_on(agents, collide1_manifest, :acceptable_exit_codes => [1]).each do |result|
   assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", nil\]/, "#{result.host}: #{result.stderr}")
 end
 
-verify_absent hosts_to_test, 'guid'
+verify_absent agents, 'guid'
 
 collide2_manifest = <<MANIFEST
   package {'guid': ensure => '0.1.0', provider => gem}
   package {'other-guid': name => 'guid', ensure => installed, provider => gem}
 MANIFEST
 
-apply_manifest_on(hosts_to_test, collide2_manifest, :acceptable_exit_codes => [1]).each do |result|
+apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]).each do |result|
   assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", "gem"\]/, "#{result.host}: #{result.stderr}")
 end
 
-verify_absent hosts_to_test, 'guid'
+verify_absent agents, 'guid'
 
 # Test successful parallel installation
 install_manifest = <<MANIFEST
@@ -81,12 +78,12 @@ install_manifest = <<MANIFEST
   }
 MANIFEST
 
-apply_manifest_on(hosts_to_test, install_manifest).each do |result|
+apply_manifest_on(agents, install_manifest).each do |result|
   assert_match('Package[guid]/ensure: created', "#{result.host}: #{result.stdout}")
   assert_match('Package[gem-guid]/ensure: created', "#{result.host}: #{result.stdout}")
 end
 
-verify_present hosts_to_test, 'guid'
+verify_present agents, 'guid'
 
 # Test removal
 remove_manifest = <<MANIFEST
@@ -99,10 +96,10 @@ remove_manifest = <<MANIFEST
   package {'guid': ensure => absent}
 MANIFEST
 
-apply_manifest_on(hosts_to_test, remove_manifest).each do |result|
+apply_manifest_on(agents, remove_manifest).each do |result|
   assert_match('Package[guid]/ensure: removed', "#{result.host}: #{result.stdout}")
   assert_match('Package[gem-guid]/ensure: removed', "#{result.host}: #{result.stdout}")
 end
 
-verify_absent hosts_to_test, 'guid'
+verify_absent agents, 'guid'
 
