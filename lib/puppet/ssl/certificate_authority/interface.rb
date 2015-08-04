@@ -140,7 +140,7 @@ module Puppet
             if value = ca.print(host)
               puts value
             else
-              Puppet.err "Could not find certificate for #{host}"
+              raise ArgumentError, "Could not find certificate for #{host}"
             end
           end
         end
@@ -151,7 +151,7 @@ module Puppet
             if cert = (Puppet::SSL::Certificate.indirection.find(host) || Puppet::SSL::CertificateRequest.indirection.find(host))
               puts "#{host} #{cert.digest(@digest)}"
             else
-              Puppet.err "Could not find certificate for #{host}"
+	      raise ArgumentError, "Could not find certificate for #{host}"
             end
           end
         end
