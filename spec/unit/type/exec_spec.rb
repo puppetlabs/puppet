@@ -396,16 +396,19 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should fail if timeout is exceeded" do
-        ruby_path = Puppet::Util::Execution.ruby_path()
+      context 'when timeout is exceeded on POSIX', :as_platform => :posix do
+        it 'sends a SIGTERM and raises a Puppet::Error' do
+          ruby_path = Puppet::Util::Execution.ruby_path()
 
-        ## Leaving this commented version in here because it fails on windows, due to what appears to be
-        ##  an assumption about hash iteration order in lib/puppet/type.rb#hash2resource, where
-        ##  resource[]= will overwrite the namevar with ":name" if the iteration is in the wrong order
-        #sleep_exec = Puppet::Type.type(:exec).new(:name => 'exec_spec sleep command', :command => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
-        sleep_exec = Puppet::Type.type(:exec).new(:name => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
+          ## Leaving this commented version in here because it fails on windows, due to what appears to be
+          ##  an assumption about hash iteration order in lib/puppet/type.rb#hash2resource, where
+          ##  resource[]= will overwrite the namevar with ":name" if the iteration is in the wrong order
+          #sleep_exec = Puppet::Type.type(:exec).new(:name => 'exec_spec sleep command', :command => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
+          sleep_exec = Puppet::Type.type(:exec).new(:name => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
 
-        expect { sleep_exec.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
+          Process.expects(:kill).at_least_once
+          expect { sleep_exec.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
+        end
       end
 
       it "should convert timeout to a float" do

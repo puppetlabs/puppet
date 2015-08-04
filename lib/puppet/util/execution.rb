@@ -1,3 +1,4 @@
+require 'timeout'
 require 'puppet/file_system/uniquefile'
 
 module Puppet
@@ -179,8 +180,23 @@ module Puppet::Util::Execution
       if execution_stub = Puppet::Util::ExecutionStub.current_value
         return execution_stub.call(*exec_args)
       elsif Puppet.features.posix?
-        child_pid = execute_posix(*exec_args)
-        exit_status = Process.waitpid2(child_pid).last.exitstatus
+        child_pid = nil
+        begin
+          child_pid = execute_posix(*exec_args)
+          exit_status = Process.waitpid2(child_pid).last.exitstatus
+          child_pid = nil
+        rescue Timeout::Error => e
+          # NOTE: For Ruby 2.1+, an explicit Timeout::Error class has to be
+          # passed to Timeout.timeout in order for there to be something for
+          # this block to rescue.
+          unless child_pid.nil?
+            Process.kill(:TERM, child_pid)
+            # Spawn a thread to reap the process if it dies.
+            Thread.new { Process.waitpid(child_pid) }
+          end
+
+          raise e
+        end
       elsif Puppet.features.microsoft_windows?
         process_info = execute_windows(*exec_args)
         begin
