@@ -456,10 +456,12 @@ module Puppet
         key and value pair are interpreted in a provider specific way.  Each
         option will automatically be quoted when passed to the install command.
 
-        On Windows, this is the **only** place in Puppet where backslash
-        separators should be used.  Note that backslashes in double-quoted
-        strings _must_ be double-escaped and backslashes in single-quoted
-        strings _may_ be double-escaped.
+        With Windows packages, note that file paths in an install option must
+        use backslashes. (Since install options are passed directly to the
+        installation command, forward slashes won't be automatically converted
+        like they are in `file` resources.) Note also that backslashes in
+        double-quoted strings _must_ be escaped and backslashes in single-quoted
+        strings _can_ be escaped.
       EOT
     end
 
