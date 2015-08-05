@@ -404,8 +404,9 @@ module Puppet
     end
 
     newparam(:configfiles) do
-      desc "Whether configfiles should be kept or replaced.  Most packages
-        types do not support this parameter. Defaults to `keep`."
+      desc "Whether to keep or replace modified config files when installing or
+        upgrading a package. This only affects the `apt` and `dpkg` providers.
+        Defaults to `keep`."
 
       defaultto :keep
 
