@@ -140,7 +140,7 @@ module Puppet
       # value containing only the file mode, excluding the type, e.g
       # S_IFDIR 0040000
       def stat(host, path)
-        stat_command = case agent['platform']
+        stat_command = case host['platform']
                        when /osx/
                          "stat -f '%Su:%Sg:%p'"
                        else
