@@ -51,7 +51,7 @@ See [LICENSE](LICENSE) file.
 Support
 -------
 
-Please log tickets and issues at our [JIRA tracker](http://tickets.puppetlabs.com).  A [mailing
+Please log tickets and issues at our [JIRA tracker](https://tickets.puppetlabs.com).  A [mailing
 list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
 available for asking questions and getting help from others. In addition there
 is an active #puppet channel on Freenode.
