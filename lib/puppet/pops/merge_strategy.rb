@@ -4,6 +4,9 @@ module Puppet::Pops
   # Merges to objects into one based on an implemented strategy.
   #
   class MergeStrategy
+
+    NOT_FOUND = Object.new.freeze
+
     TypeAsserter = Puppet::Pops::Types::TypeAsserter
     TypeParser = Puppet::Pops::Types::TypeParser
 
@@ -25,6 +28,7 @@ module Puppet::Pops
     # @return [MergeStrategy] The matching merge strategy
     #
     def self.strategy(merge)
+      merge = :first if merge.nil?
       TypeAsserter.assert_instance_of("MergeStrategies.merge 'merge' parameter", merge_t, merge)
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
@@ -82,7 +86,7 @@ module Puppet::Pops
       @options = options
     end
 
-    # Merges the elements of _e1_ and _e2_ accoring to the implemented strategy and options given when this
+    # Merges the elements of _e1_ and _e2_ according to the rules of this strategy and options given when this
     # instance was created
     #
     # @param e1 [Object] The first element
@@ -93,6 +97,30 @@ module Puppet::Pops
       checked_merge(
         assert_type('e1', value_t, e1),
         assert_type('e2', value_t, e2))
+    end
+
+    # Merges the result of yielding the given _lookup_variants_ to a given block.
+    #
+    # @param lookup_variants [Array] The variants to pass as second argument to the given block
+    # @return [Object] the merged value. Will be the constant #NOT_FOUND unless the lookup was successful
+    # @yield [} ]
+    # @yieldparam variant [Object] each variant given in the _lookup_variants_ array.
+    # @yieldreturn [Object] the value to merge with other values
+    #
+    def merge_lookup(lookup_variants)
+      lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
+        not_found = true
+        value = catch(:no_such_key) do
+          v = yield(lookup_variant)
+          not_found = false
+          v
+        end
+        if not_found || value.equal?(NOT_FOUND)
+          memo
+        else
+          memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
+        end
+      end
     end
 
     # Converts a single value to the type expeced when peforming a merge of two elements
@@ -131,6 +159,37 @@ module Puppet::Pops
     def assert_type(param, type, value)
       TypeAsserter.assert_instance_of(param, type, value)
     end
+  end
+
+  # Simple strategy that returns the first value found. It never merges any values.
+  #
+  class FirstFoundStrategy < MergeStrategy
+    def self.key
+      :first
+    end
+
+    # Returns the first value found
+    #
+    # @param lookup_variants [Array] The variants to pass as second argument to the given block
+    # @return [Object] the merged value. Will be the constant #NOT_FOUND unless the lookup was successful
+    #
+    def merge_lookup(lookup_variants)
+      lookup_variants.each do |lookup_variant|
+        catch(:no_such_key) do
+          value = yield(lookup_variant)
+          return value unless value.equal?(NOT_FOUND)
+        end
+      end
+      NOT_FOUND
+    end
+
+    protected
+
+    def value_t
+      @value_t ||= Puppet::Pops::Types::PAnyType::DEFAULT
+    end
+
+    MergeStrategy.add_strategy(self)
   end
 
   # Produces a new hash by merging hash e1 with hash e2 in such a way that the values of duplicate keys

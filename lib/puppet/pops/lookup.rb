@@ -21,11 +21,11 @@ class Puppet::Pops::Lookup
 
     # find first name that yields a non-nil result and wrap it in a two element array
     # with name and value.
-    not_found = Object.new
+    not_found = Puppet::Pops::MergeStrategy::NOT_FOUND
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil,not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type('override', value_type, override_values[key]) : not_found
-      value = search_and_merge(key, lookup_invocation, merge, not_found) if value.equal?(not_found)
+      value = search_and_merge(key, lookup_invocation, merge) if value.equal?(not_found)
       break [key, assert_type('found', value_type, value)] unless value.equal?(not_found)
       memo
     end
@@ -56,22 +56,14 @@ class Puppet::Pops::Lookup
     answer
   end
 
-  def self.search_and_merge(name, lookup_invocation, merge, not_found)
-    in_global = lambda { lookup_with_databinding(name, lookup_invocation, merge) }
-    in_env = lambda { Puppet::DataProviders.lookup_in_environment(name, lookup_invocation, merge) }
-    in_module = lambda { Puppet::DataProviders.lookup_in_module(name, lookup_invocation, merge) }
-
-    [in_global, in_env, in_module].reduce(not_found) do |memo, f|
-      found = false # can't trust catch return value since nil is valid
-      value = catch (:no_such_key) do
-        answer = f.call
-        found = true
-        answer
-      end
-      next memo unless found
-      break value if merge.nil? # value found and no merge
-      strategy = Puppet::Pops::MergeStrategy.strategy(merge)
-      memo.equal?(not_found) ? strategy.convert_value(value) : strategy.merge(memo, value)
+  def self.search_and_merge(name, lookup_invocation, merge)
+    @variants ||= [
+      method(:lookup_with_databinding),
+      Puppet::DataProviders.method(:lookup_in_environment),
+      Puppet::DataProviders.method(:lookup_in_module)
+    ]
+    Puppet::Pops::MergeStrategy.strategy(merge).merge_lookup(@variants) do |f|
+      f.call(name, lookup_invocation, merge)
     end
   end
   private_class_method :search_and_merge

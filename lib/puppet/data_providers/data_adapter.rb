@@ -76,7 +76,7 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
     # Get the environment's configuration since we need to know which data provider
     # should be used (includes 'none' which gets a null implementation).
     #
-    env_conf = Puppet.lookup(:environments).get_conf(@env.name)
+    env_conf = @env.configuration
 
     # Get the data provider and find the bound implementation
     # TODO: PUP-1640, drop the nil check when legacy env support is dropped

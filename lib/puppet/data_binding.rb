@@ -8,9 +8,9 @@ class Puppet::DataBinding
   indirects(:data_binding, :terminus_setting => :data_binding_terminus,
     :doc => "Where to find external data bindings.")
 
-  class LookupError < Puppet::Error; end
+  class LookupError < Puppet::PreformattedError; end
 
-  class RecursiveLookup < Puppet::DataBinding::LookupError; end
+  class RecursiveLookupError < Puppet::DataBinding::LookupError; end
 
   class LookupInvocation
     attr_reader :scope, :override_values, :default_values
@@ -26,7 +26,9 @@ class Puppet::DataBinding
     end
 
     def check(name)
-      raise RecursiveLookup, "Detected in [#{@seen.join(', ')}]" if @name_stack.include?(name)
+      if @name_stack.include?(name)
+        raise RecursiveLookupError, "Recursive lookup detected in [#{@name_stack.join(', ')}]"
+      end
       return unless block_given?
 
       @name_stack.push(name)

@@ -22,9 +22,20 @@ module Puppet::Plugins::DataProviders
       hash = data(data_key(key), lookup_invocation)
       value = hash[key]
       throw :no_such_key unless value || hash.include?(key)
+      post_process(value, lookup_invocation)
+    end
+
+    # Perform optional post processing of found value. This hook is used by the hiera style
+    # providers to perform interpolation. The default method simply returns the given _value_.
+    #
+    # @param value [Object] The value to perform post processing on
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @return [Object] The result of post processing the value.
+    #
+    # @api public
+    def post_process(value, lookup_invocation)
       value
     end
-    protected :unchecked_lookup
 
     # Gets the data from the compiler, or initializes it by calling #initialize_data if not present in the compiler.
     # This means, that data is initialized once per compilation, and the data is cached for as long as the compiler
@@ -114,5 +125,131 @@ module Puppet::Plugins::DataProviders
       'environment'
     end
     protected :data_key
+  end
+
+  # Class that keeps track of the original path (as it appears in the declaration, before interpolation),
+  # the fully resolved path, and whether or the resolved path exists.
+  #
+  # @api public
+  class ResolvedPath
+    attr_reader :original_path, :path
+
+    # @param original_path [String] path as found in declaration. May contain interpolation expressions
+    # @param path [Pathname] the expanded absolue path
+    # @api public
+    def initialize(original_path, path)
+      @original_path = original_path
+      @path = path
+      @exists = nil
+    end
+
+    # @return [Boolean] cached info if the path exists or not
+    # @api public
+    def exists?
+      @exists = @path.exist? if @exists.nil?
+      @exists
+    end
+  end
+
+  # A data provider that is initialized with a set of _paths_. When performing lookup, each
+  # path is search in the order they appear. If a value is found in more than one location it
+  # will be merged according to a given (optional) merge strategy.
+  #
+  # @abstract
+  # @api public
+  class PathBasedDataProvider
+    include DataProvider
+
+    attr_reader :name
+
+    # @param name [String] The name of the data provider
+    # @param paths [Array<ResolvedPath>] Paths used by this provider
+    #
+    # @api public
+    def initialize(name, paths)
+      @name = name
+      @paths = paths
+    end
+
+    # Performs a lookup by searching all given paths for the given _key_. A merge will be performed if
+    # the value is found in more than one location and _merge_ is not nil.
+    #
+    # @param key [String] The key to lookup
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+    #
+    # @api public
+    def unchecked_lookup(key, lookup_invocation, merge)
+      Puppet::Pops::MergeStrategy.strategy(merge).merge_lookup(@paths) do |path|
+        next Puppet::Pops::MergeStrategy::NOT_FOUND unless path.exists?
+        hash = data(path.path, lookup_invocation)
+        next Puppet::Pops::MergeStrategy::NOT_FOUND unless hash.include?(key)
+        post_process(hash[key], lookup_invocation)
+      end
+    end
+  end
+
+  # Factory for creating path based data providers
+  #
+  # @abstract
+  # @api public
+  class PathBasedDataProviderFactory
+    # Create a path based data provider with the given _name_ and _paths_
+    #
+    # @param name [String] the name of the created provider (for logging and debugging)
+    # @param paths [Array<String>] array of resolved paths
+    # @return [DataProvider] The created data provider
+    #
+    # @api public
+    def create(name, paths)
+      raise NotImplementedError, "Subclass of PathBasedDataProviderFactory must implement 'create' method"
+    end
+
+    # Resolve the given _paths_ to something that is meaningful as a _paths_ argument when creating
+    # a provider using the #create call.
+    #
+    # In order to increase efficiency, the implementors of this method should ensure that resolved
+    # paths that exists are included in the result.
+    #
+    # @param datadir [Pathname] The base when creating absolute paths
+    # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
+    # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @return [Array<ResolvedPath>] Array of resolved paths
+    #
+    # @api public
+    def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
+      []
+    end
+  end
+
+  # Factory for creating file based data providers. This is an extension of the path based
+  # factory where it is required that each resolved path appoints an existing file in the local
+  # file system.
+  #
+  # @abstract
+  # @api public
+  class FileBasedDataProviderFactory < PathBasedDataProviderFactory
+    # @param datadir [Pathname] The base when creating absolute paths
+    # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
+    # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
+    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @return [Array<ResolvedPath>] Array of resolved paths
+    def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
+      resolved_paths = []
+      unless paths.nil? || datadir.nil?
+        ext = path_extension
+        paths.each_with_index do |path, idx|
+          path = path + ext unless path.end_with?(ext)
+          resolved_paths << ResolvedPath.new(declared_paths[idx], datadir + path)
+        end
+      end
+      resolved_paths
+    end
+
+    def path_extension
+      raise NotImplementedError, "Subclass of FileBasedProviderFactory must implement 'path_extension' method"
+    end
+    protected :path_extension
   end
 end

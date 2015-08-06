@@ -25,6 +25,17 @@ module Puppet::Plugins::DataProviders
   # The lookup **type** for the multibind containing map of provider name to module data provider implementation.
   # @api public
   MODULE_DATA_PROVIDERS_TYPE         = 'Puppet::Plugins::DataProviders::ModuleDataProvider'
+
+  # The lookup **key** for the multibind containing map of provider name to path based data provider factory
+  # implementation.
+  # @api public
+  PATH_BASED_DATA_PROVIDER_FACTORIES_KEY  = 'puppet::path_based_data_provider_factories'
+
+  # The lookup **type** for the multibind containing map of provider name to path based data provider factory
+  # implementation.
+  # @api public
+  PATH_BASED_DATA_PROVIDER_FACTORIES_TYPE = 'Puppet::Plugins::DataProviders::PathBasedDataProviderFactory'
+
 end
 
 require_relative 'data_providers/data_provider'
