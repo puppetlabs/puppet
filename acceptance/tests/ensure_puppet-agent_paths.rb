@@ -2,6 +2,8 @@
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 test_name 'PUP-4033: Ensure aio path spec is honored'
 
+skip_test "not an aio environment" unless options[:type] == 'aio'
+
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
 
