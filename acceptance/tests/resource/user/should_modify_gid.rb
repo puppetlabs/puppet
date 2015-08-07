@@ -1,6 +1,5 @@
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
-confine :except, :platform => /osx/ # See PUP-4824
 
 user = "pl#{rand(99999).to_i}"
 group1 = "#{user}old"
@@ -15,25 +14,32 @@ agents.each do |host|
   on(host, puppet_resource('user', user, 'ensure=present', "gid=#{group1}"))
 
   step "verify that the user has the correct gid"
-  on(host, "getent group #{group1}") do
-      gid = stdout.split(':')[2]
-      on(host, "getent passwd #{user}") do
-          got = stdout.split(':')[3]
-          fail_test "didn't have the expected old GID, but #{got}" unless got == gid
-      end
+  group_gid1 = agent.group_gid(group1)
+  agent.user_get(user) do |result|
+    if agent['platform'] =~ /osx/
+        match = result.stdout.match(/gid: (\d+)/)
+        user_gid1 = match ? match[1] : nil
+    else
+        user_gid1 = result.stdout.split(':')[3]
+    end
+
+    fail_test "didn't have the expected old GID #{group_gid1}, but got: #{user_gid1}" unless group_gid1 == user_gid1
   end
 
   step "modify the GID of the user"
   on(host, puppet_resource('user', user, 'ensure=present', "gid=#{group2}"))
 
-
   step "verify that the user has the updated gid"
-  on(host, "getent group #{group2}") do
-      gid = stdout.split(':')[2]
-      on(host, "getent passwd #{user}") do
-          got = stdout.split(':')[3]
-          fail_test "didn't have the expected old GID, but #{got}" unless got == gid
-      end
+  group_gid2 = agent.group_gid(group2)
+  agent.user_get(user) do |result|
+    if agent['platform'] =~ /osx/
+        match = result.stdout.match(/gid: (\d+)/)
+        user_gid2 = match ? match[1] : nil
+    else
+        user_gid2 = result.stdout.split(':')[3]
+    end
+
+    fail_test "didn't have the expected old GID #{group_gid}, but got: #{user_gid2}" unless group_gid2 == user_gid2
   end
 
   step "ensure that we remove the things we made"

@@ -1,7 +1,5 @@
 test_name "should create a user"
 
-confine :except, :platform => /osx/ # See PUP-4824
-
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
@@ -16,7 +14,7 @@ agents.each do |agent|
   agent.user_get(name)
 
   case agent['platform']
-  when /sles/, /solaris/, /windows/
+  when /sles/, /solaris/, /windows/, /osx/
     # no private user groups by default
   else
     agent.group_get(name)
