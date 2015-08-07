@@ -1,9 +1,16 @@
 test_name "puppet module list (with missing dependencies)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
+
+default_moduledir = get_default_modulepath_for_host(master)
+secondary_moduledir = get_nondefault_modulepath_for_host(master)
+
+skip_test "no secondary moduledir available on master" if secondary_moduledir.empty?
 
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/thelock"
-  on master, "rm -rf #{master['distmoduledir']}/appleseed"
-  on master, "rm -rf #{master['sitemoduledir']}/crick"
+  on master, "rm -rf #{default_moduledir}/thelock"
+  on master, "rm -rf #{default_moduledir}/appleseed"
+  on master, "rm -rf #{secondary_moduledir}/crick"
 end
 
 step "Setup"
@@ -11,14 +18,14 @@ step "Setup"
 apply_manifest_on master, <<-PP
 file {
   [
-    '#{master['distmoduledir']}/appleseed',
-    '#{master['distmoduledir']}/thelock',
-    '#{master['sitemoduledir']}/crick',
+    '#{default_moduledir}/appleseed',
+    '#{default_moduledir}/thelock',
+    '#{secondary_moduledir}/crick',
   ]: ensure => directory,
      recurse => true,
      purge => true,
      force => true;
-  '#{master['distmoduledir']}/appleseed/metadata.json':
+  '#{default_moduledir}/appleseed/metadata.json':
     content => '{
       "name": "jimmy/appleseed",
       "version": "1.1.0",
@@ -29,7 +36,7 @@ file {
         { "name": "jimmy/crakorn", "version_requirement": "0.4.0" }
       ]
     }';
-  '#{master['distmoduledir']}/thelock/metadata.json':
+  '#{default_moduledir}/thelock/metadata.json':
     content => '{
       "name": "jimmy/thelock",
       "version": "1.0.0",
@@ -41,7 +48,7 @@ file {
         { "name": "jimmy/sprinkles", "version_requirement": "2.x" }
       ]
     }';
-  '#{master['sitemoduledir']}/crick/metadata.json':
+  '#{secondary_moduledir}/crick/metadata.json':
     content => '{
       "name": "jimmy/crick",
       "version": "1.0.1",
@@ -55,9 +62,9 @@ file {
 }
 PP
 
-on master, "[ -d #{master['distmoduledir']}/appleseed ]"
-on master, "[ -d #{master['distmoduledir']}/thelock ]"
-on master, "[ -d #{master['sitemoduledir']}/crick ]"
+on master, "[ -d #{default_moduledir}/appleseed ]"
+on master, "[ -d #{default_moduledir}/thelock ]"
+on master, "[ -d #{secondary_moduledir}/crick ]"
 
 step "List the installed modules"
 on master, puppet('module list') do

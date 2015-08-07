@@ -31,6 +31,23 @@ module Puppet
         get_modulepaths_for_host(host)[0]
       end
 
+      # Return a string of a non-default (second) path in modulepath for a given host.
+      #
+      # Example return value:
+      #
+      #   "/etc/puppetlabs/code/modules"
+      #
+      # @param host [String] hostname
+      # @return [String] second path for found modulepath
+      def get_nondefault_modulepath_for_host (host)
+        modulepath_array = get_modulepaths_for_host(host)
+        unless modulepath_array.length < 2 then
+          get_modulepaths_for_host(host)[1]
+        else
+          ""
+        end
+      end
+
       # Return an array of paths to installed modules for a given host.
       #
       # Example return value:
