@@ -6,6 +6,11 @@ module_author = "jimmy"
 module_name   = "crakorn"
 module_dependencies = []
 
+default_moduledir = get_default_modulepath_for_host(master)
+secondary_moduledir = get_nondefault_modulepath_for_host(master)
+
+skip_test "no secondary moduledir available on master" if secondary_moduledir.empty?
+
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
   rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
@@ -15,11 +20,11 @@ step "Setup"
 apply_manifest_on master, <<-PP
 file {
   [
-    '#{master['distmoduledir']}/#{module_name}',
-    '#{master['sitemoduledir']}/#{module_name}',
-    '#{master['sitemoduledir']}/appleseed',
+    '#{default_moduledir}/#{module_name}',
+    '#{secondary_moduledir}/#{module_name}',
+    '#{secondary_moduledir}/appleseed',
   ]: ensure => directory;
-  '#{master['distmoduledir']}/#{module_name}/metadata.json':
+  '#{default_moduledir}/#{module_name}/metadata.json':
     content => '{
       "name": "#{module_author}/#{module_name}",
       "version": "0.4.0",
@@ -28,7 +33,7 @@ file {
       "license": "MIT",
       "dependencies": []
     }';
-  '#{master['sitemoduledir']}/#{module_name}/metadata.json':
+  '#{secondary_moduledir}/#{module_name}/metadata.json':
     content => '{
       "name": "#{module_author}/#{module_name}",
       "version": "0.5.1",
@@ -37,7 +42,7 @@ file {
       "license": "MIT",
       "dependencies": []
     }';
-  '#{master['sitemoduledir']}/appleseed/metadata.json':
+  '#{secondary_moduledir}/appleseed/metadata.json':
     content => '{
       "name": "#{module_author}/appleseed",
       "version": "0.4.0",
@@ -54,8 +59,8 @@ on master, puppet("module uninstall #{module_author}-#{module_name} --version 0.
   assert_match(/Removed '#{module_author}-#{module_name}'/, stdout,
         "Notice that module was uninstalled was not displayed")
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
-on master, "[ ! -d #{master['sitemoduledir']}/#{module_name} ]"
+on master, "[ -d #{default_moduledir}/#{module_name} ]"
+on master, "[ ! -d #{secondary_moduledir}/#{module_name} ]"
 
 step "Try to uninstall #{module_author}-#{module_name} v0.4.0 with `--version 0.5.x`"
 on master, puppet("module uninstall #{module_author}-#{module_name} --version 0.5.x"), :acceptable_exit_codes => [1] do
@@ -64,7 +69,7 @@ on master, puppet("module uninstall #{module_author}-#{module_name} --version 0.
   assert_match(/No installed version of '#{module_author}-#{module_name}' matches/, stderr,
         "Error that module version could not be found was not displayed")
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+on master, "[ -d #{default_moduledir}/#{module_name} ]"
 
 module_name = 'appleseed'
 step "Try to uninstall #{module_author}-#{module_name} v0.4.0 with `--version >9.9.9`"
@@ -74,11 +79,11 @@ on master, puppet("module uninstall #{module_author}-#{module_name} --version \"
   assert_match(/No installed version of '#{module_author}-#{module_name}' matches/, stderr,
         "Error that module version could not be found was not displayed")
 end
-on master, "[ -d #{master['sitemoduledir']}/#{module_name} ]"
+on master, "[ -d #{secondary_moduledir}/#{module_name} ]"
 
 step "Uninstall #{module_author}-#{module_name} v0.4.0 with `--version >0.0.0`"
 on master, puppet("module uninstall #{module_author}-#{module_name} --version \">0.0.0\"") do
   assert_match(/Removed '#{module_author}-#{module_name}'/, stdout,
         "Notice that module was uninstalled was not displayed")
 end
-on master, "[ ! -d #{master['sitemoduledir']}/#{module_name} ]"
+on master, "[ ! -d #{secondary_moduledir}/#{module_name} ]"

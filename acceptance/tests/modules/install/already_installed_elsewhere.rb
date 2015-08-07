@@ -2,6 +2,10 @@ test_name "puppet module install (already installed elsewhere)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+secondary_moduledir = get_nondefault_modulepath_for_host(master)
+
+skip_test "no secondary moduledir available on master" if secondary_moduledir.empty?
+
 hosts.each do |host|
   skip_test "skip tests requiring forge certs on solaris and aix" if host['platform'] =~ /solaris/
 end
@@ -23,10 +27,10 @@ stub_forge_on(master)
 apply_manifest_on master, <<-PP
 file {
   [
-    '#{master['sitemoduledir']}',
-    '#{master['sitemoduledir']}/#{module_name}',
+    '#{secondary_moduledir}',
+    '#{secondary_moduledir}/#{module_name}',
   ]: ensure => directory;
-  '#{master['sitemoduledir']}/#{module_name}/metadata.json':
+  '#{secondary_moduledir}/#{module_name}/metadata.json':
     content => '{
       "name": "#{module_author}/#{module_name}",
       "version": "0.0.1",
