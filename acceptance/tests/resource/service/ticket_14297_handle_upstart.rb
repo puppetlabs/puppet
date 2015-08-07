@@ -2,6 +2,8 @@ test_name 'Upstart Testing'
 
 # only run these on ubuntu vms
 confine :to, :platform => 'ubuntu'
+# vivid and above use systemd rather than upstart
+confine :except, :platform => /ubuntu-[v-z]/
 
 # pick any ubuntu agent
 agent = agents.first
