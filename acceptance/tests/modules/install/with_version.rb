@@ -4,8 +4,10 @@ extend Puppet::Acceptance::ModuleUtils
 
 hosts.each do |host|
   case host['platform']
-  when /solaris/, /osx/
+  when /solaris/
     # see PUP-4822, PUP-3450
+    # We now bundle the GeoTrust Global CA with our vendored openssl, so
+    # this test will run correctly in OSX.
     skip_test "skip tests requiring forge certs"
   end
 end
