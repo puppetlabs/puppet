@@ -18,13 +18,13 @@ env:
 
 matrix:
   exclude:
-    - rvm: 2.2.0
+    - rvm: 2.2.2
       env: "CHECK=rubocop"
     - rvm: 2.0.0
       env: "CHECK=rubocop"
     - rvm: 1.9.3
       env: "CHECK=rubocop"
-    - rvm: 2.2.0
+    - rvm: 2.2.2
       env: "CHECK=commits"
     - rvm: 2.0.0
       env: "CHECK=commits"
