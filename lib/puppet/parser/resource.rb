@@ -73,16 +73,19 @@ class Puppet::Parser::Resource < Puppet::Resource
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
-    @evaluated = true
-    if klass = resource_type and ! builtin_type?
-      finish
-      evaluated_code = klass.evaluate_code(self)
 
-      return evaluated_code
-    elsif builtin?
-      devfail "Cannot evaluate a builtin type (#{type})"
-    else
-      self.fail "Cannot find definition #{type}"
+    Puppet::Util::Profiler.profile("Evaluated resource #{self}", [:compiler, :evaluate_resource, self]) do
+      @evaluated = true
+      if klass = resource_type and ! builtin_type?
+        finish
+        evaluated_code = klass.evaluate_code(self)
+
+        return evaluated_code
+      elsif builtin?
+        devfail "Cannot evaluate a builtin type (#{type})"
+      else
+        self.fail "Cannot find definition #{type}"
+      end
     end
   end
 
