@@ -380,9 +380,7 @@ class Puppet::Parser::Compiler
     exceptwrap do
       Puppet::Util::Profiler.profile("Evaluated definitions", [:compiler, :evaluate_definitions]) do
         !unevaluated_resources.each do |resource|
-          Puppet::Util::Profiler.profile("Evaluated resource #{resource}", [:compiler, :evaluate_resource, resource]) do
-            resource.evaluate
-          end
+          resource.evaluate
         end.empty?
       end
     end
