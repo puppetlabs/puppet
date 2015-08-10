@@ -35,10 +35,7 @@ describe provider_class do
   operatingsystem = [ 'Debian', 'CumulusLinux' ]
   operatingsystem.each do |os|
     it "should be the default provider on #{os}" do
-      Facter.expects(:value).with(:operatingsystem).at_least_once.returns(os)
-      if os == 'Debian'
-        Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
-      end
+      Facter.expects(:value).with(:operatingsystem).returns(os)
       expect(provider_class.default?).to be_truthy
     end
   end
