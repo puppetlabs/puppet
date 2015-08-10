@@ -446,6 +446,26 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.readlink(symlink)).to eq(missing_file.to_s)
     end
 
+    it "should be able to unlink a dangling symlink pointed at a file" do
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
+      ::File.delete(file)
+      Puppet::FileSystem.unlink(symlink)
+
+      expect(Puppet::FileSystem).to_not be_exist(file)
+      expect(Puppet::FileSystem).to_not be_exist(symlink)
+    end
+
+    it "should be able to unlink a dangling symlink pointed at a directory" do
+      symlink = tmpfile("somedir_link")
+      Puppet::FileSystem.symlink(dir, symlink)
+      Dir.rmdir(dir)
+      Puppet::FileSystem.unlink(symlink)
+
+      expect(Puppet::FileSystem).to_not be_exist(dir)
+      expect(Puppet::FileSystem).to_not be_exist(symlink)
+    end
+
     it "should delete only the symlink and not the target when calling unlink instance method" do
       [file, dir].each do |target|
         symlink = tmpfile("#{Puppet::FileSystem.basename(target)}_link")

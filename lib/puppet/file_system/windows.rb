@@ -62,7 +62,9 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       stat = Puppet::Util::Windows::File.stat(file_name) rescue nil
 
       # sigh, Ruby + Windows :(
-      if stat && stat.ftype == 'directory'
+      if !stat
+        ::File.unlink(file_name) rescue Dir.rmdir(file_name)
+      elsif stat.ftype == 'directory'
         if Puppet::Util::Windows::File.symlink?(file_name)
           Dir.rmdir(file_name)
         else
