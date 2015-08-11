@@ -105,7 +105,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def enable
-    output = systemctl("unmask", @resource[:name])
+    self.unmask
     output = systemctl("enable", @resource[:name])
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
@@ -113,11 +113,18 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def mask
     self.disable
-
     begin
       output = systemctl("mask", @resource[:name])
     rescue Puppet::ExecutionFailure
       raise Puppet::Error, "Could not mask #{self.name}: #{output}", $!.backtrace
+    end
+  end
+
+  def unmask
+    begin
+      output = systemctl("unmask", @resource[:name])
+    rescue Puppet::ExecutionFailure
+      raise Puppet::Error, "Could not unmask #{self.name}: #{output}", $!.backtrace
     end
   end
 
@@ -126,6 +133,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def startcmd
+    self.unmask
     [command(:systemctl), "start", @resource[:name]]
   end
 
