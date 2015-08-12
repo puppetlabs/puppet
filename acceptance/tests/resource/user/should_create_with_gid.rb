@@ -6,20 +6,20 @@ group = "gp#{rand(999999).to_i}"
 
 agents.each do |host|
   step "user should not exist"
-  agent.user_absent(user)
+  host.user_absent(user)
 
   step "group should exist"
-  agent.group_present(group)
+  host.group_present(group)
 
   step "create user with group"
   on(host, puppet_resource('user', user, 'ensure=present', "gid=#{group}"))
 
   step "verify the group exists and find the gid"
-  group_gid = agent.group_gid(group)
+  group_gid = host.group_gid(group)
 
   step "verify that the user has that as their gid"
-  agent.user_get(user) do |result|
-    if agent['platform'] =~ /osx/
+  host.user_get(user) do |result|
+    if host['platform'] =~ /osx/
         match = result.stdout.match(/gid: (\d+)/)
         user_gid = match ? match[1] : nil
     else

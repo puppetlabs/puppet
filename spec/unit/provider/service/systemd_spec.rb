@@ -132,6 +132,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:systemctl).with('unmask', 'sshd.service')
       provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
