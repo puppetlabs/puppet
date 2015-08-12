@@ -301,9 +301,15 @@ describe Puppet::Settings do
       expect(@settings.set_by_config?(:myval)).to be_truthy
     end
 
-    it "should not identify configured settings from environment" do
+    it "should not identify configured settings from environment by default" do
       Puppet.lookup(:environments).expects(:get_conf).with(Puppet[:environment].to_sym).never
       expect(@settings.set_by_config?(:manifest)).to be_falsey
+    end
+
+    it "should identify configured settings from environment by when an environment is specified" do
+      foo = mock('environment', :manifest => 'foo')
+      Puppet.lookup(:environments).expects(:get_conf).with(Puppet[:environment].to_sym).returns(foo)
+      expect(@settings.set_by_config?(:manifest, Puppet[:environment])).to be_truthy
     end
 
     it "should identify configured settings from the preferred run mode" do
@@ -320,6 +326,38 @@ describe Puppet::Settings do
 
       @settings.send(:parse_config_files)
       expect(@settings.set_by_config?(:myval)).to be_truthy
+    end
+
+    it "should identify configured settings from the specified run mode" do
+      user_config_text = "[master]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval, nil, :master)).to be_truthy
+    end
+
+    it "should not identify configured settings from an unspecified run mode" do
+      user_config_text = "[zaz]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval)).to be_falsey
     end
 
     it "should identify configured settings from the main section" do
