@@ -19,7 +19,7 @@ agents.each do |host|
 
   step "verify that the user has that as their gid"
   host.user_get(user) do |result|
-    if agent['platform'] =~ /osx/
+    if host['platform'] =~ /osx/
         match = result.stdout.match(/gid: (\d+)/)
         user_gid = match ? match[1] : nil
     else
