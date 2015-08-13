@@ -105,5 +105,27 @@ describe Puppet::Network::AuthConfig do
 
       described_class.new.check_authorization(:save, "/path/to/resource", params)
     end
+
+    describe "and bypass_authorization is true" do
+      before :all do
+        Puppet.settings[:bypass_authorization] = true
+      end
+
+      after :all do
+        Puppet.settings[:bypass_authorization] = false
+      end
+
+      it "should log a message at debug level" do
+        expected_msg = "Bypassing authorization check for call save on /path/to/resource because bypass_authorization is true"
+        Puppet.expects(:debug).with(expected_msg)
+        described_class.new.check_authorization(:save, '/path/to/resource', {})
+      end
+
+      it "should allow the request" do
+        expect {
+          described_class.new.check_authorization(:save, '/path/to/resource', {})
+        }.not_to raise_error
+      end
+    end
   end
 end

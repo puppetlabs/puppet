@@ -1085,6 +1085,14 @@ EOT
       rest indirections.  This can be used as a fine-grained
       authorization system for `puppet master`.",
     },
+    :bypass_authorization => {
+      :type    => :boolean,
+      :default => false,
+      :desc    => "If false perform authorization checks using auth.conf rules.
+      If true, bypass authorization checks entirely. Authorization should be
+      handled externally, e.g. using trapperkeeper-authorization. Note, this
+      setting does not affect authentication behaviors; only authorization.",
+    },
     :ca => {
       :default    => true,
       :type       => :boolean,
