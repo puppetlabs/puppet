@@ -118,6 +118,13 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     file = resource.to_ral
 
     children = get_child_resources(request, catalog, resource, file)
+    # get_child_resources() returned early because source is not
+    # a directory, but we still need to replace the metadata of the
+    # resource, so we do it here before returning.
+    if children.nil?
+      find_and_replace_metadata(request, resource, resource.to_ral)
+      return
+    end
 
     remove_existing_resources(children, catalog)
 
