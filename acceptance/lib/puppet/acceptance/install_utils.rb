@@ -162,6 +162,7 @@ module Puppet
               :puppet_agent_sha => ENV['SHA'],
               :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
             }
+            # this installs puppet-agent on windows (msi) and osx (dmg)
             install_puppet_agent_dev_repo_on(agent, opts)
           else
             fail_test("No repository installation step for #{platform} yet...")
@@ -180,24 +181,6 @@ module Puppet
           on host, "#{gem} source --clear-all"
           on host, "#{gem} source --add #{gem_source}"
         end
-      end
-
-      def install_puppet_from_msi( host, opts )
-        if not link_exists?(opts[:url])
-          raise "Puppet does not exist at #{opts[:url]}!"
-        end
-
-        # `start /w` blocks until installation is complete, but needs to be wrapped in `cmd.exe /c`
-        on host, "cmd.exe /c start /w msiexec /qn /i #{opts[:url]} /L*V C:\\\\Windows\\\\Temp\\\\Puppet-Install.log"
-
-        # make sure the background service isn't running while the test executes
-        on host, "net stop puppet"
-
-        # make sure install is sane, beaker has already added puppet and ruby
-        # to PATH in ~/.ssh/environment
-        on host, puppet('--version')
-        ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
-        on host, "#{ruby} --version"
       end
     end
   end

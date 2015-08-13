@@ -1,3 +1,4 @@
+require 'puppet/acceptance/common_utils'
 require 'puppet/acceptance/install_utils'
 
 extend Puppet::Acceptance::InstallUtils
@@ -66,22 +67,12 @@ AGENT_PACKAGES = {
 install_packages_on(master, MASTER_PACKAGES)
 install_packages_on(agents, AGENT_PACKAGES)
 
+# make sure install is sane, beaker has already added puppet and ruby
+# to PATH in ~/.ssh/environment
 agents.each do |agent|
-  case agent['platform']
-  when /windows/
-    arch = agent[:ruby_arch] || 'x86'
-    base_url = ENV['MSI_BASE_URL'] || "http://builds.puppetlabs.lan/puppet-agent/#{ENV['SHA']}/artifacts/windows"
-    filename = ENV['MSI_FILENAME'] || "puppet-agent-#{arch}.msi"
-
-    install_puppet_from_msi(agent, :url => "#{base_url}/#{filename}")
-  when /osx/
-    opts = {
-      :puppet_collection => 'PC1',
-      :puppet_agent_sha => ENV['SHA'],
-      :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
-    }
-    install_puppet_agent_dev_repo_on(agent, opts)
-  end
+  on agent, puppet('--version')
+  ruby = Puppet::Acceptance::CommandUtils.ruby_command(agent)
+  on agent, "#{ruby} --version"
 end
 
 configure_gem_mirror(hosts)
