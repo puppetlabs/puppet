@@ -15,7 +15,6 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     @sids = {
       :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
       :system => Win32::Security::SID::LocalSystem,
-      :admin => Puppet::Util::Windows::SID.name_to_sid("Administrator"),
       :administrators => Win32::Security::SID::BuiltinAdministrators,
       :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
@@ -386,9 +385,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         describe "#owner=" do
+          it "should accept the guest sid" do
+            winsec.set_owner(sids[:guest], path)
+            expect(winsec.get_owner(path)).to eq(sids[:guest])
+          end
+
           it "should accept a user sid" do
-            winsec.set_owner(sids[:admin], path)
-            winsec.get_owner(path).should == sids[:admin]
+            winsec.set_owner(sids[:current_user], path)
+            winsec.get_owner(path).should == sids[:current_user]
           end
 
           it "should accept a group sid" do
@@ -406,14 +410,19 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         describe "#group=" do
+          it "should accept the test group" do
+            winsec.set_group(sids[:guest], path)
+            expect(winsec.get_group(path)).to eq(sids[:guest])
+          end
+
           it "should accept a group sid" do
             winsec.set_group(sids[:power_users], path)
             winsec.get_group(path).should == sids[:power_users]
           end
 
           it "should accept a user sid" do
-            winsec.set_group(sids[:admin], path)
-            winsec.get_group(path).should == sids[:admin]
+            winsec.set_group(sids[:current_user], path)
+            winsec.get_group(path).should == sids[:current_user]
           end
 
           it "should combine owner and group rights when they are the same sid" do

@@ -1,0 +1,25 @@
+version: 3.x.{build}
+skip_commits:
+  message: /(^\(?doc\)?.*|.*[A|a]cceptance [T|t]est.*)/
+clone_depth: 10
+init:
+  - SET
+install:
+  - SET PATH=C:\Ruby200-x64\bin;%PATH%
+  - SET LOG_SPEC_ORDER=true
+  - gem install bundler --quiet --no-ri --no-rdoc
+  - bundle install --jobs 4 --retry 2 --without development extra
+  - type Gemfile.lock
+  - ruby -v
+build: off
+test_script:
+  - bundle exec rspec spec
+on_failure:
+  - appveyor PushArtifact .\spec_order.txt
+notifications:
+  - provider: Email
+    to:
+    - nobody@nowhere.com
+    on_build_success: false
+    on_build_failure: false
+    on_build_status_changed: false
