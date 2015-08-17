@@ -1,9 +1,9 @@
 require 'rake/clean'
 require 'pp'
 require 'yaml'
+require 'beaker/dsl/install_utils'
+extend Beaker::DSL::InstallUtils
 $LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
-require 'puppet/acceptance/git_utils'
-extend Puppet::Acceptance::GitUtils
 
 ONE_DAY_IN_SECS = 24 * 60 * 60
 REPO_CONFIGS_DIR = "repo-configs"
@@ -14,7 +14,6 @@ CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
 EPEL_MIRROR = ENV['BEAKER_EPEL_MIRROR']
 
 module HarnessOptions
-
   defaults = {
     :type => 'git',
     :helper => ['lib/helper.rb'],
@@ -252,13 +251,11 @@ def config
 end
 
 namespace :ci do
-
   task :check_env do
     raise(USAGE) unless sha
   end
 
   namespace :test do
-
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker.
