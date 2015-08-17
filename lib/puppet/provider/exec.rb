@@ -47,7 +47,12 @@ class Puppet::Provider::Exec < Puppet::Provider
           end
         end
 
-        Timeout::timeout(resource[:timeout]) do
+        # Ruby 2.1 and later interrupt execution in a way that bypasses error
+        # handling by default. Passing Timeout::Error causes an exception to be
+        # raised that can be rescued inside of the block by cleanup routines.
+        #
+        # This is backwards compatible all the way to Ruby 1.8.7.
+        Timeout::timeout(resource[:timeout], Timeout::Error) do
           # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
           # default/system locale will be respected.  Callers may override this behavior by setting locale-related
           # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
