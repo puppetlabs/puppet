@@ -1,4 +1,7 @@
 require 'puppet/application'
+require 'puppet/pops/lookup'
+require 'puppet/node'
+require 'puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
@@ -49,8 +52,20 @@ class Puppet::Application::Lookup < Puppet::Application
   def run_command
     options[:keys] = command_line.args
 
-    puts "Hello World!"
-    puts options
+    node = Puppet::Node.indirection.find("#{options[:node]}")
+    compiler = Puppet::Parser::Compiler.new(node)
+    compiler.compile
+    scope = compiler.topscope
+
+    require 'debugger'; debugger
+
+    if options[:default_value]
+     value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], true, {}, {}, options[:merge])
+    else
+      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], false, {}, {}, options[:merge])
+    end
+
+    puts value
   end
 
 end
