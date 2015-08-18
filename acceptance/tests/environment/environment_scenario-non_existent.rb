@@ -10,7 +10,7 @@ step "setup environments"
 
 stub_forge_on(master)
 
-testdir = create_tmpdir_for_user master, "codedir"
+testdir = create_tmpdir_for_user(master, File.basename(__FILE__))
 puppet_code_backup_dir = create_tmpdir_for_user(master, "puppet-code-backup-dir")
 
 apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
@@ -18,31 +18,30 @@ apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true
 step "Test"
 master_opts = {
   'main' => {
-    'environmentpath' => '$codedir/environments',
+    'environmentpath' => "#{testdir}/environments",
   }
 }
 general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
 env = 'doesnotexist'
-path = master.puppet('master')['codedir']
 
 results = use_an_environment(env, "non existent environment", *general)
 
 expectations = {
   :puppet_config => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_module_install => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_module_uninstall => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_apply => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_agent => {
     :exit_code => 1,
