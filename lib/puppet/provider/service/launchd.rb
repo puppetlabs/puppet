@@ -246,8 +246,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     did_enable_job = false
     cmds = []
     cmds << :launchctl << :load
+    cmds << "-w"
     if self.enabled? == :false  || self.status == :stopped # launchctl won't load disabled jobs
-      cmds << "-w"
       did_enable_job = true
     end
     cmds << job_path
