@@ -139,14 +139,13 @@ end
 # Prepare the file installation.
 #
 def prepare_installation
-  $operatingsystem = Facter.value :operatingsystem
-
   InstallOptions.configs = true
+  InstallOptions.check_prereqs = true
 
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
     InstallOptions.rdoc  = true
-    InstallOptions.ri  = $operatingsystem != "windows"
+    InstallOptions.ri  = true
   else
     InstallOptions.rdoc  = false
     InstallOptions.ri  = false
@@ -199,6 +198,9 @@ def prepare_installation
     opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides RbConfig::CONFIG["mandir"]') do |mandir|
       InstallOptions.mandir = mandir
     end
+    opts.on('--[no-]check-prereqs', 'Prevents validation of prerequisite libraries', 'Default on') do |prereq|
+      InstallOptions.check_prereqs = prereq
+    end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
       InstallOptions.rdoc    = false
       InstallOptions.ri      = false
@@ -227,6 +229,13 @@ def prepare_installation
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     RbConfig::CONFIG['bindir'] = "/usr/bin"
+  end
+
+  # Here we only set $operatingsystem if we have opted to check for prereqs.
+  # Otherwise facter won't be guaranteed to be present.
+  if InstallOptions.check_prereqs
+    check_prereqs
+    $operatingsystem = Facter.value :operatingsystem
   end
 
   if not InstallOptions.configdir.nil?
@@ -368,6 +377,7 @@ end
 
 def build_ri(files)
   return unless $haverdoc
+  return if $operatingsystem == "windows"
   begin
     ri = RDoc::RDoc.new
     #ri.document(["--ri-site", "--merge"] + files)
@@ -446,7 +456,6 @@ FileUtils.cd File.dirname(__FILE__) do
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*})
 
-  check_prereqs
   prepare_installation
 
   #build_rdoc(rdoc) if InstallOptions.rdoc
