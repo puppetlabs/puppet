@@ -89,13 +89,13 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should look for the relevant plist once" do
       subject.expects(:plist_from_label).returns([joblabel, {}]).once
       subject.expects(:enabled?).returns :true
-      subject.expects(:execute).with([:launchctl, :load, joblabel])
+      subject.expects(:execute).with([:launchctl, :load, "-w", joblabel])
       subject.start
     end
     it "should execute 'launchctl load' once without writing to the plist if the job is enabled" do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       subject.expects(:enabled?).returns :true
-      subject.expects(:execute).with([:launchctl, :load, joblabel]).once
+      subject.expects(:execute).with([:launchctl, :load, "-w", joblabel]).once
       subject.start
     end
     it "should execute 'launchctl load' with writing to the plist once if the job is disabled" do
