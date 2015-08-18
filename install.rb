@@ -33,13 +33,6 @@ require 'rbconfig'
 require 'find'
 require 'fileutils'
 require 'tempfile'
-begin
-  require 'ftools' # apparently on some system ftools doesn't get loaded
-  $haveftools = true
-rescue LoadError
-  puts "ftools not found.  Using FileUtils instead.."
-  $haveftools = false
-end
 require 'optparse'
 require 'ostruct'
 
@@ -67,21 +60,13 @@ def do_configs(configs, target, strip = 'conf/')
   Dir.mkdir(target) unless File.directory? target
   configs.each do |cf|
     ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
-    if $haveftools
-      File.install(cf, ocf, 0644, true)
-    else
-      FileUtils.install(cf, ocf, {:mode => 0644, :preserve => true, :verbose => true})
-    end
+    FileUtils.install(cf, ocf, {:mode => 0644, :preserve => true, :verbose => true})
   end
 
   if $operatingsystem == 'windows'
     src_dll = 'ext/windows/eventlog/puppetres.dll'
     dst_dll = File.join(InstallOptions.bin_dir, 'puppetres.dll')
-    if $haveftools
-      File.install(src_dll, dst_dll, 0644, true)
-    else
-      FileUtils.install(src_dll, dst_dll, {:mode => 0644, :preserve => true, :verbose => true})
-    end
+    FileUtils.install(src_dll, dst_dll, {:mode => 0644, :preserve => true, :verbose => true})
 
     require 'win32/registry'
     include Win32::Registry::Constants
@@ -110,15 +95,9 @@ def do_libs(libs, strip = 'lib/')
     next if File.directory? lf
     olf = File.join(InstallOptions.site_dir, lf.sub(/^#{strip}/, ''))
     op = File.dirname(olf)
-    if $haveftools
-      File.makedirs(op, true)
-      File.chmod(0755, op)
-      File.install(lf, olf, 0644, true)
-    else
-      FileUtils.makedirs(op, {:mode => 0755, :verbose => true})
-      FileUtils.chmod(0755, op)
-      FileUtils.install(lf, olf, {:mode => 0644, :preserve => true, :verbose => true})
-    end
+    FileUtils.makedirs(op, {:mode => 0755, :verbose => true})
+    FileUtils.chmod(0755, op)
+    FileUtils.install(lf, olf, {:mode => 0644, :preserve => true, :verbose => true})
   end
 end
 
@@ -126,15 +105,9 @@ def do_man(man, strip = 'man/')
   man.each do |mf|
     omf = File.join(InstallOptions.man_dir, mf.gsub(/#{strip}/, ''))
     om = File.dirname(omf)
-    if $haveftools
-      File.makedirs(om, true)
-      File.chmod(0755, om)
-      File.install(mf, omf, 0644, true)
-    else
-      FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
-      FileUtils.chmod(0755, om)
-      FileUtils.install(mf, omf, {:mode => 0644, :preserve => true, :verbose => true})
-    end
+    FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
+    FileUtils.chmod(0755, om)
+    FileUtils.install(mf, omf, {:mode => 0644, :preserve => true, :verbose => true})
     gzip = %x{which gzip}
     gzip.chomp!
     %x{#{gzip} -f #{omf}}
