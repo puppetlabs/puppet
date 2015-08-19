@@ -228,7 +228,6 @@ module Puppet
 
         results = {}
         safely_shadow_directory_contents_and_yield(master, master.puppet('master')['codedir'], envdir) do
-
           config_print = options[:config_print]
           directory_environments = options[:directory_environments]
 
@@ -246,31 +245,29 @@ module Puppet
                 agent_results[:puppet_agent] = result
               end
 
-              if agent == master
-                args = ["--trace"]
-                args << ["--environment", environment] if environment
+              args = ["--trace"]
+              args << ["--environment", environment] if environment
 
-                step "print puppet config for #{description} environment"
-                on(agent, puppet(*(["config", "print", "basemodulepath", "modulepath", "manifest", "config_version", config_print] + args)), :acceptable_exit_codes => (0..255)) do
-                  agent_results[:puppet_config] = result
-                end
+              step "print puppet config for #{description} environment"
+              on(master, puppet(*(["config", "print", "basemodulepath", "modulepath", "manifest", "config_version", config_print] + args)), :acceptable_exit_codes => (0..255)) do
+                agent_results[:puppet_config] = result
+              end
 
-                step "puppet apply using #{description} environment"
-                on(agent, puppet(*(["apply", '-e', '"include testing_mod"'] + args)), :acceptable_exit_codes => (0..255)) do
-                  agent_results[:puppet_apply] = result
-                end
+              step "puppet apply using #{description} environment"
+              on(master, puppet(*(["apply", '-e', '"include testing_mod"'] + args)), :acceptable_exit_codes => (0..255)) do
+                agent_results[:puppet_apply] = result
+              end
 
-                # Be aware that Puppet Module Tool will create the module directory path if it
-                # does not exist.  So these tests should be run last...
-                step "install a module into environment"
-                on(agent, puppet(*(["module", "install", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                  agent_results[:puppet_module_install] = result
-                end
+              # Be aware that Puppet Module Tool will create the module directory path if it
+              # does not exist.  So these tests should be run last...
+              step "install a module into environment"
+              on(master, puppet(*(["module", "install", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
+                agent_results[:puppet_module_install] = result
+              end
 
-                step "uninstall a module from #{description} environment"
-                on(agent, puppet(*(["module", "uninstall", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                  agent_results[:puppet_module_uninstall] = result
-                end
+              step "uninstall a module from #{description} environment"
+              on(master, puppet(*(["module", "uninstall", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
+                agent_results[:puppet_module_uninstall] = result
               end
             end
           end

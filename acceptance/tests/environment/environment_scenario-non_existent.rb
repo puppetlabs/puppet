@@ -23,26 +23,25 @@ master_opts = {
 }
 general = [ master_opts, testdir, puppet_code_backup_dir, { :directory_environments => true } ]
 env = 'doesnotexist'
-path = master.puppet('master')['codedir']
 
 results = use_an_environment(env, "non existent environment", *general)
 
 expectations = {
   :puppet_config => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_module_install => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_module_uninstall => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_apply => {
     :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{path}}],
+    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{testdir}}],
   },
   :puppet_agent => {
     :exit_code => 1,
