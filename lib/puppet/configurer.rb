@@ -171,7 +171,7 @@ class Puppet::Configurer
             end
 
             if node.environment.to_s != @environment
-              Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
+              Puppet.notice "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
               report.environment = @environment
               query_options = nil
@@ -212,7 +212,7 @@ class Puppet::Configurer
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end
-        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
+        Puppet.notice "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
         report.environment = @environment
 
