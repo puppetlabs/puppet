@@ -1,4 +1,4 @@
-require 'plist'
+require 'puppet/util/plist' if Puppet.features.cfpropertylist?
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
@@ -46,6 +46,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
+  confine :feature            => :cfpropertylist
 
   has_feature :enableable
   has_feature :refreshable
@@ -193,14 +194,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    begin
-      return Plist::parse_xml(path)
-    rescue ArgumentError => detail
-      Puppet.debug("Error reading #{path}: #{detail}. Retrying with plutil.")
-    end
+    plist = Puppet::Util::Plist.read_plist_file(path)
+    return plist if plist
 
+    Puppet.debug "Plist #{path} ill-formatted, converting with plutil"
     begin
-      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+      return Puppet::Util::Plist.parse_plist(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
     rescue Puppet::ExecutionFailure => detail
       Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
                      "Details: #{detail}")
@@ -328,7 +327,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     else
       overrides[resource[:name]] = false
     end
-    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+    Puppet::Util::Plist.write_plist_file(overrides, self.class.launchd_overrides)
   end
 
   def disable
@@ -338,6 +337,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     else
       overrides[resource[:name]] = true
     end
-    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+    Puppet::Util::Plist.write_plist_file(overrides, self.class.launchd_overrides)
   end
 end

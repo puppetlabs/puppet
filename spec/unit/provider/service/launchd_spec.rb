@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:launchd) do
+  let (:plistlib) { Puppet::Util::Plist }
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
   let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
@@ -43,22 +44,34 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
         provider.expects(:get_os_version).returns(kernel).at_least_once
         subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
-        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => false}})
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => false}})
         FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
         expect(subject.enabled?).to eq(:true)
       end
       it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
         provider.expects(:get_os_version).returns(kernel).at_least_once
         subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
-        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => true}})
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => true}})
         FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
         expect(subject.enabled?).to eq(:false)
       end
       it "should return true if the job plist and the global overrides have no disabled keys" do
         provider.expects(:get_os_version).returns(kernel).at_least_once
         subject.expects(:plist_from_label).returns([joblabel, {}])
-        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns({})
         FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
+        expect(subject.enabled?).to eq(:true)
+      end
+    end
+
+    describe "when reading an improperly formatted service plist on OS X #{version}" do
+      it "should attempt to read pure xml using plutil" do
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns(nil)
+        FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
+        provider.expects(:plutil).returns("valid_xml")
+        plistlib.expects(:parse_plist).with("valid_xml").returns({joblabel => {"Disabled" => false}})
         expect(subject.enabled?).to eq(:true)
       end
     end
@@ -68,21 +81,21 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
       provider.expects(:get_os_version).returns(14).at_least_once
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
-      provider.expects(:read_plist).with(launchd_overrides_10_).returns({joblabel => false})
+      plistlib.expects(:read_plist_file).with(launchd_overrides_10_).returns({joblabel => false})
       FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
       expect(subject.enabled?).to eq(:true)
     end
     it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
       provider.expects(:get_os_version).returns(14).at_least_once
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
-      provider.expects(:read_plist).with(launchd_overrides_10_).returns({joblabel => true})
+      plistlib.expects(:read_plist_file).with(launchd_overrides_10_).returns({joblabel => true})
       FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
       expect(subject.enabled?).to eq(:false)
     end
     it "should return true if the job plist and the global overrides have no disabled keys" do
       provider.expects(:get_os_version).returns(14).at_least_once
       subject.expects(:plist_from_label).returns([joblabel, {}])
-      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
+      plistlib.expects(:read_plist_file).with(launchd_overrides_10_).returns({})
       FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
       expect(subject.enabled?).to eq(:true)
     end
@@ -203,8 +216,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       it "should write to the global launchd overrides file once" do
         resource[:enable] = true
         provider.expects(:get_os_version).returns(kernel).at_least_once
-        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
-        Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], {'Disabled' => false}), launchd_overrides_6_9).once
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns({})
+        plistlib.expects(:write_plist_file).with(has_entry(resource[:name], {'Disabled' => false}), launchd_overrides_6_9).once
         subject.enable
       end
     end
@@ -213,8 +226,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       it "should write to the global launchd overrides file once" do
         resource[:enable] = false
         provider.expects(:get_os_version).returns(kernel).at_least_once
-        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
-        Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], {'Disabled' => true}), launchd_overrides_6_9).once
+        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns({})
+        plistlib.expects(:write_plist_file).with(has_entry(resource[:name], {'Disabled' => true}), launchd_overrides_6_9).once
         subject.disable
       end
     end
@@ -224,8 +237,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = true
       provider.expects(:get_os_version).returns(14).at_least_once
-      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
-      Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], false), launchd_overrides_10_).once
+      plistlib.expects(:read_plist_file).with(launchd_overrides_10_).returns({})
+      plistlib.expects(:write_plist_file).with(has_entry(resource[:name], false), launchd_overrides_10_).once
       subject.enable
     end
   end
@@ -234,8 +247,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = false
       provider.expects(:get_os_version).returns(14).at_least_once
-      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
-      Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], true), launchd_overrides_10_).once
+      plistlib.expects(:read_plist_file).with(launchd_overrides_10_).returns({})
+      plistlib.expects(:write_plist_file).with(has_entry(resource[:name], true), launchd_overrides_10_).once
       subject.disable
     end
   end
@@ -259,28 +272,9 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       it "[17624] should warn that the plist in question is being skipped" do
         provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
         provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
-        provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
+        plistlib.expects(:read_plist_file).with(busted_plist_path).returns(plist_without_label)
         Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
         provider.make_label_to_path_map
-      end
-
-      it "[15929] should skip plists that plutil cannot read" do
-        Plist.expects(:parse_xml).with(busted_plist_path).raises(ArgumentError, 'boom')
-        Puppet.expects(:debug).with("Error reading #{busted_plist_path}: boom. Retrying with plutil.")
-        provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
-          busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
-        Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
-                                      "Puppet is skipping it. \n" +
-                                      "Details: boom")
-        provider.read_plist(busted_plist_path)
-      end
-
-      it "should read binary plists with plutil" do
-        Plist.expects(:parse_xml).with(binary_plist_path).raises(ArgumentError, 'boom')
-        Puppet.expects(:debug).with("Error reading #{binary_plist_path}: boom. Retrying with plutil.")
-        provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', binary_plist_path).returns('plist')
-        Plist.expects(:parse_xml).with('plist').returns('plist_map')
-        expect(provider.read_plist(binary_plist_path)).to eq('plist_map')
       end
     end
     it "should return the cached value when available" do
@@ -295,7 +289,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.instance_variable_set(:@label_to_path_map, nil)
         provider.expects(:launchd_paths).returns([launchd_dir])
         provider.expects(:return_globbed_list_of_file_paths).with(launchd_dir).returns([plist])
-        provider.expects(:read_plist).with(plist).returns({'Label'=>'foo.bar.service'})
+        plistlib.expects(:read_plist_file).with(plist).returns({'Label'=>'foo.bar.service'})
       end
       it "should read the plists and return their contents" do
         expect(provider.make_label_to_path_map).to eq({label=>plist})
