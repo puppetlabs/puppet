@@ -1,4 +1,4 @@
-require 'facter/util/plist'
+require 'cfpropertylist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
@@ -43,7 +43,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   commands :launchctl => "/bin/launchctl"
   commands :sw_vers   => "/usr/bin/sw_vers"
-  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
@@ -205,8 +204,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # format.
   def self.read_plist(path)
     begin
-      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
-    rescue Puppet::ExecutionFailure => detail
+      CFPropertyList.native_types(CFPropertyList::List.new(:file => path).value)
+    rescue CFPlistError => detail
       Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
                      "Details: #{detail}")
       return nil
@@ -347,17 +346,26 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def enable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(self.class.launchd_overrides)
+<<<<<<< HEAD
       if self.class.get_os_version < 14
         overrides[resource[:name]] = { "Disabled" => false }
       else
         overrides[resource[:name]] = false
       end
       Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+=======
+      overrides[resource[:name]] = { "Disabled" => false }
+      plist = CFPropertyList::List.new
+      plist.value = CFPropertyList.guess(overrides)
+      plist.save(self.class.launchd_overrides, CFPropertyList::List::FORMAT_XML)
+>>>>>>> d30a4a3... (PUP-1455) Use CFPropertyList to read launchd plists
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        Plist::Emit.save_plist(job_plist, job_path)
+        plist = CFPropertyList::List.new
+        plist.value = CFPropertyList.guess(job_plist)
+        plist.save(job_path, CFPropertyList::List::FORMAT_XML)
       end
     end
   end
@@ -365,16 +373,25 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def disable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(self.class.launchd_overrides)
+<<<<<<< HEAD
       if self.class.get_os_version < 14
         overrides[resource[:name]] = { "Disabled" => true }
       else
         overrides[resource[:name]] = true
       end
       Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+=======
+      overrides[resource[:name]] = { "Disabled" => true }
+      plist = CFPropertyList::List.new
+      plist.value = CFPropertyList.guess(overrides)
+      plist.save(self.class.launchd_overrides, CFPropertyList::List::FORMAT_XML)
+>>>>>>> d30a4a3... (PUP-1455) Use CFPropertyList to read launchd plists
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
-      Plist::Emit.save_plist(job_plist, job_path)
+      plist = CFPropertyList::List.new
+      plist.value = CFPropertyList.guess(job_plist)
+      plist.save(job_path, CFPropertyList::List::FORMAT_XML)
     end
   end
 end
