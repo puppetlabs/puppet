@@ -40,6 +40,9 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:default_value] = arg
   end
 
+  # not yet supported
+  option('--trusted')
+
   # Options for facts/scope
   option('--node NODE_NAME') do |arg|
     options[:node] = arg
@@ -65,14 +68,11 @@ class Puppet::Application::Lookup < Puppet::Application
       raise "No node was given via the '--node' flag for the scope of the lookup."
     end
 
-    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:upack_arrays]) && options[:merge] != 'deep'
+    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:unpack_arrays]) && options[:merge] != 'deep'
       raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUNHELP}"
     end
 
-    node = Puppet::Node.indirection.find("#{options[:node]}")
-    compiler = Puppet::Parser::Compiler.new(node)
-    compiler.compile
-    scope = compiler.topscope
+    scope = generate_scope
 
     use_default_value = !options[:default_value].nil?
     merge_options = nil
@@ -96,8 +96,13 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
 
-    value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
+    puts Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
+  end
 
-    puts value
+  def generate_scope
+    node = Puppet::Node.indirection.find("#{options[:node]}")
+    compiler = Puppet::Parser::Compiler.new(node)
+    compiler.compile
+    compiler.topscope
   end
 end
