@@ -61,6 +61,10 @@ class Puppet::Application::Lookup < Puppet::Application
      raise "No keys were given to lookup."
     end
 
+    if !options[:node]
+      raise "No node was given via the '--node' flag for the scope of the lookup."
+    end
+
     if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:upack_arrays]) && options[:merge] != 'deep'
       raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUNHELP}"
     end
@@ -71,6 +75,7 @@ class Puppet::Application::Lookup < Puppet::Application
     scope = compiler.topscope
 
     use_default_value = !options[:default_value].nil?
+    merge_options = nil
 
     if options[:merge]
       if options[:merge] == 'deep'
@@ -89,11 +94,9 @@ class Puppet::Application::Lookup < Puppet::Application
       else
         merge_options = {'strategy' => options[:merge]}
       end
-
-      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
-    else
-      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, nil)
     end
+
+    value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
 
     puts value
   end
