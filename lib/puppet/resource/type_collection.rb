@@ -13,12 +13,14 @@ class Puppet::Resource::TypeCollection
     @definitions.clear
     @nodes.clear
     @notfound.clear
+    @capability_mappings.clear
   end
 
   def initialize(env)
     @environment = env
     @hostclasses = {}
     @definitions = {}
+    @capability_mappings = {}
     @nodes = {}
     @notfound = {}
 
@@ -33,7 +35,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def inspect
-    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys }.inspect
+    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys, :capability_mappings => @capability_mappings.keys }.inspect
   end
 
   def <<(thing)
@@ -104,6 +106,11 @@ class Puppet::Resource::TypeCollection
     @definitions[instance.name] = instance
   end
 
+  def add_capability_mapping(instance)
+    dupe_check(instance, @capability_mappings) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as a mapping" }
+    @capability_mappings[instance.name] = instance
+  end
+
   def definition(name)
     @definitions[munge_name(name)]
   end
@@ -120,7 +127,7 @@ class Puppet::Resource::TypeCollection
     find_or_load(name, :definition)
   end
 
-  [:hostclasses, :nodes, :definitions].each do |m|
+  [:hostclasses, :nodes, :definitions, :capability_mappings].each do |m|
     define_method(m) do
       instance_variable_get("@#{m}").dup
     end

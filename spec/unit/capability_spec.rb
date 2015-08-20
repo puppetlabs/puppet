@@ -63,6 +63,36 @@ describe "Capability types" do
     expect(cns[:mappings]["host"]).to be_instance_of(Puppet::Parser::AST::PopsBridge::Expression)
   end
 
+  it 'can place define and consumes/produces in separate manifests' do
+    parse_results = []
+    parser = Puppet::Parser::ParserFactory.parser
+
+    parser.string = <<-MANIFEST
+      define test($hostname) {
+        notify { "hostname ${hostname}":}
+      }
+    MANIFEST
+    parse_results << parser.parse
+
+    parser.string = <<-MANIFEST
+      Test consumes Cap {
+        host => $hostname
+      }
+    MANIFEST
+    parse_results << parser.parse
+
+    main = Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
+    Puppet::Node::Environment.any_instance.stubs(:perform_initial_import).returns main
+
+    type = compile_to_catalog(nil).environment_instance.known_resource_types.definition(:test)
+    expect(type.produces).to be_instance_of(Array)
+    cns = type.consumes.first
+
+    expect(cns).to be_instance_of(Hash)
+    expect(cns[:capability]).to eq('Cap')
+    expect(cns[:mappings]).to be_instance_of(Hash)
+    expect(cns[:mappings]['host']).to be_instance_of(Puppet::Parser::AST::PopsBridge::Expression)
+  end
 
   ["produces", "consumes"].each do |kw|
     it "creates an error when #{kw} references nonexistent type" do

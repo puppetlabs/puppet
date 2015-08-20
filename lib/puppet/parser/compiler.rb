@@ -128,6 +128,8 @@ class Puppet::Parser::Compiler
 
       activate_binder
 
+      Puppet::Util::Profiler.profile("Compile: Evaluated capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
+
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated AST node", [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
@@ -313,6 +315,25 @@ class Puppet::Parser::Compiler
     end
 
     [already_included, newly_included]
+  end
+
+  def evaluate_capability_mappings
+    krt = known_resource_types
+    krt.capability_mappings.each_value do |capability_mapping|
+      args = capability_mapping.arguments
+      resource_name = args['resource_name']
+      kind = args['kind']
+      definition = krt.find_definition(resource_name)
+      raise Puppet::ParseError, "Capability mapping error: #{kind} clause references nonexistent type #{resource_name}" unless definition
+
+      blueprint = args['blueprint']
+      if kind == 'produces'
+        definition.add_produces(blueprint)
+      else
+        definition.add_consumes(blueprint)
+      end
+    end
+    krt.capability_mappings.clear # No longer needed
   end
 
   # If ast nodes are enabled, then see if we can find and evaluate one.
