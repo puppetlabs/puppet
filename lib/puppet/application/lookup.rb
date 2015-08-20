@@ -5,7 +5,8 @@ require 'puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
-  RUNHELP = "Run 'puppet lookup --help for more details".freeze
+  RUNHELP = "Run 'puppet lookup --help' for more details".freeze
+  DEEP_MERGE_OPTIONS = "--knock_out_prefix, --sort_merged_arrays, --unpack_arrays, and --merge_hash_arrays".freeze
 
   # Options for lookup
   option('--merge TYPE') do |arg|
@@ -24,12 +25,15 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:prefix] = arg
   end
 
-  option('--sort_merged_arrays')
+  option('--sort_merge_arrays')
 
-  option('--unpack_arrays')
+  option('--unpack_arrays') do |arg|
+    options[:unpack_arrays] = arg
+  end
 
   option('--merge_hash_arrays')
 
+  # not yet supported
   option('--explain')
 
   option('--default VALUE') do |arg|
@@ -41,6 +45,7 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:node] = arg
   end
 
+  # not yet supported
   option('--facts FACT_FILE') do |arg|
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
@@ -52,20 +57,44 @@ class Puppet::Application::Lookup < Puppet::Application
   def run_command
     options[:keys] = command_line.args
 
+    if options[:keys].empty?
+     raise "No keys were given to lookup."
+    end
+
+    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:upack_arrays]) && options[:merge] != 'deep'
+      raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUNHELP}"
+    end
+
     node = Puppet::Node.indirection.find("#{options[:node]}")
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile
     scope = compiler.topscope
 
-    require 'debugger'; debugger
+    use_default_value = !options[:default_value].nil?
 
-    if options[:default_value]
-     value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], true, {}, {}, options[:merge])
+    if options[:merge]
+      if options[:merge] == 'deep'
+        merge_options = {'strategy' => 'deep',
+          'sort_merge_arrays' => !options[:sort_merge_arrays].nil?,
+          'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
+
+        if options[:prefix]
+          merge_options.merge({'prefix' => options[:prefix]})
+        end
+
+        if options[:unpack_arrays]
+          merge_options.merge({'unpack_arrays' => options[:unpack_arrays]})
+        end
+
+      else
+        merge_options = {'strategy' => options[:merge]}
+      end
+
+      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
     else
-      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], false, {}, {}, options[:merge])
+      value = Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, nil)
     end
 
     puts value
   end
-
 end
