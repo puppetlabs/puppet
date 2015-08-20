@@ -53,6 +53,14 @@ class Puppet::Pops::Model::Factory
 
   # Building of Model classes
 
+  def build_Application(o, n, ps, body)
+    o.name = n
+    ps.each { |p| o.addParameters(build(p)) }
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
+  end
+
   def build_ArithmeticExpression(o, op, a, b)
     o.operator = op
     build_BinaryExpression(o, a, b)
@@ -228,6 +236,14 @@ class Puppet::Pops::Model::Factory
     b = f_build_body(body)
     o.body = b.current if b
     o.name = name
+    o
+  end
+
+  def build_CapabilityMapping(o, kind, resource, capability, mappings)
+    o.kind = kind
+    o.resource   = resource
+    o.capability = capability
+    o.mappings = mappings.map { |m| build(m) }
     o
   end
 
@@ -753,6 +769,14 @@ class Puppet::Pops::Model::Factory
 
   def self.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
+  end
+
+  def self.CAPABILITY_MAPPING(kind, rsrc_name, cap_name, mappings)
+    new(Model::CapabilityMapping, kind, rsrc_name, cap_name, mappings)
+  end
+
+  def self.APPLICATION(name, parameters, body)
+    new(Model::Application, name, parameters, body)
   end
 
   def self.FUNCTION(name, parameters, body)

@@ -233,6 +233,15 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_CapabilityMapping(o)
+    if o.resource !~ Puppet::Pops::Patterns::CLASSREF_EXT
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.resource})
+    end
+    if o.capability !~ Puppet::Pops::Patterns::CLASSREF_EXT
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.capability})
+    end
+  end
+
   def check_EppExpression(o)
     if o.eContainer.is_a?(Puppet::Pops::Model::LambdaExpression)
       internal_check_no_capture(o.eContainer, o)

@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'matchers/match_tokens2'
 require 'puppet/pops'
 require 'puppet/pops/parser/lexer2'
+require_relative './parser_rspec_helper'
 
 module EgrammarLexer2Spec
   def tokens_scanned_from(s)
@@ -19,6 +20,7 @@ end
 
 describe 'Lexer2' do
   include EgrammarLexer2Spec
+  include ParserRspecHelper
 
   {
     :LISTSTART => '[',
@@ -113,19 +115,12 @@ describe 'Lexer2' do
   end
 
   context 'when app_managment is (turned) on' do
-    # Horrible things have to be done to test this as the Lexer sets up the KEYWORD table as a frozen constant,
-    # and this list depends on the Puppet[:app_management] setting. These 'before all' and 'after all' clauses
-    # forces Ruby to reload the Lexer
     before(:all) do
-      Puppet[:app_management] = true
-      Puppet::Pops::Parser.send(:remove_const, :Lexer2)
-      load 'puppet/pops/parser/lexer2.rb'
+      with_app_management(true)
     end
 
     after(:all) do
-      Puppet[:app_management] = false
-      Puppet::Pops::Parser.send(:remove_const, :Lexer2)
-      load 'puppet/pops/parser/lexer2.rb'
+      with_app_management(false)
     end
 
     {
