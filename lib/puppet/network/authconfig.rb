@@ -3,7 +3,7 @@ require 'puppet/network/http'
 
 module Puppet
   class ConfigurationError < Puppet::Error; end
-  class Network::AuthConfig
+  class Network::DefaultAuthProvider
     attr_accessor :rights
 
     def self.master_url_prefix
@@ -87,6 +87,26 @@ module Puppet
     def initialize(rights=nil)
       @rights = rights || Puppet::Network::Rights.new
       insert_default_acl
+    end
+  end
+
+  class Network::AuthConfig
+    @@authprovider_class = nil
+
+    def self.authprovider_class=(klass)
+      @@authprovider_class = klass
+    end
+
+    def self.authprovider_class
+      @@authprovider_class || Puppet::Network::DefaultAuthProvider
+    end
+
+    def initialize(rights=nil)
+      @authprovider = self.class.authprovider_class.new(rights)
+    end
+
+    def check_authorization(method, path, params)
+      @authprovider.check_authorization(method, path, params)
     end
   end
 end
