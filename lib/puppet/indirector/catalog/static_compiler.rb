@@ -166,31 +166,36 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
         replace_metadata(request, resource, meta)
         next
       end
-      children[meta.relative_path] ||= Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
+      child = children[meta.relative_path] ||=
+        Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
 
       # I think this is safe since it's a URL, not an actual file
-      children[meta.relative_path][:source] = source + "/" + meta.relative_path
+      child[:source] = source + "/" + meta.relative_path
       resource.each do |param, value|
         # These should never be passed to our children.
         unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
-          children[meta.relative_path][param] = value
+          child[param] = value
         end
       end
-      replace_metadata(request, children[meta.relative_path], meta)
+      replace_metadata(request, child, meta)
     end
 
     children
   end
 
-  # Remove any file resources in the catalog that will be duplicated by the
-  # given file resources.
+  # Remove any recursed file resources already in the catalog
   #
   # @param children [Array<Puppet::Resource>]
   # @param catalog [Puppet::Resource::Catalog]
   def remove_existing_resources(children, catalog)
-    existing_names = catalog.resources.collect { |r| r.to_s }
-    both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
-    both.each { |name| children.delete(name) }
+    relative_paths = children.keys
+    relative_paths.each do |relative_path|
+      child = children[relative_path]
+      if catalog.resource(child.ref)
+        Puppet.debug("Resource #{child.ref} already managed, removing from recursed children")
+        children.delete(relative_path)
+      end
+    end
   end
 
   # Retrieve the source of a file resource using a fileserver based source and
