@@ -196,8 +196,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def has_macosx_plist_overrides?
     # (#11593) Remove support for OS X 10.4 & earlier
     # leaving this as is because 10.5 still didn't have plist support
-    return true unless self.class.get_os_version < 9
-    return false
+    return self.class.get_os_version > 9
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
