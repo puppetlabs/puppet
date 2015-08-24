@@ -66,7 +66,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     ]
   end
 
-  # Gets the current darwin version, example 10.6 returns 9 and 10.10 returns 14
+  # Gets the current Darwin version, example 10.6 returns 9 and 10.10 returns 14
+  # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+  # for more information.
   #
   # @api private
   def self.get_os_version
