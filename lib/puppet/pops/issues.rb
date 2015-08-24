@@ -545,7 +545,7 @@ module Puppet::Pops::Issues
   end
 
   FUTURE_RESERVED_WORD = issue :FUTURE_RESERVED_WORD, :word do
-    "Use of future reserved word: '#{word}', must later be quoted if intended to be a String value"
+    "Use of future reserved word: '#{word}'"
   end
 
   RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do

@@ -299,6 +299,12 @@ class Puppet::Pops::Validation::Checker4_0
     'runtime' => true,
   }
 
+  FUTURE_RESERVED_WORDS = {
+    'application' => true,
+    'produces' => true,
+    'consumes' => true
+  }
+
   # for 'class', 'define', and function
   def check_NamedDefinition(o)
     top(o.eContainer, o)
@@ -317,6 +323,12 @@ class Puppet::Pops::Validation::Checker4_0
     #  but not be special in any other way
     #
     check_NamedDefinition(o)
+
+    # This is perhaps not ideal but it's very difficult to pass a ReservedWord through
+    # the mechanism that creates qualified names (namestack, namepop etc.)
+    if FUTURE_RESERVED_WORDS[o.name]
+      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, {:word => o.name})
+    end
   end
 
   def check_HostClassDefinition(o)
