@@ -177,6 +177,8 @@ class Puppet::Configurer
               @environment = node.environment.to_s
               report.environment = @environment
               query_options = nil
+            else
+              Puppet.info "Using configured environment \"#{@environment}\""
             end
           end
         rescue StandardError => detail
