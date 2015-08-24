@@ -1,4 +1,4 @@
-require 'cfpropertylist'
+require 'puppet/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
@@ -17,21 +17,16 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     * `/Library/LaunchAgents`
 
     ...and builds up a list of services based upon each plist's "Label" entry.
-
     This provider supports:
-
     * ensure => running/stopped,
     * enable => true/false
     * status
     * restart
-
     Here is how the Puppet states correspond to `launchd` states:
-
     * stopped --- job unloaded
     * started --- job loaded
     * enabled --- 'Disable' removed from job plist file
     * disabled --- 'Disable' added to job plist file
-
     Note that this allows you to do something `launchctl` can't do, which is to
     be in a state of "stopped/enabled" or "running/disabled".
 
@@ -42,7 +37,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   include Puppet::Util::Warnings
 
   commands :launchctl => "/bin/launchctl"
-  commands :sw_vers   => "/usr/bin/sw_vers"
+  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
@@ -50,6 +45,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   has_feature :enableable
   has_feature :refreshable
   mk_resource_methods
+
+  def self.plistlib
+    Puppet::Util::Plist
+  end
+
+  def plistlib
+    self.class.plistlib
+  end
 
   # These are the paths in OS X where a launchd service plist could
   # exist. This is a helper method, versus a constant, for easy testing
@@ -135,7 +138,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|
-        job = read_plist(filepath)
+        Puppet.debug("--------READING: #{filepath}")
+        job = plistlib.read_plist_file(filepath)
         next if job.nil?
         if job.has_key?("Label")
           @label_to_path_map[job["Label"]] = filepath
@@ -204,8 +208,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # format.
   def self.read_plist(path)
     begin
-      CFPropertyList.native_types(CFPropertyList::List.new(:file => path).value)
-    rescue CFPlistError => detail
+      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+    rescue Puppet::ExecutionFailure => detail
       Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
                      "Details: #{detail}")
       return nil
@@ -222,27 +226,13 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @property_hash[:ensure] != :absent
   end
 
-  def self.get_macosx_version_major
-    return @macosx_version_major if @macosx_version_major
-    begin
-      product_version_major = Facter.value(:macosx_productversion_major)
-
-      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
-      @macosx_version_major = product_version_major
-      return @macosx_version_major
-    rescue Puppet::ExecutionFailure => detail
-      self.fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
-    end
-  end
-
-
   # finds the path for a given label and returns the path and parsed plist
   # as an array of [path, plist]. Note plist is really a Hash here.
   def plist_from_label(label)
     job = self.class.jobsearch(label)
     job_path = job[label]
     if FileTest.file?(job_path)
-      job_plist = self.class.read_plist(job_path)
+      job_plist = plistlib.read_plist_file(job_path)
     else
       raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
     end
@@ -341,57 +331,39 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # Starting in 10.6 we need to write out a disabled key to the global
-  # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
     if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(self.class.launchd_overrides)
-<<<<<<< HEAD
+      overrides = plistlib.read_plist_file(self.class.launchd_overrides)
       if self.class.get_os_version < 14
         overrides[resource[:name]] = { "Disabled" => false }
       else
         overrides[resource[:name]] = false
       end
-      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
-=======
-      overrides[resource[:name]] = { "Disabled" => false }
-      plist = CFPropertyList::List.new
-      plist.value = CFPropertyList.guess(overrides)
-      plist.save(self.class.launchd_overrides, CFPropertyList::List::FORMAT_XML)
->>>>>>> d30a4a3... (PUP-1455) Use CFPropertyList to read launchd plists
+      plistlib.write_plist_file(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        plist = CFPropertyList::List.new
-        plist.value = CFPropertyList.guess(job_plist)
-        plist.save(job_path, CFPropertyList::List::FORMAT_XML)
+        plistlib.write_plist_file(job_plist, job_path)
       end
     end
   end
 
   def disable
     if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(self.class.launchd_overrides)
-<<<<<<< HEAD
+      overrides = plistlib.read_plist_file(self.class.launchd_overrides)
       if self.class.get_os_version < 14
         overrides[resource[:name]] = { "Disabled" => true }
       else
         overrides[resource[:name]] = true
       end
-      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
-=======
-      overrides[resource[:name]] = { "Disabled" => true }
-      plist = CFPropertyList::List.new
-      plist.value = CFPropertyList.guess(overrides)
-      plist.save(self.class.launchd_overrides, CFPropertyList::List::FORMAT_XML)
->>>>>>> d30a4a3... (PUP-1455) Use CFPropertyList to read launchd plists
+      plistlib.write_plist_file(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
-      job_plist["Disabled"] = true
-      plist = CFPropertyList::List.new
-      plist.value = CFPropertyList.guess(job_plist)
-      plist.save(job_path, CFPropertyList::List::FORMAT_XML)
+      if self.enabled? == :true
+        job_plist["Disabled"] = true
+        plistlib.write_plist_file(job_plist, job_path)
+      end
     end
   end
 end
