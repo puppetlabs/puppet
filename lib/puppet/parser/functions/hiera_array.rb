@@ -6,12 +6,18 @@ module Puppet::Parser::Functions
   If any of the matched values are arrays, they're flattened and included in the results.
 
   The function can be called in one of three ways:
+
   1. Using 1 to 3 arguments where the arguments are:
-     'key'      [String] Required
+
+     - `key`       [String] Required
+
            The key to lookup.
-     'default`  [Any] Optional
+
+     - `default`   [Any] Optional
+
            A value to return when there's no match for `key`. Optional
-     `override` [Any] Optional
+
+     - `override`  [Any] Optional
            An argument in the third position, providing a data source
            to consult for matching values, even if it would not ordinarily be
            part of the matched hierarchy. If Hiera doesn't find a matching key
