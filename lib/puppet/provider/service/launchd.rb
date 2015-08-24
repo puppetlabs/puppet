@@ -66,12 +66,27 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     ]
   end
 
+  # Gets the current Darwin version, example 10.6 returns 9 and 10.10 returns 14
+  # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+  # for more information.
+  #
+  # @api private
+  def self.get_os_version
+    @os_version ||= Facter.value(:operatingsystemmajrelease).to_i
+  end
+
   # Defines the path to the overrides plist file where service enabling
   # behavior is defined in 10.6 and greater.
   #
+  # With the rewrite of launchd in 10.10+, this moves and slightly changes format.
+  #
   # @api private
   def self.launchd_overrides
-    "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+    if self.get_os_version < 14
+      "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+    else
+      "/var/db/com.apple.xpc.launchd/disabled.plist"
+    end
   end
 
   # Caching is enabled through the following three methods. Self.prefetch will
@@ -181,11 +196,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # it is 10.6 or greater. This allows us to implement different plist
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
-    @product_version ||= self.class.get_macosx_version_major
     # (#11593) Remove support for OS X 10.4 & earlier
     # leaving this as is because 10.5 still didn't have plist support
-    return true unless /^10\.[0-5]/.match(@product_version)
-    return false
+    return self.class.get_os_version > 9
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
@@ -307,7 +320,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
         if overrides.has_key?(resource[:name])
-          overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
+          if self.class.get_os_version < 14
+            overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
+          else
+            overrides_disabled = overrides[resource[:name]]
+          end
         end
       end
     end
@@ -330,7 +347,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def enable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(self.class.launchd_overrides)
-      overrides[resource[:name]] = { "Disabled" => false }
+      if self.class.get_os_version < 14
+        overrides[resource[:name]] = { "Disabled" => false }
+      else
+        overrides[resource[:name]] = false
+      end
       Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
@@ -344,7 +365,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def disable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(self.class.launchd_overrides)
-      overrides[resource[:name]] = { "Disabled" => true }
+      if self.class.get_os_version < 14
+        overrides[resource[:name]] = { "Disabled" => true }
+      else
+        overrides[resource[:name]] = true
+      end
       Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
