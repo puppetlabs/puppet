@@ -17,16 +17,21 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     * `/Library/LaunchAgents`
 
     ...and builds up a list of services based upon each plist's "Label" entry.
+
     This provider supports:
+
     * ensure => running/stopped,
     * enable => true/false
     * status
     * restart
+
     Here is how the Puppet states correspond to `launchd` states:
+
     * stopped --- job unloaded
     * started --- job loaded
     * enabled --- 'Disable' removed from job plist file
     * disabled --- 'Disable' added to job plist file
+
     Note that this allows you to do something `launchctl` can't do, which is to
     be in a state of "stopped/enabled" or "running/disabled".
 
@@ -331,6 +336,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
+  # Starting in 10.6 we need to write out a disabled key to the global
+  # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
     if has_macosx_plist_overrides?
       overrides = plistlib.read_plist_file(self.class.launchd_overrides)
