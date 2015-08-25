@@ -19,6 +19,10 @@ module Puppet::DataProviders
 
     def initialize_data(path, lookup_invocation)
       HieraConfig.symkeys_to_string(YAML.load_file(path))
+    rescue YAML::SyntaxError => ex
+      # Psych errors includes the absolute path to the file, so no need to add that
+      # to the message
+      raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
     end
 
     def post_process(value, lookup_invocation)

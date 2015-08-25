@@ -123,6 +123,18 @@ describe "when using a hiera data provider" do
     end.to raise_error(Puppet::DataBinding::LookupError, /'alias' interpolation is only permitted if the expression is equal to the entire string/)
   end
 
+  it 'reports syntax errors for JSON files' do
+    expect do
+      compile_and_get_notifications('hiera_bad_syntax_json')
+    end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse \(#{environmentpath}[^)]+\):/)
+  end
+
+  it 'reports syntax errors for YAML files' do
+    expect do
+      compile_and_get_notifications('hiera_bad_syntax_yaml')
+    end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse \(#{environmentpath}[^)]+\):/)
+  end
+
   def parent_fixture(dir_name)
     File.absolute_path(File.join(my_fixture_dir(), "../#{dir_name}"))
   end

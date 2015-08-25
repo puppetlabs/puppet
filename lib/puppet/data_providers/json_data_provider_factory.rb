@@ -19,6 +19,9 @@ module Puppet::DataProviders
 
     def initialize_data(path, lookup_invocation)
       JSON.parse(File.read(path))
+    rescue JSON::ParserError => ex
+      # Filename not included in message, so we add it here.
+      raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
     end
 
     def post_process(value, lookup_invocation)

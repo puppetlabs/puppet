@@ -49,7 +49,7 @@ module Puppet::DataProviders
     end
     private_class_method :create_config_type
 
-    # Creates a new HieraConfig from teh given _config_root_. This is where the 'hiera.yaml' is expected to be found
+    # Creates a new HieraConfig from the given _config_root_. This is where the 'hiera.yaml' is expected to be found
     # and is also the base location used when resolving relative paths.
     #
     # @param config_root [Pathname] Absolute path to the configuration root
