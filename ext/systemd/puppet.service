@@ -8,6 +8,7 @@ EnvironmentFile=-/etc/sysconfig/puppetagent
 EnvironmentFile=-/etc/sysconfig/puppet
 EnvironmentFile=-/etc/default/puppet
 ExecStart=/opt/puppetlabs/puppet/bin/puppet agent $PUPPET_EXTRA_OPTS --no-daemonize
+ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 
 [Install]

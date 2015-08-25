@@ -1,11 +1,20 @@
-/var/log/puppetlabs/puppet.log {
-  missingok
-  sharedscripts
-  create 0644 puppet puppet
+/var/log/puppetlabs/masterhttp.log /var/log/puppet/masterhttp.log {
   compress
   rotate 4
+  missingok
+  notifempty
+  nocreate
+}
 
+/var/log/puppetlabs/puppetd.log /var/log/puppet/puppetd.log {
+  compress
+  rotate 4
+  missingok
+  notifempty
+  nocreate
+  sharedscripts
   postrotate
-    [ -e /etc/init.d/puppet ] && /etc/init.d/puppet reload > /dev/null 2>&1 || true
+   ([ -x /etc/init.d/puppet ] && /etc/init.d/puppet reload > /dev/null 2>&1) ||
+    ([ -x /usr/bin/systemctl ] && /usr/bin/systemctl kill -s USR2 puppet.service > /dev/null 2>&1) || true
   endscript
 }
