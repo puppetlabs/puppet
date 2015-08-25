@@ -48,3 +48,5 @@ gem_platform_dependencies:
 bundle_platforms:
   x86-mingw32: mingw
   x64-mingw32: x64_mingw
+pre_tasks:
+  'package:apple': 'cfpropertylist'
