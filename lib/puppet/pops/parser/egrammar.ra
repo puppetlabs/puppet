@@ -461,6 +461,9 @@ attribute_operations
   attribute_name
     : NAME
     | keyword
+    | APPLICATION_R
+    | CONSUMES_R
+    | PRODUCES_R
 #    | BOOLEAN
 
   # In this version, illegal combinations are validated instead of producing syntax errors
@@ -609,6 +612,9 @@ classname
   : NAME
   | WORD
   | CLASSREF
+  | APPLICATION_R
+  | CONSUMES_R
+  | PRODUCES_R
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>

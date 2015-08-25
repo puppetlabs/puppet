@@ -125,6 +125,21 @@ describe "validating 4x" do
         source = "$a = #{word}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
       end
+
+      it 'produces a warning issue when used as a class name' do
+        source = "class #{word} {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
+      end
+
+      it 'produces no warning or error when used as a parameter name' do
+        source = "define foo($#{word}) { notice $#{word} }"
+        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
+      end
+
+      it 'produces no warning or error when used as an attribute name' do
+        source = "foo { bar: #{word} => ok }"
+        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
+      end
     end
   end
 

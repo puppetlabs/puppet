@@ -10,7 +10,7 @@
                 <string>en_US.UTF-8</string>
         </dict>
         <key>Label</key>
-        <string>com.puppetlabs.puppet</string>
+        <string>puppet</string>
         <key>KeepAlive</key>
         <true/>
         <key>ProgramArguments</key>
