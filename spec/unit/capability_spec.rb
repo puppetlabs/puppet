@@ -127,6 +127,34 @@ describe "Capability types" do
     expect(cns[:mappings]).to be_instance_of(Hash)
     expect(cns[:mappings]['host']).to be_instance_of(Puppet::Parser::AST::PopsBridge::Expression)
   end
+  it "does not allow operator '+>' in a mapping" do
+    expect do
+    compile_to_catalog(<<-MANIFEST)
+      define test($hostname) {
+        notify { "hostname ${hostname}":}
+      }
+
+      Test consumes Cap {
+        host +> $hostname
+      }
+    MANIFEST
+    end.to raise_error(Puppet::ParseErrorWithIssue, /Illegal \+> operation.*This operator can not be used in a Capability Mapping/)
+  end
+
+  it "does not allow operator '*=>' in a mapping" do
+    expect do
+      compile_to_catalog(<<-MANIFEST)
+      define test($hostname) {
+        notify { "hostname ${hostname}":}
+      }
+
+      Test consumes Cap {
+        *=> { host => $hostname }
+      }
+      MANIFEST
+    end.to raise_error(Puppet::ParseError, /The operator '\* =>' in a Capability Mapping is not supported/)
+  end
+
 
   ["produces", "consumes"].each do |kw|
     it "creates an error when #{kw} references nonexistent type" do
