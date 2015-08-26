@@ -65,12 +65,27 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     ]
   end
 
+  # Gets the current Darwin version, example 10.6 returns 9 and 10.10 returns 14
+  # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+  # for more information.
+  #
+  # @api private
+  def self.get_os_version
+    @os_version ||= Facter.value(:operatingsystemmajrelease).to_i
+  end
+
   # Defines the path to the overrides plist file where service enabling
   # behavior is defined in 10.6 and greater.
   #
+  # With the rewrite of launchd in 10.10+, this moves and slightly changes format.
+  #
   # @api private
   def self.launchd_overrides
-    "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+    if self.get_os_version < 14
+      "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+    else
+      "/var/db/com.apple.xpc.launchd/disabled.plist"
+    end
   end
 
   # Caching is enabled through the following three methods. Self.prefetch will
@@ -279,7 +294,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
       if overrides.has_key?(resource[:name])
-        overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
+        if self.class.get_os_version < 14
+          overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
+        else
+          overrides_disabled = overrides[resource[:name]]
+        end
       end
     end
 
@@ -298,13 +317,21 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # without actually loading/unloading the job.
   def enable
     overrides = self.class.read_plist(self.class.launchd_overrides)
-    overrides[resource[:name]] = { "Disabled" => false }
+    if self.class.get_os_version < 14
+      overrides[resource[:name]] = { "Disabled" => false }
+    else
+      overrides[resource[:name]] = false
+    end
     Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
   end
 
   def disable
-    job_path, job_plist = plist_from_label(resource[:name])
-    job_plist["Disabled"] = true
-    Plist::Emit.save_plist(job_plist, job_path)
+    overrides = self.class.read_plist(self.class.launchd_overrides)
+    if self.class.get_os_version < 14
+      overrides[resource[:name]] = { "Disabled" => true }
+    else
+      overrides[resource[:name]] = true
+    end
+    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
   end
 end
