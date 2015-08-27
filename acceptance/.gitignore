@@ -9,3 +9,4 @@ id_rsa-acceptance
 id_rsa-acceptance.pub
 preserved_config.yaml
 merged_options.rb
+tmp
