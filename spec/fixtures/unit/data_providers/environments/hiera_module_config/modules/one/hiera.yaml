@@ -1,0 +1,18 @@
+---
+:version: 4
+:hierarchy:
+  - :name: "name"
+    :backend: yaml
+  - :name: "one path"
+    :backend: yaml
+    :path: "single"
+  - :name: "two paths"
+    :backend: json
+    :paths:
+      - "first"
+      - "second"
+  - :name:  'other datadir'
+    :backend: yaml
+    :datadir: "data2"
+    :path: "single"
+:datadir: "data1"

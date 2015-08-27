@@ -11,6 +11,7 @@ module Puppet::Plugins::Configuration
     require 'puppet/plugins/binding_schemes'
     require 'puppet/plugins/syntax_checkers'
     require 'puppet/plugins/data_providers'
+    require 'puppet/plugins/data_providers/registry'
 
     # Extension-points are registered here:
     #
@@ -33,7 +34,7 @@ module Puppet::Plugins::Configuration
 
     extensions.multibind(checkers_name).name(checkers_name).hash_of(checkers_type)
     extensions.multibind(schemes_name).name(schemes_name).hash_of(schemes_type)
-    Puppet::Plugins::DataProviders::register_extensions(extensions)
+    Puppet::Plugins::DataProviders::Registry.register_extensions(extensions)
 
     # Register injector boot bindings
     # -------------------------------
@@ -64,5 +65,5 @@ module Puppet::Plugins::Configuration
       in_multibind(checkers_name)
       to_instance('Puppet::SyntaxCheckers::Json')
     end
-    Puppet::Plugins::DataProviders::register_defaults(bindings)
+    Puppet::Plugins::DataProviders::Registry.register_defaults(bindings)
 end
