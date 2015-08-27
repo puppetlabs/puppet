@@ -6,8 +6,9 @@ require 'spec_helper'
 describe Puppet::Type.type(:service).provider(:launchd) do
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
-  let (:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
   let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
+  let (:launchd_overrides_6_9) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
+  let (:launchd_overrides_10_) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
   subject { resource.provider }
 
   describe "the type interface" do
@@ -34,6 +35,56 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
     after :each do
       provider.instance_variable_set(:@job_list, nil)
+    end
+  end
+
+  [[10, '10.6'], [13, '10.9']].each do |kernel, version|
+    describe "when checking whether the service is enabled on OS X #{version}" do
+      it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
+        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => false}})
+        FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
+        expect(subject.enabled?).to eq(:true)
+      end
+      it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
+        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({joblabel => {"Disabled" => true}})
+        FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
+        expect(subject.enabled?).to eq(:false)
+      end
+      it "should return true if the job plist and the global overrides have no disabled keys" do
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        subject.expects(:plist_from_label).returns([joblabel, {}])
+        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
+        FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
+        expect(subject.enabled?).to eq(:true)
+      end
+    end
+  end
+
+  describe "when checking whether the service is enabled on OS X 10.10" do
+    it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
+      provider.expects(:get_os_version).returns(14).at_least_once
+      subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
+      provider.expects(:read_plist).with(launchd_overrides_10_).returns({joblabel => false})
+      FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
+      expect(subject.enabled?).to eq(:true)
+    end
+    it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
+      provider.expects(:get_os_version).returns(14).at_least_once
+      subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
+      provider.expects(:read_plist).with(launchd_overrides_10_).returns({joblabel => true})
+      FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
+      expect(subject.enabled?).to eq(:false)
+    end
+    it "should return true if the job plist and the global overrides have no disabled keys" do
+      provider.expects(:get_os_version).returns(14).at_least_once
+      subject.expects(:plist_from_label).returns([joblabel, {}])
+      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
+      FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
+      expect(subject.enabled?).to eq(:true)
     end
   end
 
@@ -147,21 +198,45 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
   end
 
-  describe "when enabling the service" do
+  [[10, "10.6"], [13, "10.9"]].each do |kernel, version|
+    describe "when enabling the service on OS X #{version}" do
+      it "should write to the global launchd overrides file once" do
+        resource[:enable] = true
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
+        Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], {'Disabled' => false}), launchd_overrides_6_9).once
+        subject.enable
+      end
+    end
+
+    describe "when disabling the service on OS X #{version}" do
+      it "should write to the global launchd overrides file once" do
+        resource[:enable] = false
+        provider.expects(:get_os_version).returns(kernel).at_least_once
+        provider.expects(:read_plist).with(launchd_overrides_6_9).returns({})
+        Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], {'Disabled' => true}), launchd_overrides_6_9).once
+        subject.disable
+      end
+    end
+  end
+
+  describe "when enabling the service on OS X 10.10" do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = true
-      provider.expects(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      provider.expects(:get_os_version).returns(14).at_least_once
+      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
+      Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], false), launchd_overrides_10_).once
       subject.enable
     end
   end
 
-  describe "when disabling the service" do
+  describe "when disabling the service on OS X 10.10" do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = false
-      provider.stubs(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
-      subject.enable
+      provider.expects(:get_os_version).returns(14).at_least_once
+      provider.expects(:read_plist).with(launchd_overrides_10_).returns({})
+      Plist::Emit.expects(:save_plist).with(has_entry(resource[:name], true), launchd_overrides_10_).once
+      subject.disable
     end
   end
 
