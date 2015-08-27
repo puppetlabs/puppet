@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :architecture
 
   commands :yum => "yum", :rpm => "rpm"
 
@@ -149,6 +149,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
         operation = :downgrade
       end
+    end
+
+    if @resource[:architecture]
+      wanted = "#{wanted}.#{@resource[:architecture]}"
     end
 
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;

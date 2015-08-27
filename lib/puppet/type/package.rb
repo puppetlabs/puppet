@@ -384,6 +384,10 @@ module Puppet
       desc "A read-only parameter set by the package."
     end
 
+    newproperty(:architecture) do
+      desc "The architecture version of a package."
+    end
+
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
 

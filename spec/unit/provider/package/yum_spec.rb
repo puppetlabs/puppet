@@ -250,6 +250,31 @@ describe provider_class do
     end
   end
 
+  describe 'when specifying package architecture' do
+    let(:name) { "mypackage" }
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name         => name,
+        :architecture => 'x86_64',
+        :provider     => 'yum'
+      )
+    end
+
+    it 'should be able to set version and detect architecture when installed' do
+      resource[:ensure] = :installed
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "mypackage.x86_64")
+      provider.install
+    end
+
+    it 'should be able to set version and detect architecture when version given' do
+      version = '1.2'
+      resource[:ensure] = version
+      provider.stubs(:query).returns :ensure => version
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "mypackage-1.2.x86_64")
+      provider.install
+    end
+  end
+
   describe 'when uninstalling' do
     it 'should use erase to purge' do
       provider.expects(:yum).with('-y', :erase, name)
