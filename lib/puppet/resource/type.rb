@@ -16,7 +16,7 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  RESOURCE_KINDS = [:hostclass, :node, :definition]
+  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping]
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
