@@ -192,7 +192,7 @@ class Puppet::Parser::AST::PopsBridge
         'kind'          => o.kind,
         'blueprint'     => {
           :capability => o.capability,
-          :mappings   => o.mappings.inject({}) do |memo, mapping|
+          :mappings   => o.mappings.reduce({}) do |memo, mapping|
             memo[mapping.attribute_name] =
               Expression.new(:value => mapping.value_expr)
             memo
