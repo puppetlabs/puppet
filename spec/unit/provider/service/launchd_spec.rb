@@ -283,14 +283,6 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.make_label_to_path_map
       end
 
-      it "[15929] should skip plists that plutil cannot read" do
-        provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
-          busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
-        Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
-                                      "Puppet is skipping it. \n" +
-                                      "Details: boom")
-        provider.read_plist(busted_plist_path)
-      end
     end
     it "should return the cached value when available" do
       provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
