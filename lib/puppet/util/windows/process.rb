@@ -243,7 +243,7 @@ module Puppet::Util::Windows::Process
 
   ffi_convention :stdcall
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx
   # DWORD WINAPI WaitForSingleObject(
   #   _In_  HANDLE hHandle,
   #   _In_  DWORD dwMilliseconds
@@ -252,7 +252,7 @@ module Puppet::Util::Windows::Process
   attach_function_private :WaitForSingleObject,
     [:handle, :dword], :dword
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
   # BOOL WINAPI GetExitCodeProcess(
   #   _In_   HANDLE hProcess,
   #   _Out_  LPDWORD lpExitCode
@@ -261,12 +261,12 @@ module Puppet::Util::Windows::Process
   attach_function_private :GetExitCodeProcess,
     [:handle, :lpdword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
   # HANDLE WINAPI GetCurrentProcess(void);
   ffi_lib :kernel32
   attach_function_private :GetCurrentProcess, [], :handle
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(
   #   _In_   HANDLE ProcessHandle,
   #   _In_   DWORD DesiredAccess,
@@ -277,7 +277,7 @@ module Puppet::Util::Windows::Process
     [:handle, :dword, :phandle], :win32_bool
 
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
   # typedef struct _LUID {
   #   DWORD LowPart;
   #   LONG  HighPart;
@@ -287,7 +287,7 @@ module Puppet::Util::Windows::Process
            :HighPart, :win32_long
   end
 
-  # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
   # BOOL WINAPI LookupPrivilegeValue(
   #   _In_opt_  LPCTSTR lpSystemName,
   #   _In_      LPCTSTR lpName,
@@ -297,7 +297,7 @@ module Puppet::Util::Windows::Process
   attach_function_private :LookupPrivilegeValueW,
     [:lpcwstr, :lpcwstr, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
   TOKEN_INFORMATION_CLASS = enum(
       :TokenUser, 1,
       :TokenGroups,
@@ -342,7 +342,7 @@ module Puppet::Util::Windows::Process
       :MaxTokenInfoClass
   )
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
   # typedef struct _LUID_AND_ATTRIBUTES {
   #   LUID  Luid;
   #   DWORD Attributes;
@@ -352,7 +352,7 @@ module Puppet::Util::Windows::Process
            :Attributes, :dword
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
   # typedef struct _TOKEN_PRIVILEGES {
   #   DWORD               PrivilegeCount;
   #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
@@ -362,7 +362,7 @@ module Puppet::Util::Windows::Process
            :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
   # typedef struct _TOKEN_ELEVATION {
   #   DWORD TokenIsElevated;
   # } TOKEN_ELEVATION, *PTOKEN_ELEVATION;
@@ -370,7 +370,7 @@ module Puppet::Util::Windows::Process
     layout :TokenIsElevated, :dword
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
   # BOOL WINAPI GetTokenInformation(
   #   _In_       HANDLE TokenHandle,
   #   _In_       TOKEN_INFORMATION_CLASS TokenInformationClass,

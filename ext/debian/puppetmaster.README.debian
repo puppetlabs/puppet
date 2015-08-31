@@ -12,4 +12,4 @@ puppetmaster-passenger package. It will automatically setup an apache2 virtual
 host that will run puppetmaster under Passenger.
 
 For more information:
-http://projects.puppetlabs.com/projects/puppet/wiki/Using_Passenger
+https://projects.puppetlabs.com/projects/puppet/wiki/Using_Passenger

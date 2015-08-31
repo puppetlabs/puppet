@@ -2,7 +2,7 @@ Puppet
 ======
 
 [![Build Status](https://travis-ci.org/puppetlabs/puppet.png?branch=master)](https://travis-ci.org/puppetlabs/puppet)
-[![Inline docs](http://inch-ci.org/github/puppetlabs/puppet.png)](http://inch-ci.org/github/puppetlabs/puppet)
+[![Inline docs](https://inch-ci.org/github/puppetlabs/puppet.png)](https://inch-ci.org/github/puppetlabs/puppet)
 
 Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs
 administrative tasks (such as adding users, installing packages, and updating server
@@ -12,7 +12,7 @@ Documentation
 -------------
 
 Documentation for Puppet and related projects can be found online at the
-[Puppet Docs site](http://docs.puppetlabs.com).
+[Puppet Docs site](https://docs.puppetlabs.com).
 
 HTTP API
 --------
@@ -21,15 +21,15 @@ HTTP API
 Installation
 ------------
 
-The best way to run Puppet is with [Puppet Enterprise](http://puppetlabs.com/puppet/puppet-enterprise),
+The best way to run Puppet is with [Puppet Enterprise](https://puppetlabs.com/puppet/puppet-enterprise),
 which also includes orchestration features, a web console, and professional support.
-[The PE documentation is available here.](http://docs.puppetlabs.com/pe/latest)
+[The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
 
 To install an open source release of Puppet,
-[see the installation guide on the docs site.](http://docs.puppetlabs.com/guides/installation.html)
+[see the installation guide on the docs site.](https://docs.puppetlabs.com/guides/installation.html)
 
 If you need to run Puppet from source as a tester or developer,
-[see the running from source guide on the docs site.](http://docs.puppetlabs.com/guides/from_source.html)
+[see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
 
 Developing and Contributing
 ------
@@ -72,5 +72,5 @@ a best effort to backport that fix onto the latest Puppet 3 release.
 Long-term support, including security patches and bug fixes, is available for
 commercial customers. Please see the following page for more details:
 
-[Puppet Enterprise Support Lifecycle](http://puppetlabs.com/misc/puppet-enterprise-lifecycle)
+[Puppet Enterprise Support Lifecycle](https://puppetlabs.com/misc/puppet-enterprise-lifecycle)
 

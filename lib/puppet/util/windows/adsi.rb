@@ -87,7 +87,7 @@ module Puppet::Util::Windows::ADSI
 
     ffi_convention :stdcall
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
     # BOOL WINAPI GetComputerName(
     #   _Out_    LPTSTR lpBuffer,
     #   _Inout_  LPDWORD lpnSize
@@ -301,7 +301,7 @@ module Puppet::Util::Windows::ADSI
       new(name, Puppet::Util::Windows::ADSI.create(name, 'user'))
     end
 
-    # UNLEN from lmcons.h - http://stackoverflow.com/a/2155176
+    # UNLEN from lmcons.h - https://stackoverflow.com/a/2155176
     MAX_USERNAME_LENGTH = 256
     def self.current_user_name
       user_name = ''
@@ -342,7 +342,7 @@ module Puppet::Util::Windows::ADSI
 
     ffi_convention :stdcall
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724432(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724432(v=vs.85).aspx
     # BOOL WINAPI GetUserName(
     #   _Out_    LPTSTR lpBuffer,
     #   _Inout_  LPDWORD lpnSize
@@ -357,7 +357,7 @@ module Puppet::Util::Windows::ADSI
       begin
         Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
       rescue WIN32OLERuntimeError => e
-        # http://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
+        # https://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
         # Prior to Vista SP1, there's no builtin way to programmatically
         # delete user profiles (except for delprof.exe). So try to delete
         # but warn if we fail

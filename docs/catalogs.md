@@ -84,7 +84,7 @@ good chance the catalog is not a RAL catalog.
 Be aware that Puppet creates a mini catalog and applies this catalog locally to
 manage file resource from the settings.  This behavior made it difficult and
 time consuming to track down a race condition in
-[2888](http://projects.puppetlabs.com/issues/2888).
+[2888](https://projects.puppetlabs.com/issues/2888).
 
 Even more surprising, the `File[puppetdlockfile]` resource is only added to the
 settings catalog if the file exists on disk.  This caused the race condition as
@@ -96,7 +96,7 @@ potential for race conditions it presents.  An effective way to be reasonably
 sure and track down the problem is to wrap the File.open method like so:
 
     # We're wrapping ourselves around the File.open method.
-    # As described at: http://goo.gl/lDsv6
+    # As described at: https://goo.gl/lDsv6
     class File
       WHITELIST = [ /pidlock.rb:39/ ]
 
