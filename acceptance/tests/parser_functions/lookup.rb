@@ -1,6 +1,6 @@
 test_name "Lookup data using the agnostic lookup function"
 # pre-docs:
-# http://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
+# https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
 
 testdir = master.tmpdir('lookup')
 

@@ -27,7 +27,7 @@ module Puppet::Parser::Functions
   If any matched value is a hash, puppet will raise a type mismatch error.
 
   More thorough examples of `hiera` are available at:  
-  <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
+  <https://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     function_fail(["hiera_array() has been converted to 4x API"])
   end

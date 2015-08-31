@@ -41,7 +41,7 @@
 #   must be running with elevated privileges.
 # * A file/dir can be deleted by anyone with the DELETE access right
 #   OR by anyone that has the FILE_DELETE_CHILD access right for the
-#   parent. See http://support.microsoft.com/kb/238018. But on Unix,
+#   parent. See https://support.microsoft.com/kb/238018. But on Unix,
 #   the user must have write access to the file/dir AND execute access
 #   to all of the parent path components.
 # * Many access control entries are inherited from parent directories,
@@ -576,7 +576,7 @@ module Puppet::Util::Windows::Security
   end
 
   def get_max_generic_acl_size(ace_count)
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
     # To calculate the initial size of an ACL, add the following together, and then align the result to the nearest DWORD:
     # * Size of the ACL structure.
     # * Size of each ACE structure that the ACL is to contain minus the SidStart member (DWORD) of the ACE.
@@ -640,7 +640,7 @@ module Puppet::Util::Windows::Security
 
   ffi_convention :stdcall
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx
   # HANDLE WINAPI CreateFile(
   #   _In_      LPCTSTR lpFileName,
   #   _In_      DWORD dwDesiredAccess,
@@ -654,7 +654,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :CreateFileW,
     [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
   # BOOL WINAPI GetVolumeInformation(
   #   _In_opt_   LPCTSTR lpRootPathName,
   #   _Out_opt_  LPTSTR lpVolumeNameBuffer,
@@ -669,7 +669,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :GetVolumeInformationW,
     [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374951(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374951(v=vs.85).aspx
   # BOOL WINAPI AddAccessAllowedAceEx(
   #   _Inout_  PACL pAcl,
   #   _In_     DWORD dwAceRevision,
@@ -681,7 +681,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :AddAccessAllowedAceEx,
     [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374964(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374964(v=vs.85).aspx
   # BOOL WINAPI AddAccessDeniedAceEx(
   #   _Inout_  PACL pAcl,
   #   _In_     DWORD dwAceRevision,
@@ -693,7 +693,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :AddAccessDeniedAceEx,
     [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374931(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374931(v=vs.85).aspx
   # typedef struct _ACL {
   #   BYTE AclRevision;
   #   BYTE Sbz1;
@@ -709,9 +709,9 @@ module Puppet::Util::Windows::Security
            :Sbz2, :word
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374912(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374912(v=vs.85).aspx
   # ACE types
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374919(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374919(v=vs.85).aspx
   # typedef struct _ACE_HEADER {
   #   BYTE AceType;
   #   BYTE AceFlags;
@@ -723,17 +723,17 @@ module Puppet::Util::Windows::Security
            :AceSize,  :word
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374892(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374892(v=vs.85).aspx
   # ACCESS_MASK
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374847(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374847(v=vs.85).aspx
   # typedef struct _ACCESS_ALLOWED_ACE {
   #   ACE_HEADER  Header;
   #   ACCESS_MASK Mask;
   #   DWORD       SidStart;
   # } ACCESS_ALLOWED_ACE, *PACCESS_ALLOWED_ACE;
   #
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374879(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374879(v=vs.85).aspx
   # typedef struct _ACCESS_DENIED_ACE {
   #   ACE_HEADER  Header;
   #   ACCESS_MASK Mask;
@@ -748,12 +748,12 @@ module Puppet::Util::Windows::Security
            :SidStart, :dword
   end
 
-  # http://stackoverflow.com/a/1792930
+  # https://stackoverflow.com/a/1792930
   MAXIMUM_SID_BYTES_LENGTH = 68
   MAXIMUM_GENERIC_ACE_SIZE = GENERIC_ACCESS_ACE.offset_of(:SidStart) +
     MAXIMUM_SID_BYTES_LENGTH
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
   # BOOL WINAPI GetAce(
   #   _In_   PACL pAcl,
   #   _In_   DWORD dwAceIndex,
@@ -763,7 +763,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :GetAce,
     [:pointer, :dword, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
   # BOOL WINAPI AdjustTokenPrivileges(
   #   _In_       HANDLE TokenHandle,
   #   _In_       BOOL DisableAllPrivileges,
@@ -776,9 +776,9 @@ module Puppet::Util::Windows::Security
   attach_function_private :AdjustTokenPrivileges,
     [:handle, :win32_bool, :pointer, :dword, :pointer, :pdword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446647(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446647(v=vs.85).aspx
   # typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
   # BOOL WINAPI GetSecurityDescriptorControl(
   #   _In_   PSECURITY_DESCRIPTOR pSecurityDescriptor,
@@ -789,7 +789,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :GetSecurityDescriptorControl,
     [:pointer, :lpword, :lpdword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
   # BOOL WINAPI InitializeAcl(
   #   _Out_  PACL pAcl,
   #   _In_   DWORD nAclLength,
@@ -799,7 +799,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :InitializeAcl,
     [:pointer, :dword, :dword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
   # BOOL WINAPI IsValidAcl(
   #   _In_  PACL pAcl
   # );
@@ -807,7 +807,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :IsValidAcl,
     [:pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379593(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379593(v=vs.85).aspx
   SE_OBJECT_TYPE = enum(
     :SE_UNKNOWN_OBJECT_TYPE, 0,
     :SE_FILE_OBJECT,
@@ -824,7 +824,7 @@ module Puppet::Util::Windows::Security
     :SE_REGISTRY_WOW64_32KEY
   )
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446654(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446654(v=vs.85).aspx
   # DWORD WINAPI GetSecurityInfo(
   #   _In_       HANDLE handle,
   #   _In_       SE_OBJECT_TYPE ObjectType,
@@ -839,7 +839,7 @@ module Puppet::Util::Windows::Security
   attach_function_private :GetSecurityInfo,
     [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer, :pointer], :dword
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
   # DWORD WINAPI SetSecurityInfo(
   #   _In_      HANDLE handle,
   #   _In_      SE_OBJECT_TYPE ObjectType,
