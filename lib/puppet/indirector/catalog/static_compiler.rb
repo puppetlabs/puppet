@@ -116,8 +116,6 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   # @param resource [Puppet::Resource]
   # @param file [Puppet::Type::File] The file RAL associated with the resource
   def add_children(request, catalog, resource, file)
-    file = resource.to_ral
-
     children = get_child_resources(request, catalog, resource, file)
 
     remove_existing_resources(children, catalog)
@@ -161,10 +159,11 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       end
     end
 
+    parent_meta = nil
     total.each do |meta|
       # This is the top-level parent directory
       if meta.relative_path == "."
-        replace_metadata(request, resource, meta)
+        parent_meta = meta
         next
       end
       child = children[meta.relative_path] ||=
@@ -180,6 +179,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       end
       replace_metadata(request, child, meta)
     end
+    replace_metadata(request, resource, parent_meta)
 
     children
   end
