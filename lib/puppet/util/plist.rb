@@ -25,33 +25,56 @@ module Puppet::Util::Plist
       bad_xml_doctype = /^.*<!DOCTYPE plist PUBLIC -\/\/Apple Computer.*$/
       # We can't really read the file until we know the source encoding in
       # Ruby 1.9.x, so we use the magic number to detect it.
-      # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
-      if IO.read(file_path, binary_plist_magic_number.length) == binary_plist_magic_number
-        plist_obj = CFPropertyList::List.new(:file => file_path)
+      # NOTE: We used IO.read originally to be Ruby 1.8.x compatible.
+      if read_file_with_offset(file_path, binary_plist_magic_number.length) == binary_plist_magic_number
+        plist_obj = new_cfpropertylist(file_path)
       else
-        plist_data = File.open(file_path, "r:UTF-8").read
+        plist_data = open_file_with_args(file_path, "r:UTF-8")
         if plist_data =~ bad_xml_doctype
           plist_data.gsub!( bad_xml_doctype, plist_xml_doctype )
           Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{file_path}")
         end
         begin
-          # This is fucking terrible - I'm redirecting $stderr because I
-          # can't swallow an error bubbled up by libxml when the file
-          # /System/Library/LaunchDaemons/org.cups.cupsd.plist tries to
-          # be parsed. That file has invalid double hyphens within an XML
-          # comment, and even though the file passes `plutil -lint`, it's
-          # invalid XML. It's been that way for fucking ever and it sucks.
-          # I would REALLY appreciate a pull request to handle this better.
-          orig_stderr = $stderr.clone
-          $stderr.reopen('/dev/null', 'w+')
-          plist_obj = CFPropertyList::List.new(:data => plist_data)
-          $stderr.reopen(orig_stderr)
-        rescue CFFormatError, LibXML::XML::Error => e
+          plist_obj = new_cfpropertylist(plist_data)
+        #rescue CFFormatError, LibXML::XML::Error => e
+        rescue CFFormatError => e
           Puppet.debug "Failed with #{e.class} on #{file_path}: #{e.inspect}"
           return nil
         end
       end
+      convert_cfpropertylist_to_native_types(plist_obj)
+    end
+
+    # Helper method to assist in reading a file. It's its own method for
+    # stubbing purposes
+    #
+    # @api private
+    def open_file_with_args(file, args)
+      File.open(file, args).read
+    end
+
+    # Helper method to assist in generating a new CFPropertList Plist. It's
+    # its own method for stubbing purposes
+    #
+    # @api private
+    def new_cfpropertylist(plist_data)
+      CFPropertyList::List.new(:data => plist_data)
+    end
+
+    # Helper method to assist in converting a native CFPropertList object to a
+    # native Ruby object (hash). It's its own method for stubbing purposes
+    #
+    # @api private
+    def convert_cfpropertylist_to_native_types(plist_obj)
       CFPropertyList.native_types(plist_obj.value)
+    end
+
+    # Helper method to assist in reading a file with an offset value. It's its
+    # own method for stubbing purposes
+    #
+    # @api private
+    def read_file_with_offset(file_path, offset)
+      IO.read(file_path, offset)
     end
 
     # This method will write a plist file using a specified format (or XML
