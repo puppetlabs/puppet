@@ -8,7 +8,8 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor :osfamily => [:redhat, :suse]
+  defaultfor :osfamily => :redhat
+  defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["10", "11"]
 
   # Remove the symlinks
   def disable
