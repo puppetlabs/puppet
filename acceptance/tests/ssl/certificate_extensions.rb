@@ -91,6 +91,7 @@ test_name "certificate extensions available as trusted data" do
         :acceptable_exit_codes => [0, 2])
 
       trusted_data = YAML.load(on(agent, "cat #{get_test_file_path(agent, 'trusted.yaml')}").stdout)
+      agent_hostname, agent_domain = agent_certname.split('.', 2)
 
       step "Verify trusted data"
       assert_equal({
@@ -101,7 +102,9 @@ test_name "certificate extensions available as trusted data" do
             'pp_instance_id' => 'i-3fkva',
             '1.3.6.1.4.1.34380.1.2.1' => 'db-server',
             '1.3.6.1.4.1.34380.1.2.2' => 'webops'
-          }
+          },
+          'hostname' => agent_hostname,
+          'domainname' => agent_domain
         },
         trusted_data)
     end
