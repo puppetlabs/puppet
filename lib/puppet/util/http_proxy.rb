@@ -181,7 +181,8 @@ module Puppet::Util::HttpProxy
       end
 
       if block_given?
-        response = proxy.send("request_#{method}".to_sym, current_uri.path, &block)
+        headers = {'Accept' => 'binary', 'accept-encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'}
+        response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
       else
         response = proxy.send(method, current_uri.path)
       end
