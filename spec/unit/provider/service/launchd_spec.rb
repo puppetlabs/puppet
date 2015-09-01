@@ -4,9 +4,11 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:launchd) do
+  let (:plistlib) { Puppet::Util::Plist }
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
   let (:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
+  let (:launchd_overrides_maj_ver_14) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
   let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
   subject { resource.provider }
 
@@ -191,23 +193,43 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
   end
 
-  describe "when enabling the service on OS X 10.6" do
-    it "should write to the global launchd overrides file once" do
+  describe "when enabling the service on OS X < 10.10" do
+    it "should write to the correct global launchd overrides file once" do
       resource[:enable] = true
       provider.expects(:get_os_version).returns(10).at_least_once
-      provider.expects(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      plistlib.stubs(:read_plist_file).returns({})
+      plistlib.expects(:write_plist_file).with(anything, launchd_overrides).once
       subject.enable
     end
   end
 
-  describe "when disabling the service on OS X 10.6" do
-    it "should write to the global launchd overrides file once" do
+  describe "when enabling the service on OS X >= 10.10" do
+    it "should write to the correct global launchd overrides file once" do
+      resource[:enable] = true
+      provider.expects(:get_os_version).returns(14).at_least_once
+      plistlib.stubs(:read_plist_file).returns({})
+      plistlib.expects(:write_plist_file).with(anything, launchd_overrides_maj_ver_14).once
+      subject.enable
+    end
+  end
+
+  describe "when disabling the service on OS X < 10.10" do
+    it "should write to the correct global launchd overrides file once" do
       resource[:enable] = false
       provider.stubs(:get_os_version).returns(10)
-      provider.stubs(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
-      subject.enable
+      plistlib.stubs(:read_plist_file).returns({})
+      plistlib.expects(:write_plist_file).with(anything, launchd_overrides).once
+      subject.disable
+    end
+  end
+
+  describe "when disabling the service on OS X >= 10.10" do
+    it "should write to the correct global launchd overrides file once" do
+      resource[:enable] = false
+      provider.stubs(:get_os_version).returns(14)
+      plistlib.stubs(:read_plist_file).returns({})
+      plistlib.expects(:write_plist_file).with(anything, launchd_overrides_maj_ver_14).once
+      subject.disable
     end
   end
 
@@ -229,7 +251,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       it "[17624] should warn that the plist in question is being skipped" do
         provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
         provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
-        provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
+        plistlib.expects(:read_plist_file).with(busted_plist_path).returns(plist_without_label)
         Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
         provider.make_label_to_path_map
       end
@@ -247,7 +269,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.instance_variable_set(:@label_to_path_map, nil)
         provider.expects(:launchd_paths).returns([launchd_dir])
         provider.expects(:return_globbed_list_of_file_paths).with(launchd_dir).returns([plist])
-        provider.expects(:read_plist).with(plist).returns({'Label'=>'foo.bar.service'})
+        plistlib.expects(:read_plist_file).with(plist).returns({'Label'=>'foo.bar.service'})
       end
       it "should read the plists and return their contents" do
         provider.make_label_to_path_map.should eq({label=>plist})
