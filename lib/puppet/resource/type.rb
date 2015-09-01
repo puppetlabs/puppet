@@ -105,6 +105,44 @@ class Puppet::Resource::Type
     return(klass == parent_type ? true : parent_type.child_of?(klass))
   end
 
+  # Evaluate the resources produced by the given resource. These resources are
+  # evaluated in a separate but identical scope from the rest of the resource.
+  def evaluate_produces(resource, scope)
+    # Only defined types can produce capabilities
+    return unless definition?
+
+    resource.export.map do |ex|
+      blueprint = produces.find { |pr| pr[:capability] == ex.type }
+      if blueprint.nil?
+        raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
+      end
+      produced_resource = Puppet::Parser::Resource.new(ex.type, ex.title, :scope => scope, :source => self)
+
+      produced_resource.resource_type.parameters.each do |name|
+        next if name == :name
+
+        if expr = blueprint[:mappings][name.to_s]
+          produced_resource[name] = expr.safeevaluate(scope)
+        else
+          produced_resource[name] = scope[name.to_s]
+        end
+      end
+      # Tag the produced resource so we can later distinguish it from
+      # copies of the resource that wind up in the catalogs of nodes that
+      # use this resource. We tag the resource with producer:<environment>,
+      # meaning produced resources need to be unique within their
+      # environment
+      # @todo lutter 2014-11-13: we would really like to use a dedicated
+      # metadata field to indicate the producer of a resource, but that
+      # requires changes to PuppetDB and its API; so for now, we just use
+      # tagging
+      produced_resource.tag("producer:#{scope.catalog.environment}")
+      scope.catalog.add_resource(produced_resource)
+      produced_resource[:require] = resource.ref
+      produced_resource
+    end
+  end
+
   # Now evaluate the code associated with this class or definition.
   def evaluate_code(resource)
 
@@ -117,6 +155,8 @@ class Puppet::Resource::Type
     set_resource_parameters(resource, scope)
 
     resource.add_edge_to_stage
+
+    evaluate_produces(resource, scope)
 
     if code
       if @match # Only bother setting up the ephemeral scope if there are match variables to add into it
@@ -279,6 +319,7 @@ class Puppet::Resource::Type
   # Set any arguments passed by the resource as variables in the scope.
   def set_resource_parameters(resource, scope)
     set = {}
+    resource.add_parameters_from_consume
     resource.to_hash.each do |param, value|
       param = param.to_sym
       fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
@@ -349,6 +390,14 @@ class Puppet::Resource::Type
       end
       @argument_types[name] = t
     end
+  end
+
+  # Returns boolean true if an instance of this type is a capability. This
+  # implementation always returns false. This "duck-typing" interface is
+  # shared among other classes and makes it easier to detect capabilities
+  # when they are intermixed with non capability instances.
+  def is_capability?
+    false
   end
 
   private
