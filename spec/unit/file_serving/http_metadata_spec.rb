@@ -13,11 +13,7 @@ describe Puppet::FileServing::HttpMetadata do
   end
 
   describe "when initializing" do
-    let :http_response do
-      result = Net::HTTPOK.new(1.0, '200', 'OK')
-      result.add_field('Last-Modified', 'Mon, 05 Jan 2015 01:19:10 GMT')
-      result
-    end
+    let(:http_response) { Net::HTTPOK.new(1.0, '200', 'OK') }
 
     it "can be instantiated from a HTTP response object" do
       expect( described_class.new(http_response) ).to_not be_nil
@@ -34,7 +30,26 @@ describe Puppet::FileServing::HttpMetadata do
       expect( metadata.mode ).to be_nil
     end
 
-    context "with no Content-MD5 header from the server" do
+    context "with no Last-Modified or Content-MD5 header from the server" do
+      before do
+        http_response.stubs(:[]).with('last-modified').returns nil
+        http_response.stubs(:[]).with('content-md5').returns nil
+      end
+
+      it "should use :mtime as the checksum type, based on current time" do
+        # Stringifying Time.now does some rounding; do so here so we don't end up with a time
+        # that's greater than the stringified version returned by collect.
+        time = Time.parse(Time.now.to_s)
+        metadata = described_class.new(http_response)
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :mtime
+        checksum = metadata.checksum
+        expect( checksum[0...7] ).to eq '{mtime}'
+        expect( Time.parse(checksum[7..-1]) ).to be >= time
+      end
+    end
+
+    context "with a Last-Modified header from the server" do
       let(:time) { Time.now.utc }
       before do
         http_response.stubs(:[]).with('content-md5').returns nil

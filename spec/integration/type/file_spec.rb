@@ -1279,6 +1279,41 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
         expect(File.read(httppath)).to eq "Content via HTTP\n"
       end
+
+      it "should fetch the file if no header specified" do
+        File.open(httppath, "w") { |f| f.puts "bar" }
+        catalog.add_resource resource
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+        expect(File.read(httppath)).to eq "Content via HTTP\n"
+      end
+
+      it "should fetch the file if mtime is older on disk" do
+        File.open(httppath, "w") { |f| f.puts "bar" }
+        FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
+        catalog.add_resource resource
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+        expect(File.read(httppath)).to eq "Content via HTTP\n"
+      end
+
+      it "should not update the file if mtime is newer on disk" do
+        File.open(httppath, "w") { |f| f.puts "Content via HTTP\n" }
+        mtime = File.stat(httppath).mtime
+        catalog.add_resource resource
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+        expect(File.read(httppath)).to eq "Content via HTTP\n"
+        expect(File.stat(httppath).mtime).to eq mtime
+      end
+
+      it "should update the file if content differs on disk" do
+        File.open(httppath, "w") { |f| f.puts "bar" }
+        catalog.add_resource resource
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+        expect(File.read(httppath)).to eq "Content via HTTP\n"
+      end
     end
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
