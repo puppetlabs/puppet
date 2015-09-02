@@ -6,12 +6,10 @@ HOSTS:
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
-  agent:
+  solaris-10-sparc:
     roles:
       - agent
-    platform: solaris-10-x86_64
-    hypervisor: vcloud
-    template: solaris-10-x86_64
+    platform: solaris-10-sparc
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
