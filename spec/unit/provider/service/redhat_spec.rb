@@ -23,13 +23,20 @@ describe provider_class, :if => Puppet.features.posix? do
     Facter.stubs(:value).with(:osfamily).returns 'RedHat'
   end
 
-  osfamily = [ 'RedHat', 'Suse' ]
+  osfamily = [ 'RedHat' ]
 
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
       expect(provider_class.default?).to be_truthy
     end
+  end
+
+  it "should be the default provider on sles11" do
+    Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystem).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("11")
+    expect(described_class.default?).to be_truthy
   end
 
   # test self.instances
