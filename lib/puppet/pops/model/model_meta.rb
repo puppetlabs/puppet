@@ -542,7 +542,7 @@ module Puppet::Pops::Model
     has_attr 'kind', String, :lowerBound => 1
     has_attr 'resource', String, :lowerBound => 1
     has_attr 'capability', String, :lowerBound => 1
-    contains_many_uni 'mappings', AttributeOperation
+    contains_many_uni 'mappings', AbstractAttributeOperation
   end
 
   # A resource defaults sets defaults for a resource type. This class inherits from AbstractResource

@@ -64,6 +64,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_UnlessExpression o            ; "'unless' Statement"                end
   def label_CallNamedFunctionExpression o ; "Function Call"                     end
   def label_CallMethodExpression o        ; "Method call"                       end
+  def label_CapabilityMapping o           ; "Capability Mapping"                end
   def label_CaseExpression o              ; "'case' statement"                  end
   def label_CaseOption o                  ; "Case Option"                       end
   def label_RenderStringExpression o      ; "Epp Text"                          end
