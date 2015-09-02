@@ -1,0 +1,16 @@
+HOSTS:
+  master:
+    roles:
+      - master
+    platform: el-7-x86_64
+    hypervisor: vcloud
+    template: redhat-7-x86_64
+  solaris-11-sparc:
+    roles:
+      - agent
+    platform: solaris-11-sparc
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/
