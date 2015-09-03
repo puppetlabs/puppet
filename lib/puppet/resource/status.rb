@@ -1,6 +1,5 @@
 require 'time'
 require 'puppet/network/format_support'
-require 'puppet/util/psych_support'
 
 module Puppet
   class Resource
@@ -14,7 +13,6 @@ module Puppet
     class Status
       include Puppet::Util::Tagging
       include Puppet::Network::FormatSupport
-      include Puppet::Util::PsychSupport
 
       # @!attribute [rw] file
       #   @return [String] The file where `@real_resource` was defined.
