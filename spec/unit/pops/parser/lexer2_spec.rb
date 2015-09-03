@@ -115,11 +115,11 @@ describe 'Lexer2' do
   end
 
   context 'when app_managment is (turned) on' do
-    before(:all) do
+    before(:each) do
       with_app_management(true)
     end
 
-    after(:all) do
+    after(:each) do
       with_app_management(false)
     end
 

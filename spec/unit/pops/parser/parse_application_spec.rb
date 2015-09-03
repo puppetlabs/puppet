@@ -6,11 +6,11 @@ require_relative './parser_rspec_helper'
 describe "egrammar parsing of 'application'" do
   include ParserRspecHelper
 
-  before(:all) do
+  before(:each) do
     with_app_management(true)
   end
 
-  after(:all) do
+  after(:each) do
     with_app_management(false)
   end
 
