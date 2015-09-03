@@ -244,11 +244,11 @@ describe "validating 4x" do
   end
 
   context "capability annotations" do
-    before(:all) do
+    before(:each) do
       with_app_management(true)
     end
 
-    after(:all) do
+    after(:each) do
       with_app_management(false)
     end
 

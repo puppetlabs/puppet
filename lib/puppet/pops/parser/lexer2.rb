@@ -107,12 +107,6 @@ class Puppet::Pops::Parser::Lexer2
   # is not used, but is kept here for documentation purposes.
   TOKEN_OTHER        = [:OTHER,  nil,  0]
 
-  APP_MANAGEMENT_TOKENS = if Puppet[:app_management]
-    {:APPLICATION => :APPLICATION, :CONSUMES => :CONSUMES, :PRODUCES => :PRODUCES }
-  else
-    {:APPLICATION => :APPLICATION_R, :CONSUMES => :CONSUMES_R, :PRODUCES => :PRODUCES_R }
-  end
-
   # Keywords are all singleton tokens with pre calculated lengths.
   # Booleans are pre-calculated (rather than evaluating the strings "false" "true" repeatedly.
   #
@@ -137,18 +131,40 @@ class Puppet::Pops::Parser::Lexer2
     "type"     => [:TYPE,     'type',     4],
     "attr"     => [:ATTR,     'attr',     4],
     "private"  => [:PRIVATE,  'private',  7],
-     # Feature-switched tokens; either reserved, or real tokens
-    "application"  => [APP_MANAGEMENT_TOKENS[:APPLICATION],  'application',  11],
-    "consumes"     => [APP_MANAGEMENT_TOKENS[:CONSUMES],  'consumes',  8],
-    "produces"     => [APP_MANAGEMENT_TOKENS[:PRODUCES],  'produces',  8],
   }
 
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
+  # We maintain two different tables of tokens for the constructs
+  # introduced by application management. Which ones we use is decided in
+  # +initvars+; by selecting one or the other variant, we select whether we
+  # hit the appmgmt-specific code paths
+  APP_MANAGEMENT_TOKENS = {
+    :with_appm => {
+      "application"  => [:APPLICATION,  'application',  11],
+      "consumes"     => [:CONSUMES,  'consumes',  8],
+      "produces"     => [:PRODUCES,  'produces',  8]
+    },
+    :without_appm => {
+      "application"  => [:APPLICATION_R,  'application',  11],
+      "consumes"     => [:CONSUMES_R,  'consumes',  8],
+      "produces"     => [:PRODUCES_R,  'produces',  8]
+    }
+  }
+
+  APP_MANAGEMENT_TOKENS.each do |_, variant|
+    variant.each { |_,v| v[1].freeze; v.freeze }
+    variant.freeze
+  end
+  APP_MANAGEMENT_TOKENS.freeze
+
   # Reverse lookup of keyword name to string
   KEYWORD_NAMES = {}
   KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
+  APP_MANAGEMENT_TOKENS.each do |_, variant|
+    variant.each { |k,v| KEYWORD_NAMES[v[0]] = k }
+  end
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
@@ -258,6 +274,8 @@ class Puppet::Pops::Parser::Lexer2
       :brace_count => 0,
       :after => nil,
     }
+    appm_mode = Puppet[:app_management] ? :with_appm : :without_appm
+    @appm_keywords = APP_MANAGEMENT_TOKENS[appm_mode]
   end
 
   # Scans all of the content and returns it in an array
@@ -615,7 +633,7 @@ class Puppet::Pops::Parser::Lexer2
 
       value = scn.scan(PATTERN_BARE_WORD)
       if value && value =~ PATTERN_NAME
-        emit_completed(KEYWORDS[value] || [:NAME, value.freeze, scn.pos - before], before)
+        emit_completed(KEYWORDS[value] || @appm_keywords[value] || [:NAME, value.freeze, scn.pos - before], before)
       elsif value
         emit_completed([:WORD, value.freeze, scn.pos - before], before)
       else

@@ -8,11 +8,11 @@ require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 describe "egrammar parsing of capability mappings" do
   include ParserRspecHelper
 
-  before(:all) do
+  before(:each) do
     with_app_management(true)
   end
 
-  after(:all) do
+  after(:each) do
     with_app_management(false)
   end
 
