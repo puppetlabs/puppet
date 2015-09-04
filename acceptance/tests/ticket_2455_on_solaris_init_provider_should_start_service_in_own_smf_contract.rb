@@ -2,13 +2,6 @@ test_name "(PUP-2455) Service provider should start Solaris init service in its 
 
 skip_test unless agents.any? {|agent| agent['platform'] =~ /solaris/ }
 
-sleepy_daemon_script = <<SCRIPT
-#!/usr/bin/env ruby
-while true
-  sleep (2)
-end
-SCRIPT
-
 sleepy_daemon_initscript = <<INITSCRIPT
 #!/usr/bin/bash
 FIXTURESERVICE="/tmp/sleepy_daemon"
@@ -94,6 +87,12 @@ step "Start master"
       next unless agent['platform'] =~ /solaris/
 
       step "Setup fixture service on #{agent}"
+        sleepy_daemon_script = <<SCRIPT
+#!#{agent['privatebindir']}/ruby
+while true
+  sleep (2)
+end
+SCRIPT
         sleepy_daemon_path = "/tmp/sleepy_daemon"
         sleepy_daemon_initscript_path = "/etc/init.d/sleepy_daemon"
         create_remote_file(agent, sleepy_daemon_path, sleepy_daemon_script)
@@ -107,7 +106,7 @@ step "Start master"
         assert_match(/ensure changed 'stopped' to 'running'/, stdout, "The fixture service #{fixture_service} is not in a testable state on #{agent}.")
 
       step "Verify whether the fixture process is alone in its SMF contract on #{agent}"
-        service_ctid = on(agent, "sleep 20;ps -eo ctid,args | grep #{fixture_service} | grep -v grep | awk '{print $1}'").stdout.chomp.to_i
+        service_ctid = on(agent, "sleep 10;ps -eo ctid,args | grep #{fixture_service} | grep -v grep | awk '{print $1}'").stdout.chomp.to_i
         number_in_contract = on(agent, "pgrep -c #{service_ctid} | wc -l").stdout.chomp.to_i
         assert(number_in_contract == 1, "The fixture process #{fixture_service} is not alone in its SMF contract on #{agent}.")
 
