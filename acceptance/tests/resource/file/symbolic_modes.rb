@@ -184,6 +184,10 @@ agents.each do |agent|
     Log.warn("Pending: this does not currently work on Windows")
     next
   end
+  if agent['platform'] =~ /solaris-10/
+    Log.warn("Pending: this does not currently work on Solaris 10")
+    next
+  end
   is_solaris = agent['platform'].include?('solaris')
 
   basedir = agent.tmpdir('symbolic-modes')
