@@ -20,14 +20,13 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
     applications.each do |app|
       app_components = {}
       # Turn the 'nodes' hash into a map component ref => node name
-      node_mapping = app['nodes'].map do |k,v|
-        k.type == "Node" ? [k, v] : [v, k]
-      end.reduce({}) do |map, (node, comp)|
-        unless map[comp.ref].nil?
-          raise Puppet::ParseError, "Application #{app} maps component #{comp} to mutiple nodes"
+      node_mapping = {}
+      app['nodes'].each do |node, comps|
+        comps = [comps] unless comp.is_a?(Array)
+        comps.each do |comp|
+          raise Puppet::ParseError, "Application #{app} maps component #{comp} to multiple nodes" if node_mapping.include?(comp.ref)
+          node_mapping[comp.ref] = node.title
         end
-        map[comp.ref] = node.title
-        map
       end
 
       catalog.direct_dependents_of(app).each do |comp|

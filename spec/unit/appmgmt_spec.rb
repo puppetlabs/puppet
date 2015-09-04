@@ -106,4 +106,75 @@ EOS
       expect(cons[:consume].ref).to eq("Cap[cap]")
     end
   end
+
+
+  describe "when validation of nodes" do
+    it 'validates that the key of a node mapping is a Node' do
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
+      application app {
+      }
+
+      app { anapp:
+        nodes => {
+          'hello' => Node[other],
+        }
+      }
+      EOS
+) }.to raise_error(Puppet::Error, /hello is not a Node/)
+    end
+
+    it 'validates that the value of a node mapping is a resource' do
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
+      application app {
+      }
+
+      app { anapp:
+        nodes => {
+          Node[other] => 'hello'
+        }
+      }
+        EOS
+      ) }.to raise_error(Puppet::Error, /hello is not a resource/)
+    end
+
+    it 'validates that the value can be an array or resources' do
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
+      define p {
+        notify {$title:}
+      }
+
+      application app {
+        p{one:}
+        p{two:}
+      }
+
+      app { anapp:
+        nodes => {
+          Node[other] => [P[one],P[two]]
+        }
+      }
+        EOS
+      ) }.not_to raise_error
+    end
+
+    it 'validates that the is bound to exactly one node' do
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('first'),
+      define p {
+        notify {$title:}
+      }
+
+      application app {
+        p{one:}
+      }
+
+      app { anapp:
+        nodes => {
+          Node[first] => P[one],
+          Node[second] => P[one],
+        }
+      }
+        EOS
+      ) }.to raise_error(Puppet::Error, /maps component P\[one\] to multiple nodes/)
+    end
+  end
 end
