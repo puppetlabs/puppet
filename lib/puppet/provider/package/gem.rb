@@ -13,7 +13,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options, :uninstall_options
+  has_feature :versionable, :install_options, :uninstall_options, :clear_paths
 
   commands :gemcmd => "gem"
 
@@ -123,6 +123,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
+
+    Gem.clear_paths if resource[:clear_paths]
   end
 
   def latest

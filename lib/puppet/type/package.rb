@@ -65,6 +65,7 @@ module Puppet
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
+    feature :clear_paths, "The provider accepts clear_paths option to trigger paths reset at runtime."
 
     ensurable do
       desc <<-EOT
@@ -547,6 +548,12 @@ module Puppet
       newvalues(:true, :false)
 
       defaultto :false
+    end
+
+    newparam(:clear_paths, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :clear_paths) do
+      desc 'Reset paths so that installed gems would become available for the current runtime'
+
+      defaultto false
     end
 
     # When a refresh event is triggered, calls reinstall on providers
