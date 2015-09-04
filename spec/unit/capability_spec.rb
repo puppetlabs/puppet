@@ -296,5 +296,16 @@ Test consumes Cap {
       expect(catalog.resource("Cap[two]")["host"]).to eq("ahost")
       expect(catalog.resource("Test", "one")["hostname"]).to eq("nohost")
     end
+
+    ['export', 'consume'].each do |metaparam|
+
+      it "validates that #{metaparam} metaparameter rejects values that are not resources" do
+        expect { make_catalog("test { one: #{metaparam} => 'hello' }") }.to raise_error(Puppet::Error, /not a resource/)
+      end
+
+      it "validates that #{metaparam} metaparameter rejects resources that are not capability resources" do
+        expect { make_catalog("notify{hello:} test { one: #{metaparam} => Notify[hello] }") }.to raise_error(Puppet::Error, /not a capability resource/)
+      end
+    end
   end
 end
