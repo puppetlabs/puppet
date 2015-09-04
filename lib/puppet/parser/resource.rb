@@ -211,11 +211,17 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     map = {}
     [ self[:consume] ].flatten.map do |ref|
+      # Assert that the ref really is a resource reference
+      raise Puppet::Error, "Invalid consume in #{self.ref}: #{ref} is not a resource" unless ref.is_a?(Puppet::Resource)
+
       # Resolve references
       cap = catalog.resource(ref.type, ref.title)
       if cap.nil?
         raise "Resource #{ref} could not be found; it might not have been produced yet"
       end
+
+      # Ensure that the found resource is a capability resource
+      raise Puppet::Error, "Invalid consume in #{ref}: #{cap} is not a capability resource" unless cap.resource_type.is_capability?
       cap
     end.each do |cns|
       # Establish mappings

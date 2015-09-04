@@ -113,6 +113,10 @@ class Puppet::Resource::Type
     return unless definition?
 
     resource.export.map do |ex|
+      # Assert that the ref really is a resource reference
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a resource" unless ex.is_a?(Puppet::Resource)
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a capability resource" unless ex.resource_type.is_capability?
+
       blueprint = produces.find { |pr| pr[:capability] == ex.type }
       if blueprint.nil?
         raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
