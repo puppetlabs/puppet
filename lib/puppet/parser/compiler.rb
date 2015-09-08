@@ -212,16 +212,14 @@ class Puppet::Parser::Compiler
     @applications.each do |app|
       mapping = app.parameters[:nodes].value
       components = []
+      all_mapped = Set.new
       mapping.each do |k,v|
-        k = [k] unless k.is_a?(Array)
+        raise Puppet::Error, "Invalid node mapping in #{app.ref}: Key #{k} is not a Node" unless k.is_a?(Puppet::Resource) && k.type == 'Node'
         v = [v] unless v.is_a?(Array)
-        k.each do |key|
-          v.each do |val|
-            key, val = val, key if val.type == "Node"
-            if key.type == "Node" && key.title == node.name
-              components << val
-            end
-          end
+        v.each do |res|
+          raise Puppet::Error, "Invalid node mapping in #{app.ref}: Value #{res} is not a resource" unless res.is_a?(Puppet::Resource)
+          raise Puppet::Error, "Application #{app.ref} maps component #{res} to multiple nodes" if all_mapped.add?(res.ref).nil?
+          components << res if k.title == node.name
         end
       end
       begin
