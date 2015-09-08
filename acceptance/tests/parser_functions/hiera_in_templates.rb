@@ -1,79 +1,44 @@
 test_name "Calling Hiera function from inside templates"
 
-# Global variables
+@module_name = "hieratest"
+@coderoot = master.tmpdir("#{@module_name}")
+@resultdir = "#{@coderoot}/results"
 
-$module_name = "hieratest"
-$coderoot = master.tmpdir("#{$module_name}")
-$resultdir = "#{$coderoot}/results"
+@msg_default = 'message from default.yaml'
+@msg_production = 'message from production.yaml'
+@msg1os = 'message1 from {osfamily}.yaml'
+@msg2os = 'message2 from {osfamily}.yaml'
+@msg_fqdn = 'messsage from {fqdn}.yaml'
 
-$msg_default = 'message from default.yaml'
-$msg_production = 'message from production.yaml'
-$msg1os = 'message1 from {osfamily}.yaml'
-$msg2os = 'message2 from {osfamily}.yaml'
-$msg_fqdn = 'messsage from {fqdn}.yaml'
+@k1 = 'key1'
+@k2 = 'key2'
+@k3 = 'key3'
 
-$k1 = 'key1'
-$k2 = 'key2'
-$k3 = 'key3'
+@hval3os = 'hash_value3 from production.yaml'
+@hval2os = 'hash_value2 from production.yaml'
+@hval1p = 'hash_value1 from {osfamily}.yaml'
+@hval2p = 'hash_value2 from {osfamily}.yaml'
 
-$val1p = 'value1 from production.yaml'
-$val2p = 'value2 from production.yaml'
-$val2os = 'value2 from {osfamily}.yaml'
-$val3os = 'value3 from {osfamily}.yaml'
+@h_m_call = "hiera\\('message'\\)"
+@h_h_call = "hiera\\('hash_value'\\)"
+@h_i_call = "hiera\\('includes'\\)"
+@ha_m_call = "hiera_array\\('message'\\)"
+@ha_i_call = "hiera_array\\('includes'\\)"
+@hh_h_call = "hiera_hash\\('hash_value'\\)"
 
-$hval3os = 'hash_value3 from production.yaml'
-$hval2os = 'hash_value2 from production.yaml'
-$hval1p = 'hash_value1 from {osfamily}.yaml'
-$hval2p = 'hash_value2 from {osfamily}.yaml'
-
-$h_m_call = "hiera\\('message'\\)"
-$h_h_call = "hiera\\('hash_value'\\)"
-$h_i_call = "hiera\\('includes'\\)"
-$ha_m_call = "hiera_array\\('message'\\)"
-$ha_i_call = "hiera_array\\('includes'\\)"
-$hh_h_call = "hiera_hash\\('hash_value'\\)"
-
-$mod_default_msg = 'This file created by mod_default.'
-$mod_osfamily_msg = 'This file created by mod_osfamily.'
-$mod_production_msg = 'This file created by mod_production.'
-$mod_fqdn_msg = 'This file created by mod_fqdn.'
+@mod_default_msg = 'This file created by mod_default.'
+@mod_osfamily_msg = 'This file created by mod_osfamily.'
+@mod_production_msg = 'This file created by mod_production.'
+@mod_fqdn_msg = 'This file created by mod_fqdn.'
 
 
 def create_environment
 
-  #    Creates a directory tree like this on the master, under /tmp/hieratest/
-  #    .
-  #    ├── environments
-  #    │   └── production
-  #    │       ├── manifests
-  #    │       │   └── site.pp
-  #    │       └── modules
-  #    │           └── hieratest
-  #    │               ├── examples
-  #    │               │   └── init.pp
-  #    │               ├── manifests
-  #    │               │   ├── init.pp
-  #    │               │   ├── mod_default.pp
-  #    │               │   ├── mod_fqdn.pp
-  #    │               │   ├── mod_osfamily.pp
-  #    │               │   └── mod_production.pp
-  #    │               └── templates
-  #    │                   ├── hieratest_results_epp.erb
-  #    │                   └── hieratest_results_erb.erb
-  #    ├── hieradata
-  #    │   ├── default.yaml
-  #    │   ├── production.yaml
-  #    │   └── RedHat.yaml
-  #    ├── hiera.yaml
-  #    └── puppet.conf
-
-
-
-  envroot = "#{$coderoot}/environments"
+  envroot = "#{@coderoot}/environments"
   production = "#{envroot}/production"
   modroot = "#{production}/modules"
-  moduledir = "#{modroot}/#{$module_name}"
-  hieradir = "#{$coderoot}/hieradata"
+  moduledir = "#{modroot}/#{@module_name}"
+  hieradir = "#{@coderoot}/hieradata"
 
   # {
   environ = <<ENV
@@ -87,7 +52,7 @@ File {
 
 file {
   [
-    "#{$coderoot}",
+    "#{@coderoot}",
     "#{envroot}",
     "#{production}",
     "#{production}/modules",
@@ -107,20 +72,20 @@ file { '#{production}/manifests/site.pp':
 node default {
   \\$msgs = hiera_array('message')
   notify {\\$msgs:}
-  include #{$module_name}
+  include #{@module_name}
 }
 ",
 }
 
 
-file {"#{$coderoot}/hiera.yaml":
+file {"#{@coderoot}/hiera.yaml":
   content => "
 ---
 :backends:
   - yaml
 
 :yaml:
-  :datadir: #{$coderoot}/hieradata
+  :datadir: #{@coderoot}/hieradata
 
 :hierarchy:
   - \\"%{clientcert}\\"
@@ -133,8 +98,8 @@ file {"#{$coderoot}/hiera.yaml":
 file {"#{hieradir}/default.yaml":
   content => "
 ---
-message: '#{$msg_default}'
-includes: '#{$module_name}::mod_default'
+message: '#{@msg_default}'
+includes: '#{@module_name}::mod_default'
 "
 }
 
@@ -142,67 +107,67 @@ file {"#{hieradir}/${osfamily}.yaml":
   content => "
 ---
 message: [
-  '#{$msg1os}',
-  '#{$msg2os}',
+  '#{@msg1os}',
+  '#{@msg2os}',
 ]
-includes: '#{$module_name}::mod_osfamily'
+includes: '#{@module_name}::mod_osfamily'
 hash_value:
-  #{$k3}: '#{$hval3os}'
-  #{$k2}: '#{$hval2os}'
+  #{@k3}: '#{@hval3os}'
+  #{@k2}: '#{@hval2os}'
 "
 }
 
 file {"#{hieradir}/production.yaml":
   content => "
 ---
-message: '#{$msg_production}'
-includes: '#{$module_name}::mod_production'
+message: '#{@msg_production}'
+includes: '#{@module_name}::mod_production'
 hash_value:
-  #{$k1}: '#{$hval1p}'
-  #{$k2}: '#{$hval2p}'
+  #{@k1}: '#{@hval1p}'
+  #{@k2}: '#{@hval2p}'
 "
 }
 
-file {"#{$hieradir}/#{$fqdn}.yaml":
+file {"#{hieradir}/#{$fqdn}.yaml":
   content => "
 ---
-message: '#{$msg_fqdn}'
-includes: '#{$module_name}::mod_fqdn'
+message: '#{@msg_fqdn}'
+includes: '#{@module_name}::mod_fqdn'
 "
 }
 
 file {"#{moduledir}/examples/init.pp":
   content => "
-include #{$module_name}
+include #{@module_name}
 "
 }
 
 file { "#{moduledir}/manifests/init.pp":
   content => "
-class #{$module_name} {
+class #{@module_name} {
   file {
     [
-      '#{$coderoot}',
-      '#{$resultdir}',
+      '#{@coderoot}',
+      '#{@resultdir}',
     ]:
     ensure => directory,
     owner  => 'root',
     group  => 'root',
     mode   => '0755',
   }
-  file {'/#{$resultdir}/#{$module_name}_results_epp':
+  file {'/#{@resultdir}/#{@module_name}_results_epp':
     ensure  => file,
     owner => 'root',
     group => 'root',
     mode  => '0644',
-    content => epp('#{$module_name}/hieratest_results_epp.epp'),
+    content => epp('#{@module_name}/hieratest_results_epp.epp'),
   }
-  file {'/#{$resultdir}/#{$module_name}_results_erb':
+  file {'/#{@resultdir}/#{@module_name}_results_erb':
     ensure  => file,
     owner => 'root',
     group => 'root',
     mode  => '0644',
-    content => template('#{$module_name}/hieratest_results_erb.erb'),
+    content => template('#{@module_name}/hieratest_results_erb.erb'),
   }
 }
 "
@@ -210,14 +175,14 @@ class #{$module_name} {
 
 file { "#{moduledir}/manifests/mod_default.pp":
   content => "
-class #{$module_name}::mod_default {
+class #{@module_name}::mod_default {
   notify{\\"module mod_default invoked.\\\\n\\":}
-  file {'/#{$resultdir}/mod_default':
+  file {'/#{@resultdir}/mod_default':
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => \\\"#{$mod_default_msg}\\\\n\\\",
+    content => \\\"#{@mod_default_msg}\\\\n\\\",
   }
 }
 "
@@ -225,14 +190,14 @@ class #{$module_name}::mod_default {
 
 file { "#{moduledir}/manifests/mod_osfamily.pp":
   content => "
-class #{$module_name}::mod_osfamily {
+class #{@module_name}::mod_osfamily {
   notify{\\"module mod_osfamily invoked.\\\\n\\":}
-  file {'/#{$resultdir}/mod_osfamily':
+  file {'/#{@resultdir}/mod_osfamily':
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => \\\"#{$mod_osfamily_msg}\\\\n\\\",
+    content => \\\"#{@mod_osfamily_msg}\\\\n\\\",
   }
 }
 "
@@ -240,14 +205,14 @@ class #{$module_name}::mod_osfamily {
 
 file { "#{moduledir}/manifests/mod_production.pp":
   content => "
-class #{$module_name}::mod_production {
+class #{@module_name}::mod_production {
   notify{\\"module mod_production invoked.\\\\n\\":}
-  file {'/#{$resultdir}/mod_production':
+  file {'/#{@resultdir}/mod_production':
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => \\\"#{$mod_production_msg}\\\\n\\\",
+    content => '#{@mod_production_msg}',
   }
 }
 "
@@ -255,14 +220,14 @@ class #{$module_name}::mod_production {
 
 file { "#{moduledir}/manifests/mod_fqdn.pp":
   content => "
-class #{$module_name}::mod_fqdn {
+class #{@module_name}::mod_fqdn {
   notify{\\"module mod_fqdn invoked.\\\\n\\":}
-  file {'/#{$resultdir}/mod_fqdn':
+  file {'/#{@resultdir}/mod_fqdn':
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => \\\"#{$mod_fqdn_msg}\\\\n\\\",
+    content => \\\"#{@mod_fqdn_msg}\\\\n\\\",
   }
 }
 "
@@ -301,12 +266,12 @@ step 'Setup'
 env_manifest = create_environment
 master_opts = {
   'main' => {
-    'environmentpath' => "#{$coderoot}/environments",
-    'hiera_config' => "#{$coderoot}/hiera.yaml",
+    'environmentpath' => "#{@coderoot}/environments",
+    'hiera_config' => "#{@coderoot}/hiera.yaml",
   },
 }
 
-with_puppet_running_on master, master_opts, $coderoot do
+with_puppet_running_on master, master_opts, @coderoot do
   apply_manifest_on(master, env_manifest, :catch_failures => true)
   agents.each do |agent|
     step "Applying catalog to agent: #{agent}."
@@ -317,87 +282,163 @@ with_puppet_running_on master, master_opts, $coderoot do
     )
 
     step "####### Verifying hiera calls from erb template #######"
-    on(agent, "cat #{$coderoot}/results/hieratest_results_erb")
+    r1 = on(agent, "cat #{@coderoot}/results/hieratest_results_erb")
+    result = r1.stdout
 
     step "Verifying hiera() call #1."
-    assert_match(/#{$h_m_call}: #{$msg_production}/, stdout)
+    assert_match(
+      /#{@h_m_call}: #{@msg_production}/,
+      result,
+      "#{@h_m_call} failed. Expected: '#{@msg_production}'"
+    )
 
     step "Verifying hiera() call #2."
-    assert_match(/#{$h_h_call}.*\"#{$k1}\"=>\"#{$hval1p}\"/, stdout)
+    assert_match(
+      /#{@h_h_call}.*\"#{@k1}\"=>\"#{@hval1p}\"/,
+      result,
+      "#{@h_h_call} failed. Expected: '\"#{@k1}\"=>\"#{@hval1p}\"'"
+    ) 
 
     step "Verifying hiera() call #3."
-    assert_match(/#{$h_h_call}.*\"#{$k2}\"=>\"#{$hval2p}\"/, stdout)
+    assert_match(
+      /#{@h_h_call}.*\"#{@k2}\"=>\"#{@hval2p}\"/,
+      result,
+      "#{@h_h_call} failed. Expected: '\"#{@k2}\"=>\"#{@hval2p}\"'"
+    ) 
 
     step "Verifying hiera() call #4."
-    assert_match(/#{$h_i_call}: #{$module_name}::mod_production/, stdout)
+    assert_match(
+      /#{@h_i_call}: #{@module_name}::mod_production/,
+      result,
+      "#{@h_i_call} failed.  Expected:'#{@module_name}::mod_production'"
+    )
 
     step "Verifying hiera_array() call. #1"
     assert_match(
-/#{$ha_m_call}: \[\"#{$msg_production}\", \"#{$msg1os}\", \"#{$msg2os}\", \"#{$msg_default}\"\]/,
-      stdout 
+/#{@ha_m_call}: \[\"#{@msg_production}\", \"#{@msg1os}\", \"#{@msg2os}\", \"#{@msg_default}\"\]/,
+      result,
+      "#{@ha_m_call} failed. Expected: '[\"#{@msg_production}\", \"#{@msg1os}\", \"#{@msg2os}\", \"#{@msg_default}\"]'"
     )
 
     step "Verifying hiera_array() call. #2"
     assert_match(
-/#{$ha_i_call}: \[\"#{$module_name}::mod_production\", \"#{$module_name}::mod_osfamily\", \"#{$module_name}::mod_default\"\]/,
-      stdout
+/#{@ha_i_call}: \[\"#{@module_name}::mod_production\", \"#{@module_name}::mod_osfamily\", \"#{@module_name}::mod_default\"\]/,
+      result,
+      "#{@ha_i_call} failed. Expected: '[\"#{@module_name}::mod_production\", \"#{@module_name}::mod_osfamily\", \"#{@module_name}::mod_default\"]'"
     )
 
     step "Verifying hiera_hash() call. #1"
-    assert_match(/#{$hh_h_call}:.*\"#{$k1}\"=>\"#{$hval1p}\"/, stdout )
+    assert_match(
+      /#{@hh_h_call}:.*\"#{@k1}\"=>\"#{@hval1p}\"/,
+      result,
+      "#{@hh_h_call} failed. Expected: '\"#{@k1}\"=>\"#{@hval1p}\"'"
+    )
 
     step "Verifying hiera_hash() call. #2"
-    assert_match(/#{$hh_h_call}:.*\"#{$k2}\"=>\"#{$hval2p}\"/, stdout)
+    assert_match(
+      /#{@hh_h_call}:.*\"#{@k2}\"=>\"#{@hval2p}\"/,
+      result, 
+      "#{@hh_h_call} failed. Expected: '\"#{@k2}\"=>\"#{@hval2p}\"'"
+    )
 
     step "Verifying hiera_hash() call. #3"
-    assert_match(/#{$hh_h_call}:.*\"#{$k3}\"=>\"#{$hval3os}\"/, stdout)
+    assert_match(
+      /#{@hh_h_call}:.*\"#{@k3}\"=>\"#{@hval3os}\"/,
+      result, 
+      "#{@hh_h_call} failed.  Expected: '\"#{@k3}\"=>\"#{@hval3os}\"'"
+    )
 
-    on(agent, "cat #{$coderoot}/results/mod_default")
+    r2 = on(agent, "cat #{@coderoot}/results/mod_default")
+    result = r2.stdout
     step "Verifying hiera_include() call. #1"
-    assert_match("#{$mod_default_msg}", stdout)
+    assert_match(
+      "#{@mod_default_msg}",
+      result,
+      "#{@hi_i_call} failed.  Expected: '#{@mod_default_msg}'"
+    )
 
-    on(agent, "cat #{$coderoot}/results/mod_osfamily")
+    r3 = on(agent, "cat #{@coderoot}/results/mod_osfamily")
+    result = r3.stdout
     step "Verifying hiera_include() call. #2"
-    assert_match("#{$mod_osfamily_msg}", stdout)
+    assert_match(
+      "#{@mod_osfamily_msg}",
+      result, 
+      "#{@hi_i_call} failed.  Expected: '#{@mod_osfamily_msg}'"
+    )
 
-    on(agent, "cat #{$coderoot}/results/mod_production")
+    r4 = on(agent, "cat #{@coderoot}/results/mod_production")
+    result = r4.stdout
     step "Verifying hiera_include() call. #3"
-    assert_match("#{$mod_production_msg}", stdout)
+    assert_match(
+      "#{@mod_production_msg}",
+      result,
+      "#{@hi_i_call} failed.  Expected: '#{@mod_production_msg}'"
+    )
 
     step "####### Verifying hiera calls from epp template #######"
-    on(agent, "cat #{$coderoot}/results/hieratest_results_epp")
+    r5 = on(agent, "cat #{@coderoot}/results/hieratest_results_epp")
+    result = r5.stdout
 
     step "Verifying hiery() call #1."
-    assert_match(/#{$h_m_call}: #{$msg_production}/, stdout)
+    assert_match(
+      /#{@h_m_call}: #{@msg_production}/,
+      result,
+      "#{@hi_m_call} failed.  Expected '#{@msg_production}'"
+    )
 
     step "Verifying hiera() call #2."
-    assert_match(/#{$h_h_call}.*#{$k1} => #{$hval1p}/, stdout)
+    assert_match(
+      /#{@h_h_call}.*#{@k1} => #{@hval1p}/,
+      result,
+      "#{@h_h_call} failed.  Expected '#{@k1} => #{@hval1p}'"
+    )
 
     step "Verifying hiera() call #3."
-    assert_match(/#{$h_h_call}.*#{$k2} => #{$hval2p}/, stdout)
+      assert_match(/#{@h_h_call}.*#{@k2} => #{@hval2p}/,
+      result,
+      "#{@h_h_call} failed.  Expected '#{@k2} => #{@hval2p}'"
+    )
 
     step "Verifying hiera() call #4."
-    assert_match(/#{$h_i_call}: #{$module_name}::mod_production/, stdout)
+    assert_match(
+      /#{@h_i_call}: #{@module_name}::mod_production/,
+      result,
+      "#{@h_i_call} failed.  Expected: '#{@module_name}::mod_production'"
+    )
 
     step "Verifying hiera_array() call. #1"
     assert_match(
-/#{$ha_m_call}: \[#{$msg_production}, #{$msg1os}, #{$msg2os}, #{$msg_default}\]/,
-      stdout 
+/#{@ha_m_call}: \[#{@msg_production}, #{@msg1os}, #{@msg2os}, #{@msg_default}\]/,
+      result,
+      "#{@ha_m_call} failed.  Expected: '[#{@msg_production}, #{@msg1os}, #{@msg2os}, #{@msg_default}]'"
     )
 
     step "Verifying hiera_array() call. #2"
     assert_match(
-/#{$ha_i_call}: \[#{$module_name}::mod_production, #{$module_name}::mod_osfamily, #{$module_name}::mod_default\]/,
-      stdout
+/#{@ha_i_call}: \[#{@module_name}::mod_production, #{@module_name}::mod_osfamily, #{@module_name}::mod_default\]/,
+      result,
+      "#{@ha_i_call} failed.  Expected: '[#{@module_name}::mod_production, #{@module_name}::mod_osfamily, #{@module_name}::mod_default'"
     )
 
     step "Verifying hiera_hash() call. #1"
-    assert_match(/#{$hh_h_call}:.*#{$k1} => #{$hval1p}/, stdout )
+    assert_match(
+      /#{@hh_h_call}:.*#{@k1} => #{@hval1p}/,
+      result,
+      "#{@hh_h_call} failed.  Expected: '{@k1} => #{@hval1p}'"
+    )
 
     step "Verifying hiera_hash() call. #2"
-    assert_match(/#{$hh_h_call}:.*#{$k2} => #{$hval2p}/, stdout)
+    assert_match(
+      /#{@hh_h_call}:.*#{@k2} => #{@hval2p}/,
+      result,
+      "#{@hh_h_call} failed. Expected '#{@k2} => #{@hval2p}'",
+    )
 
     step "Verifying hiera_hash() call. #3"
-    assert_match(/#{$hh_h_call}:.*#{$k3} => #{$hval3os}/, stdout)
+    assert_match(
+      /#{@hh_h_call}:.*#{@k3} => #{@hval3os}/,
+      result,
+      "#{@hh_h_call}: failed.  Expected: '#{@k3} => #{@hval3os}'"
+    )
   end
 end
