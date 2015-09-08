@@ -2,6 +2,7 @@ test_name "defined should create an entry in filesystem table"
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823
+confine :except, :platform => /solaris/
 
 fstab = '/etc/fstab'
 name = "pl#{rand(999999).to_i}"

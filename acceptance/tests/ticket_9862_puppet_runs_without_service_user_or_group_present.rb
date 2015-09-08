@@ -2,6 +2,7 @@ test_name "#9862: puppet runs without service user or group present"
 
 # puppet doesn't try to manage ownership on windows.
 confine :except, :platform => 'windows'
+confine :except, :platform => /solaris-10/
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
@@ -23,7 +24,7 @@ teardown do
   agents.each do |agent|
     step "ensure puppet resets it's user/group settings"
     on agent, puppet('apply', '-e', '"notify { puppet_run: }"')
-    on agent, "find \"#{agent.puppet['vardir']}\" -user existinguser" do
+    on agent, "find \"#{agent.puppet['vardir']}\" -user existinguser", {:acceptable_exit_codes => [0, 1]} do
       assert_equal('',stdout)
     end
     on agent, puppet('resource', 'user', 'existinguser', 'ensure=absent')

@@ -1,3 +1,4 @@
+---
 HOSTS:
   master:
     roles:
