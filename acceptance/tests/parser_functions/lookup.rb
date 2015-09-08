@@ -44,6 +44,10 @@ hiera_hash_value                = "hiera_class_c"
 hiera_array_value0              = "hiera_array_a"
 hiera_array_value1              = "hiera_array_b"
 
+automatic_data_key              = "automatic_data_key"
+automatic_data_value            = "automatic_data_value"
+automatic_default_value         = "automatic_default_value"
+
 def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
                        module_data_implied_value, module_data_key,
                        module_data_value, hash_name, module_hash_key,
@@ -192,6 +196,7 @@ file { '#{testdir}/hieradata/global.yaml':
     #{module_name}::#{array_key}:
         - #{hiera_array_value0}
         - #{hiera_array_value1}
+    #{module_name}::#{automatic_data_key}: #{automatic_data_value}
   ",
   mode => "0640",
 }
@@ -238,7 +243,8 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
     class #{module_name}($#{env_data_implied_key},
                          $#{module_data_implied_key},
                          $#{env_data_override_implied_key},
-                         $#{hiera_data_implied_key}) {
+                         $#{hiera_data_implied_key},
+                         $#{automatic_data_key}=$#{automatic_default_value}) {
       # lookup data from the environment function databinding
       notify { "#{env_data_implied_key} $#{env_data_implied_key}": }
       $lookup_env = lookup("#{env_data_key}")
@@ -272,6 +278,9 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
       #   this mimicks/covers behavior for including classes
       $lookup_array = lookup("#{module_name}::#{array_key}",Array[String],\\'unique\\')
       notify { "yep": message => "#{array_key} $lookup_array" }
+
+      # automatic data lookup of parametrized class
+      notify { "#{automatic_data_key} $#{automatic_data_key}": }
     }',
   mode => "0640",
 }
@@ -316,6 +325,8 @@ with_puppet_running_on master, master_opts, testdir do
     assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
 
     assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
+
+    assert_match("#{automatic_data_key} #{automatic_data_value}", stdout)
   end
 
   apply_manifest_on(master, <<-PP, :catch_failures => true)
