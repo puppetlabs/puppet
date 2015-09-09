@@ -10,6 +10,7 @@ HOSTS:
     roles:
       - agent
     platform: solaris-11-sparc
+    hypervisor: none
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic

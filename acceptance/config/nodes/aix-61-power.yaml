@@ -10,6 +10,7 @@ HOSTS:
     roles:
       - agent
     platform: aix-6.1-power
+    hypervisor: none
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
