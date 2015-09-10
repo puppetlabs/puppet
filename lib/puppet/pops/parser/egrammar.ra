@@ -22,9 +22,9 @@ token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
 token PRIVATE ATTR TYPE
 token FUNCTION
-token APPLICATION_R CONSUMES_R PRODUCES_R
+token APPLICATION_R CONSUMES_R PRODUCES_R SITE_R
+token APPLICATION PRODUCES CONSUMES SITE
 token LOW
-token APPLICATION PRODUCES CONSUMES
 
 prechigh
   left  HIGH
@@ -240,11 +240,12 @@ primary_expression
   | unless_expression
   | definition_expression
   # @todo lutter 2014-09-03: application declarations must be at the toplevel
-  # in a manifest
+  # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
   | application_expression
   | capability_mapping
   | hostclass_expression
   | node_definition_expression
+  | site_definition_expression
   | epp_render_expression
   | function_definition
   | reserved_word
@@ -464,7 +465,7 @@ attribute_operations
     | APPLICATION_R
     | CONSUMES_R
     | PRODUCES_R
-#    | BOOLEAN
+    | SITE_R
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -553,6 +554,20 @@ hostclass_expression
     : classname
     | DEFAULT
 
+#---SITE
+#
+# Produces Model::SiteDefinition
+#
+site_definition_expression
+  : SITE LBRACE statements RBRACE {
+    result = add_definition(Factory.SITE(val[2]))
+    loc result, val[0], val[3]
+    }
+  | SITE LBRACE RBRACE {
+    result = add_definition(Factory.SITE(nil))
+    loc result, val[0], val[2]
+    }
+
 #---NODE
 #
 # Produces Model::NodeDefinition
@@ -615,6 +630,7 @@ classname
   | APPLICATION_R
   | CONSUMES_R
   | PRODUCES_R
+  | SITE_R
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
@@ -665,6 +681,7 @@ reserved_word
   | APPLICATION_R { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
   | CONSUMES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
   | PRODUCES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+  | SITE_R        { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
 
 #---LITERALS (dynamic and static)
 #
