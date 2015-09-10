@@ -144,12 +144,14 @@ class Puppet::Pops::Parser::Lexer2
     :with_appm => {
       "application"  => [:APPLICATION,  'application',  11],
       "consumes"     => [:CONSUMES,  'consumes',  8],
-      "produces"     => [:PRODUCES,  'produces',  8]
+      "produces"     => [:PRODUCES,  'produces',  8],
+      "site"         => [:SITE,      'site',  4]
     },
     :without_appm => {
       "application"  => [:APPLICATION_R,  'application',  11],
       "consumes"     => [:CONSUMES_R,  'consumes',  8],
-      "produces"     => [:PRODUCES_R,  'produces',  8]
+      "produces"     => [:PRODUCES_R,  'produces',  8],
+      "site"         => [:SITE_R,      'site',  4]
     }
   }
 
