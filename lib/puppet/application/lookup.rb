@@ -96,7 +96,7 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
 
-    puts Puppet::Pops::Lookup.lookup(scope, options[:keys], options[:type], options[:default_value], use_default_value, {}, {}, merge_options)
+    puts Puppet::Pops::Lookup.lookup(options[:keys], options[:type], options[:default_value], use_default_value, merge_options, Puppet::DataBinding::LookupInvocation.new(scope, {}, {}))
   end
 
   def generate_scope
