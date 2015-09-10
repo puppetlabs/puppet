@@ -1,12 +1,20 @@
-# Call a lambda with the given arguments. Since the parameters of the lambda
-# are local to the lambda's scope, this can be used to create private sections
-# of logic in a class so that the variables are not visible outside of the
-# class.
+# Call a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# with the given arguments and return the result. Since a lambda's scope is
+# [local](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html#lambda-scope)
+# to the lambda, you can use the `with` function to create private blocks of code within a
+# class using variables whose values cannot be accessed outside of the lambda.
 #
-# @example Using with
+# @example Using `with`
 #
-#     # notices the array [1, 2, 'foo']
-#     with(1, 2, 'foo') |$x, $y, $z| { notice [$x, $y, $z] }
+# ~~~ puppet
+# # Concatenate three strings into a single string formatted as a list.
+# $fruit = with("apples", "oranges", "bananas") |$x, $y, $z| { 
+#   "${x}, ${y}, and ${z}" 
+# }
+# $check_var = $x
+# # $fruit contains "apples, oranges, and bananas"
+# # $check_var is undefined, as the value of $x is local to the lambda.
+# ~~~
 #
 # @since 4.0.0
 #
