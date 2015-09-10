@@ -152,7 +152,7 @@ end
 #         For directories, the set-gid bit can
 #         only be set or cleared by using symbolic mode.
 
-# From http://www.gnu.org/software/coreutils/manual/html_node/Symbolic-Modes.html#Symbolic-Modes
+# From https://www.gnu.org/software/coreutils/manual/html_node/Symbolic-Modes.html#Symbolic-Modes
 # Users
 # u  the user who owns the file;
 # g  other users who are in the file's group;

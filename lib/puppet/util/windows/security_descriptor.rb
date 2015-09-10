@@ -5,7 +5,7 @@
 # flags, DACL, and SACL. The SACL is not currently supported, though it has the
 # same layout as a DACL.
 #
-# @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa379563(v=vs.85).aspx
+# @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa379563(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::SecurityDescriptor
   require 'puppet/util/windows/security'

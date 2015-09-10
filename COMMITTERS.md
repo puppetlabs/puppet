@@ -8,7 +8,7 @@ branch, however, we maintain more than one active branch.  As a result
 contributors should target their changes at the master branch. This makes the
 process of contributing a little easier for the contributor since they don't
 need to concern themselves with the question, "What branch do I base my changes
-on?"  This is already called out in the [CONTRIBUTING.md](http://goo.gl/XRH2J).
+on?"  This is already called out in the [CONTRIBUTING.md](https://goo.gl/XRH2J).
 
 Therefore, it is the responsibility of the committer to re-base the change set
 on the appropriate branch which should receive the contribution.
@@ -16,7 +16,7 @@ on the appropriate branch which should receive the contribution.
 It is also the responsibility of the committer to review the change set in an
 effort to make sure the end users must opt-in to new behavior that is
 incompatible with previous behavior.  We employ the use of [feature
-flags](http://stackoverflow.com/questions/7707383/what-is-a-feature-flag) as
+flags](https://stackoverflow.com/questions/7707383/what-is-a-feature-flag) as
 the primary way to achieve this user opt-in behavior.  Finally, it is the
 responsibility of the committer to make sure the `master` and `stable` branches
 are both clean and working at all times.  Clean means that dead code is not

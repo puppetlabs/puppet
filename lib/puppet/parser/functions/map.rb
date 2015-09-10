@@ -3,7 +3,7 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
-Applies a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
 to every value in a data structure and returns an array containing the results.
 
 This function takes two mandatory arguments, in this order:

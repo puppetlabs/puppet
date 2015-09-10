@@ -39,7 +39,7 @@ module Puppet::Parser::Functions
   3. Like #1 but with all arguments passed in an array.
 
   More thorough examples of `hiera_include` are available at:
-  <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
+  <https://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     function_fail(["hiera_include() has been converted to 4x API"])
   end

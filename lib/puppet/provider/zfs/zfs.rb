@@ -40,7 +40,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
 
   PARAMETER_UNSET_OR_NOT_AVAILABLE = '-'
 
-  # http://docs.oracle.com/cd/E19963-01/html/821-1448/gbscy.html
+  # https://docs.oracle.com/cd/E19963-01/html/821-1448/gbscy.html
   # shareiscsi (added in build 120) was removed from S11 build 136
   # aclmode was removed from S11 in build 139 but it may have been added back
   # http://webcache.googleusercontent.com/search?q=cache:-p74K0DVsdwJ:developers.slashdot.org/story/11/11/09/2343258/solaris-11-released+&cd=13

@@ -41,7 +41,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       end
 
       it "fails if the contents collide with existing contents" do
-        # This is the shortest known MD5 collision. See http://eprint.iacr.org/2010/643.pdf
+        # This is the shortest known MD5 collision. See https://eprint.iacr.org/2010/643.pdf
         first_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
                           0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,
                           0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,

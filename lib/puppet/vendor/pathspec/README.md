@@ -3,7 +3,7 @@ pathspec-ruby
 
 Match Path Specifications, such as .gitignore, in Ruby!
 
-Follows .gitignore syntax defined on [gitscm](http://git-scm.com/docs/gitignore)
+Follows .gitignore syntax defined on [gitscm](https://git-scm.com/docs/gitignore)
 
 .gitignore functionality ported from [Python pathspec](https://pypi.python.org/pypi/pathspec/0.2.2) by [@cpburnz](https://github.com/cpburnz/python-path-specification)
 
