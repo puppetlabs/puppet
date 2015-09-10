@@ -3,66 +3,103 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
-Applies a parameterized block to each element in a sequence of entries from the first
-argument (_the enumerable_) and returns the last result of the invocation of the parameterized block.
+Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+to every value in a data structure from the first argument, carrying over the returned
+value of each iteration, and returns the result of the lambda's final iteration. This
+lets you create a new value or data structure by combining values from the first
+argument's data structure.
 
-This function takes two mandatory arguments: the first should be an Array, Hash, or something of
-enumerable type, and the last a parameterized block as produced by the puppet syntax:
+This function takes two mandatory arguments, in this order:
 
-      $a.reduce |$memo, $x| { ... }
-      reduce($a) |$memo, $x| { ... }
+1. An array or hash the function will iterate over.
+2. A lambda, which the function calls for each element in the first argument. It takes
+two mandatory parameters:
+    1. A memo value that is overwritten after each iteration with the iteration's result.
+    2. A second value that is overwritten after each iteration with the next value in the
+    function's first argument.
 
-When the first argument is an Array or someting of an enumerable type, the block is called with each entry in turn.
-When the first argument is a hash each entry is converted to an array with `[key, value]` before being
-fed to the block. An optional 'start memo' value may be supplied as an argument between the array/hash
-and mandatory block.
+**Example**: Using the `reduce` function
 
-      $a.reduce(start) |$memo, $x| { ... }
-      reduce($a, start) |$memo, $x| { ... }
+`$data.reduce |$memo, $value| { ... }`
 
-If no 'start memo' is given, the first invocation of the parameterized block will be given the first and second
-elements of the enumeration, and if the enumerable has fewer than 2 elements, the first
-element is produced as the result of the reduction without invocation of the block.
+or
 
-On each subsequent invocation, the produced value of the invoked parameterized block is given as the memo in the
-next invocation.
+`reduce($data) |$memo, $value| { ... }`
 
-Example Using reduce
+You can also pass an optional "start memo" value as an argument, such as `start` below:
 
-      # Reduce an array
-      $a = [1,2,3]
-      $a.reduce |$memo, $entry| { $memo + $entry }
-      #=> 6
+`$data.reduce(start) |$memo, $value| { ... }`
 
-      # Reduce hash values
-      $a = {a => 1, b => 2, c => 3}
-      $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
-      #=> [sum, 6]
+or
 
-      # reverse a string
-      "abc".reduce |$memo, $char| { "$char$memo" }
-      #=>"cbe"
+`reduce($data, start) |$memo, $value| { ... }`
 
-It is possible to provide a starting 'memo' as an argument.
+When the first argument (`$data` in the above example) is an array, Puppet passes each
+of the data structure's values in turn to the lambda's parameters. When the first
+argument is a hash, Puppet converts each of the hash's values to an array in the form
+`[key, value]`.
 
-Example Using reduce with given start 'memo'
+If you pass a start memo value, Puppet executes the lambda with the provided memo value
+and the data structure's first value. Otherwise, Puppet passes the structure's first two
+values to the lambda.
 
-      # Reduce an array
-      $a = [1,2,3]
-      $a.reduce(4) |$memo, $entry| { $memo + $entry }
-      #=> 10
+Puppet calls the lambda for each of the data structure's remaining values. For each
+call, it passes the result of the previous call as the first parameter ($memo in the
+above examples) and the next value from the data structure as the second parameter
+($value).
 
-      # Reduce hash values
-      $a = {a => 1, b => 2, c => 3}
-      $a.reduce([na, 4]) |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
-      #=> [sum, 10]
+If the structure has one value, Puppet returns the value and does not call the lambda.
 
-Example Using reduce with an Integer range
+**Example**: Using the `reduce` function
 
-      Integer[1,4].reduce |$memo, $x| { $memo + $x }
-      #=> 10
+~~~ puppet
+# Reduce the array $data, returning the sum of all values in the array.
+$data = [1, 2, 3]
+$sum = $data.reduce |$memo, $value| { $memo + $value }
+# $sum contains 6
 
-- since 4.0.0
+# Reduce the array $data, returning the sum of a start memo value and all values in the
+# array.
+$data = [1, 2, 3]
+$sum = $data.reduce(4) |$memo, $value| { $memo + $value }
+# $sum contains 10
+
+# Reduce the hash $data, returning the sum of all values and concatenated string of all
+# keys.
+$data = {a => 1, b => 2, c => 3}
+$combine = $data.reduce |$memo, $value| {
+  $string = "${memo[0]}${value[0]}"
+  $number = $memo[1] + $value[1]
+  [$string, $number]
+}
+# $combine contains [abc, 6]
+~~~
+
+**Example**: Using the `reduce` function with a start memo and two-parameter lambda
+
+~~~ puppet
+# Reduce the array $data, returning the sum of all values in the array and starting
+# with $memo set to an arbitrary value instead of $data's first value.
+$data = [1, 2, 3]
+$sum = $data.reduce(4) |$memo, $value| { $memo + $value }
+# At the start of the lambda's first iteration, $memo contains 4 and $value contains 1.
+# After all iterations, $sum contains 10.
+
+# Reduce the hash $data, returning the sum of all values and concatenated string of
+# all keys, and starting with $memo set to an arbitrary array instead of $data's first
+# key-value pair.
+$data = {a => 1, b => 2, c => 3}
+$combine = $data.reduce( [d, 4] ) |$memo, $value| {
+  $string = "${memo[0]}${value[0]}"
+  $number = $memo[1] + $value[1]
+  [$string, $number]
+}
+# At the start of the lambda's first iteration, $memo contains [d, 4] and $value
+# contains [a, 1].
+# $combine contains [dabc, 10]
+~~~
+
+- Since 4.0.0
 DOC
 ) do |args|
   function_fail(["reduce() is only available when parser/evaluator future is in effect"])
