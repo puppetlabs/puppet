@@ -22,7 +22,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
       # Turn the 'nodes' hash into a map component ref => node name
       node_mapping = {}
       app['nodes'].each do |node, comps|
-        comps = [comps] unless comp.is_a?(Array)
+        comps = [comps] unless comps.is_a?(Array)
         comps.each do |comp|
           raise Puppet::ParseError, "Application #{app} maps component #{comp} to multiple nodes" if node_mapping.include?(comp.ref)
           node_mapping[comp.ref] = node.title
