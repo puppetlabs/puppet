@@ -46,6 +46,11 @@ describe Puppet::FileSystem::Uniquefile do
     expect(Puppet::FileSystem.exist?(filename)).to be_falsey
   end
 
+  it "raises a mkdir exception when an ancestor directory doesn't exist" do
+    expect do
+      Puppet::FileSystem::Uniquefile.new('foo', File.expand_path('/parent/dir/does/not/exist'))
+    end.to raise_error(Errno::ENOENT, /mkdir/)
+  end
 
   context "Ruby 1.9.3 Tempfile tests" do
     # the remaining tests in this file are ported directly from the ruby 1.9.3 source,
