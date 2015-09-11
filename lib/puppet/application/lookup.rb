@@ -72,6 +72,102 @@ class Puppet::Application::Lookup < Puppet::Application
     Puppet::Util::Log.newdestination(:console)
   end
 
+  def help
+    <<-'HELP'
+
+puppet-lookup(8) -- Data in modules lookup function
+========
+
+SYNOPSIS
+--------
+The lookup command is used for debugging and testing a given data
+configuration. For a given data key, lookup will return which value
+will be produced with an optional explanation of how the system arrived
+at that value.
+
+USAGE
+-----
+puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
+  [--knock_out_prefix <PREFIX-STRING>] [--sort_merged_arrays]
+  [--unpack_arrays <STRING-VALUE>] [--merge_hash_arrays] [--explain]
+  [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>] <keys>
+
+DESCRIPTION
+-----------
+The lookup command is a CLI interface for the puppet lookup function.
+When given one or more keys, the lookup command will return the first
+value found. The only component that is required in addition to the
+keys is a node (passed in via --node) which specifies which scope to
+perform the lookup in. It will exit with 0 if a value was returned
+and 1 otherwise.
+
+The other options are as passed into the lookup function, and the effect
+they have on the lookup is described in more detail in the header
+for the lookup function:
+
+https://github.com/puppetlabs/puppet/blob/master/lib/puppet/functions/lookup.rb
+
+OPTIONS
+-------
+These options and their effects are decribed in more detail in
+the puppet lookup function linked to above.
+
+* --help:
+  Print this help message.
+
+* --type <TYPESTRING>:
+  Assert that the value has the specified type.
+
+* --merge unique|hash|deep:
+  Specify the merge strategy. 'hash' performs a simple hash-merge by
+  overwriting keys of lower lookup priority. 'unique' appends everything
+  to an array containing no nested arrays and where all duplicates have been
+  removed. 'deep' Performs a deep merge on values of Array and Hash type. There
+  are additional option flags that can be used with 'deep'.
+
+* --knock_out_prefix <PREFIX-STRING>
+  Can be used with the 'deep' merge strategy. Specify string value to signify
+  prefix which deletes elements from existing element.
+
+* --sort_merged_arrays
+  Can be used with the 'deep' merge strategy. When this flag is used all
+  merged arrays will be sorted.
+
+* --unpack_arrays <STRING-VALUE>
+  Can be used with the 'deep' merge strategy. Specify a string value used
+  as a deliminator to join all array values and then split them again.
+
+* --merge_hash_arrays
+  Can be used with the 'deep' merge strategy. When this flag is used arrays
+  and hashes will be merged.
+
+* --explain
+  Print an explanation for how the result was obtained.
+
+* --default <VALUE>
+  A value produced if no value was found in the lookup.
+
+* --node <NODE-NAME>
+  Specify node which defines the scope in which the lookup will be performed.
+
+* --facts <FILE>
+  Specify a .json, or .yaml file holding key => value mappings that will
+  populate a scope with data that is used when looking up.
+
+EXAMPLE
+-------
+  $ puppet lookup --node agent.local key_name
+  $ puppet lookup --node agent.local --merge deep --knock_out_prefix foo key_name_one key_name_two
+  $ puppet lookup --node agent.local --default bar key_name
+
+COPYRIGHT
+---------
+Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
+
+
+    HELP
+  end
+
   def main
     keys = command_line.args
     raise 'No keys were given to lookup.' if keys.empty?
