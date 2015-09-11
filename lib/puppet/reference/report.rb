@@ -5,19 +5,16 @@ report = Puppet::Util::Reference.newreference :report, :doc => "All available tr
 end
 
 report.header = "
-Puppet clients can report back to the server after each transaction.  This
-transaction report is sent as a YAML dump of the
-`Puppet::Transaction::Report` class and includes every log message that was
-generated during the transaction along with as many metrics as Puppet knows how
-to collect.  See [Reports and Reporting](http://docs.puppetlabs.com/guides/reporting.html) for more information on how to use reports.
+Puppet can generate a report after applying a catalog. This report includes
+events, log messages, resource statuses, and metrics and metadata about the run.
+Puppet agent sends its report to a Puppet master server, and Puppet apply
+processes its own reports.
 
-Currently, clients default to not sending in reports; you can enable reporting
-by setting the `report` parameter to true.
+Puppet master and Puppet apply will handle every report with a set of report
+processors, configurable with the `reports` setting in puppet.conf. This page
+documents the built-in report processors.
 
-To use a report, set the `reports` parameter on the server; multiple
-reports must be comma-separated.  You can also specify `none` to disable
-reports entirely.
-
-Puppet provides multiple report handlers that will process client reports:
+See [About Reporting](https://docs.puppetlabs.com/puppet/latest/reference/reporting_about.html)
+for more details.
 
 "
