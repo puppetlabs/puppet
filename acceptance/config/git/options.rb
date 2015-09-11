@@ -5,6 +5,7 @@
     'puppet',
   ],
   :pre_suite => [
+    'setup/common/pre-suite/000-delete-puppet-when-sparc.rb',
     'setup/git/pre-suite/000_EnvSetup.rb',
     'setup/git/pre-suite/010_TestSetup.rb',
     'setup/git/pre-suite/020_PuppetUserAndGroup.rb',
