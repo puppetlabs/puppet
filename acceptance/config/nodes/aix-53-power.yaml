@@ -6,13 +6,11 @@ HOSTS:
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
-  solaris-11-sparc:
+  pe-aix-53-acceptance:
     roles:
       - agent
-    platform: solaris-11-sparc
+    platform: aix-5.3-power
     hypervisor: none
-    ip: 10.32.77.138
-    vmhostname: sol11.delivery.puppetlabs.net
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
