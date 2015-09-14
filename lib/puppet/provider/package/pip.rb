@@ -3,6 +3,7 @@
 
 require 'puppet/provider/package'
 require 'xmlrpc/client'
+require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pip,
   :parent => ::Puppet::Provider::Package do
@@ -60,7 +61,16 @@ Puppet::Type.type(:package).provide :pip,
   # cache of PyPI's package list so this operation will always have to
   # ask the web service.
   def latest
-    client = XMLRPC::Client.new2("http://pypi.python.org/pypi")
+    http_proxy_host = Puppet::Util::HttpProxy.http_proxy_host
+    http_proxy_port = Puppet::Util::HttpProxy.http_proxy_port
+    if http_proxy_host and http_proxy_port
+      proxy = "#{http_proxy_host}:#{http_proxy_port}"
+    elsif http_proxy_host and not http_proxy_port
+      proxy = http_proxy_host
+    else
+      proxy = nil
+    end
+    client = XMLRPC::Client.new2("http://pypi.python.org/pypi", proxy)
     client.http_header_extra = {"Content-Type" => "text/xml"}
     client.timeout = 10
     result = client.call("package_releases", @resource[:name])
