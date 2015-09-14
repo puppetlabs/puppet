@@ -73,6 +73,25 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     return a
   end
 
+  def add_resource_before(other, *resources)
+    resources.each do |resource|
+      other_title_key = title_key_for_ref(other.ref)
+      idx = @resources.index(other_title_key)
+      raise ArgumentError, "Cannot add resource #{resource.ref} before #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      add_one_resource(resource, idx)
+    end
+  end
+
+  def add_resource_after(other, *resources)
+    resources.each do |resource|
+      other_title_key = title_key_for_ref(other.ref)
+      idx = @resources.index(other_title_key)
+      raise ArgumentError, "Cannot add resource #{resource.ref} after #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      add_one_resource(resource, idx+1)
+    end
+  end
+
+
   def add_resource(*resources)
     resources.each do |resource|
       add_one_resource(resource)
@@ -86,13 +105,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     adjacent(resource, :direction => :in)[0]
   end
 
-  def add_one_resource(resource)
+  def add_one_resource(resource, idx=-1)
     title_key = title_key_for_ref(resource.ref)
     if @resource_table[title_key]
       fail_on_duplicate_type_and_title(resource, title_key)
     end
 
-    add_resource_to_table(resource, title_key)
+    add_resource_to_table(resource, title_key, idx)
     create_resource_aliases(resource)
 
     resource.catalog = self if resource.respond_to?(:catalog=)
@@ -100,9 +119,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
   private :add_one_resource
 
-  def add_resource_to_table(resource, title_key)
+  def add_resource_to_table(resource, title_key, idx)
     @resource_table[title_key] = resource
-    @resources << title_key
+    @resources.insert(idx, title_key)
   end
   private :add_resource_to_table
 

@@ -11,10 +11,10 @@ RSpec::Matchers.define :include_in_order do |*expected|
   end
 
   def failure_message
-    "expected #{@actual.inspect} to include#{expected_to_sentence} in order"
+    "expected #{@actual.inspect} to include#{expected} in order"
   end
 
   def failure_message_when_negated
-    "expected #{@actual.inspect} not to include#{expected_to_sentence} in order"
+    "expected #{@actual.inspect} not to include#{expected} in order"
   end
 end

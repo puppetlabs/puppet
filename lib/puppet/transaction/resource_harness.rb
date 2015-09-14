@@ -99,10 +99,15 @@ class Puppet::Transaction::ResourceHarness
   def allow_changes?(resource)
     if resource.purging? and resource.deleting? and deps = relationship_graph.dependents(resource) \
             and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-      deplabel = deps.collect { |r| r.ref }.join(",")
-      plurality = deps.length > 1 ? "":"s"
-      resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
-      false
+      real_deps = deps.reject { |r| r.class.name == :whit }
+      if real_deps.empty?
+        true
+      else
+        deplabel = real_deps.collect { |r| r.ref }.join(",")
+        plurality = real_deps.length > 1 ? "":"s"
+        resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
+        false
+      end
     else
       true
     end
