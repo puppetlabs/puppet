@@ -1,7 +1,7 @@
 test_name "ticket 1073: common package name in two different providers should be allowed"
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
-confine :except, {:platform => /centos-4|el-4/}, agents # PUP-5227
+confine :except, :platform => /centos-4|el-4/ # PUP-5227
 
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils

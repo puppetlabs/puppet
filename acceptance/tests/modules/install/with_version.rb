@@ -2,7 +2,7 @@ test_name "puppet module install (with version)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-confine :except, {:platform => /centos-4|el-4/}, agents # PUP-5226
+confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
 hosts.each do |host|
   case host['platform']

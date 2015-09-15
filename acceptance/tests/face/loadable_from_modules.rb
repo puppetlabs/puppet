@@ -2,7 +2,7 @@ test_name "Exercise loading a face from a module"
 
 # Because the module tool does not work on windows, we can't run this test there
 confine :except, :platform => 'windows'
-confine :except, {:platform => /centos-4|el-4/}, agents # PUP-5225
+confine :except, :platform => /centos-4|el-4/ # PUP-5225
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
