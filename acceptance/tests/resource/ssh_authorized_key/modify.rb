@@ -16,7 +16,7 @@ agents.each do |agent|
   on(agent, "cp #{auth_keys} /tmp/auth_keys", :acceptable_exit_codes => [0,1])
 
   step "(setup) create an authorized key in the #{auth_keys} file"
-  on(agent, "echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
+  on(agent, "echo '' >> #{auth_keys} && echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
 
   #------- TESTS -------#
   step "update an authorized key entry with puppet (present)"
@@ -30,6 +30,7 @@ agents.each do |agent|
   step "verify entry updated in #{auth_keys}"
   on(agent, "cat #{auth_keys}")  do |res|
     fail_test "didn't find the updated key for #{name}" unless stdout.include? "mynewshinykey #{name}"
+    fail_test "Found old key mykey #{name}" if stdout.include? "mykey #{name}"
   end
 
 end

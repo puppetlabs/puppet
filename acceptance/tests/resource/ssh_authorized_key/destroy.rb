@@ -1,7 +1,6 @@
 test_name "should delete an entry for an SSH authorized key"
 
 confine :except, :platform => ['windows']
-confine :except, :platform => /centos-4|el-4/ # PUP-5228
 
 auth_keys = '~/.ssh/authorized_keys'
 name = "pl#{rand(999999).to_i}"
@@ -17,7 +16,7 @@ agents.each do |agent|
   on(agent, "cp #{auth_keys} /tmp/auth_keys", :acceptable_exit_codes => [0,1])
 
   step "(setup) create an authorized key in the #{auth_keys} file"
-  on(agent, "echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
+  on(agent, "echo '' >> #{auth_keys} && echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
 
   #------- TESTS -------#
   step "delete an authorized key entry with puppet (absent)"
