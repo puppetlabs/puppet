@@ -28,10 +28,14 @@ describe "when using a hiera data provider" do
   end
 
   def compile_and_get_notifications(environment, code = nil)
+    compile(environment, code).resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+  end
+
+  def compile(environment, code = nil)
     Puppet[:code] = code if code
     node = Puppet::Node.new("testnode", :facts => facts, :environment => environment)
     compiler = Puppet::Parser::Compiler.new(node)
-    compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+    block_given? ? compiler.compile() { |catalog| yield(compiler); catalog } : compiler.compile()
   end
 
   it 'uses default configuration for environment and module data' do
@@ -145,6 +149,25 @@ describe "when using a hiera data provider" do
     end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse \(#{environmentpath}[^)]+\):/)
   end
 
+  describe 'when using explain' do
+    it 'will report config path (original and resolved), data path (original and resolved), and interpolation (before and after)' do
+      compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
+        value = Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Data Provider "Hiera Data Provider, version 4"
+  ConfigurationPath "#{environmentpath}/hiera_misc/hiera.yaml"
+  Data Provider "common"
+    Path "#{environmentpath}/hiera_misc/data/common.yaml"
+      Original path: common
+      Interpolation on "Value from interpolation %{scope("target_scope")}"
+        Global Scope"
+          Found key: "target_scope" value: "with scope"
+      Found key: "km_scope" value: "Value from interpolation with scope"
+EOS
+      end
+    end
+  end
   def parent_fixture(dir_name)
     File.absolute_path(File.join(my_fixture_dir(), "../#{dir_name}"))
   end

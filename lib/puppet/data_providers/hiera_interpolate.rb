@@ -5,24 +5,26 @@ require_relative 'hiera_config'
 #
 module Puppet::DataProviders::HieraInterpolate
   def interpolate(subject, lookup_invocation, allow_methods)
-    return subject unless subject.is_a?(String)
+    return subject unless subject.is_a?(String) && !subject.index('%{').nil?
 
-    subject.gsub(/%\{([^\}]+)\}/) do |match|
-      method_key, key = get_method_and_data($1, allow_methods)
-      is_alias = method_key == 'alias'
+    lookup_invocation.with(:interpolate, subject) do
+      subject.gsub(/%\{([^\}]+)\}/) do |match|
+        method_key, key = get_method_and_data($1, allow_methods)
+        is_alias = method_key == 'alias'
 
-      # Alias is only permitted if the entire string is equal to the interpolate expression
-      raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
+        # Alias is only permitted if the entire string is equal to the interpolate expression
+        raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
 
-      segments = key.split('.')
-      value = interpolate_method(method_key).call(segments[0], lookup_invocation)
-      value = qualified_lookup(segments.drop(1), value) if segments.size > 1
-      value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) } if value.is_a?(String)
+        segments = key.split('.')
+        value = interpolate_method(method_key).call(segments[0], lookup_invocation)
+        value = qualified_lookup(segments.drop(1), value) if segments.size > 1
+        value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) } if value.is_a?(String)
 
-      # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
-      return value if is_alias
+        # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
+        return value if is_alias
 
-      value || ''
+        value || ''
+      end
     end
   end
 
@@ -32,18 +34,26 @@ module Puppet::DataProviders::HieraInterpolate
     @@interpolate_methods ||= begin
       global_lookup = lambda { |key, lookup_invocation| Puppet::Pops::Lookup.lookup(key, nil, '', true, nil, lookup_invocation) }
       scope_lookup = lambda do |key, lookup_invocation|
-        ovr = lookup_invocation.override_values
-        if ovr.include?(key)
-          ovr[key]
-        else
-          scope = lookup_invocation.scope
-          if scope.include?(key)
-            scope[key]
+        lookup_invocation.with(:scope, nil) do
+          ovr = lookup_invocation.override_values
+          if ovr.include?(key)
+            lookup_invocation.report_found_in_overrides(key, ovr[key])
           else
-            lookup_invocation.default_values[key]
+            scope = lookup_invocation.scope
+            if scope.include?(key)
+              lookup_invocation.report_found(key, scope[key])
+            else
+              defaults = lookup_invocation.default_values
+              if defaults.include?(key)
+                lookup_invocation.report_found_in_defaults(key, defaults[key])
+              else
+                nil
+              end
+            end
           end
         end
       end
+
 
       {
         'lookup' => global_lookup,

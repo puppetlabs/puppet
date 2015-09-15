@@ -27,12 +27,12 @@ describe "when performing lookup" do
   # @param *args [String] splat of args that will be concatenated to form the puppet args sent to lookup
   # @return [Array<String>] List of names of Notify resources in the resulting catalog
   #
-  def assemble_and_compile(fmt, *lookup_args)
-    assemble_and_compile_with_block(fmt, "'no_block_present'", *lookup_args)
+  def assemble_and_compile(fmt, *lookup_args, &block)
+    assemble_and_compile_with_block(fmt, "'no_block_present'", *lookup_args, &block)
   end
 
-  def assemble_and_compile_with_block(fmt, block, *lookup_args)
-    compile_and_get_notifications <<-END.gsub(/^ {6}/, '')
+  def assemble_and_compile_with_block(fmt, block, *lookup_args, &cblock)
+    compile_and_get_notifications(<<-END.gsub(/^ {6}/, ''), &cblock)
       $args = [#{lookup_args.join(',')}]
       $block = #{block}
       include abc
@@ -43,7 +43,8 @@ describe "when performing lookup" do
 
   def compile_and_get_notifications(code)
     Puppet[:code] = code
-    compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+    catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+    catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
   end
 
   # There is a fully configured 'production' environment in fixtures at this location
@@ -373,6 +374,129 @@ describe "when performing lookup" do
       expect do
         compiler.compile()
       end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
+    end
+  end
+
+
+  context 'when using explain' do
+    it 'will explain that module is not found' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('ppx::e',nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "ppx::e"
+  Module "ppx"
+    Module not found
+EOS
+      end
+    end
+
+    it 'will explain that module does not find a key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('abc::x', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "abc::x"
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    No such key: "abc::x"
+EOS
+      end
+    end
+
+    it 'will explain deep merge results without options' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy deep
+  Data Provider "FunctionEnvDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "env_e1",
+      "k3" => "env_e3"
+    }
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "module_e1",
+      "k2" => "module_e2"
+    }
+  Merged result: {
+    "k1" => "env_e1",
+    "k2" => "module_e2",
+    "k3" => "env_e3"
+  }
+EOS
+      end
+    end
+
+    it 'will explain deep merge results with options' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy deep
+  Options: {
+    "merge_hash_arrays" => true
+  }
+  Data Provider "FunctionEnvDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "env_e1",
+      "k3" => "env_e3"
+    }
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "module_e1",
+      "k2" => "module_e2"
+    }
+  Merged result: {
+    "k1" => "env_e1",
+    "k2" => "module_e2",
+    "k3" => "env_e3"
+  }
+EOS
+      end
+    end
+
+    it 'will provide a hash containing all explanation elements' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        expect(lookup_invocation.explainer.to_hash).to eq(
+            {
+              :branches => [
+              {
+                :key => 'abc::e',
+                :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
+                :event => :found,
+                :type => :data_provider,
+                :data_provider => 'FunctionEnvDataProvider'
+              },
+              {
+                :key => 'abc::e',
+                :value => { 'k1' => 'module_e1', 'k2' => 'module_e2' },
+                :event => :found,
+                :type => :data_provider,
+                :data_provider => 'FunctionModuleDataProvider',
+                :module => 'abc'
+              }
+            ],
+              :value => { 'k1' => 'env_e1', 'k2' => 'module_e2', 'k3' => 'env_e3' },
+              :event => :result,
+              :merge => :deep,
+              :options => { 'merge_hash_arrays' => true },
+              :type => :merge
+            }
+          )
+      end
     end
   end
 end

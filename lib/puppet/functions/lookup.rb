@@ -222,7 +222,7 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
   end
 
   def do_lookup(scope, name, value_type, default_value, has_default, override, default_values_hash, merge, &block)
-    Puppet::Pops::Lookup.lookup(name, value_type, default_value, has_default, merge, Puppet::DataBinding::LookupInvocation.new(scope, override, default_values_hash), &block)
+    Puppet::Pops::Lookup.lookup(name, value_type, default_value, has_default, merge, Puppet::Pops::Lookup::Invocation.new(scope, override, default_values_hash), &block)
   end
 
   def hash_args(options_hash)

@@ -4,7 +4,6 @@ module Puppet::Pops
   # Merges to objects into one based on an implemented strategy.
   #
   class MergeStrategy
-
     NOT_FOUND = Object.new.freeze
 
     TypeAsserter = Puppet::Pops::Types::TypeAsserter
@@ -130,11 +129,11 @@ module Puppet::Pops
       value
     end
 
-    protected
-
     def options
       @options
     end
+
+    protected
 
     # Returns the type used to validate the options hash
     #
