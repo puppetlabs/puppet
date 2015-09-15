@@ -1,19 +1,19 @@
 require 'puppet/application'
-require 'puppet/pops/lookup'
+require 'puppet/pops'
 require 'puppet/node'
 require 'puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
-  RUNHELP = "Run 'puppet lookup --help' for more details".freeze
-  DEEP_MERGE_OPTIONS = "--knock_out_prefix, --sort_merged_arrays, --unpack_arrays, and --merge_hash_arrays".freeze
+  RUN_HELP = "Run 'puppet lookup --help' for more details".freeze
+  DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, --unpack-arrays, and --merge-hash-arrays'.freeze
 
   # Options for lookup
   option('--merge TYPE') do |arg|
     if %w{unique hash deep}.include?(arg)
       options[:merge] = arg
     else
-      raise "The --merge option only accepts 'unique', 'hash', or 'deep' as arguments.\n#{RUNHELP}"
+      raise "The --merge option only accepts 'unique', 'hash', or 'deep' as arguments.\n#{RUN_HELP}"
     end
   end
 
@@ -21,17 +21,17 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:type] = arg
   end
 
-  option('--knock_out_prefix PREFIX_STRING') do |arg|
+  option('--knock-out-prefix PREFIX_STRING') do |arg|
     options[:prefix] = arg
   end
 
-  option('--sort_merge_arrays')
+  option('--sort-merge-arrays')
 
-  option('--unpack_arrays') do |arg|
+  option('--unpack-arrays') do |arg|
     options[:unpack_arrays] = arg
   end
 
-  option('--merge_hash_arrays')
+  option('--merge-hash-arrays')
 
   # not yet supported
   option('--explain')
@@ -53,23 +53,20 @@ class Puppet::Application::Lookup < Puppet::Application
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
     else
-      raise "The --fact file only accepts yaml and json files as arguments.\n#{RUNHELP}"
+      raise "The --fact file only accepts yaml and json files as arguments.\n#{RUN_HELP}"
     end
   end
 
-  def run_command
-    options[:keys] = command_line.args
+  def main
+    keys = command_line.args
+    raise 'No keys were given to lookup.' if keys.empty?
 
-    if options[:keys].empty?
-     raise "No keys were given to lookup."
-    end
-
-    if !options[:node]
+    unless options[:node]
       raise "No node was given via the '--node' flag for the scope of the lookup."
     end
 
     if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:unpack_arrays]) && options[:merge] != 'deep'
-      raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUNHELP}"
+      raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
     end
 
     scope = generate_scope
@@ -96,7 +93,7 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
 
-    puts Puppet::Pops::Lookup.lookup(options[:keys], options[:type], options[:default_value], use_default_value, merge_options, Puppet::DataBinding::LookupInvocation.new(scope, {}, {}))
+    puts Puppet::Pops::Lookup.lookup(keys, options[:type], options[:default_value], use_default_value, merge_options, Puppet::Pops::Lookup::Invocation.new(scope, {}, {}))
   end
 
   def generate_scope

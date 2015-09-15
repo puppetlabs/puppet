@@ -28,7 +28,7 @@ describe Puppet::Application::Lookup do
       lookup.options[:merge] = 'hash'
       lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
 
-      expected_error = "The options --knock_out_prefix, --sort_merged_arrays, --unpack_arrays, and --merge_hash_arrays are only available with '--merge deep'\nRun 'puppet lookup --help' for more details"
+      expected_error = "The options --knock-out-prefix, --sort-merged-arrays, --unpack-arrays, and --merge-hash-arrays are only available with '--merge deep'\nRun 'puppet lookup --help' for more details"
 
       expect{ lookup.run_command }.to raise_error(RuntimeError, expected_error)
     end
