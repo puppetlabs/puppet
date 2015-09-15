@@ -11,36 +11,4 @@ class Puppet::DataBinding
   class LookupError < Puppet::PreformattedError; end
 
   class RecursiveLookupError < Puppet::DataBinding::LookupError; end
-
-  class LookupInvocation
-    attr_reader :scope, :override_values, :default_values
-
-    # @param scope [Puppet::Parser::Scope] The scope to use for the lookup
-    # @param override_values [Hash<String,Object>|nil] A map to use as override. Values found here are returned immediately (no merge)
-    # @param default_values [Hash<String,Object>] A map to use as the last resort (but before default)
-    def initialize(scope, override_values = {}, default_values = {})
-      @name_stack = []
-      @scope = scope
-      @override_values = override_values
-      @default_values = default_values
-    end
-
-    def check(name)
-      if @name_stack.include?(name)
-        raise RecursiveLookupError, "Recursive lookup detected in [#{@name_stack.join(', ')}]"
-      end
-      return unless block_given?
-
-      @name_stack.push(name)
-      begin
-        yield
-      rescue LookupError
-        raise
-      rescue Puppet::Error => detail
-        raise LookupError.new(detail.message, detail)
-      ensure
-        @name_stack.pop
-      end
-    end
-  end
 end

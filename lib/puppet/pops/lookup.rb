@@ -1,7 +1,7 @@
 # This class is the backing implementation of the Puppet function 'lookup'.
 # See puppet/functions/lookup.rb for documentation.
 #
-class Puppet::Pops::Lookup
+module Puppet::Pops::Lookup
   # Performs a lookup in the configured scopes and optionally merges the default.
   #
   # This is a backing function and all parameters are assumed to have been type checked.
@@ -12,7 +12,7 @@ class Puppet::Pops::Lookup
   # @param default_value [Object] The value to use as default when no value is found
   # @param has_default [Boolean] Set to _true_ if _default_value_ is included (_nil_ is a valid _default_value_)
   # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-  # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] Invocation data containing scope, overrides, and defaults
+  # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] Invocation data containing scope, overrides, and defaults
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
@@ -23,7 +23,7 @@ class Puppet::Pops::Lookup
     # with name and value.
     not_found = Puppet::Pops::MergeStrategy::NOT_FOUND
     override_values = lookup_invocation.override_values
-    result_with_name = names.reduce([nil,not_found]) do |memo, key|
+    result_with_name = names.reduce([nil, not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type('override', value_type, override_values[key]) : not_found
       value = search_and_merge(key, lookup_invocation, merge) if value.equal?(not_found)
       break [key, assert_type('found', value_type, value)] unless value.equal?(not_found)
@@ -36,7 +36,7 @@ class Puppet::Pops::Lookup
       unless default_values.empty?
         result_with_name = names.reduce(result_with_name) do |memo, key|
           value = default_values.include?(key) ? assert_type('default_values_hash', value_type, default_values[key]) : not_found
-          memo = [ key, value ]
+          memo = [key, value]
           break memo unless value.equal?(not_found)
           memo
         end
@@ -62,8 +62,14 @@ class Puppet::Pops::Lookup
       Puppet::DataProviders.method(:lookup_in_environment),
       Puppet::DataProviders.method(:lookup_in_module)
     ]
-    Puppet::Pops::MergeStrategy.strategy(merge).merge_lookup(@variants) do |f|
-      f.call(name, lookup_invocation, merge)
+
+    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+    lookup_invocation.with(:merge, merge_strategy) do
+      merged_result = merge_strategy.merge_lookup(@variants) do |f|
+        f.call(name, lookup_invocation, merge)
+      end
+      lookup_invocation.report_result(merged_result) unless merged_result.equal?(Puppet::Pops::MergeStrategy::NOT_FOUND)
+      merged_result
     end
   end
   private_class_method :search_and_merge
@@ -82,8 +88,8 @@ class Puppet::Pops::Lookup
   private_class_method :assert_type
 
   def self.fail_lookup(names)
-    name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map {|n| "'#{n}'"} .join(', ') + ']'
-    raise Puppet::Error, "Function lookup() did not find a value for #{name_part}"
+    name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map { |n| "'#{n}'" }.join(', ') + ']'
+    raise Puppet::DataBinding::LookupError, "Function lookup() did not find a value for #{name_part}"
   end
   private_class_method :fail_lookup
 end

@@ -27,6 +27,8 @@ module Puppet
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
     require 'puppet/pops/lookup'
+    require 'puppet/pops/lookup/invocation'
+    require 'puppet/pops/lookup/explainer'
 
     require 'puppet/pops/model/model'
 

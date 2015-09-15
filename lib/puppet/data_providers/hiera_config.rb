@@ -49,6 +49,8 @@ module Puppet::DataProviders
     end
     private_class_method :create_config_type
 
+    attr_reader :config_path, :version
+
     # Creates a new HieraConfig from the given _config_root_. This is where the 'hiera.yaml' is expected to be found
     # and is also the base location used when resolving relative paths.
     #
@@ -64,6 +66,7 @@ module Puppet::DataProviders
       else
         @config = DEFAULT_CONFIG
       end
+      @version = @config['version']
     end
 
     def create_data_providers(lookup_invocation)

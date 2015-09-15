@@ -23,9 +23,14 @@ module Puppet::DataProviders
     module_name = name[0..qual_index-1]
 
     assert_loaded()
-    adapter = DataAdapter.adapt(Puppet.lookup(:current_environment))
-    data_provider = adapter.module_provider(module_name)
-    throw :no_such_key if data_provider.nil?
-    data_provider.lookup(name, lookup_invocation, merge)
+    env = Puppet.lookup(:current_environment)
+    adapter = DataAdapter.adapt(env)
+    lookup_invocation.with(:module, module_name) do
+      if env.module(module_name).nil?
+        lookup_invocation.report_module_not_found
+        throw :no_such_key
+      end
+      adapter.module_provider(module_name).lookup(name, lookup_invocation, merge)
+    end
   end
 end

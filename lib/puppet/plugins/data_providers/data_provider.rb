@@ -3,7 +3,7 @@ module Puppet::Plugins::DataProviders
     # Performs a lookup with an endless recursion check.
     #
     # @param key [String] The key to lookup
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     #
     # @api public
@@ -14,22 +14,28 @@ module Puppet::Plugins::DataProviders
     # Performs a lookup with the assumption that a recursive check has been made.
     #
     # @param key [String] The key to lookup
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
-      hash = data(data_key(key), lookup_invocation)
-      value = hash[key]
-      throw :no_such_key unless value || hash.include?(key)
-      post_process(value, lookup_invocation)
+      lookup_invocation.with(:data_provider, self) do
+        hash = data(data_key(key), lookup_invocation)
+        value = hash[key]
+        if value || hash.include?(key)
+          lookup_invocation.report_found(key, post_process(value, lookup_invocation))
+        else
+          lookup_invocation.report_not_found(key)
+          throw :no_such_key
+        end
+      end
     end
 
     # Perform optional post processing of found value. This hook is used by the hiera style
     # providers to perform interpolation. The default method simply returns the given _value_.
     #
     # @param value [Object] The value to perform post processing on
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Object] The result of post processing the value.
     #
     # @api public
@@ -45,7 +51,7 @@ module Puppet::Plugins::DataProviders
     # If data is obtained using the #initialize_data method it will be sent to the #validate_data for validation
     #
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
     #
@@ -71,7 +77,7 @@ module Puppet::Plugins::DataProviders
     # Should be reimplemented by subclass to provide the hash that corresponds to the given name.
     #
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Hash] The hash of values
     #
     # @api public
@@ -79,6 +85,11 @@ module Puppet::Plugins::DataProviders
       {}
     end
     protected :initialize_data
+
+    def name
+      cname = self.class.name
+      cname[cname.rindex(':')+1..-1]
+    end
 
     def validate_data(data, data_key)
       data
@@ -175,16 +186,33 @@ module Puppet::Plugins::DataProviders
     # the value is found in more than one location and _merge_ is not nil.
     #
     # @param key [String] The key to lookup
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
-      Puppet::Pops::MergeStrategy.strategy(merge).merge_lookup(@paths) do |path|
-        next Puppet::Pops::MergeStrategy::NOT_FOUND unless path.exists?
-        hash = data(path.path, lookup_invocation)
-        next Puppet::Pops::MergeStrategy::NOT_FOUND unless hash.include?(key)
-        post_process(hash[key], lookup_invocation)
+      lookup_invocation.with(:data_provider, self) do
+        merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+        lookup_invocation.with(:merge, merge_strategy) do
+          merged_result = merge_strategy.merge_lookup(@paths) do |path|
+            lookup_invocation.with(:path, path) do
+              if path.exists?
+                hash = data(path.path, lookup_invocation)
+                value = hash[key]
+                if value || hash.include?(key)
+                  lookup_invocation.report_found(key, post_process(value, lookup_invocation))
+                else
+                  lookup_invocation.report_not_found(key)
+                  Puppet::Pops::MergeStrategy::NOT_FOUND
+                end
+              else
+                lookup_invocation.report_path_not_found
+                Puppet::Pops::MergeStrategy::NOT_FOUND
+              end
+            end
+          end
+          lookup_invocation.report_result(merged_result)
+        end
       end
     end
   end
@@ -214,7 +242,7 @@ module Puppet::Plugins::DataProviders
     # @param datadir [Pathname] The base when creating absolute paths
     # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<ResolvedPath>] Array of resolved paths
     #
     # @api public
@@ -233,7 +261,7 @@ module Puppet::Plugins::DataProviders
     # @param datadir [Pathname] The base when creating absolute paths
     # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
-    # @param lookup_invocation [Puppet::DataBinding::LookupInvocation] The current lookup invocation
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<ResolvedPath>] Array of resolved paths
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       resolved_paths = []
