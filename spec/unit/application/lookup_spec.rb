@@ -37,14 +37,29 @@ describe Puppet::Application::Lookup do
   context "when running with correct command line options" do
     let (:lookup) { Puppet::Application[:lookup] }
 
+    it "calls the lookup method with the correct arguments" do
+      lookup.options[:node] = 'dantooine.local'
+      lookup.options[:render_as] = :s;
+      lookup.options[:merge_hash_arrays] = true
+      lookup.options[:merge] = 'deep'
+      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+      lookup.stubs(:generate_scope).yields('scope')
+
+      expected_merge = {"strategy"=> "deep", "sort_merge_arrays"=> false, "merge_hash_arrays"=> true}
+
+      (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
+
+      expect{ lookup.run_command }.to output("rand\n").to_stdout
+    end
+
     it "prints the value found by lookup" do
       lookup.options[:node] = 'dantooine.local'
       lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
-      lookup.stubs(:generate_scope).returns('scope')
+      lookup.stubs(:generate_scope).yields('scope')
 
       Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
 
-      expect{ lookup.run_command }.to output("rand\n").to_stdout
+      expect{ lookup.run_command }.to output("--- rand\n...\n").to_stdout
     end
   end
 end

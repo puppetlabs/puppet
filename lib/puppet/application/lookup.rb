@@ -17,6 +17,14 @@ class Puppet::Application::Lookup < Puppet::Application
     end
   end
 
+  option('--debug', '-d')
+
+  option('--verbose', '-v')
+
+  option('--render-as FORMAT') do |format|
+    options[:render_as] = format.downcase.to_sym
+  end
+
   option('--type TYPE_STRING') do |arg|
     options[:type] = arg
   end
@@ -33,7 +41,6 @@ class Puppet::Application::Lookup < Puppet::Application
 
   option('--merge-hash-arrays')
 
-  # not yet supported
   option('--explain')
 
   option('--default VALUE') do |arg|
@@ -69,8 +76,6 @@ class Puppet::Application::Lookup < Puppet::Application
       raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
     end
 
-    scope = generate_scope
-
     use_default_value = !options[:default_value].nil?
     merge_options = nil
 
@@ -93,13 +98,31 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
 
-    puts Puppet::Pops::Lookup.lookup(keys, options[:type], options[:default_value], use_default_value, merge_options, Puppet::Pops::Lookup::Invocation.new(scope, {}, {}))
+    explain = !!options[:explain]
+
+    # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
+    format = options[:render_as] || (explain ? :s : :yaml)
+    renderer = Puppet::Network::FormatHandler.format(format == :json ? :pson : format)
+    raise "Unknown rendering format '#{format}'" if renderer.nil?
+
+    type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type]) : nil
+
+    generate_scope do |scope|
+      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain)
+      begin
+        result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
+        puts renderer.render(result) unless explain
+      rescue Puppet::Error => e
+        raise unless e.message =~ /lookup\(\) did not find a value/
+        exit(1) unless explain
+      end
+      puts format == :s ? lookup_invocation.explainer.to_s : renderer.render(lookup_invocation.explainer.to_hash) if explain
+    end
   end
 
   def generate_scope
     node = Puppet::Node.indirection.find("#{options[:node]}")
     compiler = Puppet::Parser::Compiler.new(node)
-    compiler.compile
-    compiler.topscope
+    compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end
 end
