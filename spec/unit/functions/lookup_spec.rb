@@ -478,14 +478,14 @@ EOS
                 :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
                 :event => :found,
                 :type => :data_provider,
-                :data_provider => 'FunctionEnvDataProvider'
+                :name => 'FunctionEnvDataProvider'
               },
               {
                 :key => 'abc::e',
                 :value => { 'k1' => 'module_e1', 'k2' => 'module_e2' },
                 :event => :found,
                 :type => :data_provider,
-                :data_provider => 'FunctionModuleDataProvider',
+                :name => 'FunctionModuleDataProvider',
                 :module => 'abc'
               }
             ],

@@ -13,7 +13,7 @@ class Puppet::Application::Lookup < Puppet::Application
     if %w{unique hash deep}.include?(arg)
       options[:merge] = arg
     else
-      raise "The --merge option only accepts 'unique', 'hash', or 'deep' as arguments.\n#{RUN_HELP}"
+      raise "The --merge option only accepts 'unique', 'hash', or 'deep'.\n#{RUN_HELP}"
     end
   end
 
@@ -60,7 +60,7 @@ class Puppet::Application::Lookup < Puppet::Application
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
     else
-      raise "The --fact file only accepts yaml and json files as arguments.\n#{RUN_HELP}"
+      raise "The --fact file only accepts yaml and json files.\n#{RUN_HELP}"
     end
   end
 
@@ -112,8 +112,7 @@ class Puppet::Application::Lookup < Puppet::Application
       begin
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
-      rescue Puppet::Error => e
-        raise unless e.message =~ /lookup\(\) did not find a value/
+      rescue Puppet::DataBinding::LookupError
         exit(1) unless explain
       end
       puts format == :s ? lookup_invocation.explainer.to_s : renderer.render(lookup_invocation.explainer.to_hash) if explain
@@ -121,7 +120,8 @@ class Puppet::Application::Lookup < Puppet::Application
   end
 
   def generate_scope
-    node = Puppet::Node.indirection.find("#{options[:node]}")
+    node = options[:node]
+    node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end

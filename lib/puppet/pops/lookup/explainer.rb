@@ -254,7 +254,8 @@ module Puppet::Pops::Lookup
 
     def to_hash
       hash = super
-      hash[:data_provider] = @provider.name
+      hash[:name] = @provider.name
+      hash[:configuration_path] = @provider.config_path.to_s if @provider.respond_to?(:config_path)
       hash
     end
 
@@ -281,7 +282,7 @@ module Puppet::Pops::Lookup
     def to_hash
       hash = super
       hash[:original_path] = @path.original_path
-      hash[:path] = @path.path
+      hash[:path] = @path.path.to_s
       hash
     end
 

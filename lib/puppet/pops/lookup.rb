@@ -89,7 +89,7 @@ module Puppet::Pops::Lookup
 
   def self.fail_lookup(names)
     name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map { |n| "'#{n}'" }.join(', ') + ']'
-    raise Puppet::Error, "Function lookup() did not find a value for #{name_part}"
+    raise Puppet::DataBinding::LookupError, "Function lookup() did not find a value for #{name_part}"
   end
   private_class_method :fail_lookup
 end
