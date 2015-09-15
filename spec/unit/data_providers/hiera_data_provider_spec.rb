@@ -106,6 +106,16 @@ describe "when using a hiera data provider" do
     expect(resources).to include('Value from interpolation with default')
   end
 
+  it 'performs lookup using qualified expressions in interpolation' do
+    resources = compile_and_get_notifications('hiera_misc', "$os = { name => 'Fedora' } notify{lookup(km_qualified):}")
+    expect(resources).to include('Value from qualified interpolation OS = Fedora')
+  end
+
+  it 'can have multiple interpolate expressions in one value' do
+    resources = compile_and_get_notifications('hiera_misc', 'notify{lookup(km_multi):}')
+    expect(resources).to include('cluster/%{::cluster}/%{role}')
+  end
+
   it 'performs single quoted interpolation' do
     resources = compile_and_get_notifications('hiera_misc', 'notify{lookup(km_sqalias):}')
     expect(resources).to include('Value from interpolation with alias')

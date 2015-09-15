@@ -23,3 +23,6 @@ km_literal: 'Value from interpolation %{literal("with literal")}'
 km_sqalias: "%{alias('target_alias')}"
 recursive: '%{r1}'
 
+km_qualified: "Value from qualified interpolation OS = %{os.name}"
+
+km_multi: "cluster/%{literal('%')}{::cluster}/%{literal('%')}{role}"

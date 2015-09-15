@@ -16,7 +16,7 @@ module Puppet::DataProviders::HieraInterpolate
 
       segments = key.split('.')
       value = interpolate_method(method_key).call(segments[0], lookup_invocation)
-      value = qualified_lookup(segments.drop(1), v) if segments.size > 1
+      value = qualified_lookup(segments.drop(1), value) if segments.size > 1
       value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) } if value.is_a?(String)
 
       # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
