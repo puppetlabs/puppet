@@ -1,6 +1,7 @@
 test_name "should delete an entry for an SSH authorized key"
 
 confine :except, :platform => ['windows']
+confine :except, {:platform => /centos-4|el-4/}, agents # PUP-5228
 
 auth_keys = '~/.ssh/authorized_keys'
 name = "pl#{rand(999999).to_i}"
