@@ -19,21 +19,24 @@
 # The block, if present, is mutually exclusive to the `default_value` and will be called with the `name` used in the
 # lookup when no value is found. The value produced by the block then becomes the value produced by the lookup.
 #
-# The meaning of the parameters or content of the options hash is:
+# The meaning of each parameter is:
 #
 # * `name` - The name or array of names to lookup (first found is returned)
 # * `value_type` - The type to assert. Defaults to 'Data' See 'Type Specification' below.
-# * `default_value` - The default value if there was no value found (must comply with the data type)
-# * `override` - a hash with map from names to values that are used instead of the underlying bindings. If the name
-#   is found here it wins. Defaults to an empty hash.
-# * `default_values_hash` - a hash with map from names to values that are used as a last resort to obtain a value.
-#   Defaults to an empty hash.
-# * `merge` - A string of type Enum[unique, hash, merge] or a hash with the key 'strategy' set to that string. See
+# * `merge` - A string of type Enum[first, unique, hash, deep] or a hash with the key 'strategy' set to that string. Default is `first`. See
 #   'Merge Strategies' below.
+# * `default_value` - The default value if there was no value found (must comply with the data type)
+# * `options_hash`- A hash that may contain any of the above parameters, keyed by their name. In addition, it
+#   can also contain the following entries:
+#   * `override` - a hash with map from names to values that are used instead of the underlying bindings. If the `name`
+#     given to the lookup is a key in this hash, it wins, and the associated value is returned. Defaults to an empty hash.
+#   * `default_values_hash` - a hash with map from names to values that are used as a last resort to obtain a value.
+#     Defaults to an empty hash.
 #
 # It is not permitted to pass the `name` as both a parameter and in the options hash.
 #
 # The search will proceed as follows:
+#
 # 1. For each name given in the `name` array (or once, if it's just one name):
 #   - If a matching key is found in the `override` hash, it's value is immediately type checked and returned
 #   - Search and optionally merge Data Binding, environment data providers, and module data providers
@@ -52,6 +55,8 @@
 # Note that `merge` is passed on to allow the underlying provider to return a merged result
 #
 # The valid strategies are:
+#
+#  - 'first' The default, as explained above.
 #  - 'hash' Performs a simple hash-merge by overwriting keys of lower lookup priority. Merged values must be of Hash type
 #  - 'unique' Appends everything to an array containing no nested arrays and where all duplicates have been removed. Can
 #    append values of Scalar or Array[Scalar] type
@@ -65,9 +70,30 @@
 #  - 'unpack_arrays' Set to string value used as a deliminator to join all array values and then split them again. Default is _undef_
 #  - 'merge_hash_arrays' Set to _true_ to merge hashes within arrays. Default is _false_
 #
+# *Converting from Hiera semantics*
+#
+# A hiera _resolution\_type_ is either `priority`, `array` or `hash` and valid behaviors for the
+# `hash` resolution type are `native`, `deep`, or `deeper`. The following table shows how this
+# maps to the merge strategy:
+#
+#     Hiera merge + Config[:merge_behavior]	=> Merge Strategy
+#     ----------------------------------------------------------
+#     priority (default)                       first (default)
+#     array                                    unique
+#     hash + native                            hash
+#     hash + deeper                            deep (with Hashes)
+#     N/A                                      deep (with Arrays)
+#     hash + deep                              N/A
+#
+# There's no 100% correspondence to the Hiera `hash + deeper` since deep will no longer fail when it encounters an
+# `Array` instance.
+#
+# The Hiera `deep` is not implemented. In the Hiera documentation it is considered "largely useless and should be avoided".
+#
 # *Type Specification*
 #
 # The type specification is a type in the Puppet Type System, e.g.:
+#
 #   * `Integer`, an integral value with optional range e.g.:
 #     * `Integer[0, default]` - 0 or positive
 #     * `Integer[default, -1]` - negative,
