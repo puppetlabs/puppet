@@ -1,10 +1,10 @@
 test_name "#7680: 'links => follow' should use the file source content"
 
 agents.each do |agent|
-  confine_block :to, :platform => 'windows' do
+  if agent.platform.variant == 'windows'
     # symlinks are supported only on Vista+ (version 6.0 and higher)
-    on agents, facter('kernelmajversion') do
-      skip_test "Test not supported on this plaform" if stdout.chomp.to_f < 6.0
+    on agent, facter('kernelmajversion') do
+      skip_test "Test not supported on this platform" if stdout.chomp.to_f < 6.0
     end
   end
 
