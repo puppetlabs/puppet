@@ -73,7 +73,7 @@ case "$1" in
                 rc_exit
             fi
         fi
-        startproc -f -w -p "${pidfile}" "${puppetd}" "${PUPPET_OPTS}" "${PUPPET_EXTRA_OPTS}" && touch "${lockfile}"
+        startproc -f -w -p "${pidfile}" "${puppetd}" "${PUPPET_OPTS}" ${PUPPET_EXTRA_OPTS} && touch "${lockfile}"
         # Remember status and be verbose
         rc_status -v
         ;;
@@ -145,7 +145,7 @@ case "$1" in
         ;;
     once)
         shift
-        $puppetd "${PUPPET_OPTS}" --onetime "${PUPPET_EXTRA_OPTS}" $@
+        $puppetd "${PUPPET_OPTS}" --onetime ${PUPPET_EXTRA_OPTS} $@
         ;;
     *)
         echo "Usage: $0 {start|stop|status|try-restart|condrestart|restart|force-reload|reload|once}"
