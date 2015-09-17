@@ -81,16 +81,17 @@ puppet-lookup(8) -- Data in modules lookup function
 SYNOPSIS
 --------
 The lookup command is used for debugging and testing a given data
-configuration. For a given data key, lookup will return which value
-will be produced with an optional explanation of how the system arrived
-at that value.
+configuration. For a given data key, lookup will produce either a
+value or an explanation of how that value was obtained on the standard
+output stream with the specified rendering format.
 
 USAGE
 -----
 puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
-  [--knock_out_prefix <PREFIX-STRING>] [--sort_merged_arrays]
-  [--unpack_arrays <STRING-VALUE>] [--merge_hash_arrays] [--explain]
-  [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>] <keys>
+  [--knock-out-prefix <PREFIX-STRING>] [--sort-merged-arrays]
+  [--unpack-arrays <STRING-VALUE>] [--merge-hash-arrays] [--explain]
+  [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>]
+  [--render-as s|json|yaml|binary|msgpack] <keys>
 
 DESCRIPTION
 -----------
@@ -98,14 +99,18 @@ The lookup command is a CLI interface for the puppet lookup function.
 When given one or more keys, the lookup command will return the first
 value found. The only component that is required in addition to the
 keys is a node (passed in via --node) which specifies which scope to
-perform the lookup in. It will exit with 0 if a value was returned
-and 1 otherwise.
+perform the lookup in. 
+
+When an explanation has not been requested and
+lookup is simply looking up a value, the application will exit with 0
+if a value was found and 1 otherwise. When an explanation is requested,
+lookup will always exit with 0 unless there is a major error.
 
 The other options are as passed into the lookup function, and the effect
 they have on the lookup is described in more detail in the header
 for the lookup function:
 
-https://github.com/puppetlabs/puppet/blob/master/lib/puppet/functions/lookup.rb
+http://links.puppetlabs.com/lookup-docs
 
 OPTIONS
 -------
@@ -142,23 +147,46 @@ the puppet lookup function linked to above.
   and hashes will be merged.
 
 * --explain
-  Print an explanation for how the result was obtained.
+  Print an explanation for the details of how the lookup performed rather
+  than the value returned for the key. The explaination will describe how
+  the result was obtained or why lookup failed to obtain the result.
 
 * --default <VALUE>
   A value produced if no value was found in the lookup.
 
 * --node <NODE-NAME>
   Specify node which defines the scope in which the lookup will be performed.
+  If a node is not given, lookup will raise an error as it requires a scope
+  in order to perform a lookup.
 
 * --facts <FILE>
   Specify a .json, or .yaml file holding key => value mappings that will
   populate a scope with data that is used when looking up.
 
+* --render-as s|json|yaml|binary|msgpack
+  Determines how the results will be rendered to the standard output where
+  s means plain text. The default when lookup is producing a value is yaml
+  and the default when producing an explanation is s.
+
 EXAMPLE
 -------
+  If you wanted to lookup 'key_name' within the scope of the agent.local node,
+  you would call lookup like this:
   $ puppet lookup --node agent.local key_name
+
+  If you wanted to get the first value found for 'key_name_one' and 'key_name_two'
+  within the scope of the agent.local node while merging values and knocking out
+  the prefix 'foo' while merging, you would call lookup like this:
   $ puppet lookup --node agent.local --merge deep --knock_out_prefix foo key_name_one key_name_two
+
+  If you wanted to lookup 'key_name' within the scope of the agent.local node,
+  and return a default value of 'bar' if nothing was found, you would call
+  lookup like this:
   $ puppet lookup --node agent.local --default bar key_name
+
+  If you wanted to see an explanation of how the value for 'key_name' would be
+  obtained in the context of the agent.local node, you would call lookup like this:
+  $ puppet lookup --node agent.local --explain key_name
 
 COPYRIGHT
 ---------
