@@ -57,6 +57,44 @@ describe "Application instantiation" do
       }
 EOS
 
+MANIFEST_WITH_SITE = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      prod { one: host => ahost, export => Cap[cap] }
+      cons { two: consume => Cap[cap] }
+    }
+
+    $one = not_the_value_one
+    $two = two
+
+    node default {
+      notify { "on a node": }
+    }
+
+    notify { 'ignore me': }
+
+    site {
+      $one = one
+      app { anapp:
+        nodes => {
+          Node[first] => Prod[$one],
+          Node[second] => Cons[$two]
+        }
+      }
+    }
+EOS
+
   describe "in node catalogs" do
     it "does not affect a nonparticpating node" do
       catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other'))
@@ -83,7 +121,19 @@ EOS
       end
       expect(catalog.resource("Prod[one]")).to be_nil
     end
+
+    context "when using a site expression" do
+      it "the site expression is not evaluated in a node compilation" do
+        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
+        types = catalog.resource_keys.map { |type, _| type }.uniq.sort
+        expect(types).to eq(["Class", "Node", "Notify", "Stage"])
+        expect(catalog.resource("Notify[on a node]")).to_not be_nil
+        expect(catalog.resource("Notify[on the site]")).to be_nil
+      end
+
+    end
   end
+
 
   describe "in the environment catalog" do
     it "includes components and capability resources" do
@@ -105,76 +155,112 @@ EOS
       expect(cons).not_to be_nil
       expect(cons[:consume].ref).to eq("Cap[cap]")
     end
+
+    context "when using a site expression" do
+      it "includes components and capability resources" do
+        catalog = compile_to_env_catalog(MANIFEST_WITH_SITE).to_resource
+        apps = catalog.resources.select do |res|
+          res.resource_type && res.resource_type.application?
+        end
+        expect(apps.size).to eq(1)
+        app = apps.first
+        expect(app["nodes"]).not_to be_nil
+        comps = catalog.direct_dependents_of(app).map(&:ref).sort
+        expect(comps).to eq(["Cons[two]", "Prod[one]"])
+
+        prod = catalog.resource("Prod[one]")
+        expect(prod).not_to be_nil
+        expect(prod.export.map(&:ref)).to eq(["Cap[cap]"])
+
+        cons = catalog.resource("Cons[two]")
+        expect(cons).not_to be_nil
+        expect(cons[:consume].ref).to eq("Cap[cap]")
+      end
+
+      it "the site expression is evaluated in an environment compilation" do
+        catalog = compile_to_env_catalog(MANIFEST_WITH_SITE).to_resource
+        types = catalog.resource_keys.map { |type, _| type }.uniq.sort
+        expect(types).to eq(["App", "Class", "Cons", "Prod", "Site", "Stage"])
+        expect(catalog.resource("Notify[on a node]")).to be_nil
+        apps = catalog.resources.select do |res|
+          res.resource_type && res.resource_type.application?
+        end
+        expect(apps.size).to eq(1)
+        app = apps.first
+        comps = catalog.direct_dependents_of(app).map(&:ref).sort
+        expect(comps).to eq(["Cons[two]", "Prod[one]"])
+      end
+    end
   end
 
 
   describe "when validation of nodes" do
     it 'validates that the key of a node mapping is a Node' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
-      application app {
-      }
-
-      app { anapp:
-        nodes => {
-          'hello' => Node[other],
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+        application app {
         }
-      }
-      EOS
-) }.to raise_error(Puppet::Error, /hello is not a Node/)
+
+        app { anapp:
+          nodes => {
+            'hello' => Node[other],
+          }
+        }
+        EOS
+      }.to raise_error(Puppet::Error, /hello is not a Node/)
     end
 
     it 'validates that the value of a node mapping is a resource' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
-      application app {
-      }
-
-      app { anapp:
-        nodes => {
-          Node[other] => 'hello'
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+        application app {
         }
-      }
-        EOS
-      ) }.to raise_error(Puppet::Error, /hello is not a resource/)
+
+        app { anapp:
+          nodes => {
+            Node[other] => 'hello'
+          }
+        }
+      EOS
+      }.to raise_error(Puppet::Error, /hello is not a resource/)
     end
 
     it 'validates that the value can be an array or resources' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'),
-      define p {
-        notify {$title:}
-      }
-
-      application app {
-        p{one:}
-        p{two:}
-      }
-
-      app { anapp:
-        nodes => {
-          Node[other] => [P[one],P[two]]
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+        define p {
+          notify {$title:}
         }
-      }
-        EOS
-      ) }.not_to raise_error
+
+        application app {
+          p{one:}
+          p{two:}
+        }
+
+        app { anapp:
+          nodes => {
+            Node[other] => [P[one],P[two]]
+          }
+        }
+      EOS
+      }.not_to raise_error
     end
 
     it 'validates that the is bound to exactly one node' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('first'),
-      define p {
-        notify {$title:}
-      }
-
-      application app {
-        p{one:}
-      }
-
-      app { anapp:
-        nodes => {
-          Node[first] => P[one],
-          Node[second] => P[one],
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('first'))
+        define p {
+          notify {$title:}
         }
-      }
-        EOS
-      ) }.to raise_error(Puppet::Error, /maps component P\[one\] to multiple nodes/)
+
+        application app {
+          p{one:}
+        }
+
+        app { anapp:
+          nodes => {
+            Node[first] => P[one],
+            Node[second] => P[one],
+          }
+        }
+      EOS
+      }.to raise_error(Puppet::Error, /maps component P\[one\] to multiple nodes/)
     end
   end
 end

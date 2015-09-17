@@ -15,6 +15,7 @@ class Puppet::Resource::TypeCollection
     @nodes.clear
     @notfound.clear
     @capability_mappings.clear
+    @sites.clear
   end
 
   def initialize(env)
@@ -25,6 +26,7 @@ class Puppet::Resource::TypeCollection
     @applications = {}
     @nodes = {}
     @notfound = {}
+    @sites = []
 
     # So we can keep a list and match the first-defined regex
     @node_list = []
@@ -37,7 +39,14 @@ class Puppet::Resource::TypeCollection
   end
 
   def inspect
-    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys, :capability_mappings => @capability_mappings.keys, :applications => @applications.keys }.inspect
+    "TypeCollection" + {
+      :hostclasses => @hostclasses.keys,
+      :definitions => @definitions.keys,
+      :nodes => @nodes.keys,
+      :capability_mappings => @capability_mappings.keys,
+      :applications => @applications.keys,
+      :site => @sites[0] # todo, could be just a binary, this dumps the entire body (good while developing)
+    }.inspect
   end
 
   def <<(thing)
@@ -75,6 +84,16 @@ class Puppet::Resource::TypeCollection
     @node_list << instance
     @nodes[instance.name] = instance
     instance
+  end
+
+  def add_site(instance)
+    dupe_check_singleton(instance, @sites) { |dupe| "Site is already defined#{dupe.error_context}; cannot redefine" }
+    @sites << instance
+    instance
+  end
+
+  def site(_)
+    @sites[0]
   end
 
   def loader
@@ -134,6 +153,10 @@ class Puppet::Resource::TypeCollection
     @nodes[munge_name(name)]
   end
 
+  def find_site()
+    @sites[0]
+  end
+
   def find_hostclass(name)
     find_or_load(name, :hostclass)
   end
@@ -146,6 +169,8 @@ class Puppet::Resource::TypeCollection
     find_or_load(name, :application)
   end
 
+  # TODO: This implementation is wasteful as it creates a copy on each request
+  #
   [:hostclasses, :nodes, :definitions, :capability_mappings,
    :applications].each do |m|
     define_method(m) do
@@ -205,6 +230,12 @@ class Puppet::Resource::TypeCollection
   def dupe_check(instance, hash)
     return unless dupe = hash[instance.name]
     message = yield dupe
+    instance.fail Puppet::ParseError, message
+  end
+
+  def dupe_check_singleton(instance, set)
+    return if set.empty?
+    message = yield set[0]
     instance.fail Puppet::ParseError, message
   end
 end
