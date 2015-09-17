@@ -461,13 +461,26 @@ describe Puppet::Transaction::Report do
       expect(status.skipped).to eq(expected.skipped)
       expect(status.change_count).to eq(expected.change_count)
       expect(status.out_of_sync_count).to eq(expected.out_of_sync_count)
-      expect(status.events).to eq(expected.events)
+      expect(status.events.map(&:to_data_hash)).to eq(expected.events.map(&:to_data_hash))
     end
   end
 
   def generate_report
+    event_hash = {
+      :audited => false,
+      :property => 'message',
+      :previous_value => 'absent',
+      :desired_value => 'a resource',
+      :historical_value => nil,
+      :message => "defined 'message' as 'a resource'",
+      :name => :message_changed,
+      :status => 'success',
+    }
+    event = Puppet::Transaction::Event.new(event_hash)
+
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
     status.changed = true
+    status.add_event(event)
 
     report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
