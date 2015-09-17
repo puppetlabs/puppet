@@ -404,6 +404,16 @@ describe Puppet::Transaction::Report do
     expect(error_report.render).to validate_against('api/schemas/report.json')
   end
 
+  it "can make a round trip through yaml" do
+    report = generate_report
+
+    yaml_output = report.render(:yaml)
+    tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
+
+    expect(yaml_output).to match(/^--- /)
+    expect_equivalent_reports(tripped, report)
+  end
+
   def expect_equivalent_reports(tripped, report)
     expect(tripped.host).to eq(report.host)
     expect(tripped.time.to_i).to eq(report.time.to_i)
