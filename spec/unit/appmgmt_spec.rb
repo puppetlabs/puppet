@@ -197,6 +197,17 @@ EOS
       end
 
     end
+
+    context "when using a site expression" do
+      it "the site expression is not evaluated in a node compilation" do
+        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
+        types = catalog.resource_keys.map { |type, _| type }.uniq.sort
+        expect(types).to eq(["Class", "Node", "Notify", "Stage"])
+        expect(catalog.resource("Notify[on a node]")).to_not be_nil
+        expect(catalog.resource("Notify[on the site]")).to be_nil
+      end
+
+    end
   end
 
 
