@@ -21,7 +21,8 @@ module Puppet
         :default => false,
         :type    => :boolean,
         :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
-          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.',
+          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
+          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
         :hook    => proc do |value|
           return unless value
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
