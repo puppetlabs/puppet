@@ -1,6 +1,7 @@
 test_name "Puppet and Mcollective services should be manageable with Puppet"
 
 confine :except, :platform => 'windows' # See MCO-727
+confine :except, :platform => /centos-4|el-4/ # PUP-5257
 
 #
 # This test is intended to ensure that the Puppet and Mcollective services can
