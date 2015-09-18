@@ -30,7 +30,9 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Env Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
 
-      Puppet::Util::Profiler.profile("Env Compile: Prune and Validate", [:compiler, :prune_catalog]) { prune_catalog }
+      Puppet::Util::Profiler.profile("Env Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
+
+      Puppet::Util::Profiler.profile("Env Compile: Validate Catalog", [:compiler, :validate_site_catalog]) { validate_site_catalog }
 
       Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
@@ -72,6 +74,27 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     @catalog.remove_resource(*to_be_removed)
     # The compiler keeps a list of added resources, this shadows that list with the now pruned result
     @pruned_resources = @catalog.resources
+  end
+
+  def validate_site_catalog
+    the_site_resource = @catalog.resource('Site', 'site')
+    return unless the_site_resource
+
+    @catalog.downstream_from_vertex(the_site_resource).keys.each do |r|
+      unless r.is_application_component? || r.resource_type.application?
+        file = r.file
+        line = r.line
+        at_part =
+        if file && !file.empty? && line
+          " at file '#{file}' line #{line}"
+        elsif line
+          " at line #{line}"
+        else
+          ''
+        end
+        raise "Only application components can appear inside a site - #{r} is not allowed#{at_part}"
+      end
+    end
   end
 
   def add_resource(scope, resource)
