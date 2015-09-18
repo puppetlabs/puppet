@@ -119,11 +119,19 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should return the results of compiling as the catalog" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
-      config = mock 'config'
-      result = mock 'result'
+      catalog = Puppet::Resource::Catalog.new(@node.name)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
-      Puppet::Parser::Compiler.expects(:compile).returns result
-      expect(@compiler.find(@request)).to equal(result)
+      expect(@compiler.find(@request)).to equal(catalog)
+    end
+
+    it "returns a catalog with a code_id from the request" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      catalog = Puppet::Resource::Catalog.new(@node.name)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      @request.options[:code_id] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+
+      expect(@compiler.find(@request).code_id).to eq('b59e5df0578ef411f773ee6c33d8073c50e7b8fe')
     end
   end
 

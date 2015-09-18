@@ -48,6 +48,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if catalog = compile(node)
+      if code_id = request.options[:code_id]
+        catalog.code_id = code_id
+      end
       return catalog
     else
       # This shouldn't actually happen; we should either return
