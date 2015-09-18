@@ -136,7 +136,7 @@ describe Puppet::Util::Tagging do
     end
 
     it "protects against empty tags" do
-      expect { tagger.tags = "one,,two"}.to raise_error(/Invalid tag ''/)
+      expect { tagger.tags = "one,,two"}.to raise_error(/Invalid tag ""/)
     end
 
     it "takes an array of tags" do
