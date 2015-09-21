@@ -259,6 +259,14 @@ class Puppet::Parser::Resource < Puppet::Resource
     map.each { |name, value| self[name] = value if self[name].nil? }
   end
 
+  def offset
+    nil
+  end
+
+  def pos
+    nil
+  end
+
   private
 
   # Add default values from our definition.

@@ -25,13 +25,11 @@ describe 'the assert_type function' do
   it 'checks that first argument is a type' do
     expect do
       func.call({}, 10, 10)
-    end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
-"function 'assert_type' called with mis-matched arguments
-expected one of:
-  assert_type(Type type, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
-  assert_type(String type_string, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
-actual:
-  assert_type(Integer, Integer) - arg count {2}")))
+    end.to raise_error(ArgumentError, "'assert_type' expected one of:
+  (Type type, Any value, Callable[Type, Type] block?)
+    rejected: parameter 'type' expects a Type value, got Integer
+  (String type_string, Any value, Callable[Type, Type] block?)
+    rejected: parameter 'type_string' expects a String value, got Integer")
   end
 
   it 'allows the second arg to be undef/nil)' do

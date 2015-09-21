@@ -74,11 +74,7 @@ describe 'the 4x function api' do
   it 'an error is raised when calling a no arguments function with arguments' do
     f = create_noargs_function_class()
     func = f.new(:closure_scope, :loader)
-    expect{func.call({}, 'surprise')}.to raise_error(ArgumentError, "function 'test' called with mis-matched arguments
-expected:
-  test() - arg count {0}
-actual:
-  test(String) - arg count {1}")
+    expect{func.call({}, 'surprise')}.to raise_error(ArgumentError, "'test' expects no arguments, got 1")
   end
 
   it 'a simple function can be called' do
@@ -97,11 +93,7 @@ actual:
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
-    end.to raise_error(ArgumentError, "function 'min' called with mis-matched arguments
-expected:
-  min(#{signature}) - arg count {2}
-actual:
-  min(Integer) - arg count {1}")
+    end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 1")
   end
 
   it 'an error is raised if called with too many arguments' do
@@ -112,12 +104,7 @@ actual:
     signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
-    end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
-"function 'min' called with mis-matched arguments
-expected:
-  min(#{signature}) - arg count {2}
-actual:
-  min(Integer, Integer, Integer) - arg count {3}")))
+    end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 3")
   end
 
   it 'an error is raised if simple function-name and method are not matched' do
@@ -151,44 +138,22 @@ actual:
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
-        func.call({}, 10, 10, 10)
-      end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
-"function 'min' called with mis-matched arguments
-expected:
-  min(Numeric a, Numeric b) - arg count {2}
-actual:
-  min(Integer, Integer, Integer) - arg count {3}")))
+        func.call({}, 10, 'ten')
+      end.to raise_error(ArgumentError, "'min' parameter 'b' expects a Numeric value, got String")
     end
 
-    it 'an error includes optional indicators and count for last element' do
-      f = create_function_with_optionals_and_varargs()
-      # TODO: Bogus parameters, not yet used
-      func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
-      signature = 'Any x, Any y, Any a?, Any b?, Any c{0,}'
-      expect do
-        func.call({}, 10)
-      end.to raise_error(ArgumentError,
-"function 'min' called with mis-matched arguments
-expected:
-  min(#{signature}) - arg count {2,}
-actual:
-  min(Integer) - arg count {1}")
-    end
-
-    it 'an error includes optional indicators and count for last element when defined via dispatch' do
-      f = create_function_with_optionals_and_repeated_via_dispatch()
+    it 'an error includes optional indicators for last element' do
+      f = create_function_with_optionals_and_repeated_via_multiple_dispatch()
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
-        func.call({}, 10)
-      end.to raise_error(ArgumentError,
-"function 'min' called with mis-matched arguments
-expected:
-  min(Numeric x, Numeric y, Numeric a?, Numeric b?, Numeric c{0,}) - arg count {2,}
-actual:
-  min(Integer) - arg count {1}")
+        func.call({}, 3, 10, 3, "4")
+      end.to raise_error(ArgumentError, "'min' expected one of:
+  (Numeric x, Numeric y, Numeric a?, Numeric b?, Numeric c*)
+    rejected: parameter 'b' expects a Numeric value, got String
+  (String x, String y, String a+)
+    rejected: parameter 'x' expects a String value, got Integer")
     end
 
     it 'can create optional repeated parameter' do
@@ -210,12 +175,7 @@ actual:
       func = f.new(:closure_scope, :loader)
       expect(func.call({}, 1)).to eql(1)
       expect(func.call({}, 1, 2)).to eql(2)
-      expect { func.call({}) }.to raise_error(ArgumentError,
-"function 'count_args' called with mis-matched arguments
-expected:
-  count_args(Any c{1,}) - arg count {1,}
-actual:
-  count_args(Undef{0}) - arg count {0}")
+      expect { func.call({}) }.to raise_error(ArgumentError, "'count_args' expects at least 1 argument, got none")
     end
 
     it 'can create scope_param followed by repeated  parameter' do
@@ -256,14 +216,12 @@ actual:
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
-        func.call({}, 10, 10, 10)
-      end.to raise_error(ArgumentError,
-"function 'min' called with mis-matched arguments
-expected one of:
-  min(Numeric a, Numeric b) - arg count {2}
-  min(String s1, String s2) - arg count {2}
-actual:
-  min(Integer, Integer, Integer) - arg count {3}")
+        func.call({}, 10, '20')
+      end.to raise_error(ArgumentError, "'min' expected one of:
+  (Numeric a, Numeric b)
+    rejected: parameter 'b' expects a Numeric value, got String
+  (String s1, String s2)
+    rejected: parameter 's1' expects a String value, got Integer")
     end
 
     context 'can use injection' do
@@ -334,12 +292,7 @@ actual:
         the_function = create_function_with_required_block_all_defaults().new(:closure_scope, :loader)
         expect do
           the_function.call({}, 10)
-        end.to raise_error(ArgumentError,
-"function 'test' called with mis-matched arguments
-expected:
-  test(Integer x, Callable block) - arg count {2}
-actual:
-  test(Integer) - arg count {1}")
+        end.to raise_error(ArgumentError, "'test' expects a block")
       end
 
       it 'such that, an optional block can be defined and given as an argument' do
@@ -361,7 +314,7 @@ actual:
 
     context 'provides signature information' do
       it 'about capture rest (varargs)' do
-        fc = create_function_with_optionals_and_varargs
+        fc = create_function_with_optionals_and_repeated
         signatures = fc.signatures
         expect(signatures.size).to eql(1)
         signature = signatures[0]
@@ -369,14 +322,14 @@ actual:
       end
 
       it 'about optional and required parameters' do
-        fc = create_function_with_optionals_and_varargs
+        fc = create_function_with_optionals_and_repeated
         signature = fc.signatures[0]
         expect(signature.args_range).to eql( [2, Float::INFINITY ] )
         expect(signature.infinity?(signature.args_range[1])).to be_truthy
       end
 
       it 'about block not being allowed' do
-        fc = create_function_with_optionals_and_varargs
+        fc = create_function_with_optionals_and_repeated
         signature = fc.signatures[0]
         expect(signature.block_range).to eql( [ 0, 0 ] )
         expect(signature.block_type).to be_nil
@@ -582,7 +535,7 @@ actual:
     end
   end
 
-  def create_function_with_optionals_and_varargs
+  def create_function_with_optionals_and_repeated
     f = Puppet::Functions.create_function('min') do
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
@@ -600,6 +553,39 @@ actual:
         repeated_param 'Numeric', :c
       end
       def min(x,y,a=1, b=1, *c)
+        x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_optionals_and_repeated_via_multiple_dispatch
+    f = Puppet::Functions.create_function('min') do
+      dispatch :min do
+        param 'Numeric', :x
+        param 'Numeric', :y
+        optional_param 'Numeric', :a
+        optional_param 'Numeric', :b
+        repeated_param 'Numeric', :c
+      end
+      dispatch :min do
+        param 'String', :x
+        param 'String', :y
+        required_repeated_param 'String', :a
+      end
+      def min(x,y,a=1, b=1, *c)
+        x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_required_repeated_via_dispatch
+    f = Puppet::Functions.create_function('min') do
+      dispatch :min do
+        param 'Numeric', :x
+        param 'Numeric', :y
+        required_repeated_param 'Numeric', :z
+      end
+      def min(x,y, *z)
         x <= y ? x : y
       end
     end

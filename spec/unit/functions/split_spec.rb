@@ -21,11 +21,11 @@ describe 'the split function' do
   let(:type_parser) { Puppet::Pops::Types::TypeParser.new }
 
   it 'should raise an Error if there is less than 2 arguments' do
-    expect { split('a,b') }.to raise_error(/called with mis-matched arguments/)
+    expect { split('a,b') }.to raise_error(/'split' expects 2 arguments, got 1/)
   end
 
   it 'should raise an Error if there is more than 2 arguments' do
-    expect { split('a,b','foo', 'bar') }.to raise_error(/called with mis-matched arguments/)
+    expect { split('a,b','foo', 'bar') }.to raise_error(/'split' expects 2 arguments, got 3/)
   end
 
   it 'should raise a RegexpError if the regexp is malformed' do

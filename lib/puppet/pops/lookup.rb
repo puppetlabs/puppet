@@ -78,7 +78,7 @@ module Puppet::Pops::Lookup
     scope = lookup_invocation.scope
     Puppet::DataBinding.indirection.find(key, { :environment => scope.environment.to_s, :variables => scope, :merge => merge })
   rescue Puppet::DataBinding::LookupError => e
-    raise Puppet::Error, "Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e
+    raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
   end
   private_class_method :lookup_with_databinding
 

@@ -150,18 +150,16 @@
 # - Since 4.0.0
 Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) do
   name_t = 'Variant[String,Array[String]]'
-  value_type_t = 'Optional[Type]'
+  value_type_t = 'Type'
   default_value_t = 'Any'
-  override_t = 'Optional[Hash[String,Any]]'
-  default_values_hash_t = 'Optional[Hash[String,Any]]'
-  merge_t = 'Optional[Variant[String[1],Hash[String,Scalar]]]'
+  merge_t = 'Variant[String[1],Hash[String,Scalar]]'
   block_t = "Callable[#{name_t}]"
   option_pairs =
-      "value_type=>#{value_type_t},"\
+      "value_type=>Optional[#{value_type_t}],"\
       "default_value=>Optional[#{default_value_t}],"\
-      "override=>#{override_t},"\
-      "default_values_hash=>#{default_values_hash_t},"\
-      "merge=>#{merge_t}"\
+      "override=>Optional[Hash[String,Any]],"\
+      "default_values_hash=>Optional[Hash[String,Any]],"\
+      "merge=>Optional[#{merge_t}]"
 
   dispatch :lookup_1 do
     scope_param
@@ -172,10 +170,10 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
 
   dispatch :lookup_2 do
     scope_param
-    param  name_t,         :name
-    param  value_type_t,   :value_type
-    param  merge_t,        :merge
-    param default_value_t, :default_value
+    param name_t,                     :name
+    param "Optional[#{value_type_t}]", :value_type
+    param "Optional[#{merge_t}]",      :merge
+    param default_value_t,            :default_value
   end
 
   dispatch :lookup_3 do

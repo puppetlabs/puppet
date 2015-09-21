@@ -6,6 +6,7 @@ require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
 require 'puppet/loaders'
+require 'puppet/pops'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -16,6 +17,7 @@ class Puppet::Parser::Compiler
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
+  include Puppet::Pops::Evaluator::Runtime3Support
 
   def self.compile(node)
     $env_module_directories = nil
@@ -445,9 +447,16 @@ class Puppet::Parser::Compiler
   def evaluate_definitions
     exceptwrap do
       Puppet::Util::Profiler.profile("Evaluated definitions", [:compiler, :evaluate_definitions]) do
-        !unevaluated_resources.each do |resource|
-          resource.evaluate
-        end.empty?
+        urs = unevaluated_resources.each do |resource|
+         begin
+            resource.evaluate
+          rescue Puppet::Error => e
+            # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
+            # call stack instead
+            fail(Puppet::Pops::Issues::RUNTIME_ERROR, resource, {:detail => e.message}, e.original || e)
+          end
+        end
+        !urs.empty?
       end
     end
   end
@@ -502,8 +511,7 @@ class Puppet::Parser::Compiler
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
     if !remaining.empty?
-      fail Puppet::ParseError,
-        "Could not find resource(s) #{remaining.join(', ')} for overriding"
+      raise Puppet::ParseError, "Could not find resource(s) #{remaining.join(', ')} for overriding"
     end
   end
 
@@ -690,5 +698,5 @@ class Puppet::Parser::Compiler
     unless activate_binder()
       raise Puppet::DevError, "The Puppet Binder was not activated"
     end
-  end
+  end  # Creates a diagnostic producer
 end

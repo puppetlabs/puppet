@@ -21,11 +21,11 @@ describe "the versioncmp function" do
   let(:type_parser) { Puppet::Pops::Types::TypeParser.new }
 
   it 'should raise an Error if there is less than 2 arguments' do
-    expect { versioncmp('a,b') }.to raise_error(/called with mis-matched arguments/)
+    expect { versioncmp('a,b') }.to raise_error(/expects 2 arguments, got 1/)
   end
 
   it 'should raise an Error if there is more than 2 arguments' do
-    expect { versioncmp('a,b','foo', 'bar') }.to raise_error(/called with mis-matched arguments/)
+    expect { versioncmp('a,b','foo', 'bar') }.to raise_error(/expects 2 arguments, got 3/)
   end
 
   it "should call Puppet::Util::Package.versioncmp (included in scope)" do

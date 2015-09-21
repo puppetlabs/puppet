@@ -2,7 +2,11 @@ require 'spec_helper'
 require 'puppet/pops'
 
 describe Puppet::Pops::LabelProvider do
-  let(:labeler) { Puppet::Pops::LabelProvider.new }
+  class TestLabelProvider
+    include Puppet::Pops::LabelProvider
+  end
+
+  let(:labeler) { TestLabelProvider.new }
 
   it "prefixes words that start with a vowel with an 'an'" do
     expect(labeler.a_an('owl')).to eq('an owl')
