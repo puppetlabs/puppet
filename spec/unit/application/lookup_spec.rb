@@ -17,7 +17,7 @@ describe Puppet::Application::Lookup do
     it "errors if no node was given via the --node flag" do
       lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
 
-      expected_error = "No node was given via the '--node' flag for the scope of the lookup."
+      expected_error = "No node was given via the '--node' flag for the scope of the lookup.\nRun 'puppet lookup --help' for more details"
 
       expect{ lookup.run_command }.to raise_error(RuntimeError, expected_error)
     end
