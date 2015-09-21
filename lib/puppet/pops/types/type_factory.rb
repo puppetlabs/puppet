@@ -119,11 +119,13 @@ module Puppet::Pops::Types::TypeFactory
           s = key_type
         when Types::POptionalType
           s = key_type.optional_type
-        else
+        when Types::PStringType, Types::PEnumType
           s = key_type
+        else
+          raise ArgumentError, "Illegal Struct member key type. Expected NotUndef, Optional, String, or Enum. Got: #{key_type.class.name}"
         end
         unless (s.is_a?(Puppet::Pops::Types::PStringType) || s.is_a?(Puppet::Pops::Types::PEnumType)) && s.values.size == 1 && !s.values[0].empty?
-          raise ArgumentError, 'Unable to extract a non-empty literal string from Struct member key type' if key_type.empty?
+          raise ArgumentError, "Unable to extract a non-empty literal string from Struct member key type #{tc.string(key_type)}"
         end
       end
       Types::PStructElement.new(key_type, value_type)

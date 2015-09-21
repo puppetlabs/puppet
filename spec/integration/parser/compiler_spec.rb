@@ -659,7 +659,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass b to Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass 'b' to Class[Foo]")
     end
 
     it "should fail if invalid parameters are passed" do
@@ -1456,7 +1456,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x) { }
             foo { 'test': x =>'say friend' }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/expected Integer, actual String/)
       end
 
       it 'denies undef for a non-optional type' do
@@ -1465,7 +1465,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x) { }
             foo { 'test': x => undef }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/expected Integer, actual Undef/)
       end
 
       it 'denies non type compliant default argument' do
@@ -1474,7 +1474,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x = 'pow') { }
             foo { 'test':  }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/expected Integer, actual String/)
       end
 
       it 'denies undef as the default for a non-optional type' do
@@ -1483,7 +1483,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x = undef) { }
             foo { 'test':  }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/expected Integer, actual Undef/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -1504,7 +1504,7 @@ describe Puppet::Parser::Compiler do
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
-        end.to raise_error(/got Struct\[\{'b'=>Integer, 'c'=>String\}\]/)
+        end.to raise_error(/actual Struct\[\{'b'=>Integer, 'c'=>String\}\]/)
       end
     end
 
@@ -1542,7 +1542,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x) { }
             class { 'foo': x =>'say friend' }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/expected Integer, actual String/)
       end
 
       it 'denies undef for a non-optional type' do
@@ -1551,7 +1551,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x) { }
             class { 'foo': x => undef }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/expected Integer, actual Undef/)
       end
 
       it 'denies non type compliant default argument' do
@@ -1560,7 +1560,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x = 'pow') { }
             class { 'foo':  }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/expected Integer, actual String/)
       end
 
       it 'denies undef as the default for a non-optional type' do
@@ -1569,7 +1569,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x = undef) { }
             class { 'foo':  }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/expected Integer, actual Undef/)
       end
 
       it 'accepts a Resource as a Type' do

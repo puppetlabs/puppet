@@ -11,8 +11,11 @@ class Puppet::Resource
   include Puppet::Util::Tagging
 
   include Enumerable
-  attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
+  attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
   attr_reader :type, :title
+
+  # @deprecated
+  attr_accessor :validate_parameters
 
   require 'puppet/indirector'
   extend Puppet::Indirector
@@ -421,74 +424,11 @@ class Puppet::Resource
   end
   private :missing_arguments
 
-  # Consult external data bindings for class parameter values which must be
-  # namespaced in the backend.
-  #
-  # Example:
-  #
-  #   class foo($port=0){ ... }
-  #
-  # We make a request to the backend for the key 'foo::port' not 'foo'
-  #
-  def lookup_external_default_for(param, scope)
-    # Only lookup parameters for host classes
-    return nil unless resource_type.type == :hostclass
-
-    name = "#{resource_type.name}::#{param}"
-    in_global = lambda { lookup_with_databinding(name, scope) }
-    in_env = lambda { lookup_in_environment(name, scope) }
-    in_module = lambda { lookup_in_module(name, scope) }
-    search(in_global, in_env, in_module)
-  end
-
-  def search(*search_functions)
-    search_functions.each {|f| x = f.call(); return x unless x.nil? }
-    nil
-  end
-
-  private :lookup_external_default_for
-
-  def lookup_with_databinding(name, scope)
-    begin
-      found = false
-      value = catch(:no_such_key) do
-        v = Puppet::DataBinding.indirection.find(
-          name,
-          :environment => scope.environment.to_s,
-          :variables => scope)
-        found = true
-        v
-      end
-      found ? value : nil
-    rescue Puppet::DataBinding::LookupError => e
-      raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
-    end
-  end
-  private :lookup_with_databinding
-
-  def lookup_in_environment(name, scope)
-    found = false
-    value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
-      found = true
-      v
-    end
-    found ? value : nil
-  end
-  private :lookup_in_environment
-
-  def lookup_in_module(name, scope)
-    found = false
-    value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_module(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
-      found = true
-      v
-    end
-    found ? value : nil
-  end
-  private :lookup_in_module
-
+  # @deprecated Not used by Puppet
+  # @api private
   def set_default_parameters(scope)
+    Puppet.deprecation_warning('The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet.')
+
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
@@ -496,7 +436,9 @@ class Puppet::Resource
     end
 
     missing_arguments.collect do |param, default|
-      external_value = lookup_external_default_for(param, scope)
+      # Using 'send' since this private method moved from here to type. The caller method is deprecated
+      # and doesn't really motivate making the callee public
+      external_value = resource_type.send(:lookup_external_default_for, param, scope)
 
       if external_value.nil? && default.nil?
         next
@@ -523,7 +465,12 @@ class Puppet::Resource
   # have been provided with defaults.
   # Must be called after 'set_default_parameters'.  We can't join the methods
   # because Type#set_parameters needs specifically ordered behavior.
+  #
+  # @deprecated Not used by Puppet
+  # @api private
   def validate_complete
+    Puppet.deprecation_warning('The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet.')
+
     return unless resource_type and resource_type.respond_to?(:arguments)
 
     resource_type.arguments.each do |param, default|
