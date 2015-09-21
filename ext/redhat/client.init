@@ -18,8 +18,10 @@ export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=/var/lock/subsys/puppet
-pidfile=/var/run/puppetlabs/agent.pid
+piddir=/var/run/puppetlabs
+pidfile=${piddir}/agent.pid
 puppetd=/opt/puppetlabs/puppet/bin/puppet
+pid=$(cat $pidfile 2> /dev/null)
 RETVAL=0
 
 PUPPET_OPTS="agent "
@@ -29,6 +31,7 @@ PUPPET_OPTS="agent "
 if status | grep -q -- '-p' 2>/dev/null; then
     daemonopts="--pidfile $pidfile"
     pidopts="-p $pidfile"
+    USEINITFUNCTIONS=true
 fi
 
 # Figure out if the system just booted. Let's assume
@@ -38,6 +41,7 @@ fi
 
 start() {
     echo -n $"Starting puppet agent: "
+    mkdir -p $piddir
     daemon $daemonopts $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
     RETVAL=$?
     echo
@@ -47,16 +51,33 @@ start() {
 
 stop() {
     echo -n $"Stopping puppet agent: "
-    killproc $pidopts $puppetd
-    RETVAL=$?
+    if [ "$USEINITFUNCTIONS" = "true" ]; then
+      killproc $pidopts $puppetd
+      RETVAL=$?
+    else
+      if [ -n "${pid}" ]; then
+        kill -TERM $pid >/dev/null 2>&1
+        RETVAL=$?
+      fi
+    fi
     echo
     [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+    return $RETVAL
 }
 
 reload() {
     echo -n $"Restarting puppet agent: "
-    killproc $pidopts $puppetd -HUP
-    RETVAL=$?
+    if [ "$USEINITFUNCTIONS" = "true" ]; then
+      killproc $pidopts $puppetd -HUP
+      RETVAL=$?
+    else
+      if [ -n "${pid}" ]; then
+        kill -HUP $pid >/dev/null 2>&1
+        RETVAL=$?
+      else
+        RETVAL=0
+      fi
+    fi
     echo
     return $RETVAL
 }
@@ -67,9 +88,33 @@ restart() {
 }
 
 rh_status() {
-    status $pidopts $puppetd
-    RETVAL=$?
-    return $RETVAL
+    base=puppet
+    if [ "$USEINITFUNCTIONS" = "true" ]; then
+      status $pidopts $puppetd
+      RETVAL=$?
+      return $RETVAL
+    else
+      if [ -n "${pid}" ]; then
+        if `ps -p $pid | grep $pid > /dev/null 2>&1`; then
+          echo "${base} (pid ${pid}) is running..."
+          RETVAL=0
+          return $RETVAL
+        fi
+      fi
+      if [ -f "${pidfile}" ] ; then
+        echo "${base} dead but pid file exists"
+        RETVAL=1
+        return $RETVAL
+      fi
+      if [ -f "${lockfile}" ]; then
+        echo "${base} dead but subsys locked"
+        RETVAL=2
+        return $RETVAL
+      fi
+      echo "${base} is stopped"
+      RETVAL=3
+      return $RETVAL
+    fi
 }
 
 rh_status_q() {
