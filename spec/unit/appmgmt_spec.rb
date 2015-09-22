@@ -46,7 +46,7 @@ describe "Application instantiation" do
 
       application app {
         prod { one: host => ahost, export => Cap[cap] }
-        cons { two: consume => Cap[cap] }
+        cons { two: host => ahost, consume => Cap[cap] }
       }
 
       app { anapp:

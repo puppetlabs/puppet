@@ -41,6 +41,7 @@ module Puppet
     require 'puppet/pops/types/type_parser'
     require 'puppet/pops/types/class_loader'
     require 'puppet/pops/types/enumeration'
+    require 'puppet/pops/types/type_mismatch_describer'
 
     require 'puppet/pops/merge_strategy'
 
@@ -83,6 +84,22 @@ module Puppet
       end
     end
 
+    module Evaluator
+      require 'puppet/pops/evaluator/callable_signature'
+      require 'puppet/pops/evaluator/runtime3_converter'
+      require 'puppet/pops/evaluator/runtime3_support'
+      require 'puppet/pops/evaluator/evaluator_impl'
+      require 'puppet/pops/evaluator/epp_evaluator'
+      require 'puppet/pops/evaluator/collector_transformer'
+      require 'puppet/pops/evaluator/puppet_proc'
+      module Collectors
+        require 'puppet/pops/evaluator/collectors/abstract_collector'
+        require 'puppet/pops/evaluator/collectors/fixed_set_collector'
+        require 'puppet/pops/evaluator/collectors/catalog_collector'
+        require 'puppet/pops/evaluator/collectors/exported_collector'
+      end
+    end
+
     module Parser
       require 'puppet/pops/parser/eparser'
       require 'puppet/pops/parser/parser_support'
@@ -97,23 +114,6 @@ module Puppet
     module Validation
       require 'puppet/pops/validation/checker4_0'
       require 'puppet/pops/validation/validator_factory_4_0'
-    end
-
-    module Evaluator
-      require 'puppet/pops/evaluator/callable_signature'
-      require 'puppet/pops/evaluator/runtime3_converter'
-      require 'puppet/pops/evaluator/runtime3_support'
-      require 'puppet/pops/evaluator/evaluator_impl'
-      require 'puppet/pops/evaluator/epp_evaluator'
-      require 'puppet/pops/evaluator/callable_mismatch_describer'
-      require 'puppet/pops/evaluator/collector_transformer'
-      require 'puppet/pops/evaluator/puppet_proc'
-      module Collectors
-        require 'puppet/pops/evaluator/collectors/abstract_collector'
-        require 'puppet/pops/evaluator/collectors/fixed_set_collector'
-        require 'puppet/pops/evaluator/collectors/catalog_collector'
-        require 'puppet/pops/evaluator/collectors/exported_collector'
-      end
     end
 
     # Subsystem for puppet functions defined in ruby.

@@ -659,7 +659,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass b to Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: expects a value for parameter 'b'/)
     end
 
     it "should fail if invalid parameters are passed" do
@@ -667,7 +667,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Invalid parameter: '3' on Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: has no parameter named '3'/)
     end
 
     it "should ensure class is in catalog without params" do
@@ -1456,7 +1456,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x) { }
             foo { 'test': x =>'say friend' }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/Foo\[test\]: parameter 'x' expects an Integer value, got String/)
       end
 
       it 'denies undef for a non-optional type' do
@@ -1465,7 +1465,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x) { }
             foo { 'test': x => undef }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/Foo\[test\]: parameter 'x' expects an Integer value, got Undef/)
       end
 
       it 'denies non type compliant default argument' do
@@ -1474,7 +1474,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x = 'pow') { }
             foo { 'test':  }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/Foo\[test\]: parameter 'x' expects an Integer value, got String/)
       end
 
       it 'denies undef as the default for a non-optional type' do
@@ -1483,7 +1483,7 @@ describe Puppet::Parser::Compiler do
             define foo(Integer $x = undef) { }
             foo { 'test':  }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/Foo\[test\]: parameter 'x' expects an Integer value, got Undef/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -1504,7 +1504,7 @@ describe Puppet::Parser::Compiler do
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
-        end.to raise_error(/got Struct\[\{'b'=>Integer, 'c'=>String\}\]/)
+        end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' has no 'c' key/m)
       end
     end
 
@@ -1542,7 +1542,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x) { }
             class { 'foo': x =>'say friend' }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got String/)
       end
 
       it 'denies undef for a non-optional type' do
@@ -1551,7 +1551,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x) { }
             class { 'foo': x => undef }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got Undef/)
       end
 
       it 'denies non type compliant default argument' do
@@ -1560,7 +1560,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x = 'pow') { }
             class { 'foo':  }
           MANIFEST
-        end.to raise_error(/type Integer, got String/)
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got String/)
       end
 
       it 'denies undef as the default for a non-optional type' do
@@ -1569,7 +1569,7 @@ describe Puppet::Parser::Compiler do
             class foo(Integer $x = undef) { }
             class { 'foo':  }
           MANIFEST
-        end.to raise_error(/type Integer, got Undef/)
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got Undef/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -1636,7 +1636,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with(1) |String $x| { }
           MANIFEST
-        end.to raise_error(/expected.*String.*actual.*Integer/m)
+        end.to raise_error(/block parameter 'x' expects a String value, got Integer/m)
       end
 
       it 'denies non-type-compliant, slurped arguments' do
@@ -1644,7 +1644,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with(1, "hello") |Integer *$x| { }
           MANIFEST
-        end.to raise_error(/called with mis-matched arguments.*expected.*Integer.*actual.*Integer, String/m)
+        end.to raise_error(/block parameter 'x' expects an Integer value, got String/m)
       end
 
       it 'denies non-type-compliant default argument' do
@@ -1652,7 +1652,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with(1) |$x, String $defaulted = 1| { notify { "${$x + $defaulted}": }}
           MANIFEST
-        end.to raise_error(/expected.*Any.*String.*actual.*Integer.*Integer/m)
+        end.to raise_error(/block parameter 'defaulted' expects a String value, got Integer/m)
       end
 
       it 'raises an error when a default argument value is an incorrect type and there are no arguments passed' do
@@ -1660,7 +1660,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with() |String $defaulted = 1| {}
           MANIFEST
-        end.to raise_error(/expected.*String.*actual.*Integer/m)
+        end.to raise_error(/block parameter 'defaulted' expects a String value, got Integer/m)
       end
 
       it 'raises an error when the default argument for a slurped parameter is an incorrect type' do
@@ -1668,7 +1668,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with() |String *$defaulted = 1| {}
           MANIFEST
-        end.to raise_error(/expected.*String.*actual.*Integer/m)
+        end.to raise_error(/block parameter 'defaulted' expects a String value, got Integer/m)
       end
 
       it 'allows using an array as the default slurped value' do
@@ -1700,7 +1700,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with() |Array[String, 2] *$defaulted = hi| { }
           MANIFEST
-        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
+        end.to raise_error(/block expects at least 2 arguments, got 1/m)
       end
 
       it 'raises an error when the number of passed values does not match the parameter\'s size specification' do
@@ -1708,7 +1708,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with(hi) |Array[String, 2] *$passed| { }
           MANIFEST
-        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
+        end.to raise_error(/block expects at least 2 arguments, got 1/m)
       end
 
       it 'matches when the number of arguments passed for a slurp parameter match the size specification' do
@@ -1727,7 +1727,7 @@ describe Puppet::Parser::Compiler do
           compile_to_catalog(<<-MANIFEST)
             with(hi, bye) |Array[String, 1, 1] *$passed| { }
           MANIFEST
-        end.to raise_error(/expected.*arg count \{1\}.*actual.*arg count \{2\}/m)
+        end.to raise_error(/block expects 1 argument, got 2/m)
       end
 
       it 'allows passing slurped arrays by specifying an array of arrays' do

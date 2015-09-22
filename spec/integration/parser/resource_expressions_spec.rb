@@ -167,15 +167,15 @@ describe "Puppet resource expressions" do
     produces("notify{title:}; Notify[title] { * => { message => set}}" => "Notify[title][message] == 'set'")
     produces("Notify { * => { message => set}}; notify{title:}"      => "Notify[title][message] == 'set'")
 
-    fails("notify { title: unknown => value }" => /Invalid parameter: 'unknown'/)
+    fails("notify { title: unknown => value }" => /no parameter named 'unknown'/)
 
     # this really needs to be a better error message.
-    fails("notify { title: * => { hash => value }, message => oops }" => /Invalid parameter: 'hash'/)
+    fails("notify { title: * => { hash => value }, message => oops }" => /no parameter named 'hash'/)
 
     # should this be a better error message?
-    fails("notify { title: message => oops, * => { hash => value } }" => /Invalid parameter: 'hash'/)
+    fails("notify { title: message => oops, * => { hash => value } }" => /no parameter named 'hash'/)
 
-    fails("notify { title: * => { unknown => value } }" => /Invalid parameter: 'unknown'/)
+    fails("notify { title: * => { unknown => value } }" => /no parameter named 'unknown'/)
     fails("
          $x = { mode => '0666' }
          $y = { owner => the_y }

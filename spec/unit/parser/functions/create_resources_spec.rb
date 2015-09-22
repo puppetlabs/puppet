@@ -103,7 +103,7 @@ describe 'function for dynamically creating resources' do
 
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.to raise_error(Puppet::Error, 'Must pass one to Foocreateresource[blah] on node foonode')
+      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one' on node foonode/)
     end
 
     it 'should be able to add multiple defines' do

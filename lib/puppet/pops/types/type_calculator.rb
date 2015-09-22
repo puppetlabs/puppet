@@ -150,6 +150,8 @@ class Puppet::Pops::Types::TypeCalculator
     singleton.enumerable(t)
   end
 
+  # @return [TypeCalculator] the singleton instance
+  #
   # @api private
   def self.singleton
     @tc_instance ||= new

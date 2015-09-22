@@ -1,7 +1,9 @@
 # A provider of labels for bindings model object, producing a human name for the model object.
 # @api private
 #
-class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
+class Puppet::Pops::Binder::BindingsLabelProvider
+  include Puppet::Pops::LabelProvider
+
   def initialize
     @@label_visitor ||= Puppet::Pops::Visitor.new(self,"label",0,0)
   end

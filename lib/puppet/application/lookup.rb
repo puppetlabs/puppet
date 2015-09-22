@@ -64,12 +64,20 @@ class Puppet::Application::Lookup < Puppet::Application
     end
   end
 
+  def setup
+    # This sets up logging based on --debug or --verbose if they are set in `options`
+    set_log_level
+
+    # This uses console for everything that is not a compilation
+    Puppet::Util::Log.newdestination(:console)
+  end
+
   def main
     keys = command_line.args
     raise 'No keys were given to lookup.' if keys.empty?
 
     unless options[:node]
-      raise "No node was given via the '--node' flag for the scope of the lookup."
+      raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
     end
 
     if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:unpack_arrays]) && options[:merge] != 'deep'

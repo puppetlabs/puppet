@@ -29,6 +29,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # is up to date.
   attr_accessor :version
 
+  # The id of the code input to the compiler.
+  attr_accessor :code_id
+
   # How long this catalog took to retrieve.  Used for reporting stats.
   attr_accessor :retrieval_duration
 
@@ -351,6 +354,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.version = version
     end
 
+    if code_id = data['code_id']
+      result.code_id = code_id
+    end
+
     if environment = data['environment']
       result.environment = environment
       result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
@@ -391,6 +398,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'tags'      => tags,
       'name'      => name,
       'version'   => version,
+      'code_id'   => code_id,
       'environment' => environment.to_s,
       'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
       'edges'     => edges.   collect { |e| e.to_data_hash },

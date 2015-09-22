@@ -58,6 +58,7 @@ escaping is still used/supported.
       ],
       "name": "elmo.mydomain.com",
       "version": 1377473054,
+      "code_id": null,
       "environment": "production",
       "resources": [
         {

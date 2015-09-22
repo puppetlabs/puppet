@@ -1,6 +1,7 @@
 # Utility module for type assertion
 #
-module Puppet::Pops::Types::TypeAsserter
+module Puppet::Pops::Types
+module TypeAsserter
   # Asserts that a type_to_check is assignable to required_type and raises
   # a {Puppet::ParseError} if that's not the case
   #
@@ -9,8 +10,9 @@ module Puppet::Pops::Types::TypeAsserter
   # @param type_to_check [PAnyType] Type to check against the required type
   # @return The type_to_check argument
   #
+  # @api public
   def self.assert_assignable(subject, expected_type, type_to_check)
-    check_assignability(Puppet::Pops::Types::TypeCalculator.singleton, subject, expected_type, type_to_check)
+    report_type_mismatch(subject, expected_type, type_to_check) unless expected_type.assignable?(type_to_check)
     type_to_check
   end
 
@@ -23,23 +25,22 @@ module Puppet::Pops::Types::TypeAsserter
   # @param nil_ok [Boolean] Can be true to allow nil value. Optional and defaults to false
   # @return The value argument
   #
+  # @api public
   def self.assert_instance_of(subject, expected_type, value, nil_ok = false)
     unless value.nil? && nil_ok
-      tc = Puppet::Pops::Types::TypeCalculator.singleton
-      check_assignability(tc, subject, expected_type, tc.infer_set(value), true)
+      report_type_mismatch(subject, expected_type, TypeCalculator.singleton.infer_set(value).generalize) unless expected_type.instance?(value)
     end
     value
   end
 
-  def self.check_assignability(tc, subject, expected_type, actual_type, inferred = false)
-    unless tc.assignable?(expected_type, actual_type)
-      # Do not give all the details for inferred types - i.e. format as Integer, instead of Integer[n, n] for exact
-      # value, which is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output).
-      #
-      actual_type = Puppet::Pops::Types::TypeCalculator.generalize(actual_type) if inferred
-      raise Puppet::Pops::Types::TypeAssertionError.new(
-        "#{subject} value has wrong type, expected #{tc.string(expected_type)}, actual #{tc.string(actual_type)}", expected_type, actual_type)
-    end
+  def self.report_type_mismatch(subject, expected_type, actual_type)
+    # Do not give all the details for inferred types - i.e. format as Integer, instead of Integer[n, n] for exact
+    # value, which is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output).
+    #
+    raise TypeAssertionError.new(
+        "#{subject} value has wrong type, expected #{expected_type}, actual #{actual_type}", expected_type, actual_type)
   end
-  private_class_method :check_assignability
+  private_class_method :report_type_mismatch
 end
+end
+

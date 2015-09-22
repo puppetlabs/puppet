@@ -633,7 +633,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Must pass b to Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: expects a value for parameter 'b'/)
     end
 
     it "should fail if invalid parameters are passed" do
@@ -641,7 +641,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {})
       @compiler.topscope.known_resource_types.add klass
-      expect { @compiler.compile }.to raise_error(Puppet::ParseError, "Invalid parameter: '3' on Class[Foo]")
+      expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: has no parameter named '3'/)
     end
 
     it "should ensure class is in catalog without params" do

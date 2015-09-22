@@ -80,13 +80,13 @@ describe "the epp function" do
     it "raises an error when the passed value does not match the parameter's type" do
       expect do
         eval_template_with_args("<%-|Integer $x|-%><%= $x %>", 'x' => 'incorrect')
-      end.to raise_error(/expected.*Integer.*actual.*String/m)
+      end.to raise_error(/block parameter 'x' expects an Integer value, got String/)
     end
 
     it "raises an error when the default value does not match the parameter's type" do
       expect do
         eval_template("<%-|Integer $x = 'nope'|-%><%= $x %>")
-      end.to raise_error(/expected.*Integer.*actual.*String/m)
+      end.to raise_error(/block parameter 'x' expects an Integer value, got String/)
     end
 
     it "allows an parameter to default to undef" do

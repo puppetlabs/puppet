@@ -658,7 +658,7 @@ class Type
   def []=(name,value)
     name = name.intern
 
-    fail("Invalid parameter #{name}") unless self.class.validattr?(name)
+    fail("no parameter named '#{name}'") unless self.class.validattr?(name)
 
     if name == :name && nv = name_var
       name = nv
@@ -1865,7 +1865,7 @@ end
   def self.providify
     return if @paramhash.has_key? :provider
 
-    newparam(:provider) do
+    param = newparam(:provider) do
       # We're using a hacky way to get the name of our type, since there doesn't
       # seem to be a correct way to introspect this at the time this code is run.
       # We expect that the class in which this code is executed will be something
@@ -1925,7 +1925,8 @@ end
           provider
         end
       end
-    end.parenttype = self
+    end
+    param.parenttype = self
   end
 
   # @todo this needs a better explanation

@@ -2,6 +2,9 @@ test_name 'AIX Service Provider Testing'
 
 confine :to, :platform =>  'aix'
 
+require 'puppet/acceptance/service_utils'
+extend Puppet::Acceptance::ServiceUtils
+
 sloth_daemon_script = <<SCRIPT
 #!/usr/bin/env sh
 while true; do sleep 1; done
@@ -41,24 +44,6 @@ def assert_service_status(host, service, expected_status)
     assert_match(/#{expected_output}\Z/, actual_output,
         "Service is not actually #{expected_status}")
   end
-end
-
-def ensure_service_on_host(host, service, property, value)
-  manifest =<<MANIFEST
-service { '#{service}':
-  #{property} => '#{value}'
-}
-MANIFEST
-  # the process of creating the service will also start it
-  # to avoid a flickering test from the race condition, this test will ensure
-  # that the exit code is either
-  #   2 => something changed, or
-  #   0 => no change needed
-  on host, puppet_apply(['--detailed-exitcodes', '--verbose']),
-    {:stdin => manifest, :acceptable_exit_codes => [0, 2]}
-  # ensure idempotency
-  on host, puppet_apply(['--detailed-exitcodes', '--verbose']),
-    {:stdin => manifest, :acceptable_exit_codes => [0]}
 end
 
 agents.each do |agent|
