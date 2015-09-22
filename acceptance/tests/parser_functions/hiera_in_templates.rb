@@ -231,7 +231,7 @@ class #{@module_name}::mod_fqdn {
 
 file { "#{moduledir}/templates/hieratest_results_epp.epp":
   content => "
-hiera('message'): <%= hiera('message') %> 
+hiera('message'): <%= hiera('message') %>
 hiera('hash_value'): <%= hiera('hash_value') %>
 hiera('includes'): <%= hiera('includes') %>
 hiera_array('message'): <%= hiera_array('message') %>
@@ -296,14 +296,14 @@ with_puppet_running_on master, @master_opts, @coderoot do
       /#{@h_h_call}.*\"#{@k3}\"=>\"#{@hval3p}\"/,
       result,
       "#{@h_h_call} failed. Expected: '\"#{@k3}\"=>\"#{@hval3p}\"'"
-    ) 
+    )
 
     step "Verifying hiera() call #3."
     assert_match(
       /#{@h_h_call}.*\"#{@k2}\"=>\"#{@hval2p}\"/,
       result,
       "#{@h_h_call} failed. Expected: '\"#{@k2}\"=>\"#{@hval2p}\"'"
-    ) 
+    )
 
     step "Verifying hiera() call #4."
     assert_match(
@@ -336,14 +336,14 @@ with_puppet_running_on master, @master_opts, @coderoot do
     step "Verifying hiera_hash() call. #2"
     assert_match(
       /#{@hh_h_call}:.*\"#{@k2}\"=>\"#{@hval2p}\"/,
-      result, 
+      result,
       "#{@hh_h_call} failed. Expected: '\"#{@k2}\"=>\"#{@hval2p}\"'"
     )
 
     step "Verifying hiera_hash() call. #3"
     assert_match(
       /#{@hh_h_call}:.*\"#{@k1}\"=>\"#{@hval1os}\"/,
-      result, 
+      result,
       "#{@hh_h_call} failed.  Expected: '\"#{@k1}\"=>\"#{@hval1os}\"'"
     )
 
@@ -361,7 +361,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     step "Verifying hiera_include() call. #2"
     assert_match(
       "#{@mod_osfamily_msg}",
-      result, 
+      result,
       "#{@hi_i_call} failed.  Expected: '#{@mod_osfamily_msg}'"
     )
 
