@@ -104,7 +104,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   # Evaluates the site - the top container for the environment catalog
-  # The site contain behaves analogous to a node - for the environment catalog node expressions are ignored
+  # The site contain behaves analogous to a node - for the environment catalog, node expressions are ignored
   # as the result is cross node. The site expression serves as a container for everything that is across
   # all nodes.
   #
