@@ -295,4 +295,35 @@ describe Puppet::Settings::FileSetting do
       filesetting.munge(':memory:').should == ':memory:'
     end
   end
+
+  context "when opening", :unless => Puppet.features.microsoft_windows? do
+    let(:path) do
+      tmpfile('file_setting_spec')
+    end
+
+    let(:setting) do
+      settings = mock("settings", :value => path)
+      FileSetting.new(:name => :mysetting, :desc => "creates a file", :settings => settings)
+    end
+
+    it "creates a file with mode 0640" do
+      setting.mode = '0640'
+
+      expect(File).to_not be_exist(path)
+      setting.open('w')
+
+      expect(File).to be_exist(path)
+      expect(Puppet::FileSystem.stat(path).mode & 0777).to eq(0640)
+    end
+
+    it "preserves the mode of an existing file" do
+      setting.mode = '0640'
+
+      Puppet::FileSystem.touch(path)
+      Puppet::FileSystem.chmod(0644, path)
+      setting.open('w')
+
+      expect(Puppet::FileSystem.stat(path).mode & 0777).to eq(0644)
+    end
+  end
 end
