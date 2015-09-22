@@ -12,22 +12,24 @@ module Puppet
 
     attr_accessor :source, :local
     desc <<-'EOT'
-      A source file, which will be copied into place on the local system.
-      Values can be URIs pointing to remote files, or fully qualified paths to
-      files available on the local system (including files on NFS shares or
-      Windows mapped drives). This attribute is mutually exclusive with
-      `content` and `target`.
+      A source file, which will be copied into place on the local system. This
+      attribute is mutually exclusive with `content` and `target`. Allowed
+      values are:
 
-      The available URI schemes are *puppet* and *file*. *Puppet*
-      URIs will retrieve files from Puppet's built-in file server, and are
-      usually formatted as:
+      * `puppet:` URIs, which point to files in modules or Puppet file server
+      mount points.
+      * Fully qualified paths to locally available files (including files on NFS
+      shares or Windows mapped drives).
+      * `file:` URIs, which behave the same as local file paths.
 
-      `puppet:///modules/name_of_module/filename`
+      The normal form of a `puppet:` URI is:
 
-      This will fetch a file from a module on the puppet master (or from a
-      local module when using puppet apply). Given a `modulepath` of
+      `puppet:///modules/<MODULE NAME>/<FILE PATH>`
+
+      This will fetch a file from a module on the Puppet master (or from a
+      local module when using Puppet apply). Given a `modulepath` of
       `/etc/puppetlabs/code/modules`, the example above would resolve to
-      `/etc/puppetlabs/code/modules/name_of_module/files/filename`.
+      `/etc/puppetlabs/code/modules/<MODULE NAME>/files/<FILE PATH>`.
 
       Unlike `content`, the `source` attribute can be used to recursively copy
       directories if the `recurse` attribute is set to `true` or `remote`. If
