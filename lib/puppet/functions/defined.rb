@@ -1,70 +1,101 @@
-# Determines whether
-# a given class or resource type is defined. This function can also determine whether a
-# specific resource has been declared, or whether a variable has been assigned a value
-# (including undef...as opposed to never having been assigned anything). Returns true
-# or false. Accepts class names, type names, resource references, and variable
-# reference strings of the form '$name'.  When more than one argument is
-# supplied, defined() returns true if any are defined.
+# Determines whether a given class or resource type is defined and returns a Boolean
+# value. You can also use `defined` to determine whether a specific resource is defined,
+# or whether a variable has a value (including `undef`, as opposed to the variable never
+# being declared or assigned).
+#
+# This function takes at least one string argument, which can be a class name, type name,
+# resource reference, or variable reference of the form `'$name'`.
 #
 # The `defined` function checks both native and defined types, including types
-# provided as plugins via modules. Types and classes are both checked using their names:
+# provided by modules. Types and classes are matched by their names. The function matches
+# resource declarations by using resource references.
 #
-#     defined("file")
-#     defined("customtype")
-#     defined("foo")
-#     defined("foo::bar")
-#     defined('$name')
+# **Examples**: Different types of `defined` function matches
 #
-# Resource declarations are checked using resource references, e.g.
-# `defined( File['/tmp/myfile'] )`, or `defined( Class[myclass] )`.
-# Checking whether a given resource
-# has been declared is, unfortunately, dependent on the evaluation order of
-# the configuration, and the following code will not work:
+# ~~~ puppet
+# # Matching resource types
+# defined("file")
+# defined("customtype")
 #
-#     if defined(File['/tmp/foo']) {
-#         notify { "This configuration includes the /tmp/foo file.":}
-#     }
-#     file { "/tmp/foo":
-#         ensure => present,
-#     }
+# # Matching defines and classes
+# defined("foo")
+# defined("foo::bar")
 #
-# However, this order requirement refers to evaluation order only, and ordering of
-# resources in the configuration graph (e.g. with `before` or `require`) does not
-# affect the behavior of `defined`.
+# # Matching variables
+# defined('$name')
 #
-# You may also search using types:
+# # Matching declared resources
+# defined(File['/tmp/file'])
+# ~~~
 #
-#     defined(Resource['file','/some/file'])
-#     defined(File['/some/file'])
-#     defined(Class['foo'])
+# Puppet depends on the configuration's evaluation order when checking whether a resource
+# is declared.
 #
-# The `defined` function does not answer if data types (e.g. `Integer`) are defined. If
-# given the string 'integer' the result is false, and if given a non CatalogEntry type,
-# an error is raised.
+# @example Importance of evaluation order when using `defined`
 #
-# The rules for asking for undef, empty strings, and the main class are different from 3.x
-# (non future parser) and 4.x (with future parser or in Puppet 4.0.0 and later):
+# ~~~ puppet
+# # Assign values to $is_defined_before and $is_defined_after using identical `defined`
+# # functions.
 #
-#     defined('')     # 3.x => true,  4.x => false
-#     defined(undef)  # 3.x => true,  4.x => error
-#     defined('main') # 3.x => false, 4.x => true
+# $is_defined_before = defined(File['/tmp/file'])
 #
-# With the future parser, it is also possible to ask specifically if a name is
-# a resource type (built in or defined), or a class, by giving its type:
+# file { "/tmp/file":
+#   ensure => present,
+# }
 #
-#     defined(Type[Class['foo']])
-#     defined(Type[Resource['foo']])
+# $is_defined_after = defined(File['/tmp/file'])
 #
-# Which is different from asking:
+# # $is_defined_before returns false, but $is_defined_after returns true.
+# ~~~
 #
-#     defined('foo')
+# This order requirement only refers to evaluation order. The order of resources in the
+# configuration graph (e.g. with `before` or `require`) does not affect the `defined`
+# function's behavior.
 #
-# Since the later returns true if 'foo' is either a class, a built-in resource type, or a user defined
-# resource type, and a specific request like `Type[Class['foo']]` only returns true if `'foo'` is a class.
+# > **Warning:** Avoid relying on the result of the `defined` function in modules, as you
+# > might not be able to guarantee the evaluation order well enough to produce consistent
+# > results. This can cause other code that relies on the function's result to behave
+# > inconsistently or fail.
+#
+# If you pass more than one argument to `defined`, the function returns `true` if _any_
+# of the arguments are defined. You can also match resources by type, allowing you to
+# match conditions of different levels of specificity, such as whether a specific resource
+# is of a specific data type.
+#
+# @example Matching multiple resources and resources by different types with `defined`
+#
+# ~~~ puppet
+# file { "/tmp/file1":
+#   ensure => file,
+# }
+#
+# $tmp_file = file { "/tmp/file2":
+#   ensure => file,
+# }
+#
+# # Each of these statements return `true` ...
+# defined(File['/tmp/file1'])
+# defined(File['/tmp/file1'],File['/tmp/file2'])
+# defined(File['/tmp/file1'],File['/tmp/file2'],File['/tmp/file3'])
+# # ... but this returns `false`.
+# defined(File['/tmp/file3'])
+#
+# # Each of these statements returns `true` ...
+# defined(Type[Resource['file','/tmp/file2']])
+# defined(Resource['file','/tmp/file2'])
+# defined(File['/tmp/file2'])
+# defined('$tmp_file')
+# # ... but each of these returns `false`.
+# defined(Type[Resource['exec','/tmp/file2']])
+# defined(Resource['exec','/tmp/file2'])
+# defined(File['/tmp/file3'])
+# defined('$tmp_file2')
+# ~~~
 #
 # @since 2.7.0
-# @since 3.6.0 variable reference and future parser types")
+# @since 3.6.0 variable reference and future parser types
 # @since 3.8.1 type specific requests with future parser
+# @since 4.0.0
 #
 Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunction) do
 
