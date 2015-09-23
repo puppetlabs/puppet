@@ -1,0 +1,33 @@
+---
+HOSTS:
+  win-2012r2-rubyx86:
+    roles:
+    - agent
+    platform: windows-2012r2-64
+    ruby_arch: x86
+    hypervisor: vcloud
+    template: win-2012r2-x86_64
+  win-2012r2-rubyx64:
+    roles:
+    - agent
+    platform: windows-2012r2-64
+    ruby_arch: x64
+    hypervisor: vcloud
+    template: win-2012r2-x86_64
+  osx-1010:
+    roles:
+    - agent
+    platform: osx-yosemite-x86_64
+    hypervisor: vcloud
+    template: osx-1010-x86_64
+  redhat-7:
+    roles:
+    - agent
+    platform: el-7-x86_64
+    hypervisor: vcloud
+    template: redhat-7-x86_64
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/
