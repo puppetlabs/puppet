@@ -1,17 +1,8 @@
 require 'puppet/provider/parsedfile'
 
-known = nil
-case Facter.value(:operatingsystem)
-when "Darwin"; known = "/etc/ssh_known_hosts"
-else
-  known = "/etc/ssh/ssh_known_hosts"
-end
-
-
 Puppet::Type.type(:sshkey).provide(
   :parsed,
   :parent => Puppet::Provider::ParsedFile,
-  :default_target => known,
   :filetype => :flat
 ) do
   desc "Parse and generate host-wide known hosts files for SSH."
@@ -35,6 +26,25 @@ Puppet::Type.type(:sshkey).provide(
   # Make sure to use mode 644 if ssh_known_hosts is newly created
   def self.default_mode
     0644
+  end
+
+  def self.default_target
+    case Facter.value(:operatingsystem)
+    when "Darwin"
+      # Versions 10.11 and up use /etc/ssh/ssh_known_hosts
+      version = Facter.value(:macosx_productversion_major)
+      if version
+        if Puppet::Util::Package.versioncmp(version, '10.11') >= 0
+          "/etc/ssh/ssh_known_hosts"
+        else
+          "/etc/ssh_known_hosts"
+        end
+      else
+        "/etc/ssh_known_hosts"
+      end
+    else
+      "/etc/ssh/ssh_known_hosts"
+    end
   end
 end
 
