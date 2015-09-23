@@ -295,6 +295,17 @@ EOS
     end
 
     desc <<-EOS
+Install puppet as a gem on a predefined set of hosts using Beaker, and run a basic smoke test.
+
+  $ env SHA=<full sha> bundle exec rake:ci:gem
+EOS
+    task :gem => 'ci:check_env' do
+      ENV['TESTS'] = 'setup/gem/pre-suite/010_GemInstall.rb'
+      ENV['CONFIG'] = 'config/nodes/gem.yaml'
+      beaker_test(:gem)
+    end
+
+    desc <<-EOS
 Run the acceptance tests through Beaker and install from git on the configuration targets.
 #{USAGE}
 EOS
