@@ -2,6 +2,7 @@ require 'facter'
 require 'puppet/util/feature'
 
 Puppet.features.add :cfacter do
+  Puppet.deprecation_warning("The cfacter setting is deprecated. You can use Facter 3 and higher without this setting.")
   begin
     require 'cfacter'
 
