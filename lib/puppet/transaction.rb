@@ -350,11 +350,8 @@ class Puppet::Transaction
     resource.appliable_to_host? && resource.appliable_to_device?
   end
 
-  def handle_qualified_tags( qualified )
-    # The default behavior of Puppet::Util::Tagging is
-    # to split qualified tags into parts. That would cause
-    # qualified tags to match too broadly here.
-    return
+  def split_qualified_tags?
+    false
   end
 
   # Is this resource tagged appropriately?
@@ -364,6 +361,7 @@ class Puppet::Transaction
 
     not resource.tagged?(*tags)
   end
+
 end
 
 require 'puppet/transaction/report'
