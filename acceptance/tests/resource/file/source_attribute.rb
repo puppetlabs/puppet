@@ -164,7 +164,7 @@ with_puppet_running_on(master, master_opts, testdir) do
 
     step "second run should not update file"
     on(agent, puppet('agent', "--test --server #{master}")) do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+      assert_no_match(/content changed {(#{Regexp.new(checksums.join('|'))})}/, stdout, "Shouldn't have overwrote any files")
     end
   end
 
@@ -223,7 +223,7 @@ agents.each do |agent|
 
   step "second run should not update any files"
   apply_manifest_on agent, local_apply_manifest do
-    assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    assert_no_match(/content changed {(#{Regexp.new(checksums.join('|'))})}/, stdout, "Shouldn't have overwrote any files")
   end
 
   # changes in source file producing updates is tested elsewhere
