@@ -211,6 +211,7 @@ module Puppet::Plugins::DataProviders
               end
             end
           end
+          throw :no_such_key if merged_result.equal?(Puppet::Pops::MergeStrategy::NOT_FOUND)
           lookup_invocation.report_result(merged_result)
         end
       end
