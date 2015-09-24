@@ -145,6 +145,14 @@ describe Puppet::Parser::Compiler do
       expect(compiler.classlist).to match_array(['foo', 'bar'])
     end
 
+    it "should return a catalog with the specified code_id" do
+      node = Puppet::Node.new("mynode")
+      code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      compiler = Puppet::Parser::Compiler.new(node, :code_id => code_id)
+
+      expect(compiler.catalog.code_id).to eq(code_id)
+    end
+
     it "should add a 'main' stage to the catalog" do
       expect(@compiler.catalog.resource(:stage, :main)).to be_instance_of(Puppet::Parser::Resource)
     end

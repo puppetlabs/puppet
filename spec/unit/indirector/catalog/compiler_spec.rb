@@ -46,7 +46,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
-      @compiler.expects(:compile).with(@node)
+      @compiler.expects(:compile).with(@node, nil)
       @request.stubs(:options).returns(:use_node => @node)
       @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
@@ -63,7 +63,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should use the authenticated node name if no request key is provided" do
       @request.stubs(:key).returns(nil)
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
-      @compiler.expects(:compile).with(@node)
+      @compiler.expects(:compile).with(@node, nil)
       @compiler.find(@request)
     end
 
@@ -71,7 +71,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request.expects(:key).returns "my_node"
 
       Puppet::Node.indirection.expects(:find).with("my_node", anything).returns @node
-      @compiler.expects(:compile).with(@node)
+      @compiler.expects(:compile).with(@node, nil)
       @compiler.find(@request)
     end
 
@@ -88,7 +88,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should pass the found node to the compiler for compiling" do
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       config = mock 'config'
-      Puppet::Parser::Compiler.expects(:compile).with(@node)
+      Puppet::Parser::Compiler.expects(:compile).with(@node, nil)
       @compiler.find(@request)
     end
 
@@ -125,13 +125,25 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(@compiler.find(@request)).to equal(catalog)
     end
 
-    it "returns a catalog with a code_id from the request" do
+    it "passes the code_id from the request to the compiler" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
-      catalog = Puppet::Resource::Catalog.new(@node.name)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
-      @request.options[:code_id] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      @request.options[:code_id] = code_id
 
-      expect(@compiler.find(@request).code_id).to eq('b59e5df0578ef411f773ee6c33d8073c50e7b8fe')
+      Puppet::Parser::Compiler.expects(:compile).with(anything, code_id)
+
+      @compiler.find(@request)
+    end
+
+    it "returns a catalog with the code_id from the request" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      @request.options[:code_id] = code_id
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment, code_id)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      expect(@compiler.find(@request).code_id).to eq(code_id)
     end
   end
 
