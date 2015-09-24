@@ -149,6 +149,8 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
+      Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+
       Puppet::Util::Profiler.profile("Compile: Evaluated AST node", [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated node classes", [:compiler, :evaluate_node_classes]) { evaluate_node_classes }
@@ -158,6 +160,8 @@ class Puppet::Parser::Compiler
       Puppet::Util::Profiler.profile("Compile: Evaluated generators", [:compiler, :evaluate_generators]) { evaluate_generators }
 
       Puppet::Util::Profiler.profile("Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
+
+      Puppet::Util::Profiler.profile("Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
 
       fail_on_unevaluated
 
@@ -207,6 +211,76 @@ class Puppet::Parser::Compiler
 
     evaluate_classes(classes_with_params, @node_scope || topscope)
     evaluate_classes(classes_without_params, @node_scope || topscope)
+  end
+
+  # Evaluates the site - the top container for an environment catalog
+  # The site contain behaves analogous to a node - for the environment catalog, node expressions are ignored
+  # as the result is cross node. The site expression serves as a container for everything that is across
+  # all nodes.
+  #
+  # @api private
+  #
+  def evaluate_site
+    # Has a site been defined? If not, do nothing but issue a warning.
+    #
+    site = known_resource_types.find_site()
+    unless site
+      on_empty_site()
+      return
+    end
+
+    # Create a resource to model this site and add it to catalog
+    resource = site.ensure_in_catalog(topscope)
+
+    # The site sets node scope to be able to shadow what is in top scope
+    @node_scope = topscope.class_scope(site)
+
+    # Evaluates the logic contain in the site expression
+    resource.evaluate
+  end
+
+  # @api private
+  def on_empty_site
+    # do nothing
+  end
+
+  # Prunes the catalog by dropping all resources are contained under the Site (if a site expression is used).
+  # As a consequence all edges to/from dropped resources are also dropped.
+  # Once the pruning is performed, this compiler returns the pruned list when calling the #resources method.
+  # The pruning does not alter the order of resources in the resources list.
+  #
+  # @api private
+  def prune_catalog
+    prune_node_catalog
+  end
+
+  def prune_node_catalog
+    # Everything under Site[site] should be pruned as that is for the environment catalog, not a node
+    #
+    the_site_resource = @catalog.resource('Site', 'site')
+
+    if the_site_resource
+      # Get downstream vertexes returns a hash where the keys are the resources and values nesting level
+      to_be_removed = @catalog.downstream_from_vertex(the_site_resource).keys
+
+      # Drop the Site[site] resource if it has no content
+      if to_be_removed.empty?
+        to_be_removed << the_site_resource
+      end
+    else
+      to_be_removed = []
+    end
+
+    # keep_from_site is populated with any App resources.
+    application_resources = @resources.select {|r| r.type == 'App' }
+    # keep all applications plus what is directly referenced from applications
+    keep_from_site = application_resources
+    keep_from_site += application_resources.map {|app| @catalog.direct_dependents_of(app) }.flatten
+
+    to_be_removed -= keep_from_site
+    @catalog.remove_resource(*to_be_removed)
+    # set the pruned result
+    @resources = @catalog.resources
   end
 
   # @api private

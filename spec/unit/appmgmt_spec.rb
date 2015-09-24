@@ -49,12 +49,41 @@ describe "Application instantiation" do
         cons { two: host => ahost, consume => Cap[cap] }
       }
 
-      app { anapp:
-        nodes => {
-          Node[first] => Prod[one],
-          Node[second] => Cons[two]
+      site {
+        app { anapp:
+          nodes => {
+            Node[first] => Prod[one],
+            Node[second] => Cons[two]
+          }
         }
       }
+EOS
+
+FAULTY_MANIFEST = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      prod { one: host => ahost, export => Cap[cap] }
+      cons { two: host => ahost, consume => Cap[cap] }
+    }
+
+    # app is not in site => error
+    app { anapp:
+      nodes => {
+        Node[first] => Prod[one],
+        Node[second] => Cons[two]
+      }
+    }
 EOS
 
 MANIFEST_WITH_SITE = <<-EOS
@@ -72,7 +101,7 @@ MANIFEST_WITH_SITE = <<-EOS
 
     application app {
       prod { one: host => ahost, export => Cap[cap] }
-      cons { two: consume => Cap[cap] }
+      cons { two: host => ahost, consume => Cap[cap] }
     }
 
     $one = not_the_value_one
@@ -95,35 +124,66 @@ MANIFEST_WITH_SITE = <<-EOS
     }
 EOS
 
-  describe "in node catalogs" do
-    it "does not affect a nonparticpating node" do
+  describe "a node catalog" do
+    it "is unaffected for a non-participating node" do
       catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other'))
       types = catalog.resource_keys.map { |type, _| type }.uniq.sort
       expect(types).to eq(["Class", "Stage"])
     end
 
-    it "adds the application instance, capability resource, and component on the producing node" do
-      catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('first'))
-      ["App[anapp]", "Cap[cap]", "Prod[one]", "Notify[host ahost]"].each do |res|
-        expect(catalog.resource(res)).not_to be_nil
+    context "for producing node" do
+      let(:compiled_node) { Puppet::Node.new('first') }
+      let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}
+
+      { "App[anapp]"         => 'application instance',
+        "Cap[cap]"           => 'capability resource',
+        "Prod[one]"          => 'component',
+        "Notify[host ahost]" => 'node resource'
+      }.each do |k,v|
+        it "contains the #{v} (#{k})" do
+            expect(compiled_catalog.resource(k)).not_to be_nil
+        end
       end
-      expect(catalog.resource("Cons[two]")).to be_nil
+
+      it "does not contain the consumed resource (Cons[two])" do
+        expect(compiled_catalog.resource("Cons[two]")).to be_nil
+      end
     end
 
-    it "adds the application instance, capability resource, and component on the consuming node " do
-      cap = Puppet::Resource.new("Cap", "cap")
-      cap["host"] = "ahost"
-      Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+    context "for consuming node" do
+      let(:compiled_node) { Puppet::Node.new('second') }
+      let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}
+      let(:cap) {
+        the_cap = Puppet::Resource.new("Cap", "cap")
+        the_cap["host"] = "ahost"
+        the_cap
+      }
 
-      catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('second'))
-      ["App[anapp]", "Cap[cap]", "Cons[two]", "Notify[host ahost]"].each do |res|
-        expect(catalog.resource(res)).not_to be_nil
+      { "App[anapp]"         => 'application instance',
+        "Cap[cap]"           => 'capability resource',
+        "Cons[two]"          => 'component',
+        "Notify[host ahost]" => 'node resource'
+      }.each do |k,v|
+        it "contains the #{v} (#{k})" do
+            # Mock the connection to Puppet DB
+            Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+            expect(compiled_catalog.resource(k)).not_to be_nil
+        end
       end
-      expect(catalog.resource("Prod[one]")).to be_nil
+
+      it "does not contain the produced resource (Prod[one])" do
+        # Mock the connection to Puppet DB
+        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(compiled_catalog.resource("Prod[one]")).to be_nil
+      end
     end
 
     context "when using a site expression" do
-      it "the site expression is not evaluated in a node compilation" do
+      # The site expression must be evaluated in a node catalog compilation because
+      # the application instantiations inside it may contain other logic (local variables)
+      # that are used to instantiate an application. The application instances are needed.
+      #
+      it "the node expressions is evaluated" do
         catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
         types = catalog.resource_keys.map { |type, _| type }.uniq.sort
         expect(types).to eq(["Class", "Node", "Notify", "Stage"])
