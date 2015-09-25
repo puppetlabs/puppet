@@ -19,7 +19,7 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
   include Puppet::Pops::Evaluator::Runtime3Support
 
-  def self.compile(node)
+  def self.compile(node, code_id = nil)
     $env_module_directories = nil
     node.environment.check_for_reparse
 
@@ -33,7 +33,7 @@ class Puppet::Parser::Compiler
       raise(Puppet::Error, errmsg.join(' '))
     end
 
-    new(node).compile {|resulting_catalog| resulting_catalog.to_resource }
+    new(node, :code_id => code_id).compile {|resulting_catalog| resulting_catalog.to_resource }
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)
@@ -66,6 +66,10 @@ class Puppet::Parser::Compiler
   # @api private
   #
   attr_accessor :boot_injector
+
+  # The id of code input to the compiler.
+  # @api private
+  attr_accessor :code_id
 
   # Add a collection to the global list.
   def_delegator :@collections,   :<<, :add_collection
@@ -605,7 +609,7 @@ class Puppet::Parser::Compiler
     @relationships = []
 
     # For maintaining the relationship between scopes and their resources.
-    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment, @code_id)
 
     # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
     # Create the initial scope, it is needed early
