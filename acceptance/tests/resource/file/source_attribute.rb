@@ -163,8 +163,25 @@ with_puppet_running_on(master, master_opts, testdir) do
     end
 
     step "second run should not update file"
-    on(agent, puppet('agent', "--test --server #{master}")) do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
+      assert_no_match(/content changed.*(md5|sha256)/, stdout, "Shouldn't have overwritten any files")
+
+      # When using ctime/mtime, the agent compares the values from its
+      # local file with the values on the master to determine if the
+      # file is insync or not. If during the first run, the agent
+      # creates the files, and the resulting ctime/mtime are still
+      # behind the times on the master, then the 2nd agent run will
+      # consider the file to not be insync, and will update it
+      # again. This process will repeat until the agent updates the
+      # file, and the resulting ctime/mtime are after the values on
+      # the master, at which point it will have converged.
+      if stdout =~ /content changed.*ctime/
+        Log.warn "Agent did not converge using ctime"
+      end
+
+      if stdout =~ /content changed.*mtime/
+        Log.warn "Agent did not converge using mtime"
+      end
     end
   end
 
