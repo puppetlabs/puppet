@@ -56,17 +56,21 @@ Puppet::Type.type(:package).provide :pip,
     return nil
   end
 
-  # Ask the PyPI API for the latest version number.  There is no local
-  # cache of PyPI's package list so this operation will always have to
-  # ask the web service.
+  # Return latest version from PyPI repo as seen by pip
   def latest
-    client = XMLRPC::Client.new2("http://pypi.python.org/pypi")
-    client.http_header_extra = {"Content-Type" => "text/xml"}
-    client.timeout = 10
-    result = client.call("package_releases", @resource[:name])
-    result.first
-  rescue Timeout::Error => detail
-    raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}", detail.backtrace
+    pip_cmd = which(self.class.cmd) or return nil
+    # This is the least hackish way to have pip look up versions. Output we're interested in is:
+    # Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
+    execpipe "#{pip_cmd} install #{@resource[:name]}==versionplease" do |process|
+      process.collect do |line|
+        if line =~ /from versions: /
+          textAfterLastMatch = $'
+          versionList = textAfterLastMatch.chomp(")\n").split(', ')
+          return versionList.last
+        end
+      end
+      return nil
+    end
   end
 
   # Install a package.  The ensure parameter may specify installed,
