@@ -14,8 +14,10 @@ module Puppet::Util::Tagging
       name = tag.to_s.downcase
       if name =~ ValidTagRegex
         @tags << name
-        name.split("::").each do |section|
-          @tags << section
+        if split_qualified_tags?
+          name.split("::").each do |section|
+            @tags << section
+          end
         end
       else
         fail(Puppet::ParseError, "Invalid tag '#{name}'")
@@ -67,6 +69,10 @@ module Puppet::Util::Tagging
 
   def valid_tag?(tag)
     tag.is_a?(String) and tag =~ ValidTagRegex
+  end
+
+  def split_qualified_tags?
+    true
   end
 
   def new_tags
