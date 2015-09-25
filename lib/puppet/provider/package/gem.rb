@@ -111,8 +111,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         # we don't support puppet:// URLs (yet)
         raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")
       else
-        # interpret it as a gem repository
-        command << "--source" << "#{source}" << resource[:name]
+        # check whether it's an absolute file path to help Windows out
+        if Puppet::Util.absolute_path?(source)
+          command << source
+        else
+          # interpret it as a gem repository
+          command << "--source" << "#{source}" << resource[:name]
+        end
       end
     else
       command << "--no-rdoc" << "--no-ri" << resource[:name]
