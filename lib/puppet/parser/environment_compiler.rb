@@ -34,7 +34,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
-
       fail_on_unevaluated
 
       if block_given?
@@ -108,30 +107,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def evaluate_ast_node()
     # Do nothing, the environment catalog is not built for a particular node.
   end
-
-#  # Evaluates the site - the top container for the environment catalog
-#  # The site contain behaves analogous to a node - for the environment catalog, node expressions are ignored
-#  # as the result is cross node. The site expression serves as a container for everything that is across
-#  # all nodes.
-#  #
-#  def evaluate_site
-#    # Has a site been defined? If not, do nothing but issue a warning.
-#    #
-#    site = known_resource_types.find_site()
-#    unless site
-#      Puppet.warning("Environment Compiler: Could not find a site definition to evaluate")
-#      return
-#    end
-#
-#    # Create a resource to model this site and add it to catalog
-#    resource = site.ensure_in_catalog(topscope)
-#
-#    # The site sets node scope to be able to shadow what is in top scope
-#    @node_scope = topscope.class_scope(site)
-#
-#    # Evaluates the logic contain in the site expression
-#    resource.evaluate
-#  end
 
   def on_empty_site
     Puppet.warning("Environment Compiler: Could not find a site definition to evaluate")
