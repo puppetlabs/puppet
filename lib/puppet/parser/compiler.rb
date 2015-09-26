@@ -87,6 +87,7 @@ class Puppet::Parser::Compiler
     type = resource.resource_type
     if type.is_a?(Puppet::Resource::Type) && type.application?
       @applications << resource
+      assert_app_in_site(scope, resource)
       return
     end
 
@@ -116,7 +117,22 @@ class Puppet::Parser::Compiler
     # This adds a resource to the class it lexically appears in in the
     # manifest.
     unless resource.class?
-      return @catalog.add_edge(scope.resource, resource)
+      @catalog.add_edge(scope.resource, resource)
+    end
+  end
+
+  def assert_app_in_site(scope, resource)
+    if resource.type == 'App'
+      if scope.resource
+        # directly contained in a Site
+        return if scope.resource.type == 'Site'
+        # contained in something that may be contained in Site
+        upstream = @catalog.upstream_from_vertex(scope.resource)
+        if upstream
+          return if upstream.keys.map(&:type).include?('Site')
+        end
+      end
+      raise ArgumentError, "Application instances like '#{resource}' can only be contained within a Site"
     end
   end
 

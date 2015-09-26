@@ -66,15 +66,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     if the_site_resource
       keep_from_site = @catalog.downstream_from_vertex(the_site_resource).keys
       keep_from_site << the_site_resource
-    else
-      # keep_from_site is populated with any App resources. If a site expression is used, those outside the
-      # site expression are dropped.
-      # This logic essentially keeps the "current behavior" when not using the site expression.
-      # TODO: Should not include App instances
-      application_resources = @resources.select {|r| r.type == 'App' }
-      # keep all applications plus what is directly referenced from applications
-      keep_from_site = application_resources
-      keep_from_site += application_resources.map {|app| @catalog.direct_dependents_of(app) }.flatten
     end
 
     to_be_removed = rooted_in_main - keep_from_site
@@ -99,10 +90,10 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     # This adds a resource to the class it lexically appears in in the
     # manifest.
     unless resource.class?
-      return @catalog.add_edge(scope.resource, resource)
+      @catalog.add_edge(scope.resource, resource)
     end
+    assert_app_in_site(scope, resource)
   end
-
 
   def evaluate_ast_node()
     # Do nothing, the environment catalog is not built for a particular node.

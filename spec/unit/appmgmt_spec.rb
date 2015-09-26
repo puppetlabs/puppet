@@ -131,6 +131,11 @@ EOS
       expect(types).to eq(["Class", "Stage"])
     end
 
+    it "an application instance must be contained in a site" do
+      expect { compile_to_catalog(FAULTY_MANIFEST, Puppet::Node.new('first'))
+      }.to raise_error(/Application instances .* can only be contained within a Site/)
+    end
+
     context "for producing node" do
       let(:compiled_node) { Puppet::Node.new('first') }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}
@@ -216,6 +221,11 @@ EOS
       expect(cons[:consume].ref).to eq("Cap[cap]")
     end
 
+    it "an application instance must be contained in a site" do
+      expect { compile_to_env_catalog(FAULTY_MANIFEST)
+      }.to raise_error(/Application instances .* can only be contained within a Site/)
+    end
+
     context "when using a site expression" do
       it "includes components and capability resources" do
         catalog = compile_to_env_catalog(MANIFEST_WITH_SITE).to_resource
@@ -260,9 +270,11 @@ EOS
         application app {
         }
 
-        app { anapp:
-          nodes => {
-            'hello' => Node[other],
+        site {
+          app { anapp:
+            nodes => {
+              'hello' => Node[other],
+            }
           }
         }
         EOS
@@ -274,9 +286,11 @@ EOS
         application app {
         }
 
-        app { anapp:
-          nodes => {
-            Node[other] => 'hello'
+        site {
+          app { anapp:
+            nodes => {
+              Node[other] => 'hello'
+            }
           }
         }
       EOS
@@ -294,9 +308,11 @@ EOS
           p{two:}
         }
 
-        app { anapp:
-          nodes => {
-            Node[other] => [P[one],P[two]]
+        site {
+          app { anapp:
+            nodes => {
+              Node[other] => [P[one],P[two]]
+            }
           }
         }
       EOS
@@ -313,10 +329,12 @@ EOS
           p{one:}
         }
 
-        app { anapp:
-          nodes => {
-            Node[first] => P[one],
-            Node[second] => P[one],
+        site {
+          app { anapp:
+            nodes => {
+              Node[first] => P[one],
+              Node[second] => P[one],
+            }
           }
         }
       EOS
