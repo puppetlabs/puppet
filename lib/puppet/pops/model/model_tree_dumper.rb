@@ -234,6 +234,16 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_SiteDefinition o
+    result = ["site"]
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
   def dump_NamedDefinition o
     # the nil must be replaced with a string
     result = [nil, o.name]

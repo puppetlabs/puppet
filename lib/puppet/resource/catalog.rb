@@ -299,7 +299,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
       @resources.delete(title_key)
-      resource.remove
+      # Only Puppet::Type kind of resources respond to :remove, not Puppet::Resource
+      resource.remove if resource.respond_to?(:remove)
     end
   end
 

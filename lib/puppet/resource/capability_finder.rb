@@ -19,7 +19,6 @@ module Puppet::Resource::CapabilityFinder
     query = ["and", ["=", "type", cap.type.capitalize],
                     ["=", "title", cap.title.to_s],
                     ["=", "tag", "producer:#{environment}"]].to_json
-
     Puppet.notice "Capability lookup #{cap}]: #{query}"
     response = http.get("/pdb/query/v4/resources?query=#{CGI.escape(query)}",
                         { "Accept" => 'application/json'})

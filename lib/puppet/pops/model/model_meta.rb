@@ -303,6 +303,10 @@ module Puppet::Pops::Model
     contains_one_uni 'body', Expression
   end
 
+  class SiteDefinition < Definition
+    contains_one_uni 'body', Expression
+  end
+
   class LocatableExpression < Expression
     has_many_attr 'line_offsets', Integer
     has_attr 'locator', Object, :lowerBound => 1, :transient => true
