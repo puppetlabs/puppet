@@ -12,7 +12,6 @@ describe provider_class do
     @client = stub_everything('client')
     @client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
     @client.stubs(:call).with('package_releases', 'fake_package').returns([])
-    XMLRPC::Client.stubs(:new2).returns(@client)
   end
 
   describe "parse" do
