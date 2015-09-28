@@ -1414,7 +1414,7 @@ module Puppet::Pops
         # NOTE: This only supports Ruby, must change when/if the set of runtimes is expanded
         c1 = class_from_string(@runtime_type_name)
         c2 = class_from_string(o.runtime_type_name)
-        return false unless c1.is_a?(Class) && c2.is_a?(Class)
+        return false unless c1.is_a?(Module) && c2.is_a?(Module)
         !!(c2 <= c1)
       end
     end
