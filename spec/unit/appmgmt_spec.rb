@@ -124,6 +124,37 @@ MANIFEST_WITH_SITE = <<-EOS
     }
 EOS
 
+MANIFEST_WITH_ILLEGAL_RESOURCE = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      prod { one: host => ahost, export => Cap[cap] }
+      cons { two: consume => Cap[cap] }
+    }
+
+    site {
+      # The rouge expression is here
+      notify { 'fail me': }
+      $one = one
+      app { anapp:
+        nodes => {
+          Node[first] => Prod[one],
+          Node[second] => Cons[two]
+        }
+      }
+    }
+EOS
+
   describe "a node catalog" do
     it "is unaffected for a non-participating node" do
       catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other'))
@@ -197,6 +228,17 @@ EOS
       end
 
     end
+
+    context "when using a site expression" do
+      it "the site expression is not evaluated in a node compilation" do
+        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
+        types = catalog.resource_keys.map { |type, _| type }.uniq.sort
+        expect(types).to eq(["Class", "Node", "Notify", "Stage"])
+        expect(catalog.resource("Notify[on a node]")).to_not be_nil
+        expect(catalog.resource("Notify[on the site]")).to be_nil
+      end
+
+    end
   end
 
 
@@ -259,6 +301,12 @@ EOS
         app = apps.first
         comps = catalog.direct_dependents_of(app).map(&:ref).sort
         expect(comps).to eq(["Cons[two]", "Prod[one]"])
+      end
+
+      it "fails if there are non component resources in the site" do
+        expect {
+        catalog = compile_to_env_catalog(MANIFEST_WITH_ILLEGAL_RESOURCE).to_resource
+        }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed at line 20/)
       end
     end
   end
