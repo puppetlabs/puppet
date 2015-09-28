@@ -118,12 +118,6 @@ describe provider_class do
       expect(@provider.latest).to eq(nil)
     end
 
-    it "should handle a timeout gracefully" do
-      @resource[:name] = "fake_package"
-      @client.stubs(:call).raises(Timeout::Error)
-      expect { @provider.latest }.to raise_error(Puppet::Error)
-    end
-
   end
 
   describe "install" do
