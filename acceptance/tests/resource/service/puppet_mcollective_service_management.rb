@@ -16,7 +16,7 @@ extend Puppet::Acceptance::ServiceUtils
 def set_service_initial_status(host, service, status)
   step "Establishing precondition: #{service}: ensure => #{status}"
   ensure_service_on_host(host, service, 'ensure', status)
-  assert_service_status_on_host(agent, service, status)
+  assert_service_status_on_host(host, service, status)
 end
 
 # We want to test Puppet and Mcollective in the following conditions:
