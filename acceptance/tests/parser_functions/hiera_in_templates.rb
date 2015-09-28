@@ -2,7 +2,7 @@ test_name "Calling Hiera function from inside templates"
 
 @module_name = "hieratest"
 @coderoot = master.tmpdir("#{@module_name}")
-@resultdir = agent.tmpdir("#{@module_name}_results")
+@resultdir = agents.first.tmpdir("#{@module_name}_results")
 
 @msg_default = 'message from default.yaml'
 @msg_production = 'message from production.yaml'
