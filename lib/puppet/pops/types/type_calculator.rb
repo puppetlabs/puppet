@@ -195,7 +195,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def assignable?(t, t2)
-    if t.is_a?(Class)
+    if t.is_a?(Module)
       t = type(t)
     end
     t.is_a?(Types::PAnyType) ? t.assignable?(t2) : false
@@ -223,11 +223,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
-  # @param c [Class] the class for which a puppet type is wanted
+  # @param c [Module] the class for which a puppet type is wanted
   # @api public
   #
   def type(c)
-    raise ArgumentError, 'Argument must be a Class' unless c.is_a? Class
+    raise ArgumentError, 'Argument must be a Module' unless c.is_a? Module
 
     # Can't use a visitor here since we don't have an instance of the class
     case
@@ -316,7 +316,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def instance?(t, o)
-    if t.is_a?(Class)
+    if t.is_a?(Module)
       t = type(t)
     end
     t.is_a?(Types::PAnyType) ? t.instance?(o) : false
@@ -489,7 +489,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def string(t)
-    if t.is_a?(Class)
+    if t.is_a?(Module)
       t = type(t)
     end
     @@string_visitor.visit_this_0(self, t)
@@ -499,7 +499,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def debug_string(t)
-    if t.is_a?(Class)
+    if t.is_a?(Module)
       t = type(t)
     end
     @@inspect_visitor.visit_this_0(self, t)
@@ -520,11 +520,11 @@ class Puppet::Pops::Types::TypeCalculator
     reduce_type(enumerable.map {|o| infer(o) })
   end
 
-  # The type of all classes is PType
+  # The type of all modules is PType
   # @api private
   #
-  def infer_Class(o)
-    Types::PType::DEFAULT
+  def infer_Module(o)
+    Types::PType::new(Types::PRuntimeType.new(:ruby, o.name))
   end
 
   # @api private
