@@ -2,7 +2,6 @@ test_name "Calling Hiera function from inside templates"
 
 @module_name = "hieratest"
 @coderoot = master.tmpdir("#{@module_name}")
-@resultdir = agent.tmpdir("#{@module_name}_results")
 
 @msg_default = 'message from default.yaml'
 @msg_production = 'message from production.yaml'
@@ -39,7 +38,7 @@ test_name "Calling Hiera function from inside templates"
 }
 
 
-def create_environment(osfamilies)
+def create_environment(osfamilies, tmp_dirs)
   envroot = "#{@coderoot}/environments"
   production = "#{envroot}/production"
   modroot = "#{production}/modules"
@@ -97,7 +96,9 @@ file { '#{production}/manifests/site.pp':
 node default {
   \\$msgs = hiera_array('message')
   notify {\\$msgs:}
-  include #{@module_name}
+  class {'#{@module_name}':
+    result_dir => hiera('result_dir')[\\$::hostname],
+  }
 }
 ",
 }
@@ -125,6 +126,8 @@ file {"#{hieradir}/default.yaml":
 ---
 message: '#{@msg_default}'
 includes: '#{@module_name}::mod_default'
+result_dir:
+#{tmp_dirs}
 "
 }
 
@@ -158,17 +161,19 @@ include #{@module_name}
 
 file { "#{moduledir}/manifests/init.pp":
   content => "
-class #{@module_name} {
-  file { '#{@resultdir}':
+class #{@module_name} (
+  \\$result_dir,
+) {
+  file { \\$result_dir:
     ensure => directory,
     mode   => '0755',
   }
-  file {'#{@resultdir}/#{@module_name}_results_epp':
+  file {\\\"\\\${result_dir}/#{@module_name}_results_epp\\\":
     ensure  => file,
     mode  => '0644',
     content => epp('#{@module_name}/hieratest_results_epp.epp'),
   }
-  file {'#{@resultdir}/#{@module_name}_results_erb':
+  file {\\\"\\\${result_dir}/#{@module_name}_results_erb\\\":
     ensure  => file,
     mode  => '0644',
     content => template('#{@module_name}/hieratest_results_erb.erb'),
@@ -180,8 +185,9 @@ class #{@module_name} {
 file { "#{moduledir}/manifests/mod_default.pp":
   content => "
 class #{@module_name}::mod_default {
+  \\$result_dir = hiera('result_dir')[\\$::hostname]
   notify{\\"module mod_default invoked.\\\\n\\":}
-  file {'#{@resultdir}/mod_default':
+  file {\\\"\\\${result_dir}/mod_default\\\":
     ensure  => 'file',
     mode    => '0644',
     content => \\\"#{@mod_default_msg}\\\\n\\\",
@@ -193,8 +199,9 @@ class #{@module_name}::mod_default {
 file { "#{moduledir}/manifests/mod_osfamily.pp":
   content => "
 class #{@module_name}::mod_osfamily {
+  \\$result_dir = hiera('result_dir')[\\$::hostname]
   notify{\\"module mod_osfamily invoked.\\\\n\\":}
-  file {'#{@resultdir}/mod_osfamily':
+  file {\\\"\\\${result_dir}/mod_osfamily\\\":
     ensure  => 'file',
     mode    => '0644',
     content => \\\"#{@mod_osfamily_msg}\\\\n\\\",
@@ -206,8 +213,9 @@ class #{@module_name}::mod_osfamily {
 file { "#{moduledir}/manifests/mod_production.pp":
   content => "
 class #{@module_name}::mod_production {
+  \\$result_dir = hiera('result_dir')[\\$::hostname]
   notify{\\"module mod_production invoked.\\\\n\\":}
-  file {'#{@resultdir}/mod_production':
+  file {\\\"\\\${result_dir}/mod_production\\\":
     ensure  => 'file',
     mode    => '0644',
     content => '#{@mod_production_msg}',
@@ -219,8 +227,9 @@ class #{@module_name}::mod_production {
 file { "#{moduledir}/manifests/mod_fqdn.pp":
   content => "
 class #{@module_name}::mod_fqdn {
+  \\$result_dir = hiera('result_dir')[\\$::hostname]
   notify{\\"module mod_fqdn invoked.\\\\n\\":}
-  file {'#{@resultdir}/mod_fqdn':
+  file {\\\"\\\${result_dir}/mod_fqdn\\\":
     ensure  => 'file',
     mode    => '0644',
     content => \\\"#{@mod_fqdn_msg}\\\\n\\\",
@@ -257,23 +266,43 @@ ENV
 end
 
 def find_osfamilies
-  osfamilies = []
+  family_hash = {}
   agents.each do |agent|
     res = on(agent, facter("osfamily"))
     osf = res.stdout.chomp
-    osfamilies += [osf]
+    family_hash[osf] = 1
   end
-    osfamilies
+  osfamilies = family_hash.keys
+end
+
+def find_tmp_dirs
+  tmp_dirs = ""
+  host_to_result_dir = {}
+  agents.each do |agent|
+    h = on(agent, facter("hostname")).stdout.chomp
+    t = agent.tmpdir("#{@module_name}_results")
+    tmp_dirs += "  #{h}: '#{t}'\n"
+    host_to_result_dir[h] = t
+  end
+  result = {
+    'tmp_dirs' => tmp_dirs,
+    'host_to_result_dir' => host_to_result_dir
+  }
+  result
 end
 
 
 step 'Setup'
 
 with_puppet_running_on master, @master_opts, @coderoot do
-  env_manifest = create_environment (find_osfamilies)
+  res = find_tmp_dirs
+  tmp_dirs = res['tmp_dirs']
+  host_to_result_dir = res['host_to_result_dir']
+  env_manifest = create_environment(find_osfamilies, tmp_dirs)
   apply_manifest_on(master, env_manifest, :catch_failures => true)
   agents.each do |agent|
-    step "Applying catalog to agent: #{agent}. result files in #{@resultdir}"
+    resultdir = host_to_result_dir[on(agent, facter("hostname")).stdout.chomp]
+    step "Applying catalog to agent: #{agent}. result files in #{resultdir}"
     on(
       agent,
       puppet('agent', "-t --server #{master}"),
@@ -281,7 +310,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     )
 
     step "####### Verifying hiera calls from erb template #######"
-    r1 = on(agent, "cat #{@resultdir}/hieratest_results_erb")
+    r1 = on(agent, "cat #{resultdir}/hieratest_results_erb")
     result = r1.stdout
 
     step "Verifying hiera() call #1."
@@ -347,7 +376,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       "#{@hh_h_call} failed.  Expected: '\"#{@k1}\"=>\"#{@hval1os}\"'"
     )
 
-    r2 = on(agent, "cat #{@resultdir}/mod_default")
+    r2 = on(agent, "cat #{resultdir}/mod_default")
     result = r2.stdout
     step "Verifying hiera_include() call. #1"
     assert_match(
@@ -356,7 +385,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       "#{@hi_i_call} failed.  Expected: '#{@mod_default_msg}'"
     )
 
-    r3 = on(agent, "cat #{@resultdir}/mod_osfamily")
+    r3 = on(agent, "cat #{resultdir}/mod_osfamily")
     result = r3.stdout
     step "Verifying hiera_include() call. #2"
     assert_match(
@@ -365,7 +394,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       "#{@hi_i_call} failed.  Expected: '#{@mod_osfamily_msg}'"
     )
 
-    r4 = on(agent, "cat #{@resultdir}/mod_production")
+    r4 = on(agent, "cat #{resultdir}/mod_production")
     result = r4.stdout
     step "Verifying hiera_include() call. #3"
     assert_match(
@@ -375,7 +404,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     )
 
     step "####### Verifying hiera calls from epp template #######"
-    r5 = on(agent, "cat #{@resultdir}/hieratest_results_epp")
+    r5 = on(agent, "cat #{resultdir}/hieratest_results_epp")
     result = r5.stdout
 
     step "Verifying hiery() call #1."
