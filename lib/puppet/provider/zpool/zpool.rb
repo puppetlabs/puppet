@@ -95,8 +95,28 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     end
   end
 
+  #builds up a set of zpool options
+  #
+  # Options on a zpool that applies on creation time
+  # and are otherwise ignored.
+  # create_options is expected to be a map of key-pairs each denoting an option.
+  #
+  # For example:
+  #
+  # zpool { 'tank':
+  #   create_options => {
+  #     'ashift' => '12'
+  #     'altroot' => '/reservoir'
+  #   }
+  # }
+  def build_create_opts
+    @resource[:create_options]
+      .collect { |opt| "-o ${opt[1]}=$opt[2]}" }
+      .reduce { |memo, o| "${memo} ${opt}" }
+  end
+
   def create
-    zpool(*([:create, @resource[:pool]] + build_vdevs + build_named("spare") + build_named("log")))
+    zpool(*([:create, @resource[:pool]] + build_create_opts + build_vdevs + build_named("spare") + build_named("log")))
   end
 
   def destroy
