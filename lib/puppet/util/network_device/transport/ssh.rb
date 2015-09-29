@@ -68,9 +68,12 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
   end
 
   def close
-    @channel.close if @channel
-    @channel = nil
-    @ssh.close if @ssh
+    begin
+      @channel.close if @channel
+      @channel = nil
+      @ssh.close if @ssh
+    rescue IOError
+    end
   end
 
   def expect(prompt)
