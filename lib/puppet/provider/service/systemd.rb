@@ -20,6 +20,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     output.scan(/^(\S+)\s+(disabled|enabled|masked)\s*$/i).each do |m|
       i << new(:name => m[0])
     end
+    output = systemctl('list-units', '--type', 'service', '--full', '--all',  '--no-pager')
+    output.scan(/^(?:\*)?\s+(\S+\.service)\s+(loaded)\s+/i).each do |m|
+      i << new(:name => m[0])
+    end
     return i
   rescue Puppet::ExecutionFailure
     return []
@@ -59,7 +63,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       # flapping when simply trying to disable a masked service.
       return :mask if (@resource[:enable] == :mask) && (svc_info[:LoadState] == 'masked')
       return :true if svc_info[:UnitFileState] == 'enabled'
-      if Facter.value(:osfamily) == 'debian'
+      if Facter.value(:osfamily) == 'Debian'
         ret = debian_enabled?(svc_info)
         return ret if ret
       end
