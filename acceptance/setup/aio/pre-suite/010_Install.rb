@@ -75,4 +75,22 @@ agents.each do |agent|
   on agent, "#{ruby} --version"
 end
 
+# Get a rough estimate of clock skew among hosts
+times = []
+hosts.each do |host|
+  ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
+  on(host, "#{ruby} -e 'puts Time.now.strftime(\"%Y-%m-%d %T.%L %z\")'") do |result|
+    times << result.stdout.chomp
+  end
+end
+times.map! do |time|
+  (Time.strptime(time, "%Y-%m-%d %T.%L %z").to_f * 1000.0).to_i
+end
+diff = times.max - times.min
+if diff < 60000
+  logger.info "Host times vary #{diff} ms"
+else
+  logger.warn "Host times vary #{diff} ms, tests may fail"
+end
+
 configure_gem_mirror(hosts)
