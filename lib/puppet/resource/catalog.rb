@@ -250,7 +250,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     host_config
   end
 
-  def initialize(name = nil, environment = Puppet::Node::Environment::NONE)
+  def initialize(name = nil, environment = Puppet::Node::Environment::NONE, code_id = nil)
     super()
     @name = name
     @classes = []
@@ -261,6 +261,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     @host_config = true
     @environment_instance = environment
     @environment = environment.to_s
+    @code_id = code_id
 
     @aliases = {}
 
@@ -298,7 +299,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
       @resources.delete(title_key)
-      resource.remove
+      # Only Puppet::Type kind of resources respond to :remove, not Puppet::Resource
+      resource.remove if resource.respond_to?(:remove)
     end
   end
 
@@ -514,6 +516,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result = self.class.new(self.name, self.environment_instance)
 
     result.version = self.version
+    result.code_id = self.code_id
 
     map = {}
     resources.each do |resource|

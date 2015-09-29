@@ -16,14 +16,15 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application]
+  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application, :site]
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
       :hostclass => "class",
       :node => "node",
       :definition => "defined_type",
-      :application => "application"
+      :application => "application",
+      :site => 'site'
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
@@ -268,8 +269,17 @@ class Puppet::Resource::Type
   # parameterized class, then all parameters take on their default
   # values.
   def ensure_in_catalog(scope, parameters=nil)
-    raise ArgumentError, 'Cannot create resources for defined resource types' if type == :definition
-    resource_type = type == :hostclass ? :class : :node
+    resource_type =
+    case type
+    when :definition
+      raise ArgumentError, 'Cannot create resources for defined resource types'
+    when :hostclass
+      :class
+    when :node
+      :node
+    when :site
+      :site
+    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the

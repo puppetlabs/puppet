@@ -248,6 +248,30 @@ describe 'The type calculator' do
       expect(t.runtime_type_name).to eq('Foo')
     end
 
+    it 'Class Foo translates to PType[PRuntimeType[ruby, Foo]]' do
+      class Foo
+      end
+
+      t = calculator.infer(Foo)
+      expect(t.class).to eq(Puppet::Pops::Types::PType)
+      tt = t.type
+      expect(tt.class).to eq(Puppet::Pops::Types::PRuntimeType)
+      expect(tt.runtime).to eq(:ruby)
+      expect(tt.runtime_type_name).to eq('Foo')
+    end
+
+    it 'Module FooModule translates to PType[PRuntimeType[ruby, FooModule]]' do
+      module FooModule
+      end
+
+      t = calculator.infer(FooModule)
+      expect(t.class).to eq(Puppet::Pops::Types::PType)
+      tt = t.type
+      expect(tt.class).to eq(Puppet::Pops::Types::PRuntimeType)
+      expect(tt.runtime).to eq(:ruby)
+      expect(tt.runtime_type_name).to eq('FooModule')
+    end
+
     context 'array' do
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(Puppet::Pops::Types::PArrayType)

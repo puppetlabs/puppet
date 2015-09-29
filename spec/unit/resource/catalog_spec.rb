@@ -258,6 +258,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
         r == @r1
       end.edge?(@r1,@r2)).not_to be
     end
+
+    it "copies the version" do
+      @original.version = '123'
+      expect(@original.filter.version).to eq(@original.version)
+    end
+
+    it 'copies the code_id' do
+      @original.code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      expect(@original.filter.code_id).to eq(@original.code_id)
+    end
   end
 
   describe "when functioning as a resource container" do

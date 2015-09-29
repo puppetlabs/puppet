@@ -259,6 +259,14 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  # @param o [Model::SiteDefinition]
+  # @param body [Object] see {#f_build_body}
+  def build_SiteDefinition(o, body)
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
+  end
+
   def build_Parameter(o, name, expr)
     o.name = name
     o.value = build(expr) if expr # don't build a nil/nop
@@ -600,6 +608,7 @@ class Puppet::Pops::Model::Factory
 
   def self.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
 
+  def self.SITE(body);                   new(Model::SiteDefinition, body);                       end
 
   # Parameters
 
