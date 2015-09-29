@@ -196,7 +196,11 @@ class Puppet::Indirector::Indirection
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
         if cache?
           Puppet.info "Caching #{self.name} for #{request.key}"
-          cache.save request(:save, key, result, options)
+          begin
+            cache.save request(:save, key, result, options)
+          rescue => detail
+            Puppet.log_exception(detail)
+          end
         end
 
         filtered = result

@@ -393,6 +393,17 @@ describe Puppet::Indirector::Indirection do
 
           @indirection.find("/my/key")
         end
+
+        it "should not fail if saving to the cache fails" do
+          @cache.stubs(:find).returns nil
+
+          @terminus.stubs(:find).returns(@instance)
+          @cache.stubs(:save).raises RuntimeError
+
+          Puppet.expects(:log_exception)
+
+          expect { @indirection.find("/my/key") }.not_to raise_error
+        end
       end
     end
 
