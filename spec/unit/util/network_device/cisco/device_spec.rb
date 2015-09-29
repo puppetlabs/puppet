@@ -312,20 +312,20 @@ Self Loopback: No
 Switch#
 eos
 
-      expect(@cisco.parse_trunking("FastEthernet0/21")).to eq({ :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>:all, })
+      expect(@cisco.parse_trunking("FastEthernet0/21")).to eq({ :mode => :trunk, :encapsulation => :dot1q, :native_vlan => "1", :allowed_trunk_vlans=>:all, })
     end
 
-    it "should parse trunk switchport information with allowed vlans" do
+    it "should parse dynamic desirable switchport information with native and allowed vlans" do
       @transport.stubs(:command).with("sh interface GigabitEthernet 0/1 switchport").returns(<<eos)
 c2960#sh interfaces GigabitEthernet 0/1 switchport 
 Name: Gi0/1
 Switchport: Enabled
-Administrative Mode: trunk
+Administrative Mode: dynamic desirable
 Operational Mode: trunk
 Administrative Trunking Encapsulation: dot1q
 Operational Trunking Encapsulation: dot1q
 Negotiation of Trunking: On
-Access Mode VLAN: 1 (default)
+Access Mode VLAN: 100 (SHDSL)
 Trunking Native Mode VLAN: 1 (default)
 Administrative Native VLAN tagging: enabled
 Voice VLAN: none
@@ -350,7 +350,7 @@ Appliance trust: none
 c2960#
 eos
 
-      expect(@cisco.parse_trunking("GigabitEthernet 0/1")).to eq({ :mode => :trunk, :encapsulation => :dot1q, :allowed_trunk_vlans=>"1,99", })
+      expect(@cisco.parse_trunking("GigabitEthernet 0/1")).to eq({ :mode => "dynamic desirable", :encapsulation => :dot1q, :access_vlan => "100", :native_vlan => "1", :allowed_trunk_vlans=>"1,99", })
     end
 
     it "should parse access switchport information" do
@@ -376,7 +376,43 @@ Self Loopback: No
 Switch#
 eos
 
-      expect(@cisco.parse_trunking("FastEthernet0/1")).to eq({ :mode => :access, :native_vlan => "100" })
+      expect(@cisco.parse_trunking("FastEthernet0/1")).to eq({ :mode => :access, :access_vlan => "100" })
+    end
+
+    it "should parse auto/negotiate switchport information" do
+      @transport.stubs(:command).with("sh interface FastEthernet0/24 switchport").returns(<<eos)
+Switch#sh interfaces FastEthernet 0/24 switchport
+Name: Fa0/24
+Switchport: Enabled
+Administrative mode: dynamic auto
+Operational Mode: static access
+Administrative Trunking Encapsulation: negotiate
+Operational Trunking Encapsulation: native
+Negotiation of Trunking: On
+Access Mode VLAN: 1 (default)
+Trunking Native Mode VLAN: 2 (default)
+Administrative Native VLAN tagging: enabled
+Voice VLAN: none
+Administrative private-vlan host-association: none
+Administrative private-vlan mapping: none
+Administrative private-vlan trunk native VLAN: none
+Administrative private-vlan trunk Native VLAN tagging: enabled
+Administrative private-vlan trunk encapsulation: dot1q
+Administrative private-vlan trunk normal VLANs: none
+Administrative private-vlan trunk private VLANs: none
+Operational private-vlan: none
+Trunking VLANs Enabled: ALL
+Pruning VLANs Enabled: 2-1001
+Capture Mode Disabled
+Capture VLANs Allowed: ALL
+
+Protected: false
+Unknown unicast blocked: disabled
+Unknown multicast blocked: disabled
+Appliance trust: none
+eos
+
+      expect(@cisco.parse_trunking("FastEthernet0/24")).to eq({ :mode => "dynamic auto", :encapsulation => :negotiate, :allowed_trunk_vlans => :all, :access_vlan => "1", :native_vlan => "2" })
     end
 
     it "should parse ip addresses" do
