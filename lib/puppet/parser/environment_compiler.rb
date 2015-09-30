@@ -65,12 +65,16 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
     # Get downstream vertexes returns a hash where the keys are the resources and values nesting level
     rooted_in_main = @catalog.downstream_from_vertex(the_main_class_resource).keys
+
+    to_be_removed =
     if the_site_resource
       keep_from_site = @catalog.downstream_from_vertex(the_site_resource).keys
       keep_from_site << the_site_resource
+      rooted_in_main - keep_from_site
+    else
+      rooted_in_main
     end
 
-    to_be_removed = rooted_in_main - keep_from_site
     @catalog.remove_resource(*to_be_removed)
     # The compiler keeps a list of added resources, this shadows that list with the now pruned result
     @pruned_resources = @catalog.resources

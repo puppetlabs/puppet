@@ -243,6 +243,14 @@ EOS
 
 
   describe "in the environment catalog" do
+    it "does not fail if there is no site expression" do
+      expect {
+      catalog = compile_to_env_catalog(<<-EOC).to_resource
+        notify { 'ignore me':}
+      EOC
+      }.to_not raise_error()
+    end
+
     it "includes components and capability resources" do
       catalog = compile_to_env_catalog(MANIFEST).to_resource
       apps = catalog.resources.select do |res|
