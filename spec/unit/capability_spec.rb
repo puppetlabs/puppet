@@ -177,23 +177,6 @@ describe "Capability types" do
                          /#{kw} clause references nonexistent type Test/)
       end
     end
-
-    it 'raises an exception if the same parameter is consumed from more than one capability' do
-      expect do compile_to_catalog(<<-MANIFEST)
-      define test($hostname = nohost) {
-        notify { "hostname ${hostname}":}
-      }
-
-      Test consumes Cap {
-        hostname => $host
-      }
-
-      Test consumes Conflict_cap {
-        hostname => $host
-      }
-      MANIFEST
-      end.to raise_error(Puppet::Error, /'test' consumes 'hostname' from both 'Cap' and  'Conflict_cap'/)
-    end
   end
 
   describe "exporting a capability" do
