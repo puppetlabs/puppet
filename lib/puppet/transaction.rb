@@ -372,6 +372,10 @@ class Puppet::Transaction
     not resource.tagged?(*tags)
   end
 
+  def split_qualified_tags?
+    false
+  end
+
   # These two methods are only made public to enable the existing spec tests to run
   # under rspec 3 (apparently rspec 2 didn't enforce access controls?). Please do not
   # treat these as part of a public API.

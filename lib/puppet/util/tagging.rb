@@ -18,8 +18,10 @@ module Puppet::Util::Tagging
       if @tags.add?(name)
         # not seen before, so now we test if it is valid
         if name =~ ValidTagRegex
+          if split_qualified_tags?
           # avoid adding twice by first testing if the string contains '::'
-          @tags.merge(name.split('::')) if name.include?('::')
+            @tags.merge(name.split('::')) if name.include?('::')
+          end
         else
           @tags.delete(name)
           fail(Puppet::ParseError, "Invalid tag '#{name}'")
@@ -105,6 +107,10 @@ module Puppet::Util::Tagging
   end
 
   private
+
+  def split_qualified_tags?
+    true
+  end
 
   def new_tags
     Puppet::Util::TagSet.new
