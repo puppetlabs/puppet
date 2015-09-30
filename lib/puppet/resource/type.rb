@@ -223,11 +223,6 @@ class Puppet::Resource::Type
 
   def add_consumes(blueprint)
     @consumes ||= []
-    mappings = blueprint[:mappings]
-    @consumes.each do |bp|
-      dup = bp[:mappings].keys.find {|p| mappings.include?(p) }
-      fail "'#{name}' consumes '#{dup}' from both '#{bp[:capability]}' and  '#{blueprint[:capability]}'" unless dup.nil?
-    end
     @consumes << blueprint
   end
 
