@@ -307,5 +307,43 @@ Test consumes Cap {
         expect { make_catalog("notify{hello:} test { one: #{metaparam} => Notify[hello] }") }.to raise_error(Puppet::Error, /not a capability resource/)
       end
     end
+
+    describe 'producing/consuming resources' do
+
+      let(:ral) do
+        compile_to_ral(<<-MANIFEST)
+  define producer() {
+    notify { "producer":}
+  }
+
+  define consumer() {
+    notify { "consumer":}
+  }
+
+  Producer produces Cap {}
+
+  Consumer consumes Cap {}
+
+  producer {x: export => Cap[cap]}
+  consumer {x: consume => Cap[cap]}
+        MANIFEST
+      end
+
+      let(:graph) do
+        graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new)
+        graph.populate_from(ral)
+        graph
+      end
+
+      let(:capability) { ral.resource('Cap[cap]') }
+
+      it 'the produced resource depends on the producer' do
+        expect(graph.dependencies(capability).map {|d| d.to_s }).to include('Producer[x]')
+      end
+
+      it 'the consumer depends on the consumed resource' do
+        expect(graph.dependents(capability).map {|d| d.to_s }).to include('Consumer[x]')
+      end
+    end
   end
 end
