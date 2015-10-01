@@ -766,7 +766,7 @@ describe Puppet::Resource::Type do
       source = Puppet::Resource::Type.new(:hostclass, "foo", :code => scode)
 
       dest.merge(source)
-      expect(dest.code.children.collect { |l| l.children[0].value }).to eq(%w{dest source})
+      expect(dest.code.children.map { |c| c.value }).to eq(%w{dest source})
     end
   end
 end
