@@ -270,6 +270,49 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
+  describe "#debian_enabled?" do
+    [104, 106].each do |status|
+      it "should return true when invoke-rc.d returns #{status}" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        $CHILD_STATUS.expects(:exitstatus).returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+      end
+    end
+
+    [101, 105].each do |status|
+      it "should return true when status is #{status} and there are at least 4 start links" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        provider.expects(:get_start_link_count).returns(4)
+        $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+      end
+
+      it "should return false when status is #{status} and there are less than 4 start links" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        provider.expects(:get_start_link_count).returns(1)
+        $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:false)
+      end
+    end
+  end
+
+  describe "#get_start_link_count" do
+    it "should strip the '.service' from the search if present in the resource name" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
+      provider.get_start_link_count
+    end
+
+    it "should use the full service name if it does not include '.service'" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
+      provider.get_start_link_count
+    end
+  end
+
   it "(#16451) has command systemctl without being fully qualified" do
     expect(described_class.instance_variable_get(:@commands)).to include(:systemctl => 'systemctl')
   end

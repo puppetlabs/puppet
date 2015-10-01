@@ -63,4 +63,25 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     update_rc "-f", @resource[:name], "remove"
     update_rc @resource[:name], "defaults"
   end
+
+  def statuscmd
+    os = Facter.value(:operatingsystem).downcase
+
+    if os == 'debian'
+      majversion = Facter.value(:operatingsystemmajrelease).to_i
+    else
+      majversion = Facter.value(:operatingsystemmajrelease).split('.')[0].to_i
+    end
+
+
+    if ((os == 'debian' && majversion >= 8) || (os == 'ubuntu' && majversion >= 15))
+      # SysVInit scripts will always return '0' for status when the service is masked,
+      # even if the service is actually stopped. Use the SysVInit-Systemd compatibility
+      # layer to determine the actual status. This is only necessary when the SysVInit
+      # version of a service is queried. I.e, 'ntp' instead of 'ntp.service'.
+      (@resource[:hasstatus] == :true) && ["systemctl", "is-active", @resource[:name]]
+    else
+      super
+    end
+  end
 end
