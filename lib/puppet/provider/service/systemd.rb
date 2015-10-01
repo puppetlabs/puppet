@@ -59,7 +59,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       # flapping when simply trying to disable a masked service.
       return :mask if (@resource[:enable] == :mask) && (svc_info[:LoadState] == 'masked')
       return :true if svc_info[:UnitFileState] == 'enabled'
-      if Facter.value(:osfamily) == 'debian'
+      if Facter.value(:osfamily).downcase == 'debian'
         ret = debian_enabled?(svc_info)
         return ret if ret
       end
