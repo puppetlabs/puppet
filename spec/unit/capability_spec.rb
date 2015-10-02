@@ -162,6 +162,21 @@ describe "Capability types" do
       end.to raise_error(Puppet::ParseError, /The operator '\* =>' in a Capability Mapping is not supported/)
     end
 
+    it "does not allow 'before' relationship to capability mapping" do
+      make_cap_type
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+        define test() {
+          notify { "hello":}
+        }
+
+        Test consumes Cap {}
+
+        test { one: before => Cap[cap] }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /'before' is not a valid relationship to a capability/)
+    end
+
     ["produces", "consumes"].each do |kw|
       it "creates an error when #{kw} references nonexistent type" do
         manifest = <<-MANIFEST
@@ -247,13 +262,13 @@ test { one: hostname => "ahost", export => Cap[two] }
 
     def make_catalog(instance)
       manifest = <<-MANIFEST
-define test($hostname = nohost) {
-  notify { "hostname ${hostname}":}
-}
+      define test($hostname = nohost) {
+        notify { "hostname ${hostname}":}
+      }
 
-Test consumes Cap {
-  hostname => $host
-}
+      Test consumes Cap {
+        hostname => $host
+      }
     MANIFEST
       compile_to_catalog(manifest + instance)
     end

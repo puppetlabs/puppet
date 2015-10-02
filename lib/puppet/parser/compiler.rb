@@ -156,6 +156,7 @@ class Puppet::Parser::Compiler
   end
 
   def add_catalog_validators
+    add_catalog_validator(Puppet::Parser::CatalogValidators::RelationshipValidator)
   end
 
   # Return a list of all of the defined classes.
