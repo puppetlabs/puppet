@@ -8,6 +8,8 @@ class Puppet::Application::Lookup < Puppet::Application
   RUN_HELP = "Run 'puppet lookup --help' for more details".freeze
   DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, --unpack-arrays, and --merge-hash-arrays'.freeze
 
+  run_mode :master
+
   # Options for lookup
   option('--merge TYPE') do |arg|
     if %w{unique hash deep}.include?(arg)
@@ -64,12 +66,76 @@ class Puppet::Application::Lookup < Puppet::Application
     end
   end
 
-  def setup
+  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
+  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
+  # @see Puppet::Node::WriteOnlyYaml
+  # @see #setup_node_cache
+  # @see puppet issue 16753
+  #
+  def app_defaults
+    super.merge({
+      :node_cache_terminus => :write_only_yaml,
+      :facts_terminus => 'yaml'
+    })
+  end
+
+  def setup_logs
     # This sets up logging based on --debug or --verbose if they are set in `options`
     set_log_level
 
     # This uses console for everything that is not a compilation
     Puppet::Util::Log.newdestination(:console)
+  end
+
+  def setup_terminuses
+    require 'puppet/file_serving/content'
+    require 'puppet/file_serving/metadata'
+
+    Puppet::FileServing::Content.indirection.terminus_class = :file_server
+    Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
+
+    Puppet::FileBucket::File.indirection.terminus_class = :file
+  end
+
+  def setup_ssl
+    # Configure all of the SSL stuff.
+    if Puppet::SSL::CertificateAuthority.ca?
+      Puppet::SSL::Host.ca_location = :local
+      Puppet.settings.use :ca
+      Puppet::SSL::CertificateAuthority.instance
+    else
+      Puppet::SSL::Host.ca_location = :none
+    end
+    # These lines are not on stable (seems like a copy was made from master)
+    #
+    # Puppet::SSL::Oids.register_puppet_oids
+    # Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
+  end
+
+  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
+  # but never finds or reads anything (this since a real cache causes stale data to be served
+  # in circumstances when the cache can not be cleared).
+  # @see puppet issue 16753
+  # @see Puppet::Node::WriteOnlyYaml
+  # @return [void]
+  def setup_node_cache
+    Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
+  end
+
+  def setup
+    setup_logs
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    Puppet.settings.use :main, :master, :ssl, :metrics
+
+    setup_terminuses
+
+    # TODO: Do we need this in preview? It sets up a write only cache
+    setup_node_cache
+
+    setup_ssl
+    puts "setup happened! o:"
   end
 
   def help
@@ -200,9 +266,9 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     keys = command_line.args
     raise 'No keys were given to lookup.' if keys.empty?
 
-    unless options[:node]
-      raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
-    end
+    #unless options[:node]
+    #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
+    #end
 
     if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:unpack_arrays]) && options[:merge] != 'deep'
       raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
@@ -252,7 +318,17 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def generate_scope
-    node = options[:node]
+    if options[:node]
+      node = options[:node]
+    else
+      node = 'default'
+
+      # If we want to lookup the node we are currently on
+      # we must returning these settings to their default values
+      Puppet.settings[:facts_terminus] = 'facter'
+      Puppet.settings[:node_cache_terminus] = nil
+    end
+
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
