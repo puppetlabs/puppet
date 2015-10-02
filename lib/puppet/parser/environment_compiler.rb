@@ -34,9 +34,13 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Env Compile: Validate Catalog", [:compiler, :validate_site_catalog]) { validate_site_catalog }
 
+      Puppet::Util::Profiler.profile("Env Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) { validate_catalog(Puppet::Parser::CatalogValidator::PRE_FINISH) }
+
       Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
       fail_on_unevaluated
+
+      Puppet::Util::Profiler.profile("Env Compile: Validate Catalog final", [:compiler, :validate_final]) { validate_catalog(Puppet::Parser::CatalogValidator::FINAL) }
 
       if block_given?
         yield @catalog
