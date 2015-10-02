@@ -31,8 +31,6 @@ user { 'passwordtestuser':
 MANIFEST
 
 apply_manifest_on(hosts_to_test, adduser_manifest )
-results = apply_manifest_on(hosts_to_test, changepass_manifest )
-
-results.each do |result|
+apply_manifest_on(hosts_to_test, changepass_manifest ) do |result|
   assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" )
 end

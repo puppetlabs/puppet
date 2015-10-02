@@ -41,31 +41,31 @@ end
 
 step 'Installing a known package succeeds'
 verify_absent agents, 'guid'
-apply_manifest_on(agents, 'package {"guid": ensure => installed}').each do |result|
+apply_manifest_on(agents, 'package {"guid": ensure => installed}') do |result|
   assert_match('Package[guid]/ensure: created', "#{result.host}: #{result.stdout}")
 end
 
 step 'Removing a known package succeeds'
 verify_present agents, 'guid'
-apply_manifest_on(agents, 'package {"guid": ensure => absent}').each do |result|
+apply_manifest_on(agents, 'package {"guid": ensure => absent}') do |result|
   assert_match('Package[guid]/ensure: removed', "#{result.host}: #{result.stdout}")
 end
 
 step 'Installing a specific version of a known package succeeds'
 verify_absent agents, 'guid'
-apply_manifest_on(agents, 'package {"guid": ensure => "1.0"}').each do |result|
+apply_manifest_on(agents, 'package {"guid": ensure => "1.0"}') do |result|
   assert_match('Package[guid]/ensure: created', "#{result.host}: #{result.stdout}")
 end
 
 step 'Removing a specific version of a known package succeeds'
 verify_present agents, 'guid'
-apply_manifest_on(agents, 'package {"guid": ensure => absent}').each do |result|
+apply_manifest_on(agents, 'package {"guid": ensure => absent}') do |result|
   assert_match('Package[guid]/ensure: removed', "#{result.host}: #{result.stdout}")
 end
 
 step 'Installing a non-existant version of a known package fails'
 verify_absent agents, 'guid'
-apply_manifest_on(agents, 'package {"guid": ensure => "1.1"}').each do |result|
+apply_manifest_on(agents, 'package {"guid": ensure => "1.1"}') do |result|
   assert_not_match(/Package\[guid\]\/ensure: created/, "#{result.host}: #{result.stdout}")
   assert_match('Package[guid]/ensure: change from purged to 1.1 failed', "#{result.host}: #{result.stderr}")
 end
@@ -73,7 +73,7 @@ verify_absent agents, 'guid'
 
 step 'Installing a non-existant package fails'
 verify_absent agents, 'not_a_package'
-apply_manifest_on(agents, 'package {"not_a_package": ensure => present}').each do |result|
+apply_manifest_on(agents, 'package {"not_a_package": ensure => present}') do |result|
   assert_not_match(/Package\[not_a_package\]\/ensure: created/, "#{result.host}: #{result.stdout}")
   assert_match('Package[not_a_package]/ensure: change from purged to present failed', "#{result.host}: #{result.stderr}")
 end
@@ -81,7 +81,7 @@ verify_absent agents, 'not_a_package'
 
 step 'Removing a non-existant package succeeds'
 verify_absent agents, 'not_a_package'
-apply_manifest_on(agents, 'package {"not_a_package": ensure => absent}').each do |result|
+apply_manifest_on(agents, 'package {"not_a_package": ensure => absent}') do |result|
   assert_not_match(/Package\[not_a_package\]\/ensure/, "#{result.host}: #{result.stdout}")
   assert_match('Applied catalog', "#{result.host}: #{result.stdout}")
 end
