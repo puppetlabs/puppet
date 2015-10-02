@@ -59,6 +59,62 @@ describe "Application instantiation" do
       }
 EOS
 
+MANIFEST_WO_EXPORT = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      cons { two: host => ahost, consume => Cap[cap] }
+    }
+
+    site {
+      app { anapp:
+        nodes => {
+          Node[first] => Prod[one],
+          Node[second] => Cons[two]
+        }
+      }
+    }
+EOS
+
+MANIFEST_WITH_DOUBLE_EXPORT = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      prod { one: host => ahost, export => Cap[cap] }
+      prod { two: host => anotherhost, export => Cap[cap] }
+      cons { two: host => ahost, consume => Cap[cap] }
+    }
+
+    site {
+      app { anapp:
+        nodes => {
+          Node[first] => Prod[one],
+          Node[second] => Cons[two]
+        }
+      }
+    }
+EOS
+
 FAULTY_MANIFEST = <<-EOS
     define prod($host) {
       notify { "host ${host}":}
@@ -165,6 +221,16 @@ EOS
     it "an application instance must be contained in a site" do
       expect { compile_to_catalog(FAULTY_MANIFEST, Puppet::Node.new('first'))
       }.to raise_error(/Application instances .* can only be contained within a Site/)
+    end
+
+    it "detects that consumed capability is never exported" do
+      expect { compile_to_env_catalog(MANIFEST_WO_EXPORT)
+      }.to raise_error(/Capability 'Cap\[cap\]' referenced by 'consume' is never exported/)
+    end
+
+    it "detects that a capability is exported more than once" do
+      expect { compile_to_env_catalog(MANIFEST_WITH_DOUBLE_EXPORT)
+      }.to raise_error(/'Cap\[cap\]' is exported by both 'Prod\[one\]' and 'Prod\[two\]'/)
     end
 
     context "for producing node" do
