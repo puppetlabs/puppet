@@ -51,7 +51,7 @@ collide1_manifest = <<MANIFEST
   package {'other-guid': name => 'guid', ensure => present}
 MANIFEST
 
-apply_manifest_on(agents, collide1_manifest, :acceptable_exit_codes => [1]).each do |result|
+apply_manifest_on(agents, collide1_manifest, :acceptable_exit_codes => [1]) do |result|
   assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", nil\]/, "#{result.host}: #{result.stderr}")
 end
 
@@ -62,7 +62,7 @@ collide2_manifest = <<MANIFEST
   package {'other-guid': name => 'guid', ensure => installed, provider => gem}
 MANIFEST
 
-apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]).each do |result|
+apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]) do |result|
   assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", "gem"\]/, "#{result.host}: #{result.stderr}")
 end
 
@@ -79,7 +79,7 @@ install_manifest = <<MANIFEST
   }
 MANIFEST
 
-apply_manifest_on(agents, install_manifest).each do |result|
+apply_manifest_on(agents, install_manifest) do |result|
   assert_match('Package[guid]/ensure: created', "#{result.host}: #{result.stdout}")
   assert_match('Package[gem-guid]/ensure: created', "#{result.host}: #{result.stdout}")
 end
@@ -97,7 +97,7 @@ remove_manifest = <<MANIFEST
   package {'guid': ensure => absent}
 MANIFEST
 
-apply_manifest_on(agents, remove_manifest).each do |result|
+apply_manifest_on(agents, remove_manifest) do |result|
   assert_match('Package[guid]/ensure: removed', "#{result.host}: #{result.stdout}")
   assert_match('Package[gem-guid]/ensure: removed', "#{result.host}: #{result.stdout}")
 end
