@@ -9,6 +9,8 @@ confine :except, :platform => /centos-4|el-4/ # PUP-5257
 # more context around circumstances that this can fail.
 #
 
+skip_test 'requires puppet and mcollective service scripts from AIO agent package' if @options[:type] != 'aio'
+
 require 'puppet/acceptance/service_utils'
 extend Puppet::Acceptance::ServiceUtils
 
