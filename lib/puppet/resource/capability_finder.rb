@@ -15,14 +15,20 @@ module Puppet::Resource::CapabilityFinder
   # Looks the capability resource with the given +type+ and +title+ up from
   # PuppetDB.
   def self.find(environment, cap)
-    http = Net::HTTP.new("localhost", 8080)
-    query = ["and", ["=", "type", cap.type.capitalize],
-                    ["=", "title", cap.title.to_s],
-                    ["=", "tag", "producer:#{environment}"]].to_json
-    Puppet.notice "Capability lookup #{cap}]: #{query}"
-    response = http.get("/pdb/query/v4/resources?query=#{CGI.escape(query)}",
-                        { "Accept" => 'application/json'})
+    unless Puppet::Util.const_defined?('Puppetdb')
+      raise Puppet::DevError, 'PuppetDB is not available'
+    end
 
+    query = ['and', ['=', 'type', cap.type.capitalize],
+      ['=', 'title', cap.title.to_s],
+      ['=', 'tag', "producer:#{environment}"]].to_json
+
+    Puppet.notice "Capability lookup #{cap}]: #{query}"
+
+    http = Puppet::Util.const_get('Puppetdb').const_get('Http')
+    response = http.action("/pdb/query/v4/resources?query=#{CGI.escape(query)}") do |conn, uri|
+      conn.get(uri, { 'Accept' => 'application/json'})
+    end
     json = response.body
 
     # The format of the response body is documented at
@@ -53,8 +59,8 @@ module Puppet::Resource::CapabilityFinder
 
     unless data.empty?
       resource_hash = data.first
-      resource = Puppet::Resource.new(resource_hash["type"],
-                                      resource_hash["title"])
+      resource = Puppet::Resource.new(resource_hash['type'],
+                                      resource_hash['title'])
       real_type = Puppet::Type.type(resource.type)
       if real_type.nil?
         fail Puppet::ParseError,
@@ -62,8 +68,8 @@ module Puppet::Resource::CapabilityFinder
       end
       real_type.parameters.each do |param|
         param = param.to_s
-        next if param == "name"
-        if value = resource_hash["parameters"][param]
+        next if param == 'name'
+        if value = resource_hash['parameters'][param]
           resource[param] = value
         else
           Puppet.debug "No capability value for #{resource}->#{param}"
