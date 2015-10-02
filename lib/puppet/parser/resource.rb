@@ -250,7 +250,7 @@ class Puppet::Parser::Resource < Puppet::Resource
           # @todo lutter 2015-07-01: this should be caught by the checker
           # much earlier. We consume several capres, at least two of which
           # want to map to the same parameter (PUP-5080)
-          raise "Several consumed mappings try to set #{name}" if map[name]
+          raise "Attempt to reassign attribute '#{name}' in '#{self}' caused by multiple consumed mappings to the same attribute" if map[name]
           map[name] = value
         end
       end
