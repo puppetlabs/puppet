@@ -156,7 +156,7 @@ class Puppet::Parser::Compiler
   end
 
   def add_catalog_validators
-    add_catalog_validator(Puppet::Parser::CatalogValidators::RelationshipValidator)
+    add_catalog_validator(CatalogValidator::RelationshipValidator)
   end
 
   # Return a list of all of the defined classes.
@@ -189,7 +189,9 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Evaluated generators", [:compiler, :evaluate_generators]) { evaluate_generators }
 
-      Puppet::Util::Profiler.profile("Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) { validate_catalog(Puppet::Parser::CatalogValidator::PRE_FINISH) }
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+        validate_catalog(CatalogValidator::PRE_FINISH)
+      end
 
       Puppet::Util::Profiler.profile("Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
@@ -197,7 +199,9 @@ class Puppet::Parser::Compiler
 
       fail_on_unevaluated
 
-      Puppet::Util::Profiler.profile("Compile: Validate Catalog final", [:compiler, :validate_final]) { validate_catalog(Puppet::Parser::CatalogValidator::FINAL) }
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog final", [:compiler, :validate_final]) do
+        validate_catalog(CatalogValidator::FINAL)
+      end
 
       if block_given?
         yield @catalog
@@ -207,8 +211,8 @@ class Puppet::Parser::Compiler
     end
   end
 
-  def validate_catalog(stage)
-    @catalog_validators.select { |vclass| vclass.stage?(stage) }.each { |vclass| vclass.new(@catalog).validate }
+  def validate_catalog(validation_stage)
+    @catalog_validators.select { |vclass| vclass.validation_stage?(validation_stage) }.each { |vclass| vclass.new(@catalog).validate }
   end
 
   # Constructs the overrides for the context

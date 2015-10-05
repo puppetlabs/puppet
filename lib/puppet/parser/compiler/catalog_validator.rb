@@ -1,6 +1,6 @@
 # Abstract class for a catalog validator that can be registered with the compiler to run at
 # a certain stage.
-module Puppet::Parser
+class Puppet::Parser::Compiler
   class CatalogValidator
     PRE_FINISH = :pre_finish
     FINAL = :final
@@ -11,7 +11,7 @@ module Puppet::Parser
     # @param stage [Symbol] One of the stage constants defined in this class
     # @return [Boolean] true if the validator should run at the given stage
     #
-    def self.stage?(stage)
+    def self.validation_stage?(stage)
       FINAL.equal?(stage)
     end
 
