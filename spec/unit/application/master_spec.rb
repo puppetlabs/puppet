@@ -333,8 +333,8 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         it "should exit and log an error if running as root and the puppet user does not exist" do
           Puppet.features.stubs(:root?).returns true
           a_user_type_for("puppet").expects(:exists?).returns false
-
-          expect { @master.main }.to raise_error(Puppet::Error, /Could not change user to puppet\. User does not exist and is required to continue\./)
+          Puppet.expects(:err).with('Could not change user to puppet. User does not exist and is required to continue.')
+          expect { @master.main }.to exit_with 74
         end
       end
 

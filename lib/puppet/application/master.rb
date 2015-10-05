@@ -198,7 +198,8 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
           exit(39)
         end
       else
-        raise Puppet::Error.new("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.")
+        Puppet.err("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.")
+        exit(74)
       end
     end
 
