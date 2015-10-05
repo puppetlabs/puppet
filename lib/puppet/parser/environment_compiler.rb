@@ -19,6 +19,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def add_catalog_validators
     super
     add_catalog_validator(CatalogValidator::SiteValidator)
+    add_catalog_validator(CatalogValidator::EnvironmentRelationshipValidator)
   end
 
   def compile
