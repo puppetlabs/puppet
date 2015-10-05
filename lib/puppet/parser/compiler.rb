@@ -148,6 +148,16 @@ class Puppet::Parser::Compiler
     @catalog.add_class(name) unless name == ""
   end
 
+  # Add a catalog validator that will run at some stage to this compiler
+  # @param catalog_validators [Class<CatalogValidator>] The catalog validator class to add
+  def add_catalog_validator(catalog_validators)
+    @catalog_validators << catalog_validators
+    nil
+  end
+
+  def add_catalog_validators
+    add_catalog_validator(CatalogValidator::RelationshipValidator)
+  end
 
   # Return a list of all of the defined classes.
   def_delegator :@catalog, :classes, :classlist
@@ -179,11 +189,19 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Evaluated generators", [:compiler, :evaluate_generators]) { evaluate_generators }
 
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+        validate_catalog(CatalogValidator::PRE_FINISH)
+      end
+
       Puppet::Util::Profiler.profile("Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
       Puppet::Util::Profiler.profile("Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
 
       fail_on_unevaluated
+
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog final", [:compiler, :validate_final]) do
+        validate_catalog(CatalogValidator::FINAL)
+      end
 
       if block_given?
         yield @catalog
@@ -191,6 +209,10 @@ class Puppet::Parser::Compiler
         @catalog
       end
     end
+  end
+
+  def validate_catalog(validation_stage)
+    @catalog_validators.select { |vclass| vclass.validation_stage?(validation_stage) }.each { |vclass| vclass.new(@catalog).validate }
   end
 
   # Constructs the overrides for the context
@@ -394,6 +416,7 @@ class Puppet::Parser::Compiler
     @current_components = nil
     set_options(options)
     initvars
+    add_catalog_validators
   end
 
   # Create a new scope, with either a specified parent scope or
@@ -731,6 +754,8 @@ class Puppet::Parser::Compiler
     else
       @catalog.add_class(*@node.classes)
     end
+
+    @catalog_validators = []
   end
 
   # Set the node's parameters into the top-scope as variables.
