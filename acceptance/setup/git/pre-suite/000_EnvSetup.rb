@@ -39,6 +39,22 @@ PACKAGES = {
   ],
 }
 
+# override incorrect FOSS (git) defaults from Beaker with AIO applicable ones
+#
+# Remove after PUP-4867 breaks distmoduledir and sitemoduledir into individual
+# settings from modulepath and Beaker can properly introspect these settings
+hosts.each do |host|
+  platform = host['platform'] =~ /windows/ ? 'windows' : 'unix'
+
+  host['puppetbindir'] = '/usr/bin' if platform == 'windows'
+
+  # Beakers add_aio_defaults_on helper is not appropriate here as it
+  # also alters puppetbindir / privatebindir to use package installed
+  # paths rather than git installed paths
+  host['distmoduledir'] = AIO_DEFAULTS[platform]['distmoduledir']
+  host['sitemoduledir'] = AIO_DEFAULTS[platform]['sitemoduledir']
+end
+
 hosts.each do |host|
   case host['platform']
   when  /solaris-10/
