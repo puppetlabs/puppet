@@ -396,7 +396,8 @@ class Puppet::Resource
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
-    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
+    escaped = self.title.gsub(/'/,"\\\\'")
+    "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
   end
 
   def to_ref
