@@ -104,22 +104,9 @@ case "$1" in
         # Remember status and be quiet
         rc_status
         ;;
-    force-reload)
-        ## Signal the daemon to reload its config. Most daemons
-        ## do this on signal 1 (SIGHUP).
-        ## If it does not support it, restart.
-
-        echo -n "Reload service puppet"
-        ## if it supports it:
-        killproc -HUP -p "${pidfile}" "${puppetd}"
-        rc_status -v
-        ;;
-    reload)
-        ## Like force-reload, but if daemon does not support
-        ## signalling, do nothing (!)
-
-        # If it supports signalling:
-        echo -n "Reload puppet services."
+    reload|force-reload)
+        # Reload the service by sending the HUP signal
+        echo -n "Reloading puppet service: "
         killproc -HUP -p "${pidfile}" "${puppetd}"
         rc_status -v
         ;;
