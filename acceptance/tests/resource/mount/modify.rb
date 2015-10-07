@@ -3,6 +3,7 @@ test_name "should modify an entry in filesystem table"
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823
 confine :except, :platform => /solaris/
+confine :except, :platform => /aix/
 
 fstab = '/etc/fstab'
 name = "pl#{rand(999999).to_i}"

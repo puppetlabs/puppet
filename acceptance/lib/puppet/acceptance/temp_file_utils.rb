@@ -140,17 +140,13 @@ module Puppet
       # value containing only the file mode, excluding the type, e.g
       # S_IFDIR 0040000
       def stat(host, path)
-        stat_command = case host['platform']
-                       when /osx/
-                         "stat -f '%Su:%Sg:%p'"
-                       else
-                         "stat --format '%U:%G:%a'"
-                       end
+        require File.join(File.dirname(__FILE__),'common_utils.rb')
+        ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
+        owner = on(host, "#{ruby} -e 'require \"etc\"; puts (Etc.getpwuid(File.stat(\"#{path}\").uid).name)'").stdout.chomp
+        group = on(host, "#{ruby} -e 'require \"etc\"; puts (Etc.getgrgid(File.stat(\"#{path}\").gid).name)'").stdout.chomp
+        mode  = on(host, "#{ruby} -e 'puts (File.stat(\"#{path}\").mode & 07777)'").stdout.chomp.to_i
 
-        permissions = on(host, "#{stat_command} #{path}").stdout.chomp
-        owner, group, mode = permissions.split(':')
-
-        [owner, group, mode.to_i(8) & 07777]
+        [owner, group, mode]
       end
 
       def initialize_temp_dirs()
