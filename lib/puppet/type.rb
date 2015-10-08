@@ -2117,8 +2117,17 @@ end
     auto_rel = "eachauto#{rel_type}".to_sym
 
     self.class.send(auto_rel) { |type, block|
-      # Ignore any types we can't find, although that would be a bit odd.
-      next unless Puppet::Type.type(type)
+      if not Puppet::Type.type(type)
+        # We know it is not a type at this point, let's see if it exists as a defined type in the catalog
+        # We split and join on :: because defined types will likely have colon separators
+        # All defined types are of type :component
+        found_defines = rel_catalog.resources.select do |x|
+          x.type == :component && x.title_class == type.to_s.split('::').map(&:capitalize).join('::')
+        end
+        next if found_defines.empty?
+        # If this passes then it means the catalog contains a defined type of that name and to allow going forward
+        # with the block to add relations
+      end
 
       # Retrieve the list of names from the block.
       next unless list = self.instance_eval(&block)
