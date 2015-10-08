@@ -470,4 +470,12 @@ describe Puppet::Application::Apply do
       @apply.send(:apply_catalog, catalog)
     end
   end
+
+  it "should honor the catalog_cache_terminus setting" do
+    Puppet.settings[:catalog_cache_terminus] = "json"
+    Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+
+    @apply.initialize_app_defaults
+    @apply.setup
+  end
 end
