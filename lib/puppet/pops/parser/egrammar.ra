@@ -194,8 +194,9 @@ resource
 #
 expression
   : primary_expression
+  | capability_mapping
   | call_function_expression
-  | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
+  | bracketed_expression
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
   | expression MATCH        expression                 { result = val[0] =~  val[2]       ; loc result, val[1] }
   | expression NOMATCH      expression                 { result = val[0].mne val[2]       ; loc result, val[1] }
@@ -220,6 +221,8 @@ expression
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
   |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
+bracketed_expression
+  : expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -242,7 +245,6 @@ primary_expression
   # @todo lutter 2014-09-03: application declarations must be at the toplevel
   # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
   | application_expression
-  | capability_mapping
   | hostclass_expression
   | node_definition_expression
   | site_definition_expression
@@ -508,7 +510,14 @@ application_expression
 capability_mapping
   : classname capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
     result = Factory.CAPABILITY_MAPPING(val[1][:value],
-                                        classname(val[0][:value]),
+                                        Factory.QNAME(classname(val[0][:value])),
+                                        classname(val[2][:value]), val[4])
+    loc result, val[0], val[6]
+    add_mapping(result)
+  }
+  | bracketed_expression capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
+    result = Factory.CAPABILITY_MAPPING(val[1][:value],
+                                        val[0],
                                         classname(val[2][:value]), val[4])
     loc result, val[0], val[6]
     add_mapping(result)

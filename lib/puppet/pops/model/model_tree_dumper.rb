@@ -263,7 +263,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_CapabilityMapping o
-    [o.kind, o.resource, o.capability, do_dump(o.mappings)]
+    [o.kind, do_dump(o.component), o.capability, do_dump(o.mappings)]
   end
 
   def dump_ResourceOverrideExpression o

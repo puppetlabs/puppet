@@ -190,9 +190,9 @@ class Puppet::Parser::AST::PopsBridge
 
     def instantiate_CapabilityMapping(o, modname)
       # Use an intermediate 'capability_mapping' type to pass this info to the compiler where the
-      # actual mapping takes place.
-      Puppet::Resource::Type.new(:capability_mapping, "#{o.resource} #{o.kind} #{o.capability}", { :arguments => {
-        'resource_name' => o.resource,
+      # actual mapping takes place
+      Puppet::Resource::Type.new(:capability_mapping, "#{o.component} #{o.kind} #{o.capability}", { :arguments => {
+        'component'     => o.component,
         'kind'          => o.kind,
         'blueprint'     => {
           :capability => o.capability,

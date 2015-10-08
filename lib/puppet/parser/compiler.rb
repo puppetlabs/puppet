@@ -501,16 +501,29 @@ class Puppet::Parser::Compiler
     krt = known_resource_types
     krt.capability_mappings.each_value do |capability_mapping|
       args = capability_mapping.arguments
-      resource_name = args['resource_name']
+      component_ref = args['component']
       kind = args['kind']
-      definition = krt.find_definition(resource_name)
-      raise Puppet::ParseError, "Capability mapping error: #{kind} clause references nonexistent type #{resource_name}" unless definition
+
+      # That component_ref is either a QNAME or a Class['literal'|QREF] is asserted during validation so no
+      # need to check that here
+      if component_ref.is_a?(Puppet::Pops::Model::QualifiedName)
+        component_name = component_ref.value
+        component_type = 'type'
+        component = krt.find_definition(component_name)
+      else
+        component_name = component_ref.keys[0].value
+        component_type = 'class'
+        component = krt.find_hostclass(component_name)
+      end
+      if component.nil?
+        raise Puppet::ParseError, "Capability mapping error: #{kind} clause references nonexistent #{component_type} #{component_name}"
+      end
 
       blueprint = args['blueprint']
       if kind == 'produces'
-        definition.add_produces(blueprint)
+        component.add_produces(blueprint)
       else
-        definition.add_consumes(blueprint)
+        component.add_consumes(blueprint)
       end
     end
     krt.capability_mappings.clear # No longer needed

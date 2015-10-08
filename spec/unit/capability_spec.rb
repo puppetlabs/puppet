@@ -364,5 +364,51 @@ test { one: hostname => "ahost", export => Cap[two] }
         expect(graph.dependents(capability).map {|d| d.to_s }).to include('Consumer[y]')
       end
     end
+
+    describe 'producing/consuming resources to/from classes' do
+
+      let(:ral) do
+        compile_to_ral(<<-MANIFEST)
+  define test($hostname) {
+    notify { $hostname:}
+  }
+
+  class producer($host) {
+    notify { p: }
+  }
+
+  class consumer($host) {
+    test { c: hostname => $host }
+  }
+
+  Class[producer] produces Cap {}
+
+  Class[consumer] consumes Cap {}
+
+  class { producer: host => 'produced.host', export => Cap[one]}
+  class { consumer: consume => Cap[one]}
+        MANIFEST
+      end
+
+      let(:graph) do
+        graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new)
+        graph.populate_from(ral)
+        graph
+      end
+
+      let(:capability) { ral.resource('Cap[one]') }
+
+      it 'the produced resource depends on the producer' do
+        expect(graph.dependencies(capability).map {|d| d.to_s }).to include('Class[Producer]')
+      end
+
+      it 'the consumer depends on the consumed resource' do
+        expect(graph.dependents(capability).map {|d| d.to_s }).to include('Class[Consumer]')
+      end
+
+      it 'resource in the consumer class gets values from producer via the capability resource' do
+        expect(graph.dependents(capability).map {|d| d.to_s }).to include('Notify[produced.host]')
+      end
+    end
   end
 end
