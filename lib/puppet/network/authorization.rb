@@ -21,8 +21,15 @@ module Puppet::Network
   end
 
   module Authorization
+    @@authconfigloader_class = nil
+
+    def self.authconfigloader_class=(klass)
+      @@authconfigloader_class = klass
+    end
+
     def authconfig
-      AuthConfigLoader.authconfig
+      authconfigloader = @@authconfigloader_class || AuthConfigLoader
+      authconfigloader.authconfig
     end
 
     # Verify that our client has access.
