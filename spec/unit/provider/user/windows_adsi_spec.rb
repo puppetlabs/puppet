@@ -124,7 +124,8 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       resource[:name] = 'DOMAIN\testdomainuser'
       Puppet::Util::Windows::ADSI::Group.expects(:exists?).with(resource[:name]).returns(false)
       connection.expects(:Create)
-      connection.expects(:SetPassword)
+      connection.expects(:Get).with('UserFlags')
+      connection.expects(:Put).with('UserFlags', true)
       connection.expects(:SetInfo).raises( WIN32OLERuntimeError.new("(in OLE method `SetInfo': )\n    OLE error code:8007089A in Active Directory\n      The specified username is invalid.\r\n\n    HRESULT error code:0x80020009\n      Exception occurred."))
 
       expect{ provider.create }.to raise_error(
