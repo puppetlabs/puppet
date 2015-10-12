@@ -527,7 +527,7 @@ class Puppet::Parser::Compiler
     end
 
     unless (astnode ||= known_resource_types.node("default"))
-      raise Puppet::ParseError, "Could not find default node or by name with '#{node.names.join(", ")}'"
+      raise Puppet::ParseError, "Could not find node statement with name 'default' or '#{node.names.join(", ")}'"
     end
 
     # Create a resource to model this node, and then add it to the list
