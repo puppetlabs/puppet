@@ -10,7 +10,7 @@
 #
 #   $x = regsubst($ipaddress, /([0-9]+)/, '<\\1>', 'G')
 #
-# @param target [Array[Optional[String]]|String]
+# @param target [Array[String]|String]
 #      The string or array of strings to operate on.  If an array, the replacement will be
 #      performed on each of the elements in the array, and the return value will be an array.
 # @param regexp [String|Regexp|Type[Regexp]]
@@ -37,7 +37,7 @@
 #
 Puppet::Functions.create_function(:regsubst) do
   dispatch :regsubst_string do
-    param          'Variant[Array[Optional[String]],String]',  :target
+    param          'Variant[Array[String],String]',  :target
     param          'String',                         :pattern
     param          'String',                         :replacement
     optional_param 'Optional[Pattern[/^[GEIM]*$/]]', :flags
@@ -45,7 +45,7 @@ Puppet::Functions.create_function(:regsubst) do
   end
 
   dispatch :regsubst_regexp do
-    param          'Variant[Array[Optional[String]],String]',  :target
+    param          'Variant[Array[String],String]',  :target
     param          'Variant[Regexp,Type[Regexp]]',   :pattern
     param          'String',                         :replacement
     optional_param 'Pattern[/^G?$/]',                :flags
