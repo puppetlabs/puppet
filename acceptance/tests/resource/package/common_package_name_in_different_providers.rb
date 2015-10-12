@@ -15,6 +15,21 @@ teardown do
   end
 end
 
+step "Verify gem and ruby-devel on fedora-22 and above if not aio" do
+  if @options[:type] != 'aio' then
+    agents.each do |agent|
+      if agent[:platform] =~ /fedora-2[2-9]/ then
+        unless check_for_package agent, 'rubygems'
+          install_package agent, 'rubygems'
+        end
+        unless check_for_package agent, 'ruby-devel'
+          install_package agent, 'ruby-devel'
+        end
+      end
+    end
+  end
+end
+
 def verify_state(hosts, pkg, state, match)
   hosts.each do |agent|
     # Note yum lists packages as <name>.<arch>

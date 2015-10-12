@@ -120,9 +120,14 @@ end
 
 
 public_binaries = {
-  :posix => ['puppet', 'facter', 'hiera', 'mco'],
-  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat', 'mco.bat']
+  :posix => ['puppet', 'facter', 'hiera'],
+  :win   => ['puppet.bat', 'facter.bat', 'hiera.bat']
 }
+
+if @options[:type] != 'git' then
+  public_binaries[:posix].concat ['mco']
+  public_binaries[:win].concat ['mco.bat']
+end
 
 def locations(platform, ruby_arch, type)
   if type != 'aio'
@@ -152,14 +157,16 @@ agents.each do |agent|
   dir = locations(agent[:platform], agent[:ruby_arch], @options[:type])
   os = agent['platform'] =~ /windows/ ? :win : :posix
 
+  file_type =  (@options[:type] == 'git' || os == :win) ? :binary : :symlink
+
   public_binaries[os].each do |binary|
     path = File.join(dir, binary)
-    case os
-    when :win
+    case file_type
+    when :binary
       if !file_exists?(agent, path)
         fail_test("Failed to find expected binary '#{path}' on agent '#{agent}'")
       end
-    when :posix
+    when :symlink
       if !link_exists?(agent, path)
         fail_test("Failed to find expected symbolic link '#{path}' on agent '#{agent}'")
       end

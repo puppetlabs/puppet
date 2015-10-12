@@ -72,9 +72,8 @@ step "Remove system users" do
 end
 
 step "Ensure master fails to start when missing system user" do
-  on master, puppet('master'), :acceptable_exit_codes => [74] do
-    assert_match(/could not change to group "#{original_state[master][:group]}"/, result.output)
-    assert_match(/Could not change to user #{original_state[master][:user]}/, result.output)
+  on master, puppet('master', '--no-daemonize'), :acceptable_exit_codes => [74] do
+    assert_match(/Could not change user to #{original_state[master][:user]}/, result.output)
   end
 end
 
