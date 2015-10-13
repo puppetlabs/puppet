@@ -331,7 +331,7 @@ test { one: hostname => "ahost", export => Cap[two] }
   }
 
   define consumer() {
-    notify { "consumer":}
+    notify { $title:}
   }
 
   Producer produces Cap {}
@@ -340,6 +340,7 @@ test { one: hostname => "ahost", export => Cap[two] }
 
   producer {x: export => Cap[cap]}
   consumer {x: consume => Cap[cap]}
+  consumer {y: require => Cap[cap]}
         MANIFEST
       end
 
@@ -357,6 +358,10 @@ test { one: hostname => "ahost", export => Cap[two] }
 
       it 'the consumer depends on the consumed resource' do
         expect(graph.dependents(capability).map {|d| d.to_s }).to include('Consumer[x]')
+      end
+
+      it 'the consumer depends on the required resource' do
+        expect(graph.dependents(capability).map {|d| d.to_s }).to include('Consumer[y]')
       end
     end
   end
