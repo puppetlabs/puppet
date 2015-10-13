@@ -21,6 +21,16 @@ describe component do
     expect(comp.title).to eq(comp.ref)
   end
 
+  it "should have a reference type equivalent to its calling defined type" do
+    comp = component.new(:name => "Foo[bar]")
+    expect(comp.title_class).to eq("Foo")
+  end
+
+  it "should have a reference type equivalent to its calling defined type with colons" do
+    comp = component.new(:name => "Foo::Sub[bar]")
+    expect(comp.title_class).to eq("Foo::Sub")
+  end
+
   it "should not fail when provided an invalid value" do
     comp = component.new(:name => "Foo[bar]")
     expect { comp[:yayness] = "ey" }.not_to raise_error

@@ -449,6 +449,174 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  context "autorelations of defined types" do
+    before :each do
+      @myral = <<-MANIFEST
+        define module::dummy {
+        }
+        module::dummy { 'dummyname': }
+      MANIFEST
+    end
+
+    describe "when building autorelations" do
+      it "should be able to autorequire resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autorequire('module::dummy') { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Completed_module::Dummy[dummyname]]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
+      it "should be able to autosubscribe resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autosubscribe('module::dummy') { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Completed_module::Dummy[dummyname]]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+
+      it "should be able to autobefore resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autobefore('module::dummy') { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Admissible_module::Dummy[dummyname]]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
+      it "should be able to autonotify resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autonotify('module::dummy') { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Admissible_module::Dummy[dummyname]]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+    end
+  end
+
+  context "autorelations of defined types that are the root of the module" do
+    before :each do
+      @myral = <<-MANIFEST
+        define dummy {
+        }
+        dummy { 'dummyname': }
+      MANIFEST
+    end
+
+    describe "when building autorelations" do
+      it "should be able to autorequire resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autorequire(:dummy) { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Completed_dummy[dummyname]]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
+      it "should be able to autosubscribe resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autosubscribe(:dummy) { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Completed_dummy[dummyname]]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+
+      it "should be able to autobefore resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autobefore(:dummy) { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Admissible_dummy[dummyname]]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
+      it "should be able to autonotify resources" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autonotify(:dummy) { ['dummyname'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          #{@myral}
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Whit[Admissible_dummy[dummyname]]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+    end
+  end
+
   describe "when initializing" do
     describe "and passed a Puppet::Resource instance" do
       it "should set its title to the title of the resource if the resource type is equal to the current type" do
