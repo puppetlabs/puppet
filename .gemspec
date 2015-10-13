@@ -24,8 +24,8 @@ Gem::Specification.new do |s|
   mdata = version.match(/(\d+\.\d+\.\d+)/)
   s.version = mdata ? mdata[1] : version
 
-  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
-  s.required_ruby_version = Gem::Requirement.new(">= 1.9.3") if s.respond_to? :required_ruby_version=
+  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1")
+  s.required_ruby_version = Gem::Requirement.new(">= 1.9.3")
   s.authors = ["Puppet Labs"]
   s.date = "2012-08-17"
   s.description = "Puppet, an automated configuration management tool"
@@ -37,19 +37,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
-
-  if s.respond_to? :specification_version then
-    s.specification_version = 3
-
-    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 3"])
-      s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
-    else
-      s.add_dependency(%q<facter>, [">= 1.7", "< 3"])
-      s.add_dependency(%q<hiera>, [">= 2.0", "< 4"])
-    end
-  else
-    s.add_dependency(%q<facter>, [">= 1.7", "< 3"])
-    s.add_dependency(%q<hiera>, [">= 2.0", "< 4"])
-  end
+  s.specification_version = 3
+  s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 3"])
+  s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
 end
