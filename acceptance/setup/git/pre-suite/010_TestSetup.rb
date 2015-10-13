@@ -1,9 +1,6 @@
-begin
-  require 'beaker/dsl/install_utils'
-end
-
 test_name "Install packages and repositories on target machines..." do
-  extend Beaker::DSL::InstallUtils
+require 'beaker/dsl/install_utils'
+extend Beaker::DSL::InstallUtils
 
   SourcePath  = Beaker::DSL::InstallUtils::SourcePath
   GitURI      = Beaker::DSL::InstallUtils::GitURI
@@ -32,7 +29,7 @@ test_name "Install packages and repositories on target machines..." do
         on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
-        install_from_git host, SourcePath, repository
+        install_from_git_on host, SourcePath, repository
       end
 
       if index == 1
