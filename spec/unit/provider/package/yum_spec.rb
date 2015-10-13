@@ -22,7 +22,7 @@ describe provider_class do
   end
 
   before do
-    provider.stubs(:yum).returns 'yum'
+    provider_class.stubs(:command).with(:cmd).returns('/usr/bin/yum')
     provider.stubs(:rpm).returns 'rpm'
     provider.stubs(:get).with(:version).returns '1'
     provider.stubs(:get).with(:release).returns '1'
@@ -186,7 +186,7 @@ describe provider_class do
 
     it 'should call yum install for :installed' do
       resource.stubs(:should).with(:ensure).returns :installed
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'mypackage'])
       provider.install
     end
 
@@ -197,7 +197,7 @@ describe provider_class do
 
       it 'should catch yum install failures when status code is wrong' do
         resource.stubs(:should).with(:ensure).returns :installed
-        provider.expects(:yum).with('-e', '0', '-y', :install, name).returns("No package #{name} available.")
+        Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-e', '0', '-y', :install, name]).returns("No package #{name} available.")
         expect {
           provider.install
         }.to raise_error(Puppet::Error, "Could not find package #{name}")
@@ -212,7 +212,7 @@ describe provider_class do
     it 'should be able to set version' do
       version = '1.2'
       resource[:ensure] = version
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}")
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}"])
       provider.stubs(:query).returns :ensure => version
       provider.install
     end
@@ -220,6 +220,7 @@ describe provider_class do
     it 'should handle partial versions specified' do
       version = '1.3.4'
       resource[:ensure] = version
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'mypackage-1.3.4'])
       provider.stubs(:query).returns :ensure => '1.3.4-1.el6'
       provider.install
     end
@@ -228,7 +229,7 @@ describe provider_class do
       current_version = '1.2'
       version = '1.0'
       resource[:ensure] = '1.0'
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, "#{name}-#{version}")
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :downgrade, "#{name}-#{version}"])
       provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
       provider.install
     end
@@ -237,22 +238,22 @@ describe provider_class do
       resource[:ensure] = :installed
       resource[:install_options] = ['-t', {'-x' => 'expackage'}]
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, name)
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, name])
       provider.install
     end
 
     it 'allow virtual packages' do
       resource[:ensure] = :installed
       resource[:allow_virtual] = true
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name).never
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :list, name]).never
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name])
       provider.install
     end
   end
 
   describe 'when uninstalling' do
     it 'should use erase to purge' do
-      provider.expects(:yum).with('-y', :erase, name)
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-y', :erase, name])
       provider.purge
     end
   end
@@ -397,10 +398,6 @@ describe provider_class do
   end
 
   describe "executing yum check-update" do
-    before do
-      described_class.stubs(:command).with(:yum).returns '/usr/bin/yum'
-    end
-
     it "passes repos to enable to 'yum check-update'" do
       Puppet::Util::Execution.expects(:execute).with do |args, *rest|
         expect(args).to eq %w[/usr/bin/yum check-update --enablerepo=updates --enablerepo=centosplus]
