@@ -86,6 +86,33 @@ MANIFEST_WO_EXPORT = <<-EOS
     }
 EOS
 
+MANIFEST_REQ_WO_EXPORT = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      cons { two: host => ahost, require => Cap[cap] }
+    }
+
+    site {
+      app { anapp:
+        nodes => {
+          Node[first] => Prod[one],
+          Node[second] => Cons[two]
+        }
+      }
+    }
+EOS
+
 MANIFEST_WITH_DOUBLE_EXPORT = <<-EOS
     define prod($host) {
       notify { "host ${host}":}
@@ -226,6 +253,11 @@ EOS
     it "detects that consumed capability is never exported" do
       expect { compile_to_env_catalog(MANIFEST_WO_EXPORT)
       }.to raise_error(/Capability 'Cap\[cap\]' referenced by 'consume' is never exported/)
+    end
+
+    it "detects that required capability is never exported" do
+      expect { compile_to_env_catalog(MANIFEST_REQ_WO_EXPORT)
+      }.to raise_error(/Capability 'Cap\[cap\]' referenced by 'require' is never exported/)
     end
 
     it "detects that a capability is exported more than once" do
