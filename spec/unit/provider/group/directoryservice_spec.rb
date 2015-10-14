@@ -26,4 +26,8 @@ describe Puppet::Type.type(:group).provider(:directoryservice) do
     expect(provider.members_insync?([], [])).to be_truthy
   end
 
+  it "should return true when current is :absent and should members is empty list" do
+    expect(provider.members_insync?(:absent, [])).to be_truthy
+  end
+
 end

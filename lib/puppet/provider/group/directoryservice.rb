@@ -12,14 +12,10 @@ Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider
 
   def members_insync?(current, should)
     return false unless current
-    if current == :absent and should.empty?
-      return true
+    if current == :absent
+      return should.empty?
     else
-      if current.respond_to?(:sort) and should.respond_to?(:sort)
-        return current.sort.uniq == should.sort.uniq
-      else
-        return current == should
-      end
+      return current.sort.uniq == should.sort.uniq
     end
   end
 
