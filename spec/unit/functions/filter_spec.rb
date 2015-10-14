@@ -126,6 +126,24 @@ describe 'the filter method' do
     expect(catalog).to have_resource("File[/file_blueb]").with_parameter(:ensure, 'present')
   end
 
+  it 'filters on an array will not include elements for which the block returns truthy but not true' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $r = [1, 2, 3].filter |$v| { $v } == []
+      notify { "eval_${$r}": }
+    MANIFEST
+
+    expect(catalog).to have_resource('Notify[eval_true]')
+  end
+
+  it 'filters on a hash will not include elements for which the block returns truthy but not true' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $r = {a => 1, b => 2, c => 3}.filter |$k, $v| { $v } == {}
+      notify { "eval_${$r}": }
+    MANIFEST
+
+    expect(catalog).to have_resource('Notify[eval_true]')
+  end
+
   it_should_behave_like 'all iterative functions argument checks', 'filter'
   it_should_behave_like 'all iterative functions hash handling', 'filter'
 end
