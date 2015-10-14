@@ -657,6 +657,20 @@ describe Puppet::Resource do
       )
     end
 
+    it "should escape internal single quotes in a title" do
+      singlequote_resource = Puppet::Resource.new("one::two", "/my/file'b'a'r",
+        :parameters => {
+          :ensure => 'present',
+        }
+      )
+      expect(singlequote_resource.to_manifest).to eq <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+        one::two { '/my/file\\'b\\'a\\'r':
+          ensure => 'present',
+        }
+      HEREDOC
+
+    end
+
     it "should align, sort and add trailing commas to attributes with ensure first" do
       expect(@resource.to_manifest).to eq <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
         one::two { '/my/file':
