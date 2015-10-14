@@ -13,7 +13,7 @@ Find
 
 Retrieve data for a node
 
-    GET /puppet/v3/node/:certname?environment=:environment
+    GET /puppet/v3/node/:certname?environment=:environment&transaction_uuid=:transaction_uuid&configured_environment=:environment
 
 
 ### Supported HTTP Methods
@@ -26,7 +26,7 @@ PSON
 
 ### Examples
 
-    > GET /puppet/v3/node/mycertname?environment=production HTTP/1.1
+    > GET /puppet/v3/node/mycertname?environment=production&configured_environment=production HTTP/1.1
     > Accept: pson, b64_zlib_yaml, yaml, raw
 
     < HTTP/1.1 200 OK

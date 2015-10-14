@@ -8,7 +8,7 @@ Find
 
 Retrieve a catalog.
 
-    POST /puppet/v3/catalog/:nodename?environment=:environment
+    POST /puppet/v3/catalog/:nodename
     GET /puppet/v3/catalog/:nodename?environment=:environment
 
 ### Supported HTTP Methods
@@ -31,21 +31,26 @@ The examples below use the POST method.
 
 ### Parameters
 
-Three parameters should be provided to the POST or GET:
+Four parameters should be provided to the POST or GET:
 
+- `environment`: the environment name
 - `facts_format`: must be `pson`
 - `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
 doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
 escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 
+An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
+environment, which might differ from what the client believes is its current environment.
+- `configured_environment`: the environment configured on the client
+
 ### Example Response
 
 #### Catalog found
 
-    POST /puppet/v3/catalog/elmo.mydomain.com?environment=env
+    POST /puppet/v3/catalog/elmo.mydomain.com
 
-    facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
+    environment=env&configured_environment=canary_env&facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 
     HTTP 200 OK
     Content-Type: text/pson
