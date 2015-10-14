@@ -47,11 +47,12 @@ restore:
   to its original location.
 
 diff:
-  Print a diff in unified format between two checksums in the filebucket or between a checksum and
-  its matching file.
+  Print a diff in unified format between two checksums in the filebucket
+  or between a checksum and its matching file.
 
 list:
-  List all files in the current filebucket.
+  List all files in the current local filebucket. Listing remote
+  filebuckets is not allowed.
 
 DESCRIPTION
 -----------

@@ -38,6 +38,10 @@ module Puppet::FileBucketFile
     end
 
     def list(request)
+      if request.remote?
+        raise Puppet::Error, "Listing remote file buckets is not allowed"
+      end
+
       fromdate = request.options[:fromdate] || "0:0:0 1-1-1970"
       todate = request.options[:todate] || Time.now.strftime("%F %T")
       begin
