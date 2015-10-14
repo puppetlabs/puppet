@@ -1725,6 +1725,11 @@ describe 'The type calculator' do
       expect(calculator.string(t)).to eq('Array[Integer]')
     end
 
+    it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
+      t = empty_array_t
+      expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')
+    end
+
     it 'should yield \'Collection\' and from/to for PCollectionType' do
       expect(calculator.string(collection_t(range_t(1,1)))).to eq('Collection[1, 1]')
       expect(calculator.string(collection_t(range_t(1,2)))).to eq('Collection[1, 2]')
@@ -2056,6 +2061,18 @@ describe 'The type calculator' do
       element_types = inferred_type.types
       expect(element_types[0].class).to eq(Puppet::Pops::Types::PStringType)
       expect(element_types[1].class).to eq(Puppet::Pops::Types::PUndefType)
+    end
+
+    it 'infers on an empty Array produces Array[Unit,0,0]' do
+      inferred_type = calculator.infer([])
+      expect(inferred_type.element_type.class).to eq(Puppet::Pops::Types::PUnitType)
+      expect(inferred_type.size_range).to eq([0, 0])
+    end
+
+    it 'infer_set on an empty Array produces Array[Unit,0,0]' do
+      inferred_type = calculator.infer_set([])
+      expect(inferred_type.element_type.class).to eq(Puppet::Pops::Types::PUnitType)
+      expect(inferred_type.size_range).to eq([0, 0])
     end
   end
 
