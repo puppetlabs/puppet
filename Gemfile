@@ -65,12 +65,7 @@ group(:extra) do
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
   gem "tzinfo", :require => false
-  case RUBY_PLATFORM
-  when 'java'
-    gem "msgpack-jruby", :require => false
-  else
-    gem "msgpack", :require => false
-  end
+  gem "msgpack", :require => false
 end
 
 require 'yaml'
