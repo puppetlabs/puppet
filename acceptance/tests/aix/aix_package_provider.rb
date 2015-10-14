@@ -73,7 +73,7 @@ assert_package_version package, version2
 step "test that downgrading fails by trying to install an older version of the package"
 
 on hosts, puppet_apply("--verbose", "--detailed-exitcodes"), :stdin => version1_manifest, :acceptable_exit_codes => [4,6] do
-  assert_match(/aix package provider is unable to downgrade packages/, stdout, "Didn't get an error about downgrading packages")
+  assert_match(/aix package provider is unable to downgrade packages/, stderr, "Didn't get an error about downgrading packages")
 end
 
 step "uninstall the package"
