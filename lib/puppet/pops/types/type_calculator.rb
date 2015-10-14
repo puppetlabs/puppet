@@ -644,7 +644,7 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_Array(o)
     element_type =
       if o.empty?
-        Types::PUndefType::DEFAULT
+        Types::PUnitType::DEFAULT
       else
         infer_and_reduce_type(o)
       end
@@ -674,7 +674,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   def infer_set_Array(o)
     if o.empty?
-      Types::PArrayType.new(Types::PUndefType::DEFAULT, size_as_type(o))
+      Types::PArrayType.new(Types::PUnitType::DEFAULT, size_as_type(o))
     else
       Types::PTupleType.new(o.map {|x| infer_set(x) })
     end

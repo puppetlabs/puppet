@@ -48,6 +48,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.array_of(t, s)
   end
 
+  def empty_array_t
+  empty_array = array_t(unit_t, range_t(0,0))
+  end
+
   def hash_t(k,v,s = nil)
     Puppet::Pops::Types::TypeFactory.hash_of(v, k, s)
   end
@@ -94,7 +98,7 @@ describe 'The type calculator' do
 
   def unit_t
     # Cannot be created via factory, the type is private to the type system
-    Puppet::Pops::Types::PUnitType.new
+    Puppet::Pops::Types::PUnitType::DEFAULT
   end
 
   def types
@@ -814,6 +818,11 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
+      end
+
+      it 'Empty Array is assignable to an array that accepts 0 entries' do
+        expect(empty_array_t).to be_assignable_to(array_t(string_t))
+        expect(empty_array_t).to be_assignable_to(array_t(integer_t))
       end
     end
 
