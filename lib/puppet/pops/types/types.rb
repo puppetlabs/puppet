@@ -583,6 +583,7 @@ module Puppet::Pops
 
 
       DEFAULT_SIZE = PIntegerType.new(0)
+      ZERO_SIZE = PIntegerType.new(0, 0)
       DEFAULT = PCollectionType.new(nil)
 
       protected
@@ -1186,6 +1187,7 @@ module Puppet::Pops
 
       DATA = PArrayType.new(PDataType::DEFAULT, PCollectionType::DEFAULT_SIZE)
       DEFAULT = PArrayType.new(nil)
+      EMPTY = PArrayType.new(PUnitType::DEFAULT, PCollectionType::ZERO_SIZE)
 
       protected
 
