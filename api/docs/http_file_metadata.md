@@ -84,9 +84,9 @@ None
         "type": "directory"
     }
 
-#### File metadata found for a link
+#### File metadata found for a link ignoring source permissions
 
-    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env
+    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env&source_permissions=ignore
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -99,7 +99,7 @@ None
         "destination": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
         "group": 20,
         "links": "manage",
-        "mode": 493,
+        "mode": 420,
         "owner": 501,
         "path": "/etc/puppetlabs/code/modules/example/files/link_to_file.txt",
         "relative_path": null,
