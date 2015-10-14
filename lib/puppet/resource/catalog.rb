@@ -325,7 +325,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       # @todo lutter 2015-03-10: this assumes that it is legal to just
       # mention a capability resource in code and have it automatically
       # made available, even if the current component does not require it
-      result = Puppet::Resource::CapabilityFinder.find(environment, res)
+      result = Puppet::Resource::CapabilityFinder.find(environment, code_id, res)
       add_resource(result) if result
     end
     result

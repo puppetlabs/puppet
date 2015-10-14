@@ -12,16 +12,30 @@ require 'json'
 # @api private
 module Puppet::Resource::CapabilityFinder
 
-  # Looks the capability resource with the given +type+ and +title+ up from
-  # PuppetDB.
-  def self.find(environment, cap)
+  # Looks the capability resource from PuppetDB.
+  # @param environment [String] environment name
+  # @param code_id [String,nil] code_id of the catalog
+  # @param cap [Puppet::Type] the capability resource type instance
+  # @return [Puppet::Resource,nil] The found capability resource or `nil` if it could not be found
+  def self.find(environment, code_id, cap)
     unless Puppet::Util.const_defined?('Puppetdb')
       raise Puppet::DevError, 'PuppetDB is not available'
     end
 
-    query = ['and', ['=', 'type', cap.type.capitalize],
+    query_terms = [
+      'and',
+      ['=', 'type', cap.type.capitalize],
       ['=', 'title', cap.title.to_s],
-      ['=', 'tag', "producer:#{environment}"]].to_json
+      ['=', 'tag', "producer:#{environment}"]
+    ]
+
+    unless code_id.nil?
+      query_terms << ['in', 'certname',
+        ['extract', 'certname',
+          ['select_catalogs',
+            ['=', 'code_id', code_id]]]]
+    end
+    query = query_terms.to_json
 
     Puppet.notice "Capability lookup #{cap}]: #{query}"
 
