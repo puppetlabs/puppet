@@ -173,9 +173,11 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     def locking(tmpname)
       lock = tmpname + '.lock'
       mkdir(lock)
-      yield
-    ensure
-      rmdir(lock) if lock
+      begin
+        yield
+      ensure
+        rmdir(lock)
+      end
     end
 
     def mkdir(*args)
