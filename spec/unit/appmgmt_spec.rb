@@ -110,6 +110,28 @@ MANIFEST_WO_NODE = <<-EOS
     }
 EOS
 
+MANIFEST_WITH_STRING_NODES = <<-EOS
+    application app {
+    }
+
+    site {
+      app { anapp:
+        nodes => "foobar",
+      }
+    }
+EOS
+
+MANIFEST_WITH_FALSE_NODES = <<-EOS
+    application app {
+    }
+
+    site {
+      app { anapp:
+        nodes => false,
+      }
+    }
+EOS
+
 MANIFEST_REQ_WO_EXPORT = <<-EOS
     define prod($host) {
       notify { "host ${host}":}
@@ -276,6 +298,16 @@ EOS
 
     it "does not raise an error when node mappings are not provided" do
       expect { compile_to_catalog(MANIFEST_WO_NODE) }.to_not raise_error
+    end
+
+    it "raises an error if node mapping is a string" do
+      expect { compile_to_catalog(MANIFEST_WITH_STRING_NODES)
+      }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
+    end
+
+    it "raises an error if node mapping is false" do
+      expect { compile_to_catalog(MANIFEST_WITH_FALSE_NODES)
+      }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
     end
 
     it "detects that consumed capability is never exported" do
