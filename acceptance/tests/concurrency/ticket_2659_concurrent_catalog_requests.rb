@@ -4,6 +4,7 @@ test_name "concurrent catalog requests (PUP-2659)"
 confine :except, :platform => 'windows'
 confine :except, :platform => /osx/ # see PUP-4820
 confine :except, :platform => 'solaris'
+confine :except, :platform => 'aix'
 
 step "setup a manifest"
 
