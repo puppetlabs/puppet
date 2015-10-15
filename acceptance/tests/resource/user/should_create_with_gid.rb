@@ -22,6 +22,9 @@ agents.each do |host|
     if host['platform'] =~ /osx/
         match = result.stdout.match(/gid: (\d+)/)
         user_gid = match ? match[1] : nil
+    elsif host['platform'] =~ /aix/
+        match = result.stdout.match(/pgrp=([^\s\\]+)/)
+        user_gid = match ? host.group_gid(match[1]) : nil
     else
         user_gid = result.stdout.split(':')[3]
     end
