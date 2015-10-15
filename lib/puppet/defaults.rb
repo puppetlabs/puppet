@@ -532,7 +532,7 @@ module Puppet
       :app_management => {
           :default  => false,
           :type     => :boolean,
-          :desc     => "Whether the application management feature is on or off. A change of this setting requires a reboot.",
+          :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
       }
   )
 
