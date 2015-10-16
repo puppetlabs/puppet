@@ -25,6 +25,8 @@ end
 # 1) Starting, stopping and refreshing while the service is initially stopped
 # 2) Starting, stopping and refreshing while the service is initially running
 agents.each do |agent|
+  skip_test "Skipping because of Solaris service status race condition when refreshing service: see PUP-5262." if agent['platform'] =~ /solaris/
+
   ['puppet', 'mcollective'].each do |service|
     ['stopped', 'running'].each do |status|
       # --- service management using `puppet apply` --- #
@@ -42,16 +44,7 @@ agents.each do |agent|
       step "Refreshing the #{service} service while it is #{status}: it should be #{status}"
       set_service_initial_status(agent, service, status)
       refresh_service_on_host(agent, service)
-
-      # The Solaris service provider currently doesn't wait for the Puppet service to finish
-      # restarting before returning from the run. Remove this check when resolved.
-      if agent.platform.variant =~ /solaris/ && service == 'puppet' && status == 'running'
-        expect_failure('Expected test to fail due to PUP-5262') do
-          assert_service_status_on_host(agent, service, status)
-        end
-      else
-        assert_service_status_on_host(agent, service, status) # Status should not change after refresh
-      end
+      assert_service_status_on_host(agent, service, status) # Status should not change after refresh
 
       # --- service management using `puppet resource` --- #
       step "#{service} service management using `puppet resource`"
