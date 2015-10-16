@@ -47,6 +47,7 @@ describe provider_class do
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       provider.stubs(:which).with("rpm").returns("/bin/rpm")
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns('22')
     end
 
     it 'should call dnf install for :installed' do
