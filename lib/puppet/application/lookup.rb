@@ -131,11 +131,10 @@ class Puppet::Application::Lookup < Puppet::Application
 
     setup_terminuses
 
-    # TODO: Do we need this in preview? It sets up a write only cache
+    # TODO: Do we need this in lookup? It sets up a write only cache
     setup_node_cache
 
     setup_ssl
-    puts "setup happened! o:"
   end
 
   def help
@@ -163,9 +162,7 @@ DESCRIPTION
 -----------
 The lookup command is a CLI interface for the puppet lookup function.
 When given one or more keys, the lookup command will return the first
-value found. The only component that is required in addition to the
-keys is a node (passed in via --node) which specifies which scope to
-perform the lookup in. 
+value found.
 
 When an explanation has not been requested and
 lookup is simply looking up a value, the application will exit with 0
@@ -222,8 +219,8 @@ the puppet lookup function linked to above.
 
 * --node <NODE-NAME>
   Specify node which defines the scope in which the lookup will be performed.
-  If a node is not given, lookup will raise an error as it requires a scope
-  in order to perform a lookup.
+  If a node is not given, lookup will default to the machine from which the
+  lookup is being run (which should be the master).
 
 * --facts <FILE>
   Specify a .json, or .yaml file holding key => value mappings that will
@@ -236,6 +233,10 @@ the puppet lookup function linked to above.
 
 EXAMPLE
 -------
+  If you wanted to lookup 'key_name' within the scope of the master, you would 
+  call lookup like this:
+  $ puppet lookup key_name
+
   If you wanted to lookup 'key_name' within the scope of the agent.local node,
   you would call lookup like this:
   $ puppet lookup --node agent.local key_name

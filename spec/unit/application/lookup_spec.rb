@@ -14,14 +14,6 @@ describe Puppet::Application::Lookup do
       expect{ lookup.run_command }.to raise_error(RuntimeError, expected_error)
     end
 
-    it "errors if no node was given via the --node flag" do
-      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
-
-      expected_error = "No node was given via the '--node' flag for the scope of the lookup.\nRun 'puppet lookup --help' for more details"
-
-      expect{ lookup.run_command }.to raise_error(RuntimeError, expected_error)
-    end
-
     it "does not allow deep merge options if '--merge' was not set to deep" do
       lookup.options[:node] = 'dantooine.local'
       lookup.options[:merge_hash_arrays] = true
