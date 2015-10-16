@@ -412,7 +412,7 @@ class Puppet::Resource::Type
   private :assign_defaults
 
   def validate_resource_hash(resource, resource_hash)
-    Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(resource.to_s, parameter_struct, resource_hash)
+    Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(resource.to_s, parameter_struct, resource_hash, resource.is_unevaluated_consumer?)
   end
   private :validate_resource_hash
 

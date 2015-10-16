@@ -110,6 +110,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     unless resource.class?
       @catalog.add_edge(scope.resource, resource)
     end
+    resource.mark_unevaluated_consumer if is_capability_consumer?(resource)
     assert_app_in_site(scope, resource)
   end
 
@@ -138,4 +139,22 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def resources
     @pruned_resources || super
   end
+
+  def is_capability?(value)
+    if value.is_a?(Array)
+      value.find { |ev| is_capability?(ev) }
+    elsif value.is_a?(Puppet::Resource)
+      rstype = value.resource_type
+      rstype.nil? ? false : rstype.is_capability?
+    else
+      false
+    end
+  end
+  private :is_capability?
+
+  def is_capability_consumer?(resource)
+    resource.eachparam { |param| return true if (param.name == :consume || param.name == :require) && is_capability?(param.value) }
+    false
+  end
+  private :is_capability_consumer?
 end

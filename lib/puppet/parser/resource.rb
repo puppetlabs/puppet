@@ -134,6 +134,15 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
+  def is_unevaluated_consumer?
+    # We don't declare a new variable here just to test. Saves memory
+    instance_variable_defined?(:@unevaluated_consumer)
+  end
+
+  def mark_unevaluated_consumer
+    @unevaluated_consumer = true
+  end
+
   # Merge an override resource in.  This will throw exceptions if
   # any overrides aren't allowed.
   def merge(resource)
