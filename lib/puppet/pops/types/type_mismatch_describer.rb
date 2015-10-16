@@ -307,8 +307,8 @@ module Puppet::Pops::Types
   end
 
   class TypeMismatchDescriber
-    def self.validate_parameters(subject, params_struct, given_hash)
-      singleton.validate_parameters(subject, params_struct, given_hash)
+    def self.validate_parameters(subject, params_struct, given_hash, missing_ok = false)
+      singleton.validate_parameters(subject, params_struct, given_hash, missing_ok)
     end
 
     def self.validate_default_parameter(subject, param_name, param_type, value)
@@ -329,9 +329,10 @@ module Puppet::Pops::Types
     # @param subject [String] string to be prepended to the exception message
     # @param params_struct [PStructType] Struct to use for validation
     # @param given_hash [Hash<String,Object>] the parameters to validate
+    # @param missing_ok [Boolean] Do not generate errors on missing parameters
     #
-    def validate_parameters(subject, params_struct, given_hash)
-      errors = describe_struct_signature(params_struct, given_hash).flatten
+    def validate_parameters(subject, params_struct, given_hash, missing_ok = false)
+      errors = describe_struct_signature(params_struct, given_hash, missing_ok).flatten
       case errors.size
       when 0
       when 1
@@ -365,8 +366,9 @@ module Puppet::Pops::Types
     #
     # @param params_struct [PStructType] Struct to use for validation
     # @param param_hash [Hash<String,Object>] The parameters to validate
+    # @param missing_ok [Boolean] Do not generate errors on missing parameters
     # @return [Array<Mismatch>] An array of found errors. An empty array indicates no errors.
-    def describe_struct_signature(params_struct, param_hash)
+    def describe_struct_signature(params_struct, param_hash, missing_ok = false)
       param_type_hash = params_struct.hashed_elements
       result =  param_hash.each_key.reject { |name| param_type_hash.include?(name) }.map { |name| InvalidParameter.new(nil, name) }
 
@@ -377,7 +379,7 @@ module Puppet::Pops::Types
         if param_hash.include?(name)
           result << describe(value_type, TypeCalculator.singleton.infer_set(value).generalize, [ParameterPathElement.new(name)]) unless value_type.instance?(value)
         else
-          result << MissingParameter.new(nil, name) unless elem.key_type.assignable?(PUndefType::DEFAULT)
+          result << MissingParameter.new(nil, name) unless elem.key_type.assignable?(PUndefType::DEFAULT) unless missing_ok
         end
       end
       result

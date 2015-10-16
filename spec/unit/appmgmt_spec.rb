@@ -47,6 +47,7 @@ describe "Application instantiation" do
       application app {
         prod { one: host => ahost, export => Cap[cap] }
         cons { two: host => ahost, consume => Cap[cap] }
+        cons { three: consume => Cap[cap] }
       }
 
       site {
@@ -358,7 +359,7 @@ EOS
       app = apps.first
       expect(app["nodes"]).not_to be_nil
       comps = catalog.direct_dependents_of(app).map(&:ref).sort
-      expect(comps).to eq(["Cons[two]", "Prod[one]"])
+      expect(comps).to eq(["Cons[three]", "Cons[two]", "Prod[one]"])
 
       prod = catalog.resource("Prod[one]")
       expect(prod).not_to be_nil
