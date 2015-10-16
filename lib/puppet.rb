@@ -82,6 +82,8 @@ module Puppet
   # setting access and stuff
   def self.[]=(param,value)
     @@settings[param] = value
+    # Ensure that all environment caches are cleared if we're changing the parser
+    lookup(:environments).clear_all if param == :parser
   end
 
   def self.clear
@@ -242,6 +244,8 @@ module Puppet
   # @api private
   def self.override(bindings, description = "", &block)
     @context.override(bindings, description, &block)
+  ensure
+    lookup(:root_environment).instance_variable_set(:@future_parser, nil)
   end
 
   # @api private
@@ -264,14 +268,7 @@ module Puppet
   #
   def self.future_parser?(in_environment = nil)
     env = in_environment || Puppet.lookup(:current_environment) { return Puppet[:parser] == 'future' }
-    env_conf = Puppet.lookup(:environments).get_conf(env.name)
-
-    if env_conf.nil?
-      # Case for non-directory environments
-      Puppet[:parser] == 'future'
-    else
-      env_conf.parser == 'future'
-    end
+    env.future_parser?
   end
 end
 
