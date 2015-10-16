@@ -1,7 +1,7 @@
 test_name "tests that user resource will not add users that already exist."
 
-user  = "user#{rand(999999).to_i}"
-group = "group#{rand(999999).to_i}"
+user  = "u#{rand(999999).to_i}"
+group = "g#{rand(999999).to_i}"
 
 teardown do
   hosts.each do |host|

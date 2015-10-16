@@ -81,8 +81,8 @@ class ModifiesModeTest < ActionModeTest
 
     @start_mode = start_mode
 
-    user = 'symbolictestuser'
-    group = 'symbolictestgroup'
+    user = 'symuser'
+    group = 'symgroup'
     agent.user_present(user)
     agent.group_present(group)
 

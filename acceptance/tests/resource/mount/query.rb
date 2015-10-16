@@ -2,6 +2,7 @@ test_name "should be able to find an existing filesystem table entry"
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /solaris/
+confine :except, :platform => /aix/
 
 fstab = '/etc/fstab'
 name = "pl#{rand(999999).to_i}"
