@@ -566,16 +566,15 @@ class Puppet::Resource::Type
 
     qname = "#{name}::#{param}"
 
-    # TODO: create this puppet option
-    #if Puppet[:hiera_advanced_parameter_bindings]
-    opt_name = "lookupoptions::#{qname}"
-    in_global = lambda { lookup_with_databinding(opt_name, scope) }
-    in_env = lambda { lookup_in_environment(opt_name, scope) }
-    in_module = lambda { lookup_in_module(opt_name, scope) }
-    merge_strategy = lookup_search(in_global, in_env, in_module)
-    merge_strategy = merge_strategy['merge'] if merge_strategy
-    Puppet.debug "merge strategy for #{qname} is '#{merge_strategy}'"
-    #end
+    if Puppet[:hiera_advanced_parameter_bindings]
+      opt_name = "lookupoptions::#{qname}"
+      in_global = lambda { lookup_with_databinding(opt_name, scope) }
+      in_env = lambda { lookup_in_environment(opt_name, scope) }
+      in_module = lambda { lookup_in_module(opt_name, scope) }
+      merge_strategy = lookup_search(in_global, in_env, in_module)
+      merge_strategy = merge_strategy['merge'] if merge_strategy
+      Puppet.debug "The merge strategy for #{qname} is '#{merge_strategy}'" if merge_strategy
+    end
 
     in_global = lambda { lookup_with_databinding(qname, scope, merge_strategy) }
     in_env = lambda { lookup_in_environment(qname, scope, merge_strategy) }
