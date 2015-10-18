@@ -65,7 +65,7 @@ Then run the test as:
 
  * Don't use waitpid/waitpid2 if you need the child process' exit code,
    as the child process may exit before it has a chance to open the
-   child's HANDLE and retrieve its exit code.  Use Puppet::Util.execute.
+   child's HANDLE and retrieve its exit code.  Use Puppet::Util::Execution.execute.
 
  * Don't assume 'C' drive.  Use environment variables to look these up:
 
