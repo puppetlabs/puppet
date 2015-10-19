@@ -451,6 +451,23 @@ EOS
       expect(cons[:consume].ref).to eq("Cap[cap]")
     end
 
+    it "includes class components" do
+      catalog = compile_to_env_catalog(MANIFEST_WITH_CLASS).to_resource
+      classes = catalog.resources.select do |res|
+        res.type == 'Class' && (res.title == 'Prod' || res.title == 'Cons')
+      end
+      expect(classes.size).to eq(2)
+      expect(classes.map(&:ref).sort).to eq(["Class[Cons]", "Class[Prod]"])
+
+      prod = catalog.resource("Class[prod]")
+      expect(prod).not_to be_nil
+      expect(prod.export.map(&:ref)).to eq(["Cap[cap]"])
+
+      cons = catalog.resource("Class[cons]")
+      expect(cons).not_to be_nil
+      expect(cons[:consume].ref).to eq("Cap[cap]")
+    end
+
     it "an application instance must be contained in a site" do
       expect { compile_to_env_catalog(FAULTY_MANIFEST)
       }.to raise_error(/Application instances .* can only be contained within a Site/)

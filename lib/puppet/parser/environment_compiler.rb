@@ -132,6 +132,11 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     end
   end
 
+  def evaluate_classes(titles, scope, lazy)
+    # Always lazy in an Environment compilation
+    super(titles, scope, true)
+  end
+
   # Overrides the regular compiler to be able to return the list of resources after a prune
   # has taken place in the graph representation. Before a prune, the list is the same as in the regular
   # compiler
