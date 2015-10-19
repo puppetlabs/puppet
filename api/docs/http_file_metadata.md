@@ -36,7 +36,14 @@ PSON
 
 ### Parameters
 
-None
+Optional parameters to GET:
+
+* `links` -- either `manage` (default) or `follow`.  See examples in Search below.
+* `checksum_type` -- the checksum type to calculate the checksum value for the result metadata; one of `md5` (default), `md5lite`, `sha256`, `sha256lite`, `mtime`, `ctime`, and `none`.
+* `source_permissions` -- whether (and how) Puppet should copy owner, group, and mode permissions; one of
+  * `ignore` (the default) will never apply the owner, group, or mode from the source when managing a file. When creating new files without explicit permissions, the permissions they receive will depend on platform-specific behavior. On POSIX, Puppet will use the umask of the user it is running as. On Windows, Puppet will use the default DACL associated with the user it is running as.
+  * `use` will cause Puppet to apply the owner, group, and mode from the source to any files it is managing.
+  * `use_when_creating` will only apply the owner, group, and mode from the source when creating a file; existing files will not have their permissions overwritten.
 
 ### Example Response
 
@@ -134,6 +141,11 @@ Accept: pson, text/pson
 * `recurse` -- should always be set to `yes`; unfortunately the default is `no`, which causes a search to behave like a find operation.
 * `ignore` -- file or directory regex to ignore; can be repeated.
 * `links` -- either `manage` (default) or `follow`.  See examples below.
+* `checksum_type` -- the checksum type to calculate the checksum value for the result metadata; one of `md5` (default), `md5lite`, `sha256`, `sha256lite`, `mtime`, `ctime`, and `none`.
+* `source_permissions` -- whether (and how) Puppet should copy owner, group, and mode permissions; one of
+  * `ignore` (the default) will never apply the owner, group, or mode from the source when managing a file. When creating new files without explicit permissions, the permissions they receive will depend on platform-specific behavior. On POSIX, Puppet will use the umask of the user it is running as. On Windows, Puppet will use the default DACL associated with the user it is running as.
+  * `use` will cause Puppet to apply the owner, group, and mode from the source to any files it is managing.
+  * `use_when_creating` will only apply the owner, group, and mode from the source when creating a file; existing files will not have their permissions overwritten.
 
 ### Example Response
 
