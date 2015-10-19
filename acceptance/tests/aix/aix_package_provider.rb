@@ -4,10 +4,6 @@ confine :to, :platform => /aix/
 
 dir = "/tmp/aix-packages-#{$$}"
 
-teardown do
-  on hosts, "rm -rf #{dir}"
-end
-
 def assert_package_version(package, expected_version)
   # The output of lslpp is a colon-delimited list like:
   # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
@@ -21,6 +17,11 @@ end
 package = 'sudo.rte'
 version1 = '1.7.10.4'
 version2 = '1.8.6.4'
+
+teardown do
+  on hosts, "rm -rf #{dir}"
+  on hosts, puppet('resource', 'package', "'#{package}' ensure=absent")
+end
 
 step "download packages to use for test"
 
