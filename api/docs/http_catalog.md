@@ -41,7 +41,8 @@ escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 
 An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
-environment, which might differ from what the client believes is its current environment.
+environment, which might differ from what the client believes is its current environment:
+
 - `configured_environment`: the environment configured on the client
 
 ### Example Response

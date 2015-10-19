@@ -24,9 +24,20 @@ GET
 
 PSON
 
+### Parameters
+
+One parameter should be provided to the GET:
+
+- `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
+
+An optional parameter can be provided to the GET to notify a node classifier that the client requested a specific
+environment, which might differ from what the client believes is its current environment:
+
+- `configured_environment`: the environment configured on the client
+
 ### Examples
 
-    > GET /puppet/v3/node/mycertname?environment=production&configured_environment=production HTTP/1.1
+    > GET /puppet/v3/node/mycertname?environment=production&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c&configured_environment=production HTTP/1.1
     > Accept: pson, b64_zlib_yaml, yaml, raw
 
     < HTTP/1.1 200 OK
