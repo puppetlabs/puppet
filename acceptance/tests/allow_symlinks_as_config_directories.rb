@@ -23,7 +23,7 @@ agents.each do |agent|
   step "Check that the symlink and confdir are unchanged"
   on agent, "[ -L #{conflink} ]"
   on agent, "[ -d #{confdir} ]"
-  if agent[:platform] =~ /solaris/
+  if agent[:platform] =~ /solaris|aix/
     on agent, "[ $(ls -ld #{conflink} | sed 's/.*-> //') = #{confdir} ]"
   else
     on agent, "[ $(readlink #{conflink}) = #{confdir} ]"

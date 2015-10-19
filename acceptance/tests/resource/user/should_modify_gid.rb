@@ -1,9 +1,10 @@
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
+confine :except, :platform => /aix/ # PUP-5358
 
-user = "pl#{rand(99999).to_i}"
-group1 = "#{user}old"
-group2 = "#{user}new"
+user = "u#{rand(99999).to_i}"
+group1 = "#{user}o"
+group2 = "#{user}n"
 
 agents.each do |host|
   step "ensure that the groups both exist"

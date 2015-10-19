@@ -724,8 +724,8 @@ describe Puppet::Transaction, " when determining tags" do
   it "should tag one::two only as 'one::two' and not 'one', 'two', and 'one::two'" do
     @transaction.tags = "one::two"
     expect(@transaction).to be_tagged("one::two")
-    expect(@transaction).not_to be_tagged("one")
-    expect(@transaction).not_to be_tagged("two")
+    expect(@transaction).to_not be_tagged("one")
+    expect(@transaction).to_not be_tagged("two")
   end
 
   it "should accept a comma-delimited string" do

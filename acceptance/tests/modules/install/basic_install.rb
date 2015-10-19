@@ -6,7 +6,7 @@ confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
 hosts.each do |host|
   case host['platform']
-  when /solaris/
+  when /solaris|aix/
     # see PUP-4822, PUP-3450
     # We now bundle the GeoTrust Global CA with our vendored openssl, so
     # this test will run correctly in OSX.

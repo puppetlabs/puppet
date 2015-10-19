@@ -14,7 +14,7 @@ agents.each do |agent|
   agent.user_get(name)
 
   case agent['platform']
-  when /sles/, /solaris/, /windows/, /osx/
+  when /sles/, /solaris/, /windows/, /osx/, /aix/
     # no private user groups by default
   else
     agent.group_get(name)
