@@ -374,6 +374,12 @@ class Puppet::Parser::Compiler
       classes = classes.keys
     end
 
+    unless @current_components.nil?
+      classes = classes.select do |title|
+        @current_components.any? { |comp| comp.class? && comp.title == title }
+      end
+    end
+
     hostclasses = classes.collect do |name|
       scope.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
     end

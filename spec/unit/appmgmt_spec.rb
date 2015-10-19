@@ -239,6 +239,39 @@ MANIFEST_WITH_ILLEGAL_RESOURCE = <<-EOS
     }
 EOS
 
+MANIFEST_WITH_CLASS = <<-EOS
+    define test($host) {
+      notify { "c $host": }
+    }
+
+    class prod($host) {
+      notify { "p $host": }
+    }
+
+    class cons($host) {
+      test { c: host => $host }
+    }
+
+    Class[prod] produces Cap {}
+
+    Class[cons] consumes Cap {}
+
+    application app {
+      class { prod: host => 'ahost', export => Cap[cap]}
+      class { cons: consume => Cap[cap]}
+    }
+
+    site {
+      app { anapp:
+        nodes => {
+          Node[first] => Class[prod],
+          Node[second] => Class[cons]
+        }
+      }
+    }
+EOS
+
+
   describe "a node catalog" do
     it "is unaffected for a non-participating node" do
       catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other'))
@@ -310,6 +343,54 @@ EOS
         # Mock the connection to Puppet DB
         Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
         expect(compiled_catalog.resource("Prod[one]")).to be_nil
+      end
+    end
+
+    context "for node with class producer" do
+      let(:compiled_node) { Puppet::Node.new('first') }
+      let(:compiled_catalog) { compile_to_catalog(MANIFEST_WITH_CLASS, compiled_node)}
+
+      { "App[anapp]"      => 'application instance',
+        "Cap[cap]"        => 'capability resource',
+        "Class[prod]"     => 'class',
+        "Notify[p ahost]" => 'node resource'
+      }.each do |k,v|
+        it "contains the #{v} (#{k})" do
+          cat = compiled_catalog
+          expect(cat.resource(k)).not_to be_nil
+        end
+      end
+
+      it "does not contain the consumed resource (Class[cons])" do
+        expect(compiled_catalog.resource("Class[cons]")).to be_nil
+      end
+    end
+
+    context "for node with class consumer" do
+      let(:compiled_node) { Puppet::Node.new('second') }
+      let(:compiled_catalog) { compile_to_catalog(MANIFEST_WITH_CLASS, compiled_node)}
+      let(:cap) {
+        the_cap = Puppet::Resource.new("Cap", "cap")
+        the_cap["host"] = "ahost"
+        the_cap
+      }
+
+      { "App[anapp]"      => 'application instance',
+        "Cap[cap]"        => 'capability resource',
+        "Class[cons]"     => 'class',
+        "Notify[c ahost]" => 'node resource'
+      }.each do |k,v|
+        it "contains the #{v} (#{k})" do
+          # Mock the connection to Puppet DB
+          Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+          expect(compiled_catalog.resource(k)).not_to be_nil
+        end
+      end
+
+      it "does not contain the produced resource (Class[prod])" do
+        # Mock the connection to Puppet DB
+        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(compiled_catalog.resource("Class[prod]")).to be_nil
       end
     end
 
