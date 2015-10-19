@@ -544,8 +544,8 @@ module Puppet::Pops::Model
   class CapabilityMapping < Definition
     # 'produces' or 'consumes'
     has_attr 'kind', String, :lowerBound => 1
-    has_attr 'resource', String, :lowerBound => 1
     has_attr 'capability', String, :lowerBound => 1
+    contains_one_uni 'component', Expression, :lowerBound => 1
     contains_many_uni 'mappings', AbstractAttributeOperation
   end
 

@@ -239,9 +239,10 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  def build_CapabilityMapping(o, kind, resource, capability, mappings)
+  def build_CapabilityMapping(o, kind, component, capability, mappings)
     o.kind = kind
-    o.resource   = resource
+    component = component.current if component.is_a?(Puppet::Pops::Model::Factory)
+    o.component = component
     o.capability = capability
     o.mappings = mappings.map { |m| build(m) }
     o
@@ -780,8 +781,8 @@ class Puppet::Pops::Model::Factory
     new(Model::ResourceTypeDefinition, name, parameters, body)
   end
 
-  def self.CAPABILITY_MAPPING(kind, rsrc_name, cap_name, mappings)
-    new(Model::CapabilityMapping, kind, rsrc_name, cap_name, mappings)
+  def self.CAPABILITY_MAPPING(kind, component, cap_name, mappings)
+    new(Model::CapabilityMapping, kind, component, cap_name, mappings)
   end
 
   def self.APPLICATION(name, parameters, body)

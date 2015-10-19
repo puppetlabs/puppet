@@ -118,8 +118,8 @@ class Puppet::Resource::Type
   # Evaluate the resources produced by the given resource. These resources are
   # evaluated in a separate but identical scope from the rest of the resource.
   def evaluate_produces(resource, scope)
-    # Only defined types can produce capabilities
-    return unless definition?
+    # Only defined types and classes can produce capabilities
+    return unless definition? || hostclass?
 
     resource.export.map do |ex|
       # Assert that the ref really is a resource reference
