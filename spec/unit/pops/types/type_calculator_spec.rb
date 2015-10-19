@@ -48,6 +48,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.array_of(t, s)
   end
 
+  def empty_array_t
+  empty_array = array_t(unit_t, range_t(0,0))
+  end
+
   def hash_t(k,v,s = nil)
     Puppet::Pops::Types::TypeFactory.hash_of(v, k, s)
   end
@@ -94,7 +98,7 @@ describe 'The type calculator' do
 
   def unit_t
     # Cannot be created via factory, the type is private to the type system
-    Puppet::Pops::Types::PUnitType.new
+    Puppet::Pops::Types::PUnitType::DEFAULT
   end
 
   def types
@@ -814,6 +818,11 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
+      end
+
+      it 'Empty Array is assignable to an array that accepts 0 entries' do
+        expect(empty_array_t).to be_assignable_to(array_t(string_t))
+        expect(empty_array_t).to be_assignable_to(array_t(integer_t))
       end
     end
 
@@ -1716,6 +1725,11 @@ describe 'The type calculator' do
       expect(calculator.string(t)).to eq('Array[Integer]')
     end
 
+    it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
+      t = empty_array_t
+      expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')
+    end
+
     it 'should yield \'Collection\' and from/to for PCollectionType' do
       expect(calculator.string(collection_t(range_t(1,1)))).to eq('Collection[1, 1]')
       expect(calculator.string(collection_t(range_t(1,2)))).to eq('Collection[1, 2]')
@@ -2047,6 +2061,18 @@ describe 'The type calculator' do
       element_types = inferred_type.types
       expect(element_types[0].class).to eq(Puppet::Pops::Types::PStringType)
       expect(element_types[1].class).to eq(Puppet::Pops::Types::PUndefType)
+    end
+
+    it 'infers on an empty Array produces Array[Unit,0,0]' do
+      inferred_type = calculator.infer([])
+      expect(inferred_type.element_type.class).to eq(Puppet::Pops::Types::PUnitType)
+      expect(inferred_type.size_range).to eq([0, 0])
+    end
+
+    it 'infer_set on an empty Array produces Array[Unit,0,0]' do
+      inferred_type = calculator.infer_set([])
+      expect(inferred_type.element_type.class).to eq(Puppet::Pops::Types::PUnitType)
+      expect(inferred_type.size_range).to eq([0, 0])
     end
   end
 
