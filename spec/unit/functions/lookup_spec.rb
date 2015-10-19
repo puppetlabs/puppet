@@ -466,6 +466,31 @@ EOS
       end
     end
 
+    it 'will handle path merge with not found correctly' do
+      assemble_and_compile('${r}', "'hieraprovider::test::param_a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('hieraprovider::test::not_found', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::DataBinding::LookupError
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "hieraprovider::test::not_found"
+  Module "hieraprovider" using Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
+    Data Provider "two paths"
+      Merge strategy first
+        Path "#{environmentpath}/production/modules/hieraprovider/data/first.json"
+          Original path: first
+          No such key: "hieraprovider::test::not_found"
+        Path "#{environmentpath}/production/modules/hieraprovider/data/second_not_present.json"
+          Original path: second_not_present
+          Path not found
+EOS
+      end
+    end
+
     it 'will provide a hash containing all explanation elements' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
