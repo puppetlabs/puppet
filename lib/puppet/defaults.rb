@@ -2052,6 +2052,10 @@ EOT
     },
     :parser => {
       :default => "current",
+      :hook    => proc do |value|
+        envs = Puppet.lookup(:environments) { nil }
+        envs.clear_all unless envs.nil?
+      end,
       :desc => <<-'EOT'
         Selects the parser to use for parsing puppet manifests (in puppet DSL
         language/'.pp' files). Available choices are `current` (the default)

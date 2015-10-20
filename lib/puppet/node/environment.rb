@@ -258,6 +258,15 @@ class Puppet::Node::Environment
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
   end
 
+  # @api private
+  def future_parser?
+    if @future_parser.nil?
+      environment_conf = Puppet.lookup(:environments).get_conf(name)
+      @future_parser = 'future' == (environment_conf.nil? ? Puppet[:parser] : environment_conf.parser)
+    end
+    @future_parser
+  end
+
   # Return an environment-specific Puppet setting.
   #
   # @api public
