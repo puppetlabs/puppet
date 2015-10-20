@@ -57,7 +57,6 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:node] = arg
   end
 
-  # not yet supported
   option('--facts FACT_FILE') do |arg|
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
@@ -331,6 +330,18 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+
+    if options[:fact_file]
+      original_facts = node.facts.values
+      if options[:fact_file].match(/.*\.json/)
+        given_facts = JSON.parse(File.read(options[:fact_file]))
+      else
+        given_facts = YAML.load(File.read(options[:fact_file]))
+      end
+
+      node.facts.values = original_facts.merge(given_facts)
+    end
+
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end
