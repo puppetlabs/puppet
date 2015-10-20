@@ -114,6 +114,17 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar", :list_all => true)).to eq(nil)
           end
 
+          it "raises when the request is remote" do
+            Puppet[:bucketdir] = tmpdir('bucket')
+
+            request = Puppet::Indirector::Request.new(:file_bucket_file, :find, "#{digest_algorithm}/#{checksum}/foo/bar", nil, :list_all => true)
+            request.node = 'client.example.com'
+
+            expect {
+              Puppet::FileBucketFile::File.new.find(request)
+            }.to raise_error(Puppet::Error, "Listing remote file buckets is not allowed")
+          end
+
           it "should return the list of bucketed files in a human readable way" do
             checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
             checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')

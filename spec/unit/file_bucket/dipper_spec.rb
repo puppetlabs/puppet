@@ -241,7 +241,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   describe "when diffing on a remote filebucket" do
     describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
       with_digest_algorithms do
-
         it "should fail in an informative way when one or more checksum doesn't exists" do
           @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
           wrong_checksum = "DEADBEEF"
@@ -252,7 +251,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         end
 
         it "should properly diff files on the filebucket" do
-
           @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
 
           Puppet::FileBucketFile::Rest.any_instance.expects(:find).returns("Probably valid diff")
@@ -261,6 +259,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         end
       end
     end
+
     describe "in windows environment", :if => Puppet.features.microsoft_windows? do
       it "should fail in an informative way when trying to diff" do
         @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
@@ -274,46 +273,12 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "listing files in remote filebucket" do
-    with_digest_algorithms do
-      it "should list all files present" do
-        @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port=> "31337")
+    it "is not allowed" do
+      @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port=> "31337")
 
-        file = make_tmp_file(plaintext)
-        real_path = Pathname.new(file).realpath
-
-        date = Time.now.strftime("%F %T")
-
-        expect(digest(plaintext)).to eq(checksum)
-        expected_list = "#{checksum} #{date} #{file}\n"
-
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list)
-
-        expect(@dipper.list(nil, nil)).to eq(expected_list)
-
-      end
-      it "should filter with the provided dates" do
-        @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port=> "31337")
-
-        file = make_tmp_file(plaintext)
-        date = Time.now
-        date_s = date.strftime("%F %T")
-
-        expect(digest(plaintext)).to eq(checksum)
-
-        expected_list = "#{checksum} #{date_s} #{file}\n"
-
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns("")
-        expect(@dipper.list((date + 3).strftime("%F %T"), nil )).to eq("")
-
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list+expected_list)
-        expect(@dipper.list(nil, (date + 3).strftime("%F %T"))).to eq(expected_list + expected_list)
-
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(expected_list)
-        expect(@dipper.list(date_s, (date + 3).strftime("%F %T"))).to eq(expected_list)
-
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns("")
-        expect(@dipper.list((date + 1).strftime("%F %T"), (date + 3).strftime("%F %T"))).to eq("")
-      end
+      expect {
+        @dipper.list(nil, nil)
+      }.to raise_error(Puppet::Error, "Listing remote file buckets is not allowed")
     end
   end
 

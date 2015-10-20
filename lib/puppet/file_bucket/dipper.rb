@@ -153,6 +153,8 @@ class Puppet::FileBucket::Dipper
 
   # List Filebucket content.
   def list(fromdate, todate)
+    raise Puppet::Error, "Listing remote file buckets is not allowed" unless local?
+
     source_path = "#{@rest_path}#{@checksum_type}/"
     file_bucket_list = Puppet::FileBucket::File.indirection.find(
       source_path,
