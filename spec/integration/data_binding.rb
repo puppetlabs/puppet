@@ -7,6 +7,17 @@ describe "Data binding" do
   include PuppetSpec::Compiler
 
   let(:dir) { tmpdir("puppetdir") }
+  let(:data) {{
+    'global' => {
+      "testing::binding::value" => "the value",
+      "testing::binding::calling_class" => "%{calling_class}",
+      "testing::binding::calling_class_path" => "%{calling_class_path}"
+    },
+    'client1' => {
+      "testing::binding::value" => "value override"
+    }
+  }}
+
 
   before do
     Puppet[:data_binding_terminus] = "hiera"
@@ -14,20 +25,14 @@ describe "Data binding" do
   end
 
   it "looks up data from hiera" do
-    configure_hiera_for({
-      "testing::binding::value" => "the value",
-      "testing::binding::calling_class" => "%{calling_class}",
-      "testing::binding::calling_class_path" => "%{calling_class_path}",
-      "testing::binding::calling_module" => "%{calling_module}"
-     
-    })
+    configure_hiera_for(data)
 
     create_manifest_in_module("testing", "binding.pp",
                               <<-MANIFEST)
     class testing::binding($value,
                            $calling_class,
                            $calling_class_path,
-                           $calling_module) {}
+                           $calling_module = $module_name) {}
     MANIFEST
 
     catalog = compile_to_catalog("include testing::binding")
@@ -49,15 +54,15 @@ describe "Data binding" do
 
     create_manifest_in_module("testing", "data.pp",
                               <<-MANIFEST)
-    class testing::data {
+    class testing::data (
       $variable = "the value"
-    }
+    ) { }
     MANIFEST
 
-    catalog = compile_to_catalog("include testing::binding")
-    resource = catalog.resource('Class[testing::binding]')
+    catalog = compile_to_catalog("include testing::data")
+    resource = catalog.resource('Class[testing::data]')
 
-    expect(resource[:value]).to eq("the value")
+    expect(resource[:variable]).to eq("the value")
   end
 
   def configure_hiera_for(data)
@@ -67,14 +72,16 @@ describe "Data binding" do
       f.write("---
         :yaml:
           :datadir: #{dir}
-        :hierarchy: ['global']
+        :hierarchy: ['%{clientcert}', 'global']
         :logger: 'noop'
         :backends: ['yaml']
       ")
     end
 
-    File.open(File.join(dir, 'global.yaml'), 'w') do |f|
-      f.write(YAML.dump(data))
+    data.each do | file, contents |
+      File.open(File.join(dir, "#{file}.yaml"), 'w') do |f|
+        f.write(YAML.dump(contents))
+      end
     end
 
     Puppet[:hiera_config] = hiera_config_file
