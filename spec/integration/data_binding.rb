@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-require 'puppet/node/facts'
 require 'puppet_spec/compiler'
 
 describe "Data binding" do
@@ -23,12 +22,12 @@ describe "Data binding" do
 	'bind' => 'localhost'
       }
     },
-    'client1' => {
+    'agent.example.com' => {
       'lookupoptions::testing::hash::options' => {
 	'merge' => 'deep'
       },
       'testing::hash::options' => {
-	'key'  => 'bad value',
+	'key'  => 'new value',
 	'port' => '443'
       }
     }
@@ -104,8 +103,7 @@ describe "Data binding" do
   end
 
   context "with custom clientcert and without hiera_advanced_parameter_bindingss" do
-    it "overrides global data with client1 data from hiera" do
-      Puppet[:certname] = 'client1'
+    it "overrides global data with agent.example.com data from hiera" do
       configure_hiera_for_two_tier(hash_data)
 
       create_manifest_in_module("testing", "hash.pp",
@@ -117,15 +115,14 @@ describe "Data binding" do
       resource = catalog.resource('Class[testing::hash]')
 
       expect(resource[:options]).to eq({
-	'key'  => 'bad value',
+	'key'  => 'new value',
 	'port' => '443',
       })
     end
   end
 
   context "with custom clientcert and with hiera_advanced_parameter_bindings" do
-    it "merges global data with client1 data from hiera" do
-      Puppet[:certname] = 'client1'
+    it "merges global data with agent.example.com data from hiera" do
       Puppet[:hiera_advanced_parameter_bindings] = true
       configure_hiera_for_two_tier(hash_data)
 
@@ -138,7 +135,7 @@ describe "Data binding" do
       resource = catalog.resource('Class[testing::hash]')
 
       expect(resource[:options]).to eq({
-        'key'  => 'bad value',
+        'key'  => 'new value',
         'port' => '443',
 	'bind' => 'localhost',
       })
@@ -175,7 +172,7 @@ describe "Data binding" do
       f.write("---
         :yaml:
           :datadir: #{dir}
-        :hierarchy: ['client1', 'global']
+        :hierarchy: ['agent.example.com', 'global']
         :logger: 'noop'
         :backends: ['yaml']
       ")
