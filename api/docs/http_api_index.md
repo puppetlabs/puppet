@@ -7,6 +7,9 @@ and they've historically relied on a lot of shared code to work correctly.
 This is gradually changing, although we expect external use of these APIs to
 remain low for the foreseeable future.
 
+Puppet will often send garbage URL parameters, such as `fail_on_404` and
+`ignore_cache`. The server will ignore any parameters it isn't expecting.
+
 V1/V2 HTTP APIs (Removed)
 ---------------
 
