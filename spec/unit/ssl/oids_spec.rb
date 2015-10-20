@@ -25,6 +25,14 @@ describe Puppet::SSL::Oids do
       'pp_department'       => "1.3.6.1.4.1.34380.1.1.15",
       'pp_cluster'          => "1.3.6.1.4.1.34380.1.1.16",
       'pp_provisioner'      => "1.3.6.1.4.1.34380.1.1.17",
+      'pp_region'           => "1.3.6.1.4.1.34380.1.1.18",
+      'pp_datacenter'       => "1.3.6.1.4.1.34380.1.1.19",
+      'pp_zone'             => "1.3.6.1.4.1.34380.1.1.20",
+      'pp_network'          => "1.3.6.1.4.1.34380.1.1.21",
+      'pp_securitypolicy'   => "1.3.6.1.4.1.34380.1.1.22",
+      'pp_cloudplatform'    => "1.3.6.1.4.1.34380.1.1.23",
+      'pp_apptier'          => "1.3.6.1.4.1.34380.1.1.24",
+      'pp_hostname'         => "1.3.6.1.4.1.34380.1.1.24",
       'ppPrivCertExt'       => '1.3.6.1.4.1.34380.1.2',
     }.each_pair do |sn, oid|
       it "defines #{sn} as #{oid}" do
