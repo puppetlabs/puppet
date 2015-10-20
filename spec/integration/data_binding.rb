@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+require 'puppet/node/facts'
 require 'puppet_spec/compiler'
 
 describe "Data binding" do
@@ -12,9 +13,24 @@ describe "Data binding" do
       "testing::binding::value" => "the value",
       "testing::binding::calling_class" => "%{calling_class}",
       "testing::binding::calling_class_path" => "%{calling_class_path}"
+    }
+  }}
+  let(:hash_data) {{
+    'global' => {
+      "testing::hash::options" => {
+	'key'  => 'value',
+	'port' => '80',
+	'bind' => 'localhost'
+      }
     },
     'client1' => {
-      "testing::binding::value" => "value override"
+      'lookupoptions::testing::hash::options' => {
+	'merge' => 'deep'
+      },
+      'testing::hash::options' => {
+	'key'  => 'bad value',
+	'port' => '443'
+      }
     }
   }}
 
@@ -22,26 +38,6 @@ describe "Data binding" do
   before do
     Puppet[:data_binding_terminus] = "hiera"
     Puppet[:modulepath] = dir
-  end
-
-  it "looks up data from hiera" do
-    configure_hiera_for(data)
-
-    create_manifest_in_module("testing", "binding.pp",
-                              <<-MANIFEST)
-    class testing::binding($value,
-                           $calling_class,
-                           $calling_class_path,
-                           $calling_module = $module_name) {}
-    MANIFEST
-
-    catalog = compile_to_catalog("include testing::binding")
-    resource = catalog.resource('Class[testing::binding]')
-
-    expect(resource[:value]).to eq("the value")
-    expect(resource[:calling_class]).to eq("testing::binding")
-    expect(resource[:calling_class_path]).to eq("testing/binding")
-    expect(resource[:calling_module]).to eq("testing")
   end
 
   it "works with the puppet backend configured, although it can't use it for lookup" do
@@ -55,7 +51,7 @@ describe "Data binding" do
     create_manifest_in_module("testing", "data.pp",
                               <<-MANIFEST)
     class testing::data (
-      $variable = "the value"
+    $variable = "the value"
     ) { }
     MANIFEST
 
@@ -65,14 +61,121 @@ describe "Data binding" do
     expect(resource[:variable]).to eq("the value")
   end
 
-  def configure_hiera_for(data)
+  context "with testing::binding and global data only" do
+    it "looks up global data from hiera" do
+      configure_hiera_for_one_tier(data)
+
+      create_manifest_in_module("testing", "binding.pp",
+                                <<-MANIFEST)
+      class testing::binding($value,
+                             $calling_class,
+                             $calling_class_path,
+                             $calling_module = $module_name) {}
+      MANIFEST
+
+      catalog = compile_to_catalog("include testing::binding")
+      resource = catalog.resource('Class[testing::binding]')
+
+      expect(resource[:value]).to eq("the value")
+      expect(resource[:calling_class]).to eq("testing::binding")
+      expect(resource[:calling_class_path]).to eq("testing/binding")
+      expect(resource[:calling_module]).to eq("testing")
+    end
+  end
+
+  context "with testing::hash and global data only" do
+    it "looks up global data from hiera" do
+      configure_hiera_for_one_tier(hash_data)
+
+      create_manifest_in_module("testing", "hash.pp",
+                                <<-MANIFEST)
+      class testing::hash($options) {}
+      MANIFEST
+
+      catalog = compile_to_catalog("include testing::hash")
+      resource = catalog.resource('Class[testing::hash]')
+
+      expect(resource[:options]).to eq({
+	'key'  => 'value',
+	'port' => '80',
+	'bind' => 'localhost'
+      })
+    end
+  end
+
+  context "with custom clientcert and without hiera_advanced_parameter_bindingss" do
+    it "overrides global data with client1 data from hiera" do
+      Puppet[:certname] = 'client1'
+      configure_hiera_for_two_tier(hash_data)
+
+      create_manifest_in_module("testing", "hash.pp",
+                                <<-MANIFEST)
+      class testing::hash($options) {}
+      MANIFEST
+
+      catalog = compile_to_catalog("include testing::hash")
+      resource = catalog.resource('Class[testing::hash]')
+
+      expect(resource[:options]).to eq({
+	'key'  => 'bad value',
+	'port' => '443',
+      })
+    end
+  end
+
+  context "with custom clientcert and with hiera_advanced_parameter_bindings" do
+    it "merges global data with client1 data from hiera" do
+      Puppet[:certname] = 'client1'
+      Puppet[:hiera_advanced_parameter_bindings] = true
+      configure_hiera_for_two_tier(hash_data)
+
+      create_manifest_in_module("testing", "hash.pp",
+                                <<-MANIFEST)
+      class testing::hash($options) {}
+      MANIFEST
+
+      catalog = compile_to_catalog("include testing::hash")
+      resource = catalog.resource('Class[testing::hash]')
+
+      expect(resource[:options]).to eq({
+        'key'  => 'bad value',
+        'port' => '443',
+	'bind' => 'localhost',
+      })
+    end
+  end
+
+
+  def configure_hiera_for_one_tier(data)
     hiera_config_file = tmpfile("hiera.yaml")
 
     File.open(hiera_config_file, 'w') do |f|
       f.write("---
         :yaml:
           :datadir: #{dir}
-        :hierarchy: ['%{clientcert}', 'global']
+        :hierarchy: ['global']
+        :logger: 'noop'
+        :backends: ['yaml']
+      ")
+    end
+
+    data.each do | file, contents |
+      File.open(File.join(dir, "#{file}.yaml"), 'w') do |f|
+        f.write(YAML.dump(contents))
+      end
+    end
+
+    Puppet[:hiera_config] = hiera_config_file
+  end
+
+  def configure_hiera_for_two_tier(data)
+    hiera_config_file = tmpfile("hiera.yaml")
+
+    File.open(hiera_config_file, 'w') do |f|
+      f.write("---
+        :yaml:
+          :datadir: #{dir}
+        :hierarchy: ['client1', 'global']
         :logger: 'noop'
         :backends: ['yaml']
       ")
