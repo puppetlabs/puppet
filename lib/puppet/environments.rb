@@ -38,6 +38,9 @@ module Puppet::Environments
         raise EnvironmentNotFound, name
       end
     end
+
+    def clear_all
+    end
   end
 
   # @!macro [new] loader_search_paths
@@ -257,6 +260,9 @@ module Puppet::Environments
       nil
     end
 
+    def clear_all
+      @loaders.each {|loader| loader.clear_all}
+    end
   end
 
   class Cached
@@ -356,6 +362,7 @@ module Puppet::Environments
     # Clears all cached environments.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear_all()
+      super
       @cache = {}
       @expirations.clear
       @next_expiration = END_OF_TIME
