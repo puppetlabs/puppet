@@ -179,7 +179,10 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
-      Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+      Puppet::Util::Profiler.profile("Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+
+      # New capability mappings may have been defined when the site was evaluated
+      Puppet::Util::Profiler.profile("Compile: Evaluated site capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated AST node", [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
 
