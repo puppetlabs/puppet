@@ -4,6 +4,11 @@ confine :to, :platform => "aix"
 
 # NOTE: This test is duplicated in the pe_acceptance_tests repo
 
+teardown do
+    test_apply('cdrecord', 'absent', '')
+    test_apply('bos.atm.atmle', 'absent', '')
+end
+
 def assert_package_version(package, expected_version)
   # The output of lslpp is a colon-delimited list like:
   # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
@@ -90,7 +95,7 @@ package_types.each do |package_type, details|
        { :stdin => manifest,
          :acceptable_exit_codes => [4,6] } do
 
-        assert_match(/NIM package provider is unable to downgrade packages/, stdout, "Didn't get an error about downgrading packages")
+        assert_match(/NIM package provider is unable to downgrade packages/, stderr, "Didn't get an error about downgrading packages")
     end
   end
 
