@@ -94,5 +94,14 @@ describe 'the regsubst function' do
                  'G')
       ).to eql(['<130>.<236>.<254>.<10>', '<foo>.<example>.<com>','<coconut>', '<10>.<20>.<30>.<40>'])
     end
+
+    it 'should return an empty array if given an empty array and string pattern' do
+      expect(regsubst([], '', '')).to eql([])
+    end
+
+    it 'should return an empty array if given an empty array and regexp pattern' do
+      expect(regsubst([], //, '')).to eql([])
+    end
+
   end
 end
