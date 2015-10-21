@@ -223,7 +223,8 @@ the puppet lookup function linked to above.
 
 * --facts <FILE>
   Specify a .json, or .yaml file holding key => value mappings that will
-  populate a scope with data that is used when looking up.
+  override the facts for the current node. Any facts not specified by the
+  user will maintain their original value.
 
 * --render-as s|json|yaml|binary|msgpack
   Determines how the results will be rendered to the standard output where
@@ -333,10 +334,17 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     if options[:fact_file]
       original_facts = node.facts.values
-      if options[:fact_file].match(/.*\.json/)
+      if options[:fact_file].end_with?("json")
         given_facts = JSON.parse(File.read(options[:fact_file]))
       else
         given_facts = YAML.load(File.read(options[:fact_file]))
+
+        # If the data is not correctly formatted this will be a string so we should warn the user
+        # Otherwise both JSON and YAML will provide sane parse errors for the user if the data is
+        # incorrectly formatted
+        if !given_facts.instance_of?(Hash)
+          raise "Incorrect formatted YAML data in #{options[:fact_file]} given via the --facts flag"
+        end
       end
 
       node.facts.values = original_facts.merge(given_facts)
