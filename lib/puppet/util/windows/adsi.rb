@@ -188,8 +188,11 @@ module Puppet::Util::Windows::ADSI
     end
 
     def password=(password)
-      native_user.SetPassword(password)
-      commit
+      if !password.nil?
+        native_user.SetPassword(password)
+        commit
+      end
+
       fADS_UF_DONT_EXPIRE_PASSWD = 0x10000
       add_flag("UserFlags", fADS_UF_DONT_EXPIRE_PASSWD)
     end
