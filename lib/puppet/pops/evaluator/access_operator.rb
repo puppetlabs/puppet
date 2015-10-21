@@ -247,10 +247,14 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     if keys.size == 1
       type = keys[0]
-      unless type.is_a?(Puppet::Pops::Types::PAnyType) || type.is_a?(String)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
+      unless type.is_a?(Puppet::Pops::Types::PAnyType)
+        if type.is_a?(String)
+          type = TYPEFACTORY.string(nil, type)
+        else
+          fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
+        end
       end
-      Puppet::Pops::Types::POptionalType.new(keys[0])
+      Puppet::Pops::Types::POptionalType.new(type)
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
     end
@@ -265,7 +269,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       type = keys[0]
       case type
       when String
-        type = TYPEFACTORY.string(type)
+        type = TYPEFACTORY.string(nil, type)
       when Puppet::Pops::Types::PAnyType
         type = nil if type.class == Puppet::Pops::Types::PAnyType
       else
