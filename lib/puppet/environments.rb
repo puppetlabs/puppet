@@ -202,7 +202,6 @@ module Puppet::Environments
         setting_values.interpolate(:manifest),
         setting_values.interpolate(:config_version)
       )
-      env.watching = false
       env
     end
 
