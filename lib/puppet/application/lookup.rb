@@ -57,7 +57,6 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:node] = arg
   end
 
-  # not yet supported
   option('--facts FACT_FILE') do |arg|
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
@@ -224,7 +223,8 @@ the puppet lookup function linked to above.
 
 * --facts <FILE>
   Specify a .json, or .yaml file holding key => value mappings that will
-  populate a scope with data that is used when looking up.
+  override the facts for the current node. Any facts not specified by the
+  user will maintain their original value.
 
 * --render-as s|json|yaml|binary|msgpack
   Determines how the results will be rendered to the standard output where
@@ -331,6 +331,24 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+
+   fact_file = options[:fact_file]
+
+    if fact_file
+      original_facts = node.facts.values
+      if fact_file.end_with?("json")
+        given_facts = JSON.parse(File.read(fact_file))
+      else
+        given_facts = YAML.load(File.read(fact_file))
+      end
+
+      unless given_facts.instance_of?(Hash)
+        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
+      end
+
+      node.facts.values = original_facts.merge(given_facts)
+    end
+
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end
