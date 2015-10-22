@@ -331,8 +331,9 @@ class Puppet::Parser::Compiler
   # @api private
   def evaluate_applications
     @applications.each do |app|
-      mapping = app.parameters[:nodes].value
       components = []
+      mapping = app.parameters[:nodes] ? app.parameters[:nodes].value : {}
+      raise Puppet::Error, "Invalid node mapping in #{app.ref}: Mapping must be a hash" unless mapping.is_a?(Hash)
       all_mapped = Set.new
       mapping.each do |k,v|
         raise Puppet::Error, "Invalid node mapping in #{app.ref}: Key #{k} is not a Node" unless k.is_a?(Puppet::Resource) && k.type == 'Node'

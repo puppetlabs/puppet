@@ -87,6 +87,52 @@ MANIFEST_WO_EXPORT = <<-EOS
     }
 EOS
 
+MANIFEST_WO_NODE = <<-EOS
+    define prod($host) {
+      notify { "host ${host}":}
+    }
+
+    Prod produces Cap { }
+
+    define cons($host) {
+      notify { "host ${host}": }
+    }
+
+    Cons consumes Cap { }
+
+    application app {
+      prod { one: host => ahost, export => Cap[cap] }
+      cons { two: host => ahost, consume => Cap[cap] }
+    }
+
+    site {
+      app { anapp:
+      }
+    }
+EOS
+
+MANIFEST_WITH_STRING_NODES = <<-EOS
+    application app {
+    }
+
+    site {
+      app { anapp:
+        nodes => "foobar",
+      }
+    }
+EOS
+
+MANIFEST_WITH_FALSE_NODES = <<-EOS
+    application app {
+    }
+
+    site {
+      app { anapp:
+        nodes => false,
+      }
+    }
+EOS
+
 MANIFEST_REQ_WO_EXPORT = <<-EOS
     define prod($host) {
       notify { "host ${host}":}
@@ -282,6 +328,20 @@ EOS
     it "an application instance must be contained in a site" do
       expect { compile_to_catalog(FAULTY_MANIFEST, Puppet::Node.new('first'))
       }.to raise_error(/Application instances .* can only be contained within a Site/)
+    end
+
+    it "does not raise an error when node mappings are not provided" do
+      expect { compile_to_catalog(MANIFEST_WO_NODE) }.to_not raise_error
+    end
+
+    it "raises an error if node mapping is a string" do
+      expect { compile_to_catalog(MANIFEST_WITH_STRING_NODES)
+      }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
+    end
+
+    it "raises an error if node mapping is false" do
+      expect { compile_to_catalog(MANIFEST_WITH_FALSE_NODES)
+      }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
     end
 
     it "detects that consumed capability is never exported" do
