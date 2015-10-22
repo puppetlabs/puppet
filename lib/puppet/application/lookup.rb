@@ -332,19 +332,18 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
 
-    if options[:fact_file]
-      original_facts = node.facts.values
-      if options[:fact_file].end_with?("json")
-        given_facts = JSON.parse(File.read(options[:fact_file]))
-      else
-        given_facts = YAML.load(File.read(options[:fact_file]))
+   fact_file = options[:fact_file]
 
-        # If the data is not correctly formatted this will be a string so we should warn the user
-        # Otherwise both JSON and YAML will provide sane parse errors for the user if the data is
-        # incorrectly formatted
-        if !given_facts.instance_of?(Hash)
-          raise "Incorrect formatted YAML data in #{options[:fact_file]} given via the --facts flag"
-        end
+    if fact_file
+      original_facts = node.facts.values
+      if fact_file.end_with?("json")
+        given_facts = JSON.parse(File.read(fact_file))
+      else
+        given_facts = YAML.load(File.read(fact_file))
+      end
+
+      unless given_facts.instance_of?(Hash)
+        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
       end
 
       node.facts.values = original_facts.merge(given_facts)
