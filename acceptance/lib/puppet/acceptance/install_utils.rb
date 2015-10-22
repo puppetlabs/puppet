@@ -8,7 +8,7 @@ module Puppet
     module InstallUtils
       PLATFORM_PATTERNS = {
         :redhat        => /fedora|el-|centos/,
-        :debian        => /debian|ubuntu/,
+        :debian        => /debian|ubuntu|cumulus/,
         :debian_ruby18 => /debian|ubuntu-lucid|ubuntu-precise/,
         :solaris_10    => /solaris-10/,
         :solaris_11    => /solaris-11/,
@@ -141,10 +141,14 @@ module Puppet
           repo_url = "http://%s/%s/%s/repo_configs/rpm/%s" % [tld, project, sha, repo_filename]
 
           on host, "curl -o /etc/yum.repos.d/#{repo_filename} #{repo_url}"
-        when /^(debian|ubuntu)-([^-]+)-(.+)$/
+        when /^(debian|ubuntu|cumulus)-([^-]+)-(.+)$/
           variant = $1
           version = $2
           arch = $3
+
+          if variant =~ /cumulus/ then
+            version = variant
+          end
 
           list_filename = "pl-%s%s-%s.list" % [
             project,
