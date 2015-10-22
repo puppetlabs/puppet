@@ -555,7 +555,7 @@ module Puppet
     },
     :module_groups => {
         :default  => nil,
-        :desc     => "Extra module groups to request from the Puppet Forge",
+        :desc     => "Extra module groups to request from the Puppet Forge. This is an internal setting, and users should never change it.",
     }
   )
 
