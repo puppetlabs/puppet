@@ -187,7 +187,7 @@ module Puppet::Plugins::DataProviders
     #
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+    # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)

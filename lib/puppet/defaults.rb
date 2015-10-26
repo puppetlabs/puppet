@@ -362,11 +362,6 @@ module Puppet
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
-    :hiera_advanced_parameter_bindings => {
-      :type    => :boolean,
-      :default => false,
-      :desc    => "Whether to provide advanced bindings to hiera automatic parameter lookups.",
-    },
     :binder_config => {
       :default => nil,
       :desc    => "The binder configuration file. Puppet reads this file on each request to configure the bindings system.

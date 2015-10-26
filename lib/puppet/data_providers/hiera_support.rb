@@ -14,7 +14,7 @@ module Puppet::DataProviders::HieraSupport
   #
   # @param key [String] The key to lookup
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-  # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+  # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
   #
   # @api public
   def unchecked_lookup(key, lookup_invocation, merge)
@@ -22,7 +22,7 @@ module Puppet::DataProviders::HieraSupport
       merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
       lookup_invocation.with(:merge, merge_strategy) do
         merged_result = merge_strategy.merge_lookup(data_providers(data_key(key), lookup_invocation)) do |data_provider|
-          data_provider.unchecked_lookup(key, lookup_invocation, merge)
+          data_provider.unchecked_lookup(key, lookup_invocation, merge_strategy)
         end
         lookup_invocation.report_result(merged_result)
       end

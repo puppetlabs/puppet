@@ -9,26 +9,43 @@ describe "Data binding" do
   let(:dir) { tmpdir("puppetdir") }
   let(:data) {{
     'global' => {
-      "testing::binding::value" => "the value",
-      "testing::binding::calling_class" => "%{calling_class}",
-      "testing::binding::calling_class_path" => "%{calling_class_path}"
+      'testing::binding::value' => 'the value',
+      'testing::binding::calling_class' => '%{calling_class}',
+      'testing::binding::calling_class_path' => '%{calling_class_path}'
     }
   }}
   let(:hash_data) {{
     'global' => {
-      "testing::hash::options" => {
-	'key'  => 'value',
-	'port' => '80',
-	'bind' => 'localhost'
+      'testing::hash::options' => {
+        'key'  => 'value',
+        'port' => '80',
+        'bind' => 'localhost'
       }
     },
     'agent.example.com' => {
-      'lookupoptions::testing::hash::options' => {
-	'merge' => 'deep'
+      'testing::hash::options' => {
+        'key'  => 'new value',
+        'port' => '443'
+      }
+    }
+  }}
+  let(:hash_data_with_lopts) {{
+    'global' => {
+      'testing::hash::options' => {
+        'key'  => 'value',
+        'port' => '80',
+        'bind' => 'localhost'
+      }
+    },
+    'agent.example.com' => {
+      'lookup_options' => {
+        'testing::hash::options' => {
+          'merge' => 'deep'
+        }
       },
       'testing::hash::options' => {
-	'key'  => 'new value',
-	'port' => '443'
+        'key'  => 'new value',
+        'port' => '443'
       }
     }
   }}
@@ -102,8 +119,8 @@ describe "Data binding" do
     end
   end
 
-  context "with custom clientcert and without hiera_advanced_parameter_bindingss" do
-    it "overrides global data with agent.example.com data from hiera" do
+  context "with custom clientcert" do
+    it "merges global data with agent.example.com data from hiera" do
       configure_hiera_for_two_tier(hash_data)
 
       create_manifest_in_module("testing", "hash.pp",
@@ -115,16 +132,15 @@ describe "Data binding" do
       resource = catalog.resource('Class[testing::hash]')
 
       expect(resource[:options]).to eq({
-	'key'  => 'new value',
-	'port' => '443',
+            'key'  => 'new value',
+            'port' => '443',
       })
     end
   end
 
-  context "with custom clientcert and with hiera_advanced_parameter_bindings" do
+  context "with custom clientcert and with lookup_options" do
     it "merges global data with agent.example.com data from hiera" do
-      Puppet[:hiera_advanced_parameter_bindings] = true
-      configure_hiera_for_two_tier(hash_data)
+      configure_hiera_for_two_tier(hash_data_with_lopts)
 
       create_manifest_in_module("testing", "hash.pp",
                                 <<-MANIFEST)
@@ -137,7 +153,7 @@ describe "Data binding" do
       expect(resource[:options]).to eq({
         'key'  => 'new value',
         'port' => '443',
-	'bind' => 'localhost',
+	      'bind' => 'localhost',
       })
     end
   end

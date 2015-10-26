@@ -11,7 +11,7 @@ module Puppet::Pops::Lookup
   # @param type [Puppet::Pops::Types::PAnyType|nil] The expected type of the found value
   # @param default_value [Object] The value to use as default when no value is found
   # @param has_default [Boolean] Set to _true_ if _default_value_ is included (_nil_ is a valid _default_value_)
-  # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+  # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] Invocation data containing scope, overrides, and defaults
   # @return [Object] The found value
   #
@@ -58,7 +58,7 @@ module Puppet::Pops::Lookup
 
   # @api private
   def self.search_and_merge(name, lookup_invocation, merge)
-    return Puppet::DataProviders.adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
+    return Puppet::DataProviders.lookup_adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
   end
 
   def self.assert_type(subject, type, value)

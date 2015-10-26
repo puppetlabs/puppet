@@ -20,22 +20,16 @@ module Puppet::Pops
     end
     private_class_method :strategies
 
-    # Validates that the given argument is a valid merge strategy definition
-    # @param merge  [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key
-    #   identifier or a hash with options where the key 'strategy' denotes the key
-    def self.validate(merge)
-      TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
-    end
-
     # Finds the merge strategy for the given _merge_, creates an instance of it and returns that instance.
     #
-    # @param merge [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key
+    # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] The merge strategy. Can be a string or symbol denoting the key
     #   identifier or a hash with options where the key 'strategy' denotes the key
     # @return [MergeStrategy] The matching merge strategy
     #
     def self.strategy(merge)
+      return merge if merge.is_a?(MergeStrategy)
       merge = :first if merge.nil?
-      validate(merge)
+      TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
@@ -141,6 +135,14 @@ module Puppet::Pops
 
     def options
       @options
+    end
+
+    def configuration
+      if @options.nil? || @options.empty?
+        self.class.key.to_s
+      else
+        @options.include?('strategy') ? @options : { 'strategy' => self.class.key.to_s }.merge(@options)
+      end
     end
 
     protected

@@ -35,8 +35,11 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def convert_merge(merge)
     case merge
     when nil
+    when 'first'
       # Nil is OK. Defaults to Hiera :priority
       nil
+    when Puppet::Pops::MergeStrategy
+      convert_merge(merge.configuration)
     when 'unique'
       # Equivalent to Hiera :array
       :array
