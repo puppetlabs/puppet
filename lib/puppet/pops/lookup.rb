@@ -25,7 +25,7 @@ module Puppet::Pops::Lookup
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil, not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type('override', value_type, override_values[key]) : not_found
-      value = search_and_merge(key, lookup_invocation, merge) if value.equal?(not_found)
+      catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge) } if value.equal?(not_found)
       break [key, assert_type('found', value_type, value)] unless value.equal?(not_found)
       memo
     end
@@ -56,31 +56,10 @@ module Puppet::Pops::Lookup
     answer
   end
 
+  # @api private
   def self.search_and_merge(name, lookup_invocation, merge)
-    @variants ||= [
-      method(:lookup_with_databinding),
-      Puppet::DataProviders.method(:lookup_in_environment),
-      Puppet::DataProviders.method(:lookup_in_module)
-    ]
-
-    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
-    lookup_invocation.with(:merge, merge_strategy) do
-      merged_result = merge_strategy.merge_lookup(@variants) do |f|
-        f.call(name, lookup_invocation, merge)
-      end
-      lookup_invocation.report_result(merged_result) unless merged_result.equal?(Puppet::Pops::MergeStrategy::NOT_FOUND)
-      merged_result
-    end
+    return Puppet::DataProviders.adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
   end
-  private_class_method :search_and_merge
-
-  def self.lookup_with_databinding(key, lookup_invocation, merge)
-    scope = lookup_invocation.scope
-    Puppet::DataBinding.indirection.find(key, { :environment => scope.environment.to_s, :variables => scope, :merge => merge })
-  rescue Puppet::DataBinding::LookupError => e
-    raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
-  end
-  private_class_method :lookup_with_databinding
 
   def self.assert_type(subject, type, value)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(subject, type, value)

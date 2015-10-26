@@ -203,15 +203,14 @@ module Puppet::Plugins::DataProviders
                   lookup_invocation.report_found(key, post_process(value, lookup_invocation))
                 else
                   lookup_invocation.report_not_found(key)
-                  Puppet::Pops::MergeStrategy::NOT_FOUND
+                  throw :no_such_key
                 end
               else
                 lookup_invocation.report_path_not_found
-                Puppet::Pops::MergeStrategy::NOT_FOUND
+                throw :no_such_key
               end
             end
           end
-          throw :no_such_key if merged_result.equal?(Puppet::Pops::MergeStrategy::NOT_FOUND)
           lookup_invocation.report_result(merged_result)
         end
       end

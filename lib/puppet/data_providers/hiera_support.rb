@@ -24,7 +24,6 @@ module Puppet::DataProviders::HieraSupport
         merged_result = merge_strategy.merge_lookup(data_providers(data_key(key), lookup_invocation)) do |data_provider|
           data_provider.unchecked_lookup(key, lookup_invocation, merge)
         end
-        throw :no_such_key if merged_result.equal?(Puppet::Pops::MergeStrategy::NOT_FOUND)
         lookup_invocation.report_result(merged_result)
       end
     end

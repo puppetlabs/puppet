@@ -20,6 +20,13 @@ module Puppet::Pops
     end
     private_class_method :strategies
 
+    # Validates that the given argument is a valid merge strategy definition
+    # @param merge  [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key
+    #   identifier or a hash with options where the key 'strategy' denotes the key
+    def self.validate(merge)
+      TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
+    end
+
     # Finds the merge strategy for the given _merge_, creates an instance of it and returns that instance.
     #
     # @param merge [String|Symbol|Hash<String,Object>] The merge strategy. Can be a string or symbol denoting the key
@@ -28,7 +35,7 @@ module Puppet::Pops
     #
     def self.strategy(merge)
       merge = :first if merge.nil?
-      TypeAsserter.assert_instance_of("MergeStrategies.merge 'merge' parameter", merge_t, merge)
+      validate(merge)
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
@@ -101,25 +108,28 @@ module Puppet::Pops
     # Merges the result of yielding the given _lookup_variants_ to a given block.
     #
     # @param lookup_variants [Array] The variants to pass as second argument to the given block
-    # @return [Object] the merged value. Will be the constant #NOT_FOUND unless the lookup was successful
+    # @return [Object] the merged value.
     # @yield [} ]
     # @yieldparam variant [Object] each variant given in the _lookup_variants_ array.
     # @yieldreturn [Object] the value to merge with other values
+    # @throws :no_such_key if the lookup was unsuccessful
     #
     def merge_lookup(lookup_variants)
-      lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
+      result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
         not_found = true
         value = catch(:no_such_key) do
           v = yield(lookup_variant)
           not_found = false
           v
         end
-        if not_found || value.equal?(NOT_FOUND)
+        if not_found
           memo
         else
           memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
         end
       end
+      throw :no_such_key if result == NOT_FOUND
+      result
     end
 
     # Converts a single value to the type expeced when peforming a merge of two elements
@@ -170,16 +180,14 @@ module Puppet::Pops
     # Returns the first value found
     #
     # @param lookup_variants [Array] The variants to pass as second argument to the given block
-    # @return [Object] the merged value. Will be the constant #NOT_FOUND unless the lookup was successful
+    # @return [Object] the merged value
+    # @throws :no_such_key unless the lookup was successful
     #
     def merge_lookup(lookup_variants)
       lookup_variants.each do |lookup_variant|
-        catch(:no_such_key) do
-          value = yield(lookup_variant)
-          return value unless value.equal?(NOT_FOUND)
-        end
+        catch(:no_such_key) { return yield(lookup_variant) }
       end
-      NOT_FOUND
+      throw :no_such_key
     end
 
     protected

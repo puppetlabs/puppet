@@ -562,58 +562,10 @@ class Puppet::Resource::Type
   # We make a request to the backend for the key 'foo::port' not 'foo'
   #
   def lookup_external_default_for(param, scope)
-    return unless type == :hostclass
-    qname = "#{name}::#{param}"
-    in_global = lambda { lookup_with_databinding(qname, scope) }
-    in_env = lambda { lookup_in_environment(qname, scope) }
-    in_module = lambda { lookup_in_module(qname, scope) }
-    lookup_search(in_global, in_env, in_module)
-  end
-  private :lookup_external_default_for
-
-  def lookup_search(*search_functions)
-    search_functions.each {|f| x = f.call(); return x unless x.nil? }
+    if type == :hostclass
+      catch(:no_such_key) { return Puppet::Pops::Lookup.search_and_merge("#{name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil) }
+    end
     nil
   end
-  private :lookup_search
-
-  def lookup_with_databinding(name, scope)
-    begin
-      found = false
-      value = catch(:no_such_key) do
-        v = Puppet::DataBinding.indirection.find(
-          name,
-          :environment => scope.environment.to_s,
-          :variables => scope)
-        found = true
-        v
-      end
-      found ? value : nil
-    rescue Puppet::DataBinding::LookupError => e
-      raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
-    end
-  end
-  private :lookup_with_databinding
-
-  def lookup_in_environment(name, scope)
-    found = false
-    value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
-      found = true
-      v
-    end
-    found ? value : nil
-  end
-  private :lookup_in_environment
-
-  def lookup_in_module(name, scope)
-    found = false
-    value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_module(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
-      found = true
-      v
-    end
-    found ? value : nil
-  end
-  private :lookup_in_module
+  private :lookup_external_default_for
 end
