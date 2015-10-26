@@ -562,19 +562,16 @@ class Puppet::Resource::Type
   # We make a request to the backend for the key 'foo::port' not 'foo'
   #
   def lookup_external_default_for(param, scope)
-    qname = "#{name}::#{param}"
-    
-    if Puppet[:hiera_advanced_parameter_bindings]
-      opt_name = "lookupoptions::#{qname}"
-      in_global = lambda { lookup_with_databinding(opt_name, scope) }
-      in_env = lambda { lookup_in_environment(opt_name, scope) }
-      in_module = lambda { lookup_in_module(opt_name, scope) }
-      merge_strategy = lookup_search(in_global, in_env, in_module)
-      merge_strategy = merge_strategy['merge'] if merge_strategy
-      Puppet.debug "The merge strategy for #{qname} is '#{merge_strategy}'" if merge_strategy
-    end
- 
     if type == :hostclass
+      qname = "#{name}::#{param}"
+
+      merge_strategy = nil
+      if Puppet[:hiera_advanced_parameter_bindings]
+        opt_name = "lookupoptions::#{qname}"
+        catch(:no_such_key) { merge_strategy = Puppet::Pops::Lookup.search_and_merge(opt_name, Puppet::Pops::Lookup::Invocation.new(scope), 'hash') }
+        merge_strategy = merge_strategy['merge'] if merge_strategy
+        Puppet.debug "The merge strategy for #{qname} is '#{merge_strategy}'" if merge_strategy
+      end
       catch(:no_such_key) { return Puppet::Pops::Lookup.search_and_merge(qname, Puppet::Pops::Lookup::Invocation.new(scope), merge_strategy) }
     end
     nil
