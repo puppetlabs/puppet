@@ -563,10 +563,22 @@ class Puppet::Resource::Type
   #
   def lookup_external_default_for(param, scope)
     return unless type == :hostclass
+
     qname = "#{name}::#{param}"
-    in_global = lambda { lookup_with_databinding(qname, scope) }
-    in_env = lambda { lookup_in_environment(qname, scope) }
-    in_module = lambda { lookup_in_module(qname, scope) }
+
+    if Puppet[:hiera_advanced_parameter_bindings]
+      opt_name = "lookupoptions::#{qname}"
+      in_global = lambda { lookup_with_databinding(opt_name, scope) }
+      in_env = lambda { lookup_in_environment(opt_name, scope) }
+      in_module = lambda { lookup_in_module(opt_name, scope) }
+      merge_strategy = lookup_search(in_global, in_env, in_module)
+      merge_strategy = merge_strategy['merge'] if merge_strategy
+      Puppet.debug "The merge strategy for #{qname} is '#{merge_strategy}'" if merge_strategy
+    end
+
+    in_global = lambda { lookup_with_databinding(qname, scope, merge_strategy) }
+    in_env = lambda { lookup_in_environment(qname, scope, merge_strategy) }
+    in_module = lambda { lookup_in_module(qname, scope, merge_strategy) }
     lookup_search(in_global, in_env, in_module)
   end
   private :lookup_external_default_for
@@ -577,14 +589,23 @@ class Puppet::Resource::Type
   end
   private :lookup_search
 
-  def lookup_with_databinding(name, scope)
+  def lookup_with_databinding(name, scope, merge = nil)
     begin
       found = false
       value = catch(:no_such_key) do
-        v = Puppet::DataBinding.indirection.find(
-          name,
-          :environment => scope.environment.to_s,
-          :variables => scope)
+        if merge
+          arguments = {
+            :environment => scope.environment.to_s,
+            :variables => scope,
+            :merge => merge
+          }
+        else
+          arguments = {
+            :environment => scope.environment.to_s,
+            :variables => scope
+          }
+        end
+        v = Puppet::DataBinding.indirection.find(name, arguments)
         found = true
         v
       end
@@ -595,10 +616,10 @@ class Puppet::Resource::Type
   end
   private :lookup_with_databinding
 
-  def lookup_in_environment(name, scope)
+  def lookup_in_environment(name, scope, merge = nil)
     found = false
     value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
+      v = Puppet::DataProviders.lookup_in_environment(name, Puppet::Pops::Lookup::Invocation.new(scope), merge)
       found = true
       v
     end
@@ -606,10 +627,10 @@ class Puppet::Resource::Type
   end
   private :lookup_in_environment
 
-  def lookup_in_module(name, scope)
+  def lookup_in_module(name, scope, merge = nil)
     found = false
     value = catch(:no_such_key) do
-      v = Puppet::DataProviders.lookup_in_module(name, Puppet::Pops::Lookup::Invocation.new(scope), nil)
+      v = Puppet::DataProviders.lookup_in_module(name, Puppet::Pops::Lookup::Invocation.new(scope), merge)
       found = true
       v
     end
