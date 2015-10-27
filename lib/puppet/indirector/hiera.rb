@@ -18,7 +18,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def find(request)
     not_found = Object.new
     options = request.options
-    Puppet.debug "Performing a hiera indirector lookup of #{request.key} with options #{options.inspect}"
+    Puppet.debug { "Performing a hiera indirector lookup of #{request.key} with options #{options.inspect}" }
     value = hiera.lookup(request.key, not_found, Hiera::Scope.new(options[:variables]), nil, convert_merge(options[:merge]))
     throw :no_such_key if value.equal?(not_found)
     value

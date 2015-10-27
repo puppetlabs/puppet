@@ -172,14 +172,8 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     # Support running tests without an injector being configured == using a null implementation
     return EnvironmentDataProvider.new() unless injector
 
-    # Get the environment's configuration since we need to know which data provider
-    # should be used (includes 'none' which gets a null implementation).
-    #
-    env_conf = @env.configuration
-
-    # Get the data provider and find the bound implementation
-    # TODO: PUP-1640, drop the nil check when legacy env support is dropped
-    provider_name = env_conf.nil? ? 'none' : env_conf.environment_data_provider
+    # Get the name of the data provider from the environment's configuration and find the bound implementation
+    provider_name = @env.configuration.environment_data_provider
     service_type = Registry.hash_of_environment_data_providers
     service_name = ENV_DATA_PROVIDERS_KEY
 

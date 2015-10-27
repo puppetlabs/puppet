@@ -50,9 +50,11 @@ describe "Data binding" do
     }
   }}
 
-
   before do
-    Puppet[:data_binding_terminus] = "hiera"
+    # Drop all occurances of cached hiera instances. This will reset @hiera in Puppet::Indirector::Hiera, Testing::DataBinding::Hiera,
+    # and Puppet::DataBinding::Hiera. Different classes are active as indirection depending on configuration
+    ObjectSpace.each_object(Class).select {|klass| klass <= Puppet::Indirector::Hiera }.each { |klass| klass.instance_variable_set(:@hiera, nil) }
+    Puppet[:data_binding_terminus] = 'hiera'
     Puppet[:modulepath] = dir
   end
 
