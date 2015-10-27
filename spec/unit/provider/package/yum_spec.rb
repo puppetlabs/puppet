@@ -494,6 +494,17 @@ describe provider_class do
         expect(output).not_to include("1:1.0.0-14.git20150121.b4ea599c.el7")
       end
     end
+    describe "with security notifications" do
+      let(:check_update) { File.read(my_fixture('yum-check-update-security.txt')) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it "ignores all entries including and after 'Security'" do
+        expect(output).not_to include("Security")
+      end
+      it "includes updates before 'Security'" do
+        expect(output).to include("yum-plugin-fastestmirror.noarch")
+      end
+    end
   end
 
   describe "parsing a line from yum check-update" do
