@@ -13,9 +13,6 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-PATH=/opt/puppetlabs/puppet/bin:/usr/bin:/sbin:/bin:/usr/sbin
-export PATH
-
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=/var/lock/subsys/puppet
 piddir=/var/run/puppetlabs
