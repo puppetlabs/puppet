@@ -12,7 +12,8 @@ test_name 'Arista Switch Pre-suite' do
 
   step 'add puppet user to switch' do
     switchs.each do |switch|
-      on(switch, "useradd -M -N -r -s /sbin/nologin -c \"Privileged Puppet account\" -g 0 puppet")
+      on(switch, "/opt/puppetlabs/bin/puppet config --confdir /etc/puppetlabs/puppet set user root")
+      on(switch, "/opt/puppetlabs/bin/puppet config --confdir /etc/puppetlabs/puppet set group root")
     end
   end
 end
