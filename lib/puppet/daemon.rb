@@ -110,7 +110,7 @@ class Puppet::Daemon
   def set_signal_traps
     [:INT, :TERM].each do |signal|
       Signal.trap(signal) do
-        Puppet.notice "Exiting..."
+        Puppet.notice "Caught #{signal}; exiting"
         stop
       end
     end
