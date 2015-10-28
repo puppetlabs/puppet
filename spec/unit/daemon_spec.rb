@@ -45,15 +45,24 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   end
 
   describe "when setting signal traps" do
-    signals = {:INT => :stop, :TERM => :stop }
-    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}) unless Puppet.features.microsoft_windows?
-    signals.each do |signal, method|
-      it "should log and call #{method} when it receives #{signal}" do
-        Signal.expects(:trap).with(signal).yields
-
-        Puppet.expects(:notice)
+    [:INT, :TERM].each do |signal|
+      it "logs a notice and exits when sent #{signal}" do
+        Signal.stubs(:trap).with(signal).yields
+        Puppet.expects(:notice).with('Exiting...')
+        daemon.expects(:stop)
 
         daemon.set_signal_traps
+      end
+    end
+
+    {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
+      it "logs a notice and remembers to call #{method} when it receives #{signal}" do
+        Signal.stubs(:trap).with(signal).yields
+        Puppet.expects(:notice).with("Caught #{signal}; storing #{method}")
+
+        daemon.set_signal_traps
+
+        expect(daemon.signals).to eq([method])
       end
     end
   end

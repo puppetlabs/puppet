@@ -24,6 +24,7 @@ class Puppet::Daemon
   SIGNAL_CHECK_INTERVAL = 5
 
   attr_accessor :agent, :server, :argv
+  attr_reader :signals
 
   def initialize(pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
     @scheduler = scheduler
@@ -104,13 +105,21 @@ class Puppet::Daemon
   # Trap a couple of the main signals.  This should probably be handled
   # in a way that anyone else can register callbacks for traps, but, eh.
   def set_signal_traps
-    signals = {:INT => :stop, :TERM => :stop }
-    # extended signals not supported under windows
-    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
-    signals.each do |signal, method|
+    [:INT, :TERM].each do |signal|
       Signal.trap(signal) do
-        Puppet.notice "Caught #{signal}; storing #{method}"
-        @signals << method
+        Puppet.notice "Exiting..."
+        stop
+      end
+    end
+
+    # extended signals not supported under windows
+    if !Puppet.features.microsoft_windows?
+      signals = {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
+      signals.each do |signal, method|
+        Signal.trap(signal) do
+          Puppet.notice "Caught #{signal}; storing #{method}"
+          @signals << method
+        end
       end
     end
   end
