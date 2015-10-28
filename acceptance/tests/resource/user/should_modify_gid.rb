@@ -1,6 +1,7 @@
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
 confine :except, :platform => /aix/ # PUP-5358
+confine :except, :platform => /eos/ # See QA-2096
 
 user = "u#{rand(99999).to_i}"
 group1 = "#{user}o"

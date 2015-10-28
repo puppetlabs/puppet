@@ -1,4 +1,5 @@
 test_name "ensure that puppet does not report removing a user that does not exist"
+confine :except, :platform => /eos/ # See ARISTA-37
 
 name = "pl#{rand(999999).to_i}"
 
