@@ -1,3 +1,5 @@
+require 'timeout'
+
 # AIX System Resource controller (SRC)
 Puppet::Type.type(:service).provide :src, :parent => :base do
 
@@ -61,6 +63,31 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
 
   def disable
     rmitab(@resource[:name])
+  end
+
+  # Wait for the service to transition into the specified state before returning.
+  # This is necessary due to the asynchronous nature of AIX services.
+  # desired_state should either be :running or :stopped.
+  def wait(desired_state)
+    Timeout.timeout(60) do
+      loop do
+        status = self.status
+        break if status == desired_state.to_sym
+        sleep(1)
+      end
+    end
+  rescue Timeout::Error
+    raise Puppet::Error.new("Timed out waiting for #{@resource[:name]} to transition states")
+  end
+
+  def start
+    super
+    self.wait(:running)
+  end
+
+  def stop
+    super
+    self.wait(:stopped)
   end
 
   def restart
