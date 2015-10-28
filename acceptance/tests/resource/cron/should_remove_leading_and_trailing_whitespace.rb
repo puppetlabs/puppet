@@ -1,5 +1,6 @@
 test_name "(#656) leading and trailing whitespace in cron entries should should be stripped"
-confine :except, :platform => 'windows'
+confine :except, :platform => ['windows']
+confine :except, :platform => /eos/ # See QA-2096
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
