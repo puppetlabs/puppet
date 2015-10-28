@@ -50,7 +50,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     [:INT, :TERM].each do |signal|
       it "logs a notice and exits when sent #{signal}" do
         Signal.stubs(:trap).with(signal).yields
-        Puppet.expects(:notice).with('Exiting...')
+        Puppet.expects(:notice).with("Caught #{signal}; exiting")
         daemon.expects(:stop)
 
         daemon.set_signal_traps
