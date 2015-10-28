@@ -1,4 +1,5 @@
 test_name "file resource: symbolic modes"
+confine :except, :platform => /eos/ # See ARISTA-37
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils

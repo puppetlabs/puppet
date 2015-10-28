@@ -1,5 +1,6 @@
 test_name "Cron: should allow changing parameters after creation"
-confine :except, :platform => 'windows'
+confine :except, :platform => ['windows']
+confine :except, :platform => /eos/ # See QA-2096
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
 

@@ -3,6 +3,7 @@ test_name "should modify an entry in filesystem table"
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823
 confine :except, :platform => /solaris/ # See PUP-5201
+confine :except, :platform => /eos/ # See QA-2096
 
 require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils
