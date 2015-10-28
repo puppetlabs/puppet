@@ -20,7 +20,7 @@ class Puppet::Provider::Package::Windows
         inst = installer
 
         if inst.ProductState(name) == INSTALLSTATE_DEFAULT
-          MsiPackage.new(values['DisplayName'],
+          MsiPackage.new(get_display_name(values),
                          values['DisplayVersion'],
                          name, # productcode
                          inst.ProductInfo(name, 'PackageCode'))
@@ -31,8 +31,9 @@ class Puppet::Provider::Package::Windows
     # Is this a valid MSI package we should manage?
     def self.valid?(name, values)
       # See http://community.spiceworks.com/how_to/show/2238
-      !!(values['DisplayName'] and values['DisplayName'].length > 0 and
-         values['WindowsInstaller'] == 1 and # DWORD
+      displayName = get_display_name(values)
+      !!(displayName && displayName.length > 0 &&
+         values['WindowsInstaller'] == 1 && # DWORD
          name =~ /\A\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}\Z/i)
     end
 
