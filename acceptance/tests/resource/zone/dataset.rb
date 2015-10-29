@@ -17,8 +17,8 @@ def moresetup(agent)
 end
 
 def moreclean(agent)
-  on agent, "zfs destroy -r tstpool"
-  on agent, "zpool destroy tstpool"
+  on agent, "zfs destroy -r tstpool", :acceptable_exit_codes => [0,1]
+  on agent, "zpool destroy tstpool", :acceptable_exit_codes => [0,1]
   on agent, "rm -f /tstzones/dsk"
 end
 
