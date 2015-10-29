@@ -3,6 +3,7 @@
   :is_puppetserver => true,
   :puppetservice => 'puppetserver',
   :'puppetserver-confdir' => '/etc/puppetlabs/puppetserver/conf.d',
+  :restart_when_done => false,
   :pre_suite => [
     'setup/common/pre-suite/000-delete-puppet-when-none.rb',
     'setup/aio/pre-suite/010_Install.rb',
