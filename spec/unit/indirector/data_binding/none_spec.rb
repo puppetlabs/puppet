@@ -20,9 +20,9 @@ describe Puppet::DataBinding::None do
   end
 
   describe "the behavior of the find method" do
-    it "should just return nil" do
+    it "should just throw :no_such_key" do
       data_binding = Puppet::DataBinding::None.new
-      expect(data_binding.find('fake_request')).to be_nil
+      expect { data_binding.find('fake_request') }.to throw_symbol(:no_such_key)
     end
   end
 end

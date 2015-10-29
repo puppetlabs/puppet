@@ -7,5 +7,12 @@ one::array:
   - second
   - third
 
+one::lopts_test::hash:
+  a: A
+  c: C
+  m:
+    ma: MA
+    mc: MC
+
 # should not be found since it's not qualified with module name
 ukey2: Some value
