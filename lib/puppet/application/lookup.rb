@@ -322,7 +322,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if options[:node]
       node = options[:node]
     else
-      node = 'default'
+      node = Puppet[:node_name_value]
 
       # If we want to lookup the node we are currently on
       # we must returning these settings to their default values
@@ -332,7 +332,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
 
-   fact_file = options[:fact_file]
+    fact_file = options[:fact_file]
 
     if fact_file
       original_facts = node.facts.values
