@@ -116,6 +116,7 @@ describe Puppet::Parser::Compiler do
     it "should set its node attribute" do
       expect(@compiler.node).to equal(@node)
     end
+
     it "should detect when ast nodes are absent" do
       expect(@compiler.ast_nodes?).to be_falsey
     end
@@ -155,6 +156,77 @@ describe Puppet::Parser::Compiler do
 
     it "should add a 'main' stage to the catalog" do
       expect(@compiler.catalog.resource(:stage, :main)).to be_instance_of(Puppet::Parser::Resource)
+    end
+  end
+
+  describe "sanitize_node" do
+    it "should delete trusted from parameters" do
+      node = Puppet::Node.new("mynode")
+      node.parameters['trusted'] =  { :a => 42 }
+      node.parameters['preserve_me'] = 'other stuff'
+      compiler = Puppet::Parser::Compiler.new(node)
+      sanitized = compiler.node
+      expect(sanitized.parameters['trusted']).to eq(nil)
+      expect(sanitized.parameters['preserve_me']).to eq('other stuff')
+    end
+
+    it "should not report trusted_data if trusted is false" do
+      node = Puppet::Node.new("mynode")
+      node.parameters['trusted'] = false
+      compiler = Puppet::Parser::Compiler.new(node)
+      sanitized = compiler.node
+      expect(sanitized.trusted_data).to_not eq(false)
+    end
+
+    it "should not report trusted_data if trusted is not a hash" do
+      node = Puppet::Node.new("mynode")
+      node.parameters['trusted'] = 'not a hash'
+      compiler = Puppet::Parser::Compiler.new(node)
+      sanitized = compiler.node
+      expect(sanitized.trusted_data).to_not eq('not a hash')
+    end
+
+    it "should not report trusted_data if trusted hash doesn't include known keys" do
+      node = Puppet::Node.new("mynode")
+      node.parameters['trusted'] = { :a => 42 }
+      compiler = Puppet::Parser::Compiler.new(node)
+      sanitized = compiler.node
+      expect(sanitized.trusted_data).to_not eq({ :a => 42 })
+    end
+
+    it "should report 'trusted' parameters as trusted_data but as inauthentic if running as non-root" do
+      node = Puppet::Node.new("mynode")
+      node.parameters['trusted'] = { 'authenticated' => true,
+                                     'certname'      => 'foo',
+                                     'extensions'    => 'things' }
+
+      Puppet.features.stubs(:root?).returns(false)
+
+      Puppet.ignore(:trusted_information)
+      compiler = Puppet::Parser::Compiler.new(node)
+      Puppet.restore(:trusted_information)
+
+      sanitized = compiler.node
+      expect(sanitized.trusted_data).to eq({ 'authenticated' => false,
+                                             'certname'      => 'foo',
+                                             'extensions'    => 'things' })
+    end
+
+    it "should prefer trusted_data in the node above other plausible sources" do
+      node = Puppet::Node.new("mynode")
+      node.trusted_data = { 'authenticated' => true,
+                           'certname'      => 'the real deal',
+                           'extensions'    => 'things' }
+
+      node.parameters['trusted'] = { 'authenticated' => true,
+                                     'certname'      => 'not me',
+                                     'extensions'    => 'things' }
+
+      compiler = Puppet::Parser::Compiler.new(node)
+      sanitized = compiler.node
+      expect(sanitized.trusted_data).to eq({ 'authenticated' => true,
+                                             'certname'      => 'the real deal',
+                                             'extensions'    => 'things' })
     end
   end
 

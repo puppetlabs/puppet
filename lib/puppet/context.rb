@@ -20,6 +20,7 @@ class Puppet::Context
   # @api private
   def initialize(initial_bindings)
     @table = initial_bindings
+    @ignores = []
     @description = "root"
     @id = 0
     @rollbacks = {}
@@ -45,7 +46,7 @@ class Puppet::Context
 
   # @api private
   def lookup(name, &block)
-    if @table.include?(name)
+    if @table.include?(name) && !@ignores.include?(name)
       value = @table[name]
       value.is_a?(Proc) ? (@table[name] = value.call) : value
     elsif block
@@ -64,6 +65,20 @@ class Puppet::Context
     yield
   ensure
     rollback(mark_point)
+  end
+
+  # @api private
+  def ignore(name)
+    @ignores << name
+  end
+
+  # @api private
+  def restore(name)
+    if @ignores.include?(name)
+      @ignores.delete(name)
+    else
+      raise UndefinedBindingError, "no '#{name}' in ignores #{@ignores.inspect} at top of #{@stack.inspect}"
+    end
   end
 
   # Mark a place on the context stack to later return to with {rollback}.
