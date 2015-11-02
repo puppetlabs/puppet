@@ -20,7 +20,7 @@ class Puppet::Context::TrustedInformation
   # The domain name derived from the validated certificate name
   #
   # @return [String]
-  attr_reader :domainname
+  attr_reader :domain
 
   # The hostname derived from the validated certificate name
   #
@@ -32,13 +32,13 @@ class Puppet::Context::TrustedInformation
     @certname = certname.freeze
     @extensions = extensions.freeze
     if @certname
-      hostname, domainname = @certname.split('.', 2)
+      hostname, domain = @certname.split('.', 2)
     else
       hostname = nil
-      domainname = nil
+      domain = nil
     end
     @hostname = hostname.freeze
-    @domainname = domainname.freeze
+    @domain = domain.freeze
   end
 
   def self.remote(authenticated, node_name, certificate)
@@ -70,7 +70,7 @@ class Puppet::Context::TrustedInformation
       'certname'.freeze => certname,
       'extensions'.freeze => extensions,
       'hostname'.freeze => hostname,
-      'domainname'.freeze => domainname,
+      'domain'.freeze => domain,
     }.freeze
   end
 end
