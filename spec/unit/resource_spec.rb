@@ -331,13 +331,15 @@ describe Puppet::Resource do
         end
 
         it "should query the data_binding terminus using a namespaced key" do
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
           Puppet::DataBinding.indirection.expects(:find).with(
             'apache::port', all_of(has_key(:environment), has_key(:variables)))
           resource.set_default_parameters(scope)
         end
 
         it "should use the value from the data_binding terminus" do
-          Puppet::DataBinding.indirection.expects(:find).returns('443')
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
 
           resource.set_default_parameters(scope)
 
@@ -345,7 +347,8 @@ describe Puppet::Resource do
         end
 
         it "should use the default value if the data_binding terminus returns nil" do
-          Puppet::DataBinding.indirection.expects(:find).returns(nil)
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns(nil)
 
           resource.set_default_parameters(scope)
 
@@ -353,7 +356,8 @@ describe Puppet::Resource do
         end
 
         it "should fail with error message about data binding on a hiera failure" do
-          Puppet::DataBinding.indirection.expects(:find).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
           expect {
             resource.set_default_parameters(scope)
           }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)

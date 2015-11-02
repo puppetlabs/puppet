@@ -223,6 +223,18 @@ module Puppet
     @context.override(bindings, description, &block)
   end
 
+  # @param name The name of a context key to ignore; intended for test usage.
+  # @api private
+  def self.ignore(name)
+    @context.ignore(name)
+  end
+
+  # @param name The name of a previously ignored context key to restore; intended for test usage.
+  # @api private
+  def self.restore(name)
+    @context.restore(name)
+  end
+
   # @api private
   def self.mark_context(name)
     @context.mark(name)

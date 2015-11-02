@@ -15,6 +15,7 @@ module PuppetX::Thallgren
     end
 
     def lookup(name, scope, merge)
+      throw :no_such_key unless @data.include?(name)
       @data[name]
     end
   end

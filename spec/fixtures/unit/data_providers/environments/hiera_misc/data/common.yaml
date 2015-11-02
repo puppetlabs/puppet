@@ -1,4 +1,8 @@
 ---
+lookup_options:
+  one::lopts_test::hash:
+    merge: deep
+
 one::test::param:
   key1: env 1
 
@@ -6,6 +10,13 @@ one::array:
   - second
   - third
   - fourth
+
+one::lopts_test::hash:
+  a: A
+  b: B
+  m:
+    ma: MA
+    mb: MB
 
 ukey1: Some value
 
