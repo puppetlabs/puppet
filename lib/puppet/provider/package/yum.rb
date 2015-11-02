@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     updates = Hash.new { |h, k| h[k] = [] }
     body.split.each_slice(3) do |tuple|
-      break if tuple[0] =~ /^Obsoleting/
+      break if tuple[0] =~ /^Obsoleting/ or tuple[0] =~ /^Security:/
       hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
