@@ -101,18 +101,17 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   # Retrieve lookup options that applies when using a specific module (i.e. a merge of the pre-cached
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
-    # We want a new invocation to avoid that this lookup clobbers the report (should be revisited if
-    # it's desirable to report lookup of lookup options)
-    invocation = Puppet::Pops::Lookup::Invocation.new(lookup_invocation.scope)
-    env_opts = env_lookup_options(invocation, merge_strategy)
-    options = nil
-    unless module_name.nil?
-      catch(:no_such_key) do
-        options = module_provider(module_name).lookup(LOOKUP_OPTIONS, invocation, merge_strategy)
-        options = merge.merge(env_opts, options) unless env_opts.nil?
+    lookup_invocation.with(:meta, module_name) do
+      env_opts = env_lookup_options(lookup_invocation, merge_strategy)
+      options = nil
+      unless module_name.nil?
+        catch(:no_such_key) do
+          options = module_provider(module_name).lookup(LOOKUP_OPTIONS, lookup_invocation, merge_strategy)
+          options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
+        end
       end
+      options.nil? ? env_opts : options
     end
-    options.nil? ? env_opts : options
   end
 
   # Retrieve and cache lookup options specific to the environment that this adapter is attached to (i.e. a merge

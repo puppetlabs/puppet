@@ -18,6 +18,13 @@ one::lopts_test::hash:
     ma: MA
     mb: MB
 
+one::loptsm_test::hash:
+  a: A
+  b: B
+  m:
+    ma: MA
+    mb: MB
+
 ukey1: Some value
 
 target_lookup: with lookup

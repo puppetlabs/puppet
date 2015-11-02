@@ -69,8 +69,14 @@ describe "when using a hiera data provider" do
     expect(resources[0][1..-2].split(', ')).to contain_exactly('first', 'second', 'third', 'fourth')
   end
 
-  it 'reads performs merge found in lookup_options of values declared in environment and module' do
+  it 'reads performs merge found in lookup_options in environment of values declared in environment and module' do
     resources = compile_and_get_notifications('hiera_misc', 'include one::lopts_test')
+    expect(resources.size).to eq(1)
+    expect(resources[0]).to eq('A, B, C, MA, MB, MC')
+  end
+
+  it 'reads performs merge found in lookup_options in module of values declared in environment and module' do
+    resources = compile_and_get_notifications('hiera_misc', 'include one::loptsm_test')
     expect(resources.size).to eq(1)
     expect(resources[0]).to eq('A, B, C, MA, MB, MC')
   end
