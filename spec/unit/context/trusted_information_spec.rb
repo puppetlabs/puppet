@@ -48,7 +48,7 @@ describe Puppet::Context::TrustedInformation do
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       })
       expect(trusted.hostname).to eq('cert name')
-      expect(trusted.domainname).to be_nil
+      expect(trusted.domain).to be_nil
     end
 
     it "is remote but lacks certificate information when it is authenticated" do
@@ -72,7 +72,7 @@ describe Puppet::Context::TrustedInformation do
       expect(trusted.certname).to eq('cert name')
       expect(trusted.extensions).to eq({})
       expect(trusted.hostname).to eq('cert name')
-      expect(trusted.domainname).to be_nil
+      expect(trusted.domain).to be_nil
     end
 
     it "is authenticated local with no clientcert when there is no node" do
@@ -82,7 +82,7 @@ describe Puppet::Context::TrustedInformation do
       expect(trusted.certname).to be_nil
       expect(trusted.extensions).to eq({})
       expect(trusted.hostname).to be_nil
-      expect(trusted.domainname).to be_nil
+      expect(trusted.domain).to be_nil
     end
   end
 
@@ -97,22 +97,22 @@ describe Puppet::Context::TrustedInformation do
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'cert name',
-      'domainname' => nil
+      'domain' => nil
     })
   end
 
-  it "extracts domainname and hostname from certname" do
-    trusted = Puppet::Context::TrustedInformation.remote(true, 'hostname.domainname.long', cert)
+  it "extracts domain and hostname from certname" do
+    trusted = Puppet::Context::TrustedInformation.remote(true, 'hostname.domain.long', cert)
 
     expect(trusted.to_h).to eq({
       'authenticated' => 'remote',
-      'certname' => 'hostname.domainname.long',
+      'certname' => 'hostname.domain.long',
       'extensions' => {
         '1.3.6.1.4.1.34380.1.2.1' => 'CSR specific info',
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'hostname',
-      'domainname' => 'domainname.long'
+      'domain' => 'domain.long'
     })
   end
 

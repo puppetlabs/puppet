@@ -1823,7 +1823,7 @@ describe Puppet::Settings do
   end
 
   describe "default_certname" do
-    describe "using hostname and domainname" do
+    describe "using hostname and domain" do
       before :each do
         Puppet::Settings.stubs(:hostname_fact).returns("testhostname")
         Puppet::Settings.stubs(:domain_fact).returns("domain.test.")
