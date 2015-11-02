@@ -95,6 +95,14 @@ describe 'collectors' do
       MANIFEST
     end
 
+    it "matches with resource references" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "foobar": }
+        @notify { "testing": require => Notify["foobar"], message => "wanted" }
+        Notify <| require == Notify["foobar"] |>
+      MANIFEST
+    end
+
     it "allows criteria to be combined with 'and'" do
       expect_the_message_to_be(["the message"], <<-MANIFEST)
         @notify { "testing": message => "the message" }
