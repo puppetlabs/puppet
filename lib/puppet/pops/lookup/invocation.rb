@@ -44,6 +44,7 @@ module Puppet::Pops::Lookup
     end
 
     # The qualifier_type can be one of:
+    # :global - qualifier is the data binding terminus name
     # :data_provider - qualifier a DataProvider instance
     # :path - qualifier is a ResolvedPath instance
     # :merge - qualifier is a MergeStrategy instance

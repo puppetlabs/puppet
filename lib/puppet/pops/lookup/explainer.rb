@@ -238,6 +238,30 @@ module Puppet::Pops::Lookup
     end
   end
 
+  class ExplainGlobal < ExplainTreeNode
+    def initialize(parent, binding_terminus)
+      super(parent)
+      @binding_terminus = binding_terminus
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << first_indent << 'Data Binding "' << @binding_terminus << "\"\n"
+      indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
+      dump_outcome(io, indent)
+    end
+
+    def to_hash
+      hash = super
+      hash[:name] = @binding_terminus
+      hash
+    end
+
+    def type
+      :global
+    end
+  end
+
   class ExplainDataProvider < ExplainTreeNode
     def initialize(parent, provider)
       super(parent)
@@ -314,6 +338,8 @@ module Puppet::Pops::Lookup
 
     def push(qualifier_type, qualifier)
       node = case (qualifier_type)
+        when :global
+         ExplainGlobal.new(@current, qualifier)
         when :path
           ExplainPath.new(@current, qualifier)
         when :module

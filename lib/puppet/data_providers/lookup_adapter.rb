@@ -40,9 +40,17 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
   # @api private
   def lookup_global(name, lookup_invocation, merge_strategy)
-    Puppet::DataBinding.indirection.find(name, { :environment => @env.to_s, :variables => lookup_invocation.scope, :merge => merge_strategy })
+    terminus = Puppet[:data_binding_terminus]
+    lookup_invocation.with(:global, terminus) do
+      catch(:no_such_key) do
+        return lookup_invocation.report_found(name, Puppet::DataBinding.indirection.find(name,
+            { :environment => @env.to_s, :variables => lookup_invocation.scope, :merge => merge_strategy }))
+      end
+      lookup_invocation.report_not_found(name)
+      throw :no_such_key
+    end
   rescue Puppet::DataBinding::LookupError => e
-    raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
+    raise Puppet::Error.new("Error from DataBinding '#{terminus}' while looking up '#{name}': #{e.message}", e)
   end
 
   # @api private

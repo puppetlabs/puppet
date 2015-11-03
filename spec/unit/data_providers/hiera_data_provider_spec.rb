@@ -161,15 +161,19 @@ describe "when using a hiera data provider" do
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         value = Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
-Data Provider "Hiera Data Provider, version 4"
-  ConfigurationPath "#{environmentpath}/hiera_misc/hiera.yaml"
-  Data Provider "common"
-    Path "#{environmentpath}/hiera_misc/data/common.yaml"
-      Original path: common
-      Interpolation on "Value from interpolation %{scope("target_scope")}"
-        Global Scope"
-          Found key: "target_scope" value: "with scope"
-      Found key: "km_scope" value: "Value from interpolation with scope"
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "km_scope"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/hiera_misc/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/hiera_misc/data/common.yaml"
+        Original path: common
+        Interpolation on "Value from interpolation %{scope("target_scope")}"
+          Global Scope"
+            Found key: "target_scope" value: "with scope"
+        Found key: "km_scope" value: "Value from interpolation with scope"
+  Merged result: "Value from interpolation with scope"
 EOS
       end
     end
