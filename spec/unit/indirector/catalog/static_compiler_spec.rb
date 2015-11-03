@@ -34,6 +34,10 @@ describe Puppet::Resource::Catalog::StaticCompiler do
   end
 
   describe "#find" do
+    before :each do
+      subject.stubs(:store_content)
+    end
+
     it "returns a catalog" do
       expect(subject.find(request)).to be_a_kind_of(Puppet::Resource::Catalog)
     end
@@ -45,7 +49,8 @@ describe Puppet::Resource::Catalog::StaticCompiler do
 
     describe "a catalog with file resources containing source parameters with puppet:// URIs" do
       it "filters file resource source URI's to checksums" do
-        stub_the_compiler
+        subject.stubs(:compile).returns(build_catalog)
+
         resource_catalog = subject.find(request)
         resource_catalog.resources.each do |resource|
           next unless resource.type == "File"
@@ -56,7 +61,8 @@ describe Puppet::Resource::Catalog::StaticCompiler do
 
       it "does not modify file resources with non-puppet:// URI's" do
         uri = "/this/is/not/a/puppet/uri.txt"
-        stub_the_compiler(:source => uri)
+        subject.stubs(:compile).returns(build_catalog(:source => uri))
+
         resource_catalog = subject.find(request)
         resource_catalog.resources.each do |resource|
           next unless resource.type == "File"
@@ -65,14 +71,15 @@ describe Puppet::Resource::Catalog::StaticCompiler do
         end
       end
 
-      it "copies the owner, group and mode from the fileserer" do
-        stub_the_compiler
+      it "copies the owner, group and mode from the fileserver" do
+        subject.stubs(:compile).returns(build_catalog)
+
         resource_catalog = subject.find(request)
         resource_catalog.resources.each do |resource|
           next unless resource.type == "File"
-          expect(resource[:owner]).to eq(0)
-          expect(resource[:group]).to eq(0)
-          expect(resource[:mode]).to  eq(420)
+          expect(resource[:owner]).to eq("0")
+          expect(resource[:group]).to eq("0")
+          expect(resource[:mode]).to  eq("644")
         end
       end
     end
@@ -119,19 +126,6 @@ describe Puppet::Resource::Catalog::StaticCompiler do
   end
 
   # Spec helper methods
-
-  def stub_the_compiler(options = {:stub_methods => [:store_content]})
-    # Build a resource catalog suitable for specifying the behavior of the
-    # static compiler.
-    compiler = mock('indirection terminus compiler')
-    compiler.stubs(:find).returns(build_catalog(options))
-    subject.stubs(:compiler).returns(compiler)
-    # Mock the store content method to prevent copying the contents to the
-    # file bucket.
-    (options[:stub_methods] || []).each do |mthd|
-      subject.stubs(mthd)
-    end
-  end
 
   def build_catalog(options = {})
     options = options.dup
