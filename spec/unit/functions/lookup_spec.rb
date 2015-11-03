@@ -397,6 +397,8 @@ describe "when performing lookup" do
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy first
+  Data Binding "hiera"
+    No such key: "ppx::e"
   Data Provider "FunctionEnvDataProvider"
     No such key: "ppx::e"
   Module "ppx"
@@ -414,6 +416,8 @@ EOS
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy first
+  Data Binding "hiera"
+    No such key: "abc::x"
   Data Provider "FunctionEnvDataProvider"
     No such key: "abc::x"
   Module "abc" using Data Provider "FunctionModuleDataProvider"
@@ -428,6 +432,8 @@ EOS
         Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy deep
+  Data Binding "hiera"
+    No such key: "abc::e"
   Data Provider "FunctionEnvDataProvider"
     Found key: "abc::e" value: {
       "k1" => "env_e1",
@@ -449,6 +455,7 @@ EOS
 
     it 'will explain deep merge results with options' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
+        Hiera.any_instance.expects(:lookup).with(any_parameters).returns({'k1' => 'global_g1'})
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
@@ -456,6 +463,10 @@ Merge strategy deep
   Options: {
     "merge_hash_arrays" => true
   }
+  Data Binding "hiera"
+    Found key: "abc::e" value: {
+      "k1" => "global_g1"
+    }
   Data Provider "FunctionEnvDataProvider"
     Found key: "abc::e" value: {
       "k1" => "env_e1",
@@ -467,7 +478,7 @@ Merge strategy deep
       "k2" => "module_e2"
     }
   Merged result: {
-    "k1" => "env_e1",
+    "k1" => "global_g1",
     "k2" => "module_e2",
     "k3" => "env_e3"
   }
@@ -484,6 +495,8 @@ EOS
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy first
+  Data Binding "hiera"
+    No such key: "hieraprovider::test::not_found"
   Data Provider "FunctionEnvDataProvider"
     No such key: "hieraprovider::test::not_found"
   Module "hieraprovider" using Data Provider "Hiera Data Provider, version 4"
@@ -507,6 +520,12 @@ EOS
         expect(lookup_invocation.explainer.to_hash).to eq(
             {
               :branches => [
+              {
+                :key => 'abc::e',
+                :event => :not_found,
+                :type => :global,
+                :name => :hiera
+              },
               {
                 :key => 'abc::e',
                 :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
