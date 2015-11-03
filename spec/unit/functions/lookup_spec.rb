@@ -455,6 +455,7 @@ EOS
 
     it 'will explain deep merge results with options' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
+        Hiera.any_instance.expects(:lookup).with(any_parameters).returns({'k1' => 'global_g1'})
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
@@ -463,7 +464,9 @@ Merge strategy deep
     "merge_hash_arrays" => true
   }
   Data Binding "hiera"
-    No such key: "abc::e"
+    Found key: "abc::e" value: {
+      "k1" => "global_g1"
+    }
   Data Provider "FunctionEnvDataProvider"
     Found key: "abc::e" value: {
       "k1" => "env_e1",
@@ -475,7 +478,7 @@ Merge strategy deep
       "k2" => "module_e2"
     }
   Merged result: {
-    "k1" => "env_e1",
+    "k1" => "global_g1",
     "k2" => "module_e2",
     "k3" => "env_e3"
   }
