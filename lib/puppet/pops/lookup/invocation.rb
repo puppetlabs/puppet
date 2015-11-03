@@ -1,6 +1,6 @@
 module Puppet::Pops::Lookup
   class Invocation
-    attr_reader :scope, :override_values, :default_values, :explainer
+    attr_reader :scope, :override_values, :default_values, :explainer, :module_name
 
     # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
     # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
@@ -50,17 +50,30 @@ module Puppet::Pops::Lookup
     # :merge - qualifier is a MergeStrategy instance
     # :module - qualifier is the name of a module
     # :interpolation - qualifier is the unresolved interpolation expression
+    # :meta - qualifier is the name of a module or nil if that's not applicable
     #
     # @param qualifier [Object] A branch, a provider, or a path
     def with(qualifier_type, qualifier)
+      is_meta = qualifier_type == :meta
+      @module_name = qualifier if is_meta
       if @explainer.nil?
         yield
       else
-        @explainer.push(qualifier_type, qualifier)
-        begin
-          yield
-        ensure
-          @explainer.pop
+        if is_meta
+          save_explainer = @explainer
+          @explainer = nil
+          begin
+            yield
+          ensure
+            @explainer = save_explainer
+          end
+        else
+          @explainer.push(qualifier_type, qualifier)
+          begin
+            yield
+          ensure
+            @explainer.pop
+          end
         end
       end
     end
