@@ -20,7 +20,7 @@ module Puppet::Plugins::DataProviders
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
       lookup_invocation.with(:data_provider, self) do
-        hash = data(data_key(key), lookup_invocation)
+        hash = data(data_key(key, lookup_invocation), lookup_invocation)
         value = hash[key]
         if value || hash.include?(key)
           lookup_invocation.report_found(key, post_process(value, lookup_invocation))
@@ -69,7 +69,7 @@ module Puppet::Plugins::DataProviders
     # @return [String,nil] The data key or nil if not applicable
     #
     # @api public
-    def data_key(key)
+    def data_key(key, lookup_invocation)
       nil
     end
     protected :data_key
@@ -105,8 +105,8 @@ module Puppet::Plugins::DataProviders
     #
     # @param key [String] The key
     # @return [String] The first segment of the given key
-    def data_key(key)
-      # Do not attempt to do a lookup in a module unless the name is qualified.
+    def data_key(key, lookup_invocation)
+      return lookup_invocation.module_name if key == 'lookup_options'
       qual_index = key.index('::')
       throw :no_such_key if qual_index.nil?
       key[0..qual_index-1]
@@ -121,7 +121,7 @@ module Puppet::Plugins::DataProviders
     def validate_data(data, module_name)
       module_prefix = "#{module_name}::"
       data.each_key do |k|
-        unless k.is_a?(String) && k.start_with?(module_prefix)
+        unless k.is_a?(String) && (k == 'lookup_options' || k.start_with?(module_prefix))
           raise Puppet::DataBinding::LookupError, "Module data for module '#{module_name}' must use keys qualified with the name of the module"
         end
       end
@@ -132,7 +132,7 @@ module Puppet::Plugins::DataProviders
   class EnvironmentDataProvider
     include DataProvider
 
-    def data_key(key)
+    def data_key(key, lookup_invocation)
       'environment'
     end
     protected :data_key

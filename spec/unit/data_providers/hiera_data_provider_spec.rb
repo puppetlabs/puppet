@@ -53,26 +53,38 @@ describe "when using a hiera data provider" do
     expect(resources).to include('module data param_a is 100, module data param_b is 200, module data param_c is 300, module data param_d is 400, module data param_e is 500')
   end
 
-  it 'reads does not perform merge of values declared in environment and module when resolving parameters' do
+  it 'does not perform merge of values declared in environment and module when resolving parameters' do
     resources = compile_and_get_notifications('hiera_misc')
     expect(resources).to include('env 1, ')
   end
 
-  it 'reads performs hash merge of values declared in environment and module' do
+  it 'performs hash merge of values declared in environment and module' do
     resources = compile_and_get_notifications('hiera_misc', '$r = lookup(one::test::param, Hash[String,String], hash) notify{"${r[key1]}, ${r[key2]}":}')
     expect(resources).to include('env 1, module 2')
   end
 
-  it 'reads performs unique merge of values declared in environment and module' do
+  it 'performs unique merge of values declared in environment and module' do
     resources = compile_and_get_notifications('hiera_misc', '$r = lookup(one::array, Array[String], unique) notify{"${r}":}')
     expect(resources.size).to eq(1)
     expect(resources[0][1..-2].split(', ')).to contain_exactly('first', 'second', 'third', 'fourth')
   end
 
-  it 'reads performs merge found in lookup_options of values declared in environment and module' do
+  it 'performs merge found in lookup_options in environment of values declared in environment and module' do
     resources = compile_and_get_notifications('hiera_misc', 'include one::lopts_test')
     expect(resources.size).to eq(1)
     expect(resources[0]).to eq('A, B, C, MA, MB, MC')
+  end
+
+  it 'performs merge found in lookup_options in module of values declared in environment and module' do
+    resources = compile_and_get_notifications('hiera_misc', 'include one::loptsm_test')
+    expect(resources.size).to eq(1)
+    expect(resources[0]).to eq('A, B, C, MA, MB, MC')
+  end
+
+  it "can lookup the 'lookup_options' hash as a regular value" do
+    resources = compile_and_get_notifications('hiera_misc', '$r = lookup(lookup_options, Hash[String,Hash[String,String]], hash) notify{"${r[one::lopts_test::hash][merge]}":}')
+    expect(resources.size).to eq(1)
+    expect(resources[0]).to eq('deep')
   end
 
   it 'does find unqualified keys in the environment' do

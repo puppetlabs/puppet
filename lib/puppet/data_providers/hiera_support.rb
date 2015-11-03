@@ -21,7 +21,7 @@ module Puppet::DataProviders::HieraSupport
     lookup_invocation.with(:data_provider, self) do
       merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
       lookup_invocation.with(:merge, merge_strategy) do
-        merged_result = merge_strategy.merge_lookup(data_providers(data_key(key), lookup_invocation)) do |data_provider|
+        merged_result = merge_strategy.merge_lookup(data_providers(data_key(key, lookup_invocation), lookup_invocation)) do |data_provider|
           data_provider.unchecked_lookup(key, lookup_invocation, merge_strategy)
         end
         lookup_invocation.report_result(merged_result)
