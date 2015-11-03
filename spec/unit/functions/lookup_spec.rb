@@ -396,6 +396,12 @@ describe "when performing lookup" do
         rescue Puppet::Error
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Searching for 'lookup_options'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "FunctionEnvDataProvider"
+      No such key: "lookup_options"
 Merge strategy first
   Data Binding "hiera"
     No such key: "ppx::e"
@@ -415,6 +421,14 @@ EOS
         rescue Puppet::Error
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Searching for 'lookup_options'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "FunctionEnvDataProvider"
+      No such key: "lookup_options"
+    Data Provider "FunctionModuleDataProvider"
+      No such key: "lookup_options"
 Merge strategy first
   Data Binding "hiera"
     No such key: "abc::x"
@@ -494,6 +508,22 @@ EOS
         rescue Puppet::DataBinding::LookupError
         end
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Searching for 'lookup_options'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "FunctionEnvDataProvider"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
+      Data Provider "two paths"
+        Merge strategy hash
+          Path "#{environmentpath}/production/modules/hieraprovider/data/first.json"
+            Original path: first
+            No such key: "lookup_options"
+          Path "#{environmentpath}/production/modules/hieraprovider/data/second_not_present.json"
+            Original path: second_not_present
+            Path not found
 Merge strategy first
   Data Binding "hiera"
     No such key: "hieraprovider::test::not_found"

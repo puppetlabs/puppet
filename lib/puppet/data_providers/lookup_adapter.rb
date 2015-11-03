@@ -95,11 +95,12 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     module_name = extract_module_name(name)
 
     # Retrieve the options for the module. We use nil as a key in case we have none
-    options = @lookup_options[module_name]
-    if options.nil? && !@lookup_options.include?(module_name)
+    if lookup_invocation.force_options_lookup? || !@lookup_options.include?(module_name)
       options = retrieve_lookup_options(module_name, lookup_invocation, Puppet::Pops::MergeStrategy.strategy(HASH))
       raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.nil? || options.is_a?(Hash)
       @lookup_options[module_name] = options
+    else
+      options = @lookup_options[module_name]
     end
     options.nil? ? nil : options[name]
   end
@@ -110,22 +111,24 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
     lookup_invocation.with(:meta, module_name) do
-      env_opts = env_lookup_options(lookup_invocation, merge_strategy)
-      options = nil
-      unless module_name.nil?
-        catch(:no_such_key) do
-          options = module_provider(module_name).lookup(LOOKUP_OPTIONS, lookup_invocation, merge_strategy)
-          options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
+      lookup_invocation.with(:merge, merge_strategy) do
+        env_opts = env_lookup_options(lookup_invocation, merge_strategy)
+        unless module_name.nil? || @env.module(module_name).nil?
+          catch(:no_such_key) do
+            options = module_provider(module_name).lookup(LOOKUP_OPTIONS, lookup_invocation, merge_strategy)
+            options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
+            return lookup_invocation.report_result(options)
+          end
         end
+        env_opts
       end
-      options.nil? ? env_opts : options
     end
   end
 
   # Retrieve and cache lookup options specific to the environment that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
   def env_lookup_options(lookup_invocation, merge_strategy)
-    unless instance_variable_defined?(:@env_lookup_options)
+    if lookup_invocation.force_options_lookup? || !instance_variable_defined?(:@env_lookup_options)
       @env_lookup_options = nil
       catch(:no_such_key) do
         @env_lookup_options = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment]) do |m|
