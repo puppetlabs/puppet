@@ -82,6 +82,30 @@ describe Puppet::Resource::Catalog::StaticCompiler do
           expect(resource[:mode]).to  eq("644")
         end
       end
+
+      it "ignores recurse when source refers to a file" do
+        path = File.expand_path('/tmp/foo')
+        metadata = fileserver_metadata(:path => path)
+        metadata.relative_path = '.'
+
+        Puppet::FileServing::Metadata.indirection.stubs(:search).returns([metadata])
+        Puppet::FileServing::Metadata.indirection.stubs(:find).returns(metadata)
+
+        catalog = Puppet::Resource::Catalog.new(request)
+        catalog.add_resource(
+          Puppet::Resource.new('file', path,
+            :parameters => {
+              :recurse => true,
+              :source => 'puppet:///modules/mymodule/foo'
+            }
+          )
+        )
+        subject.stubs(:compile).returns(catalog)
+
+        resource = subject.find(request).resources.first
+        expect(resource[:ensure]).to eq('file')
+        expect(resource.title).to eq(path)
+      end
     end
   end
 

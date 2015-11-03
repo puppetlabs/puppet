@@ -121,7 +121,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     # a directory, but we still need to replace the metadata of the
     # resource, so we do it here before returning.
     if children.nil?
-      find_and_replace_metadata(request, resource, resource.to_ral)
+      find_and_replace_metadata(request, resource, file)
       return
     end
 
