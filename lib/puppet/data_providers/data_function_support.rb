@@ -16,7 +16,7 @@ module Puppet::DataProviders::DataFunctionSupport
         # validate result if block given
         result = yield(result) if block_given?
       else
-        raise Puppet::Error.new("Data from 'function' cannot find the required '#{name}' function")
+        raise Puppet::Error.new("Cannot find the function '#{name}' - required when using 'function' data provider scheme")
       end
       result
     end
