@@ -9,9 +9,9 @@ HOSTS:
   agent:
     roles:
     - agent
-    platform: osx-10.9-x86_64
+    platform: osx-10.11-x86_64
     hypervisor: vcloud
-    template: osx-109-x86_64
+    template: osx-1011-x86_64
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
