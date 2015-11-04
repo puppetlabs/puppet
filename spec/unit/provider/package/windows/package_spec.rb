@@ -132,6 +132,47 @@ describe Puppet::Provider::Package::Windows::Package do
     end
   end
 
+  context '::get_display_name' do
+    it 'should return nil if values is nil' do
+      expect(subject.get_display_name(nil)).to be_nil
+    end
+
+    it 'should return empty if values is empty' do
+      reg_values =  {}
+      expect(subject.get_display_name(reg_values)).to eq('')
+    end
+
+    it 'should return DisplayName when available' do
+      reg_values =  { 'DisplayName' => 'Google' }
+      expect(subject.get_display_name(reg_values)).to eq('Google')
+    end
+
+    it 'should return DisplayName when available, even when QuietDisplayName is also available' do
+      reg_values =  { 'DisplayName' => 'Google', 'QuietDisplayName' => 'Google Quiet' }
+      expect(subject.get_display_name(reg_values)).to eq('Google')
+    end
+
+    it 'should return QuietDisplayName when available if DisplayName is empty' do
+      reg_values =  { 'DisplayName' => '', 'QuietDisplayName' =>'Google Quiet' }
+      expect(subject.get_display_name(reg_values)).to eq('Google Quiet')
+    end
+
+    it 'should return QuietDisplayName when DisplayName is not available' do
+      reg_values =  { 'QuietDisplayName' =>'Google Quiet' }
+      expect(subject.get_display_name(reg_values)).to eq('Google Quiet')
+    end
+
+    it 'should return empty when DisplayName is empty and QuietDisplay name is not available' do
+      reg_values =  { 'DisplayName' => '' }
+      expect(subject.get_display_name(reg_values)).to eq('')
+    end
+
+    it 'should return empty when DisplayName is empty and QuietDisplay name is empty' do
+      reg_values =  { 'DisplayName' => '', 'QuietDisplayName' =>'' }
+      expect(subject.get_display_name(reg_values)).to eq('')
+    end
+  end
+
   it 'should implement instance methods' do
     pkg = subject.new('orca', '5.0')
 
