@@ -162,6 +162,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
         expect(provider.members_to_s([invalid_user])).to eq("#{invalid_user}")
       end
+      it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
+        expect(provider.members_to_s([invalid_user])).to eq("#{invalid_user}")
+      end
     end
   end
 
