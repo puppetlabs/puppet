@@ -138,8 +138,6 @@ class Puppet::Daemon
   end
 
   def start
-    set_signal_traps
-
     create_pidfile
 
     raise Puppet::DevError, "Daemons must have an agent, server, or both" unless agent or server
