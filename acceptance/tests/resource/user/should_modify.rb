@@ -1,4 +1,5 @@
 test_name "should modify a user"
+confine :except, :platform => /^eos-/ # See ARISTA-37
 
 name = "pl#{rand(999999).to_i}"
 
