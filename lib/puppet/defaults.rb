@@ -21,7 +21,8 @@ module Puppet
         :default => false,
         :type    => :boolean,
         :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
-          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.',
+          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
+          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
         :hook    => proc do |value|
           return unless value
           raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
@@ -526,6 +527,15 @@ module Puppet
       :desc    => "The directory where catalog previews per node are generated."
     }
   )
+
+  define_settings(:main,
+      :app_management => {
+          :default  => false,
+          :type     => :boolean,
+          :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
+      }
+  )
+
   Puppet.define_settings(:module_tool,
     :module_repository  => {
       :default  => 'https://forgeapi.puppetlabs.com',
@@ -545,7 +555,7 @@ module Puppet
     },
     :module_groups => {
         :default  => nil,
-        :desc     => "Extra module groups to request from the Puppet Forge",
+        :desc     => "Extra module groups to request from the Puppet Forge. This is an internal setting, and users should never change it.",
     }
   )
 

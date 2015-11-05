@@ -1,36 +1,87 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera_hash, :type => :rvalue, :arity => -2, :doc => 
-  "Returns a merged hash of matches from throughout the hierarchy. In cases where two or 
-  more hashes share keys, the hierarchy  order determines which key/value pair will be 
-  used in the returned hash, with the pair in the highest priority data source winning.
+  newfunction(
+    :hiera_hash,
+    :type => :rvalue,
+    :arity => -2,
+    :doc => <<-DOC
+Finds all matches of a key throughout the hierarchy and returns them in a merged hash.
+If any of the matched hashes share keys, the final hash uses the value from the
+highest priority match. This is called a
+[hash merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#hash-merge).
 
-  The function can be called in one of three ways:
-  1. Using 1 to 3 arguments where the arguments are:
-     'key'      [String] Required
-           The key to lookup.
-     'default`  [Any] Optional
-           A value to return when there's no match for `key`. Optional
-     `override` [Any] Optional
-           An argument in the third position, providing a data source
-           to consult for matching values, even if it would not ordinarily be
-           part of the matched hierarchy. If Hiera doesn't find a matching key
-           in the named override data source, it will continue to search through the
-           rest of the hierarchy.
+The merge strategy is determined by Hiera's
+[`:merge_behavior`](https://docs.puppetlabs.com/hiera/latest/configuring.html#mergebehavior)
+setting.
 
-  2. Using a 'key' and an optional 'override' parameter like in #1 but with a block to
-     provide the default value. The block is called with one parameter (the key) and
-     should return the value.
+The `hiera_hash` function takes up to three arguments, in this order:
 
-  3. Like #1 but with all arguments passed in an array.
+1. A string key that Hiera searches for in the hierarchy. **Required**.
+2. An optional default value to return if Hiera doesn't find anything matching the key.
+    * If this argument isn't provided and this function results in a lookup failure, Puppet
+    fails with a compilation error.
+3. The optional name of an arbitrary
+[hierarchy level](https://docs.puppetlabs.com/hiera/latest/hierarchy.html) to insert at the
+top of the hierarchy. This lets you temporarily modify the hierarchy for a single lookup.
+    * If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
+    searching the rest of the hierarchy.
 
-  `hiera_hash` expects that all values returned will be hashes. If any of the values 
-  found in the data sources are strings or arrays, puppet will raise a type mismatch error.
+**Example**: Using `hiera_hash`
 
-  More thorough examples of `hiera_hash` are available at:  
-  <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
-  ") do |*args|
+~~~ yaml
+# Assuming hiera.yaml
+# :hierarchy:
+#   - web01.example.com
+#   - common
+
+# Assuming common.yaml:
+# users:
+#   regular:
+#     'cdouglas': 'Carrie Douglas'
+
+# Assuming web01.example.com.yaml:
+# users:
+#   administrators:
+#     'aberry': 'Amy Berry'
+~~~
+
+~~~ puppet
+# Assuming we are not web01.example.com:
+
+$allusers = hiera_hash('users', undef)
+
+# $allusers contains {regular => {"cdouglas" => "Carrie Douglas"},
+#                     administrators => {"aberry" => "Amy Berry"}}
+~~~
+
+You can optionally generate the default value with a
+[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
+takes one parameter.
+
+**Example**: Using `hiera_hash` with a lambda
+
+~~~ puppet
+# Assuming the same Hiera data as the previous example:
+
+$allusers = hiera_hash('users') | $key | { "Key \'${key}\' not found" }
+
+# $allusers contains {regular => {"cdouglas" => "Carrie Douglas"},
+#                     administrators => {"aberry" => "Amy Berry"}}
+# If hiera_hash couldn't match its key, it would return the lambda result,
+# "Key 'users' not found".
+~~~
+
+`hiera_hash` expects that all values returned will be hashes. If any of the values
+found in the data sources are strings or arrays, Puppet raises a type mismatch error.
+
+See
+[the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
+for more information about Hiera lookup functions.
+
+- Since 4.0.0
+DOC
+  ) do |*args|
     function_fail(["hiera_hash() has been converted to 4x API"])
   end
 end

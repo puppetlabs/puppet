@@ -22,19 +22,19 @@ describe 'the regsubst function' do
 
   context 'when using a string pattern' do
     it 'should raise an Error if there is less than 3 arguments' do
-      expect { regsubst('foo', 'bar') }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', 'bar') }.to raise_error(/expects between 3 and 5 arguments, got 2/)
     end
 
     it 'should raise an Error if there is more than 5 arguments' do
-      expect { regsubst('foo', 'bar', 'gazonk', 'G', 'U', 'y') }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', 'bar', 'gazonk', 'G', 'U', 'y') }.to raise_error(/expects between 3 and 5 arguments, got 6/)
     end
 
     it 'should raise an Error if given a bad flag' do
-      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/parameter 'flags' expects a match for Pattern\[\/\^\[GEIM\]\*\$\/\], got 'X'/)
     end
 
     it 'should raise an Error if given a bad encoding' do
-      expect { regsubst('foo', 'bar', 'gazonk', nil, 'X') }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', 'bar', 'gazonk', nil, 'X') }.to raise_error(/parameter 'encoding' expects a match for Enum\['E', 'N', 'S', 'U'\], got 'X'/)
     end
 
     it 'should raise an Error if given a bad regular expression' do
@@ -48,15 +48,15 @@ describe 'the regsubst function' do
 
   context 'when using a regexp pattern' do
     it 'should raise an Error if there is less than 3 arguments' do
-      expect { regsubst('foo', /bar/) }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', /bar/) }.to raise_error(/expects between 3 and 5 arguments, got 2/)
     end
 
-    it 'should raise an Error if there is more than 4 arguments' do
-      expect { regsubst('foo', /bar/, 'gazonk', 'G', 'y') }.to raise_error(/called with mis-matched arguments/)
+    it 'should raise an Error if there is more than 5 arguments' do
+      expect { regsubst('foo', /bar/, 'gazonk', 'G', 'E', 'y') }.to raise_error(/expects between 3 and 5 arguments, got 6/)
     end
 
     it 'should raise an Error if given a flag other thant G' do
-      expect { regsubst('foo', /bar/, 'gazonk', 'I') }.to raise_error(/called with mis-matched arguments/)
+      expect { regsubst('foo', /bar/, 'gazonk', 'I') }.to raise_error(/expected one of/)
     end
 
     it 'should handle global substitutions' do
@@ -94,5 +94,14 @@ describe 'the regsubst function' do
                  'G')
       ).to eql(['<130>.<236>.<254>.<10>', '<foo>.<example>.<com>','<coconut>', '<10>.<20>.<30>.<40>'])
     end
+
+    it 'should return an empty array if given an empty array and string pattern' do
+      expect(regsubst([], '', '')).to eql([])
+    end
+
+    it 'should return an empty array if given an empty array and regexp pattern' do
+      expect(regsubst([], //, '')).to eql([])
+    end
+
   end
 end

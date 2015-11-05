@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/error'
 
 # A general class for triggering a run of another
 # class.
@@ -29,10 +30,6 @@ class Puppet::Agent
 
   # Perform a run with our client.
   def run(client_options = {})
-    if running?
-      Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
-      return
-    end
     if disabled?
       Puppet.notice "Skipping run of #{client_class}; administratively disabled (Reason: '#{disable_message}');\nUse 'puppet agent --enable' to re-enable."
       return
@@ -46,6 +43,9 @@ class Puppet::Agent
           begin
             client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
             lock { client.run(client_args) }
+          rescue Puppet::LockError
+            Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
+            return
           rescue StandardError => detail
             Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
           end

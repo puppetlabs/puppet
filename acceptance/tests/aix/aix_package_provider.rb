@@ -4,10 +4,6 @@ confine :to, :platform => /aix/
 
 dir = "/tmp/aix-packages-#{$$}"
 
-teardown do
-  on hosts, "rm -rf #{dir}"
-end
-
 def assert_package_version(package, expected_version)
   # The output of lslpp is a colon-delimited list like:
   # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
@@ -21,6 +17,11 @@ end
 package = 'sudo.rte'
 version1 = '1.7.10.4'
 version2 = '1.8.6.4'
+
+teardown do
+  on hosts, "rm -rf #{dir}"
+  on hosts, puppet('resource', 'package', "'#{package}' ensure=absent")
+end
 
 step "download packages to use for test"
 
@@ -73,7 +74,7 @@ assert_package_version package, version2
 step "test that downgrading fails by trying to install an older version of the package"
 
 on hosts, puppet_apply("--verbose", "--detailed-exitcodes"), :stdin => version1_manifest, :acceptable_exit_codes => [4,6] do
-  assert_match(/aix package provider is unable to downgrade packages/, stdout, "Didn't get an error about downgrading packages")
+  assert_match(/aix package provider is unable to downgrade packages/, stderr, "Didn't get an error about downgrading packages")
 end
 
 step "uninstall the package"

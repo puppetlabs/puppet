@@ -182,9 +182,16 @@ class Puppet::Node::Environment
   # @api private
   def conflicting_manifest_settings?
     return false if !Puppet[:disable_per_environment_manifest]
-    environment_conf = Puppet.lookup(:environments).get_conf(name)
-    original_manifest = environment_conf.raw_setting(:manifest)
+    original_manifest = configuration.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
+  end
+
+  # Return the environment configuration
+  # @return [Puppet::Settings::EnvironmentConf] The configuration
+  #
+  # @api private
+  def configuration
+    Puppet.lookup(:environments).get_conf(name)
   end
 
   # Checks the environment and settings for any conflicts

@@ -10,7 +10,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
   end
 
-
   let :provider do
     described_class.new(:name => 'sshd.service')
   end
@@ -19,14 +18,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
-      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      Facter.stubs(:value).with(:osfamily).returns(osfamily)
       expect(described_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on rhel7" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("7")
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
     expect(described_class.default?).to be_truthy
   end
 
@@ -36,7 +35,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       # caused short-circuiting of the logic used by default.all? in the
       # provider. As a workaround we need to use stubs() instead of
       # expects() here.
-      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+      Facter.stubs(:value).with(:osfamily).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
       expect(described_class.default?).not_to be_truthy
@@ -45,57 +44,64 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   [ 17, 18, 19, 20, 21 ].each do |ver|
     it "should be the default provider on fedora#{ver}" do
-      Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
-      Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:fedora)
-      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("#{ver}")
+      Facter.stubs(:value).with(:osfamily).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
       expect(described_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on sles12" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("12")
+    Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("12")
     expect(described_class.default?).to be_truthy
   end
 
   it "should be the default provider on opensuse13" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("13")
+    Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("13")
     expect(described_class.default?).to be_truthy
   end
 
-  it "should not be the default provider on sles11" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:suse)
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:suse)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("11")
-    expect(described_class.default?).not_to be_truthy
+  # tumbleweed is a rolling release with date-based major version numbers
+  it "should be the default provider on tumbleweed" do
+    Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("20150829")
+    expect(described_class.default?).to be_truthy
+  end
+
+  # leap is the next generation suse release
+  it "should be the default provider on leap" do
+    Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("42")
+    expect(described_class.default?).to be_truthy
   end
 
   it "should not be the default provider on debian7" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("7")
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
     expect(described_class.default?).not_to be_truthy
   end
 
   it "should be the default provider on debian8" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("8")
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("8")
     expect(described_class.default?).to be_truthy
   end
 
   it "should not be the default provider on ubuntu14.04" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:ubuntu)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("14.04")
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("14.04")
     expect(described_class.default?).not_to be_truthy
   end
 
   it "should be the default provider on ubuntu15.04" do
-    Facter.expects(:value).with(:osfamily).at_least_once.returns(:debian)
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns(:ubuntu)
-    Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns("15.04")
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.04")
     expect(described_class.default?).to be_truthy
   end
 
@@ -261,6 +267,49 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
+    end
+  end
+
+  describe "#debian_enabled?" do
+    [104, 106].each do |status|
+      it "should return true when invoke-rc.d returns #{status}" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        $CHILD_STATUS.expects(:exitstatus).returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+      end
+    end
+
+    [101, 105].each do |status|
+      it "should return true when status is #{status} and there are at least 4 start links" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        provider.expects(:get_start_link_count).returns(4)
+        $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+      end
+
+      it "should return false when status is #{status} and there are less than 4 start links" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.stubs(:system)
+        provider.expects(:get_start_link_count).returns(1)
+        $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
+        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:false)
+      end
+    end
+  end
+
+  describe "#get_start_link_count" do
+    it "should strip the '.service' from the search if present in the resource name" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
+      provider.get_start_link_count
+    end
+
+    it "should use the full service name if it does not include '.service'" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
+      provider.get_start_link_count
     end
   end
 

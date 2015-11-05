@@ -21,7 +21,15 @@ describe Puppet::Application::Filebucket do
     expect(@filebucket).to respond_to(:restore)
   end
 
-  [:bucket, :debug, :local, :remote, :verbose].each do |option|
+  it "should declare a diff command" do
+    expect(@filebucket).to respond_to(:diff)
+  end
+
+  it "should declare a list command" do
+    expect(@filebucket).to respond_to(:list)
+  end
+
+  [:bucket, :debug, :local, :remote, :verbose, :fromdate, :todate].each do |option|
     it "should declare handle_#{option} method" do
       expect(@filebucket).to respond_to("handle_#{option}".to_sym)
     end
@@ -198,6 +206,84 @@ describe Puppet::Application::Filebucket do
         @client.expects(:restore).with(file,md5)
 
         @filebucket.restore
+      end
+    end
+
+    describe "the command diff" do
+      it "should call the client diff method with 2 given checksums" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).returns(false)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(md5a,md5b, nil, nil)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with a path if the second argument is a file" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(true)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(md5a, nil, nil, md5b)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with a path if the first argument is a file" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(false)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(nil, md5b, md5a, nil)
+
+        @filebucket.diff
+      end
+
+      it "should call the clien diff with paths if the both arguments are files" do
+        md5a="DEADBEEF"
+        md5b="BEEF"
+        Puppet::FileSystem.stubs(:exist?).with(md5a).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(md5b).returns(true)
+        @filebucket.stubs(:args).returns([md5a, md5b])
+
+        @client.expects(:diff).with(nil, nil, md5a, md5b)
+
+        @filebucket.diff
+      end
+
+      it "should fail if only one checksum is given" do
+        md5a="DEADBEEF"
+        @filebucket.stubs(:args).returns([md5a])
+
+        expect { @filebucket.diff }.to raise_error Puppet::Error
+      end
+    end
+    describe "the command list" do
+      it "should call the client list method with nil dates" do
+        @client.expects(:list).with(nil, nil)
+
+        @filebucket.list
+      end
+      it "should call the client list method with the given dates" do
+        # 3 Hours ago
+        threehours = 60*60*3
+        fromdate = (Time.now - threehours).strftime("%F %T")
+        # 1 Hour ago
+        onehour = 60*60
+        todate = (Time.now - onehour).strftime("%F %T")
+
+        @filebucket.options.stubs(:[]).with(:fromdate).returns(fromdate)
+        @filebucket.options.stubs(:[]).with(:todate).returns(todate)
+
+        @client.expects(:list).with(fromdate, todate)
+
+        @filebucket.list
       end
     end
 

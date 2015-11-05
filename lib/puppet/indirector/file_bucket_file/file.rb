@@ -1,15 +1,23 @@
 require 'puppet/indirector/code'
 require 'puppet/file_bucket/file'
 require 'puppet/util/checksums'
+require 'puppet/util/diff'
 require 'fileutils'
 
 module Puppet::FileBucketFile
   class File < Puppet::Indirector::Code
     include Puppet::Util::Checksums
+    include Puppet::Util::Diff
 
     desc "Store files in a directory set based on their checksums."
 
     def find(request)
+      request.options[:bucket_path] ||= Puppet[:bucketdir]
+      # If filebucket mode is 'list'
+      if request.options[:list_all]
+        return nil unless ::File.exists?(request.options[:bucket_path])
+        return list(request)
+      end
       checksum, files_original_path = request_to_checksum_and_path(request)
       contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
       paths_file = path_for(request.options[:bucket_path], checksum, 'paths')
@@ -18,7 +26,8 @@ module Puppet::FileBucketFile
         if request.options[:diff_with]
           other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
           raise "could not find diff_with #{request.options[:diff_with]}" unless Puppet::FileSystem.exist?(other_contents_file)
-          return `diff #{Puppet::FileSystem.path_string(contents_file).inspect} #{Puppet::FileSystem.path_string(other_contents_file).inspect}`
+          raise "Unable to diff on this platform" unless Puppet[:diff] != ""
+          return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
           Puppet.info "FileBucket read #{checksum}"
           model.new(Puppet::FileSystem.binread(contents_file))
@@ -26,6 +35,54 @@ module Puppet::FileBucketFile
       else
         nil
       end
+    end
+
+    def list(request)
+      if request.remote?
+        raise Puppet::Error, "Listing remote file buckets is not allowed"
+      end
+
+      fromdate = request.options[:fromdate] || "0:0:0 1-1-1970"
+      todate = request.options[:todate] || Time.now.strftime("%F %T")
+      begin
+        to = Time.parse(todate)
+      rescue ArgumentError
+        raise Puppet::Error, "Error while parsing 'todate'"
+      end
+      begin
+        from = Time.parse(fromdate)
+      rescue ArgumentError
+        raise Puppet::Error, "Error while parsing 'fromdate'"
+      end
+      # Setting hash's default value to [], needed by the following loop
+      bucket = Hash.new {[]}
+      msg = ""
+      # Get all files with mtime between 'from' and 'to'
+      Pathname.new(request.options[:bucket_path]).find { |item|
+        if item.file? and item.basename.to_s == "paths"
+          filenames = item.read.strip.split("\n")
+          filestat = Time.parse(item.stat.mtime.to_s)
+          if from <= filestat and filestat <= to
+            filenames.each do |filename|
+              bucket[filename] += [[ item.stat.mtime , item.parent.basename ]]
+            end
+          end
+        end
+      }
+      # Sort the results
+      bucket.each { |filename, contents|
+        contents.sort_by! do |item|
+          item[0]
+        end
+      }
+      # Build the output message. Sorted by names then by dates
+      bucket.sort.each { |filename,contents|
+        contents.each { |mtime, chksum|
+          date = mtime.strftime("%F %T")
+          msg += "#{chksum} #{date} #{filename}\n"
+        }
+      }
+      return model.new(msg)
     end
 
     def head(request)

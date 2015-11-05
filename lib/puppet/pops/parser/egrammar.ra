@@ -22,7 +22,8 @@ token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
 token PRIVATE ATTR TYPE
 token FUNCTION
-token APPLICATION_R CONSUMES_R PRODUCES_R
+token APPLICATION_R CONSUMES_R PRODUCES_R SITE_R
+token APPLICATION PRODUCES CONSUMES SITE
 token LOW
 
 prechigh
@@ -193,8 +194,9 @@ resource
 #
 expression
   : primary_expression
+  | capability_mapping
   | call_function_expression
-  | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
+  | bracketed_expression
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
   | expression MATCH        expression                 { result = val[0] =~  val[2]       ; loc result, val[1] }
   | expression NOMATCH      expression                 { result = val[0].mne val[2]       ; loc result, val[1] }
@@ -219,6 +221,8 @@ expression
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
   |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
+bracketed_expression
+  : expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -238,8 +242,12 @@ primary_expression
   | if_expression
   | unless_expression
   | definition_expression
+  # @todo lutter 2014-09-03: application declarations must be at the toplevel
+  # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
+  | application_expression
   | hostclass_expression
   | node_definition_expression
+  | site_definition_expression
   | epp_render_expression
   | function_definition
   | reserved_word
@@ -459,7 +467,7 @@ attribute_operations
     | APPLICATION_R
     | CONSUMES_R
     | PRODUCES_R
-#    | BOOLEAN
+    | SITE_R
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -491,6 +499,33 @@ definition_expression
         @lexer.indefine = false
       end
     }
+
+#---APPLICATION
+application_expression
+  : APPLICATION classname parameter_list LBRACE opt_statements RBRACE {
+    result = add_definition(Factory.APPLICATION(classname(val[1][:value]), val[2], val[4]))
+    loc result, val[0], val[5]
+  }
+
+capability_mapping
+  : classname capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
+    result = Factory.CAPABILITY_MAPPING(val[1][:value],
+                                        Factory.QNAME(classname(val[0][:value])),
+                                        classname(val[2][:value]), val[4])
+    loc result, val[0], val[6]
+    add_mapping(result)
+  }
+  | bracketed_expression capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
+    result = Factory.CAPABILITY_MAPPING(val[1][:value],
+                                        val[0],
+                                        classname(val[2][:value]), val[4])
+    loc result, val[0], val[6]
+    add_mapping(result)
+  }
+
+capability_kw
+  : PRODUCES
+  | CONSUMES
 
 #---HOSTCLASS
 #
@@ -527,6 +562,20 @@ hostclass_expression
   classnameordefault
     : classname
     | DEFAULT
+
+#---SITE
+#
+# Produces Model::SiteDefinition
+#
+site_definition_expression
+  : SITE LBRACE statements RBRACE {
+    result = add_definition(Factory.SITE(val[2]))
+    loc result, val[0], val[3]
+    }
+  | SITE LBRACE RBRACE {
+    result = add_definition(Factory.SITE(nil))
+    loc result, val[0], val[2]
+    }
 
 #---NODE
 #
@@ -590,6 +639,7 @@ classname
   | APPLICATION_R
   | CONSUMES_R
   | PRODUCES_R
+  | SITE_R
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
@@ -640,6 +690,7 @@ reserved_word
   | APPLICATION_R { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
   | CONSUMES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
   | PRODUCES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+  | SITE_R        { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
 
 #---LITERALS (dynamic and static)
 #
@@ -744,6 +795,8 @@ keyword
   | ATTR
   | FUNCTION
   | PRIVATE
+  | APPLICATION
+  | PRODUCES
 
 nil
   : { result = nil}

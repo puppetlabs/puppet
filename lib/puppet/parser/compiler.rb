@@ -6,6 +6,7 @@ require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
 require 'puppet/loaders'
+require 'puppet/pops'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -16,8 +17,9 @@ class Puppet::Parser::Compiler
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
+  include Puppet::Pops::Evaluator::Runtime3Support
 
-  def self.compile(node)
+  def self.compile(node, code_id = nil)
     $env_module_directories = nil
     node.environment.check_for_reparse
 
@@ -31,7 +33,7 @@ class Puppet::Parser::Compiler
       raise(Puppet::Error, errmsg.join(' '))
     end
 
-    new(node).compile {|resulting_catalog| resulting_catalog.to_resource }
+    new(node, :code_id => code_id).compile {|resulting_catalog| resulting_catalog.to_resource }
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)
@@ -65,6 +67,10 @@ class Puppet::Parser::Compiler
   #
   attr_accessor :boot_injector
 
+  # The id of code input to the compiler.
+  # @api private
+  attr_accessor :code_id
+
   # Add a collection to the global list.
   def_delegator :@collections,   :<<, :add_collection
   def_delegator :@relationships, :<<, :add_relationship
@@ -82,6 +88,22 @@ class Puppet::Parser::Compiler
   end
 
   def add_resource(scope, resource)
+    type = resource.resource_type
+    if type.is_a?(Puppet::Resource::Type) && type.application?
+      @applications << resource
+      assert_app_in_site(scope, resource)
+      return
+    end
+
+    if @current_app
+      # We are in the process of pulling application components out that
+      # apply to this node
+      Puppet.notice "Check #{resource}"
+      return unless @current_components.any? do |comp|
+        comp.type == resource.type && comp.title == resource.title
+      end
+    end
+
     @resources << resource
 
     # Note that this will fail if the resource is not unique.
@@ -99,7 +121,22 @@ class Puppet::Parser::Compiler
     # This adds a resource to the class it lexically appears in in the
     # manifest.
     unless resource.class?
-      return @catalog.add_edge(scope.resource, resource)
+      @catalog.add_edge(scope.resource, resource)
+    end
+  end
+
+  def assert_app_in_site(scope, resource)
+    if resource.type == 'App'
+      if scope.resource
+        # directly contained in a Site
+        return if scope.resource.type == 'Site'
+        # contained in something that may be contained in Site
+        upstream = @catalog.upstream_from_vertex(scope.resource)
+        if upstream
+          return if upstream.keys.map(&:type).include?('Site')
+        end
+      end
+      raise ArgumentError, "Application instances like '#{resource}' can only be contained within a Site"
     end
   end
 
@@ -111,6 +148,16 @@ class Puppet::Parser::Compiler
     @catalog.add_class(name) unless name == ""
   end
 
+  # Add a catalog validator that will run at some stage to this compiler
+  # @param catalog_validators [Class<CatalogValidator>] The catalog validator class to add
+  def add_catalog_validator(catalog_validators)
+    @catalog_validators << catalog_validators
+    nil
+  end
+
+  def add_catalog_validators
+    add_catalog_validator(CatalogValidator::RelationshipValidator)
+  end
 
   # Return a list of all of the defined classes.
   def_delegator :@catalog, :classes, :classlist
@@ -128,17 +175,36 @@ class Puppet::Parser::Compiler
 
       activate_binder
 
+      Puppet::Util::Profiler.profile("Compile: Evaluated capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
+
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated AST node", [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated node classes", [:compiler, :evaluate_node_classes]) { evaluate_node_classes }
 
+      Puppet::Util::Profiler.profile("Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
+
+      # New capability mappings may have been defined when the site was evaluated
+      Puppet::Util::Profiler.profile("Compile: Evaluated site capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
+
       Puppet::Util::Profiler.profile("Compile: Evaluated generators", [:compiler, :evaluate_generators]) { evaluate_generators }
+
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+        validate_catalog(CatalogValidator::PRE_FINISH)
+      end
 
       Puppet::Util::Profiler.profile("Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
 
+      Puppet::Util::Profiler.profile("Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
+
       fail_on_unevaluated
+
+      Puppet::Util::Profiler.profile("Compile: Validate Catalog final", [:compiler, :validate_final]) do
+        validate_catalog(CatalogValidator::FINAL)
+      end
 
       if block_given?
         yield @catalog
@@ -146,6 +212,10 @@ class Puppet::Parser::Compiler
         @catalog
       end
     end
+  end
+
+  def validate_catalog(validation_stage)
+    @catalog_validators.select { |vclass| vclass.validation_stage?(validation_stage) }.each { |vclass| vclass.new(@catalog).validate }
   end
 
   # Constructs the overrides for the context
@@ -188,6 +258,111 @@ class Puppet::Parser::Compiler
     evaluate_classes(classes_without_params, @node_scope || topscope)
   end
 
+  # Evaluates the site - the top container for an environment catalog
+  # The site contain behaves analogous to a node - for the environment catalog, node expressions are ignored
+  # as the result is cross node. The site expression serves as a container for everything that is across
+  # all nodes.
+  #
+  # @api private
+  #
+  def evaluate_site
+    # Has a site been defined? If not, do nothing but issue a warning.
+    #
+    site = known_resource_types.find_site()
+    unless site
+      on_empty_site()
+      return
+    end
+
+    # Create a resource to model this site and add it to catalog
+    resource = site.ensure_in_catalog(topscope)
+
+    # The site sets node scope to be able to shadow what is in top scope
+    @node_scope = topscope.class_scope(site)
+
+    # Evaluates the logic contain in the site expression
+    resource.evaluate
+  end
+
+  # @api private
+  def on_empty_site
+    # do nothing
+  end
+
+  # Prunes the catalog by dropping all resources are contained under the Site (if a site expression is used).
+  # As a consequence all edges to/from dropped resources are also dropped.
+  # Once the pruning is performed, this compiler returns the pruned list when calling the #resources method.
+  # The pruning does not alter the order of resources in the resources list.
+  #
+  # @api private
+  def prune_catalog
+    prune_node_catalog
+  end
+
+  def prune_node_catalog
+    # Everything under Site[site] should be pruned as that is for the environment catalog, not a node
+    #
+    the_site_resource = @catalog.resource('Site', 'site')
+
+    if the_site_resource
+      # Get downstream vertexes returns a hash where the keys are the resources and values nesting level
+      to_be_removed = @catalog.downstream_from_vertex(the_site_resource).keys
+
+      # Drop the Site[site] resource if it has no content
+      if to_be_removed.empty?
+        to_be_removed << the_site_resource
+      end
+    else
+      to_be_removed = []
+    end
+
+    # keep_from_site is populated with any App resources.
+    application_resources = @resources.select {|r| r.type == 'App' }
+    # keep all applications plus what is directly referenced from applications
+    keep_from_site = application_resources
+    keep_from_site += application_resources.map {|app| @catalog.direct_dependents_of(app) }.flatten
+
+    to_be_removed -= keep_from_site
+    @catalog.remove_resource(*to_be_removed)
+    # set the pruned result
+    @resources = @catalog.resources
+  end
+
+  # @api private
+  def evaluate_applications
+    @applications.each do |app|
+      components = []
+      mapping = app.parameters[:nodes] ? app.parameters[:nodes].value : {}
+      raise Puppet::Error, "Invalid node mapping in #{app.ref}: Mapping must be a hash" unless mapping.is_a?(Hash)
+      all_mapped = Set.new
+      mapping.each do |k,v|
+        raise Puppet::Error, "Invalid node mapping in #{app.ref}: Key #{k} is not a Node" unless k.is_a?(Puppet::Resource) && k.type == 'Node'
+        v = [v] unless v.is_a?(Array)
+        v.each do |res|
+          raise Puppet::Error, "Invalid node mapping in #{app.ref}: Value #{res} is not a resource" unless res.is_a?(Puppet::Resource)
+          raise Puppet::Error, "Application #{app.ref} maps component #{res} to multiple nodes" if all_mapped.add?(res.ref).nil?
+          components << res if k.title == node.name
+        end
+      end
+      begin
+        @current_app = app
+        @current_components = components
+        unless @current_components.empty?
+          Puppet.notice "EVAL APP #{app} #{components.inspect}"
+          # Add the app itself since components mapped to the current node
+          # will have a containment edge for it
+          # @todo lutter 2015-01-28: the node mapping winds up in the
+          # catalog, but probably shouldn't
+          @catalog.add_resource(@current_app)
+          @current_app.evaluate
+        end
+      ensure
+        @current_app = nil
+        @current_components = nil
+      end
+    end
+  end
+
   # Evaluates each specified class in turn. If there are any classes that 
   # can't be found, an error is raised. This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
@@ -201,6 +376,12 @@ class Puppet::Parser::Compiler
     if classes.class == Hash
       class_parameters = classes
       classes = classes.keys
+    end
+
+    unless @current_components.nil?
+      classes = classes.select do |title|
+        @current_components.any? { |comp| comp.class? && comp.title == title }
+      end
     end
 
     hostclasses = classes.collect do |name|
@@ -232,9 +413,20 @@ class Puppet::Parser::Compiler
   def_delegator :@catalog, :resource, :findresource
 
   def initialize(node, options = {})
-    @node = node
+    @node = sanitize_node(node)
+    # Array of resources representing all application instances we've found
+    @applications = []
+    # We use @current_app and @current_components to signal to the
+    # evaluator that we are in the middle of evaluating an
+    # application. They are set in evaluate_applications to the application
+    # instance, resp. to an array of the components of that application
+    # that is mapped to the current node. They are only non-nil when we are
+    # in the middle of executing evaluate_applications
+    @current_app = nil
+    @current_components = nil
     set_options(options)
     initvars
+    add_catalog_validators
   end
 
   # Create a new scope, with either a specified parent scope or
@@ -315,6 +507,38 @@ class Puppet::Parser::Compiler
     [already_included, newly_included]
   end
 
+  def evaluate_capability_mappings
+    krt = known_resource_types
+    krt.capability_mappings.each_value do |capability_mapping|
+      args = capability_mapping.arguments
+      component_ref = args['component']
+      kind = args['kind']
+
+      # That component_ref is either a QNAME or a Class['literal'|QREF] is asserted during validation so no
+      # need to check that here
+      if component_ref.is_a?(Puppet::Pops::Model::QualifiedName)
+        component_name = component_ref.value
+        component_type = 'type'
+        component = krt.find_definition(component_name)
+      else
+        component_name = component_ref.keys[0].value
+        component_type = 'class'
+        component = krt.find_hostclass(component_name)
+      end
+      if component.nil?
+        raise Puppet::ParseError, "Capability mapping error: #{kind} clause references nonexistent #{component_type} #{component_name}"
+      end
+
+      blueprint = args['blueprint']
+      if kind == 'produces'
+        component.add_produces(blueprint)
+      else
+        component.add_consumes(blueprint)
+      end
+    end
+    krt.capability_mappings.clear # No longer needed
+  end
+
   # If ast nodes are enabled, then see if we can find and evaluate one.
   def evaluate_ast_node
     return unless ast_nodes?
@@ -326,7 +550,7 @@ class Puppet::Parser::Compiler
     end
 
     unless (astnode ||= known_resource_types.node("default"))
-      raise Puppet::ParseError, "Could not find default node or by name with '#{node.names.join(", ")}'"
+      raise Puppet::ParseError, "Could not find node statement with name 'default' or '#{node.names.join(", ")}'"
     end
 
     # Create a resource to model this node, and then add it to the list
@@ -363,9 +587,16 @@ class Puppet::Parser::Compiler
   def evaluate_definitions
     exceptwrap do
       Puppet::Util::Profiler.profile("Evaluated definitions", [:compiler, :evaluate_definitions]) do
-        !unevaluated_resources.each do |resource|
-          resource.evaluate
-        end.empty?
+        urs = unevaluated_resources.each do |resource|
+         begin
+            resource.evaluate
+          rescue Puppet::Error => e
+            # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
+            # call stack instead
+            fail(Puppet::Pops::Issues::RUNTIME_ERROR, resource, {:detail => e.message}, e.original || e)
+          end
+        end
+        !urs.empty?
       end
     end
   end
@@ -420,8 +651,7 @@ class Puppet::Parser::Compiler
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
     if !remaining.empty?
-      fail Puppet::ParseError,
-        "Could not find resource(s) #{remaining.join(', ')} for overriding"
+      raise Puppet::ParseError, "Could not find resource(s) #{remaining.join(', ')} for overriding"
     end
   end
 
@@ -515,7 +745,7 @@ class Puppet::Parser::Compiler
     @relationships = []
 
     # For maintaining the relationship between scopes and their resources.
-    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment, @code_id)
 
     # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
     # Create the initial scope, it is needed early
@@ -547,6 +777,66 @@ class Puppet::Parser::Compiler
     else
       @catalog.add_class(*@node.classes)
     end
+
+    @catalog_validators = []
+  end
+
+  def sanitize_node(node)
+    # Resurrect "trusted information" that comes from node/fact terminus.
+    # The current way this is done in puppet db (currently the only one)
+    # is to store the node parameter 'trusted' as a hash of the trusted information.
+    #
+    # Thus here there are two main cases:
+    # 1. This terminus was used in a real agent call (only meaningful if someone curls the request as it would
+    #  fail since the result is a hash of two catalogs).
+    # 2  It is a command line call with a given node that use a terminus that:
+    # 2.1 does not include a 'trusted' fact - use local from node trusted information
+    # 2.2 has a 'trusted' fact - this in turn could be
+    # 2.2.1 puppet db having stored trusted node data as a fact (not a great design)
+    # 2.2.2 some other terminus having stored a fact called "trusted" (most likely that would have failed earlier, but could
+    #       be spoofed).
+    #
+    # For the reasons above, the resurection of trusted node data with authenticated => true is only performed
+    # if user is running as root, else it is resurrected as unauthenticated.
+    #
+    trusted_param = node.parameters['trusted']
+    if trusted_param
+      # Blows up if it is a parameter as it will be set as $trusted by the compiler as if it was a variable
+      node.parameters.delete('trusted')
+      if trusted_param.is_a?(Hash) && %w{authenticated certname extensions}.all? {|key| trusted_param.has_key?(key) }
+        # looks like a hash of trusted data - resurrect it
+        # Allow root to trust the authenticated information if option --trusted is given
+        if !Puppet.features.root?
+          # Set as not trusted - but keep the information
+          trusted_param['authenticated'] = false
+        end
+      else
+        # trusted is some kind of garbage, do not resurrect
+        trusted_param = nil
+      end
+    else
+      # trusted may be boolean false if set as a fact by someone
+      trusted_param = nil
+    end
+
+    # The options for node.trusted_data in priority order are:
+    # 1) node came with trusted_data so use that
+    # 2) else if there is :trusted_information in the puppet context
+    # 3) else if the node provided a 'trusted' parameter (parsed out above)
+    # 4) last, fallback to local node trusted information
+    #
+    # Note that trusted_data should be a hash, but (2) and (4) are not
+    # hashes, so we to_h at the end
+    if !node.trusted_data
+      trusted = Puppet.lookup(:trusted_information) do
+        trusted_param || Puppet::Context::TrustedInformation.local(node)
+      end
+
+      # Ruby 1.9.3 can't apply to_h to a hash, so check first
+      node.trusted_data = trusted.is_a?(Hash) ? trusted : trusted.to_h
+    end
+
+    node
   end
 
   # Set the node's parameters into the top-scope as variables.
@@ -608,5 +898,5 @@ class Puppet::Parser::Compiler
     unless activate_binder()
       raise Puppet::DevError, "The Puppet Binder was not activated"
     end
-  end
+  end  # Creates a diagnostic producer
 end

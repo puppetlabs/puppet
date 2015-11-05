@@ -47,7 +47,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    if catalog = compile(node)
+    if catalog = compile(node, request.options[:code_id])
       return catalog
     else
       # This shouldn't actually happen; we should either return
@@ -82,7 +82,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Compile the actual catalog.
-  def compile(node)
+  def compile(node, code_id)
     str = "Compiled catalog for #{node.name}"
     str += " in environment #{node.environment}" if node.environment
     config = nil
@@ -90,7 +90,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     benchmark(:notice, str) do
       Puppet::Util::Profiler.profile(str, [:compiler, :compile, node.environment, node.name]) do
         begin
-          config = Puppet::Parser::Compiler.compile(node)
+          config = Puppet::Parser::Compiler.compile(node, code_id)
         rescue Puppet::Error => detail
           Puppet.err(detail.to_s) if networked?
           raise

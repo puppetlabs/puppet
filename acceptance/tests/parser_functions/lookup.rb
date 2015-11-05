@@ -44,6 +44,9 @@ hiera_hash_value                = "hiera_class_c"
 hiera_array_value0              = "hiera_array_a"
 hiera_array_value1              = "hiera_array_b"
 
+automatic_data_key              = "automatic_data_key"
+automatic_data_value            = "automatic_data_value"
+automatic_default_value         = "automatic_default_value"
 
 def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
                        module_data_implied_value, module_data_key,
@@ -90,6 +93,36 @@ PP
   end
 end
 
+def mod_manifest_metadata_json(module_name = nil, testdir)
+  if module_name
+    metadata_manifest = <<PPmetadata
+      file { '#{testdir}/environments/production/modules/#{module_name}/metadata.json':
+        ensure => file,
+        content => '
+{
+  "name": "tester-#{module_name}",
+  "version": "0.1.0",
+  "author": "tester",
+  "summary": null,
+  "license": "Apache-2.0",
+  "source": "",
+  "project_page": null,
+  "issues_url": null,
+  "dependencies": [
+  ],
+  "data_provider": "function"
+}
+        ',
+        mode => "0644",
+      }
+      file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/bindings':
+        ensure => absent,
+	force  => true,
+      }
+PPmetadata
+  end
+end
+
 module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
                        module_data_implied_value, module_data_key, module_data_value,
                        hash_name, module_hash_key, module_hash_value, array_key,
@@ -98,6 +131,8 @@ module_manifest2 = mod_manifest_entry(module_name2, testdir, module_data_implied
                        module_data_implied_value, module_data_key, module_data_value_other,
                        hash_name, module_hash_key, module_hash_value, array_key,
                        module_array_value0, module_array_value1)
+metadata_manifest1 = mod_manifest_metadata_json(module_name, testdir)
+metadata_manifest2 = mod_manifest_metadata_json(module_name2, testdir)
 
 apply_manifest_on(master, <<-PP, :catch_failures => true)
 File {
@@ -161,6 +196,7 @@ file { '#{testdir}/hieradata/global.yaml':
     #{module_name}::#{array_key}:
         - #{hiera_array_value0}
         - #{hiera_array_value1}
+    #{module_name}::#{automatic_data_key}: #{automatic_data_value}
   ",
   mode => "0640",
 }
@@ -207,7 +243,8 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
     class #{module_name}($#{env_data_implied_key},
                          $#{module_data_implied_key},
                          $#{env_data_override_implied_key},
-                         $#{hiera_data_implied_key}) {
+                         $#{hiera_data_implied_key},
+                         $#{automatic_data_key}=$#{automatic_default_value}) {
       # lookup data from the environment function databinding
       notify { "#{env_data_implied_key} $#{env_data_implied_key}": }
       $lookup_env = lookup("#{env_data_key}")
@@ -241,6 +278,9 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
       #   this mimicks/covers behavior for including classes
       $lookup_array = lookup("#{module_name}::#{array_key}",Array[String],\\'unique\\')
       notify { "yep": message => "#{array_key} $lookup_array" }
+
+      # automatic data lookup of parametrized class
+      notify { "#{automatic_data_key} $#{automatic_data_key}": }
     }',
   mode => "0640",
 }
@@ -255,7 +295,6 @@ file { '#{testdir}/environments/production/manifests/site.pp':
 }
 PP
 
-step "Try to lookup string data"
 
 master_opts = {
   'main' => {
@@ -263,9 +302,11 @@ master_opts = {
     'hiera_config' => "#{testdir}/hiera.yaml",
   },
 }
-
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
+
+    step "Try to lookup string data, binding specified in bindings/default.rb"
+
     on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2])
     assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
     assert_match("#{env_data_key} #{env_data_value}", stdout)
@@ -284,5 +325,37 @@ with_puppet_running_on master, master_opts, testdir do
     assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
 
     assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
+
+    assert_match("#{automatic_data_key} #{automatic_data_value}", stdout)
+  end
+
+  apply_manifest_on(master, <<-PP, :catch_failures => true)
+  #{metadata_manifest1}
+  #{metadata_manifest2}
+  PP
+
+
+  step "Try again to lookup string data, binding specified in metadata.json"
+
+  agents.each do |agent|
+    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0, 2])
+    assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
+    assert_match("#{env_data_key} #{env_data_value}", stdout)
+
+    assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
+    assert_match("#{module_data_key} #{module_data_value}", stdout)
+
+    assert_match("#{module_data_key} #{module_data_value_other}", stdout)
+ 
+    assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
+    assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
+
+    assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
+    assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
+
+    assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
+
+    assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
+
   end
 end

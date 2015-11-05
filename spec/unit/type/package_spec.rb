@@ -3,6 +3,7 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:package) do
   before do
+    Process.stubs(:euid).returns 0
     Puppet::Util::Storage.stubs(:store)
   end
 

@@ -27,6 +27,6 @@ describe 'the scanf function' do
   it 'errors when not given enough arguments' do
     expect do
       compile_to_catalog("'42'.scanf()")
-    end.to raise_error(/.*expected.*scanf\(String data, String format, Callable block \{0,1\}\)/m)
+    end.to raise_error(/'scanf' expects 2 arguments, got 1/)
   end
 end

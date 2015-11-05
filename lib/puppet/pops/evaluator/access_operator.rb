@@ -164,10 +164,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       keys = keys[0, keys.size - 1]
     end
     assert_keys(keys, o, 1, Float::INFINITY, Puppet::Pops::Types::PAnyType)
-    t = Puppet::Pops::Types::TypeFactory.tuple(*keys)
-    # set size type, or nil for default (exactly 1)
-    t.size_type = size_type
-    t
+    Puppet::Pops::Types::TypeFactory.tuple(keys, size_type)
   end
 
   def access_PCallableType(o, scope, keys)
@@ -189,9 +186,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     else
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
-    string_t = Puppet::Pops::Types::TypeFactory.string()
-    string_t.size_type = size_t
-    string_t
+    TYPEFACTORY.string(size_t)
   end
 
   # Asserts type of each key and calls fail with BAD_TYPE_SPECIFICATION
@@ -229,7 +224,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when :default
       'Default'
     else
-      Puppet::Pops::Types::TypeCalculator.generalize!(Puppet::Pops::Types::TypeCalculator.infer(actual)).to_s
+      Puppet::Pops::Types::TypeCalculator.generalize(Puppet::Pops::Types::TypeCalculator.infer(actual)).to_s
     end
   end
 
@@ -252,10 +247,14 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     if keys.size == 1
       type = keys[0]
-      unless type.is_a?(Puppet::Pops::Types::PAnyType) || type.is_a?(String)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
+      unless type.is_a?(Puppet::Pops::Types::PAnyType)
+        if type.is_a?(String)
+          type = TYPEFACTORY.string(nil, type)
+        else
+          fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
+        end
       end
-      TYPEFACTORY.optional(type)
+      Puppet::Pops::Types::POptionalType.new(type)
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
     end
@@ -270,7 +269,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       type = keys[0]
       case type
       when String
-        type = TYPEFACTORY.string(type)
+        type = TYPEFACTORY.string(nil, type)
       when Puppet::Pops::Types::PAnyType
         type = nil if type.class == Puppet::Pops::Types::PAnyType
       else
@@ -288,9 +287,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
-      result = Puppet::Pops::Types::PType.new()
-      result.type = keys[0]
-      result
+      Puppet::Pops::Types::PType.new(keys[0])
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
     end
@@ -312,11 +309,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
         {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
     end
-    ranged_integer = Puppet::Pops::Types::PIntegerType.new()
-    from, to = keys
-    ranged_integer.from = from == :default ? nil : from
-    ranged_integer.to = to == :default ? nil : to
-    ranged_integer
+    Puppet::Pops::Types::PIntegerType.new(*keys)
   end
 
   def access_PFloatType(o, scope, keys)
@@ -328,11 +321,10 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
         {:actual => x.class}) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
     end
-    ranged_float = Puppet::Pops::Types::PFloatType.new()
     from, to = keys
-    ranged_float.from = from == :default || from.nil? ? nil : Float(from)
-    ranged_float.to = to == :default || to.nil? ? nil : Float(to)
-    ranged_float
+    from = from == :default || from.nil? ? nil : Float(from)
+    to = to == :default || to.nil? ? nil : Float(to)
+    Puppet::Pops::Types::PFloatType.new(from, to)
   end
 
   # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type.
@@ -348,29 +340,18 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     case keys.size
     when 2
-      result = Puppet::Pops::Types::PHashType.new()
-      result.key_type = keys[0]
-      result.element_type = keys[1]
-      result
+      Puppet::Pops::Types::PHashType.new(keys[0], keys[1], nil)
     when 3
-      result = Puppet::Pops::Types::PHashType.new()
-      result.key_type = keys[0]
-      result.element_type = keys[1]
-      size_t = collection_size_t(1, keys[2])
-      result
+      size_t = keys[2]
+      size_t = Puppet::Pops::Types::PIntegerType.new(size_t) unless size_t.is_a?(Puppet::Pops::Types::PIntegerType)
+      Puppet::Pops::Types::PHashType.new(keys[0], keys[1], size_t)
     when 4
-      result = Puppet::Pops::Types::PHashType.new()
-      result.key_type = keys[0]
-      result.element_type = keys[1]
-      size_t = collection_size_t(1, keys[2], keys[3])
-      result
+      Puppet::Pops::Types::PHashType.new(keys[0], keys[1], collection_size_t(1, keys[2], keys[3]))
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
         :base_type => 'Hash-Type', :min => 2, :max => 4, :actual => keys.size
       })
     end
-    result.size_type = size_t if size_t
-    result
   end
 
   # CollectionType is parameterized with a range
@@ -385,9 +366,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
-    result = Puppet::Pops::Types::PCollectionType.new()
-    result.size_type = size_t
-    result
+    Puppet::Pops::Types::PCollectionType.new(size_t)
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.
@@ -408,26 +387,19 @@ class Puppet::Pops::Evaluator::AccessOperator
     unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
     end
-    result = Puppet::Pops::Types::PArrayType.new()
-    result.element_type = keys[0]
-    result.size_type = size_t
-    result
+    Puppet::Pops::Types::PArrayType.new(keys[0], size_t)
   end
 
   # Produces an PIntegerType (range) given one or two keys.
   def collection_size_t(start_index, *keys)
     if keys.size == 1 && keys[0].is_a?(Puppet::Pops::Types::PIntegerType)
-      keys[0].copy
+      keys[0]
     else
       keys.each_with_index do |x, index|
         fail(Puppet::Pops::Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
           {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
       end
-      ranged_integer = Puppet::Pops::Types::PIntegerType.new()
-      from, to = keys
-      ranged_integer.from = from == :default ? nil : from
-      ranged_integer.to = to == :default ? nil : to
-      ranged_integer
+      Puppet::Pops::Types::PIntegerType.new(*keys)
     end
   end
 
@@ -527,10 +499,7 @@ class Puppet::Pops::Evaluator::AccessOperator
         })
       end
 
-      rtype = Puppet::Pops::Types::PResourceType.new()
-      rtype.type_name = type_name
-      rtype.title = (t == :no_title ? nil : t)
-      rtype
+      Puppet::Pops::Types::PResourceType.new(type_name, t == :no_title ? nil : t)
     end
     # returns single type if request was for a single entity, else an array of types (possibly empty)
     return result_type_array ? result : result.pop
@@ -577,10 +546,8 @@ class Puppet::Pops::Evaluator::AccessOperator
                end
 
         if name =~ Puppet::Pops::Patterns::NAME
-          ctype = Puppet::Pops::Types::PHostClassType.new()
           # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-          ctype.class_name = name.sub(/^::/, EMPTY_STRING)
-          ctype
+          Puppet::Pops::Types::PHostClassType.new(name.sub(/^::/, EMPTY_STRING))
         else
           fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
         end

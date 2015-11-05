@@ -27,7 +27,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       krt = resource_types_in(request.environment)
 
       # This is a bit ugly.
-      [:hostclass, :definition, :node].each do |type|
+      [:hostclass, :definition, :application, :node].each do |type|
         # We have to us 'find_<type>' here because it will
         # load any missing types from disk, whereas the plain
         # '<type>' method only returns from memory.
@@ -66,14 +66,16 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
             krt.hostclasses.values
           when "defined_type"
             krt.definitions.values
+          when "application"
+            krt.applications.values
           when "node"
             krt.nodes.values
           when nil
-            result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.nodes.values]
+            result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.applications.values, krt.nodes.values]
           else
             raise ArgumentError, "Unrecognized kind filter: " +
                       "'#{request.options[:kind]}', expected one " +
-                      " of 'class', 'defined_type', or 'node'."
+                      " of 'class', 'defined_type', 'application', or 'node'."
         end
 
       result = result_candidates.flatten.reject { |t| t.name == "" }

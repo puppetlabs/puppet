@@ -18,6 +18,9 @@
         "version": {
             "type": "integer"
         },
+        "code_id": {
+            "type": ["string", "null"]
+        },
         "environment": {
             "type": "string"
         },
@@ -90,6 +93,6 @@
             }
         }
     },
-    "required": ["tags", "name", "version", "environment", "resources", "edges", "classes"],
+    "required": ["tags", "name", "version", "code_id", "environment", "resources", "edges", "classes"],
     "additionalProperties": false
 }

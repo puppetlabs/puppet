@@ -58,17 +58,17 @@ describe Puppet::Agent::Locker do
     expect(@locker.lock { :result }).to eq(:result)
   end
 
-  it "should return nil when the lock method does not receive the lock" do
+  it "should raise LockError when the lock method does not receive the lock" do
     @locker.send(:lockfile).expects(:lock).returns false
 
-    expect(@locker.lock {}).to be_nil
+    expect { @locker.lock {} }.to raise_error(Puppet::LockError)
   end
 
   it "should not yield when the lock method does not receive the lock" do
     @locker.send(:lockfile).expects(:lock).returns false
 
     yielded = false
-    @locker.lock { yielded = true }
+    expect { @locker.lock { yielded = true } }.to raise_error(Puppet::LockError)
     expect(yielded).to be_falsey
   end
 
@@ -76,7 +76,7 @@ describe Puppet::Agent::Locker do
     @locker.send(:lockfile).expects(:lock).returns false
     @locker.send(:lockfile).expects(:unlock).never
 
-    @locker.lock {}
+    expect { @locker.lock {} }.to raise_error(Puppet::LockError)
   end
 
   it "should unlock after yielding upon obtaining a lock" do

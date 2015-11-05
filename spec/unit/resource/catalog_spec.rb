@@ -86,6 +86,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     expect(@catalog.server_version).to eq(5)
   end
 
+  it "defaults code_id to nil" do
+    catalog = Puppet::Resource::Catalog.new("host")
+    expect(catalog.code_id).to be_nil
+  end
+
   describe "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
@@ -252,6 +257,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
       expect(@original.filter do |r|
         r == @r1
       end.edge?(@r1,@r2)).not_to be
+    end
+
+    it "copies the version" do
+      @original.version = '123'
+      expect(@original.filter.version).to eq(@original.version)
+    end
+
+    it 'copies the code_id' do
+      @original.code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+      expect(@original.filter.code_id).to eq(@original.code_id)
     end
   end
 
@@ -782,17 +797,23 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
 
-  def pson_output_should
-    @catalog.class.expects(:from_data_hash).with { |hash| yield hash }.returns(:something)
+  { :name => 'myhost',
+    :version => 42,
+    :code_id => 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+  }.each do |param, value|
+    it "emits a #{param} equal to #{value.inspect}" do
+      @catalog.send(param.to_s + "=", value)
+      pson = PSON.parse(@catalog.to_pson)
+
+      expect(pson[param.to_s]).to eq(@catalog.send(param))
+    end
   end
 
-  [:name, :version, :classes].each do |param|
-    it "should set its #{param} to the #{param} of the resource" do
-      @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
+  it "emits an array of classes" do
+    @catalog.add_class('foo')
+    pson = PSON.parse(@catalog.to_pson)
 
-      pson_output_should { |hash| expect(hash[param.to_s]).to eq(@catalog.send(param)) }
-      Puppet::Resource::Catalog.from_data_hash PSON.parse @catalog.to_pson
-    end
+    expect(pson['classes']).to eq(['foo'])
   end
 
   it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
@@ -831,6 +852,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
 
   it "should create it with the provided name" do
     @data['version'] = 50
+    @data['code_id'] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
     @data['tags'] = %w{one two}
     @data['classes'] = %w{one two}
     @data['edges'] = [Puppet::Relationship.new("File[/foo]", "File[/bar]",
@@ -844,6 +866,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
 
     expect(catalog.name).to eq('myhost')
     expect(catalog.version).to eq(@data['version'])
+    expect(catalog.code_id).to eq(@data['code_id'])
     expect(catalog).to be_tagged("one")
     expect(catalog).to be_tagged("two")
 

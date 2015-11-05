@@ -35,7 +35,7 @@ describe Puppet::Resource::Catalog do
       node.stub_everything
 
       Puppet::Node.indirection.expects(:find).returns(node)
-      compiler.expects(:compile).with(node).returns nil
+      compiler.expects(:compile).with(node, anything).returns nil
 
       expect(Puppet::Resource::Catalog.indirection.find("me")).to be_nil
     end

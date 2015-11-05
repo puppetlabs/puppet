@@ -685,23 +685,23 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     # Type operations (full set tested by tests covering type calculator)
     {
       "Array[Integer]"                  => types.array_of(types.integer),
-      "Array[Integer,1]"                => types.constrain_size(types.array_of(types.integer),1, :default),
-      "Array[Integer,1,2]"              => types.constrain_size(types.array_of(types.integer),1, 2),
-      "Array[Integer,Integer[1,2]]"     => types.constrain_size(types.array_of(types.integer),1, 2),
-      "Array[Integer,Integer[1]]"       => types.constrain_size(types.array_of(types.integer),1, :default),
+      "Array[Integer,1]"                => types.array_of(types.integer, types.range(1, :default)),
+      "Array[Integer,1,2]"              => types.array_of(types.integer, types.range(1, 2)),
+      "Array[Integer,Integer[1,2]]"     => types.array_of(types.integer, types.range(1, 2)),
+      "Array[Integer,Integer[1]]"       => types.array_of(types.integer, types.range(1, :default)),
       "Hash[Integer,Integer]"           => types.hash_of(types.integer, types.integer),
-      "Hash[Integer,Integer,1]"         => types.constrain_size(types.hash_of(types.integer, types.integer),1, :default),
-      "Hash[Integer,Integer,1,2]"       => types.constrain_size(types.hash_of(types.integer, types.integer),1, 2),
-      "Hash[Integer,Integer,Integer[1,2]]" => types.constrain_size(types.hash_of(types.integer, types.integer),1, 2),
-      "Hash[Integer,Integer,Integer[1]]"   => types.constrain_size(types.hash_of(types.integer, types.integer),1, :default),
+      "Hash[Integer,Integer,1]"         => types.hash_of(types.integer, types.integer, types.range(1, :default)),
+      "Hash[Integer,Integer,1,2]"       => types.hash_of(types.integer, types.integer, types.range(1, 2)),
+      "Hash[Integer,Integer,Integer[1,2]]" => types.hash_of(types.integer, types.integer, types.range(1, 2)),
+      "Hash[Integer,Integer,Integer[1]]"   => types.hash_of(types.integer, types.integer, types.range(1, :default)),
       "Resource[File]"                  => types.resource('File'),
       "Resource['File']"                => types.resource(types.resource('File')),
       "File[foo]"                       => types.resource('file', 'foo'),
       "File[foo, bar]"                  => [types.resource('file', 'foo'), types.resource('file', 'bar')],
       "Pattern[a, /b/, Pattern[c], Regexp[d]]"  => types.pattern('a', 'b', 'c', 'd'),
-      "String[1,2]"                     => types.constrain_size(types.string,1, 2),
-      "String[Integer[1,2]]"            => types.constrain_size(types.string,1, 2),
-      "String[Integer[1]]"              => types.constrain_size(types.string,1, :default),
+      "String[1,2]"                     => types.string(types.range(1, 2)),
+      "String[Integer[1,2]]"            => types.string(types.range(1, 2)),
+      "String[Integer[1]]"              => types.string(types.range(1, :default)),
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
@@ -1193,6 +1193,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'x'])
       expect(scope.compiler).to have_relationship(['File', 'a', '->', 'File', 'y'])
       expect(scope.compiler).to have_relationship(['File', 'b', '->', 'File', 'y'])
+    end
+
+    it 'should form a relation with 3.x resource -> resource' do
+      # Create a 3.x resource since this is the value given as arguments to defined type
+      scope['a_3x_resource']= Puppet::Parser::Resource.new('notify', 'a', {:scope => scope, :file => __FILE__, :line => 1})
+      source = "$a_3x_resource -> notify{b:}"
+      parser.evaluate_string(scope, source, __FILE__)
+      expect(scope.compiler).to have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
     end
 
     it 'should tolerate (eliminate) duplicates in operands' do

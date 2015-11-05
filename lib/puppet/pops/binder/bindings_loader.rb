@@ -38,11 +38,10 @@ class Puppet::Pops::Binder::BindingsLoader
     paths_for_name(name).find {|p| Puppet::FileSystem.exist?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
   end
 
-  private
-
   def self.loader()
     @autoloader ||= Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings")
   end
+  private_class_method :loader
 
   def self.provide_from_string(scope, name)
     name_path = name.split('::')
@@ -52,6 +51,7 @@ class Puppet::Pops::Binder::BindingsLoader
     end
     provide_from_name_path(scope, name, name_path)
   end
+  private_class_method :provide_from_string
 
   def self.provide_from_name_path(scope, name, name_path)
     # If bindings is already loaded, try this first
@@ -64,14 +64,17 @@ class Puppet::Pops::Binder::BindingsLoader
     end
     result
   end
+  private_class_method :provide_from_name_path
 
   def self.paths_for_name(fq_name)
     [de_camel(fq_name), downcased_path(fq_name)].uniq
   end
+  private_class_method :paths_for_name
 
   def self.downcased_path(fq_name)
     fq_name.to_s.gsub(/::/, '/').downcase
   end
+  private_class_method :downcased_path
 
   def self.de_camel(fq_name)
     fq_name.to_s.gsub(/::/, '/').
@@ -80,4 +83,5 @@ class Puppet::Pops::Binder::BindingsLoader
     tr("-", "_").
     downcase
   end
+  private_class_method :de_camel
 end

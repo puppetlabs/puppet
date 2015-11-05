@@ -11,16 +11,6 @@ module Puppet::DataProviders; end
 class Puppet::DataProviders::FunctionEnvDataProvider < Puppet::Plugins::DataProviders::EnvironmentDataProvider
   include Puppet::DataProviders::DataFunctionSupport
 
-  def lookup(name, scope, merge)
-    begin
-      hash = data('environment', scope)
-      throw :no_such_key unless hash.include?(name)
-      hash[name]
-    rescue *Puppet::Error => detail
-      raise Puppet::DataBinding::LookupError.new(detail.message, detail)
-    end
-  end
-
   def loader(key, scope)
     # This loader allows the data function to be private or public in the environment
     scope.compiler.loaders.private_environment_loader

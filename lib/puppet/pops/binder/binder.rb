@@ -138,7 +138,7 @@ class Puppet::Pops::Binder::Binder
 
   # @api private
   def self.format_binding(b)
-    type_name = Puppet::Pops::Types::TypeCalculator.new().string(b.type)
+    type_name = Puppet::Pops::Types::TypeCalculator.singleton.string(b.type)
     layer_name, bindings_name = get_named_binding_layer_and_name(b)
     "binding: '#{type_name}/#{b.name}' in: '#{bindings_name}' in layer: '#{layer_name}'"
   end
@@ -319,7 +319,7 @@ class Puppet::Pops::Binder::Binder
           unless key_factory.is_contributions_key?(k)
             if v.is_abstract?()
               layer_name, bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(v.binding)
-              type_name = key_factory.type_calculator.string(v.binding.type)
+              type_name = Puppet::Pops::Types::TypeCalculator.singleton.string(v.binding.type)
               raise ArgumentError, "The abstract binding '#{type_name}/#{v.binding.name}' in '#{bindings_name}' in layer '#{layer_name}' was not overridden"
             end
             raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)" if entry

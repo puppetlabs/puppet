@@ -32,8 +32,9 @@ end
 
 def verify_state(hosts, pkg, state, match)
   hosts.each do |agent|
+    cmd = rpm_provider(agent)
     # Note yum lists packages as <name>.<arch>
-    on agent, 'yum list installed' do
+    on agent, "#{cmd} list installed" do
       method(match).call(/^#{pkg}\./, stdout)
     end
 

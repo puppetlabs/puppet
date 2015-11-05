@@ -27,19 +27,24 @@ describe "when performing lookup" do
   # @param *args [String] splat of args that will be concatenated to form the puppet args sent to lookup
   # @return [Array<String>] List of names of Notify resources in the resulting catalog
   #
-  def assemble_and_compile(fmt, *lookup_args)
-    assemble_and_compile_with_block(fmt, "'no_block_present'", *lookup_args)
+  def assemble_and_compile(fmt, *lookup_args, &block)
+    assemble_and_compile_with_block(fmt, "'no_block_present'", *lookup_args, &block)
   end
 
-  def assemble_and_compile_with_block(fmt, block, *lookup_args)
-    Puppet[:code] = <<-END.gsub(/^ {6}/, '')
+  def assemble_and_compile_with_block(fmt, block, *lookup_args, &cblock)
+    compile_and_get_notifications(<<-END.gsub(/^ {6}/, ''), &cblock)
       $args = [#{lookup_args.join(',')}]
       $block = #{block}
       include abc
       $r = if $abc::result == undef { 'no_value' } else { $abc::result }
       notify { \"#{fmt}\": }
     END
-    compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+  end
+
+  def compile_and_get_notifications(code)
+    Puppet[:code] = code
+    catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+    catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
   end
 
   # There is a fully configured 'production' environment in fixtures at this location
@@ -76,7 +81,18 @@ describe "when performing lookup" do
       expect(resources).to include('module_b')
     end
 
+    it "can lookup value provided by the module that has 'function' data_provider entry in metadata.json" do
+      resources = compile_and_get_notifications("$args = ['meta::b']\ninclude meta\nnotify { $meta::result: }\n")
+      expect(resources).to include('module_b')
+    end
+
+    it "can lookup value provided by the module that has 'sample' data_provider entry in metadata.json" do
+      resources = compile_and_get_notifications("$args = ['metawcp::b']\ninclude metawcp\nnotify { $metawcp::result: }\n")
+      expect(resources).to include('module_b')
+    end
+
     it 'can lookup value provided in global scope' do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::a', any_parameters).returns('global_a')
       resources = assemble_and_compile('${r}', "'abc::a'")
       expect(resources).to include('global_a')
@@ -108,6 +124,7 @@ describe "when performing lookup" do
     end
 
     it "can 'hash' merge values provided by global, environment, and module" do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::e', any_parameters).returns({ 'k1' => 'global_e1' })
       resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "'hash'")
       expect(resources).to include('global_e1_module_e2_env_e3')
@@ -173,30 +190,35 @@ describe "when performing lookup" do
     end
 
     it 'can lookup and deep merge deep values provided by global, environment, and module' do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::f', any_parameters).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
       resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
     it 'will propagate resolution_type :array to Hiera when merge == \'unique\''  do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::c', anything, anything, anything, :array).returns(['global_c'])
       resources = assemble_and_compile('${r[0]}_${r[1]}_${r[2]}', "'abc::c'", 'Array[String]', "'unique'")
       expect(resources).to include('global_c_env_c_module_c')
     end
 
     it 'will propagate a Hash resolution_type with :behavior => :native to Hiera when merge == \'hash\''  do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::e', anything, anything, anything, { :behavior => :native }).returns({ 'k1' => 'global_e1' })
       resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{strategy => 'hash'}")
       expect(resources).to include('global_e1_module_e2_env_e3')
     end
 
     it 'will propagate a Hash resolution_type with :behavior => :deeper to Hiera when merge == \'deep\''  do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
       resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
     end
 
     it 'will propagate a Hash resolution_type with symbolic deep merge options to Hiera'  do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper, :knockout_prefix => '--' }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' }})
       resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "{ 'strategy' => 'deep', 'knockout_prefix' => '--' }")
       expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
@@ -331,24 +353,26 @@ describe "when performing lookup" do
     end
 
     it 'will resolve global, environment, and module correctly' do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('bca::e', any_parameters).returns({ 'k1' => 'global_e1' })
-      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+      resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include bca
         $r = lookup(bca::e, Hash[String,String], hash)
         notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
       END
-      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      )
       expect(resources).to include('global_e1_module_bca_e2_env_bca_e3')
     end
 
     it 'will resolve global and environment correctly when module has no provider' do
+      Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
       Hiera.any_instance.expects(:lookup).with('no_provider::e', any_parameters).returns({ 'k1' => 'global_e1' })
-      Puppet[:code] = <<-END.gsub(/^ {8}/, '')
+      resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include no_provider
         $r = lookup(no_provider::e, Hash[String,String], hash)
         notify { "${r[k1]}_${r[k2]}_${r[k3]}": }
       END
-      resources = compiler.compile().resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+      )
       expect(resources).to include('global_e1__env_no_provider_e3') # k2 is missing
     end
   end
@@ -359,6 +383,173 @@ describe "when performing lookup" do
       expect do
         compiler.compile()
       end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
+    end
+  end
+
+
+  context 'when using explain' do
+    it 'will explain that module is not found' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('ppx::e',nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "ppx::e"
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "ppx::e"
+  Module "ppx"
+    Module not found
+EOS
+      end
+    end
+
+    it 'will explain that module does not find a key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('abc::x', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "abc::x"
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "abc::x"
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    No such key: "abc::x"
+EOS
+      end
+    end
+
+    it 'will explain deep merge results without options' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy deep
+  Data Binding "hiera"
+    No such key: "abc::e"
+  Data Provider "FunctionEnvDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "env_e1",
+      "k3" => "env_e3"
+    }
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "module_e1",
+      "k2" => "module_e2"
+    }
+  Merged result: {
+    "k1" => "env_e1",
+    "k2" => "module_e2",
+    "k3" => "env_e3"
+  }
+EOS
+      end
+    end
+
+    it 'will explain deep merge results with options' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        Hiera.any_instance.expects(:lookup).with(any_parameters).returns({'k1' => 'global_g1'})
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy deep
+  Options: {
+    "merge_hash_arrays" => true
+  }
+  Data Binding "hiera"
+    Found key: "abc::e" value: {
+      "k1" => "global_g1"
+    }
+  Data Provider "FunctionEnvDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "env_e1",
+      "k3" => "env_e3"
+    }
+  Module "abc" using Data Provider "FunctionModuleDataProvider"
+    Found key: "abc::e" value: {
+      "k1" => "module_e1",
+      "k2" => "module_e2"
+    }
+  Merged result: {
+    "k1" => "global_g1",
+    "k2" => "module_e2",
+    "k3" => "env_e3"
+  }
+EOS
+      end
+    end
+
+    it 'will handle path merge with not found correctly' do
+      assemble_and_compile('${r}', "'hieraprovider::test::param_a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('hieraprovider::test::not_found', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::DataBinding::LookupError
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "hieraprovider::test::not_found"
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "hieraprovider::test::not_found"
+  Module "hieraprovider" using Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
+    Data Provider "two paths"
+      Merge strategy first
+        Path "#{environmentpath}/production/modules/hieraprovider/data/first.json"
+          Original path: first
+          No such key: "hieraprovider::test::not_found"
+        Path "#{environmentpath}/production/modules/hieraprovider/data/second_not_present.json"
+          Original path: second_not_present
+          Path not found
+EOS
+      end
+    end
+
+    it 'will provide a hash containing all explanation elements' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        expect(lookup_invocation.explainer.to_hash).to eq(
+            {
+              :branches => [
+              {
+                :key => 'abc::e',
+                :event => :not_found,
+                :type => :global,
+                :name => :hiera
+              },
+              {
+                :key => 'abc::e',
+                :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
+                :event => :found,
+                :type => :data_provider,
+                :name => 'FunctionEnvDataProvider'
+              },
+              {
+                :key => 'abc::e',
+                :value => { 'k1' => 'module_e1', 'k2' => 'module_e2' },
+                :event => :found,
+                :type => :data_provider,
+                :name => 'FunctionModuleDataProvider',
+                :module => 'abc'
+              }
+            ],
+              :value => { 'k1' => 'env_e1', 'k2' => 'module_e2', 'k3' => 'env_e3' },
+              :event => :result,
+              :merge => :deep,
+              :options => { 'merge_hash_arrays' => true },
+              :type => :merge
+            }
+          )
+      end
     end
   end
 end

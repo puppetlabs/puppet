@@ -79,7 +79,7 @@ class Puppet::Transaction
   # necessary events.
   def evaluate(&block)
     block ||= method(:eval_resource)
-    generator = AdditionalResourceGenerator.new(@catalog, relationship_graph, @prioritizer)
+    generator = AdditionalResourceGenerator.new(@catalog, nil, @prioritizer)
     @catalog.vertices.each { |resource| generator.generate_additional_resources(resource) }
 
     perform_pre_run_checks
@@ -135,6 +135,9 @@ class Puppet::Transaction
       end
     end
 
+    # Generate the relationship graph, set up our generator to use it
+    # for eval_generate, then kick off our traversal.
+    generator.relationship_graph = relationship_graph
     relationship_graph.traverse(:while => continue_while,
                                 :pre_process => pre_process,
                                 :overly_deferred_resource_handler => overly_deferred_resource_handler,

@@ -4,8 +4,6 @@ step "Ensure Git and Ruby"
 
 require 'puppet/acceptance/install_utils'
 extend Puppet::Acceptance::InstallUtils
-require 'puppet/acceptance/git_utils'
-extend Puppet::Acceptance::GitUtils
 require 'beaker/dsl/install_utils'
 extend Beaker::DSL::InstallUtils
 
@@ -114,9 +112,9 @@ hosts.each do |host|
 
     step "#{host} Install ruby from git using revision #{revision}"
     # TODO remove this step once we are installing puppet from msi packages
-    install_from_git(host, "/opt/puppet-git-repos",
+    install_from_git_on(host, "/opt/puppet-git-repos",
                      :name => 'puppet-win32-ruby',
-                     :path => build_giturl('puppet-win32-ruby'),
+                     :path => build_git_url('puppet-win32-ruby'),
                      :rev  => revision)
     on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
     on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'

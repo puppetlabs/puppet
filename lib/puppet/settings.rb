@@ -828,9 +828,9 @@ class Puppet::Settings
 
   # Allow later inspection to determine if the setting was set by user
   # config, rather than a default setting.
-  def set_by_config?(param)
+  def set_by_config?(param, environment = nil, run_mode = preferred_run_mode)
     param = param.to_sym
-    configsearchpath.any? do |source|
+    configsearchpath(environment, run_mode).any? do |source|
       if vals = searchpath_values(source)
         vals.lookup(param)
       end

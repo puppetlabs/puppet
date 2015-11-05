@@ -181,12 +181,15 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 # Create puppet modules directory for puppet module tool
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
-
 # Install a NetworkManager dispatcher script to pickup changes to
 # # /etc/resolv.conf and such (https://bugzilla.redhat.com/532085).
 mkdir -p %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d
 cp -pr ext/puppet-nm-dispatcher \
   %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d/98-%{name}
+
+# Masterhttp.log is created on server start and should be distributed
+# with correct permissions
+touch %{buildroot}%{_localstatedir}/log/puppet/masterhttp.log
 
 %files
 %defattr(-, root, root, 0755)
@@ -280,6 +283,7 @@ cp -pr ext/puppet-nm-dispatcher \
 %{_sysconfdir}/puppet/environments/example_env/README.environment
 %{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-master.8.gz
+%attr(660, puppet, puppet) %{_localstatedir}/log/puppet/masterhttp.log
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)

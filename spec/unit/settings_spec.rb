@@ -287,6 +287,95 @@ describe Puppet::Settings do
       expect(@settings.set_by_cli?(:myval)).to be_falsey
     end
 
+    it "should find no configured settings by default" do
+      expect(@settings.set_by_config?(:myval)).to be_falsey
+    end
+
+    it "should identify configured settings in memory" do
+      @settings.instance_variable_get(:@value_sets)[:memory].expects(:lookup).with(:myval).returns('foo')
+      expect(@settings.set_by_config?(:myval)).to be_truthy
+    end
+
+    it "should identify configured settings from CLI" do
+      @settings.instance_variable_get(:@value_sets)[:cli].expects(:lookup).with(:myval).returns('foo')
+      expect(@settings.set_by_config?(:myval)).to be_truthy
+    end
+
+    it "should not identify configured settings from environment by default" do
+      Puppet.lookup(:environments).expects(:get_conf).with(Puppet[:environment].to_sym).never
+      expect(@settings.set_by_config?(:manifest)).to be_falsey
+    end
+
+    it "should identify configured settings from environment by when an environment is specified" do
+      foo = mock('environment', :manifest => 'foo')
+      Puppet.lookup(:environments).expects(:get_conf).with(Puppet[:environment].to_sym).returns(foo)
+      expect(@settings.set_by_config?(:manifest, Puppet[:environment])).to be_truthy
+    end
+
+    it "should identify configured settings from the preferred run mode" do
+      user_config_text = "[#{@settings.preferred_run_mode}]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval)).to be_truthy
+    end
+
+    it "should identify configured settings from the specified run mode" do
+      user_config_text = "[master]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval, nil, :master)).to be_truthy
+    end
+
+    it "should not identify configured settings from an unspecified run mode" do
+      user_config_text = "[zaz]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval)).to be_falsey
+    end
+
+    it "should identify configured settings from the main section" do
+      user_config_text = "[main]\nmyval = foo"
+      seq = sequence "config_file_sequence"
+
+      Puppet.features.stubs(:root?).returns(false)
+      Puppet::FileSystem.expects(:exist?).
+        with(user_config_file_default_location).
+        returns(true).in_sequence(seq)
+      @settings.expects(:read_file).
+        with(user_config_file_default_location).
+        returns(user_config_text).in_sequence(seq)
+
+      @settings.send(:parse_config_files)
+      expect(@settings.set_by_config?(:myval)).to be_truthy
+    end
+
     it "should clear the cache when setting getopt-specific values" do
       @settings.define_settings :mysection,
           :one => { :default => "whah", :desc => "yay" },
@@ -1734,7 +1823,7 @@ describe Puppet::Settings do
   end
 
   describe "default_certname" do
-    describe "using hostname and domainname" do
+    describe "using hostname and domain" do
       before :each do
         Puppet::Settings.stubs(:hostname_fact).returns("testhostname")
         Puppet::Settings.stubs(:domain_fact).returns("domain.test.")

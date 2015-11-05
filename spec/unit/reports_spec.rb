@@ -43,6 +43,16 @@ describe Puppet::Reports, " when registering report types" do
     Puppet::Reports.register_report(:testing) { }
   end
 
+  it "should allow a successful report to be reloaded" do
+    Puppet::Reports.register_report(:testing) { }
+    Puppet::Reports.register_report(:testing) { }
+  end
+
+  it "should allow a failed report to be reloaded and show the correct exception both times" do
+    expect { Puppet::Reports.register_report(:testing) { raise TypeError, 'failed report' } }.to raise_error(TypeError)
+    expect { Puppet::Reports.register_report(:testing) { raise TypeError, 'failed report' } }.to raise_error(TypeError)
+  end
+
   it "should extend the report type with the Puppet::Util::Docs module" do
     mod = stub 'module', :define_method => true
 

@@ -88,12 +88,18 @@ class Puppet::Parser::AST::PopsBridge
           instantiate_HostClassDefinition(d, modname)
         when Puppet::Pops::Model::ResourceTypeDefinition
           instantiate_ResourceTypeDefinition(d, modname)
+        when Puppet::Pops::Model::CapabilityMapping
+          instantiate_CapabilityMapping(d, modname)
         when Puppet::Pops::Model::NodeDefinition
           instantiate_NodeDefinition(d, modname)
+        when Puppet::Pops::Model::SiteDefinition
+            instantiate_SiteDefinition(d, modname)
         when Puppet::Pops::Model::FunctionDefinition
           instantiate_FunctionDefinition(d, modname)
           # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
           next
+        when Puppet::Pops::Model::Application
+          instantiate_ApplicationDefinition(d, modname)
         else
           raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
         end
@@ -182,6 +188,27 @@ class Puppet::Parser::AST::PopsBridge
       Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
     end
 
+    def instantiate_CapabilityMapping(o, modname)
+      # Use an intermediate 'capability_mapping' type to pass this info to the compiler where the
+      # actual mapping takes place
+      Puppet::Resource::Type.new(:capability_mapping, "#{o.component} #{o.kind} #{o.capability}", { :arguments => {
+        'component'     => o.component,
+        'kind'          => o.kind,
+        'blueprint'     => {
+          :capability => o.capability,
+          :mappings   => o.mappings.reduce({}) do |memo, mapping|
+            memo[mapping.attribute_name] =
+              Expression.new(:value => mapping.value_expr)
+            memo
+          end
+      }}})
+    end
+
+    def instantiate_ApplicationDefinition(o, modname)
+      args = args_from_definition(o, modname)
+      Puppet::Resource::Type.new(:application, o.name, @context.merge(args))
+    end
+
     def instantiate_NodeDefinition(o, modname)
       args = { :module_name => modname }
 
@@ -192,12 +219,23 @@ class Puppet::Parser::AST::PopsBridge
       unless is_nop?(o.parent)
         args[:parent] = @ast_transformer.hostname(o.parent)
       end
+      args = @ast_transformer.merge_location(args, o)
 
       host_matches = @ast_transformer.hostname(o.host_matches)
-      @ast_transformer.merge_location(args, o)
       host_matches.collect do |name|
         Puppet::Resource::Type.new(:node, name, @context.merge(args))
       end
+    end
+
+    def instantiate_SiteDefinition(o, modname)
+      args = { :module_name => modname }
+
+      unless is_nop?(o.body)
+        args[:code] = Expression.new(:value => o.body)
+      end
+
+      args = @ast_transformer.merge_location(args, o)
+      Puppet::Resource::Type.new(:site, 'site', @context.merge(args))
     end
 
     # Propagates a found Function to the appropriate loader.

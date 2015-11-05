@@ -58,7 +58,6 @@ describe Puppet::Agent do
 
     client.expects(:run)
 
-    @agent.stubs(:running?).returns false
     @agent.stubs(:disabled?).returns false
     @agent.run
   end
@@ -75,19 +74,12 @@ describe Puppet::Agent do
   describe "when being run" do
     before do
       AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
-      @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
     end
 
     it "should splay" do
       @agent.expects(:splay)
 
-      @agent.run
-    end
-
-    it "should do nothing if already running" do
-      @agent.expects(:running?).returns true
-      AgentTestClient.expects(:new).never
       @agent.run
     end
 

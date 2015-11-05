@@ -2,46 +2,62 @@ test_name "mounted should create an entry in filesystem table and mount it"
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823
-confine :except, :platform => /solaris/
-confine :except, :platform => /aix/
+confine :except, :platform => /solaris/ # See PUP-5201
 
-fstab = '/etc/fstab'
+require 'puppet/acceptance/mount_utils'
+extend Puppet::Acceptance::MountUtils
+
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
+  fs_file = filesystem_file(agent)
+  fs_type = filesystem_type(agent)
+
   teardown do
-    #(teardown) restore the fstab file
-    on(agent, "mv /tmp/fstab #{fstab}", :acceptable_exit_codes => (0..254))
     #(teardown) umount disk image
     on(agent, "umount /#{name}", :acceptable_exit_codes => (0..254))
     #(teardown) delete disk image
-    on(agent, "rm /tmp/#{name}", :acceptable_exit_codes => (0..254))
+    if agent['platform'] =~ /aix/
+      on(agent, "rmlv -f #{name}", :acceptable_exit_codes => (0..254))
+    else
+      on(agent, "rm /tmp/#{name}", :acceptable_exit_codes => (0..254))
+    end
     #(teardown) delete mount point
     on(agent, "rm -fr /#{name}", :acceptable_exit_codes => (0..254))
+    #(teardown) restore the fstab file
+    on(agent, "mv /tmp/fs_backup_file #{fs_file}", :acceptable_exit_codes => (0..254))
   end
 
   #------- SETUP -------#
-  step "(setup) backup fstab file"
-  on(agent, "cp #{fstab} /tmp/fstab", :acceptable_exit_codes => [0,1])
-
-  step "(setup) create disk image"
-  on(agent, "dd if=/dev/zero of=/tmp/#{name} count=10240", :acceptable_exit_codes => [0,1])
-  on(agent, "yes | mkfs -t ext3 -q /tmp/#{name}")
+  step "(setup) backup #{fs_file} file"
+  on(agent, "cp #{fs_file} /tmp/fs_backup_file", :acceptable_exit_codes => [0,1])
 
   step "(setup) create mount point"
   on(agent, "mkdir /#{name}", :acceptable_exit_codes => [0,1])
 
+  step "(setup) create new filesystem to be mounted"
+  create_filesystem(agent, name)
+
   #------- TESTS -------#
   step "create a mount with puppet (mounted)"
-  args = ['ensure=mounted',
-          'fstype=ext3',
-          'options=loop',
-          "device='/tmp/#{name}'"
-         ]
+  if agent['platform'] =~ /aix/
+    args = ['ensure=mounted',
+            "fstype=#{fs_type}",
+            "options='log=/dev/hd8'",
+            "device=/dev/#{name}",
+           ]
+  else
+    args = ['ensure=mounted',
+            "fstype=#{fs_type}",
+            'options=loop',
+            "device=/tmp/#{name}",
+           ]
+  end
+
   on(agent, puppet_resource('mount', "/#{name}", args))
 
   step "verify entry in filesystem table"
-  on(agent, "cat #{fstab}") do |res|
+  on(agent, "cat #{fs_file}") do |res|
     fail_test "didn't find the mount #{name}" unless res.stdout.include? "#{name}"
   end
 

@@ -154,12 +154,14 @@ class Puppet::Configurer
         query_options = get_facts(options)
       end
 
+      configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+
       # We only need to find out the environment to run in if we don't already have a catalog
       unless options[:catalog]
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
-              :configured_environment => Puppet[:environment],
+              :configured_environment => configured_environment,
               :ignore_cache => true,
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
@@ -171,10 +173,12 @@ class Puppet::Configurer
             end
 
             if node.environment.to_s != @environment
-              Puppet.notice "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
+              Puppet.notice "Local environment: '#{@environment}' doesn't match server specified node environment '#{node.environment}', switching agent to '#{node.environment}'."
               @environment = node.environment.to_s
               report.environment = @environment
               query_options = nil
+            else
+              Puppet.info "Using configured environment '#{@environment}'"
             end
           end
         rescue StandardError => detail
@@ -197,7 +201,7 @@ class Puppet::Configurer
 
       query_options = get_facts(options) unless query_options
       query_options[:transaction_uuid] = @transaction_uuid
-      query_options[:configured_environment] = Puppet[:environment]
+      query_options[:configured_environment] = configured_environment
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
@@ -212,13 +216,13 @@ class Puppet::Configurer
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end
-        Puppet.notice "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
+        Puppet.notice "Local environment: '#{@environment}' doesn't match server specified environment '#{catalog.environment}', restarting agent run with environment '#{catalog.environment}'"
         @environment = catalog.environment
         report.environment = @environment
 
         query_options = get_facts(options)
         query_options[:transaction_uuid] = @transaction_uuid
-        query_options[:configured_environment] = Puppet[:environment]
+        query_options[:configured_environment] = configured_environment
 
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1

@@ -83,20 +83,16 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "parses a size constrained collection using capped range" do
-    parameterized_array = types.array_of(types.integer)
-    types.constrain_size(parameterized_array, 1,2)
-    parameterized_hash = types.hash_of(types.integer, types.boolean)
-    types.constrain_size(parameterized_hash, 1,2)
+    parameterized_array = types.array_of(types.integer, types.range(1,2))
+    parameterized_hash = types.hash_of(types.integer, types.boolean, types.range(1,2))
 
     expect(the_type_parsed_from(parameterized_array)).to be_the_type(parameterized_array)
     expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
   end
 
   it "parses a size constrained collection with open range" do
-    parameterized_array = types.array_of(types.integer)
-    types.constrain_size(parameterized_array, 1,:default)
-    parameterized_hash = types.hash_of(types.integer, types.boolean)
-    types.constrain_size(parameterized_hash, 1,:default)
+    parameterized_array = types.array_of(types.integer, types.range(1, :default))
+    parameterized_hash = types.hash_of(types.integer, types.boolean, types.range(1, :default))
 
     expect(the_type_parsed_from(parameterized_array)).to be_the_type(parameterized_array)
     expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
@@ -108,13 +104,12 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "parses tuple type" do
-    tuple_t = types.tuple(Integer, String)
+    tuple_t = types.tuple([Integer, String])
     expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
   end
 
   it "parses tuple type with occurrence constraint" do
-    tuple_t = types.tuple(Integer, String)
-    types.constrain_size(tuple_t, 2, 5)
+    tuple_t = types.tuple([Integer, String], types.range(2, 5))
     expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
   end
 
@@ -173,7 +168,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it 'parses a collection size range' do
-   expect(parser.parse("Collection[1,2]")).to be_the_type(types.constrain_size(types.collection,1,2))
+   expect(parser.parse("Collection[1,2]")).to be_the_type(types.collection(types.range(1,2)))
   end
 
   it 'parses a type type' do

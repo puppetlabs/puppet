@@ -71,7 +71,7 @@ else
     agents.each do |agent|
       on(agent, puppet('agent', "-t --server #{master}"))
 
-      on master, "grep -q #{agent} #{testdir}/*/*"
+      on master, "grep -q #{agent.node_name} #{testdir}/*/*"
     end
   end
 

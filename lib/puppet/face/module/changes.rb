@@ -4,7 +4,8 @@ Puppet::Face.define(:module, '1.0.0') do
     description <<-EOT
       Shows any files in a module that have been modified since it was
       installed. This action compares the files on disk to the md5 checksums
-      included in the module's metadata.
+      included in the module's checksums.json or, if that is missing, in
+      metadata.json.
     EOT
 
     returns "Array of strings representing paths of modified files."

@@ -18,7 +18,7 @@ describe Puppet::FileBucket::File do
 
       {
         "md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
-        "https://puppetmaster:8140/production/file_bucket_file/md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
+        "filebucket://puppetmaster:8140/md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
           described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
@@ -31,7 +31,7 @@ describe Puppet::FileBucket::File do
     describe "when running another application" do
       {
         "md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
-        "https://puppetmaster:8140/production/file_bucket_file/md5/d41d8cd98f00b204e9800998ecf8427e" => :rest,
+        "filebucket://puppetmaster:8140/md5/d41d8cd98f00b204e9800998ecf8427e" => :rest,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
           described_class.indirection.terminus(terminus).class.any_instance.expects(:find)

@@ -88,6 +88,13 @@ context 'installing myresource' do
             provider.install
           end
         end
+        describe "as a windows path on windows", :if => Puppet.features.microsoft_windows? do
+          it "should treat the source as a local path" do
+            resource[:source] = "c:/this/is/a/path/to/a/gem.gem"
+            provider.expects(:execute).with { |args| args[2] == "c:/this/is/a/path/to/a/gem.gem" }.returns ""
+            provider.install
+          end
+        end
         describe "with an invalid uri" do
           it "should fail" do
             URI.expects(:parse).raises(ArgumentError)

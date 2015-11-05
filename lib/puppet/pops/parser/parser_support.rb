@@ -50,21 +50,28 @@ class Puppet::Pops::Parser::Parser
   # lexer. Line and position is produced if the given semantic is a Positioned object and have been given an offset.
   #
   def error(semantic, message)
-    semantic = semantic.current() if semantic.is_a?(Puppet::Pops::Model::Factory)
-    # Adapt the model so it is possible to get location information.
-    # The model may not have been added to the source tree, so give it the lexer's locator
-    # directly instead of searching for the root Program where the locator is normally stored.
-    #
-    if semantic.is_a?(Puppet::Pops::Model::Positioned)
-      adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(semantic)
-      adapter.locator = @lexer.locator
-    else
-      adapter = nil
-    end
     except = Puppet::ParseError.new(message)
-    except.file = @lexer.locator.file
-    except.line = adapter.line if adapter
-    except.pos = adapter.pos if adapter
+    if semantic.is_a?(Puppet::Pops::Parser::LexerSupport::TokenValue)
+      except.file = semantic[:file];
+      except.line = semantic[:line];
+      except.pos = semantic[:pos];
+    else
+      semantic = semantic.current() if semantic.is_a?(Puppet::Pops::Model::Factory)
+
+      # Adapt the model so it is possible to get location information.
+      # The model may not have been added to the source tree, so give it the lexer's locator
+      # directly instead of searching for the root Program where the locator is normally stored.
+      #
+      if semantic.is_a?(Puppet::Pops::Model::Positioned)
+        adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(semantic)
+        adapter.locator = @lexer.locator
+      else
+        adapter = nil
+      end
+      except.file = @lexer.locator.file
+      except.line = adapter.line if adapter
+      except.pos = adapter.pos if adapter
+    end
     raise except
   end
 
@@ -165,6 +172,11 @@ class Puppet::Pops::Parser::Parser
   def add_definition(definition)
     @definitions << definition.current
     definition
+  end
+
+  def add_mapping(produces)
+    # The actual handling of mappings happens in PopsBridge
+    add_definition(produces)
   end
 
   # Transforms an array of expressions containing literal name expressions to calls if followed by an

@@ -185,7 +185,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should do nothing if the agent is running" do
-      agent.expects(:running?).returns true
+      agent.expects(:run).with({:splay => false}).raises Puppet::LockError, 'Failed to aquire lock'
+      Puppet.expects(:notice).with('Not triggering already-running agent')
 
       daemon.agent = agent
 
@@ -193,8 +194,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should run the agent if one is available and it is not running" do
-      agent.expects(:running?).returns false
       agent.expects(:run).with({:splay => false})
+      Puppet.expects(:notice).with('Not triggering already-running agent').never
 
       daemon.agent = agent
 

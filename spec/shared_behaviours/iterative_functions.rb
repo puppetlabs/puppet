@@ -22,25 +22,25 @@ shared_examples_for 'all iterative functions argument checks' do |func|
   it 'raises an error when called with any parameters besides a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)
-        [1].#{func}(1) |$v| {  }
+        [1].#{func}(1,2) |$v,$y| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*arg count \{3\}/m)
+    end.to raise_error(Puppet::Error, /expects (?:between 1 and 2 arguments|1 argument), got 3/)
   end
 
   it 'raises an error when called without a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)
-        [1].#{func}()
+        [1].#{func}
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*arg count \{1\}/m)
+    end.to raise_error(Puppet::Error, /expects a block/)
   end
 
   it 'raises an error when called with something that is not a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)
-        [1].#{func}(1)
+        [1].#{func}(1,2)
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*Callable.*actual(?!Callable\)).*/m)
+    end.to raise_error(Puppet::Error, /expects (?:between 1 and 2 arguments|1 argument), got 3/)
   end
 
   it 'raises an error when called with a block with too many required parameters' do
@@ -48,7 +48,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}() |$v1, $v2, $v3| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*Callable\[Any, Any, Any\]/m)
+    end.to raise_error(Puppet::Error, /block expects(?: between 1 and)? 2 arguments, got 3/)
   end
 
   it 'raises an error when called with a block with too few parameters' do
@@ -56,7 +56,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}() | | {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*Callable\[0, 0\]/m)
+    end.to raise_error(Puppet::Error, /block expects(?: between 1 and)? 2 arguments, got none/)
   end
 
   it 'does not raise an error when called with a block with too many but optional arguments' do

@@ -332,9 +332,10 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           @applier.expects(:puts).with "h1"
 
           @ca.expects(:print).with("host2").returns nil
-          Puppet.expects(:err).with { |msg| msg.include?("host2") }
-
-          @applier.apply(@ca)
+    
+	  expect {
+            @applier.apply(@ca)
+	  }.to raise_error(ArgumentError, /Could not find certificate for host2/)
         end
       end
     end

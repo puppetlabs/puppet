@@ -1,0 +1,30 @@
+---
+one::test::param:
+  key2: module 2
+
+one::array:
+  - first
+  - second
+  - third
+
+one::lopts_test::hash:
+  a: A
+  c: C
+  m:
+    ma: MA
+    mc: MC
+
+one::loptsm_test::hash:
+  a: A
+  c: C
+  m:
+    ma: MA
+    mc: MC
+
+lookup_options:
+  one::loptsm_test::hash:
+    merge: deep
+
+
+# should not be found since it's not qualified with module name
+ukey2: Some value

@@ -10,7 +10,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => [:archlinux]
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
-  defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["12", "13"]
+  defaultfor :osfamily => :suse
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => "8"
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => "15.04"
 
@@ -32,7 +32,14 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def get_start_link_count
-    Dir.glob("/etc/rc*.d/S??#{@resource[:name]}").length
+    # Start links don't include '.service'. Just search for the service name.
+    if @resource[:name].match(/\.service/)
+      link_name = @resource[:name].split('.')[0]
+    else
+      link_name = @resource[:name]
+    end
+
+    Dir.glob("/etc/rc*.d/S??#{link_name}").length
   end
 
   def enabled?
@@ -59,7 +66,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       # flapping when simply trying to disable a masked service.
       return :mask if (@resource[:enable] == :mask) && (svc_info[:LoadState] == 'masked')
       return :true if svc_info[:UnitFileState] == 'enabled'
-      if Facter.value(:osfamily) == 'debian'
+      if Facter.value(:osfamily).downcase == 'debian'
         ret = debian_enabled?(svc_info)
         return ret if ret
       end
@@ -72,6 +79,11 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return :false
   end
 
+  # This method is required for Debian systems due to the way the SysVInit-Systemd
+  # compatibility layer works. When we are trying to manage a service which does not
+  # have a Systemd unit file, we need to go through the old init script to determine
+  # whether it is enabled or not. See PUP-5016 for more details.
+  #
   def debian_enabled?(svc_info)
     # If UnitFileState == UnitFileState then we query the older way.
     if svc_info[:UnitFileState] == 'UnitFileState'

@@ -53,6 +53,14 @@ class Puppet::Pops::Model::Factory
 
   # Building of Model classes
 
+  def build_Application(o, n, ps, body)
+    o.name = n
+    ps.each { |p| o.addParameters(build(p)) }
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
+  end
+
   def build_ArithmeticExpression(o, op, a, b)
     o.operator = op
     build_BinaryExpression(o, a, b)
@@ -231,6 +239,15 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_CapabilityMapping(o, kind, component, capability, mappings)
+    o.kind = kind
+    component = component.current if component.is_a?(Puppet::Pops::Model::Factory)
+    o.component = component
+    o.capability = capability
+    o.mappings = mappings.map { |m| build(m) }
+    o
+  end
+
   # @param o [Model::NodeDefinition]
   # @param hosts [Array<Expression>] host matches
   # @param parent [Expression] parent node matcher
@@ -238,6 +255,14 @@ class Puppet::Pops::Model::Factory
   def build_NodeDefinition(o, hosts, parent, body)
     o.host_matches = hosts.map {|h| build(h) }
     o.parent = build(parent) if parent # no nop here
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
+  end
+
+  # @param o [Model::SiteDefinition]
+  # @param body [Object] see {#f_build_body}
+  def build_SiteDefinition(o, body)
     b = f_build_body(body)
     o.body = b.current if b
     o
@@ -584,6 +609,7 @@ class Puppet::Pops::Model::Factory
 
   def self.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
 
+  def self.SITE(body);                   new(Model::SiteDefinition, body);                       end
 
   # Parameters
 
@@ -753,6 +779,14 @@ class Puppet::Pops::Model::Factory
 
   def self.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
+  end
+
+  def self.CAPABILITY_MAPPING(kind, component, cap_name, mappings)
+    new(Model::CapabilityMapping, kind, component, cap_name, mappings)
+  end
+
+  def self.APPLICATION(name, parameters, body)
+    new(Model::Application, name, parameters, body)
   end
 
   def self.FUNCTION(name, parameters, body)

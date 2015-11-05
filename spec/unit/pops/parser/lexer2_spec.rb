@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'matchers/match_tokens2'
 require 'puppet/pops'
 require 'puppet/pops/parser/lexer2'
+require_relative './parser_rspec_helper'
 
 module EgrammarLexer2Spec
   def tokens_scanned_from(s)
@@ -19,6 +20,7 @@ end
 
 describe 'Lexer2' do
   include EgrammarLexer2Spec
+  include ParserRspecHelper
 
   {
     :LISTSTART => '[',
@@ -100,13 +102,37 @@ describe 'Lexer2' do
     end
   end
 
-  {
-    "application"  => :APPLICATION_R,
-    "consumes"     => :CONSUMES_R,
-    "produces"     => :PRODUCES_R,
-  }.each do |string, name|
-    it "should lex a (future reserved) keyword from '#{string}'" do
-      expect(tokens_scanned_from(string)).to match_tokens2(name)
+  context 'when app_management is off (by default)' do
+    {
+      "application"  => :APPLICATION_R,
+      "consumes"     => :CONSUMES_R,
+      "produces"     => :PRODUCES_R,
+      "site"         => :SITE_R,
+    }.each do |string, name|
+      it "should lex a (future reserved) keyword from '#{string}'" do
+        expect(tokens_scanned_from(string)).to match_tokens2(name)
+      end
+    end
+  end
+
+  context 'when app_managment is (turned) on' do
+    before(:each) do
+      with_app_management(true)
+    end
+
+    after(:each) do
+      with_app_management(false)
+    end
+
+    {
+      "application"  => :APPLICATION,
+      "consumes"     => :CONSUMES,
+      "produces"     => :PRODUCES,
+      "site"         => :SITE,
+    }.each do |string, name|
+      it "should lex a keyword from '#{string}'" do
+        expect(tokens_scanned_from(string)).to match_tokens2(name)
+      end
     end
   end
 

@@ -109,6 +109,57 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         let(:not_bucketed_plaintext) { "other stuff" }
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
+        describe "when listing the filebucket" do
+          it "should return false/nil when the bucket is empty" do
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar", :list_all => true)).to eq(nil)
+          end
+
+          it "raises when the request is remote" do
+            Puppet[:bucketdir] = tmpdir('bucket')
+
+            request = Puppet::Indirector::Request.new(:file_bucket_file, :find, "#{digest_algorithm}/#{checksum}/foo/bar", nil, :list_all => true)
+            request.node = 'client.example.com'
+
+            expect {
+              Puppet::FileBucketFile::File.new.find(request)
+            }.to raise_error(Puppet::Error, "Listing remote file buckets is not allowed")
+          end
+
+          it "should return the list of bucketed files in a human readable way" do
+            checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
+            checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')
+            checksum3 = save_bucket_file("I'm the modified content of a existing file", '/foo/bar1')
+
+            # Use the first checksum as we know it's stored in the bucket
+            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}/foo/bar1", :list_all => true)
+
+            # The list is sort order from date and file name, so first and third checksums come before the second
+            date_pattern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+            expect(find_result.to_s).to match(Regexp.new("^#{checksum1} #{date_pattern} foo/bar1\\n#{checksum3} #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
+          end
+
+          it "should fail in an informative way when provided dates are not in the right format" do
+            contents = "I'm the contents of a file"
+            save_bucket_file(contents, '/foo/bar1')
+            expect {
+              Puppet::FileBucket::File.indirection.find(
+                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                :list_all => true,
+                :todate => "0:0:0 1-1-1970",
+                :fromdate => "WEIRD"
+              )
+            }.to raise_error(Puppet::Error, /fromdate/)
+            expect {
+              Puppet::FileBucket::File.indirection.find(
+                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                :list_all => true,
+                :todate => "WEIRD",
+                :fromdate => Time.now
+              )
+            }.to raise_error(Puppet::Error, /todate/)
+          end
+        end
+
         describe "when supplying a path" do
           it "should return false/nil if the file isn't bucketed" do
             expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar")).to eq(false)
@@ -177,7 +228,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           checksum2 = save_bucket_file("foo\nbiz\nbaz")
 
           diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
-          expect(diff).to eq("2c2\n< bar\n---\n> biz\n")
+          expect(diff).to include("-bar\n+biz\n")
         end
 
         it "should raise an exception if the hash to diff against isn't found" do

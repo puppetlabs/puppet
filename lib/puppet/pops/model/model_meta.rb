@@ -291,12 +291,19 @@ module Puppet::Pops::Model
   class ResourceTypeDefinition < NamedDefinition
   end
 
+  class Application < NamedDefinition
+  end
+
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
   # a parent node (also using a String or Regular expression).
   #
   class NodeDefinition < Definition
     contains_one_uni 'parent', Expression
     contains_many_uni 'host_matches', Expression, :lowerBound => 1
+    contains_one_uni 'body', Expression
+  end
+
+  class SiteDefinition < Definition
     contains_one_uni 'body', Expression
   end
 
@@ -532,6 +539,14 @@ module Puppet::Pops::Model
   class ResourceExpression < AbstractResource
     contains_one_uni 'type_name', Expression, :lowerBound => 1
     contains_many_uni 'bodies', ResourceBody
+  end
+
+  class CapabilityMapping < Definition
+    # 'produces' or 'consumes'
+    has_attr 'kind', String, :lowerBound => 1
+    has_attr 'capability', String, :lowerBound => 1
+    contains_one_uni 'component', Expression, :lowerBound => 1
+    contains_many_uni 'mappings', AbstractAttributeOperation
   end
 
   # A resource defaults sets defaults for a resource type. This class inherits from AbstractResource

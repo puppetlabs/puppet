@@ -25,8 +25,7 @@ class Puppet::Pops::Types::Enumeration
       o.each
     when Puppet::Pops::Types::PIntegerType
       # Not enumerable if representing an infinite range
-      return nil if o.to.nil? || o.from.nil?
-      o.each
+      o.enumerable? ? o.each : nil
     else
       nil
     end

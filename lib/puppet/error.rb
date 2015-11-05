@@ -93,4 +93,8 @@ module Puppet
   class MissingCommand < Puppet::Error
   end
 
+  # Raised when we failed to aquire a lock
+  class LockError < Puppet::Error
+  end
+
 end

@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   has_feature :install_options, :versionable, :virtual_packages
 
-  commands :yum => "yum", :rpm => "rpm"
+  commands :cmd => "yum", :rpm => "rpm"
 
   if command('rpm')
     confine :true => begin
@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @return [Hash<String, Array<Hash<String, String>>>] All packages that were
   #   found with a list of found versions for each package.
   def self.check_updates(enablerepo, disablerepo, disableexcludes)
-    args = [command(:yum), 'check-update']
+    args = [command(:cmd), 'check-update']
     args.concat(enablerepo.map { |repo| ["--enablerepo=#{repo}"] }.flatten)
     args.concat(disablerepo.map { |repo| ["--disablerepo=#{repo}"] }.flatten)
     args.concat(disableexcludes.map { |repo| ["--disableexcludes=#{repo}"] }.flatten)
@@ -78,9 +78,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     if output.exitstatus == 100
       updates = parse_updates(output)
     elsif output.exitstatus == 0
-      self.debug "yum check-update exited with 0; no package updates available."
+      self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
-      self.warn "Could not check for updates, 'yum check-update' exited with #{output.exitstatus}"
+      self.warn "Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}"
     end
     updates
   end
@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     updates = Hash.new { |h, k| h[k] = [] }
     body.split.each_slice(3) do |tuple|
-      break if tuple[0] =~ /^Obsoleting/
+      break if tuple[0] =~ /^(Obsoleting|Security:)/
       hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
@@ -126,11 +126,16 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     @latest_versions = nil
   end
 
+  def self.error_level
+    '0'
+  end
+
   def install
     wanted = @resource[:name]
+    error_level = self.class.error_level
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
-      yum *['-d', '0', '-e', '0', '-y', install_options, :list, wanted].compact
+      execute([command(:cmd), '-d', '0', '-e', error_level, '-y', install_options, :list, wanted].compact)
     end
 
     should = @resource.should(:ensure)
@@ -154,8 +159,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;
     # ensure we capture output to check for errors.
     no_debug = if Facter.value(:operatingsystemmajrelease).to_i > 5 then ["-d", "0"] else [] end
-    args = no_debug + ["-e", "0", "-y", install_options, operation, wanted].compact
-    output = yum *args
+    command = [command(:cmd)] + no_debug + ["-e", error_level, "-y", install_options, operation, wanted].compact
+    output = execute(command)
 
     if output =~ /^No package #{wanted} available\.$/
       raise Puppet::Error, "Could not find package #{wanted}"
@@ -194,7 +199,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def purge
-    yum "-y", :erase, @resource[:name]
+    execute([command(:cmd), "-y", :erase, @resource[:name]])
   end
 
   # parse a yum "version" specification

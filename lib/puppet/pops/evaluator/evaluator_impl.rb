@@ -665,7 +665,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
       evaluated_name = evaluate(tmp_name, scope)
       unless type_name_acceptable
-        actual = type_calculator.generalize!(type_calculator.infer(evaluated_name)).to_s
+        actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
         fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => actual})
       end
 
@@ -684,7 +684,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         evaluated_name.type_name # assume validated
 
       else
-        actual = type_calculator.generalize!(type_calculator.infer(evaluated_name)).to_s
+        actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
         fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
       end
     end
@@ -720,7 +720,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           fail(Puppet::Pops::Issues::MISSING_TITLE_AT, body.title, {:index => index})
 
         elsif !title.is_a?(String) && title != :default
-          actual = type_calculator.generalize!(type_calculator.infer(title)).to_s
+          actual = type_calculator.generalize(type_calculator.infer(title)).to_s
           fail(Puppet::Pops::Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
 
         elsif title == EMPTY_STRING
@@ -779,7 +779,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_AttributesOperation(o, scope)
     hashed_params = evaluate(o.expr, scope)
     unless hashed_params.is_a?(Hash)
-      actual = type_calculator.generalize!(type_calculator.infer(hashed_params)).to_s
+      actual = type_calculator.generalize(type_calculator.infer(hashed_params)).to_s
       fail(Puppet::Pops::Issues::TYPE_MISMATCH, o.expr, {:expected => 'Hash', :actual => actual})
     end
     hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, :'=>') }
@@ -793,7 +793,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     if type.is_a?(Puppet::Pops::Types::PResourceType) && !type.type_name.nil? && type.title.nil?
       type.type_name # assume it is a valid name
     else
-      actual = type_calculator.generalize!(type_calculator.infer(type))
+      actual = type_calculator.generalize(type_calculator.infer(type))
       fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_ref, {:actual => actual})
     end
     evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }

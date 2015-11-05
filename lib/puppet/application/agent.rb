@@ -382,6 +382,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    raise ArgumentError, "The puppet agent command does not take parameters" unless command_line.args.empty?
+
     setup_test if options[:test]
 
     setup_logs

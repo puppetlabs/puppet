@@ -16,18 +16,39 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  RESOURCE_KINDS = [:hostclass, :node, :definition]
+  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application, :site]
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
       :hostclass => "class",
       :node => "node",
       :definition => "defined_type",
+      :application => "application",
+      :site => 'site'
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
+  NAME = 'name'.freeze
+  TITLE = 'title'.freeze
+  MODULE_NAME = 'module_name'.freeze
+  CALLER_MODULE_NAME = 'caller_module_name'.freeze
+  PARAMETERS = 'parameters'.freeze
+  KIND = 'kind'.freeze
+  NODES = 'nodes'.freeze
+  DOUBLE_COLON = '::'.freeze
+  EMPTY_ARRAY = [].freeze
+
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
+
+  # The attributes 'produces' and 'consumes' are arrays of the blueprints
+  # of capabilities this type can produce/consume. The entries in the array
+  # are a fairly direct representation of what goes into produces/consumes
+  # clauses. Each entry is a hash with attributes
+  #   :capability  - the type name of the capres produced/consumed
+  #   :mappings    - a hash of attribute_name => Expression
+  # These two attributes are populated in
+  # PopsBridge::instantiate_CapabilityMaping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
@@ -48,8 +69,8 @@ class Puppet::Resource::Type
   indirects :resource_type, :terminus_class => :parser
 
   def self.from_data_hash(data)
-    name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
-    kind = data.delete('kind') || "definition"
+    name = data.delete(NAME) or raise ArgumentError, 'Resource Type names must be specified'
+    kind = data.delete(KIND) || 'definition'
 
     unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
       raise ArgumentError, "Unsupported resource kind '#{kind}'"
@@ -74,15 +95,15 @@ class Puppet::Resource::Type
     # External documentation uses "parameters" but the internal name
     # is "arguments"
     # Dump any arguments as source
-    data['parameters'] = Hash[arguments.map do |k,v|
+    data[PARAMETERS] = Hash[arguments.map do |k,v|
                                 [k, v.respond_to?(:source_text) ? v.source_text : v]
                               end]
-    data['name'] = name
+    data[NAME] = name
 
     unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
       raise ArgumentError, "Unsupported resource kind '#{type}'"
     end
-    data['kind'] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
+    data[KIND] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
     data
   end
 
@@ -92,6 +113,48 @@ class Puppet::Resource::Type
     return false unless parent
 
     return(klass == parent_type ? true : parent_type.child_of?(klass))
+  end
+
+  # Evaluate the resources produced by the given resource. These resources are
+  # evaluated in a separate but identical scope from the rest of the resource.
+  def evaluate_produces(resource, scope)
+    # Only defined types and classes can produce capabilities
+    return unless definition? || hostclass?
+
+    resource.export.map do |ex|
+      # Assert that the ref really is a resource reference
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a resource" unless ex.is_a?(Puppet::Resource)
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a capability resource" if ex.resource_type.nil? || !ex.resource_type.is_capability?
+
+      blueprint = produces.find { |pr| pr[:capability] == ex.type }
+      if blueprint.nil?
+        raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
+      end
+      produced_resource = Puppet::Parser::Resource.new(ex.type, ex.title, :scope => scope, :source => self)
+
+      produced_resource.resource_type.parameters.each do |name|
+        next if name == :name
+
+        if expr = blueprint[:mappings][name.to_s]
+          produced_resource[name] = expr.safeevaluate(scope)
+        else
+          produced_resource[name] = scope[name.to_s]
+        end
+      end
+      # Tag the produced resource so we can later distinguish it from
+      # copies of the resource that wind up in the catalogs of nodes that
+      # use this resource. We tag the resource with producer:<environment>,
+      # meaning produced resources need to be unique within their
+      # environment
+      # @todo lutter 2014-11-13: we would really like to use a dedicated
+      # metadata field to indicate the producer of a resource, but that
+      # requires changes to PuppetDB and its API; so for now, we just use
+      # tagging
+      produced_resource.tag("producer:#{scope.catalog.environment}")
+      scope.catalog.add_resource(produced_resource)
+      produced_resource[:require] = resource.ref
+      produced_resource
+    end
   end
 
   # Now evaluate the code associated with this class or definition.
@@ -106,6 +169,8 @@ class Puppet::Resource::Type
     set_resource_parameters(resource, scope)
 
     resource.add_edge_to_stage
+
+    evaluate_produces(resource, scope)
 
     if code
       if @match # Only bother setting up the ephemeral scope if there are match variables to add into it
@@ -132,7 +197,7 @@ class Puppet::Resource::Type
 
     [:code, :doc, :line, :file, :parent].each do |param|
       next unless value = options[param]
-      send(param.to_s + "=", value)
+      send(param.to_s + '=', value)
     end
 
     set_arguments(options[:arguments])
@@ -141,6 +206,24 @@ class Puppet::Resource::Type
     @match = nil
 
     @module_name = options[:module_name]
+  end
+
+  def produces
+    @produces || EMPTY_ARRAY
+  end
+
+  def consumes
+    @consumes || EMPTY_ARRAY
+  end
+
+  def add_produces(blueprint)
+    @produces ||= []
+    @produces << blueprint
+  end
+
+  def add_consumes(blueprint)
+    @consumes ||= []
+    @consumes << blueprint
   end
 
   # This is only used for node names, and really only when the node name
@@ -186,8 +269,17 @@ class Puppet::Resource::Type
   # parameterized class, then all parameters take on their default
   # values.
   def ensure_in_catalog(scope, parameters=nil)
-    type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
-    resource_type = type == :hostclass ? :class : :node
+    resource_type =
+    case type
+    when :definition
+      raise ArgumentError, 'Cannot create resources for defined resource types'
+    when :hostclass
+      :class
+    when :node
+      :node
+    when :site
+      :site
+    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
@@ -196,11 +288,13 @@ class Puppet::Resource::Type
     # if parameters are passed, we should still try to create the resource
     # even if it exists so that we can fail
     # this prevents us from being able to combine param classes with include
-    if resource = scope.catalog.resource(resource_type, name) and !parameters
-      return resource
+    if parameters.nil?
+      resource = scope.catalog.resource(resource_type, name)
+      return resource unless resource.nil?
+    elsif parameters.is_a?(Hash)
+      parameters = parameters.map {|k, v| Puppet::Parser::Resource::Param.new(:name => k, :value => v, :source => self)}
     end
-    resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
-    assign_parameter_values(parameters, resource)
+    resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self, :parameters => parameters)
     instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
     resource
@@ -229,7 +323,11 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
+  # @deprecated Not used by Puppet
+  # @api private
   def assign_parameter_values(parameters, resource)
+    Puppet.deprecation_warning('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.')
+
     return unless parameters
 
     # It'd be nice to assign default parameter values here,
@@ -247,53 +345,91 @@ class Puppet::Resource::Type
       fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}")
   end
 
-  # Set any arguments passed by the resource as variables in the scope.
+  # Validate and set any arguments passed by the resource as variables in the scope.
+  # @param resource [Puppet::Parser::Resource] the resource
+  # @param scope [Puppet::Parser::Scope] the scope
+  #
+  # @api private
   def set_resource_parameters(resource, scope)
-    set = {}
-    resource.to_hash.each do |param, value|
-      param = param.to_sym
-      fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
+    # Inject parameters from using external lookup
+    resource.add_parameters_from_consume
+    inject_external_parameters(resource, scope)
 
-      exceptwrap { scope[param.to_s] = value }
-
-      set[param] = true
-    end
+    resource_hash = {}
+    resource.each { |k, v| resource_hash[k.to_s] = v.value unless k == :name || k == :title }
 
     if @type == :hostclass
-      scope["title"] = resource.title.to_s.downcase unless set.include? :title
-      scope["name"] =  resource.name.to_s.downcase  unless set.include? :name
+      scope[TITLE] = resource.title.to_s.downcase
+      scope[NAME] =  resource.name.to_s.downcase
     else
-      scope["title"] = resource.title               unless set.include? :title
-      scope["name"] =  resource.name                unless set.include? :name
+      scope[TITLE] = resource.title
+      scope[NAME] =  resource.name
     end
-    scope["module_name"] = module_name if module_name and ! set.include? :module_name
 
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope["caller_module_name"] = caller_name
+    modname = resource_hash[MODULE_NAME] || module_name
+    scope[MODULE_NAME] = modname unless modname.nil?
+    caller_name = resource_hash[CALLER_MODULE_NAME] || scope.parent_module_name
+    scope[CALLER_MODULE_NAME] = caller_name unless caller_name.nil?
+
+    scope.class_set(self.name,scope) if hostclass? || node?
+
+    assign_defaults(resource, scope, resource_hash)
+    validate_resource_hash(resource, resource_hash)
+    resource_hash.each { |param, value| exceptwrap { scope[param] = value }}
+  end
+
+  # Lookup and inject parameters from external scope
+  # @param resource [Puppet::Parser::Resource] the resource
+  # @param scope [Puppet::Parser::Scope] the scope
+  def inject_external_parameters(resource, scope)
+    # Only lookup parameters for host classes
+    return unless type == :hostclass
+    parameters = resource.parameters
+    arguments.each do |param_name, _|
+      name = param_name.to_sym
+      next if parameters.include?(name)
+      value = lookup_external_default_for(param_name, scope)
+      resource[name] = value unless value.nil?
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+  end
+  private :inject_external_parameters
 
-    # Evaluate the default parameters, now that all other variables are set
-    default_params = resource.set_default_parameters(scope)
-    default_params.each { |param| scope[param] = resource[param] }
+  def assign_defaults(resource, scope, resource_hash)
+    return unless resource.is_a?(Puppet::Parser::Resource)
+    parameters = resource.parameters
+    hashed_types = parameter_struct.hashed_elements
+    arguments.each do |param_name, default|
+      next if default.nil?
+      name = param_name.to_sym
+      param = parameters[name]
+      next unless param.nil? || param.value.nil?
 
-    # This has to come after the above parameters so that default values
-    # can use their values
-    resource.validate_complete
+      value = default.safeevaluate(scope)
+      resource[name] = value
+      resource_hash[param_name] = value
+    end
+  end
+  private :assign_defaults
+
+  def validate_resource_hash(resource, resource_hash)
+    Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(resource.to_s, parameter_struct, resource_hash, resource.is_unevaluated_consumer?)
+  end
+  private :validate_resource_hash
+
+  # Validate that all parameters given to the resource are correct
+  # @param resource [Puppet::Resource] the resource to validate
+  def validate_resource(resource)
+    validate_resource_hash(resource, Hash[resource.parameters.map { |name, value| [name.to_s, value.value] }])
   end
 
   # Check whether a given argument is valid.
   def valid_parameter?(param)
-    param = param.to_s
-
-    return true if param == "name"
-    return true if Puppet::Type.metaparam?(param)
-    return false unless defined?(@arguments)
-    return(arguments.include?(param) ? true : false)
+    parameter_struct.hashed_elements.include?(param.to_s)
   end
 
   def set_arguments(arguments)
     @arguments = {}
+    @parameter_struct = nil
     return if arguments.nil?
 
     arguments.each do |arg, default|
@@ -309,6 +445,7 @@ class Puppet::Resource::Type
   #
   def set_argument_types(name_to_type_hash)
     @argument_types = {}
+    @parameter_struct = nil
     return unless name_to_type_hash
     name_to_type_hash.each do |name, t|
       # catch internal errors
@@ -320,6 +457,14 @@ class Puppet::Resource::Type
       end
       @argument_types[name] = t
     end
+  end
+
+  # Returns boolean true if an instance of this type is a capability. This
+  # implementation always returns false. This "duck-typing" interface is
+  # shared among other classes and makes it easier to detect capabilities
+  # when they are intermixed with non capability instances.
+  def is_capability?
+    false
   end
 
   private
@@ -341,9 +486,9 @@ class Puppet::Resource::Type
 
   # Split an fq name into a namespace and name
   def namesplit(fullname)
-    ary = fullname.split("::")
+    ary = fullname.split(DOUBLE_COLON)
     n = ary.pop || ""
-    ns = ary.join("::")
+    ns = ary.join(DOUBLE_COLON)
     return ns, n
   end
 
@@ -374,4 +519,53 @@ class Puppet::Resource::Type
       raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
     end
   end
+
+  def parameter_struct
+    @parameter_struct ||= create_params_struct
+  end
+
+  def create_params_struct
+    arg_types = argument_types
+    type_factory = Puppet::Pops::Types::TypeFactory
+    members = { type_factory.optional(type_factory.string(nil, NAME)) =>  type_factory.any }
+
+    if application?
+      resource_type = type_factory.type_type(type_factory.resource)
+      members[type_factory.optional(type_factory.string(nil, NODES))] = type_factory.hash_of(type_factory.variant(
+          resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
+    end
+
+    Puppet::Type.eachmetaparam do |name|
+      # TODO: Once meta parameters are typed, this should change to reflect that type
+      members[name.to_s] = type_factory.any
+    end
+
+    arguments.each_pair do |name, default|
+      key_type = type_factory.string(nil, name.to_s)
+      key_type = type_factory.optional(key_type) unless default.nil?
+
+      arg_type = arg_types[name]
+      arg_type = type_factory.any if arg_type.nil?
+      members[key_type] = arg_type
+    end
+    type_factory.struct(members)
+  end
+  private :create_params_struct
+
+  # Consult external data bindings for class parameter values which must be
+  # namespaced in the backend.
+  #
+  # Example:
+  #
+  #   class foo($port=0){ ... }
+  #
+  # We make a request to the backend for the key 'foo::port' not 'foo'
+  #
+  def lookup_external_default_for(param, scope)
+    if type == :hostclass
+      catch(:no_such_key) { return Puppet::Pops::Lookup.search_and_merge("#{name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil) }
+    end
+    nil
+  end
+  private :lookup_external_default_for
 end

@@ -195,6 +195,8 @@ class Puppet::Pops::Validation::Checker4_0
     case parent1
     when Model::AbstractResource
     when Model::CollectExpression
+    when Model::CapabilityMapping
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent1, :operator=>'* =>')
     else
       # protect against just testing a snippet that has no parent, error message will be a bit strange
       # but it is not for a real program.
@@ -230,6 +232,32 @@ class Puppet::Pops::Validation::Checker4_0
       acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+    end
+  end
+
+  def check_CapabilityMapping(o)
+    ok =
+    case o.component
+    when Puppet::Pops::Model::QualifiedName
+      name = o.component.value
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o.component, {:name=>name}) unless name =~ Puppet::Pops::Patterns::CLASSREF_EXT
+      true
+    when Puppet::Pops::Model::AccessExpression
+      keys = o.component.keys
+      expr = o.component.left_expr
+      if expr.is_a?(Puppet::Pops::Model::QualifiedReference) && keys.size == 1
+        key = keys[0]
+        key.is_a?(Puppet::Pops::Model::LiteralString) || key.is_a?(Puppet::Pops::Model::QualifiedName) || key.is_a?(Puppet::Pops::Model::QualifiedReference)
+      else
+        false
+      end
+    else
+      false
+    end
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.component, :feature=>'capability mapping', :container => o) unless ok
+
+    if o.capability !~ Puppet::Pops::Patterns::CLASSREF_EXT
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.capability})
     end
   end
 

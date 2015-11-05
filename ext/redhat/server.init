@@ -89,7 +89,7 @@ genconfig() {
 }
 
 rh_status() {
-    status $pidopts $PUPPETMASTER
+    status $pidopts -l $lockfile $PUPPETMASTER
     RETVAL=$?
     return $RETVAL
 }

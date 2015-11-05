@@ -532,8 +532,14 @@ describe Puppet::Configurer do
       @agent.run
     end
 
-    it "sends the configured environment in the request" do
+    it "sends an explicitly configured environment request" do
+      Puppet.settings.expects(:set_by_config?).with(:environment).returns(true)
       Puppet::Node.indirection.expects(:find).with(anything, has_entries(:configured_environment => Puppet[:environment])).twice
+      @agent.run
+    end
+
+    it "does not send a configured_environment when using the default" do
+      Puppet::Node.indirection.expects(:find).with(anything, has_entries(:configured_environment => nil)).twice
       @agent.run
     end
   end

@@ -331,13 +331,15 @@ describe Puppet::Resource do
         end
 
         it "should query the data_binding terminus using a namespaced key" do
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
           Puppet::DataBinding.indirection.expects(:find).with(
             'apache::port', all_of(has_key(:environment), has_key(:variables)))
           resource.set_default_parameters(scope)
         end
 
         it "should use the value from the data_binding terminus" do
-          Puppet::DataBinding.indirection.expects(:find).returns('443')
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
 
           resource.set_default_parameters(scope)
 
@@ -345,7 +347,8 @@ describe Puppet::Resource do
         end
 
         it "should use the default value if the data_binding terminus returns nil" do
-          Puppet::DataBinding.indirection.expects(:find).returns(nil)
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns(nil)
 
           resource.set_default_parameters(scope)
 
@@ -353,7 +356,8 @@ describe Puppet::Resource do
         end
 
         it "should fail with error message about data binding on a hiera failure" do
-          Puppet::DataBinding.indirection.expects(:find).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
           expect {
             resource.set_default_parameters(scope)
           }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)
@@ -428,7 +432,7 @@ describe Puppet::Resource do
     end
 
     it "should fail if invalid parameters are used" do
-      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.to raise_error(ArgumentError, /Invalid parameter/)
+      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.to raise_error(Puppet::Error, /no parameter named 'nosuchparam'/)
     end
 
     it "should fail if the resource type cannot be resolved" do
@@ -655,6 +659,20 @@ describe Puppet::Resource do
           :ensure => 'present',
         }
       )
+    end
+
+    it "should escape internal single quotes in a title" do
+      singlequote_resource = Puppet::Resource.new("one::two", "/my/file'b'a'r",
+        :parameters => {
+          :ensure => 'present',
+        }
+      )
+      expect(singlequote_resource.to_manifest).to eq <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+        one::two { '/my/file\\'b\\'a\\'r':
+          ensure => 'present',
+        }
+      HEREDOC
+
     end
 
     it "should align, sort and add trailing commas to attributes with ensure first" do

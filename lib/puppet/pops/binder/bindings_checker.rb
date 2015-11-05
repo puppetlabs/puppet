@@ -12,7 +12,7 @@ class Puppet::Pops::Binder::BindingsChecker
   # @api public
   def initialize(diagnostics_producer)
     @@check_visitor     ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
-    @type_calculator      = Puppet::Pops::Types::TypeCalculator.new()
+    @type_calculator      = Puppet::Pops::Types::TypeCalculator.singleton
     @expression_validator = Puppet::Pops::Validation::ValidatorFactory_4_0.new().checker(diagnostics_producer)
     @acceptor             = diagnostics_producer
   end

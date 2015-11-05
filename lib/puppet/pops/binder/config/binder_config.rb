@@ -23,7 +23,7 @@ module Puppet::Pops::Binder::Config
 
     DEFAULT_LAYERS = [
       { 'name' => 'site',    'include' => [ 'confdir:/default?optional'] },
-      { 'name' => 'modules', 'include' => [ 'module:/*::default'] },
+      { 'name' => 'modules', 'include' => [ 'module:/*::default', 'module:/*::metadata'] },
     ]
 
     DEFAULT_SCHEME_EXTENSIONS = {}

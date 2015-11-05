@@ -36,7 +36,14 @@ PSON
 
 ### Parameters
 
-None
+Optional parameters to GET:
+
+* `links` -- either `manage` (default) or `follow`.  See examples in Search below.
+* `checksum_type` -- the checksum type to calculate the checksum value for the result metadata; one of `md5` (default), `md5lite`, `sha256`, `sha256lite`, `mtime`, `ctime`, and `none`.
+* `source_permissions` -- whether (and how) Puppet should copy owner, group, and mode permissions; one of
+  * `ignore` (the default) will never apply the owner, group, or mode from the source when managing a file. When creating new files without explicit permissions, the permissions they receive will depend on platform-specific behavior. On POSIX, Puppet will use the umask of the user it is running as. On Windows, Puppet will use the default DACL associated with the user it is running as.
+  * `use` will cause Puppet to apply the owner, group, and mode from the source to any files it is managing.
+  * `use_when_creating` will only apply the owner, group, and mode from the source when creating a file; existing files will not have their permissions overwritten.
 
 ### Example Response
 
@@ -84,9 +91,9 @@ None
         "type": "directory"
     }
 
-#### File metadata found for a link
+#### File metadata found for a link ignoring source permissions
 
-    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env
+    GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env&source_permissions=ignore
 
     HTTP/1.1 200 OK
     Content-Type: text/pson
@@ -99,7 +106,7 @@ None
         "destination": "/etc/puppetlabs/code/modules/example/files/just_a_file.txt",
         "group": 20,
         "links": "manage",
-        "mode": 493,
+        "mode": 420,
         "owner": 501,
         "path": "/etc/puppetlabs/code/modules/example/files/link_to_file.txt",
         "relative_path": null,
@@ -134,6 +141,11 @@ Accept: pson, text/pson
 * `recurse` -- should always be set to `yes`; unfortunately the default is `no`, which causes a search to behave like a find operation.
 * `ignore` -- file or directory regex to ignore; can be repeated.
 * `links` -- either `manage` (default) or `follow`.  See examples below.
+* `checksum_type` -- the checksum type to calculate the checksum value for the result metadata; one of `md5` (default), `md5lite`, `sha256`, `sha256lite`, `mtime`, `ctime`, and `none`.
+* `source_permissions` -- whether (and how) Puppet should copy owner, group, and mode permissions; one of
+  * `ignore` (the default) will never apply the owner, group, or mode from the source when managing a file. When creating new files without explicit permissions, the permissions they receive will depend on platform-specific behavior. On POSIX, Puppet will use the umask of the user it is running as. On Windows, Puppet will use the default DACL associated with the user it is running as.
+  * `use` will cause Puppet to apply the owner, group, and mode from the source to any files it is managing.
+  * `use_when_creating` will only apply the owner, group, and mode from the source when creating a file; existing files will not have their permissions overwritten.
 
 ### Example Response
 

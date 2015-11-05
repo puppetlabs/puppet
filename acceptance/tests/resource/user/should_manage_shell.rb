@@ -19,7 +19,14 @@ agents.each do |agent|
   end
 
   step "modify the user with shell"
-  shell = '/bin/bash'
+
+  # We need to use an allowed shell in AIX, as according to `/etc/security/login.cfg`
+  if agent['platform'] =~ /aix/
+    shell = '/bin/ksh'
+  else
+    shell = '/bin/bash'
+  end
+
   on agent, puppet_resource('user', name, ["ensure=present", "shell=#{shell}"])
 
   step "verify the user shell matches the managed shell"

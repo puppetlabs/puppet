@@ -32,7 +32,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def self.instances
-   svcs.split("\n").select{|l| l !~ /^legacy_run/ }.collect do |line|
+   svcs("-H").split("\n").select{|l| l !~ /^legacy_run/ }.collect do |line|
      state,stime,fmri = line.split(/\s+/)
      status =  case state
                when /online/; :running

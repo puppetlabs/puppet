@@ -4,28 +4,27 @@ module Puppet::DataProviders
     unless @loaded
       require 'puppet/pops'
       require 'puppet/data_providers/data_adapter'
+      require 'puppet/data_providers/lookup_adapter'
     end
     @loaded = true
   end
 
-  def self.lookup_in_environment(name, scope, merge)
-    assert_loaded()
-    adapter = Puppet::DataProviders::DataAdapter.adapt(Puppet.lookup(:current_environment))
-    adapter.env_provider.lookup(name, scope, merge)
+  # @deprecated use `lookup_adapter(lookup_invocation).lookup` instead
+  def self.lookup_in_environment(name, lookup_invocation, merge)
+    Puppet.deprecation_warning('The method Puppet::DataProviders.lookup_in_environment is deprecated and will be removed in the next major release of Puppet.')
+    lookup_adapter(lookup_invocation).lookup_in_environment(name, lookup_invocation, Puppet::Pops::MergeStrategy.strategy(merge))
   end
 
   MODULE_NAME = 'module_name'.freeze
 
-  def self.lookup_in_module(name, scope, merge)
-    # Do not attempt to do a lookup in a module unless the name is qualified.
-    qual_index = name.index('::')
-    throw :no_such_key if qual_index.nil?
-    module_name = name[0..qual_index-1]
+  # @deprecated use `adapter(lookup_invocation).lookup` instead
+  def self.lookup_in_module(name, lookup_invocation, merge)
+    Puppet.deprecation_warning('The method Puppet::DataProviders.lookup_in_module is deprecated and will be removed in the next major release of Puppet.')
+    lookup_adapter(lookup_invocation).lookup_in_module(name, lookup_invocation, Puppet::Pops::MergeStrategy.strategy(merge))
+  end
 
+  def self.lookup_adapter(lookup_invocation)
     assert_loaded()
-    adapter = Puppet::DataProviders::DataAdapter.adapt(Puppet.lookup(:current_environment))
-    data_provider = adapter.module_provider(module_name)
-    throw :no_such_key if data_provider.nil?
-    data_provider.lookup(name, scope, merge)
+    LookupAdapter.adapt(lookup_invocation.scope.environment)
   end
 end

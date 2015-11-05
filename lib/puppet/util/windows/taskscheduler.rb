@@ -809,7 +809,7 @@ module Win32
     # Returns whether or not the scheduled task exists.
     def exists?(job_name)
       bool = false
-      Dir.foreach('C:/Windows/Tasks'){ |file|
+      Dir.foreach("#{ENV['SystemRoot']}/Tasks"){ |file|
         if File.basename(file, '.job') == job_name
           bool = true
           break

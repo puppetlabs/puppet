@@ -13,9 +13,6 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-PATH=/opt/puppetlabs/puppet/bin:/usr/bin:/sbin:/bin:/usr/sbin
-export PATH
-
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=/var/lock/subsys/puppet
 piddir=/var/run/puppetlabs
@@ -66,7 +63,7 @@ stop() {
 }
 
 reload() {
-    echo -n $"Restarting puppet agent: "
+    echo -n $"Reloading puppet agent: "
     if [ "$USEINITFUNCTIONS" = "true" ]; then
       killproc $pidopts $puppetd -HUP
       RETVAL=$?
@@ -78,6 +75,14 @@ reload() {
         RETVAL=0
       fi
     fi
+    echo
+    return $RETVAL
+}
+
+rotate() {
+    echo -n $"Reopening log files for puppet agent: "
+    killproc $pidopts $puppetd -USR2
+    RETVAL=$?
     echo
     return $RETVAL
 }
@@ -136,6 +141,9 @@ case "$1" in
     restart)
         restart
     ;;
+    rotate)
+        rotate
+    ;;
     reload|force-reload)
         reload
     ;;
@@ -154,7 +162,7 @@ case "$1" in
         genconfig
     ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once|genconfig}"
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|rotate|once|genconfig}"
         exit 1
 esac
 

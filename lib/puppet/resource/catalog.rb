@@ -4,6 +4,8 @@ require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/graph'
 
+require 'puppet/resource/capability_finder'
+
 # This class models a node catalog.  It is the thing meant to be passed
 # from server to client, and it contains all of the information in the
 # catalog, including the resources and the relationships between them.
@@ -26,6 +28,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The catalog version.  Used for testing whether a catalog
   # is up to date.
   attr_accessor :version
+
+  # The id of the code input to the compiler.
+  attr_accessor :code_id
 
   # How long this catalog took to retrieve.  Used for reporting stats.
   attr_accessor :retrieval_duration
@@ -71,6 +76,25 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     return a
   end
 
+  def add_resource_before(other, *resources)
+    resources.each do |resource|
+      other_title_key = title_key_for_ref(other.ref)
+      idx = @resources.index(other_title_key)
+      raise ArgumentError, "Cannot add resource #{resource.ref} before #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      add_one_resource(resource, idx)
+    end
+  end
+
+  def add_resource_after(other, *resources)
+    resources.each do |resource|
+      other_title_key = title_key_for_ref(other.ref)
+      idx = @resources.index(other_title_key)
+      raise ArgumentError, "Cannot add resource #{resource.ref} after #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      add_one_resource(resource, idx+1)
+    end
+  end
+
+
   def add_resource(*resources)
     resources.each do |resource|
       add_one_resource(resource)
@@ -84,13 +108,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     adjacent(resource, :direction => :in)[0]
   end
 
-  def add_one_resource(resource)
+  def add_one_resource(resource, idx=-1)
     title_key = title_key_for_ref(resource.ref)
     if @resource_table[title_key]
       fail_on_duplicate_type_and_title(resource, title_key)
     end
 
-    add_resource_to_table(resource, title_key)
+    add_resource_to_table(resource, title_key, idx)
     create_resource_aliases(resource)
 
     resource.catalog = self if resource.respond_to?(:catalog=)
@@ -98,9 +122,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
   private :add_one_resource
 
-  def add_resource_to_table(resource, title_key)
+  def add_resource_to_table(resource, title_key, idx)
     @resource_table[title_key] = resource
-    @resources << title_key
+    @resources.insert(idx, title_key)
   end
   private :add_resource_to_table
 
@@ -245,7 +269,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     host_config
   end
 
-  def initialize(name = nil, environment = Puppet::Node::Environment::NONE)
+  def initialize(name = nil, environment = Puppet::Node::Environment::NONE, code_id = nil)
     super()
     @name = name
     @classes = []
@@ -256,6 +280,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     @host_config = true
     @environment_instance = environment
     @environment = environment.to_s
+    @code_id = code_id
 
     @aliases = {}
 
@@ -293,7 +318,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
       @resources.delete(title_key)
-      resource.remove
+      # Only Puppet::Type kind of resources respond to :remove, not Puppet::Resource
+      resource.remove if resource.respond_to?(:remove)
     end
   end
 
@@ -313,7 +339,15 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     res.catalog = self
     title_key      = [res.type, res.title.to_s]
     uniqueness_key = [res.type, res.uniqueness_key].flatten
-    @resource_table[title_key] || @resource_table[uniqueness_key]
+    result = @resource_table[title_key] || @resource_table[uniqueness_key]
+    if ! result && res.resource_type && res.resource_type.is_capability?
+      # @todo lutter 2015-03-10: this assumes that it is legal to just
+      # mention a capability resource in code and have it automatically
+      # made available, even if the current component does not require it
+      result = Puppet::Resource::CapabilityFinder.find(environment, code_id, res)
+      add_resource(result) if result
+    end
+    result
   end
 
   def resource_refs
@@ -339,6 +373,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     if version = data['version']
       result.version = version
+    end
+
+    if code_id = data['code_id']
+      result.code_id = code_id
     end
 
     if environment = data['environment']
@@ -381,6 +419,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'tags'      => tags,
       'name'      => name,
       'version'   => version,
+      'code_id'   => code_id,
       'environment' => environment.to_s,
       'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
       'edges'     => edges.   collect { |e| e.to_data_hash },
@@ -496,6 +535,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result = self.class.new(self.name, self.environment_instance)
 
     result.version = self.version
+    result.code_id = self.code_id
 
     map = {}
     resources.each do |resource|

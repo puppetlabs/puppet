@@ -71,7 +71,7 @@ class Puppet::Provider::Package::Windows
 
     def self.replace_forward_slashes(value)
       if value.include?('/')
-        value.gsub!('/', "\\") 
+        value.gsub!('/', "\\")
         Puppet.debug('Package source parameter contained /s - replaced with \\s')
       end
       value
@@ -79,6 +79,14 @@ class Puppet::Provider::Package::Windows
 
     def self.quote(value)
       value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+    end
+
+    def self.get_display_name(values)
+      return if values.nil?
+      return values['DisplayName'] if values['DisplayName'] && values['DisplayName'].length > 0
+      return values['QuietDisplayName'] if values['QuietDisplayName'] && values['QuietDisplayName'].length > 0
+
+      ''
     end
 
     def initialize(name, version)

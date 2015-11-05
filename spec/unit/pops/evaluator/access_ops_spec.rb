@@ -208,13 +208,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces a size constrained Array when the last two arguments specify this' do
       expr = fqr('Array')[fqr('String'), 1]
-      expected_t = types.array_of(String)
-      types.constrain_size(expected_t, 1, :default)
+      expected_t = types.array_of(String, types.range(1, :default))
       expect(evaluate(expr)).to be_the_type(expected_t)
 
       expr = fqr('Array')[fqr('String'), 1, 2]
-      expected_t = types.array_of(String)
-      types.constrain_size(expected_t, 1, 2)
+      expected_t = types.array_of(String, types.range(1, 2))
       expect(evaluate(expr)).to be_the_type(expected_t)
     end
 
@@ -227,11 +225,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     #
     it 'produces a Tuple[String] from the expression Tuple[String]' do
       expr = fqr('Tuple')[fqr('String')]
-      expect(evaluate(expr)).to be_the_type(types.tuple(String))
+      expect(evaluate(expr)).to be_the_type(types.tuple([String]))
 
       # arguments are flattened
       expr = fqr('Tuple')[[fqr('String')]]
-      expect(evaluate(expr)).to be_the_type(types.tuple(String))
+      expect(evaluate(expr)).to be_the_type(types.tuple([String]))
     end
 
     it "Tuple parameterization gives an error if parameter is not a type" do
@@ -241,13 +239,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces a varargs Tuple when the last two arguments specify size constraint' do
       expr = fqr('Tuple')[fqr('String'), 1]
-      expected_t = types.tuple(String)
-      types.constrain_size(expected_t, 1, :default)
+      expected_t = types.tuple([String], types.range(1, :default))
       expect(evaluate(expr)).to be_the_type(expected_t)
 
       expr = fqr('Tuple')[fqr('String'), 1, 2]
-      expected_t = types.tuple(String)
-      types.constrain_size(expected_t, 1, 2)
+      expected_t = types.tuple([String], types.range(1, 2))
       expect(evaluate(expr)).to be_the_type(expected_t)
     end
 
@@ -416,7 +412,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'produces a NotUndef instance with String type when given a literal String' do
       type_expr = fqr('NotUndef')[literal('hey')]
       tf = Puppet::Pops::Types::TypeFactory
-      expect(evaluate(type_expr)).to eql(tf.not_undef(tf.string('hey')))
+      expect(evaluate(type_expr)).to be_the_type(tf.not_undef(tf.string(nil, 'hey')))
+    end
+
+    it 'Produces Optional instance with String type when using a String argument' do
+      type_expr = fqr('Optional')[literal('hey')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to be_the_type(tf.optional(tf.string(nil, 'hey')))
     end
 
     # Type Type

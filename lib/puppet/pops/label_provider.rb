@@ -1,7 +1,7 @@
 # Provides a label for an object.
 # This simple implementation calls #to_s on the given object, and handles articles 'a/an/the'.
 #
-class Puppet::Pops::LabelProvider
+module Puppet::Pops::LabelProvider
   VOWELS = %w{a e i o u y}
   SKIPPED_CHARACTERS = %w{" '}
   A = "a"

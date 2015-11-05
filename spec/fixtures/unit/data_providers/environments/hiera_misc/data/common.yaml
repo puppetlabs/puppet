@@ -1,0 +1,46 @@
+---
+lookup_options:
+  one::lopts_test::hash:
+    merge: deep
+
+one::test::param:
+  key1: env 1
+
+one::array:
+  - second
+  - third
+  - fourth
+
+one::lopts_test::hash:
+  a: A
+  b: B
+  m:
+    ma: MA
+    mb: MB
+
+one::loptsm_test::hash:
+  a: A
+  b: B
+  m:
+    ma: MA
+    mb: MB
+
+ukey1: Some value
+
+target_lookup: with lookup
+target_hiera: with hiera
+target_alias: Value from interpolation with alias
+
+km_default: 'Value from interpolation %{target_default}'
+km_alias: '%{alias("target_alias")}'
+km_lookup: 'Value from interpolation %{lookup("target_lookup")}'
+km_hiera: 'Value from interpolation %{hiera("target_hiera")}'
+km_scope: 'Value from interpolation %{scope("target_scope")}'
+km_literal: 'Value from interpolation %{literal("with literal")}'
+
+km_sqalias: "%{alias('target_alias')}"
+recursive: '%{r1}'
+
+km_qualified: "Value from qualified interpolation OS = %{os.name}"
+
+km_multi: "cluster/%{literal('%')}{::cluster}/%{literal('%')}{role}"

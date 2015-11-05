@@ -141,4 +141,31 @@ describe provider_class do
     end
   end
 
+  describe "when checking service status" do
+    context "On systems which use the systemd-sysvinit compatibility layer" do
+      it "should call systemctl to determine running status in Debian" do
+        Facter.stubs(:value).with(:operatingsystem).returns('Debian')
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')
+        @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        expect(@provider.statuscmd).to eq(["systemctl", "is-active", @resource[:name]])
+      end
+
+      it "should call systemctl to determine running status in Ubuntu" do
+        Facter.stubs(:value).with(:operatingsystem).returns('Ubuntu')
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('15.04')
+        @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        expect(@provider.statuscmd).to eq(["systemctl", "is-active", @resource[:name]])
+      end
+    end
+
+    context "On systems which only use sysvinit" do
+      it "should use the service init script" do
+        Facter.stubs(:value).with(:operatingsystem).returns('Debian')
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('7')
+        @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        @provider.stubs(:initscript).returns("/etc/init.d/script")
+        expect(@provider.statuscmd).to eq(["/etc/init.d/script", :status])
+      end
+    end
+  end
 end

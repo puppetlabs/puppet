@@ -2,7 +2,9 @@
 # As an example, if object is an ArithmeticExpression with operator +, `#a_an(o)` produces "a '+' Expression",
 # #the(o) produces "the + Expression", and #label produces "+ Expression".
 #
-class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
+class Puppet::Pops::Model::ModelLabelProvider
+  include Puppet::Pops::LabelProvider
+
   def initialize
     @@label_visitor ||= Puppet::Pops::Visitor.new(self,"label",0,0)
   end
@@ -56,6 +58,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
   def label_HostClassDefinition o         ; "Host Class Definition"             end
   def label_NodeDefinition o              ; "Node Definition"                   end
+  def label_SiteDefinition o              ; "Site Definition"                   end
   def label_ResourceTypeDefinition o      ; "'define' expression"               end
   def label_ResourceOverrideExpression o  ; "Resource Override"                 end
   def label_Parameter o                   ; "Parameter Definition"              end
@@ -64,6 +67,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_UnlessExpression o            ; "'unless' Statement"                end
   def label_CallNamedFunctionExpression o ; "Function Call"                     end
   def label_CallMethodExpression o        ; "Method call"                       end
+  def label_CapabilityMapping o           ; "Capability Mapping"                end
   def label_CaseExpression o              ; "'case' statement"                  end
   def label_CaseOption o                  ; "Case Option"                       end
   def label_RenderStringExpression o      ; "Epp Text"                          end
@@ -96,6 +100,11 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
       "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type"
     end
   end
+
+  def label_Resource o
+    'Resource Statement'
+  end
+
 
   def label_Class o
     if o <= Puppet::Pops::Types::PAnyType
