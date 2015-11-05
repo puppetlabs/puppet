@@ -1,5 +1,6 @@
 test_name "should create cron"
 confine :except, :platform => 'windows'
+confine :except, :platform => /^eos-/ # See PUP-5445
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils

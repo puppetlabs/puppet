@@ -3,6 +3,7 @@ test_name "should delete an entry in filesystem table and unmount it"
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823
 confine :except, :platform => /solaris/ # See PUP-5201
+confine :except, :platform => /^eos-/ # See PUP-5445
 
 require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils
