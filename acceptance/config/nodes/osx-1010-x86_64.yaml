@@ -9,7 +9,7 @@ HOSTS:
   agent:
     roles:
     - agent
-    platform: osx-yosemite-x86_64
+    platform: osx-10.10-x86_64
     hypervisor: vcloud
     template: osx-1010-x86_64
 CONFIG:

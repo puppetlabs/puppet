@@ -9,7 +9,7 @@ HOSTS:
   agent:
     roles:
     - agent
-    platform: osx-elcapitan-x86_64
+    platform: osx-10.11-x86_64
     hypervisor: vcloud
     template: osx-1011-x86_64
 CONFIG:

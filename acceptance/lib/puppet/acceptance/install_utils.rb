@@ -7,7 +7,7 @@ module Puppet
   module Acceptance
     module InstallUtils
       PLATFORM_PATTERNS = {
-        :redhat        => /fedora|el|centos/,
+        :redhat        => /fedora|el-|centos/,
         :debian        => /debian|ubuntu/,
         :debian_ruby18 => /debian|ubuntu-lucid|ubuntu-precise/,
         :solaris_10    => /solaris-10/,
