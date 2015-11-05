@@ -222,7 +222,7 @@ expression
   |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
 bracketed_expression
-  : expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
+  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[4] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
