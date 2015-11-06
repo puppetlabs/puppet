@@ -13,6 +13,7 @@ module Puppet
         :solaris_10    => /solaris-10/,
         :solaris_11    => /solaris-11/,
         :windows       => /windows/,
+        :eos           => /^eos-/,
       }.freeze
 
       # Installs packages on the hosts.
@@ -166,7 +167,7 @@ module Puppet
               :puppet_agent_sha => ENV['SHA'],
               :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
             }
-            # this installs puppet-agent on windows (msi) and osx (dmg)
+            # this installs puppet-agent on windows (msi), osx (dmg) and eos (swix)
             install_puppet_agent_dev_repo_on(agent, opts)
           else
             fail_test("No repository installation step for #{platform} yet...")
