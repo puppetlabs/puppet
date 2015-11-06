@@ -38,6 +38,6 @@ Gem::Specification.new do |s|
   s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
-  s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 3"])
+  s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
 end
