@@ -82,12 +82,6 @@ agents.each do |agent|
     end
   end
 
-  if platform == 'fedora' && majrelease > 21
-    # This is a reminder so we update the provider's defaultfor when new
-    # versions of Fedora are released (then update this test)
-    fail_test "Provider needs manual update to support Fedora #{majrelease}"
-  end
-
   step "installing #{package_name[platform]}"
   apply_manifest_on(agent, manifest_install_package, :catch_failures => true)
 
