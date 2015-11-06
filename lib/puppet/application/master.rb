@@ -295,6 +295,9 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
     daemon.daemonize if Puppet[:daemonize]
 
+    # Setup signal traps immediately after daemonization so we clean up the daemon
+    daemon.set_signal_traps
+
     announce_start_of_master
 
     daemon.start

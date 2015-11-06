@@ -322,6 +322,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       # waiting for certificates so that we don't block
       daemon = daemonize_process_when(Puppet[:daemonize])
 
+      # Setup signal traps immediately after daemonization so we clean up the daemon
+      daemon.set_signal_traps
+
       wait_for_certificates
 
       if Puppet[:onetime]
@@ -346,7 +349,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def onetime(daemon)
-    daemon.set_signal_traps
     begin
       exitstatus = daemon.agent.run
     rescue => detail

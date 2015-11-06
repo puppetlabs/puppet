@@ -20,7 +20,7 @@ version2 = '1.8.6.4'
 
 teardown do
   on hosts, "rm -rf #{dir}"
-  on hosts, puppet('resource', 'package', "'#{package}' ensure=absent")
+  on hosts, "installp -u #{package}"
 end
 
 step "download packages to use for test"

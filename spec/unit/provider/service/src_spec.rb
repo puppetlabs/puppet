@@ -37,7 +37,7 @@ describe provider_class do
   end
 
   describe ".instances" do
-    it "should has a .instances method" do
+    it "should have a .instances method" do
       expect(provider_class).to respond_to :instances
     end
 
@@ -63,14 +63,28 @@ _EOF_
   describe "when starting a service" do
     it "should execute the startsrc command" do
       @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      @provider.expects(:status).returns :running
       @provider.start
+    end
+
+    it "should error if timeout occurs while stopping the service" do
+      @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      Timeout.expects(:timeout).with(60).raises(Timeout::Error)
+      expect { @provider.start }.to raise_error Puppet::Error, ('Timed out waiting for myservice to transition states')
     end
   end
 
   describe "when stopping a service" do
     it "should execute the stopsrc command" do
       @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      @provider.expects(:status).returns :stopped
       @provider.stop
+    end
+
+    it "should error if timeout occurs while stopping the service" do
+      @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      Timeout.expects(:timeout).with(60).raises(Timeout::Error)
+      expect { @provider.stop }.to raise_error Puppet::Error, ('Timed out waiting for myservice to transition states')
     end
   end
 
@@ -160,14 +174,15 @@ _EOF_
       @provider.restart
     end
 
-    it "should execute restart which runs stopsrc then startsrc" do
+    it "should execute restart which runs stop then start" do
       sample_output =  <<_EOF_
 #subsysname:synonym:cmdargs:path:uid:auditid:standin:standout:standerr:action:multi:contact:svrkey:svrmtype:priority:signorm:sigforce:display:waittime:grpname:
 myservice::--no-daemonize:/usr/sbin/puppetd:0:0:/dev/null:/var/log/puppet.log:/var/log/puppet.log:-O:-Q:-S:0:0:20:15:9:-d:20::"
 _EOF_
+
       @provider.expects(:execute).with(['/usr/bin/lssrc', '-Ss', "myservice"]).returns sample_output
-      @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
-      @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      @provider.expects(:stop)
+      @provider.expects(:start)
       @provider.restart
     end
   end
