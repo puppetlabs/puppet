@@ -533,7 +533,7 @@ module Puppet::Pops::Issues
   end
 
   IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
-    "This #{label.label(semantic)} has no effect. A value-producing expression without other effect may only be placed last in a block/sequence"
+    "This #{label.label(semantic)} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)"
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
