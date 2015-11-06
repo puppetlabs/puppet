@@ -175,6 +175,10 @@ describe "egrammar parsing basic expressions" do
       expect(dump(parse("$a = $b[2]"))).to eq("(= $a (slice $b 2))")
     end
 
+    it "$a = $b[2,]" do
+      expect(dump(parse("$a = $b[2,]"))).to eq("(= $a (slice $b 2))")
+    end
+
     it "$a = [1, 2, 3][2]" do
       expect(dump(parse("$a = [1,2,3][2]"))).to eq("(= $a (slice ([] 1 2 3) 2))")
     end
