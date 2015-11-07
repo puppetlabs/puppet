@@ -5,6 +5,8 @@ confine :except, :platform => /centos-4|el-4/ # PUP-5227
 
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils
+require 'puppet/acceptance/common_utils'
+extend Puppet::Acceptance::CommandUtils
 
 rpm_options = {:pkg => 'guid', :version => '1.0'}
 
@@ -30,6 +32,14 @@ step "Verify gem and ruby-devel on fedora-22 and above if not aio" do
   end
 end
 
+def gem_provider
+  if @options[:type] == 'aio'
+    'puppet_gem'
+  else
+    'gem'
+  end
+end
+
 def verify_state(hosts, pkg, state, match)
   hosts.each do |agent|
     cmd = rpm_provider(agent)
@@ -38,7 +48,7 @@ def verify_state(hosts, pkg, state, match)
       method(match).call(/^#{pkg}\./, stdout)
     end
 
-    on agent, 'gem list --local' do
+    on agent, "#{gem_command(agent, @options[:type])} list --local" do
       method(match).call(/^#{pkg} /, stdout)
     end
   end
@@ -74,12 +84,12 @@ end
 verify_absent agents, 'guid'
 
 collide2_manifest = <<MANIFEST
-  package {'guid': ensure => '0.1.0', provider => gem}
-  package {'other-guid': name => 'guid', ensure => installed, provider => gem}
+  package {'guid': ensure => '0.1.0', provider => #{gem_provider}}
+  package {'other-guid': name => 'guid', ensure => installed, provider => #{gem_provider}}
 MANIFEST
 
 apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]) do |result|
-  assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", "gem"\]/, "#{result.host}: #{result.stderr}")
+  assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", "#{gem_provider}"\]/, "#{result.host}: #{result.stderr}")
 end
 
 verify_absent agents, 'guid'
@@ -89,7 +99,7 @@ install_manifest = <<MANIFEST
   package {'guid': ensure => installed}
 
   package {'gem-guid':
-    provider => gem,
+    provider => #{gem_provider},
     name => 'guid',
     ensure => installed,
   }
@@ -105,7 +115,7 @@ verify_present agents, 'guid'
 # Test removal
 remove_manifest = <<MANIFEST
   package {'gem-guid':
-    provider => gem,
+    provider => #{gem_provider},
     name => 'guid',
     ensure => absent,
   }
