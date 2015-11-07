@@ -352,7 +352,9 @@ module Puppet::Util::Windows::Security
     dacl.allow(well_known_nobody_sid, nobody_allow)
 
     # TODO: system should be first?
-    dacl.allow(well_known_system_sid, system_allow)
+    dacl.allow(well_known_system_sid, system_allow,
+      Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE |
+      Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE)
 
     # add inherit-only aces for child dirs and files that are created within the dir
     inherit_only = Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
