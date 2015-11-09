@@ -5,13 +5,7 @@ test_name "add parser=#{ENV['PARSER']} to all puppet.conf (only if $PARSER is se
 
   hosts.each do |host|
     step "adjust #{host} puppet.conf" do
-      temp = host.tmpdir('parser-set')
-      opts = {
-        'main' => {
-           'parser' => parser
-        }
-      }
-      lay_down_new_puppet_conf(host, opts, temp)
+      on(host, puppet("config set --section main parser #{parser}"))
     end
   end
 end
