@@ -1,3 +1,5 @@
+require 'timeout'
+
 # Solaris 10 SMF-style services.
 Puppet::Type.type(:service).provide :smf, :parent => :base do
   desc <<-EOT
@@ -74,6 +76,45 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
   end
 
+  # Wait for the service to transition into the specified state before returning.
+  # This is necessary due to the asynchronous nature of SMF services.
+  # desired_state should be online, offline, disabled, or uninitialized.
+  # See PUP-5474 for long-term solution to this issue.
+  def wait(*desired_state)
+    Timeout.timeout(60) do
+      loop do
+        states = self.service_states
+        break if desired_state.include?(states[0]) && states[1] == '-'
+        sleep(1)
+      end
+    end
+  rescue Timeout::Error
+    raise Puppet::Error.new("Timed out waiting for #{@resource[:name]} to transition states")
+  end
+
+  def start
+    # Wait for the service to actually start before returning.
+    super
+    self.wait('online')
+  end
+
+  def stop
+    # Wait for the service to actually stop before returning.
+    super
+    self.wait('offline', 'disabled', 'uninitialized')
+  end
+
+  def restart
+    # Wait for the service to actually start before returning.
+    super
+    self.wait('online')
+  end
+
+  # Determine the current and next states of a service.
+  def service_states
+    svcs("-H", "-o", "state,nstate", @resource[:name]).chomp.split
+  end
+
   def status
     if @resource[:status]
       super
@@ -83,7 +124,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     begin
       # get the current state and the next state, and if the next
       # state is set (i.e. not "-") use it for state comparison
-      states = svcs("-H", "-o", "state,nstate", @resource[:name]).chomp.split
+      states = service_states
       state = states[1] == "-" ? states[0] : states[1]
     rescue Puppet::ExecutionFailure
       info "Could not get status on service #{self.name}"
