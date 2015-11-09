@@ -26,6 +26,7 @@ end
 # 2) Starting, stopping and refreshing while the service is initially running
 agents.each do |agent|
   skip_test "Skipping because of Solaris service status race condition when refreshing service: see PUP-5262." if agent['platform'] =~ /solaris/
+  skip_test "Skipping because of Mcollective service daemonization issue: see PA-67" if agent['platform'] =~ /aix/
 
   ['puppet', 'mcollective'].each do |service|
     ['stopped', 'running'].each do |status|
