@@ -146,16 +146,18 @@ module Manager
     # We are overwhelmingly symbols here, which usually match, so it is worth
     # having this special-case to return quickly.  Like, 25K symbols vs. 300
     # strings in this method. --daniel 2012-07-17
-    return @types[name] if @types[name]
+    return @types[name] if @types.include? name
 
     # Try mangling the name, if it is a string.
     if name.is_a? String
       name = name.downcase.intern
-      return @types[name] if @types[name]
+      return @types[name] if @types.include? name
     end
     # Try loading the type.
     if typeloader.load(name, Puppet.lookup(:current_environment))
       Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
+    else
+      @types[name] = nil
     end
 
     # ...and I guess that is that, eh.
