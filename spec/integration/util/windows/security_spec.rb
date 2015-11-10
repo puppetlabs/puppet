@@ -241,8 +241,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
             if Puppet::FileSystem.directory?(path)
               system_aces.each do |ace|
-                ace.object_inherit?.should be_true
-                ace.container_inherit?.should be_true
+                expect(ace).to be_object_inherit
+                expect(ace).to be_container_inherit
               end
 
               # it's critically important that this file be default created
@@ -252,9 +252,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
               system_aces = winsec.get_aces_for_path_by_sid(nested_file, sids[:system])
               # even when SYSTEM is the owner (in CI), there should be an inherited SYSTEM
-              system_aces.any? do |ace|
+              expect(system_aces.any? do |ace|
                 ace.mask == klass::FILE_ALL_ACCESS && ace.inherited?
-              end.should be_true
+              end).to be_truthy
             end
           end
 
