@@ -123,4 +123,23 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     # zypper install can be used for update, too
     self.install
   end
+
+  def uninstall
+    #extract version numbers and convert to integers
+    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+
+    if major < 1
+      super
+    else
+      options = [:remove, '--no-confirm']
+      if major == 1 && minor < 6
+          options << '--force-resolution'
+      end
+
+      options << @resource[:name]
+    	
+      zypper *options
+    end
+
+  end
 end
