@@ -7,9 +7,9 @@ Maintainer:
  Nigel Kersten <nigel@explanatorygap.net>,
  Stig Sandbeck Mathisen <ssm@debian.org>
 Source: git://github.com/puppetlabs/puppet.git,
- https://puppetlabs.com/trac/puppet/wiki/DownloadingPuppet
+ https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html
 
-Copyright: 2005-2011 Puppet Labs, LLC
+Copyright: 2005-2015 Puppet Labs
 License: Apache 2.0
 
 Files: debian/*
