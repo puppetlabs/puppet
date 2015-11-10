@@ -16,7 +16,7 @@ Documentation for Puppet and related projects can be found online at the
 
 HTTP API
 --------
-[HTTP API Index](api/docs/http_api_index.md)
+[HTTP API Index](https://docs.puppetlabs.com/puppet/latest/reference/http_api/http_api_index.html)
 
 Installation
 ------------
@@ -26,7 +26,7 @@ which also includes orchestration features, a web console, and professional supp
 [The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
 
 To install an open source release of Puppet,
-[see the installation guide on the docs site.](https://docs.puppetlabs.com/guides/installation.html)
+[see the installation guide on the docs site.](http://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
 
 If you need to run Puppet from source as a tester or developer,
 [see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
@@ -63,7 +63,6 @@ they become available.
 Bugfixes and ongoing development will occur in minor releases for the current
 major version. Security fixes will be backported to a previous major version on
 a best-effort basis, until the previous major version is no longer maintained.
-
 
 For example: If a security vulnerability is discovered in Puppet 4.1.1, we
 would fix it in the 4 series, most likely as 4.1.2. Maintainers would then make
