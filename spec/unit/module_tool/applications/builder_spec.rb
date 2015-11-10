@@ -343,12 +343,12 @@ symlinkfile
         f.puts({
           "name" => "#{module_name}",
           "version" => "#{version}",
-          "source" => "http://github.com/testing/#{module_name}",
+          "source" => "https://github.com/testing/#{module_name}",
           "author" => "testing",
           "license" => "Apache License Version 2.0",
           "summary" => "Puppet testing module",
           "description" => "This module can be used for basic testing",
-          "project_page" => "http://github.com/testing/#{module_name}"
+          "project_page" => "https://github.com/testing/#{module_name}"
         }.to_json)
       end
     end
@@ -381,12 +381,12 @@ symlinkfile
         f.puts({
           "name" => "#{module_name}",
           "version" => "#{version}",
-          "source" => "http://github.com/testing/#{module_name}",
+          "source" => "https://github.com/testing/#{module_name}",
           "author" => "testing",
           "license" => "Apache License Version 2.0",
           "summary" => "Puppet testing module",
           "description" => "This module can be used for basic testing",
-          "project_page" => "http://github.com/testing/#{module_name}",
+          "project_page" => "https://github.com/testing/#{module_name}",
           "checksums" => {"README.md" => "deadbeef"}
         }.to_json)
       end

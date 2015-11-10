@@ -1,6 +1,6 @@
 # 2010-08-02 Nan Liu
 #
-# http://projects.puppetlabs.com/issues/4289
+# https://projects.puppetlabs.com/issues/4289
 #
 # NL: Facter should return OS version instead of kernel version for OEL
 # test script only applicable to OEL, provided based on ticked info, not verified.

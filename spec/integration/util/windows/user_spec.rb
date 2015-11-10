@@ -67,7 +67,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
         yield
       }.to raise_error { |error|
         expect(error).to be_a(Puppet::Util::Windows::Error)
-        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms681385(v=vs.85).aspx
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms681385(v=vs.85).aspx
         # ERROR_LOGON_FAILURE 1326
         expect(error.code).to eq(1326)
       }

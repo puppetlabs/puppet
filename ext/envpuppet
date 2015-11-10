@@ -105,11 +105,11 @@ if [ "${ENVPUPPET_BLEEDING:-}" = "true" ]; then
   myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/puppet-interfaces/lib"
 fi
 
-# http://github.com/jamtur01/puppet-scaffold.git
+# https://github.com/jamtur01/puppet-scaffold.git
 mypath="${mypath}:${ENVPUPPET_BASEDIR}/puppet-scaffold/bin"
 myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/puppet-scaffold/lib"
 
-# http://github.com/puppetlabs/puppet-module-tool.git
+# https://github.com/puppetlabs/puppet-module-tool.git
 # Also known as "pmt"  Will become "puppet module"
 mypath="${mypath}:${ENVPUPPET_BASEDIR}/puppet-module-tool/bin"
 myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/puppet-module-tool/lib"

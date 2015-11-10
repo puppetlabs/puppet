@@ -14,8 +14,8 @@ metadata_json_file = <<-FILE
   "summary": "Test Module",
   "license": "Apache Version 2.0",
   "source": "git://github.com/puppetlabs/puppetlabs-test.git",
-  "project_page": "http://github.com/puppetlabs/puppetlabs-test",
-  "issues_url": "http://github.com/puppetlabs/puppetlabs-test",
+  "project_page": "https://github.com/puppetlabs/puppetlabs-test",
+  "issues_url": "https://github.com/puppetlabs/puppetlabs-test",
   "dependencies": [
     {"name":"puppetlabs-stdlub","version_requirement":">= 1.0.0"}
   ]

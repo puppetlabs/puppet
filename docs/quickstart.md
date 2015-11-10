@@ -21,7 +21,7 @@ Puppet needs to work across a variety of ruby versions, including ruby
 
 Popular ways of making sure you have access to the various versions of ruby are
 to use either [rbenv](https://github.com/sstephenson/rbenv) or
-[rvm](http://rvm.io/). You can read up on the linked sites for how to get them
+[rvm](https://rvm.io/). You can read up on the linked sites for how to get them
 installed on your system.
 
 ## Dependencies

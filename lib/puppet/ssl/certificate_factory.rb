@@ -62,7 +62,7 @@ module Puppet::SSL::CertificateFactory
   #   extensions to.
   # @param csr [OpenSSL::X509::Request] The CSR associated with the given
   #   certificate, which may specify requested extensions for the given cert.
-  #   See http://tools.ietf.org/html/rfc2985 Section 5.4.2 Extension request
+  #   See https://tools.ietf.org/html/rfc2985 Section 5.4.2 Extension request
   # @param issuer [OpenSSL::X509::Certificate, OpenSSL::X509::Request] An X509 CSR
   #   if this is a self signed certificate, or the X509 certificate of the CA if
   #   this is a CA signed certificate.
@@ -100,7 +100,7 @@ module Puppet::SSL::CertificateFactory
     # something went wrong up there. --daniel 2011-10-11
     defaults = { "nsComment" => "Puppet Ruby/OpenSSL Internal Certificate" }
 
-    # See http://www.openssl.org/docs/apps/x509v3_config.html
+    # See https://www.openssl.org/docs/apps/x509v3_config.html
     # for information about the special meanings of 'hash', 'keyid', 'issuer'
     override = {
       "subjectKeyIdentifier"   => "hash",
@@ -126,7 +126,7 @@ module Puppet::SSL::CertificateFactory
       # complaint that the issuer keyid can't be fetched, which breaks all
       # sorts of things in our test suite and, e.g., bootstrapping the CA.
       #
-      # http://tools.ietf.org/html/rfc5280#section-4.2.1.1 says that, to be a
+      # https://tools.ietf.org/html/rfc5280#section-4.2.1.1 says that, to be a
       # conforming CA we MAY omit the field if we are self-signed, which I
       # think gives us a pass in the specific case.
       #

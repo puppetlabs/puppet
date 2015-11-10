@@ -9,8 +9,8 @@ Release: 1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
 
-URL: http://puppetlabs.com/projects/puppet/
-Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+URL: https://puppetlabs.com/projects/puppet/
+Source0: https://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.7

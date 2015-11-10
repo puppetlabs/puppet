@@ -5,7 +5,7 @@ module Puppet::Util::Windows
     require 'ffi'
     extend FFI::Library
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384129(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa384129(v=vs.85).aspx
     KEY64 = 0x100
     KEY32 = 0x200
 

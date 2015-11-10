@@ -5,7 +5,7 @@
     "type": "object",
     "properties": {
         "tags": {
-            "description": "Tags: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+            "description": "Tags: regex is from https://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
             "type": "array",
             "items": {
                 "type": "string",
@@ -46,7 +46,7 @@
                         "type": "boolean"
                     },
                     "tags": {
-                        "description": "Tags: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+                        "description": "Tags: regex is from https://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
                         "type": "array",
                         "items": {
                             "type": "string",
@@ -54,7 +54,7 @@
                         }
                     },
                     "parameters": {
-                        "description": "Parameters: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+                        "description": "Parameters: regex is from https://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
                         "type": "object",
                         "patternProperties": {
                             "^[a-z][a-z0-9_]*$": {}

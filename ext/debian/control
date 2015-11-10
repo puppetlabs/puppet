@@ -7,7 +7,7 @@ Build-Depends-Indep: ruby | ruby-interpreter, libopenssl-ruby | libopenssl-ruby1
 Build-Depends: debhelper (>= 7.0.0), openssl
 Standards-Version: 3.9.1
 Vcs-Git: git://github.com/puppetlabs/puppet
-Homepage: http://projects.puppetlabs.com/projects/puppet
+Homepage: https://projects.puppetlabs.com/projects/puppet
 
 Package: puppet-common
 Architecture: all

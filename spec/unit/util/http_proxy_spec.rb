@@ -127,14 +127,14 @@ describe Puppet::Util::HttpProxy do
     no_proxy = '127.0.0.1, localhost, mydomain.com, *.otherdomain.com, oddport.com:8080, *.otheroddport.com:8080, .anotherdomain.com, .anotheroddport.com:8080'
     it "should return false if no_proxy does not exist in env" do
       Puppet::Util.withenv('no_proxy' => nil) do
-        dest = 'http://puppetlabs.com'
+        dest = 'https://puppetlabs.com'
         expect(subject.no_proxy?(dest)).to be false
       end
     end
 
     it "should return false if the dest does not match any element in the no_proxy list" do
       Puppet::Util.withenv('no_proxy' => no_proxy) do
-        dest = 'http://puppetlabs.com'
+        dest = 'https://puppetlabs.com'
         expect(subject.no_proxy?(dest)).to be false
       end
     end
