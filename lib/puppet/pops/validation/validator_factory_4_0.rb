@@ -20,8 +20,8 @@ class Puppet::Pops::Validation::ValidatorFactory_4_0 < Puppet::Pops::Validation:
     # Configure each issue that should **not** be an error
     #
     # Validate as per the current runtime configuration
-    p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
-    p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
+    p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] || Puppet[:disable_warnings].include?('storeconfigs') ? :ignore : :warning
+    p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] || Puppet[:disable_warnings].include?('storeconfigs') ? :ignore : :warning
 
     p[Issues::FUTURE_RESERVED_WORD]          = :deprecation
 
