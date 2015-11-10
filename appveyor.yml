@@ -1,6 +1,4 @@
 version: 4.1.0.{build}
-skip_commits:
-  message: /(^\(?doc\)?.*|.*[A|a]cceptance [T|t]est.*)/
 clone_depth: 10
 init:
   - SET
