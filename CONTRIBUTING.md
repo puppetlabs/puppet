@@ -106,7 +106,7 @@ a ticket number.
 
 # Additional Resources
 
-* [Puppet Labs community guildelines](https://docs.puppetlabs.com/community/community_guidelines.html)
+* [Puppet Labs community guidelines](https://docs.puppetlabs.com/community/community_guidelines.html)
 * [Bug tracker (Jira)](https://tickets.puppetlabs.com)
 * [Contributor License Agreement](http://links.puppetlabs.com/cla)
 * [General GitHub documentation](https://help.github.com/)
