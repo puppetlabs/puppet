@@ -18,29 +18,29 @@ Puppet::Type.newtype(:cron) do
 
     Example:
 
-        cron { logrotate:
-          command => "/usr/sbin/logrotate",
-          user    => root,
-          hour    => 2,
-          minute  => 0
+        cron { 'logrotate':
+          command => '/usr/sbin/logrotate',
+          user    => 'root',
+          hour    => '2',
+          minute  => '0',
         }
 
     Note that all periodic attributes can be specified as an array of values:
 
-        cron { logrotate:
-          command => "/usr/sbin/logrotate",
-          user    => root,
-          hour    => [2, 4]
+        cron { 'logrotate':
+          command => '/usr/sbin/logrotate',
+          user    => 'root',
+          hour    => [2, 4],
         }
 
     ...or using ranges or the step syntax `*/2` (although there's no guarantee
     that your `cron` daemon supports these):
 
-        cron { logrotate:
-          command => "/usr/sbin/logrotate",
-          user    => root,
+        cron { 'logrotate':
+          command => '/usr/sbin/logrotate',
+          user    => 'root',
           hour    => ['2-4'],
-          minute  => '*/10'
+          minute  => '*/10',
         }
 
     An important note: _the Cron type will not reset parameters that are
