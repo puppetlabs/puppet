@@ -895,7 +895,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](https://docs.puppetlabs.com/guides/configuring.html).",
+        [the guide to Puppet's config files](http://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,

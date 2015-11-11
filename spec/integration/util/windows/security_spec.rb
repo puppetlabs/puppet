@@ -238,6 +238,24 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               expect(ace.mask).to eq(klass::FILE_ALL_ACCESS)
               expect(ace).not_to be_inherited
             end
+
+            if Puppet::FileSystem.directory?(path)
+              system_aces.each do |ace|
+                expect(ace).to be_object_inherit
+                expect(ace).to be_container_inherit
+              end
+
+              # it's critically important that this file be default created
+              # and that this file not have it's owner / group / mode set by winsec
+              nested_file = File.join(path, 'nested_file')
+              File.new(nested_file, 'w').close
+
+              system_aces = winsec.get_aces_for_path_by_sid(nested_file, sids[:system])
+              # even when SYSTEM is the owner (in CI), there should be an inherited SYSTEM
+              expect(system_aces.any? do |ace|
+                ace.mask == klass::FILE_ALL_ACCESS && ace.inherited?
+              end).to be_truthy
+            end
           end
 
           describe "for modes that require deny aces" do

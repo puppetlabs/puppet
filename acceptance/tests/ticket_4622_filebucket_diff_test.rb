@@ -11,9 +11,9 @@ end
 
 def validate_diff_on(host, item_one, item_two, bucket_locale)
   on host, puppet("filebucket diff #{item_one} #{item_two} #{bucket_locale}"), :acceptable_exit_codes => [ 0, 2 ]
-  assert_match("-foo", result.stdout.strip)
-  assert_match('+bar', result.stdout.strip)
-  assert_match('+baz', result.stdout.strip)
+  assert_match(/[-<] ?foo/, result.stdout.strip)
+  assert_match(/[+>] ?bar/, result.stdout.strip)
+  assert_match(/[+>] ?baz/, result.stdout.strip)
 end
 
 step "Master: Start Puppet Master" do
