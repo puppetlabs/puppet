@@ -29,11 +29,8 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    if cmd.class == Array
-      pip_cmd = ( which(cmd.first) or which(cmd.last) ) or return []
-    else
-      pip_cmd = which(cmd) or return []
-    end
+    pip_cmd = cmd.map { |c| which(c) }.find { |c| c != nil }
+    return [] unless pip_cmd
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -44,7 +41,7 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    ["pip","pip-python"]
+    ["pip", "pip-python"]
   end
 
   # Return structured information about a particular package or `nil` if
@@ -113,23 +110,11 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if self.class.cmd.class == Array
-      if pathname = which(self.class.cmd.first)
-        self.class.commands :pip => pathname
-        pip *args
-      elsif pathname = which(self.class.cmd.last)
-        self.class.commands :pip => pathname
-        pip *args
-      else
-        raise e, "Could not locate the #{self.class.cmd.join(' and ')} commands.", e.backtrace
-      end
+    if pathname = self.class.cmd.map { |c| which(c) }.find { |c| c != nil }
+      self.class.commands :pip => pathname
+      pip *args
     else
-      if pathname = which(self.class.cmd)
-        self.class.commands :pip => pathname
-        pip *args
-      else
-        raise e, "Could not locate the #{self.class.cmd} command.", e.backtrace
-      end
+      raise e, "Could not locate command #{self.class.cmd.join(' and ')}.", e.backtrace
     end
   end
 
