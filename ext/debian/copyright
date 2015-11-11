@@ -7,9 +7,9 @@ Maintainer:
  Nigel Kersten <nigel@explanatorygap.net>,
  Stig Sandbeck Mathisen <ssm@debian.org>
 Source: git://github.com/puppetlabs/puppet.git,
- http://puppetlabs.com/trac/puppet/wiki/DownloadingPuppet
+ https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html
 
-Copyright: 2005-2011 Puppet Labs, LLC
+Copyright: 2005-2015 Puppet Labs
 License: Apache 2.0
 
 Files: debian/*
@@ -35,7 +35,7 @@ Files: lib/puppet/util/rdoc/generators/template/puppet/puppet.rb
 Copyright: The FaerieMUD Consortium.
 License: CC-BY-1.0
  This work is licensed under the Creative Commons Attribution License. To view
- a copy of this license, visit http://creativecommons.org/licenses/by/1.0/ or
+ a copy of this license, visit https://creativecommons.org/licenses/by/1.0/ or
  send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California
  94305, USA.
 
@@ -46,7 +46,7 @@ License: Apache
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
  .
- http://www.apache.org/licenses/LICENSE-2.0
+ https://www.apache.org/licenses/LICENSE-2.0
  .
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,

@@ -608,7 +608,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # This method accepts a passed value and one of three fields: 'salt',
   # 'entropy', or 'iterations'.  These fields correspond with the fields
   # utilized in a PBKDF2 password hashing system
-  # (see http://en.wikipedia.org/wiki/PBKDF2 ) where 'entropy' is the
+  # (see https://en.wikipedia.org/wiki/PBKDF2 ) where 'entropy' is the
   # password hash, 'salt' is the password hash salt value, and 'iterations'
   # is an integer recommended to be > 10,000. The remaining arguments are
   # the user's plist itself, and the shadow_hash_data hash containing the

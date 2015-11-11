@@ -43,7 +43,7 @@ Change to the 'test' folder and run the test suite:
 
 == Documentation
 
-RDoc documentation is available at Github: http://mthiede.github.com/rgen/
+RDoc documentation is available at Github: https://mthiede.github.com/rgen/
 
 Find the main documentation parts for:
 * RGen::MetamodelBuilder

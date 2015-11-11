@@ -2,7 +2,7 @@ Report
 ======
 This document describes the Puppet master's report endpoint and the schema for
 Report Format 4 in technical term. Also see the
-[documentation](http://docs.puppetlabs.com/puppet/latest/reference/format_report.html).
+[documentation](https://docs.puppetlabs.com/puppet/latest/reference/format_report.html).
 
 The `report` endpoint allows clients to send reports to the master via `http`
 or `https`.  Once received by the master they are processed by the *report

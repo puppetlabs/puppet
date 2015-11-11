@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     check_result(output.exitstatus)
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
   self::ERROR_SUCCESS                  = 0
   self::ERROR_SUCCESS_REBOOT_INITIATED = 1641
   self::ERROR_SUCCESS_REBOOT_REQUIRED  = 3010

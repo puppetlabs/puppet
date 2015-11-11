@@ -32,12 +32,12 @@ Gem::Specification.new do |s|
   s.email = "puppet@puppetlabs.com"
   s.executables = ["puppet"]
   s.files = ["bin/puppet"]
-  s.homepage = "http://puppetlabs.com"
+  s.homepage = "https://puppetlabs.com"
   s.rdoc_options = ["--title", "Puppet - Configuration Management", "--main", "README", "--line-numbers"]
   s.require_paths = ["lib"]
   s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
-  s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 3"])
+  s.add_runtime_dependency(%q<facter>, [">= 1.7", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
 end

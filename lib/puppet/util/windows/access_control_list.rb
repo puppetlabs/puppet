@@ -2,7 +2,7 @@
 #
 # Represents a list of access control entries (ACEs).
 #
-# @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa374872(v=vs.85).aspx
+# @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa374872(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::AccessControlList
   include Enumerable

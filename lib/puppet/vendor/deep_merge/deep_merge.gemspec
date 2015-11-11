@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
     "lib/deep_merge/rails_compat.rb",
     "test/test_deep_merge.rb"
   ]
-  s.homepage = %q{http://github.com/danielsdeleo/deep_merge}
+  s.homepage = %q{https://github.com/danielsdeleo/deep_merge}
   s.require_paths = ["lib"]
   s.summary = %q{Merge Deeply Nested Hashes}
   s.test_files = [

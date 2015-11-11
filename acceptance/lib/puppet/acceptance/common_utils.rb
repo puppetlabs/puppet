@@ -131,11 +131,15 @@ module Puppet
       end
       module_function :ruby_command
 
-      def gem_command(host)
-        if host['platform'] =~ /windows/
-          "env PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+      def gem_command(host, type='aio')
+        if type == 'aio'
+          if host['platform'] =~ /windows/
+            "env PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+          else
+            "env PATH=\"#{host['privatebindir']}:${PATH}\" gem"
+          end
         else
-          "env PATH=\"#{host['privatebindir']}:${PATH}\" gem"
+          on(host, 'which gem').stdout.chomp
         end
       end
       module_function :gem_command

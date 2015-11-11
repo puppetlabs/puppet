@@ -84,7 +84,7 @@ module Win32
     SCHED_S_TASK_HAS_NOT_RUN              = 0x00041303
     SCHED_S_TASK_NOT_SCHEDULED            = 0x00041305
     # HRESULT error codes
-    # http://blogs.msdn.com/b/eldar/archive/2007/04/03/a-lot-of-hresult-codes.aspx
+    # https://blogs.msdn.com/b/eldar/archive/2007/04/03/a-lot-of-hresult-codes.aspx
     # in Ruby, an 0x8XXXXXXX style HRESULT can be resolved to 2s complement
     # by using "0x8XXXXXXX".to_i(16) - - 0x100000000
     SCHED_E_ACCOUNT_INFORMATION_NOT_SET   = -2147216625 # 0x8004130F
@@ -1002,7 +1002,7 @@ module Win32
 
       public
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381811(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381811(v=vs.85).aspx
       ITaskScheduler = com::Interface[com::IUnknown,
         FFI::WIN32::GUID['148BD527-A2AB-11CE-B11F-00AA00530503'],
 
@@ -1025,7 +1025,7 @@ module Win32
       TaskScheduler = com::Factory[ITaskScheduler,
         FFI::WIN32::GUID['148BD52A-A2AB-11CE-B11F-00AA00530503']]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa380706(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa380706(v=vs.85).aspx
       IEnumWorkItems = com::Interface[com::IUnknown,
         FFI::WIN32::GUID['148BD528-A2AB-11CE-B11F-00AA00530503'],
 
@@ -1039,7 +1039,7 @@ module Win32
 
       EnumWorkItems = com::Instance[IEnumWorkItems]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381216(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381216(v=vs.85).aspx
       IScheduledWorkItem = com::Interface[com::IUnknown,
         FFI::WIN32::GUID['a6b952f0-a4b1-11d0-997d-00aa006887ec'],
 
@@ -1091,7 +1091,7 @@ module Win32
         GetAccountInformation: [[:pointer], :hresult]
       ]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381311(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381311(v=vs.85).aspx
       ITask = com::Interface[IScheduledWorkItem,
         FFI::WIN32::GUID['148BD524-A2AB-11CE-B11F-00AA00530503'],
 
@@ -1117,14 +1117,14 @@ module Win32
 
       Task = com::Instance[ITask]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/ms688695(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/ms688695(v=vs.85).aspx
       IPersist = com::Interface[com::IUnknown,
         FFI::WIN32::GUID['0000010c-0000-0000-c000-000000000046'],
         # CLSID *
         GetClassID: [[:pointer], :hresult]
       ]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687223(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/ms687223(v=vs.85).aspx
       IPersistFile = com::Interface[IPersist,
         FFI::WIN32::GUID['0000010b-0000-0000-C000-000000000046'],
 
@@ -1138,7 +1138,7 @@ module Win32
 
       PersistFile = com::Instance[IPersistFile]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381864(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381864(v=vs.85).aspx
       ITaskTrigger = com::Interface[com::IUnknown,
         FFI::WIN32::GUID['148BD52B-A2AB-11CE-B11F-00AA00530503'],
 
@@ -1149,7 +1149,7 @@ module Win32
 
       TaskTrigger = com::Instance[ITaskTrigger]
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa383620(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383620(v=vs.85).aspx
       # The TASK_TRIGGER_TYPE field of the TASK_TRIGGER structure determines
       # which member of the TRIGGER_TYPE_UNION field to use.
       TASK_TRIGGER_TYPE = enum(
@@ -1163,31 +1163,31 @@ module Win32
         :TASK_EVENT_TRIGGER_AT_LOGON, 7         # Ignore the Type field
       )
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446857(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446857(v=vs.85).aspx
       class DAILY < FFI::Struct
         layout :DaysInterval, :word
       end
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384014(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa384014(v=vs.85).aspx
       class WEEKLY < FFI::Struct
         layout :WeeksInterval, :word,
                :rgfDaysOfTheWeek, :word
       end
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
       class MONTHLYDATE < FFI::Struct
         layout :rgfDays, :dword,
                :rgfMonths, :word
       end
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
       class MONTHLYDOW < FFI::Struct
         layout :wWhichWeek, :word,
                :rgfDaysOfTheWeek, :word,
                :rgfMonths, :word
       end
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384002(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa384002(v=vs.85).aspx
       class TRIGGER_TYPE_UNION < FFI::Union
         layout :Daily, DAILY,
                :Weekly, WEEKLY,
@@ -1195,7 +1195,7 @@ module Win32
                :MonthlyDOW, MONTHLYDOW
       end
 
-      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa383618(v=vs.85).aspx
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383618(v=vs.85).aspx
       class TASK_TRIGGER < FFI::Struct
         layout :cbTriggerSize, :word,            # Structure size.
                :Reserved1, :word,                # Reserved. Must be zero.

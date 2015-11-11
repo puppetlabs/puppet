@@ -3,7 +3,7 @@ require 'puppet/indirector/exec'
 
 class Puppet::Node::Exec < Puppet::Indirector::Exec
   desc "Call an external program to get node information.  See
-  the [External Nodes](http://docs.puppetlabs.com/guides/external_nodes.html) page for more information."
+  the [External Nodes](https://docs.puppetlabs.com/guides/external_nodes.html) page for more information."
   include Puppet::Util
 
   def command
