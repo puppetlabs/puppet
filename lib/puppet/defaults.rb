@@ -114,7 +114,7 @@ module Puppet
         * `deprecations` --- disables deprecation warnings.",
       :hook      => proc do |value|
         values = munge(value)
-        valid   = %w[deprecations]
+        valid   = %w[deprecations storeconfigs]
         invalid = values - (values & valid)
         if not invalid.empty?
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
