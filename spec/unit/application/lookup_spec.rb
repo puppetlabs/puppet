@@ -99,34 +99,70 @@ describe Puppet::Application::Lookup do
     } }
 
     let(:expected_yaml_hash) { {
-      :type => :merge,
-      :merge => :first,
-      :event => :result,
-      :value => 'This is A',
       :branches => [
-      { :key => 'a',
-        :event => :not_found,
-        :type => :global,
-        :name => :hiera
-      },
       {
-        :type => :data_provider,
-        :name => 'Hiera Data Provider, version 4',
-        :configuration_path => "#{environmentpath}/production/hiera.yaml",
+        :type => :meta,
         :branches => [
         {
-          :type => :data_provider,
-          :name => 'common',
+          :type => :merge,
+          :merge => :hash,
           :branches => [
           {
-            :key => 'a',
-            :value => 'This is A',
-            :event => :found,
-            :type => :path,
-            :original_path => 'common',
-            :path => "#{environmentpath}/production/data/common.yaml",
+            :type => :global,
+            :key => 'lookup_options',
+            :name => :hiera,
+            :event => :not_found
+          },
+          {
+            :type => :data_provider,
+            :name => 'Hiera Data Provider, version 4',
+            :configuration_path => "#{environmentpath}/production/hiera.yaml",
+            :branches => [
+            {
+              :type => :data_provider,
+              :name => 'common',
+              :branches => [
+              {
+                :type => :path,
+                :key => 'lookup_options',
+                :original_path => 'common',
+                :path => "#{environmentpath}/production/data/common.yaml",
+                :event => :not_found
+              }]
+            }]
           }]
-       }]
+        }]
+      },
+      {
+        :type => :merge,
+        :merge => :first,
+        :event => :result,
+        :value => 'This is A',
+        :branches => [
+        { :key => 'a',
+          :event => :not_found,
+          :type => :global,
+          :name => :hiera
+        },
+        {
+          :type => :data_provider,
+          :name => 'Hiera Data Provider, version 4',
+          :configuration_path => "#{environmentpath}/production/hiera.yaml",
+          :branches => [
+          {
+            :type => :data_provider,
+            :name => 'common',
+            :branches => [
+            {
+              :key => 'a',
+              :value => 'This is A',
+              :event => :found,
+              :type => :path,
+              :original_path => 'common',
+              :path => "#{environmentpath}/production/data/common.yaml",
+              }]
+           }]
+         }]
       }]
     } }
 
@@ -143,6 +179,34 @@ describe Puppet::Application::Lookup do
     it 'produces human readable text by default' do
       lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
       lookup.options[:explain] = true
+      lookup.command_line.stubs(:args).returns(['a'])
+      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Searching for 'lookup_options'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: common
+          No such key: "lookup_options"
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "a"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: common
+        Found key: "a" value: "This is A"
+  Merged result: "This is A"
+      EXPLANATION
+    end
+
+    it 'produces human readable text without meta data when --explain-data is used' do
+      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:explain_data] = true
       lookup.command_line.stubs(:args).returns(['a'])
       expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy first
@@ -177,7 +241,7 @@ Merge strategy first
 
     it 'can produce a json explanation' do
       lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
-      lookup.options[:explain] = true
+      lookup.options[:explain_data] = true
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['a'])
       save_stdout = $stdout

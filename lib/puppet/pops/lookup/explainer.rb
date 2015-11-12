@@ -133,6 +133,22 @@ module Puppet::Pops::Lookup
     end
   end
 
+  class ExplainMeta < ExplainTreeNode
+    def initialize(parent)
+      super(parent)
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << first_indent << "Searching for 'lookup_options'\n"
+      indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
+    end
+
+    def type
+      :meta
+    end
+  end
+
   class ExplainInterpolate < ExplainTreeNode
     def initialize(parent, expression)
       super(parent)
@@ -163,6 +179,8 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
+      return if branches.size == 0
+
       # It's pointless to report a merge where there's only one branch
       return branches[0].dump_on(io, indent, first_indent) if branches.size == 1
 
@@ -332,8 +350,10 @@ module Puppet::Pops::Lookup
   end
 
   class Explainer < ExplainNode
-    def initialize
+    def initialize(suppress_meta = false, force_options_lookup = true)
       @current = self
+      @suppress_meta = suppress_meta
+      @force_options_lookup = force_options_lookup
     end
 
     def push(qualifier_type, qualifier)
@@ -352,6 +372,8 @@ module Puppet::Pops::Lookup
           ExplainMerge.new(@current, qualifier)
         when :scope
           ExplainScope.new(@current)
+        when :meta
+          ExplainMeta.new(@current)
         else
           raise ArgumentError, "Unknown Explain type #{qualifier_type}"
         end
@@ -393,6 +415,14 @@ module Puppet::Pops::Lookup
 
     def dump_on(io, indent, first_indent)
       branches.each { |b| b.dump_on(io, indent, first_indent) }
+    end
+
+    def suppress_meta?
+      @suppress_meta
+    end
+
+    def force_options_lookup?
+      @force_options_lookup
     end
 
     def to_hash

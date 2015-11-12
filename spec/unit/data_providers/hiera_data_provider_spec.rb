@@ -167,10 +167,10 @@ describe "when using a hiera data provider" do
     end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse \(#{environmentpath}[^)]+\):/)
   end
 
-  describe 'when using explain' do
+  describe 'when using explain-data' do
     it 'will report config path (original and resolved), data path (original and resolved), and interpolation (before and after)' do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
-        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, Puppet::Pops::Lookup::Explainer.new(true))
         value = Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy first
@@ -190,6 +190,90 @@ EOS
       end
     end
   end
+
+  describe 'when using explain' do
+    it 'will report config path (original and resolved), data path (original and resolved), and interpolation (before and after)' do
+      compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
+        value = Puppet::Pops::Lookup.lookup('one::lopts_test::hash', nil, nil, nil, nil, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Searching for 'lookup_options'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/hiera_misc/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/hiera_misc/data/common.yaml"
+          Original path: common
+          Found key: "lookup_options" value: {
+            "one::lopts_test::hash" => {
+              "merge" => "deep"
+            }
+          }
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/hiera_misc/modules/one/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/hiera_misc/modules/one/data/common.yaml"
+          Original path: common
+          Found key: "lookup_options" value: {
+            "one::loptsm_test::hash" => {
+              "merge" => "deep"
+            }
+          }
+    Merged result: {
+      "one::loptsm_test::hash" => {
+        "merge" => "deep"
+      },
+      "one::lopts_test::hash" => {
+        "merge" => "deep"
+      }
+    }
+Merge strategy deep
+  Data Binding "hiera"
+    No such key: "one::lopts_test::hash"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/hiera_misc/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/hiera_misc/data/common.yaml"
+        Original path: common
+        Found key: "one::lopts_test::hash" value: {
+          "a" => "A",
+          "b" => "B",
+          "m" => {
+            "ma" => "MA",
+            "mb" => "MB"
+          }
+        }
+  Module "one" using Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/hiera_misc/modules/one/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/hiera_misc/modules/one/data/common.yaml"
+        Original path: common
+        Found key: "one::lopts_test::hash" value: {
+          "a" => "A",
+          "c" => "C",
+          "m" => {
+            "ma" => "MA",
+            "mc" => "MC",
+            "mb" => "MB"
+          }
+        }
+  Merged result: {
+    "a" => "A",
+    "c" => "C",
+    "m" => {
+      "ma" => "MA",
+      "mc" => "MC",
+      "mb" => "MB"
+    },
+    "b" => "B"
+  }
+EOS
+      end
+    end
+  end
+
   def parent_fixture(dir_name)
     File.absolute_path(File.join(my_fixture_dir(), "../#{dir_name}"))
   end

@@ -59,7 +59,7 @@ module Puppet::Pops::Lookup
       if @explainer.nil?
         yield
       else
-        if is_meta
+        if is_meta && @explainer.suppress_meta?
           save_explainer = @explainer
           @explainer = nil
           begin
@@ -76,6 +76,10 @@ module Puppet::Pops::Lookup
           end
         end
       end
+    end
+
+    def force_options_lookup?
+      @explainer.nil? ? false : @explainer.force_options_lookup?
     end
 
     def report_found_in_overrides(key, value)

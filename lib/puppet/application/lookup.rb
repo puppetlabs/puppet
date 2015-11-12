@@ -45,6 +45,8 @@ class Puppet::Application::Lookup < Puppet::Application
 
   option('--explain')
 
+  option('--explain-data')
+
   option('--default VALUE') do |arg|
     options[:default_value] = arg
   end
@@ -213,6 +215,10 @@ the puppet lookup function linked to above.
   than the value returned for the key. The explaination will describe how
   the result was obtained or why lookup failed to obtain the result.
 
+* --explain-data
+  Like --explain but will omit explanation of how lookup_options are found
+  and assembled.
+
 * --default <VALUE>
   A value produced if no value was found in the lookup.
 
@@ -297,7 +303,8 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
     end
 
-    explain = !!options[:explain]
+    explain_data = !!options[:explain_data]
+    explain = !!options[:explain] || explain_data
 
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
@@ -307,7 +314,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type]) : nil
 
     generate_scope do |scope|
-      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain)
+      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_data) : nil)
       begin
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
