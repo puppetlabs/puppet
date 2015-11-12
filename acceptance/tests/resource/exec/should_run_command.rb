@@ -1,8 +1,6 @@
 test_name "tests that puppet correctly runs an exec."
 # original author: Dan Bode  --daniel 2010-12-23
 
-confine :except, :platform => /osx/ # see BKR-388
-
 def before(agent)
   step "file to be touched should not exist."
   touched = agent.tmpfile('test-exec')

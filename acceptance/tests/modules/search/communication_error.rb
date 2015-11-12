@@ -1,7 +1,5 @@
 test_name 'puppet module search should print a reasonable message on communication errors'
 
-confine :except, :platform => 'solaris'
-
 step 'Setup'
 stub_hosts_on(master, 'forgeapi.puppetlabs.com' => '127.0.0.2')
 

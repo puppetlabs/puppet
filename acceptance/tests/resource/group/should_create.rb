@@ -1,7 +1,5 @@
 test_name "should create a group"
 
-confine :except, :platform => /osx/ # See PUP-4824
-
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
