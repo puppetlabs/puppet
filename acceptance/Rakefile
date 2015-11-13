@@ -185,7 +185,7 @@ end
 
 def list_preserved_configurations(secs_ago = ONE_DAY_IN_SECS)
   preserved = {}
-  Dir.glob('log/*_*').each do |dir|
+  Dir.glob('log/*-*/*').each do |dir|
     preserved_config_path = "#{dir}/preserved_config.yaml"
     yesterday = Time.now - secs_ago.to_i
     if preserved_config = File.exists?(preserved_config_path)
