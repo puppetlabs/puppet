@@ -63,7 +63,7 @@ class Puppet::Util::Autoload
       $clean_loadpath ||= $LOAD_PATH.dup
       $env_loadpath ||= {}
       $env_loadpath[env] ||= search_directories(env)
-      $current_loadpath ||= nil
+      $current_loadpath ||= $clean_loadpath
 
       loadpath = $env_loadpath[env]
       last_loadpath = $current_loadpath
