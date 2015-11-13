@@ -3,7 +3,7 @@
 #
 class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
-  LOOKUP_OPTIONS = 'lookup_options'.freeze
+  LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
   HASH = 'hash'.freeze
   MERGE = 'merge'.freeze
 
@@ -29,12 +29,38 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   # @throws :no_such_key if the given key is not found
   #
   def lookup(key, lookup_invocation, merge)
-    merge = lookup_merge_options(key, lookup_invocation) if merge.nil?
-    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
-    lookup_invocation.with(:merge, merge_strategy) do
-      result = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment, :lookup_in_module]) { |m| send(m, key, lookup_invocation, merge_strategy) }
-      lookup_invocation.report_result(result)
-      result
+    # The 'lookup_options' key is reserved and not found as normal data
+    throw :no_such_key if key == LOOKUP_OPTIONS
+
+    merge_explained = false
+    if lookup_invocation.explain_options?
+      catch(:no_such_key) do
+        module_name = extract_module_name(key) unless key == Puppet::Pops::Lookup::GLOBAL
+        lookup_invocation.module_name = module_name
+        if lookup_invocation.only_explain_options?
+          do_lookup(LOOKUP_OPTIONS, lookup_invocation, HASH)
+          return nil
+        end
+
+        # Bypass cache and do a "normal" lookup of the lookup_options
+        lookup_invocation.with(:meta, LOOKUP_OPTIONS) do
+          key_options = do_lookup(LOOKUP_OPTIONS, lookup_invocation, HASH)[key]
+          merge = key_options[MERGE] unless key_options.nil?
+          merge_explained = true
+        end
+      end
+    elsif merge.nil?
+      # Used cached lookup_options
+      merge = lookup_merge_options(key, lookup_invocation)
+      lookup_invocation.report_merge_source('lookup_options') unless merge.nil?
+    end
+
+    if merge_explained
+      # Merge lookup is explained in detail so we need to explain the data in a section
+      # on the same level to avoid confusion
+      lookup_invocation.with(:data, key) { do_lookup(key, lookup_invocation, merge) }
+    else
+      do_lookup(key, lookup_invocation, merge)
     end
   end
 
@@ -60,7 +86,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
   # @api private
   def lookup_in_module(name, lookup_invocation, merge_strategy)
-    module_name = extract_module_name(name)
+    module_name = lookup_invocation.module_name || extract_module_name(name)
 
     # Do not attempt to do a lookup in a module unless the name is qualified.
     throw :no_such_key if module_name.nil?
@@ -95,41 +121,51 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     module_name = extract_module_name(name)
 
     # Retrieve the options for the module. We use nil as a key in case we have none
-    options = @lookup_options[module_name]
-    if options.nil? && !@lookup_options.include?(module_name)
+    if !@lookup_options.include?(module_name)
       options = retrieve_lookup_options(module_name, lookup_invocation, Puppet::Pops::MergeStrategy.strategy(HASH))
       raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.nil? || options.is_a?(Hash)
       @lookup_options[module_name] = options
+    else
+      options = @lookup_options[module_name]
     end
     options.nil? ? nil : options[name]
   end
 
   private
 
+  def do_lookup(key, lookup_invocation, merge)
+    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+    lookup_invocation.with(:merge, merge_strategy) do
+      result = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment, :lookup_in_module]) { |m| send(m, key, lookup_invocation, merge_strategy) }
+      lookup_invocation.report_result(result)
+      result
+    end
+  end
+
   # Retrieve lookup options that applies when using a specific module (i.e. a merge of the pre-cached
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
-    lookup_invocation.with(:meta, module_name) do
-      env_opts = env_lookup_options(lookup_invocation, merge_strategy)
-      options = nil
-      unless module_name.nil?
-        catch(:no_such_key) do
-          options = module_provider(module_name).lookup(LOOKUP_OPTIONS, lookup_invocation, merge_strategy)
-          options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
-        end
+    meta_invocation = Puppet::Pops::Lookup::Invocation.new(lookup_invocation.scope)
+    env_opts = env_lookup_options(meta_invocation, merge_strategy)
+    unless module_name.nil? || @env.module(module_name).nil?
+      catch(:no_such_key) do
+        meta_invocation.module_name = module_name
+        options = module_provider(module_name).lookup(LOOKUP_OPTIONS, meta_invocation, merge_strategy)
+        options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
+        return options
       end
-      options.nil? ? env_opts : options
     end
+    env_opts
   end
 
   # Retrieve and cache lookup options specific to the environment that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
-  def env_lookup_options(lookup_invocation, merge_strategy)
-    unless instance_variable_defined?(:@env_lookup_options)
+  def env_lookup_options(meta_invocation, merge_strategy)
+    if !instance_variable_defined?(:@env_lookup_options)
       @env_lookup_options = nil
       catch(:no_such_key) do
         @env_lookup_options = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment]) do |m|
-          send(m, LOOKUP_OPTIONS, lookup_invocation, merge_strategy)
+          send(m, LOOKUP_OPTIONS, meta_invocation, merge_strategy)
         end
       end
     end
