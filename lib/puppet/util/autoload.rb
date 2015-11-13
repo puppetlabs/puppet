@@ -76,7 +76,6 @@ class Puppet::Util::Autoload
       return false unless file
       begin
         mark_loaded(name, file)
-        $LOAD_PATH.push *(search_directories(env))
         Kernel.load file, @wrap
         return true
       rescue SystemExit,NoMemoryError
