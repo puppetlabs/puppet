@@ -55,10 +55,12 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load_file(name, env)
+      load_path = $LOAD_PATH
       file = get_file(name.to_s, env)
       return false unless file
       begin
         mark_loaded(name, file)
+        $LOAD_PATH.push *(search_directories(env))
         Kernel.load file, @wrap
         return true
       rescue SystemExit,NoMemoryError
@@ -67,6 +69,12 @@ class Puppet::Util::Autoload
         message = "Could not autoload #{name}: #{detail}"
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
+      ensure
+        # Restore original LOAD_PATH
+        $LOAD_PATH.each do |p|
+          $LOAD_PATH.delete(p) unless load_path.include? p
+        end
+        $LOAD_PATH.uniq!
       end
     end
 
