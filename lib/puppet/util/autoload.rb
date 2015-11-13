@@ -55,7 +55,23 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load_file(name, env)
-      load_path = $LOAD_PATH
+      # $clean_loadpath     - remembers LOAD_PATH from where we started
+      # $env_loadpath[env]  - remembers the LOAD_PATH we want to apply for each environment
+      # $current_loadpath   - which LOAD_PATH we have set right now
+      # loadpath            - which LOAD_PATH we want to apply
+      # last_loadpath       - which LOAD_PATH was set when we started
+      $clean_loadpath ||= $LOAD_PATH.dup
+      $env_loadpath ||= {}
+      $env_loadpath[env] ||= search_directories(env)
+      $current_loadpath ||= nil
+
+      loadpath = $env_loadpath[env]
+      last_loadpath = $current_loadpath
+      if loadpath != $current_loadpath
+        $current_load_path = loadpath
+        $LOAD_PATH.replace loadpath
+      end
+
       file = get_file(name.to_s, env)
       return false unless file
       begin
@@ -70,11 +86,11 @@ class Puppet::Util::Autoload
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       ensure
-        # Restore original LOAD_PATH
-        $LOAD_PATH.each do |p|
-          $LOAD_PATH.delete(p) unless load_path.include? p
+        # Restore previous LOAD_PATH if we changed it
+        if loadpath != last_loadpath
+          $LOAD_PATH.replace last_loadpath
+          $current_loadpath = last_loadpath
         end
-        $LOAD_PATH.uniq!
       end
     end
 
