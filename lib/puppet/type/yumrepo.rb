@@ -21,6 +21,16 @@ Puppet::Type.newtype(:yumrepo) do
   YUM_BOOLEAN=/^(True|False|0|1|No|Yes)$/i
   YUM_BOOLEAN_DOC="Valid values are: False/0/No or True/1/Yes."
 
+  # Common munge logic for YUM_BOOLEAN values. Munges for two requirements:
+  # 1) Because of how regex validation works in Puppet::Parameter::Value,
+  # Boolean false and lowercase false will not be considered invalid. However,
+  # if the user specified false (or true), they meant False (or True).
+  # 2) In order for parameter removal to work correctly, when absent is passed
+  # as a string it needs to be munged back to a symbol.
+  munge_yum_bool = Proc.new do |val|
+    val.to_s == 'absent' ? :absent : val.to_s.capitalize
+  end
+
   VALID_SCHEMES = %w[file http https ftp]
 
   newparam(:name, :namevar => true) do
@@ -81,6 +91,7 @@ Puppet::Type.newtype(:yumrepo) do
     #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:gpgcheck) do
@@ -90,6 +101,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:repo_gpgcheck) do
@@ -98,6 +110,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:gpgkey) do
@@ -179,6 +192,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:failovermethod) do
@@ -194,6 +208,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:retries) do
@@ -231,6 +246,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:priority) do
@@ -307,6 +323,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:sslcacert) do
@@ -323,6 +340,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:sslclientcert) do
@@ -359,6 +377,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:assumeyes) do
@@ -367,6 +386,7 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
   end
 
   newproperty(:deltarpm_percentage) do
