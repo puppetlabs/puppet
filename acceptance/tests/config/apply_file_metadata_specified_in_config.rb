@@ -2,7 +2,7 @@ test_name "#17371 file metadata specified in puppet.conf needs to be applied"
 
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
-confine :except, :platform => /solaris-10/
+confine :except, :platform => /solaris-10/ # See PUP-5200
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
