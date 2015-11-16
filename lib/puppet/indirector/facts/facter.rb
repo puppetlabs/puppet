@@ -29,19 +29,8 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     self.class.setup_external_search_paths(request) if Puppet.features.external_facts?
     self.class.setup_search_paths(request)
 
-    # Add the puppetversion fact; this is done before generating the hash so it is
-    # accessible to custom facts.
-    Facter.add(:puppetversion) do
-      setcode { Puppet.version.to_s }
-    end
-
-    Facter.add(:agent_specified_environment) do
-      setcode do
-        if Puppet.settings.set_by_config?(:environment)
-          Puppet[:environment]
-        end
-      end
-    end
+    # Initialize core Puppet facts, such as puppetversion
+    Puppet.initialize_facts
 
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
     result.add_local_facts
