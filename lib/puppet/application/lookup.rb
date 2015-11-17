@@ -147,7 +147,8 @@ SYNOPSIS
 The lookup command is used for debugging and testing a given data
 configuration. For a given data key, lookup will produce either a
 value or an explanation of how that value was obtained on the standard
-output stream with the specified rendering format.
+output stream with the specified rendering format. Lookup is designed
+to be run on a puppet master or a node in a masterless setup.
 
 USAGE
 -----
@@ -161,7 +162,7 @@ DESCRIPTION
 -----------
 The lookup command is a CLI interface for the puppet lookup function.
 When given one or more keys, the lookup command will return the first
-value found.
+value found when run from the puppet master or a masterless node.
 
 When an explanation has not been requested and
 lookup is simply looking up a value, the application will exit with 0

@@ -484,9 +484,10 @@ module Puppet
     },
     :environment_data_provider => {
       :default    => "none",
-      :desc       => "The name of a registered environment data provider. The two built in
-      and registered providers are 'none' (no environment specific data), and 'function'
-      (environment specific data obtained by calling the function 'environment::data()').
+      :desc       => "The name of a registered environment data provider used when obtaining environment
+      specific data. The three built in and registered providers are 'none' (no data), 'function' (data
+      obtained by calling the function 'environment::data()') and 'hiera' (data obtained using a data
+      provider configured using a hiera.yaml file in root of the environment).
       Other environment data providers may be registered in modules on the module path. For such
       custom data providers see the respective module documentation."
     },
