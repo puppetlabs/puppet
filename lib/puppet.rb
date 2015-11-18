@@ -138,6 +138,23 @@ module Puppet
   end
   private_class_method :do_initialize_settings_for_run_mode
 
+  # Initialize puppet's core facts. It should not be called before initialize_settings.
+  def self.initialize_facts
+    # Add the puppetversion fact; this is done before generating the hash so it is
+    # accessible to custom facts.
+    Facter.add(:puppetversion) do
+      setcode { Puppet.version.to_s }
+    end
+
+    Facter.add(:agent_specified_environment) do
+      setcode do
+        if Puppet.settings.set_by_config?(:environment)
+          Puppet[:environment]
+        end
+      end
+    end
+  end
+
   # Create a new type.  Just proxy to the Type class.  The mirroring query
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
