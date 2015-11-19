@@ -48,6 +48,14 @@ describe Puppet::Node do
       node.parameters["environment"] = :bar
       node.environment.name.should == :bar
     end
+
+    it "should allow its environment parameter to be set by attribute after initialization" do
+      node = Puppet::Node.new("foo", { :parameters => { 'environment' => :foo } })
+      node.environment_name = :foo
+      node.environment = :bar
+      expect(node.environment_name).to eq(:bar)
+      expect(node.parameters['environment']).to eq(:bar)
+    end
   end
 
   it "can survive a round-trip through YAML" do

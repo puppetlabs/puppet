@@ -18,6 +18,8 @@ class Puppet::Node
 
   ::PSON.register_document_type('Node',self)
 
+  ENVIRONMENT = 'environment'.freeze
+
   def self.from_data_hash(data)
     raise ArgumentError, "No name provided in serialized data" unless name = data['name']
 
@@ -58,7 +60,7 @@ class Puppet::Node
     if @environment
       @environment
     else
-      if env = parameters["environment"]
+      if env = parameters[ENVIRONMENT]
         self.environment = env
       elsif environment_name
         self.environment = environment_name
@@ -80,6 +82,13 @@ class Puppet::Node
     else
       @environment = env
     end
+
+    # Keep environment_name attribute and parameter in sync if they have been set
+    unless @environment.nil?
+      @parameters[ENVIRONMENT] = @environment.name if @parameters.include?(ENVIRONMENT)
+      self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
+    end
+    @environment
   end
 
   def has_environment_instance?
@@ -129,7 +138,7 @@ class Puppet::Node
       @parameters[name] = value unless @parameters.include?(name)
     end
 
-    @parameters["environment"] ||= self.environment.name.to_s
+    @parameters[ENVIRONMENT] ||= self.environment.name.to_s
   end
 
   # Calculate the list of names we might use for looking
