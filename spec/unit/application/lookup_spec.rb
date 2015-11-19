@@ -14,6 +14,16 @@ describe Puppet::Application::Lookup do
       expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
     end
 
+    it "does not allow invalid arguments for '--merge'" do
+      lookup.options[:node] = 'dantooine.local'
+      lookup.options[:merge] = 'something_bad'
+      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+
+      expected_error = "The --merge option only accepts 'first', 'hash', 'unique', or 'deep'\nRun 'puppet lookup --help' for more details"
+
+      expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
+    end
+
     it "does not allow deep merge options if '--merge' was not set to deep" do
       lookup.options[:node] = 'dantooine.local'
       lookup.options[:merge_hash_arrays] = true
@@ -42,6 +52,18 @@ describe Puppet::Application::Lookup do
       (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
 
       expect { lookup.run_command }.to output("rand\n").to_stdout
+    end
+
+    %w(first unique hash deep).each do |opt|
+
+      it "accepts --merge #{opt}" do
+        lookup.options[:node] = 'dantooine.local'
+        lookup.options[:merge] = opt
+        lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+        lookup.stubs(:generate_scope).yields('scope')
+        Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
+        expect { lookup.run_command }.to output("--- rand\n...\n").to_stdout
+      end
     end
 
     it "prints the value found by lookup" do

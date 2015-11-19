@@ -12,11 +12,7 @@ class Puppet::Application::Lookup < Puppet::Application
 
   # Options for lookup
   option('--merge TYPE') do |arg|
-    if %w{unique hash deep}.include?(arg)
-      options[:merge] = arg
-    else
-      raise "The --merge option only accepts 'unique', 'hash', or 'deep'.\n#{RUN_HELP}"
-    end
+    options[:merge] = arg
   end
 
   option('--debug', '-d')
@@ -279,8 +275,15 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     use_default_value = !options[:default_value].nil?
     merge_options = nil
 
-    if options[:merge]
-      if options[:merge] == 'deep'
+    merge = options[:merge]
+    unless merge.nil?
+      strategies = Puppet::Pops::MergeStrategy.strategy_keys
+      unless strategies.include?(merge.to_sym)
+        strategies = strategies.map {|k| "'#{k}'"}
+        raise "The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\n#{RUN_HELP}"
+      end
+
+      if merge == 'deep'
         merge_options = {'strategy' => 'deep',
           'sort_merge_arrays' => !options[:sort_merge_arrays].nil?,
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
@@ -294,7 +297,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         end
 
       else
-        merge_options = {'strategy' => options[:merge]}
+        merge_options = {'strategy' => merge}
       end
     end
 
