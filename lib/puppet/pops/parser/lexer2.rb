@@ -498,7 +498,7 @@ class Puppet::Pops::Parser::Lexer2
     when '/'
       case la1
       when '*'
-        scn.skip(PATTERN_MLCOMMENT)
+        lex_error(Puppet::Pops::Issues::UNCLOSED_MLCOMMENT) if scn.skip(PATTERN_MLCOMMENT).nil?
         nil
 
       else
