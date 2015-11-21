@@ -352,6 +352,11 @@ class Puppet::Resource::Type
   # @api private
   def set_resource_parameters(resource, scope)
     # Inject parameters from using external lookup
+    modname = resource[:module_name] || module_name
+    scope[MODULE_NAME] = modname unless modname.nil?
+    caller_name = resource[:caller_module_name] || scope.parent_module_name
+    scope[CALLER_MODULE_NAME] = caller_name unless caller_name.nil?
+
     resource.add_parameters_from_consume
     inject_external_parameters(resource, scope)
 
@@ -365,11 +370,6 @@ class Puppet::Resource::Type
       scope[TITLE] = resource.title
       scope[NAME] =  resource.name
     end
-
-    modname = resource_hash[MODULE_NAME] || module_name
-    scope[MODULE_NAME] = modname unless modname.nil?
-    caller_name = resource_hash[CALLER_MODULE_NAME] || scope.parent_module_name
-    scope[CALLER_MODULE_NAME] = caller_name unless caller_name.nil?
 
     scope.class_set(self.name,scope) if hostclass? || node?
 
