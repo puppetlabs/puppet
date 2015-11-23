@@ -118,7 +118,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
 
     it "should return only services" do
-      described_class.expects(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
+      described_class.expects(:systemctl).with('list-unit-files', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
       expect(described_class.instances.map(&:name)).to match_array(%w{
         arp-ethers.service
         auditd.service
