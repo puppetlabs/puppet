@@ -1,6 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+module Puppet::Util::Plist
+end
+
 macauth_type = Puppet::Type.type(:macauthorization)
 
 describe Puppet::Type.type(:macauthorization), "when checking macauthorization objects" do
@@ -10,7 +13,7 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
     authplist["rules"] = { "foorule" => "foo" }
     authplist["rights"] = { "fooright" => "foo" }
     provider_class = macauth_type.provider(macauth_type.providers[0])
-    Plist.stubs(:parse_xml).with("/etc/authorization").returns(authplist)
+    Puppet::Util::Plist.stubs(:parse_plist).with("/etc/authorization").returns(authplist)
     macauth_type.stubs(:defaultprovider).returns provider_class
     @resource = macauth_type.new(:name => 'foo')
   end

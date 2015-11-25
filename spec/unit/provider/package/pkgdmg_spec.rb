@@ -1,6 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+module Puppet::Util::Plist
+end
+
 describe Puppet::Type.type(:package).provider(:pkgdmg) do
   let(:resource) { Puppet::Type.type(:package).new(:name => 'foo', :provider => :pkgdmg) }
   let(:provider) { described_class.new(resource) }
@@ -26,8 +29,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
   # These tests shouldn't be this messy. The pkgdmg provider needs work...
   describe "when installing a pkgdmg" do
     let(:fake_mountpoint) { "/tmp/dmg.foo" }
-    let(:empty_hdiutil_plist) { Plist::Emit.dump({}) }
-    let(:fake_hdiutil_plist) { Plist::Emit.dump({"system-entities" => [{"mount-point" => fake_mountpoint}]}) }
+    let(:fake_hdiutil_plist) { {"system-entities" => [{"mount-point" => fake_mountpoint}]} }
 
     before do
       fh = mock 'filehandle'
@@ -39,20 +41,23 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
     end
 
     it "should fail when a disk image with no system entities is mounted" do
-      described_class.stubs(:hdiutil).returns(empty_hdiutil_plist)
+      described_class.stubs(:hdiutil).returns 'empty plist'
+      Puppet::Util::Plist.expects(:parse_plist).with('empty plist').returns({})
       expect { provider.install }.to raise_error(Puppet::Error, /No disk entities/)
     end
 
     it "should call hdiutil to mount and eject the disk image" do
       Dir.stubs(:entries).returns []
       provider.class.expects(:hdiutil).with("eject", fake_mountpoint).returns 0
-      provider.class.expects(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", nil).returns fake_hdiutil_plist
+      provider.class.expects(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", nil).returns 'a plist'
+      Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
       provider.install
     end
 
     it "should call installpkg if a pkg/mpkg is found on the dmg" do
       Dir.stubs(:entries).returns ["foo.pkg"]
-      provider.class.stubs(:hdiutil).returns fake_hdiutil_plist
+      provider.class.stubs(:hdiutil).returns 'a plist'
+      Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
       provider.class.expects(:installpkg).with("#{fake_mountpoint}/foo.pkg", resource[:name], "foo.dmg").returns ""
       provider.install
     end
@@ -70,7 +75,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         described_class.expects(:curl).with do |*args|
           args[0] == "-o" && args[1].include?(tmpdir) && args.include?("--fail") && ! args.include?("-k")
         end
-        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.stubs(:hdiutil).returns 'a plist'
+        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
         described_class.expects(:installpkg)
 
         provider.install
@@ -86,7 +92,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
           expect(args).to be_include 'some_host:some_port'
           expect(args).to be_include '--proxy'
         end
-        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.stubs(:hdiutil).returns 'a plist'
+        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
         described_class.expects(:installpkg)
 
         provider.install
@@ -102,7 +109,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
           expect(args).to be_include 'some_host'
           expect(args).to be_include '--proxy'
         end
-        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.stubs(:hdiutil).returns 'a plist'
+        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
         described_class.expects(:installpkg)
 
         provider.install
@@ -119,7 +127,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
           expect(args).not_to be_include '--proxy'
           true
         end
-        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.stubs(:hdiutil).returns 'a plist'
+        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
         described_class.expects(:installpkg)
 
         provider.install

@@ -42,7 +42,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   include Puppet::Util::Warnings
 
   commands :launchctl => "/bin/launchctl"
-  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
@@ -194,17 +193,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    plist = Puppet::Util::Plist.read_plist_file(path)
-    return plist if plist
-
-    Puppet.debug "Plist #{path} ill-formatted, converting with plutil"
-    begin
-      return Puppet::Util::Plist.parse_plist(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
-    rescue Puppet::ExecutionFailure => detail
-      Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
-                     "Details: #{detail}")
-      return nil
-    end
+    Puppet::Util::Plist.read_plist_file(path)
   end
 
   # Clean out the @property_hash variable containing the cached list of services

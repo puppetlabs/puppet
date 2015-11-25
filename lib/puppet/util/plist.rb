@@ -1,4 +1,6 @@
 require 'cfpropertylist'
+require 'puppet/util/execution'
+
 module Puppet::Util::Plist
 
   class FormatError < RuntimeError; end
@@ -34,7 +36,17 @@ module Puppet::Util::Plist
         convert_cfpropertylist_to_native_types(plist_obj)
       else
         plist_data = open_file_with_args(file_path, "r:UTF-8")
-        parse_plist(plist_data, file_path)
+        plist = parse_plist(plist_data, file_path)
+        return plist if plist
+
+        Puppet.debug "Plist #{file_path} ill-formatted, converting with plutil"
+        begin
+          plist = Puppet::Util::Execution.execute(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', file_path],
+                                                  {:failonfail => true, :combine => true})
+          return parse_plist(plist)
+        rescue Puppet::ExecutionFailure => detail
+          Puppet.warning("Cannot read file #{path}; Puppet is skipping it.\n" + "Details: #{detail}")
+        end
       end
     end
 
@@ -87,22 +99,32 @@ module Puppet::Util::Plist
       IO.read(file_path, offset)
     end
 
+    def to_format(format)
+      if format.to_sym == :xml
+        plist_format = CFPropertyList::List::FORMAT_XML
+      elsif format.to_sym == :binary
+        plist_format = CFPropertyList::List::FORMAT_BINARY
+      else
+        raise FormatError.new "Unknown plist format #{format}"
+      end
+    end
+
     # This method will write a plist file using a specified format (or XML
     # by default)
-    def write_plist_file(plist, file_path, format = 'xml')
-      if format == 'xml'
-        plist_format = CFPropertyList::List::FORMAT_XML
-      else
-        plist_format = CFPropertyList::List::FORMAT_BINARY
-      end
-
+    def write_plist_file(plist, file_path, format = :xml)
       begin
         plist_to_save       = CFPropertyList::List.new
         plist_to_save.value = CFPropertyList.guess(plist)
-        plist_to_save.save(file_path, plist_format)
+        plist_to_save.save(file_path, to_format(format))
       rescue IOError => e
-        fail("Unable to write the file #{file_path}.  #{e.inspect}")
+        Puppet.error("Unable to write the file #{file_path}. #{e.inspect}")
       end
+    end
+
+    def dump_plist(plist_data, format = :xml)
+      plist_to_save       = CFPropertyList::List.new
+      plist_to_save.value = CFPropertyList.guess(plist_data)
+      plist_to_save.to_str(to_format(format))
     end
   end
 end

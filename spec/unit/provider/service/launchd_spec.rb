@@ -63,18 +63,6 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         expect(subject.enabled?).to eq(:true)
       end
     end
-
-    describe "when reading an improperly formatted service plist on OS X #{version}" do
-      it "should attempt to read pure xml using plutil" do
-        provider.expects(:get_os_version).returns(kernel).at_least_once
-        subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
-        plistlib.expects(:read_plist_file).with(launchd_overrides_6_9).returns(nil)
-        FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
-        provider.expects(:plutil).returns("valid_xml")
-        plistlib.expects(:parse_plist).with("valid_xml").returns({joblabel => {"Disabled" => false}})
-        expect(subject.enabled?).to eq(:true)
-      end
-    end
   end
 
   describe "when checking whether the service is enabled on OS X 10.10" do
