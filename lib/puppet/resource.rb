@@ -387,7 +387,7 @@ class Puppet::Resource
     begin
       Puppet::DataBinding.indirection.find(
         name,
-        :environment => scope.environment.to_s,
+        :environment => scope.environment,
         :variables => scope)
     rescue Puppet::DataBinding::LookupError => e
       raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
