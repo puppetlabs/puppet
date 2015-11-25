@@ -186,6 +186,14 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
     store.set_default_paths
   end
 
+  it "doesn't warn when calling set_default_paths multiple times" do
+    with_root_certs([cert])
+    store.expects(:warn).never
+
+    store.set_default_paths
+    store.set_default_paths
+  end
+
   it "ignores duplicate root certs" do
     with_root_certs([cert, cert])
 
