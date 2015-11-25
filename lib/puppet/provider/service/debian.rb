@@ -73,8 +73,8 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
       majversion = Facter.value(:operatingsystemmajrelease).split('.')[0].to_i
     end
 
-
-    if ((os == 'debian' && majversion >= 8) || (os == 'ubuntu' && majversion >= 15))
+    if ((os == 'debian' && majversion >= 8) || (os == 'ubuntu' && majversion >= 15)) &&
+         Puppet::Util.which('systemctl')
       # SysVInit scripts will always return '0' for status when the service is masked,
       # even if the service is actually stopped. Use the SysVInit-Systemd compatibility
       # layer to determine the actual status. This is only necessary when the SysVInit

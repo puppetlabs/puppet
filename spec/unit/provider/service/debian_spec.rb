@@ -147,6 +147,7 @@ describe provider_class do
         Facter.stubs(:value).with(:operatingsystem).returns('Debian')
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')
         @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        Puppet::Util.expects(:which).with('systemctl').returns('/bin/systemctl')
         expect(@provider.statuscmd).to eq(["systemctl", "is-active", @resource[:name]])
       end
 
@@ -154,7 +155,17 @@ describe provider_class do
         Facter.stubs(:value).with(:operatingsystem).returns('Ubuntu')
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns('15.04')
         @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        Puppet::Util.expects(:which).with('systemctl').returns('/bin/systemctl')
         expect(@provider.statuscmd).to eq(["systemctl", "is-active", @resource[:name]])
+      end
+
+      it "should fall back to the service init script if systemctl is not present" do
+        Facter.stubs(:value).with(:operatingsystem).returns('Debian')
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')
+        @resource.stubs(:[]).with(:hasstatus).returns(:true)
+        Puppet::Util.expects(:which).with('systemctl').returns(nil)
+        @provider.stubs(:initscript).returns("/etc/init.d/script")
+        expect(@provider.statuscmd).to eq(["/etc/init.d/script", :status])
       end
     end
 
