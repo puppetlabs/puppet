@@ -105,6 +105,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class.default?).to be_truthy
   end
 
+  it "should be the default provider on ubuntu15.10" do
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.10")
+    expect(described_class.default?).to be_truthy
+  end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
