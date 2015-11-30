@@ -8,7 +8,7 @@ Puppet::Type.type(:sshkey).provide(
   desc "Parse and generate host-wide known hosts files for SSH."
 
   text_line :comment, :match => /^#/
-  text_line :blank, :match => /^\s+/
+  text_line :blank, :match => /^\s*$/
 
   record_line :parsed, :fields => %w{name type key},
     :post_parse => proc { |hash|
