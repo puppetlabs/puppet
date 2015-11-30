@@ -24,6 +24,15 @@ module Puppet::Pops
       include Puppet::Pops::Containment
     end
 
+    class Positioned
+      module ClassModule
+        def set_loc(offset, length)
+          @offset = offset
+          @length = length
+        end
+      end
+    end
+
     class LocatableExpression
       module ClassModule
         # Go through the gymnastics of making either value or pattern settable
