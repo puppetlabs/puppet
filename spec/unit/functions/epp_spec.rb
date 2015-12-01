@@ -44,15 +44,15 @@ describe "the epp function" do
     it "raises an error if required variable is not given" do
       scope['x'] = 'wrong one'
       expect do
-        eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'y' => 'correct')
-      end.to raise_error(/no value given for required parameters x/)
+        eval_template("<%-| $x |-%><%= $x == correct %>")
+      end.to raise_error(/expects a value for parameter 'x'/)
     end
 
-    it "raises an error if too many arguments are given" do
+    it 'raises an error if invalid arguments are given' do
       scope['x'] = 'wrong one'
       expect do
         eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
-      end.to raise_error(/Too many arguments: 2 for 1/)
+      end.to raise_error(/has no parameter named 'y'/)
     end
   end
 
@@ -80,13 +80,13 @@ describe "the epp function" do
     it "raises an error when the passed value does not match the parameter's type" do
       expect do
         eval_template_with_args("<%-|Integer $x|-%><%= $x %>", 'x' => 'incorrect')
-      end.to raise_error(/block parameter 'x' expects an Integer value, got String/)
+      end.to raise_error(/parameter 'x' expects an Integer value, got String/)
     end
 
     it "raises an error when the default value does not match the parameter's type" do
       expect do
         eval_template("<%-|Integer $x = 'nope'|-%><%= $x %>")
-      end.to raise_error(/block parameter 'x' expects an Integer value, got String/)
+      end.to raise_error(/parameter 'x' expects an Integer value, got String/)
     end
 
     it "allows an parameter to default to undef" do
