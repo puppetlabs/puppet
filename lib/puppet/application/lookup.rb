@@ -336,7 +336,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     fact_file = options[:fact_file]
 
     if fact_file
-      original_facts = node.facts.values
+      original_facts = node.parameters
       if fact_file.end_with?("json")
         given_facts = JSON.parse(File.read(fact_file))
       else
@@ -347,7 +347,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
       end
 
-      node.facts.values = original_facts.merge(given_facts)
+      node.parameters = original_facts.merge(given_facts)
     end
 
     compiler = Puppet::Parser::Compiler.new(node)

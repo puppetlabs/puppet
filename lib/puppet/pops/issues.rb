@@ -632,6 +632,10 @@ module Puppet::Pops::Issues
     "Unclosed quote after #{after} followed by '#{followed_by}'"
   end
 
+  UNCLOSED_MLCOMMENT = hard_issue :UNCLOSED_MLCOMMENT do
+    'Unclosed multiline comment'
+  end
+
   EPP_INTERNAL_ERROR = hard_issue :EPP_INTERNAL_ERROR, :error do
     "Internal error: #{error}"
   end
