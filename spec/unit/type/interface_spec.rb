@@ -67,6 +67,38 @@ describe Puppet::Type.type(:interface) do
       end
     end
 
+    describe "interface mode" do
+      it "should allow :access" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :mode => :access)
+      end
+
+      it "should allow :trunk" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :mode => :trunk)
+      end
+
+      it "should allow 'dynamic auto'" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :mode => 'dynamic auto')
+      end
+
+      it "should allow 'dynamic desirable'" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :mode => 'dynamic desirable')
+      end
+    end
+
+    describe "interface encapsulation" do
+      it "should allow :dot1q" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :encapsulation => :dot1q)
+      end
+
+      it "should allow :isl" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :encapsulation => :isl)
+      end
+
+      it "should allow :negotiate" do
+        Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :encapsulation => :negotiate)
+      end
+    end
+
     describe "especially ipaddress" do
       it "should allow ipv4 addresses" do
         Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ipaddress => "192.168.0.1/24")
