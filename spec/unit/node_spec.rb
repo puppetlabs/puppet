@@ -86,6 +86,14 @@ describe Puppet::Node do
                              )
       expect(node.to_pson).to validate_against('api/schemas/node.json')
     end
+
+    it "should allow its environment parameter to be set by attribute after initialization" do
+      node = Puppet::Node.new("foo", { :parameters => { 'environment' => :foo } })
+      node.environment_name = :foo
+      node.environment = :bar
+      expect(node.environment_name).to eq(:bar)
+      expect(node.parameters['environment']).to eq(:bar)
+    end
   end
 
   describe "when serializing using yaml" do
