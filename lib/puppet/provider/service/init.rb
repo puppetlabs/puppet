@@ -61,6 +61,11 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{cryptdisks-udev}
     excludes += %w{statd-mounting}
     excludes += %w{gssd-mounting}
+    # Prevent puppet failing on unsafe scripts from Yocto Linux
+    excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
+                 hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
+                 rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
+                 umountnfs.sh}
   end
 
   # List all services of this type.
