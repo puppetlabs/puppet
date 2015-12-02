@@ -41,6 +41,8 @@ class Puppet::Application::Lookup < Puppet::Application
 
   option('--explain')
 
+  option('--explain-options')
+
   option('--default VALUE') do |arg|
     options[:default_value] = arg
   end
@@ -210,6 +212,10 @@ the puppet lookup function linked to above.
   than the value returned for the key. The explaination will describe how
   the result was obtained or why lookup failed to obtain the result.
 
+* --explain-options
+  Explain if a lookup_options hash will be used and how it was assembled
+  when performing a lookup.
+
 * --default <VALUE>
   A value produced if no value was found in the lookup.
 
@@ -262,7 +268,6 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     keys = command_line.args
-    raise 'No keys were given to lookup.' if keys.empty?
 
     #unless options[:node]
     #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
@@ -301,7 +306,18 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
     end
 
-    explain = !!options[:explain]
+    explain_data = !!options[:explain]
+    explain_options = !!options[:explain_options]
+    only_explain_options = explain_options && !explain_data
+    if keys.empty?
+      if only_explain_options
+        # Explain lookup_options for lookup of an unqualified value.
+        keys = Puppet::Pops::Lookup::GLOBAL
+      else
+        raise 'No keys were given to lookup.'
+      end
+    end
+    explain = explain_data || explain_options
 
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
@@ -311,7 +327,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type]) : nil
 
     generate_scope do |scope|
-      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain)
+      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
       begin
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain

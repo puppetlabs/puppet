@@ -126,30 +126,30 @@ describe Puppet::Application::Lookup do
       :event => :result,
       :value => 'This is A',
       :branches => [
-      { :key => 'a',
-        :event => :not_found,
-        :type => :global,
-        :name => :hiera
-      },
-      {
-        :type => :data_provider,
-        :name => 'Hiera Data Provider, version 4',
-        :configuration_path => "#{environmentpath}/production/hiera.yaml",
-        :branches => [
+        { :key => 'a',
+          :event => :not_found,
+          :type => :global,
+          :name => :hiera
+        },
         {
           :type => :data_provider,
-          :name => 'common',
+          :name => 'Hiera Data Provider, version 4',
+          :configuration_path => "#{environmentpath}/production/hiera.yaml",
           :branches => [
-          {
-            :key => 'a',
-            :value => 'This is A',
-            :event => :found,
-            :type => :path,
-            :original_path => 'common',
-            :path => "#{environmentpath}/production/data/common.yaml",
-          }]
-       }]
-      }]
+            {
+              :type => :data_provider,
+              :name => 'common',
+              :branches => [
+                {
+                  :key => 'a',
+                  :value => 'This is A',
+                  :event => :found,
+                  :type => :path,
+                  :original_path => 'common',
+                  :path => "#{environmentpath}/production/data/common.yaml",
+                }]
+            }]
+        }]
     } }
 
     around(:each) do |example|
@@ -174,9 +174,65 @@ Merge strategy first
     ConfigurationPath "#{environmentpath}/production/hiera.yaml"
     Data Provider "common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: common
+        Original path: "common"
         Found key: "a" value: "This is A"
   Merged result: "This is A"
+      EXPLANATION
+    end
+
+    it 'produces human readable text of a hash merge when using --explain-options' do
+      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:explain_options] = true
+      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Merge strategy hash
+  Data Binding "hiera"
+    No such key: "lookup_options"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
+  Merged result: {
+    "a" => "first"
+  }
+      EXPLANATION
+    end
+
+    it 'produces human readable text of a hash merge when using both --explain and --explain-options' do
+      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:explain] = true
+      lookup.options[:explain_options] = true
+      lookup.command_line.stubs(:args).returns(['a'])
+      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Searching for "lookup_options"
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "lookup_options" value: {
+            "a" => "first"
+          }
+    Merged result: {
+      "a" => "first"
+    }
+Searching for "a"
+  Merge strategy first
+    Data Binding "hiera"
+      No such key: "a"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "a" value: "This is A"
+    Merged result: "This is A"
       EXPLANATION
     end
 

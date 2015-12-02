@@ -98,6 +98,7 @@ module Puppet::Plugins::DataProviders
   end
 
   class ModuleDataProvider
+    LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
     include DataProvider
 
     # Retrieve the first segment of the qualified name _key_. This method will throw
@@ -106,7 +107,7 @@ module Puppet::Plugins::DataProviders
     # @param key [String] The key
     # @return [String] The first segment of the given key
     def data_key(key, lookup_invocation)
-      return lookup_invocation.module_name if key == 'lookup_options'
+      return lookup_invocation.module_name if key == LOOKUP_OPTIONS
       qual_index = key.index('::')
       throw :no_such_key if qual_index.nil?
       key[0..qual_index-1]
@@ -121,7 +122,7 @@ module Puppet::Plugins::DataProviders
     def validate_data(data, module_name)
       module_prefix = "#{module_name}::"
       data.each_key do |k|
-        unless k.is_a?(String) && (k == 'lookup_options' || k.start_with?(module_prefix))
+        unless k.is_a?(String) && (k == LOOKUP_OPTIONS || k.start_with?(module_prefix))
           raise Puppet::DataBinding::LookupError, "Module data for module '#{module_name}' must use keys qualified with the name of the module"
         end
       end

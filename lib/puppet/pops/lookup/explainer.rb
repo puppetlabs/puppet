@@ -28,7 +28,8 @@ module Puppet::Pops::Lookup
   end
 
   class ExplainTreeNode < ExplainNode
-    attr_reader :parent, :event, :key, :value
+    attr_reader :parent, :event, :value
+    attr_accessor :key
 
     def initialize(parent)
       @parent = parent
@@ -133,6 +134,42 @@ module Puppet::Pops::Lookup
     end
   end
 
+  class ExplainTop < ExplainTreeNode
+    attr_reader :key, :type
+
+    def initialize(parent, type, key)
+      super(parent)
+      @type = type
+      self.key = key
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << first_indent << 'Searching for "' << key << "\"\n"
+      indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
+    end
+  end
+
+  class ExplainMergeSource < ExplainNode
+    attr_reader :merge_source
+
+    def initialize(merge_source)
+      @merge_source = merge_source
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << first_indent << 'Using merge options from "' << merge_source << "\" hash\n"
+    end
+
+    def to_hash
+      { :type => type, :merge_source => merge_source }
+    end
+
+    def type
+      :merge_source
+    end
+  end
+
   class ExplainInterpolate < ExplainTreeNode
     def initialize(parent, expression)
       super(parent)
@@ -163,6 +200,8 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
+      return if branches.size == 0
+
       # It's pointless to report a merge where there's only one branch
       return branches[0].dump_on(io, indent, first_indent) if branches.size == 1
 
@@ -297,7 +336,7 @@ module Puppet::Pops::Lookup
     def dump_on(io, indent, first_indent)
       io << indent << 'Path "' << @path.path << "\"\n"
       indent = increase_indent(indent)
-      io << indent << 'Original path: ' << @path.original_path << "\n"
+      io << indent << 'Original path: "' << @path.original_path << "\"\n"
       branches.each {|b| b.dump_on(io, indent, indent)}
       io << indent << "Path not found\n" if @event == :path_not_found
       dump_outcome(io, indent)
@@ -332,8 +371,10 @@ module Puppet::Pops::Lookup
   end
 
   class Explainer < ExplainNode
-    def initialize
+    def initialize(explain_options = false, only_explain_options = false)
       @current = self
+      @explain_options = explain_options
+      @only_explain_options = only_explain_options
     end
 
     def push(qualifier_type, qualifier)
@@ -352,11 +393,21 @@ module Puppet::Pops::Lookup
           ExplainMerge.new(@current, qualifier)
         when :scope
           ExplainScope.new(@current)
+        when :meta, :data
+          ExplainTop.new(@current, qualifier_type, qualifier)
         else
           raise ArgumentError, "Unknown Explain type #{qualifier_type}"
         end
       @current.branches << node
       @current = node
+    end
+
+    def only_explain_options?
+      @only_explain_options
+    end
+
+    def explain_options?
+      @explain_options
     end
 
     def pop
@@ -373,6 +424,10 @@ module Puppet::Pops::Lookup
 
     def accept_found(key, value)
       @current.found(key, value)
+    end
+
+    def accept_merge_source(merge_source)
+      @current.branches << ExplainMergeSource.new(merge_source)
     end
 
     def accept_not_found(key)

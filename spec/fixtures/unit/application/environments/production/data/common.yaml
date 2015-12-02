@@ -1,3 +1,6 @@
 ---
 a: This is A
 b: This is B
+
+lookup_options:
+  a: first
