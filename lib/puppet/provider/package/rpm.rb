@@ -281,7 +281,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
       hash[:provider] = self.name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
-      hash[:ensure].prepend("#{hash[:epoch]}:") if hash[:epoch] != '0'
     else
       Puppet.debug("Failed to match rpm line #{line}")
     end

@@ -1,6 +1,7 @@
 module Puppet::Pops::Lookup
   class Invocation
-    attr_reader :scope, :override_values, :default_values, :explainer, :module_name
+    attr_reader :scope, :override_values, :default_values, :explainer
+    attr_accessor :module_name
 
     # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
     # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
@@ -50,32 +51,29 @@ module Puppet::Pops::Lookup
     # :merge - qualifier is a MergeStrategy instance
     # :module - qualifier is the name of a module
     # :interpolation - qualifier is the unresolved interpolation expression
-    # :meta - qualifier is the name of a module or nil if that's not applicable
+    # :meta - qualifier is the module name
+    # :data - qualifier is the key
     #
     # @param qualifier [Object] A branch, a provider, or a path
     def with(qualifier_type, qualifier)
-      is_meta = qualifier_type == :meta
-      @module_name = qualifier if is_meta
       if @explainer.nil?
         yield
       else
-        if is_meta
-          save_explainer = @explainer
-          @explainer = nil
-          begin
-            yield
-          ensure
-            @explainer = save_explainer
-          end
-        else
-          @explainer.push(qualifier_type, qualifier)
-          begin
-            yield
-          ensure
-            @explainer.pop
-          end
+        @explainer.push(qualifier_type, qualifier)
+        begin
+          yield
+        ensure
+          @explainer.pop
         end
       end
+    end
+
+    def only_explain_options?
+      @explainer.nil? ? false : @explainer.only_explain_options?
+    end
+
+    def explain_options?
+      @explainer.nil? ? false : @explainer.explain_options?
     end
 
     def report_found_in_overrides(key, value)
@@ -91,6 +89,10 @@ module Puppet::Pops::Lookup
     def report_found(key, value)
       @explainer.accept_found(key, value) unless @explainer.nil?
       value
+    end
+
+    def report_merge_source(merge_source)
+      @explainer.accept_merge_source(merge_source) unless @explainer.nil?
     end
 
     # Report the result of a merge or fully resolved interpolated string

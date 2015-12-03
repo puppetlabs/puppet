@@ -486,7 +486,7 @@ EOS
       end
     end
 
-    it 'will handle path merge with not found correctly' do
+    it 'will handle path merge when some entries are not found correctly' do
       assemble_and_compile('${r}', "'hieraprovider::test::param_a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         begin
@@ -504,10 +504,10 @@ Merge strategy first
     Data Provider "two paths"
       Merge strategy first
         Path "#{environmentpath}/production/modules/hieraprovider/data/first.json"
-          Original path: first
+          Original path: "first"
           No such key: "hieraprovider::test::not_found"
         Path "#{environmentpath}/production/modules/hieraprovider/data/second_not_present.json"
-          Original path: second_not_present
+          Original path: "second_not_present"
           Path not found
 EOS
       end

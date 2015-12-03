@@ -12,7 +12,6 @@ describe provider_class do
     chkconfig 0 1.3.30.2 2.el5 x86_64
     myresource 0 1.2.3.4 5.el4 noarch
     mysummaryless 0 1.2.3.4 5.el4 noarch
-    tomcat 1 1.2.3.4 5.fc22 noarch
     RPM_OUTPUT
   end
 
@@ -117,18 +116,7 @@ describe provider_class do
           :ensure => "1.3.30.2-2.el5",
         }
       )
-      expect(installed_packages[3].properties).to eq(
-        {
-          :provider    => :rpm,
-          :name        => "myresource",
-          :epoch       => "0",
-          :version     => "1.2.3.4",
-          :release     => "5.el4",
-          :arch        => "noarch",
-          :ensure      => "1.2.3.4-5.el4",
-        }
-      )
-      expect(installed_packages[4].properties).to eq(
+      expect(installed_packages.last.properties).to eq(
         {
           :provider    => :rpm,
           :name        => "mysummaryless",
@@ -137,17 +125,6 @@ describe provider_class do
           :release     => "5.el4",
           :arch        => "noarch",
           :ensure      => "1.2.3.4-5.el4",
-        }
-      )
-      expect(installed_packages[5].properties).to eq(
-        {
-          :provider    => :rpm,
-          :name        => "tomcat",
-          :epoch       => "1",
-          :version     => "1.2.3.4",
-          :release     => "5.fc22",
-          :arch        => "noarch",
-          :ensure      => "1:1.2.3.4-5.fc22",
         }
       )
     end
@@ -292,7 +269,7 @@ describe provider_class do
           line.gsub(field, delimiter),
           package_hash.merge(
             field.to_sym => delimiter,
-            :ensure => 'epoch:version-release'.gsub(field, delimiter)
+            :ensure => 'version-release'.gsub(field, delimiter)
           )
         )
       end

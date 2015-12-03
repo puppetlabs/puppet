@@ -14,6 +14,16 @@ describe Puppet::Application::Lookup do
       expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
     end
 
+    it "does not allow invalid arguments for '--merge'" do
+      lookup.options[:node] = 'dantooine.local'
+      lookup.options[:merge] = 'something_bad'
+      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+
+      expected_error = "The --merge option only accepts 'first', 'hash', 'unique', or 'deep'\nRun 'puppet lookup --help' for more details"
+
+      expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
+    end
+
     it "does not allow deep merge options if '--merge' was not set to deep" do
       lookup.options[:node] = 'dantooine.local'
       lookup.options[:merge_hash_arrays] = true
@@ -42,6 +52,18 @@ describe Puppet::Application::Lookup do
       (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
 
       expect { lookup.run_command }.to output("rand\n").to_stdout
+    end
+
+    %w(first unique hash deep).each do |opt|
+
+      it "accepts --merge #{opt}" do
+        lookup.options[:node] = 'dantooine.local'
+        lookup.options[:merge] = opt
+        lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+        lookup.stubs(:generate_scope).yields('scope')
+        Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
+        expect { lookup.run_command }.to output("--- rand\n...\n").to_stdout
+      end
     end
 
     it "prints the value found by lookup" do
@@ -104,30 +126,30 @@ describe Puppet::Application::Lookup do
       :event => :result,
       :value => 'This is A',
       :branches => [
-      { :key => 'a',
-        :event => :not_found,
-        :type => :global,
-        :name => :hiera
-      },
-      {
-        :type => :data_provider,
-        :name => 'Hiera Data Provider, version 4',
-        :configuration_path => "#{environmentpath}/production/hiera.yaml",
-        :branches => [
+        { :key => 'a',
+          :event => :not_found,
+          :type => :global,
+          :name => :hiera
+        },
         {
           :type => :data_provider,
-          :name => 'common',
+          :name => 'Hiera Data Provider, version 4',
+          :configuration_path => "#{environmentpath}/production/hiera.yaml",
           :branches => [
-          {
-            :key => 'a',
-            :value => 'This is A',
-            :event => :found,
-            :type => :path,
-            :original_path => 'common',
-            :path => "#{environmentpath}/production/data/common.yaml",
-          }]
-       }]
-      }]
+            {
+              :type => :data_provider,
+              :name => 'common',
+              :branches => [
+                {
+                  :key => 'a',
+                  :value => 'This is A',
+                  :event => :found,
+                  :type => :path,
+                  :original_path => 'common',
+                  :path => "#{environmentpath}/production/data/common.yaml",
+                }]
+            }]
+        }]
     } }
 
     around(:each) do |example|
@@ -152,9 +174,65 @@ Merge strategy first
     ConfigurationPath "#{environmentpath}/production/hiera.yaml"
     Data Provider "common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: common
+        Original path: "common"
         Found key: "a" value: "This is A"
   Merged result: "This is A"
+      EXPLANATION
+    end
+
+    it 'produces human readable text of a hash merge when using --explain-options' do
+      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:explain_options] = true
+      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Merge strategy hash
+  Data Binding "hiera"
+    No such key: "lookup_options"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
+  Merged result: {
+    "a" => "first"
+  }
+      EXPLANATION
+    end
+
+    it 'produces human readable text of a hash merge when using both --explain and --explain-options' do
+      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:explain] = true
+      lookup.options[:explain_options] = true
+      lookup.command_line.stubs(:args).returns(['a'])
+      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Searching for "lookup_options"
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "lookup_options" value: {
+            "a" => "first"
+          }
+    Merged result: {
+      "a" => "first"
+    }
+Searching for "a"
+  Merge strategy first
+    Data Binding "hiera"
+      No such key: "a"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "a" value: "This is A"
+    Merged result: "This is A"
       EXPLANATION
     end
 
