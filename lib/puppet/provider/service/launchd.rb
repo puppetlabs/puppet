@@ -194,6 +194,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # format.
   def self.read_plist(path)
     begin
+      return Plist::parse_xml(path)
+    rescue ArgumentError => detail
+      Puppet.debug("Error reading #{path}: #{detail}. Retrying with plutil.")
+    end
+
+    begin
       Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
     rescue Puppet::ExecutionFailure => detail
       Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +

@@ -254,6 +254,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         }
       end
       let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
+      let(:binary_plist_path) { '/Library/LaunchAgents/org.binary.plist' }
 
       it "[17624] should warn that the plist in question is being skipped" do
         provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
@@ -264,12 +265,22 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       end
 
       it "[15929] should skip plists that plutil cannot read" do
+        Plist.expects(:parse_xml).with(busted_plist_path).raises(ArgumentError, 'boom')
+        Puppet.expects(:debug).with("Error reading #{busted_plist_path}: boom. Retrying with plutil.")
         provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
           busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
         Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
                                       "Puppet is skipping it. \n" +
                                       "Details: boom")
         provider.read_plist(busted_plist_path)
+      end
+
+      it "should read binary plists with plutil" do
+        Plist.expects(:parse_xml).with(binary_plist_path).raises(ArgumentError, 'boom')
+        Puppet.expects(:debug).with("Error reading #{binary_plist_path}: boom. Retrying with plutil.")
+        provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', binary_plist_path).returns('plist')
+        Plist.expects(:parse_xml).with('plist').returns('plist_map')
+        expect(provider.read_plist(binary_plist_path)).to eq('plist_map')
       end
     end
     it "should return the cached value when available" do
