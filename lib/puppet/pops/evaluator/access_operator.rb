@@ -39,7 +39,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       # Note that Ruby 1.8.7 requires a length of 1 to produce a String
-      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
+      k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
       bad_access_key_type(o, 0, k1, Integer) unless k1.is_a?(Integer)
       k2 = 1
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
@@ -50,8 +50,8 @@ class Puppet::Pops::Evaluator::AccessOperator
         o[ k1, k2 ]
       end
     when 2
-      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
-      k2 = coerce_numeric(keys[1], @semantic.keys, scope)
+      k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
+      k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
       [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
 
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
