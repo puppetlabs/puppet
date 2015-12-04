@@ -23,7 +23,9 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     throw :no_such_key if value.equal?(not_found)
     value
   rescue *DataBindingExceptions => detail
-    raise Puppet::DataBinding::LookupError.new(detail.message, detail)
+    error = Puppet::DataBinding::LookupError.new("DataBinding 'hiera': #{detail.message}")
+    error.set_backtrace(detail.backtrace)
+    raise error
   end
 
   private

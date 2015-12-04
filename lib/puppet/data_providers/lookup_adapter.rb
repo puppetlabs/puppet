@@ -32,6 +32,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     # The 'lookup_options' key is reserved and not found as normal data
     throw :no_such_key if key == LOOKUP_OPTIONS
 
+    lookup_invocation.top_key ||= key
     merge_explained = false
     if lookup_invocation.explain_options?
       catch(:no_such_key) do
@@ -75,8 +76,10 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
       lookup_invocation.report_not_found(name)
       throw :no_such_key
     end
-  rescue Puppet::DataBinding::LookupError => e
-    raise Puppet::Error.new("Error from DataBinding '#{terminus}' while looking up '#{name}': #{e.message}", e)
+  rescue Puppet::DataBinding::LookupError => detail
+    error = Puppet::Error.new("Lookup of key '#{lookup_invocation.top_key}' failed: #{detail.message}")
+    error.set_backtrace(detail.backtrace)
+    raise error
   end
 
   # @api private
@@ -146,6 +149,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
     meta_invocation = Puppet::Pops::Lookup::Invocation.new(lookup_invocation.scope)
+    meta_invocation.top_key = lookup_invocation.top_key
     env_opts = env_lookup_options(meta_invocation, merge_strategy)
     unless module_name.nil? || @env.module(module_name).nil?
       catch(:no_such_key) do
