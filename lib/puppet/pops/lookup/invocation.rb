@@ -1,7 +1,7 @@
 module Puppet::Pops::Lookup
   class Invocation
     attr_reader :scope, :override_values, :default_values, :explainer
-    attr_accessor :module_name
+    attr_accessor :module_name, :top_key
 
     # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
     # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
