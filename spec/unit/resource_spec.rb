@@ -360,9 +360,8 @@ describe Puppet::Resource do
           Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
           expect {
             resource.set_default_parameters(scope)
-          }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)
+          }.to raise_error(Puppet::Error, /Lookup of key 'apache::port' failed: Forgettabotit/)
         end
-
       end
 
       context "when a value is provided" do
