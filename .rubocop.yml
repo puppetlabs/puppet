@@ -25,9 +25,8 @@ Lint/UnreachableCode:
 Lint/UselessComparison:
   Enabled: true
 
-# MAYBE useful - no return inside ensure block.
 Lint/EnsureReturn:
-  Enabled: false
+  Enabled: true
 
 # MAYBE useful - errors when rescue {} happens.
 Lint/HandleExceptions:

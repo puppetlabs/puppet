@@ -235,7 +235,7 @@ class Puppet::Configurer
       Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
       return nil
     ensure
-      execute_postrun_command or return nil
+      execute_postrun_command
     end
   ensure
     # Between Puppet runs we need to forget the cached values.  This lets us
