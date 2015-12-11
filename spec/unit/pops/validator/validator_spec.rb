@@ -177,6 +177,18 @@ describe "validating 4x" do
     end
   end
 
+  context 'for parameter names' do
+    ['class', 'define'].each do |word|
+      it "should require that #{word} parameter names are unique" do
+        expect(validate(parse("#{word} foo($a = 10, $a = 20) {}"))).to have_issue(Puppet::Pops::Issues::DUPLICATE_PARAMETER)
+      end
+    end
+
+    it "should require that template parameter names are unique" do
+      expect(validate(parse_epp("<%-| $a, $a |-%><%= $a == doh %>"))).to have_issue(Puppet::Pops::Issues::DUPLICATE_PARAMETER)
+    end
+  end
+
   context 'for reserved parameter names' do
     ['name', 'title'].each do |word|
       it "produces an error when $#{word} is used as a parameter in a class" do
