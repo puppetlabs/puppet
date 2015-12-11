@@ -1601,6 +1601,12 @@ EOT
         only resources tagged with the specified tags will be applied.
         Values must be comma-separated.",
     },
+    :skip_tags => {
+      :default    => "",
+      :desc       => "Tags to use to filter resources.  If this is set, then
+        only resources not tagged with the specified tags will be applied.
+        Values must be comma-separated.",
+    },
     :evaltrace => {
       :default    => false,
       :type       => :boolean,
