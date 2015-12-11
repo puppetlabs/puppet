@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     elsif output.exitstatus == 0
       self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
-      self.warn "Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}"
+      self.warning "Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}"
     end
     updates
   end

@@ -448,7 +448,7 @@ describe provider_class do
 
     it "returns an empty hash if 'yum check-update' returned an exit code that was not 0 or 100" do
       Puppet::Util::Execution.expects(:execute).returns(stub(:exitstatus => 1))
-      described_class.expects(:warn)
+      described_class.expects(:warning).with('Could not check for updates, \'/usr/bin/yum check-update\' exited with 1')
       expect(described_class.check_updates([], [], [])).to eq({})
     end
   end
