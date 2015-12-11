@@ -249,6 +249,22 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       expect(described_class.reposdir('/etc/yum.conf')).to include("/etc/yum/extra.repos.d")
     end
 
+    it "includes the directory if the value is split by whitespace" do
+      Puppet::FileSystem.expects(:exist?).with("/etc/yum/extra.repos.d").returns(true)
+      Puppet::FileSystem.expects(:exist?).with("/etc/yum/misc.repos.d").returns(true)
+
+      described_class.expects(:find_conf_value).with('reposdir', '/etc/yum.conf').returns "/etc/yum/extra.repos.d /etc/yum/misc.repos.d"
+      expect(described_class.reposdir('/etc/yum.conf')).to include("/etc/yum/extra.repos.d", "/etc/yum/misc.repos.d")
+    end
+
+    it "includes the directory if the value is split by new lines" do
+      Puppet::FileSystem.expects(:exist?).with("/etc/yum/extra.repos.d").returns(true)
+      Puppet::FileSystem.expects(:exist?).with("/etc/yum/misc.repos.d").returns(true)
+
+      described_class.expects(:find_conf_value).with('reposdir', '/etc/yum.conf').returns "/etc/yum/extra.repos.d\n/etc/yum/misc.repos.d"
+      expect(described_class.reposdir('/etc/yum.conf')).to include("/etc/yum/extra.repos.d", "/etc/yum/misc.repos.d")
+    end
+
     it "doesn't include the directory specified by the yum.conf 'reposdir' entry when the directory is absent" do
       Puppet::FileSystem.expects(:exist?).with("/etc/yum/extra.repos.d").returns(false)
 
