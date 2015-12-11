@@ -387,7 +387,8 @@ class Puppet::Resource::Type
     parameters = resource.parameters
     arguments.each do |param_name, _|
       name = param_name.to_sym
-      next if parameters.include?(name)
+      param = parameters[name]
+      next unless param.nil? || param.value.nil?
       value = lookup_external_default_for(param_name, scope)
       resource[name] = value unless value.nil?
     end
