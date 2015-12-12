@@ -138,10 +138,10 @@ class Puppet::Transaction::AdditionalResourceGenerator
   def add_generated_directed_dependency(parent, child, label=nil)
     if parent.depthfirst?
       source = child
-      target = parent.to_resource
+      target = parent
     else
       source = parent
-      target = child.to_resource
+      target = child
     end
 
     # For each potential relationship metaparam, check if parent or
@@ -170,8 +170,22 @@ class Puppet::Transaction::AdditionalResourceGenerator
     }
 
     if not edge_exists
+      # We *cannot* use target.to_resource here!
+      #
+      # For reasons that are beyond my (and, perhaps, human)
+      # comprehension, to_resource will call retrieve. This is
+      # problematic if a generated resource needs the system to be
+      # changed by a previous resource (think a file on a path
+      # controlled by a mount resource).
+      #
+      # Instead of using to_resource, we just construct a resource as
+      # if the arguments to the Type instance had been passed to a
+      # Resource instead.
+      resource = ::Puppet::Resource.new(target.class, target.title,
+                                        :parameters => target.original_parameters)
+
       source[:before] ||= []
-      source[:before] << target
+      source[:before] << resource
     end
   end
 
