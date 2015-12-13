@@ -264,6 +264,7 @@ class Puppet::Pops::Validation::Checker4_0
   def check_EppExpression(o)
     if o.eContainer.is_a?(Puppet::Pops::Model::LambdaExpression)
       internal_check_no_capture(o.eContainer, o)
+      internal_check_parameter_name_uniqueness(o.eContainer)
     end
   end
 
@@ -355,6 +356,7 @@ class Puppet::Pops::Validation::Checker4_0
   def check_HostClassDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
   end
@@ -362,6 +364,7 @@ class Puppet::Pops::Validation::Checker4_0
   def check_ResourceTypeDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
   end
@@ -399,6 +402,13 @@ class Puppet::Pops::Validation::Checker4_0
       if RESERVED_PARAMETERS[p.name]
         acceptor.accept(Issues::RESERVED_PARAMETER, p, {:container => o, :param_name => p.name})
       end
+    end
+  end
+
+  def internal_check_parameter_name_uniqueness(o)
+    unique = Set.new
+    o.parameters.each do |p|
+      acceptor.accept(Issues::DUPLICATE_PARAMETER, p, {:param_name => p.name}) unless unique.add?(p.name)
     end
   end
 

@@ -15,6 +15,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   # https://projects.puppetlabs.com/issues/2538
   # is resolved.
   commands :invoke_rc => "/usr/sbin/invoke-rc.d"
+  commands :service => "/usr/sbin/service"
 
   defaultfor :operatingsystem => :cumuluslinux
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ['5','6','7']
@@ -65,23 +66,9 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def statuscmd
-    os = Facter.value(:operatingsystem).downcase
-
-    if os == 'debian'
-      majversion = Facter.value(:operatingsystemmajrelease).to_i
-    else
-      majversion = Facter.value(:operatingsystemmajrelease).split('.')[0].to_i
-    end
-
-
-    if ((os == 'debian' && majversion >= 8) || (os == 'ubuntu' && majversion >= 15))
-      # SysVInit scripts will always return '0' for status when the service is masked,
-      # even if the service is actually stopped. Use the SysVInit-Systemd compatibility
-      # layer to determine the actual status. This is only necessary when the SysVInit
-      # version of a service is queried. I.e, 'ntp' instead of 'ntp.service'.
-      (@resource[:hasstatus] == :true) && ["systemctl", "is-active", @resource[:name]]
-    else
-      super
-    end
+      # /usr/sbin/service provides an abstraction layer which is able to query services
+      # independent of the init system used.
+      # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=775795
+    (@resource[:hasstatus] == :true) && [command(:service), @resource[:name], "status"]
   end
 end

@@ -194,24 +194,6 @@ describe Puppet::Parser::Compiler do
       expect(sanitized.trusted_data).to_not eq({ :a => 42 })
     end
 
-    it "should report 'trusted' parameters as trusted_data but as inauthentic if running as non-root" do
-      node = Puppet::Node.new("mynode")
-      node.parameters['trusted'] = { 'authenticated' => true,
-                                     'certname'      => 'foo',
-                                     'extensions'    => 'things' }
-
-      Puppet.features.stubs(:root?).returns(false)
-
-      Puppet.ignore(:trusted_information)
-      compiler = Puppet::Parser::Compiler.new(node)
-      Puppet.restore(:trusted_information)
-
-      sanitized = compiler.node
-      expect(sanitized.trusted_data).to eq({ 'authenticated' => false,
-                                             'certname'      => 'foo',
-                                             'extensions'    => 'things' })
-    end
-
     it "should prefer trusted_data in the node above other plausible sources" do
       node = Puppet::Node.new("mynode")
       node.trusted_data = { 'authenticated' => true,

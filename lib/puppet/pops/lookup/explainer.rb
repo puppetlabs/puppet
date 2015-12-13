@@ -135,8 +135,6 @@ module Puppet::Pops::Lookup
   end
 
   class ExplainTop < ExplainTreeNode
-    attr_reader :key, :type
-
     def initialize(parent, type, key)
       super(parent)
       @type = type
@@ -147,6 +145,21 @@ module Puppet::Pops::Lookup
       io << first_indent << 'Searching for "' << key << "\"\n"
       indent = increase_indent(indent)
       branches.each {|b| b.dump_on(io, indent, indent)}
+    end
+  end
+
+  class ExplainInvalidKey < ExplainTreeNode
+    def initialize(parent, key)
+      super(parent)
+      @key = key
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << first_indent << "Invalid key \"" << @key << "\"\n"
+    end
+
+    def type
+      :invalid_key
     end
   end
 
@@ -395,6 +408,8 @@ module Puppet::Pops::Lookup
           ExplainScope.new(@current)
         when :meta, :data
           ExplainTop.new(@current, qualifier_type, qualifier)
+        when :invalid_key
+          ExplainInvalidKey.new(@current, qualifier)
         else
           raise ArgumentError, "Unknown Explain type #{qualifier_type}"
         end

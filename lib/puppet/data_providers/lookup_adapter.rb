@@ -4,6 +4,8 @@
 class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
   LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
+  LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
+  LOOKUP_OPTIONS_PREFIX.freeze
   HASH = 'hash'.freeze
   MERGE = 'merge'.freeze
 
@@ -30,7 +32,11 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   #
   def lookup(key, lookup_invocation, merge)
     # The 'lookup_options' key is reserved and not found as normal data
-    throw :no_such_key if key == LOOKUP_OPTIONS
+    if key == LOOKUP_OPTIONS || key.start_with?(LOOKUP_OPTIONS_PREFIX)
+      lookup_invocation.with(:invalid_key, LOOKUP_OPTIONS) do
+        throw :no_such_key
+      end
+    end
 
     lookup_invocation.top_key ||= key
     merge_explained = false
