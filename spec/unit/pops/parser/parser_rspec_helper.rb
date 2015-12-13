@@ -13,4 +13,9 @@ module ParserRspecHelper
     parser = Puppet::Pops::Parser::Parser.new()
     parser.parse_string(code)
   end
+
+  def parse_epp(code)
+    parser = Puppet::Pops::Parser::EppParser.new()
+    parser.parse_string(code)
+  end
 end

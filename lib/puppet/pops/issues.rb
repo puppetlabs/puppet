@@ -564,6 +564,10 @@ module Puppet::Pops::Issues
     "Resource Override can only operate on resources, got: #{label.label(actual)}"
   end
 
+  DUPLICATE_PARAMETER = hard_issue :DUPLICATE_PARAMETER, :param_name do
+    "The parameter '#{param_name}' is declared more than once in the parameter list"
+  end
+
   RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
     "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
   end
