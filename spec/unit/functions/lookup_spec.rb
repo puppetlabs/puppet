@@ -551,5 +551,32 @@ EOS
           )
       end
     end
+
+    it 'will explain that "lookup_options" is an invalid key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('lookup_options', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Invalid key "lookup_options"
+EOS
+      end
+    end
+
+    it 'will explain that "lookup_options" is an invalid key for any key starting with "lookup_options."' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('lookup_options.subkey', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Invalid key "lookup_options"
+EOS
+      end
+    end
+
   end
 end
