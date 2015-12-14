@@ -36,15 +36,15 @@ describe "the inline_epp function" do
     it "raises an error if required variable is not given" do
       scope['x'] = 'wrong one'
       expect {
-        eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'y' => 'correct')
-      }.to raise_error(/no value given for required parameters x/)
+        eval_template_with_args("<%-| $x |-%><%= $x == correct %>", {})
+      }.to raise_error(/expects a value for parameter 'x'/)
     end
 
-    it "raises an error if too many arguments are given" do
+    it 'raises an error if unexpected arguments are given' do
       scope['x'] = 'wrong one'
       expect {
         eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
-      }.to raise_error(/Too many arguments: 2 for 1/)
+      }.to raise_error(/has no parameter named 'y'/)
     end
   end
 

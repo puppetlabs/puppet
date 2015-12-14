@@ -234,20 +234,28 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
           trunking[:mode] = :trunk
         when "static access"
           trunking[:mode] = :access
+        when "dynamic auto"
+          trunking[:mode] = 'dynamic auto'
+        when "dynamic desirable"
+          trunking[:mode] = 'dynamic desirable'
         else
           raise "Unknown switchport mode: #{$1} for #{interface}"
         end
       when /^Administrative Trunking Encapsulation:\s+(.*)$/
         case $1
         when "dot1q","isl"
-          trunking[:encapsulation] = $1.to_sym if trunking[:mode] == :trunk
+          trunking[:encapsulation] = $1.to_sym if trunking[:mode] != :access
+        when "negotiate"
+          trunking[:encapsulation] = :negotiate
         else
           raise "Unknown switchport encapsulation: #{$1} for #{interface}"
         end
       when /^Access Mode VLAN:\s+(.*) \(\(Inactive\)\)$/
         # nothing
       when /^Access Mode VLAN:\s+(.*) \(.*\)$/
-        trunking[:native_vlan] = $1 if trunking[:mode] == :access
+        trunking[:access_vlan] = $1 if trunking[:mode] != :trunk
+      when /^Trunking Native Mode VLAN:\s+(.*) \(.*\)$/
+        trunking[:native_vlan] = $1 if trunking[:mode] != :access
       when /^Trunking VLANs Enabled:\s+(.*)$/
         next if trunking[:mode] == :access
         vlans = $1

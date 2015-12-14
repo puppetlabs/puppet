@@ -89,7 +89,11 @@ class Puppet::Pops::Functions::Function
     raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - no loader specified" unless the_loader
 
     func = the_loader.load(:function, function_name)
-    return func.call(scope, *args, &block) if func
+    if func
+      Puppet::Util::Profiler.profile(function_name, [:functions, function_name]) do
+        return func.call(scope, *args, &block)
+      end
+    end
 
     # Check if a 3x function is present. Raise a generic error if it's not to allow upper layers to fill in the details
     # about where in a puppet manifest this error originates. (Such information is not available here).

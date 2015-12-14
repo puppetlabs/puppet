@@ -82,13 +82,8 @@ class ModifiesModeTest < ActionModeTest
 
     @start_mode = start_mode
 
-    user = 'symuser'
-    group = 'symgroup'
-    agent.user_present(user)
-    agent.group_present(group)
-
-    testcase.on(agent, "touch #{@file} && chown #{user}:#{group} #{@file} && chmod #{start_mode.to_s(8)} #{@file}")
-    testcase.on(agent, "mkdir -p #{@dir} && chown #{user}:#{group} #{@dir} && chmod #{start_mode.to_s(8)} #{@dir}")
+    testcase.on(agent, "touch #{@file} && chown symuser:symgroup #{@file} && chmod #{start_mode.to_s(8)} #{@file}")
+    testcase.on(agent, "mkdir -p #{@dir} && chown symuser:symgroup #{@dir} && chmod #{start_mode.to_s(8)} #{@dir}")
   end
 
   def assert_file_mode(expected_mode)
@@ -190,6 +185,14 @@ agents.each do |agent|
     next
   end
   is_solaris = agent['platform'].include?('solaris')
+
+  on(agent, puppet("resource user symuser ensure=present"))
+  on(agent, puppet("resource group symgroup ensure=present"))
+
+  teardown do
+    on(agent, puppet("resource user symuser ensure=absent"))
+    on(agent, puppet("resource group symgroup ensure=absent"))
+  end
 
   basedir = agent.tmpdir('symbolic-modes')
   on(agent, "mkdir -p #{basedir}")

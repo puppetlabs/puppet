@@ -360,9 +360,8 @@ describe Puppet::Resource do
           Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
           expect {
             resource.set_default_parameters(scope)
-          }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)
+          }.to raise_error(Puppet::Error, /Lookup of key 'apache::port' failed: Forgettabotit/)
         end
-
       end
 
       context "when a value is provided" do
@@ -391,6 +390,17 @@ describe Puppet::Resource do
           Puppet::DataBinding.indirection.expects(:find).never
           expect(resource.set_default_parameters(scope)).to eq([])
           expect(resource[:port]).to eq('8080')
+        end
+
+        it "should use the value from the data_binding terminus when provided value is undef" do
+          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
+
+          rs = Puppet::Parser::Resource.new("class", "apache", :scope => scope,
+            :parameters => [Puppet::Parser::Resource::Param.new({ :name => 'port', :value => nil })])
+
+          rs.resource_type.set_resource_parameters(rs, scope)
+          expect(rs[:port]).to eq('443')
         end
       end
     end

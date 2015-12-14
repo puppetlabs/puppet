@@ -41,30 +41,31 @@ describe "sshkey parsed provider" do
   end
 
   context "with the sample file" do
-    let :fixture do my_fixture('sample') end
-    before :each do subject.stubs(:default_target).returns(fixture) end
+    ['sample', 'sample_with_blank_lines'].each do |sample_file|
+      let :fixture do my_fixture(sample_file) end
+      before :each do subject.stubs(:default_target).returns(fixture) end
 
-    it "should parse to records on prefetch" do
-      expect(subject.target_records(fixture)).to be_empty
-      subject.prefetch
+      it "should parse to records on prefetch" do
+        expect(subject.target_records(fixture)).to be_empty
+        subject.prefetch
 
-      records = subject.target_records(fixture)
-      expect(records).to be_an Array
-      expect(records).to be_all {|x| expect(x).to be_an Hash }
-    end
+        records = subject.target_records(fixture)
+        expect(records).to be_an Array
+        expect(records).to be_all {|x| expect(x).to be_an Hash }
+      end
 
-    it "should reconstitute the file from records" do
-      subject.prefetch
-      records = subject.target_records(fixture)
+      it "should reconstitute the file from records" do
+        subject.prefetch
+        records = subject.target_records(fixture)
+        text = subject.to_file(records).gsub(/^# HEADER.+\n/, '')
 
-      text = subject.to_file(records).gsub(/^# HEADER.+\n/, '')
+        oldlines = File.readlines(fixture).map(&:chomp)
+        newlines = text.chomp.split("\n")
+        expect(oldlines.length).to eq(newlines.length)
 
-      oldlines = File.readlines(fixture).map(&:chomp)
-      newlines = text.chomp.split("\n")
-      expect(oldlines.length).to eq(newlines.length)
-
-      oldlines.zip(newlines).each do |old, new|
-        expect(old.gsub(/\s+/, '')).to eq(new.gsub(/\s+/, ''))
+        oldlines.zip(newlines).each do |old, new|
+          expect(old.gsub(/\s+/, '')).to eq(new.gsub(/\s+/, ''))
+        end
       end
     end
   end

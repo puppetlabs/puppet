@@ -67,6 +67,10 @@ module Puppet::Pops::Parser::SlurpSupport
   def slurp(scanner, pattern, escapes, ignore_invalid_escapes)
     str = scanner.scan_until(pattern) || return
 
+    return str unless str.include?('\\')
+
+    return str.gsub!(/\\(\\|')/m, '\1') || str if escapes.equal?(SQ_ESCAPES)
+
     # Process unicode escapes first as they require getting 4 hex digits
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
@@ -83,7 +87,7 @@ module Puppet::Pops::Parser::SlurpSupport
         when 'r'   ; "\r"
         when 'n'   ; "\n"
         when 't'   ; "\t"
-        when 's'   ; " "
+        when 's'   ; ' '
         when 'u'
           lex_warning(Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE)
           "\\u"

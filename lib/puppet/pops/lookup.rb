@@ -2,6 +2,9 @@
 # See puppet/functions/lookup.rb for documentation.
 #
 module Puppet::Pops::Lookup
+  LOOKUP_OPTIONS = 'lookup_options'.freeze
+  GLOBAL = '__global__'.freeze
+
   # Performs a lookup in the configured scopes and optionally merges the default.
   #
   # This is a backing function and all parameters are assumed to have been type checked.

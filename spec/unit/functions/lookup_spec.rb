@@ -486,7 +486,7 @@ EOS
       end
     end
 
-    it 'will handle path merge with not found correctly' do
+    it 'will handle path merge when some entries are not found correctly' do
       assemble_and_compile('${r}', "'hieraprovider::test::param_a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         begin
@@ -504,10 +504,10 @@ Merge strategy first
     Data Provider "two paths"
       Merge strategy first
         Path "#{environmentpath}/production/modules/hieraprovider/data/first.json"
-          Original path: first
+          Original path: "first"
           No such key: "hieraprovider::test::not_found"
         Path "#{environmentpath}/production/modules/hieraprovider/data/second_not_present.json"
-          Original path: second_not_present
+          Original path: "second_not_present"
           Path not found
 EOS
       end
@@ -551,5 +551,32 @@ EOS
           )
       end
     end
+
+    it 'will explain that "lookup_options" is an invalid key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('lookup_options', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Invalid key "lookup_options"
+EOS
+      end
+    end
+
+    it 'will explain that "lookup_options" is an invalid key for any key starting with "lookup_options."' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('lookup_options.subkey', nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Invalid key "lookup_options"
+EOS
+      end
+    end
+
   end
 end

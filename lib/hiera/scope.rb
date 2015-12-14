@@ -33,7 +33,7 @@ class Hiera
       if [CALLING_CLASS, CALLING_CLASS_PATH, CALLING_MODULE].include? key
         true
       else
-        @real.lookupvar(key) != ""
+        @real.exist?(key)
       end
     end
 

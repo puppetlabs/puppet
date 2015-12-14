@@ -12,11 +12,7 @@ class Puppet::Application::Lookup < Puppet::Application
 
   # Options for lookup
   option('--merge TYPE') do |arg|
-    if %w{unique hash deep}.include?(arg)
-      options[:merge] = arg
-    else
-      raise "The --merge option only accepts 'unique', 'hash', or 'deep'.\n#{RUN_HELP}"
-    end
+    options[:merge] = arg
   end
 
   option('--debug', '-d')
@@ -44,6 +40,8 @@ class Puppet::Application::Lookup < Puppet::Application
   option('--merge-hash-arrays')
 
   option('--explain')
+
+  option('--explain-options')
 
   option('--default VALUE') do |arg|
     options[:default_value] = arg
@@ -214,6 +212,10 @@ the puppet lookup function linked to above.
   than the value returned for the key. The explaination will describe how
   the result was obtained or why lookup failed to obtain the result.
 
+* --explain-options
+  Explain if a lookup_options hash will be used and how it was assembled
+  when performing a lookup.
+
 * --default <VALUE>
   A value produced if no value was found in the lookup.
 
@@ -266,7 +268,6 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     keys = command_line.args
-    raise 'No keys were given to lookup.' if keys.empty?
 
     #unless options[:node]
     #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
@@ -279,8 +280,15 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     use_default_value = !options[:default_value].nil?
     merge_options = nil
 
-    if options[:merge]
-      if options[:merge] == 'deep'
+    merge = options[:merge]
+    unless merge.nil?
+      strategies = Puppet::Pops::MergeStrategy.strategy_keys
+      unless strategies.include?(merge.to_sym)
+        strategies = strategies.map {|k| "'#{k}'"}
+        raise "The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\n#{RUN_HELP}"
+      end
+
+      if merge == 'deep'
         merge_options = {'strategy' => 'deep',
           'sort_merge_arrays' => !options[:sort_merge_arrays].nil?,
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
@@ -294,11 +302,22 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         end
 
       else
-        merge_options = {'strategy' => options[:merge]}
+        merge_options = {'strategy' => merge}
       end
     end
 
-    explain = !!options[:explain]
+    explain_data = !!options[:explain]
+    explain_options = !!options[:explain_options]
+    only_explain_options = explain_options && !explain_data
+    if keys.empty?
+      if only_explain_options
+        # Explain lookup_options for lookup of an unqualified value.
+        keys = Puppet::Pops::Lookup::GLOBAL
+      else
+        raise 'No keys were given to lookup.'
+      end
+    end
+    explain = explain_data || explain_options
 
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
@@ -308,7 +327,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type]) : nil
 
     generate_scope do |scope|
-      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain)
+      lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
       begin
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
@@ -336,7 +355,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     fact_file = options[:fact_file]
 
     if fact_file
-      original_facts = node.facts.values
+      original_facts = node.parameters
       if fact_file.end_with?("json")
         given_facts = JSON.parse(File.read(fact_file))
       else
@@ -347,7 +366,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
       end
 
-      node.facts.values = original_facts.merge(given_facts)
+      node.parameters = original_facts.merge(given_facts)
     end
 
     compiler = Puppet::Parser::Compiler.new(node)

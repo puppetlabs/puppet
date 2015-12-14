@@ -564,6 +564,10 @@ module Puppet::Pops::Issues
     "Resource Override can only operate on resources, got: #{label.label(actual)}"
   end
 
+  DUPLICATE_PARAMETER = hard_issue :DUPLICATE_PARAMETER, :param_name do
+    "The parameter '#{param_name}' is declared more than once in the parameter list"
+  end
+
   RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
     "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
   end
@@ -630,6 +634,10 @@ module Puppet::Pops::Issues
 
   UNCLOSED_QUOTE = hard_issue :UNCLOSED_QUOTE, :after, :followed_by do
     "Unclosed quote after #{after} followed by '#{followed_by}'"
+  end
+
+  UNCLOSED_MLCOMMENT = hard_issue :UNCLOSED_MLCOMMENT do
+    'Unclosed multiline comment'
   end
 
   EPP_INTERNAL_ERROR = hard_issue :EPP_INTERNAL_ERROR, :error do

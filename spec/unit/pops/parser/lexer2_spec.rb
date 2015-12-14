@@ -329,6 +329,12 @@ describe 'Lexer2' do
     end
   end
 
+  it 'detects unterminated multiline comment' do
+    expect { tokens_scanned_from("/* not terminated\nmultiline\ncomment") }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
+      expect(e.issue_code).to be(Puppet::Pops::Issues::UNCLOSED_MLCOMMENT.issue_code)
+    }
+  end
+
   { "=~" => [:MATCH, "=~ /./"],
     "!~" => [:NOMATCH, "!~ /./"],
     ","  => [:COMMA, ", /./"],
