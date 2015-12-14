@@ -18,6 +18,7 @@ describe "apply" do
       manifest = file_containing("manifest", catalog.to_pson)
 
       puppet = Puppet::Application[:apply]
+      puppet.stubs(:lock).yields
       puppet.options[:catalog] = manifest
 
       puppet.apply
@@ -34,6 +35,7 @@ describe "apply" do
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
       puppet = Puppet::Application[:apply]
+      puppet.stubs(:lock).yields
       puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
@@ -46,6 +48,7 @@ describe "apply" do
     Puppet[:trusted_server_facts] = true
 
     puppet = Puppet::Application[:apply]
+    puppet.stubs(:lock).yields
     puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
 
     expect { puppet.run_command }.to exit_with(0)
@@ -67,6 +70,7 @@ describe "apply" do
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
       puppet = Puppet::Application[:apply]
+      puppet.stubs(:lock).yields
       puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
@@ -78,6 +82,7 @@ describe "apply" do
     it "logs compile errors once" do
       Puppet.initialize_settings([])
       apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply.stubs(:lock).yields
       apply.options[:code] = '08'
 
       msg = 'valid octal'
@@ -93,6 +98,7 @@ describe "apply" do
     it "logs compile post processing errors once" do
       Puppet.initialize_settings([])
       apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply.stubs(:lock).yields
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
       apply.options[:code] = "file { '#{path}':
         content => 'This is the test file content',
@@ -135,6 +141,7 @@ describe "apply" do
     def init_cli_args_and_apply_app(args, execute)
       Puppet.initialize_settings(args)
       puppet = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => args))
+      puppet.stubs(:lock).yields
       puppet.options[:code] = execute
       return puppet
     end

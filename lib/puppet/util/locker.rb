@@ -12,7 +12,7 @@ require 'puppet/error'
 #
 # For more information, please see docs on the website.
 #  http://links.puppetlabs.com/agent_lockfiles
-module Puppet::Agent::Locker
+module Puppet::Util::Locker
   # Yield if we get a lock, else raise Puppet::LockError. Return
   # value of block yielded.
   def lock
@@ -30,7 +30,7 @@ module Puppet::Agent::Locker
   # @deprecated
   def running?
     Puppet.deprecation_warning <<-ENDHEREDOC
-Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.
+Puppet::Util::Locker.running? is deprecated as it is inherently unsafe.
 The only safe way to know if the lock is locked is to try lock and perform some
 action and then handle the LockError that may result.
 ENDHEREDOC
