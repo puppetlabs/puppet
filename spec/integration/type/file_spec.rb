@@ -1287,7 +1287,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         # Such upstream ressources are treated as "really fresh" and get
         # downloaded during every run.
         it "should fetch the file if no header specified" do
-          File.open(httppath, "w") { |f| f.puts "Content originally on disk\n" }
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # make sure the mtime is not "right now", lest we get a race
           FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
           catalog.add_resource resource
@@ -1297,7 +1297,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
 
         it "should fetch the file if mtime is older on disk" do
-          File.open(httppath, "w") { |f| f.puts "Content originally on disk\n" }
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # fixture has Last-Modified: Sun, 22 Mar 2015 22:25:34 GMT
           FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
           catalog.add_resource resource
@@ -1307,7 +1307,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
 
         it "should not update the file if mtime is newer on disk" do
-          File.open(httppath, "w") { |f| f.puts "Content via HTTP\n" }
+          File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
           mtime = File.stat(httppath).mtime
           catalog.add_resource resource
           catalog.apply
@@ -1335,7 +1335,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
 
         it "should update the file if content differs on disk" do
-          File.open(httppath, "w") { |f| f.puts "Content originally on disk\n" }
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
@@ -1343,7 +1343,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
 
         it "should not update the file if content on disk is up-to-date" do
-          File.open(httppath, "w") { |f| f.puts "Content via HTTP\n" }
+          File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
           disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
           FileUtils.touch httppath, :mtime => disk_mtime
           catalog.add_resource resource
