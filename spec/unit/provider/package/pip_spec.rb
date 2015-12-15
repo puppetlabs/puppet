@@ -12,7 +12,6 @@ describe provider_class do
     @client = stub_everything('client')
     @client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
     @client.stubs(:call).with('package_releases', 'fake_package').returns([])
-    XMLRPC::Client.stubs(:new2).returns(@client)
   end
 
   describe "parse" do
@@ -118,23 +117,53 @@ describe provider_class do
   end
 
   describe "latest" do
+    context "connecting directly" do
 
-    it "should find a version number for real_package" do
-      @resource[:name] = "real_package"
-      @provider.latest.should_not == nil
+      before :each do
+        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", nil).returns(@client)
+      end
+
+      it "should find a version number for real_package" do
+        @resource[:name] = "real_package"
+        @provider.latest.should_not == nil
+      end
+
+      it "should not find a version number for fake_package" do
+        @resource[:name] = "fake_package"
+        @provider.latest.should == nil
+      end
+
+      it "should handle a timeout gracefully" do
+        @resource[:name] = "fake_package"
+        @client.stubs(:call).raises(Timeout::Error)
+        lambda { @provider.latest }.should raise_error(Puppet::Error)
+      end
+
     end
 
-    it "should not find a version number for fake_package" do
-      @resource[:name] = "fake_package"
-      @provider.latest.should == nil
-    end
+    context "connecting via a proxy" do
+      before :each do
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
+        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", "some_host:some_port").returns(@client)
+      end
 
-    it "should handle a timeout gracefully" do
-      @resource[:name] = "fake_package"
-      @client.stubs(:call).raises(Timeout::Error)
-      lambda { @provider.latest }.should raise_error(Puppet::Error)
-    end
+      it "should find a version number for real_package" do
+        @resource[:name] = "real_package"
+        @provider.latest.should_not == nil
+      end
 
+      it "should not find a version number for fake_package" do
+        @resource[:name] = "fake_package"
+        @provider.latest.should == nil
+      end
+
+      it "should handle a timeout gracefully" do
+        @resource[:name] = "fake_package"
+        @client.stubs(:call).raises(Timeout::Error)
+        lambda { @provider.latest }.should raise_error(Puppet::Error)
+      end
+    end
   end
 
   describe "install" do
