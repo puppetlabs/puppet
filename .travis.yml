@@ -29,7 +29,7 @@ matrix:
       env: "CHECK=rubocop"
     - rvm: ruby-head
       env: "CHECK=commits"
-    - rvm: 2.2.2
+    - rvm: 2.2.3
       env: "CHECK=commits"
     - rvm: 2.0.0
       env: "CHECK=commits"
