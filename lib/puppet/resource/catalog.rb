@@ -195,6 +195,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def apply(options = {})
     Puppet::Util::Storage.load if host_config?
 
+    # The only option still supported is report.
+    # Issue a deprecation warning for any others.
+    deprecated_options = options.keys - [:report]
+    if !deprecated_options.empty?
+      Puppet.deprecation_warning("Puppet::Resource::Catalog.apply no longer " \
+                                 "takes the #{deprecated_options} option(s)")
+    end
+
     transaction = create_transaction(options)
 
     begin

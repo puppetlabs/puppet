@@ -596,11 +596,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should pass supplied tags on to the transaction" do
       @transaction.expects(:tags=).with(%w{one two})
+      Puppet.expects(:deprecation_warning).with(regexp_matches(/:tags/))
       @catalog.apply(:tags => %w{one two})
     end
 
     it "should set ignoreschedules on the transaction if specified in apply()" do
       @transaction.expects(:ignoreschedules=).with(true)
+      Puppet.expects(:deprecation_warning).with(regexp_matches(/:ignoreschedules/))
       @catalog.apply(:ignoreschedules => true)
     end
 
