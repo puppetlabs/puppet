@@ -108,7 +108,7 @@ module Puppet
           on host, 'iptables -F'
         when /fedora|el-7/
           on host, puppet('resource', 'service', 'firewalld', 'ensure=stopped')
-        when /el|centos/
+        when /el-|centos/
           on host, puppet('resource', 'service', 'iptables', 'ensure=stopped')
         when /ubuntu/
           on host, puppet('resource', 'service', 'ufw', 'ensure=stopped')
@@ -125,7 +125,7 @@ module Puppet
         sha     = sha == 'nightly' ? nil                        :  sha
 
         case platform
-        when /^(fedora|el|centos)-(\d+)-(.+)$/
+        when /^(fedora|el-|centos)-(\d+)-(.+)$/
           variant = (($1 == 'centos') ? 'el' : $1)
           fedora_prefix = ((variant == 'fedora') ? 'f' : '')
           version = $2

@@ -1,7 +1,7 @@
 test_name 'SysV and Systemd Service Provider Validation'
 
 
-confine :to, :platform => /el|centos|fedora|debian|sles|ubuntu-v/
+confine :to, :platform => /el-|centos|fedora|debian|sles|ubuntu-v/
 # osx covered by launchd_provider.rb
 # ubuntu-[a-u] upstart covered by ticket_14297_handle_upstart.rb
 
