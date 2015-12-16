@@ -81,8 +81,17 @@ class Puppet::Network::HTTP::Pool
 
       Puppet.debug("Starting connection for #{site}")
       http.start
+      setsockopts(http.instance_variable_get(:@socket))
       http
     end
+  end
+
+  # Set useful socket option(s) which lack from default settings in Net:HTTP
+  #
+  # @api private
+  def setsockopts(netio)
+    socket = netio.io
+    socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
   end
 
   # Release a connection back into the pool.

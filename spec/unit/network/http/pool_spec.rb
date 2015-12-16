@@ -109,6 +109,14 @@ describe Puppet::Network::HTTP::Pool do
       end rescue nil
     end
 
+    it 'sets keepalive bit on network socket' do
+      pool = create_pool
+      s = Socket.new(Socket::PF_INET, Socket::SOCK_STREAM)
+      pool.setsockopts(Net::BufferedIO.new(s))
+
+      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).bool).to eq(true)
+    end
+
     context 'when releasing connections' do
       it 'releases HTTP connections' do
         conn = create_connection(site)
@@ -150,6 +158,7 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
       pool = create_pool
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -169,6 +178,7 @@ describe Puppet::Network::HTTP::Pool do
 
       conn = create_connection(site)
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -179,6 +189,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -205,6 +216,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool_with_expired_connections(site, conn)
       pool.factory.expects(:create_connection => stub('conn', :start => nil))
+      pool.expects(:setsockopts)
 
       pool.borrow(site, verify)
     end
@@ -217,6 +229,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool_with_expired_connections(site, conn)
       pool.factory.expects(:create_connection => stub('open_conn', :start => nil))
+      pool.expects(:setsockopts)
 
       pool.borrow(site, verify)
     end
