@@ -34,6 +34,7 @@ $matches = "abc123".match(/([a-z]+)([1-9]+)/)
 ~~~ ruby
 $matches = ["abc123","def456"].match(/([a-z]+)([1-9]+)/)
 # $matches contains [[abc123, abc, 123], [def456, def, 456]]
+~~~
 
 - Since 4.0.0
 DOC
