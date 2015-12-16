@@ -117,7 +117,7 @@ if Puppet::Util::Platform.windows?
     alias __original_set_default_paths set_default_paths
     def set_default_paths
       # This can be removed once openssl integrates with windows
-      # cert store, see http://rt.openssl.org/Ticket/Display.html?id=2158
+      # cert store, see https://rt.openssl.org/Ticket/Display.html?id=2158
       Puppet::Util::Windows::RootCerts.instance.to_a.uniq.each do |x509|
         begin
           add_cert(x509)

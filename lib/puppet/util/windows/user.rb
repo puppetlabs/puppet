@@ -19,7 +19,7 @@ module Puppet::Util::Windows::User
   module_function :admin?
 
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ee207397(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ee207397(v=vs.85).aspx
   SECURITY_MAX_SID_SIZE = 68
 
   def check_token_membership
@@ -106,7 +106,7 @@ module Puppet::Util::Windows::User
 
   ffi_convention :stdcall
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378184(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa378184(v=vs.85).aspx
   # BOOL LogonUser(
   #   _In_      LPTSTR lpszUsername,
   #   _In_opt_  LPTSTR lpszDomain,
@@ -119,7 +119,7 @@ module Puppet::Util::Windows::User
   attach_function_private :LogonUserW,
     [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {
   #   DWORD  dwSize;
   #   DWORD  dwFlags;
@@ -143,7 +143,7 @@ module Puppet::Util::Windows::User
            :hProfile, :handle
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb762281(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/bb762281(v=vs.85).aspx
   # BOOL WINAPI LoadUserProfile(
   #   _In_     HANDLE hToken,
   #   _Inout_  LPPROFILEINFO lpProfileInfo
@@ -152,7 +152,7 @@ module Puppet::Util::Windows::User
   attach_function_private :LoadUserProfileW,
     [:handle, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb762282(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/bb762282(v=vs.85).aspx
   # BOOL WINAPI UnloadUserProfile(
   #   _In_  HANDLE hToken,
   #   _In_  HANDLE hProfile
@@ -161,7 +161,7 @@ module Puppet::Util::Windows::User
   attach_function_private :UnloadUserProfile,
     [:handle, :handle], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376389(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376389(v=vs.85).aspx
   # BOOL WINAPI CheckTokenMembership(
   #   _In_opt_  HANDLE TokenHandle,
   #   _In_      PSID SidToCheck,
@@ -171,7 +171,7 @@ module Puppet::Util::Windows::User
   attach_function_private :CheckTokenMembership,
     [:handle, :pointer, :pbool], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
   WELL_KNOWN_SID_TYPE = enum(
     :WinNullSid                                   , 0,
     :WinWorldSid                                  , 1,
@@ -270,7 +270,7 @@ module Puppet::Util::Windows::User
     :WinCapabilityRemovableStorageSid             , 94
   )
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446585(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446585(v=vs.85).aspx
   # BOOL WINAPI CreateWellKnownSid(
   #   _In_       WELL_KNOWN_SID_TYPE WellKnownSidType,
   #   _In_opt_   PSID DomainSid,
@@ -281,7 +281,7 @@ module Puppet::Util::Windows::User
   attach_function_private :CreateWellKnownSid,
     [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
   # BOOL WINAPI IsValidSid(
   #   _In_  PSID pSid
   # );

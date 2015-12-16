@@ -26,7 +26,7 @@
 # iterated over in order. This is useful for many datasets.
 #
 # The implementation is adapted from Robert Sedgewick's Left Leaning Red-Black Tree implementation,
-# which can be found at http://www.cs.princeton.edu/~rs/talks/LLRB/Java/RedBlackBST.java
+# which can be found at https://www.cs.princeton.edu/~rs/talks/LLRB/Java/RedBlackBST.java
 #
 # Most methods have O(log n) complexity.
 

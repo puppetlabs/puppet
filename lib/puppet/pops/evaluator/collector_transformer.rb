@@ -125,6 +125,14 @@ protected
     end
   end
 
+ def query_AccessExpression(o, scope)
+    pops_object = @@evaluator.evaluate(o, scope)
+
+    # Convert to Puppet 3 style objects since that is how they are represented
+    # in the catalog.
+    @@evaluator.convert(pops_object, scope, nil)
+  end
+
   def query_VariableExpression(o, scope)
     @@evaluator.evaluate(o, scope)
   end
@@ -155,6 +163,14 @@ protected
 
   def query_Object(o, scope)
     raise ArgumentError, "Cannot transform object of class #{o.class}"
+  end
+
+  def match_AccessExpression(o, scope)
+    pops_object = @@evaluator.evaluate(o, scope)
+
+    # Convert to Puppet 3 style objects since that is how they are represented
+    # in the catalog.
+    @@evaluator.convert(pops_object, scope, nil)
   end
 
   def match_AndExpression(o, scope)

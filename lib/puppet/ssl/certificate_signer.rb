@@ -1,6 +1,6 @@
 # Take care of signing a certificate in a FIPS 140-2 compliant manner.
 #
-# @see http://projects.puppetlabs.com/issues/17295
+# @see https://projects.puppetlabs.com/issues/17295
 #
 # @api private
 class Puppet::SSL::CertificateSigner

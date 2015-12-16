@@ -66,7 +66,7 @@ module Puppet::Util::Windows
     end
     module_function :sid_to_name
 
-    # http://stackoverflow.com/a/1792930 - 68 bytes, 184 characters in a string
+    # https://stackoverflow.com/a/1792930 - 68 bytes, 184 characters in a string
     MAXIMUM_SID_STRING_LENGTH = 184
 
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
@@ -133,7 +133,7 @@ module Puppet::Util::Windows
 
     ffi_convention :stdcall
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
     # BOOL WINAPI IsValidSid(
     #   _In_  PSID pSid
     # );
@@ -141,7 +141,7 @@ module Puppet::Util::Windows
     attach_function_private :IsValidSid,
       [:pointer], :win32_bool
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376399(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376399(v=vs.85).aspx
     # BOOL ConvertSidToStringSid(
     #   _In_   PSID Sid,
     #   _Out_  LPTSTR *StringSid
@@ -150,7 +150,7 @@ module Puppet::Util::Windows
     attach_function_private :ConvertSidToStringSidW,
       [:pointer, :pointer], :win32_bool
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376402(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376402(v=vs.85).aspx
     # BOOL WINAPI ConvertStringSidToSid(
     #   _In_   LPCTSTR StringSid,
     #   _Out_  PSID *Sid

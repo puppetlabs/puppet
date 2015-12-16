@@ -66,7 +66,7 @@ class Puppet::Util::Windows::Error < Puppet::Error
 
   ffi_convention :stdcall
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms679351(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms679351(v=vs.85).aspx
   # DWORD WINAPI FormatMessage(
   #   _In_      DWORD dwFlags,
   #   _In_opt_  LPCVOID lpSource,

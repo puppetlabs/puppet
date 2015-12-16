@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:pip)
-osfamilies = { ['RedHat', '6'] => 'pip-python', ['RedHat', '7'] => 'pip', ['Not RedHat', nil] => 'pip' }
+osfamilies = { ['All', nil] => ['pip', 'pip-python'] }
 
 describe provider_class do
 
@@ -32,42 +32,44 @@ describe provider_class do
   end
 
   describe "cmd" do
-    it "should return pip-python on RedHat < 7 systems" do
-      Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("6")
-      expect(provider_class.cmd).to eq('pip-python')
-    end
-
-    it "should return pip on RedHat >= 7 systems" do
-      Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-      expect(provider_class.cmd).to eq('pip')
+    it "should return pip-python on legacy systems" do
+      Facter.stubs(:value).with(:osfamily).returns("legacy")
+      expect(provider_class.cmd[1]).to eq('pip-python')
     end
 
     it "should return pip by default" do
-      Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
-      expect(provider_class.cmd).to eq('pip')
+      Facter.stubs(:value).with(:osfamily).returns("All")
+      expect(provider_class.cmd[0]).to eq('pip')
     end
 
   end
 
   describe "instances" do
 
-    osfamilies.each do |osfamily, pip_cmd|
-      it "should return an array on #{osfamily} when #{pip_cmd} is present" do
+    osfamilies.each do |osfamily, pip_cmds|
+      it "should return an array on #{osfamily} when #{pip_cmds.join(' or ')} is present" do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
-        provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
-        p = stub("process")
-        p.expects(:collect).yields("real_package==1.2.5")
-        provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
-        provider_class.instances
+        pip_cmds.each do |pip_cmd|
+          pip_cmds.each do |cmd|
+            unless cmd == pip_cmd
+              provider_class.expects(:which).with(cmd).returns(nil)
+            end
+          end
+          provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
+          p = stub("process")
+          p.expects(:collect).yields("real_package==1.2.5")
+          provider_class.expects(:execpipe).with("/fake/bin/#{pip_cmd} freeze").yields(p)
+          provider_class.instances
+        end
       end
 
-      it "should return an empty array on #{osfamily} when #{pip_cmd} is missing" do
+      it "should return an empty array on #{osfamily} when #{pip_cmds.join(' and ')} are missing" do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
-        provider_class.expects(:which).with(pip_cmd).returns nil
+        pip_cmds.each do |cmd|
+          provider_class.expects(:which).with(cmd).returns nil
+        end
         expect(provider_class.instances).to eq([])
       end
     end
@@ -235,30 +237,41 @@ describe provider_class do
       @provider.method(:lazy_pip).call "freeze"
     end
 
-    osfamilies.each do |osfamily, pip_cmd|
-      it "should retry on #{osfamily} if #{pip_cmd} has not yet been found" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
-        @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
-        @provider.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
-        @provider.method(:lazy_pip).call "freeze"
+    osfamilies.each do |osfamily, pip_cmds|
+      pip_cmds.each do |pip_cmd|
+        it "should retry on #{osfamily} if #{pip_cmd} has not yet been found" do
+          Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
+          Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
+          @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+          pip_cmds.each do |cmd|
+            unless cmd == pip_cmd
+              @provider.expects(:which).with(cmd).returns(nil)
+            end
+          end
+          @provider.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
+          @provider.method(:lazy_pip).call "freeze"
+        end
       end
 
-      it "should fail on #{osfamily} if #{pip_cmd} is missing" do
+      it "should fail on #{osfamily} if #{pip_cmds.join(' and ')} are missing" do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        @provider.expects(:which).with(pip_cmd).returns(nil)
+        pip_cmds.each do |pip_cmd|
+          @provider.expects(:which).with(pip_cmd).returns(nil)
+        end
         expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
       end
 
-      it "should output a useful error message on #{osfamily} if #{pip_cmd} is missing" do
+      it "should output a useful error message on #{osfamily} if #{pip_cmds.join(' and ')} are missing" do
         Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        @provider.expects(:which).with(pip_cmd).returns(nil)
+        pip_cmds.each do |pip_cmd|
+          @provider.expects(:which).with(pip_cmd).returns(nil)
+        end
         expect { @provider.method(:lazy_pip).call("freeze") }.
-          to raise_error(NoMethodError, "Could not locate the #{pip_cmd} command.")
+          to raise_error(NoMethodError, "Could not locate command #{pip_cmds.join(' and ')}.")
       end
 
     end

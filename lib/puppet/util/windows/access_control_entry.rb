@@ -3,7 +3,7 @@
 # Represents an access control entry, which grants or denies a subject,
 # identified by a SID, rights to a securable object.
 #
-# @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa374868(v=vs.85).aspx
+# @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa374868(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::AccessControlEntry
   require 'puppet/util/windows/security'

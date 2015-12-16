@@ -9,22 +9,21 @@ module Puppet
       Whether the file should exist, and if so what kind of file it should be.
       Possible values are `present`, `absent`, `file`, `directory`, and `link`.
 
-      * `present` will accept any form of file existence, and will create a
+      * `present` accepts any form of file existence, and creates a
         normal file if the file is missing. (The file will have no content
         unless the `content` or `source` attribute is used.)
-      * `absent` will make sure the file doesn't exist, deleting it
-        if necessary.
-      * `file` will make sure it's a normal file, and enables use of the
-        `content` or `source` attribute.
-      * `directory` will make sure it's a directory, and enables use of the
-        `source`, `recurse`, `recurselimit`, `ignore`, and `purge` attributes.
-      * `link` will make sure the file is a symlink, and **requires** that you
-        also set the `target` attribute. Symlinks are supported on all Posix
+      * `absent` ensures the file doesn't exist, and deletes it if necessary.
+      * `file` ensures it's a normal file, and enables use of the `content` or
+        `source` attribute.
+      * `directory` ensures it's a directory, and enables use of the `source`,
+        `recurse`, `recurselimit`, `ignore`, and `purge` attributes.
+      * `link` ensures the file is a symlink, and **requires** that you also
+        set the `target` attribute. Symlinks are supported on all Posix
         systems and on Windows Vista / 2008 and higher. On Windows, managing
-        symlinks requires puppet agent's user account to have the "Create
+        symlinks requires Puppet agent's user account to have the "Create
         Symbolic Links" privilege; this can be configured in the "User Rights
-        Assignment" section in the Windows policy editor. By default, puppet
-        agent runs as the Administrator account, which does have this privilege.
+        Assignment" section in the Windows policy editor. By default, Puppet
+        agent runs as the Administrator account, which has this privilege.
 
       Puppet avoids destroying directories unless the `force` attribute is set
       to `true`. This means that if a file is currently a directory, setting
@@ -47,7 +46,9 @@ module Puppet
           }
 
       However, we recommend using `link` and `target` explicitly, since this
-      behavior can be harder to read.
+      behavior can be harder to read and is
+      [deprecated](https://docs.puppetlabs.com/puppet/4.3/reference/deprecated_language.html)
+      as of Puppet 4.3.0.
     EOT
 
     # Most 'ensure' properties have a default, but with files we, um, don't.

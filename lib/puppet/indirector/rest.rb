@@ -96,7 +96,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
       # http://redmine.ruby-lang.org/issues/show/3991
       if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
-        http_post(req, uri, body, headers)
+        uri_with_env = "#{uri}?environment=#{request.environment.name}"
+        http_post(req, uri_with_env, body, headers)
       else
         http_get(req, uri_with_query_string, headers)
       end

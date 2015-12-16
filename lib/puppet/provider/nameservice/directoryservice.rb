@@ -160,7 +160,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.get_exec_preamble(ds_action, resource_name = nil)
     # JJM 2007-07-24
     #     DSCL commands are often repetitive and contain the same positional
-    #     arguments over and over. See http://developer.apple.com/documentation/Porting/Conceptual/PortingUnix/additionalfeatures/chapter_10_section_9.html
+    #     arguments over and over. See https://developer.apple.com/documentation/Porting/Conceptual/PortingUnix/additionalfeatures/chapter_10_section_9.html
     #     for an example of what I mean.
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
