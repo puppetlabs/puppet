@@ -1,0 +1,4 @@
+---
+lookup_options:
+  roles::devco::packages:
+    merge: unique
