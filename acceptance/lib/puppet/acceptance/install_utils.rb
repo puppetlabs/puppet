@@ -125,7 +125,7 @@ module Puppet
         sha     = sha == 'nightly' ? nil                        :  sha
 
         case platform
-        when /^(fedora|el-|centos)-(\d+)-(.+)$/
+        when /^(fedora|el|centos)-(\d+)-(.+)$/
           variant = (($1 == 'centos') ? 'el' : $1)
           fedora_prefix = ((variant == 'fedora') ? 'f' : '')
           version = $2
