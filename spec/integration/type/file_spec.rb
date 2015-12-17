@@ -1260,6 +1260,102 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
+
+    describe "from http servers" do
+      let(:http_source) { "http://my-server/file" }
+      let(:httppath) { "#{path}http" }
+
+      context "using mtime checksums", :vcr => true do
+        let(:resource) do
+          described_class.new(
+            :path   => httppath,
+            :ensure => :file,
+            :source => http_source,
+            :backup => false,
+            :checksum => :mtime
+          )
+        end
+
+        it "should fetch the file if it is not on the local disk" do
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+        end
+
+        # The fixture has neither last-modified nor content-checksum headers.
+        # Such upstream ressources are treated as "really fresh" and get
+        # downloaded during every run.
+        it "should fetch the file if no header specified" do
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
+          # make sure the mtime is not "right now", lest we get a race
+          FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+        end
+
+        it "should fetch the file if mtime is older on disk" do
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
+          # fixture has Last-Modified: Sun, 22 Mar 2015 22:25:34 GMT
+          FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+        end
+
+        it "should not update the file if mtime is newer on disk" do
+          File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
+          mtime = File.stat(httppath).mtime
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+          expect(File.stat(httppath).mtime).to eq mtime
+        end
+      end
+
+      context "using default md5 checksums", :vcr => true do
+        let(:resource) do
+          described_class.new(
+            :path   => httppath,
+            :ensure => :file,
+            :source => http_source,
+            :backup => false,
+          )
+        end
+
+        it "should fetch the file if it is not on the local disk" do
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+        end
+
+        it "should update the file if content differs on disk" do
+          File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+        end
+
+        it "should not update the file if content on disk is up-to-date" do
+          File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
+          disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
+          FileUtils.touch httppath, :mtime => disk_mtime
+          catalog.add_resource resource
+          catalog.apply
+          expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
+          expect(File.read(httppath)).to eq "Content via HTTP\n"
+          expect(File.stat(httppath).mtime).to eq disk_mtime
+        end
+
+      end
+    end
+
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
