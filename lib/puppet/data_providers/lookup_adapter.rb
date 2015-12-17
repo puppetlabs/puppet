@@ -216,7 +216,8 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     unless provider
       raise Puppet::Error.new("Environment '#{@env.name}', cannot find module_data_provider '#{provider_name}'")
     end
-    provider
+    # Provider is configured per module but cached using environment life cycle so it must be cloned
+    provider.clone
   end
 
   def initialize_env_provider
