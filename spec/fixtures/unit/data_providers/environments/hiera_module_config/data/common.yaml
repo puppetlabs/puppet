@@ -1,0 +1,4 @@
+---
+users::local:
+  bob:
+    name: Bob

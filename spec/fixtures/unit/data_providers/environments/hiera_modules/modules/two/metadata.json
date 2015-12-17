@@ -1,0 +1,9 @@
+{
+    "name": "example/two",
+    "version": "0.0.2",
+    "source": "git@github.com/example/example-two.git",
+    "dependencies": [],
+    "author": "Bob the Builder",
+    "license": "Apache-2.0",
+    "data_provider": "hiera"
+}

@@ -53,6 +53,12 @@ describe "when using a hiera data provider" do
     expect(resources).to include('module data param_a is 100, module data param_b is 200, module data param_c is 300, module data param_d is 400, module data param_e is 500')
   end
 
+  it 'keeps lookup_options in one module separate from lookup_options in another' do
+    resources1 = compile('hiera_modules', 'include one').resources.select {|r| r.ref.start_with?('Class[One]')}
+    resources2 = compile('hiera_modules', 'include two').resources.select {|r| r.ref.start_with?('Class[One]')}
+    expect(resources1).to eq(resources2)
+  end
+
   it 'does not perform merge of values declared in environment and module when resolving parameters' do
     resources = compile_and_get_notifications('hiera_misc')
     expect(resources).to include('env 1, ')

@@ -1,0 +1,6 @@
+---
+lookup_options:
+  one::local:
+    merge:
+       strategy: "deep"
+       merge_hash_arrays: true
