@@ -49,6 +49,13 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{wait-for-state portmap-wait}
     # these excludes were found with grep -r -L start /etc/init.d
     excludes += %w{rcS module-init-tools}
+    # Prevent puppet failing on unsafe scripts from Yocto Linux
+    if Facter.value(:osfamily) == "cisco-wrlinux"
+      excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
+                   hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
+                   rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
+                   umountnfs.sh}
+    end
     # Prevent puppet failing to get status of the new service introduced
     # by the fix for this (bug https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/982889)
     # due to puppet's inability to deal with upstart services with instances.

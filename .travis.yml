@@ -10,7 +10,7 @@ notifications:
 rvm:
   - ruby-head
   - 2.2.3
-  - 2.1.7
+  - 2.1.8
   - 2.0.0
   - 1.9.3
 

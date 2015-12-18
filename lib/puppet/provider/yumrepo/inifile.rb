@@ -74,9 +74,12 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def self.reposdir(conf='/etc/yum.conf', dirs=['/etc/yum.repos.d', '/etc/yum/repos.d'])
     reposdir = find_conf_value('reposdir', conf)
     # Use directories in reposdir if they are set instead of default
-    dirs = reposdir.split(",").map(&:strip) if reposdir
-    
-
+    if reposdir
+      # Follow the code from the yum/config.py
+      dirs = reposdir.gsub!("\n", ' ')
+      dirs = reposdir.gsub!(',', ' ')
+      dirs = reposdir.split
+    end
     dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
     if dirs.empty?
       Puppet.debug('No yum directories were found on the local filesystem')
