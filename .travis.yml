@@ -9,7 +9,7 @@ notifications:
   email: false
 rvm:
   - 2.2.2
-  - 2.1.6
+  - 2.1.8
   - 2.0.0
   - 1.9.3
 
