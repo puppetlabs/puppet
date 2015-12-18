@@ -7,7 +7,7 @@ script: "bundle exec rake \"parallel:spec[2]\""
 notifications:
   email: false
 rvm:
-  - 2.1.1
+  - 2.1.8
   - 2.0.0
   - 1.9.3
   - 1.8.7-p374
