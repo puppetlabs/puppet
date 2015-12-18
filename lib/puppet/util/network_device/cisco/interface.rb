@@ -45,11 +45,6 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
         should[:access_vlan] = should[:native_vlan]
       end
 
-      # Don't change non-operational mode parameters
-      next if property == :access_vlan and should[:mode] == :trunk
-      next if property == :native_vlan and should[:mode] == :access
-      next if property == :encapsulation and should[:mode] == :access
-
       Puppet.debug("comparing #{property}: #{is[property]} == #{should[property]}")
 
       # They're equal, so do nothing.
@@ -89,7 +84,11 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
 
   def command(command)
     transport.command(command) do |out|
-      Puppet.err "Error while executing #{command}, device returned #{out}" if out =~ /^%/mo
+      if out =~ /^%/mo or out =~ /^Command rejected:/mo
+        # strip off the command just sent
+        error = out.sub(command,'')
+        Puppet.err "Error while executing '#{command}', device returned: #{error}"
+      end
     end
   end
 end
