@@ -1261,11 +1261,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
-    describe "from http servers" do
+    describe "from http" do
       let(:http_source) { "http://my-server/file" }
       let(:httppath) { "#{path}http" }
 
-      context "using mtime checksums", :vcr => true do
+      context "using mtime", :vcr => true do
         let(:resource) do
           described_class.new(
             :path   => httppath,
@@ -1276,7 +1276,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           )
         end
 
-        it "should fetch the file if it is not on the local disk" do
+        it "should fetch if not on the local disk" do
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
@@ -1286,7 +1286,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         # The fixture has neither last-modified nor content-checksum headers.
         # Such upstream ressources are treated as "really fresh" and get
         # downloaded during every run.
-        it "should fetch the file if no header specified" do
+        it "should fetch if no header specified" do
           File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # make sure the mtime is not "right now", lest we get a race
           FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
@@ -1296,7 +1296,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(File.read(httppath)).to eq "Content via HTTP\n"
         end
 
-        it "should fetch the file if mtime is older on disk" do
+        it "should fetch if mtime is older on disk" do
           File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # fixture has Last-Modified: Sun, 22 Mar 2015 22:25:34 GMT
           FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
@@ -1306,7 +1306,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(File.read(httppath)).to eq "Content via HTTP\n"
         end
 
-        it "should not update the file if mtime is newer on disk" do
+        it "should not update if mtime is newer on disk" do
           File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
           mtime = File.stat(httppath).mtime
           catalog.add_resource resource
@@ -1317,7 +1317,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         end
       end
 
-      context "using default md5 checksums", :vcr => true do
+      context "using md5", :vcr => true do
         let(:resource) do
           described_class.new(
             :path   => httppath,
@@ -1327,14 +1327,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           )
         end
 
-        it "should fetch the file if it is not on the local disk" do
+        it "should fetch if not on the local disk" do
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
           expect(File.read(httppath)).to eq "Content via HTTP\n"
         end
 
-        it "should update the file if content differs on disk" do
+        it "should update if content differs on disk" do
           File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           catalog.add_resource resource
           catalog.apply
@@ -1342,7 +1342,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(File.read(httppath)).to eq "Content via HTTP\n"
         end
 
-        it "should not update the file if content on disk is up-to-date" do
+        it "should not update if content on disk is up-to-date" do
           File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
           disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
           FileUtils.touch httppath, :mtime => disk_mtime
