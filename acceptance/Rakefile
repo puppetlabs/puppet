@@ -1,6 +1,9 @@
 require 'rake/clean'
 require 'pp'
 require 'yaml'
+require 'securerandom'
+require 'fileutils'
+require 'beaker-hostgenerator'
 require 'beaker/dsl/install_utils'
 extend Beaker::DSL::InstallUtils
 $LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
@@ -113,7 +116,20 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  config_opt = "--hosts=#{config}" if config
+  agent_target = ENV['TEST_TARGET']
+  if agent_target
+    master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
+    targets = "#{master_target}-#{agent_target}"
+    cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role'])
+    ENV['CONFIG'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
+    FileUtils.mkdir_p('tmp')
+    File.open(config, 'w') do |fh|
+      fh.print(cli.execute)
+    end
+    config_opt = "--hosts=#{config}"
+  elsif config
+    config_opt = "--hosts=#{config}"
+  end
 
   overriding_options = ENV['OPTIONS']
 
@@ -258,7 +274,9 @@ namespace :ci do
   namespace :test do
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
-Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker.
+Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker,
+or specify TEST_TARGET in a form beaker-hostgenerator accepts, e.g. ubuntu1504-64a.
+You may override the default master test target by specifying MASTER_TEST_TARGET.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
 If testing from git checkouts, you may optionally set the github fork to checkout from using PUPPET_FORK='some-other-puppet-fork' (you may change the HIERA_FORK and FACTER_FORK as well if you wish).
