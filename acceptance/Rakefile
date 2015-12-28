@@ -116,7 +116,11 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  agent_target = ENV['TEST_TARGET']
+  # The 'if ...' suffix conditional below is a temporary measure which should go
+  # away once the pipeline changes are made so that TEST_TARGET is always
+  # intended for use with beaker-hostgenerator. So please remove that
+  # conditional (and this comment) once that pipeline change is made.
+  agent_target = ENV['TEST_TARGET'] if ENV['TEST_TARGET'] && ENV['TEST_TARGET'][-1,1] == 'a'
   if agent_target
     master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
     targets = "#{master_target}-#{agent_target}"
