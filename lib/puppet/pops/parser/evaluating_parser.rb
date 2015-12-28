@@ -9,7 +9,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     @parser = Puppet::Pops::Parser::Parser.new()
   end
 
-  def parse_string(s, file_source = 'unknown')
+  def parse_string(s, file_source = nil)
     @file_source = file_source
     clear()
     # Handling of syntax error can be much improved (in general), now it bails out of the parser
@@ -19,7 +19,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     # Also a possible improvement (if the YAML parser returns positions) is to provide correct output of position.
     #
     begin
-      assert_and_report(parser.parse_string(s))
+      assert_and_report(parser.parse_string(s, file_source))
     rescue Puppet::ParseErrorWithIssue => e
       raise e
     rescue Puppet::ParseError => e
@@ -35,7 +35,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     assert_and_report(parser.parse_file(file))
   end
 
-  def evaluate_string(scope, s, file_source='unknown')
+  def evaluate_string(scope, s, file_source = nil)
     evaluate(scope, parse_string(s, file_source))
   end
 
