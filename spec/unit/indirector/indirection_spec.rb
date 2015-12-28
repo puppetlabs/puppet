@@ -402,7 +402,7 @@ describe Puppet::Indirector::Indirection do
 
           Puppet.expects(:log_exception)
 
-          expect { @indirection.find("/my/key") }.to raise_error
+          expect { @indirection.find("/my/key") }.to raise_error RuntimeError
         end
       end
     end
