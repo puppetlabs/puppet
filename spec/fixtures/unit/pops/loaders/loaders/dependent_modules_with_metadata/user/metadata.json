@@ -5,5 +5,8 @@
   "license": "",
   "source": "",
   "version": "1.0.0",
-  "dependencies": [{ "name": "test/usee" }]
+  "dependencies": [
+    { "name": "test/usee" },
+    { "name": "test-usee2" }
+  ]
 }

@@ -155,6 +155,8 @@ class Puppet::Module
 
       if attr == :dependencies
         value.each do |dep|
+          name = dep['name']
+          dep['name'] = name.tr('-', '/') unless name.nil?
           dep['version_requirement'] ||= '>= 0.0.0'
         end
       end
@@ -269,11 +271,10 @@ class Puppet::Module
 
     dependencies.each do |dependency|
       name = dependency['name']
-      forge_name = name.tr('-', '/')
       version_string = dependency['version_requirement'] || '>= 0.0.0'
 
       dep_mod = begin
-        environment.module_by_forge_name(forge_name)
+        environment.module_by_forge_name(name)
       rescue
         nil
       end
