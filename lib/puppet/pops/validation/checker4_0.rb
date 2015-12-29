@@ -213,11 +213,24 @@ class Puppet::Pops::Validation::Checker4_0
     rvalue(o.right_expr)
   end
 
+  def resource_without_title?(o)
+    if o.instance_of?(Puppet::Pops::Model::BlockExpression)
+      statements = o.statements
+      statements.length == 2 && statements[0].instance_of?(Puppet::Pops::Model::QualifiedName) && statements[1].instance_of?(Puppet::Pops::Model::LiteralHash)
+    else
+      false
+    end
+  end
+
   def check_BlockExpression(o)
-    o.statements[0..-2].each do |statement|
-      if idem(statement)
-        acceptor.accept(Issues::IDEM_EXPRESSION_NOT_LAST, statement)
-        break # only flag the first
+    if resource_without_title?(o)
+      acceptor.accept(Issues::RESOURCE_WITHOUT_TITLE, o, :name => o.statements[0].value)
+    else
+      o.statements[0..-2].each do |statement|
+        if idem(statement)
+          acceptor.accept(Issues::IDEM_EXPRESSION_NOT_LAST, statement)
+          break # only flag the first
+        end
       end
     end
   end
@@ -378,7 +391,7 @@ class Puppet::Pops::Validation::Checker4_0
 
   def internal_check_no_idem_last(o)
     if violator = ends_with_idem(o.body)
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
   end
 
@@ -443,7 +456,7 @@ class Puppet::Pops::Validation::Checker4_0
     hostname(o.host_matches, o)
     top(o.eContainer, o)
     if violator = ends_with_idem(o.body)
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
     unless o.parent.nil?
       acceptor.accept(Issues::ILLEGAL_NODE_INHERITANCE, o.parent)

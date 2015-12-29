@@ -536,6 +536,10 @@ module Puppet::Pops::Issues
     "This #{label.label(semantic)} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)"
   end
 
+  RESOURCE_WITHOUT_TITLE = issue :RESOURCE_WITHOUT_TITLE, :name do
+    "This expression is invalid. Did you try declaring a '#{name}' resource without a title?"
+  end
+
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
     "This #{label.label(semantic)} has no effect. #{label.a_an_uc(container)} can not end with a value-producing expression without other effect"
   end
