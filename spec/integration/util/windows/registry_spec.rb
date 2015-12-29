@@ -6,6 +6,25 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
   subject do
     class TestRegistry
       include Puppet::Util::Windows::Registry
+      extend FFI::Library
+
+      ffi_lib :advapi32
+      attach_function :RegSetValueExW,
+        [:handle, :pointer, :dword, :dword, :pointer, :dword], :win32_long
+
+      def write_corrupt_dword(reg, valuename)
+        # Normally DWORDs contain 4 bytes.  This bad data only has 2
+        bad_data = [0, 0]
+        FFI::Pointer.from_string_to_wide_string(valuename) do |name_ptr|
+          FFI::MemoryPointer.new(:uchar, bad_data.length) do |data_ptr|
+            data_ptr.write_array_of_uchar(bad_data)
+            if RegSetValueExW(reg.hkey, name_ptr, 0,
+              Win32::Registry::REG_DWORD, data_ptr, data_ptr.size) != 0
+                raise Puppet::Util::Windows::Error.new("Failed to write registry value")
+            end
+          end
+        end
+      end
     end
 
     TestRegistry.new
@@ -160,6 +179,75 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
           written = vals[guid]
           expect(written).to eq(utf_8_str)
           expect(written.encoding).to eq(Encoding::UTF_8)
+        end
+      end
+    end
+
+    context "when reading values" do
+      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:value_name) { SecureRandom.uuid }
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      [
+        {:name => 'REG_SZ', :type => Win32::Registry::REG_SZ, :value => 'reg sz string'},
+        {:name => 'REG_EXPAND_SZ', :type => Win32::Registry::REG_EXPAND_SZ, :value => 'reg expand string'},
+        {:name => 'REG_MULTI_SZ', :type => Win32::Registry::REG_MULTI_SZ, :value => ['string1', 'string2']},
+        {:name => 'REG_BINARY', :type => Win32::Registry::REG_BINARY, :value => 'abinarystring'},
+        {:name => 'REG_DWORD', :type => Win32::Registry::REG_DWORD, :value => 0xFFFFFFFF},
+        {:name => 'REG_DWORD_BIG_ENDIAN', :type => Win32::Registry::REG_DWORD_BIG_ENDIAN, :value => 0xFFFF},
+        {:name => 'REG_QWORD', :type => Win32::Registry::REG_QWORD, :value => 0xFFFFFFFFFFFFFFFF},
+      ].each do |pair|
+        it "should return #{pair[:name]} values" do
+          hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+            reg.write(value_name, pair[:type], pair[:value])
+          end
+
+          hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_READ) do |reg|
+            vals = subject.values(reg)
+
+            expect(vals).to have_key(value_name)
+            subject.each_value(reg) do |subkey, type, data|
+              expect(type).to eq(pair[:type])
+            end
+
+            written = vals[value_name]
+            expect(written).to eq(pair[:value])
+          end
+        end
+      end
+    end
+
+    context "when reading corrupt values" do
+      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:value_name) { SecureRandom.uuid }
+
+      before(:each) do
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
+          subject.write_corrupt_dword(reg_key, value_name)
+        end
+      end
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
+          subject.delete_key(reg_key, subkey_name)
+        end
+      end
+
+      it "should return nil for a corrupt DWORD" do
+        hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
+          vals = subject.values(reg_key)
+
+          expect(vals).to have_key(value_name)
+          expect(vals[value_name]).to be_nil
         end
       end
     end
