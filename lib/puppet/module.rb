@@ -65,8 +65,7 @@ class Puppet::Module
     @environment = environment
 
     assert_validity
-
-    load_metadata if has_metadata?
+    load_metadata
 
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
   end
@@ -86,24 +85,12 @@ class Puppet::Module
   end
 
   def has_metadata?
-    return false unless metadata_file
-
-    return false unless Puppet::FileSystem.exist?(metadata_file)
-
     begin
-      metadata =  JSON.parse(File.read(metadata_file, :encoding => 'utf-8'))
-    rescue JSON::JSONError => e
-      msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
-      case Puppet[:strict]
-      when :off, :warning
-        Puppet.warning(msg)
-      when :error
-        raise FaultyMetadata, msg
-      end
-      return false
+      load_metadata
+      @metadata.is_a?(Hash) && !@metadata.empty?
+    rescue Puppet::Module::MissingMetadata
+      false
     end
-
-    return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
 
   FILETYPES.each do |type, location|
@@ -151,14 +138,33 @@ class Puppet::Module
     @license_file = File.join(path, "License")
   end
 
+  def read_metadata
+    md_file = metadata_file
+    md_file.nil? ? {} : JSON.parse(File.read(md_file, :encoding => 'utf-8'))
+  rescue Errno::ENOENT
+    {}
+  rescue JSON::JSONError => e
+    msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
+    case Puppet[:strict]
+    when :off, :warning
+      Puppet.warning(msg)
+    when :error
+      raise FaultyMetadata, msg
+    end
+    {}
+  end
+
   def load_metadata
-    @metadata = data = JSON.parse(File.read(metadata_file, :encoding => 'utf-8'))
+    return if instance_variable_defined?(:@metadata)
+
+    @metadata = data = read_metadata
+    return if data.empty?
+
     @forge_name = data['name'].gsub('-', '/') if data['name']
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
-      unless value = data[attr.to_s]
-        raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
-      end
+      value = data[attr.to_s]
+      raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}" if value.nil?
 
       if attr == :dependencies
         unless value.is_a?(Array)
