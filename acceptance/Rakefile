@@ -124,7 +124,7 @@ EOS
   if agent_target
     master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
     targets = "#{master_target}-#{agent_target}"
-    cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role'])
+    cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
     ENV['CONFIG'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
     FileUtils.mkdir_p('tmp')
     File.open(config, 'w') do |fh|
