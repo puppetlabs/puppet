@@ -123,6 +123,9 @@ describe 'loaders' do
       moduleb_loader = loaders.private_loader_for_module('user')
       function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
       expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+
+      function = moduleb_loader.load_typed(typed_name(:function, 'user::caller2')).value
+      expect(function.call({})).to eql("usee2::callee() was told 'passed value' + I am user::caller2()")
     end
   end
 
