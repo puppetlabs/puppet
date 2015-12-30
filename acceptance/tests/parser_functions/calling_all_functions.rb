@@ -4,8 +4,8 @@ test_name 'Calling all functions.. test in progress!'
 step 'Apply manifest containing all function calls'
 def manifest_call_each_function_from_array(functions)
   manifest = ''
-  # use index to work around puppet's imutable variables
-  # use variables so we can contatenate strings
+  # use index to work around puppet's immutable variables
+  # use variables so we can concatenate strings
   functions.each_with_index do |function,index|
     if function[:rvalue]
       manifest << "$pre#{index} = \"sayeth #{function[:name].capitalize}: Scope(Class[main]): \" "
@@ -67,10 +67,12 @@ agents.each do |agent|
     {:name => :regsubst,         :args => '"Cersei","Cer(\\w)ei","Daenery\\1"',:lambda => nil, :expected => 'Daenerys', :rvalue => true},
     # explicitly called in call_em_all; implicitly called by the include above
     #{:name => :require,          :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
-    {:name => :scanf,            :args => '"Eddard Stark","%6s"',              :lambda => nil, :expected => 'Eddard', :rvalue => true},
+    # 4x output contains brackets around scanf output
+    {:name => :scanf,            :args => '"Eddard Stark","%6s"',              :lambda => nil, :expected => /Scanf: Scope\(Class\[main\]\): \[?Eddard\]?/, :rvalue => true},
     {:name => :sha1,             :args => '"Sansa"',                           :lambda => nil, :expected => '4337ce5e4095e565d51e0ef4c80df1fecf238b29', :rvalue => true},
     {:name => :shellquote,       :args => '["-1", "--two"]',                   :lambda => nil, :expected => '-1 --two', :rvalue => true},
-    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => '9 8 7', :rvalue => true},
+    # 4x output contains brackets around split output and commas btwn values
+    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => /Split: Scope\(Class\[main\]\): \[?9,? 8,? 7\]?/, :rvalue => true},
     {:name => :sprintf,          :args => '"%b","123"',                        :lambda => nil, :expected => '1111011', :rvalue => true},
     # explicitly called in call_em_all
     #{:name => :tag,              :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
@@ -79,7 +81,7 @@ agents.each do |agent|
     {:name => :versioncmp,       :args => '"1","2"',                           :lambda => nil, :expected => '-1', :rvalue => true},
     {:name => :warning,          :args => '"consider yourself warned"',        :lambda => nil, :expected => 'consider yourself warned', :rvalue => false},
     # do this one last or it will not allow the others to run.
-    {:name => :fail,             :args => '"Jon Snow"',                        :lambda => nil, :expected => 'Error: Jon Snow', :rvalue => false},
+    {:name => :fail,             :args => '"Jon Snow"',                        :lambda => nil, :expected => /Error:.*Jon Snow/, :rvalue => false},
   ]
 
   puppet_version = on(agent, puppet('--version')).stdout.chomp
@@ -167,10 +169,10 @@ PP
 
   scope = 'Scope(Class[main]):'
   # apply the 4x function manifest with future parser
-  apply_manifest_on(agent, manifest_call_each_function_from_array(functions_4x),
-    {:modulepath => "#{testdir}/environments/production/modules/",
-     :future_parser => true,
-     :acceptable_exit_codes => 1} ) do |result|
+  puppet_apply_options = {:modulepath => "#{testdir}/environments/production/modules/",
+     :acceptable_exit_codes => 1}
+  puppet_apply_options[:future_parser] = true if puppet_version =~ /\A3\./
+  apply_manifest_on(agent, manifest_call_each_function_from_array(functions_4x), puppet_apply_options) do |result|
        functions_4x.each do |function|
          expected = "#{function[:name].capitalize}: #{scope} #{function[:expected]}"
          assert_match(expected, result.output,
@@ -180,7 +182,8 @@ PP
 
    file_path = agent.tmpfile('apply_manifest.pp')
    create_remote_file(agent, file_path, manifest_call_each_function_from_array(functions_3x))
-   on(agent, puppet("apply --trusted_node_data --color=false --modulepath #{testdir}/environments/production/modules/ #{file_path}"),
+   trusted_3x = puppet_version =~ /\A3\./ ? '--trusted_node_data ' : ''
+   on(agent, puppet("apply #{trusted_3x} --color=false --modulepath #{testdir}/environments/production/modules/ #{file_path}"),
       :acceptable_exit_codes => 1 ) do |result|
         functions_3x.each do |function|
           # append the function name to the matcher so it's more expressive
