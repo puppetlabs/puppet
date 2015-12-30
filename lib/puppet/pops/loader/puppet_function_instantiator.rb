@@ -43,7 +43,8 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
     # Adapt the function definition with loader - this is used from logic contained in it body to find the
     # loader to use when making calls to the new function API. Such logic have a hard time finding the closure (where
     # the loader is known - hence this mechanism
-    Puppet::Pops::Adapters::LoaderAdapter.adapt(the_function_definition).loader = loader
+    private_loader = loader.private_loader
+    Puppet::Pops::Adapters::LoaderAdapter.adapt(the_function_definition).loader = private_loader
 
     # TODO: Cheating wrt. scope - assuming it is found in the context
     closure_scope = Puppet.lookup(:global_scope) { {} }
@@ -53,7 +54,7 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
     # when calling functions etc.
     # It should be bound to global scope
 
-    created.new(closure_scope, loader)
+    created.new(closure_scope, private_loader)
   end
 
   # Creates Function class and instantiates it based on a FunctionDefinition model

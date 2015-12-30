@@ -99,7 +99,7 @@ class Puppet::Pops::Functions::Function
     # about where in a puppet manifest this error originates. (Such information is not available here).
     loader_scope = closure_scope
     func_3x = Puppet::Parser::Functions.function(function_name, loader_scope.environment) if loader_scope.is_a?(Puppet::Parser::Scope)
-    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found" unless func_3x
+    raise ArgumentError, "Function #{self.class.name}(): Unknown function: '#{function_name}'" unless func_3x
 
     # Call via 3x API
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.

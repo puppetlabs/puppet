@@ -31,6 +31,8 @@ describe 'loaders' do
   let(:mix_4x_and_3x_functions) { config_dir('mix_4x_and_3x_functions') }
   let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
   let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
+  let(:user_metadata_path) { File.join(dependent_modules_with_metadata, 'modules/user/metadata.json') }
+
   let(:empty_test_env) { environment_for() }
 
   # Loaders caches the puppet_system_loader, must reset between tests
@@ -103,7 +105,9 @@ describe 'loaders' do
     end
 
     it 'loader allows loading a function more than once' do
-      env = environment_for(dependent_modules_with_metadata)
+      File.stubs(:read).with(user_metadata_path).returns ''
+
+      env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -116,8 +120,51 @@ describe 'loaders' do
   end
 
   context 'when loading from a module with metadata' do
+    let(:env) { environment_for(File.join(dependent_modules_with_metadata, 'modules')) }
+    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
+
+    let(:environmentpath) { my_fixture_dir }
+    let(:node) { Puppet::Node.new('test', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'dependent_modules_with_metadata') }
+    let(:compiler) { Puppet::Parser::Compiler.new(node) }
+
+    let(:user_metadata) {
+      {
+        'name' => 'test-user',
+        'author' =>  'test',
+        'description' =>  '',
+        'license' =>  '',
+        'source' =>  '',
+        'version' =>  '1.0.0',
+        'dependencies' =>  []
+      }
+    }
+
+    def compile_and_get_notifications(code)
+      Puppet[:code] = code
+      catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+      catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+    end
+
+    around(:each) do |example|
+      # Initialize settings to get a full compile as close as possible to a real
+      # environment load
+      Puppet.settings.initialize_global_settings
+
+      # Initialize loaders based on the environmentpath. It does not work to
+      # just set the setting environmentpath for some reason - this achieves the same:
+      # - first a loader is created, loading directory environments from the fixture (there is
+      # one environment, 'sample', which will be loaded since the node references this
+      # environment by name).
+      # - secondly, the created env loader is set as 'environments' in the puppet context.
+      #
+      environments = Puppet::Environments::Directories.new(environmentpath, [])
+      Puppet.override(:environments => environments) do
+        example.run
+      end
+    end
+
     it 'all dependent modules are visible' do
-      env = environment_for(dependent_modules_with_metadata)
+      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -127,7 +174,39 @@ describe 'loaders' do
       function = moduleb_loader.load_typed(typed_name(:function, 'user::caller2')).value
       expect(function.call({})).to eql("usee2::callee() was told 'passed value' + I am user::caller2()")
     end
+
+    [ 'outside a function', 'a puppet function declared under functions', 'a puppet function declared in init.pp', 'a ruby function'].each_with_index do |from, from_idx|
+      [ {:from => from, :called => 'a puppet function declared under functions', :expects => "I'm the function usee::usee_puppet()"},
+        {:from => from, :called => 'a puppet function declared in init.pp', :expects => "I'm the function usee::usee_puppet_init()"},
+        {:from => from, :called => 'a ruby function', :expects => "I'm the function usee::usee_ruby()"} ].each_with_index do |desc, called_idx|
+        case_number = from_idx * 3 + called_idx + 1
+        it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
+          File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          catalog = compiler.compile
+          resource = catalog.resource('Notify', "case_#{case_number}")
+          expect(resource).not_to be_nil
+          expect(resource['message']).to eq(desc[:expects])
+        end
+
+        it "can call #{desc[:called]} from #{desc[:from]} when no metadata is present" do
+          Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          catalog = compiler.compile
+          resource = catalog.resource('Notify', "case_#{case_number}")
+          expect(resource).not_to be_nil
+          expect(resource['message']).to eq(desc[:expects])
+        end
+
+        it 'can not call ruby function in a dependent module from outside a function if dependency is missing in existing metadata.json' do
+          File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => []).to_pson
+          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
+        end
+      end
+    end
   end
+
 
   context 'when loading from a module without metadata' do
     it 'loads a ruby function with a qualified name' do
