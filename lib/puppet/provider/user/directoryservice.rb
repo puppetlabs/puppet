@@ -1,5 +1,5 @@
 require 'puppet'
-require 'plist'
+require 'puppet/util/plist' if Puppet.features.cfpropertylist?
 require 'base64'
 
 Puppet::Type.type(:user).provide :directoryservice do
@@ -13,11 +13,11 @@ Puppet::Type.type(:user).provide :directoryservice do
   commands :uuidgen      => '/usr/bin/uuidgen'
   commands :dsimport     => '/usr/bin/dsimport'
   commands :dscl         => '/usr/bin/dscl'
-  commands :plutil       => '/usr/bin/plutil'
   commands :dscacheutil  => '/usr/bin/dscacheutil'
 
   # Provider confines and defaults
   confine    :operatingsystem => :darwin
+  confine    :feature         => :cfpropertylist
   defaultfor :operatingsystem => :darwin
 
   # Need this to create getter/setter methods automagically
@@ -91,7 +91,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # Return an array of hashes containing information about every user on
   # the system.
   def self.get_all_users
-    Plist.parse_xml(dscl '-plist', '.', 'readall', '/Users')
+    Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'readall', '/Users')
   end
 
   # This method accepts an individual user plist, passed as a hash, and
@@ -164,14 +164,14 @@ Puppet::Type.type(:user).provide :directoryservice do
   # Use dscl to retrieve an array of hashes containing attributes about all
   # of the local groups on the machine.
   def self.get_list_of_groups
-    @groups ||= Plist.parse_xml(dscl '-plist', '.', 'readall', '/Groups')
+    @groups ||= Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'readall', '/Groups')
   end
 
   # Perform a dscl lookup at the path specified for the specific keyname
   # value. The value returned is the first item within the array returned
   # from dscl
   def self.get_attribute_from_dscl(path, username, keyname)
-    Plist.parse_xml(dscl '-plist', '.', 'read', "/#{path}/#{username}", keyname)
+    Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'read', "/#{path}/#{username}", keyname)
   end
 
   # The plist embedded in the ShadowHashData key is a binary plist. The
@@ -179,40 +179,25 @@ Puppet::Type.type(:user).provide :directoryservice do
   # extract the binary plist, convert it to XML, and return it.
   def self.get_embedded_binary_plist(shadow_hash_data)
     embedded_binary_plist = Array(shadow_hash_data['dsAttrTypeNative:ShadowHashData'][0].delete(' ')).pack('H*')
-    convert_binary_to_xml(embedded_binary_plist)
+    convert_binary_to_hash(embedded_binary_plist)
   end
 
-  # This method will accept a hash that has been returned from Plist::parse_xml
-  # and convert it to a binary plist (string value).
-  def self.convert_xml_to_binary(plist_data)
-    Puppet.debug('Converting XML plist to binary')
-    Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
-    IO.popen('plutil -convert binary1 -o - -', 'r+') do |io|
-      io.write Plist::Emit.dump(plist_data)
-      io.close_write
-      @converted_plist = io.read
-    end
-    @converted_plist
+  # This method will accept a hash and convert it to a binary plist (string value).
+  def self.convert_hash_to_binary(plist_data)
+    Puppet.debug('Converting plist hash to binary')
+    Puppet::Util::Plist.dump_plist(plist_data, :binary)
   end
 
-  # This method will accept a binary plist (as a string) and convert it to a
-  # hash via Plist::parse_xml.
-  def self.convert_binary_to_xml(plist_data)
-    Puppet.debug('Converting binary plist to XML')
-    Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
-    IO.popen('plutil -convert xml1 -o - -', 'r+') do |io|
-      io.write plist_data
-      io.close_write
-      @converted_plist = io.read
-    end
-    Puppet.debug('Converting XML values to a hash.')
-    Plist::parse_xml(@converted_plist)
+  # This method will accept a binary plist (as a string) and convert it to a hash.
+  def self.convert_binary_to_hash(plist_data)
+    Puppet.debug('Converting binary plist to hash')
+    Puppet::Util::Plist.parse_plist(plist_data)
   end
 
   # The salted-SHA512 password hash in 10.7 is stored in the 'SALTED-SHA512'
   # key as binary data. That data is extracted and converted to a hex string.
   def self.get_salted_sha512(embedded_binary_plist)
-    embedded_binary_plist['SALTED-SHA512'].string.unpack("H*")[0]
+    embedded_binary_plist['SALTED-SHA512'].unpack("H*")[0]
   end
 
   # This method reads the passed embedded_binary_plist hash and returns values
@@ -222,7 +207,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.get_salted_sha512_pbkdf2(field, embedded_binary_plist)
     case field
     when 'salt', 'entropy'
-      embedded_binary_plist['SALTED-SHA512-PBKDF2'][field].string.unpack('H*').first
+      embedded_binary_plist['SALTED-SHA512-PBKDF2'][field].unpack('H*').first
     when 'iterations'
       Integer(embedded_binary_plist['SALTED-SHA512-PBKDF2'][field])
     else
@@ -549,15 +534,16 @@ Puppet::Type.type(:user).provide :directoryservice do
   def get_users_plist(username)
     # This method will retrieve the data stored in a user's plist and
     # return it as a native Ruby hash.
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{username}.plist"))
+    path = "#{users_plist_dir}/#{username}.plist"
+    Puppet::Util::Plist.read_plist_file(path)
   end
 
   # This method will return the binary plist that's embedded in the
   # ShadowHashData key of a user's plist, or false if it doesn't exist.
   def get_shadow_hash_data(users_plist)
     if users_plist['ShadowHashData']
-      password_hash_plist  = users_plist['ShadowHashData'][0].string
-      self.class.convert_binary_to_xml(password_hash_plist)
+      password_hash_plist  = users_plist['ShadowHashData'][0]
+      self.class.convert_binary_to_hash(password_hash_plist)
     else
       false
     end
@@ -568,20 +554,11 @@ Puppet::Type.type(:user).provide :directoryservice do
   # into the ShadowHashData key of the user's plist.
   def set_shadow_hash_data(users_plist, binary_plist)
     if users_plist.has_key?('ShadowHashData')
-      users_plist['ShadowHashData'][0].string = binary_plist
+      users_plist['ShadowHashData'][0] = binary_plist
     else
-      users_plist['ShadowHashData'] = [new_stringio_object(binary_plist)]
+      users_plist['ShadowHashData'] = [binary_plist]
     end
     write_users_plist_to_disk(users_plist)
-  end
-
-  # This method returns a new StringIO object. Why does it exist?
-  # Well, StringIO objects have their own 'serial number', so when
-  # writing rspec tests it's difficult to compare StringIO objects
-  # due to this serial number. If this action is wrapped in its own
-  # method, it can be mocked for easier testing.
-  def new_stringio_object(value = '')
-    StringIO.new(value)
   end
 
   # This method accepts an argument of a hex password hash, and base64
@@ -598,10 +575,10 @@ Puppet::Type.type(:user).provide :directoryservice do
   def set_salted_sha512(users_plist, shadow_hash_data, value)
     unless shadow_hash_data
       shadow_hash_data = Hash.new
-      shadow_hash_data['SALTED-SHA512'] = new_stringio_object
+      shadow_hash_data['SALTED-SHA512'] = ''
     end
-    shadow_hash_data['SALTED-SHA512'].string = base64_decode_string(value)
-    binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
+    shadow_hash_data['SALTED-SHA512'] = base64_decode_string(value)
+    binary_plist = self.class.convert_hash_to_binary(shadow_hash_data)
     set_shadow_hash_data(users_plist, binary_plist)
   end
 
@@ -618,8 +595,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] =  new_stringio_object unless shadow_hash_data['SALTED-SHA512-PBKDF2'][field]
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field].string = base64_decode_string(value)
+      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = base64_decode_string(value)
     when 'iterations'
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Integer(value)
     else
@@ -633,15 +609,14 @@ Puppet::Type.type(:user).provide :directoryservice do
     # Convert shadow_hash_data to a binary plist, and call the
     # set_shadow_hash_data method to serialize and write the data
     # back to the user's plist.
-    binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
+    binary_plist = self.class.convert_hash_to_binary(shadow_hash_data)
     set_shadow_hash_data(users_plist, binary_plist)
   end
 
   # This method will accept a plist in XML format, save it to disk, convert
   # the plist to a binary format, and flush the dscl cache.
   def write_users_plist_to_disk(users_plist)
-    Plist::Emit.save_plist(users_plist, "#{users_plist_dir}/#{@resource.name}.plist")
-    plutil'-convert', 'binary1', "#{users_plist_dir}/#{@resource.name}.plist"
+    Puppet::Util::Plist.write_plist_file(users_plist, "#{users_plist_dir}/#{@resource.name}.plist", :binary)
   end
 
   # This is a simple wrapper method for writing values to a file.
