@@ -213,7 +213,7 @@ module Puppet::Util::Windows
         when Win32::Registry::REG_MULTI_SZ
           result = [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
         when Win32::Registry::REG_BINARY
-          result = [ type, data.read_bytes(0, byte_length) ]
+          result = [ type, data_ptr.read_bytes(byte_length) ]
         when Win32::Registry::REG_DWORD
           result = [ type, data_ptr.read_dword ]
         when Win32::Registry::REG_DWORD_BIG_ENDIAN
