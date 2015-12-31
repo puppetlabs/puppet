@@ -121,14 +121,14 @@ EOS
     master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
     targets = "#{master_target}-#{agent_target}"
     cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
-    ENV['CONFIG'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
+    ENV['HOSTS'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
     FileUtils.mkdir_p('tmp')
-    File.open(config, 'w') do |fh|
+    File.open(hosts_file, 'w') do |fh|
       fh.print(cli.execute)
     end
-    config_opt = "--hosts=#{config}"
-  elsif config
-    config_opt = "--hosts=#{config}"
+    config_opt = "--hosts=#{hosts_file}"
+  elsif hosts_file
+    config_opt = "--hosts=#{hosts_file}"
   end
 
   overriding_options = ENV['OPTIONS']
@@ -143,8 +143,10 @@ EOS
 end
 
 def preserve_configuration(final_options, options_file)
-  if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
-    cp(hosts_file, "log/latest/config.yml")
+  if (preserved_hosts_file = hosts ||
+        final_options[:preserved_hosts_file]) &&
+        preserved_hosts_file !~ /preserved_config/
+    cp(preserved_hosts_file, "log/latest/config.yml")
     generate_config_for_latest_hosts
   end
   mv(options_file, "log/latest")
@@ -262,8 +264,13 @@ def sha
   ENV['SHA']
 end
 
-def config
-  ENV['CONFIG']
+def hosts_file
+  if ENV['HOSTS']
+    ENV['HOSTS']
+  else
+    puts 'Warning: environment variable CONFIG deprecated. Please use HOSTS to match beaker options.'
+    ENV['CONFIG']
+  end
 end
 
 namespace :ci do
@@ -274,7 +281,7 @@ namespace :ci do
   namespace :test do
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
-Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker,
+Also must set HOSTS=config/nodes/foo.yaml or include it in an options.rb for Beaker,
 or specify TEST_TARGET in a form beaker-hostgenerator accepts, e.g. ubuntu1504-64a.
 You may override the default master test target by specifying MASTER_TEST_TARGET.
 You may set TESTS=path/to/test,and/more/tests.
@@ -300,7 +307,7 @@ Install puppet as a gem on a predefined set of hosts using Beaker, and run a bas
 EOS
     task :gem => 'ci:check_env' do
       ENV['TESTS'] = 'setup/gem/pre-suite/010_GemInstall.rb'
-      ENV['CONFIG'] = 'config/nodes/gem.yaml'
+      ENV['HOSTS'] = 'config/nodes/gem.yaml'
       beaker_test(:gem)
     end
 
@@ -363,7 +370,7 @@ One can set install-type using, e.g.: TYPE='git'.
     puts "Using ##{config_number}: #{config_path}"
 
     options = {
-      :hosts_file => "#{config_path}/preserved_config.yaml",
+      :preserved_hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => 'always',
     }
