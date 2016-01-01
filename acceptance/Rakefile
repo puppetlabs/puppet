@@ -83,7 +83,6 @@ end
 def beaker_test(mode = :aio, options = {})
   delete_options = options.delete(:__delete_options__) || []
   final_options = HarnessOptions.options(mode, options)
-  preserve_config = final_options.delete(:__preserve_config__)
 
   if mode == :git
     # Build up project git urls based on git server and fork env variables or defaults
@@ -136,11 +135,7 @@ EOS
 
   args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
 
-  begin
-    sh("beaker", *args)
-  ensure
-    preserve_configuration(final_options, options_file) if preserve_config
-  end
+  sh("beaker", *args)
 end
 
 def preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
@@ -171,12 +166,18 @@ def preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
   hosts
 end
 
-#FIXME: won't work without a token
+def vmpooler_token
+  `grep --extended --only-matching 'vmpooler_token: .*' ${HOME}/.fog`.split(' ')[1]
+end
+
 def release_hosts(hosts = nil)
   hosts.each do |h|
-    hostname = h.split('.').first
+    hostname = h.match(/\w{15}\.delivery\.puppetlabs\.net/)[0]
     puts "Releaseing '#{hostname}'"
-    puts `curl -X DELETE --url http://vcloud.delivery.puppetlabs.net/vm/#{hostname}`
+    shh_curl = 'curl --silent --show-error'
+    token_command = "-H X-AUTH-TOKEN:#{vmpooler_token}"
+    vcloud_url = "http://vcloud.delivery.puppetlabs.net/vm/#{hostname}"
+    puts `#{shh_curl} -X DELETE --url #{vcloud_url} #{token_command}`
   end
 end
 
@@ -258,7 +259,7 @@ This can also be accomplished for any beaker task with OPTIONS='--preserve-hosts
 #{USAGE}
   EOS
   task :test_and_preserve_hosts => 'ci:check_env'  do
-    beaker_test(beaker_run_type, :preserve_hosts => 'always', :__preserve_config__ => true)
+    beaker_test(beaker_run_type, :preserve_hosts => 'always')
   end
 
   desc "List preserved hosts from latest (default) or runs within given hours; e.g.: rake ci:list_hosts[24]"
@@ -269,7 +270,7 @@ This can also be accomplished for any beaker task with OPTIONS='--preserve-hosts
   end
 
   desc <<-EOS
-Release any preserved hosts back to vmpooler.  These should be reaped daily by scripts, but this will free up resources immediately. This is intended for vmpooler only.
+Release preserved hosts within [:hours_ago] (latest sut.log by default) back to vmpooler; e.g.: rake ci:kill_hosts[24]"
   EOS
   # FIXME: test with other hypervisors? this implies beaker should probably handle this stuff
   task :kill_hosts, :hours_ago do |t, args|
