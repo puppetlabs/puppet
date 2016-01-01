@@ -40,16 +40,16 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
   end
 
   describe ".sid_uri" do
-    it "should raise an error when the input is not a SID object" do
+    it "should raise an error when the input is not a SID Principal" do
       [Object.new, {}, 1, :symbol, '', nil].each do |input|
         expect {
           Puppet::Util::Windows::ADSI.sid_uri(input)
-        }.to raise_error(Puppet::Error, /Must use a valid SID object/)
+        }.to raise_error(Puppet::Error, /Must use a valid SID::Principal/)
       end
     end
 
     it "should return a SID uri for a well-known SID (SYSTEM)" do
-      sid = Win32::Security::SID.new('SYSTEM')
+      sid = Puppet::Util::Windows::SID::Principal.lookup_account_name('SYSTEM')
       expect(Puppet::Util::Windows::ADSI.sid_uri(sid)).to eq('WinNT://S-1-5-18')
     end
   end
@@ -207,20 +207,20 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       describe "when given a set of groups to which to add the user" do
         let(:existing_groups) { ['group2','group3'] }
-        let(:group_sids) { existing_groups.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])} }
+        let(:group_sids) { existing_groups.each_with_index.map{|n,i| stub(:Name => n, :objectSID => stub(:sid => i))} }
 
         let(:groups_to_set) { 'group1,group2' }
-        let(:desired_sids) { groups_to_set.split(',').each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i-1])} }
+        let(:desired_sids) { groups_to_set.split(',').each_with_index.map{|n,i| stub(:Name => n, :objectSID => stub(:sid => i-1))} }
 
         before(:each) do
-          user.expects(:group_sids).returns(group_sids.map {|s| s.objectSID})
+          user.expects(:group_sids).returns(group_sids.map {|s| s.objectSID })
         end
 
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
-            user.expects(:add_group_sids).with([-1])
-            user.expects(:remove_group_sids).with([1])
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
+            user.expects(:add_group_sids).with { |value| value.sid == -1 }
+            user.expects(:remove_group_sids).with { |value| value.sid == 1 }
 
             user.set_groups(groups_to_set, false)
           end
@@ -228,7 +228,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           it "should remove all users from a group if desired is empty" do
             Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
             user.expects(:add_group_sids).never
-            user.expects(:remove_group_sids).with([0], [1])
+            user.expects(:remove_group_sids).with { |user1, user2| user1.sid == 0 && user2.sid == 1 }
 
             user.set_groups('', false)
           end
@@ -236,8 +236,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.to_s, s.objectSID] }])
-            user.expects(:add_group_sids).with([-1])
+            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
+            user.expects(:add_group_sids).with { |value| value.sid == -1 }
             user.expects(:remove_group_sids).never
 
             user.set_groups(groups_to_set, true)
@@ -274,7 +274,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         end
 
         it "and raise when passed a non-SID object to add" do
-          expect{ group.add_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID object/)
+          expect{ group.add_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID::Principal/)
         end
 
         it "to remove a member" do
@@ -284,7 +284,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         end
 
         it "and raise when passed a non-SID object to remove" do
-          expect{ group.remove_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID object/)
+          expect{ group.remove_member_sids(invalid)}.to raise_error(Puppet::Error, /Must use a valid SID::Principal/)
         end
       end
 
@@ -302,9 +302,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         it "should set the members of a group to only desired_members when inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN'),
-              stub(:account => 'user2', :domain => 'testcomputername'),
-              stub(:account => 'user3', :domain => 'DOMAIN2'),
+              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
+              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
+              stub(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
@@ -329,9 +329,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         it "should add the desired_members to an existing group when not inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN'),
-              stub(:account => 'user2', :domain => 'testcomputername'),
-              stub(:account => 'user3', :domain => 'DOMAIN2'),
+              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
+              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
+              stub(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
@@ -365,8 +365,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         it "should remove all members when desired_members is empty and inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN'),
-              stub(:account => 'user2', :domain => 'testcomputername')
+              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
+              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
@@ -388,8 +388,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         it "should do nothing when desired_members is empty and not inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN'),
-              stub(:account => 'user2', :domain => 'testcomputername')
+              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
+              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
           ]
           # use stubbed objectSid on member to return stubbed SID
           Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])

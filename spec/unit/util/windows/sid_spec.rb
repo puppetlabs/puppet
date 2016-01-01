@@ -17,8 +17,10 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
       converted = subject.octet_string_to_sid_object(bytes)
 
-      expect(converted).to eq(Win32::Security::SID.new('SYSTEM'))
-      expect(converted).to be_an_instance_of Win32::Security::SID
+      expect(converted).to be_an_instance_of Puppet::Util::Windows::SID::Principal
+      expect(converted.sid_bytes).to eq(bytes)
+      expect(converted.sid).to eq(sid)
+      expect(converted.account).to eq('SYSTEM')
     end
 
     it "should raise an error for non-array input" do
@@ -33,11 +35,19 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       }.to raise_error(Puppet::Error, /Octet string must be an array of bytes/)
     end
 
+    it "should raise an error for a valid byte array with no mapping to a user" do
+      expect {
+        # S-1-1-1 which is not a valid account
+        valid_octet_invalid_user =[1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
+        subject.octet_string_to_sid_object(valid_octet_invalid_user)
+      }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  No mapping between account names and security IDs was done./)
+    end
+
     it "should raise an error for a malformed byte array" do
       expect {
-        invalid_octet = [1]
+        invalid_octet = [2]
         subject.octet_string_to_sid_object(invalid_octet)
-      }.to raise_error(SystemCallError, /No mapping between account names and security IDs was done./)
+      }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  The parameter is incorrect./)
     end
   end
 
@@ -51,12 +61,12 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should return a SID for a passed user or group name" do
-      subject.expects(:name_to_sid_object).with('testers').returns 'S-1-5-32-547'
+      subject.expects(:name_to_sid_object).with('testers').returns stub(:sid => 'S-1-5-32-547')
       expect(subject.name_to_sid('testers')).to eq('S-1-5-32-547')
     end
 
     it "should return a SID for a passed fully-qualified user or group name" do
-      subject.expects(:name_to_sid_object).with('MACHINE\testers').returns 'S-1-5-32-547'
+      subject.expects(:name_to_sid_object).with('MACHINE\testers').returns stub(:sid => 'S-1-5-32-547')
       expect(subject.name_to_sid('MACHINE\testers')).to eq('S-1-5-32-547')
     end
 
@@ -75,6 +85,33 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     it "should be the identity function for any sid" do
       expect(subject.name_to_sid(sid)).to eq(sid)
     end
+
+    describe "with non-US languages" do
+
+      UMLAUT = [195, 164].pack('c*').force_encoding(Encoding::UTF_8)
+      let(:username) { SecureRandom.uuid.to_s.gsub(/\-/, '')[0..13] + UMLAUT }
+
+      after(:each) {
+        Puppet::Util::Windows::ADSI::User.delete(username)
+      }
+
+      it "should properly resolve a username with an umlaut" do
+        # Ruby seems to use the local codepage when making COM calls
+        # if this fails, might want to use Windows API directly instead to ensure bytes
+        user = Puppet::Util::Windows::ADSI.create(username, 'user')
+        user.SetInfo()
+
+        # compare the new SID to the name_to_sid result
+        sid_bytes = user.objectSID.to_a
+        sid_string = ''
+        FFI::MemoryPointer.new(:byte, sid_bytes.length) do |sid_byte_ptr|
+          sid_byte_ptr.write_array_of_uchar(sid_bytes)
+          sid_string = Puppet::Util::Windows::SID.sid_ptr_to_string(sid_byte_ptr)
+        end
+
+        expect(subject.name_to_sid(username)).to eq(sid_string)
+      end
+    end
   end
 
   context "#name_to_sid_object" do
@@ -82,12 +119,12 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect(subject.name_to_sid_object(unknown_name)).to be_nil
     end
 
-    it "should return a Win32::Security::SID instance for any valid sid" do
-      expect(subject.name_to_sid_object(sid)).to be_an_instance_of(Win32::Security::SID)
+    it "should return a Puppet::Util::Windows::SID::Principal instance for any valid sid" do
+      expect(subject.name_to_sid_object(sid)).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
     end
 
     it "should accept unqualified account name" do
-      expect(subject.name_to_sid_object('SYSTEM').to_s).to eq(sid)
+      expect(subject.name_to_sid_object('SYSTEM').sid).to eq(sid)
     end
 
     it "should be case-insensitive" do
@@ -99,7 +136,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should accept domain qualified account names" do
-      expect(subject.name_to_sid_object('NT AUTHORITY\SYSTEM').to_s).to eq(sid)
+      expect(subject.name_to_sid_object('NT AUTHORITY\SYSTEM').sid).to eq(sid)
     end
   end
 
