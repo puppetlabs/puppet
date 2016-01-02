@@ -19,22 +19,9 @@ EPEL_MIRROR = ENV['BEAKER_EPEL_MIRROR']
 
 module HarnessOptions
   defaults = {
-    :type => 'git',
-    :helper => ['lib/helper.rb'],
     :tests  => ['tests'],
     :log_level => 'debug',
-    :color => false,
-    :root_keys => true,
-    :ssh => {
-      :keys => ["id_rsa_acceptance", "#{ENV['HOME']}/.ssh/id_rsa-acceptance"],
-    },
-    :xml => true,
-    :timesync => false,
-    :repo_proxy => true,
-    :add_el_extras => true,
     :preserve_hosts => 'onfail',
-    :forge_host => 'forge-aio01-petest.puppetlabs.com',
-    :'master-start-curl-retries' => 30
   }
 
   DEFAULTS = EPEL_MIRROR ? defaults.merge(:epel_url => EPEL_MIRROR) : defaults
