@@ -127,7 +127,7 @@ EOS
       fh.print(cli.execute)
     end
     config_opt = "--hosts=#{hosts_file}"
-  elsif hosts_file
+  elsif hosts_file && !options[:hosts]
     config_opt = "--hosts=#{hosts_file}"
   end
 
@@ -290,7 +290,8 @@ One can set install-type using, e.g.: TYPE='git'.
     end
 
     options = {
-      :preserved_hosts_file => "#{config_path}/preserved_config.yaml",
+      :hosts     => "log/latest/hosts_preserved.yml",
+      :pre_suite => [],
     }
     run_type = beaker_run_type
     beaker_test(beaker_run_type, options)
