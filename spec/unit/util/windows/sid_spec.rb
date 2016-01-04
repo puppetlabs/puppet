@@ -75,6 +75,52 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     it "should be the identity function for any sid" do
       expect(subject.name_to_sid(sid)).to eq(sid)
     end
+
+    describe "Non english text" do
+
+      let(:username) {
+        # Create a user with an umlaut
+        umlaut = [195, 164].pack('c*').force_encoding(Encoding::UTF_8)
+        username = "hansolo" + umlaut
+      }
+
+      after :each do
+        # Delete the test user
+        Puppet::Util::Windows::ADSI::User.delete(username)
+      end
+
+      it "should properly resolve a username with an umlaut" do
+        def get_sid_string(data)
+          sid = []
+
+          sid << (data[0]).unpack("C")
+
+          idAuth = 0
+          (data[2..7]).unpack("CCCCCC").each { |val| idAuth = idAuth*256 + val }
+          sid << idAuth
+
+          sid += data.unpack("bbbbbbbbV*")[8..-1]
+          "S-" + sid.join('-')
+        end
+
+        def byte2hex(b)
+          ret = '%x' % (b.to_i & 0xff)
+          ret = '0' + ret if ret.length < 2
+          ret
+        end
+
+        # NOTE: Ruby uses the stupid local codepage
+        user = Puppet::Util::Windows::ADSI.create(username, 'user')
+        user.SetInfo()
+
+        # compare the new SID to the name_to_sid result
+        sid_string = get_sid_string(user.objectSID.pack('C*'))
+
+        #should be equivalent
+        expect(subject.name_to_sid(username)).to eq(sid_string)
+      end
+    end
+
   end
 
   context "#name_to_sid_object" do
