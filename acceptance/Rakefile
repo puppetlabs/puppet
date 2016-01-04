@@ -103,24 +103,10 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  agent_target = ENV['TEST_TARGET']
-  if agent_target
-    master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
-    targets = "#{master_target}-#{agent_target}"
-    cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
-    ENV['HOSTS'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
-    FileUtils.mkdir_p('tmp')
-    File.open(hosts_file, 'w') do |fh|
-      fh.print(cli.execute)
-    end
-    config_opt = "--hosts=#{hosts_file}"
-  elsif hosts_file && !options[:hosts]
-    config_opt = "--hosts=#{hosts_file}"
-  end
-
   overriding_options = ENV['OPTIONS']
 
-  args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
+  args = ["--options-file", options_file, hosts_opt(options[:hosts]), tests_opt,
+          overriding_options].compact
 
   sh("beaker", *args)
 end
@@ -183,12 +169,36 @@ def sha
   ENV['SHA']
 end
 
-def hosts_file
+def agent_target
+  ENV['TEST_TARGET'] || 'redhat7-64a'
+end
+
+def master_target
+  ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
+end
+
+def test_targets
+  "#{master_target}-#{agent_target}"
+end
+
+HOSTS_FILE = "#{test_targets}-#{SecureRandom.uuid}.yaml"
+
+def hosts_file_env
   if ENV['HOSTS']
     ENV['HOSTS']
-  else
+  elseif env_config = ENV['CONFIG']
     puts 'Warning: environment variable CONFIG deprecated. Please use HOSTS to match beaker options.'
-    ENV['CONFIG']
+    env_config
+  end
+end
+
+def hosts_opt(options_hosts)
+  unless options_hosts # using preserved hosts task
+    if hosts_file_env
+      "--hosts=#{hosts_file_env}"
+    else
+      "--hosts=tmp/#{HOSTS_FILE}"
+    end
   end
 end
 
@@ -197,7 +207,21 @@ namespace :ci do
     raise(USAGE) unless sha
   end
 
+  desc 'Generate Beaker Host Config File'
+  task :gen_hosts do
+    if hosts_file_env
+      next
+    end
+
+    cli = BeakerHostGenerator::CLI.new([test_targets, '--disable-default-role', '--osinfo-version', '1'])
+    FileUtils.mkdir_p('tmp') # -p ignores when dir already exists
+    File.open("tmp/#{HOSTS_FILE}", 'w') do |fh|
+      fh.print(cli.execute)
+    end
+  end
+
   namespace :test do
+
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set HOSTS=config/nodes/foo.yaml or include it in an options.rb for Beaker,
@@ -215,7 +239,7 @@ EOS
 Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation.
 #{USAGE}
 EOS
-    task :aio => 'ci:check_env' do
+    task :aio => ['ci:check_env', 'ci:gen_hosts'] do
       beaker_test(:aio)
     end
 
@@ -224,7 +248,7 @@ Install puppet as a gem on a predefined set of hosts using Beaker, and run a bas
 
   $ env SHA=<full sha> bundle exec rake:ci:gem
 EOS
-    task :gem => 'ci:check_env' do
+    task :gem => ['ci:check_env', 'ci:gen_hosts'] do
       ENV['TESTS'] = 'setup/gem/pre-suite/010_GemInstall.rb'
       ENV['HOSTS'] = 'config/nodes/gem.yaml'
       beaker_test(:gem)
@@ -234,7 +258,7 @@ EOS
 Run the acceptance tests through Beaker and install from git on the configuration targets.
 #{USAGE}
 EOS
-    task :git => 'ci:check_env' do
+    task :git => ['ci:check_env', 'ci:gen_hosts'] do
       beaker_test(:git)
     end
   end
@@ -245,7 +269,7 @@ Defaults to an aio run, but you can set it to 'git' with TYPE='git'.
 This can also be accomplished for any beaker task with OPTIONS='--preserve-hosts'.
 #{USAGE}
   EOS
-  task :test_and_preserve_hosts => 'ci:check_env'  do
+  task :test_and_preserve_hosts => ['ci:check_env', 'ci:gen_hosts'] do
     beaker_test(beaker_run_type, :preserve_hosts => 'always')
   end
 
