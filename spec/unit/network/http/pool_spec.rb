@@ -114,7 +114,21 @@ describe Puppet::Network::HTTP::Pool do
       s = Socket.new(Socket::PF_INET, Socket::SOCK_STREAM)
       pool.setsockopts(Net::BufferedIO.new(s))
 
-      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).bool).to eq(true)
+      # On windows, Socket.getsockopt() doesn't return exactly the same data
+      # as an equivalent Socket::Option.new() statement, so we strip off the
+      # unrelevant bits only on this platform.
+      # To make sure we're not voiding the test case by doing this, we check
+      # both with and without the keepalive bit set.
+      keepalive   = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, true).data
+      nokeepalive = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, false).data
+
+      if Puppet::Util::Platform.windows?
+        keepalive   = keepalive[0]
+        nokeepalive = nokeepalive[0]
+      end
+
+      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to eq(keepalive)
+      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to_not eq(nokeepalive)
     end
 
     context 'when releasing connections' do
