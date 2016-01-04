@@ -100,7 +100,7 @@ agents.each do |agent|
     {:name => :reduce,           :args => '[4,5,6]',                           :lambda => '|$sum, $n| { $sum+$n }', :expected => '15', :rvalue => true},
     #         :reuse,:recycle
     {:name => :slice,            :args => '[1,2,3,4,5,6], 2',                  :lambda => nil, :expected => '[[1, 2], [3, 4], [5, 6]]', :rvalue => true},
-    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x| {notice $x}', :expected => '1', :rvalue => true},
+    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {notice [$x, $y]}', :expected => '[1, Catelyn]', :rvalue => true},
   ]
 
   module_manifest = <<PP
