@@ -94,31 +94,6 @@ class Puppet::Application::Lookup < Puppet::Application
     Puppet::FileBucket::File.indirection.terminus_class = :file
   end
 
-  def setup_ssl
-    # Configure all of the SSL stuff.
-    if Puppet::SSL::CertificateAuthority.ca?
-      Puppet::SSL::Host.ca_location = :local
-      Puppet.settings.use :ca
-      Puppet::SSL::CertificateAuthority.instance
-    else
-      Puppet::SSL::Host.ca_location = :none
-    end
-    # These lines are not on stable (seems like a copy was made from master)
-    #
-    # Puppet::SSL::Oids.register_puppet_oids
-    # Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
-  end
-
-  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
-  # but never finds or reads anything (this since a real cache causes stale data to be served
-  # in circumstances when the cache can not be cleared).
-  # @see puppet issue 16753
-  # @see Puppet::Node::WriteOnlyYaml
-  # @return [void]
-  def setup_node_cache
-    Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
-  end
-
   def setup
     setup_logs
 
@@ -127,11 +102,6 @@ class Puppet::Application::Lookup < Puppet::Application
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     setup_terminuses
-
-    # TODO: Do we need this in lookup? It sets up a write only cache
-    setup_node_cache
-
-    setup_ssl
   end
 
   def help
