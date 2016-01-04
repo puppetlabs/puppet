@@ -103,10 +103,10 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  overriding_options = ENV['OPTIONS']
+  overriding_options = ENV['OPTIONS'].to_s
 
   args = ["--options-file", options_file, hosts_opt(options[:hosts]), tests_opt,
-          overriding_options].compact
+          *overriding_options.split(' ')].compact
 
   sh("beaker", *args)
 end
