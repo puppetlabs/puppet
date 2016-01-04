@@ -78,7 +78,7 @@ describe Puppet::Application::Lookup do
   end
 
 
-  context 'when asked to explain' do
+  context 'when given a valid configuration' do
     let (:lookup) { Puppet::Application[:lookup] }
 
     # There is a fully configured 'sample' environment in fixtures at this location
@@ -86,7 +86,7 @@ describe Puppet::Application::Lookup do
 
     let(:facts) { Puppet::Node::Facts.new("facts", {}) }
 
-    let(:node) { Puppet::Node.new("testnode", :facts => facts, :environment => environment) }
+    let(:node) { Puppet::Node.new("testnode", :facts => facts, :environment => 'production') }
 
     let(:expected_json_hash) { {
       'type' => 'merge',
@@ -162,8 +162,8 @@ describe Puppet::Application::Lookup do
       end
     end
 
-    it 'produces human readable text by default' do
-      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+    it '--explain produces human readable text by default' do
+      lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.command_line.stubs(:args).returns(['a'])
       expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
@@ -180,8 +180,8 @@ Merge strategy first
       EXPLANATION
     end
 
-    it 'produces human readable text of a hash merge when using --explain-options' do
-      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+    it '--explain produces human readable text of a hash merge when using --explain-options' do
+      lookup.options[:node] = node
       lookup.options[:explain_options] = true
       expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy hash
@@ -201,8 +201,8 @@ Merge strategy hash
       EXPLANATION
     end
 
-    it 'produces human readable text of a hash merge when using both --explain and --explain-options' do
-      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+    it '--explain produces human readable text of a hash merge when using both --explain and --explain-options' do
+      lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:explain_options] = true
       lookup.command_line.stubs(:args).returns(['a'])
@@ -237,7 +237,7 @@ Searching for "a"
     end
 
     it 'can produce a yaml explanation' do
-      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:render_as] = :yaml
       lookup.command_line.stubs(:args).returns(['a'])
@@ -254,7 +254,7 @@ Searching for "a"
     end
 
     it 'can produce a json explanation' do
-      lookup.options[:node] = Puppet::Node.new("testnode", :facts => facts, :environment => 'production')
+      lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['a'])
@@ -268,6 +268,38 @@ Searching for "a"
         $stdout = save_stdout
       end
       expect(JSON.parse(output)).to eq(expected_json_hash)
+    end
+
+    context 'the global scope' do
+      it "is unaffected by global variables unless '--compile' is used" do
+        lookup.options[:node] = node
+        lookup.command_line.stubs(:args).returns(['c'])
+        expect { lookup.run_command }.to output("--- This is\n...\n").to_stdout
+      end
+
+      it "is affected by global variables when '--compile' is used" do
+        lookup.options[:node] = node
+        lookup.options[:compile] = true
+        lookup.command_line.stubs(:args).returns(['c'])
+        expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+      end
+    end
+
+    context 'using a puppet function as data provider' do
+      let(:node) { Puppet::Node.new("testnode", :facts => facts, :environment => 'puppet_func_provider') }
+
+      it "works OK in the absense of '--compile'" do
+        lookup.options[:node] = node
+        lookup.command_line.stubs(:args).returns(['c'])
+        expect { lookup.run_command }.to output("--- This is C from data.pp\n...\n").to_stdout
+      end
+
+      it "global scope is affected by global variables when '--compile' is used" do
+        lookup.options[:node] = node
+        lookup.options[:compile] = true
+        lookup.command_line.stubs(:args).returns(['c'])
+        expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+      end
     end
   end
 end

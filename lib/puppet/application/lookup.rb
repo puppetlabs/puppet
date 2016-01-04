@@ -27,6 +27,8 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:type] = arg
   end
 
+  option('--compile', '-c')
+
   option('--knock-out-prefix PREFIX_STRING') do |arg|
     options[:prefix] = arg
   end
@@ -124,6 +126,7 @@ puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
   [--knock-out-prefix <PREFIX-STRING>] [--sort-merged-arrays]
   [--unpack-arrays <STRING-VALUE>] [--merge-hash-arrays] [--explain]
   [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>]
+  [--compile]
   [--render-as s|json|yaml|binary|msgpack] <keys>
 
 DESCRIPTION
@@ -198,6 +201,11 @@ the puppet lookup function linked to above.
   Specify a .json, or .yaml file holding key => value mappings that will
   override the facts for the current node. Any facts not specified by the
   user will maintain their original value.
+
+* --compile
+  Perform a full catalog compilation prior to the lookup. This is meaningful when
+  the catalog changes global variables that are referenced in interpolated values.
+  No catalog compilation takes place unless this flag is given.
 
 * --render-as s|json|yaml|binary|msgpack
   Determines how the results will be rendered to the standard output where
@@ -339,6 +347,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       node.parameters = original_facts.merge(given_facts)
     end
 
+    Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end
