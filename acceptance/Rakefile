@@ -9,9 +9,9 @@ extend Beaker::DSL::InstallUtils
 $LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
 
 ONE_DAY_IN_SECS  = 24 * 60 * 60
-REPO_CONFIGS_DIR = "repo-configs"
+REPO_CONFIGS_DIR = 'repo-configs'
 SUTS_FILENAME    = 'sut.log'
-CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
+CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb', 'tmp')
 
 # If elsewhere we're depending on internal network resources
 # then assume we can depend on them here
