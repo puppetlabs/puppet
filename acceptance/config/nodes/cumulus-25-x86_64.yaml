@@ -6,13 +6,12 @@ HOSTS:
     platform: el-7-x86_64
     hypervisor: vcloud
     template: redhat-7-x86_64
-  cumulus-22-x86_64:
+  cumulus-25-x86_64:
     roles:
       - agent
-    platform: cumulus-2.2-amd64
-    hypervisor: none
-    ip: 10.0.77.5
-    vmhostname: dell-s6000.delivery.puppetlabs.net
+    platform: cumulus-2.5-x86_64
+    hypervisor: vcloud
+    template: cumulus-vx-25-x86_64
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
