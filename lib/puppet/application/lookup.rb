@@ -27,6 +27,8 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:type] = arg
   end
 
+  option('--compile', '-c')
+
   option('--knock-out-prefix PREFIX_STRING') do |arg|
     options[:prefix] = arg
   end
@@ -94,31 +96,6 @@ class Puppet::Application::Lookup < Puppet::Application
     Puppet::FileBucket::File.indirection.terminus_class = :file
   end
 
-  def setup_ssl
-    # Configure all of the SSL stuff.
-    if Puppet::SSL::CertificateAuthority.ca?
-      Puppet::SSL::Host.ca_location = :local
-      Puppet.settings.use :ca
-      Puppet::SSL::CertificateAuthority.instance
-    else
-      Puppet::SSL::Host.ca_location = :none
-    end
-    # These lines are not on stable (seems like a copy was made from master)
-    #
-    # Puppet::SSL::Oids.register_puppet_oids
-    # Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
-  end
-
-  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
-  # but never finds or reads anything (this since a real cache causes stale data to be served
-  # in circumstances when the cache can not be cleared).
-  # @see puppet issue 16753
-  # @see Puppet::Node::WriteOnlyYaml
-  # @return [void]
-  def setup_node_cache
-    Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
-  end
-
   def setup
     setup_logs
 
@@ -127,11 +104,6 @@ class Puppet::Application::Lookup < Puppet::Application
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     setup_terminuses
-
-    # TODO: Do we need this in lookup? It sets up a write only cache
-    setup_node_cache
-
-    setup_ssl
   end
 
   def help
@@ -154,6 +126,7 @@ puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
   [--knock-out-prefix <PREFIX-STRING>] [--sort-merged-arrays]
   [--unpack-arrays <STRING-VALUE>] [--merge-hash-arrays] [--explain]
   [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>]
+  [--compile]
   [--render-as s|json|yaml|binary|msgpack] <keys>
 
 DESCRIPTION
@@ -228,6 +201,11 @@ the puppet lookup function linked to above.
   Specify a .json, or .yaml file holding key => value mappings that will
   override the facts for the current node. Any facts not specified by the
   user will maintain their original value.
+
+* --compile
+  Perform a full catalog compilation prior to the lookup. This is meaningful when
+  the catalog changes global variables that are referenced in interpolated values.
+  No catalog compilation takes place unless this flag is given.
 
 * --render-as s|json|yaml|binary|msgpack
   Determines how the results will be rendered to the standard output where
@@ -369,6 +347,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       node.parameters = original_facts.merge(given_facts)
     end
 
+    Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end

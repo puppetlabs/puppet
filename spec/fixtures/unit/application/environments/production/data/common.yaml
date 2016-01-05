@@ -1,6 +1,7 @@
 ---
 a: This is A
 b: This is B
+c: "This is%{cx}"
 
 lookup_options:
   a: first
