@@ -52,7 +52,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     json = nil
 
     begin
-      json = File.read(file)
+      json = File.read(file).force_encoding(Encoding::ASCII_8BIT)
     rescue Errno::ENOENT
       return nil
     rescue => detail
