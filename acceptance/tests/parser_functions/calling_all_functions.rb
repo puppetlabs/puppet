@@ -72,7 +72,7 @@ agents.each do |agent|
     {:name => :sha1,             :args => '"Sansa"',                           :lambda => nil, :expected => '4337ce5e4095e565d51e0ef4c80df1fecf238b29', :rvalue => true},
     {:name => :shellquote,       :args => '["-1", "--two"]',                   :lambda => nil, :expected => '-1 --two', :rvalue => true},
     # 4x output contains brackets around split output and commas btwn values
-    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => /Split: Scope\(Class\[main\]\): \[?9,? 8,? 7\]?/, :rvalue => true},
+    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => /Split: Scope\(Class\[main\]\): \[?9,?\s?8,?\s?7\]?/, :rvalue => true},
     {:name => :sprintf,          :args => '"%b","123"',                        :lambda => nil, :expected => '1111011', :rvalue => true},
     # explicitly called in call_em_all
     #{:name => :tag,              :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
@@ -85,9 +85,6 @@ agents.each do |agent|
   ]
 
   puppet_version = on(agent, puppet('--version')).stdout.chomp
-  if puppet_version =~ /\A3\./
-    functions_3x.find{|x| x[:name] == :split}[:expected] = '987'
-  end
 
   functions_4x = [
     {:name => :assert_type,      :args => '"String[1]", "Valar morghulis"',    :lambda => nil, :expected => 'Valar morghulis', :rvalue => true},
