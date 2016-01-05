@@ -15,7 +15,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     filename = path(request.key)
     FileUtils.mkdir_p(File.dirname(filename))
 
-    Puppet::Util.replace_file(filename, 0660) {|f| f.print to_json(request.instance) }
+    Puppet::Util.replace_file(filename, 0660) {|f| f.print to_json(request.instance).force_encoding(Encoding::ASCII_8BIT) }
   rescue TypeError => detail
     Puppet.log_exception(detail, "Could not save #{self.name} #{request.key}: #{detail}")
   end
@@ -52,7 +52,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     json = nil
 
     begin
-      json = File.read(file)
+      json = Puppet::FileSystem.read(file).force_encoding(Encoding::ASCII_8BIT)
     rescue Errno::ENOENT
       return nil
     rescue => detail
