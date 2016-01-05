@@ -49,7 +49,7 @@ agents.each do |agent|
     {:name => :emerg,            :args => '"consider yourself emergent"',      :lambda => nil, :expected => 'consider yourself emergent', :rvalue => false},
     {:name => :err,              :args => '"consider yourself in err"',        :lambda => nil, :expected => 'consider yourself in err', :rvalue => false},
     {:name => :file,             :args => '"call_em_all/rickon.txt"',          :lambda => nil, :expected => 'who?', :rvalue => true},
-    {:name => :fqdn_rand,        :args => '100000',                            :lambda => nil, :expected => /Fqdn_rand: Scope\(Class\[main\]\): \d{5}/, :rvalue => true},
+    {:name => :fqdn_rand,        :args => '100000',                            :lambda => nil, :expected => /Fqdn_rand: Scope\(Class\[main\]\): \d{1,5}/, :rvalue => true},
     # generate requires a fully qualified exe; which requires specifics for windows vs posix
     #{:name => :generate,         :args => generator[:args],                    :lambda => nil, :expected => generator[:expected], :rvalue => true},
     {:name => :hiera_array,      :args => 'date,default_array',                :lambda => nil, :expected => 'default_array', :rvalue => true},
@@ -64,7 +64,7 @@ agents.each do |agent|
     {:name => :md5,              :args => '"Bran"',                            :lambda => nil, :expected => '723f9ac32ceb881ddf4fb8fc1020cf83', :rvalue => true},
     {:name => :notice,           :args => '"consider yourself under notice"',  :lambda => nil, :expected => 'consider yourself under notice', :rvalue => false},
     {:name => :realize,          :args => 'User[arya]',                        :lambda => nil, :expected => '', :rvalue => false},  # TODO: create a virtual first
-    {:name => :regsubst,         :args => '"Cersei","Cer(\\w)ei","Daenery\\1"',:lambda => nil, :expected => 'Daenerys', :rvalue => true},
+    {:name => :regsubst,         :args => '"Cersei","Cer(\\\\w)ei","Daenery\\\\1"',:lambda => nil, :expected => 'Daenerys', :rvalue => true},
     # explicitly called in call_em_all; implicitly called by the include above
     #{:name => :require,          :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
     # 4x output contains brackets around scanf output
@@ -100,7 +100,7 @@ agents.each do |agent|
     {:name => :reduce,           :args => '[4,5,6]',                           :lambda => '|$sum, $n| { $sum+$n }', :expected => '15', :rvalue => true},
     #         :reuse,:recycle
     {:name => :slice,            :args => '[1,2,3,4,5,6], 2',                  :lambda => nil, :expected => '[[1, 2], [3, 4], [5, 6]]', :rvalue => true},
-    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x| {notice $x}', :expected => '1', :rvalue => true},
+    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {notice [$x, $y]}', :expected => '[1, Catelyn]', :rvalue => true},
   ]
 
   module_manifest = <<PP

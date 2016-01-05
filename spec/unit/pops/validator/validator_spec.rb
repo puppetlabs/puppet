@@ -107,6 +107,46 @@ describe "validating 4x" do
         SOURCE
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::IDEM_NOT_ALLOWED_LAST)
       end
+
+      it "detects a resource declared without title in #{type} when it is the only declaration present" do
+        source = <<-SOURCE
+          #{type} nope {
+            notify { message => 'Nope' }
+          }
+        SOURCE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESOURCE_WITHOUT_TITLE)
+      end
+
+      it "detects a resource declared without title in #{type} when it is in between other declarations" do
+        source = <<-SOURCE
+        #{type} nope {
+            notify { succ: message => 'Nope' }
+            notify { message => 'Nope' }
+            notify { pred: message => 'Nope' }
+          }
+        SOURCE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESOURCE_WITHOUT_TITLE)
+      end
+
+      it "detects a resource declared without title in #{type} when it is declarated first" do
+        source = <<-SOURCE
+          #{type} nope {
+            notify { message => 'Nope' }
+            notify { pred: message => 'Nope' }
+          }
+        SOURCE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESOURCE_WITHOUT_TITLE)
+      end
+
+      it "detects a resource declared without title in #{type} when it is declarated last" do
+        source = <<-SOURCE
+          #{type} nope {
+            notify { succ: message => 'Nope' }
+            notify { message => 'Nope' }
+          }
+        SOURCE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESOURCE_WITHOUT_TITLE)
+      end
     end
   end
 

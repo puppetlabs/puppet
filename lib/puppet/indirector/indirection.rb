@@ -207,10 +207,14 @@ class Puppet::Indirector::Indirection
         filtered = result
         if terminus.respond_to?(:filter)
           Puppet::Util::Profiler.profile("Filtered result for #{self.name} #{request.key}", [:indirector, :filter, self.name, request.key]) do
-            filtered = terminus.filter(result)
+            begin
+              filtered = terminus.filter(result)
+            rescue Puppet::Error => detail
+              Puppet.log_exception(detail)
+              raise detail
+            end
           end
         end
-
         filtered
       end
     end
