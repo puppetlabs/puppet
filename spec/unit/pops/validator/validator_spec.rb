@@ -293,6 +293,30 @@ describe "validating 4x" do
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
       end
     end
+
+    ['class', 'define', 'node'].each do |word|
+      it "produces an error when $#{word} is nested in an function" do
+        source = "function y() { #{word} x {} }"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+      end
+    end
+
+    it 'produces an error when a function is nested in an function' do
+      source = 'function y() { function x() {} }'
+      expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+    end
+
+    ['class', 'define', 'node'].each do |word|
+      it "produces an error when function is nested in a #{word}" do
+        source = "#{word} x { function y() {} }"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+      end
+    end
+
+    it 'does not produce an error when function is at top level' do
+      source = 'function y() {}'
+      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+    end
   end
 
   context "capability annotations" do
