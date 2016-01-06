@@ -76,7 +76,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect(subject.name_to_sid(sid)).to eq(sid)
     end
 
-    describe "Non english text" do
+    describe "non-ANSI text" do
 
       let(:username) {
         # Create a user with an umlaut
