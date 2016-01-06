@@ -158,6 +158,63 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       end
     end
 
+    describe "when a special status command is specifed" do
+      it "should use the provided status command" do
+        resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
+        provider = provider_class.new(resource)
+        provider.stubs(:is_upstart?).returns(true)
+
+        provider.expects(:status_exec).with(['foo']).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        Process::Status.any_instance.stubs(:exitstatus).returns(0)
+        provider.status
+      end
+
+      it "should return :stopped when the provided status command return non-zero" do
+        resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
+        provider = provider_class.new(resource)
+        provider.stubs(:is_upstart?).returns(true)
+
+        provider.expects(:status_exec).with(['foo']).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        $CHILD_STATUS.stubs(:exitstatus).returns 1
+        provider.status.should == :stopped
+      end
+
+      it "should return :running when the provided status command return zero" do
+        resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
+        provider = provider_class.new(resource)
+        provider.stubs(:is_upstart?).returns(true)
+
+        provider.expects(:status_exec).with(['foo']).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        provider.status.should == :running
+      end
+    end
+
+    describe "when :hasstatus is set to false" do
+      it "should return :stopped if the pid can not be found" do
+        resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
+        provider = provider_class.new(resource)
+        provider.stubs(:is_upstart?).returns(true)
+
+        provider.expects(:status_exec).with(['foo']).never
+        provider.expects(:getpid).returns nil
+        provider.status.should == :stopped
+      end
+
+      it "should return :running if the pid can be found" do
+        resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
+        provider = provider_class.new(resource)
+        provider.stubs(:is_upstart?).returns(true)
+
+        provider.expects(:status_exec).with(['foo']).never
+        provider.expects(:getpid).returns 2706
+        provider.status.should == :running
+      end
+    end
+
     it "should properly handle services with 'start' in their name" do
       resource = Puppet::Type.type(:service).new(:name => "foostartbar", :provider => :upstart)
       provider = provider_class.new(resource)
