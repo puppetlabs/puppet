@@ -68,11 +68,11 @@ agents.each do |agent|
     # explicitly called in call_em_all; implicitly called by the include above
     #{:name => :require,          :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
     # 4x output contains brackets around scanf output
-    {:name => :scanf,            :args => '"Eddard Stark","%6s"',              :lambda => nil, :expected => /Scanf: Scope\(Class\[main\]\): \[?Eddard\]?/, :rvalue => true},
+    {:name => :scanf,            :args => '"Eddard Stark","%6s"',              :lambda => nil, :expected => '[Eddard]', :rvalue => true},
     {:name => :sha1,             :args => '"Sansa"',                           :lambda => nil, :expected => '4337ce5e4095e565d51e0ef4c80df1fecf238b29', :rvalue => true},
     {:name => :shellquote,       :args => '["-1", "--two"]',                   :lambda => nil, :expected => '-1 --two', :rvalue => true},
     # 4x output contains brackets around split output and commas btwn values
-    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => /Split: Scope\(Class\[main\]\): \[?9,?\s?8,?\s?7\]?/, :rvalue => true},
+    {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => '[9, 8, 7]', :rvalue => true},
     {:name => :sprintf,          :args => '"%b","123"',                        :lambda => nil, :expected => '1111011', :rvalue => true},
     # explicitly called in call_em_all
     #{:name => :tag,              :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
