@@ -57,6 +57,7 @@ class Puppet::Pops::Model::ModelLabelProvider
   def label_ConcatenatedString o          ; "Double Quoted String"              end
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
   def label_HostClassDefinition o         ; "Host Class Definition"             end
+  def label_FunctionDefinition o          ; "Function Definition"               end
   def label_NodeDefinition o              ; "Node Definition"                   end
   def label_SiteDefinition o              ; "Site Definition"                   end
   def label_ResourceTypeDefinition o      ; "'define' expression"               end

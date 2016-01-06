@@ -366,10 +366,6 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_FunctionDefinition(o)
-    # TODO PUP-2080: more strict rule for top - can only be contained in Program (for now)
-    #  sticking functions in classes would create functions in the class name space
-    #  but not be special in any other way
-    #
     check_NamedDefinition(o)
   end
 
@@ -723,8 +719,13 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def top_BlockExpression(o, definition)
-    # ok, if this is a block representing the body of a class, or is top level
-    top o.eContainer, definition
+    if definition.is_a?(Model::FunctionDefinition)
+      # not ok if the definition is a FunctionDefinition. It can never be nested in a block
+      acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
+    else
+      # ok, if this is a block representing the body of a class, or is top level
+      top o.eContainer, definition
+    end
   end
 
   def top_HostClassDefinition(o, definition)
