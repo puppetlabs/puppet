@@ -719,7 +719,7 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def top_BlockExpression(o, definition)
-    if definition.is_a?(Model::FunctionDefinition)
+    if definition.is_a?(Model::FunctionDefinition) && !o.eContainer.is_a?(Model::Program)
       # not ok if the definition is a FunctionDefinition. It can never be nested in a block
       acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
     else

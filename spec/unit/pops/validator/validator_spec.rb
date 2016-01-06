@@ -313,9 +313,20 @@ describe "validating 4x" do
       end
     end
 
-    it 'does not produce an error when function is at top level' do
+    it 'does not produce an error when function is at top level script' do
       source = 'function y() {}'
       expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+    end
+
+    it 'does not produce an error when function is at top level file' do
+      source = 'function y() {}'
+
+      # We simulate a file by inserting a block between the program and the contained function
+      program = parse(source).current
+      function = program.body
+      program.body = Puppet::Pops::Model::BlockExpression.new
+      program.body.addStatements(function)
+      expect(validate(program)).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
     end
   end
 
