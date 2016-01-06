@@ -178,7 +178,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 1
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the provided status command return zero" do
@@ -189,7 +189,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
@@ -201,7 +201,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:getpid).returns nil
-        provider.status.should == :stopped
+        expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running if the pid can be found" do
@@ -211,7 +211,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
         provider.expects(:status_exec).with(['foo']).never
         provider.expects(:getpid).returns 2706
-        provider.status.should == :running
+        expect(provider.status).to eq(:running)
       end
     end
 
