@@ -970,34 +970,17 @@ describe 'The type calculator' do
         expect(calculator.assignable?(range_t(2,5), range_t(2,5))).to eq(true)
       end
 
-      it 'should accept an equal reverse range' do
-        expect(calculator.assignable?(range_t(2,5), range_t(5,2))).to eq(true)
-      end
-
       it 'should accept a narrower range' do
         expect(calculator.assignable?(range_t(2,10), range_t(3,5))).to eq(true)
-      end
-
-      it 'should accept a narrower reverse range' do
-        expect(calculator.assignable?(range_t(2,10), range_t(5,3))).to eq(true)
       end
 
       it 'should reject a wider range' do
         expect(calculator.assignable?(range_t(3,5), range_t(2,10))).to eq(false)
       end
 
-      it 'should reject a wider reverse range' do
-        expect(calculator.assignable?(range_t(3,5), range_t(10,2))).to eq(false)
-      end
-
       it 'should reject a partially overlapping range' do
         expect(calculator.assignable?(range_t(3,5), range_t(2,4))).to eq(false)
         expect(calculator.assignable?(range_t(3,5), range_t(4,6))).to eq(false)
-      end
-
-      it 'should reject a partially overlapping reverse range' do
-        expect(calculator.assignable?(range_t(3,5), range_t(4,2))).to eq(false)
-        expect(calculator.assignable?(range_t(3,5), range_t(6,4))).to eq(false)
       end
     end
 
