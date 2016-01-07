@@ -123,9 +123,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to eql(range(1,1))
     end
 
-    it 'produces an Integer[from, <from]' do
+    it 'gives an error for Integer[from, <from]' do
       expr = fqr('Integer')[1,0]
-      expect(evaluate(expr)).to eql(range(1,0))
+      expect{evaluate(expr)}.to raise_error(/'from' must be less or equal to 'to'/)
     end
 
     it 'produces an error for Integer[] if there are more than 2 keys' do
@@ -154,9 +154,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to eql(float_range(1.0,1.0))
     end
 
-    it 'produces a Float[from, <from]' do
+    it 'gives an error for Float[from, <from]' do
       expr = fqr('Float')[1.0,0.0]
-      expect(evaluate(expr)).to eql(float_range(1.0,0.0))
+      expect{evaluate(expr)}.to raise_error(/'from' must be less or equal to 'to'/)
     end
 
     it 'produces an error for Float[] if there are more than 2 keys' do
