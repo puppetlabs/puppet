@@ -708,12 +708,8 @@ class Puppet::Pops::Types::TypeCalculator
     from = range.from
     to = range.to
     x = from.nil? ? 1 : from
-    y = to.nil? ? Float::INFINITY : to
-    if x < y
-      [x, y]
-    else
-      [y, x]
-    end
+    y = to.nil? ? TheInfinity : to
+    [x, y]
   end
 
   # @api private

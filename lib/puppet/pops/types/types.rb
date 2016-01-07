@@ -423,15 +423,9 @@ module Puppet::Pops
       def initialize(from, to = Float::INFINITY)
         from = -Float::INFINITY if from.nil? || from == :default
         to = Float::INFINITY if to.nil? || to == :default
-
-        # Always create in right order
-        if from <= to
-          @from = from
-          @to = to
-        else
-          @to = from
-          @from = to
-        end
+        raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+        @from = from
+        @to = to
       end
 
       # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
