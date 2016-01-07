@@ -23,6 +23,7 @@ module Puppet::Pops::Adapters
   #
   class SourcePosAdapter < Puppet::Pops::Adaptable::Adapter
     attr_accessor :locator
+    attr_reader :adapted
 
     def self.create_adapter(o)
       new(o)
@@ -117,5 +118,47 @@ module Puppet::Pops::Adapters
   class LoaderAdapter < Puppet::Pops::Adaptable::Adapter
     # @return [Puppet::Pops::Loader::Loader] the loader
     attr_accessor :loader
+
+    # Attempts to find the module that `instance` originates from by looking at it's {SourcePosAdapter} and
+    # compare the `locator.file` found there with the module paths given in the environment found in the
+    # given `scope`. If the file is found to be relative to a path, then the first segment of the relative
+    # path is interpreted as the name of a module. The object that the {SourcePosAdapter} is adapted to
+    # will then be adapted to the private loader for that module and that adapter is returned.
+    #
+    # The method returns `nil` when no module could be found.
+    #
+    # @param scope
+    # @param instance
+    def self.adapt_by_source(scope, instance)
+      source_pos = Puppet::Pops::Utils.find_adapter(instance, SourcePosAdapter)
+      unless source_pos.nil?
+        mod = find_module_for_file(scope.environment, source_pos.locator.file)
+        unless mod.nil?
+          adapter = LoaderAdapter.adapt(source_pos.adapted)
+          adapter.loader = scope.compiler.loaders.private_loader_for_module(mod.name)
+          return adapter
+        end
+      end
+      nil
+    end
+
+    def self.find_module_for_file(environment, file)
+      return nil if file.nil?
+      file_path = Pathname.new(file)
+      environment.modulepath.each do |path|
+        begin
+          relative_path = file_path.relative_path_from(Pathname.new(path)).to_s.split(File::SEPARATOR)
+        rescue ArgumentError
+          # file_path was not relative to the module_path. That's OK.
+          next
+        end
+        if relative_path.length > 1
+          mod = environment.module(relative_path[0])
+          return mod unless mod.nil?
+        end
+      end
+      nil
+    end
+    private_class_method :find_module_for_file
   end
 end

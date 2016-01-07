@@ -420,7 +420,7 @@ describe 'the 4x function api' do
         end
         # initiate the function the same way the loader initiates it
         f = fc.new(:closure_scope, Puppet.lookup(:loaders).puppet_system_loader)
-        expect{f.call({})}.to raise_error(ArgumentError, "Function test(): cannot call function 'no_such_function' - not found")
+        expect{f.call({})}.to raise_error(ArgumentError, "Function test(): Unknown function: 'no_such_function'")
       end
     end
 

@@ -151,6 +151,10 @@ module Puppet::Pops::Issues
     "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
   end
 
+  NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
+    "#{label.a_an_uc(semantic)} may only appear at toplevel"
+  end
+
   CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
     "Illegal attempt to assign to '#{name}'. Cannot assign to variables in other namespaces"
   end
