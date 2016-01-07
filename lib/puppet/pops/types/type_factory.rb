@@ -17,6 +17,9 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.range(from, to)
+    # NOTE! Do not merge the following line to 4.x. It has the same check in the initialize method
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+
     t = Types::PIntegerType.new()
     # optimize eq with symbol (faster when it is left)
     t.from = from unless (:default == from || from == 'default')
@@ -28,6 +31,9 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.float_range(from, to)
+    # NOTE! Do not merge the following line to 4.x. It has the same check in the initialize method
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+
     t = Types::PFloatType.new()
     # optimize eq with symbol (faster when it is left)
     t.from = Float(from) unless :default == from || from.nil?

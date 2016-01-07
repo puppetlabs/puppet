@@ -121,11 +121,7 @@ module Puppet::Pops
         def range
           f = from || NEGATIVE_INFINITY
           t = to || INFINITY
-          if f < t
-            [f, t]
-          else
-            [t,f]
-          end
+          [f, t]
         end
 
         # Returns Enumerator if no block is given
@@ -133,11 +129,7 @@ module Puppet::Pops
         def each
           return self.to_enum unless block_given?
           return nil if from.nil? || to.nil?
-          if to < from
-            from.downto(to) {|x| yield x }
-          else
-            from.upto(to) {|x| yield x }
-          end
+          from.upto(to) {|x| yield x }
         end
 
         def hash
@@ -212,11 +204,7 @@ module Puppet::Pops
           return [0, INFINITY] if size_type.nil?
           f = size_type.from || 0
           t = size_type.to || INFINITY
-          if f < t
-            [f, t]
-          else
-            [t,f]
-          end
+          [f, t]
         end
 
         def hash

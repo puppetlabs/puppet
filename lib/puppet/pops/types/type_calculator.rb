@@ -1069,11 +1069,7 @@ class Puppet::Pops::Types::TypeCalculator
     to = range.to
     x = from.nil? ? 1 : from
     y = to.nil? ? TheInfinity : to
-    if x < y
-      [x, y]
-    else
-      [y, x]
-    end
+    [x, y]
   end
 
   # @api private

@@ -317,6 +317,9 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     ranged_integer = Puppet::Pops::Types::PIntegerType.new()
     from, to = keys
+    # NOTE! Do not merge the following line to 4.x. It has the same check in the initialize method
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+
     ranged_integer.from = from == :default ? nil : from
     ranged_integer.to = to == :default ? nil : to
     ranged_integer
@@ -333,6 +336,9 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     ranged_float = Puppet::Pops::Types::PFloatType.new()
     from, to = keys
+    # NOTE! Do not merge the following line to 4.x. It has the same check in the initialize method
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+
     ranged_float.from = from == :default || from.nil? ? nil : Float(from)
     ranged_float.to = to == :default || to.nil? ? nil : Float(to)
     ranged_float
@@ -428,6 +434,9 @@ class Puppet::Pops::Evaluator::AccessOperator
       end
       ranged_integer = Puppet::Pops::Types::PIntegerType.new()
       from, to = keys
+      # NOTE! Do not merge the following line to 4.x. It has the same check in the initialize method
+      raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
+
       ranged_integer.from = from == :default ? nil : from
       ranged_integer.to = to == :default ? nil : to
       ranged_integer
