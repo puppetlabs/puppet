@@ -10,7 +10,7 @@ gpg_key: '4BD6EC30'
 pbuild_conf: '/etc/pbuilderrc'
 
 build_gem: TRUE
-build_dmg: FALSE
+build_dmg: TRUE
 sign_tar: FALSE
 yum_host: 'yum.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
