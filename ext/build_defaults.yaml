@@ -29,7 +29,7 @@ build_msi:
       x86: 'refs/tags/1.9.3-p551.6'
       x64: 'refs/tags/2.0.0.9-x64'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
-apt_host: 'apt.puppetlabs.com'
+apt_signing_server: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
 apt_repo_path: '/opt/repository/incoming'
 ips_repo: '/var/pkgrepo'
