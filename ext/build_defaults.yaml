@@ -14,7 +14,7 @@ build_dmg: FALSE
 sign_tar: FALSE
 yum_host: 'yum.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
-apt_host: 'apt.puppetlabs.com'
+apt_signing_server: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
 apt_repo_path: '/opt/repository/incoming'
 tar_host: 'downloads.puppetlabs.com'
