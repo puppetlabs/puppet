@@ -8,9 +8,10 @@ require 'beaker/dsl/install_utils'
 extend Beaker::DSL::InstallUtils
 $LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
 
-ONE_DAY_IN_SECS = 24 * 60 * 60
-REPO_CONFIGS_DIR = "repo-configs"
-CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
+ONE_DAY_IN_SECS  = 24 * 60 * 60
+REPO_CONFIGS_DIR = 'repo-configs'
+SUTS_FILENAME    = 'sut.log'
+CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb', 'tmp')
 
 # If elsewhere we're depending on internal network resources
 # then assume we can depend on them here
@@ -18,22 +19,9 @@ EPEL_MIRROR = ENV['BEAKER_EPEL_MIRROR']
 
 module HarnessOptions
   defaults = {
-    :type => 'git',
-    :helper => ['lib/helper.rb'],
     :tests  => ['tests'],
     :log_level => 'debug',
-    :color => false,
-    :root_keys => true,
-    :ssh => {
-      :keys => ["id_rsa_acceptance", "#{ENV['HOME']}/.ssh/id_rsa-acceptance"],
-    },
-    :xml => true,
-    :timesync => false,
-    :repo_proxy => true,
-    :add_el_extras => true,
     :preserve_hosts => 'onfail',
-    :forge_host => 'forge-aio01-petest.puppetlabs.com',
-    :'master-start-curl-retries' => 30
   }
 
   DEFAULTS = EPEL_MIRROR ? defaults.merge(:epel_url => EPEL_MIRROR) : defaults
@@ -79,10 +67,9 @@ module HarnessOptions
   end
 end
 
-def beaker_test(mode = :packages, options = {})
+def beaker_test(mode = :aio, options = {})
   delete_options = options.delete(:__delete_options__) || []
   final_options = HarnessOptions.options(mode, options)
-  preserve_config = final_options.delete(:__preserve_config__)
 
   if mode == :git
     # Build up project git urls based on git server and fork env variables or defaults
@@ -116,118 +103,35 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  agent_target = ENV['TEST_TARGET']
-  if agent_target
-    master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
-    targets = "#{master_target}-#{agent_target}"
-    cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
-    ENV['CONFIG'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
-    FileUtils.mkdir_p('tmp')
-    File.open(config, 'w') do |fh|
-      fh.print(cli.execute)
-    end
-    config_opt = "--hosts=#{config}"
-  elsif config
-    config_opt = "--hosts=#{config}"
-  end
+  overriding_options = ENV['OPTIONS'].to_s
 
-  overriding_options = ENV['OPTIONS']
+  args = ["--options-file", options_file, hosts_opt(options[:hosts]), tests_opt,
+          *overriding_options.split(' ')].compact
 
-  args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
-
-  begin
-    sh("beaker", *args)
-  ensure
-    preserve_configuration(final_options, options_file) if preserve_config
-  end
+  sh("beaker", *args)
 end
 
-def preserve_configuration(final_options, options_file)
-  if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
-    cp(hosts_file, "log/latest/config.yml")
-    generate_config_for_latest_hosts
-  end
-  mv(options_file, "log/latest")
-end
-
-def generate_config_for_latest_hosts
-  preserved_config_hash = { 'HOSTS' => {} }
-
-  puts "\nPreserving configuration so that any preserved nodes can be tested again locally..."
-
-  config_hash = YAML.load_file('log/latest/config.yml')
-  if !config_hash || !config_hash.include?('HOSTS')
-    puts "Warning: No HOSTS configuration found in log/latest/config.yml"
-    return
-  else
-    nodes = config_hash['HOSTS'].map do |node_label,hash|
-      {
-        :node_label => node_label,
-        :roles => hash['roles'],
-        :platform => hash['platform']
-      }
-    end
-
-    pre_suite_log = File.read('log/latest/pre_suite-run.log')
-    nodes.each do |node_info|
-      host_regex = /^([\w.]+) \(#{node_info[:node_label]}\)/
-      if matched = host_regex.match(pre_suite_log)
-        hostname = matched[1]
-        fqdn = (hostname =~ /\./) ?
-          hostname :
-          "#{hostname}.delivery.puppetlabs.net"
-      elsif /^#{node_info[:node_label]} /.match(pre_suite_log)
-        fqdn = "#{node_info[:node_label]}"
-        puts "* Couldn't find any log lines for #{host_regex}, assuming #{fqdn} is the fqdn"
-      end
-      if fqdn
-        preserved_config_hash['HOSTS'][fqdn] = {
-          'roles' => node_info[:roles],
-          'platform' => node_info[:platform],
-        }
-      else
-        puts "* Couldn't match #{node_info[:node_label]} in pre_suite-run.log"
-      end
-    end
-    pp preserved_config_hash
-
-    File.open('log/latest/preserved_config.yaml', 'w') do |config_file|
-      YAML.dump(preserved_config_hash, config_file)
-    end
-  end
-rescue Errno::ENOENT => e
-  puts "Warning: Couldn't generate preserved_config.yaml #{e}"
-end
-
-def list_preserved_configurations(secs_ago = ONE_DAY_IN_SECS)
-  preserved = {}
-  Dir.glob('log/*_*').each do |dir|
-    preserved_config_path = "#{dir}/preserved_config.yaml"
-    yesterday = Time.now - secs_ago.to_i
-    if preserved_config = File.exists?(preserved_config_path)
-      directory = File.new(dir)
-      if directory.ctime > yesterday
-        hosts = []
-        preserved_config = YAML.load_file(preserved_config_path).to_hash
-        preserved_config['HOSTS'].each do |hostname,values|
-          hosts << "#{hostname}: #{values['platform']}, #{values['roles']}"
-        end
-        preserved[hosts] = directory.to_path
-      end
-    end
-  end
-  preserved.map { |k,v| [v,k] }.sort { |a,b| a[0] <=> b[0] }.reverse
-end
-
-def list_preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
+def preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
   hosts = Set.new
-  Dir.glob('log/**/pre*suite*run.log').each do |log|
-    yesterday = Time.now - secs_ago.to_i
-    File.open(log, 'r') do |file|
-      if file.ctime > yesterday
-        file.each_line do |line|
-          matchdata = /^(\w+)(?:\.[\w.]+)? \(.*?\) \d\d:\d\d:\d\d\$/.match(line.encode!('UTF-8', 'UTF-8', :invalid => :replace))
-          hosts.add(matchdata[1]) if matchdata
+  # if secs_ago = 0, just use latest log
+  do_only_log_latest = secs_ago == 0
+  dirs = do_only_log_latest ? Dir.glob('log/latest') : Dir.glob('log/*')
+  yesterday = do_only_log_latest ? Time.now - ONE_DAY_IN_SECS : Time.now - secs_ago.to_i
+  dirs.each do |dir|
+    if dir !~ /^log\/latest$/ || do_only_log_latest
+    hosts_dirs = do_only_log_latest ? Dir.glob(dir) : Dir.glob("#{dir}/*")
+      hosts_dirs.each do |date_dir|
+        preserved_config_path = "#{date_dir}/#{SUTS_FILENAME}"
+        if preserved_config = File.exists?(preserved_config_path)
+          File.open(preserved_config_path, 'r') do |file|
+            if file.ctime > yesterday
+              file.each_line do |line|
+                # match every line without [-]
+                matchdata = /^((?!\[-\]).)*$/.match(line)
+                hosts.add(line) if matchdata
+              end
+            end
+          end
         end
       end
     end
@@ -235,26 +139,29 @@ def list_preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
   hosts
 end
 
-def release_hosts(hosts = nil, secs_ago = ONE_DAY_IN_SECS)
-  secs_ago ||= ONE_DAY_IN_SECS
-  hosts ||= list_preserved_hosts(secs_ago)
+def vmpooler_token
+  `grep --extended --only-matching 'vmpooler_token: .*' ${HOME}/.fog`.split(' ')[1]
+end
 
+def release_hosts(hosts = nil)
   hosts.each do |h|
-    hostname = h.split('.').first
+    hostname = h.match(/\w{15}\.delivery\.puppetlabs\.net/)[0]
     puts "Releaseing '#{hostname}'"
-    puts `curl -X DELETE --url http://vcloud.delivery.puppetlabs.net/vm/#{hostname}`
+    shh_curl = 'curl --silent --show-error'
+    token_command = "-H X-AUTH-TOKEN:#{vmpooler_token}"
+    vcloud_url = "http://vcloud.delivery.puppetlabs.net/vm/#{hostname}"
+    puts `#{shh_curl} -X DELETE --url #{vcloud_url} #{token_command}`
   end
 end
 
-def print_preserved(preserved)
-  preserved.each_with_index do |entry,i|
-    puts "##{i}: #{entry[0]}"
-    entry[1].each { |h| puts "  #{h}" }
+def print_hosts(hosts)
+  hosts.each_with_index do |entry,i|
+    puts "##{i}: #{entry}"
   end
 end
 
 def beaker_run_type
-  type = ENV['TYPE'] || :packages
+  type = ENV['TYPE'] || :aio
   type = type.to_sym
 end
 
@@ -262,8 +169,37 @@ def sha
   ENV['SHA']
 end
 
-def config
-  ENV['CONFIG']
+def agent_target
+  ENV['TEST_TARGET'] || 'redhat7-64a'
+end
+
+def master_target
+  ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
+end
+
+def test_targets
+  "#{master_target}-#{agent_target}"
+end
+
+HOSTS_FILE = "#{test_targets}-#{SecureRandom.uuid}.yaml"
+
+def hosts_file_env
+  if ENV['HOSTS']
+    ENV['HOSTS']
+  elseif env_config = ENV['CONFIG']
+    puts 'Warning: environment variable CONFIG deprecated. Please use HOSTS to match beaker options.'
+    env_config
+  end
+end
+
+def hosts_opt(options_hosts)
+  unless options_hosts # using preserved hosts task
+    if hosts_file_env
+      "--hosts=#{hosts_file_env}"
+    else
+      "--hosts=tmp/#{HOSTS_FILE}"
+    end
+  end
 end
 
 namespace :ci do
@@ -271,10 +207,24 @@ namespace :ci do
     raise(USAGE) unless sha
   end
 
+  desc 'Generate Beaker Host Config File'
+  task :gen_hosts do
+    if hosts_file_env
+      next
+    end
+
+    cli = BeakerHostGenerator::CLI.new([test_targets, '--disable-default-role', '--osinfo-version', '1'])
+    FileUtils.mkdir_p('tmp') # -p ignores when dir already exists
+    File.open("tmp/#{HOSTS_FILE}", 'w') do |fh|
+      fh.print(cli.execute)
+    end
+  end
+
   namespace :test do
+
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
-Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker,
+Also must set HOSTS=config/nodes/foo.yaml or include it in an options.rb for Beaker,
 or specify TEST_TARGET in a form beaker-hostgenerator accepts, e.g. ubuntu1504-64a.
 You may override the default master test target by specifying MASTER_TEST_TARGET.
 You may set TESTS=path/to/test,and/more/tests.
@@ -286,27 +236,11 @@ If there is a Beaker options hash in a ./local_options.rb, it will be included. 
 EOS
 
     desc <<-EOS
-Run the acceptance tests through Beaker and install packages on the configuration targets.
-#{USAGE}
-EOS
-    task :packages => 'ci:check_env' do
-      beaker_test
-    end
-
-    desc <<-EOS
 Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation.
 #{USAGE}
 EOS
-    task :aio => 'ci:check_env' do
+    task :aio => ['ci:check_env', 'ci:gen_hosts'] do
       beaker_test(:aio)
-    end
-
-    desc <<-EOS
-Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation, testing against puppet-master-passenger.
-#{USAGE}
-EOS
-    task :passenger => 'ci:check_env' do
-      beaker_test(:passenger)
     end
 
     desc <<-EOS
@@ -314,9 +248,9 @@ Install puppet as a gem on a predefined set of hosts using Beaker, and run a bas
 
   $ env SHA=<full sha> bundle exec rake:ci:gem
 EOS
-    task :gem => 'ci:check_env' do
+    task :gem => ['ci:check_env', 'ci:gen_hosts'] do
       ENV['TESTS'] = 'setup/gem/pre-suite/010_GemInstall.rb'
-      ENV['CONFIG'] = 'config/nodes/gem.yaml'
+      ENV['HOSTS'] = 'config/nodes/gem.yaml'
       beaker_test(:gem)
     end
 
@@ -324,73 +258,53 @@ EOS
 Run the acceptance tests through Beaker and install from git on the configuration targets.
 #{USAGE}
 EOS
-    task :git => 'ci:check_env' do
+    task :git => ['ci:check_env', 'ci:gen_hosts'] do
       beaker_test(:git)
     end
   end
 
-  desc "Capture the master and agent hostname from the latest log and construct a preserved_config.yaml for re-running against preserved hosts without provisioning."
-  task :extract_preserved_config do
-    generate_config_for_latest_hosts
-  end
-
   desc <<-EOS
 Run an acceptance test for a given node configuration and preserve the hosts.
-Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+Defaults to an aio run, but you can set it to 'git' with TYPE='git'.
+This can also be accomplished for any beaker task with OPTIONS='--preserve-hosts'.
 #{USAGE}
   EOS
-  task :test_and_preserve_hosts => 'ci:check_env'  do
-    beaker_test(beaker_run_type, :preserve_hosts => 'always', :__preserve_config__ => true)
+  task :test_and_preserve_hosts => ['ci:check_env', 'ci:gen_hosts'] do
+    beaker_test(beaker_run_type, :preserve_hosts => 'always')
   end
 
-  desc "List acceptance runs from the past day which had hosts preserved."
-  task :list_preserved do
-    preserved = list_preserved_configurations
-    print_preserved(preserved)
+  desc "List preserved hosts from latest (default) or runs within given hours; e.g.: rake ci:list_hosts[24]"
+  task :list_hosts, :hours_ago do |t, args|
+    latest = 0
+    secs_ago = args[:hours_ago].to_f*60*60 || latest
+    print_hosts(preserved_hosts(secs_ago))
   end
 
   desc <<-EOS
-Shutdown and destroy any hosts that we have preserved for testing.  These should be reaped daily by scripts, but this will free up resources immediately.
-Specify a list of comma separated HOST_NAMES if you have a set of dynamic vcloud host names you want to purge outside of what can be grepped from the logs.
-You can go back through the last SECS_AGO logs.  Default is one day ago in secs.
+Release preserved hosts within [:hours_ago] (latest sut.log by default) back to vmpooler; e.g.: rake ci:kill_hosts[24]"
   EOS
-  task :release_hosts do
-    host_names = ENV['HOST_NAMES'].split(',') if ENV['HOST_NAMES']
-    secs_ago = ENV['SECS_AGO']
-    release_hosts(host_names, secs_ago)
-  end
-
-  task :destroy_preserved_hosts => 'ci:release_hosts' do
-    puts "Note: we are now releasing hosts back to the vcloud pooling api rather than destroying them directly.  The rake task for this is ci:release_hosts"
+  # FIXME: test with other hypervisors? this implies beaker should probably handle this stuff
+  task :kill_hosts, :hours_ago do |t, args|
+    latest = 0
+    secs_ago = args[:hours_ago].to_f*60*60 || latest
+    host_names = preserved_hosts(secs_ago)
+    release_hosts(host_names)
   end
 
   desc <<-EOS
 Rerun an acceptance test using the last captured preserved_config.yaml to skip provisioning.
-Or specify a CONFIG_NUMBER from `rake ci:list_preserved`.
-Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+One can set install-type using, e.g.: TYPE='git'.
   EOS
   task :test_against_preserved_hosts do
-    config_number = (ENV['CONFIG_NUMBER'] || 0).to_i
-    preserved = list_preserved_configurations
-    print_preserved(preserved)
-    config_path = preserved[config_number][0]
-
-    puts "Using ##{config_number}: #{config_path}"
+    if ENV['CONFIG_NUMBER']
+      puts "WARNING, config_number capability has bit-rotted. ignoring"
+    end
 
     options = {
-      :hosts_file => "#{config_path}/preserved_config.yaml",
-      :no_provision => true,
-      :preserve_hosts => 'always',
+      :hosts     => "log/latest/hosts_preserved.yml",
+      :pre_suite => [],
     }
     run_type = beaker_run_type
-    if run_type == :packages
-      options.merge!(:pre_suite => [
-        'setup/packages/pre-suite/015_PackageHostsPresets.rb',
-        'setup/packages/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
-      ])
-    else
-      options.merge!(:__delete_options__ => [:pre_suite])
-    end
     beaker_test(beaker_run_type, options)
   end
 end

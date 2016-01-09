@@ -1,9 +1,5 @@
 {
-  :type => 'aio',
-  :is_puppetserver => true,
-  :puppetservice => 'puppetserver',
-  :'puppetserver-confdir' => '/etc/puppetlabs/puppetserver/conf.d',
-  :restart_when_done => false,
+  :type      => 'aio',
   :pre_suite => [
     'setup/common/pre-suite/000-delete-puppet-when-none.rb',
     'setup/aio/pre-suite/010_Install.rb',
@@ -15,4 +11,4 @@
     'setup/aio/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
     'setup/common/pre-suite/070_InstallCACerts.rb',
   ],
-}
+}.merge(eval File.read('config/common/options.rb'))
