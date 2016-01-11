@@ -117,17 +117,17 @@ EOS
   tests_opt = "--tests=#{tests}" if tests
 
   agent_target = ENV['TEST_TARGET']
-  if agent_target
+  if config and File.exists?(config)
+    config_opt = "--hosts=#{config}"
+  elsif agent_target
     master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
     targets = "#{master_target}-#{agent_target}"
     cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
-    ENV['CONFIG'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
+    ENV['BEAKER_HOSTS'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
     FileUtils.mkdir_p('tmp')
     File.open(config, 'w') do |fh|
       fh.print(cli.execute)
     end
-    config_opt = "--hosts=#{config}"
-  elsif config
     config_opt = "--hosts=#{config}"
   end
 
@@ -263,7 +263,7 @@ def sha
 end
 
 def config
-  ENV['CONFIG']
+  ENV['BEAKER_HOSTS']
 end
 
 namespace :ci do
@@ -274,7 +274,7 @@ namespace :ci do
   namespace :test do
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
-Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker,
+Also must set BEAKER_HOSTS=config/nodes/foo.yaml or include it in an options.rb for Beaker,
 or specify TEST_TARGET in a form beaker-hostgenerator accepts, e.g. ubuntu1504-64a.
 You may override the default master test target by specifying MASTER_TEST_TARGET.
 You may set TESTS=path/to/test,and/more/tests.
@@ -316,7 +316,7 @@ Install puppet as a gem on a predefined set of hosts using Beaker, and run a bas
 EOS
     task :gem => 'ci:check_env' do
       ENV['TESTS'] = 'setup/gem/pre-suite/010_GemInstall.rb'
-      ENV['CONFIG'] = 'config/nodes/gem.yaml'
+      ENV['BEAKER_HOSTS'] = 'config/nodes/gem.yaml'
       beaker_test(:gem)
     end
 
