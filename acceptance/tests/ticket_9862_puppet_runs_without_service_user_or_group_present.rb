@@ -3,6 +3,7 @@ test_name "#9862: puppet runs without service user or group present"
 # puppet doesn't try to manage ownership on windows.
 confine :except, :platform => 'windows'
 confine :except, :platform => /solaris-10/ # See PUP-5200
+confine :except, :platform => /^eos-/
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils

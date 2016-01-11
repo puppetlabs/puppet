@@ -1,5 +1,6 @@
 test_name "#3961: puppet ca should produce certs spec"
 confine :except, :platform => 'windows'
+confine :except, :platform => /^eos-/
 
 target  = "working3961.example.org"
 
