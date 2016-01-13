@@ -163,5 +163,96 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
         end
       end
     end
+
+    context "when reading binary values" do
+      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:guid) { SecureRandom.uuid }
+
+      before :each do
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          reg.write("#{guid}", Win32::Registry::REG_BINARY, "abinarystring")
+        end
+      end
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      it "should return binary values" do
+
+        hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_READ) do |reg|
+          vals = subject.values(reg)
+
+          expect(vals).to have_key(guid)
+          written = vals[guid]
+          expect(written).to eq("abinarystring")
+        end
+
+      end
+    end
+
+    context "when reading corrupt values" do
+      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:guid) { SecureRandom.uuid }
+
+      before :each do
+
+        module BadRegistryValues
+          extend FFI::Library
+
+          # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724923(v=vs.85).aspx
+          # LONG WINAPI RegSetValueEx(
+          #   _In_             HKEY    hKey,
+          #   _In_opt_         LPCTSTR lpValueName,
+          #   _Reserved_       DWORD   Reserved,
+          #   _In_             DWORD   dwType,
+          #   _In_       const BYTE    *lpData,
+          #   _In_             DWORD   cbData
+          # );
+          ffi_lib :advapi32
+          attach_function :RegSetValueExW,
+            [:handle, :pointer, :dword, :dword, :pointer, :dword], :win32_long
+
+          def BadRegistryValues.write_bad_dword(reg,valuename)
+            # Normally DWORDs contain 4 bytes.  This bad data only has 2
+            bad_data = "\00\00".unpack('CC')
+            FFI::Pointer.from_string_to_wide_string(valuename) do |name_ptr|
+              FFI::MemoryPointer.new(:uchar, bad_data.length) do |data_ptr|
+                data_ptr.write_array_of_uchar(bad_data)
+                if RegSetValueExW(reg.hkey, name_ptr, 0,
+                  Win32::Registry::REG_DWORD, data_ptr, data_ptr.size) != 0
+                    raise Puppet::Util::Windows::Error.new("Failed to write registry value")
+                end
+              end
+            end
+          end
+        end
+        
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          BadRegistryValues.write_bad_dword(reg, guid)
+        end
+      end
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      it "should return nil" do
+        hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          vals = subject.values(reg)
+
+          expect(vals).to have_key(guid)
+          expect(vals[guid]).to be_nil
+        end
+      end
+    end
   end
 end
