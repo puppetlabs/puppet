@@ -207,21 +207,27 @@ module Puppet::Util::Windows
         # buffer is raw bytes, *not* chars - less a NULL terminator
         string_length = (byte_length / FFI.type_size(:wchar)) - 1 if byte_length > 0
 
-        case type
-        when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-          result = [ type, data_ptr.read_wide_string(string_length) ]
-        when Win32::Registry::REG_MULTI_SZ
-          result = [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
-        when Win32::Registry::REG_BINARY
-          result = [ type, data.read_bytes(0, byte_length) ]
-        when Win32::Registry::REG_DWORD
-          result = [ type, data_ptr.read_dword ]
-        when Win32::Registry::REG_DWORD_BIG_ENDIAN
-          result = [ type, data_ptr.order(:big).read_dword ]
-        when Win32::Registry::REG_QWORD
-          result = [ type, data_ptr.read_qword ]
-        else
-          raise TypeError, "Type #{type} is not supported."
+        begin
+          case type
+            when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
+              result = [ type, data_ptr.read_wide_string(string_length) ]
+            when Win32::Registry::REG_MULTI_SZ
+              result = [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
+            when Win32::Registry::REG_BINARY
+              result = [ type, data_ptr.read_bytes(byte_length) ]
+            when Win32::Registry::REG_DWORD
+              result = [ type, data_ptr.read_dword ]
+            when Win32::Registry::REG_DWORD_BIG_ENDIAN
+              result = [ type, data_ptr.order(:big).read_dword ]
+            when Win32::Registry::REG_QWORD
+              result = [ type, data_ptr.read_qword ]
+            else
+              raise TypeError, "Type #{type} is not supported."
+          end
+        rescue IndexError => ex
+          raise if (ex.message !~ /^Memory access .* is out of bounds$/i)
+          parent_key_name = key.parent ? "#{key.parent.keyname}\\" : ""
+          Puppet.warning "A value in the registry key #{parent_key_name}#{key.keyname} is corrupt or invalid"
         end
       end
 
