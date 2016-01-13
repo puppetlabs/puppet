@@ -79,7 +79,7 @@ module HarnessOptions
   end
 end
 
-def beaker_test(mode = :packages, options = {})
+def beaker_test(mode = :aio, options = {})
   delete_options = options.delete(:__delete_options__) || []
   final_options = HarnessOptions.options(mode, options)
   preserve_config = final_options.delete(:__preserve_config__)
@@ -254,7 +254,7 @@ def print_preserved(preserved)
 end
 
 def beaker_run_type
-  type = ENV['TYPE'] || :packages
+  type = ENV['TYPE'] || :aio
   type = type.to_sym
 end
 
@@ -284,14 +284,6 @@ You may also optionally set the git server to checkout repos from using GIT_SERV
 Or you may set PUPPET_GIT_SERVER='my.host.with.git.daemon', specifically, if you have set up a `git daemon` to pull local commits from.  (You will need to allow the git daemon to serve the repo (see `git help daemon` and the docs/acceptance_tests.md for more details)).
 If there is a Beaker options hash in a ./local_options.rb, it will be included.  Commandline options set through the above environment variables will override settings in this file.
 EOS
-
-    desc <<-EOS
-Run the acceptance tests through Beaker and install packages on the configuration targets.
-#{USAGE}
-EOS
-    task :packages => 'ci:check_env' do
-      beaker_test
-    end
 
     desc <<-EOS
 Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation.
@@ -336,7 +328,7 @@ EOS
 
   desc <<-EOS
 Run an acceptance test for a given node configuration and preserve the hosts.
-Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+Defaults to an aio run, but you can set it to 'git' with TYPE='git'.
 #{USAGE}
   EOS
   task :test_and_preserve_hosts => 'ci:check_env'  do
@@ -367,7 +359,7 @@ You can go back through the last SECS_AGO logs.  Default is one day ago in secs.
   desc <<-EOS
 Rerun an acceptance test using the last captured preserved_config.yaml to skip provisioning.
 Or specify a CONFIG_NUMBER from `rake ci:list_preserved`.
-Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+Defaults to an aio run, but you can set it to 'git' with TYPE='git'.
   EOS
   task :test_against_preserved_hosts do
     config_number = (ENV['CONFIG_NUMBER'] || 0).to_i
@@ -382,15 +374,8 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
       :no_provision => true,
       :preserve_hosts => 'always',
     }
-    run_type = beaker_run_type
-    if run_type == :packages
-      options.merge!(:pre_suite => [
-        'setup/packages/pre-suite/015_PackageHostsPresets.rb',
-        'setup/packages/pre-suite/045_EnsureMasterStartedOnPassenger.rb',
-      ])
-    else
-      options.merge!(:__delete_options__ => [:pre_suite])
-    end
+    options.merge!(:__delete_options__ => [:pre_suite])
+
     beaker_test(beaker_run_type, options)
   end
 end
