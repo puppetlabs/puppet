@@ -28,8 +28,8 @@ describe "the epp function" do
     end
 
     it "can use values from the enclosing scope for defaults" do
-      scope['phantom'] = 'of the opera'
-      expect(eval_template("<%- |$phantom = $phantom| -%><%= $phantom %>")).to eq("of the opera")
+      scope['phantom_dflt'] = 'of the opera'
+      expect(eval_template("<%- |$phantom = $phantom_dflt| -%><%= $phantom %>")).to eq("of the opera")
     end
 
     it "uses the default value if the given value is undef/nil" do

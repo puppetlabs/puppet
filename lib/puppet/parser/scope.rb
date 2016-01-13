@@ -78,6 +78,7 @@ class Puppet::Parser::Scope
   end
 
   class LocalScope < Ephemeral
+    attr_reader :symbols
 
     def initialize(parent=nil)
       super parent
@@ -173,6 +174,85 @@ class Puppet::Parser::Scope
     end
 
   end
+
+  class ParameterScope < Ephemeral
+    class Access
+      attr_accessor :value
+
+      def assigned?
+        instance_variable_defined?(:@value)
+      end
+    end
+
+    # A parameter default must be evaluated using a special scope. The scope that is given to this method must
+    # have a `ParameterScope` as its last ephemeral scope. This method will then push a `MatchScope` while the
+    # given `expression` is evaluated. The method will catch any throw of `:unevaluated_parameter` and produce
+    # an error saying that the evaluated parameter X tries to access the unevaluated parameter Y.
+    #
+    # @param name [String] the name of the currently evaluated parameter
+    # @param expression [Puppet::Parser::AST] the expression to evaluate
+    # @param scope [Puppet::Parser::Scope] a scope where a `ParameterScope` has been pushed
+    # @return [Object] the result of the evaluation
+    #
+    # @api private
+    def self.evaluate3x(name, expression, scope)
+      elevel = scope.ephemeral_level
+      bad = catch(:unevaluated_parameter) do
+        scope.new_match_scope(nil)
+        return expression.safeevaluate(scope)
+      end
+      raise Puppet::Error, "$#{name} tries to access unevaluated $#{bad}"
+    ensure
+      scope.unset_ephemeral_var(elevel)
+    end
+
+    def self.evaluate(name, expression, scope, evaluator)
+      elevel = scope.ephemeral_level
+      bad = catch(:unevaluated_parameter) do
+        scope.new_match_scope(nil)
+        return evaluator.evaluate(expression, scope)
+      end
+      raise Puppet::Error, "$#{name} tries to access unevaluated $#{bad}"
+    ensure
+      scope.unset_ephemeral_var(elevel)
+    end
+
+    def initialize(parent, param_names)
+      super(parent)
+      @params = {}
+      param_names.each { |name| @params[name] = Access.new }
+    end
+
+    def [](name)
+      access = @params[name]
+      return super if access.nil?
+      throw(:unevaluated_parameter, name) unless access.assigned?
+      access.value
+    end
+
+    def []=(name, value)
+      access = @params[name]
+      @params[name] = access = Access.new if access.nil?
+      access.value = value
+    end
+
+    def bound?(name)
+      @params.include?(name)
+    end
+
+    def include?(name)
+      @params.include?(name) || super
+    end
+
+    def is_local_scope?
+      true
+    end
+
+    def to_hash
+      Hash[@params.select {|_, access| access.assigned? }.map { |name, access| [name, access.value] }]
+    end
+  end
+
 
   # Returns true if the variable of the given name has a non nil value.
   # TODO: This has vague semantics - does the variable exist or not?
@@ -738,15 +818,25 @@ class Puppet::Parser::Scope
 
   alias_method :inspect, :to_s
 
-  # remove ephemeral scope up to level
-  # TODO: Who uses :all ? Remove ??
+  # Pop ephemeral scopes up to level and return them
   #
+  # @param level [Symbol,Fixnum] The symbol `:all` or a positive integer
+  # @return [Array] the removed ephemeral scopes
+  # @api private
   def unset_ephemeral_var(level=:all)
     if level == :all
+      result = @ephemeral
       @ephemeral = [ MatchScope.new(@symtable, nil)]
+      result
     else
       @ephemeral.pop(@ephemeral.size - level)
     end
+  end
+
+  # Push ephemeral scopes onto the ephemeral scope stack
+  # @param ephemeral_scopes [Array]
+  def restore_ephemerals(ephemeral_scopes)
+    ephemeral_scopes.each { |ephemeral_scope| @ephemeral.push(ephemeral_scope) } unless ephemeral_scopes.nil?
   end
 
   def ephemeral_level
@@ -771,6 +861,13 @@ class Puppet::Parser::Scope
   # Nests a match data scope
   def new_match_scope(match_data)
     @ephemeral.push(MatchScope.new(@ephemeral.last, match_data))
+  end
+
+  # Nests a parameter scope
+  def new_parameter_scope(param_names)
+    param_scope = ParameterScope.new(@ephemeral.last, param_names)
+    @ephemeral.push(param_scope)
+    param_scope
   end
 
   def ephemeral_from(match, file = nil, line = nil)
