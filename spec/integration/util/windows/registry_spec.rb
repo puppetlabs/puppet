@@ -2,7 +2,8 @@
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows? do
+if Puppet::Util::Platform.windows?
+describe Puppet::Util::Windows::Registry do
   subject do
     class TestRegistry
       include Puppet::Util::Windows::Registry
@@ -252,4 +253,5 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
       end
     end
   end
+end
 end
