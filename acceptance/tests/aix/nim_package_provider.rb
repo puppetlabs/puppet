@@ -61,6 +61,14 @@ package_types = {
     }
 }
 
+step "Setup: ensure test packages are not installed" do
+  pkgs = ['cdrecord', 'bos.atm.atmle']
+  pkgs.each do |pkg|
+    on hosts, puppet_apply(["--detailed-exitcodes", "--verbose"]),
+       {:stdin => get_manifest(pkg, 'absent'), :acceptable_exit_codes => [0,2]}
+  end
+end
+
 package_types.each do |package_type, details|
   step "install a #{package_type} package via 'ensure=>present'" do
     package_name = details[:package_name]
