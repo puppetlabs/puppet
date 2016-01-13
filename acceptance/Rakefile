@@ -294,14 +294,6 @@ EOS
     end
 
     desc <<-EOS
-Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation, testing against puppet-master-passenger.
-#{USAGE}
-EOS
-    task :passenger => 'ci:check_env' do
-      beaker_test(:passenger)
-    end
-
-    desc <<-EOS
 Install puppet as a gem on a predefined set of hosts using Beaker, and run a basic smoke test.
 
   $ env SHA=<full sha> bundle exec rake:ci:gem
