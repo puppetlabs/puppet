@@ -2,5 +2,5 @@ PKG=CSWpuppet
 NAME=puppet - System Automation Framework
 VERSION=3.0.0
 CATEGORY=application
-VENDOR=http://projects.puppetlabs.com/projects/puppet
+VENDOR=https://projects.puppetlabs.com/projects/puppet
 EMAIL=info@puppetlabs.com

@@ -2,7 +2,7 @@ require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package do
   desc "OpenSolaris image packaging system. See pkg(5) for more information"
-  # http://docs.oracle.com/cd/E19963-01/html/820-6572/managepkgs.html
+  # https://docs.oracle.com/cd/E19963-01/html/820-6572/managepkgs.html
   # A few notes before we start :
   # Opensolaris pkg has two slightly different formats (as of now.)
   # The first one is what is distributed with the Solaris 11 Express 11/10 dvd

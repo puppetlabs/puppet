@@ -11,7 +11,10 @@
 # Note that this class is a CallableSignature, and the methods defined there should be used
 # as the API for obtaining information in a callable-implementation agnostic way.
 #
-class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignature
+module Puppet::Pops
+module Evaluator
+
+class Closure < CallableSignature
   attr_reader :evaluator
   attr_reader :model
   attr_reader :enclosing_scope
@@ -25,9 +28,13 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # Evaluates a closure in its enclosing scope after having matched given arguments with parameters (from left to right)
   # @api public
   def call(*args)
+    # We only want to see the global scope here. Other ephemeral scopes must be popped
+    # and later restored
+    scopes_to_restore = @enclosing_scope.unset_ephemeral_var(1) if @enclosing_scope.ephemeral_level > 1
+
     variable_bindings = combine_values_with_parameters(args)
 
-    tc = Puppet::Pops::Types::TypeCalculator.singleton
+    tc = Types::TypeCalculator.singleton
     final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
       if param.captures_rest
         tmp_args.concat(variable_bindings[param.name])
@@ -39,7 +46,12 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     if type.callable?(final_args)
       @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
     else
-      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
+      raise ArgumentError, Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
+    end
+  ensure
+    unless scopes_to_restore.nil?
+      @enclosing_scope.unset_ephemeral_var(1)
+      @enclosing_scope.restore_ephemerals(scopes_to_restore)
     end
   end
 
@@ -53,18 +65,38 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # Call closure with argument assignment by name
   def call_by_name(args_hash, enforce_parameters)
+    # We only want to see the global scope here. Other ephemeral scopes must be popped
+    # and later restored
+    scopes_to_restore = @enclosing_scope.unset_ephemeral_var(1) if @enclosing_scope.ephemeral_level > 1
+
     if enforce_parameters
-      args_hash = args_hash.dup
-      parameters.each do |p|
-        name = p.name
-        # only set result of default expr if it is defined (it is otherwise not possible to differentiate
-        # between explicit undef and no default expression
-        args_hash[name] = @evaluator.evaluate(p.value, @enclosing_scope) if args_hash[name].nil? && !p.value.nil?
+      begin
+        elevel = @enclosing_scope.ephemeral_level
+        # Push a temporary parameter scope used while resolving the parameter defaults
+        param_scope = @enclosing_scope.new_parameter_scope(parameter_names)
+        args_hash.each { |k, v| param_scope[k] = v unless v.nil? && parameter_names.include?(k) }
+        parameters.each do |p|
+          name = p.name
+          # only set result of default expr if it is defined (it is otherwise not possible to differentiate
+          # between explicit undef and no default expression
+          arg = args_hash[name]
+          if arg.nil? && !p.value.nil?
+            param_scope[name] = Puppet::Parser::Scope::ParameterScope.evaluate(name, p.value, @enclosing_scope, @evaluator)
+          end
+        end
+        args_hash = param_scope.to_hash
+      ensure
+        @enclosing_scope.unset_ephemeral_var(elevel)
       end
-      Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
+      Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
     end
 
     @evaluator.evaluate_block_with_bindings(@enclosing_scope, args_hash, @model.body)
+  ensure
+    unless scopes_to_restore.nil?
+      @enclosing_scope.unset_ephemeral_var(1)
+      @enclosing_scope.restore_ephemerals(scopes_to_restore)
+    end
   end
 
   def parameters
@@ -112,7 +144,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     CLOSURE_NAME
   end
 
-  class Named < Puppet::Pops::Evaluator::Closure
+  class Named < Closure
     def initialize(name, evaluator, model, scope)
       @name = name
       super(evaluator, model, scope)
@@ -126,7 +158,10 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   private
 
   def combine_values_with_parameters(args)
-    variable_bindings = {}
+    elevel = @enclosing_scope.ephemeral_level
+
+    # Push a temporary parameter scope used while resolving the parameter defaults
+    param_scope = @enclosing_scope.new_parameter_scope(parameter_names)
 
     parameters.each_with_index do |parameter, index|
       param_captures     = parameter.captures_rest
@@ -135,7 +170,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       if index >= args.size
         if default_expression
           # not given, has default
-          value = @evaluator.evaluate(default_expression, @enclosing_scope)
+          value = Puppet::Parser::Scope::ParameterScope.evaluate(parameter.name, default_expression, @enclosing_scope, @evaluator)
+
           if param_captures && !value.is_a?(Array)
             # correct non array default value
             value = [value]
@@ -146,7 +182,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
             # default for captures rest is an empty array
             value = []
           else
-            @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
+            @evaluator.fail(Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
           end
         end
       else
@@ -158,7 +194,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
           #
           if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
-            value = @evaluator.evaluate(default_expression, @enclosing_scope)
+            value = Puppet::Parser::Scope::ParameterScope.evaluate(parameter.name, default_expression, @enclosing_scope, @evaluator)
             # and ensure it is an array
             value = [value] unless value.is_a?(Array)
           end
@@ -167,10 +203,12 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         end
       end
 
-      variable_bindings[parameter.name] = value
+      param_scope[parameter.name] = value
     end
 
-    variable_bindings
+    param_scope.to_hash
+  ensure
+    @enclosing_scope.unset_ephemeral_var(elevel)
   end
 
   def create_callable_type()
@@ -185,7 +223,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       if param_range[0] == 0
         in_optional_parameters = true
       elsif param_range[0] != 0 && in_optional_parameters
-        @evaluator.fail(Puppet::Pops::Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
+        @evaluator.fail(Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
       end
 
       range[0] += param_range[0]
@@ -196,11 +234,11 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       range[1] = :default
     end
 
-    Puppet::Pops::Types::TypeFactory.callable(*(types + range))
+    Types::TypeFactory.callable(*(types + range))
   end
 
   def create_params_struct
-    type_factory = Puppet::Pops::Types::TypeFactory
+    type_factory = Types::TypeFactory
     members = {}
 
     parameters.each do |param|
@@ -216,10 +254,10 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     type = if param.type_expr
              @evaluator.evaluate(param.type_expr, @enclosing_scope)
            else
-             Puppet::Pops::Types::PAnyType::DEFAULT
+             Types::PAnyType::DEFAULT
            end
 
-    if param.captures_rest && type.is_a?(Puppet::Pops::Types::PArrayType)
+    if param.captures_rest && type.is_a?(Types::PArrayType)
       # An array on a slurp parameter is how a size range is defined for a
       # slurp (Array[Integer, 1, 3] *$param). However, the callable that is
       # created can't have the array in that position or else type checking
@@ -228,7 +266,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       # to be unpacked.
       param_range = type.size_range
       type = type.element_type
-    elsif param.captures_rest && !type.is_a?(Puppet::Pops::Types::PArrayType)
+    elsif param.captures_rest && !type.is_a?(Types::PArrayType)
       param_range = ANY_NUMBER_RANGE
     elsif param.value
       param_range = OPTIONAL_SINGLE_RANGE
@@ -247,3 +285,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   OPTIONAL_SINGLE_RANGE = [0, 1]
   REQUIRED_SINGLE_RANGE = [1, 1]
 end
+end
+end
+

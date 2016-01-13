@@ -13,6 +13,6 @@ Puppet::Type.type(:package).provide :pip3,
   or an array where each element is either a string or a hash."
 
   def self.cmd
-    "pip3"
+    ["pip3"]
   end
 end

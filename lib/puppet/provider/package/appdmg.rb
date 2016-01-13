@@ -13,10 +13,12 @@
 # in /var/db/.puppet_appdmg_installed_<name>
 
 require 'puppet/provider/package'
+require 'puppet/util/plist' if Puppet.features.cfpropertylist?
 Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Package) do
   desc "Package management which copies application bundles to a target."
 
   confine :operatingsystem => :darwin
+  confine :feature         => :cfpropertylist
 
   commands :hdiutil => "/usr/bin/hdiutil"
   commands :curl => "/usr/bin/curl"
@@ -50,7 +52,6 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
 
   def self.installpkgdmg(source, name)
     require 'open-uri'
-    require 'plist'
     cached_source = source
     tmpdir = Dir.mktmpdir
     begin
@@ -67,7 +68,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
 
       open(cached_source) do |dmg|
         xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
-          ptable = Plist::parse_xml xml_str
+          ptable = Puppet::Util::Plist::parse_plist(xml_str)
           # JJM Filter out all mount-paths into a single array, discard the rest.
           mounts = ptable['system-entities'].collect { |entity|
             entity['mount-point']

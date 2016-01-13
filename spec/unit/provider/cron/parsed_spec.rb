@@ -139,6 +139,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       expect(described_class.parse_line('MAILTO=""')).to eq({:record_type => :environment, :line => 'MAILTO=""'})
       expect(described_class.parse_line('FOO=BAR')).to eq({:record_type => :environment, :line => 'FOO=BAR'})
       expect(described_class.parse_line('FOO_BAR=BAR')).to eq({:record_type => :environment, :line => 'FOO_BAR=BAR'})
+      expect(described_class.parse_line('SPACE = BAR')).to eq({:record_type => :environment, :line => 'SPACE = BAR'})
     end
 
     it "should extract a cron entry" do

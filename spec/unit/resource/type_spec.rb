@@ -240,9 +240,30 @@ describe Puppet::Resource::Type do
   end
 
   describe "when setting its parameters in the scope" do
+    let(:parser) { Puppet::Pops::Parser::Parser.new() }
+
+    def wrap3x(expression)
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.current)
+    end
+
+    def parse_expression(expr_string)
+      wrap3x(parser.parse_string(expr_string))
+    end
+
+    def number_expression(number)
+      wrap3x(Puppet::Pops::Model::Factory.NUMBER(number))
+    end
+
     def variable_expression(name)
-      varexpr = Puppet::Pops::Model::Factory.QNAME(name).var().current
-      Puppet::Parser::AST::PopsBridge::Expression.new(:value => varexpr)
+      wrap3x(Puppet::Pops::Model::Factory.QNAME(name).var())
+    end
+
+    def matchref_expression(number)
+      wrap3x(Puppet::Pops::Model::Factory.NUMBER(number).var())
+    end
+
+    def regular_expression(name)
+      wrap3x(Puppet::Pops::Model::Factory.QNAME(name).var())
     end
 
     before do
@@ -270,6 +291,128 @@ describe Puppet::Resource::Type do
       @type.set_arguments :foo => variable_expression('name')
       @type.set_resource_parameters(@resource, @scope)
       expect(@scope['foo']).to eq('foobar')
+    end
+
+    context 'referencing a variable to the left of the default expression' do
+      it 'is possible when the referenced variable uses a default' do
+        @type.set_arguments({
+          :first => number_expression(10),
+          :second => variable_expression('first'),
+        })
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(10)
+        expect(@scope['second']).to eq(10)
+      end
+
+      it 'is possible when the referenced variable is given a value' do
+        @type.set_arguments({
+          :first => number_expression(10),
+          :second => variable_expression('first'),
+        })
+        @resource[:first] = 2
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(2)
+        expect(@scope['second']).to eq(2)
+      end
+
+      it 'is possible when the referenced variable is an array produced by match function' do
+        @type.set_arguments({
+          :first => parse_expression("'hello'.match(/(h)(.*)/)"),
+          :second => parse_expression('$first[0]'),
+          :third => parse_expression('$first[1]')
+        })
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(['hello', 'h', 'ello'])
+        expect(@scope['second']).to eq('hello')
+        expect(@scope['third']).to eq('h')
+      end
+
+      it 'does not clobber a given value' do
+        @type.set_arguments({
+          :first => number_expression(10),
+          :second => variable_expression('first'),
+        })
+        @resource[:first] = 2
+        @resource[:second] = 5
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(2)
+        expect(@scope['second']).to eq(5)
+      end
+    end
+
+    context 'referencing a variable to the right of the default expression' do
+      before :each do
+        @type.set_arguments({
+          :first => number_expression(10),
+          :second => variable_expression('third'),
+          :third => number_expression(20)
+        })
+      end
+
+      it 'is ok when no defaults are used' do
+        @resource[:first] = 1
+        @resource[:second] = 2
+        @resource[:third] = 3
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(1)
+        expect(@scope['second']).to eq(2)
+        expect(@scope['third']).to eq(3)
+      end
+
+      it 'is ok when the referencing default expression never evaluated' do
+        @resource[:first] = 1
+        @resource[:second] = 2
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq(1)
+        expect(@scope['second']).to eq(2)
+        expect(@scope['third']).to eq(20)
+      end
+
+      it 'fails when the default expression is evaluated' do
+        @resource[:first] = 1
+        expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(Puppet::Error, '$second tries to access unevaluated $third')
+      end
+    end
+
+    context 'when using match scope' do
+      it '$n evaluates to undef at the top level' do
+        @type.set_arguments({
+          :first => matchref_expression('0'),
+          :second => matchref_expression('1'),
+        })
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope).not_to include('first')
+        expect(@scope).not_to include('second')
+      end
+
+      it 'match scope exists for a parameter, but does not affect match scopes to the right' do
+        @type.set_arguments({
+          :first => parse_expression("['hello' =~ /(h)(.*)/, $1, $2]"),
+          :second => matchref_expression('1'),
+        })
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq([true, 'h', 'ello'])
+        expect(@scope['second']).to be_nil
+      end
+
+      it 'match scope nests per parameter' do
+        @type.set_arguments({
+          :first => parse_expression("['hi' =~ /(h)(.*)/, $1, if 'foo' =~ /f(oo)/ { $1 }, $1, $2]"),
+          :second => matchref_expression('0'),
+        })
+        @type.set_resource_parameters(@resource, @scope)
+
+        expect(@scope['first']).to eq([true, 'h', 'oo', 'h', 'i'])
+        expect(@scope['second']).to be_nil
+      end
     end
 
     it "should set each of the resource's parameters as variables in the scope" do
@@ -484,9 +627,7 @@ describe Puppet::Resource::Type do
     it "should evaluate the AST code if any is provided" do
       code = stub 'code'
       @type.stubs(:code).returns code
-      subscope = stub_everything("subscope", :compiler => @compiler)
-      @scope.stubs(:newscope).returns subscope
-      code.expects(:safeevaluate).with subscope
+      code.expects(:safeevaluate).with kind_of(Puppet::Parser::Scope)
 
       @type.evaluate_code(@resource)
     end

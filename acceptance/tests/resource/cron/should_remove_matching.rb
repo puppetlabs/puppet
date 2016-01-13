@@ -1,6 +1,6 @@
 test_name "puppet should remove a crontab entry based on command matching"
 confine :except, :platform => 'windows'
-confine :except, :platform => /^eos-/ # See PUP-5445
+confine :except, :platform => /^eos-/ # See PUP-5500
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils

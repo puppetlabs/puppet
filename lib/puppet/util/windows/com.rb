@@ -49,7 +49,7 @@ module Puppet::Util::Windows::COM
   CLSCTX_ALL = CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
   CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms686615(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms686615(v=vs.85).aspx
   # HRESULT CoCreateInstance(
   #   _In_   REFCLSID rclsid,
   #   _In_   LPUNKNOWN pUnkOuter,
@@ -202,14 +202,14 @@ module Puppet::Util::Windows::COM
 
   Unknown = Instance[IUnknown]
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms678543(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms678543(v=vs.85).aspx
   # HRESULT CoInitialize(
   #   _In_opt_  LPVOID pvReserved
   # );
   ffi_lib :ole32
   attach_function_private :CoInitialize, [:lpvoid], :hresult
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms688715(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms688715(v=vs.85).aspx
   # void CoUninitialize(void);
   ffi_lib :ole32
   attach_function_private :CoUninitialize, [], :void

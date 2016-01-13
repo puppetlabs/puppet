@@ -1,6 +1,6 @@
 test_name "Cron: check idempotency"
 confine :except, :platform => 'windows'
-confine :except, :platform => /^eos-/ # See PUP-5445
+confine :except, :platform => /^eos-/ # See PUP-5500
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils

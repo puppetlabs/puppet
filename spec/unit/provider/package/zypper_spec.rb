@@ -214,4 +214,18 @@ describe provider_class do
       @provider.install
     end
   end
+
+  describe 'when uninstalling' do
+    it 'should use remove to uninstall on zypper version 1.6 and above' do
+      @provider.stubs(:zypper_version).returns '1.6.308'
+      @provider.expects(:zypper).with(:remove, '--no-confirm', 'mypackage')
+      @provider.uninstall
+    end
+
+    it 'should use remove  --force-solution to uninstall on zypper versions between 1.0 and 1.6' do
+      @provider.stubs(:zypper_version).returns '1.0.2'
+      @provider.expects(:zypper).with(:remove, '--no-confirm', '--force-resolution', 'mypackage')
+      @provider.uninstall
+    end
+  end
 end

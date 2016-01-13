@@ -1,4 +1,5 @@
 require 'rgen/ecore/ecore'
+require 'puppet/parser/scope'
 require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
@@ -621,6 +622,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # to the compiler to collect the resources specified by the query.
   #
   def eval_CollectExpression o, scope
+    if o.query.is_a?(Puppet::Pops::Model::ExportedQuery)
+      optionally_fail(Puppet::Pops::Issues::RT_NO_STORECONFIGS, o);
+    end
     Puppet::Pops::Evaluator::CollectorTransformer.new().transform(o,scope)
   end
 

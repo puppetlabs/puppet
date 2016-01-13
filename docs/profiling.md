@@ -26,7 +26,7 @@ will be output to the logs.
 ## Using a Ruby Profiler
 
 For much finer grained profiling, you'll want to use
-[ruby-prof](http://rubygems.org/gems/ruby-prof). Once you have the gem
+[ruby-prof](https://rubygems.org/gems/ruby-prof). Once you have the gem
 installed you can either modify the code to profile a certain section (using
 RubyProf.profile) or run the master with ruby-prof by adding `use
 Rack::RubyProf, :path => '/temp/profile'` to the config.ru for your master.

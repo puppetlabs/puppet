@@ -25,6 +25,9 @@ gem_rdoc_options:
   - README.md
   - --line-numbers
 gem_platform_dependencies:
+  universal-darwin:
+    gem_runtime_dependencies:
+      CFPropertyList: '~> 2.2.6'
   x86-mingw32:
     gem_runtime_dependencies:
       # Pinning versions that require native extensions
@@ -45,5 +48,8 @@ gem_platform_dependencies:
       win32-service: '~> 0.8.6'
       minitar: '~> 0.5.4'
 bundle_platforms:
+  universal-darwin: ruby
   x86-mingw32: mingw
   x64-mingw32: x64_mingw
+pre_tasks:
+  'package:apple': 'cfpropertylist'

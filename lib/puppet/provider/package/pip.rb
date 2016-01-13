@@ -30,7 +30,8 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    pip_cmd = which(cmd) or return []
+    pip_cmd = cmd.map { |c| which(c) }.find { |c| c != nil }
+    return [] unless pip_cmd
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -41,11 +42,7 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    if Facter.value(:osfamily) == "RedHat" and Facter.value(:operatingsystemmajrelease).to_i < 7
-      "pip-python"
-    else
-      "pip"
-    end
+    ["pip", "pip-python"]
   end
 
   # Return structured information about a particular package or `nil` if
@@ -123,11 +120,11 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which(self.class.cmd)
+    if pathname = self.class.cmd.map { |c| which(c) }.find { |c| c != nil }
       self.class.commands :pip => pathname
       pip *args
     else
-      raise e, "Could not locate the #{self.class.cmd} command.", e.backtrace
+      raise e, "Could not locate command #{self.class.cmd.join(' and ')}.", e.backtrace
     end
   end
 

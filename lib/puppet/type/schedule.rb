@@ -2,7 +2,7 @@ module Puppet
   Type.newtype(:schedule) do
     @doc = <<-'EOT'
       Define schedules for Puppet. Resources can be limited to a schedule by using the
-      [`schedule`](http://docs.puppetlabs.com/references/latest/metaparameter.html#schedule)
+      [`schedule`](https://docs.puppetlabs.com/references/latest/metaparameter.html#schedule)
       metaparameter.
 
       Currently, **schedules can only be used to stop a resource from being
