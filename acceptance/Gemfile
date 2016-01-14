@@ -12,7 +12,7 @@ def location_for(place, fake_version = nil)
   end
 end
 
-gem "beaker", *location_for(ENV['BEAKER_VERSION'] || '~> 2.28')
+gem "beaker", *location_for(ENV['BEAKER_VERSION'] || '~> 2.32')
 gem "beaker-hostgenerator", *location_for(ENV['BEAKER_HOSTGENERATOR_VERSION'] || "~> 0.3")
 gem "rake", "~> 10.1"
 gem "httparty", :require => false
