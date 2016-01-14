@@ -65,6 +65,7 @@ environment, which might differ from what the client believes is its current env
       "name": "elmo.mydomain.com",
       "version": 1377473054,
       "code_id": null,
+      "catalog_uuid": "827a74c8-cf98-44da-9ff7-18c5e4bee41e",
       "environment": "production",
       "resources": [
         {
