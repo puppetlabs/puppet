@@ -22,6 +22,11 @@ module Puppet::Util::Windows::SID
         @sid_bytes == compare.sid_bytes
     end
 
+    # added for backward compatibility
+    def to_s
+      @sid
+    end
+
     # = 8 + max sub identifiers (15) * 4
     MAXIMUM_SID_BYTE_LENGTH = 68
 
