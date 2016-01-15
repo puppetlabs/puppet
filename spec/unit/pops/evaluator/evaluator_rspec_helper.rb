@@ -55,10 +55,10 @@ module EvaluatorRspecHelper
     result = evaluator.evaluate(in_top_scope.current, top_scope)
     if in_local_scope
       # This is really bad in 3.x scope
-      elevel = top_scope.ephemeral_level
-      top_scope.new_ephemeral(true)
-      result = evaluator.evaluate(in_local_scope.current, top_scope)
-      top_scope.unset_ephemeral_var(elevel)
+      top_scope.with_guarded_scope do
+        top_scope.new_ephemeral(true)
+        result = evaluator.evaluate(in_local_scope.current, top_scope)
+      end
     end
     if in_top_scope_again
       result = evaluator.evaluate(in_top_scope_again.current, top_scope)

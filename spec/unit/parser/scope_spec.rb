@@ -489,17 +489,15 @@ describe Puppet::Parser::Scope do
         expect(@scope.include?("1")).to be_falsey
       end
 
-      describe "when calling unset_ephemeral_var with a level" do
+      describe "when using a guarded scope" do
         it "should remove ephemeral scopes up to this level" do
           @scope.set_match_data({1 => :value1})
           @scope.new_ephemeral
           @scope.set_match_data({1 => :value2})
-          level = @scope.ephemeral_level()
-          @scope.new_ephemeral
-          @scope.set_match_data({1 => :value3})
-
-          @scope.unset_ephemeral_var(level)
-
+          @scope.with_guarded_scope do
+            @scope.new_ephemeral
+            @scope.set_match_data({1 => :value3})
+          end
           expect(@scope["1"]).to eq(:value2)
         end
       end
