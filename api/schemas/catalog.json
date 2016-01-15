@@ -21,6 +21,9 @@
         "code_id": {
             "type": ["string", "null"]
         },
+        "catalog_uuid": {
+            "type": "string"
+        },
         "environment": {
             "type": "string"
         },
@@ -93,6 +96,6 @@
             }
         }
     },
-    "required": ["tags", "name", "version", "code_id", "environment", "resources", "edges", "classes"],
+    "required": ["tags", "name", "version", "code_id", "catalog_uuid", "environment", "resources", "edges", "classes"],
     "additionalProperties": false
 }

@@ -3,6 +3,7 @@ require 'puppet/indirector'
 require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/graph'
+require 'securerandom'
 
 require 'puppet/resource/capability_finder'
 
@@ -31,6 +32,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # The id of the code input to the compiler.
   attr_accessor :code_id
+
+  # The UUID of the catalog
+  attr_accessor :catalog_uuid
 
   # How long this catalog took to retrieve.  Used for reporting stats.
   attr_accessor :retrieval_duration
@@ -272,6 +276,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def initialize(name = nil, environment = Puppet::Node::Environment::NONE, code_id = nil)
     super()
     @name = name
+    @catalog_uuid = SecureRandom.uuid
     @classes = []
     @resource_table = {}
     @resources = []
@@ -379,6 +384,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.code_id = code_id
     end
 
+    if catalog_uuid = data['catalog_uuid']
+      result.catalog_uuid = catalog_uuid
+    end
+
     if environment = data['environment']
       result.environment = environment
       result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
@@ -420,7 +429,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'name'      => name,
       'version'   => version,
       'code_id'   => code_id,
-      'environment' => environment.to_s,
+      'catalog_uuid' => catalog_uuid,
+      'environment'  => environment.to_s,
       'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
       'edges'     => edges.   collect { |e| e.to_data_hash },
       'classes'   => classes
@@ -536,6 +546,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     result.version = self.version
     result.code_id = self.code_id
+    result.catalog_uuid = self.catalog_uuid
 
     map = {}
     resources.each do |resource|
