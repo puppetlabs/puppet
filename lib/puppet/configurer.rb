@@ -229,6 +229,9 @@ class Puppet::Configurer
       end
 
       execute_prerun_command or return nil
+
+      options[:report].code_id = catalog.code_id
+      options[:report].catalog_uuid = catalog.catalog_uuid
       apply_catalog(catalog, options)
       report.exit_status
     rescue => detail
