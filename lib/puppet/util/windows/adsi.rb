@@ -56,6 +56,9 @@ module Puppet::Util::Windows::ADSI
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
+    # This method should *only* be used to generate WinNT://<SID> style monikers
+    # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
+    # to resolve an account with WIN32OLE.connect
     # @api private
     def sid_uri_safe(sid)
       return sid_uri(sid) if sid.kind_of?(Win32::Security::SID)
@@ -68,6 +71,9 @@ module Puppet::Util::Windows::ADSI
       end
     end
 
+    # This method should *only* be used to generate WinNT://<SID> style monikers
+    # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
+    # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
       raise Puppet::Error.new( "Must use a valid SID object" ) if !sid.kind_of?(Win32::Security::SID)
       "WinNT://#{sid.to_s}"
@@ -99,8 +105,6 @@ module Puppet::Util::Windows::ADSI
 
   module Shared
     def uri(name, host = '.')
-      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
-
       host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
 
       # group or user
@@ -321,9 +325,29 @@ module Puppet::Util::Windows::ADSI
       user_name
     end
 
-    def self.exists?(name)
-      Puppet::Util::Windows::ADSI::connectable?(User.uri(*User.parse_name(name)))
+    def self.exists?(name_or_sid)
+      well_known = false
+      if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))
+        return true if sid.account_type == 'user'
+
+        # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM
+        # so try to resolve it
+        # https://msdn.microsoft.com/en-us/library/cc234477.aspx
+        well_known = sid.account_type == 'well known group'
+        return false if sid.account_type != 'alias' && !well_known
+        name_or_sid = "#{sid.domain}\\#{sid.account}"
+      end
+
+      user = Puppet::Util::Windows::ADSI.connect(User.uri(*User.parse_name(name_or_sid)))
+      # otherwise, verify that the account is actually a User account
+      user.Class == 'User'
+    rescue
+      # special accounts like SYSTEM cannot resolve via moniker like WinNT://./SYSTEM,user
+      # and thus fail to connect - so given a validly resolved SID, this failure is ambiguous as it
+      # may indicate either a group like Service or an account like SYSTEM
+      well_known
     end
+
 
     def self.delete(name)
       Puppet::Util::Windows::ADSI.delete(name, 'user')
@@ -464,8 +488,26 @@ module Puppet::Util::Windows::ADSI
       new(name, Puppet::Util::Windows::ADSI.create(name, 'group'))
     end
 
-    def self.exists?(name)
-      Puppet::Util::Windows::ADSI.connectable?(Group.uri(name))
+    def self.exists?(name_or_sid)
+      well_known = false
+      if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))
+        return true if sid.account_type == 'group'
+
+        # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM
+        # so try to resolve it
+        # https://msdn.microsoft.com/en-us/library/cc234477.aspx
+        well_known = sid.account_type == 'well known group'
+        return false if sid.account_type != 'alias' && !well_known
+        name_or_sid = "#{sid.domain}\\#{sid.account}"
+      end
+
+      user = Puppet::Util::Windows::ADSI.connect(Group.uri(*Group.parse_name(name_or_sid)))
+      user.Class == 'Group'
+    rescue
+      # special groups like Authenticated Users cannot resolve via moniker like WinNT://./Authenticated Users,group
+      # and thus fail to connect - so given a validly resolved SID, this failure is ambiguous as it
+      # may indicate either a group like Service or an account like SYSTEM
+      well_known
     end
 
     def self.delete(name)

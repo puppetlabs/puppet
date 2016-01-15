@@ -1,5 +1,8 @@
 test_name "file resource: symbolic modes"
 confine :except, :platform => /^eos-/ # See ARISTA-37
+confine :except, :platform => /^solaris-10/
+confine :except, :platform => /^windows/
+confine :to, {}, hosts.select { |host| ! host[:roles].include?('master') }
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
@@ -176,14 +179,6 @@ end
 #     permissions locked while a program is accessing that file.
 #
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    Log.warn("Pending: this does not currently work on Windows")
-    next
-  end
-  if agent['platform'] =~ /solaris-10/
-    Log.warn("Pending: this does not currently work on Solaris 10")
-    next
-  end
   is_solaris = agent['platform'].include?('solaris')
 
   on(agent, puppet("resource user symuser ensure=present"))

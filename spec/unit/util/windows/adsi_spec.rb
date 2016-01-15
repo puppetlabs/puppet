@@ -60,12 +60,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     let(:domain_username) { "#{domain}\\#{username}"}
 
     it "should generate the correct URI" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       expect(Puppet::Util::Windows::ADSI::User.uri(username)).to eq("WinNT://./#{username},user")
     end
 
     it "should generate the correct URI for a user with a domain" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       expect(Puppet::Util::Windows::ADSI::User.uri(username, domain)).to eq("WinNT://#{domain}/#{username},user")
     end
 
@@ -96,23 +94,31 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to check the existence of a user" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with(username).returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
+      connection.expects(:Class).returns('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(username)).to be_truthy
     end
 
     it "should be able to check the existence of a domain user" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with("#{domain}\\#{username}").returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
+      connection.expects(:Class).returns('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(domain_username)).to be_truthy
     end
 
     it "should be able to confirm the existence of a user with a well-known SID" do
-
       system_user = Win32::Security::SID::LocalSystem
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::User.exists?(system_user)).to be_truthy
+    end
+
+    it "should return false with a well-known Group SID" do
+      group = Win32::Security::SID::BuiltinAdministrators
+      # ensure that the underlying OS is queried here
+      Puppet::Util::Windows::ADSI.unstub(:connect)
+      expect(Puppet::Util::Windows::ADSI::User.exists?(group)).to be_falsey
     end
 
     it "should return nil with an unknown SID" do
@@ -130,8 +136,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should return an enumeration of IADsUser wrapped objects" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
-
       name = 'Administrator'
       wmi_users = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
@@ -409,7 +413,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       end
 
       it "should generate the correct URI" do
-        Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
         adsi_group.expects(:objectSID).returns([0])
         Socket.expects(:gethostname).returns('testcomputername')
         Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(stub(:account => groupname,:domain => 'testcomputername'))
@@ -418,7 +421,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should generate the correct URI" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
       expect(Puppet::Util::Windows::ADSI::Group.uri("people")).to eq("WinNT://./people,group")
     end
 
@@ -435,8 +437,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to confirm the existence of a group" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with(groupname).returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
+      connection.expects(:Class).returns('Group')
 
       expect(Puppet::Util::Windows::ADSI::Group.exists?(groupname)).to be_truthy
     end
@@ -447,6 +450,13 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::Group.exists?(service_group)).to be_truthy
+    end
+
+    it "will return true with a well-known User SID, as there is no way to resolve it with a WinNT:// style moniker" do
+      user = Win32::Security::SID::NtLocal
+      # ensure that the underlying OS is queried here
+      Puppet::Util::Windows::ADSI.unstub(:connect)
+      expect(Puppet::Util::Windows::ADSI::Group.exists?(user)).to be_truthy
     end
 
     it "should return nil with an unknown SID" do
@@ -464,8 +474,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should return an enumeration of IADsGroup wrapped objects" do
-      Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
-
       name = 'Administrators'
       wmi_groups = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
