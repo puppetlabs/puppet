@@ -49,7 +49,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   # @api private
   #
   def set_entry(typed_name, value, origin = nil)
-    if entry = @named_values[typed_name] then fail_redefined(entry); end
+    if entry = @named_values[typed_name] then fail_redefine(entry); end
     @named_values[typed_name] = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
   end
 
