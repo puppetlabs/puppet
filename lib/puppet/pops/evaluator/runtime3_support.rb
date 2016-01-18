@@ -280,7 +280,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
         return func.call(scope, *args, &block)
       end
     end
-
     # Call via 3x API if function exists there
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
