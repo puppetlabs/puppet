@@ -117,8 +117,13 @@ describe Puppet::Network::HTTP::Pool do
       # On windows, Socket.getsockopt() doesn't return exactly the same data
       # as an equivalent Socket::Option.new() statement, so we strip off the
       # unrelevant bits only on this platform.
+      #
       # To make sure we're not voiding the test case by doing this, we check
       # both with and without the keepalive bit set.
+      #
+      # This workaround can be removed once all the ruby versions we care about
+      # have the patch from https://bugs.ruby-lang.org/issues/11958 applied.
+      #
       keepalive   = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, true).data
       nokeepalive = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, false).data
 
