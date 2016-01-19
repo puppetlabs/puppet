@@ -81,7 +81,7 @@ describe Puppet::Indirector::JSON do
           # I don't like this, but there isn't a credible alternative that
           # also works on Windows, so a stub it is. At least the expectation
           # will fail if the implementation changes. Sorry to the next dev.
-          File.expects(:read).with(file).raises(Errno::EPERM)
+          Puppet::FileSystem.expects(:read).with(file).raises(Errno::EPERM)
           expect { subject.find(request) }.
             to raise_error Puppet::Error, /Could not read JSON/
         end
