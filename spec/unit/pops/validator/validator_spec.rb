@@ -249,7 +249,7 @@ describe "validating 4x" do
         expect(validate(parse("#{word} foo($a = 10, $b = ($a = 10)) {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT)
       end
 
-      it "should permit assignments permit assignments in #{word} parameter default inside nested lambda expressions" do
+      it "should permit assignments in #{word} parameter default inside nested lambda expressions" do
         expect(validate(parse(
           "#{word} foo($a = [1,2,3], $b = 0, $c = $a.map |$x| { $b = $x; $b * $a.reduce |$x, $y| {$x + $y}}) {}"))).not_to(
           have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT))

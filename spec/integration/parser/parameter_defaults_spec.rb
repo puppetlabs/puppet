@@ -123,7 +123,7 @@ require 'puppet_spec/language'
         expect_fail(params, [], /default expression for \$b tries to illegally access not yet evaluated \$a/)
       end
 
-      it 'will use the referenced parameters given value' do
+      it "will use the referenced parameter's given value" do
         expect_log(params, [2], ['$a == 2', '$b == 2'])
       end
 
@@ -139,11 +139,11 @@ require 'puppet_spec/language'
       SOURCE
       }
 
-      it 'will use the referenced parameters default value when no value is given for the referenced parameter' do
+      it "will use the referenced parameter's default value when no value is given for the referenced parameter" do
         expect_log(params, [], ['$a == 10', '$b == 10'])
       end
 
-      it 'will use the referenced parameters given value' do
+      it "will use the referenced parameter's given value" do
         expect_log(params, [2], ['$a == 2', '$b == 2'])
       end
 
@@ -174,7 +174,7 @@ require 'puppet_spec/language'
     end
 
     context 'with regular expressions' do
-      it 'evaluates unset match scope parameters to undef' do
+      it "evaluates unset match scope parameter's to undef" do
         expect_log([<<-SOURCE, 2], [], ['$a == ', '$b == '])
         $a = $0,
         $b = $1
@@ -196,7 +196,7 @@ require 'puppet_spec/language'
         SOURCE
       end
 
-      it 'can have nexted match expressions' do
+      it 'can have nested match expressions' do
         expect_log([<<-SOURCE, 2], [], ['$a == [true, h, oo, h, i]', '$b == '] )
         $a = ['hi' =~ /(h)(.*)/, $1, if'foo' =~ /f(oo)/ { $1 }, $1, $2],
         $b = $0
@@ -266,7 +266,7 @@ require 'puppet_spec/language'
         SOURCE
       end
 
-      it 'will not make match scope available to function body' do
+      it "will not make match scope available to #{call_type} body" do
         expect_log([<<-SOURCE, call_type == 'Function' ? <<-BODY : <<-EPP_BODY], [], ['Yes'])
         $a = "hello" =~ /.*/
         SOURCE
