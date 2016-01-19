@@ -20,7 +20,13 @@ class Benchmarker
 
   def run(args=nil)
     envs = Puppet.lookup(:environments)
+
     envs.clear('benchmarking')
+#    # Uncomment to get some basic memory statistics
+#    ObjectSpace.garbage_collect
+#    result = {}
+#    ObjectSpace.count_objects(result)
+#    puts "C(#{result[:T_CLASS]}) O(#{result[:T_OBJECT]}) F(#{result[:FREE]}) #{result[:T_CLASS] + result[:T_OBJECT]}"
     node = Puppet::Node.new('testing', :environment => envs.get('benchmarking'))
     Puppet::Resource::Catalog.indirection.find('testing', :use_node => node)
   end
@@ -41,11 +47,12 @@ class Benchmarker
     mkdir_p(env_functions)
     mkdir_p(File.join(environment, 'manifests'))
 
-    module_count = @size / 10
-    function_count = @size * 10
+    module_count = @size / 5
+    function_count = @size * 3
     render(File.join(templates, 'site.pp.erb'),
            File.join(environment, 'manifests', 'site.pp'),
-           :size => module_count)
+           :size => module_count,
+           :function_count => function_count)
 
     env_function_template = File.join(templates, 'env_function.erb')
     function_count.times { |n| render(env_function_template, File.join(env_functions, "f#{n}.rb"), :n => n) }
@@ -66,7 +73,7 @@ class Benchmarker
           'license' => 'Apache 2.0',
           'version' => '1.0.0',
           'summary' => 'Benchmark module',
-          'dependencies' => i > 0 ? [{'name' => "tester-module#{i-1}", 'version_requirement' => '1.0.0' }] : [],
+          'dependencies' => dependencies_for(i),
           'source' => ''
         }, f)
       end
@@ -88,8 +95,16 @@ class Benchmarker
            :location => @target)
   end
 
+  def dependencies_for(n)
+    return [] if n == 0
+    n.times.map do |m|
+      {'name' => "tester-module#{m}", 'version_requirement' => '1.0.0'}
+    end
+  end
+
   def render(erb_file, output_file, bindings)
     site = ERB.new(File.read(erb_file))
+    site.filename = erb_file
     File.open(output_file, 'w') do |fh|
       fh.write(site.result(OpenStruct.new(bindings).instance_eval { binding }))
     end

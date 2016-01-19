@@ -1,3 +1,6 @@
 Benchmark scenario: many functions spread across many modules.
-Benchmark target: function loading.
+Benchmark target: function loading and call overhead
 
+A number of modules are generated. The environment, and each module holds a large number of functions (several 100s).
+Fuctions call each other and cause deep recursion (and on demand loading as they are called.
+Calls are made across modules, and to the environment.
