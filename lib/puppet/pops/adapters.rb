@@ -91,6 +91,7 @@ module Puppet::Pops::Adapters
       last = first + @adapted.length
       @adapted.eAllContents.each do |m|
         m_offset = m.offset
+        next if m_offset.nil?
         first = m_offset if m_offset < first
         m_last = m_offset + m.length
         last = m_last if m_last > last

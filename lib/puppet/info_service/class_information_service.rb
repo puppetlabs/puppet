@@ -79,10 +79,7 @@ class Puppet::InfoService::ClassInformationService
     value_expr = p.value
     return structure if value_expr.nil?
     default_value = value_as_literal(value_expr)
-    if !default_value.nil?
-      structure[:default_literal] = default_value
-      return structure
-    end
+    structure[:default_literal] = default_value unless default_value.nil?
     structure[:default_source] = extract_value_source(value_expr)
     structure
   end
