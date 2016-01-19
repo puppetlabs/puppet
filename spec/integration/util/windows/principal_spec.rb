@@ -18,6 +18,37 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
     end
 
+    it "should create an instance from a well-known account prefixed with NT AUTHORITY" do
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('NT AUTHORITY\\SYSTEM')
+      expect(principal.account).to eq('SYSTEM')
+      expect(principal.sid_bytes).to eq(system_bytes)
+      expect(principal.sid).to eq('S-1-5-18')
+      expect(principal.domain).to eq('NT AUTHORITY')
+      expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
+      expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
+    end
+
+    it "should create an instance from a local account prefixed with hostname" do
+      current_user_name = Puppet::Util::Windows::ADSI::User.current_user_name
+      running_as_system = (current_user_name == 'SYSTEM')
+      username = running_as_system ? 'Administrator' : current_user_name
+
+      user_exists = Puppet::Util::Windows::ADSI::User.exists?(".\\#{username}")
+
+      # when running as SYSTEM (in Jenkins CI), then Administrator should be used
+      # otherwise running in AppVeyor there is no Administrator and a the current local user can be used
+      skip if (running_as_system && !user_exists)
+
+      hostname = Socket.gethostname
+
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_name("#{hostname}\\#{username}")
+      expect(principal.account).to match(/^#{Regexp.quote(username)}$/i)
+      # skip SID and bytes in this case since the most interesting thing here is domain_account
+      expect(principal.domain).to match(/^#{Regexp.quote(hostname)}$/i)
+      expect(principal.domain_account).to match(/^#{Regexp.quote(hostname)}\\#{Regexp.quote(username)}$/i)
+      expect(principal.account_type).to eq(:SidTypeUser)
+    end
+
     it "should create an instance from a well-known group alias" do
       principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('Administrators')
       expect(principal.account).to eq('Administrators')
