@@ -6,12 +6,16 @@ module Puppet::Util::Windows::SID
     attr_reader :account, :sid_bytes, :sid, :domain, :domain_account, :account_type
 
     def initialize(account, sid_bytes, sid, domain, account_type)
-      @account = account
+      # Calling lookup_account_name like host\user is valid and therefore this
+      # value may include two components, but favor the domain value passed in
+      @account = account =~ /(.+)\\(.+)/ ? $2 : account
       @sid_bytes = sid_bytes
       @sid = sid
       @domain = domain
+      # when domain is available, combine it with parsed account
+      # otherwise use the account value directly
       @domain_account = domain && !domain.empty? ?
-        "#{domain}\\#{account}" : account
+        "#{domain}\\#{@account}" : account
 
       @account_type = account_type
     end
