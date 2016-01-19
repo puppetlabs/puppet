@@ -16,7 +16,7 @@ module Puppet::Util::Windows
     def name_to_sid(name)
       sid = name_to_sid_object(name)
 
-      sid ? sid.to_s : nil
+      sid ? sid.sid : nil
     end
     module_function :name_to_sid
 
@@ -24,14 +24,22 @@ module Puppet::Util::Windows
     # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',
     # 'BUILTIN\Administrators', or 'S-1-5-32-544', and will return the
     # SID object. Returns nil if the account doesn't exist.
+    # This method returns a SID::Principal with the account, domain, SID, etc
     def name_to_sid_object(name)
       # Apparently, we accept a symbol..
       name = name.to_s.strip if name
 
-      # if it's in SID string form, convert to user
-      parsed_sid = Win32::Security::SID.string_to_sid(name) rescue nil
+      # if name is a SID string, convert it to raw bytes for use with lookup_account_sid
+      raw_sid_bytes = nil
+      begin
+        string_to_sid_ptr(name) do |sid_ptr|
+          valid = ! sid_ptr.nil? && ! sid_ptr.null?
+          raw_sid_bytes = sid_ptr.read_array_of_uchar(get_length_sid(sid_ptr))
+        end
+      rescue
+      end
 
-      parsed_sid ? Win32::Security::SID.new(parsed_sid) : Win32::Security::SID.new(name)
+      raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
     rescue
       nil
     end
@@ -41,12 +49,13 @@ module Puppet::Util::Windows
     # e.g. [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] is the representation for
     # S-1-5-18, the local 'SYSTEM' account.
     # Raises an Error for nil or non-array input.
+    # This method returns a SID::Principal with the account, domain, SID, etc
     def octet_string_to_sid_object(bytes)
       if !bytes || !bytes.respond_to?('pack') || bytes.empty?
         raise Puppet::Util::Windows::Error.new("Octet string must be an array of bytes")
       end
 
-      Win32::Security::SID.new(bytes.pack('C*'))
+      Principal.lookup_account_sid(bytes)
     end
     module_function :octet_string_to_sid_object
 
@@ -54,13 +63,18 @@ module Puppet::Util::Windows
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
     # for that SID does not exist.
     def sid_to_name(value)
-      sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(value))
 
-      if sid.domain and sid.domain.length > 0
-        "#{sid.domain}\\#{sid.account}"
-      else
-        sid.account
+      sid_bytes = []
+      begin
+        string_to_sid_ptr(value) do |ptr|
+          valid = ! ptr.nil? && ! ptr.null?
+          sid_bytes = ptr.read_array_of_uchar(get_length_sid(ptr))
+        end
+      rescue Puppet::Util::Windows::Error => e
+        raise if e.code != ERROR_INVALID_SID_STRUCTURE
       end
+
+      Principal.lookup_account_sid(sid_bytes).domain_account
     rescue
       nil
     end
@@ -71,7 +85,7 @@ module Puppet::Util::Windows
 
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
-      if ! psid.instance_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
+      if ! psid.kind_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
@@ -131,6 +145,16 @@ module Puppet::Util::Windows
     end
     module_function :valid_sid?
 
+    def get_length_sid(sid_ptr)
+      # MSDN states IsValidSid should be called on pointer first
+      if ! sid_ptr.kind_of?(FFI::Pointer) || IsValidSid(sid_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid SID")
+      end
+
+      GetLengthSid(sid_ptr)
+    end
+    module_function :get_length_sid
+
     ffi_convention :stdcall
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
@@ -158,5 +182,12 @@ module Puppet::Util::Windows
     ffi_lib :advapi32
     attach_function_private :ConvertStringSidToSidW,
       [:lpcwstr, :pointer], :win32_bool
+
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446642(v=vs.85).aspx
+    # DWORD WINAPI GetLengthSid(
+    #   _In_ PSID pSid
+    # );
+    ffi_lib :advapi32
+    attach_function_private :GetLengthSid, [:pointer], :dword
   end
 end

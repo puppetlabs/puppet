@@ -32,9 +32,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
   describe "group type :members property helpers" do
 
-    let(:user1) { stub(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
-    let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
-    let(:user3) { stub(:account => 'user3', :domain => '.', :to_s => 'user3sid') }
+    let(:user1) { stub(:account => 'user1', :domain => '.', :sid => 'user1sid') }
+    let(:user2) { stub(:account => 'user2', :domain => '.', :sid => 'user2sid') }
+    let(:user3) { stub(:account => 'user3', :domain => '.', :sid => 'user3sid') }
     let(:invalid_user) { SecureRandom.uuid }
 
     before :each do
@@ -183,9 +183,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       provider.group.stubs(:members).returns ['user1', 'user2']
 
       member_sids = [
-        stub(:account => 'user1', :domain => 'testcomputername'),
-        stub(:account => 'user2', :domain => 'testcomputername'),
-        stub(:account => 'user3', :domain => 'testcomputername'),
+        stub(:account => 'user1', :domain => 'testcomputername', :sid => 1),
+        stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
+        stub(:account => 'user3', :domain => 'testcomputername', :sid => 3),
       ]
 
       provider.group.stubs(:member_sids).returns(member_sids[0..1])

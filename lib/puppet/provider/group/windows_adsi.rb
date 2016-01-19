@@ -28,7 +28,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
 
     if @resource[:auth_membership]
-      current_users == specified_users
+      current_users.keys.to_a == specified_users.keys.to_a
     else
       (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
     end
@@ -48,7 +48,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
       else
         account = sid.account
       end
-      resource.debug("#{sid.domain}\\#{account} (#{sid.to_s})")
+      resource.debug("#{sid.domain}\\#{account} (#{sid.sid})")
       "#{sid.domain}\\#{account}"
     end
     return users.join(',')
