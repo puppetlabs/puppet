@@ -4,8 +4,8 @@ require 'puppet/error'
 # A general class for triggering a run of another
 # class.
 class Puppet::Agent
-  require 'puppet/util/locker'
-  include Puppet::Util::Locker
+  require 'puppet/agent/locker'
+  include Puppet::Agent::Locker
 
   require 'puppet/agent/disabler'
   include Puppet::Agent::Disabler
