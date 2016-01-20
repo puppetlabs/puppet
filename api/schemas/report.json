@@ -93,6 +93,16 @@
             "type":        "string"
         },
 
+        "code_id": {
+            "description": "The id of the code input to the compiler.",
+            "type":        "string"
+        },
+
+        "catalog_uuid": {
+            "description": "A UUID covering a specific catalog.",
+            "type":        "string"
+        },
+
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
