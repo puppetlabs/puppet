@@ -3,7 +3,7 @@
 class Puppet::Settings::EnvironmentConf
 
   ENVIRONMENT_CONF_ONLY_SETTINGS = [:modulepath, :manifest, :config_version].freeze
-  VALID_SETTINGS = (ENVIRONMENT_CONF_ONLY_SETTINGS + [:environment_timeout, :environment_data_provider]).freeze
+  VALID_SETTINGS = (ENVIRONMENT_CONF_ONLY_SETTINGS + [:environment_timeout, :environment_data_provider, :static_catalogs]).freeze
 
   # Given a path to a directory environment, attempts to load and parse an
   # environment.conf in ini format, and return an EnvironmentConf instance.
@@ -39,8 +39,8 @@ class Puppet::Settings::EnvironmentConf
   # Configuration values are exactly those returned by the environment object,
   # without interpolation.  This is a special case for the default configured
   # environment returned by the Puppet::Environments::StaticPrivate loader.
-  def self.static_for(environment, environment_timeout = 0)
-    Static.new(environment, environment_timeout)
+  def self.static_for(environment, environment_timeout = 0, static_catalogs = false)
+    Static.new(environment, environment_timeout, static_catalogs)
   end
 
   attr_reader :section, :path_to_env, :global_modulepath
@@ -108,6 +108,12 @@ class Puppet::Settings::EnvironmentConf
     end
   end
 
+  def static_catalogs
+    get_setting(:static_catalogs, Puppet.settings.value(:static_catalogs)) do |value|
+      value
+    end
+  end
+
   def config_version
     get_setting(:config_version) do |config_version|
       absolute(config_version)
@@ -161,10 +167,12 @@ class Puppet::Settings::EnvironmentConf
   class Static
     attr_reader :environment_timeout
     attr_reader :environment_data_provider
+    attr_reader :static_catalogs
 
-    def initialize(environment, environment_timeout, environment_data_provider = 'none')
+    def initialize(environment, environment_timeout, static_catalogs, environment_data_provider = 'none')
       @environment = environment
       @environment_timeout = environment_timeout
+      @static_catalogs = static_catalogs
       @environment_data_provider = environment_data_provider
     end
 

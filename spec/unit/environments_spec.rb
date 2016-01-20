@@ -121,6 +121,7 @@ describe Puppet::Environments do
 manifest=#{manifestdir}
 modulepath=#{modulepath.join(File::PATH_SEPARATOR)}
 config_version=/some/script
+static_catalogs=true
         EOF
       end
 
@@ -156,6 +157,17 @@ config_version=/some/script
         end
       end
 
+      it "reads static_catalogs setting" do
+        loader_from(:filesystem => [envdir, manifestdir, modulepath].flatten,
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(manifestdir.path).
+            with_modulepath(modulepath.map(&:path)).
+            with_config_version(File.expand_path('/some/script')).
+            with_static_catalogs(true)
+        end
+      end
+
       it "accepts an empty environment.conf without warning" do
         content = nil
 
@@ -176,7 +188,8 @@ config_version=/some/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest("#{FS.path_string(envdir)}/env1/manifests").
             with_modulepath(["#{FS.path_string(envdir)}/env1/modules", global_path_location]).
-            with_config_version(nil)
+            with_config_version(nil).
+            with_static_catalogs(false)
         end
 
         expect(@logs).to be_empty
@@ -386,6 +399,7 @@ config_version=$vardir/random/scripts
       expect(conf.modulepath).to eq('')
       expect(conf.manifest).to eq(:no_manifest)
       expect(conf.config_version).to be_nil
+      expect(conf.static_catalogs).to eq(false)
     end
 
     it "returns nil if you request a configuration from an env that doesn't exist" do
@@ -547,7 +561,8 @@ config_version=$vardir/random/scripts
         (!@manifest || @manifest == env.manifest) &&
         (!@modulepath || @modulepath == env.modulepath) &&
         (!@full_modulepath || @full_modulepath == env.full_modulepath) &&
-        (!@config_version || @config_version == env.config_version)
+        (!@config_version || @config_version == env.config_version) &&
+        (!@static_catalogs || @static_catalogs == env.static_catalogs?)
     end
 
     chain :with_manifest do |manifest|
@@ -566,16 +581,21 @@ config_version=$vardir/random/scripts
       @config_version = config_version
     end
 
+    chain :with_static_catalogs do |static_catalogs|
+      @static_catalogs = static_catalogs
+    end
+
     description do
       "environment #{expected}" +
         (@manifest ? " with manifest #{@manifest}" : "") +
         (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "") +
         (@full_modulepath ? " with full_modulepath [#{@full_modulepath.join(', ')}]" : "") +
-        (@config_version ? " with config_version #{@config_version}" : "")
+        (@config_version ? " with config_version #{@config_version}" : "") +
+        (@static_catalogs ? " with static_catalogs #{@static_catalogs}" : "")
     end
 
     failure_message do |env|
-      "expected <#{env.name}: modulepath = [#{env.full_modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
+      "expected <#{env.name}: modulepath = [#{env.full_modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}>, static_catalogs = #{env.static_catalogs?} to be #{description}"
     end
   end
 
