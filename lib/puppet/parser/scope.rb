@@ -229,7 +229,7 @@ class Puppet::Parser::Scope
     end
 
     def []=(name, value)
-      raise Puppet::Error, "Attempt to assign variable #{name} to read-only parameter scope" if @read_only
+      raise Puppet::Error, "Attempt to assign variable #{name} when evaluating parameters" if @read_only
       @params[name] ||= Access.new
       @params[name].value = value
     end
