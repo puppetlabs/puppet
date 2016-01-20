@@ -1,13 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/agent'
-require 'puppet/agent/locker'
+require 'puppet/util/locker'
 
 class LockerTester
-  include Puppet::Agent::Locker
+  include Puppet::Util::Locker
 end
 
-describe Puppet::Agent::Locker do
+describe Puppet::Util::Locker do
   before do
     @locker = LockerTester.new
   end
