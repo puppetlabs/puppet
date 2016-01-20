@@ -9,6 +9,9 @@ require 'fileutils'
 describe Puppet::Application::Apply do
   before :each do
     @apply = Puppet::Application[:apply]
+    # So we don't actually try to hit the filesystem.
+    @apply.stubs(:lock).yields
+
     Puppet::Util::Log.stubs(:newdestination)
     Puppet[:reports] = "none"
   end
@@ -19,6 +22,10 @@ describe Puppet::Application::Apply do
 
     Puppet::Node.indirection.reset_terminus_class
     Puppet::Node.indirection.cache_class = nil
+  end
+
+  it "should include the Locker module" do
+    expect(Puppet::Application::Apply.ancestors).to be_include(Puppet::Util::Locker)
   end
 
   [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
@@ -169,6 +176,30 @@ describe Puppet::Application::Apply do
 
       @apply.expects(:main)
       @apply.run_command
+    end
+
+    it "should use a filesystem lock to restrict multiple processes running" do
+      @apply.expects(:lock)
+      @apply.run_command
+    end
+
+    describe "when a filesystem lock is encountered" do
+      before :each do
+        @apply.expects(:lock).raises(Puppet::LockError, 'locked')
+        Puppet.expects(:notice).with(regexp_matches /Run of Puppet::Configurer already in progress; skipping  (.+ exists)/)
+      end
+
+      it "should exit" do
+        expect(@apply.run_command).to raise_error(SystemExit)
+      end
+
+      it "should return an exit code of 1" do
+        begin
+          @apply.run_command
+        rescue SystemExit => e
+          expect(e.status).to eq(0)
+        end
+      end
     end
 
     describe "the main command" do

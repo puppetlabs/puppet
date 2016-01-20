@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/agent'
-require 'puppet/agent/locker'
+require 'puppet/util/locker'
 
 class DisablerTester
   include Puppet::Agent::Disabler
