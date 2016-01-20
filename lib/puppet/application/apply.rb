@@ -6,9 +6,6 @@ class Puppet::Application::Apply < Puppet::Application
   require 'puppet/util/splayer'
   include Puppet::Util::Splayer
 
-  require 'puppet/util/locker'
-  include Puppet::Util::Locker
-
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
     options[:code] = arg
@@ -167,15 +164,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def run_command
-    lock do
-      if options[:catalog]
-        apply
-      else
-        main
-      end
+    if options[:catalog]
+      apply
+    else
+      main
     end
-  rescue Puppet::LockError
-    Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
   end
 
   def apply
