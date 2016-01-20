@@ -147,7 +147,7 @@ class Puppet::Settings::EnvironmentConf
 
   def get_setting(setting_name, default = nil)
     value = raw_setting(setting_name)
-    value ||= default
+    value = default if value.nil?
     yield value
   end
 

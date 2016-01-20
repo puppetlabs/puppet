@@ -45,6 +45,13 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.static_catalogs).to eq(true)
     end
 
+    it "can retrieve untruthy settings" do
+      Puppet[:static_catalogs] = true
+      setup_environment_conf(config, :static_catalogs => false)
+
+      expect(envconf.static_catalogs).to eq(false)
+    end
+
     it "can retrieve raw settings" do
       setup_environment_conf(config, :manifest => 'manifest.pp')
 
