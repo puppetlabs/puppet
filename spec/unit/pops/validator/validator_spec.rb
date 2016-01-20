@@ -229,6 +229,34 @@ describe "validating 4x" do
     end
   end
 
+  context 'for parameter defaults' do
+    ['class', 'define'].each do |word|
+      it "should not permit assignments in #{word} parameter default expressions" do
+        expect { parse("#{word} foo($a = $x = 10) {}") }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '='/)
+      end
+    end
+
+    ['class', 'define'].each do |word|
+      it "should not permit assignments in #{word} parameter default nested expressions" do
+        expect(validate(parse("#{word} foo($a = [$x = 10]) {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT)
+      end
+
+      it "should not permit assignments to subsequently declared parameters in #{word} parameter default nested expressions" do
+        expect(validate(parse("#{word} foo($a = ($b = 3), $b = 5) {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT)
+      end
+
+      it "should not permit assignments to previously declared parameters in #{word} parameter default nested expressions" do
+        expect(validate(parse("#{word} foo($a = 10, $b = ($a = 10)) {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT)
+      end
+
+      it "should permit assignments in #{word} parameter default inside nested lambda expressions" do
+        expect(validate(parse(
+          "#{word} foo($a = [1,2,3], $b = 0, $c = $a.map |$x| { $b = $x; $b * $a.reduce |$x, $y| {$x + $y}}) {}"))).not_to(
+          have_issue(Puppet::Pops::Issues::ILLEGAL_ASSIGNMENT_CONTEXT))
+      end
+    end
+  end
+
   context 'for reserved parameter names' do
     ['name', 'title'].each do |word|
       it "produces an error when $#{word} is used as a parameter in a class" do
@@ -313,20 +341,20 @@ describe "validating 4x" do
       end
     end
 
-    it 'does not produce an error when function is at top level script' do
+    it 'does not produce an error when function is alone at top level script' do
       source = 'function y() {}'
       expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
     end
 
-    it 'does not produce an error when function is at top level file' do
-      source = 'function y() {}'
-
-      # We simulate a file by inserting a block between the program and the contained function
-      program = parse(source).current
-      function = program.body
-      program.body = Puppet::Pops::Model::BlockExpression.new
-      program.body.addStatements(function)
-      expect(validate(program)).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+    it 'does not produce an error when function is in a top level block' do
+      source = "function x() {}\nfunction y() {}"
+      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+      source = "$a = 10\nfunction y() {}"
+      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+      source = "function y() {}\n$a = 10"
+      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
+      source = "$a = 10\nfunction y() {}\n$b = 20"
+      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
     end
   end
 

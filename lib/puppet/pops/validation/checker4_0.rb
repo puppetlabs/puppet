@@ -360,6 +360,7 @@ class Puppet::Pops::Validation::Checker4_0
 
   def check_FunctionDefinition(o)
     check_NamedDefinition(o)
+    internal_check_parameter_name_uniqueness(o)
   end
 
   def check_HostClassDefinition(o)
@@ -491,12 +492,16 @@ class Puppet::Pops::Validation::Checker4_0
     end
     return unless o.value
 
-    if o.value.is_a?(Puppet::Pops::Model::AssignmentExpression)
-      [o.value]
+    internal_check_illegal_assignment(o.value)
+  end
+
+  def internal_check_illegal_assignment(o)
+    if o.is_a?(Puppet::Pops::Model::AssignmentExpression)
+      acceptor.accept(Issues::ILLEGAL_ASSIGNMENT_CONTEXT, o)
     else
-      o.value.eAllContents.select {|model| model.is_a? Puppet::Pops::Model::AssignmentExpression }
-    end.each do |assignment|
-      acceptor.accept(Issues::ILLEGAL_ASSIGNMENT_CONTEXT, assignment)
+      # recursively check all contents unless it's a lambda expression. A lambda may contain
+      # local assignments
+      o.eContents.each {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Puppet::Pops::Model::LambdaExpression)
     end
   end
 

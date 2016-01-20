@@ -1,4 +1,5 @@
 require 'rgen/ecore/ecore'
+require 'puppet/parser/scope'
 require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
@@ -158,7 +159,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @api private
   #
   def evaluate_block_with_bindings(scope, variable_bindings, block_expr)
-    with_guarded_scope(scope) do
+    scope.with_guarded_scope do
       # change to create local scope_from - cannot give it file and line -
       # that is the place of the call, not "here"
       create_local_scope_from(variable_bindings, scope)
@@ -584,7 +585,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # memo scope level before evaluating test - don't want a match in the case test to leak $n match vars
     # to expressions after the case expression.
     #
-    with_guarded_scope(scope) do
+    scope.with_guarded_scope do
       test = evaluate(o.test, scope)
 
       result = nil
@@ -855,7 +856,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # memo scope level before evaluating test - don't want a match in the case test to leak $n match vars
     # to expressions after the selector expression.
     #
-    with_guarded_scope(scope) do
+    scope.with_guarded_scope do
       test = evaluate(o.left_expr, scope)
 
       the_default = nil
@@ -897,7 +898,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
   # Evaluates Puppet DSL `if`
   def eval_IfExpression o, scope
-    with_guarded_scope(scope) do
+    scope.with_guarded_scope do
       if is_true?(evaluate(o.test, scope), o.test)
         evaluate(o.then_expr, scope)
       else
@@ -908,7 +909,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
   # Evaluates Puppet DSL `unless`
   def eval_UnlessExpression o, scope
-    with_guarded_scope(scope) do
+    scope.with_guarded_scope do
       unless is_true?(evaluate(o.test, scope), o.test)
         evaluate(o.then_expr, scope)
       else
@@ -1127,15 +1128,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       @@compare_operator.equals(left,right)
     end
     @@compare_operator.match(left, right, scope)
-  end
-
-  def with_guarded_scope(scope)
-    scope_memo = get_scope_nesting_level(scope)
-    begin
-      yield
-    ensure
-      set_scope_nesting_level(scope, scope_memo)
-    end
   end
 
   # Maps the expression in the given array to their product except for UnfoldExpressions which are first unfolded.

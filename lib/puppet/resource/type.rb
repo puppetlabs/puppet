@@ -174,12 +174,9 @@ class Puppet::Resource::Type
 
     if code
       if @match # Only bother setting up the ephemeral scope if there are match variables to add into it
-        begin
-          elevel = scope.ephemeral_level
+        scope.with_guarded_scope do
           scope.ephemeral_from(@match, file, line)
           code.safeevaluate(scope)
-        ensure
-          scope.unset_ephemeral_var(elevel)
         end
       else
         code.safeevaluate(scope)
@@ -346,6 +343,9 @@ class Puppet::Resource::Type
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.
+  #
+  # This method is known to only be used on the server/compile side.
+  #
   # @param resource [Puppet::Parser::Resource] the resource
   # @param scope [Puppet::Parser::Scope] the scope
   #
@@ -360,9 +360,6 @@ class Puppet::Resource::Type
     resource.add_parameters_from_consume
     inject_external_parameters(resource, scope)
 
-    resource_hash = {}
-    resource.each { |k, v| resource_hash[k.to_s] = v.value unless k == :name || k == :title }
-
     if @type == :hostclass
       scope[TITLE] = resource.title.to_s.downcase
       scope[NAME] =  resource.name.to_s.downcase
@@ -370,12 +367,21 @@ class Puppet::Resource::Type
       scope[TITLE] = resource.title
       scope[NAME] =  resource.name
     end
-
     scope.class_set(self.name,scope) if hostclass? || node?
 
-    assign_defaults(resource, scope, resource_hash)
-    validate_resource_hash(resource, resource_hash)
-    resource_hash.each { |param, value| exceptwrap { scope[param] = value }}
+    param_hash = scope.with_parameter_scope(arguments.keys) do |param_scope|
+      # Assign directly to the parameter scope to avoid scope parameter validation at this point. It
+      # will happen anyway when the values are assigned to the scope after the parameter scoped has
+      # been popped.
+      resource.each { |k, v| param_scope[k.to_s] = v.value unless k == :name || k == :title }
+      assign_defaults(resource, param_scope, scope)
+      param_scope.to_hash
+    end
+
+    validate_resource_hash(resource, param_hash)
+
+    # Assign parameter values to current scope
+    param_hash.each { |param, value| exceptwrap { scope[param] = value }}
   end
 
   # Lookup and inject parameters from external scope
@@ -395,19 +401,17 @@ class Puppet::Resource::Type
   end
   private :inject_external_parameters
 
-  def assign_defaults(resource, scope, resource_hash)
+  def assign_defaults(resource, param_scope, scope)
     return unless resource.is_a?(Puppet::Parser::Resource)
     parameters = resource.parameters
-    hashed_types = parameter_struct.hashed_elements
     arguments.each do |param_name, default|
       next if default.nil?
       name = param_name.to_sym
       param = parameters[name]
       next unless param.nil? || param.value.nil?
-
-      value = default.safeevaluate(scope)
+      value = exceptwrap { param_scope.evaluate3x(param_name, default, scope) }
       resource[name] = value
-      resource_hash[param_name] = value
+      param_scope[param_name] = value
     end
   end
   private :assign_defaults
