@@ -467,14 +467,7 @@ module Util
   module_function :deterministic_rand
 
   def deterministic_rand_int(seed,max)
-    if defined?(Random) == 'constant' && Random.class == Class
-      Random.new(seed).rand(max)
-    else
-      srand(seed)
-      result = rand(max)
-      srand()
-      result
-    end
+    Random.new(seed).rand(max)
   end
   module_function :deterministic_rand_int
 end
