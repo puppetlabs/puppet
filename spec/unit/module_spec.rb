@@ -347,6 +347,20 @@ describe Puppet::Module do
       expect(mod.unmet_dependencies).to eq([])
     end
 
+    it "should throw an error if invalid dependencies are specified" do
+      expect {
+        PuppetSpec::Modules.create(
+          'foobar',
+          @modpath,
+          :metadata => {
+            :dependencies => ""
+          }
+        )
+      }.to raise_error(
+        Puppet::Module::MissingMetadata,
+        /dependencies in the file metadata.json of the module foobar must be an array, not: ''/)
+    end
+
     it "should only list unmet dependencies" do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
