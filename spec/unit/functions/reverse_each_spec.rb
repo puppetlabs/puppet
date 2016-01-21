@@ -82,4 +82,19 @@ describe 'the reverse_each function' do
   it 'should produce the choices of Enum[first,second,third] in reverse' do
     expect(eval_and_collect_notices('Enum[first,second,third].reverse_each |$x| { notice($x) }')).to eq(%w(third second first))
   end
+
+  it 'should produce nth element in reverse of range Integer[5,20] when chained after a step' do
+    expect(eval_and_collect_notices('Integer[5,20].step(4).reverse_each |$x| { notice($x) }')
+    ).to eq(['17', '13', '9', '5'])
+  end
+
+  it 'should produce nth element in reverse of times 5 when chained after a step' do
+    expect(eval_and_collect_notices('5.step(2).reverse_each |$x| { notice($x) }')).to eq(['4', '2', '0'])
+  end
+
+  it 'should produce nth element in reverse of range Integer[5,20] when chained after a step' do
+    expect(eval_and_collect_notices(
+      '[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].step(4).reverse_each |$x| { notice($x) }')
+    ).to eq(['17', '13', '9', '5'])
+  end
 end

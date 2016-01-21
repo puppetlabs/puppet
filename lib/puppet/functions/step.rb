@@ -1,0 +1,88 @@
+# Provides stepping with given interval over elements in an iterable and optionally runs a
+# [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) for each
+# element.
+#
+# This function takes two to three arguments.
+#
+# 1. An iterable that the function will iterate over.
+# 2. An integer step factor. This must be a positive integer.
+# 3. An optional lambda, which the function calls for each element in the interval. It must
+# request one parameter.
+#
+# @example Using the `step` function
+#
+# `$data.step(<n>) |$parameter| { <PUPPET CODE BLOCK> }`
+#
+# or
+#
+# `$stepped_data = $data.step(<n>)`
+#
+# or
+#
+# `step($data, <n>) |$parameter| { <PUPPET CODE BLOCK> }`
+#
+# or
+#
+# `$stepped_data = step($data, <n>)`
+#
+# When no block is given, Puppet returns an iterable that represents every nth element
+# of its first argument. This allows functions on iterables to be chained.
+#
+# When a block is given, Puppet iterates the first argument and passes each nth value in turn to
+# the block, then returns the first argument unchanged.
+#
+# @example Using the `step` function with an array, a step factor, and a one-parameter block
+#
+# ~~~ puppet
+# # For the array $data, call a block with each 3rd element of $data
+# $data = [1,2,3,4,5,6,7,8]
+# $data.step(3) |$item| {
+#  notice($item)
+# }
+# # Puppet notices the values '1', '4', '7'.
+# ~~~
+#
+# When no block is given, Puppet returns a new iterable so that a new function that takes
+# an iterable as an argument can use it as input.
+#
+# @example Using the `step` function chained with a `map` function.
+#
+# # For the array $data, return an array containing each 5th value in reverse order multiplied by 10
+# $data = Integer[0,20]
+# $transformed_data = $data.step(5).map |$item| { $item * 10 }
+# # $transformed_data contains [0,50,100,150,200]
+# ~~~
+#
+# @example The same example using `step` function chained with a `map` in alternative syntax
+#
+# # For the array $data, return an array containing each 5th value in reverse order multiplied by 10
+# $data = Integer[0,20]
+# $transformed_data = map(step($data, 5)) |$item| { $item * 10 }
+# # $transformed_data contains [0,50,100,150,200]
+# ~~~
+#
+# @since 4.4.0
+#
+Puppet::Functions.create_function(:step) do
+  dispatch :step do
+    param 'Iterable', :iterable
+    param 'Integer[1]', :step
+  end
+
+  dispatch :step_block do
+    param 'Iterable', :iterable
+    param 'Integer[1]', :step
+    block_param 'Callable[1,1]', :block
+  end
+
+  def step(iterable, step)
+    # produces an Iterable
+    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).step(step)
+  end
+
+  def step_block(iterable, step, &block)
+    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).step(step, &block)
+    # produces the receiver
+    iterable
+  end
+end
