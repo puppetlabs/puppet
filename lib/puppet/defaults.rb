@@ -147,6 +147,11 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
     },
+    :static_catalogs => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether to compile a static catalog."
+    },
     :autoflush => {
       :default => true,
       :type       => :boolean,

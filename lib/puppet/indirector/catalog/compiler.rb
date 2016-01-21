@@ -83,7 +83,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Compile the actual catalog.
   def compile(node, code_id)
-    str = "Compiled catalog for #{node.name}"
+    str = "Compiled %s for #{node.name}" % [node.environment.static_catalogs? ? 'static catalog' : 'catalog']
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
