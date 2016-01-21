@@ -25,21 +25,66 @@ module Util
 
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
-  def self.withenv(hash)
-    saved = ENV.to_hash
-    hash.each do |name, val|
-      ENV[name.to_s] = val
-    end
-
+  # Windows can store unicode chars in the environment, so need to use API calls
+  #   to get and set the environment instead of ENV due to encoding problems.
+  def self.withenv(hash, mode=:posix)
+    saved = get_environment(mode)
+    merge_environment(hash, mode)
     yield
   ensure
-    ENV.clear
-    saved.each do |name, val|
-      ENV[name] = val
+    if saved
+      clear_environment(mode)
+      merge_environment(saved, mode)
     end
   end
 
+  private
+  # @api private
+  def self.get_environment(mode=:posix)
+    case mode
+      when :posix
+        ENV.to_hash
+      when :windows
+        require 'puppet/util/windows/process'
+        Puppet::Util::Windows::Process.get_environment_strings
+      else
+        raise "Unable to retrieve the environment for mode #{mode}"
+    end
+  end
 
+  # @api private
+  def self.merge_environment(hash, mode=:posix)
+    case mode
+      when :posix
+        hash.each do |name, val|
+          ENV[name.to_s] = val
+        end
+      when :windows
+        require 'puppet/util/windows/process'
+        hash.each do |name, val|
+          name = name.to_s unless name.is_a? String
+          Puppet::Util::Windows::Process.set_environment_variable(name,val)
+        end
+      else
+        raise "Unable to merge the environment for mode #{mode}"
+    end
+  end
+
+  # @api private
+  def self.clear_environment(mode=:posix)
+    case mode
+      when :posix
+        ENV.clear
+      when :windows
+        Puppet::Util::Windows::Process.get_environment_strings.each do |key, val|
+          Puppet::Util::Windows::Process.set_environment_variable(key,nil)
+        end
+      else
+        raise "Unable to clear the environment for mode #{mode}"
+    end
+  end
+
+  public
   # Execute a given chunk of code with a new umask.
   def self.withumask(mask)
     cur = File.umask(mask)

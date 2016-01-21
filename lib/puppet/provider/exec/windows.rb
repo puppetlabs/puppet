@@ -45,7 +45,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
     end
 
     if resource[:path]
-      Puppet::Util.withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
+      Puppet::Util.withenv( {:PATH => resource[:path].join(File::PATH_SEPARATOR)}, :windows) do
         return if which(exe)
       end
     end

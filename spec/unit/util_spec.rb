@@ -24,13 +24,15 @@ describe Puppet::Util do
   end
 
   describe "#withenv" do
+    let(:mode) { Puppet.features.microsoft_windows? ? :windows : :posix }
+
     before :each do
       @original_path = ENV["PATH"]
       @new_env = {:PATH => "/some/bogus/path"}
     end
 
     it "should change environment variables within the block then reset environment variables to their original values" do
-      Puppet::Util.withenv @new_env do
+      Puppet::Util.withenv @new_env, mode do
         expect(ENV["PATH"]).to eq("/some/bogus/path")
       end
       expect(ENV["PATH"]).to eq(@original_path)
@@ -38,7 +40,7 @@ describe Puppet::Util do
 
     it "should reset environment variables to their original values even if the block fails" do
       begin
-        Puppet::Util.withenv @new_env do
+        Puppet::Util.withenv @new_env, mode do
           expect(ENV["PATH"]).to eq("/some/bogus/path")
           raise "This is a failure"
         end
@@ -50,7 +52,7 @@ describe Puppet::Util do
     it "should reset environment variables even when they are set twice" do
       # Setting Path & Environment parameters in Exec type can cause weirdness
       @new_env["PATH"] = "/someother/bogus/path"
-      Puppet::Util.withenv @new_env do
+      Puppet::Util.withenv @new_env, mode do
         # When assigning duplicate keys, can't guarantee order of evaluation
         expect(ENV["PATH"]).to match(/\/some.*\/bogus\/path/)
       end
@@ -60,12 +62,103 @@ describe Puppet::Util do
     it "should remove any new environment variables after the block ends" do
       @new_env[:FOO] = "bar"
       ENV["FOO"] = nil
-      Puppet::Util.withenv @new_env do
+      Puppet::Util.withenv @new_env, mode do
         expect(ENV["FOO"]).to eq("bar")
       end
       expect(ENV["FOO"]).to eq(nil)
     end
+  end
 
+  describe "#withenv on POSIX", :unless => Puppet.features.microsoft_windows? do
+    it "should preserve case" do
+      # start with lower case key,
+      env_key = SecureRandom.uuid.downcase
+
+      begin
+        original_value = 'hello'
+        ENV[env_key] = original_value
+        new_value = 'goodbye'
+
+        Puppet::Util.withenv({env_key.upcase => new_value}, :posix) do
+          expect(ENV[env_key]).to eq(original_value)
+          expect(ENV[env_key.upcase]).to eq(new_value)
+        end
+
+        expect(ENV[env_key]).to eq(original_value)
+        expect(ENV[env_key.upcase]).to be_nil
+      ensure
+        ENV.delete(env_key)
+      end
+    end
+  end
+
+  describe "#withenv on Windows", :if => Puppet.features.microsoft_windows? do
+
+    it "should ignore case" do
+      # start with lower case key,
+      env_key = SecureRandom.uuid.downcase + 'aaaaa'
+
+      begin
+        original_value = 'hello'
+        ENV[env_key] = original_value
+        new_value = 'goodbye'
+
+        Puppet::Util.withenv({env_key.upcase => new_value}, :windows) do
+          expect(ENV[env_key]).to eq(new_value)
+          expect(ENV[env_key.upcase]).to eq(new_value)
+        end
+
+        expect(ENV[env_key]).to eq(original_value)
+        expect(ENV[env_key.upcase]).to eq(original_value)
+      ensure
+        ENV.delete(env_key)
+      end
+    end
+
+    it "should not preserve UTF8 environment variables in the interim process" do
+      env_var_name = SecureRandom.uuid
+      # ENDASH [0xE2, 0x80, 0x93] + TM [0xE2, 0x84, 0xA2] symbol in UTF8 bytes
+      utf_8_bytes = [0xE2, 0x80, 0x93, 0xE2, 0x84, 0xA2]
+      utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
+
+      Puppet::Util.withenv({utf_8_str => utf_8_str}, :windows) do
+        expect(Puppet::Util::Windows::Process.get_environment_strings[utf_8_str]).to eq(utf_8_str)
+        expect(ENV[utf_8_str]).to_not eq(utf_8_str)
+      end
+      expect(Puppet::Util::Windows::Process.get_environment_strings[utf_8_str]).to eq(nil)
+    end
+
+    it "should preserve UTF8 environment variables" do
+      env_var_name = SecureRandom.uuid
+      # ENDASH [0xE2, 0x80, 0x93] + TM [0xE2, 0x84, 0xA2] symbol in UTF8 bytes
+      utf_8_bytes = [0xE2, 0x80, 0x93, 0xE2, 0x84, 0xA2]
+      utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
+      env_var_nonenglish_name = utf_8_str
+
+      begin
+        # Create an environment variable with non-english characters in both the name and value
+        Puppet::Util::Windows::Process.set_environment_variable(env_var_nonenglish_name, utf_8_str)
+        # Create an environment variable with non-english characters in the value
+        Puppet::Util::Windows::Process.set_environment_variable(env_var_name, utf_8_str)
+
+        original_env = Puppet::Util::Windows::Process.get_environment_strings.keys.to_a
+        Puppet::Util.withenv({'PATH' => "/some/bogus/path"}, :windows) do
+          expect(ENV["PATH"]).to eq("/some/bogus/path")
+        end
+
+        # require 'pry'; binding.pry
+        expect(Puppet::Util::Windows::Process.get_environment_strings[env_var_name]).to eq(utf_8_str)
+        expect(Puppet::Util::Windows::Process.get_environment_strings[env_var_nonenglish_name]).to eq(utf_8_str)
+        expect(Puppet::Util::Windows::Process.get_environment_strings.keys.to_a).to eq(original_env)
+
+        # TODO: document the buggy Ruby behavior with specs
+        expect(ENV[env_var_name]).to_not eq(utf_8_str)
+      ensure
+        Puppet::Util::Windows::Process.set_environment_variable(env_var_nonenglish_name, nil)
+        Puppet::Util::Windows::Process.set_environment_variable(env_var_name, nil)
+      end
+
+    end
   end
 
   describe "#absolute_path?" do
@@ -533,7 +626,7 @@ describe Puppet::Util do
 
     it "should work with Windows paths" do
       expect(Puppet::Util.pretty_backtrace(["C:/work/puppet/c.rb:12:in `foo'\n"])).
-        to eq("C:/work/puppet/c.rb:12:in `foo'")
+          to eq("C:/work/puppet/c.rb:12:in `foo'")
     end
   end
 
@@ -552,7 +645,7 @@ describe Puppet::Util do
         Puppet::Util.deterministic_rand(123,20)
         expect(srand()).to eql(1234)
       end
-    # ruby below 1.9.2 variant
+      # ruby below 1.9.2 variant
     else
       it "should set a new global seed" do
         srand(1234)
@@ -562,3 +655,4 @@ describe Puppet::Util do
     end
   end
 end
+
