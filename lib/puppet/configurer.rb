@@ -47,6 +47,7 @@ class Puppet::Configurer
   def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
     @running = false
     @splayed = false
+    @cached_catalog_status = 'unused'
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
     @handler = Puppet::Configurer::PluginHandler.new(factory)
@@ -55,13 +56,23 @@ class Puppet::Configurer
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(query_options)
     query_options ||= {}
-    # First try it with no cache, then with the cache.
-    unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(query_options)) or result = retrieve_new_catalog(query_options)
-      if ! Puppet[:usecacheonfailure]
-        Puppet.warning "Not using cache on failed catalog"
-        return nil
+    if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
+      @cached_catalog_status = 'use_cached_catalog'
+    else
+      result = retrieve_new_catalog(query_options)
+
+      if !result
+        if !Puppet[:usecacheonfailure]
+          Puppet.warning "Not using cache on failed catalog"
+          return nil
+        end
+
+        result = retrieve_catalog_from_cache(query_options)
+
+        if result
+          @cached_catalog_status = 'use_cache_on_failure'
+        end
       end
-      result = retrieve_catalog_from_cache(query_options)
     end
 
     return nil unless result
@@ -232,6 +243,7 @@ class Puppet::Configurer
 
       options[:report].code_id = catalog.code_id
       options[:report].catalog_uuid = catalog.catalog_uuid
+      options[:report].cached_catalog_status = @cached_catalog_status
       apply_catalog(catalog, options)
       report.exit_status
     rescue => detail
@@ -245,6 +257,8 @@ class Puppet::Configurer
     # pick up on new functions installed by gems or new modules being added
     # without the daemon being restarted.
     $env_module_directories = nil
+
+    report.cached_catalog_status ||= @cached_catalog_status
 
     Puppet::Util::Log.close(report)
     send_report(report)
