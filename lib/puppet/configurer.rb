@@ -111,6 +111,7 @@ class Puppet::Configurer
   def prepare_and_retrieve_catalog(options, query_options)
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
+    query_options[:transaction_uuid] = @transaction_uuid
 
     unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
       Puppet.err "Could not retrieve catalog; skipping run"
@@ -211,7 +212,6 @@ class Puppet::Configurer
       Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
-      query_options[:transaction_uuid] = @transaction_uuid
       query_options[:configured_environment] = configured_environment
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
@@ -232,7 +232,6 @@ class Puppet::Configurer
         report.environment = @environment
 
         query_options = get_facts(options)
-        query_options[:transaction_uuid] = @transaction_uuid
         query_options[:configured_environment] = configured_environment
 
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
