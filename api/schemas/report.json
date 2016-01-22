@@ -103,10 +103,19 @@
             "type":        "string"
         },
 
+        "cached_catalog_status": {
+            "description": "Whether a cached catalog was used, and if so, why it was used. Enumerator with one of the values:\n\n* `unused`, if a cached catalog was not used.\n* `use_cached_catalog`, if a cached catalog was used because the use_cached_catalog option was set.\n* `use_cache_on_failure`, if a cached catalog was used because the usecacheonfailure setting was set and the agent failed to download a new catalog",
+            "enum": [
+              "unused",
+              "use_cached_catalog",
+              "use_cache_on_failure"
+            ]
+        },
+
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["4", 4]
+            "enum":        ["5", 5]
         },
 
         "puppet_version": {

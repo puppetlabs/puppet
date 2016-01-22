@@ -64,6 +64,12 @@ describe Puppet::Transaction::Report do
     expect(report.catalog_uuid).to eq("some catalog uuid")
   end
 
+  it "should be able to set cached_catalog_status" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.cached_catalog_status = "use_cached_catalog"
+    expect(report.cached_catalog_status).to eq("use_cached_catalog")
+  end
+
   it "should take 'environment' as an argument" do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment).to eq("some environment")
   end
@@ -433,6 +439,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.transaction_uuid).to eq(report.transaction_uuid)
     expect(tripped.code_id).to eq(report.code_id)
     expect(tripped.catalog_uuid).to eq(report.catalog_uuid)
+    expect(tripped.cached_catalog_status).to eq(report.cached_catalog_status)
     expect(tripped.report_format).to eq(report.report_format)
     expect(tripped.puppet_version).to eq(report.puppet_version)
     expect(tripped.kind).to eq(report.kind)
@@ -501,6 +508,7 @@ describe Puppet::Transaction::Report do
     report.add_times("timing", 4)
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
+    report.cached_catalog_status = "unused"
     report.add_resource_status(status)
     report.finalize_report
     report
@@ -516,6 +524,7 @@ describe Puppet::Transaction::Report do
     report.add_times("timing", 4)
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
+    report.cached_catalog_status = "unused"
     report.add_resource_status(status)
     report.finalize_report
     report
