@@ -50,6 +50,8 @@ class Puppet::Configurer
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
+    @static_catalog = true
+    @checksum_type = Puppet[:digest_algorithm]
     @handler = Puppet::Configurer::PluginHandler.new(factory)
   end
 
@@ -112,6 +114,8 @@ class Puppet::Configurer
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
     query_options[:transaction_uuid] = @transaction_uuid
+    query_options[:static_catalog] = @static_catalog
+    query_options[:checksum_type] = @checksum_type
 
     unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
       Puppet.err "Could not retrieve catalog; skipping run"
