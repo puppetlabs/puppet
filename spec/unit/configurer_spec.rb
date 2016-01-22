@@ -377,6 +377,12 @@ describe Puppet::Configurer do
       expect($env_module_directories).to eq(nil)
     end
 
+    it "sends the transaction uuid in a catalog request" do
+      @agent.instance_variable_set(:@transaction_uuid, 'aaa')
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => 'aaa'))
+      @agent.run
+    end
+
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler
