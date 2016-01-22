@@ -367,6 +367,9 @@ Puppet::Type.newtype(:file) do
       creator_count += 1 if self.should(param)
     end
     creator_count += 1 if @parameters.include?(:source)
+
+    self.fail "You cannot specify more than one of content and content_uri" if @parameters.include?(:content_uri) && @parameters.include?(:content)
+
     self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
@@ -922,6 +925,7 @@ end
 require 'puppet/type/file/checksum'
 require 'puppet/type/file/content'     # can create the file
 require 'puppet/type/file/source'      # can create the file
+require 'puppet/type/file/content_uri'
 require 'puppet/type/file/target'      # creates a different type of file
 require 'puppet/type/file/ensure'      # can create the file
 require 'puppet/type/file/owner'
