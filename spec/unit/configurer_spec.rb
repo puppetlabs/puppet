@@ -388,21 +388,22 @@ describe Puppet::Configurer do
       @agent.run
     end
 
-    it "sets the checksum_type query param to the default digest_algorithm in a catalog request" do
-      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:checksum_type => 'md5'))
+    it "sets the checksum_type query param to the default supported_checksum_types in a catalog request" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything,
+        has_entries(:checksum_type => 'md5.sha256'))
       @agent.run
     end
 
-    it "sets the checksum_type query param to the digest_algorithm setting in a catalog request" do
+    it "sets the checksum_type query param to the supported_checksum_types setting in a catalog request" do
       # Regenerate the agent to pick up the new setting
-      Puppet[:digest_algorithm] = 'sha256'
+      Puppet[:supported_checksum_types] = ['sha256']
       @agent = Puppet::Configurer.new
       @agent.stubs(:init_storage)
       @agent.stubs(:download_plugins)
       @agent.stubs(:send_report)
       @agent.stubs(:save_last_run_summary)
 
-      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:checksum_type => Puppet[:digest_algorithm]))
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:checksum_type => 'sha256'))
       @agent.run
     end
 

@@ -51,7 +51,7 @@ class Puppet::Configurer
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
     @static_catalog = true
-    @checksum_type = Puppet[:digest_algorithm]
+    @checksum_type = Puppet[:supported_checksum_types]
     @handler = Puppet::Configurer::PluginHandler.new(factory)
   end
 
@@ -115,7 +115,10 @@ class Puppet::Configurer
     options[:report].host = Puppet[:node_name_value]
     query_options[:transaction_uuid] = @transaction_uuid
     query_options[:static_catalog] = @static_catalog
-    query_options[:checksum_type] = @checksum_type
+
+    # Query params don't enforce ordered evaluation, so munge this list into a
+    # dot-separated string.
+    query_options[:checksum_type] = @checksum_type.join('.')
 
     unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
       Puppet.err "Could not retrieve catalog; skipping run"
