@@ -110,7 +110,7 @@ example is formatted for readability)
          "change_count"=>0,
          "out_of_sync_count"=>0,
          "events"=>[]}},
-      "cached_catalog_status"=> "unused"}
+      "cached_catalog_status"=> "not_used"}
 
 Schema
 ------

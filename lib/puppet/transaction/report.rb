@@ -55,8 +55,8 @@ class Puppet::Transaction::Report
   attr_accessor :catalog_uuid
 
   # Whether a cached catalog was used in the run, and if so, the reason that it was used.
-  # @return [String] One of the values: 'unused', 'use_cached_catalog',
-  # or 'use_cache_on_failure'
+  # @return [String] One of the values: 'not_used', 'explicitly_requested',
+  # or 'on_failure'
   attr_accessor :cached_catalog_status
 
   # The host name for which the report is generated

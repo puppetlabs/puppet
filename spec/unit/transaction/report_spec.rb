@@ -66,8 +66,8 @@ describe Puppet::Transaction::Report do
 
   it "should be able to set cached_catalog_status" do
     report = Puppet::Transaction::Report.new("inspect")
-    report.cached_catalog_status = "use_cached_catalog"
-    expect(report.cached_catalog_status).to eq("use_cached_catalog")
+    report.cached_catalog_status = "explicitly_requested"
+    expect(report.cached_catalog_status).to eq("explicitly_requested")
   end
 
   it "should take 'environment' as an argument" do
@@ -508,7 +508,7 @@ describe Puppet::Transaction::Report do
     report.add_times("timing", 4)
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
-    report.cached_catalog_status = "unused"
+    report.cached_catalog_status = "not_used"
     report.add_resource_status(status)
     report.finalize_report
     report
@@ -524,7 +524,7 @@ describe Puppet::Transaction::Report do
     report.add_times("timing", 4)
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
-    report.cached_catalog_status = "unused"
+    report.cached_catalog_status = "not_used"
     report.add_resource_status(status)
     report.finalize_report
     report
