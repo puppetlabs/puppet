@@ -430,10 +430,13 @@ def install_binfile(from, op_file, target)
       tmp_file2 = Tempfile.new('puppet-wrapper')
       cwv = <<-EOS
 @echo off
-setlocal
-set RUBY_BIN=%~dp0
-set RUBY_BIN=%RUBY_BIN:\\=/%
-"%RUBY_BIN%ruby.exe" -x "%RUBY_BIN%puppet" %*
+SETLOCAL
+if exist "%~dp0environment.bat" (
+  call "%~dp0environment.bat" %0 %*
+) else (
+  SET PATH=%~dp0;%PATH%
+)
+ruby.exe -S -- puppet %*
 EOS
       File.open(tmp_file2.path, "w") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
