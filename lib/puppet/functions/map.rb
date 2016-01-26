@@ -78,12 +78,12 @@ Puppet::Functions.create_function(:map) do
   end
 
   dispatch :map_Enumerable_2 do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     block_param 'Callable[2,2]', :block
   end
 
   dispatch :map_Enumerable_1 do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     block_param 'Callable[1,1]', :block
   end
 
@@ -98,7 +98,7 @@ Puppet::Functions.create_function(:map) do
   def map_Enumerable_1(enumerable)
     result = []
     index = 0
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     begin
       loop { result << yield(enum.next) }
     rescue StopIteration
@@ -109,7 +109,7 @@ Puppet::Functions.create_function(:map) do
   def map_Enumerable_2(enumerable)
     result = []
     index = 0
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     begin
       loop do
         result << yield(index, enum.next)
@@ -119,12 +119,4 @@ Puppet::Functions.create_function(:map) do
     end
     result
   end
-
-  def asserted_enumerable(obj)
-    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
-      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
-    end
-    enum
-  end
-
 end

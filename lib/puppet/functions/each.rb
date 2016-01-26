@@ -106,12 +106,12 @@ Puppet::Functions.create_function(:each) do
   end
 
   dispatch :foreach_Enumerable_2 do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     block_param 'Callable[2,2]', :block
   end
 
   dispatch :foreach_Enumerable_1 do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     block_param 'Callable[1,1]', :block
   end
 
@@ -134,7 +134,7 @@ Puppet::Functions.create_function(:each) do
   end
 
   def foreach_Enumerable_1(enumerable)
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
       begin
         loop { yield(enum.next) }
       rescue StopIteration
@@ -144,7 +144,7 @@ Puppet::Functions.create_function(:each) do
   end
 
   def foreach_Enumerable_2(enumerable)
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     index = 0
     begin
       loop do
@@ -156,12 +156,4 @@ Puppet::Functions.create_function(:each) do
     # produces the receiver
     enumerable
   end
-
-  def asserted_enumerable(obj)
-    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
-      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
-    end
-    enum
-  end
-
 end
