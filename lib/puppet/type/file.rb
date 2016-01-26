@@ -124,6 +124,11 @@ Puppet::Type.newtype(:file) do
     end
   end
 
+  newparam(:checksum_value) do
+    desc "The checksum of the source contents. Only md5 and sha256 are supported when
+      specifying this parameter."
+  end
+
   newparam(:recurse) do
     desc "Whether to recursively manage the _contents_ of a directory. This attribute
       is only used when `ensure => directory` is set. The allowed values are:
@@ -385,6 +390,10 @@ Puppet::Type.newtype(:file) do
     if @parameters[:content] && @parameters[:content].actual_content
       # Now that we know the checksum, update content (in case it was created before checksum was known).
       @parameters[:content].value = @parameters[:checksum].sum(@parameters[:content].actual_content)
+    end
+
+    if self[:checksum] && self[:checksum_value] && !send("#{self[:checksum]}?", self[:checksum_value])
+      self.fail "Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}"
     end
 
     provider.validate if provider.respond_to?(:validate)

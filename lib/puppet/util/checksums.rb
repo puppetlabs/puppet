@@ -1,5 +1,6 @@
 require 'digest/md5'
 require 'digest/sha1'
+require 'time'
 
 # A stand-alone module for calculating checksums
 # in a generic way.
@@ -41,6 +42,10 @@ module Puppet::Util::Checksums
     Digest::SHA256.hexdigest(content)
   end
 
+  def sha256?(string)
+    string =~ /^\h{64}$/
+  end
+
   def sha256_file(filename, lite = false)
     require 'digest/sha2'
 
@@ -62,6 +67,10 @@ module Puppet::Util::Checksums
     sha256(content[0..511])
   end
 
+  def sha256lite?(string)
+    sha256?(string)
+  end
+
   def sha256lite_file(filename)
     sha256_file(filename, true)
   end
@@ -77,6 +86,10 @@ module Puppet::Util::Checksums
   # Calculate a checksum using Digest::MD5.
   def md5(content)
     Digest::MD5.hexdigest(content)
+  end
+
+  def md5?(string)
+    string =~ /^\h{32}$/
   end
 
   # Calculate a checksum of a file's content using Digest::MD5.
@@ -99,6 +112,10 @@ module Puppet::Util::Checksums
     md5(content[0..511])
   end
 
+  def md5lite?(string)
+    md5?(string)
+  end
+
   # Calculate a checksum of the first 500 chars of a file's content using Digest::MD5.
   def md5lite_file(filename)
     md5_file(filename, true)
@@ -114,6 +131,12 @@ module Puppet::Util::Checksums
 
   def mtime(content)
     ""
+  end
+
+  def mtime?(string)
+    !!DateTime.parse(string)
+  rescue
+    false
   end
 
   # Return the :mtime timestamp of a file.
@@ -132,6 +155,10 @@ module Puppet::Util::Checksums
   # Calculate a checksum using Digest::SHA1.
   def sha1(content)
     Digest::SHA1.hexdigest(content)
+  end
+
+  def sha1?(string)
+    string =~ /^\h{40}$/
   end
 
   # Calculate a checksum of a file's content using Digest::SHA1.
@@ -154,6 +181,10 @@ module Puppet::Util::Checksums
     sha1(content[0..511])
   end
 
+  def sha1lite?(string)
+    sha1?(string)
+  end
+
   # Calculate a checksum of the first 500 chars of a file's content using Digest::SHA1.
   def sha1lite_file(filename)
     sha1_file(filename, true)
@@ -171,6 +202,12 @@ module Puppet::Util::Checksums
     ""
   end
 
+  def ctime?(string)
+    !!DateTime.parse(string)
+  rescue
+    false
+  end
+
   # Return the :ctime of a file.
   def ctime_file(filename)
     Puppet::FileSystem.stat(filename).send(:ctime)
@@ -182,6 +219,10 @@ module Puppet::Util::Checksums
 
   def none(content)
     ""
+  end
+
+  def none?(string)
+    string.empty?
   end
 
   # Return a "no checksum"
