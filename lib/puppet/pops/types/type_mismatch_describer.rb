@@ -217,8 +217,8 @@ module Puppet::Pops::Types
           e = e.map { |t| t.to_s }
           a = a.to_s
         else
-          sns = e.map { |t| t.simple_name }
-          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }
+          sns = e.map { |t| t.simple_name }.uniq
+          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
           a = a.simple_name
         end
         case e.size
