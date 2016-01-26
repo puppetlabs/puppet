@@ -533,6 +533,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def infer_Iterator(o)
+    Types::PIteratorType.new(o.element_type)
+  end
+
+  # @api private
   def infer_Function(o)
     o.class.dispatcher.to_type
   end
@@ -794,6 +799,24 @@ class Puppet::Pops::Types::TypeCalculator
       'Integer'
     else
       "Integer[#{range.join(', ')}]"
+    end
+  end
+
+  # @api private
+  def string_PIterableType(t)
+    if t.element_type.nil?
+      'Iterable'
+    else
+      "Iterable[#{string(t.element_type)}]"
+    end
+  end
+
+  # @api private
+  def string_PIteratorType(t)
+    if t.element_type.nil?
+      'Iterator'
+    else
+      "Iterator[#{string(t.element_type)}]"
     end
   end
 

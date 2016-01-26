@@ -46,4 +46,22 @@ module PuppetSpec::Compiler
     relationships.traverse { |resource| order_seen << resource.ref }
     order_seen
   end
+
+  def collect_notices(code, node = Puppet::Node.new('foonode'))
+    Puppet[:code] = code
+    compiler = Puppet::Parser::Compiler.new(node)
+    logs = []
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      yield(compiler)
+    end
+    logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
+    logs
+  end
+
+  def eval_and_collect_notices(code, node = Puppet::Node.new('foonode'))
+    collect_notices('undef', node) do |compiler|
+      compiler.compile
+      Puppet::Pops::Parser::EvaluatingParser.new().evaluate_string(compiler.topscope, code)
+    end
+  end
 end

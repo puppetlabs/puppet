@@ -46,6 +46,20 @@ module Puppet::Pops::Types::TypeFactory
     Types::PNumericType::DEFAULT
   end
 
+  # Produces the Iterable type
+  # @api public
+  #
+  def self.iterable(elem_type = nil)
+    elem_type.nil? ? Types::PIterableType::DEFAULT : Types::PIterableType.new(elem_type)
+  end
+
+  # Produces the Iterator type
+  # @api public
+  #
+  def self.iterator(elem_type = nil)
+    elem_type.nil? ? Types::PIteratorType::DEFAULT : Types::PIteratorType.new(elem_type)
+  end
+
   # Produces a string representation of the type
   # @api public
   #
