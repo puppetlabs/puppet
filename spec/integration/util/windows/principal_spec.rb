@@ -65,6 +65,13 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
         principal.lookup_account_name('ConanTheBarbarian')
       }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountNameW/)
     end
+
+    it "should return a BUILTIN domain principal for empty account names" do
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('')
+      expect(principal.account_type).to eq(:SidTypeDomain)
+      expect(principal.sid).to eq('S-1-5-32')
+      expect(principal.domain).to eq('BUILTIN')
+    end
   end
 
   describe ".lookup_account_sid" do
@@ -97,10 +104,34 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account_type).to eq(:SidTypeAlias)
     end
 
-    it "should raise an error when trying to lookup completely invalid SID bytes" do
+    it "should raise an error when trying to lookup nil" do
+      principal = Puppet::Util::Windows::SID::Principal
+      expect {
+        principal.lookup_account_sid(nil)
+      }.to raise_error(Puppet::Util::Windows::Error, /must not be nil/)
+    end
+
+    it "should raise an error when trying to lookup non-byte array" do
+      principal = Puppet::Util::Windows::SID::Principal
+      expect {
+        principal.lookup_account_sid('ConanTheBarbarian')
+      }.to raise_error(Puppet::Util::Windows::Error, /array/)
+    end
+
+    it "should raise an error when trying to lookup an empty array" do
       principal = Puppet::Util::Windows::SID::Principal
       expect {
         principal.lookup_account_sid([])
+      }.to raise_error(Puppet::Util::Windows::Error, /at least 1 byte long/)
+    end
+
+    # https://technet.microsoft.com/en-us/library/cc962011.aspx
+    # "... The structure used in all SIDs created by Windows NT and Windows 2000 is revision level 1. ..."
+    # Therefore a value of zero for the revision, is not a valid SID
+    it "should raise an error when trying to lookup completely invalid SID bytes" do
+      principal = Puppet::Util::Windows::SID::Principal
+      expect {
+        principal.lookup_account_sid([0])
       }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  The parameter is incorrect/)
     end
 
@@ -111,5 +142,12 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
         principal.lookup_account_sid([1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
       }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  No mapping between account names and security IDs was done/)
     end
+    
+    it "should return a domain principal for BUILTIN SID S-1-5-32" do
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_sid([1, 1, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0])
+      expect(principal.account_type).to eq(:SidTypeDomain)
+      expect(principal.sid).to eq('S-1-5-32')
+      expect(principal.domain).to eq('BUILTIN')
+    end    
   end
 end
