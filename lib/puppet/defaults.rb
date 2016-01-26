@@ -1570,7 +1570,9 @@ EOT
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether plugins should be synced with the central server.",
+      :desc       => "Whether plugins should be synced with the central server. This setting is
+        deprecated.",
+     :deprecated => :completely,
     },
 
     :pluginsignore => {
