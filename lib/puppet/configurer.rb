@@ -47,7 +47,7 @@ class Puppet::Configurer
   def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
     @running = false
     @splayed = false
-    @cached_catalog_status = 'unused'
+    @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = SecureRandom.uuid
     @handler = Puppet::Configurer::PluginHandler.new(factory)
@@ -57,7 +57,7 @@ class Puppet::Configurer
   def retrieve_catalog(query_options)
     query_options ||= {}
     if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
-      @cached_catalog_status = 'use_cached_catalog'
+      @cached_catalog_status = 'explicitly_requested'
     else
       result = retrieve_new_catalog(query_options)
 
@@ -70,7 +70,7 @@ class Puppet::Configurer
         result = retrieve_catalog_from_cache(query_options)
 
         if result
-          @cached_catalog_status = 'use_cache_on_failure'
+          @cached_catalog_status = 'on_failure'
         end
       end
     end
