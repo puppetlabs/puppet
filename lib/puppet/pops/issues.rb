@@ -73,19 +73,30 @@ module Puppet::Pops::Issues
       instance_eval &block
     end
 
-    # Returns the label provider given as a key in the hash passed to #format.
-    # If given an argument, calls #label on the label provider (caller would otherwise have to
-    # call label.label(it)
+    # Obtains the label provider given as a key `:label` in the hash passed to #format. The label provider is
+    # return if no arguments are given. If given an argument, returns the result of calling #label on the label
+    # provider.
     #
-    def label(it = nil)
-      raise "Label provider key :label must be set to produce the text of the message!" unless @data[:label]
-      it.nil? ? @data[:label] : @data[:label].label(it)
+    # @param args [Object] one object to obtain a label for or zero arguments to obtain the label provider
+    # @return [Puppet::Pops::LabelProvider,String] the label provider or label depending on if an argument is given or not
+    # @raise [Puppet::Error] if no label provider is found
+    def label(*args)
+      args.empty? ? label_provider : label_provider.label(args[0])
+    end
+
+    # Returns the label provider given as key `:label` in the hash passed to #format.
+    # @return [Puppet::Pops::LabelProvider] the label provider
+    # @raise [Puppet::Error] if no label provider is found
+    def label_provider
+      label_provider = @data[:label]
+      raise Puppet::Error, 'Label provider key :label must be set to produce the text of the message!' unless label_provider
+      label_provider
     end
 
     # Returns the label provider given as a key in the hash passed to #format.
     #
     def semantic
-      raise "Label provider key :semantic must be set to produce the text of the message!" unless @data[:semantic]
+      raise Puppet::Error, 'Label provider key :semantic must be set to produce the text of the message!' unless @data[:semantic]
       @data[:semantic]
     end
   end
