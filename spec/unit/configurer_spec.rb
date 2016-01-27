@@ -377,6 +377,36 @@ describe Puppet::Configurer do
       expect($env_module_directories).to eq(nil)
     end
 
+    it "sends the transaction uuid in a catalog request" do
+      @agent.instance_variable_set(:@transaction_uuid, 'aaa')
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => 'aaa'))
+      @agent.run
+    end
+
+    it "sets the static_catalog query param to true in a catalog request" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:static_catalog => true))
+      @agent.run
+    end
+
+    it "sets the checksum_type query param to the default supported_checksum_types in a catalog request" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything,
+        has_entries(:checksum_type => 'md5.sha256'))
+      @agent.run
+    end
+
+    it "sets the checksum_type query param to the supported_checksum_types setting in a catalog request" do
+      # Regenerate the agent to pick up the new setting
+      Puppet[:supported_checksum_types] = ['sha256']
+      @agent = Puppet::Configurer.new
+      @agent.stubs(:init_storage)
+      @agent.stubs(:download_plugins)
+      @agent.stubs(:send_report)
+      @agent.stubs(:save_last_run_summary)
+
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:checksum_type => 'sha256'))
+      @agent.run
+    end
+
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler
