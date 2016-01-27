@@ -19,6 +19,9 @@ describe "Puppet::InfoService" do
            class bar($bar_a, Integer $bar_b, String $bar_c = 'c default value') { }
            class bar2($bar2_a, Integer $bar2_b, String $bar2_c = 'c default value') { }
         CODE
+        'intp.pp' => <<-CODE,
+           class intp(String $intp_a = "default with interpolated $::os_family") { }
+        CODE
         'fee.pp' => <<-CODE,
            class fee(Integer $fee_a = 1+1) { }
         CODE
@@ -52,13 +55,15 @@ describe "Puppet::InfoService" do
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
            ]} # end production env
@@ -75,13 +80,15 @@ describe "Puppet::InfoService" do
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
            ],
@@ -90,13 +97,15 @@ describe "Puppet::InfoService" do
               :params=>[
                 {:name=>"bar_a"},
                 {:name=>"bar_b", :type=>"Integer"},
-                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
               ]},
             {:name=>"bar2",
               :params=>[
                 {:name=>"bar2_a"},
                 {:name=>"bar2_b", :type=>"Integer"},
-                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value",
+                :default_source=>"'c default value'"}
               ]
             }
           ],
@@ -121,13 +130,15 @@ describe "Puppet::InfoService" do
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
            ],
@@ -136,13 +147,15 @@ describe "Puppet::InfoService" do
               :params=>[
                 {:name=>"bar_a"},
                 {:name=>"bar_b", :type=>"Integer"},
-                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
               ]},
             {:name=>"bar2",
               :params=>[
                 {:name=>"bar2_a"},
                 {:name=>"bar2_b", :type=>"Integer"},
-                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
                 ]
               }
             ],
@@ -209,6 +222,22 @@ describe "Puppet::InfoService" do
                ]},
            ]} # end production env
         })
+    end
+
+    it 'does not evaluate default expressions' do
+      files = ['intp.pp'].map {|f| File.join(code_dir, f) }
+      result = Puppet::InfoService.classes_per_environment({'production' => files })
+      expect(result).to eq({
+        'production' =>{
+          "#{code_dir}/intp.pp"=>[
+            {:name=> 'intp',
+              :params=>[
+                {:name=> 'intp_a',
+                  :type=> 'String',
+                  :default_source=>'"default with interpolated $::os_family"'}
+              ]},
+          ]} # end production env
+      })
     end
 
     it "produces error entry if file is broken" do
