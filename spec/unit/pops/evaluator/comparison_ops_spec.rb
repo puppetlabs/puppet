@@ -86,6 +86,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "'1.0' < 1.1 == true" do
         expect{evaluate(literal('1.0') <  literal(1.1))}.to raise_error(/String < Float/)
       end
+      it "undef < 1.1 == true" do
+        expect{evaluate(literal(nil) <  literal(1.1))}.to raise_error(/Undef Value < Float/)
+      end
     end
 
     context "of regular expressions" do
