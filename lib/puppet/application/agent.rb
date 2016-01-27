@@ -404,7 +404,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 
-    if Puppet[:catalog_cache_terminus]
+    if Puppet[:noop]
+      Puppet::Resource::Catalog.indirection.cache_class = nil
+    elsif Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 

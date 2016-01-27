@@ -478,4 +478,13 @@ describe Puppet::Application::Apply do
     @apply.initialize_app_defaults
     @apply.setup
   end
+
+  it "should set catalog cache class to nil during a noop run" do
+    Puppet[:catalog_cache_terminus] = "json"
+    Puppet[:noop] = true
+    Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(nil)
+
+    @apply.initialize_app_defaults
+    @apply.setup
+  end
 end
