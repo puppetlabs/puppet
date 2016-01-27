@@ -163,6 +163,10 @@ describe Puppet::Pops::Types::TypeParser do
    expect(parser.parse("Integer[1,2]")).to be_the_type(types.range(1,2))
   end
 
+  it 'parses a negative integer range' do
+    expect(parser.parse("Integer[-3,-1]")).to be_the_type(types.range(-3,-1))
+  end
+
   it 'parses a float range' do
    expect(parser.parse("Float[1.0,2.0]")).to be_the_type(types.float_range(1.0,2.0))
   end
