@@ -96,6 +96,11 @@ class Puppet::Pops::Types::TypeParser
   end
 
   # @api private
+  def interpret_UnaryMinusExpression(o)
+    -@type_transformer.visit_this_0(self, o.expr)
+  end
+
+  # @api private
   def interpret_LiteralFloat(o)
     o.value
   end
