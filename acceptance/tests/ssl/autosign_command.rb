@@ -32,9 +32,25 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   fqdn = master.execute('facter fqdn')
 
   step "Step 1: ensure autosign command can approve CSRs" do
+
+    # Our script needs to consume stdin (SERVER-1116)
+    # We should revert back to /bin/true once resolved
+    autosign_true_script = <<-EOF
+!#/bin/bash
+while read line
+do
+    : # noop command
+done
+exit 0
+EOF
+
+    autosign_true_script_path = "#{testdirs[master]}/mytrue"
+    create_remote_file(master, autosign_true_script_path, autosign_true_script)
+    on(master, "chmod 777 #{autosign_true_script_path}")
+
     master_opts = {
       'master' => {
-        'autosign' => '/bin/true',
+        'autosign' => autosign_true_script_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
       }
     }
@@ -55,9 +71,25 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   end
 
   step "Step 2: ensure autosign command can reject CSRs" do
+
+    # Our script needs to consume stdin (SERVER-1116)
+    # We should revert back to /bin/false once resolved
+    autosign_false_script = <<-EOF
+!#/bin/bash
+while read line
+do
+    : # noop command
+done
+exit 1
+EOF
+
+    autosign_false_script_path = "#{testdirs[master]}/myfalse"
+    create_remote_file(master, autosign_false_script_path, autosign_false_script)
+    on(master, "chmod 777 #{autosign_false_script_path}")
+
     master_opts = {
       'master' => {
-        'autosign' => '/bin/false',
+        'autosign' => autosign_false_script_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
       }
     }
