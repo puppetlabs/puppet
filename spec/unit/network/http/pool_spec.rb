@@ -109,6 +109,33 @@ describe Puppet::Network::HTTP::Pool do
       end rescue nil
     end
 
+    it 'sets keepalive bit on network socket' do
+      pool = create_pool
+      s = Socket.new(Socket::PF_INET, Socket::SOCK_STREAM)
+      pool.setsockopts(Net::BufferedIO.new(s))
+
+      # On windows, Socket.getsockopt() doesn't return exactly the same data
+      # as an equivalent Socket::Option.new() statement, so we strip off the
+      # unrelevant bits only on this platform.
+      #
+      # To make sure we're not voiding the test case by doing this, we check
+      # both with and without the keepalive bit set.
+      #
+      # This workaround can be removed once all the ruby versions we care about
+      # have the patch from https://bugs.ruby-lang.org/issues/11958 applied.
+      #
+      keepalive   = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, true).data
+      nokeepalive = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, false).data
+
+      if Puppet::Util::Platform.windows?
+        keepalive   = keepalive[0]
+        nokeepalive = nokeepalive[0]
+      end
+
+      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to eq(keepalive)
+      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to_not eq(nokeepalive)
+    end
+
     context 'when releasing connections' do
       it 'releases HTTP connections' do
         conn = create_connection(site)
@@ -150,6 +177,7 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
       pool = create_pool
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -169,6 +197,7 @@ describe Puppet::Network::HTTP::Pool do
 
       conn = create_connection(site)
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -179,6 +208,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool
       pool.factory.expects(:create_connection).with(site).returns(conn)
+      pool.expects(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -205,6 +235,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool_with_expired_connections(site, conn)
       pool.factory.expects(:create_connection => stub('conn', :start => nil))
+      pool.expects(:setsockopts)
 
       pool.borrow(site, verify)
     end
@@ -217,6 +248,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool = create_pool_with_expired_connections(site, conn)
       pool.factory.expects(:create_connection => stub('open_conn', :start => nil))
+      pool.expects(:setsockopts)
 
       pool.borrow(site, verify)
     end
