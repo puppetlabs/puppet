@@ -240,7 +240,7 @@ module Puppet::Util::Windows::Process
     pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, ENVSTRINGS_TERMINATOR_WCHAR)
       .split(?\x00)
       .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
-      .map { |env_pair| env_pair.split('=', -2) }
+      .map { |env_pair| env_pair.split('=', 2) }
     Hash[ pairs ]
   ensure
     if env_ptr && ! env_ptr.null?
