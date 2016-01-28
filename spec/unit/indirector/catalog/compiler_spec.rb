@@ -46,7 +46,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @request.stubs(:options).returns(:use_node => @node)
       @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
@@ -63,7 +63,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should use the authenticated node name if no request key is provided" do
       @request.stubs(:key).returns(nil)
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -71,7 +71,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request.expects(:key).returns "my_node"
 
       Puppet::Node.indirection.expects(:find).with("my_node", anything).returns @node
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -88,7 +88,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should pass the found node to the compiler for compiling" do
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       config = mock 'config'
-      Puppet::Parser::Compiler.expects(:compile).with(@node, nil)
+      Puppet::Parser::Compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -144,6 +144,77 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       expect(@compiler.find(@request).code_id).to eq(code_id)
+    end
+
+    it "does not inline metadata when the static_catalog option is false" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = false
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "does not inline metadata when static_catalogs are disabled" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'md5'
+      @node.environment.stubs(:static_catalogs?).returns false
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "inlines metadata when the static_catalog option is true and static_catalogs are enabled" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'sha256'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).with(catalog, :sha256).returns catalog
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "inlines metadata with the first common checksum type" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'atime.md5.sha256.mtime'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).with(catalog, :md5).returns catalog
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "errors if checksum_type contains no shared checksum types" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'atime.sha512'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      expect { @compiler.find(@request) }.to raise_error Puppet::Error,
+        "Unable to find a common checksum type between agent 'atime.sha512' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+    end
+
+    it "errors if checksum_type contains no shared checksum types" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = nil
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      expect { @compiler.find(@request) }.to raise_error Puppet::Error,
+        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
     end
   end
 
@@ -299,5 +370,95 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(@compiler.filter(@catalog)).to eq(catalog)
     end
 
+  end
+
+  def build_catalog(node, num_resources, sources = nil, parameters = {:ensure => 'file'})
+    catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
+
+    resources = []
+    resources << Puppet::Resource.new("notify", "alpha")
+    resources << Puppet::Resource.new("notify", "omega")
+
+    0.upto(num_resources) do |idx|
+      parameters.merge! :require => "Notify[alpha]", :before  => "Notify[omega]"
+      if sources
+        parameters.merge! :source => sources[idx % sources.size]
+      end
+      # The compiler does not operate on a RAL catalog, so we're
+      # using Puppet::Resource to produce a resource catalog.
+      agnostic_path = File.expand_path("/tmp/file_#{idx}.txt") # Windows Friendly
+      rsrc = Puppet::Resource.new("file", agnostic_path, :parameters => parameters)
+      rsrc.file = 'site.pp'
+      rsrc.line = idx+1
+      resources << rsrc
+    end
+
+    resources.each do |rsrc|
+      catalog.add_resource(rsrc)
+    end
+    catalog
+  end
+
+  describe "when inlining metadata" do
+    let(:node) { Puppet::Node.new 'me' }
+    let(:checksum_type) { 'md5' }
+    before :each do
+      @compiler = Puppet::Resource::Catalog::Compiler.new
+    end
+
+    [['md5', 'b1946ac92492d2347c6235b4d2611184'],
+     ['sha256', '5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03']].each do |checksum_type, sha|
+      describe "with agent requesting checksum_type #{checksum_type}" do
+        it "sets checksum and checksum_value for resources with puppet:// source URIs" do
+          catalog = build_catalog(node, 3, ['puppet:///modules/mymodule/config_file.txt'])
+          catalog.resources.select {|r| r.type == 'File'}.each do |r|
+            ral = r.to_ral
+            r.expects(:to_ral).returns(ral)
+
+            metadata = stub 'metadata'
+            metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
+            metadata.stubs(:ftype).returns("file")
+
+            source = stub 'source'
+            source.stubs(:metadata).returns(metadata)
+
+            ral.expects(:parameter).with(:source).returns(source)
+          end
+          expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+        end
+      end
+    end
+
+    it "skips absent resources" do
+      catalog = build_catalog(node, 3, nil, :ensure => 'absent')
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        r.expects(:to_ral).never
+      end
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+    end
+
+    it "skips resources without a source" do
+      catalog = build_catalog(node, 3)
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        r.expects(:to_ral).never
+      end
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+    end
+
+    it "skips resources with a local source" do
+      catalog = build_catalog(node, 3, ['/tmp/foo_source'])
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        r.expects(:to_ral).never
+      end
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+    end
+
+    it "skips resources with a http source" do
+      catalog = build_catalog(node, 3, ['http://foo.source.io', 'https://foo.source.io'])
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        r.expects(:to_ral).never
+      end
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+    end
   end
 end
