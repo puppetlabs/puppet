@@ -52,6 +52,7 @@ module Puppet::Util::Windows::APITypes
 
     alias_method :read_wchar, :read_uint16
     alias_method :read_word,  :read_uint16
+    alias_method :read_array_of_wchar, :read_array_of_uint16
 
     def read_wide_string(char_length, dst_encoding = Encoding::UTF_8)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
@@ -59,14 +60,14 @@ module Puppet::Util::Windows::APITypes
       str.encode(dst_encoding)
     end
 
-    def read_arbitrary_wide_string_up_to(max_char_length = 512)
+    def read_arbitrary_wide_string_up_to(max_char_length = 512, terminal_array = [NULL_TERMINATOR_WCHAR])
       # max_char_length is number of wide chars (typically excluding NULLs), *not* bytes
       # use a pointer to read one UTF-16LE char (2 bytes) at a time
       wchar_ptr = FFI::Pointer.new(:wchar, address)
 
       # now iterate 2 bytes at a time until an offset lower than max_char_length is found
-      0.upto(max_char_length - 1) do |i|
-        if wchar_ptr[i].read_wchar == NULL_TERMINATOR_WCHAR
+      0.upto(max_char_length - terminal_array.length) do |i|
+        if wchar_ptr[i].read_array_of_wchar(terminal_array.length) == terminal_array
           return read_wide_string(i)
         end
       end
