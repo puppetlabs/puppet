@@ -16,7 +16,7 @@ module Puppet::Pops::Types
     # An `ArgumentError` is raised for all other objects.
     #
     # @param o [Object] The object to produce an `Iterable` for
-    # @return [Iterable,nil] The produced `Iterable` or `nil` if it couldn't be produced
+    # @return [Iterable,nil] The produced `Iterable`
     # @raise [ArgumentError] In case an `Iterable` cannot be produced
     # @api public
     def self.asserted_iterable(caller, obj)
@@ -50,24 +50,39 @@ module Puppet::Pops::Types
       when String
         Iterator.new(PStringType.new(PIntegerType.new(1, 1)), o.each_char)
       when Array
-        tc = TypeCalculator.singleton
-        Iterator.new(tc.unwrap_single_variant(PVariantType.new(o.map {|e| tc.infer_set(e) })), o.each)
+        if o.empty?
+          Iterator.new(PUnitType::DEFAULT, o.each)
+        else
+          tc = TypeCalculator.singleton
+          Iterator.new(tc.unwrap_single_variant(PVariantType.new(o.map {|e| tc.infer_set(e) })), o.each)
+        end
       when Hash
         # Each element is a two element [key, value] tuple.
-        tc = TypeCalculator.singleton
-        Iterator.new(PTupleType.new([
-          tc.unwrap_single_variant(PVariantType.new(o.keys.map {|e| tc.infer_set(e) })),
-          tc.unwrap_single_variant(PVariantType.new(o.values.map {|e| tc.infer_set(e) }))], PIntegerType.new(2,2)), o.each_pair)
+        if o.empty?
+          Iterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
+        else
+          tc = TypeCalculator.singleton
+          Iterator.new(PTupleType.new([
+            tc.unwrap_single_variant(PVariantType.new(o.keys.map {|e| tc.infer_set(e) })),
+            tc.unwrap_single_variant(PVariantType.new(o.values.map {|e| tc.infer_set(e) }))], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
+        end
       when Integer
-        o > 0 ? IntegerRangeIterator.new(PIntegerType.new(0, o - 1)) : nil
+        if o == 0
+          Iterator.new(PUnitType::DEFAULT, o.times)
+        elsif o > 0
+          IntegerRangeIterator.new(PIntegerType.new(0, o - 1))
+        else
+          nil
+        end
       when PIntegerType
-        o.enumerable? ? IntegerRangeIterator.new(o) : nil
+        # a finite range will always produce at least one element since it's inclusive
+        o.finite_range? ? IntegerRangeIterator.new(o) : nil
       when PEnumType
         Iterator.new(o, o.values)
       when Range
         min = o.min
         max = o.max
-        if min.is_a?(Integer) && max.is_a?(Integer) && max > min
+        if min.is_a?(Integer) && max.is_a?(Integer) && max >= min
           IntegerRangeIterator.new(PIntegerType.new(min, max))
         elsif min.is_a?(String) && max.is_a?(String) && max > min
           # A generalized element type where only the size is inferred is used here since inferring the full
@@ -84,9 +99,6 @@ module Puppet::Pops::Types
           # Unsupported range. It's either descending or nonsensical for other reasons (float, mixed types, etc.)
           nil
         end
-      when Dir
-        # Enumerable over file names
-        Iterator.new(PStringType::NON_EMPTY, o.each)
       else
         # Not supported. We cannot determine the element type
         nil

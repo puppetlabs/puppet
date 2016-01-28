@@ -103,13 +103,14 @@ module Puppet::Pops
         false
       end
 
-      # Returns the `PIterableType` that this type should be assignable to to, or `nil` if no such type exists.
+      # Returns the `PIterableType` that this type should be assignable to, or `nil` if no such type exists.
       # A type that returns a `PIterableType` must respond `true` to `#iterable?`.
       #
-      # Any Collection[T] is assignable to an Iterable[T]
-      # A String is assignable to an Iterable[String] iterating over the strings characters
-      # An Integer is assignable to an Iterable[Integer] iterating over the 'times' enumerator
-      # A Type[T] is assignabel to an Iterable[Type[T]] if T is an Integer or Enum
+      # @example
+      #     Any Collection[T] is assignable to an Iterable[T]
+      #     A String is assignable to an Iterable[String] iterating over the strings characters
+      #     An Integer is assignable to an Iterable[Integer] iterating over the 'times' enumerator
+      #     A Type[T] is assignable to an Iterable[Type[T]] if T is an Integer or Enum
       #
       # @return [PIterableType,nil] The iterable type that this type is assignable to or `nil`
       # @api private
@@ -235,7 +236,7 @@ module Puppet::Pops
         when PEnumType
           true
         when PIntegerType
-          @type.enumerable?
+          @type.finite_range?
         else
           false
         end
@@ -245,9 +246,13 @@ module Puppet::Pops
         # The types PIntegerType and PEnumType are Iterable
         case @type
         when PEnumType
-          @type.each
+          # @type describes the element type perfectly since the iteration is made over the
+          # contained choices.
+          PIterableType.new(@type)
         when PIntegerType
-          @type.enumerable? ? @type.each : nil
+          # @type describes the element type perfectly since the iteration is made over the
+          # specified range.
+          @type.finite_range? ? PIterableType.new(@type) : nil
         else
           nil
         end
@@ -436,7 +441,8 @@ module Puppet::Pops
       end
 
       def iterable_type
-        PIterableType.new(PStringType::DEFAULT)
+        # An instance of an Enum is a String
+        PStringType::ITERABLE_TYPE
       end
 
       def hash
@@ -536,11 +542,10 @@ module Puppet::Pops
     # @api public
     #
     class PIntegerType < PNumericType
-      # Answers the question, "is this instance of PIntegerType enumerable?" (as opposed to if instances described by
-      # this type is enumerable). Will respond `true` for any range that is bounded at both ends.
+      # Will respond `true` for any range that is bounded at both ends.
       #
-      # @return [Boolean] `true` if the type is enumerable.
-      def enumerable?
+      # @return [Boolean] `true` if the type describes a finite range.
+      def finite_range?
         @from != -Float::INFINITY && @to != Float::INFINITY
       end
 
@@ -636,7 +641,7 @@ module Puppet::Pops
       end
 
       def iterable_type
-        PIterableType.new(element_type)
+        PIterableType.new(@element_type)
       end
 
       def ==(o)
@@ -682,12 +687,12 @@ module Puppet::Pops
         if @element_type.nil? || @element_type.assignable?(PAnyType::DEFAULT)
           # Any element_type will do
           case o
-          when Iterable, String, Hash, Enumerable, Enumerator, Range, PEnumType
+          when Iterable, String, Hash, Array, Range, PEnumType
             true
           when Integer
-            o > 0
+            o >= 0
           when PIntegerType
-            o.enumerable?
+            o.finite_range?
           else
             false
           end
@@ -723,8 +728,7 @@ module Puppet::Pops
       # @api private
       def _assignable?(o)
         if @element_type.nil? || @element_type.assignable?(PAnyType::DEFAULT)
-          # Don't request the iterable_type since it might be expensive to compute the
-          # type of its elements
+          # Don't request the iterable_type. Since this Iterable accepts Any element, it is enough that o is iterable.
           o.iterable?
         else
           o = o.iterable_type
@@ -799,7 +803,7 @@ module Puppet::Pops
       end
 
       def iterable_type
-        PIterableType.new(PStringType::DEFAULT)
+        ITERABLE_TYPE
       end
 
       def ==(o)
@@ -817,6 +821,9 @@ module Puppet::Pops
 
       DEFAULT = PStringType.new(nil)
       NON_EMPTY = PStringType.new(PIntegerType.new(1))
+
+      # Iterates over each character of the string
+      ITERABLE_TYPE = PIterableType.new(PStringType.new(PIntegerType.new(1,1)))
 
       protected
 
@@ -1032,12 +1039,14 @@ module Puppet::Pops
 
       def iterable_type
         if self == DEFAULT
-          PIterableType.new(PTupleType.new([PAnyType::DEFAULT], PHashType::TUPLE_SIZE))
+          PIterableType.new(PHashType::DEFAULT_KEY_PAIR_TUPLE)
         else
           tc = TypeCalculator.singleton
-          key_type = tc.infer_and_reduce_type(@elements.map {|se| se.key_type })
-          value_type = tc.infer_and_reduce_type(@elements.map {|se| se.value_type })
-          PIterableType.new(PTupleType.new([key_type, value_type], PHashType::TUPLE_SIZE))
+          PIterableType.new(
+            PTupleType.new([
+              tc.unwrap_single_variant(PVariantType.new(@elements.map {|se| se.key_type })),
+              tc.unwrap_single_variant(PVariantType.new(@elements.map {|se| se.value_type }))],
+              PHashType::KEY_PAIR_TUPLE_SIZE))
         end
       end
 
@@ -1184,7 +1193,7 @@ module Puppet::Pops
       end
 
       def iterable_type
-        PIterableType.new(TypeCalculator.singleton.infer_and_reduce_type(types))
+        PIterableType.new(TypeCalculator.singleton.unwrap_single_variant(PVariantType.new(types)))
       end
 
       # Returns the number of elements accepted [min, max] in the tuple
@@ -1473,9 +1482,9 @@ module Puppet::Pops
 
       def iterable_type
         if self == DEFAULT || self == EMPTY
-          PIterableType.new(PTupleType.new([PAnyType::DEFAULT], TUPLE_SIZE))
+          PIterableType.new(DEFAULT_KEY_PAIR_TUPLE)
         else
-          PIterableType.new(PTupleType.new([@key_type, element_type], TUPLE_SIZE))
+          PIterableType.new(PTupleType.new([@key_type, @element_type], KEY_PAIR_TUPLE_SIZE))
         end
       end
 
@@ -1488,9 +1497,10 @@ module Puppet::Pops
       end
 
       DEFAULT = PHashType.new(nil, nil)
-      TUPLE_SIZE = PIntegerType.new(2,2)
+      KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2,2)
+      DEFAULT_KEY_PAIR_TUPLE = PTupleType.new([PUnitType::DEFAULT, PUnitType::DEFAULT], KEY_PAIR_TUPLE_SIZE)
       DATA = PHashType.new(PScalarType::DEFAULT, PDataType::DEFAULT, DEFAULT_SIZE)
-      EMPTY = PHashType.new(PUndefType::DEFAULT, PUndefType::DEFAULT, PIntegerType.new(0, 0))
+      EMPTY = PHashType.new(PUnitType::DEFAULT, PUnitType::DEFAULT, PIntegerType.new(0, 0))
 
       protected
 
@@ -1614,7 +1624,7 @@ module Puppet::Pops
 
       def iterable?
         c = class_from_string(@runtime_type_name)
-        c.nil? ? false : c < Enumerable || c < Iterable
+        c.nil? ? false : c < Iterable
       end
 
       def iterable_type

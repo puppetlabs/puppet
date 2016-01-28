@@ -1978,13 +1978,13 @@ describe 'The type calculator' do
     end
   end
 
-  context 'when asking for an enumerable ' do
-    it 'should produce an enumerable for an Integer range that is not infinite' do
+  context 'when asking for an iterable ' do
+    it 'should produce an iterable for an Integer range that is finite' do
       t = Puppet::Pops::Types::PIntegerType.new(1, 10)
       expect(calculator.iterable(t).respond_to?(:each)).to eq(true)
     end
 
-    it 'should not produce an enumerable for an Integer range that has an infinite side' do
+    it 'should not produce an iterable for an Integer range that has an infinite side' do
       t = Puppet::Pops::Types::PIntegerType.new(nil, 10)
       expect(calculator.iterable(t)).to eq(nil)
 
@@ -1992,7 +1992,7 @@ describe 'The type calculator' do
       expect(calculator.iterable(t)).to eq(nil)
     end
 
-    it 'all but Integer range are not enumerable' do
+    it 'all but Integer range are not iterable' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
         expect(calculator.iterable(calculator.type(t))).to eq(nil)
       end

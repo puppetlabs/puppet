@@ -4,7 +4,16 @@ require 'puppet/pops'
 module Puppet::Pops::Types
 describe 'The iterable support' do
 
-  [5, (3..10), %w(a b c), 'hello', PIntegerType.new(1, 4), PEnumType.new(%w(yes no)) ].each do |obj|
+  [
+    0,
+    5,
+    (3..10),
+    %w(a b c),
+    {'a'=>2},
+    'hello',
+    PIntegerType.new(1, 4),
+    PEnumType.new(%w(yes no))
+  ].each do |obj|
     it "should consider instances of #{obj.class.name} to be Iterable" do
       expect(PIterableType::DEFAULT.instance?(obj)).to eq(true)
     end
@@ -14,7 +23,11 @@ describe 'The iterable support' do
     end
   end
 
-  { -1 => 'a negative Integer', 0 => 'the value 0', PIntegerType.new(nil, nil) => 'an unbounded Integer type' }.each_pair do |obj, desc|
+  {
+    -1 => 'a negative Integer',
+    5.times => 'an Enumerable',
+    PIntegerType.new(nil, nil) => 'an unbounded Integer type'
+  }.each_pair do |obj, desc|
     it "does not consider #{desc} to be Iterable" do
       expect(PIterableType::DEFAULT.instance?(obj)).to eq(false)
     end
@@ -39,7 +52,7 @@ describe 'The iterable support' do
     ]
     iterable_types << PType.new(PIntegerType.new(0, 10))
     iterable_types << PType.new(PEnumType.new(%w(yes no)))
-    iterable_types << PRuntimeType.new(:ruby, 'Dir') # Enumerable
+    iterable_types << PRuntimeType.new(:ruby, 'Puppet::Pops::Types::Iterator')
     iterable_types << PVariantType.new(iterable_types.clone)
 
     not_iterable_types = [
@@ -75,6 +88,22 @@ describe 'The iterable support' do
       it "should not consider #{type} to be assignable to Iterable type" do
         expect(PIterableType::DEFAULT.assignable?(type)).to eq(false)
       end
+    end
+
+    it "should consider Type[Integer[0,5]] to be assignable to Iterable[Integer[0,5]]" do
+      expect(PIterableType.new(PIntegerType.new(0,5)).assignable?(PType.new(PIntegerType.new(0,5)))).to eq(true)
+    end
+
+    it "should consider Type[Enum[yes,no]] to be assignable to Iterable[Enum[yes,no]]" do
+      expect(PIterableType.new(PEnumType.new(%w(yes no))).assignable?(PType.new(PEnumType.new(%w(yes no))))).to eq(true)
+    end
+
+    it "should not consider Type[Enum[ok,fail]] to be assignable to Iterable[Enum[yes,no]]" do
+      expect(PIterableType.new(PEnumType.new(%w(ok fail))).assignable?(PType.new(PEnumType.new(%w(yes no))))).to eq(false)
+    end
+
+    it "should not consider Type[String] to be assignable to Iterable[String]" do
+      expect(PIterableType.new(PStringType::DEFAULT).assignable?(PType.new(PStringType::DEFAULT))).to eq(false)
     end
   end
 
@@ -147,7 +176,7 @@ describe 'The iterable support' do
     expect(Iterable.on([1,5,5,9,9,9]).element_type).to eq(PVariantType.new([PIntegerType.new(1,1), PIntegerType.new(5,5), PIntegerType.new(9,9)]))
   end
 
-  it 'can chain reverse_each after step on Enumerator' do
+  it 'can chain reverse_each after step on Iterable' do
     expect{ |b| Iterable.on(6).step(2).reverse_each(&b) }.to yield_successive_args(4,2,0)
   end
 
@@ -155,7 +184,7 @@ describe 'The iterable support' do
     expect{ |b| Iterable.on(PIntegerType.new(0, 5)).step(2).reverse_each(&b) }.to yield_successive_args(4,2,0)
   end
 
-  it 'can chain step after reverse_each on Enumerator' do
+  it 'can chain step after reverse_each on Iterable' do
     expect{ |b| Iterable.on(6).reverse_each.step(2, &b) }.to yield_successive_args(5,3,1)
   end
 
@@ -166,7 +195,7 @@ describe 'The iterable support' do
   it 'will produce the same result for each as for reverse_each.reverse_each' do
     x1 = Iterable.on(5)
     x2 = Iterable.on(5)
-    expect(x1.inject([]) { |a,i| a << i; a}).to eq(x2.reverse_each.reverse_each.inject([]) { |a,i| a << i; a})
+    expect(x1.reduce([]) { |a,i| a << i; a}).to eq(x2.reverse_each.reverse_each.reduce([]) { |a,i| a << i; a})
   end
 
   it 'can chain many nested step/reverse_each calls' do
