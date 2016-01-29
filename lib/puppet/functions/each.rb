@@ -3,7 +3,7 @@
 #
 # This function takes two mandatory arguments, in this order:
 #
-# 1. An array or hash the function will iterate over.
+# 1. An array, hash, or other iterable object that the function will iterate over.
 # 2. A lambda, which the function calls for each element in the first argument. It can
 # request one or two parameters.
 #

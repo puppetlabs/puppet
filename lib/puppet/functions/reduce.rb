@@ -6,7 +6,7 @@
 #
 # This function takes two mandatory arguments, in this order:
 #
-# 1. An array or hash the function will iterate over.
+# 1. An array, hash, or other iterable object that the function will iterate over.
 # 2. A lambda, which the function calls for each element in the first argument. It takes
 # two mandatory parameters:
 #     1. A memo value that is overwritten after each iteration with the iteration's result.
