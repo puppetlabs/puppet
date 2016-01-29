@@ -27,6 +27,7 @@ class Puppet::Settings::FileOrDirectorySetting < Puppet::Settings::FileSetting
       super
     else
       controlled_access do |mode|
+        # TODO: encoding UTF8
         Puppet::FileSystem.open(filename, mode, option, &block)
       end
     end

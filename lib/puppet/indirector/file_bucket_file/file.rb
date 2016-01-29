@@ -115,6 +115,7 @@ module Puppet::FileBucketFile
     # @param files_original_path [String]
     #
     def matches(paths_file, files_original_path)
+      # TODO: a+ is read-write... need to also pass encoding utf8
       Puppet::FileSystem.open(paths_file, 0640, 'a+') do |f|
         path_match(f, files_original_path)
       end
@@ -138,6 +139,7 @@ module Puppet::FileBucketFile
           Puppet::FileSystem.dir_mkpath(paths_file)
         end
 
+        # TODO: double check this to make sure encoding isn't necessary
         Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+') do |f|
           if Puppet::FileSystem.exist?(contents_file)
             verify_identical_file!(contents_file, bucket_file)

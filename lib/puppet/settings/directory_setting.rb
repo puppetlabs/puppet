@@ -6,6 +6,7 @@ class Puppet::Settings::DirectorySetting < Puppet::Settings::FileSetting
   # @api private
   def open_file(filename, option = 'r', &block)
     controlled_access do |mode|
+      # TODO: Encoding UTF-8
       Puppet::FileSystem.open(filename, mode, option, &block)
     end
   end

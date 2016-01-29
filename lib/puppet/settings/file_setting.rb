@@ -187,6 +187,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   def exclusive_open(option = 'r', &block)
     controlled_access do |mode|
+      # TODO: encoding UTF8
       Puppet::FileSystem.exclusive_open(file(), mode, option, &block)
     end
   end
@@ -194,6 +195,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   def open(option = 'r', &block)
     controlled_access do |mode|
+      # TODO: encoding UTF8
       Puppet::FileSystem.open(file, mode, option, &block)
     end
   end
