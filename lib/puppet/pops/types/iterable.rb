@@ -84,7 +84,7 @@ module Puppet::Pops::Types
         max = o.max
         if min.is_a?(Integer) && max.is_a?(Integer) && max >= min
           IntegerRangeIterator.new(PIntegerType.new(min, max))
-        elsif min.is_a?(String) && max.is_a?(String) && max > min
+        elsif min.is_a?(String) && max.is_a?(String) && max >= min
           # A generalized element type where only the size is inferred is used here since inferring the full
           # range might waste a lot of memory.
           if min.length < max.length
