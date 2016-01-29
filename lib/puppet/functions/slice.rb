@@ -38,7 +38,7 @@ Puppet::Functions.create_function(:slice) do
   end
 
   dispatch :slice_Enumerable do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     param 'Integer[1, default]', :slize_size
     optional_block_param
   end
@@ -49,7 +49,7 @@ Puppet::Functions.create_function(:slice) do
   end
 
   def slice_Enumerable(enumerable, slice_size, &pblock)
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     result = slice_Common(enum, slice_size, nil, block_given? ? pblock : nil)
     block_given? ? enumerable : result
   end
@@ -108,12 +108,4 @@ Puppet::Functions.create_function(:slice) do
     end
     serving_size
   end
-
-  def asserted_enumerable(obj)
-    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
-      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
-    end
-    enum
-  end
-
 end
