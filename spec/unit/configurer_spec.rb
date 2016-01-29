@@ -584,8 +584,6 @@ describe Puppet::Configurer do
 
       # this is the default when using a Configurer instance
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :rest
-
-      @agent.stubs(:convert_catalog).returns @catalog
     end
 
     describe "and configured to only retrieve a catalog from the cache" do
@@ -744,13 +742,6 @@ describe Puppet::Configurer do
       expect(@agent.retrieve_catalog({})).to be_nil
     end
 
-    it "should convert the catalog before returning" do
-      Puppet::Resource::Catalog.indirection.stubs(:find).returns @catalog
-
-      @agent.expects(:convert_catalog).with { |cat, dur| cat == @catalog }.returns "converted catalog"
-      expect(@agent.retrieve_catalog({})).to eq("converted catalog")
-    end
-
     it "should return nil if there is an error while retrieving the catalog" do
       Puppet::Resource::Catalog.indirection.expects(:find).at_least_once.raises "eh"
 
@@ -762,38 +753,38 @@ describe Puppet::Configurer do
     before do
       Puppet.settings.stubs(:use).returns(true)
 
-      @catalog = Puppet::Resource::Catalog.new
-      @oldcatalog = stub 'old_catalog', :to_ral => @catalog
+      catalog.stubs(:to_ral).returns ral_catalog
     end
 
-    it "should convert the catalog to a RAL-formed catalog" do
-      @oldcatalog.expects(:to_ral).returns @catalog
+    let (:catalog) { Puppet::Resource::Catalog.new }
+    let (:ral_catalog) { Puppet::Resource::Catalog.new }
 
-      expect(@agent.convert_catalog(@oldcatalog, 10)).to equal(@catalog)
+    it "should convert the catalog to a RAL-formed catalog" do
+      expect(@agent.convert_catalog(catalog, 10)).to equal(ral_catalog)
     end
 
     it "should finalize the catalog" do
-      @catalog.expects(:finalize)
+      ral_catalog.expects(:finalize)
 
-      @agent.convert_catalog(@oldcatalog, 10)
+      @agent.convert_catalog(catalog, 10)
     end
 
     it "should record the passed retrieval time with the RAL catalog" do
-      @catalog.expects(:retrieval_duration=).with 10
+      ral_catalog.expects(:retrieval_duration=).with 10
 
-      @agent.convert_catalog(@oldcatalog, 10)
+      @agent.convert_catalog(catalog, 10)
     end
 
     it "should write the RAL catalog's class file" do
-      @catalog.expects(:write_class_file)
+      ral_catalog.expects(:write_class_file)
 
-      @agent.convert_catalog(@oldcatalog, 10)
+      @agent.convert_catalog(catalog, 10)
     end
 
     it "should write the RAL catalog's resource file" do
-      @catalog.expects(:write_resource_file)
+      ral_catalog.expects(:write_resource_file)
 
-      @agent.convert_catalog(@oldcatalog, 10)
+      @agent.convert_catalog(catalog, 10)
     end
   end
 

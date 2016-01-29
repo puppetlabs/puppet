@@ -89,9 +89,7 @@ class Puppet::Configurer
       end
     end
 
-    return nil unless result
-
-    convert_catalog(result, @duration)
+    result
   end
 
   # Convert a plain resource catalog into our full host catalog.
@@ -132,11 +130,16 @@ class Puppet::Configurer
     # dot-separated string.
     query_options[:checksum_type] = @checksum_type.join('.')
 
-    unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
-      Puppet.err "Could not retrieve catalog; skipping run"
-      return
-    end
-    catalog
+    # apply passes in ral catalog
+    catalog = options.delete(:catalog)
+    return catalog if catalog
+
+    # retrieve_catalog returns json catalog
+    catalog = retrieve_catalog(query_options)
+    return convert_catalog(catalog, @duration) if catalog
+
+    Puppet.err "Could not retrieve catalog; skipping run"
+    nil
   end
 
   def prepare_and_retrieve_catalog_from_cache
