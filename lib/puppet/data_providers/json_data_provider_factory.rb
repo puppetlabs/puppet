@@ -18,7 +18,7 @@ module Puppet::DataProviders
     include HieraInterpolate
 
     def initialize_data(path, lookup_invocation)
-      JSON.parse(File.read(path))
+      JSON.parse(Puppet::FileSystem.read(path, :encoding => 'utf-8'))
     rescue JSON::ParserError => ex
       # Filename not included in message, so we add it here.
       raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
