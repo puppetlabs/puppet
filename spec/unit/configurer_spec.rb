@@ -578,6 +578,7 @@ describe Puppet::Configurer do
     before do
       Puppet.settings.stubs(:use).returns(true)
       @agent.stubs(:facts_for_uploading).returns({})
+      @agent.stubs(:download_plugins)
 
       @catalog = Puppet::Resource::Catalog.new
 
@@ -597,6 +598,22 @@ describe Puppet::Configurer do
         Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
 
         expect(@agent.retrieve_catalog({})).to eq(@catalog)
+      end
+
+      it "should not make a node request or pluginsync when a cached catalog is successfully retrieved" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+        @agent.expects(:download_plugins).never
+
+        @agent.run
+      end
+
+      it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+        Puppet::Resource::Catalog.indirection.expects(:find).twice.with { |name, options| options[:ignore_cache] == true }.returns @catalog
+        @agent.expects(:download_plugins)
+
+        @agent.run
       end
 
       it "should set its cached_catalog_status to 'explicitly_requested'" do
@@ -620,6 +637,20 @@ describe Puppet::Configurer do
 
         @agent.retrieve_catalog({})
         expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
+      end
+
+      it "should only attempt to retrieve a cached catalog once" do
+        @agent.expects(:prepare_and_retrieve_catalog_from_cache).once.returns(@catalog)
+
+        @agent.expects(:retrieve_catalog_from_cache).never
+        @agent.run
+      end
+
+      it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
+        @agent.expects(:prepare_and_retrieve_catalog_from_cache).once.returns(nil)
+
+        @agent.expects(:retrieve_catalog_from_cache).never
+        @agent.run
       end
     end
 
@@ -763,6 +794,34 @@ describe Puppet::Configurer do
       @catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(@oldcatalog, 10)
+    end
+  end
+
+  describe "when determining whether to pluginsync" do
+    it "should default to Puppet[:pluginsync] when explicitly set by the commandline" do
+      Puppet.settings[:pluginsync] = false
+      Puppet.settings.expects(:set_by_cli?).returns(true)
+
+      expect(described_class).not_to be_should_pluginsync
+    end
+
+    it "should default to Puppet[:pluginsync] when explicitly set by config" do
+      Puppet.settings[:pluginsync] = false
+      Puppet.settings.expects(:set_by_config?).returns(true)
+
+      expect(described_class).not_to be_should_pluginsync
+    end
+
+    it "should be true if use_cached_catalog is false" do
+      Puppet.settings[:use_cached_catalog] = false
+
+      expect(described_class).to be_should_pluginsync
+    end
+
+    it "should be false if use_cached_catalog is true" do
+      Puppet.settings[:use_cached_catalog] = true
+
+      expect(described_class).not_to be_should_pluginsync
     end
   end
 end
