@@ -72,6 +72,8 @@ class Puppet::Configurer
     query_options ||= {}
     if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
       @cached_catalog_status = 'explicitly_requested'
+
+      Puppet.info "Using cached catalog from environment '#{result.environment}'"
     else
       result = retrieve_new_catalog(query_options)
 
@@ -84,7 +86,14 @@ class Puppet::Configurer
         result = retrieve_catalog_from_cache(query_options)
 
         if result
+          # don't use use cached catalog if it doesn't match server specified environment
+          if @node_environment && result.environment != @environment
+            Puppet.err "Not using cached catalog because its environment '#{result.environment}' does not match '#{@environment}'"
+            return nil
+          end
+
           @cached_catalog_status = 'on_failure'
+          Puppet.info "Using cached catalog from environment '#{result.environment}'"
         end
       end
     end
@@ -232,6 +241,8 @@ class Puppet::Configurer
               node.environment = Puppet::Node::Environment.remote(node.environment_name)
             end
 
+            @node_environment = node.environment.to_s
+
             if node.environment.to_s != @environment
               Puppet.notice "Local environment: '#{@environment}' doesn't match server specified node environment '#{node.environment}', switching agent to '#{node.environment}'."
               @environment = node.environment.to_s
@@ -350,7 +361,6 @@ class Puppet::Configurer
       result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
         query_options.merge(:ignore_terminus => true, :environment => Puppet::Node::Environment.remote(@environment)))
     end
-    Puppet.notice "Using cached catalog"
     result
   rescue => detail
     Puppet.log_exception(detail, "Could not retrieve catalog from cache: #{detail}")
