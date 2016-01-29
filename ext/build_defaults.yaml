@@ -26,8 +26,8 @@ build_msi:
     repo: 'git://github.com/puppetlabs/hiera.git'
   sys:
     ref:
-      x86: 'refs/tags/1.9.3-p551.8'
-      x64: 'refs/tags/2.0.0.11-x64'
+      x86: 'refs/tags/1.9.3-p551.9'
+      x64: 'refs/tags/2.0.0.12-x64'
     repo: 'git://github.com/puppetlabs/puppet-win32-ruby.git'
 apt_signing_server: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
