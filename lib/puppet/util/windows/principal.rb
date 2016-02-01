@@ -12,12 +12,18 @@ module Puppet::Util::Windows::SID
       @sid_bytes = sid_bytes
       @sid = sid
       @domain = domain
-      # when domain is available, combine it with parsed account
-      # otherwise use the account value directly
-      @domain_account = domain && !domain.empty? ?
-        "#{domain}\\#{@account}" : account
-
       @account_type = account_type
+      # When domain is available and it is a Domain principal, use domain only
+      #   otherwise if domain is available then combine it with parsed account
+      #   otherwise when the domain is not available, use the account value directly
+      # WinNT naming standard https://msdn.microsoft.com/en-us/library/windows/desktop/aa746534(v=vs.85).aspx
+      if (domain && !domain.empty? && @account_type == :SidTypeDomain)
+        @domain_account = @domain
+      elsif (domain && !domain.empty?)
+        @domain_account =  "#{domain}\\#{@account}"
+      else
+        @domain_account = account
+      end
     end
 
     # added for backward compatibility
