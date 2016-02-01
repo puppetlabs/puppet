@@ -71,7 +71,18 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account_type).to eq(:SidTypeDomain)
       expect(principal.sid).to eq('S-1-5-32')
       expect(principal.domain).to eq('BUILTIN')
+      expect(principal.domain_account).to eq('BUILTIN')
     end
+
+    it "should return a BUILTIN domain principal for BUILTIN account names" do
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('BUILTIN')
+      expect(principal.account_type).to eq(:SidTypeDomain)
+      expect(principal.sid).to eq('S-1-5-32')
+      expect(principal.account).to eq('BUILTIN')
+      expect(principal.domain).to eq('BUILTIN')
+      expect(principal.domain_account).to eq('BUILTIN')
+    end
+
   end
 
   describe ".lookup_account_sid" do
@@ -142,12 +153,14 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
         principal.lookup_account_sid([1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
       }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  No mapping between account names and security IDs was done/)
     end
-    
+
     it "should return a domain principal for BUILTIN SID S-1-5-32" do
       principal = Puppet::Util::Windows::SID::Principal.lookup_account_sid([1, 1, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0])
       expect(principal.account_type).to eq(:SidTypeDomain)
       expect(principal.sid).to eq('S-1-5-32')
+      expect(principal.account).to eq('BUILTIN')
       expect(principal.domain).to eq('BUILTIN')
-    end    
+      expect(principal.domain_account).to eq('BUILTIN')
+    end
   end
 end
