@@ -124,16 +124,14 @@ describe Puppet::Network::HTTP::Pool do
       # This workaround can be removed once all the ruby versions we care about
       # have the patch from https://bugs.ruby-lang.org/issues/11958 applied.
       #
-      keepalive   = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, true).data
-      nokeepalive = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, false).data
-
       if Puppet::Util::Platform.windows?
-        keepalive   = keepalive[0]
-        nokeepalive = nokeepalive[0]
+        keepalive   = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, true).data[0]
+        nokeepalive = Socket::Option.bool(:INET, :SOCKET, :KEEPALIVE, false).data[0]
+        expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to eq(keepalive)
+        expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to_not eq(nokeepalive)
+      else
+        expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).bool).to eq(true)
       end
-
-      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to eq(keepalive)
-      expect(s.getsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE).data).to_not eq(nokeepalive)
     end
 
     context 'when releasing connections' do
