@@ -54,6 +54,10 @@ class Puppet::Util::Metric
     @values.sort { |a, b| a[1] <=> b[1] }
   end
 
+  def replace(name, value)
+    @values.map! { |v_name, label, v_value| v_name == name ? [v_name, label, value]: [v_name, label, v_value] }
+  end
+
   # Convert a name into a label.
   def self.labelize(name)
     name.to_s.capitalize.gsub("_", " ")

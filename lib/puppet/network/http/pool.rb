@@ -13,10 +13,19 @@ class Puppet::Network::HTTP::Pool
 
   attr_reader :factory
 
+  attr_writer :report
+
   def initialize(keepalive_timeout = FIFTEEN_SECONDS)
     @pool = {}
     @factory = Puppet::Network::HTTP::Factory.new
     @keepalive_timeout = keepalive_timeout
+    @report = nil
+  end
+
+  def increment_metric(name)
+    if @report
+      @report.incr_metric("http_connections", name)
+    end
   end
 
   def with_connection(site, verify, &block)
@@ -60,6 +69,7 @@ class Puppet::Network::HTTP::Pool
   # @api private
   def close_connection(site, http)
     Puppet.debug("Closing connection for #{site}")
+    increment_metric("closed")
     http.finish
   rescue => detail
     Puppet.log_exception(detail, "Failed to close connection for #{site}: #{detail}")
@@ -72,10 +82,12 @@ class Puppet::Network::HTTP::Pool
   def borrow(site, verify)
     @pool[site] = active_sessions(site)
     session = @pool[site].shift
+    increment_metric("borrowed")
     if session
       Puppet.debug("Using cached connection for #{site}")
       session.connection
     else
+      increment_metric("created")
       http = @factory.create_connection(site)
       verify.setup_connection(http)
 
@@ -101,7 +113,7 @@ class Puppet::Network::HTTP::Pool
     expiration = Time.now + @keepalive_timeout
     session = Puppet::Network::HTTP::Session.new(http, expiration)
     Puppet.debug("Caching connection for #{site}")
-
+    increment_metric("released")
     sessions = @pool[site]
     if sessions
       sessions.unshift(session)

@@ -80,8 +80,12 @@ class Puppet::Transaction
   # necessary events.
   def evaluate(&block)
     block ||= method(:eval_resource)
-    generator = AdditionalResourceGenerator.new(@catalog, nil, @prioritizer)
-    @catalog.vertices.each { |resource| generator.generate_additional_resources(resource) }
+    generator = nil
+    additionnal_resource_generation_time = thinmark do
+      generator = AdditionalResourceGenerator.new(@catalog, nil, @prioritizer)
+      @catalog.vertices.each { |resource| generator.generate_additional_resources(resource) }
+    end
+    @report.add_times(:additionnal_resource_generation, additionnal_resource_generation_time)
 
     perform_pre_run_checks
 
@@ -135,24 +139,28 @@ class Puppet::Transaction
         end
       end
     end
-
-    # Generate the relationship graph, set up our generator to use it
-    # for eval_generate, then kick off our traversal.
-    generator.relationship_graph = relationship_graph
-    relationship_graph.traverse(:while => continue_while,
-                                :pre_process => pre_process,
-                                :overly_deferred_resource_handler => overly_deferred_resource_handler,
-                                :canceled_resource_handler => canceled_resource_handler,
-                                :teardown => teardown) do |resource|
-      if resource.is_a?(Puppet::Type::Component)
-        Puppet.warning "Somehow left a component in the relationship graph"
-      else
-        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
-        seconds = thinmark { block.call(resource) }
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+    resourceTotalTime = 0
+    seconds = 0
+    graphTotalTime = thinmark do
+          # Generate the relationship graph, set up our generator to use it
+          # for eval_generate, then kick off our traversal.
+          generator.relationship_graph = relationship_graph
+          relationship_graph.traverse(:while => continue_while,
+                                  :pre_process => pre_process,
+                                  :overly_deferred_resource_handler => overly_deferred_resource_handler,
+                                  :canceled_resource_handler => canceled_resource_handler,
+                                  :teardown => teardown) do |resource|
+            if resource.is_a?(Puppet::Type::Component)
+              Puppet.warning "Somehow left a component in the relationship graph"
+            else
+              resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+              seconds = thinmark { block.call(resource) }
+              resourceTotalTime += seconds
+              resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+            end
       end
     end
-
+    @report.add_times(:graph_overhead, graphTotalTime - resourceTotalTime)
     Puppet.debug "Finishing transaction #{object_id}"
   end
 
