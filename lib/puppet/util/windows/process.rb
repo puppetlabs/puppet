@@ -224,6 +224,52 @@ module Puppet::Util::Windows::Process
   end
   module_function :windows_major_version
 
+  ENVSTRINGS_TERMINATOR_WCHAR = [0,0]
+  # Returns a hash of the current environment variables encoded as UTF-8
+  # The memory block returned from GetEnvironmentStringsW is double-null terminated and the vars are paired as below;
+  # Var1=Value1\0
+  # Var2=Value2\0
+  # VarX=ValueX\0\0
+  # Note - Some env variable names start with '=' and are excluded from the return value
+  # Note - The env_ptr MUST be freed using the FreeEnvironmentStringsW function
+  # Note - There is no technical limitation to the size of the environment block returned.
+  #   However a pracitcal limit of 64K is used as no single environment variable can exceed 32KB
+  def get_environment_strings
+    env_ptr = GetEnvironmentStringsW()
+
+    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, ENVSTRINGS_TERMINATOR_WCHAR)
+      .split(?\x00)
+      .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
+      .map { |env_pair| env_pair.split('=', 2) }
+    Hash[ pairs ]
+  ensure
+    if env_ptr && ! env_ptr.null?
+      if FreeEnvironmentStringsW(env_ptr) == FFI::WIN32_FALSE
+        Puppet.debug "FreeEnvironmentStringsW memory leak"
+      end
+    end
+  end
+  module_function :get_environment_strings
+
+  def set_environment_variable(name, val)
+    raise Puppet::Util::Windows::Error('environment variable name must not be nil or empty') if ! name || name.empty?
+
+    FFI::MemoryPointer.from_string_to_wide_string(name) do |name_ptr|
+      if (val.nil?)
+        if SetEnvironmentVariableW(name_ptr, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to remove environment variable: #{name}")
+        end
+      else
+        FFI::MemoryPointer.from_string_to_wide_string(val) do |val_ptr|
+          if SetEnvironmentVariableW(name_ptr, val_ptr) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new("Failed to set environment variable: #{name}")
+          end
+        end
+      end
+    end
+  end
+  module_function :set_environment_variable
+
   # Returns whether or not the OS has the ability to set elevated
   # token information.
   #
@@ -265,6 +311,28 @@ module Puppet::Util::Windows::Process
   # HANDLE WINAPI GetCurrentProcess(void);
   ffi_lib :kernel32
   attach_function_private :GetCurrentProcess, [], :handle
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683187(v=vs.85).aspx
+  # LPTCH GetEnvironmentStrings(void);
+  ffi_lib :kernel32
+  attach_function_private :GetEnvironmentStringsW, [], :pointer
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683151(v=vs.85).aspx
+  # BOOL FreeEnvironmentStrings(
+  #   _In_ LPTCH lpszEnvironmentBlock
+  # );
+  ffi_lib :kernel32
+  attach_function_private :FreeEnvironmentStringsW,
+    [:pointer], :win32_bool
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms686206(v=vs.85).aspx
+  # BOOL WINAPI SetEnvironmentVariableW(
+  #     _In_     LPCTSTR lpName,
+  #     _In_opt_ LPCTSTR lpValue
+  #   );
+  ffi_lib :kernel32
+  attach_function_private :SetEnvironmentVariableW,
+    [:lpcwstr, :lpcwstr], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(
