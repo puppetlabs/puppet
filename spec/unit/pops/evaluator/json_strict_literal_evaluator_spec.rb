@@ -16,19 +16,18 @@ describe "Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator" do
     '"a"'     => 'a',
     'a'       => 'a',
     'a::b'    => 'a::b',
+    'undef'   => nil,
 
     # collections
     '[1,2,3]'     => [1,2,3],
     '{a=>1,b=>2}' => {'a' => 1, 'b' => 2},
+    '[undef]'     => [nil],
+    '{a=>undef}'  => { 'a' => nil }
 
   }.each do |source, result|
     it "evaluates '#{source}' to #{result}" do
       expect(leval.literal(parser.parse_string(source))).to eq(result)
     end
-  end
-
-  it "evaluates undef to nil" do
-    expect(leval.literal(parser.parse_string('undef'))).to be_nil
   end
 
   [ '1+1', 
@@ -44,11 +43,18 @@ describe "Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator" do
     end
   end
 
-  [ '{1=>100}', 
-    '{"ok" => {1 => 100}}',
-    '[{1 => 100}]',
-    'default', 
+  [ 'default', 
     '/.*/', 
+    '{1=>100}', 
+    '{undef => 10}',
+    '{default => 10}',
+    '{/.*/ => 10}',
+    '{"ok" => {1 => 100}}',
+    '[default]',
+    '[[default]]',
+    '[/.*/]',
+    '[[/.*/]]',
+    '[{1 => 100}]',
   ].each do |source|
     it "throws :not_literal for values not representable as pure JSON '#{source}'" do
       expect{leval.literal(parser.parse_string('1+1'))}.to throw_symbol(:not_literal)
