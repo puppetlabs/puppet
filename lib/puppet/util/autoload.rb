@@ -2,6 +2,15 @@ require 'pathname'
 require 'puppet/util/rubygems'
 require 'puppet/util/warnings'
 require 'puppet/util/methodhelper'
+require 'puppet/pops/adaptable'
+
+# An adapter that ties the module_directories cache to the environment where the modules are parsed. This
+# adapter ensures that the life-cycle of this cache doesn't exceed  the life-cycle of the environment.
+#
+# @api private
+class Puppet::Util::ModuleDirectoriesAdapter < Puppet::Pops::Adaptable::Adapter
+  attr_accessor :directories
+end
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
@@ -99,12 +108,6 @@ class Puppet::Util::Autoload
     end
 
     def module_directories(env)
-      # We're using a per-thread cache of module directories so that we don't
-      # scan the filesystem each time we try to load something. This is reset
-      # at the beginning of compilation and at the end of an agent run.
-      $env_module_directories ||= {}
-
-
       # This is a little bit of a hack.  Basically, the autoloader is being
       # called indirectly during application bootstrapping when we do things
       # such as check "features".  However, during bootstrapping, we haven't
@@ -129,11 +132,13 @@ class Puppet::Util::Autoload
 
         if env
           # if the app defaults have been initialized then it should be safe to access the module path setting.
-          $env_module_directories[env] ||= env.modulepath.collect do |dir|
-            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-          end.flatten.find_all do |d|
-            FileTest.directory?(d)
-          end
+          Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
+            a.directories ||= env.modulepath.collect do |dir|
+              Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
+            end.flatten.find_all do |d|
+              FileTest.directory?(d)
+            end
+          end.directories
         else
           []
         end

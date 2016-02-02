@@ -3,7 +3,6 @@ require 'puppet/parser/compiler'
 class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def self.compile(env)
     begin
-      $env_module_directories = nil
       env.check_for_reparse
 
       node = Puppet::Node.new(env)

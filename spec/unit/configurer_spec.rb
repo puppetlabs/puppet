@@ -369,14 +369,6 @@ describe Puppet::Configurer do
       expect(report.environment).to eq("second_env")
     end
 
-    it "should clear the global caches" do
-      $env_module_directories = false
-
-      @agent.run
-
-      expect($env_module_directories).to eq(nil)
-    end
-
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler
