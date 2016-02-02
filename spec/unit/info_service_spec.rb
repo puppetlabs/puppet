@@ -34,6 +34,9 @@ describe "Puppet::InfoService" do
         'borked.pp' => <<-CODE,
            class Borked($Herp+$Derp) {}
         CODE
+        'json_unsafe.pp' => <<-CODE,
+             class json_unsafe($arg1 = /.*/, $arg2 = default, $arg3 = {1 => 1}) {}
+          CODE
        })
     end
 
@@ -208,6 +211,25 @@ describe "Puppet::InfoService" do
                ]},
            ]} # end production env
         })
+     end
+
+     it "produces source string for literals that are not pure json" do
+       files = ['json_unsafe.pp'].map {|f| File.join(code_dir, f) }
+       result = Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(result).to eq({
+         "production"=>{
+            "#{code_dir}/json_unsafe.pp" => [
+              {:name=>"json_unsafe",
+                :params => [
+                  {:name => "arg1",
+                    :default_source => "/.*/" },
+                  {:name => "arg2",
+                    :default_source => "default" },
+                  {:name => "arg3",
+                    :default_source => "{1 => 1}" }
+                ]}
+            ]} # end production env
+         })
      end
 
     it "produces no type entry if type is not given" do
