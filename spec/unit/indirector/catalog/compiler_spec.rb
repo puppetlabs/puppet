@@ -379,7 +379,7 @@ describe Puppet::Resource::Catalog::Compiler do
     resources << Puppet::Resource.new("notify", "alpha")
     resources << Puppet::Resource.new("notify", "omega")
 
-    0.upto(num_resources) do |idx|
+    0.upto(num_resources-1) do |idx|
       parameters.merge! :require => "Notify[alpha]", :before  => "Notify[omega]"
       if sources
         parameters.merge! :source => sources[idx % sources.size]
@@ -401,6 +401,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when inlining metadata" do
     let(:node) { Puppet::Node.new 'me' }
+    let(:num_resources) { 3 }
     let(:checksum_type) { 'md5' }
     before :each do
       @compiler = Puppet::Resource::Catalog::Compiler.new
@@ -410,7 +411,7 @@ describe Puppet::Resource::Catalog::Compiler do
      ['sha256', '5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03']].each do |checksum_type, sha|
       describe "with agent requesting checksum_type #{checksum_type}" do
         it "sets checksum and checksum_value for resources with puppet:// source URIs" do
-          catalog = build_catalog(node, 3, ['puppet:///modules/mymodule/config_file.txt'])
+          catalog = build_catalog(node, num_resources, ['puppet:///modules/mymodule/config_file.txt'])
           catalog.resources.select {|r| r.type == 'File'}.each do |r|
             ral = r.to_ral
             r.expects(:to_ral).returns(ral)
@@ -424,13 +425,15 @@ describe Puppet::Resource::Catalog::Compiler do
 
             ral.expects(:parameter).with(:source).returns(source)
           end
+
           expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+          expect(catalog.resources.select {|r| r[:checksum_value] == sha}.size).to eq(num_resources)
         end
       end
     end
 
     it "skips absent resources" do
-      catalog = build_catalog(node, 3, nil, :ensure => 'absent')
+      catalog = build_catalog(node, num_resources, nil, :ensure => 'absent')
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
@@ -438,7 +441,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "skips resources without a source" do
-      catalog = build_catalog(node, 3)
+      catalog = build_catalog(node, num_resources)
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
@@ -446,7 +449,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "skips resources with a local source" do
-      catalog = build_catalog(node, 3, ['/tmp/foo_source'])
+      catalog = build_catalog(node, num_resources, ['/tmp/foo_source'])
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
@@ -454,7 +457,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "skips resources with a http source" do
-      catalog = build_catalog(node, 3, ['http://foo.source.io', 'https://foo.source.io'])
+      catalog = build_catalog(node, num_resources, ['http://foo.source.io', 'https://foo.source.io'])
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
