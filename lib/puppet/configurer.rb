@@ -22,6 +22,18 @@ class Puppet::Configurer
     "Puppet configuration client"
   end
 
+  def self.should_pluginsync?
+    if Puppet.settings.set_by_cli?(:pluginsync) || Puppet.settings.set_by_config?(:pluginsync)
+      Puppet[:pluginsync]
+    else
+      if Puppet[:use_cached_catalog]
+        false
+      else
+        true
+      end
+    end
+  end
+
   def execute_postrun_command
     execute_from_setting(:postrun_command)
   end
@@ -127,6 +139,15 @@ class Puppet::Configurer
     catalog
   end
 
+  def prepare_and_retrieve_catalog_from_cache
+    result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
+    if result
+      Puppet.info "Using cached catalog from environment '#{result.environment}'"
+      return convert_catalog(result, @duration)
+    end
+    nil
+  end
+
   # Retrieve (optionally) and apply a catalog. If a catalog is passed in
   # the options, then apply that one, otherwise retrieve it.
   def apply_catalog(catalog, options)
@@ -167,6 +188,23 @@ class Puppet::Configurer
     init_storage
 
     Puppet::Util::Log.newdestination(report)
+
+    # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
+    # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
+    if Puppet[:use_cached_catalog]
+      if catalog = prepare_and_retrieve_catalog_from_cache
+        options[:catalog] = catalog
+        @cached_catalog_status = 'explicitly_requested'
+        @environment = catalog.environment
+        report.environment = catalog.environment
+      else
+        # Don't try to retrieve a catalog from the cache again after we've already
+        # failed to do so the first time.
+        Puppet[:use_cached_catalog] = false
+        Puppet[:usecacheonfailure] = false
+        options[:pluginsync] = Puppet::Configurer.should_pluginsync?
+      end
+    end
 
     begin
       unless Puppet[:node_name_fact].empty?

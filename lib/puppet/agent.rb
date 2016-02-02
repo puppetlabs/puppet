@@ -41,7 +41,7 @@ class Puppet::Agent
       result = run_in_fork(should_fork) do
         with_client do |client|
           begin
-            client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
+            client_args = client_options.merge(:pluginsync => Puppet::Configurer.should_pluginsync?)
             lock { client.run(client_args) }
           rescue Puppet::LockError
             Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
