@@ -87,7 +87,19 @@ describe 'the step method' do
     expect(eval_and_collect_notices('Integer[5,20].step(4) |$x| { notice($x) }')).to eq(['5', '9', '13', '17'])
   end
 
-  it 'should produce negative interval of Integer[5,20] when chained after a reverse_each' do
+  it 'should produce the elements of [a,b,c,d,e,f,g,h] according to step' do
+    expect(eval_and_collect_notices('[a,b,c,d,e,f,g,h].step(2) |$x| { notice($x) }')).to eq(%w(a c e g))
+  end
+
+  it 'should produce the elements {a=>1,b=>2,c=>3,d=>4,e=>5,f=>6,g=>7,h=>8} according to step' do
+    expect(eval_and_collect_notices('{a=>1,b=>2,c=>3,d=>4,e=>5,f=>6,g=>7,h=>8}.step(2) |$t| { notice($t[1]) }')).to eq(%w(1 3 5 7))
+  end
+
+  it 'should produce the choices of Enum[a,b,c,d,e,f,g,h] according to step' do
+    expect(eval_and_collect_notices('Enum[a,b,c,d,e,f,g,h].step(2) |$x| { notice($x) }')).to eq(%w(a c e g))
+  end
+
+  it 'should produce descending interval of Integer[5,20] when chained after a reverse_each' do
     expect(eval_and_collect_notices('Integer[5,20].reverse_each.step(4) |$x| { notice($x) }')).to eq(['20', '16', '12', '8'])
   end
 end
