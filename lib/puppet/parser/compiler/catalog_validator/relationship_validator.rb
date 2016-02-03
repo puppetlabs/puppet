@@ -15,9 +15,30 @@ class Puppet::Parser::Compiler
 
     private
 
+    # A hash lookup is 6x avg times faster than find among 3 values.
+    CAPABILITY_ACCEPTED_METAPARAMS = {:require => true, :consume => true, :export => true}.freeze
+
     def validate_relationship(param)
-      unless [:require, :consume, :export].find {|pname| pname == param.name }
-        raise CatalogValidationError.new("'#{param.name}' is not a valid relationship to a capability", param.file, param.line) if has_capability?(param.value)
+      # when relationship is to a capability
+      if has_capability?(param.value)
+        unless CAPABILITY_ACCEPTED_METAPARAMS[param.name]
+          raise CatalogValidationError.new(
+            "'#{param.name}' is not a valid relationship to a capability", 
+              param.file, param.line)
+        end
+      elsif Puppet[:strict] != :off
+        # all other relationships requires the referenced resource to exist when mode is strict
+        refs = param.value.is_a?(Array) ? param.value : [param.value]
+        refs.each do |r|
+          unless catalog.resource(r.to_s)
+            msg = "Could not find resource '#{r.to_s}' in parameter '#{param.name.to_s}'"
+            if Puppet[:strict] == :error
+              raise CatalogValidationError.new(msg, param.file, param.line)
+            else
+              Puppet.warn_once(:undefined_resources, r.to_s, msg, param.file, param.line)
+            end
+          end
+        end
       end
     end
 
