@@ -24,8 +24,8 @@
 #
 # `$reverse_data = reverse_each($data)`
 #
-# When no second argument is present, Puppet returns an iterable that represents the reverse
-# order of its first argument. This allows methods on iterables to be chained.
+# When no second argument is present, Puppet returns an `Iterable` that represents the reverse
+# order of its first argument. This allows methods on `Iterable` to be chained.
 #
 # When a lamdba is given as the second argument, Puppet iterates the first argument in reverse order
 # and passes each value in turn to the lambda, then returns the first argument unchanged.
@@ -33,26 +33,21 @@
 # @example Using the `reverse_each` function with an array and a one-parameter lambda
 #
 # ~~~ puppet
-# # For the array $data, run a lambda that creates a resource in reverse order for each item in reverse.
-# $data = ["routers", "servers", "workstations"]
-# $data.reverse_each |$item| {
-#  notify { $item:
-#    message => $item
-#  }
-# }
-# # Puppet creates one resource for each of the three items in $data in reverse order. Each resource is
-# # named after the item's value and uses the item's value in a parameter.
+# # Puppet will print a notice for each of the three items in $data in reverse order.
+# $data = [1,2,3]
+# $data.reverse_each |$item| { notice($item) }
+#
 # ~~~
 #
-# When no second argument is present, Puppet returns a new iterable so that a new function that takes
-# an iterable as an argument can use it as input.
+# When no second argument is present, Puppet returns a new `Iterable` which allows it to be directly chained into
+# another function that takes an `Iterable` as an argument.
 #
 # @example Using the `reverse_each` function chained with a `map` function.
 #
 # # For the array $data, return an array containing each value multiplied by 10 in reverse order
 # $data = [1,2,3]
 # $transformed_data = $data.reverse_each.map |$item| { $item * 10 }
-# # $transformed_data contains [30,20,10]
+# # $transformed_data is set to [30,20,10]
 # ~~~
 #
 # @example The same example using `reverse_each` function chained with a `map` in alternative syntax
@@ -60,7 +55,7 @@
 # # For the array $data, return an array containing each value multiplied by 10 in reverse order
 # $data = [1,2,3]
 # $transformed_data = map(reverse_each($data)) |$item| { $item * 10 }
-# # $transformed_data contains [30,20,10]
+# # $transformed_data is set to [30,20,10]
 # ~~~
 #
 # @since 4.4.0
