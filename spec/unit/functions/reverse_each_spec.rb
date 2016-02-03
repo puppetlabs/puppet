@@ -70,4 +70,16 @@ describe 'the reverse_each function' do
   it 'should produce range Integer[5,8] in reverse' do
     expect(eval_and_collect_notices('Integer[5,8].reverse_each |$x| { notice($x) }')).to eq(['8', '7', '6', '5'])
   end
+
+  it 'should produce the choices of [first,second,third] in reverse' do
+    expect(eval_and_collect_notices('[first,second,third].reverse_each |$x| { notice($x) }')).to eq(%w(third second first))
+  end
+
+  it 'should produce the choices of {first => 1,second => 2,third => 3} in reverse' do
+    expect(eval_and_collect_notices('{first => 1,second => 2,third => 3}.reverse_each |$t| { notice($t[0]) }')).to eq(%w(third second first))
+  end
+
+  it 'should produce the choices of Enum[first,second,third] in reverse' do
+    expect(eval_and_collect_notices('Enum[first,second,third].reverse_each |$x| { notice($x) }')).to eq(%w(third second first))
+  end
 end
