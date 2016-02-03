@@ -580,7 +580,8 @@ describe Puppet::Configurer do
       @agent.stubs(:facts_for_uploading).returns({})
       @agent.stubs(:download_plugins)
 
-      @catalog = Puppet::Resource::Catalog.new
+      # retrieve a catalog in the current environment, so we don't try to converge unexpectedly
+      @catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
 
       # this is the default when using a Configurer instance
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :rest
@@ -608,7 +609,7 @@ describe Puppet::Configurer do
 
       it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
         Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
-        Puppet::Resource::Catalog.indirection.expects(:find).twice.with { |name, options| options[:ignore_cache] == true }.returns @catalog
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
         @agent.expects(:download_plugins)
 
         @agent.run
