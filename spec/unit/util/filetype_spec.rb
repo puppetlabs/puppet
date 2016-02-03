@@ -183,7 +183,7 @@ describe Puppet::Util::FileType do
     let(:crontab_output) { 'suntab_output' }
 
     # possible crontab output was taken from here:
-    # http://docs.oracle.com/cd/E19082-01/819-2380/sysrescron-60/index.html
+    # https://docs.oracle.com/cd/E19082-01/819-2380/sysrescron-60/index.html
     let(:absent_crontab) do
       'crontab: can\'t open your crontab file'
     end

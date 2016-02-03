@@ -1,5 +1,5 @@
 require 'facter'
-require 'plist'
+require 'puppet/util/plist' if Puppet.features.cfpropertylist?
 require 'puppet'
 require 'tempfile'
 
@@ -12,6 +12,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   commands :security => "/usr/bin/security"
 
   confine :operatingsystem => :darwin
+  confine :feature         => :cfpropertylist
 
   defaultfor :operatingsystem => :darwin
 
@@ -50,7 +51,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
 
     def populate_rules_rights
-      auth_plist = Plist::parse_xml(AuthDB)
+      auth_plist = Puppet::Util::Plist.parse_plist(AuthDB)
       raise Puppet::Error.new("Cannot parse: #{AuthDB}") if not auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
@@ -124,12 +125,12 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   end
 
   def destroy_rule
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = Puppet::Util::Plist.parse_plist(AuthDB)
     authdb_rules = authdb["rules"].dup
     if authdb_rules[resource[:name]]
       begin
         authdb["rules"].delete(resource[:name])
-        Plist::Emit.save_plist(authdb, AuthDB)
+        Puppet::Util::Plist.write_plist_file(authdb, AuthDB)
       rescue Errno::EACCES => e
         raise Puppet::Error.new("Error saving #{AuthDB}: #{e}", e)
       end
@@ -144,7 +145,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     cmds = []
     cmds << :security << "authorizationdb" << "read" << resource[:name]
     output = execute(cmds, :failonfail => false, :combine => false)
-    current_values = Plist::parse_xml(output)
+    current_values = Puppet::Util::Plist.parse_plist(output)
     current_values ||= {}
     specified_values = convert_plist_to_native_attributes(@property_hash)
 
@@ -155,7 +156,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   end
 
   def flush_rule
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = Puppet::Util::Plist.parse_plist(AuthDB)
     authdb_rules = authdb["rules"].dup
     current_values = {}
     current_values = authdb_rules[resource[:name]] if authdb_rules[resource[:name]]
@@ -171,7 +172,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     values = convert_plist_to_native_attributes(values)
     tmp = Tempfile.new('puppet_macauthorization')
     begin
-      Plist::Emit.save_plist(values, tmp.path)
+      Puppet::Util::Plist.write_plist_file(values, tmp.path)
       cmds = []
       cmds << :security << "authorizationdb" << "write" << name
       execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
@@ -189,11 +190,11 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # support modifying rules at all so we have to twiddle the whole
     # plist... :( See Apple Bug #6386000
     values = convert_plist_to_native_attributes(values)
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = Puppet::Util::Plist.parse_plist(AuthDB)
     authdb["rules"][name] = values
 
     begin
-      Plist::Emit.save_plist(authdb, AuthDB)
+      Puppet::Util::Plist.write_plist_file(authdb, AuthDB)
     rescue
       raise Puppet::Error.new("Error writing to: #{AuthDB}")
     end

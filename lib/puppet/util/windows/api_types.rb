@@ -114,10 +114,10 @@ module Puppet::Util::Windows::APITypes
   # https://github.com/ffi/ffi/wiki/Types
 
   # Windows - Common Data Types
-  # http://msdn.microsoft.com/en-us/library/cc230309.aspx
+  # https://msdn.microsoft.com/en-us/library/cc230309.aspx
 
   # Windows Data Types
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
 
   FFI.typedef :uint16, :word
   FFI.typedef :uint32, :dword
@@ -157,7 +157,7 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :int32, :win32_long
   # FFI bool can be only 1 byte at times,
   # Win32 BOOL is a signed int, and is always 4 bytes, even on x64
-  # http://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
+  # https://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
   FFI.typedef :int32, :win32_bool
 
   # Same as a LONG, a 32-bit signed integer
@@ -174,7 +174,7 @@ module Puppet::Util::Windows::APITypes
   module ::FFI::WIN32
     extend ::FFI::Library
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa373931(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa373931(v=vs.85).aspx
     # typedef struct _GUID {
     #   DWORD Data1;
     #   WORD  Data2;
@@ -205,7 +205,7 @@ module Puppet::Util::Windows::APITypes
       def ==(other) Windows.memcmp(other, self, size) == 0 end
     end
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
     # typedef struct _SYSTEMTIME {
     #   WORD wYear;
     #   WORD wMonth;
@@ -246,21 +246,21 @@ module Puppet::Util::Windows::APITypes
 
     ffi_convention :stdcall
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
     # HLOCAL WINAPI LocalFree(
     #   _In_  HLOCAL hMem
     # );
     ffi_lib :kernel32
     attach_function :LocalFree, [:handle], :handle
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
     # BOOL WINAPI CloseHandle(
     #   _In_  HANDLE hObject
     # );
     ffi_lib :kernel32
     attach_function_private :CloseHandle, [:handle], :win32_bool
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
     # void CoTaskMemFree(
     #   _In_opt_  LPVOID pv
     # );

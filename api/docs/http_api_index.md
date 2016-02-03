@@ -57,7 +57,7 @@ these services and use the Puppet master's data for other purposes.
 
 The V3 API contains endpoints of two types: those that are based on dispatching
 to Puppet's internal "indirector" framework, and those that are not (namely the
-[environments endpoint](#environments-endpoint)).
+[environment endpoints](#environment-endpoints)).
 
 Every HTTP endpoint that dispatches to the indirector follows the form:
 `/puppet/v3/:indirection/:key?environment=:environment` where:
@@ -92,15 +92,16 @@ tools.
 * [Resource Type](./http_resource_type.md)
 * [Status](./http_status.md)
 
-### Environments Endpoint
+### Environment Endpoints
 
-The one endpoint with a different format is the `/puppet/v3/environments`
-endpoint.
+The endpoints with a different format are the `/puppet/v3/environments` and
+the `/puppet/v3/environment/:environment` endpoints.
 
-This endpoint will only accept payloads formatted as JSON and respond with JSON
-(MIME type of `application/json`).
+These endpoints will only accept payloads formatted as JSON and respond
+with JSON (MIME type of `application/json`).
 
 * [Environments](./http_environments.md)
+* [Environment Catalog](./http_environment.md)
 
 #### Error Responses
 

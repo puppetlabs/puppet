@@ -244,23 +244,25 @@ class Puppet::Parser::Resource < Puppet::Resource
       raise "Resource #{self} tries to consume #{cns} but no 'consumes' mapping exists for #{self.resource_type} and #{cns.type}" unless blueprint
 
       # setup scope that has, for each attr of cns, a binding to cns[attr]
-      cns_scope = scope.find_global_scope.newscope(:source => self, :resource => self)
-      cns.to_hash.each { |name, value| cns_scope[name.to_s] = value }
-
-      # evaluate mappings in that scope
-      resource_type.arguments.keys.each do |name|
-        if expr = blueprint[:mappings][name]
-          # Explicit mapping
-          value = expr.safeevaluate(cns_scope)
-        else
-          value = cns[name]
-        end
-        unless value.nil?
-          # @todo lutter 2015-07-01: this should be caught by the checker
-          # much earlier. We consume several capres, at least two of which
-          # want to map to the same parameter (PUP-5080)
-          raise "Attempt to reassign attribute '#{name}' in '#{self}' caused by multiple consumed mappings to the same attribute" if map[name]
-          map[name] = value
+      scope.with_global_scope do |global_scope|
+        cns_scope = global_scope.newscope(:source => self, :resource => self)
+        cns.to_hash.each { |name, value| cns_scope[name.to_s] = value }
+  
+        # evaluate mappings in that scope
+        resource_type.arguments.keys.each do |name|
+          if expr = blueprint[:mappings][name]
+            # Explicit mapping
+            value = expr.safeevaluate(cns_scope)
+          else
+            value = cns[name]
+          end
+          unless value.nil?
+            # @todo lutter 2015-07-01: this should be caught by the checker
+            # much earlier. We consume several capres, at least two of which
+            # want to map to the same parameter (PUP-5080)
+            raise "Attempt to reassign attribute '#{name}' in '#{self}' caused by multiple consumed mappings to the same attribute" if map[name]
+            map[name] = value
+          end
         end
       end
     end

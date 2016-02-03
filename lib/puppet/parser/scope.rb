@@ -174,6 +174,94 @@ class Puppet::Parser::Scope
 
   end
 
+  # @api private
+  class ParameterScope < Ephemeral
+    class Access
+      attr_accessor :value
+
+      def assigned?
+        instance_variable_defined?(:@value)
+      end
+    end
+
+    # A parameter default must be evaluated using a special scope. The scope that is given to this method must
+    # have a `ParameterScope` as its last ephemeral scope. This method will then push a `MatchScope` while the
+    # given `expression` is evaluated. The method will catch any throw of `:unevaluated_parameter` and produce
+    # an error saying that the evaluated parameter X tries to access the unevaluated parameter Y.
+    #
+    # @param name [String] the name of the currently evaluated parameter
+    # @param expression [Puppet::Parser::AST] the expression to evaluate
+    # @param scope [Puppet::Parser::Scope] a scope where a `ParameterScope` has been pushed
+    # @return [Object] the result of the evaluation
+    #
+    # @api private
+    def evaluate3x(name, expression, scope)
+      scope.with_guarded_scope do
+        bad = catch(:unevaluated_parameter) do
+          scope.new_match_scope(nil)
+          return as_read_only { expression.safeevaluate(scope) }
+        end
+        raise Puppet::Error, "default expression for $#{name} tries to illegally access not yet evaluated $#{bad}"
+      end
+    end
+
+    def evaluate(name, expression, scope, evaluator)
+      scope.with_guarded_scope do
+        bad = catch(:unevaluated_parameter) do
+          scope.new_match_scope(nil)
+          return as_read_only { evaluator.evaluate(expression, scope) }
+        end
+        raise Puppet::Error, "default expression for $#{name} tries to illegally access not yet evaluated $#{bad}"
+      end
+    end
+
+    def initialize(parent, param_names)
+      super(parent)
+      @params = {}
+      param_names.each { |name| @params[name] = Access.new }
+    end
+
+    def [](name)
+      access = @params[name]
+      return super if access.nil?
+      throw(:unevaluated_parameter, name) unless access.assigned?
+      access.value
+    end
+
+    def []=(name, value)
+      raise Puppet::Error, "Attempt to assign variable #{name} when evaluating parameters" if @read_only
+      @params[name] ||= Access.new
+      @params[name].value = value
+    end
+
+    def bound?(name)
+      @params.include?(name)
+    end
+
+    def include?(name)
+      @params.include?(name) || super
+    end
+
+    def is_local_scope?
+      true
+    end
+
+    def as_read_only
+      read_only = @read_only
+      @read_only = true
+      begin
+        yield
+      ensure
+        @read_only = read_only
+      end
+    end
+
+    def to_hash
+      Hash[@params.select {|_, access| access.assigned? }.map { |name, access| [name, access.value] }]
+    end
+  end
+
+
   # Returns true if the variable of the given name has a non nil value.
   # TODO: This has vague semantics - does the variable exist or not?
   #       use ['name'] to get nil or value, and if nil check with exist?('name')
@@ -738,15 +826,33 @@ class Puppet::Parser::Scope
 
   alias_method :inspect, :to_s
 
-  # remove ephemeral scope up to level
-  # TODO: Who uses :all ? Remove ??
+  # Pop ephemeral scopes up to level and return them
   #
+  # @deprecated use #pop_epehemeral
+  # @api private
   def unset_ephemeral_var(level=:all)
+    Puppet.deprecation_warning('Method Parser::Scope#unset_ephemeral_var() is deprecated')
     if level == :all
       @ephemeral = [ MatchScope.new(@symtable, nil)]
     else
       @ephemeral.pop(@ephemeral.size - level)
     end
+  end
+
+  # Pop ephemeral scopes up to level and return them
+  #
+  # @param level [Fixnum] a positive integer
+  # @return [Array] the removed ephemeral scopes
+  # @api private
+  def pop_ephemerals(level)
+    @ephemeral.pop(@ephemeral.size - level)
+  end
+
+  # Push ephemeral scopes onto the ephemeral scope stack
+  # @param ephemeral_scopes [Array]
+  # @api private
+  def push_ephemerals(ephemeral_scopes)
+    ephemeral_scopes.each { |ephemeral_scope| @ephemeral.push(ephemeral_scope) } unless ephemeral_scopes.nil?
   end
 
   def ephemeral_level
@@ -759,6 +865,53 @@ class Puppet::Parser::Scope
       @ephemeral.push(LocalScope.new(@ephemeral.last))
     else
       @ephemeral.push(MatchScope.new(@ephemeral.last, nil))
+    end
+  end
+
+  # Execute given block in global scope with no ephemerals present
+  #
+  # @yieldparam [Scope] global_scope the global and ephemeral less scope
+  # @return [Object] the return of the block
+  #
+  # @api private
+  def with_global_scope(&block)
+    find_global_scope.without_ephemeral_scopes(&block)
+  end
+
+  # Execute given block with all ephemeral popped from the ephemeral stack
+  #
+  # @api private
+  def without_ephemeral_scopes
+    save_ephemeral = @ephemeral
+    begin
+      @ephemeral = [ @symtable ]
+      yield(self)
+    ensure
+      @ephemeral = save_ephemeral
+    end
+  end
+
+  # Nests a parameter scope
+  # @api private
+  def with_parameter_scope(param_names)
+    param_scope = ParameterScope.new(@ephemeral.last, param_names)
+    with_guarded_scope do
+      @ephemeral.push(param_scope)
+      yield(param_scope)
+    end
+  end
+
+  # Execute given block and ensure that ephemeral level is restored
+  #
+  # @return [Object] the return of the block
+  #
+  # @api private
+  def with_guarded_scope
+    elevel = ephemeral_level
+    begin
+      yield
+    ensure
+      pop_ephemerals(elevel)
     end
   end
 

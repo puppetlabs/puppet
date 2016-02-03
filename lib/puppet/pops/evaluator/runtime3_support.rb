@@ -136,10 +136,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def set_scope_nesting_level(scope, level)
-    # Yup, 3x uses this method to reset the level, it also supports passing :all to destroy all 
-    # ephemeral/local scopes - which is a sure way to create havoc.
-    #
-    scope.unset_ephemeral_var(level)
+    # 3x uses this method to reset the level,
+    scope.pop_ephemerals(level)
   end
 
   # Adds a relationship between the given `source` and `target` of the given `relationship_type`

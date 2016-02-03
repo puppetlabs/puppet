@@ -78,7 +78,23 @@ class SemVer < Numeric
   end
 
   def <=>(other)
-    other = SemVer.new("#{other}") unless other.is_a? SemVer
+    # Note that prior to ruby 2.3.0, if a <=> method threw an exception, ruby
+    # would silently rescue the exception and return nil from <=> (which causes
+    # the derived == comparison to return false). Starting in ruby 2.3.0, this
+    # behavior changed and the exception is actually thrown. Some comments at:
+    # https://bugs.ruby-lang.org/issues/7688
+    #
+    # SemVer#initialize above throws an ArgumentError given an invalid
+    # version string. So, to preserve the ability to use the == operator
+    # between a SemVer object and an invalid version string, we take care here
+    # to do the valid? check before constructing the SemVer object (i.e.
+    # so that a == comparison doesn't throw an exception, but just returns
+    # false.)
+    unless other.is_a? SemVer
+      return nil unless SemVer.valid?(other)
+      other = SemVer.new("#{other}")
+    end
+
     return self.major <=> other.major unless self.major == other.major
     return self.minor <=> other.minor unless self.minor == other.minor
     return self.tiny  <=> other.tiny  unless self.tiny  == other.tiny

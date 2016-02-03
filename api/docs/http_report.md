@@ -2,7 +2,7 @@ Report
 ======
 This document describes the Puppet master's report endpoint and the schema for
 Report Format 4 in technical term. Also see the
-[documentation](http://docs.puppetlabs.com/puppet/latest/reference/format_report.html).
+[documentation](https://docs.puppetlabs.com/puppet/latest/reference/format_report.html).
 
 The `report` endpoint allows clients to send reports to the master via `http`
 or `https`.  Once received by the master they are processed by the *report
@@ -51,7 +51,9 @@ example is formatted for readability)
      "time"=>"2013-09-12T03:50:59.009301000+02:00",
      "configuration_version"=>1357986,
      "transaction_uuid"=>"df34516e-4050-402d-a166-05b03b940749",
-     "report_format"=>4,
+     "code_id"=>null,
+     "catalog_uuid"=>"827a74c8-cf98-44da-9ff7-18c5e4bee41e",
+     "report_format"=>5,
      "puppet_version"=>"3.3.0",
      "kind"=>"apply",
      "status"=>"unchanged",
@@ -107,7 +109,8 @@ example is formatted for readability)
          "skipped"=>false,
          "change_count"=>0,
          "out_of_sync_count"=>0,
-         "events"=>[]}}}
+         "events"=>[]}},
+      "cached_catalog_status"=> "not_used"}
 
 Schema
 ------

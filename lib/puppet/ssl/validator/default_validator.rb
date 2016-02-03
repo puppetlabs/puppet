@@ -48,7 +48,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # chain being verified.
   #
   # From the [OpenSSL
-  # documentation](http://www.openssl.org/docs/ssl/SSL_CTX_set_verify.html):
+  # documentation](https://www.openssl.org/docs/ssl/SSL_CTX_set_verify.html):
   # The `verify_callback` function is used to control the behaviour when the
   # SSL_VERIFY_PEER flag is set. It must be supplied by the application and
   # receives two arguments: preverify_ok indicates, whether the verification of

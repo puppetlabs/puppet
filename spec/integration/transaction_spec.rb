@@ -319,6 +319,17 @@ describe Puppet::Transaction do
       expect(Puppet::FileSystem.exist?(fname)).to be_falsey
     end
 
+    it "does not trigger skip-tagged resources" do
+      catalog = mk_catalog
+
+      Puppet[:skip_tags] = "skipme"
+      exec.tag("skipme")
+
+      catalog.add_resource(file, exec)
+      catalog.apply
+      expect(Puppet::FileSystem.exist?(fname)).to be_falsey
+    end
+
     it "does not trigger resources with failed dependencies" do
       catalog = mk_catalog
       file[:path] = make_absolute("/foo/bar/baz")

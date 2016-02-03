@@ -23,13 +23,13 @@ and updates to existing core types.
 
 If you are unsure of whether your contribution should be implemented as a
 module or part of Puppet Core, you may visit
-[#puppet-dev on Freenode IRC](http://freenode.net) or ask on the
+[#puppet-dev on Freenode IRC](https://freenode.net) or ask on the
 [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev)
 for advice.
 
 ## Getting Started
 
-* Make sure you have a [Jira account](http://tickets.puppetlabs.com)
+* Make sure you have a [Jira account](https://tickets.puppetlabs.com)
 * Make sure you have a [GitHub account](https://github.com/signup/free)
 * Submit a ticket for your issue, assuming one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
@@ -106,11 +106,11 @@ a ticket number.
 
 # Additional Resources
 
-* [Puppet Labs community guidelines](http://docs.puppetlabs.com/community/community_guidelines.html)
-* [Bug tracker (Jira)](http://tickets.puppetlabs.com)
+* [Puppet Labs community guidelines](https://docs.puppetlabs.com/community/community_guidelines.html)
+* [Bug tracker (Jira)](https://tickets.puppetlabs.com)
 * [Contributor License Agreement](http://links.puppetlabs.com/cla)
-* [General GitHub documentation](http://help.github.com/)
-* [GitHub pull request documentation](http://help.github.com/send-pull-requests/)
+* [General GitHub documentation](https://help.github.com/)
+* [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
 * #puppet-dev IRC channel on freenode.org ([Archive](https://botbot.me/freenode/puppet-dev/))
 * [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev)
 * [Community PR Triage notes](https://github.com/puppet-community/community-triage/tree/master/core/notes)

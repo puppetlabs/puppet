@@ -20,8 +20,8 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     pkg(['version', '-voRL='])
   end
 
-  def self.get_latest_version(origin)
-    if latest_version = self.get_version_list.lines.find { |l| l =~ /^#{origin} / }
+  def self.get_latest_version(origin, version_list)
+    if latest_version = version_list.lines.find { |l| l =~ /^#{origin} / }
       latest_version = latest_version.split(' ').last.split(')').first
       return latest_version
     end
@@ -32,6 +32,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     packages = []
     begin
       info = self.get_query
+      version_list = self.get_version_list
 
       unless info
         return packages
@@ -40,7 +41,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
       info.lines.each do |line|
 
         name, version, origin = line.chomp.split(" ", 3)
-        latest_version  = get_latest_version(origin) || version
+        latest_version  = get_latest_version(origin, version_list) || version
 
         pkg = {
           :ensure   => version,
@@ -84,7 +85,15 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     when true, false, Symbol
       installname = resource[:name]
     else
-      installname = resource[:name] + '-' + resource[:ensure]
+      # If resource[:name] is actually an origin (e.g. 'www/curl' instead of
+      # just 'curl'), drop the category prefix. pkgng doesn't support version
+      # pinning with the origin syntax (pkg install curl-1.2.3 is valid, but
+      # pkg install www/curl-1.2.3 is not).
+      if resource[:name] =~ /\//
+        installname = resource[:name].split('/')[1] + '-' + resource[:ensure]
+      else
+        installname = resource[:name] + '-' + resource[:ensure]
+      end
     end
 
     if not source # install using default repo logic

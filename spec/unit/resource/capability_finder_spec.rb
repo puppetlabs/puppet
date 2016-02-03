@@ -15,7 +15,7 @@ describe Puppet::Resource::CapabilityFinder do
     around(:each) do |example|
       mock_pdb = !Puppet::Util.const_defined?('Puppetdb')
       if mock_pdb
-        class Puppet::Util::Puppetdb
+        module Puppet::Util::Puppetdb
           class Http; end
         end
       end
@@ -27,11 +27,8 @@ describe Puppet::Resource::CapabilityFinder do
       end
     end
 
-    class MockResponse
-      def body
-        '[{"type": "Cap", "title": "cap", "parameters": { "host" : "ahost" }}]'
-      end
-    end
+    let(:response_body) { [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}}] }
+    let(:response) { stub('response', :body => response_body.to_json) }
 
     def make_cap_type
       Puppet::Type.newtype :cap, :is_capability => true do
@@ -40,17 +37,33 @@ describe Puppet::Resource::CapabilityFinder do
       end
     end
 
-    it 'should call Puppet::Util::PuppetDB::Http.action' do
-      Puppet::Util::Puppetdb::Http.expects(:action).returns(MockResponse.new)
-      result = Puppet::Resource::CapabilityFinder.find('production', nil, Puppet::Resource.new('Cap', 'cap'))
-      expect(result['host']).to eq('ahost')
+    describe "when query_puppetdb method is available" do
+      it 'should call use the query_puppetdb method if available' do
+        Puppet::Util::Puppetdb.expects(:query_puppetdb).returns(response_body)
+        Puppet::Util::Puppetdb::Http.expects(:action).never
+
+        result = Puppet::Resource::CapabilityFinder.find('production', nil, Puppet::Resource.new('Cap', 'cap'))
+        expect(result['host']).to eq('ahost')
+      end
     end
 
-    it 'should use pass code_id in query to Puppet::Util::PuppetDB::Http.action' do
-      code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
-      Puppet::Util::Puppetdb::Http.expects(:action).with(regexp_matches(Regexp.new(CGI.escape('"=","code_id","' + code_id + "")))).returns(MockResponse.new)
-      result = Puppet::Resource::CapabilityFinder.find('production', code_id, Puppet::Resource.new('Cap', 'cap'))
-      expect(result['host']).to eq('ahost')
+    describe "when query_puppetdb method is unavailable" do
+      before :each do
+        Puppet::Util::Puppetdb.stubs(:respond_to?).with(:query_puppetdb).returns false
+      end
+
+      it 'should call Puppet::Util::PuppetDB::Http.action' do
+        Puppet::Util::Puppetdb::Http.expects(:action).returns(response)
+        result = Puppet::Resource::CapabilityFinder.find('production', nil, Puppet::Resource.new('Cap', 'cap'))
+        expect(result['host']).to eq('ahost')
+      end
+
+      it 'should include code_id in query' do
+        code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+        Puppet::Util::Puppetdb::Http.expects(:action).with(regexp_matches(Regexp.new(CGI.escape('"=","code_id","' + code_id + "")))).returns(response)
+        result = Puppet::Resource::CapabilityFinder.find('production', code_id, Puppet::Resource.new('Cap', 'cap'))
+        expect(result['host']).to eq('ahost')
+      end
     end
   end
 end

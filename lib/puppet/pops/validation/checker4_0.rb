@@ -301,13 +301,6 @@ class Puppet::Pops::Validation::Checker4_0
     unless o.type_expr.is_a? Model::QualifiedReference
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o)
     end
-
-    # If a collect expression tries to collect exported resources and storeconfigs is not on
-    # then it will not work... This was checked in the parser previously. This is a runtime checking
-    # thing as opposed to a language thing.
-    if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.query.is_a?(Model::ExportedQuery)
-      acceptor.accept(Issues::RT_NO_STORECONFIGS, o)
-    end
   end
 
   # Only used for function names, grammar should not be able to produce something faulty, but
@@ -367,6 +360,7 @@ class Puppet::Pops::Validation::Checker4_0
 
   def check_FunctionDefinition(o)
     check_NamedDefinition(o)
+    internal_check_parameter_name_uniqueness(o)
   end
 
   def check_HostClassDefinition(o)
@@ -498,12 +492,16 @@ class Puppet::Pops::Validation::Checker4_0
     end
     return unless o.value
 
-    if o.value.is_a?(Puppet::Pops::Model::AssignmentExpression)
-      [o.value]
+    internal_check_illegal_assignment(o.value)
+  end
+
+  def internal_check_illegal_assignment(o)
+    if o.is_a?(Puppet::Pops::Model::AssignmentExpression)
+      acceptor.accept(Issues::ILLEGAL_ASSIGNMENT_CONTEXT, o)
     else
-      o.value.eAllContents.select {|model| model.is_a? Puppet::Pops::Model::AssignmentExpression }
-    end.each do |assignment|
-      acceptor.accept(Issues::ILLEGAL_ASSIGNMENT_CONTEXT, assignment)
+      # recursively check all contents unless it's a lambda expression. A lambda may contain
+      # local assignments
+      o.eContents.each {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Puppet::Pops::Model::LambdaExpression)
     end
   end
 

@@ -32,6 +32,20 @@ module Semantic
       end
 
       def <=>(oth)
+        # Note that prior to ruby 2.3.0, if a <=> method threw an exception, ruby
+        # would silently rescue the exception and return nil from <=> (which causes
+        # the derived == comparison to return false). Starting in ruby 2.3.0, this
+        # behavior changed and the exception is actually thrown. Some comments at:
+        # https://bugs.ruby-lang.org/issues/7688
+        #
+        # So simply return nil here if any of the needed fields are not available,
+        # since attempting to access a missing field is one way to force an exception.
+        # This doesn't help if the  <=> use below throws an exception, but it
+        # handles the most typical cause.
+        return nil if !oth.respond_to?(:priority) ||
+                      !oth.respond_to?(:name)     ||
+                      !oth.respond_to?(:version)
+
         our_key   = [ priority, name, version ]
         their_key = [ oth.priority, oth.name, oth.version ]
 

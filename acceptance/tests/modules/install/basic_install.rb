@@ -3,16 +3,7 @@ require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
 confine :except, :platform => /centos-4|el-4/ # PUP-5226
-
-hosts.each do |host|
-  case host['platform']
-  when /solaris|aix/
-    # see PUP-4822, PUP-3450
-    # We now bundle the GeoTrust Global CA with our vendored openssl, so
-    # this test will run correctly in OSX.
-    skip_test "skip tests requiring forge certs"
-  end
-end
+confine :except, :platform => /aix/ # PUP-5501
 
 module_author = "pmtacceptance"
 module_name   = "nginx"

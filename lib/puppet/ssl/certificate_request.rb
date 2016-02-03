@@ -23,7 +23,7 @@ require 'puppet/ssl/certificate_signer'
 #
 # This behavior is dictated by PKCS#9/RFC 2985 section 5.4.2.
 #
-# @see http://tools.ietf.org/html/rfc2985 "RFC 2985 Section 5.4.2 Extension request"
+# @see https://tools.ietf.org/html/rfc2985 "RFC 2985 Section 5.4.2 Extension request"
 #
 class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   wraps OpenSSL::X509::Request
@@ -193,7 +193,7 @@ DOC
   #
   # The format of CSR attributes is specified in PKCS#10/RFC 2986
   #
-  # @see http://tools.ietf.org/html/rfc2986 "RFC 2986 Certification Request Syntax Specification"
+  # @see https://tools.ietf.org/html/rfc2986 "RFC 2986 Certification Request Syntax Specification"
   #
   # @api public
   #
@@ -289,8 +289,8 @@ DOC
   # that in turn holds the elements. This is why we have to unpack an array
   # every time we unpack a Set/Seq.
   #
-  # @see http://tools.ietf.org/html/rfc2985#ref-10 5.4.2 CSR Extension Request structure
-  # @see http://tools.ietf.org/html/rfc5280 4.1 Certificate Extension structure
+  # @see https://tools.ietf.org/html/rfc2985#ref-10 5.4.2 CSR Extension Request structure
+  # @see https://tools.ietf.org/html/rfc5280 4.1 Certificate Extension structure
   #
   # @api private
   #

@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/util/tagging'
+require 'puppet/util/skip_tags'
 require 'puppet/application'
 require 'digest/sha1'
 require 'set'
@@ -185,6 +186,10 @@ class Puppet::Transaction
     super
   end
 
+  def skip_tags
+    @skip_tags ||= Puppet::Util::SkipTags.new(Puppet[:skip_tags]).tags
+  end
+
   def prefetch_if_necessary(resource)
     provider_class = resource.provider.class
     return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
@@ -339,7 +344,9 @@ class Puppet::Transaction
 
   # Should this resource be skipped?
   def skip?(resource)
-    if missing_tags?(resource)
+    if skip_tags?(resource)
+      resource.debug "Skipping with skip tags #{skip_tags.join(", ")}"
+    elsif missing_tags?(resource)
       resource.debug "Not tagged with #{tags.join(", ")}"
     elsif ! scheduled?(resource)
       resource.debug "Not scheduled"
@@ -375,6 +382,13 @@ class Puppet::Transaction
     not resource.tagged?(*tags)
   end
 
+  def skip_tags?(resource)
+    return false if ignore_tags?
+    return false if skip_tags.empty?
+
+    resource.tagged?(*skip_tags)
+  end
+
   def split_qualified_tags?
     false
   end
@@ -389,4 +403,3 @@ class Puppet::Transaction
 end
 
 require 'puppet/transaction/report'
-

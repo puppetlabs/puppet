@@ -126,6 +126,12 @@ class Puppet::Pops::Types::TypeParser
     when 'numeric'
         TYPES.numeric
 
+    when 'iterable'
+      TYPES.iterable
+
+    when 'iterator'
+      TYPES.iterator
+
     when 'string'
       TYPES.string
 
@@ -361,6 +367,20 @@ class Puppet::Pops::Types::TypeParser
      else
        TYPES.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
+
+    when 'iterable'
+      if parameters.size != 1
+        raise_invalid_parameters_error('Iterable', 1, parameters.size)
+      end
+      assert_type(parameters[0])
+      TYPES.iterable(parameters[0])
+
+    when 'iterator'
+      if parameters.size != 1
+        raise_invalid_parameters_error('Iterator', 1, parameters.size)
+      end
+      assert_type(parameters[0])
+      TYPES.iterator(parameters[0])
 
     when 'float'
       if parameters.size == 1

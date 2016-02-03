@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/agent'
+require 'puppet/configurer'
 
 class AgentTestClient
   def run

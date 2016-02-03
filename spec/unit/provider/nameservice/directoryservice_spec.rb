@@ -1,6 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+module Puppet::Util::Plist
+end
+
 # We use this as a reasonable way to obtain all the support infrastructure.
 [:group].each do |type_for_this_round|
   provider_class = Puppet::Type.type(type_for_this_round).provider(:directoryservice)
@@ -79,19 +82,17 @@ describe 'DirectoryService password behavior' do
   end
 
   let :shadow_hash_data do
-    {'ShadowHashData' => [StringIO.new(binary_plist)]}
+    {'ShadowHashData' => [binary_plist]}
   end
 
   subject do
     Puppet::Provider::NameService::DirectoryService
   end
 
-  it 'should execute convert_binary_to_xml once when getting the password' do
-    subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
+  it 'should execute convert_binary_to_hash once when getting the password' do
+    subject.expects(:convert_binary_to_hash).returns({'SALTED-SHA512' => pw_string})
     Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-    Plist.expects(:parse_xml).returns(shadow_hash_data)
-    # On Mac OS X 10.7 we first need to convert to xml when reading the password
-    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
+    Puppet::Util::Plist.expects(:read_plist_file).returns(shadow_hash_data)
     subject.get_password('uid', 'jeff')
   end
 
@@ -102,25 +103,19 @@ describe 'DirectoryService password behavior' do
   end
 
   it 'should convert xml-to-binary and binary-to-xml when setting the pw on >= 10.7' do
-    subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
-    subject.expects(:convert_xml_to_binary).returns(binary_plist)
+    subject.expects(:convert_binary_to_hash).returns({'SALTED-SHA512' => pw_string})
+    subject.expects(:convert_hash_to_binary).returns(binary_plist)
     Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-    Plist.expects(:parse_xml).returns(shadow_hash_data)
-    # On Mac OS X 10.7 we first need to convert to xml
-    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
-    # And again back to a binary plist or DirectoryService will complain
-    subject.expects(:plutil).with('-convert', 'binary1', plist_path)
-    Plist::Emit.expects(:save_plist).with(shadow_hash_data, plist_path)
+    Puppet::Util::Plist.expects(:read_plist_file).returns(shadow_hash_data)
+    Puppet::Util::Plist.expects(:write_plist_file).with(shadow_hash_data, plist_path, :binary)
     subject.set_password('jeff', 'uid', sha512_hash)
   end
 
   it '[#13686] should handle an empty ShadowHashData field in the users plist' do
-    subject.expects(:convert_xml_to_binary).returns(binary_plist)
+    subject.expects(:convert_hash_to_binary).returns(binary_plist)
     Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-    Plist.expects(:parse_xml).returns({'ShadowHashData' => nil})
-    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
-    subject.expects(:plutil).with('-convert', 'binary1', plist_path)
-    Plist::Emit.expects(:save_plist)
+    Puppet::Util::Plist.expects(:read_plist_file).returns({'ShadowHashData' => nil})
+    Puppet::Util::Plist.expects(:write_plist_file)
     subject.set_password('jeff', 'uid', sha512_hash)
   end
 end

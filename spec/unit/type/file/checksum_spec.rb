@@ -76,4 +76,10 @@ describe checksum do
       expect(sum).to eq("something")
     end
   end
+
+  it 'should use values allowed by the supported_checksum_types setting' do
+    values = checksum.value_collection.values.reject {|v| v == :none}.map {|v| v.to_s}
+    Puppet.settings[:supported_checksum_types] = values
+    expect(Puppet.settings[:supported_checksum_types]).to eq(values)
+  end
 end

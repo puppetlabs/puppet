@@ -272,7 +272,7 @@ module Puppet::Util::Windows::File
 
   private
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
   FSCTL_GET_REPARSE_POINT = 0x900a8
 
   def self.resolve_symlink(handle)
@@ -290,7 +290,7 @@ module Puppet::Util::Windows::File
 
   ffi_convention :stdcall
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
   # BOOL WINAPI ReplaceFile(
   #   _In_        LPCTSTR lpReplacedFileName,
   #   _In_        LPCTSTR lpReplacementFileName,
@@ -305,7 +305,7 @@ module Puppet::Util::Windows::File
   attach_function_private :ReplaceFileW,
     [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
   # BOOL WINAPI MoveFileEx(
   #   _In_      LPCTSTR lpExistingFileName,
   #   _In_opt_  LPCTSTR lpNewFileName,
@@ -328,7 +328,7 @@ module Puppet::Util::Windows::File
   rescue LoadError
   end
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
   # DWORD WINAPI GetFileAttributes(
   #   _In_  LPCTSTR lpFileName
   # );
@@ -336,7 +336,7 @@ module Puppet::Util::Windows::File
   attach_function_private :GetFileAttributesW,
     [:lpcwstr], :dword
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365535(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365535(v=vs.85).aspx
   # BOOL WINAPI SetFileAttributes(
   #   _In_  LPCTSTR lpFileName,
   #   _In_  DWORD dwFileAttributes
@@ -358,7 +358,7 @@ module Puppet::Util::Windows::File
   attach_function_private :CreateFileW,
     [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
   # BOOL WINAPI DeviceIoControl(
   #   _In_         HANDLE hDevice,
   #   _In_         DWORD dwIoControlCode,
@@ -376,8 +376,8 @@ module Puppet::Util::Windows::File
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
   # REPARSE_DATA_BUFFER
-  # http://msdn.microsoft.com/en-us/library/cc232006.aspx
-  # http://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
+  # https://msdn.microsoft.com/en-us/library/cc232006.aspx
+  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
   # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
   class REPARSE_DATA_BUFFER < FFI::Struct
     layout :ReparseTag, :win32_ulong,
