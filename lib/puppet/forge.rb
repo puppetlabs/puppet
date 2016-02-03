@@ -38,7 +38,7 @@ class Puppet::Forge < Semantic::Dependency::Source
   #     "releases"    => [{"version"=>"0.0.1"}, {"version"=>"0.0.2"}],
   #     "full_name"   => "puppetlabs/bacula",
   #     "version"     => "0.0.2",
-  #     "project_url" => "http://github.com/puppetlabs/puppetlabs-bacula",
+  #     "project_url" => "https://github.com/puppetlabs/puppetlabs-bacula",
   #     "desc"        => "bacula"
   #   }
   # ]

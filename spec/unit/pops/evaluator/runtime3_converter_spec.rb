@@ -16,4 +16,10 @@ describe 'when converting to 3.x' do
     converted = Puppet::Pops::Evaluator::Runtime3Converter.instance.catalog_type_to_split_type_title(t)
     expect(converted).to eql(['class', 'kermit'])
   end
+
+  it "errors on attempts to convert an 'Iterator'" do
+    expect {
+      Puppet::Pops::Evaluator::Runtime3Converter.convert(Puppet::Pops::Types::Iterable.on((1..3)), {}, nil)
+    }.to raise_error(Puppet::Error, /Use of an Iterator is not supported here/)
+  end
 end

@@ -6,7 +6,7 @@
 #
 # This function takes two mandatory arguments, in this order:
 #
-# 1. An array or hash the function will iterate over.
+# 1. An array, hash, or other iterable object that the function will iterate over.
 # 2. A lambda, which the function calls for each element in the first argument. It takes
 # two mandatory parameters:
 #     1. A memo value that is overwritten after each iteration with the iteration's result.
@@ -99,31 +99,23 @@
 Puppet::Functions.create_function(:reduce) do
 
   dispatch :reduce_without_memo do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     block_param 'Callable[2,2]', :block
   end
 
   dispatch :reduce_with_memo do
-    param 'Any', :enumerable
+    param 'Iterable', :enumerable
     param 'Any', :memo
     block_param 'Callable[2,2]', :block
   end
 
   def reduce_without_memo(enumerable)
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     enum.reduce {|memo, x| yield(memo, x) }
   end
 
   def reduce_with_memo(enumerable, given_memo)
-    enum = asserted_enumerable(enumerable)
+    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     enum.reduce(given_memo) {|memo, x| yield(memo, x) }
   end
-
-  def asserted_enumerable(obj)
-    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
-      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
-    end
-    enum
-  end
-
 end

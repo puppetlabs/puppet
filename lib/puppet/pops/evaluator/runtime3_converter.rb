@@ -88,6 +88,11 @@ class Runtime3Converter
   end
   alias :convert2_Hash :convert_Hash
 
+  def convert_Iterator(o, scope, undef_value)
+    raise Puppet::Error, 'Use of an Iterator is not supported here'
+  end
+  alias :convert2_Iterator :convert_Iterator
+
   def convert_Regexp(o, scope, undef_value)
     # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
     # source form

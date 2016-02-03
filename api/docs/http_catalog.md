@@ -31,7 +31,7 @@ The examples below use the POST method.
 
 ### Parameters
 
-Four parameters should be provided to the POST or GET:
+Six parameters should be provided to the POST or GET:
 
 - `environment`: the environment name
 - `facts_format`: must be `pson`
@@ -39,6 +39,9 @@ Four parameters should be provided to the POST or GET:
 doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
 escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
+- `static_catalog`: a boolean requesting a static catalog if available; should always be `true`
+- `checksum_type`: a dot-separated list of checksum types supported by the agent, for use in file resources of a static
+catalog. The order signifies preference, highest first.
 
 An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
 environment, which might differ from what the client believes is its current environment:
@@ -51,7 +54,7 @@ environment, which might differ from what the client believes is its current env
 
     POST /puppet/v3/catalog/elmo.mydomain.com
 
-    environment=env&configured_environment=canary_env&facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
+    environment=env&configured_environment=canary_env&facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c&static_catalog=true&checksum_type=md5.sha256
 
     HTTP 200 OK
     Content-Type: text/pson
@@ -65,6 +68,7 @@ environment, which might differ from what the client believes is its current env
       "name": "elmo.mydomain.com",
       "version": 1377473054,
       "code_id": null,
+      "catalog_uuid": "827a74c8-cf98-44da-9ff7-18c5e4bee41e",
       "environment": "production",
       "resources": [
         {

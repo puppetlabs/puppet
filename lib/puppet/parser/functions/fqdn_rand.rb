@@ -16,6 +16,6 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   node. (For example, `fqdn_rand(30)`, `fqdn_rand(30, 'expensive job 1')`, and
   `fqdn_rand(30, 'expensive job 2')` will produce totally different numbers.)") do |args|
     max = args.shift.to_i
-    seed = Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex
+    seed = Digest::MD5.hexdigest([self['::fqdn'],max,args].join(':')).hex
     Puppet::Util.deterministic_rand_int(seed,max)
 end

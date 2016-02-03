@@ -5,7 +5,7 @@ describe "the epp function" do
 
   let :node     do Puppet::Node.new('localhost') end
   let :compiler do Puppet::Parser::Compiler.new(node) end
-  let :scope    do Puppet::Parser::Scope.new(compiler) end
+  let :scope    do compiler.topscope end
 
   context "when accessing scope variables as $ variables" do
     it "looks up the value from the scope" do
@@ -27,10 +27,18 @@ describe "the epp function" do
       expect(eval_template_with_args("<%= $phantom == dragos %>", 'phantom' => 'dragos')).to eq("true")
     end
 
-    it "can use values from the enclosing scope for defaults" do
+    it "can use values from the global scope for defaults" do
       scope['phantom'] = 'of the opera'
-      expect(eval_template("<%- |$phantom = $phantom| -%><%= $phantom %>")).to eq("of the opera")
+      expect(eval_template("<%- |$phantom = $::phantom| -%><%= $phantom %>")).to eq("of the opera")
     end
+
+    it "will not use values from the enclosing scope for defaults" do
+      scope['the_phantom'] = 'of the state opera'
+      scope.new_ephemeral(true)
+      scope['the_phantom'] = 'of the local opera'
+      expect(scope['the_phantom']).to eq('of the local opera')
+      expect(eval_template("<%- |$phantom = $the_phantom| -%><%= $phantom %>")).to eq("of the state opera")
+     end
 
     it "uses the default value if the given value is undef/nil" do
       expect(eval_template_with_args("<%- |$phantom = 'inside your mind'| -%><%= $phantom %>", 'phantom' => nil)).to eq("inside your mind")

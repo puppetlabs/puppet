@@ -7,8 +7,7 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
 
   describe "when installing an appdmg" do
     let(:fake_mountpoint) { "/tmp/dmg.foo" }
-    let(:empty_hdiutil_plist) { Plist::Emit.dump({}) }
-    let(:fake_hdiutil_plist) { Plist::Emit.dump({"system-entities" => [{"mount-point" => fake_mountpoint}]}) }
+    let(:fake_hdiutil_plist) { {"system-entities" => [{"mount-point" => fake_mountpoint}]} }
 
     before do
       fh = mock 'filehandle'
@@ -32,7 +31,8 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
         described_class.expects(:curl).with do |*args|
           args[0] == "-o" && args[1].include?(tmpdir) && ! args.include?("-k")
         end
-        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.stubs(:hdiutil).returns 'a plist'
+        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
         described_class.expects(:installapp)
 
         provider.install

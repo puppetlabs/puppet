@@ -93,10 +93,29 @@
             "type":        "string"
         },
 
+        "code_id": {
+            "description": "The id of the code input to the compiler.",
+            "type":        "string"
+        },
+
+        "catalog_uuid": {
+            "description": "A UUID covering a specific catalog.",
+            "type":        "string"
+        },
+
+        "cached_catalog_status": {
+            "description": "Whether a cached catalog was used, and if so, why it was used. Enumerator with one of the values:\n\n* `not_used`, if a cached catalog was not used.\n* `explicitly_requested`, if a cached catalog was used because the use_cached_catalog option was set.\n* `on_failure`, if a cached catalog was used because the usecacheonfailure setting was set and the agent failed to download a new catalog",
+            "enum": [
+              "not_used",
+              "explicitly_requested",
+              "on_failure"
+            ]
+        },
+
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["4", 4]
+            "enum":        ["5", 5]
         },
 
         "puppet_version": {

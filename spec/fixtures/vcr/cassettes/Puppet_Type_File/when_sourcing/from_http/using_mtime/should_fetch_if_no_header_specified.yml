@@ -1,0 +1,197 @@
+---
+http_interactions:
+- request:
+    method: head
+    uri: http://my-server/file
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 301
+      message: ! 'Moved Permanently '
+    headers:
+      Location:
+      - http://my-server/file/
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Content-Length:
+      - '44'
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+- request:
+    method: head
+    uri: http://my-server/file/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ! 'OK '
+    headers:
+      Etag:
+      - 62e0b-184a-550f415e
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '6218'
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+- request:
+    method: head
+    uri: http://my-server/file/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ! 'OK '
+    headers:
+      Etag:
+      - 62e0b-184a-550f415e
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '6218'
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+- request:
+    method: head
+    uri: http://my-server/file
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 301
+      message: ! 'Moved Permanently '
+    headers:
+      Location:
+      - http://my-server/file/
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Content-Length:
+      - '44'
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+- request:
+    method: head
+    uri: http://my-server/file/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ! 'OK '
+    headers:
+      Etag:
+      - 62e0b-184a-550f415e
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '6218'
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+- request:
+    method: get
+    uri: http://my-server/file/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - ! '*/*'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ! 'OK '
+    headers:
+      Etag:
+      - 62e0b-184a-550f415e
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '6218'
+      Server:
+      - WEBrick/1.3.1 (Ruby/1.9.3/2013-11-22)
+      Date:
+      - Sun, 22 Mar 2015 22:57:44 GMT
+      Connection:
+      - Keep-Alive
+    body:
+      encoding: US-ASCII
+      string: ! "Content via HTTP\n"
+    http_version: 
+  recorded_at: Sun, 22 Mar 2015 22:57:44 GMT
+recorded_with: VCR 2.9.3

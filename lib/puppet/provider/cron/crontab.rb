@@ -9,7 +9,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
 
   text_line :blank, :match => %r{^\s*$}
 
-  text_line :environment, :match => %r{^\s*\w+=}
+  text_line :environment, :match => %r{^\s*\w+\s*=}
 
   def self.filetype
   tabname = case Facter.value(:osfamily)

@@ -196,7 +196,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
 
     attrs.each { |val|
-      key = key_list.shift.downcase.to_sym
+      key = key_list.shift.to_sym
       properties = self.load_attribute(key, val, mapping, properties)
     }
     properties.empty? ? nil : properties

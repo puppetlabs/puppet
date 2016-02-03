@@ -21,6 +21,8 @@ module Puppet::FileServing::TerminusSelector
       else
         Puppet[:default_file_terminus]
       end
+   when "http","https"
+     :http
     when nil
       :file_server
     else

@@ -377,6 +377,36 @@ describe Puppet::Configurer do
       expect($env_module_directories).to eq(nil)
     end
 
+    it "sends the transaction uuid in a catalog request" do
+      @agent.instance_variable_set(:@transaction_uuid, 'aaa')
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => 'aaa'))
+      @agent.run
+    end
+
+    it "sets the static_catalog query param to true in a catalog request" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:static_catalog => true))
+      @agent.run
+    end
+
+    it "sets the checksum_type query param to the default supported_checksum_types in a catalog request" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything,
+        has_entries(:checksum_type => 'md5.sha256'))
+      @agent.run
+    end
+
+    it "sets the checksum_type query param to the supported_checksum_types setting in a catalog request" do
+      # Regenerate the agent to pick up the new setting
+      Puppet[:supported_checksum_types] = ['sha256']
+      @agent = Puppet::Configurer.new
+      @agent.stubs(:init_storage)
+      @agent.stubs(:download_plugins)
+      @agent.stubs(:send_report)
+      @agent.stubs(:save_last_run_summary)
+
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:checksum_type => 'sha256'))
+      @agent.run
+    end
+
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler
@@ -548,6 +578,7 @@ describe Puppet::Configurer do
     before do
       Puppet.settings.stubs(:use).returns(true)
       @agent.stubs(:facts_for_uploading).returns({})
+      @agent.stubs(:download_plugins)
 
       @catalog = Puppet::Resource::Catalog.new
 
@@ -569,11 +600,57 @@ describe Puppet::Configurer do
         expect(@agent.retrieve_catalog({})).to eq(@catalog)
       end
 
+      it "should not make a node request or pluginsync when a cached catalog is successfully retrieved" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+        @agent.expects(:download_plugins).never
+
+        @agent.run
+      end
+
+      it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+        Puppet::Resource::Catalog.indirection.expects(:find).twice.with { |name, options| options[:ignore_cache] == true }.returns @catalog
+        @agent.expects(:download_plugins)
+
+        @agent.run
+      end
+
+      it "should set its cached_catalog_status to 'explicitly_requested'" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+
+        @agent.retrieve_catalog({})
+        expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('explicitly_requested')
+      end
+
       it "should compile a new catalog if none is found in the cache" do
         Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
         Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
 
         expect(@agent.retrieve_catalog({})).to eq(@catalog)
+      end
+
+      it "should set its cached_catalog_status to 'not_used' if no catalog is found in the cache" do
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+        Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+
+        @agent.retrieve_catalog({})
+        expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
+      end
+
+      it "should only attempt to retrieve a cached catalog once" do
+        @agent.expects(:prepare_and_retrieve_catalog_from_cache).once.returns(@catalog)
+
+        @agent.expects(:retrieve_catalog_from_cache).never
+        @agent.run
+      end
+
+      it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
+        @agent.expects(:prepare_and_retrieve_catalog_from_cache).once.returns(nil)
+
+        @agent.expects(:retrieve_catalog_from_cache).never
+        @agent.run
       end
     end
 
@@ -581,6 +658,13 @@ describe Puppet::Configurer do
       Puppet::Resource::Catalog.indirection.expects(:find).returns @catalog
 
       @agent.retrieve_catalog({})
+    end
+
+    it "should set its cached_catalog_status to 'not_used' when downloading a new catalog" do
+      Puppet::Resource::Catalog.indirection.expects(:find).returns @catalog
+
+      @agent.retrieve_catalog({})
+      expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
     end
 
     it "should use its node_name_value to retrieve the catalog" do
@@ -606,6 +690,14 @@ describe Puppet::Configurer do
       expect(@agent.retrieve_catalog({})).to eq(@catalog)
     end
 
+    it "should set its cached_catalog_status to 'on_failure' when no catalog can be retrieved from the server" do
+      @agent.stubs(:retrieve_new_catalog).with({}).returns nil
+      @agent.stubs(:retrieve_catalog_from_cache).with({}).returns(@catalog)
+
+      @agent.retrieve_catalog({})
+      expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
+    end
+
     it "should not look in the cache for a catalog if one is returned from the server" do
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.never
@@ -620,6 +712,14 @@ describe Puppet::Configurer do
       expect(@agent.retrieve_catalog({})).to eq(@catalog)
     end
 
+    it "should set its cached_catalog_status to 'on_failure' when retrieving the remote catalog throws an exception" do
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.raises "eh"
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+
+      @agent.retrieve_catalog({})
+      expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
+    end
+
     it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
       Puppet[:usecacheonfailure] = false
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
@@ -627,6 +727,14 @@ describe Puppet::Configurer do
       Puppet.expects(:warning)
 
       expect(@agent.retrieve_catalog({})).to be_nil
+    end
+
+    it "should set its cached_catalog_status to 'not_used' if no catalog can be retrieved from the server and :usecacheonfailure is disabled or fails to retrieve a catalog" do
+      Puppet[:usecacheonfailure] = false
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
+
+      @agent.retrieve_catalog({})
+      expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
     end
 
     it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
@@ -686,6 +794,34 @@ describe Puppet::Configurer do
       @catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(@oldcatalog, 10)
+    end
+  end
+
+  describe "when determining whether to pluginsync" do
+    it "should default to Puppet[:pluginsync] when explicitly set by the commandline" do
+      Puppet.settings[:pluginsync] = false
+      Puppet.settings.expects(:set_by_cli?).returns(true)
+
+      expect(described_class).not_to be_should_pluginsync
+    end
+
+    it "should default to Puppet[:pluginsync] when explicitly set by config" do
+      Puppet.settings[:pluginsync] = false
+      Puppet.settings.expects(:set_by_config?).returns(true)
+
+      expect(described_class).not_to be_should_pluginsync
+    end
+
+    it "should be true if use_cached_catalog is false" do
+      Puppet.settings[:use_cached_catalog] = false
+
+      expect(described_class).to be_should_pluginsync
+    end
+
+    it "should be false if use_cached_catalog is true" do
+      Puppet.settings[:use_cached_catalog] = true
+
+      expect(described_class).not_to be_should_pluginsync
     end
   end
 end

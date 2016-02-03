@@ -6,7 +6,9 @@
 require 'spec_helper'
 
 require 'puppet'
-require 'plist'
+
+module Puppet::Util::Plist
+end
 
 provider_class = Puppet::Type.type(:macauthorization).provider(:macauthorization)
 
@@ -26,7 +28,8 @@ describe provider_class do
     authdb["rights"] = { "fooright" => "foo" }
 
     # Stub out Plist::parse_xml
-    Plist.stubs(:parse_xml).returns(authdb)
+    Puppet::Util::Plist.stubs(:parse_plist).returns(authdb)
+    Puppet::Util::Plist.stubs(:write_plist_file)
 
     # A catch all; no parameters set
     @resource.stubs(:[]).returns(nil)

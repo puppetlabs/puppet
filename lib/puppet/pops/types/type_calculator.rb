@@ -147,7 +147,13 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api public
   def self.enumerable(t)
-    singleton.enumerable(t)
+    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
+    singleton.iterable(t)
+  end
+
+  # @api public
+  def self.iterable(t)
+    singleton.iterable(t)
   end
 
   # @return [TypeCalculator] the singleton instance
@@ -201,10 +207,16 @@ class Puppet::Pops::Types::TypeCalculator
     t.is_a?(Types::PAnyType) ? t.assignable?(t2) : false
  end
 
-  # Returns an enumerable if the t represents something that can be iterated
+  # Returns an iterable if the t represents something that can be iterated
   def enumerable(t)
-    # Only PIntegerTypes are enumerable and only if not representing an infinite range
-    t.is_a?(Types::PIntegerType) && t.size < Float::INFINITY ? t : nil
+    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
+    iterable(t)
+  end
+
+  # Returns an iterable if the t represents something that can be iterated
+  def iterable(t)
+    # Create an iterable on the type if possible
+    Types::Iterable.on(t)
   end
 
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
@@ -533,6 +545,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def infer_Iterator(o)
+    Types::PIteratorType.new(o.element_type)
+  end
+
+  # @api private
   def infer_Function(o)
     o.class.dispatcher.to_type
   end
@@ -794,6 +811,24 @@ class Puppet::Pops::Types::TypeCalculator
       'Integer'
     else
       "Integer[#{range.join(', ')}]"
+    end
+  end
+
+  # @api private
+  def string_PIterableType(t)
+    if t.element_type.nil?
+      'Iterable'
+    else
+      "Iterable[#{string(t.element_type)}]"
+    end
+  end
+
+  # @api private
+  def string_PIteratorType(t)
+    if t.element_type.nil?
+      'Iterator'
+    else
+      "Iterator[#{string(t.element_type)}]"
     end
   end
 

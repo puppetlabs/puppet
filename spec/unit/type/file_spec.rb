@@ -1393,6 +1393,16 @@ describe Puppet::Type.type(:file) do
   describe "when using source" do
     before do
       file[:source] = File.expand_path('/one')
+      @checksum_values = {
+        :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
+        :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
+        :sha256 => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        :mtime => 'Jan 26 13:59:49 2016',
+        :ctime => 'Jan 26 13:59:49 2016'
+      }
     end
     Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
       describe "with checksum '#{checksum_type}'" do
@@ -1401,7 +1411,16 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'should validate' do
+          expect { file.validate }.to_not raise_error
+        end
 
+        it 'should fail on an invalid checksum_value' do
+          file[:checksum_value] = ''
+          expect { file.validate }.to raise_error(Puppet::Error, "Checksum value '' is not a valid checksum type #{checksum_type}")
+        end
+
+        it 'should validate a valid checksum_value' do
+          file[:checksum_value] = @checksum_values[checksum_type]
           expect { file.validate }.to_not raise_error
         end
       end
@@ -1421,6 +1440,14 @@ describe Puppet::Type.type(:file) do
   describe "when using content" do
     before do
       file[:content] = 'file contents'
+      @checksum_values = {
+        :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
+        :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
+        :sha256 => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+      }
     end
 
     (Puppet::Type::File::ParameterChecksum.value_collection.values - SOURCE_ONLY_CHECKSUMS).each do |checksum_type|
@@ -1430,6 +1457,16 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'should validate' do
+          expect { file.validate }.to_not raise_error
+        end
+
+        it 'should fail on an invalid checksum_value' do
+          file[:checksum_value] = ''
+          expect { file.validate }.to raise_error(Puppet::Error, "Checksum value '' is not a valid checksum type #{checksum_type}")
+        end
+
+        it 'should validate a valid checksum_value' do
+          file[:checksum_value] = @checksum_values[checksum_type]
           expect { file.validate }.to_not raise_error
         end
       end
@@ -1443,6 +1480,26 @@ describe Puppet::Type.type(:file) do
           expect { file.validate }.to raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
         end
       end
+    end
+  end
+
+  describe "when checksum is none" do
+    before do
+      file[:checksum] = :none
+    end
+
+    it 'should validate' do
+      expect { file.validate }.to_not raise_error
+    end
+
+    it 'should fail on an invalid checksum_value' do
+      file[:checksum_value] = 'boo'
+      expect { file.validate }.to raise_error(Puppet::Error, "Checksum value 'boo' is not a valid checksum type none")
+    end
+
+    it 'should validate a valid checksum_value' do
+      file[:checksum_value] = ''
+      expect { file.validate }.to_not raise_error
     end
   end
 
@@ -1491,15 +1548,14 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when validating" do
-    [[:source, :target], [:source, :content], [:target, :content]].each do |prop1,prop2|
+    [[:source, :target], [:source, :content], [:target, :content], [:content, :content_uri]].each do |prop1,prop2|
       it "should fail if both #{prop1} and #{prop2} are specified" do
           file[prop1] = prop1 == :source ? File.expand_path("prop1 value") : "prop1 value"
-          file[prop2] = "prop2 value"
+          file[prop2] = prop2 == :content_uri ? "puppet:///some_uri" : "prop2 value"
         expect do
           file.validate
         end.to raise_error(Puppet::Error, /You cannot specify more than one of/)
       end
     end
   end
-
 end

@@ -163,6 +163,7 @@ describe Puppet::Network::HTTP::Connection do
 
       Net::HTTP.any_instance.stubs(:start)
       Net::HTTP.any_instance.stubs(:request).returns(httpok)
+      Puppet::Network::HTTP::Pool.any_instance.stubs(:setsockopts)
 
       connection.get('request')
     end

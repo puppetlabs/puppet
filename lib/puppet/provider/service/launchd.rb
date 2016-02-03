@@ -1,4 +1,4 @@
-require 'plist'
+require 'puppet/util/plist' if Puppet.features.cfpropertylist?
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
@@ -6,7 +6,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     For `launchd` documentation, see:
 
-    * <http://developer.apple.com/macosx/launchd.html>
+    * <https://developer.apple.com/macosx/launchd.html>
     * <http://launchd.macosforge.org/>
 
     This provider reads plists out of the following directories:
@@ -42,10 +42,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   include Puppet::Util::Warnings
 
   commands :launchctl => "/bin/launchctl"
-  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
+  confine :feature            => :cfpropertylist
 
   has_feature :enableable
   has_feature :refreshable
@@ -193,19 +193,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    begin
-      return Plist::parse_xml(path)
-    rescue ArgumentError => detail
-      Puppet.debug("Error reading #{path}: #{detail}. Retrying with plutil.")
-    end
-
-    begin
-      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
-    rescue Puppet::ExecutionFailure => detail
-      Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
-                     "Details: #{detail}")
-      return nil
-    end
+    Puppet::Util::Plist.read_plist_file(path)
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -328,7 +316,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     else
       overrides[resource[:name]] = false
     end
-    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+    Puppet::Util::Plist.write_plist_file(overrides, self.class.launchd_overrides)
   end
 
   def disable
@@ -338,6 +326,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     else
       overrides[resource[:name]] = true
     end
-    Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
+    Puppet::Util::Plist.write_plist_file(overrides, self.class.launchd_overrides)
   end
 end

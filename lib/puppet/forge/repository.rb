@@ -90,7 +90,7 @@ class Puppet::Forge
     # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
     #  verifying the remote SSL certificate
     def read_response(request, io = nil)
-      http_object = get_http_object
+      http_object = Puppet::Util::HttpProxy.get_http_object(uri)
 
       http_object.start do |http|
         response = http.request(request)
@@ -119,36 +119,6 @@ class Puppet::Forge
       else
         raise e
       end
-    end
-
-    # Return a Net::HTTP::Proxy object constructed from the settings provided
-    # accessing the repository.
-    #
-    # This method optionally configures SSL correctly if the URI scheme is
-    # 'https', including setting up the root certificate store so remote server
-    # SSL certificates can be validated.
-    #
-    # @return [Net::HTTP::Proxy] object constructed from repo settings
-    def get_http_object
-      proxy = Puppet::Util::HttpProxy.proxy(@uri)
-
-      if @uri.scheme == 'https'
-        cert_store = OpenSSL::X509::Store.new
-        cert_store.set_default_paths
-
-        proxy.use_ssl = true
-        proxy.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        proxy.cert_store = cert_store
-      end
-
-      if Puppet[:http_debug]
-        proxy.set_debug_output($stderr)
-      end
-
-      proxy.open_timeout = Puppet[:http_connect_timeout]
-      proxy.read_timeout = Puppet[:http_read_timeout]
-
-      proxy
     end
 
     # Return the local file name containing the data downloaded from the

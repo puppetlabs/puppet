@@ -5,7 +5,13 @@ The `certificate_revocation_list` endpoint retrieves a Certificate Revocation Li
 from the master.  The master must be configured to be a CA.  The returned
 CRL is always in the `.pem` format.
 
-In all requests the `:environment` and `:nodename` must be given, but neither has any bearing on the request.
+Under Puppet Server's CA service, the `environment` parameter is ignored and can
+be omitted. Under a Rack or WEBrick Puppet master, `environment` is required and
+must be a valid environment, but it has no effect on the response.
+
+The `:nodename` should always be `ca`, due to the default auth.conf rules for
+WEBrick and Rack Puppet masters. (You can use a different `:nodename` if you
+change the auth rules, but it will have no effect on the response.)
 
 Find
 ----
