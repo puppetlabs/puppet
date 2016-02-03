@@ -6,9 +6,9 @@ module Puppet::Util::Windows::SID
     attr_reader :account, :sid_bytes, :sid, :domain, :domain_account, :account_type
 
     def initialize(account, sid_bytes, sid, domain, account_type)
-      # Calling lookup_account_name like host\user is valid and therefore this
-      # value may include two components, but favor the domain value passed in
-      @account = account =~ /(.+)\\(.+)/ ? $2 : account
+      # This is only ever called from lookup_account_sid which has already
+      # removed the potential for passing in an account like host\user
+      @account = account
       @sid_bytes = sid_bytes
       @sid = sid
       @domain = domain
@@ -74,12 +74,11 @@ module Puppet::Util::Windows::SID
                    raise Puppet::Util::Windows::Error.new('Failed to call LookupAccountNameW')
                   end
 
-                  return new(
-                    account_name,
-                    sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'),
-                    Puppet::Util::Windows::SID.sid_ptr_to_string(sid_ptr),
-                    domain_ptr.read_wide_string(domain_length_ptr.read_dword),
-                    SID_NAME_USE[name_use_enum_ptr.read_uint32])
+                  # with a SID returned, loop back through lookup_account_sid to retrieve official name
+                  # necessary when accounts like . or '' are passed in
+                  return lookup_account_sid(
+                    system_name,
+                    sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'))
                   end
                 end
               end

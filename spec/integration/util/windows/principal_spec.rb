@@ -70,6 +70,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('')
       expect(principal.account_type).to eq(:SidTypeDomain)
       expect(principal.sid).to eq('S-1-5-32')
+      expect(principal.account).to eq('BUILTIN')
       expect(principal.domain).to eq('BUILTIN')
       expect(principal.domain_account).to eq('BUILTIN')
     end
@@ -161,6 +162,25 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account).to eq('BUILTIN')
       expect(principal.domain).to eq('BUILTIN')
       expect(principal.domain_account).to eq('BUILTIN')
+    end
+  end
+
+  describe "it should create matching Principal objects" do
+    let(:builtin_sid) { [1, 1, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0] }
+    let(:sid_principal) { Puppet::Util::Windows::SID::Principal.lookup_account_sid(builtin_sid) }
+
+    ['.', 'builtin', ''].each do |name|
+      it "when comparing the one looked up via SID S-1-5-32 to one looked up via non-canonical name #{name} for the BUILTIN domain" do
+        name_principal = Puppet::Util::Windows::SID::Principal.lookup_account_name(name)
+
+        # compares canonical sid
+        expect(sid_principal).to eq(name_principal)
+
+        # compare all properties that have public accessors
+        sid_principal.public_methods(false).reject { |m| m == :== }.each do |method|
+          expect(sid_principal.send(method)).to eq(name_principal.send(method))
+        end
+      end
     end
   end
 end
