@@ -432,6 +432,58 @@ describe Puppet::Resource::Catalog::Compiler do
       end
     end
 
+    describe "when inlining symlinks" do
+      it "sets ensure and target for links which are managed" do
+        catalog = build_catalog(node, 1, ['puppet:///modules/mymodule/config_file_link.txt'], {:ensure => 'link', :links => 'manage'})
+
+        catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          ral = r.to_ral
+          r.expects(:to_ral).returns(ral)
+
+          metadata = stub 'metadata'
+          metadata.stubs(:ftype).returns('link')
+          metadata.stubs(:destination).returns('/tmp/some/absolute/path')
+
+          source = stub 'source'
+          source.stubs(:metadata).returns(metadata)
+
+          ral.expects(:parameter).with(:source).returns(source)
+        end
+
+        expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+        catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          expect(r[:ensure]).to eq('link')
+          expect(r[:target]).to eq('/tmp/some/absolute/path')
+          expect(r[:source]).to be_nil
+        end
+      end
+
+      it "sets checksum and checksum_value for links which are followed" do
+        catalog = build_catalog(node, 1, ['puppet:///modules/mymodule/config_file_link.txt'], {:ensure => 'link', :links => 'follow'})
+
+        catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          ral = r.to_ral
+          r.expects(:to_ral).returns(ral)
+
+          metadata = stub 'metadata'
+          metadata.stubs(:ftype).returns('file')
+          metadata.stubs(:checksum).returns('{md5}b1946ac92492d2347c6235b4d2611184')
+
+          source = stub 'source'
+          source.stubs(:metadata).returns(metadata)
+
+          ral.expects(:parameter).with(:source).returns(source)
+        end
+
+        expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+        catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          expect(r[:checksum_value]).to eq('b1946ac92492d2347c6235b4d2611184')
+          expect(r[:ensure]).to eq('file')
+        end
+      end
+
+    end
+
     it "skips absent resources" do
       catalog = build_catalog(node, num_resources, nil, :ensure => 'absent')
       catalog.resources.select {|r| r.type == 'File'}.each do |r|

@@ -85,6 +85,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Rewrite a given file resource with the metadata from a fileserver based file
   def replace_metadata(resource, metadata)
+    if resource[:links] == "manage" && metadata.ftype == "link"
+      resource.delete(:source)
+      resource[:ensure] = "link"
+      resource[:target] = metadata.destination
+    elsif resource[:links] == "follow"
+      resource[:ensure] = metadata.ftype
+    end
+
     if metadata.ftype == "file"
       resource[:checksum_value] = sumdata(metadata.checksum)
     end
