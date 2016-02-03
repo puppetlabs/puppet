@@ -25,16 +25,16 @@
 #
 # `$stepped_data = step($data, <n>)`
 #
-# When no block is given, Puppet returns an iterable that represents every nth element
-# of its first argument. This allows functions on iterables to be chained.
+# When no block is given, Puppet returns an `Iterable` that yields the first element and every nth successor
+# element, from its first argument. This allows functions on iterables to be chained.
 #
-# When a block is given, Puppet iterates the first argument and passes each nth value in turn to
-# the block, then returns the first argument unchanged.
+# When a block is given, Puppet iterates the first argument and calls the block with the first element and then with
+# every nth successor element.
 #
 # @example Using the `step` function with an array, a step factor, and a one-parameter block
 #
 # ~~~ puppet
-# # For the array $data, call a block with each 3rd element of $data
+# # For the array $data, call a block with the first element and then with each 3rd successor element
 # $data = [1,2,3,4,5,6,7,8]
 # $data.step(3) |$item| {
 #  notice($item)
@@ -42,12 +42,13 @@
 # # Puppet notices the values '1', '4', '7'.
 # ~~~
 #
-# When no block is given, Puppet returns a new iterable so that a new function that takes
-# an iterable as an argument can use it as input.
+# When no block is given, Puppet returns a new `Iterable` which allows it to be directly chained into
+# another function that takes an `Iterable` as an argument.
 #
 # @example Using the `step` function chained with a `map` function.
 #
-# # For the array $data, return an array containing each 5th value in reverse order multiplied by 10
+# # For the array $data, return an array, set to the first element and each 5th successor element, in reverse
+# # order multiplied by 10
 # $data = Integer[0,20]
 # $transformed_data = $data.step(5).map |$item| { $item * 10 }
 # # $transformed_data contains [0,50,100,150,200]
@@ -55,7 +56,7 @@
 #
 # @example The same example using `step` function chained with a `map` in alternative syntax
 #
-# # For the array $data, return an array containing each 5th value in reverse order multiplied by 10
+# # For the array $data, return an array containing the first and each 5th successor, in reverse order, multiplied by 10
 # $data = Integer[0,20]
 # $transformed_data = map(step($data, 5)) |$item| { $item * 10 }
 # # $transformed_data contains [0,50,100,150,200]
