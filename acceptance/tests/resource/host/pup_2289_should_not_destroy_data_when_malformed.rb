@@ -1,4 +1,5 @@
 test_name "should not delete data when existing content is malformed"
+confine :except, :platform => /cisco-5/
 agents.each do |agent|
   file = agent.tmpfile('host-not-delete-data')
 

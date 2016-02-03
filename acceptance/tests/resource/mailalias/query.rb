@@ -1,6 +1,7 @@
 test_name "should be able to find an exisitng email alias"
 
 confine :except, :platform => 'windows'
+confine :except, :platform => /cisco-5/
 
 name = "pl#{rand(999999).to_i}"
 agents.each do |agent|

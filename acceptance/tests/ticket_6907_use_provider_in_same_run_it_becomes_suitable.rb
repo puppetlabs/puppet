@@ -1,5 +1,7 @@
 test_name "providers should be useable in the same run they become suitable"
 
+confine :except, :platform => /cisco-5/
+
 agents.each do |agent|
   dir = agent.tmpdir('provider-6907')
 

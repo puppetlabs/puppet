@@ -1,4 +1,5 @@
 test_name "test that we can query and find a group that exists."
+confine :except, :platform => /cisco-5/
 
 name = "pl#{rand(999999).to_i}"
 

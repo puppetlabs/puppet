@@ -1,6 +1,7 @@
 test_name "Bug #7165: Don't refresh service immediately after starting it"
 
 confine :except, :platform => 'windows'
+confine :except, :platform => /cisco-5/
 
 agents.each do |host|
   dir = host.tmpdir('7165-no-refresh')
