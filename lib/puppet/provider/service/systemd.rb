@@ -148,16 +148,35 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def restartcmd
-    [command(:systemctl), "restart", @resource[:name]]
+    begin
+      [command(:systemctl), "restart", @resource[:name]]
+    rescue Puppet::ExecutionFailure
+      prepare_error_message('restart', @resource[:name])
+    end
   end
 
   def startcmd
     self.unmask
-    [command(:systemctl), "start", @resource[:name]]
+    begin
+      [command(:systemctl), "start", @resource[:name]]
+    rescue Puppet::ExecutionFailure
+      prepare_error_message('start', @resource[:name])
+    end
   end
 
   def stopcmd
-    [command(:systemctl), "stop", @resource[:name]]
+    begin
+      [command(:systemctl), "stop", @resource[:name]]
+    rescue Puppet::ExecutionFailure
+      prepare_error_message('stop', @resource[:name])
+    end
+  end
+
+  def prepare_error_message(action, name)
+    error_return << "Systemd #{action} for #{name} failed: #{output}"
+    journalctl_output = command(:systemctl), "journalctl -n 50 --since '1 hour ago' -u #{name}"
+    error_return << "journalctl log for #{name}: #{journalctl_output}"
+    raise Puppet::Error, error_return, $!.backtrace
   end
 end
 
