@@ -1,6 +1,6 @@
 require 'puppet'
 require 'puppet/pops'
-require 'puppet/pops/evaluator/literal_evaluator'
+require 'puppet/pops/evaluator/json_strict_literal_evaluator'
 
 class Puppet::InfoService::ClassInformationService
 
@@ -41,7 +41,7 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def literal_evaluator
-    @@literal_evaluator ||= Puppet::Pops::Evaluator::LiteralEvaluator.new
+    @@literal_evaluator ||= Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator.new
   end
 
   def result_of(f)
