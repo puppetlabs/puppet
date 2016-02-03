@@ -668,6 +668,7 @@ describe Puppet::Configurer do
       end
 
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
+        Puppet::Node.indirection.expects(:find).returns(nil)
         expects_neither_new_or_cached_catalog
 
         @agent.run
