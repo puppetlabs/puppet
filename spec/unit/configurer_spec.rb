@@ -369,14 +369,6 @@ describe Puppet::Configurer do
       expect(report.environment).to eq("second_env")
     end
 
-    it "should clear the global caches" do
-      $env_module_directories = false
-
-      @agent.run
-
-      expect($env_module_directories).to eq(nil)
-    end
-
     it "sends the transaction uuid in a catalog request" do
       @agent.instance_variable_set(:@transaction_uuid, 'aaa')
       Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => 'aaa'))

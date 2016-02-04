@@ -297,13 +297,7 @@ class Puppet::Configurer
       execute_postrun_command or return nil
     end
   ensure
-    # Between Puppet runs we need to forget the cached values.  This lets us
-    # pick up on new functions installed by gems or new modules being added
-    # without the daemon being restarted.
-    $env_module_directories = nil
-
     report.cached_catalog_status ||= @cached_catalog_status
-
     Puppet::Util::Log.close(report)
     send_report(report)
     Puppet.pop_context
