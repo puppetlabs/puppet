@@ -53,6 +53,8 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def parse_file(f)
+    return {:error => "The file #{f} does not exist"} unless Puppet::FileSystem.exist?(f)
+
     begin
       parse_result = @parser.parse_file(f)
       parse_result.definitions.select {|d| d.is_a?(Puppet::Pops::Model::HostClassDefinition)}.map do |d|

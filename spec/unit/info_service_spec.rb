@@ -283,5 +283,16 @@ describe "Puppet::InfoService" do
               },
          })
     end
+
+    it "produces error when given a file that does not exist" do
+      files = ['the_tooth_fairy_does_not_exist.pp'].map {|f| File.join(code_dir, f) }
+      result = Puppet::InfoService.classes_per_environment({'production' => files })
+      expect(result).to eq({
+        "production"=>{
+          "#{code_dir}/the_tooth_fairy_does_not_exist.pp" => {:error  => "The file #{code_dir}/the_tooth_fairy_does_not_exist.pp does not exist"}
+             },
+        })
+    end
+
   end
 end
