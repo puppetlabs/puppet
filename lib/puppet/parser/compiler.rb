@@ -20,7 +20,6 @@ class Puppet::Parser::Compiler
   include Puppet::Pops::Evaluator::Runtime3Support
 
   def self.compile(node, code_id = nil)
-    $env_module_directories = nil
     node.environment.check_for_reparse
 
     errors = node.environment.validation_errors
