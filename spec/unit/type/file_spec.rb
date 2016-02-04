@@ -1070,6 +1070,7 @@ describe Puppet::Type.type(:file) do
       it "should fail if the checksum parameter and content checksums do not match" do
         checksum = stub('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
         file.stubs(:parameter).with(:checksum).returns(checksum)
+        file.stubs(:parameter).with(:source).returns(nil)
 
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
@@ -1084,6 +1085,7 @@ describe Puppet::Type.type(:file) do
       it "should not fail if the checksum property and content checksums do not match" do
         checksum = stub('checksum_parameter',  :sum => 'checksum_b')
         file.stubs(:parameter).with(:checksum).returns(checksum)
+        file.stubs(:parameter).with(:source).returns(nil)
 
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
@@ -1190,12 +1192,20 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#write_content" do
-    it "should delegate writing the file to the content property" do
+    it "should delegate writing the file from content to the content property" do
       io = stub('io')
       file[:content] = "some content here"
       file.property(:content).expects(:write).with(io)
 
-      file.send(:write_content, io)
+      file.send(:write_contents, io)
+    end
+
+    it "should delegate writing the file from source to the source parameter" do
+      io = stub('io')
+      file[:source] = "file:///some_source_uri"
+      file.parameter(:source).expects(:write).with(io)
+
+      file.send(:write_contents, io)
     end
   end
 

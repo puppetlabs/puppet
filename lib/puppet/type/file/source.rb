@@ -2,6 +2,11 @@ require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/terminus_helper'
 
+require 'puppet/util/http_proxy'
+require 'puppet/network/http'
+require 'puppet/network/http/api/indirected_routes'
+require 'puppet/network/http/compression'
+
 module Puppet
   # Copy files from a local or remote source.  This state *only* does any work
   # when the remote file is an actual file; in that case, this state copies
@@ -10,6 +15,7 @@ module Puppet
   # so that things get taken care of appropriately.
   Puppet::Type.type(:file).newparam(:source) do
     include Puppet::Util::Diff
+    include Puppet::Network::HTTP::Compression.module
 
     attr_accessor :source, :local
     desc <<-'EOT'
@@ -223,6 +229,15 @@ module Puppet
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
 
+    def write(file)
+      resource.parameter(:checksum).sum_stream { |sum|
+        each_chunk_from(self) { |chunk|
+          sum << chunk
+          file.print chunk
+        }
+      }
+    end
+
     private
 
     def scheme
@@ -240,6 +255,60 @@ module Puppet
         # Force the mode value in file resources to be a string containing octal.
         value = value.to_s(8) if param_name == :mode && value.is_a?(Numeric)
         resource[param_name] = value
+      end
+    end
+
+    def each_chunk_from(source_or_content)
+      if Puppet[:default_file_terminus] == :file_server
+        yield source_or_content.content
+      elsif source_or_content.local?
+        chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
+      else
+        chunk_file_from_source(source_or_content) { |chunk| yield chunk }
+      end
+    end
+
+    def chunk_file_from_disk(source)
+      File.open(source.full_path, "rb") do |src|
+        while chunk = src.read(8192)
+          yield chunk
+        end
+      end
+    end
+
+    def get_from_puppet_source(source_or_content, &block)
+      source = source_or_content.metadata.source
+      request = Puppet::Indirector::Request.new(:file_content, :find, source, nil, :environment => resource.catalog.environment_instance)
+
+      request.do_request(:fileserver) do |req|
+        connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
+        connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "binary"}), &block)
+      end
+    end
+
+    def get_from_http_source(source, &block)
+      Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get, &block)
+    end
+
+    def get_from_source(source_or_content, &block)
+      source = source_or_content.metadata.source
+      if source =~ /^https?:/
+        get_from_http_source(source, &block)
+      else
+        get_from_puppet_source(source_or_content, &block)
+      end
+    end
+
+
+    def chunk_file_from_source(source_or_content)
+      get_from_source(source_or_content) do |response|
+        case response.code
+        when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
+        else
+          # Raise the http error if we didn't get a 'success' of some kind.
+          message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+          raise Net::HTTPError.new(message, response)
+        end
       end
     end
   end

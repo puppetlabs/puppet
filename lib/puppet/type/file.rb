@@ -810,8 +810,9 @@ Puppet::Type.newtype(:file) do
   end
 
   # Write out the file.  Requires the property name for logging.
-  # Write will be done by the content property, along with checksum computation
-  def write(property)
+  # Write will be done by the content or source property, with checksum
+  # computation handled by content
+  def write(property = nil)
     remove_existing(:file)
 
     mode = self.should(:mode) # might be nil
@@ -820,7 +821,7 @@ Puppet::Type.newtype(:file) do
     if write_temporary_file?
       Puppet::Util.replace_file(self[:path], mode_int) do |file|
         file.binmode
-        content_checksum = write_content(file)
+        content_checksum = write_contents(file)
         file.flush
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
         if self[:validate_cmd]
@@ -832,11 +833,24 @@ Puppet::Type.newtype(:file) do
       end
     else
       umask = mode ? 000 : 022
-      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_content(f) } }
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_contents(f) } }
     end
 
     # make sure all of the modes are actually correct
     property_fix
+  end
+
+  def write_temporarily
+    tempfile = Tempfile.new("puppet-file")
+    tempfile.open
+
+    write_contents(tempfile)
+
+    tempfile.close
+
+    yield tempfile.path
+
+    tempfile.delete
   end
 
   private
@@ -915,8 +929,15 @@ Puppet::Type.newtype(:file) do
   # write the current content. Note that if there is no content property
   # simply opening the file with 'w' as done in write is enough to truncate
   # or write an empty length file.
-  def write_content(file)
-    (content = property(:content)) && content.write(file)
+  def write_contents(file)
+    # Ideally only source or content would exist. However, if source is specified
+    # it will be used to generate content; content will trigger writing the file,
+    # but we should still use source to do the final write, so put it first.
+    if source = parameter(:source)
+      source.write(file)
+    elsif content = property(:content)
+      content.write(file)
+    end
   end
 
   def write_temporary_file?
