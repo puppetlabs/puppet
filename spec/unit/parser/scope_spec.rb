@@ -158,7 +158,7 @@ describe Puppet::Parser::Scope do
       expect { @scope[:foo] = 12 }.to raise_error(Puppet::ParseError, /Scope variable name .* not a string/)
     end
 
-    it "should return nil for unset variables" do
+    it "should return nil for unset variables when --strict variables is not in effect" do
       expect(@scope["var"]).to be_nil
     end
 
@@ -206,6 +206,26 @@ describe Puppet::Parser::Scope do
 
     it "should be able to detect when variables are not set" do
       expect(@scope).not_to be_include("var")
+    end
+
+    it "warns and return nil for non found unqualified variable" do
+      Puppet.expects(:warn_once)
+      expect(@scope["santa_clause"]).to be_nil
+    end
+
+    it "warns once for a non found variable" do
+      Puppet.expects(:warning).once
+      expect([@scope["santa_claus"],@scope["santa_claus"]]).to eq([nil, nil])
+    end
+
+    it "warns and return nil for non found qualified variable" do
+      Puppet.expects(:warn_once)
+      expect(@scope["north_pole::santa_clause"]).to be_nil
+    end
+
+    it "does not warn when a numeric variable is missing - they always exist" do
+      Puppet.expects(:warn_once).never
+      expect(@scope["1"]).to be_nil
     end
 
     describe "and the variable is qualified" do
@@ -266,17 +286,17 @@ describe Puppet::Parser::Scope do
 
       it "should warn and return nil for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
-        @scope.expects(:warning)
+        Puppet.expects(:warn_once)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes do not exist" do
-        @scope.expects(:warning)
+        Puppet.expects(:warn_once)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should return nil when asked for a non-string qualified variable from a class that does not exist" do
-        @scope.stubs(:warning)
+#        @scope.stubs(:warning)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
