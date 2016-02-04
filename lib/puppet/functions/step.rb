@@ -4,8 +4,8 @@
 #
 # This function takes two to three arguments.
 #
-# 1. An iterable that the function will iterate over.
-# 2. An integer step factor. This must be a positive integer.
+# 1. An 'Iterable' that the function will iterate over.
+# 2. An `Integer` step factor. This must be a positive integer.
 # 3. An optional lambda, which the function calls for each element in the interval. It must
 # request one parameter.
 #
@@ -56,7 +56,7 @@
 #
 # @example The same example using `step` function chained with a `map` in alternative syntax
 #
-# # For the array $data, return an array containing the first and each 5th successor, in reverse order, multiplied by 10
+# # For the array $data, return an array, set to the first and each 5th successor, in reverse order, multiplied by 10
 # $data = Integer[0,20]
 # $transformed_data = map(step($data, 5)) |$item| { $item * 10 }
 # # $transformed_data contains [0,50,100,150,200]
