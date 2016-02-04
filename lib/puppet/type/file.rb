@@ -377,7 +377,7 @@ Puppet::Type.newtype(:file) do
 
     self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
-    self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+    self.fail "You cannot specify a remote recursion without a source" if !self[:source] && self[:recurse] == :remote
 
     self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
 
@@ -385,7 +385,7 @@ Puppet::Type.newtype(:file) do
       self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
-    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] && self[:recurselimit]
 
     if @parameters[:content] && @parameters[:content].actual_content
       # Now that we know the checksum, update content (in case it was created before checksum was known).
@@ -410,7 +410,7 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
+    if self.should(:owner) && ! self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
