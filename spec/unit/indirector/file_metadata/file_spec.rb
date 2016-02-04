@@ -19,6 +19,7 @@ describe Puppet::Indirector::FileMetadata::File do
       @uri = Puppet::Util.path_to_uri(@path).to_s
       @data = mock 'metadata'
       @data.stubs(:collect)
+      @data.expects(:environment=).at_most(1)
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
 
       @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri, nil)
@@ -47,9 +48,11 @@ describe Puppet::Indirector::FileMetadata::File do
       Puppet::FileServing::Fileset.expects(:merge).returns [["one", @path], ["two", @path]]
 
       one = mock("one", :collect => nil)
+      one.expects(:environment=).with(@request.environment).at_most(1)
       Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "one"}).returns one
 
       two = mock("two", :collect => nil)
+      two.expects(:environment=).with(@request.environment).at_most(1)
       Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "two"}).returns two
 
       expect(@metadata.search(@request)).to eq([one, two])

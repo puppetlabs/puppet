@@ -11,7 +11,9 @@ describe Puppet::FileServing::TerminusHelper do
     @model = mock 'model'
     @helper.stubs(:model).returns(@model)
 
-    @request = stub 'request', :key => "url", :options => {}
+    @environment = stub 'environment'
+
+    @request = stub 'request', :key => "url", :options => {}, :environment => @environment
 
     @fileset = stub 'fileset', :files => [], :path => "/my/file"
     Puppet::FileServing::Fileset.stubs(:new).with("/my/file", {}).returns(@fileset)
@@ -20,6 +22,7 @@ describe Puppet::FileServing::TerminusHelper do
   it "should find a file with absolute path" do
     file = stub 'file', :collect => nil
     file.expects(:collect).with(nil)
+    file.expects(:environment=).with(@environment)
     @model.expects(:new).with("/my/file", {:relative_path => nil}).returns(file)
     @helper.path2instance(@request, "/my/file")
   end
@@ -31,6 +34,7 @@ describe Puppet::FileServing::TerminusHelper do
       @request.options[k] = v
     }
     file.expects(:collect)
+    file.expects(:environment=).with(@environment)
     @model.expects(:new).with("/my/file", {:relative_path => :file}).returns(file)
     @helper.path2instance(@request, "/my/file", {:relative_path => :file})
   end
@@ -63,6 +67,8 @@ describe Puppet::FileServing::TerminusHelper do
 
       @one = stub 'one', :links= => nil, :collect => nil
       @two = stub 'two', :links= => nil, :collect => nil
+      @one.expects(:environment=).with(@environment)
+      @two.expects(:environment=).with(@environment)
 
       @fileset = stub 'fileset', :files => %w{one two}, :path => "/my/file"
       Puppet::FileServing::Fileset.stubs(:new).returns(@fileset)

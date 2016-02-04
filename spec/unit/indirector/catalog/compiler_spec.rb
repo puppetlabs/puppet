@@ -419,6 +419,7 @@ describe Puppet::Resource::Catalog::Compiler do
             metadata = stub 'metadata'
             metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
             metadata.stubs(:ftype).returns("file")
+            metadata.stubs(:inlinable).returns(true)
 
             source = stub 'source'
             source.stubs(:metadata).returns(metadata)

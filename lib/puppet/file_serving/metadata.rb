@@ -12,7 +12,9 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   extend Puppet::Indirector
   indirects :file_metadata, :terminus_class => :selector
 
-  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination, :source_permissions
+  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination, :source_permissions, :inlinable
+
+  attr_accessor :environment, :static_catalog
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
@@ -88,6 +90,21 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   def collect(source_permissions = nil)
     real_path = full_path
 
+    if static_catalog
+      if environment && environment.static_catalogs?
+        env_path = File.join(Puppet[:environmentpath], environment.name.to_s) # environment.name is a symbol sometimes
+        puts "Checking if #{real_path} is in #{env_path}"
+        if real_path.start_with? env_path
+          @inlinable = true
+        else
+          @inlinable = false
+          return
+        end
+      else
+        @inlinable = false
+      end
+    end
+
     stat = collect_stat(real_path)
     @owner = stat.owner
     @group = stat.group
@@ -121,23 +138,30 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @checksum_type ||= Puppet[:digest_algorithm]
     @ftype       = data.delete('type')
     @destination = data.delete('destination')
+    @inlinable   = data.delete('inlinable')
     super(path,data)
   end
 
   def to_data_hash
-    super.update(
-      {
-        'owner'        => owner,
-        'group'        => group,
-        'mode'         => mode,
-        'checksum'     => {
-          'type'   => checksum_type,
-          'value'  => checksum
-        },
-        'type'         => ftype,
-        'destination'  => destination,
-      }
-    )
+    data_hash = {
+      'owner'        => owner,
+      'group'        => group,
+      'mode'         => mode,
+      'checksum'     => {
+        'type'   => checksum_type,
+        'value'  => checksum
+      },
+      'type'         => ftype,
+      'destination'  => destination,
+    }
+
+    # To maintain wire compatibility, we don't add the inlinable
+    # attribute to the serialized format unless it was explicitly set.
+    if !inlinable.nil?
+      data_hash['inlinable'] = inlinable
+    end
+
+    super.update(data_hash)
   end
 
   def self.from_data_hash(data)

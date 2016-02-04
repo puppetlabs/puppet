@@ -174,7 +174,7 @@ module Puppet
     # Provide, and retrieve if necessary, the metadata for this file.  Fail
     # if we can't find data about this host, and fail if there are any
     # problems in our query.
-    def metadata
+    def metadata(static_catalog = nil)
       return @metadata if @metadata
       return nil unless value
       value.each do |source|
@@ -183,8 +183,11 @@ module Puppet
             :environment          => resource.catalog.environment_instance,
             :links                => resource[:links],
             :checksum_type        => resource[:checksum],
-            :source_permissions   => resource[:source_permissions]
+            :source_permissions   => resource[:source_permissions],
           }
+          # Maintain pre-static-catalog wire format if we're not in
+          # the middle of a static catalog compilation
+          options[:static_catalog] = static_catalog unless static_catalog.nil?
 
           if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             @metadata = data

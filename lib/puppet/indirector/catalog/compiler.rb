@@ -121,9 +121,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if file.recurse?
         # TODO: find and replace metadata for children recursively
       else
-        metadata = file.parameter(:source).metadata
+        metadata = file.parameter(:source).metadata(true) # If we ever have non-boolean static catalog options I'll cry
         raise "Could not get metadata for #{resource[:source]}" unless metadata
-        replace_metadata(resource, metadata)
+        if metadata.inlinable
+          replace_metadata(resource, metadata)
+        end
       end
     end
 
