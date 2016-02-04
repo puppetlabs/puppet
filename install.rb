@@ -406,7 +406,7 @@ def install_binfile(from, op_file, target)
 
   File.open(from) do |ip|
     File.open(tmp_file.path, "w") do |op|
-      op.puts "#!#{ruby}"
+      op.puts "#!#{ruby}" unless $operatingsystem == "windows"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
       op.write contents.join
@@ -416,30 +416,35 @@ def install_binfile(from, op_file, target)
   if $operatingsystem == "windows"
     installed_wrapper = false
 
-    if File.exists?("#{from}.bat")
-      FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
-      installed_wrapper = true
-    end
+    unless File.extname(from).match(/\.(cmd|bat)/)
+      if File.exists?("#{from}.bat")
+        FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
+        installed_wrapper = true
+      end
 
-    if File.exists?("#{from}.cmd")
-      FileUtils.install("#{from}.cmd", File.join(target, "#{op_file}.cmd"), :mode => 0755, :preserve => true, :verbose => true)
-      installed_wrapper = true
-    end
+      if File.exists?("#{from}.cmd")
+        FileUtils.install("#{from}.cmd", File.join(target, "#{op_file}.cmd"), :mode => 0755, :preserve => true, :verbose => true)
+        installed_wrapper = true
+      end
 
-    if not installed_wrapper
-      tmp_file2 = Tempfile.new('puppet-wrapper')
-      cwv = <<-EOS
+      if not installed_wrapper
+        tmp_file2 = Tempfile.new('puppet-wrapper')
+        cwv = <<-EOS
 @echo off
-setlocal
-set RUBY_BIN=%~dp0
-set RUBY_BIN=%RUBY_BIN:\\=/%
-"%RUBY_BIN%ruby.exe" -x "%RUBY_BIN%puppet" %*
+SETLOCAL
+if exist "%~dp0environment.bat" (
+  call "%~dp0environment.bat" %0 %*
+) else (
+  SET "PATH=%~dp0;%PATH%"
+)
+ruby.exe -S -- puppet %*
 EOS
-      File.open(tmp_file2.path, "w") { |cw| cw.puts cwv }
-      FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
+        File.open(tmp_file2.path, "w") { |cw| cw.puts cwv }
+        FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
 
-      tmp_file2.unlink
-      installed_wrapper = true
+        tmp_file2.unlink
+        installed_wrapper = true
+      end
     end
   end
   FileUtils.install(tmp_file.path, File.join(target, op_file), :mode => 0755, :preserve => true, :verbose => true)
@@ -458,10 +463,15 @@ FileUtils.cd File.dirname(__FILE__) do
 
   prepare_installation
 
+  if $operatingsystem == "windows"
+    windows_bins = glob(%w{ext/windows/*bat})
+  end
+
   #build_rdoc(rdoc) if InstallOptions.rdoc
   #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
+  do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $operatingsystem == "windows"
   do_libs(libs)
   do_man(man) unless $operatingsystem == "windows"
 end
