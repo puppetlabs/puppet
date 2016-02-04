@@ -6,18 +6,24 @@ module Puppet::Util::Windows::SID
     attr_reader :account, :sid_bytes, :sid, :domain, :domain_account, :account_type
 
     def initialize(account, sid_bytes, sid, domain, account_type)
-      # Calling lookup_account_name like host\user is valid and therefore this
-      # value may include two components, but favor the domain value passed in
-      @account = account =~ /(.+)\\(.+)/ ? $2 : account
+      # This is only ever called from lookup_account_sid which has already
+      # removed the potential for passing in an account like host\user
+      @account = account
       @sid_bytes = sid_bytes
       @sid = sid
       @domain = domain
-      # when domain is available, combine it with parsed account
-      # otherwise use the account value directly
-      @domain_account = domain && !domain.empty? ?
-        "#{domain}\\#{@account}" : account
-
       @account_type = account_type
+      # When domain is available and it is a Domain principal, use domain only
+      #   otherwise if domain is available then combine it with parsed account
+      #   otherwise when the domain is not available, use the account value directly
+      # WinNT naming standard https://msdn.microsoft.com/en-us/library/windows/desktop/aa746534(v=vs.85).aspx
+      if (domain && !domain.empty? && @account_type == :SidTypeDomain)
+        @domain_account = @domain
+      elsif (domain && !domain.empty?)
+        @domain_account =  "#{domain}\\#{@account}"
+      else
+        @domain_account = account
+      end
     end
 
     # added for backward compatibility
@@ -68,12 +74,11 @@ module Puppet::Util::Windows::SID
                    raise Puppet::Util::Windows::Error.new('Failed to call LookupAccountNameW')
                   end
 
-                  return new(
-                    account_name,
-                    sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'),
-                    Puppet::Util::Windows::SID.sid_ptr_to_string(sid_ptr),
-                    domain_ptr.read_wide_string(domain_length_ptr.read_dword),
-                    SID_NAME_USE[name_use_enum_ptr.read_uint32])
+                  # with a SID returned, loop back through lookup_account_sid to retrieve official name
+                  # necessary when accounts like . or '' are passed in
+                  return lookup_account_sid(
+                    system_name,
+                    sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'))
                   end
                 end
               end
@@ -87,6 +92,10 @@ module Puppet::Util::Windows::SID
 
     def self.lookup_account_sid(system_name = nil, sid_bytes)
       system_name_ptr = FFI::Pointer::NULL
+      if (sid_bytes.nil? || (!sid_bytes.is_a? Array) || (sid_bytes.length == 0))
+        raise Puppet::Util::Windows::Error.new('Byte array for lookup_account_sid must not be nil and must be at least 1 byte long')
+      end
+
       begin
         if system_name
           system_name_wide = Puppet::Util::Windows::String.wide_string(system_name)
