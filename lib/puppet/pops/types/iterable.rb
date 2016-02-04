@@ -78,7 +78,7 @@ module Puppet::Pops::Types
         # a finite range will always produce at least one element since it's inclusive
         o.finite_range? ? IntegerRangeIterator.new(o) : nil
       when PEnumType
-        Iterator.new(o, o.values)
+        Iterator.new(o, o.values.each)
       when Range
         min = o.min
         max = o.max
