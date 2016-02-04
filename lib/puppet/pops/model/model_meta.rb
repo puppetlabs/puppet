@@ -294,6 +294,23 @@ module Puppet::Pops::Model
   class Application < NamedDefinition
   end
 
+  # Abstract base class for QREF named non-parameterized definitions
+  class QRefDefinition < Definition
+    abstract
+    has_attr 'name', String, :lowerBound => 1
+  end
+
+  # A type alias assignment
+  class TypeAlias < QRefDefinition
+    contains_one_uni 'type_expr', Expression
+  end
+
+  # A type definition
+  class TypeDefinition < QRefDefinition
+    has_attr 'parent', String
+    contains_one_uni 'body', Expression
+  end
+
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
   # a parent node (also using a String or Regular expression).
   #

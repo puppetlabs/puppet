@@ -359,6 +359,12 @@ module Issues
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
   end
 
+  # Issues when expressions that are not implemented or activated in the current version are used.
+  #
+  UNSUPPORTED_EXPRESSION = issue :UNSUPPORTED_EXPRESSION do
+    "Expressions of type #{label.a_an(semantic)} are not supported in this version of Puppet"
+  end
+
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
     "Illegal relationship operand, can not form a relationship with #{label.a_an(operand)}. A Catalog type is required."
   end

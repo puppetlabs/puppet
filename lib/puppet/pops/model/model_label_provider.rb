@@ -95,6 +95,8 @@ class ModelLabelProvider
   def label_ReservedWord o                ; "Reserved Word '#{o.word}'"         end
   def label_CatalogCollector o            ; "Catalog-Collector"                 end
   def label_ExportedCollector o           ; "Exported-Collector"                end
+  def label_TypeAlias o                   ; "Type Alias"                        end
+  def label_TypeDefinition o              ; "Type Definition"                   end
 
   def label_PResourceType o
     if o.title

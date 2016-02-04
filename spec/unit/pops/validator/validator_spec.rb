@@ -151,7 +151,7 @@ describe "validating 4x" do
   end
 
   context 'for reserved words' do
-    ['private', 'type', 'attr'].each do |word|
+    ['private', 'attr'].each do |word|
       it "produces an error for the word '#{word}'" do
         source = "$a = #{word}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_WORD)
@@ -214,6 +214,27 @@ describe "validating 4x" do
         source = "define #{name} {}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_TYPE_NAME)
       end
+    end
+  end
+
+  context 'for keywords' do
+    it "should allow using the 'type' as the name of a function with no parameters" do
+      source = "type()"
+      expect(validate(parse(source))).not_to have_any_issues
+    end
+
+    it "should allow using the keyword 'type' as the name of a function with parameters" do
+      source = "type('a', 'b')"
+      expect(validate(parse(source))).not_to have_any_issues
+    end
+    it "should allow using the 'type' as the name of a function with no parameters and a block" do
+      source = "type() |$x| { $x }"
+      expect(validate(parse(source))).not_to have_any_issues
+    end
+
+    it "should allow using the keyword 'type' as the name of a function with parameters and a block" do
+      source = "type('a', 'b') |$x| { $x }"
+      expect(validate(parse(source))).not_to have_any_issues
     end
   end
 
@@ -300,61 +321,69 @@ describe "validating 4x" do
     end
   end
 
-  context 'top level constructs in conditionals' do
-    ['class', 'define', 'node'].each do |word|
-      it "produces an error when $#{word} is nested in an if expression" do
-        source = "if true { #{word} x {} }"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+  context 'top level constructs' do
+    def issue(at_top)
+      at_top ? Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL : Puppet::Pops::Issues::NOT_TOP_LEVEL
+    end
+
+    # Top level. Defines the expressions that are tested inside of other things
+    {
+      'a class' => ['class x{}', false],
+      'a define' => ['define x{}', false],
+      'a node' => ['node x{}', false],
+      'a function' => ['function x() {}', true],
+      'a type alias' => ['type A = Data', true],
+      'a type alias for a complex type' => ['type C = Hash[String[1],Integer]', true],
+      'a type definition' => ['type A {}', true]
+    }.each_pair do |word, (decl, at_top)|
+      # Nesting level. Defines how each of the top level expressions are nested in
+      # another expression
+      {
+        'a define' => ["define y{ #{decl} }", at_top],
+        'a function' => ["function y() { #{decl} }", at_top],
+        'a type definition' => ["type A { #{decl} }", at_top],
+        'an if expression' => ["if true { #{decl} }", false],
+        'an if-else expression' => ["if false {} else { #{decl} }", false],
+        'an unless' => ["unless false { #{decl} }", false]
+      }.each_pair do |nester, (source, abs_top)|
+        # Tests each top level expression in each nested expression
+        it "produces an error when #{word} is nested in #{nester}" do
+          expect(validate(parse(source))).to have_issue(issue(abs_top))
+        end
+      end
+
+      # Test that the expression can exist anywhere in a top level block
+
+      it "will allow #{word} as the only statement in a top level block" do
+        expect(validate(parse(decl))).not_to have_issue(issue(at_top))
+      end
+
+      it "will allow #{word} as the last statement in a top level block" do
+        source = "$a = 10\n#{decl}"
+        expect(validate(parse(source))).not_to have_issue(issue(at_top))
+      end
+
+      it "will allow #{word} as the first statement in a top level block" do
+        source = "#{decl}\n$a = 10"
+        expect(validate(parse(source))).not_to have_issue(issue(at_top))
+      end
+
+      it "will allow #{word} in between other statements in a top level block" do
+        source = "$a = 10\n#{decl}\n$b = 20"
+        expect(validate(parse(source))).not_to have_issue(issue(at_top))
       end
     end
 
-    ['class', 'define', 'node'].each do |word|
-      it "produces an error when $#{word} is nested in an if-else expression" do
-        source = "if false {} else { #{word} x {} }"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+    context 'that are type aliases' do
+      it 'raises errors when RHS is a name that is an invalid reference' do
+        source = 'type MyInt = integer'
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_EXPRESSION)
       end
-    end
 
-    ['class', 'define', 'node'].each do |word|
-      it "produces an error when $#{word} is nested in an unless expression" do
-        source = "unless false { #{word} x {} }"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
+      it 'raises errors when RHS is an AccessExpression with a name that is an invalid reference on LHS' do
+        source = 'type IntegerArray = array[Integer]'
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_EXPRESSION)
       end
-    end
-
-    ['class', 'define', 'node'].each do |word|
-      it "produces an error when $#{word} is nested in an function" do
-        source = "function y() { #{word} x {} }"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
-      end
-    end
-
-    it 'produces an error when a function is nested in an function' do
-      source = 'function y() { function x() {} }'
-      expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-    end
-
-    ['class', 'define', 'node'].each do |word|
-      it "produces an error when function is nested in a #{word}" do
-        source = "#{word} x { function y() {} }"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-      end
-    end
-
-    it 'does not produce an error when function is alone at top level script' do
-      source = 'function y() {}'
-      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-    end
-
-    it 'does not produce an error when function is in a top level block' do
-      source = "function x() {}\nfunction y() {}"
-      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-      source = "$a = 10\nfunction y() {}"
-      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-      source = "function y() {}\n$a = 10"
-      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
-      source = "$a = 10\nfunction y() {}\n$b = 20"
-      expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::NOT_ABSOLUTE_TOP_LEVEL)
     end
   end
 
