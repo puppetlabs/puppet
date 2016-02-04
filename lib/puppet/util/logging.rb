@@ -1,6 +1,8 @@
 # A module to make logging a bit easier.
 require 'puppet/util/log'
 require 'puppet/error'
+require 'puppet/util/multi_match.rb'
+
 require 'facter'
 
 module Puppet::Util::Logging
@@ -147,6 +149,43 @@ module Puppet::Util::Logging
 
     key ||= "#{file}:#{line}"
     issue_deprecation_warning(message, key, file, line, false)
+  end
+
+  FILE_AND_LINE = MultiMatch::TUPLE
+  FILE_NO_LINE  = MultiMatch.new(MultiMatch::NOT_NIL, nil).freeze
+  NO_FILE_LINE  = MultiMatch.new(nil, MultiMatch::NOT_NIL).freeze
+
+  # Logs a (non deprecation) warning once for a given key.
+  #
+  # @param kind [String] The kind of warning. The
+  #   kind must be one of the defined kinds for the Puppet[:disable_warnings] setting.
+  # @param message [String] The message to log (logs via warning)
+  # @param key [String] Key used to make this warning unique
+  # @param file [String,nil] the File related to the warning
+  # @param line [Integer,nil] the Line number related to the warning
+  #   warning as unique
+  #
+  # Either :file and :line and/or :key must be passed.
+  def warn_once(kind, key, message, file = nil, line = nil)
+    return if Puppet[:disable_warnings].include?(kind)
+    $unique_warnings ||= {}
+    if $unique_warnings.length < 100 then
+      if (! $unique_warnings.has_key?(key)) then
+        $unique_warnings[key] = message
+        call_trace =
+        case MultiMatch.new(file, line)
+        when FILE_AND_LINE
+          "\n   (at #{file}:#{line})"
+        when FILE_NO_LINE
+          "\n   (in #{file})"
+        when NO_FILE_LINE
+          "\n   (in unknown file, line #{line})"
+        else
+          "\n   (file & line not available)"
+        end
+        warning("#{message}#{call_trace}")
+      end
+    end
   end
 
   def get_deprecation_offender()

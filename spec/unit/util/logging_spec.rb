@@ -177,6 +177,54 @@ describe Puppet::Util::Logging do
     end
   end
 
+  context "when sending a warn_once" do
+    after(:each) {
+      # this is required because of bugs in Mocha whe tearing down expectations for each test
+      # why it works elsewhere is a mystery.
+      @logger.unstub(:warning)
+    }
+
+    it "warns without file and line when neither is given" do
+      @logger.expects(:warning).with(regexp_matches(/.*\(file \& line not available\).*/m))
+      @logger.warn_once('kind', 'wp', "wet paint")
+    end
+
+    it "warns with file when only file is given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in aFile\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint",'aFile')
+    end
+
+    it "warns with unknown file and line when only line is given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in uknown file, line 5\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint", nil, 5)
+    end
+
+    it "warns with file and line when both are given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(at aFile:5\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint",'aFile', 5)
+    end
+
+    it "does not produce warning if kind is disabled" do
+      Puppet[:disable_warnings] = ['undefined_variables']
+      @logger.expects(:warning).never
+      @logger.warn_once('undefined_variable', 'wp', "wet paint")
+    end
+
+    it "produces warning even if deprecation warnings are disabled " do
+      Puppet[:disable_warnings] = ['deprecations']
+      @logger.expects(:warning).never
+      @logger.warn_once('undefined_variable', 'wp', "wet paint")
+    end
+
+    it "warns once per key" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*/m)).once
+      5.times do
+        @logger.warn_once('kind', 'wp', "wet paint")
+      end
+    end
+
+  end
+
   describe "when formatting exceptions" do
     it "should be able to format a chain of exceptions" do
       exc3 = Puppet::Error.new("original")

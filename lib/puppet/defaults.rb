@@ -111,10 +111,11 @@ module Puppet
 
         Valid values for this setting are:
 
-        * `deprecations` --- disables deprecation warnings.",
+        * `deprecations` --- disables deprecation warnings.
+        * `undefined_variables` --- disables warnings about non existing variables.",
       :hook      => proc do |value|
         values = munge(value)
-        valid   = %w[deprecations]
+        valid   = %w[deprecations undefined_variables]
         invalid = values - (values & valid)
         if not invalid.empty?
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
