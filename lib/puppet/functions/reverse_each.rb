@@ -4,7 +4,7 @@
 #
 # This function takes one to two arguments.
 #
-# 1. An iterable that the function will iterate over.
+# 1. An `Iterable` that the function will iterate over.
 # 2. An optional lambda, which the function calls for each element in the first argument. It must
 # request one parameter.
 #
@@ -27,20 +27,20 @@
 # When no second argument is present, Puppet returns an `Iterable` that represents the reverse
 # order of its first argument. This allows methods on `Iterable` to be chained.
 #
-# When a lamdba is given as the second argument, Puppet iterates the first argument in reverse order
-# and passes each value in turn to the lambda, then returns the first argument unchanged.
+# When a lamdba is given as the second argument, Puppet iterates the first argument in reverse
+# order and passes each value in turn to the lambda, then returns the first argument unchanged.
 #
 # @example Using the `reverse_each` function with an array and a one-parameter lambda
 #
 # ~~~ puppet
-# # Puppet will print a notice for each of the three items in $data in reverse order.
+# # Puppet will log a notice for each of the three items in $data in reverse order.
 # $data = [1,2,3]
 # $data.reverse_each |$item| { notice($item) }
 #
 # ~~~
 #
-# When no second argument is present, Puppet returns a new `Iterable` which allows it to be directly chained into
-# another function that takes an `Iterable` as an argument.
+# When no second argument is present, Puppet returns a new `Iterable` which allows it to
+# be directly chained into another function that takes an `Iterable` as an argument.
 #
 # @example Using the `reverse_each` function chained with a `map` function.
 #
