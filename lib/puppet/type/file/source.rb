@@ -231,7 +231,7 @@ module Puppet
 
     def write(file)
       resource.parameter(:checksum).sum_stream { |sum|
-        each_chunk_from(self) { |chunk|
+        each_chunk_from { |chunk|
           sum << chunk
           file.print chunk
         }
@@ -258,27 +258,26 @@ module Puppet
       end
     end
 
-    def each_chunk_from(source_or_content)
+    def each_chunk_from
       if Puppet[:default_file_terminus] == :file_server
-        yield source_or_content.content
-      elsif source_or_content.local?
-        chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
+        yield content
+      elsif local?
+        chunk_file_from_disk { |chunk| yield chunk }
       else
-        chunk_file_from_source(source_or_content) { |chunk| yield chunk }
+        chunk_file_from_source { |chunk| yield chunk }
       end
     end
 
-    def chunk_file_from_disk(source)
-      File.open(source.full_path, "rb") do |src|
+    def chunk_file_from_disk
+      File.open(full_path, "rb") do |src|
         while chunk = src.read(8192)
           yield chunk
         end
       end
     end
 
-    def get_from_puppet_source(source_or_content, &block)
-      source = source_or_content.metadata.source
-      request = Puppet::Indirector::Request.new(:file_content, :find, source, nil, :environment => resource.catalog.environment_instance)
+    def get_from_puppet_source(source_uri, &block)
+      request = Puppet::Indirector::Request.new(:file_content, :find, source_uri, nil, :environment => resource.catalog.environment_instance)
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
@@ -286,22 +285,22 @@ module Puppet
       end
     end
 
-    def get_from_http_source(source, &block)
-      Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get, &block)
+    def get_from_http_source(source_uri, &block)
+      Puppet::Util::HttpProxy.request_with_redirects(URI(source_uri), :get, &block)
     end
 
-    def get_from_source(source_or_content, &block)
-      source = source_or_content.metadata.source
-      if source =~ /^https?:/
-        get_from_http_source(source, &block)
+    def get_from_source(&block)
+      source_uri = metadata.source
+      if source_uri =~ /^https?:/
+        get_from_http_source(source_uri, &block)
       else
-        get_from_puppet_source(source_or_content, &block)
+        get_from_puppet_source(source_uri, &block)
       end
     end
 
 
-    def chunk_file_from_source(source_or_content)
-      get_from_source(source_or_content) do |response|
+    def chunk_file_from_source
+      get_from_source do |response|
         case response.code
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else

@@ -82,6 +82,10 @@ module Puppet
     # Also, fix #872: when content is used, and replace is true, the file
     # should be insync when it exists
     def insync?(is)
+      if resource[:source] && resource[:checksum_value]
+        self.fail Puppet::Error, "Content should not exist if source and checksum_value are specified"
+      end
+
       if resource.should_be_file?
         return false if is == :absent
       else
@@ -104,10 +108,15 @@ module Puppet
     end
 
     def property_matches?(current, desired)
-      basic = super
+      # If checksum_value is specified, it overrides comparing the content field.
+      checksum_type = resource.parameter(:checksum).value
+      if checksum_value = resource.parameter(:checksum_value)
+        desired = "{#{checksum_type}}#{checksum_value.value}"
+      end
+
+      basic = super(current, desired)
       # The inherited equality is always accepted, so use it if valid.
       time_types = [:mtime, :ctime]
-      checksum_type = resource.parameter(:checksum).value
       return basic if basic || !time_types.include?(checksum_type)
       return false unless current && desired
       begin

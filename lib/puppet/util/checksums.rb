@@ -134,6 +134,7 @@ module Puppet::Util::Checksums
   end
 
   def mtime?(string)
+    return true if string.is_a? Time
     !!DateTime.parse(string)
   rescue
     false
@@ -203,6 +204,7 @@ module Puppet::Util::Checksums
   end
 
   def ctime?(string)
+    return true if string.is_a? Time
     !!DateTime.parse(string)
   rescue
     false

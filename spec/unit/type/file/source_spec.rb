@@ -688,28 +688,25 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         source = source_param.new(:resource => resource)
 
         source.expects(:chunk_file_from_source).returns('from_source')
-        source.send(:each_chunk_from, source) { |chunk| expect(chunk).to eq('from_source') }
+        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('from_source') }
       end
 
       it "when running as puppet apply" do
         Puppet[:default_file_terminus] = "file_server"
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:content).once.returns :whoo
-        source.send(:each_chunk_from, source_or_content) { |chunk| expect(chunk).to eq(:whoo) }
+        source.expects(:content).once.returns :whoo
+        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq(:whoo) }
       end
 
       it "when running from source with a local file" do
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:local?).returns true
-        source.expects(:chunk_file_from_disk).with(source_or_content).once.yields 'woot'
-        source.send(:each_chunk_from, source_or_content) { |chunk| expect(chunk).to eq('woot') }
+        source.expects(:local?).returns true
+        source.expects(:chunk_file_from_disk).once.yields 'woot'
+        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('woot') }
       end
 
       it "when running from source with a remote file" do
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:local?).returns false
-        source.expects(:chunk_file_from_source).with(source_or_content).once.yields 'woot'
-        source.send(:each_chunk_from, source_or_content) { |chunk| expect(chunk).to eq('woot') }
+        source.expects(:local?).returns false
+        source.expects(:chunk_file_from_source).once.yields 'woot'
+        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('woot') }
       end
     end
   end

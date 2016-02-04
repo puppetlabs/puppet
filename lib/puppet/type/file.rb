@@ -124,11 +124,6 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  newparam(:checksum_value) do
-    desc "The checksum of the source contents. Only md5 and sha256 are supported when
-      specifying this parameter."
-  end
-
   newparam(:recurse) do
     desc "Whether to recursively manage the _contents_ of a directory. This attribute
       is only used when `ensure => directory` is set. The allowed values are:
@@ -730,7 +725,9 @@ Puppet::Type.newtype(:file) do
   end
 
   def retrieve
-    if source = parameter(:source)
+    # `checksum_value` implies explicit management of all metadata, so skip metadata
+    # retrieval. Otherwise, if source is set, retrieve metadata for source.
+    if (source = parameter(:source)) && property(:checksum_value).nil?
       source.copy_source_values
     end
     super
@@ -811,7 +808,7 @@ Puppet::Type.newtype(:file) do
 
   # Write out the file.  Requires the property name for logging.
   # Write will be done by the content or source property, with checksum
-  # computation handled by content
+  # computation handled by content or checksum_value
   def write(property = nil)
     remove_existing(:file)
 
@@ -930,9 +927,9 @@ Puppet::Type.newtype(:file) do
   # simply opening the file with 'w' as done in write is enough to truncate
   # or write an empty length file.
   def write_contents(file)
-    # Ideally only source or content would exist. However, if source is specified
-    # it will be used to generate content; content will trigger writing the file,
-    # but we should still use source to do the final write, so put it first.
+    # Ideally only source or content would exist. However, if source is specified without
+    # checksum_value, source will be used to generate content; content will trigger
+    # writing the file, but we should still use source to do the final write, so put it first.
     if source = parameter(:source)
       source.write(file)
     elsif content = property(:content)
@@ -958,6 +955,7 @@ Puppet::Type.newtype(:file) do
       thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
+
 end
 
 # We put all of the properties in separate files, because there are so many
@@ -966,6 +964,7 @@ end
 require 'puppet/type/file/checksum'
 require 'puppet/type/file/content'     # can create the file
 require 'puppet/type/file/source'      # can create the file
+require 'puppet/type/file/checksum_value' # can create the file, in place of content
 require 'puppet/type/file/content_uri'
 require 'puppet/type/file/target'      # creates a different type of file
 require 'puppet/type/file/ensure'      # can create the file
