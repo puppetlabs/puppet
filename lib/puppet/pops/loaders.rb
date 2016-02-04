@@ -1,4 +1,5 @@
-class Puppet::Pops::Loaders
+module Puppet::Pops
+class Loaders
   class LoaderError < Puppet::Error; end
 
   attr_reader :static_loader
@@ -8,7 +9,7 @@ class Puppet::Pops::Loaders
 
   def initialize(environment)
     # The static loader can only be changed after a reboot
-    @@static_loader ||= Puppet::Pops::Loader::StaticLoader.new()
+    @@static_loader ||= Loader::StaticLoader.new()
 
     # Create the set of loaders
     # 1. Puppet, loads from the "running" puppet - i.e. bundled functions, types, extension points and extensions
@@ -66,7 +67,7 @@ class Puppet::Pops::Loaders
   private
 
   def create_puppet_system_loader()
-    Puppet::Pops::Loader::ModuleLoaders.system_loader_from(static_loader, self)
+    Loader::ModuleLoaders.system_loader_from(static_loader, self)
   end
 
   def create_environment_loader(environment)
@@ -91,10 +92,10 @@ class Puppet::Pops::Loaders
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     if env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf)
       # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
-      loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
+      loader = Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
     else
       # View the environment as a module to allow loading from it - this module is always called 'environment'
-      loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(puppet_system_loader, self, 'environment', env_conf.path_to_env)
+      loader = Loader::ModuleLoaders.module_loader_from(puppet_system_loader, self, 'environment', env_conf.path_to_env)
     end
 
     # An environment has a module path even if it has a null loader
@@ -105,7 +106,7 @@ class Puppet::Pops::Loaders
     # Code in the environment gets to see all modules (since there is no metadata for the environment)
     # but since this is not given to the module loaders, they can not load global code (since they can not
     # have prior knowledge about this
-    loader = Puppet::Pops::Loader::DependencyLoader.new(loader, "environment", @module_resolver.all_module_loaders())
+    loader = Loader::DependencyLoader.new(loader, "environment", @module_resolver.all_module_loaders())
 
     # The module loader gets the private loader via a lazy operation to look up the module's private loader.
     # This does not work for an environment since it is not resolved the same way.
@@ -121,7 +122,7 @@ class Puppet::Pops::Loaders
       # Create data about this module
       md = LoaderModuleData.new(puppet_module)
       mr[puppet_module.name] = md
-      md.public_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(parent_loader, self, md.name, md.path)
+      md.public_loader = Loader::ModuleLoaders.module_loader_from(parent_loader, self, md.name, md.path)
     end
     # NOTE: Do not resolve all modules here - this is wasteful if only a subset of modules / functions are used
     #       The resolution is triggered by asking for a module's private loader, since this means there is interest
@@ -224,7 +225,7 @@ class Puppet::Pops::Loaders
     def create_loader_with_all_modules_visible(from_module_data)
       Puppet.debug{"ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible"}
 
-      Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, all_module_loaders())
+      Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, all_module_loaders())
     end
 
     def create_loader_with_only_dependencies_visible(from_module_data)
@@ -234,7 +235,8 @@ class Puppet::Pops::Loaders
           " Use 'puppet module list --tree' to see information about modules")
       end
       dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
-      Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)
+      Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)
     end
   end
+end
 end

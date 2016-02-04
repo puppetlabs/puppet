@@ -1,4 +1,5 @@
-module Puppet::Pops::Types
+module Puppet::Pops
+module Types
   EMPTY_ARRAY = [].freeze
 
   class TypePathElement
@@ -198,7 +199,7 @@ module Puppet::Pops::Types
   end
 
   class TypeMismatch < ExpectedActualMismatch
-    include Puppet::Pops::LabelProvider
+    include LabelProvider
 
     # @return A new instance with the least restrictive respective boundaries
     def merge(path, o)
@@ -688,12 +689,12 @@ module Puppet::Pops::Types
       required_count = from
       types =
         case param_types
-        when Puppet::Pops::Types::PTupleType
+        when PTupleType
           param_types.types
-        when Puppet::Pops::Types::PArrayType
+        when PArrayType
           [param_types.element_type]
         end
-      tc = Puppet::Pops::Types::TypeCalculator.singleton
+      tc = TypeCalculator.singleton
 
       # join type with names (types are always present, names are optional)
       # separate entries with comma
@@ -708,17 +709,17 @@ module Puppet::Pops::Types
           indicator = from == param_names.size ? '+' : '*'
         elsif optional(index, required_count)
           indicator = '?'
-          type = type.optional_type if type.is_a?(Puppet::Pops::Types::POptionalType)
+          type = type.optional_type if type.is_a?(POptionalType)
         end
         "#{tc.string(type)} #{name}#{indicator}"
       end.join(', ')
 
       # If there is a block, include it
       case signature.type.block_type
-      when Puppet::Pops::Types::POptionalType
+      when POptionalType
         result << ', ' unless result == ''
         result << "#{signature.type.block_type.optional_type} #{signature.block_name}?"
-      when Puppet::Pops::Types::PCallableType
+      when PCallableType
         result << ', ' unless result == ''
         result << "#{signature.type.block_type} #{signature.block_name}"
       when NilClass
@@ -740,4 +741,4 @@ module Puppet::Pops::Types
     end
   end
 end
-
+end

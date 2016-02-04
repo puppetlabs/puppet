@@ -1,10 +1,13 @@
+module Puppet::Pops
+module Binder
 # This module contains the various producers used by Puppet Bindings.
-# The main (abstract) class is {Puppet::Pops::Binder::Producers::Producer} which documents the
+
+# The main (abstract) class is {Producers::Producer} which documents the
 # Producer API and serves as a base class for all other producers.
 # It is required that custom producers inherit from this producer (directly or indirectly).
 #
 # The selection of a Producer is typically performed by the Innjector when it configures itself
-# from a Bindings model where a {Puppet::Pops::Binder::Bindings::ProducerDescriptor} describes
+# from a Bindings model where a {Bindings::ProducerDescriptor} describes
 # which producer to use. The configuration uses this to create the concrete producer.
 # It is possible to describe that a particular producer class is to be used, and also to describe that
 # a custom producer (derived from Producer) should be used. This is available for both regular
@@ -13,7 +16,7 @@
 #
 # @api public
 #
-module Puppet::Pops::Binder::Producers
+module Producers
   # Producer is an abstract base class representing the base contract for a bound producer.
   # Typically, when a lookup is performed it is the value that is returned (via a producer), but
   # it is also possible to lookup the producer, and ask it to produce the value (the producer may
@@ -48,10 +51,10 @@ module Puppet::Pops::Binder::Producers
     # Creates a Producer.
     # Derived classes should call this constructor to get support for transformer lambda.
     #
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -60,9 +63,9 @@ module Puppet::Pops::Binder::Producers
           raise ArgumentError, "Transformer Proc must take one argument; value." unless transformer_lambda.arity == 1
           @transformer = transformer_lambda
         else
-          raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
+          raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Model::LambdaExpression)
           raise ArgumentError, "Transformer lambda must take one argument; value." unless transformer_lambda.parameters.size() == 1
-          @transformer = Puppet::Pops::Parser::EvaluatingParser.new.closure(transformer_lambda, scope)
+          @transformer = Parser::EvaluatingParser.new.closure(transformer_lambda, scope)
         end
       end
     end
@@ -81,9 +84,9 @@ module Puppet::Pops::Binder::Producers
     # This implementation returns `self`. A derived class may want to override this method
     # to perform initialization/refresh of its internal state. This method is called when
     # a producer is requested.
-    # @see Puppet::Pops::Binder::ProducerProducer for an example of implementation.
+    # @see ProducerProducer for an example of implementation.
     # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
-    # @return [Puppet::Pops::Binder::Producer] the producer to use
+    # @return [Producer] the producer to use
     # @api public
     #
     def producer(scope)
@@ -123,11 +126,11 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :value
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Model::LambdaExpression, nil] :value (nil) the value to produce
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression, nil] :value (nil) the value to produce
     # @api public
     #
    def initialize(injector, binding, scope, options)
@@ -182,10 +185,10 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :binding
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -204,10 +207,10 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :init_args
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [String] :class_name The name of the class to create instance of
     # @option options [Array<Object>] :init_args ([]) Optional arguments to class constructor
     # @api public
@@ -220,7 +223,7 @@ module Puppet::Pops::Binder::Producers
       class_name = options[:class_name]
       raise ArgumentError, "Option 'class_name' must be given for an InstantiatingProducer" unless class_name
       # get class by name
-      @the_class = Puppet::Pops::Types::ClassLoader.provide(class_name)
+      @the_class = Types::ClassLoader.provide(class_name)
       @init_args = options[:init_args] || []
       raise ArgumentError, "Can not load the class #{class_name} specified in binding named: '#{binding.name}'" unless @the_class
     end
@@ -255,11 +258,11 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :producers
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Array<Puppet::Pops::Binder::Producers::Producer>] :producers list of producers to consult. Required.
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Array<Producers::Producer>] :producers list of producers to consult. Required.
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -288,11 +291,11 @@ module Puppet::Pops::Binder::Producers
     #
     attr_reader :expression
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Array<Puppet::Pops::Model::Expression>] :expression The expression to evaluate
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Array<Model::Expression>] :expression The expression to evaluate
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -303,7 +306,7 @@ module Puppet::Pops::Binder::Producers
 
     # @api private
     def internal_produce(scope)
-      Puppet::Pops::Parser::EvaluatingParser.new.evaluate(scope, expression)
+      Parser::EvaluatingParser.new.evaluate(scope, expression)
     end
   end
 
@@ -316,11 +319,11 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :name
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binder [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
     # @api public
     #
@@ -345,13 +348,13 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :key
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binder [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
-    # @option options [Puppet::Pops::Types::PAnyType] :key The key to lookup in the hash
+    # @option options [Types::PAnyType] :key The key to lookup in the hash
     # @api public
     #
     def initialize(injector, binder, scope, options)
@@ -379,11 +382,11 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :value_producer
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Model::LambdaExpression] :producer_producer a producer of a value producer (required)
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :producer_producer a producer of a value producer (required)
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -420,11 +423,11 @@ module Puppet::Pops::Binder::Producers
 
     # Creates  new ProducerProducer given a producer.
     #
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Binder::Producer] :producer_producer a producer of a value producer (required)
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Producer] :producer_producer a producer of a value producer (required)
     #
     # @api public
     #
@@ -512,10 +515,10 @@ module Puppet::Pops::Binder::Producers
   class MultibindProducer < AbstractArgumentedProducer
     attr_reader :contributions_key
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     #
     # @api public
     #
@@ -524,8 +527,8 @@ module Puppet::Pops::Binder::Producers
       @contributions_key = injector.key_factory.multibind_contributions(binding.id)
     end
 
-    # @param expected [Array<Puppet::Pops::Types::PAnyType>, Puppet::Pops::Types::PAnyType] expected type or types
-    # @param actual [Object, Puppet::Pops::Types::PAnyType> the actual value (or its type)
+    # @param expected [Array<Types::PAnyType>, Types::PAnyType] expected type or types
+    # @param actual [Object, Types::PAnyType> the actual value (or its type)
     # @return [String] a formatted string for inclusion as detail in an error message
     # @api private
     #
@@ -578,10 +581,10 @@ module Puppet::Pops::Binder::Producers
     # @api public
     attr_reader :priority_on_unnamed
 
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Boolean] :uniq (false) if collected result should be post-processed to contain only unique entries
     # @option options [Boolean, Integer] :flatten (false) if collected result should be post-processed so all contained arrays
     #   are flattened. May be set to an Integer value to indicate the level of recursion (-1 is endless, 0 is none).
@@ -680,10 +683,10 @@ module Puppet::Pops::Binder::Producers
     # By default, the hash is produced using `:priority` resolution - the highest entry is selected, the rest are
     # ignored unless they have the same priority which is an error.
     #
-    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param injector [Injector] The injector where the lookup originates
+    # @param binding [Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
-    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Symbol, String] :conflict_resolution (:priority) One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
     #   <ul><li> `ignore` the first found highest priority contribution is used, the rest are ignored</li>
     #   <li>`error` any duplicate key is an error</li>
@@ -720,7 +723,7 @@ module Puppet::Pops::Binder::Producers
 
       if uniq || flatten || conflict_resolution.to_s == 'append'
         etype = binding.type.element_type
-        unless etype.class == Puppet::Pops::Types::PDataType || etype.is_a?(Puppet::Pops::Types::PArrayType)
+        unless etype.class == Types::PDataType || etype.is_a?(Types::PArrayType)
           detail = []
           detail << ":uniq" if uniq
           detail << ":flatten" if flatten
@@ -823,4 +826,6 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+end
+end
 end

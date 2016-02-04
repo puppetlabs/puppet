@@ -1,5 +1,7 @@
-module Puppet::Pops::Parser::HeredocSupport
-  include Puppet::Pops::Parser::LexerSupport
+module Puppet::Pops
+module Parser
+module HeredocSupport
+  include LexerSupport
 
   # Pattern for heredoc `@(endtag[:syntax][/escapes])
   # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
@@ -15,12 +17,12 @@ module Puppet::Pops::Parser::HeredocSupport
 
     # scanner is at position before @(
     # find end of the heredoc spec
-    str = scn.scan_until(/\)/) || lex_error(Puppet::Pops::Issues::HEREDOC_UNCLOSED_PARENTHESIS, :followed_by => followed_by)
+    str = scn.scan_until(/\)/) || lex_error(Issues::HEREDOC_UNCLOSED_PARENTHESIS, :followed_by => followed_by)
     pos_after_heredoc = scn.pos
 
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
     md = str.match(PATTERN_HEREDOC)
-    lex_error(Puppet::Pops::Issues::HEREDOC_INVALID_SYNTAX) unless md
+    lex_error(Issues::HEREDOC_INVALID_SYNTAX) unless md
     endtag = md[1]
     syntax = md[2] || ''
     escapes = md[3]
@@ -33,7 +35,7 @@ module Puppet::Pops::Parser::HeredocSupport
       endtag = $1.strip
     end
 
-    lex_error(Puppet::Pops::Issues::HEREDOC_MISSING_ENDTAG) unless endtag.length >= 1
+    lex_error(Issues::HEREDOC_MISSING_ENDTAG) unless endtag.length >= 1
 
     resulting_escapes = []
     if escapes
@@ -41,7 +43,7 @@ module Puppet::Pops::Parser::HeredocSupport
 
       escapes = escapes.split('')
       unless escapes.length == escapes.uniq.length
-        lex_error(Puppet::Pops::Issues::HEREDOC_MULTIPLE_AT_ESCAPES, :escapes => escapes)
+        lex_error(Issues::HEREDOC_MULTIPLE_AT_ESCAPES, :escapes => escapes)
       end
       resulting_escapes = ["\\"]
       escapes.each do |e|
@@ -51,7 +53,7 @@ module Puppet::Pops::Parser::HeredocSupport
         when "L"
           resulting_escapes += ["\n", "\r\n"]
         else
-          lex_error(Puppet::Pops::Issues::HEREDOC_INVALID_ESCAPE, :actual => e)
+          lex_error(Issues::HEREDOC_INVALID_ESCAPE, :actual => e)
         end
       end
     end
@@ -66,14 +68,14 @@ module Puppet::Pops::Parser::HeredocSupport
     if ctx[:newline_jump]
       scn.pos = ctx[:newline_jump]
     else
-      scn.scan_until(/\n/) || lex_error(Puppet::Pops::Issues::HEREDOC_WITHOUT_TEXT)
+      scn.scan_until(/\n/) || lex_error(Issues::HEREDOC_WITHOUT_TEXT)
     end
     # offset 0 for the heredoc, and its line number
     heredoc_offset = scn.pos
     heredoc_line = locator.line_for_offset(heredoc_offset)-1
 
     # Compute message to emit if there is no end (to make it refer to the opening heredoc position).
-    eof_error = create_lex_error(Puppet::Pops::Issues::HEREDOC_WITHOUT_END_TAGGED_LINE)
+    eof_error = create_lex_error(Issues::HEREDOC_WITHOUT_END_TAGGED_LINE)
 
     # Text from this position (+ lexing contexts offset for any preceding heredoc) is heredoc until a line
     # that terminates the heredoc is found.
@@ -97,13 +99,13 @@ module Puppet::Pops::Parser::HeredocSupport
 
         # Use a new lexer instance configured with a sub-locator to enable correct positioning
         sublexer = self.class.new()
-        locator = Puppet::Pops::Parser::Locator::SubLocator.sub_locator(str,
+        locator = Locator::SubLocator.sub_locator(str,
           locator.file, heredoc_line, heredoc_offset, leading.length())
 
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
         enqueue([:SUBLOCATE,
-          Puppet::Pops::Parser::LexerSupport::TokenValue.new([:SUBLOCATE,
+          LexerSupport::TokenValue.new([:SUBLOCATE,
             lines, lines.reduce(0) {|size, s| size + s.length} ],
             heredoc_offset,
             locator)])
@@ -137,4 +139,6 @@ module Puppet::Pops::Parser::HeredocSupport
   end
 
 
+end
+end
 end

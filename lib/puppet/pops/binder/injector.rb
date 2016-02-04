@@ -1,8 +1,10 @@
+module Puppet::Pops
+module Binder
 # The injector is the "lookup service" class
 #
 # Initialization
 # --------------
-# The injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}. The Binder instance contains a resolved set of
+# The injector is initialized with a configured {Binder Binder}. The Binder instance contains a resolved set of
 # `key => "binding information"` that is used to setup the injector.
 #
 # Lookup
@@ -34,8 +36,8 @@
 # recreate the producer on each call to `produce`; i.e. each `lookup_producer` returns a producer capable of returning
 # a series of objects.
 #
-# @see Puppet::Pops::Binder::Binder Binder, for details about how to bind keys to producers
-# @see Puppet::Pops::Binder::BindingsFactory BindingsFactory, for a convenient way to create a Binder and bindings
+# @see Binder Binder, for details about how to bind keys to producers
+# @see BindingsFactory BindingsFactory, for a convenient way to create a Binder and bindings
 #
 # Assisted Inject
 # ---------------
@@ -66,7 +68,7 @@
 #   injector.lookup(scope, Duck)
 #   # Produces a Duck named 'Donald Duck' or named after the binding 'default-duck-name' (and with similar treatment of
 #   # year_of_birth).
-# @see Puppet::Pops::Binder::Producers::AssistedInjectProducer AssistedInjectProducer, for more details on assisted injection
+# @see Producers::AssistedInjectProducer AssistedInjectProducer, for more details on assisted injection
 #
 # Access to key factory and type calculator
 # -----------------------------------------
@@ -82,19 +84,19 @@
 #
 # @api public
 #
-class Puppet::Pops::Binder::Injector
+class Injector
 
-  Producers = Puppet::Pops::Binder::Producers
+  Producers = Producers
 
   def self.create_from_model(layered_bindings_model)
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings_model))
+    self.new(Binder.new(layered_bindings_model))
   end
 
   def self.create_from_hash(name, key_value_hash)
-    factory = Puppet::Pops::Binder::BindingsFactory
+    factory = BindingsFactory
     named_bindings = factory.named_bindings(name) { key_value_hash.each {|k,v| bind.name(k).to(v) }}
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',named_bindings.model))
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+    self.new(Binder.new(layered_bindings))
   end
 
   # Creates an injector with a single bindings layer created with the given name, and the bindings
@@ -108,9 +110,9 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def self.create(name, &block)
-    factory = Puppet::Pops::Binder::BindingsFactory
+    factory = BindingsFactory
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',factory.named_bindings(name, &block).model))
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+    self.new(Binder.new(layered_bindings))
   end
 
   # Creates an overriding injector with a single bindings layer
@@ -125,9 +127,9 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def override(name, &block)
-    factory = Puppet::Pops::Binder::BindingsFactory
+    factory = BindingsFactory
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',factory.named_bindings(name, &block).model))
-    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+    self.class.new(Binder.new(layered_bindings, @impl.binder))
   end
 
   # Creates an overriding injector with bindings from a bindings model (a LayeredBindings) which
@@ -136,10 +138,10 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def override_with_model(layered_bindings)
-    unless layered_bindings.is_a?(Puppet::Pops::Binder::Bindings::LayeredBindings)
+    unless layered_bindings.is_a?(Bindings::LayeredBindings)
       raise ArgumentError, "Expected a LayeredBindings model, got '#{bindings_model.class}'"
     end
-    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+    self.class.new(Binder.new(layered_bindings, @impl.binder))
   end
 
   # Creates an overriding injector with a single bindings layer
@@ -147,15 +149,15 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def override_with_hash(name, key_value_hash)
-    factory = Puppet::Pops::Binder::BindingsFactory
+    factory = BindingsFactory
     named_bindings = factory.named_bindings(name) { key_value_hash.each {|k,v| bind.name(k).to(v) }}
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',named_bindings.model))
-    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+    self.class.new(Binder.new(layered_bindings, @impl.binder))
   end
 
-  # An Injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}.
+  # An Injector is initialized with a configured {Binder Binder}.
   #
-  # @param configured_binder [Puppet::Pops::Binder::Binder,nil] The configured binder containing effective bindings. A given value
+  # @param configured_binder [Binder,nil] The configured binder containing effective bindings. A given value
   #   of nil creates an injector that returns or yields nil on all lookup requests.
   # @raise ArgumentError if the given binder is not fully configured
   #
@@ -172,7 +174,7 @@ class Puppet::Pops::Binder::Injector
   # The KeyFactory used to produce keys in this injector.
   # The factory is shared with the Binder to ensure consistent translation to keys.
   # A compatible type calculator can also be obtained from the key factory.
-  # @return [Puppet::Pops::Binder::KeyFactory] the key factory in use
+  # @return [KeyFactory] the key factory in use
   #
   # @api public
   #
@@ -183,7 +185,7 @@ class Puppet::Pops::Binder::Injector
   # Returns the TypeCalculator in use for keys. The same calculator (as used for keys) should be used if there is a need
   # to check type conformance, or infer the type of Ruby objects.
   #
-  # @return [Puppet::Pops::Types::TypeCalculator] the type calculator that is in use for keys
+  # @return [Types::TypeCalculator] the type calculator that is in use for keys
   # @api public
   #
   def type_calculator()
@@ -205,7 +207,7 @@ class Puppet::Pops::Binder::Injector
   # @overload lookup(scope, type, name = '')
   #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param type [Puppet::Pops::Types::PAnyType] the type of what to lookup
+  #   @param type [Types::PAnyType] the type of what to lookup
   #   @param name [String] the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup(scope, name)
@@ -231,7 +233,7 @@ class Puppet::Pops::Binder::Injector
   # Creates a key for the type/name combination using a KeyFactory. Specialization of the Data type are transformed
   # to a Data key, and the result is type checked to conform with the given key.
   #
-  # @param type [Puppet::Pops::Types::PAnyType] the type to lookup as defined by Puppet::Pops::Types::TypeFactory
+  # @param type [Types::PAnyType] the type to lookup as defined by Types::TypeFactory
   # @param name [String] the (optional for non `Data` types) name of the entry to lookup.
   #   The name may be an empty String (the default), but not nil. The name is required for lookup for subtypes of
   #   `Data`.
@@ -247,7 +249,7 @@ class Puppet::Pops::Binder::Injector
   # Looks up the key and returns the entry, or nil if no entry is found.
   # Produced type is checked for type conformance with its binding, but not with the lookup key.
   # (This since all subtypes of PDataType are looked up using a key based on PDataType).
-  # Use the Puppet::Pops::Types::TypeCalculator#instance? method to check for conformance of the result
+  # Use the Types::TypeCalculator#instance? method to check for conformance of the result
   # if this is wanted, or use #lookup_type.
   #
   # @param key [Object] lookup of key as produced by the key factory
@@ -275,7 +277,7 @@ class Puppet::Pops::Binder::Injector
   # @overload lookup_producer(scope, type, name = '')
   #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param type [Puppet::Pops::Types::PAnyType], the type of what to lookup
+  #   @param type [Types::PAnyType], the type of what to lookup
   #   @param name [String], the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup_producer(scope, name)
@@ -284,11 +286,11 @@ class Puppet::Pops::Binder::Injector
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param name [String], the Data/name to lookup
   #
-  # @return [Puppet::Pops::Binder::Producers::Producer, Object, nil] a producer, or what the optional block returns
+  # @return [Producers::Producer, Object, nil] a producer, or what the optional block returns
   #
   # @yield [producer] passes the looked up producer to an optional block and returns what this block returns
   # @yield [scope, producer] passes scope and producer to the block and returns what this block returns
-  # @yieldparam producer [Puppet::Pops::Binder::Producers::Producer, nil] the looked up producer or nil if nothing was bound
+  # @yieldparam producer [Producers::Producer, nil] the looked up producer or nil if nothing was bound
   # @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
   #
   # @raise [ArgumentError] if the block has an arity that is not 1 or 2
@@ -300,7 +302,7 @@ class Puppet::Pops::Binder::Injector
   end
 
   # Looks up a Producer given an opaque binder key.
-  # @return [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found.
+  # @return [Producers::Producer, nil] the bound producer, or nil if no such producer was found.
   #
   # @api public
   #
@@ -310,7 +312,7 @@ class Puppet::Pops::Binder::Injector
 
   # Looks up a Producer given a type/name key.
   # @note The result is not type checked (it cannot be until the producer has produced an instance).
-  # @return [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found
+  # @return [Producers::Producer, nil] the bound producer, or nil if no such producer was found
   #
   # @api public
   #
@@ -323,7 +325,7 @@ class Puppet::Pops::Binder::Injector
   #
   # @param scope [Puppet::Parser::Scope] the scope to use
   # @param contributions_key [Object] Opaque key as produced by KeyFactory as the contributions key for a multibinding
-  # @return [Array<Puppet::Pops::Binder::InjectorEntry>] the contributions sorted in deecending order of precedence
+  # @return [Array<InjectorEntry>] the contributions sorted in deecending order of precedence
   #
   # @api public
   #
@@ -339,7 +341,7 @@ class Puppet::Pops::Binder::Injector
   end
 
 # The implementation of the Injector is private.
-# @see Puppet::Pops::Binder::Injector The public API this module implements.
+# @see Injector The public API this module implements.
 # @api private
 #
 module Private
@@ -353,8 +355,8 @@ module Private
 
     def initialize
       @entries = []
-      @key_factory = Puppet::Pops::Binder::KeyFactory.new()
-      @type_calculator = Puppet::Pops::Types::TypeCalculator.singleton
+      @key_factory = KeyFactory.new()
+      @type_calculator = Types::TypeCalculator.singleton
     end
 
     def lookup(scope, *args, &block)
@@ -430,8 +432,8 @@ module Private
       # represented the same (but still opaque) way.
       #
       @key_factory         = configured_binder.key_factory()
-      @type_calculator     = Puppet::Pops::Types::TypeCalculator.singleton
-      @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform", 2,  2)
+      @type_calculator     = Types::TypeCalculator.singleton
+      @@transform_visitor ||= Visitor.new(nil,"transform", 2,  2)
       @recursion_lock = [ ]
     end
 
@@ -441,7 +443,7 @@ module Private
 
       val = case args[ 0 ]
 
-      when Puppet::Pops::Types::PAnyType
+      when Types::PAnyType
         lookup_type(scope, *args)
 
       when String
@@ -507,7 +509,7 @@ module Private
         when NilClass
           @parent ? @parent.lookup_key(scope, key) : nil
 
-        when Puppet::Pops::Binder::InjectorEntry
+        when InjectorEntry
           val = produce(scope, entry)
           return nil if val.nil?
           unless type_calculator.instance?(entry.binding.type, val)
@@ -561,7 +563,7 @@ module Private
     #
     def assistable_injected_class(key)
       kt = key_factory.get_type(key)
-      return nil unless kt.is_a?(Puppet::Pops::Types::PRuntimeType) && kt.runtime == :ruby && !key_factory.is_named?(key)
+      return nil unless kt.is_a?(Types::PRuntimeType) && kt.runtime == :ruby && !key_factory.is_named?(key)
       type_calculator.injectable_class(kt)
     end
 
@@ -569,7 +571,7 @@ module Private
       raise ArgumentError, "lookup_producer should be called with two or three arguments, got: #{args.size()+1}" unless args.size <= 2
 
       p = case args[ 0 ]
-      when Puppet::Pops::Types::PAnyType
+      when Types::PAnyType
         lookup_producer_type(scope, *args)
 
       when String
@@ -615,7 +617,7 @@ module Private
     end
 
     # Returns the producer for the entry
-    # @return [Puppet::Pops::Binder::Producers::Producer] the entry's producer.
+    # @return [Producers::Producer] the entry's producer.
     #
     # @api private
     #
@@ -660,21 +662,21 @@ module Private
 
     # @api private
     def format_binding(b)
-      Puppet::Pops::Binder::Binder.format_binding(b)
+      Binder.format_binding(b)
     end
 
     # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically)
     # @api private
     #
     def transform_NilClass(descriptor, scope, entry)
-      unless entry.binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding)
+      unless entry.binding.is_a?(Bindings::Multibinding)
         raise ArgumentError, "Binding without producer detected, #{format_binding(entry.binding)}"
       end
       case entry.binding.type
-      when Puppet::Pops::Types::PArrayType
-        transform(Puppet::Pops::Binder::Bindings::ArrayMultibindProducerDescriptor.new(), scope, entry)
-      when Puppet::Pops::Types::PHashType
-        transform(Puppet::Pops::Binder::Bindings::HashMultibindProducerDescriptor.new(), scope, entry)
+      when Types::PArrayType
+        transform(Bindings::ArrayMultibindProducerDescriptor.new(), scope, entry)
+      when Types::PHashType
+        transform(Bindings::HashMultibindProducerDescriptor.new(), scope, entry)
       else
         raise ArgumentError, "Unsupported multibind type, must be an array or hash type, #{format_binding(entry.binding)}"
       end
@@ -754,7 +756,7 @@ module Private
 
     # @api private
     def singleton?(descriptor)
-      ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
+      ! descriptor.eContainer().is_a?(Bindings::NonCachingProducerDescriptor)
     end
 
     # Special marker class used in entries
@@ -764,3 +766,6 @@ module Private
   end
 end
 end
+end
+end
+

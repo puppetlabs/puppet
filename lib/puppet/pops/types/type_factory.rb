@@ -1,15 +1,16 @@
+module Puppet::Pops
+module Types
 # Helper module that makes creation of type objects simpler.
 # @api public
 #
-module Puppet::Pops::Types::TypeFactory
-  Types = Puppet::Pops::Types
-  @type_calculator = Types::TypeCalculator.singleton
+module TypeFactory
+  @type_calculator = TypeCalculator.singleton
 
   # Produces the Integer type
   # @api public
   #
   def self.integer
-    Types::PIntegerType::DEFAULT
+    PIntegerType::DEFAULT
   end
 
   # Produces an Integer range type
@@ -19,7 +20,7 @@ module Puppet::Pops::Types::TypeFactory
     # optimize eq with symbol (faster when it is left)
     from = :default == from if from == 'default'
     to = :default if to == 'default'
-    Types::PIntegerType.new(from, to)
+    PIntegerType.new(from, to)
   end
 
   # Produces a Float range type
@@ -29,35 +30,35 @@ module Puppet::Pops::Types::TypeFactory
     # optimize eq with symbol (faster when it is left)
     from = Float(from) unless :default == from || from.nil?
     to = Float(to) unless :default == to || to.nil?
-    Types::PFloatType.new(from, to)
+    PFloatType.new(from, to)
   end
 
   # Produces the Float type
   # @api public
   #
   def self.float
-    Types::PFloatType::DEFAULT
+    PFloatType::DEFAULT
   end
 
   # Produces the Numeric type
   # @api public
   #
   def self.numeric
-    Types::PNumericType::DEFAULT
+    PNumericType::DEFAULT
   end
 
   # Produces the Iterable type
   # @api public
   #
   def self.iterable(elem_type = nil)
-    elem_type.nil? ? Types::PIterableType::DEFAULT : Types::PIterableType.new(elem_type)
+    elem_type.nil? ? PIterableType::DEFAULT : PIterableType.new(elem_type)
   end
 
   # Produces the Iterator type
   # @api public
   #
   def self.iterator(elem_type = nil)
-    elem_type.nil? ? Types::PIteratorType::DEFAULT : Types::PIteratorType.new(elem_type)
+    elem_type.nil? ? PIteratorType::DEFAULT : PIteratorType.new(elem_type)
   end
 
   # Produces a string representation of the type
@@ -71,7 +72,7 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.string(size_type = nil, *values)
-    Types::PStringType.new(size_type, values)
+    PStringType.new(size_type, values)
   end
 
   # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
@@ -84,21 +85,21 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.optional(optional_type = nil)
-    Types::POptionalType.new(type_of(optional_type.is_a?(String) ? string(nil, optional_type) : type_of(optional_type)))
+    POptionalType.new(type_of(optional_type.is_a?(String) ? string(nil, optional_type) : type_of(optional_type)))
   end
 
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
   def self.enum(*values)
-    Types::PEnumType.new(values)
+    PEnumType.new(values)
   end
 
   # Produces the Variant type, optionally with the "one of" types
   # @api public
   #
   def self.variant(*types)
-    Types::PVariantType.new(types.map {|v| type_of(v) })
+    PVariantType.new(types.map {|v| type_of(v) })
   end
 
   # Produces the Struct type, either a non parameterized instance representing
@@ -116,53 +117,53 @@ module Puppet::Pops::Types::TypeFactory
     tc = @type_calculator
     elements = hash.map do |key_type, value_type|
       value_type = type_of(value_type)
-      raise ArgumentError, 'Struct element value_type must be a Type' unless value_type.is_a?(Types::PAnyType)
+      raise ArgumentError, 'Struct element value_type must be a Type' unless value_type.is_a?(PAnyType)
 
       # TODO: Should have stricter name rule
       if key_type.is_a?(String)
         raise ArgumentError, 'Struct element key cannot be an empty String' if key_type.empty?
         key_type = string(nil, key_type)
         # Must make key optional if the value can be Undef
-        key_type = optional(key_type) if tc.assignable?(value_type, Types::PUndefType::DEFAULT)
+        key_type = optional(key_type) if tc.assignable?(value_type, PUndefType::DEFAULT)
       else
         # assert that the key type is one of String[1], NotUndef[String[1]] and Optional[String[1]]
         case key_type
-        when Types::PNotUndefType
+        when PNotUndefType
           # We can loose the NotUndef wrapper here since String[1] isn't optional anyway
           key_type = key_type.type
           s = key_type
-        when Types::POptionalType
+        when POptionalType
           s = key_type.optional_type
-        when Types::PStringType, Types::PEnumType
+        when PStringType, PEnumType
           s = key_type
         else
           raise ArgumentError, "Illegal Struct member key type. Expected NotUndef, Optional, String, or Enum. Got: #{key_type.class.name}"
         end
-        unless (s.is_a?(Puppet::Pops::Types::PStringType) || s.is_a?(Puppet::Pops::Types::PEnumType)) && s.values.size == 1 && !s.values[0].empty?
+        unless (s.is_a?(PStringType) || s.is_a?(PEnumType)) && s.values.size == 1 && !s.values[0].empty?
           raise ArgumentError, "Unable to extract a non-empty literal string from Struct member key type #{tc.string(key_type)}"
         end
       end
-      Types::PStructElement.new(key_type, value_type)
+      PStructElement.new(key_type, value_type)
     end
-    Types::PStructType.new(elements)
+    PStructType.new(elements)
   end
 
   def self.tuple(types = [], size_type = nil)
-    Types::PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
+    PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
   end
 
   # Produces the Boolean type
   # @api public
   #
   def self.boolean
-    Types::PBooleanType::DEFAULT
+    PBooleanType::DEFAULT
   end
 
   # Produces the Any type
   # @api public
   #
   def self.any
-    Types::PAnyType::DEFAULT
+    PAnyType::DEFAULT
   end
 
   # Produces the Regexp type
@@ -172,11 +173,11 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.regexp(pattern = nil)
     if pattern
-      t = Types::PRegexpType.new(pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern)
+      t = PRegexpType.new(pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern)
       t.regexp unless pattern.nil? # compile pattern to catch errors
       t
     else
-      Types::PRegexpType::DEFAULT
+      PRegexpType::DEFAULT
     end
   end
 
@@ -184,7 +185,7 @@ module Puppet::Pops::Types::TypeFactory
     patterns = regular_expressions.map do |re|
       case re
       when String
-        re_t = Types::PRegexpType.new(re)
+        re_t = PRegexpType.new(re)
         re_t.regexp  # compile it to catch errors
         re_t
 
@@ -192,33 +193,33 @@ module Puppet::Pops::Types::TypeFactory
         # Regep.to_s includes options user did not enter and does not escape source
         # to work either as a string or as a // regexp. The inspect method does a better
         # job, but includes the //
-        Types::PRegexpType.new(re.inspect[1..-2])
+        PRegexpType.new(re.inspect[1..-2])
 
-      when Types::PRegexpType
+      when PRegexpType
         re
 
-      when Types::PPatternType
+      when PPatternType
         re.patterns
 
      else
        raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
       end
     end.flatten.uniq
-    Types::PPatternType.new(patterns)
+    PPatternType.new(patterns)
   end
 
   # Produces the Literal type
   # @api public
   #
   def self.scalar
-    Types::PScalarType::DEFAULT
+    PScalarType::DEFAULT
   end
 
   # Produces a CallableType matching all callables
   # @api public
   #
   def self.all_callables
-    return Puppet::Pops::Types::PCallableType::DEFAULT
+    return PCallableType::DEFAULT
   end
 
   # Produces a Callable type with one signature without support for a block
@@ -238,7 +239,7 @@ module Puppet::Pops::Types::TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
-    last_callable = Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(params.last)
+    last_callable = TypeCalculator.is_kind_of_callable?(params.last)
     block_t = last_callable ? params.pop : nil
 
     # compute a size_type for the signature based on the two last parameters
@@ -256,42 +257,42 @@ module Puppet::Pops::Types::TypeFactory
 
     # If the specification requires types, and none were given, a Unit type is used
     if types.empty? && !size_type.nil? && size_type.range[1] > 0
-      types << Types::PUnitType::DEFAULT
+      types << PUnitType::DEFAULT
     end
     # create a signature
     tuple_t = tuple(types, size_type)
-    Types::PCallableType.new(tuple_t, block_t)
+    PCallableType.new(tuple_t, block_t)
   end
 
   # Produces the abstract type Collection
   # @api public
   #
   def self.collection(size_type = nil)
-    size_type.nil? ? Types::PCollectionType::DEFAULT : Types::PCollectionType.new(nil, size_type)
+    size_type.nil? ? PCollectionType::DEFAULT : PCollectionType.new(nil, size_type)
   end
 
   # Produces the Data type
   # @api public
   #
   def self.data
-    Types::PDataType::DEFAULT
+    PDataType::DEFAULT
   end
 
   # Creates an instance of the Undef type
   # @api public
   def self.undef
-    Types::PUndefType::DEFAULT
+    PUndefType::DEFAULT
   end
 
   # Creates an instance of the Default type
   # @api public
   def self.default
-    Types::PDefaultType::DEFAULT
+    PDefaultType::DEFAULT
   end
 
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry
-    Types::PCatalogEntryType::DEFAULT
+    PCatalogEntryType::DEFAULT
   end
 
   # Produces a PResourceType with a String type_name A PResourceType with a nil
@@ -300,15 +301,15 @@ module Puppet::Pops::Types::TypeFactory
   # name.  (There is no resource-type subtyping in Puppet (yet)).
   #
   def self.resource(type_name = nil, title = nil)
-    type_name = type_name.type_name if type_name.is_a?(Types::PResourceType)
+    type_name = type_name.type_name if type_name.is_a?(PResourceType)
     type_name = type_name.downcase unless type_name.nil?
-    unless type_name.nil? || type_name =~ Puppet::Pops::Patterns::CLASSREF
+    unless type_name.nil? || type_name =~ Patterns::CLASSREF
       raise ArgumentError, "Illegal type name '#{type.type_name}'"
     end
     if type_name.nil? && !title.nil?
       raise ArgumentError, 'The type name cannot be nil, if title is given'
     end
-    Types::PResourceType.new(type_name, title)
+    PResourceType.new(type_name, title)
   end
 
   # Produces PHostClassType with a string class_name.  A PHostClassType with
@@ -318,9 +319,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.host_class(class_name = nil)
     if class_name.nil?
-      Types::PHostClassType::DEFAULT
+      PHostClassType::DEFAULT
     else
-      Types::PHostClassType.new(class_name.sub(/^::/, ''))
+      PHostClassType.new(class_name.sub(/^::/, ''))
     end
   end
 
@@ -329,7 +330,7 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.array_of(o, size_type = nil)
-    Types::PArrayType.new(type_of(o), size_type)
+    PArrayType.new(type_of(o), size_type)
   end
 
   # Produces a type for Hash[Scalar, o] where o is either a type, or an
@@ -337,21 +338,21 @@ module Puppet::Pops::Types::TypeFactory
   # @api public
   #
   def self.hash_of(value, key = scalar, size_type = nil)
-    Types::PHashType.new(type_of(key), type_of(value), size_type)
+    PHashType.new(type_of(key), type_of(value), size_type)
   end
 
   # Produces a type for Array[Data]
   # @api public
   #
   def self.array_of_data
-    Types::PArrayType::DATA
+    PArrayType::DATA
   end
 
   # Produces a type for Hash[Scalar, Data]
   # @api public
   #
   def self.hash_of_data
-    Types::PHashType::DATA
+    PHashType::DATA
   end
 
   # Produces a type for NotUndef[T]
@@ -359,20 +360,20 @@ module Puppet::Pops::Types::TypeFactory
   # the type String[inst_type].
   #
   # @param inst_type [Type,String] the type to qualify
-  # @return [Puppet::Pops::Types::PNotUndefType] the NotUndef type
+  # @return [PNotUndefType] the NotUndef type
   #
   # @api public
   #
   def self.not_undef(inst_type = nil)
     inst_type = string(nil, inst_type) if inst_type.is_a?(String)
-    Types::PNotUndefType.new(inst_type)
+    PNotUndefType.new(inst_type)
   end
 
   # Produces a type for Type[T]
   # @api public
   #
   def self.type_type(inst_type = nil)
-    inst_type.nil? ? Types::PType::DEFAULT : Types::PType.new(inst_type)
+    inst_type.nil? ? PType::DEFAULT : PType.new(inst_type)
   end
 
   # Produce a type corresponding to the class of given unless given is a
@@ -382,10 +383,10 @@ module Puppet::Pops::Types::TypeFactory
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PAnyType)
+    elsif o.is_a?(PAnyType)
       o
     elsif o.is_a?(String)
-      Types::PRuntimeType.new(:ruby, o)
+      PRuntimeType.new(:ruby, o)
     else
       @type_calculator.infer_generic(o)
     end
@@ -409,7 +410,7 @@ module Puppet::Pops::Types::TypeFactory
     if o.is_a?(Class)
       @type_calculator.type(o)
     else
-      Types::PRuntimeType.new(:ruby, o.class.name)
+      PRuntimeType.new(:ruby, o.class.name)
     end
   end
 
@@ -418,7 +419,7 @@ module Puppet::Pops::Types::TypeFactory
   # or mapps a Ruby Class to its name.
   #
   def self.ruby_type(class_name = nil)
-    Types::PRuntimeType.new(:ruby, class_name)
+    PRuntimeType.new(:ruby, class_name)
   end
 
   # Generic creator of a RuntimeType - allows creating the type with nil or
@@ -426,7 +427,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.runtime(runtime=nil, runtime_type_name = nil)
     runtime = runtime.to_sym if runtime.is_a?(String)
-    Types::PRuntimeType.new(runtime, runtime_type_name)
+    PRuntimeType.new(runtime, runtime_type_name)
   end
 
   # Returns true if the given type t is of valid range parameter type (integer
@@ -435,4 +436,6 @@ module Puppet::Pops::Types::TypeFactory
     t.is_a?(Integer) || t == 'default' || :default == t
   end
 
+end
+end
 end

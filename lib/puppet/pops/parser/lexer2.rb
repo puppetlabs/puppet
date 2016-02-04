@@ -12,12 +12,14 @@ require 'puppet/pops/parser/interpolation_support'
 require 'puppet/pops/parser/epp_support'
 require 'puppet/pops/parser/slurp_support'
 
-class Puppet::Pops::Parser::Lexer2
-  include Puppet::Pops::Parser::LexerSupport
-  include Puppet::Pops::Parser::HeredocSupport
-  include Puppet::Pops::Parser::InterpolationSupport
-  include Puppet::Pops::Parser::SlurpSupport
-  include Puppet::Pops::Parser::EppSupport
+module Puppet::Pops
+module Parser
+class Lexer2
+  include LexerSupport
+  include HeredocSupport
+  include InterpolationSupport
+  include SlurpSupport
+  include EppSupport
 
   # ALl tokens have three slots, the token name (a Symbol), the token text (String), and a token text length.
   # All operator and punctuation tokens reuse singleton arrays Tokens that require unique values create
@@ -356,7 +358,7 @@ class Puppet::Pops::Parser::Lexer2
         scn = @scanner
         la = scn.peek(2)
         if la[1] == '*'
-          lex_error(Puppet::Pops::Issues::UNCLOSED_MLCOMMENT) if scn.skip(PATTERN_MLCOMMENT).nil?
+          lex_error(Issues::UNCLOSED_MLCOMMENT) if scn.skip(PATTERN_MLCOMMENT).nil?
           nil
         else
           before = scn.pos
@@ -432,7 +434,7 @@ class Puppet::Pops::Parser::Lexer2
             else
               # move to faulty position ('::<uc-letter>' was ok)
               scn.pos = scn.pos + 3
-              lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE)
+              lex_error(Issues::ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE)
             end
           else
             value = scn.scan(PATTERN_BARE_WORD)
@@ -445,7 +447,7 @@ class Puppet::Pops::Parser::Lexer2
             else
               # move to faulty position ('::' was ok)
               scn.pos = scn.pos + 2
-              lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
+              lex_error(Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
             end
           end
         else
@@ -524,7 +526,7 @@ class Puppet::Pops::Parser::Lexer2
           length = scn.pos - before
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
-          lex_error(Puppet::Pops::Issues::ILLEGAL_NUMBER, {:value => invalid_number})
+          lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
         end
       end
     end
@@ -544,9 +546,9 @@ class Puppet::Pops::Parser::Lexer2
           scn.pos = scn.pos + 1
           fully_qualified = scn.match?(/::/)
           if fully_qualified
-            lex_error(Puppet::Pops::Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
+            lex_error(Issues::ILLEGAL_FULLY_QUALIFIED_NAME)
           else
-            lex_error(Puppet::Pops::Issues::ILLEGAL_NAME_OR_BARE_WORD)
+            lex_error(Issues::ILLEGAL_NAME_OR_BARE_WORD)
           end
         end
       end
@@ -563,7 +565,7 @@ class Puppet::Pops::Parser::Lexer2
         else
           # move to faulty position ([A-Z] was ok)
           scn.pos = scn.pos + 1
-          lex_error(Puppet::Pops::Issues::ILLEGAL_CLASS_REFERENCE)
+          lex_error(Issues::ILLEGAL_CLASS_REFERENCE)
         end
       end
     end
@@ -605,19 +607,19 @@ class Puppet::Pops::Parser::Lexer2
   def lex_string(string, path='')
     initvars
     @scanner = StringScanner.new(string)
-    @locator = Puppet::Pops::Parser::Locator.locator(string, path)
+    @locator = Locator.locator(string, path)
   end
 
   # Lexes an unquoted string.
   # @param string [String] the string to lex
-  # @param locator [Puppet::Pops::Parser::Locator] the locator to use (a default is used if nil is given)
+  # @param locator [Locator] the locator to use (a default is used if nil is given)
   # @param escapes [Array<String>] array of character strings representing the escape sequences to transform
   # @param interpolate [Boolean] whether interpolation of expressions should be made or not.
   #
   def lex_unquoted_string(string, locator, escapes, interpolate)
     initvars
     @scanner = StringScanner.new(string)
-    @locator = locator || Puppet::Pops::Parser::Locator.locator(string, '')
+    @locator = locator || Locator.locator(string, '')
     @lexing_context[:escapes] = escapes || UQ_ESCAPES
     @lexing_context[:uq_slurp_pattern] = interpolate ? (escapes.include?('$') ? SLURP_UQ_PATTERN : SLURP_UQNE_PATTERN) : SLURP_ALL_PATTERN
   end
@@ -642,7 +644,7 @@ class Puppet::Pops::Parser::Lexer2
     initvars
     contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ''
     @scanner = StringScanner.new(contents.freeze)
-    @locator = Puppet::Pops::Parser::Locator.locator(contents, file)
+    @locator = Locator.locator(contents, file)
   end
 
   def initvars
@@ -679,7 +681,7 @@ class Puppet::Pops::Parser::Lexer2
     # every token in the lexed content.
     #
     scn   = @scanner
-    lex_error_without_pos(Puppet::Pops::Issues::NO_INPUT_TO_LEXER) unless scn
+    lex_error_without_pos(Issues::NO_INPUT_TO_LEXER) unless scn
 
     ctx   = @lexing_context
     queue = @token_queue
@@ -758,4 +760,6 @@ class Puppet::Pops::Parser::Lexer2
     end
   end
 
+end
+end
 end

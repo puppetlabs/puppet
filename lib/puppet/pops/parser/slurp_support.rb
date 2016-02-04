@@ -1,3 +1,5 @@
+module Puppet::Pops
+module Parser
 # This module is an integral part of the Lexer.
 # It defines the string slurping behavior - finding the string and non string parts in interpolated
 # strings, translating escape sequences in strings to their single character equivalence.
@@ -6,8 +8,8 @@
 # additional parameter passing and evaluation of conditional logic.
 # TODO: More detailed performance analysis of excessive character escaping and interpolation.
 #
-module Puppet::Pops::Parser::SlurpSupport
-  include Puppet::Pops::Parser::LexerSupport
+module SlurpSupport
+  include LexerSupport
 
   SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
@@ -23,7 +25,7 @@ module Puppet::Pops::Parser::SlurpSupport
     # skip the leading '
     @scanner.pos += 1
     str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes)
-    lex_error(Puppet::Pops::Issues::UNCLOSED_QUOTE, :after => "\"'\"", :followed_by => followed_by) unless str
+    lex_error(Issues::UNCLOSED_QUOTE, :after => "\"'\"", :followed_by => followed_by) unless str
     str[0..-2] # strip closing "'" from result
   end
 
@@ -32,7 +34,7 @@ module Puppet::Pops::Parser::SlurpSupport
     last = scn.matched
     str = slurp(scn, SLURP_DQ_PATTERN, DQ_ESCAPES, false)
     unless str
-      lex_error(Puppet::Pops::Issues::UNCLOSED_QUOTE, :after => format_quote(last), :followed_by => followed_by)
+      lex_error(Issues::UNCLOSED_QUOTE, :after => format_quote(last), :followed_by => followed_by)
     end
 
     # Terminator may be a single char '"', '$', or two characters '${' group match 1 (scn[1]) from the last slurp holds this
@@ -89,14 +91,14 @@ module Puppet::Pops::Parser::SlurpSupport
         when 't'   ; "\t"
         when 's'   ; ' '
         when 'u'
-          lex_warning(Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE)
+          lex_warning(Issues::ILLEGAL_UNICODE_ESCAPE)
           "\\u"
         when "\n"  ; ''
         when "\r\n"; ''
         else      ch
         end
       else
-        lex_warning(Puppet::Pops::Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes
+        lex_warning(Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes
         "\\#{ch}"
       end
     }
@@ -105,11 +107,13 @@ module Puppet::Pops::Parser::SlurpSupport
       # have reached this far... Unfortunately there is no more specific error and a match on message is
       # required to differentiate from other internal problems.
       if e.message =~ /invalid byte sequence/
-        lex_error(Puppet::Pops::Issues::ILLEGAL_UNICODE_ESCAPE)
+        lex_error(Issues::ILLEGAL_UNICODE_ESCAPE)
       else
         raise e
       end
     end
     str
   end
+end
+end
 end

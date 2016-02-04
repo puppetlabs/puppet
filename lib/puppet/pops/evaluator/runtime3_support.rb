@@ -1,16 +1,18 @@
+module Puppet::Pops
+module Evaluator
 # A module with bindings between the new evaluator and the 3x runtime.
 # The intention is to separate all calls into scope, compiler, resource, etc. in this module
 # to make it easier to later refactor the evaluator for better implementations of the 3x classes.
 #
 # @api private
-module Puppet::Pops::Evaluator::Runtime3Support
+module Runtime3Support
 
   NAME_SPACE_SEPARATOR = '::'.freeze
 
   # Fails the evaluation of _semantic_ with a given issue.
   #
-  # @param issue [Puppet::Pops::Issue] the issue to report
-  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
+  # @param issue [Issue] the issue to report
+  # @param semantic [ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
   # @param options [Hash] hash of optional named data elements for the given issue
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
@@ -24,8 +26,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
   # If the given issue is configured to be of severity < :error it is only reported, and the function returns.
   #
-  # @param issue [Puppet::Pops::Issue] the issue to report
-  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
+  # @param issue [Issue] the issue to report
+  # @param semantic [ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
   # @param options [Hash] hash of optional named data elements for the given issue
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
@@ -59,11 +61,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     #
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
       elsif name == "server_facts" && Puppet[:trusted_server_facts]
-        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
       else
-        fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
+        fail(Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
       end
     end
     scope.setvar(name, value)
@@ -85,8 +87,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
     #
-    unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
-      fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
+    unless name =~ Patterns::NUMERIC_VAR_NAME
+      fail(Issues::UNKNOWN_VARIABLE, o, {:name => name})
     end
   end
 
@@ -194,20 +196,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
     #
-    if source.is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
+    if source.is_a?(Collectors::AbstractCollector)
       # use verbatim - behavior defined by 3x
       source_resource = source
     else
       # transform into the wonderful String representation in 3x
-      type, title = Puppet::Pops::Evaluator::Runtime3Converter.instance.catalog_type_to_split_type_title(source)
+      type, title = Runtime3Converter.instance.catalog_type_to_split_type_title(source)
       source_resource = Puppet::Resource.new(type, title)
     end
-    if target.is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
+    if target.is_a?(Collectors::AbstractCollector)
       # use verbatim - behavior defined by 3x
       target_resource = target
     else
       # transform into the wonderful String representation in 3x
-      type, title = Puppet::Pops::Evaluator::Runtime3Converter.instance.catalog_type_to_split_type_title(target)
+      type, title = Runtime3Converter.instance.catalog_type_to_split_type_title(target)
       target_resource = Puppet::Resource.new(type, title)
     end
     # Add the relationship to the compiler for later evaluation.
@@ -223,8 +225,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @return [Numeric] value `v` converted to Numeric.
   #
   def coerce_numeric(v, o, scope)
-    unless n = Puppet::Pops::Utils.to_n(v)
-      fail(Puppet::Pops::Issues::NOT_NUMERIC, o, {:value => v})
+    unless n = Utils.to_n(v)
+      fail(Issues::NOT_NUMERIC, o, {:value => v})
     end
     n
   end
@@ -256,7 +258,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3Converter.map_args(args, scope, '')
     result = scope.send("function_#{name}", mapped_args, &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -266,11 +268,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Call via 4x API if the function exists there
     loaders = scope.compiler.loaders
     # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-    adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+    adapter = Utils.find_adapter(o, Adapters::LoaderAdapter)
 
     # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
-    # This is necessary since not all .pp files are loaded by a Puppet::Pops::Loader (see PUP-1833)
-    adapter ||= Puppet::Pops::Adapters::LoaderAdapter.adapt_by_source(scope, o)
+    # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
+    adapter ||= Adapters::LoaderAdapter.adapt_by_source(scope, o)
 
     loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
     if loader && func = loader.load(:function, name)
@@ -279,11 +281,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
       end
     end
     # Call via 3x API if function exists there
-    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+    fail(Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3Converter.map_args(args, scope, '')
     result = scope.send("function_#{name}", mapped_args, &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -301,7 +303,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def convert(value, scope, undef_value)
-    Puppet::Pops::Evaluator::Runtime3Converter.convert(value, scope, undef_value)
+    Runtime3Converter.convert(value, scope, undef_value)
   end
 
   CLASS_STRING = 'class'.freeze
@@ -377,8 +379,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # A *=> results in an array of arrays
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
-      unless r.is_a?(Puppet::Pops::Types::PResourceType) && r.type_name != 'class'
-        fail(Puppet::Pops::Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
+      unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
+        fail(Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
       end
       resource = Puppet::Parser::Resource.new(
       r.type_name, r.title,
@@ -470,27 +472,27 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def extract_file_line(o)
-    source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
+    source_pos = Utils.find_closest_positioned(o)
     return [nil, -1] unless source_pos
     [source_pos.locator.file, source_pos.line]
   end
 
   def find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+    return nil if o.nil? || o.is_a?(Model::Program)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Adapters::SourcePosAdapter.adapt(o)
   end
 
   # Creates a diagnostic producer
   def diagnostic_producer
-    Puppet::Pops::Validation::DiagnosticProducer.new(
+    Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
-      Puppet::Pops::Model::ModelLabelProvider.new())
+      Model::ModelLabelProvider.new())
   end
 
   # Configure the severity of failures
-  class SeverityProducer < Puppet::Pops::Validation::SeverityProducer
-    Issues = Puppet::Pops::Issues
+  class SeverityProducer < Validation::SeverityProducer
+    Issues = Issues
 
     def initialize
       super
@@ -509,10 +511,10 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   # An acceptor of diagnostics that immediately raises an exception.
-  class ExceptionRaisingAcceptor < Puppet::Pops::Validation::Acceptor
+  class ExceptionRaisingAcceptor < Validation::Acceptor
     def accept(diagnostic)
       super
-      Puppet::Pops::IssueReporter.assert_and_report(self, {
+      IssueReporter.assert_and_report(self, {
         :message => "Evaluation Error:", 
         :emit_warnings => true,  # log warnings
         :exception_class => Puppet::PreformattedError
@@ -525,4 +527,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   class EvaluationError < StandardError
   end
+end
+end
 end

@@ -1,3 +1,5 @@
+module Puppet::Pops
+module Evaluator
 # A Closure represents logic bound to a particular scope.
 # As long as the runtime (basically the scope implementation) has the behavior of Puppet 3x it is not
 # safe to return and later use this closure.
@@ -11,7 +13,7 @@
 # Note that this class is a CallableSignature, and the methods defined there should be used
 # as the API for obtaining information in a callable-implementation agnostic way.
 #
-class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignature
+class Closure < CallableSignature
   attr_reader :evaluator
   attr_reader :model
   attr_reader :enclosing_scope
@@ -55,7 +57,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         end
         args_hash = param_scope.to_hash
       end
-      Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
+      Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
     end
 
     @evaluator.evaluate_block_with_bindings(@enclosing_scope, args_hash, @model.body)
@@ -106,7 +108,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     CLOSURE_NAME
   end
 
-  class Named < Puppet::Pops::Evaluator::Closure
+  class Named < Closure
     def initialize(name, evaluator, model, scope)
       @name = name
       super(evaluator, model, scope)
@@ -122,7 +124,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   def call_with_scope(scope, args)
     variable_bindings = combine_values_with_parameters(scope, args)
 
-    tc = Puppet::Pops::Types::TypeCalculator.singleton
+    tc = Types::TypeCalculator.singleton
     final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
       if param.captures_rest
         tmp_args.concat(variable_bindings[param.name])
@@ -134,7 +136,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     if type.callable?(final_args)
       @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
     else
-      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
+      raise ArgumentError, Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
     end
   end
 
@@ -159,7 +161,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
               # default for captures rest is an empty array
               value = []
             else
-              @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
+              @evaluator.fail(Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
             end
           end
         else
@@ -197,7 +199,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       if param_range[0] == 0
         in_optional_parameters = true
       elsif param_range[0] != 0 && in_optional_parameters
-        @evaluator.fail(Puppet::Pops::Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
+        @evaluator.fail(Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
       end
 
       range[0] += param_range[0]
@@ -208,11 +210,11 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       range[1] = :default
     end
 
-    Puppet::Pops::Types::TypeFactory.callable(*(types + range))
+    Types::TypeFactory.callable(*(types + range))
   end
 
   def create_params_struct
-    type_factory = Puppet::Pops::Types::TypeFactory
+    type_factory = Types::TypeFactory
     members = {}
 
     parameters.each do |param|
@@ -228,10 +230,10 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     type = if param.type_expr
              @evaluator.evaluate(param.type_expr, @enclosing_scope)
            else
-             Puppet::Pops::Types::PAnyType::DEFAULT
+             Types::PAnyType::DEFAULT
            end
 
-    if param.captures_rest && type.is_a?(Puppet::Pops::Types::PArrayType)
+    if param.captures_rest && type.is_a?(Types::PArrayType)
       # An array on a slurp parameter is how a size range is defined for a
       # slurp (Array[Integer, 1, 3] *$param). However, the callable that is
       # created can't have the array in that position or else type checking
@@ -240,7 +242,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       # to be unpacked.
       param_range = type.size_range
       type = type.element_type
-    elsif param.captures_rest && !type.is_a?(Puppet::Pops::Types::PArrayType)
+    elsif param.captures_rest && !type.is_a?(Types::PArrayType)
       param_range = ANY_NUMBER_RANGE
     elsif param.value
       param_range = OPTIONAL_SINGLE_RANGE
@@ -258,4 +260,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   ANY_NUMBER_RANGE = [0, Float::INFINITY]
   OPTIONAL_SINGLE_RANGE = [0, 1]
   REQUIRED_SINGLE_RANGE = [1, 1]
+end
+end
 end

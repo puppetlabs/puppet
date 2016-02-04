@@ -1,15 +1,17 @@
 require 'rgen/metamodel_builder'
 
+module Puppet::Pops
+module Types
 # The ClassLoader provides a Class instance given a class name or a meta-type.
 # If the class is not already loaded, it is loaded using the Puppet Autoloader.
 # This means it can load a class from a gem, or from puppet modules.
 #
-class Puppet::Pops::Types::ClassLoader
+class ClassLoader
   @autoloader = Puppet::Util::Autoload.new("ClassLoader", "")
 
   # Returns a Class given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.
-  # @param name [String, Array<String>, Array<Symbol>, Puppet::Pops::Types::PAnyType] A fully qualified
+  # @param name [String, Array<String>, Array<Symbol>, PAnyType] A fully qualified
   #   class name String (e.g. '::Foo::Bar', 'Foo::Bar'), a PAnyType, or a fully qualified name in Array form where each part
   #   is either a String or a Symbol, e.g. `%w{Puppetx Puppetlabs SomeExtension}`.
   # @return [Class, nil] the looked up class or nil if no such class is loaded
@@ -24,7 +26,7 @@ class Puppet::Pops::Types::ClassLoader
     when Array
       provide_from_name_path(name.join('::'), name)
 
-    when Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PType
+    when PAnyType, PType
       provide_from_type(name)
 
     else
@@ -36,38 +38,38 @@ class Puppet::Pops::Types::ClassLoader
 
   def self.provide_from_type(type)
     case type
-    when Puppet::Pops::Types::PRuntimeType
+    when PRuntimeType
       raise ArgumentError.new("Only Runtime type 'ruby' is supported, got #{type.runtime}") unless type.runtime == :ruby
       provide_from_string(type.runtime_type_name)
 
-    when Puppet::Pops::Types::PBooleanType
+    when PBooleanType
       # There is no other thing to load except this Enum meta type
       RGen::MetamodelBuilder::MMBase::Boolean
 
-    when Puppet::Pops::Types::PType
+    when PType
       # TODO: PType should has a type argument (a PAnyType) so the Class' class could be returned
       #       (but this only matters in special circumstances when meta programming has been used).
       Class
 
-    when Puppet::Pops::Type::POptionalType
+    when POptionalType
       # cannot make a distinction between optional and its type
       provide_from_type(type.optional_type)
 
     # Although not expected to be the first choice for getting a concrete class for these
     # types, these are of value if the calling logic just has a reference to type.
     #
-    when Puppet::Pops::Types::PArrayType    ; Array
-    when Puppet::Pops::Types::PTupleType    ; Array
-    when Puppet::Pops::Types::PHashType     ; Hash
-    when Puppet::Pops::Types::PStructType   ; Hash
-    when Puppet::Pops::Types::PRegexpType   ; Regexp
-    when Puppet::Pops::Types::PIntegerType  ; Integer
-    when Puppet::Pops::Types::PStringType   ; String
-    when Puppet::Pops::Types::PPatternType  ; String
-    when Puppet::Pops::Types::PEnumType     ; String
-    when Puppet::Pops::Types::PFloatType    ; Float
-    when Puppet::Pops::Types::PUndefType      ; NilClass
-    when Puppet::Pops::Types::PCallableType ; Proc
+    when PArrayType    ; Array
+    when PTupleType    ; Array
+    when PHashType     ; Hash
+    when PStructType   ; Hash
+    when PRegexpType   ; Regexp
+    when PIntegerType  ; Integer
+    when PStringType   ; String
+    when PPatternType  ; String
+    when PEnumType     ; String
+    when PFloatType    ; Float
+    when PUndefType      ; NilClass
+    when PCallableType ; Proc
     else
       nil
     end
@@ -126,4 +128,6 @@ class Puppet::Pops::Types::ClassLoader
     downcase
   end
 
+end
+end
 end

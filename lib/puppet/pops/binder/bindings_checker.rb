@@ -1,19 +1,21 @@
+module Puppet::Pops
+module Binder
 # A validator/checker of a bindings model
 # @api public
 #
-class Puppet::Pops::Binder::BindingsChecker
-  Bindings = Puppet::Pops::Binder::Bindings
-  Issues = Puppet::Pops::Binder::BinderIssues
-  Types = Puppet::Pops::Types
+class BindingsChecker
+  Bindings = Bindings
+  Issues = BinderIssues
+  Types = Types
 
   attr_reader :type_calculator
   attr_reader :acceptor
 
   # @api public
   def initialize(diagnostics_producer)
-    @@check_visitor     ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
-    @type_calculator      = Puppet::Pops::Types::TypeCalculator.singleton
-    @expression_validator = Puppet::Pops::Validation::ValidatorFactory_4_0.new().checker(diagnostics_producer)
+    @@check_visitor     ||= Visitor.new(nil, "check", 0, 0)
+    @type_calculator      = Types::TypeCalculator.singleton
+    @expression_validator = Validation::ValidatorFactory_4_0.new().checker(diagnostics_producer)
     @acceptor             = diagnostics_producer
   end
 
@@ -109,7 +111,7 @@ class Puppet::Pops::Binder::BindingsChecker
   # Checks that an expression has been declared in the producer
   # @api private
   def check_EvaluatingProducerDescriptor(p)
-    unless p.expression.is_a?(Puppet::Pops::Model::Expression)
+    unless p.expression.is_a?(Model::Expression)
       acceptor.accept(Issues::MISSING_EXPRESSION, p, {:binding => binding_parent(p)})
     end
   end
@@ -194,4 +196,6 @@ class Puppet::Pops::Binder::BindingsChecker
     end while !p.is_a?(Bindings::AbstractBinding)
     p
   end
+end
+end
 end

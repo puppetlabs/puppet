@@ -1,7 +1,8 @@
 # Defines classes to deal with issues, and message formatting and defines constants with Issues.
 # @api public
 #
-module Puppet::Pops::Issues
+module Puppet::Pops
+module Issues
   # Describes an issue, and can produce a message for an occurrence of the issue.
   #
   class Issue
@@ -48,7 +49,7 @@ module Puppet::Pops::Issues
         # Evaluate the message block in the msg data's binding
         msgdata.format(hash, &message_block)
       rescue StandardError => e
-        Puppet::Pops::Issues::MessageData
+        MessageData
         raise RuntimeError, "Error while reporting issue: #{issue_code}. #{e.message}", caller
       end
     end
@@ -78,14 +79,14 @@ module Puppet::Pops::Issues
     # provider.
     #
     # @param args [Object] one object to obtain a label for or zero arguments to obtain the label provider
-    # @return [Puppet::Pops::LabelProvider,String] the label provider or label depending on if an argument is given or not
+    # @return [LabelProvider,String] the label provider or label depending on if an argument is given or not
     # @raise [Puppet::Error] if no label provider is found
     def label(*args)
       args.empty? ? label_provider : label_provider.label(args[0])
     end
 
     # Returns the label provider given as key `:label` in the hash passed to #format.
-    # @return [Puppet::Pops::LabelProvider] the label provider
+    # @return [LabelProvider] the label provider
     # @raise [Puppet::Error] if no label provider is found
     def label_provider
       label_provider = @data[:label]
@@ -177,7 +178,7 @@ module Puppet::Pops::Issues
 
   # Variables are immutable, cannot reassign in the same assignment scope
   ILLEGAL_REASSIGNMENT = hard_issue :ILLEGAL_REASSIGNMENT, :name do
-    if Puppet::Pops::Validation::Checker4_0::RESERVED_PARAMETERS[name]
+    if Validation::Checker4_0::RESERVED_PARAMETERS[name]
       "Cannot reassign built in (or already assigned) variable '$#{name}'"
     else
       "Cannot reassign variable '$#{name}'"
@@ -698,4 +699,5 @@ module Puppet::Pops::Issues
   HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
     "An escape char for @() may only appear once. Got '#{escapes.join(', ')}'"
   end
+end
 end

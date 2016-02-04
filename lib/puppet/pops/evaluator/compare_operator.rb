@@ -1,3 +1,5 @@
+module Puppet::Pops
+module Evaluator
 # Compares the puppet DSL way
 #
 # ==Equality
@@ -6,20 +8,20 @@
 # Hashes  are equal to hashes if they have the same size and keys and values #equals.
 # All other objects are equal if they are ruby #== equal
 #
-class Puppet::Pops::Evaluator::CompareOperator
-  include Puppet::Pops::Utils
+class CompareOperator
+  include Utils
 
   # Provides access to the Puppet 3.x runtime (scope, etc.)
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
-  include Puppet::Pops::Evaluator::Runtime3Support
+  include Runtime3Support
 
   def initialize
-    @@equals_visitor  ||= Puppet::Pops::Visitor.new(self, "equals", 1, 1)
-    @@compare_visitor ||= Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
-    @@match_visitor ||= Puppet::Pops::Visitor.new(self, "match", 2, 2)
-    @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 2, 2)
-    @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
+    @@equals_visitor  ||= Visitor.new(self, "equals", 1, 1)
+    @@compare_visitor ||= Visitor.new(self, "cmp", 1, 1)
+    @@match_visitor ||= Visitor.new(self, "match", 2, 2)
+    @@include_visitor ||= Visitor.new(self, "include", 2, 2)
+    @type_calculator = Types::TypeCalculator.new()
   end
 
   def equals (a, b)
@@ -143,7 +145,7 @@ class Puppet::Pops::Evaluator::CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
-    when Puppet::Pops::Types::PAnyType
+    when Types::PAnyType
       a.each {|element| return true if @type_calculator.instance?(b, element) }
       return false
     else
@@ -192,4 +194,6 @@ class Puppet::Pops::Evaluator::CompareOperator
     return true if symbol == :default
     equals(left, default, scope)
   end
+end
+end
 end

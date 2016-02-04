@@ -1,11 +1,13 @@
+module Puppet::Pops
+module Binder
 # A helper class that makes it easier to construct a Bindings model.
 #
 # The Bindings Model
 # ------------------
-# The BindingsModel (defined in {Puppet::Pops::Binder::Bindings} is a model that is intended to be generally free from Ruby concerns.
+# The BindingsModel (defined in {Bindings} is a model that is intended to be generally free from Ruby concerns.
 # This means that it is possible for system integrators to create and serialize such models using other technologies than
 # Ruby. This manifests itself in the model in that producers are described using instances of a `ProducerDescriptor` rather than
-# describing Ruby classes directly. This is also true of the type system where type is expressed using the {Puppet::Pops::Types} model
+# describing Ruby classes directly. This is also true of the type system where type is expressed using the {Types} model
 # to describe all types.
 #
 # This class, the `BindingsFactory` is a concrete Ruby API for constructing instances of classes in the model.
@@ -14,14 +16,14 @@
 # --------------
 # The typical usage of the factory is to call {named_bindings} which creates a container of bindings wrapped in a *build object*
 # equipped with convenience methods to define the details of the just created named bindings.
-# The returned builder is an instance of {Puppet::Pops::Binder::BindingsFactory::BindingsContainerBuilder BindingsContainerBuilder}.
+# The returned builder is an instance of {BindingsFactory::BindingsContainerBuilder BindingsContainerBuilder}.
 #
 # Binding
 # -------
 # A Binding binds a type/name key to a producer of a value. A binding is conveniently created by calling `bind` on a
 # `BindingsContainerBuilder`. The call to bind, produces a binding wrapped in a build object equipped with convenience methods
 # to define the details of the just created binding. The returned builder is an instance of
-# {Puppet::Pops::Binder::BindingsFactory::BindingsBuilder BindingsBuilder}.
+# {BindingsFactory::BindingsBuilder BindingsBuilder}.
 #
 # Multibinding
 # ------------
@@ -36,7 +38,7 @@
 #
 # It is intended that a user defining bindings in Ruby should be able to use the builder object methods for the majority of tasks.
 # If something advanced is wanted, use of one of the helper class methods on the BuildingsFactory, and/or the
-# {Puppet::Pops::Types::TypeCalculator TypeCalculator} will be required to create and configure objects that are not handled by
+# {Types::TypeCalculator TypeCalculator} will be required to create and configure objects that are not handled by
 # the methods in the builder objects.
 #
 # Chaining of calls
@@ -76,7 +78,7 @@
 #     end.model
 #
 # @example Create a NamedBinding with content
-#   result = Puppet::Pops::Binder::BindingsFactory.named_bindings("mymodule::mybindings") do
+#   result = BindingsFactory.named_bindings("mymodule::mybindings") do
 #     bind.name("foo").to(42)
 #     bind.string.name("site url").to("http://www.example.com")
 #   end
@@ -84,12 +86,12 @@
 #
 # @api public
 #
-module Puppet::Pops::Binder::BindingsFactory
+module BindingsFactory
 
-  # Alias for the {Puppet::Pops::Types::TypeFactory TypeFactory}. This is also available as the method
+  # Alias for the {Types::TypeFactory TypeFactory}. This is also available as the method
   # `type_factory`.
   #
-  T = Puppet::Pops::Types::TypeFactory
+  T = Types::TypeFactory
 
   # Abstract base class for bindings object builders.
   # Supports delegation of method calls to the BindingsFactory class methods for all methods not implemented
@@ -101,7 +103,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # The built model object.
     attr_reader :model
 
-    # @param binding [Puppet::Pops::Binder::Bindings::AbstractBinding] The binding to build.
+    # @param binding [Bindings::AbstractBinding] The binding to build.
     # @api public
     def initialize(binding)
       @model = binding
@@ -113,7 +115,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api private
     #
     def method_missing(meth, *args, &block)
-      factory = Puppet::Pops::Binder::BindingsFactory
+      factory = BindingsFactory
       if factory.respond_to?(meth)
         factory.send(meth, *args, &block)
       else
@@ -132,7 +134,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def bind(&block)
-      binding = Puppet::Pops::Binder::Bindings::Binding.new()
+      binding = Bindings::Binding.new()
       model.addBindings(binding)
       builder = BindingsBuilder.new(binding)
       builder.instance_eval(&block) if block_given?
@@ -146,7 +148,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def multibind(id, &block)
-      binding = Puppet::Pops::Binder::Bindings::Multibinding.new()
+      binding = Bindings::Multibinding.new()
       binding.id = id
       model.addBindings(binding)
       builder = MultibindingsBuilder.new(binding)
@@ -161,7 +163,7 @@ module Puppet::Pops::Binder::BindingsFactory
   #
   class BindingsBuilder < AbstractBuilder
 
-    # @param binding [Puppet::Pops::Binder::Bindings::AbstractBinding] the binding to build.
+    # @param binding [Bindings::AbstractBinding] the binding to build.
     # @api public
     def initialize(binding)
       super binding
@@ -219,7 +221,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @example creating a Hash with Integer key and Array[Integer] element type
     #     tc = type_factory
     #     type(tc.hash(tc.array_of(tc.integer), tc.integer)
-    # @param type [Puppet::Pops::Types::PAnyType] the type to set for the binding
+    # @param type [Types::PAnyType] the type to set for the binding
     # @api public
     #
     def type(type)
@@ -228,71 +230,71 @@ module Puppet::Pops::Binder::BindingsFactory
     end
 
     # Sets the type of the binding to Integer.
-    # @return [Puppet::Pops::Types::PIntegerType] the type
+    # @return [Types::PIntegerType] the type
     # @api public
     def integer()
       type(T.integer())
     end
 
     # Sets the type of the binding to Float.
-    # @return [Puppet::Pops::Types::PFloatType] the type
+    # @return [Types::PFloatType] the type
     # @api public
     def float()
       type(T.float())
     end
 
     # Sets the type of the binding to Boolean.
-    # @return [Puppet::Pops::Types::PBooleanType] the type
+    # @return [Types::PBooleanType] the type
     # @api public
     def boolean()
       type(T.boolean())
     end
 
     # Sets the type of the binding to String.
-    # @return [Puppet::Pops::Types::PStringType] the type
+    # @return [Types::PStringType] the type
     # @api public
     def string()
       type(T.string())
     end
 
     # Sets the type of the binding to Pattern.
-    # @return [Puppet::Pops::Types::PRegexpType] the type
+    # @return [Types::PRegexpType] the type
     # @api public
     def pattern()
       type(T.pattern())
     end
 
     # Sets the type of the binding to the abstract type Scalar.
-    # @return [Puppet::Pops::Types::PScalarType] the type
+    # @return [Types::PScalarType] the type
     # @api public
     def scalar()
       type(T.scalar())
     end
 
     # Sets the type of the binding to the abstract type Data.
-    # @return [Puppet::Pops::Types::PDataType] the type
+    # @return [Types::PDataType] the type
     # @api public
     def data()
       type(T.data())
     end
 
     # Sets the type of the binding to Array[Data].
-    # @return [Puppet::Pops::Types::PArrayType] the type
+    # @return [Types::PArrayType] the type
     # @api public
     def array_of_data()
       type(T.array_of_data())
     end
 
     # Sets the type of the binding to Array[T], where T is given.
-    # @param t [Puppet::Pops::Types::PAnyType] the type of the elements of the array
-    # @return [Puppet::Pops::Types::PArrayType] the type
+    # @param t [Types::PAnyType] the type of the elements of the array
+    # @return [Types::PArrayType] the type
     # @api public
     def array_of(t)
       type(T.array_of(t))
     end
 
     # Sets the type of the binding to Hash[Literal, Data].
-    # @return [Puppet::Pops::Types::PHashType] the type
+    # @return [Types::PHashType] the type
     # @api public
     def hash_of_data()
       type(T.hash_of_data())
@@ -301,7 +303,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # Sets type of the binding to `Hash[Literal, t]`.
     # To also limit the key type, use {#type} and give it a fully specified
     # hash using {#type_factory} and then `hash_of(value_type, key_type)`.
-    # @return [Puppet::Pops::Types::PHashType] the type
+    # @return [Types::PHashType] the type
     # @api public
     def hash_of(t)
       type(T.hash_of(t))
@@ -310,7 +312,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # Sets the type of the binding based on the given argument.
     # @overload instance_of(t)
     #   The same as calling {#type} with `t`.
-    #   @param t [Puppet::Pops::Types::PAnyType] the type
+    #   @param t [Types::PAnyType] the type
     # @overload instance_of(o)
     #   Infers the type from the given Ruby object and sets that as the type - i.e. "set the type
     #   of the binding to be that of the given data object".
@@ -337,7 +339,7 @@ module Puppet::Pops::Binder::BindingsFactory
     #   The type factory is also available via the constant {T}.
     # @api public
     def type_factory
-      Puppet::Pops::Types::TypeFactory
+      Types::TypeFactory
     end
 
     # Sets the binding's producer to a singleton producer, if given argument is a value, a literal producer is created for it.
@@ -355,16 +357,16 @@ module Puppet::Pops::Binder::BindingsFactory
     def to(producer, *args)
       case producer
       when Class
-        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
-      when Puppet::Pops::Model::Program
+        producer = BindingsFactory.instance_producer(producer.name, *args)
+      when Model::Program
         # program is not an expression
-        producer = Puppet::Pops::Binder::BindingsFactory.evaluating_producer(producer.body)
-      when Puppet::Pops::Model::Expression
-        producer = Puppet::Pops::Binder::BindingsFactory.evaluating_producer(producer)
-      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+        producer = BindingsFactory.evaluating_producer(producer.body)
+      when Model::Expression
+        producer = BindingsFactory.evaluating_producer(producer)
+      when Bindings::ProducerDescriptor
       else
       # If given producer is not a producer, create a literal producer
-        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+        producer = BindingsFactory.literal_producer(producer)
       end
       model.producer = producer
       self
@@ -393,7 +395,7 @@ module Puppet::Pops::Binder::BindingsFactory
       # Help by setting the type - since if an to_instance is bound, the type is know. This avoids having
       # to specify the same thing twice.
       self.instance_of(type)
-      model.producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(class_name, *args)
+      model.producer = BindingsFactory.instance_producer(class_name, *args)
     end
 
     # Sets the binding's producer to a singleton producer
@@ -401,30 +403,30 @@ module Puppet::Pops::Binder::BindingsFactory
     #   Sets the producer to an instantiated producer. The resulting model can not be serialized as a consequence as there
     #   is no meta-model describing the specialized producer. Use this only in exceptional cases, or where there is never the
     #   need to serialize the model.
-    #   @param a_producer [Puppet::Pops::Binder::Producers::Producer] an instantiated producer, not serializeable !
+    #   @param a_producer [Producers::Producer] an instantiated producer, not serializeable !
     #
     # @overload to_producer(a_class, *args)
     #   @param a_class [Class] the class to create an instance of
     #   @param args [Object] the arguments to the given class' new
     #
     # @overload to_producer(a_producer_descriptor)
-    #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
-    #      producing Puppet::Pops::Binder::Producers::Producer
+    #   @param a_producer_descriptor [Bindings::ProducerDescriptor] a descriptor
+    #      producing Producers::Producer
     #
     # @api public
     #
     def to_producer(producer, *args)
       case producer
       when Class
-        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
-      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
-      when Puppet::Pops::Binder::Producers::Producer
+        producer = BindingsFactory.instance_producer(producer.name, *args)
+      when Bindings::ProducerDescriptor
+      when Producers::Producer
         # a custom producer instance
-        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+        producer = BindingsFactory.literal_producer(producer)
       else
         raise ArgumentError, "Given producer argument is none of a producer descriptor, a class, or a producer"
       end
-      metaproducer = Puppet::Pops::Binder::BindingsFactory.producer_producer(producer)
+      metaproducer = BindingsFactory.producer_producer(producer)
       model.producer = metaproducer
       self
     end
@@ -436,34 +438,34 @@ module Puppet::Pops::Binder::BindingsFactory
     #   Sets the producer to an instantiated producer. The resulting model can not be serialized as a consequence as there
     #   is no meta-model describing the specialized producer. Use this only in exceptional cases, or where there is never the
     #   need to serialize the model.
-    #   @param a_producer [Puppet::Pops::Binder::Producers::Producer] an instantiated producer, not serializeable !
+    #   @param a_producer [Producers::Producer] an instantiated producer, not serializeable !
     #
     # @overload to_producer(a_class, *args)
     #   @param a_class [Class] the class to create an instance of
     #   @param args [Object] the arguments to the given class' new
     #
     # @overload to_producer(a_producer_descriptor)
-    #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
-    #      producing Puppet::Pops::Binder::Producers::Producer
+    #   @param a_producer_descriptor [Bindings::ProducerDescriptor] a descriptor
+    #      producing Producers::Producer
     #
     # @api public
     #
     def to_producer_series(producer, *args)
       case producer
       when Class
-        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
-      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
-      when Puppet::Pops::Binder::Producers::Producer
+        producer = BindingsFactory.instance_producer(producer.name, *args)
+      when Bindings::ProducerDescriptor
+      when Producers::Producer
         # a custom producer instance
-        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+        producer = BindingsFactory.literal_producer(producer)
       else
         raise ArgumentError, "Given producer argument is none of a producer descriptor, a class, or a producer"
       end
-      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching = Bindings::NonCachingProducerDescriptor.new()
       non_caching.producer = producer
-      metaproducer = Puppet::Pops::Binder::BindingsFactory.producer_producer(non_caching)
+      metaproducer = BindingsFactory.producer_producer(non_caching)
 
-      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching = Bindings::NonCachingProducerDescriptor.new()
       non_caching.producer = metaproducer
 
       model.producer = non_caching
@@ -483,13 +485,13 @@ module Puppet::Pops::Binder::BindingsFactory
     def to_series_of(producer, *args)
       case producer
       when Class
-        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
-      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+        producer = BindingsFactory.instance_producer(producer.name, *args)
+      when Bindings::ProducerDescriptor
       else
       # If given producer is not a producer, create a literal producer
-        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+        producer = BindingsFactory.literal_producer(producer)
       end
-      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching = Bindings::NonCachingProducerDescriptor.new()
       non_caching.producer = producer
       model.producer = non_caching
       self
@@ -503,9 +505,9 @@ module Puppet::Pops::Binder::BindingsFactory
     def to_lookup_of(type, name=nil)
       unless name
         name = type
-        type = Puppet::Pops::Types::TypeFactory.data()
+        type = Types::TypeFactory.data()
       end
-      model.producer = Puppet::Pops::Binder::BindingsFactory.lookup_producer(type, name)
+      model.producer = BindingsFactory.lookup_producer(type, name)
       self
     end
 
@@ -517,7 +519,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def to_hash_lookup_of(type, name, key)
-      model.producer = Puppet::Pops::Binder::BindingsFactory.hash_lookup_producer(type, name, key)
+      model.producer = BindingsFactory.hash_lookup_producer(type, name, key)
       self
     end
 
@@ -536,17 +538,17 @@ module Puppet::Pops::Binder::BindingsFactory
         if entry.is_a?(Array)
           case entry.size
           when 2
-            Puppet::Pops::Binder::BindingsFactory.lookup_producer(entry[0], entry[1])
+            BindingsFactory.lookup_producer(entry[0], entry[1])
           when 1
-            Puppet::Pops::Binder::BindingsFactory.lookup_producer(Puppet::Pops::Types::TypeFactory.data(), entry[0])
+            BindingsFactory.lookup_producer(Types::TypeFactory.data(), entry[0])
           else
             raise ArgumentError, "Not an array of [type, name], name, or [name]"
           end
         else
-          Puppet::Pops::Binder::BindingsFactory.lookup_producer(T.data(), entry)
+          BindingsFactory.lookup_producer(T.data(), entry)
         end
       end
-      model.producer = Puppet::Pops::Binder::BindingsFactory.first_found_producer(*producers)
+      model.producer = BindingsFactory.first_found_producer(*producers)
       self
     end
 
@@ -560,7 +562,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     def producer_options(options)
       options.each do |k, v|
-        arg = Puppet::Pops::Binder::Bindings::NamedArgument.new()
+        arg = Bindings::NamedArgument.new()
         arg.name = k.to_s
         arg.value = v
         model.addProducer_args(arg)
@@ -574,11 +576,11 @@ module Puppet::Pops::Binder::BindingsFactory
   #
   # @api public
   class MultibindingsBuilder < BindingsBuilder
-    # Constraints type to be one of {Puppet::Pops::Types::PArrayType PArrayType}, or {Puppet::Pops::Types::PHashType PHashType}.
+    # Constraints type to be one of {Types::PArrayType PArrayType}, or {Types::PHashType PHashType}.
     # @raise [ArgumentError] if type constraint is not met.
     # @api public
     def type(type)
-      unless type.class == Puppet::Pops::Types::PArrayType || type.class == Puppet::Pops::Types::PHashType
+      unless type.class == Types::PArrayType || type.class == Types::PHashType
         raise ArgumentError, "Wrong type; only PArrayType, or PHashType allowed, got '#{type.to_s}'"
       end
       model.type = type
@@ -597,11 +599,11 @@ module Puppet::Pops::Binder::BindingsFactory
   # A ContributedBindings is used by bindings providers to return a set of named bindings.
   #
   # @param name [String] the name of the contributed bindings (for human use in messages/logs only)
-  # @param named_bindings [Puppet::Pops::Binder::Bindings::NamedBindings, Array<Puppet::Pops::Binder::Bindings::NamedBindings>] the
+  # @param named_bindings [Bindings::NamedBindings, Array<Bindings::NamedBindings>] the
   #   named bindings to include
   #
   def self.contributed_bindings(name, named_bindings)
-    cb = Puppet::Pops::Binder::Bindings::ContributedBindings.new()
+    cb = Bindings::ContributedBindings.new()
     cb.name = name
     named_bindings = [named_bindings] unless named_bindings.is_a?(Array)
     named_bindings.each {|b| cb.addBindings(b) }
@@ -616,7 +618,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # @api public
   #
   def self.named_bindings(name, &block)
-    binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
+    binding = Bindings::NamedBindings.new()
     binding.name = name
     builder = BindingsContainerBuilder.new(binding)
     builder.instance_eval(&block) if block_given?
@@ -629,7 +631,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # @api private
   #
   def self.safe_named_bindings(name, scope, &block)
-    binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
+    binding = Bindings::NamedBindings.new()
     binding.name = name
     anon = Class.new(BindingsContainerBuilder) do
       def initialize(b)
@@ -649,33 +651,33 @@ module Puppet::Pops::Binder::BindingsFactory
 
   # Creates a literal/constant producer
   # @param value [Object] the value to produce
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
+  # @return [Bindings::ProducerDescriptor] a producer description
   # @api public
   #
   def self.literal_producer(value)
-    producer = Puppet::Pops::Binder::Bindings::ConstantProducerDescriptor.new()
+    producer = Bindings::ConstantProducerDescriptor.new()
     producer.value = value
     producer
   end
 
   # Creates a non caching producer
-  # @param producer [Puppet::Pops::Binder::Bindings::Producer] the producer to make non caching
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
+  # @param producer [Bindings::Producer] the producer to make non caching
+  # @return [Bindings::ProducerDescriptor] a producer description
   # @api public
   #
   def self.non_caching_producer(producer)
-    p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+    p = Bindings::NonCachingProducerDescriptor.new()
     p.producer = producer
     p
   end
 
   # Creates a producer producer
-  # @param producer [Puppet::Pops::Binder::Bindings::Producer] a producer producing a Producer.
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
+  # @param producer [Bindings::Producer] a producer producing a Producer.
+  # @return [Bindings::ProducerDescriptor] a producer description
   # @api public
   #
   def self.producer_producer(producer)
-    p = Puppet::Pops::Binder::Bindings::ProducerProducerDescriptor.new()
+    p = Bindings::ProducerProducerDescriptor.new()
     p.producer = producer
     p
   end
@@ -688,23 +690,23 @@ module Puppet::Pops::Binder::BindingsFactory
   #
   # @param class_name [String] the name of the class
   # @param args[Object] arguments to the class' `new` method.
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
+  # @return [Bindings::ProducerDescriptor] a producer description
   # @api public
   #
   def self.instance_producer(class_name, *args)
-    p = Puppet::Pops::Binder::Bindings::InstanceProducerDescriptor.new()
+    p = Bindings::InstanceProducerDescriptor.new()
     p.class_name = class_name
     args.each {|a| p.addArguments(a) }
     p
   end
 
   # Creates a Producer that looks up a value.
-  # @param type [Puppet::Pops::Types::PAnyType] the type to lookup
+  # @param type [Types::PAnyType] the type to lookup
   # @param name [String] the name to lookup
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
+  # @return [Bindings::ProducerDescriptor] a producer description
   # @api public
   def self.lookup_producer(type, name)
-    p = Puppet::Pops::Binder::Bindings::LookupProducerDescriptor.new()
+    p = Bindings::LookupProducerDescriptor.new()
     p.type = type
     p.name = name
     p
@@ -712,14 +714,14 @@ module Puppet::Pops::Binder::BindingsFactory
 
   # Creates a Hash lookup producer that looks up a hash value, and then a key in the hash.
   #
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
-  # @param type [Puppet::Pops::Types::PAnyType] the type to lookup (i.e. a Hash of some key/value type).
+  # @return [Bindings::ProducerDescriptor] a producer description
+  # @param type [Types::PAnyType] the type to lookup (i.e. a Hash of some key/value type).
   # @param name [String] the name to lookup
   # @param key [Object] the key to lookup in the looked up hash (type should comply with given key type).
   # @api public
   #
   def self.hash_lookup_producer(type, name, key)
-    p = Puppet::Pops::Binder::Bindings::HashLookupProducerDescriptor.new()
+    p = Bindings::HashLookupProducerDescriptor.new()
     p.type = type
     p.name = name
     p.key = key
@@ -728,29 +730,29 @@ module Puppet::Pops::Binder::BindingsFactory
 
   # Creates a first-found producer that looks up from a given series of keys. The first found looked up
   # value will be produced.
-  # @param producers [Array<Puppet::Pops::Binder::Bindings::ProducerDescriptor>] the producers to consult in given order
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer descriptor
+  # @param producers [Array<Bindings::ProducerDescriptor>] the producers to consult in given order
+  # @return [Bindings::ProducerDescriptor] a producer descriptor
   # @api public
   def self.first_found_producer(*producers)
-    p = Puppet::Pops::Binder::Bindings::FirstFoundProducerDescriptor.new()
+    p = Bindings::FirstFoundProducerDescriptor.new()
     producers.each {|p2| p.addProducers(p2) }
     p
   end
 
   # Creates an evaluating producer that evaluates a puppet expression.
-  # A puppet expression is most conveniently created by using the {Puppet::Pops::Parser::EvaluatingParser EvaluatingParser} as it performs
+  # A puppet expression is most conveniently created by using the {Parser::EvaluatingParser EvaluatingParser} as it performs
   # all set up and validation of the parsed source. Two convenience methods are used to parse an expression, or parse a ruby string
   # as a puppet string. See methods {puppet_expression}, {puppet_string} and {parser} for more information.
   #
   # @example producing a puppet expression
   #     expr = puppet_string("Interpolated $fqdn", __FILE__)
   #
-  # @param expression [Puppet::Pops::Model::Expression] a puppet DSL expression as producer by the eparser.
-  # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer descriptor
+  # @param expression [Model::Expression] a puppet DSL expression as producer by the eparser.
+  # @return [Bindings::ProducerDescriptor] a producer descriptor
   # @api public
   #
   def self.evaluating_producer(expression)
-    p = Puppet::Pops::Binder::Bindings::EvaluatingProducerDescriptor.new()
+    p = Bindings::EvaluatingProducerDescriptor.new()
     p.expression = expression
     p
   end
@@ -760,32 +762,32 @@ module Puppet::Pops::Binder::BindingsFactory
   # @api public
   #
   def self.named_layer(name, *bindings)
-    result = Puppet::Pops::Binder::Bindings::NamedLayer.new()
+    result = Bindings::NamedLayer.new()
     result.name = name
     bindings.each { |b| result.addBindings(b) }
     result
   end
 
   # Create a LayeredBindings. This is used by the bindings system to create a model of all given layers.
-  # @param named_layers [Puppet::Pops::Binder::Bindings::NamedLayer] one or more named layers
-  # @return [Puppet::Pops::Binder::Bindings::LayeredBindings] the constructed layered bindings.
+  # @param named_layers [Bindings::NamedLayer] one or more named layers
+  # @return [Bindings::LayeredBindings] the constructed layered bindings.
   # @api public
   #
   def self.layered_bindings(*named_layers)
-    result = Puppet::Pops::Binder::Bindings::LayeredBindings.new()
+    result = Bindings::LayeredBindings.new()
     named_layers.each {|b| result.addLayers(b) }
     result
   end
 
-  # @return [Puppet::Pops::Parser::EvaluatingParser] a parser for puppet expressions
+  # @return [Parser::EvaluatingParser] a parser for puppet expressions
   def self.parser
-    @parser ||= Puppet::Pops::Parser::EvaluatingParser.new()
+    @parser ||= Parser::EvaluatingParser.new()
   end
 
   # Parses and produces a puppet expression from the given string.
   # @param string [String] puppet source e.g. "1 + 2"
   # @param source_file [String] the source location, typically `__File__`
-  # @return [Puppet::Pops::Model::Expression] an expression (that can be bound)
+  # @return [Model::Expression] an expression (that can be bound)
   # @api public
   #
   def self.puppet_expression(string, source_file)
@@ -800,10 +802,12 @@ module Puppet::Pops::Binder::BindingsFactory
   #
   # @param string [String] puppet source e.g. "On node $!{fqdn}"
   # @param source_file [String] the source location, typically `__File__`
-  # @return [Puppet::Pops::Model::Expression] an expression (that can be bound)
+  # @return [Model::Expression] an expression (that can be bound)
   # @api public
   #
   def self.puppet_string(string, source_file)
     parser.parse_string(parser.quote(string), source_file).current
   end
+end
+end
 end

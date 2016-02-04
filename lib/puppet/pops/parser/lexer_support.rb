@@ -1,7 +1,9 @@
+module Puppet::Pops
+module Parser
 # This is an integral part of the Lexer. It is broken out into a separate module
 # for maintainability of the code, and making the various parts of the lexer focused.
 #
-module Puppet::Pops::Parser::LexerSupport
+module LexerSupport
 
   # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
   def followed_by
@@ -56,7 +58,7 @@ module Puppet::Pops::Parser::LexerSupport
       })
   end
 
-  # @param issue [Puppet::Pops::Issues::Issue] the issue
+  # @param issue [Issues::Issue] the issue
   # @param args [Hash<Symbol,String>] Issue arguments
   # @param pos [Integer]
   # @return [Puppet::ParseErrorWithIssue] the created error
@@ -75,16 +77,16 @@ module Puppet::Pops::Parser::LexerSupport
   #
   def assert_numeric(value, pos)
     if value =~ /^0[xX]/
-      lex_error(Puppet::Pops::Issues::INVALID_HEX_NUMBER, {:value => value}, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      lex_error(Issues::INVALID_HEX_NUMBER, {:value => value}, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
     elsif value =~ /^0[^.]/
-      lex_error(Puppet::Pops::Issues::INVALID_OCTAL_NUMBER, {:value => value}, pos)   unless value =~ /^0[0-7]+$/
+      lex_error(Issues::INVALID_OCTAL_NUMBER, {:value => value}, pos)   unless value =~ /^0[0-7]+$/
 
     elsif value =~ /^\d+[eE.]/
-      lex_error(Puppet::Pops::Issues::INVALID_DECIMAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
+      lex_error(Issues::INVALID_DECIMAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
 
     else
-      lex_error(Puppet::Pops::Issues::ILLEGAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+$/
+      lex_error(Issues::ILLEGAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+$/
     end
   end
 
@@ -92,7 +94,7 @@ module Puppet::Pops::Parser::LexerSupport
   # and its position in its source container. There is a cost associated with computing the
   # line and position on line information.
   #
-  class TokenValue < Puppet::Pops::Parser::Locatable
+  class TokenValue < Locatable
     attr_reader :token_array
     attr_reader :offset
     attr_reader :locator
@@ -139,4 +141,6 @@ module Puppet::Pops::Parser::LexerSupport
     #
   end
 
+end
+end
 end

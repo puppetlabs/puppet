@@ -3,11 +3,13 @@
 # An instance should be created and a call to {#define_layers} should be made which will process the layered bindings
 # (handle overrides, abstract entries etc.).
 # The constructed hash with `key => InjectorEntry` mappings is obtained as {#injector_entries}, and is used to initialize an
-# {Puppet::Pops::Binder::Injector Injector}.
+# {Injector Injector}.
 #
 # @api public
 #
-class Puppet::Pops::Binder::Binder
+module Puppet::Pops
+module Binder
+class Binder
 
   # @api private
   attr_reader :injector_entries
@@ -35,7 +37,7 @@ class Puppet::Pops::Binder::Binder
     @parent = parent_binder
     @id_index = Hash.new() { |k, v| [] }
 
-    @key_factory = Puppet::Pops::Binder::KeyFactory.new()
+    @key_factory = KeyFactory.new()
 
     # Resulting hash of all key -> binding
     @injector_entries = {}
@@ -58,11 +60,11 @@ class Puppet::Pops::Binder::Binder
   #   validated to get better error messages if the model is invalid. This implementation expects the model
   #   to be valid, and any errors raised will be more technical runtime errors.
   #
-  # @param layered_bindings [Puppet::Pops::Binder::Bindings::LayeredBindings] the named and ordered layers
+  # @param layered_bindings [Bindings::LayeredBindings] the named and ordered layers
   # @raise ArgumentError if this binder is already configured
   # @raise ArgumentError if bindings with unresolved 'override' surfaces as an effective binding
   # @raise ArgumentError if the given argument has the wrong type, or if model is invalid in some way
-  # @return [Puppet::Pops::Binder::Binder] self
+  # @return [Binder] self
   # @api public
   #
   def define_layers(layered_bindings)
@@ -107,7 +109,7 @@ class Puppet::Pops::Binder::Binder
   end
 
   def add_id_to_index(binding)
-    return unless binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding) && !(id = binding.id).nil?
+    return unless binding.is_a?(Bindings::Multibinding) && !(id = binding.id).nil?
     @id_index[id] = @id_index[id] << binding
   end
 
@@ -118,7 +120,7 @@ class Puppet::Pops::Binder::Binder
       entry = lookup(key)
       unless entry.precedence == @binder_precedence
         # it is from a lower layer it must be promoted
-        injector_entries[ key ] = Puppet::Pops::Binder::InjectorEntry.new(binding, binder_precedence)
+        injector_entries[ key ] = InjectorEntry.new(binding, binder_precedence)
       end
     end
     # recursive "up the parent chain" to promote all
@@ -138,7 +140,7 @@ class Puppet::Pops::Binder::Binder
 
   # @api private
   def self.format_binding(b)
-    type_name = Puppet::Pops::Types::TypeCalculator.singleton.string(b.type)
+    type_name = Types::TypeCalculator.singleton.string(b.type)
     layer_name, bindings_name = get_named_binding_layer_and_name(b)
     "binding: '#{type_name}/#{b.name}' in: '#{bindings_name}' in layer: '#{layer_name}'"
   end
@@ -152,14 +154,14 @@ class Puppet::Pops::Binder::Binder
   # @api private
   def self.get_named_binding_layer_and_name(b)
     return ['<unknown>', '<unknown>'] if b.nil?
-    return [get_named_layer(b), b.name] if b.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings)
+    return [get_named_layer(b), b.name] if b.is_a?(Bindings::NamedBindings)
     get_named_binding_layer_and_name(b.eContainer)
   end
 
   # @api private
   def self.get_named_layer(b)
     return '<unknown>' if b.nil?
-    return b.name if b.is_a?(Puppet::Pops::Binder::Bindings::NamedLayer)
+    return b.name if b.is_a?(Bindings::NamedLayer)
     get_named_layer(b.eContainer)
   end
 
@@ -181,21 +183,21 @@ class Puppet::Pops::Binder::Binder
       @key_factory = key_factory
       @bindings = []
       @contributions = []
-      @@bind_visitor ||= Puppet::Pops::Visitor.new(nil,"bind",0,0)
+      @@bind_visitor ||= Visitor.new(nil,"bind",0,0)
     end
 
     # Add the binding to the list of potentially effective bindings from this layer
     # @api private
     #
     def add(b)
-      bindings << Puppet::Pops::Binder::InjectorEntry.new(b, binder_precedence)
+      bindings << InjectorEntry.new(b, binder_precedence)
     end
 
     # Add a multibind contribution
     # @api private
     #
     def add_contribution(b)
-      contributions << Puppet::Pops::Binder::InjectorEntry.new(b, binder_precedence)
+      contributions << InjectorEntry.new(b, binder_precedence)
     end
 
     # Bind given abstract binding
@@ -205,7 +207,7 @@ class Puppet::Pops::Binder::Binder
       @@bind_visitor.visit_this_0(self, binding)
     end
 
-    # @return [Puppet::Pops::Binder::InjectorEntry] the entry with the highest precedence
+    # @return [InjectorEntry] the entry with the highest precedence
     # @api private
     def highest(b1, b2)
       if b1.is_abstract? != b2.is_abstract?
@@ -268,7 +270,7 @@ class Puppet::Pops::Binder::Binder
 
 
     # Produces the key for the given Binding.
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding to get a key for
+    # @param binding [Bindings::Binding] the binding to get a key for
     # @return [Object] an opaque key
     # @api private
     #
@@ -318,8 +320,8 @@ class Puppet::Pops::Binder::Binder
           entry = binder.injector_entries[k]
           unless key_factory.is_contributions_key?(k)
             if v.is_abstract?()
-              layer_name, bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(v.binding)
-              type_name = Puppet::Pops::Types::TypeCalculator.singleton.string(v.binding.type)
+              layer_name, bindings_name = Binder.get_named_binding_layer_and_name(v.binding)
+              type_name = Types::TypeCalculator.singleton.string(v.binding.type)
               raise ArgumentError, "The abstract binding '#{type_name}/#{v.binding.name}' in '#{bindings_name}' in layer '#{layer_name}' was not overridden"
             end
             raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)" if entry
@@ -391,4 +393,6 @@ class Puppet::Pops::Binder::Binder
       this_layer
     end
   end
+end
+end
 end
