@@ -15,7 +15,15 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.sid).to eq('S-1-5-18')
       expect(principal.domain).to eq('NT AUTHORITY')
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
-      expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
+
+      # Windows API LookupAccountSid behaves differently if current user is SYSTEM
+      if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
+        account_type = :SidTypeWellKnownGroup
+      else
+        account_type = :SidTypeUser
+      end
+
+      expect(principal.account_type).to eq(account_type)
     end
 
     it "should create an instance from a well-known account prefixed with NT AUTHORITY" do
@@ -25,7 +33,15 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.sid).to eq('S-1-5-18')
       expect(principal.domain).to eq('NT AUTHORITY')
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
-      expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
+
+      # Windows API LookupAccountSid behaves differently if current user is SYSTEM
+      if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
+        account_type = :SidTypeWellKnownGroup
+      else
+        account_type = :SidTypeUser
+      end
+
+      expect(principal.account_type).to eq(account_type)
     end
 
     it "should create an instance from a local account prefixed with hostname" do
@@ -96,7 +112,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
 
       # Windows API LookupAccountSid behaves differently if current user is SYSTEM
-      # even though LookupAccountName does not demonstrate same behavior
       if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
         account_type = :SidTypeWellKnownGroup
       else
