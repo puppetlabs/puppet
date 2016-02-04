@@ -53,7 +53,7 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=> {:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
@@ -69,7 +69,7 @@ describe "Puppet::InfoService" do
                    :default_source=>"'c default value'"}
                ]
              }
-           ]} # end production env
+           ]}} # end production env
         })
     end
 
@@ -78,7 +78,7 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=>{:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
@@ -94,8 +94,8 @@ describe "Puppet::InfoService" do
                    :default_source=>"'c default value'"}
                ]
              }
-           ],
-          "#{code_dir}/bar.pp"=>[
+           ]},
+          "#{code_dir}/bar.pp"=> {:classes =>[
             {:name=>"bar",
               :params=>[
                 {:name=>"bar_a"},
@@ -111,7 +111,7 @@ describe "Puppet::InfoService" do
                 :default_source=>"'c default value'"}
               ]
             }
-          ],
+          ]},
 
           } # end production env
         }
@@ -128,7 +128,7 @@ describe "Puppet::InfoService" do
 
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=>{:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
@@ -144,8 +144,8 @@ describe "Puppet::InfoService" do
                    :default_source=>"'c default value'"}
                ]
              }
-           ],
-          "#{code_dir}/bar.pp"=>[
+           ]},
+          "#{code_dir}/bar.pp"=>{:classes => [
             {:name=>"bar",
               :params=>[
                 {:name=>"bar_a"},
@@ -161,21 +161,21 @@ describe "Puppet::InfoService" do
                   :default_source=>"'c default value'"}
                 ]
               }
-            ],
+          ]},
           }, # end production env
         "test"=>{
-           "#{code_dir}/fee.pp"=>[
+           "#{code_dir}/fee.pp"=>{:classes => [
              {:name=>"fee",
                :params=>[
                  {:name=>"fee_a", :type=>"Integer", :default_source=>"1+1"}
                ]},
-           ],
-          "#{code_dir}/fum.pp"=>[
+           ]},
+          "#{code_dir}/fum.pp"=>{:classes => [
             {:name=>"fum",
               :params=>[
                 {:name=>"fum_a"}
               ]},
-          ],
+          ]},
          } # end test env
         }
       )
@@ -193,8 +193,8 @@ describe "Puppet::InfoService" do
         'test'       => files_test
         })
        expect(result).to eq({
-        "production"=>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]},
-        "test"      =>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}
+         "production"=>{ "#{code_dir}/fum.pp"=>{:classes => [ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}},
+         "test"      =>{ "#{code_dir}/fum.pp"=>{:classes => [ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}}
        }
       )
     end
@@ -204,12 +204,12 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/fee.pp"=>[
+           "#{code_dir}/fee.pp"=>{:classes => [
              {:name=>"fee",
                :params=>[
                  {:name=>"fee_a", :type=>"Integer", :default_source=>"1+1"}
                ]},
-           ]} # end production env
+           ]}} # end production env
         })
      end
 
@@ -218,7 +218,7 @@ describe "Puppet::InfoService" do
        result = Puppet::InfoService.classes_per_environment({'production' => files })
        expect(result).to eq({
          "production"=>{
-            "#{code_dir}/json_unsafe.pp" => [
+            "#{code_dir}/json_unsafe.pp" => {:classes => [
               {:name=>"json_unsafe",
                 :params => [
                   {:name => "arg1",
@@ -228,7 +228,7 @@ describe "Puppet::InfoService" do
                   {:name => "arg3",
                     :default_source => "{1 => 1}" }
                 ]}
-            ]} # end production env
+            ]}} # end production env
          })
      end
 
@@ -237,12 +237,12 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/fum.pp"=>[
+           "#{code_dir}/fum.pp"=>{:classes => [
              {:name=>"fum",
                :params=>[
                  {:name=>"fum_a" }
                ]},
-           ]} # end production env
+           ]}} # end production env
         })
     end
 
@@ -251,14 +251,14 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         'production' =>{
-          "#{code_dir}/intp.pp"=>[
+          "#{code_dir}/intp.pp"=>{:classes => [
             {:name=> 'intp',
               :params=>[
                 {:name=> 'intp_a',
                   :type=> 'String',
                   :default_source=>'"default with interpolated $::os_family"'}
               ]},
-          ]} # end production env
+          ]}} # end production env
       })
     end
 
@@ -279,8 +279,8 @@ describe "Puppet::InfoService" do
        result = Puppet::InfoService.classes_per_environment({'production' => files })
        expect(result).to eq({
          "production"=>{
-            "#{code_dir}/nothing.pp"=> []
-              },
+           "#{code_dir}/nothing.pp"=> {:classes => [] }
+           },
          })
     end
 
