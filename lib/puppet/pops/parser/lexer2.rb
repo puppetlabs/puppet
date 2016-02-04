@@ -571,6 +571,9 @@ class Lexer2
     end
 
     @selector.default = lambda do
+      # Assert that the start of the input is not a Byte Order Mark
+      assert_not_bom() if @scanner.pos == 0
+
       # In case of unicode spaces of various kinds that are captured by a regexp, but not by the
       # simpler case expression above (not worth handling those special cases with better performance).
       scn = @scanner

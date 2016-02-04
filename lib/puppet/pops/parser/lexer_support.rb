@@ -1,5 +1,9 @@
+
 module Puppet::Pops
 module Parser
+
+require 'puppet/util/multi_match'
+
 # This is an integral part of the Lexer. It is broken out into a separate module
 # for maintainability of the code, and making the various parts of the lexer focused.
 #
@@ -139,6 +143,79 @@ module LexerSupport
     # TODO: Make this comparable for testing
     # vs symbolic, vs array with symbol and non hash, array with symbol and hash)
     #
+  end
+
+
+  MM = Puppet::Util::MultiMatch
+  MM_ANY = MM::NOT_NIL
+
+  BOM_UTF_8      = MM.new("\xEF", "\xBB", "\xBF",                  MM_ANY)
+  BOM_UTF_16_1   = MM.new("\xFE", "\xFF",                          MM_ANY, MM_ANY)
+  BOM_UTF_16_2   = MM.new("\xFF", "\xFE",                          MM_ANY, MM_ANY)
+  BOM_UTF_32_1   = MM.new("\x00", "\x00", "\xFE", "\xFF"           )
+  BOM_UTF_32_2   = MM.new("\xFF", "\xFE", "\x00", "\x00"           )
+
+  BOM_UTF_1      = MM.new("\xF7", "\x64", "\x4C",                  MM_ANY)
+  BOM_UTF_EBCDIC = MM.new("\xDD", "\x73", "\x66", "\x73"           )
+  BOM_SCSU       = MM.new("\x0E", "\xFE", "\xFF",                  MM_ANY)
+  BOM_BOCU       = MM.new("\xFB", "\xEE", "\x28",                  MM_ANY)
+  BOM_GB_18030   = MM.new("\x84", "\x31", "\x95", "\x33"            )
+
+  LONGEST_BOM    = 4
+
+  def assert_not_bom()
+    return if @scanner.pos != 0 # only check at beginning of input
+
+    name, size =
+    case bom = get_bom()
+
+    when BOM_UTF_32_1, BOM_UTF_32_2
+      ['UTF-32', 4]
+
+    when BOM_GB_18030
+      ['GB-18030', 4]
+
+    when BOM_UTF_EBCDIC
+      ['UTF-EBCDIC', 4]
+
+    when BOM_SCSU
+      ['SCSU', 3]
+
+    when BOM_UTF_8
+      ['UTF-8', 3]
+
+    when BOM_UTF_1
+      ['UTF-1', 3]
+
+    when BOM_BOCU
+      ['BOCU', 3]
+
+    when BOM_UTF_16_1, BOM_UTF_16_2
+      ['UTF-16', 2]
+
+    else
+      @scanner.reset
+      return
+    end
+
+    lex_error_without_pos(
+      Puppet::Pops::Issues::ILLEGAL_BOM,
+      { :format_name   => name,
+        :bytes  => "[#{bom.values[0,size].map {|b| "%X" % b.getbyte(0)}.join(" ")}]"
+      })
+  end
+
+  def get_bom()
+    # get 5 bytes as efficiently as possible (none of the string methods works since a bom consists of
+    # illegal characters on most platforms, and there is no get_bytes(n). xplicit calls are faster than
+    # looping with a lambda. The get_byte returns nil if there are too few characters, and they
+    # are changed to spaces
+    MM.new(
+      (@scanner.get_byte() || ' '),
+      (@scanner.get_byte() || ' '),
+      (@scanner.get_byte() || ' '),
+      (@scanner.get_byte() || ' ')
+      )
   end
 
 end

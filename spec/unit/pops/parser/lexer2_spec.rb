@@ -702,4 +702,29 @@ describe 'Lexer2' do
       expect_issue('"asd', Puppet::Pops::Issues::UNCLOSED_QUOTE)
     end
   end
+
+  context 'when dealing with non UTF-8 and Byte Order Marks (BOMs)' do
+      {
+      'UTF_8'      => "\xEF" "\xBB" "\xBF",
+      'UTF_16_1'   => "\xFE" "\xFF",
+      'UTF_16_2'   => "\xFF" "\xFE",
+      'UTF_32_1'   => "\x00" "\x00" "\xFE" "\xFF",
+      'UTF_32_2'   => "\xFF" "\xFE" "\x00" "\x00",
+      'UTF_1'      => "\xF7" "\x64" "\x4C",
+      'UTF_EBCDIC' => "\xDD" "\x73" "\x66" "\x73",
+      'SCSU'       => "\x0E" "\xFE" "\xFF",
+      'BOCU'       => "\xFB" "\xEE" "\x28",
+      'GB_18030'   => "\x84" "\x31" "\x95" "\x33",
+      }.each do |key, string|
+        it "errors on the byte order mark for #{key} '[#{string.bytes.map() {|b| '%X' % b}.join(' ')}]'" do
+          format_name = key.split('_')[0,2].join('-')
+          bytes = "\\[#{string.bytes.map {|b| '%X' % b}.join(' ')}\\]"
+          fix =  " - remove these from the puppet source"
+          expect {
+            tokens_scanned_from(string)
+          }.to raise_error(Puppet::ParseErrorWithIssue,
+            /Illegal #{format_name} .* at beginning of input: #{bytes}#{fix}/)
+        end
+     end
+  end
 end
