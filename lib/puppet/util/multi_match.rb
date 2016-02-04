@@ -13,6 +13,7 @@
 # 
 # which test against single NOT_NIL value, Array with two NOT_NIL, and Array with three NOT_NIL
 #
+module Puppet::Util
 class MultiMatch
   attr_reader :values
 
@@ -46,4 +47,5 @@ class MultiMatch
   NOT_NIL = MatchNotNil.new().freeze
   TUPLE = MultiMatch.new(NOT_NIL, NOT_NIL).freeze
   TRIPLE = MultiMatch.new(NOT_NIL, NOT_NIL, NOT_NIL).freeze
+end
 end

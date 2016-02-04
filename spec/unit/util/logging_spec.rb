@@ -183,15 +183,13 @@ describe Puppet::Util::Logging do
       # why it works elsewhere is a mystery.
       @logger.unstub(:warning)
     }
-
-    it "warns without file and line when neither is given" do
-      @logger.expects(:warning).with(regexp_matches(/.*\(file \& line not available\).*/m))
-      @logger.warn_once('kind', 'wp', "wet paint")
-    end
+    before(:each) {
+      @logger.clear_deprecation_warnings
+    }
 
     it "warns with file when only file is given" do
       @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in aFile\)/m))
-      @logger.warn_once('kind', 'wp', "wet paint",'aFile')
+      @logger.warn_once('kind', 'wp', "wet paint", 'aFile')
     end
 
     it "warns with unknown file and line when only line is given" do

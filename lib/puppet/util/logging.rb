@@ -5,7 +5,8 @@ require 'puppet/util/multi_match.rb'
 
 require 'facter'
 
-module Puppet::Util::Logging
+module Puppet::Util
+module Logging
 
   def send_log(level, message)
     Puppet::Util::Log.create({:level => level, :source => log_source, :message => message}.merge(log_metadata))
@@ -150,10 +151,10 @@ module Puppet::Util::Logging
     key ||= "#{file}:#{line}"
     issue_deprecation_warning(message, key, file, line, false)
   end
-
-  FILE_AND_LINE = MultiMatch::TUPLE
-  FILE_NO_LINE  = MultiMatch.new(MultiMatch::NOT_NIL, nil).freeze
-  NO_FILE_LINE  = MultiMatch.new(nil, MultiMatch::NOT_NIL).freeze
+  MM = MultiMatch
+  FILE_AND_LINE = MM::TUPLE
+  FILE_NO_LINE  = MM.new(MM::NOT_NIL, nil).freeze
+  NO_FILE_LINE  = MM.new(nil, MM::NOT_NIL).freeze
 
   # Logs a (non deprecation) warning once for a given key.
   #
@@ -173,7 +174,7 @@ module Puppet::Util::Logging
       if (! $unique_warnings.has_key?(key)) then
         $unique_warnings[key] = message
         call_trace =
-        case MultiMatch.new(file, line)
+        case MM.new(file, line)
         when FILE_AND_LINE
           "\n   (at #{file}:#{line})"
         when FILE_NO_LINE
@@ -202,6 +203,7 @@ module Puppet::Util::Logging
   end
 
   def clear_deprecation_warnings
+    $unique_warnings.clear if $unique_warnings
     $deprecation_warnings.clear if $deprecation_warnings
   end
 
@@ -304,4 +306,5 @@ module Puppet::Util::Logging
     (is_resource? or is_resource_parameter?) and respond_to?(:path) and return path.to_s
     to_s
   end
+end
 end
