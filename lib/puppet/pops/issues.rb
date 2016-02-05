@@ -499,7 +499,7 @@ module Puppet::Pops::Issues
   end
 
   DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
-    "The attribute '#{attribute}' has already been set in this resource body"
+    "The attribute '#{attribute}' has already been set"
   end
 
   MISSING_TITLE = hard_issue :MISSING_TITLE do

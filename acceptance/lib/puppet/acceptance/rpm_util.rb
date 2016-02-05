@@ -73,7 +73,7 @@ Release: 1
 License: GPL+
 Group: Development/Tools
 SOURCE0 : %{name}-%{version}.tar.gz
-URL: http://www.puppetlabs.com/
+URL: https://www.puppetlabs.com/
 
 BuildRoot: %{_topdir}/BUILD/%{name}-%{version}-%{release}-root
 

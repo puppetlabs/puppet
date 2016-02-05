@@ -82,7 +82,7 @@ module Puppet::Parser::Functions
   # extend the behavior and functionality of Puppet.
   #
   # See also [Docs: Custom
-  # Functions](http://docs.puppetlabs.com/guides/custom_functions.html)
+  # Functions](https://docs.puppetlabs.com/guides/custom_functions.html)
   #
   # @example Define a new Puppet DSL Function
   #     >> Puppet::Parser::Functions.newfunction(:double, :arity => 1,
@@ -125,7 +125,7 @@ module Puppet::Parser::Functions
   #   This string will be extracted by documentation generation tools.
   #
   # @option options [Integer] :arity (-1) the
-  #   [arity](http://en.wikipedia.org/wiki/Arity) of the function.  When
+  #   [arity](https://en.wikipedia.org/wiki/Arity) of the function.  When
   #   specified as a positive integer the function is expected to receive
   #   _exactly_ the specified number of arguments.  When specified as a
   #   negative number, the function is expected to receive _at least_ the

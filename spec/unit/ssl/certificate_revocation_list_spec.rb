@@ -105,14 +105,14 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "returns the last update time in UTC" do
-      # http://tools.ietf.org/html/rfc5280#section-5.1.2.4
+      # https://tools.ietf.org/html/rfc5280#section-5.1.2.4
       thisUpdate = @crl.generate(@cert, @key).last_update
       expect(thisUpdate).to be_utc
       expects_time_close_to_now(thisUpdate)
     end
 
     it "returns the next update time in UTC 5 years from now" do
-      # http://tools.ietf.org/html/rfc5280#section-5.1.2.5
+      # https://tools.ietf.org/html/rfc5280#section-5.1.2.5
       nextUpdate = @crl.generate(@cert, @key).next_update
       expect(nextUpdate).to be_utc
       expects_time_close_to_five_years(nextUpdate)
@@ -179,7 +179,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "adds a non-critical CRL reason specifying key compromise by default" do
-      # http://tools.ietf.org/html/rfc5280#section-5.3.1
+      # https://tools.ietf.org/html/rfc5280#section-5.3.1
       serial = 1
       @crl.revoke(serial, @key)
 

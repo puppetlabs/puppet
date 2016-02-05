@@ -35,15 +35,10 @@ module Puppet::Resource::CapabilityFinder
           ['select_catalogs',
             ['=', 'code_id', code_id]]]]
     end
-    query = query_terms.to_json
 
-    Puppet.notice "Capability lookup #{cap}]: #{query}"
+    Puppet.notice "Capability lookup #{cap}]: #{query_terms}"
 
-    http = Puppet::Util.const_get('Puppetdb').const_get('Http')
-    response = http.action("/pdb/query/v4/resources?query=#{CGI.escape(query)}") do |conn, uri|
-      conn.get(uri, { 'Accept' => 'application/json'})
-    end
-    json = response.body
+    data = query_puppetdb(query_terms)
 
     # The format of the response body is documented at
     #   http://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
@@ -53,12 +48,6 @@ module Puppet::Resource::CapabilityFinder
     # ::Resource. If the array contains more than one entry, we have a
     # bug in the overall system, as we allowed multiple capabilities with
     # the same type and title to be produced in this environment.
-    begin
-      data = JSON.parse(json)
-    rescue JSON::JSONError => e
-      raise Puppet::DevError,
-      "Invalid JSON from PuppetDB when looking up #{cap}\n#{e}\nRaw JSON was:\n#{json}"
-    end
     unless data.is_a?(Array)
       raise Puppet::DevError,
       "Unexpected response from PuppetDB when looking up #{cap}: " +
@@ -91,5 +80,23 @@ module Puppet::Resource::CapabilityFinder
       end
       return resource
     end
+  end
+
+  def self.query_puppetdb(query)
+    # If using PuppetDB >= 4, use the API method query_puppetdb()
+    if Puppet::Util::Puppetdb.respond_to?(:query_puppetdb)
+      # PuppetDB 4 uses a unified query endpoint, so we have to specify what we're querying
+      Puppet::Util::Puppetdb.query_puppetdb(["from", "resources", query])
+    # For PuppetDB < 4, use the old internal method action()
+    else
+      url = "/pdb/query/v4/resource?query=#{CGI.escape(query.to_json)}"
+      response = Puppet::Util::Puppetdb::Http.action(url) do |conn, uri|
+        conn.get(uri, { 'Accept' => 'application/json'})
+      end
+      JSON.parse(response.body)
+    end
+  rescue JSON::JSONError => e
+    raise Puppet::DevError,
+      "Invalid JSON from PuppetDB when looking up #{cap}\n#{e}"
   end
 end

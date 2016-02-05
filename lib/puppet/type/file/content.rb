@@ -4,6 +4,7 @@ require 'tempfile'
 require 'date'
 
 require 'puppet/util/checksums'
+require 'puppet/util/http_proxy'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
 require 'puppet/network/http/compression'
@@ -39,8 +40,8 @@ module Puppet
           }
 
       ...but for larger files, this attribute is more useful when combined with the
-      [template](http://docs.puppetlabs.com/references/latest/function.html#template)
-      or [file](http://docs.puppetlabs.com/references/latest/function.html#file)
+      [template](https://docs.puppetlabs.com/references/latest/function.html#template)
+      or [file](https://docs.puppetlabs.com/references/latest/function.html#file)
       function.
     EOT
 
@@ -210,13 +211,26 @@ module Puppet
       end
     end
 
-    def get_from_source(source_or_content, &block)
+    def get_from_puppet_source(source_or_content, &block)
       source = source_or_content.metadata.source
       request = Puppet::Indirector::Request.new(:file_content, :find, source, nil, :environment => resource.catalog.environment_instance)
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
         connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "binary"}), &block)
+      end
+    end
+
+    def get_from_http_source(source, &block)
+      Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get, &block)
+    end
+
+    def get_from_source(source_or_content, &block)
+      source = source_or_content.metadata.source
+      if source =~ /^https?:/
+        get_from_http_source(source, &block)
+      else
+        get_from_puppet_source(source_or_content, &block)
       end
     end
 

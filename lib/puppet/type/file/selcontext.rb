@@ -17,7 +17,7 @@
 # command.  This allows the user to specify a subset of the three
 # values while leaving the others alone.
 #
-# See http://www.nsa.gov/selinux/ for complete docs on SELinux.
+# See https://www.nsa.gov/selinux/ for complete docs on SELinux.
 
 
 module Puppet

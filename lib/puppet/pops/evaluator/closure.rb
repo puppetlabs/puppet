@@ -25,22 +25,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # Evaluates a closure in its enclosing scope after having matched given arguments with parameters (from left to right)
   # @api public
   def call(*args)
-    variable_bindings = combine_values_with_parameters(args)
-
-    tc = Puppet::Pops::Types::TypeCalculator.singleton
-    final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
-      if param.captures_rest
-        tmp_args.concat(variable_bindings[param.name])
-      else
-        tmp_args << variable_bindings[param.name]
-      end
-    end)
-
-    if type.callable?(final_args)
-      @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
-    else
-      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
-    end
+    call_with_scope(@enclosing_scope, args)
   end
 
   # This method makes a Closure compatible with a Dispatch. This is used when the closure is wrapped in a Function
@@ -48,18 +33,27 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # checks of the argument type/arity validity).
   # @api private
   def invoke(instance, calling_scope, args, &block)
-    call(*args, &block)
+    @enclosing_scope.with_global_scope do |global_scope|
+      call_with_scope(global_scope, args, &block)
+    end
   end
 
   # Call closure with argument assignment by name
   def call_by_name(args_hash, enforce_parameters)
     if enforce_parameters
-      args_hash = args_hash.dup
-      parameters.each do |p|
-        name = p.name
-        # only set result of default expr if it is defined (it is otherwise not possible to differentiate
-        # between explicit undef and no default expression
-        args_hash[name] = @evaluator.evaluate(p.value, @enclosing_scope) if args_hash[name].nil? && !p.value.nil?
+      # Push a temporary parameter scope used while resolving the parameter defaults
+      @enclosing_scope.with_parameter_scope(parameter_names) do |param_scope|
+        args_hash.each { |k, v| param_scope[k] = v unless v.nil? && parameter_names.include?(k) }
+        parameters.each do |p|
+          name = p.name
+          # only set result of default expr if it is defined (it is otherwise not possible to differentiate
+          # between explicit undef and no default expression
+          arg = args_hash[name]
+          if arg.nil? && !p.value.nil?
+            param_scope[name] = param_scope.evaluate(name, p.value, @enclosing_scope, @evaluator)
+          end
+        end
+        args_hash = param_scope.to_hash
       end
       Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
     end
@@ -125,52 +119,70 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   private
 
-  def combine_values_with_parameters(args)
-    variable_bindings = {}
+  def call_with_scope(scope, args)
+    variable_bindings = combine_values_with_parameters(scope, args)
 
-    parameters.each_with_index do |parameter, index|
-      param_captures     = parameter.captures_rest
-      default_expression = parameter.value
-
-      if index >= args.size
-        if default_expression
-          # not given, has default
-          value = @evaluator.evaluate(default_expression, @enclosing_scope)
-          if param_captures && !value.is_a?(Array)
-            # correct non array default value
-            value = [value]
-          end
-        else
-          # not given, does not have default
-          if param_captures
-            # default for captures rest is an empty array
-            value = []
-          else
-            @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
-          end
-        end
+    tc = Puppet::Pops::Types::TypeCalculator.singleton
+    final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
+      if param.captures_rest
+        tmp_args.concat(variable_bindings[param.name])
       else
-        given_argument = args[index]
-        if param_captures
-          # get excess arguments
-          value = args[(parameter_count-1)..-1]
-          # If the input was a single nil, or undef, and there is a default, use the default
-          # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
-          #
-          if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
-            value = @evaluator.evaluate(default_expression, @enclosing_scope)
-            # and ensure it is an array
-            value = [value] unless value.is_a?(Array)
+        tmp_args << variable_bindings[param.name]
+      end
+    end)
+
+    if type.callable?(final_args)
+      @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
+    else
+      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
+    end
+  end
+
+  def combine_values_with_parameters(scope, args)
+    scope.with_parameter_scope(parameter_names) do |param_scope|
+      parameters.each_with_index do |parameter, index|
+        param_captures     = parameter.captures_rest
+        default_expression = parameter.value
+
+        if index >= args.size
+          if default_expression
+            # not given, has default
+            value = param_scope.evaluate(parameter.name, default_expression, scope, @evaluator)
+
+            if param_captures && !value.is_a?(Array)
+              # correct non array default value
+              value = [value]
+            end
+          else
+            # not given, does not have default
+            if param_captures
+              # default for captures rest is an empty array
+              value = []
+            else
+              @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
+            end
           end
         else
-          value = given_argument
+          given_argument = args[index]
+          if param_captures
+            # get excess arguments
+            value = args[(parameter_count-1)..-1]
+            # If the input was a single nil, or undef, and there is a default, use the default
+            # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
+            #
+            if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
+              value = param_scope.evaluate(parameter.name, default_expression, scope, @evaluator)
+              # and ensure it is an array
+              value = [value] unless value.is_a?(Array)
+            end
+          else
+            value = given_argument
+          end
         end
+        param_scope[parameter.name] = value
       end
-
-      variable_bindings[parameter.name] = value
+      param_scope.to_hash
     end
-
-    variable_bindings
   end
 
   def create_callable_type()

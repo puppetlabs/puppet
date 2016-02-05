@@ -34,14 +34,6 @@ module Puppet
 
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
-    require 'puppet/pops/types/type_asserter'
-    require 'puppet/pops/types/type_assertion_error'
-    require 'puppet/pops/types/type_calculator'
-    require 'puppet/pops/types/type_factory'
-    require 'puppet/pops/types/type_parser'
-    require 'puppet/pops/types/class_loader'
-    require 'puppet/pops/types/enumeration'
-    require 'puppet/pops/types/type_mismatch_describer'
 
     require 'puppet/pops/merge_strategy'
 

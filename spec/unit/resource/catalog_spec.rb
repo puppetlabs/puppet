@@ -91,6 +91,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     expect(catalog.code_id).to be_nil
   end
 
+  it "should include a catalog_uuid" do
+    SecureRandom.stubs(:uuid).returns ("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
+    catalog = Puppet::Resource::Catalog.new("host")
+    expect(catalog.catalog_uuid).to eq("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
+  end
+
   describe "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
@@ -267,6 +273,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it 'copies the code_id' do
       @original.code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
       expect(@original.filter.code_id).to eq(@original.code_id)
+    end
+
+    it 'copies the catalog_uuid' do
+      @original.catalog_uuid = '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
+      expect(@original.filter.catalog_uuid).to eq(@original.catalog_uuid)
     end
   end
 
@@ -799,7 +810,8 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
 
   { :name => 'myhost',
     :version => 42,
-    :code_id => 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+    :code_id => 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe',
+    :catalog_uuid => '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
   }.each do |param, value|
     it "emits a #{param} equal to #{value.inspect}" do
       @catalog.send(param.to_s + "=", value)
@@ -853,6 +865,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   it "should create it with the provided name" do
     @data['version'] = 50
     @data['code_id'] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
+    @data['catalog_uuid'] = '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
     @data['tags'] = %w{one two}
     @data['classes'] = %w{one two}
     @data['edges'] = [Puppet::Relationship.new("File[/foo]", "File[/bar]",
@@ -867,6 +880,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     expect(catalog.name).to eq('myhost')
     expect(catalog.version).to eq(@data['version'])
     expect(catalog.code_id).to eq(@data['code_id'])
+    expect(catalog.catalog_uuid).to eq(@data['catalog_uuid'])
     expect(catalog).to be_tagged("one")
     expect(catalog).to be_tagged("two")
 

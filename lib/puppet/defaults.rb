@@ -147,6 +147,11 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
     },
+    :static_catalogs => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether to compile a static catalog."
+    },
     :autoflush => {
       :default => true,
       :type       => :boolean,
@@ -272,7 +277,7 @@ module Puppet
 
         This setting must have a value set to enable **directory environments.** The
         recommended value is `$codedir/environments`. For more details, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :type    => :path,
     },
     :always_cache_features => {
@@ -572,15 +577,15 @@ module Puppet
         `certname` setting as its requested Subject CN.
 
         This is the name used when managing a node's permissions in
-        [auth.conf](http://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html).
+        [auth.conf](https://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html).
         In most cases, it is also used as the node's name when matching
-        [node definitions](http://docs.puppetlabs.com/puppet/latest/reference/lang_node_definitions.html)
+        [node definitions](https://docs.puppetlabs.com/puppet/latest/reference/lang_node_definitions.html)
         and requesting data from an ENC. (This can be changed with the `node_name_value`
         and `node_name_fact` settings, although you should only do so if you have
         a compelling reason.)
 
         A node's certname is available in Puppet manifests as `$trusted['certname']`. (See
-        [Facts and Built-In Variables](http://docs.puppetlabs.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
+        [Facts and Built-In Variables](https://docs.puppetlabs.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
         for more details.)
 
         * For best compatibility, you should limit the value of `certname` to
@@ -781,6 +786,20 @@ EOT
         :values => ["md5", "sha256"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
                       Valid values are md5, sha256. Default is md5.',
+    },
+    :supported_checksum_types => {
+      :default => ['md5', 'sha256'],
+      :type    => :array,
+      :desc    => 'Checksum types supported by this agent for use in file resources of a static
+        catalog. Valid types are md5, md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
+      :hook    => proc do |value|
+        values = munge(value)
+        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
+        invalid = values.reject {|alg| valid.include?(alg)}
+        if not invalid.empty?
+          raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
+        end
+      end
     }
   )
 
@@ -896,7 +915,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](http://docs.puppetlabs.com/guides/configuring.html).",
+        [the guide to Puppet's config files](http://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,
@@ -969,7 +988,7 @@ EOT
         directory environments instead. If you need to use something other than the
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :modulepath => {
       :default => "",
@@ -983,7 +1002,7 @@ EOT
         directory environments instead. If you need to use something other than the
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :config_version => {
       :default    => "",
@@ -995,7 +1014,7 @@ EOT
       Setting a global value for config_version in puppet.conf is not allowed
       (but it can be overridden from the commandline). Please set a
       per-environment value in environment.conf instead. For more info, see
-      http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     }
   )
 
@@ -1107,7 +1126,7 @@ EOT
         These are the modules that will be used by _all_ environments. Note that
         the `modules` directory of the active environment will have priority over
         any global directories. For more info, see
-        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1283,7 +1302,7 @@ EOT
         For control over logging destinations, see the `--logdest` command line
         option in the manual pages for puppet master, puppet agent, and puppet
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
-        or read them online at http://docs.puppetlabs.com/references/latest/man/."
+        or read them online at https://docs.puppetlabs.com/references/latest/man/."
     },
     :server => {
       :default => "puppet",
@@ -1328,7 +1347,7 @@ EOT
         event _would_ have been sent.
 
         **Important note:**
-        [The `noop` metaparameter](http://docs.puppetlabs.com/references/latest/metaparameter.html#noop)
+        [The `noop` metaparameter](https://docs.puppetlabs.com/references/latest/metaparameter.html#noop)
         allows you to apply individual resources in noop mode, and will override
         the global value of the `noop` setting. This means a resource with
         `noop => false` _will_ be changed if necessary, even when running puppet
@@ -1565,7 +1584,11 @@ EOT
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether plugins should be synced with the central server.",
+      :desc       => "Whether plugins should be synced with the central server. This setting is
+        deprecated.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
+      }
     },
 
     :pluginsignore => {
@@ -1599,6 +1622,12 @@ EOT
       :default    => "",
       :desc       => "Tags to use to find resources.  If this is set, then
         only resources tagged with the specified tags will be applied.
+        Values must be comma-separated.",
+    },
+    :skip_tags => {
+      :default    => "",
+      :desc       => "Tags to use to filter resources.  If this is set, then
+        only resources not tagged with the specified tags will be applied.
         Values must be comma-separated.",
     },
     :evaltrace => {

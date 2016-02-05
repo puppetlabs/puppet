@@ -64,7 +64,7 @@ class Benchmarker
               @parser.evaluate(@scope, model)
             ensure
               # Toss the created local scope
-              @scope.unset_ephemeral_var(scope_memo)
+              @scope.pop_ephemerals(scope_memo)
             end
           end
         end

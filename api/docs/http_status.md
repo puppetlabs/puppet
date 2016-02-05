@@ -10,8 +10,8 @@ Get status for a master
 
     GET /puppet/v3/status/:name?environment=:environment
 
-The `:environment` and `:name` sections of the URL are both ignored, but a
-value must be provided for both.
+The `environment` parameter and the `:name` are both required, but have no
+effect on the response. The `environment` must be a valid environment.
 
 ### Supported HTTP Methods
 

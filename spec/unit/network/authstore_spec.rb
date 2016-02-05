@@ -301,7 +301,7 @@ describe Puppet::Network::AuthStore::Declaration do
 
       issue_7477 = !(IPAddr.new(ip) rescue false)
 
-      describe "on rubies with a fix for issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
+      describe "on rubies with a fix for issue [7477](https://goo.gl/Bb1LU)", :if => issue_7477
         it "should match the specified IP" do
           expect(declaration).to be_match('www.testsite.org',ip)
         end

@@ -123,6 +123,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCollectionType,
         Puppet::Pops::Types::PArrayType,
         Puppet::Pops::Types::PHashType,
+        Puppet::Pops::Types::PIterableType,
+        Puppet::Pops::Types::PIteratorType,
         Puppet::Pops::Types::PRuntimeType,
         Puppet::Pops::Types::PHostClassType,
         Puppet::Pops::Types::PResourceType,
@@ -232,6 +234,10 @@ describe 'The type calculator' do
 
     it 'regexp translates to PRegexpType' do
       expect(calculator.infer(/^a regular expression$/).class).to eq(Puppet::Pops::Types::PRegexpType)
+    end
+
+    it 'iterable translates to PIteratorType' do
+      expect(calculator.infer(Puppet::Pops::Types::Iterable.on(1))).to be_a(Puppet::Pops::Types::PIteratorType)
     end
 
     it 'nil translates to PUndefType' do
@@ -793,7 +799,11 @@ describe 'The type calculator' do
       end
 
       it 'Collection is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PNotUndefType] - collection_types
+        tested_types = all_types - [
+          Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType] - collection_types
         t = Puppet::Pops::Types::PCollectionType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -815,6 +825,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -841,6 +852,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -878,6 +890,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PTupleType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -899,6 +912,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -1880,6 +1894,7 @@ describe 'The type calculator' do
       expect(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ).is_a?(ptype)).to eq(true)
@@ -1904,6 +1919,7 @@ describe 'The type calculator' do
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT))).to eq('Type[Collection]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ))).to eq('Type[Array[?]]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ))).to eq('Type[Hash[?, ?]]')
+      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ))).to eq('Type[Iterable]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ))).to eq('Type[Runtime[?, ?]]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ))).to eq('Type[Class]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ))).to eq('Type[Resource]')
@@ -1962,23 +1978,23 @@ describe 'The type calculator' do
     end
   end
 
-  context 'when asking for an enumerable ' do
-    it 'should produce an enumerable for an Integer range that is not infinite' do
+  context 'when asking for an iterable ' do
+    it 'should produce an iterable for an Integer range that is finite' do
       t = Puppet::Pops::Types::PIntegerType.new(1, 10)
-      expect(calculator.enumerable(t).respond_to?(:each)).to eq(true)
+      expect(calculator.iterable(t).respond_to?(:each)).to eq(true)
     end
 
-    it 'should not produce an enumerable for an Integer range that has an infinite side' do
+    it 'should not produce an iterable for an Integer range that has an infinite side' do
       t = Puppet::Pops::Types::PIntegerType.new(nil, 10)
-      expect(calculator.enumerable(t)).to eq(nil)
+      expect(calculator.iterable(t)).to eq(nil)
 
       t = Puppet::Pops::Types::PIntegerType.new(1, nil)
-      expect(calculator.enumerable(t)).to eq(nil)
+      expect(calculator.iterable(t)).to eq(nil)
     end
 
-    it 'all but Integer range are not enumerable' do
+    it 'all but Integer range are not iterable' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
-        expect(calculator.enumerable(calculator.type(t))).to eq(nil)
+        expect(calculator.iterable(calculator.type(t))).to eq(nil)
       end
     end
   end

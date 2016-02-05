@@ -9,7 +9,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
   description "This subcommand can inspect and modify settings from Puppet's
     'puppet.conf' configuration file. For documentation about individual settings,
-    see http://docs.puppetlabs.com/references/latest/configuration.html."
+    see https://docs.puppetlabs.com/references/latest/configuration.html."
 
   option "--section SECTION_NAME" do
     default_to { "main" }

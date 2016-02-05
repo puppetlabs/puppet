@@ -22,8 +22,18 @@ describe Puppet::FileServing::TerminusSelector do
       expect(@object.select(@request)).to eq(:file)
     end
 
-    it "should fail when a protocol other than :puppet or :file is used" do
-      @request.stubs(:protocol).returns "http"
+    it "should return :http if the URI protocol is set to 'http'" do
+      @request.expects(:protocol).returns "http"
+      expect(@object.select(@request)).to eq :http
+    end
+
+    it "should return :http if the URI protocol is set to 'https'" do
+      @request.expects(:protocol).returns "https"
+      expect(@object.select(@request)).to eq :http
+    end
+
+    it "should fail when a protocol other than :puppet, :http(s) or :file is used" do
+      @request.stubs(:protocol).returns "ftp"
       expect { @object.select(@request) }.to raise_error(ArgumentError)
     end
 

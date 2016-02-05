@@ -52,6 +52,24 @@ describe Puppet::Transaction::Report do
     expect(report.transaction_uuid).to eq("some transaction uuid")
   end
 
+  it "should be able to set code_id" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.code_id = "some code id"
+    expect(report.code_id).to eq("some code id")
+  end
+
+  it "should be able to set catalog_uuid" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.catalog_uuid = "some catalog uuid"
+    expect(report.catalog_uuid).to eq("some catalog uuid")
+  end
+
+  it "should be able to set cached_catalog_status" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.cached_catalog_status = "explicitly_requested"
+    expect(report.cached_catalog_status).to eq("explicitly_requested")
+  end
+
   it "should take 'environment' as an argument" do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment).to eq("some environment")
   end
@@ -419,6 +437,9 @@ describe Puppet::Transaction::Report do
     expect(tripped.time.to_i).to eq(report.time.to_i)
     expect(tripped.configuration_version).to eq(report.configuration_version)
     expect(tripped.transaction_uuid).to eq(report.transaction_uuid)
+    expect(tripped.code_id).to eq(report.code_id)
+    expect(tripped.catalog_uuid).to eq(report.catalog_uuid)
+    expect(tripped.cached_catalog_status).to eq(report.cached_catalog_status)
     expect(tripped.report_format).to eq(report.report_format)
     expect(tripped.puppet_version).to eq(report.puppet_version)
     expect(tripped.kind).to eq(report.kind)
@@ -485,6 +506,9 @@ describe Puppet::Transaction::Report do
     report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
+    report.code_id = "some code id"
+    report.catalog_uuid = "some catalog uuid"
+    report.cached_catalog_status = "not_used"
     report.add_resource_status(status)
     report.finalize_report
     report
@@ -498,6 +522,9 @@ describe Puppet::Transaction::Report do
     report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
+    report.code_id = "some code id"
+    report.catalog_uuid = "some catalog uuid"
+    report.cached_catalog_status = "not_used"
     report.add_resource_status(status)
     report.finalize_report
     report
