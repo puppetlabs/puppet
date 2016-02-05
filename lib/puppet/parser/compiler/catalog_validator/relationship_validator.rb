@@ -21,7 +21,7 @@ class Puppet::Parser::Compiler
     def validate_relationship(param)
       # when relationship is to a capability
       if has_capability?(param.value)
-        if ! CAPABILITY_ACCEPTED_METAPARAMS[param.name]
+        unless CAPABILITY_ACCEPTED_METAPARAMS[param.name]
           raise CatalogValidationError.new(
             "'#{param.name}' is not a valid relationship to a capability", 
               param.file, param.line)
