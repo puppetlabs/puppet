@@ -296,7 +296,6 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return nil when asked for a non-string qualified variable from a class that does not exist" do
-#        @scope.stubs(:warning)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 

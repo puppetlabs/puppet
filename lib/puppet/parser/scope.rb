@@ -271,7 +271,7 @@ class Puppet::Parser::Scope
     catch(:undefined_variable) {
       return ! self[name].nil?
     }
-    nil
+    false
   end
 
   # Returns true if the variable of the given name is set to any value (including nil)
@@ -517,7 +517,7 @@ class Puppet::Parser::Scope
       # a location is in most cases not given to scope (operator [], and lookupvar), and
       # would be too expensive to always give.
       # The ideal solution would be to always throw :undefined_variable, but that has to
-      # wait until a major release. It would the force all callers of scope to deal with
+      # wait until a major release. It would then force all callers of scope to deal with
       # the case of :undefined_variable. (Should check with include? first or catch the throw).
       # Use deprecation warning to enable turning off these warnings, and to ensure each variable
       # is only logged once.
