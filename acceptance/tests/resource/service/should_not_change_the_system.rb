@@ -2,7 +2,7 @@ test_name "`puppet resource service` should list running services without callin
 
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
-confine :except, :platform => /cisco-5/
+confine :except, :platform => /^cisco-/ # See PUP-5827
 
 # For each script in /etc/init.d, the init service provider will call
 # the script with the `status` argument, except for blacklisted

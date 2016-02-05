@@ -10,7 +10,7 @@ disable_pe_enterprise_mcollective_agent_classes
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
-  confine :except, :platform => /cisco-5/
+  confine :except, :platform => /^cisco-/ # See PUP-5827
 
   agent_certnames = []
 

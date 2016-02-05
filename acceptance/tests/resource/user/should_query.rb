@@ -1,6 +1,6 @@
 test_name "test that we can query and find a user that exists."
 confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /cisco-5/
+confine :except, :platform => /^cisco-/ # See PUP-5828
 
 name = "pl#{rand(999999).to_i}"
 

@@ -43,9 +43,6 @@ end
 # make sure install is sane, beaker has already added puppet and ruby
 # to PATH in ~/.ssh/environment
 agents.each do |agent|
-  if agent['platform'] =~ /cisco-5/
-    on agent, "sudo chmod +x /etc/profile.d/puppet-agent.sh"
-  end
   on agent, puppet('--version')
   ruby = Puppet::Acceptance::CommandUtils.ruby_command(agent)
   on agent, "#{ruby} --version"

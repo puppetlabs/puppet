@@ -2,7 +2,7 @@ test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
 confine :except, :platform => /aix/ # PUP-5358
 confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /cisco-5/
+confine :except, :platform => /^cisco-/ # See PUP-5828
 
 user = "u#{rand(99999).to_i}"
 group1 = "#{user}o"
