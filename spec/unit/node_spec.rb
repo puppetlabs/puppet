@@ -92,7 +92,7 @@ describe Puppet::Node do
       node.environment_name = :foo
       node.environment = :bar
       expect(node.environment_name).to eq(:bar)
-      expect(node.parameters['environment']).to eq(:bar)
+      expect(node.parameters['environment']).to eq('bar')
     end
   end
 
