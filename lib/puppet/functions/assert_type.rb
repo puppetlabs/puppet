@@ -50,7 +50,7 @@
 #
 # @since 4.0.0
 #
-Puppet::Functions.create_function(:assert_type) do
+Puppet::Functions.create_function(:assert_type, Puppet::Functions::InternalFunction) do
   dispatch :assert_type do
     param 'Type', :type
     param 'Any', :value
@@ -58,6 +58,7 @@ Puppet::Functions.create_function(:assert_type) do
   end
 
   dispatch :assert_type_s do
+    scope_param
     param 'String', :type_string
     param 'Any', :value
     optional_block_param 'Callable[Type, Type]', :block
@@ -85,11 +86,12 @@ Puppet::Functions.create_function(:assert_type) do
     value
   end
 
+  # @param scope [Puppet::Parser::Scope] scope used when obtaining loader for defined types
   # @param type_string [String] the type the value must be an instance of given in String form
   # @param value [Object] the value to assert
   #
-  def assert_type_s(type_string, value, &proc)
-    t = Puppet::Pops::Types::TypeParser.new.parse(type_string)
+  def assert_type_s(scope, type_string, value, &proc)
+    t = Puppet::Pops::Types::TypeParser.new.parse(type_string, scope)
     block_given? ? assert_type(t, value, &proc) : assert_type(t, value)
   end
 end

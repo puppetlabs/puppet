@@ -277,7 +277,7 @@ class EvaluatorImpl
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
   #
   def eval_QualifiedReference(o, scope)
-    @@type_parser.interpret(o)
+    @@type_parser.interpret(o, scope)
   end
 
   def eval_NotExpression(o, scope)
