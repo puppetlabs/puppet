@@ -23,6 +23,8 @@ module Puppet::Pops::Loader::LoaderPaths
           result << FunctionPathPP.new(loader)
         end
         # When wanted also add FunctionPath3x to load 3x functions
+    when :type
+      result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
     else
       # unknown types, simply produce an empty result; no paths to check, nothing to find... move along...
       []
@@ -144,6 +146,19 @@ module Puppet::Pops::Loader::LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::PuppetFunctionInstantiator
+    end
+  end
+
+  class TypePathPP < PuppetSmartPath
+    # Navigate to directory where 'lib' is, then down again
+    TYPE_PATH_PP = File.join('types')
+
+    def relative_path
+      TYPE_PATH_PP
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::TypeDefinitionInstantiator
     end
   end
 

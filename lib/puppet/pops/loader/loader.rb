@@ -22,7 +22,7 @@
 class Puppet::Pops::Loader::Loader
 
   # Describes the kinds of things that loaders can load
-  LOADABLE_KINDS = [:func_4x, :func_4xpp].freeze
+  LOADABLE_KINDS = [:func_4x, :func_4xpp, :type_pp].freeze
 
   # Produces the value associated with the given name if already loaded, or available for loading
   # by this loader, one of its parents, or other loaders visible to this loader.

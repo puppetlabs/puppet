@@ -1,8 +1,11 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet/loaders'
+require 'puppet_spec/compiler'
 
 describe 'the assert_type function' do
+  include PuppetSpec::Compiler
+
   after(:all) { Puppet::Pops::Loaders.clear }
 
   let(:loaders) { Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, [])) }
@@ -51,5 +54,36 @@ describe 'the assert_type function' do
 
   def type(type_ref)
     Puppet::Pops::Types::TypeFactory.type_of(type_ref)
+  end
+
+  it 'can validate a resource type' do
+    expect(eval_and_collect_notices("assert_type(Type[Resource], File['/tmp/test']) notice('ok')")).to eq(['ok'])
+  end
+
+  it 'can validate a type alias' do
+    code = <<-CODE
+      type UnprivilegedPort = Integer[1024,65537]
+      assert_type(UnprivilegedPort, 5432)
+      notice('ok')
+    CODE
+    expect(eval_and_collect_notices(code)).to eq(['ok'])
+  end
+
+  it 'can validate a type alias passed as a String' do
+    code = <<-CODE
+      type UnprivilegedPort = Integer[1024,65537]
+      assert_type('UnprivilegedPort', 5432)
+      notice('ok')
+    CODE
+    expect(eval_and_collect_notices(code)).to eq(['ok'])
+  end
+
+  it 'can validate and fail using a type alias' do
+    code = <<-CODE
+      type UnprivilegedPort = Integer[1024,65537]
+      assert_type(UnprivilegedPort, 345)
+      notice('ok')
+    CODE
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Expected type UnprivilegedPort does not match actual: Integer/)
   end
 end

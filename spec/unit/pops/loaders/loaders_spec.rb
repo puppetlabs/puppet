@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_spec/compiler'
 
 require 'puppet/pops'
 require 'puppet/loaders'
@@ -25,6 +26,7 @@ end
 
 describe 'loaders' do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   let(:module_without_metadata) { File.join(config_dir('wo_metadata_module'), 'modules') }
   let(:module_without_lib) { File.join(config_dir('module_no_lib'), 'modules') }
@@ -205,8 +207,49 @@ describe 'loaders' do
         end
       end
     end
-  end
 
+    it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
+      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
+        assert_type(Usee::Zero, 0)
+        notice(ok)
+      CODE
+    end
+
+    it "a type can reference an autoloaded type alias from another module when no metadata is present" do
+      Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+      expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
+        assert_type(Usee::Zero, 0)
+        notice(ok)
+      CODE
+    end
+
+    it "a type can reference a type alias from another module when other module has it declared in init.pp" do
+      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
+        include 'usee'
+        assert_type(Usee::One, 1)
+        notice(ok)
+      CODE
+    end
+
+    it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
+      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
+        assert_type(User::WithUseeZero, [0])
+        notice(ok)
+      CODE
+    end
+
+    it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
+      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
+        include 'usee'
+        assert_type(User::WithUseeOne, [1])
+        notice(ok)
+      CODE
+    end
+  end
 
   context 'when loading from a module without metadata' do
     it 'loads a ruby function with a qualified name' do
