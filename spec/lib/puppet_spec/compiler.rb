@@ -59,9 +59,8 @@ module PuppetSpec::Compiler
   end
 
   def eval_and_collect_notices(code, node = Puppet::Node.new('foonode'))
-    collect_notices('undef', node) do |compiler|
+    collect_notices(code, node) do |compiler|
       compiler.compile
-      Puppet::Pops::Parser::EvaluatingParser.new().evaluate_string(compiler.topscope, code)
     end
   end
 end
