@@ -571,9 +571,6 @@ class Lexer2
     end
 
     @selector.default = lambda do
-      # Assert that the start of the input is not a Byte Order Mark
-      assert_not_bom() if @scanner.pos == 0
-
       # In case of unicode spaces of various kinds that are captured by a regexp, but not by the
       # simpler case expression above (not worth handling those special cases with better performance).
       scn = @scanner
@@ -609,6 +606,7 @@ class Lexer2
 
   def lex_string(string, path='')
     initvars
+    assert_not_bom(string)
     @scanner = StringScanner.new(string)
     @locator = Locator.locator(string, path)
   end
@@ -621,6 +619,7 @@ class Lexer2
   #
   def lex_unquoted_string(string, locator, escapes, interpolate)
     initvars
+    assert_not_bom(string)
     @scanner = StringScanner.new(string)
     @locator = locator || Locator.locator(string, '')
     @lexing_context[:escapes] = escapes || UQ_ESCAPES
@@ -646,6 +645,7 @@ class Lexer2
   def lex_file(file)
     initvars
     contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ''
+    assert_not_bom(contents)
     @scanner = StringScanner.new(contents.freeze)
     @locator = Locator.locator(contents, file)
   end

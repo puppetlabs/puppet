@@ -705,26 +705,37 @@ describe 'Lexer2' do
 
   context 'when dealing with non UTF-8 and Byte Order Marks (BOMs)' do
       {
-      'UTF_8'      => "\xEF" "\xBB" "\xBF",
-      'UTF_16_1'   => "\xFE" "\xFF",
-      'UTF_16_2'   => "\xFF" "\xFE",
-      'UTF_32_1'   => "\x00" "\x00" "\xFE" "\xFF",
-      'UTF_32_2'   => "\xFF" "\xFE" "\x00" "\x00",
-      'UTF_1'      => "\xF7" "\x64" "\x4C",
-      'UTF_EBCDIC' => "\xDD" "\x73" "\x66" "\x73",
-      'SCSU'       => "\x0E" "\xFE" "\xFF",
-      'BOCU'       => "\xFB" "\xEE" "\x28",
-      'GB_18030'   => "\x84" "\x31" "\x95" "\x33",
-      }.each do |key, string|
-        it "errors on the byte order mark for #{key} '[#{string.bytes.map() {|b| '%X' % b}.join(' ')}]'" do
+      'UTF_8'      => [0xEF, 0xBB, 0xBF],
+      'UTF_16_1'   => [0xFE, 0xFF],
+      'UTF_16_2'   => [0xFF, 0xFE],
+      'UTF_32_1'   => [0x00, 0x00, 0xFE, 0xFF],
+      'UTF_32_2'   => [0xFF, 0xFE, 0x00, 0x00],
+      'UTF_1'      => [0xF7, 0x64, 0x4C],
+      'UTF_EBCDIC' => [0xDD, 0x73, 0x66, 0x73],
+      'SCSU'       => [0x0E, 0xFE, 0xFF],
+      'BOCU'       => [0xFB, 0xEE, 0x28],
+      'GB_18030'   => [0x84, 0x31, 0x95, 0x33]
+      }.each do |key, bytes|
+        it "errors on the byte order mark for #{key} '[#{bytes.map() {|b| '%X' % b}.join(' ')}]'" do
           format_name = key.split('_')[0,2].join('-')
-          bytes = "\\[#{string.bytes.map {|b| '%X' % b}.join(' ')}\\]"
+          bytes_str = "\\[#{bytes.map {|b| '%X' % b}.join(' ')}\\]"
           fix =  " - remove these from the puppet source"
           expect {
-            tokens_scanned_from(string)
+            tokens_scanned_from(bytes.pack('C*'))
           }.to raise_error(Puppet::ParseErrorWithIssue,
-            /Illegal #{format_name} .* at beginning of input: #{bytes}#{fix}/)
+            /Illegal #{format_name} .* at beginning of input: #{bytes_str}#{fix}/)
         end
-     end
+
+       it "can use a possibly 'broken' UTF-16 string without problems for #{key}" do
+         format_name = key.split('_')[0,2].join('-')
+         string = bytes.pack('C*').force_encoding('UTF-16')
+         bytes_str = "\\[#{string.bytes.map {|b| '%X' % b}.join(' ')}\\]"
+         fix =  " - remove these from the puppet source"
+         expect {
+           tokens_scanned_from(string)
+         }.to raise_error(Puppet::ParseErrorWithIssue,
+           /Illegal #{format_name} .* at beginning of input: #{bytes_str}#{fix}/)
+       end
+    end
   end
 end
