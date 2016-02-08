@@ -48,6 +48,15 @@ class PAnyType < TypedModelObject
   # Checks if _o_ is a type that is assignable to this type.
   # If _o_ is a `Class` then it is first converted to a type.
   # If _o_ is a Variant, then it is considered assignable when all its types are assignable
+  #
+  # The check for assignable must be guarded against self recursion since `self`, the given type _o_,
+  # or both, might be a `TypeAlias`. The initial caller of this method will typically never care
+  # about this and hence pass only the first argument, but as soon as a check of a contained type
+  # encounters a `TypeAlias`, then a `RecursionGuard` instance is created and passed on in all
+  # subsequent calls. The recursion is allowed to continue until self recursion has been detected in
+  # both `self` and in the given type. At that point the given type is considered to be assignable
+  # to `self` since all checks up to that point were positive.
+  #
   # @param o [Class,PAnyType] the class or type to test
   # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
   # @return [Boolean] `true` when _o_ is assignable to this type
@@ -59,6 +68,20 @@ class PAnyType < TypedModelObject
       _assignable?(TypeCalculator.singleton.type(o), guard)
     when PUnitType
       true
+    when PTypeAlias
+      # An alias may contain self recursive constructs.
+      if o.self_recursion?
+        guard ||= RecursionGuard.new
+        if guard.add_that(o) == 3
+          # Recursion detected both in self and other. This means that other is assignable
+          # to self. This point would not have been reached otherwise
+          true
+        else
+          assignable?(o.resolved_type, guard)
+        end
+      else
+        assignable?(o.resolved_type, guard)
+      end
     when PVariantType
       # Assignable if all contained types are assignable
       o.types.all? { |vt| assignable?(vt, guard) }
@@ -1910,6 +1933,130 @@ class PTypeReference < PAnyType
   end
 
   DEFAULT = PTypeReference.new('UnresolvedReference')
+end
+
+# Describes a named alias for another Type.
+# The alias is created with a name and an unresolved type expression. The type expression may
+# in turn contain other aliases (including the alias that contains it) which means that an alias
+# might contain self recursion. Whether or not that is the case is computed and remembered when the alias
+# is resolved since guarding against self recursive constructs is relatively expensive.
+#
+class PTypeAlias < PAnyType
+  attr_reader :name
+
+  # @param name [String] The name of the type
+  # @param type_expr [Model::PopsObject] The expression that describes the aliased type
+  # @param resolved_type [PAnyType] the resolve type (only used for the DEFAULT initialization)
+  def initialize(name, type_expr, resolved_type = nil)
+    @name = name
+    @type_expr = type_expr
+    @resolved_type = resolved_type
+    @self_recursion = false
+  end
+
+  # Returns the resolved type. The type must have been resolved by a call prior to calls to this
+  # method or an error will be raised.
+  #
+  # @return [PAnyType] The resolved type of this alias.
+  # @raise [Puppet::Error] unless the type has been resolved prior to calling this method
+  def resolved_type
+    raise Puppet::Error, "Reference to unresolved type #{@name}" unless @resolved_type
+    @resolved_type
+  end
+
+  def callable_args?(callable, guard)
+    guarded_recursion(guard, false) { |g| resolved_type.callable_args?(callable, g) }
+  end
+
+  def kind_of_callable?(optional=true, guard = nil)
+    guarded_recursion(guard, false) { |g| resolved_type.kind_of_callable?(optional, g) }
+  end
+
+  def instance?(o)
+    # No value can ever be recursive so no guard is needed here
+    resolved_type.instance?(o)
+  end
+
+  def iterable?(guard = nil)
+    guarded_recursion(guard, false) { |g| resolved_type.iterable?(g) }
+  end
+
+  def iterable_type(guard = nil)
+    guarded_recursion(guard, nil) { |g| resolved_type.iterable_type(g) }
+  end
+
+  def hash
+    @name.hash
+  end
+
+  # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
+  # interpret the contained expression and the resolved type is remembered. This method also
+  # checks and remembers if the resolve type contains self recursion.
+  #
+  # @return [PTypeAlias] the receiver of the call, i.e. `self`
+  # @api private
+  def resolve(type_parser, scope)
+    if @resolved_type.nil?
+      # resolved to PTypeReference::DEFAULT during resolve to avoid endless recursion
+      @resolved_type = PTypeReference::DEFAULT
+      @self_recursion = true # assumed while it being found out below
+      begin
+        @resolved_type = type_parser.interpret(@type_expr, scope)
+
+        # Find out if this type is recursive. A recursive type has performance implications
+        # on several methods and this knowledge is used to avoid that for non-recursive
+        # types.
+        guard = RecursionGuard.new
+        accept(NoopTypeAcceptor::INSTANCE, guard)
+        @self_recursion = guard.recursive_this?(self)
+      rescue
+        @resolved_type = nil
+        raise
+      end
+    end
+    self
+  end
+
+  def ==(o)
+    super && o.name == @name
+  end
+
+  def accept(visitor, guard)
+    guarded_recursion(guard, nil) do |g|
+      super
+      resolved_type.accept(visitor, g)
+    end
+  end
+
+  def self_recursion?
+    @self_recursion
+  end
+
+  protected
+
+  def _assignable?(o, guard)
+    guard ||= RecursionGuard.new
+    if guard.add_this(self) == 3
+      # Recursion detected both in self and other. This means that other is assignable
+      # to self. This point would not have been reached otherwise
+      true
+    else
+      resolved_type.assignable?(o, guard)
+    end
+  end
+
+  private
+
+  def guarded_recursion(guard, dflt)
+    if @self_recursion
+      guard ||= RecursionGuard.new
+      (guard.add_this(self) & 1) == 0 ? yield(guard) : dflt
+    else
+      yield(guard)
+    end
+  end
+
+  DEFAULT = PTypeAlias.new('UnresolvedAlias', nil, PTypeReference::DEFAULT)
 end
 end
 end

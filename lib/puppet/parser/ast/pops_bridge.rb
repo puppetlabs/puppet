@@ -95,8 +95,12 @@ class Puppet::Parser::AST::PopsBridge
         when Puppet::Pops::Model::SiteDefinition
             instantiate_SiteDefinition(d, modname)
         when Puppet::Pops::Model::FunctionDefinition
-          instantiate_FunctionDefinition(d, modname)
           # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
+          instantiate_FunctionDefinition(d, modname)
+          next
+        when Puppet::Pops::Model::TypeAlias
+          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
+          instantiate_TypeAlias(d, modname)
           next
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
@@ -242,33 +246,53 @@ class Puppet::Parser::AST::PopsBridge
     # This is for 4x evaluator/loader
     #
     def instantiate_FunctionDefinition(function_definition, modname)
-      loaders = (Puppet.lookup(:loaders) { nil })
-      unless loaders
-        raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing - cannot define any functions"
-      end
-      loader =
-      if modname.nil? || modname == ""
-        # TODO : Later when functions can be private, a decision is needed regarding what that means.
-        #        A private environment loader could be used for logic outside of modules, then only that logic
-        #        would see the function.
-        #
-        # Use the private loader, this function may see the environment's dependencies (currently, all modules)
-        loaders.private_environment_loader()
-      else
-        # TODO : Later check if function is private, and then add it to
-        #        private_loader_for_module
-        #
-        loaders.public_loader_for_module(modname)
-      end
-      unless loader
-        raise Puppet::ParseError, "Internal Error: did not find public loader for module: '#{modname}'"
-      end
+      loader = module_loader(modname)
 
-      # Instantiate Function, and store it in the environment loader
+      # Instantiate Function, and store it in the loader
       typed_name, f = Puppet::Pops::Loader::PuppetFunctionInstantiator.create_from_model(function_definition, loader)
       loader.set_entry(typed_name, f, Puppet::Pops::Adapters::SourcePosAdapter.adapt(function_definition).to_uri)
 
       nil # do not want the function to inadvertently leak into 3x
+    end
+
+    # Propagates a found TypeAlias to the appropriate loader.
+    # This is for 4x evaluator/loader
+    #
+    def instantiate_TypeAlias(type_alias, modname)
+      loader = module_loader(modname)
+
+      # Bind the type alias to the loader using the alias
+      typed_name, t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
+      loader.set_entry(typed_name, t, Puppet::Pops::Adapters::SourcePosAdapter.adapt(type_alias).to_uri)
+
+      nil # do not want the type alias to inadvertently leak into 3x
+    end
+
+    # Finds the appropriate loader for the given `module_name`, or for the environment in case `module_name`
+    # is `nil` or empty.
+    # @param module_name [String] the name of the module
+    # @return [Puppet::Pops::Loader::Loader]
+    def module_loader(module_name)
+      loaders = Puppet.lookup(:loaders) { nil }
+      unless loaders
+        raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing - cannot define any functions"
+      end
+      loader =
+        if module_name.nil? || module_name == ""
+          # TODO : Later when functions and types can be private, a decision is needed regarding what that means.
+          #        A private environment loader could be used for logic outside of modules, then only that logic
+          #        would see the function.
+          #
+          # Use the private loader, this function may see the environment's dependencies (currently, all modules)
+          loaders.private_environment_loader()
+        else
+          # TODO : Later check if function is private, and then add it to
+          #        private_loader_for_module
+          #
+          loaders.public_loader_for_module(module_name)
+        end
+      raise Puppet::ParseError, "Internal Error: did not find public loader for module: '#{module_name}'" unless loader
+      loader
     end
 
     def code()

@@ -116,7 +116,8 @@ class TypeParser
 
   # @api private
   def interpret_QualifiedReference(name_ast, scope)
-    case name_ast.value
+    name = name_ast.value
+    case name
     when 'integer'
       TypeFactory.integer
 
@@ -206,7 +207,16 @@ class TypeParser
       TypeFactory.all_callables
 
     else
-      TypeFactory.resource(name_ast.value)
+      if scope.nil?
+        TypeFactory.type_reference(name.capitalize)
+      else
+        loader = Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(name_ast, scope)
+        unless loader.nil?
+          type = loader.load(:type, name)
+          type = type.resolve(self, scope) unless type.nil?
+        end
+        type || TypeFactory.resource(name)
+      end
     end
   end
 
@@ -450,12 +460,18 @@ class TypeParser
       TypeFactory.runtime(*parameters)
 
     else
-      # It is a resource such a File['/tmp/foo']
       type_name = parameterized_ast.left_expr.value
-      if parameters.size != 1
-        raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
+      if scope.nil?
+        # Will be impossible to tell from a typed alias (when implemented) so a type reference
+        # is returned here for now
+        TypeFactory.type_reference(type_name.capitalize, parameters)
+      else
+        # It is a resource such a File['/tmp/foo']
+       if parameters.size != 1
+          raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
+        end
+        TypeFactory.resource(type_name, parameters[0])
       end
-      TypeFactory.resource(type_name, parameters[0])
     end
   end
 

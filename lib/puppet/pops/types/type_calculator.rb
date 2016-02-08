@@ -1035,6 +1035,11 @@ class TypeCalculator
   end
 
   # @api private
+  def string_PTypeAlias(t)
+    t.name
+  end
+
+  # @api private
   def string_PTypeReference(t)
     if t.parameters.empty?
       t.name

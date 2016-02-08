@@ -40,6 +40,11 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.variant(*types)
   end
 
+  def type_alias_t(name, type_string)
+    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string).current
+    Puppet::Pops::Types::TypeFactory.type_alias(name, type_expr)
+  end
+
   def type_reference_t(name, *args)
     Puppet::Pops::Types::TypeFactory.type_reference(name, args)
   end
@@ -142,6 +147,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::POptionalType,
         Puppet::Pops::Types::PDefaultType,
         Puppet::Pops::Types::PTypeReference,
+        Puppet::Pops::Types::PTypeAlias,
       ]
     end
 
@@ -1342,6 +1348,65 @@ describe 'The type calculator' do
       expect(calculator.assignable?(r1, r2)).to eq(false)
     end
 
+    context 'for TypeAlias, such that' do
+      let!(:parser) { Puppet::Pops::Types::TypeParser.new }
+
+      it 'it is assignable to the type that it is an alias for' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.assignable?(integer_t, t)).to be_truthy
+      end
+
+      it 'the type that it is an alias for is assignable to it' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.assignable?(t, integer_t)).to be_truthy
+      end
+
+      it 'a recursive alias can be assignable from a conformant type with any depth' do
+        scope = mock
+
+        t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+
+        t.resolve(parser, scope)
+        expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
+      end
+
+
+      it 'similar recursive aliases are assignable' do
+        scope = mock
+
+        t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree1]]')
+        t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree2]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree1').returns t1
+        loader.expects(:load).with(:type, 'tree2').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        t2.resolve(parser, scope)
+        expect(calculator.assignable?(t1, t2)).to be_truthy
+      end
+
+      it 'crossing recursive aliases are assignable' do
+        scope = mock
+
+        t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
+        t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree1').returns t1
+        loader.expects(:load).with(:type, 'tree2').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        t2.resolve(parser, scope)
+        expect(calculator.assignable?(t1, t2)).to be_truthy
+      end
+    end
   end
 
   context 'when testing if x is instance of type t' do
@@ -1608,6 +1673,48 @@ describe 'The type calculator' do
         expect(calculator.instance?(all_callables_t, f)).to be_truthy
         # Callable[String]
         expect(calculator.instance?(callable_t(String), f)).to be_truthy
+      end
+    end
+
+    context 'and t is a TypeAlias' do
+      let!(:parser) { Puppet::Pops::Types::TypeParser.new }
+
+      it 'should consider x an instance of the aliased simple type' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.instance?(t, 15)).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased parameterized type' do
+        t = type_alias_t('Alias', 'Integer[0,20]').resolve(parser, nil)
+        expect(calculator.instance?(t, 15)).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased type that uses self recursion' do
+        scope = mock
+
+        t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+
+        t.resolve(parser, scope)
+        expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
+        scope = mock
+
+        t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
+        t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t1
+        loader.expects(:load).with(:type, 'othertree').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
     end
   end
@@ -1891,6 +1998,11 @@ describe 'The type calculator' do
     it "should yield the name and arguments of an parameterized type reference" do
       t = type_reference_t('What', undef_t, string_t)
       expect(calculator.string(t)).to eq('What[Undef, String]')
+    end
+
+    it "should yield the name of a type alias" do
+      t = type_alias_t('Alias', 'Integer')
+      expect(calculator.string(t)).to eq('Alias')
     end
   end
 

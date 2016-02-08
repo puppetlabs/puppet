@@ -14,5 +14,12 @@ module TypeAcceptor
   def visit(type, guard)
   end
 end
+
+# An acceptor that does nothing
+class NoopTypeAcceptor
+  include TypeAcceptor
+
+  INSTANCE = NoopTypeAcceptor.new
+end
 end
 end
