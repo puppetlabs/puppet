@@ -172,7 +172,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
         show_filename = templates.count > 1
         dumps = templates.each do |file|
-          buffer.print dump_parse(File.read(file), file, options, show_filename)
+          buffer.print dump_parse(Puppet::FileSystem.read(file, :encoding => 'utf-8'), file, options, show_filename)
         end
 
         if !missing_files.empty?

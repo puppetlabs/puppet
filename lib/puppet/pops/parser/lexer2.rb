@@ -640,7 +640,7 @@ class Puppet::Pops::Parser::Lexer2
   #
   def lex_file(file)
     initvars
-    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ''
+    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file, :encoding => 'utf-8') : ''
     @scanner = StringScanner.new(contents.freeze)
     @locator = Puppet::Pops::Parser::Locator.locator(contents, file)
   end

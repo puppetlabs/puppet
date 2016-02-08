@@ -20,7 +20,7 @@ describe Puppet::Util::ResourceTemplate do
   describe "when evaluating" do
     before do
       Puppet::FileSystem.stubs(:exist?).returns true
-      File.stubs(:read).returns "eh"
+      Puppet::FileSystem.stubs(:read).returns "eh"
 
       @template = stub 'template', :result => nil
       ERB.stubs(:new).returns @template
@@ -38,7 +38,7 @@ describe Puppet::Util::ResourceTemplate do
     end
 
     it "should create a template instance with the contents of the file" do
-      File.expects(:read).with("/my/template").returns "yay"
+      Puppet::FileSystem.expects(:read).with("/my/template", :encoding => 'utf-8').returns "yay"
       ERB.expects(:new).with("yay", 0, "-").returns(@template)
 
       @wrapper.stubs :set_resource_variables
