@@ -5,6 +5,7 @@ require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
 require 'puppet/pops/evaluator/closure'
 require 'puppet/pops/evaluator/external_syntax_support'
+require 'puppet/pops/types/iterable'
 
 module Puppet::Pops
 module Evaluator
@@ -296,6 +297,8 @@ class EvaluatorImpl
     when Array
       candidate
     when Hash
+      candidate.to_a
+    when Puppet::Pops::Types::Iterator
       candidate.to_a
     else
       # turns anything else into an array (so result can be unfolded)
