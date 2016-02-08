@@ -1,6 +1,7 @@
 require_relative 'iterable'
 require_relative 'enumeration'
 require_relative 'recursion_guard'
+require_relative 'type_acceptor'
 require_relative 'type_asserter'
 require_relative 'type_assertion_error'
 require_relative 'type_calculator'
@@ -37,6 +38,13 @@ end
 # @api public
 #
 class PAnyType < TypedModelObject
+  # Accept a visitor that will be sent the message `visit`, once with `self` as the
+  # argument. The visitor will then visit all types that this type contains.
+  #
+  def accept(visitor, guard)
+    visitor.visit(self, guard)
+  end
+
   # Checks if _o_ is a type that is assignable to this type.
   # If _o_ is a `Class` then it is first converted to a type.
   # If _o_ is a Variant, then it is considered assignable when all its types are assignable
@@ -226,6 +234,11 @@ class PType < PAnyType
     @type = type
   end
 
+  def accept(visitor, guard)
+    super
+    @type.accept(visitor, guard) unless @type.nil?
+  end
+
   def instance?(o)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o)
@@ -296,6 +309,11 @@ class PNotUndefType < PAnyType
 
   def initialize(type = nil)
     @type = type.class == PAnyType ? nil : type
+  end
+
+  def accept(visitor, guard)
+    super
+    @type.accept(visitor, guard) unless @type.nil?
   end
 
   def instance?(o)
@@ -630,6 +648,12 @@ class PCollectionType < PAnyType
     @size_type = size_type
   end
 
+  def accept(visitor, guard)
+    super
+    @size_type.accept(visitor, guard) unless @size_type.nil?
+    @element_type.accept(visitor, guard) unless @element_type.nil?
+  end
+
   def generalize
     @element_type.nil? ? DEFAULT : PCollectionType.new(element_type.generalize, nil)
   end
@@ -692,6 +716,11 @@ class PIterableType < PAnyType
 
   def initialize(type)
     @element_type = type
+  end
+
+  def accept(visitor, guard)
+    super
+    @element_type.accept(visitor, guard) unless @element_type.nil?
   end
 
   def instance?(o)
@@ -757,6 +786,11 @@ class PIteratorType < PAnyType
     @element_type = type
   end
 
+  def accept(visitor, guard)
+    super
+    @element_type.accept(visitor, guard) unless @element_type.nil?
+  end
+
   def instance?(o)
     o.is_a?(Iterable) && (@element_type.nil? || @element_type.assignable?(o.element_type))
   end
@@ -799,6 +833,11 @@ class PStringType < PScalarType
   def initialize(size_type, values = [])
     @size_type = size_type
     @values = values.sort.freeze
+  end
+
+  def accept(visitor, guard)
+    super
+    @size_type.accept(visitor, guard) unless @size_type.nil?
   end
 
   def generalize
@@ -926,6 +965,11 @@ class PPatternType < PScalarType
     @patterns = patterns.freeze
   end
 
+  def accept(visitor, guard)
+    super
+    @patterns.each { |p| p.accept(visitor, guard) }
+  end
+
   def hash
     @patterns.hash
   end
@@ -988,6 +1032,11 @@ end
 class PStructElement < TypedModelObject
   attr_accessor :key_type, :value_type
 
+  def accept(visitor, guard)
+    @key_type.accept(visitor, guard)
+    @value_type.accept(visitor, guard)
+  end
+
   def hash
     value_type.hash * 31 + key_type.hash
   end
@@ -1023,6 +1072,11 @@ class PStructType < PAnyType
 
   def initialize(elements)
     @elements = elements.sort.freeze
+  end
+
+  def accept(visitor, guard)
+    super
+    @elements.each { |elem| elem.accept(visitor, guard) }
   end
 
   def each
@@ -1135,6 +1189,12 @@ class PTupleType < PAnyType
   attr_reader :size_type
 
   attr_reader :types
+
+  def accept(visitor, guard)
+    super
+    @size_type.accept(visitor, guard) unless @size_type.nil?
+    @types.each { |elem| elem.accept(visitor, guard) }
+  end
 
   # @api private
   def callable_args?(callable_t, guard)
@@ -1302,6 +1362,12 @@ class PCallableType < PAnyType
     @block_type = block_type
   end
 
+  def accept(visitor, guard)
+    super
+    @param_types.accept(visitor, guard) unless @param_types.nil?
+    @block_type.accept(visitor, guard) unless @block_type.nil?
+  end
+
   def generalize
     return self if self == DEFAULT
     params_t = @param_types.nil? ? nil : @param_types.generalize
@@ -1459,6 +1525,11 @@ class PHashType < PCollectionType
     @key_type = key_type
   end
 
+  def accept(visitor, guard)
+    super
+    @key_type.accept(visitor, guard) unless @key_type.nil?
+  end
+
   def generalize
     if self == DEFAULT || self == EMPTY
       self
@@ -1549,6 +1620,11 @@ class PVariantType < PAnyType
   # @param types [Array[PAnyType]] the variants
   def initialize(types)
     @types = types.uniq.freeze
+  end
+
+  def accept(visitor, guard)
+    super
+    @types.each { |t| t.accept(visitor, guard) }
   end
 
   def each
@@ -1759,6 +1835,11 @@ class POptionalType < PAnyType
 
   def initialize(optional_type)
     @optional_type = optional_type
+  end
+
+  def accept(visitor, guard)
+    super
+    @optional_type.accept(visitor, guard) unless @optional_type.nil?
   end
 
   def generalize
