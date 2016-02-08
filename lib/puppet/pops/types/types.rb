@@ -1780,6 +1780,40 @@ module Types
       end
     end
   end
+
+  class PTypeReference < PAnyType
+    attr_reader :name, :parameters
+
+    def initialize(name, parameters = nil)
+      @name = name
+      @parameters = parameters.nil? ? [] : parameters
+    end
+
+    def callable?(args)
+      false
+    end
+
+    def instance?(o)
+      false
+    end
+
+    def hash
+      @name.hash * 31 + @parameters.hash
+    end
+
+    def ==(o)
+      super && o.name == @name && o.parameters == @parameters
+    end
+
+    protected
+
+    def _assignable?(o)
+      # A type must be assignable to itself or a lot of unit tests will break
+      o == self
+    end
+
+    DEFAULT = PTypeReference.new('UnresolvedReference')
+  end
 end
 end
 

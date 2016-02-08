@@ -1020,6 +1020,7 @@ class TypeCalculator
     end
   end
 
+  # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
     if optional_type.nil?
@@ -1030,6 +1031,16 @@ class TypeCalculator
       else
         "Optional[#{string(optional_type)}]"
       end
+    end
+  end
+
+  # @api private
+  def string_PTypeReference(t)
+    if t.parameters.empty?
+      t.name
+    else
+      params_string = t.parameters.map {|p| string(p) }.join(', ')
+      "#{t.name}[#{params_string}]"
     end
   end
 

@@ -40,6 +40,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.variant(*types)
   end
 
+  def type_reference_t(name, *args)
+    Puppet::Pops::Types::TypeFactory.type_reference(name, args)
+  end
+
   def integer_t
     Puppet::Pops::Types::TypeFactory.integer
   end
@@ -137,6 +141,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PType,
         Puppet::Pops::Types::POptionalType,
         Puppet::Pops::Types::PDefaultType,
+        Puppet::Pops::Types::PTypeReference,
       ]
     end
 
@@ -1876,6 +1881,16 @@ describe 'The type calculator' do
     it "should yield 'NotUndef['string']' for a PNotUndefType['string']" do
       t = not_undef_t('hey')
       expect(calculator.string(t)).to eq("NotUndef['hey']")
+    end
+
+    it "should yield the name of an unparameterized type reference" do
+      t = type_reference_t('What')
+      expect(calculator.string(t)).to eq('What')
+    end
+
+    it "should yield the name and arguments of an parameterized type reference" do
+      t = type_reference_t('What', undef_t, string_t)
+      expect(calculator.string(t)).to eq('What[Undef, String]')
     end
   end
 
