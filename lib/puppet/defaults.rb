@@ -790,8 +790,9 @@ EOT
     :supported_checksum_types => {
       :default => ['md5', 'sha256'],
       :type    => :array,
-      :desc    => 'Checksum types supported by this agent for use in file resources of a static
-        catalog. Valid types are md5, md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
+      :desc    => 'Checksum types supported by this agent for use in file resources of a
+                   static catalog. Values must be comma-separated. Valid types are md5,
+                   md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
       :hook    => proc do |value|
         values = munge(value)
         valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
