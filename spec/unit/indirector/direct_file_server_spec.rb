@@ -34,6 +34,7 @@ describe Puppet::Indirector::DirectFileServer do
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
       mycontent = stub 'content', :collect => nil
       mycontent.expects(:collect)
+      mycontent.expects(:environment=).with(@request.environment).at_most(1)
       @model.expects(:new).returns(mycontent)
       expect(@server.find(@request)).to eq(mycontent)
     end
@@ -44,6 +45,7 @@ describe Puppet::Indirector::DirectFileServer do
     before do
       @data = mock 'content'
       @data.stubs(:collect)
+      @data.expects(:environment=).with(@request.environment).at_most(1)
       Puppet::FileSystem.expects(:exist?).with(@path).returns true
     end
 

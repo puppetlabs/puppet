@@ -12,6 +12,9 @@ module Puppet::FileServing::TerminusHelper
     result.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
     result.source_permissions = request.options[:source_permissions] if request.options[:source_permissions]
 
+    result.environment = request.environment
+    result.static_catalog = request.options[:static_catalog] if request.options[:static_catalog]
+
     result.collect
 
     result

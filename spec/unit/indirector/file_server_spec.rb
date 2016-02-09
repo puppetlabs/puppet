@@ -32,6 +32,7 @@ describe Puppet::Indirector::FileServer do
     before do
       @mount = stub 'mount', :find => nil
       @instance = stub('instance', :links= => nil, :collect => nil)
+      @instance.expects(:environment=).with(@request.environment).at_most(1)
     end
 
     it "should use the configuration to find the mount and relative path" do
@@ -176,9 +177,11 @@ describe Puppet::Indirector::FileServer do
       Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one", "two" => "/two")
 
       one = stub 'one', :collect => nil
+      one.expects(:environment=).with(@request.environment)
       @model.expects(:new).with("/one", :relative_path => "one").returns one
 
       two = stub 'two', :collect => nil
+      two.expects(:environment=).with(@request.environment)
       @model.expects(:new).with("/two", :relative_path => "two").returns two
 
       # order can't be guaranteed
@@ -199,6 +202,7 @@ describe Puppet::Indirector::FileServer do
 
       one = stub 'one', :collect => nil
       @model.expects(:new).with("/one", :relative_path => "one").returns one
+      one.expects(:environment=).with(@request.environment)
       one.expects(:links=).with true
 
       @request.options[:links] = true
@@ -218,6 +222,7 @@ describe Puppet::Indirector::FileServer do
       one = stub 'one', :collect => nil
       @model.expects(:new).with("/one", :relative_path => "one").returns one
 
+      one.expects(:environment=)
       one.expects(:checksum_type=).with :checksum
       @request.options[:checksum_type] = :checksum
 
@@ -235,6 +240,7 @@ describe Puppet::Indirector::FileServer do
 
       one = mock 'one'
       @model.expects(:new).with("/one", :relative_path => "one").returns one
+      one.expects(:environment=).at_most(1)
       one.expects(:collect)
 
       @file_server.search(@request)
