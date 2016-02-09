@@ -122,8 +122,8 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def self.read(path)
-    @impl.read(assert_path(path))
+  def self.read(path, opts = {})
+    @impl.read(assert_path(path), opts)
   end
 
   # Read a file keeping the original line endings intact. This

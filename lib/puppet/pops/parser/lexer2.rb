@@ -644,7 +644,7 @@ class Lexer2
   #
   def lex_file(file)
     initvars
-    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ''
+    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file, :encoding => 'utf-8') : ''
     assert_not_bom(contents)
     @scanner = StringScanner.new(contents.freeze)
     @locator = Locator.locator(contents, file)

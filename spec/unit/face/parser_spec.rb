@@ -98,6 +98,16 @@ describe Puppet::Face[:parser, :current] do
       expect(@logs[0].message).to eq("Syntax error at end of file")
       expect(@logs[0].level).to eq(:err)
     end
+
+    it "logs an error if the input begins with a UTF-8 BOM (Byte Order Mark)" do
+      utf8_bom_manifest = file_containing('utf8_bom.pp', "\uFEFFnotice hi")
+
+      output = parser.dump(utf8_bom_manifest)
+
+      expect(output).to eq("")
+      expect(@logs[1].message).to eq("Syntax error at '' at line 1:1")
+      expect(@logs[1].level).to eq(:err)
+    end
   end
 
   def from_an_interactive_terminal

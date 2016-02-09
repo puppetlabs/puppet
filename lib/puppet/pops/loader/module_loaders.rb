@@ -233,7 +233,7 @@ module ModuleLoaders
     end
 
     def get_contents(effective_path)
-      Puppet::FileSystem.read(effective_path)
+      Puppet::FileSystem.read(effective_path, :encoding => 'utf-8')
     end
   end
 

@@ -739,3 +739,41 @@ describe 'Lexer2' do
     end
   end
 end
+
+describe Puppet::Pops::Parser::Lexer2 do
+
+  include PuppetSpec::Files
+
+  # First line of Rune version of Rune poem at http://www.columbia.edu/~fdc/utf8/
+  # characters chosen since they will not parse on Windows with codepage 437 or 1252
+  # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
+  # ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
+  let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+
+  context 'when lexing files from disk' do
+    it 'should always read files as UTF-8' do
+      if Puppet.features.microsoft_windows? && Encoding.default_external == Encoding::UTF_8
+        raise 'This test must be run in a codepage other than 65001 to validate behavior'
+      end
+
+      manifest_code = "notify { '#{rune_utf8}': }"
+      manifest = file_containing('manifest.pp', manifest_code)
+      lexed_file = described_class.new.lex_file(manifest)
+
+      expect(lexed_file.string.encoding).to eq(Encoding::UTF_8)
+      expect(lexed_file.string).to eq(manifest_code)
+    end
+
+    it 'currently preserves the UTF-8 BOM (Byte Order Mark) when lexing files' do
+      bom = "\uFEFF"
+
+      manifest_code = "#{bom}notify { '#{rune_utf8}': }"
+      manifest = file_containing('manifest.pp', manifest_code)
+      lexed_file = described_class.new.lex_file(manifest)
+
+      expect(lexed_file.string.encoding).to eq(Encoding::UTF_8)
+      expect(lexed_file.string).to eq(manifest_code)
+    end
+  end
+
+end
