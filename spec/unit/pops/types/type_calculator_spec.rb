@@ -97,6 +97,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.optional(t)
   end
 
+  def type_t(t)
+    Puppet::Pops::Types::TypeFactory.type_type(t)
+  end
+
   def not_undef_t(t = nil)
     Puppet::Pops::Types::TypeFactory.not_undef(t)
   end
@@ -1435,6 +1439,62 @@ describe 'The type calculator' do
         t1.resolve(parser, scope)
         t2.resolve(parser, scope)
         expect(calculator.assignable?(t1, t2)).to be_truthy
+      end
+
+      it 'Type[T] is assignable to Type[AT] when AT is an alias for T' do
+        scope = mock
+
+        ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveinteger').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(range_t(0, :default))
+        t2 = parser.parse('Type[PositiveInteger]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[T] is assignable to AT when AT is an alias for Type[T]' do
+        scope = mock
+
+        ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(range_t(0, :default))
+        t2 = parser.parse('PositiveIntegerType', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[Type[T]] is assignable to Type[Type[AT]] when AT is an alias for T' do
+        scope = mock
+
+        ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveinteger').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(type_t(range_t(0, :default)))
+        t2 = parser.parse('Type[Type[PositiveInteger]]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[Type[T]] is assignable to Type[AT] when AT is an alias for Type[T]' do
+        scope = mock
+
+        ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(type_t(range_t(0, :default)))
+        t2 = parser.parse('Type[PositiveIntegerType]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
       end
     end
   end
