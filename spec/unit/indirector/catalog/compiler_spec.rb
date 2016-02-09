@@ -413,12 +413,14 @@ describe Puppet::Resource::Catalog::Compiler do
         it "sets checksum and checksum_value for resources with puppet:// source URIs" do
           catalog = build_catalog(node, num_resources, ['puppet:///modules/mymodule/config_file.txt'])
           catalog.resources.select {|r| r.type == 'File'}.each do |r|
+            source_path = File.join(Puppet[:environmentpath], catalog.environment, "modules/mymodule/files/config_file.txt")
             ral = r.to_ral
             r.expects(:to_ral).returns(ral)
 
             metadata = stub 'metadata'
             metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
             metadata.stubs(:ftype).returns("file")
+            metadata.stubs(:full_path).returns(source_path)
 
             source = stub 'source'
             source.stubs(:metadata).returns(metadata)
@@ -437,12 +439,14 @@ describe Puppet::Resource::Catalog::Compiler do
         catalog = build_catalog(node, 1, ['puppet:///modules/mymodule/config_file_link.txt'], {:ensure => 'link', :links => 'manage'})
 
         catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          source_path = File.join(Puppet[:environmentpath], catalog.environment, "modules/mymodule/files/config_file.txt")
           ral = r.to_ral
           r.expects(:to_ral).returns(ral)
 
           metadata = stub 'metadata'
           metadata.stubs(:ftype).returns('link')
           metadata.stubs(:destination).returns('/tmp/some/absolute/path')
+          metadata.stubs(:full_path).returns(source_path)
 
           source = stub 'source'
           source.stubs(:metadata).returns(metadata)
@@ -462,12 +466,14 @@ describe Puppet::Resource::Catalog::Compiler do
         catalog = build_catalog(node, 1, ['puppet:///modules/mymodule/config_file_link.txt'], {:ensure => 'link', :links => 'follow'})
 
         catalog.resources.select {|r| r.type == 'File'}.each do |r|
+          source_path = File.join(Puppet[:environmentpath], catalog.environment, "modules/mymodule/files/config_file.txt")
           ral = r.to_ral
           r.expects(:to_ral).returns(ral)
 
           metadata = stub 'metadata'
           metadata.stubs(:ftype).returns('file')
           metadata.stubs(:checksum).returns('{md5}b1946ac92492d2347c6235b4d2611184')
+          metadata.stubs(:full_path).returns(source_path)
 
           source = stub 'source'
           source.stubs(:metadata).returns(metadata)
@@ -514,6 +520,27 @@ describe Puppet::Resource::Catalog::Compiler do
         r.expects(:to_ral).never
       end
       expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+    end
+
+    it "skips resources with a source outside the environment path" do
+      catalog = build_catalog(node, num_resources, ['puppet:///modules/mymodule/config_file.txt'])
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        source_path = File.join(Puppet[:codedir], "modules/mymodule/files/config_file.txt")
+        ral = r.to_ral
+        r.expects(:to_ral).returns(ral)
+
+        metadata = stub 'metadata'
+        metadata.stubs(:ftype).returns("file")
+        metadata.stubs(:full_path).returns(source_path)
+
+        source = stub 'source'
+        source.stubs(:metadata).returns(metadata)
+
+        ral.expects(:parameter).with(:source).returns(source)
+      end
+
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      expect(catalog.resources.select {|r| r.type == 'File' && r[:checksum_value] == nil}.size).to eq(num_resources)
     end
   end
 end

@@ -114,6 +114,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
+    environment_path = File.join(Puppet[:environmentpath], catalog.environment, "")
     catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
       next if resource[:ensure] == 'absent'
 
@@ -131,7 +132,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       else
         metadata = file.parameter(:source).metadata
         raise "Could not get metadata for #{resource[:source]}" unless metadata
-        replace_metadata(resource, metadata)
+        if metadata.full_path.start_with? environment_path
+          # If the file is in the environment directory, we can safely inline
+          replace_metadata(resource, metadata)
+        end
       end
     end
 
