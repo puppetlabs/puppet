@@ -606,6 +606,7 @@ class Lexer2
 
   def lex_string(string, path='')
     initvars
+    assert_not_bom(string)
     @scanner = StringScanner.new(string)
     @locator = Locator.locator(string, path)
   end
@@ -618,6 +619,7 @@ class Lexer2
   #
   def lex_unquoted_string(string, locator, escapes, interpolate)
     initvars
+    assert_not_bom(string)
     @scanner = StringScanner.new(string)
     @locator = locator || Locator.locator(string, '')
     @lexing_context[:escapes] = escapes || UQ_ESCAPES
@@ -643,6 +645,7 @@ class Lexer2
   def lex_file(file)
     initvars
     contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ''
+    assert_not_bom(contents)
     @scanner = StringScanner.new(contents.freeze)
     @locator = Locator.locator(contents, file)
   end

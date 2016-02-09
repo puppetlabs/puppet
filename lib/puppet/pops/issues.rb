@@ -699,5 +699,9 @@ module Issues
   HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
     "An escape char for @() may only appear once. Got '#{escapes.join(', ')}'"
   end
+
+  ILLEGAL_BOM = hard_issue :ILLEGAL_BOM, :format_name, :bytes do
+    "Illegal #{format_name} Byte Order mark at beginning of input: #{bytes} - remove these from the puppet source"
+  end
 end
 end

@@ -1,5 +1,9 @@
+
 module Puppet::Pops
 module Parser
+
+require 'puppet/util/multi_match'
+
 # This is an integral part of the Lexer. It is broken out into a separate module
 # for maintainability of the code, and making the various parts of the lexer focused.
 #
@@ -139,6 +143,76 @@ module LexerSupport
     # TODO: Make this comparable for testing
     # vs symbolic, vs array with symbol and non hash, array with symbol and hash)
     #
+  end
+
+
+  MM = Puppet::Util::MultiMatch
+  MM_ANY = MM::NOT_NIL
+
+  BOM_UTF_8      = MM.new(0xEF, 0xBB, 0xBF,        MM_ANY)
+  BOM_UTF_16_1   = MM.new(0xFE, 0xFF,              MM_ANY, MM_ANY)
+  BOM_UTF_16_2   = MM.new(0xFF, 0xFE,              MM_ANY, MM_ANY)
+  BOM_UTF_32_1   = MM.new(0x00, 0x00, 0xFE, 0xFF   )
+  BOM_UTF_32_2   = MM.new(0xFF, 0xFE, 0x00, 0x00   )
+
+  BOM_UTF_1      = MM.new(0xF7, 0x64, 0x4C,        MM_ANY)
+  BOM_UTF_EBCDIC = MM.new(0xDD, 0x73, 0x66, 0x73   )
+  BOM_SCSU       = MM.new(0x0E, 0xFE, 0xFF,        MM_ANY)
+  BOM_BOCU       = MM.new(0xFB, 0xEE, 0x28,        MM_ANY)
+  BOM_GB_18030   = MM.new(0x84, 0x31, 0x95, 0x33   )
+
+  LONGEST_BOM    = 4
+
+  def assert_not_bom(content)
+    name, size =
+    case bom = get_bom(content)
+
+    when BOM_UTF_32_1, BOM_UTF_32_2
+      ['UTF-32', 4]
+
+    when BOM_GB_18030
+      ['GB-18030', 4]
+
+    when BOM_UTF_EBCDIC
+      ['UTF-EBCDIC', 4]
+
+    when BOM_SCSU
+      ['SCSU', 3]
+
+    when BOM_UTF_8
+      ['UTF-8', 3]
+
+    when BOM_UTF_1
+      ['UTF-1', 3]
+
+    when BOM_BOCU
+      ['BOCU', 3]
+
+    when BOM_UTF_16_1, BOM_UTF_16_2
+      ['UTF-16', 2]
+
+    else
+      return
+    end
+
+    lex_error_without_pos(
+      Puppet::Pops::Issues::ILLEGAL_BOM,
+      { :format_name   => name,
+        :bytes  => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
+      })
+  end
+
+  def get_bom(content)
+    # get 5 bytes as efficiently as possible (none of the string methods works since a bom consists of
+    # illegal characters on most platforms, and there is no get_bytes(n). xplicit calls are faster than
+    # looping with a lambda. The get_byte returns nil if there are too few characters, and they
+    # are changed to spaces
+    MM.new(
+      (content.getbyte(0) || ' '),
+      (content.getbyte(1) || ' '),
+      (content.getbyte(2) || ' '),
+      (content.getbyte(3) || ' ')
+      )
   end
 
 end
