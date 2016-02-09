@@ -703,6 +703,36 @@ describe 'The type calculator' do
       end
     end
 
+    context "for TypeReference, such that" do
+      it 'no other type is assignable' do
+        t = Puppet::Pops::Types::PTypeReference::DEFAULT
+        all_instances = (all_types - [
+          Puppet::Pops::Types::PTypeReference, # Avoid comparison with t
+          Puppet::Pops::Types::PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
+          Puppet::Pops::Types::PTypeAlias      # DEFAULT resolves to PTypeReference::DEFAULT, i.e. t
+        ]).map {|c| c::DEFAULT }
+
+        # Add a non-empty variant
+        all_instances << variant_t(Puppet::Pops::Types::PAnyType::DEFAULT)
+        # Add a type alias that doesn't resolve to 't'
+        all_instances << type_alias_t('MyInt', 'Integer').resolve(Puppet::Pops::Types::TypeParser.new, nil)
+
+        all_instances.each { |i| expect(i).not_to be_assignable_to(t) }
+      end
+
+      it 'a TypeReference to the exact same type is assignable' do
+        expect(type_reference_t('Integer[0,10]')).to be_assignable_to(type_reference_t('Integer[0,10]'))
+      end
+
+      it 'a TypeReference to the different type is not assignable' do
+        expect(type_reference_t('String')).not_to be_assignable_to(type_reference_t('Integer'))
+      end
+
+      it 'a TypeReference to the different type is not assignable even if the referenced type is' do
+        expect(type_reference_t('Integer[1,2]')).not_to be_assignable_to(type_reference_t('Integer[0,3]'))
+      end
+    end
+
     context 'for Data, such that' do
       it 'all scalars + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType::DEFAULT
