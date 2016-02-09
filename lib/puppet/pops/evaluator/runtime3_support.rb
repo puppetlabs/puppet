@@ -87,9 +87,10 @@ module Runtime3Support
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
     #
-    unless name =~ Patterns::NUMERIC_VAR_NAME
-      fail(Issues::UNKNOWN_VARIABLE, o, {:name => name})
+    unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
+      optionally_fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
     end
+    nil # in case unknown variable is configured as a warning
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
@@ -503,6 +504,8 @@ module Runtime3Support
       else
         p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
       end
+
+      p[Issues::UNKNOWN_VARIABLE]             = Puppet[:strict_variables] ? :error : :warning
 
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning

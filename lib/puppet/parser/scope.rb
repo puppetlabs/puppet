@@ -268,7 +268,10 @@ class Puppet::Parser::Scope
   #       this include? is only useful because of checking against the boolean value false.
   #
   def include?(name)
-    ! self[name].nil?
+    catch(:undefined_variable) {
+      return ! self[name].nil?
+    }
+    false
   end
 
   # Returns true if the variable of the given name is set to any value (including nil)
@@ -500,14 +503,28 @@ class Puppet::Parser::Scope
     end
   end
 
+  UNDEFINED_VARIABLES_KIND = 'undefined_variables'.freeze
+
   def variable_not_found(name, reason=nil)
     # Built in variables always exist
     if BUILT_IN_VARS.include?(name)
       return nil
     end
     if Puppet[:strict_variables]
-      throw :undefined_variable
+      throw(:undefined_variable, reason)
     else
+      # Always warn, unfortunately without location (unless given in "reason") since
+      # a location is in most cases not given to scope (operator [], and lookupvar), and
+      # would be too expensive to always give.
+      # The ideal solution would be to always throw :undefined_variable, but that has to
+      # wait until a major release. It would then force all callers of scope to deal with
+      # the case of :undefined_variable. (Should check with include? first or catch the throw).
+      # Use deprecation warning to enable turning off these warnings, and to ensure each variable
+      # is only logged once.
+      unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
+        Puppet.warn_once(UNDEFINED_VARIABLES_KIND, "Variable: #{name}",
+          "Undefined variable '#{name}'; #{reason}" )
+      end
       nil
     end
   end
@@ -599,7 +616,8 @@ class Puppet::Parser::Scope
                  else
                    ""
                  end
-      warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{reason}#{location}"
+      variable_not_found("#{class_name}::#{variable_name}", "#{reason}#{location}")
+      return nil
     end
     variable_not_found("#{class_name}::#{variable_name}", reason)
   end
