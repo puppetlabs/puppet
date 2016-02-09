@@ -5,13 +5,13 @@
 # of types produced by the {TypeCalculator TypeCalculator}.
 #
 # @api public
-module Puppet::Pops 
+module Puppet::Pops
 module Types
 class TypeParser
   # @api public
   def initialize
     @parser = Parser::Parser.new
-    @type_transformer = Visitor.new(nil, 'interpret', 0, 0)
+    @type_transformer = Visitor.new(nil, 'interpret', 1, 1)
   end
 
   # Produces a *puppet type* based on the given string.
@@ -23,11 +23,12 @@ class TypeParser
   #
   # @param string [String] a string with the type expressed in stringified form as produced by the 
   #   {TypeCalculator#string TypeCalculator#string} method.
+  # @param scope [Puppet::Parser::Scope] scope to use when loading type aliases
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #
   # @api public
   #
-  def parse(string)
+  def parse(string, scope = nil)
     # TODO: This state (@string) can be removed since the parse result of newer future parser
     # contains a Locator in its SourcePosAdapter and the Locator keeps the string.
     # This way, there is no difference between a parsed "string" and something that has been parsed
@@ -36,86 +37,87 @@ class TypeParser
     @string = string
     model = @parser.parse_string(@string)
     if model
-      interpret(model.current)
+      interpret(model.current, scope)
     else
       raise_invalid_type_specification_error
     end
   end
 
   # @api private
-  def interpret(ast)
-    result = @type_transformer.visit_this_0(self, ast)
+  def interpret(ast, scope)
+    result = @type_transformer.visit_this_1(self, ast, scope)
     result = result.body if result.is_a?(Model::Program)
     raise_invalid_type_specification_error unless result.is_a?(PAnyType)
     result
   end
 
   # @api private
-  def interpret_any(ast)
-    @type_transformer.visit_this_0(self, ast)
+  def interpret_any(ast, scope)
+    @type_transformer.visit_this_1(self, ast, scope)
   end
 
   # @api private
-  def interpret_Object(o)
+  def interpret_Object(o, scope)
     raise_invalid_type_specification_error
   end
 
   # @api private
-  def interpret_Program(o)
-    interpret(o.body)
+  def interpret_Program(o, scope)
+    interpret(o.body, scope)
   end
 
   # @api private
-  def interpret_QualifiedName(o)
+  def interpret_QualifiedName(o, scope)
     o.value
   end
 
   # @api private
-  def interpret_LiteralString(o)
+  def interpret_LiteralString(o, scope)
     o.value
   end
 
-  def interpret_LiteralRegularExpression(o)
+  def interpret_LiteralRegularExpression(o, scope)
     o.value
   end
 
   # @api private
-  def interpret_String(o)
+  def interpret_String(o, scope)
     o
   end
 
   # @api private
-  def interpret_LiteralDefault(o)
+  def interpret_LiteralDefault(o, scope)
     :default
   end
 
   # @api private
-  def interpret_LiteralInteger(o)
+  def interpret_LiteralInteger(o, scope)
     o.value
   end
 
   # @api private
-  def interpret_UnaryMinusExpression(o)
-    -@type_transformer.visit_this_0(self, o.expr)
+  def interpret_UnaryMinusExpression(o, scope)
+    -@type_transformer.visit_this_1(self, o.expr, scope)
   end
 
   # @api private
-  def interpret_LiteralFloat(o)
+  def interpret_LiteralFloat(o, scope)
     o.value
   end
 
   # @api private
-  def interpret_LiteralHash(o)
+  def interpret_LiteralHash(o, scope)
     result = {}
     o.entries.each do |entry|
-      result[@type_transformer.visit_this_0(self, entry.key)] = @type_transformer.visit_this_0(self, entry.value)
+      result[@type_transformer.visit_this_1(self, entry.key, scope)] = @type_transformer.visit_this_1(self, entry.value, scope)
     end
     result
   end
 
   # @api private
-  def interpret_QualifiedReference(name_ast)
-    case name_ast.value
+  def interpret_QualifiedReference(name_ast, scope)
+    name = name_ast.value
+    case name
     when 'integer'
       TypeFactory.integer
 
@@ -205,13 +207,22 @@ class TypeParser
       TypeFactory.all_callables
 
     else
-      TypeFactory.resource(name_ast.value)
+      if scope.nil?
+        TypeFactory.type_reference(name.capitalize)
+      else
+        loader = Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(name_ast, scope)
+        unless loader.nil?
+          type = loader.load(:type, name)
+          type = type.resolve(self, scope) unless type.nil?
+        end
+        type || TypeFactory.resource(name)
+      end
     end
   end
 
   # @api private
-  def interpret_AccessExpression(parameterized_ast)
-    parameters = parameterized_ast.keys.collect { |param| interpret_any(param) }
+  def interpret_AccessExpression(parameterized_ast, scope)
+    parameters = parameterized_ast.keys.collect { |param| interpret_any(param, scope) }
 
     unless parameterized_ast.left_expr.is_a?(Model::QualifiedReference)
       raise_invalid_type_specification_error
@@ -449,12 +460,18 @@ class TypeParser
       TypeFactory.runtime(*parameters)
 
     else
-      # It is a resource such a File['/tmp/foo']
       type_name = parameterized_ast.left_expr.value
-      if parameters.size != 1
-        raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
+      if scope.nil?
+        # Will be impossible to tell from a typed alias (when implemented) so a type reference
+        # is returned here for now
+        TypeFactory.type_reference(type_name.capitalize, parameters)
+      else
+        # It is a resource such a File['/tmp/foo']
+       if parameters.size != 1
+          raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
+        end
+        TypeFactory.resource(type_name, parameters[0])
       end
-      TypeFactory.resource(type_name, parameters[0])
     end
   end
 

@@ -116,6 +116,7 @@ module ModuleLoaders
         case typed_name.type
         when :function
         when :resource_type
+        when :type
         else
           # anything else cannot possibly be in this module
           # TODO: should not be allowed anyway... may have to revisit this decision

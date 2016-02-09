@@ -334,6 +334,20 @@ class Factory
     o
   end
 
+  def build_TypeAlias(o, name, type_expr)
+    o.type_expr = build(type_expr)
+    o.name = name
+    o
+  end
+
+  def build_TypeDefinition(o, name, parent, body)
+    b = f_build_body(body)
+    o.body = b.current if b
+    o.parent = parent
+    o.name = name
+    o
+  end
+
   def build_UnaryExpression(o, expr)
     ops = to_ops(expr)
     o.expr = ops unless Factory.nop? ops
@@ -790,6 +804,14 @@ class Factory
 
   def self.LAMBDA(parameters, body)
     new(LambdaExpression, parameters, body)
+  end
+
+  def self.TYPE_ALIAS(name, type_expr)
+    new(TypeAlias, name, type_expr)
+  end
+
+  def self.TYPE_DEFINITION(name, parent, body)
+    new(TypeDefinition, name, parent, body)
   end
 
   def self.nop? o

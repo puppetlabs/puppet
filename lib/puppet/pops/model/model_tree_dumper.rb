@@ -415,6 +415,14 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ["sublocated", do_dump(o.expr)]
   end
 
+  def dump_TypeAlias(o)
+    ['type-alias', o.name, do_dump(o.type_expr)]
+  end
+
+  def dump_TypeDefinition(o)
+    ['type-definition', o.name, o.parent, do_dump(o.body)]
+  end
+
   def dump_Object o
     [o.class.to_s, o.to_s]
   end

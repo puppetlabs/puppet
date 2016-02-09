@@ -121,6 +121,28 @@ module Adapters
     # @return [Loader::Loader] the loader
     attr_accessor :loader
 
+    # Finds the loader to use when loading originates from the source position of the given argument.
+    #
+    # @param instance [Model::PopsObject] The model object
+    # @param scope [Puppet::Parser::Scope] The scope to use
+    # @return [Loader,nil] the found loader or `nil` if it could not be found
+    #
+    def self.loader_for_model_object(model, scope)
+      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+      adapter = Utils.find_adapter(model, self)
+      return adapter.loader unless adapter.nil?
+
+      if scope.nil?
+        loaders = Puppet.lookup(:loaders) { nil }
+        loaders.nil? ? nil : loaders.private_environment_loader
+      else
+        # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
+        # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
+        adapter = adapt_by_source(scope, model)
+        adapter.nil? ? scope.compiler.loaders.private_environment_loader : adapter.loader
+      end
+    end
+
     # Attempts to find the module that `instance` originates from by looking at it's {SourcePosAdapter} and
     # compare the `locator.file` found there with the module paths given in the environment found in the
     # given `scope`. If the file is found to be relative to a path, then the first segment of the relative

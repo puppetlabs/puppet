@@ -345,16 +345,21 @@ class Checker4_0
     if o.name !~ Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
+    internal_check_reserved_type_name(o, o.name)
+    internal_check_future_reserved_word(o, o.name)
+  end
 
-    if RESERVED_TYPE_NAMES[o.name()]
-      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => o.name})
-    end
+  def check_TypeAlias(o)
+    top(o.eContainer, o)
+    internal_check_reserved_type_name(o, o.name)
+    internal_check_type_ref(o, o.type_expr)
+  end
 
-    # This is perhaps not ideal but it's very difficult to pass a ReservedWord through
-    # the mechanism that creates qualified names (namestack, namepop etc.)
-    if FUTURE_RESERVED_WORDS[o.name]
-      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, {:word => o.name})
-    end
+  def check_TypeDefinition(o)
+    top(o.eContainer, o)
+    internal_check_reserved_type_name(o, o.name)
+    # TODO: Check TypeDefinition body. For now, just error out
+    acceptor.accept(Issues::UNSUPPORTED_EXPRESSION, o)
   end
 
   def check_FunctionDefinition(o)
@@ -376,6 +381,15 @@ class Checker4_0
     internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
+  end
+
+  def internal_check_type_ref(o, r)
+    n = r.is_a?(Model::AccessExpression) ? r.left_expr : r
+    if n.is_a? Model::QualifiedReference
+      internal_check_future_reserved_word(r, n.value)
+    else
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, r, :feature => 'a type reference', :container => o)
+    end
   end
 
   def internal_check_no_idem_last(o)
@@ -400,6 +414,19 @@ class Checker4_0
       end
     end
   end
+
+  def internal_check_reserved_type_name(o, name)
+    if RESERVED_TYPE_NAMES[name]
+      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => name})
+    end
+  end
+
+  def internal_check_future_reserved_word(o, name)
+    if FUTURE_RESERVED_WORDS[name]
+      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, {:word => name})
+    end
+  end
+
 
   RESERVED_PARAMETERS = {
     'name' => true,
@@ -716,8 +743,10 @@ class Checker4_0
   end
 
   def top_BlockExpression(o, definition)
-    if definition.is_a?(Model::FunctionDefinition) && !o.eContainer.is_a?(Model::Program)
-      # not ok if the definition is a FunctionDefinition. It can never be nested in a block
+    if !o.eContainer.is_a?(Model::Program) &&
+      (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
+
+      # not ok. These can never be nested in a block
       acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
     else
       # ok, if this is a block representing the body of a class, or is top level

@@ -430,6 +430,23 @@ module TypeFactory
     PRuntimeType.new(runtime, runtime_type_name)
   end
 
+  # Returns the type alias for the given expression
+  # @param name [String] the name of the unresolved type
+  # @param expression [Model::Expression] an expression that will evaluate to a type
+  # @return [PTypeAlias] the type alias
+  def self.type_alias(name, expression)
+    PTypeAlias.new(name, expression)
+  end
+
+  # Returns the type that represents a type reference with a given name and optional
+  # parameters.
+  # @param name [String] the name of the type
+  # @param parameters [Array] the parameters
+  # @return [PTypeReference] the type reference
+  def self.type_reference(name, parameters = nil)
+    PTypeReference.new(name, parameters)
+  end
+
   # Returns true if the given type t is of valid range parameter type (integer
   # or literal default).
   def self.is_range_parameter?(t)
