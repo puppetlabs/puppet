@@ -36,6 +36,46 @@ class Loaders
     @puppet_system_loader = nil
   end
 
+  # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context and then uses it to
+  # find the appropriate loader for the given `module_name`, or for the environment in case `module_name`
+  # is `nil` or empty.
+  #
+  # @param module_name [String,nil] the name of the module
+  # @return [Loader::Loader] the found loader
+  # @raise [Puppet::ParseError] if no loader can be found
+  # @api private
+  def self.find_loader(module_name)
+    loaders = Puppet.lookup(:loaders) { nil }
+    raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing" if loaders.nil?
+    loaders.find_loader(module_name)
+  end
+
+  # Finds the appropriate loader for the given `module_name`, or for the environment in case `module_name`
+  # is `nil` or empty.
+  #
+  # @param module_name [String,nil] the name of the module
+  # @return [Loader::Loader] the found loader
+  # @raise [Puppet::ParseError] if no loader can be found
+  # @api private
+  def find_loader(module_name)
+    if module_name.nil? || module_name == ''
+      # TODO : Later when fdefinition can be private, a decision is needed regarding what that means.
+      #        A private environment loader could be used for logic outside of modules, then only that logic
+      #        would see the definition.
+      #
+      # Use the private loader, this definition may see the environment's dependencies (currently, all modules)
+      loader = private_environment_loader()
+      raise Puppet::ParseError, 'Internal Error: did not find public loader' if loader.nil?
+      loader
+    else
+      # TODO : Later check if definition is private, and then add it to private_loader_for_module
+      #
+      loader = public_loader_for_module(module_name)
+      raise Puppet::ParseError, "Internal Error: did not find public loader for module: '#{module_name}'" if loader.nil?
+      loader
+    end
+  end
+
   def static_loader
     @@static_loader
   end
