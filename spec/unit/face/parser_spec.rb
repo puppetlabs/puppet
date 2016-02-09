@@ -105,7 +105,7 @@ describe Puppet::Face[:parser, :current] do
       output = parser.dump(utf8_bom_manifest)
 
       expect(output).to eq("")
-      expect(@logs[1].message).to eq("Syntax error at '' at line 1:1")
+      expect(@logs[1].message).to eq("Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source")
       expect(@logs[1].level).to eq(:err)
     end
   end

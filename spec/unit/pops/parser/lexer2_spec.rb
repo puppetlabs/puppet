@@ -764,15 +764,16 @@ describe Puppet::Pops::Parser::Lexer2 do
       expect(lexed_file.string).to eq(manifest_code)
     end
 
-    it 'currently preserves the UTF-8 BOM (Byte Order Mark) when lexing files' do
+    it 'currently errors when the UTF-8 BOM (Byte Order Mark) is present when lexing files' do
       bom = "\uFEFF"
 
-      manifest_code = "#{bom}notify { '#{rune_utf8}': }"
-      manifest = file_containing('manifest.pp', manifest_code)
-      lexed_file = described_class.new.lex_file(manifest)
+        manifest_code = "#{bom}notify { '#{rune_utf8}': }"
+        manifest = file_containing('manifest.pp', manifest_code)
 
-      expect(lexed_file.string.encoding).to eq(Encoding::UTF_8)
-      expect(lexed_file.string).to eq(manifest_code)
+        expect {
+          lexed_file = described_class.new.lex_file(manifest)
+        }.to raise_error(Puppet::ParseErrorWithIssue,
+          'Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source')
     end
   end
 
