@@ -72,7 +72,7 @@ class PAnyType < TypedModelObject
       # An alias may contain self recursive constructs.
       if o.self_recursion?
         guard ||= RecursionGuard.new
-        if guard.add_that(o) == 3
+        if guard.add_that(o) == RecursionGuard::SELF_RECURSION_IN_BOTH
           # Recursion detected both in self and other. This means that other is assignable
           # to self. This point would not have been reached otherwise
           true
@@ -2036,7 +2036,7 @@ class PTypeAlias < PAnyType
 
   def _assignable?(o, guard)
     guard ||= RecursionGuard.new
-    if guard.add_this(self) == 3
+    if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
       # Recursion detected both in self and other. This means that other is assignable
       # to self. This point would not have been reached otherwise
       true
@@ -2050,7 +2050,7 @@ class PTypeAlias < PAnyType
   def guarded_recursion(guard, dflt)
     if @self_recursion
       guard ||= RecursionGuard.new
-      (guard.add_this(self) & 1) == 0 ? yield(guard) : dflt
+      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
     else
       yield(guard)
     end

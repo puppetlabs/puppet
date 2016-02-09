@@ -1,21 +1,23 @@
 module Puppet::Pops
 module Types
-# keeps track of recursion of conceptual 'this' and 'that' instances using two separate maps and
-# a state. All comparisons are made using the `object_id` of the instance rather than the instance
-# itself.
-# The state can have the following values:
+# Keeps track of self recursion of conceptual 'this' and 'that' instances using two separate maps and
+# a state. The class is used when tracking self recursion in two objects ('this' and 'that') simultaneously.
+# A typical example of when this is needed is when testing if 'that' Puppet Type is assignable to 'this'
+# Puppet Type since both types may contain self references.
 #
-# 0 - no recursion detected
-# 1 - recursion detected in 'self'
-# 2 - recursion detected in 'other'
-# 3 - recursion detected in both 'self' and 'other'
+# All comparisons are made using the `object_id` of the instance rather than the instance itself.
 #
 # @api private
 class RecursionGuard
   attr_reader :state
 
+  NO_SELF_RECURSION = 0
+  SELF_RECURSION_IN_THIS = 1
+  SELF_RECURSION_IN_THAT = 2
+  SELF_RECURSION_IN_BOTH = 3
+
   def initialize
-    @state = 0
+    @state = NO_SELF_RECURSION
   end
 
   # Checks if recursion was detected for the given argument in the 'this' context
@@ -36,8 +38,8 @@ class RecursionGuard
   # @param instance [Object] the instance to add
   # @return [Integer] the resulting state
   def add_this(instance)
-    if (@state & 1) == 0
-      @state = @state | 1 if map_put(this_map, instance)
+    if (@state & SELF_RECURSION_IN_THIS) == 0
+      @state = @state | SELF_RECURSION_IN_THIS if map_put(this_map, instance)
     end
     @state
   end
@@ -46,8 +48,8 @@ class RecursionGuard
   # @param instance [Object] the instance to add
   # @return [Integer] the resulting state
   def add_that(instance)
-    if (@state & 2) == 0
-      @state = @state | 2 if map_put(that_map, instance)
+    if (@state & SELF_RECURSION_IN_THAT) == 0
+      @state = @state | SELF_RECURSION_IN_THAT if map_put(that_map, instance)
     end
     @state
   end
