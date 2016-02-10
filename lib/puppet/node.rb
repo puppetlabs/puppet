@@ -75,7 +75,7 @@ class Puppet::Node
 
     # Keep environment_name attribute and parameter in sync if they have been set
     unless @environment.nil?
-      @parameters[ENVIRONMENT] = @environment.name if @parameters.include?(ENVIRONMENT)
+      @parameters[ENVIRONMENT] = @environment.name.to_s if @parameters.include?(ENVIRONMENT)
       self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
     end
     @environment
