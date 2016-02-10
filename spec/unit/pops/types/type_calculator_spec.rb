@@ -1943,6 +1943,22 @@ describe 'The type calculator' do
       expect(calculator.string(array_t(string_t, range_t(2, :default)))).to eq('Array[String, 2, default]')
     end
 
+    it 'should yield \'Iterable\' for PIterableType' do
+      expect(calculator.string(Puppet::Pops::Types::PIterableType::DEFAULT)).to eq('Iterable')
+    end
+
+    it 'should yield \'Iterable[Integer]\' for PIterableType[PIntegerType]' do
+      expect(calculator.string(Puppet::Pops::Types::PIterableType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterable[Integer]')
+    end
+
+    it 'should yield \'Iterator\' for PIteratorType' do
+      expect(calculator.string(Puppet::Pops::Types::PIteratorType::DEFAULT)).to eq('Iterator')
+    end
+
+    it 'should yield \'Iterator[Integer]\' for PIteratorType[PIntegerType]' do
+      expect(calculator.string(Puppet::Pops::Types::PIteratorType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterator[Integer]')
+    end
+
     it 'should yield \'Tuple[Integer]\' for PTupleType[PIntegerType]' do
       t = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PIntegerType::DEFAULT])
       expect(calculator.string(t)).to eq('Tuple[Integer]')

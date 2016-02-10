@@ -254,5 +254,9 @@ describe 'The iterable support' do
     ubi = TestUnboundedIterator.new
     expect{ Iterable.on(ubi).to_a }.to raise_error(Puppet::Error, /Attempt to create an Array from an unbounded Iterable/)
   end
+
+  it 'will produce the string Iterator[T] on to_s on an iterator instance with element type T' do
+    expect(Iterable.on(18).to_s).to eq('Iterator[Integer] value')
+  end
 end
 end

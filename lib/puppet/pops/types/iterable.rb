@@ -208,6 +208,11 @@ module Puppet::Pops::Types
       StepIterator.new(@element_type, self, step)
     end
 
+    def to_s
+      et = element_type
+      et.nil? ? 'Iterator value' : "Iterator[#{et.generalize}] value"
+    end
+
     def unbounded?
       Iterable.unbounded?(@enumeration)
     end
