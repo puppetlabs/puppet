@@ -1160,7 +1160,6 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should not favor local scope, (with class not included in topscope)" do
-        expect {
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
@@ -1173,7 +1172,9 @@ describe Puppet::Parser::Compiler do
           include experiment
           include experiment::baz
         PP
-        }.to raise_error(/Could not find resource 'Class\[Baz\]' in parameter 'require'/)
+
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
     end
 
@@ -1239,21 +1240,6 @@ describe Puppet::Parser::Compiler do
             }
           PP
         end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may only appear at toplevel/)
-      end
-    end
-
-    describe "relationships to non existing resources" do
-      [ 'before',
-        'subscribe',
-        'notify',
-        'require'].each do |meta_param|
-        it "are reported as an error when formed via meta parameter #{meta_param}" do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notify{ x : #{meta_param} => Notify[tooth_fairy] }
-            PP
-          }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-        end
       end
     end
 
