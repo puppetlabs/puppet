@@ -660,7 +660,14 @@ Puppet::Type.newtype(:file) do
     total = self[:source].collect do |source|
       next unless result = perform_recursion(source)
       return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
-      result.each { |data| data.source = "#{source}/#{data.relative_path}" }
+      result.each do |data|
+        if data.relative_path == '.'
+          data.source = source
+        else
+          # REMIND: appending file paths to URL may not be safe, e.g. foo+bar
+          data.source = "#{source}/#{data.relative_path}"
+        end
+      end
       break result if result and ! result.empty? and sourceselect == :first
       result
     end.flatten.compact
@@ -670,7 +677,7 @@ Puppet::Type.newtype(:file) do
       found = []
       total.reject! do |data|
         result = found.include?(data.relative_path)
-        found << data.relative_path unless found.include?(data.relative_path)
+        found << data.relative_path unless result
         result
       end
     end
