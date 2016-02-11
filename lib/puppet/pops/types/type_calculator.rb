@@ -979,8 +979,12 @@ class TypeCalculator
 
   # @api private
   def string_PHashType(t)
-    parts = [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type)
-    "Hash[#{parts.join(', ')}]"
+    if t == PHashType::DATA
+      "Hash"
+    else
+      parts = [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type)
+      "Hash[#{parts.join(', ')}]"
+    end
   end
 
   # @api private

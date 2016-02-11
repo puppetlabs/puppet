@@ -1999,6 +1999,10 @@ describe 'The type calculator' do
       expect(calculator.string(hash_t(string_t, string_t, range_t(2, :default)))).to eq('Hash[String, String, 2, default]')
     end
 
+    it 'should yield \'Hash\' for PHashType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PHashType::DATA)).to eq('Hash')
+    end
+
     it "should yield 'Class' for a PHostClassType" do
       t = Puppet::Pops::Types::PHostClassType::DEFAULT
       expect(calculator.string(t)).to eq('Class')
