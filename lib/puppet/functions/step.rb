@@ -28,8 +28,8 @@
 # When no block is given, Puppet returns an `Iterable` that yields the first element and every nth successor
 # element, from its first argument. This allows functions on iterables to be chained.
 #
-# When a block is given, Puppet iterates the first argument and calls the block with the first element and then with
-# every nth successor element.
+# When a block is given, Puppet iterates and calls the block with the first element and then with
+# every nth successor element. It then returns `undef`.
 #
 # @example Using the `step` function with an array, a step factor, and a one-parameter block
 #
@@ -83,7 +83,6 @@ Puppet::Functions.create_function(:step) do
 
   def step_block(iterable, step, &block)
     Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).step(step, &block)
-    # produces the receiver
-    iterable
+    nil
   end
 end

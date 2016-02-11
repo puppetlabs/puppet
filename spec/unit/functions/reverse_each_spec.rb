@@ -55,6 +55,14 @@ describe 'the reverse_each function' do
     end.to_not raise_error
   end
 
+  it 'returns an Undef when called with a block' do
+    expect do
+      compile_to_catalog(<<-MANIFEST)
+            assert_type(Undef, [1].reverse_each |$x| { $x })
+      MANIFEST
+    end.not_to raise_error
+  end
+
   it 'returns an Iterable when called without a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)

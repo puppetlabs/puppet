@@ -28,7 +28,7 @@
 # order of its first argument. This allows methods on `Iterable` to be chained.
 #
 # When a lamdba is given as the second argument, Puppet iterates the first argument in reverse
-# order and passes each value in turn to the lambda, then returns the first argument unchanged.
+# order and passes each value in turn to the lambda, then returns `undef`.
 #
 # @example Using the `reverse_each` function with an array and a one-parameter lambda
 #
@@ -77,7 +77,6 @@ Puppet::Functions.create_function(:reverse_each) do
 
   def reverse_each_block(iterable, &block)
     Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).reverse_each(&block)
-    # produces the receiver
-    iterable
+    nil
   end
 end
