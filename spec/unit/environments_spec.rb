@@ -121,7 +121,7 @@ describe Puppet::Environments do
 manifest=#{manifestdir}
 modulepath=#{modulepath.join(File::PATH_SEPARATOR)}
 config_version=/some/script
-static_catalogs=true
+static_catalogs=false
         EOF
       end
 
@@ -164,7 +164,7 @@ static_catalogs=true
             with_manifest(manifestdir.path).
             with_modulepath(modulepath.map(&:path)).
             with_config_version(File.expand_path('/some/script')).
-            with_static_catalogs(true)
+            with_static_catalogs(false)
         end
       end
 
@@ -189,7 +189,7 @@ static_catalogs=true
             with_manifest("#{FS.path_string(envdir)}/env1/manifests").
             with_modulepath(["#{FS.path_string(envdir)}/env1/modules", global_path_location]).
             with_config_version(nil).
-            with_static_catalogs(false)
+            with_static_catalogs(true)
         end
 
         expect(@logs).to be_empty
@@ -399,7 +399,7 @@ config_version=$vardir/random/scripts
       expect(conf.modulepath).to eq('')
       expect(conf.manifest).to eq(:no_manifest)
       expect(conf.config_version).to be_nil
-      expect(conf.static_catalogs).to eq(false)
+      expect(conf.static_catalogs).to eq(true)
     end
 
     it "returns nil if you request a configuration from an env that doesn't exist" do

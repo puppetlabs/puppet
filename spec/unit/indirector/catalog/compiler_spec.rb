@@ -149,6 +149,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "does not inline metadata when the static_catalog option is false" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = false
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns true
 
       catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
@@ -162,6 +163,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'md5'
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns false
 
       catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
@@ -171,10 +173,24 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(@compiler.find(@request)).to eq(catalog)
     end
 
-    it "inlines metadata when the static_catalog option is true and static_catalogs are enabled" do
+    it "does not inline metadata when code_id is not specified" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'md5'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "inlines metadata when the static_catalog option is true, static_catalogs are enabled, and a code_id is provided" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'sha256'
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns true
 
       catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
@@ -188,6 +204,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'atime.md5.sha256.mtime'
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns true
 
       catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
@@ -201,6 +218,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'atime.sha512'
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns true
 
       expect { @compiler.find(@request) }.to raise_error Puppet::Error,
@@ -211,6 +229,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = nil
+      @request.options[:code_id] = 'some_code_id'
       @node.environment.stubs(:static_catalogs?).returns true
 
       expect { @compiler.find(@request) }.to raise_error Puppet::Error,

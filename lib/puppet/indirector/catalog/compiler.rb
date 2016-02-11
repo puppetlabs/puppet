@@ -144,13 +144,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Compile the actual catalog.
   def compile(node, options)
-    if node.environment.static_catalogs? && options[:static_catalog]
+    if node.environment && node.environment.static_catalogs? && options[:static_catalog] && options[:code_id]
       # Check for errors before compiling the catalog
       checksum_type = common_checksum_type(options[:checksum_type])
       raise Puppet::Error, "Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'." unless checksum_type
     end
 
-    str = "Compiled %s for #{node.name}" % [node.environment.static_catalogs? ? 'static catalog' : 'catalog']
+    str = "Compiled %s for #{node.name}" % [checksum_type ? 'static catalog' : 'catalog']
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
