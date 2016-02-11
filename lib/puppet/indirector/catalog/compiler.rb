@@ -84,7 +84,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Rewrite a given file resource with the metadata from a fileserver based file
-  def replace_metadata(resource, metadata)
+  def replace_metadata(resource, metadata, recurse = false)
     if resource[:links] == "manage" && metadata.ftype == "link"
       resource.delete(:source)
       resource[:ensure] = "link"
@@ -95,6 +95,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     if metadata.ftype == "file"
       resource[:checksum_value] = sumdata(metadata.checksum)
+    end
+
+    if recurse
+      resource[:source] = metadata.source
+      if metadata.ftype == "file"
+        resource[:checksum] = metadata.checksum_type
+      end
     end
   end
 
@@ -128,7 +135,27 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
-        # TODO: find and replace metadata for children recursively
+        file.recurse_remote_metadata.each do |meta|
+          # Don't create a new resource for the parent directory
+          next if meta.relative_path == "."
+
+          # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
+          child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
+          replace_metadata(child_resource, meta, true)
+
+          # Copy parameters from original parent directory
+          file.original_parameters.each do |param, value|
+            # These should never be passed to our children
+            unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
+              child_resource[param] = value.to_s
+            end
+          end
+          #TODO: Add edge between `child_resource` and its nearest ancestor and
+          # add an edge between `child_resource` and all other resources that depend
+          # on `file`
+          catalog.add_resource(child_resource)
+          catalog.add_edge(file, child_resource)
+          end
       else
         metadata = file.parameter(:source).metadata
         raise "Could not get metadata for #{resource[:source]}" unless metadata
