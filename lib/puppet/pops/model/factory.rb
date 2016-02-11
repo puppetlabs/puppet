@@ -889,7 +889,7 @@ class Factory
 
   # Transforms a left expression followed by an untitled resource (in the form of attribute_operations)
   # @param left [Factory, Expression] the lhs followed what may be a hash
-  def self.transform_resource_wo_title(left, attribute_ops)
+  def self.transform_resource_wo_title(left, attribute_ops, lbrace_token, rbrace_token)
     # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
     return nil unless left.current.is_a?(QualifiedName)
@@ -897,7 +897,9 @@ class Factory
       return nil if ao.operator == :'+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
     end
-    result = block_or_expression(*transform_calls([left, HASH(keyed_entries)]))
+    a_hash = HASH(keyed_entries)
+    a_hash.record_position(lbrace_token, rbrace_token)
+    result = block_or_expression(*transform_calls([left, a_hash]))
     result
   end
 
