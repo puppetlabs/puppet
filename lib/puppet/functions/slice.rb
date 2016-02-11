@@ -33,13 +33,13 @@
 Puppet::Functions.create_function(:slice) do
   dispatch :slice_Hash do
     param 'Hash[Any, Any]', :hash
-    param 'Integer[1, default]', :slize_size
+    param 'Integer[1, default]', :slice_size
     optional_block_param
   end
 
   dispatch :slice_Enumerable do
     param 'Iterable', :enumerable
-    param 'Integer[1, default]', :slize_size
+    param 'Integer[1, default]', :slice_size
     optional_block_param
   end
 
