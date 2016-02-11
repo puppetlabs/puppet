@@ -1924,6 +1924,10 @@ describe 'The type calculator' do
       expect(calculator.string(t)).to eq('Array[Integer]')
     end
 
+    it 'should yield \'Array\' for PArrayType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PArrayType::DATA)).to eq('Array')
+    end
+
     it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
       t = empty_array_t
       expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')

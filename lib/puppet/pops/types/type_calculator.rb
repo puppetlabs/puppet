@@ -969,8 +969,12 @@ class TypeCalculator
 
   # @api private
   def string_PArrayType(t)
-    parts = [string(t.element_type)] + range_array_part(t.size_type)
-    "Array[#{parts.join(', ')}]"
+    if t == PArrayType::DATA
+      "Array"
+    else
+      parts = [string(t.element_type)] + range_array_part(t.size_type)
+      "Array[#{parts.join(', ')}]"
+  end
   end
 
   # @api private
