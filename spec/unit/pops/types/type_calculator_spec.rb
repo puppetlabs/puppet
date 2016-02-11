@@ -1924,6 +1924,10 @@ describe 'The type calculator' do
       expect(calculator.string(t)).to eq('Array[Integer]')
     end
 
+    it 'should yield \'Array\' for PArrayType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PArrayType::DATA)).to eq('Array')
+    end
+
     it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
       t = empty_array_t
       expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')
@@ -1993,6 +1997,10 @@ describe 'The type calculator' do
       expect(calculator.string(hash_t(string_t, string_t, range_t(1,2)))).to eq('Hash[String, String, 1, 2]')
       expect(calculator.string(hash_t(string_t, string_t, range_t(:default, 2)))).to eq('Hash[String, String, default, 2]')
       expect(calculator.string(hash_t(string_t, string_t, range_t(2, :default)))).to eq('Hash[String, String, 2, default]')
+    end
+
+    it 'should yield \'Hash\' for PHashType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PHashType::DATA)).to eq('Hash')
     end
 
     it "should yield 'Class' for a PHostClassType" do
