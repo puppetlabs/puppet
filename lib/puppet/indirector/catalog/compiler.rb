@@ -165,8 +165,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
       end
     end
-
-    catalog
   end
 
   # Compile the actual catalog.
@@ -197,7 +195,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       str += " in environment #{node.environment}" if node.environment
       benchmark(:notice, str) do
         Puppet::Util::Profiler.profile(str, [:compiler, :static_inline, node.environment, node.name]) do
-          config = inline_metadata(config, checksum_type)
+          inline_metadata(config, checksum_type)
         end
       end
     end

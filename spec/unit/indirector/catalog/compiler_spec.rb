@@ -156,7 +156,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       @compiler.expects(:inline_metadata).never
-      expect(@compiler.find(@request)).to eq(catalog)
+      @compiler.find(@request)
     end
 
     it "does not inline metadata when static_catalogs are disabled" do
@@ -170,7 +170,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       @compiler.expects(:inline_metadata).never
-      expect(@compiler.find(@request)).to eq(catalog)
+      @compiler.find(@request)
     end
 
     it "does not inline metadata when code_id is not specified" do
@@ -197,7 +197,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       @compiler.expects(:inline_metadata).with(catalog, :sha256).returns catalog
-      expect(@compiler.find(@request)).to eq(catalog)
+      @compiler.find(@request)
     end
 
     it "inlines metadata with the first common checksum type" do
@@ -211,7 +211,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       @compiler.expects(:inline_metadata).with(catalog, :md5).returns catalog
-      expect(@compiler.find(@request)).to eq(catalog)
+      @compiler.find(@request)
     end
 
     it "errors if checksum_type contains no shared checksum types" do
@@ -447,7 +447,7 @@ describe Puppet::Resource::Catalog::Compiler do
             ral.expects(:parameter).with(:source).returns(source)
           end
 
-          expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+          @compiler.send(:inline_metadata, catalog, checksum_type)
           expect(catalog.resources.select {|r| r[:checksum_value] == sha}.size).to eq(num_resources)
         end
       end
@@ -473,7 +473,7 @@ describe Puppet::Resource::Catalog::Compiler do
           ral.expects(:parameter).with(:source).returns(source)
         end
 
-        expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+        @compiler.send(:inline_metadata, catalog, checksum_type)
         catalog.resources.select {|r| r.type == 'File'}.each do |r|
           expect(r[:ensure]).to eq('link')
           expect(r[:target]).to eq('/tmp/some/absolute/path')
@@ -500,7 +500,7 @@ describe Puppet::Resource::Catalog::Compiler do
           ral.expects(:parameter).with(:source).returns(source)
         end
 
-        expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+        @compiler.send(:inline_metadata, catalog, checksum_type)
         catalog.resources.select {|r| r.type == 'File'}.each do |r|
           expect(r[:checksum_value]).to eq('b1946ac92492d2347c6235b4d2611184')
           expect(r[:ensure]).to eq('file')
@@ -514,7 +514,7 @@ describe Puppet::Resource::Catalog::Compiler do
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
     end
 
     it "skips resources without a source" do
@@ -522,7 +522,7 @@ describe Puppet::Resource::Catalog::Compiler do
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
     end
 
     it "skips resources with a local source" do
@@ -530,7 +530,7 @@ describe Puppet::Resource::Catalog::Compiler do
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
     end
 
     it "skips resources with a http source" do
@@ -538,7 +538,7 @@ describe Puppet::Resource::Catalog::Compiler do
       catalog.resources.select {|r| r.type == 'File'}.each do |r|
         r.expects(:to_ral).never
       end
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
     end
 
     it "skips resources with a source outside the environment path" do
@@ -558,7 +558,7 @@ describe Puppet::Resource::Catalog::Compiler do
         ral.expects(:parameter).with(:source).returns(source)
       end
 
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.resources.select {|r| r.type == 'File' && r[:checksum_value] == nil}.size).to eq(num_resources)
     end
 
@@ -584,7 +584,7 @@ describe Puppet::Resource::Catalog::Compiler do
         ral.expects(:recurse_remote_metadata).returns([parent_metadata, child_metadata])
       end
 
-      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      @compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.resources.select{ |r| r.type == 'File' }.size).to eq(2)
     end
   end
