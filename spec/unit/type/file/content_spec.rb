@@ -180,6 +180,10 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
           expect(content).to be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
         end
 
+        it "should include the diff module" do
+          expect(content.respond_to?("diff")).to eq(false)
+        end
+
         [true, false].product([true, false]).each do |cfg, param|
           describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
             before do
@@ -205,21 +209,21 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
     end
 
-    SAVED_TIME = Time.now
+    let(:saved_time) { Time.now }
     [:ctime, :mtime].each do |time_stat|
-      [["older", SAVED_TIME-1, false], ["same", SAVED_TIME, true], ["newer", SAVED_TIME+1, true]].each do
+      [["older", -1, false], ["same", 0, true], ["newer", 1, true]].each do
         |compare, target_time, success|
         describe "with #{compare} target #{time_stat} compared to source" do
           before do
             resource[:checksum] = time_stat
-            content.should = "{#{time_stat}}#{SAVED_TIME}"
+            content.should = "{#{time_stat}}#{saved_time}"
           end
 
           it "should return #{success}" do
             if success
-              expect(content).to be_safe_insync("{#{time_stat}}#{target_time}")
+              expect(content).to be_safe_insync("{#{time_stat}}#{saved_time+target_time}")
             else
-              expect(content).not_to be_safe_insync("{#{time_stat}}#{target_time}")
+              expect(content).not_to be_safe_insync("{#{time_stat}}#{saved_time+target_time}")
             end
           end
         end
@@ -231,14 +235,14 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         end
 
         it "should not be insync if trying to create it" do
-          content.should = "{#{time_stat}}#{SAVED_TIME}"
+          content.should = "{#{time_stat}}#{saved_time}"
           expect(content).not_to be_safe_insync(:absent)
         end
 
         it "should raise an error if content is not a checksum" do
           content.should = "some content"
           expect {
-            content.safe_insync?("{#{time_stat}}#{SAVED_TIME}")
+            content.safe_insync?("{#{time_stat}}#{saved_time}")
           }.to raise_error(/Resource with checksum_type #{time_stat} didn't contain a date in/)
         end
 
@@ -313,7 +317,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
 
     it "should use the file's :write method to write the content" do
-      resource.expects(:write).with(nil)
+      resource.expects(:write).with(content)
 
       content.sync
     end
@@ -384,38 +388,6 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         fh = mock 'filehandle'
         fh.expects(:print).with("mycontent")
         content.write(fh)
-      end
-    end
-
-    # These are testing the implementation rather than the desired behaviour; while that bites, there are a whole
-    # pile of other methods in the File type that depend on intimate details of this implementation and vice-versa.
-    # If these blow up, you are gonna have to review the callers to make sure they don't explode! --daniel 2011-02-01
-    describe "each_chunk_from should work" do
-      it "when content is a string" do
-        content.should = 'i_am_a_string'
-        content.send(:each_chunk_from) { |chunk| expect(chunk).to eq('i_am_a_string') }
-      end
-
-      it "when no content, source, but ensure present" do
-        resource[:ensure] = :present
-        content.send(:each_chunk_from) { |chunk| expect(chunk).to eq('') }
-      end
-
-      # you might do this if you were just auditing
-      it "when no content, source, but ensure file" do
-        resource[:ensure] = :file
-        content.send(:each_chunk_from) { |chunk| expect(chunk).to eq('') }
-      end
-
-      it "when source_or_content is nil and content not a checksum" do
-        content.send(:each_chunk_from) { |chunk| expect(chunk).to eq('') }
-      end
-
-      # the content is munged so that if it's a checksum nil gets passed in
-      it "when content is a checksum it should try to read from filebucket" do
-        content.should = "{md5}123abcd"
-        content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
-        content.send(:each_chunk_from) { |chunk| expect(chunk).to eq('im_a_filebucket') }
       end
     end
   end

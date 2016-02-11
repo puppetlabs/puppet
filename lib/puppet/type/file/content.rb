@@ -1,14 +1,14 @@
 require 'net/http'
 require 'uri'
 require 'tempfile'
-require 'date'
 
 require 'puppet/util/checksums'
+require 'puppet/type/file/data_sync.rb'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do
-    include Puppet::Util::Diff
     include Puppet::Util::Checksums
+    include Puppet::DataSync
 
     attr_reader :actual_content
 
@@ -83,28 +83,12 @@ module Puppet
     # should be insync when it exists
     def insync?(is)
       if resource[:source] && resource[:checksum_value]
-        self.fail Puppet::Error, "Content should not exist if source and checksum_value are specified"
+        # Asserts that nothing has changed since validate ran.
+        devfail "content property should not exist if source and checksum_value are specified"
       end
 
-      if resource.should_be_file?
-        return false if is == :absent
-      else
-        if resource[:ensure] == :present and resource[:content] and s = resource.stat
-          resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
-        end
-        return true
-      end
-
-      return true if ! @resource.replace?
-
-      result = super
-
-      if ! result and Puppet[:show_diff] and resource.show_diff?
-        resource.write_temporarily do |path|
-          send @resource[:loglevel], "\n" + diff(@resource[:path], path)
-        end
-      end
-      result
+      contents_prop = resource.parameter(:source) || self
+      checksum_insync?(contents_prop, is, !resource[:content].nil?) {|_is| super(_is)}
     end
 
     def property_matches?(current, desired)
@@ -114,30 +98,13 @@ module Puppet
         desired = "{#{checksum_type}}#{checksum_value.value}"
       end
 
-      basic = super(current, desired)
       # The inherited equality is always accepted, so use it if valid.
-      time_types = [:mtime, :ctime]
-      return basic if basic || !time_types.include?(checksum_type)
-      return false unless current && desired
-      begin
-        raise if !time_types.include?(sumtype(current).to_sym) || !time_types.include?(sumtype(desired).to_sym)
-        DateTime.parse(sumdata(current)) >= DateTime.parse(sumdata(desired))
-      rescue => detail
-        self.fail Puppet::Error, "Resource with checksum_type #{checksum_type} didn't contain a date in #{current} or #{desired}", detail.backtrace
-      end
+      return true if super(current, desired)
+      return date_matches?(checksum_type, current, desired)
     end
 
     def retrieve
-      return :absent unless stat = @resource.stat
-      ftype = stat.ftype
-      # Don't even try to manage the content on directories or links
-      return nil if ["directory","link"].include?(ftype)
-
-      begin
-        resource.parameter(:checksum).sum_file(resource[:path])
-      rescue => detail
-        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}", detail.backtrace
-      end
+      retrieve_checksum(resource)
     end
 
     # Make sure we're also managing the checksum property.
@@ -151,14 +118,7 @@ module Puppet
 
     # Just write our content out to disk.
     def sync
-      return_event = @resource.stat ? :file_changed : :file_created
-
-      # We're safe not testing for the 'source' if there's no 'should'
-      # because we wouldn't have gotten this far if there weren't at least
-      # one valid value somewhere.
-      @resource.write
-
-      return_event
+      contents_sync(resource.parameter(:source) || self)
     end
 
     def write(file)

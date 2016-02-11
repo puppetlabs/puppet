@@ -569,14 +569,36 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   end
 
   describe "when writing" do
+    describe "as puppet apply" do
+      let(:source_content) { "source file content\r\n"*10 }
+      before do
+        Puppet[:default_file_terminus] = "file_server"
+        resource[:source] = file_containing('apply', source_content)
+      end
+
+      it "should copy content from the source to the file" do
+        source = resource.parameter(:source)
+        resource.write(source)
+
+        expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
+      end
+
+      with_digest_algorithms do
+        it "should return the checksum computed" do
+          File.open(filename, 'wb') do |file|
+            source = resource.parameter(:source)
+            resource[:checksum] = digest_algorithm
+            expect(source.write(file)).to eq("{#{digest_algorithm}}#{digest(source_content)}")
+          end
+        end
+      end
+    end
+
     describe "from local source" do
       let(:source_content) { "source file content\r\n"*10 }
-      before(:each) do
-        sourcename = tmpfile('source')
+      before do
         resource[:backup] = false
-        resource[:source] = sourcename
-
-        File.open(sourcename, 'wb') {|f| f.write source_content}
+        resource[:source] = file_containing('source', source_content)
       end
 
       it "should copy content from the source to the file" do
@@ -603,7 +625,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       let(:response) { stub_everything('response') }
       let(:conn) { mock('connection') }
 
-      before(:each) do
+      before do
         resource[:backup] = false
 
         response.stubs(:read_body).multiple_yields(*source_content.lines)
@@ -677,36 +699,6 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
             end
           end
         end
-      end
-    end
-
-    describe "each_chunk_from should work" do
-      let(:source) { resource.newattr(:source) }
-
-      it "when content checksum comes from source" do
-        source_param = Puppet::Type.type(:file).attrclass(:source)
-        source = source_param.new(:resource => resource)
-
-        source.expects(:chunk_file_from_source).returns('from_source')
-        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('from_source') }
-      end
-
-      it "when running as puppet apply" do
-        Puppet[:default_file_terminus] = "file_server"
-        source.expects(:content).once.returns :whoo
-        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq(:whoo) }
-      end
-
-      it "when running from source with a local file" do
-        source.expects(:local?).returns true
-        source.expects(:chunk_file_from_disk).once.yields 'woot'
-        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('woot') }
-      end
-
-      it "when running from source with a remote file" do
-        source.expects(:local?).returns false
-        source.expects(:chunk_file_from_source).once.yields 'woot'
-        source.send(:each_chunk_from) { |chunk| expect(chunk).to eq('woot') }
       end
     end
   end

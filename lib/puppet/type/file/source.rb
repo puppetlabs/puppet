@@ -14,7 +14,6 @@ module Puppet
   # this state, during retrieval, modifies the appropriate other states
   # so that things get taken care of appropriately.
   Puppet::Type.type(:file).newparam(:source) do
-    include Puppet::Util::Diff
     include Puppet::Network::HTTP::Compression.module
 
     attr_accessor :source, :local

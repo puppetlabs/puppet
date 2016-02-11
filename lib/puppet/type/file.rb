@@ -391,6 +391,8 @@ Puppet::Type.newtype(:file) do
       self.fail "Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}"
     end
 
+    self.warning "Checksum value is ignored unless content or source are specified" if self[:checksum_value] && !self[:content] && !self[:source]
+
     provider.validate if provider.respond_to?(:validate)
   end
 
@@ -806,9 +808,9 @@ Puppet::Type.newtype(:file) do
     resource
   end
 
-  # Write out the file.  Requires the property name for logging.
-  # Write will be done by the content or source property, with checksum
-  # computation handled by content or checksum_value
+  # Write out the file. To write content, pass the property as an argument
+  # to delegate writing to; must implement a #write method that takes the file
+  # as an argument.
   def write(property = nil)
     remove_existing(:file)
 
@@ -818,7 +820,8 @@ Puppet::Type.newtype(:file) do
     if write_temporary_file?
       Puppet::Util.replace_file(self[:path], mode_int) do |file|
         file.binmode
-        content_checksum = write_contents(file)
+        devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
+        content_checksum = property.write(file)
         file.flush
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
         if self[:validate_cmd]
@@ -830,24 +833,11 @@ Puppet::Type.newtype(:file) do
       end
     else
       umask = mode ? 000 : 022
-      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_contents(f) } }
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| property.write(f) if property } }
     end
 
     # make sure all of the modes are actually correct
     property_fix
-  end
-
-  def write_temporarily
-    tempfile = Tempfile.new("puppet-file")
-    tempfile.open
-
-    write_contents(tempfile)
-
-    tempfile.close
-
-    yield tempfile.path
-  ensure
-    tempfile.delete if tempfile
   end
 
   private
@@ -923,23 +913,9 @@ Puppet::Type.newtype(:file) do
     self.fail "File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})"
   end
 
-  # write the current content. Note that if there is no content property
-  # simply opening the file with 'w' as done in write is enough to truncate
-  # or write an empty length file.
-  def write_contents(file)
-    # Ideally only source or content would exist. However, if source is specified without
-    # checksum_value, source will be used to generate content; content will trigger
-    # writing the file, but we should still use source to do the final write, so put it first.
-    if source = parameter(:source)
-      source.write(file)
-    elsif content = property(:content)
-      content.write(file)
-    end
-  end
-
   def write_temporary_file?
-    # unfortunately we don't know the source file size before fetching it
-    # so let's assume the file won't be empty
+    # Unfortunately we don't know the source file size before fetching it so
+    # let's assume the file won't be empty. Why isn't it part of the metadata?
     (c = property(:content) and c.length) || @parameters[:source]
   end
 

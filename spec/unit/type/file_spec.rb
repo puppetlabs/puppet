@@ -1072,10 +1072,11 @@ describe Puppet::Type.type(:file) do
         file.stubs(:parameter).with(:checksum).returns(checksum)
         file.stubs(:parameter).with(:source).returns(nil)
 
+
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        expect { file.write :NOTUSED }.to raise_error(Puppet::Error)
+        expect { file.write property }.to raise_error(Puppet::Error)
       end
     end
 
@@ -1090,7 +1091,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        expect { file.write :NOTUSED }.to_not raise_error
+        expect { file.write property }.to_not raise_error
       end
     end
 
@@ -1103,13 +1104,13 @@ describe Puppet::Type.type(:file) do
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
           Puppet::Util.expects(:replace_file).with(file[:path], 0444)
-          file.write :NOTUSED
+          file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
           Puppet::Util.expects(:replace_file).with(file[:path], 0444)
-          file.write :NOTUSED
+          file.write
         end
       end
 
@@ -1119,19 +1120,19 @@ describe Puppet::Type.type(:file) do
         it "should set a umask of 0" do
           file[:mode] = 'oga=r'
           Puppet::Util.expects(:withumask).with(0)
-          file.write :NOTUSED
+          file.write
         end
 
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
           File.expects(:open).with(file[:path], anything, 0444)
-          file.write :NOTUSED
+          file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
           File.expects(:open).with(file[:path], anything, 0444)
-          file.write :NOTUSED
+          file.write
         end
       end
     end
@@ -1141,7 +1142,7 @@ describe Puppet::Type.type(:file) do
         it "should default to 0644 mode" do
           file = described_class.new(:path => path, :content => "file content")
 
-          file.write :NOTUSED
+          file.write file.parameter(:content)
 
           expect(File.stat(file[:path]).mode & 0777).to eq(0644)
         end
@@ -1153,7 +1154,7 @@ describe Puppet::Type.type(:file) do
 
           umask_from_the_user = 0777
           Puppet::Util.withumask(umask_from_the_user) do
-            file.write :NOTUSED
+            file.write
           end
 
           expect(File.stat(file[:path]).mode & 0777).to eq(0644)
@@ -1188,24 +1189,6 @@ describe Puppet::Type.type(:file) do
           fail_if_checksum_is_wrong(self[:path], 'anything!')
         end
       end.not_to raise_error
-    end
-  end
-
-  describe "#write_content" do
-    it "should delegate writing the file from content to the content property" do
-      io = stub('io')
-      file[:content] = "some content here"
-      file.property(:content).expects(:write).with(io)
-
-      file.send(:write_contents, io)
-    end
-
-    it "should delegate writing the file from source to the source parameter" do
-      io = stub('io')
-      file[:source] = "file:///some_source_uri"
-      file.parameter(:source).expects(:write).with(io)
-
-      file.send(:write_contents, io)
     end
   end
 

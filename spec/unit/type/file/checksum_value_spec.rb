@@ -18,36 +18,47 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
   describe "when retrieving the current checksum_value" do
     let(:checksum_value) { described_class.new(:resource => resource) }
 
-    it "should return :absent if the target does not exist" do
-      resource.expects(:stat).returns nil
-
-      expect(checksum_value.retrieve).to eq(:absent)
-    end
-
-    it "should not manage content on directories" do
-      stat = mock 'stat', :ftype => "directory"
-      resource.expects(:stat).returns stat
-
+    it "should not compute a checksum if source is absent" do
+      resource.expects(:stat).never
       expect(checksum_value.retrieve).to be_nil
     end
 
-    it "should not manage content on links" do
-      stat = mock 'stat', :ftype => "link"
-      resource.expects(:stat).returns stat
+    describe "when using a source" do
+      before do
+        resource[:source] = source_file
+      end
 
-      expect(checksum_value.retrieve).to be_nil
-    end
+      it "should return :absent if the target does not exist" do
+        resource.expects(:stat).returns nil
 
-    it "should always return the checksum as a string" do
-      resource[:checksum] = :mtime
+        expect(checksum_value.retrieve).to eq(:absent)
+      end
 
-      stat = mock 'stat', :ftype => "file"
-      resource.expects(:stat).returns stat
+      it "should not manage content on directories" do
+        stat = mock 'stat', :ftype => "directory"
+        resource.expects(:stat).returns stat
 
-      time = Time.now
-      resource.parameter(:checksum).expects(:mtime_file).with(resource[:path]).returns time
+        expect(checksum_value.retrieve).to be_nil
+      end
 
-      expect(checksum_value.retrieve).to eq(time.to_s)
+      it "should not manage content on links" do
+        stat = mock 'stat', :ftype => "link"
+        resource.expects(:stat).returns stat
+
+        expect(checksum_value.retrieve).to be_nil
+      end
+
+      it "should always return the checksum as a string" do
+        resource[:checksum] = :mtime
+
+        stat = mock 'stat', :ftype => "file"
+        resource.expects(:stat).returns stat
+
+        time = Time.now
+        resource.parameter(:checksum).expects(:mtime_file).with(resource[:path]).returns time
+
+        expect(checksum_value.retrieve).to eq(time.to_s)
+      end
     end
 
     with_digest_algorithms do
@@ -55,6 +66,7 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
         stat = mock 'stat', :ftype => "file"
         resource.expects(:stat).returns stat
         resource.parameter(:checksum).expects("#{digest_algorithm}_file".intern).with(resource[:path]).returns "mysum"
+        resource[:source] = source_file
 
         expect(checksum_value.retrieve).to eq("mysum")
       end
@@ -115,6 +127,10 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
             expect(checksum_value).to be_safe_insync("somechecksum")
           end
 
+          it "should include the diff module" do
+            expect(checksum_value.respond_to?("diff")).to eq(false)
+          end
+
           [true, false].product([true, false]).each do |cfg, param|
             describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
               before do
@@ -140,21 +156,21 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
         end
       end
 
-      SAVED_TIME = Time.now
+      let(:saved_time) { Time.now }
       [:ctime, :mtime].each do |time_stat|
-        [["older", SAVED_TIME-1, false], ["same", SAVED_TIME, true], ["newer", SAVED_TIME+1, true]].each do
+        [["older", -1, false], ["same", 0, true], ["newer", 1, true]].each do
           |compare, target_time, success|
           describe "with #{compare} target #{time_stat} compared to source" do
             before do
               resource[:checksum] = time_stat
-              checksum_value.should = SAVED_TIME.to_s
+              checksum_value.should = saved_time.to_s
             end
 
             it "should return #{success}" do
               if success
-                expect(checksum_value).to be_safe_insync(target_time.to_s)
+                expect(checksum_value).to be_safe_insync((saved_time+target_time).to_s)
               else
-                expect(checksum_value).not_to be_safe_insync(target_time.to_s)
+                expect(checksum_value).not_to be_safe_insync((saved_time+target_time).to_s)
               end
             end
           end
@@ -166,14 +182,14 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
           end
 
           it "should not be insync if trying to create it" do
-            checksum_value.should = SAVED_TIME.to_s
+            checksum_value.should = saved_time.to_s
             expect(checksum_value).not_to be_safe_insync(:absent)
           end
 
           it "should raise an error if checksum_value is not a checksum" do
             checksum_value.should = "some content"
             expect {
-              checksum_value.safe_insync?(SAVED_TIME.to_s)
+              checksum_value.safe_insync?(saved_time.to_s)
             }.to raise_error(/Resource with checksum_type #{time_stat} didn't contain a date in/)
           end
 
@@ -237,22 +253,34 @@ describe Puppet::Type.type(:file).attrclass(:checksum_value), :uses_checksums =>
       resource.stubs(:stat).returns "eh"
     end
 
-    it "should use the file's :write method to write the checksum_value" do
-      resource.expects(:write).with(nil)
+    it "should raise if source is absent" do
+      resource.expects(:write).never
 
-      checksum_value.sync
+      expect { checksum_value.sync }.to raise_error "checksum_value#sync should not be called without a source parameter"
     end
 
-    it "should return :file_changed if the file already existed" do
-      resource.expects(:stat).returns "something"
-      resource.stubs(:write)
-      expect(checksum_value.sync).to eq(:file_changed)
-    end
+    describe "when using a source" do
+      before do
+        resource[:source] = source_file
+      end
 
-    it "should return :file_created if the file did not exist" do
-      resource.expects(:stat).returns nil
-      resource.stubs(:write)
-      expect(checksum_value.sync).to eq(:file_created)
+      it "should use the file's :write method to write the checksum_value" do
+        resource.expects(:write).with(resource.parameter(:source))
+
+        checksum_value.sync
+      end
+
+      it "should return :file_changed if the file already existed" do
+        resource.expects(:stat).returns "something"
+        resource.stubs(:write)
+        expect(checksum_value.sync).to eq(:file_changed)
+      end
+
+      it "should return :file_created if the file did not exist" do
+        resource.expects(:stat).returns nil
+        resource.stubs(:write)
+        expect(checksum_value.sync).to eq(:file_created)
+      end
     end
   end
 end
