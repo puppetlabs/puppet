@@ -712,5 +712,26 @@ describe Puppet::Resource::Catalog::Compiler do
         .with_parameter(:require, catalog.resource('Notify[alpha]'))
         .with_parameter(:before, catalog.resource('Notify[omega]'))
     end
+
+    it "inlines windows file paths" do
+      pending "Calling Puppet::Resource#to_ral on windows path is not safe on *nix master"
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { 'c:/foo':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt'
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:checksum, checksum_type)
+        .with_parameter(:checksum_value, checksum_value)
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+    end
   end
 end
