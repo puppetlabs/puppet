@@ -846,8 +846,8 @@ Puppet::Type.newtype(:file) do
     tempfile.close
 
     yield tempfile.path
-
-    tempfile.delete
+  ensure
+    tempfile.delete if tempfile
   end
 
   private
