@@ -542,5 +542,31 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
       expect(catalog.resources.select {|r| r.type == 'File' && r[:checksum_value] == nil}.size).to eq(num_resources)
     end
+
+    it "inlines child metadata for directory resources where recurse is true" do
+      catalog = build_catalog(node, 1, ['puppet:///modules/mymodule/directory'], {:ensure => 'directory', :recurse => 'true'})
+
+      catalog.resources.select {|r| r.type == 'File'}.each do |r|
+        ral = r.to_ral
+        r.expects(:to_ral).returns(ral)
+
+        parent_metadata = stub 'parent_metadata'
+        parent_metadata.stubs(:ftype).returns('directory')
+        parent_metadata.stubs(:relative_path).returns('.')
+
+
+        child_metadata = stub 'child_metadata'
+        child_metadata.stubs(:relative_path).returns('myfile.txt')
+        child_metadata.stubs(:ftype).returns('file')
+        child_metadata.stubs(:source).returns('puppet:///modules/mymodule/directory/myfile.txt')
+        child_metadata.stubs(:checksum_type).returns(checksum_type)
+        child_metadata.stubs(:checksum).returns('{md5}b1946ac92492d2347c6235b4d2611184')
+
+        ral.expects(:recurse_remote_metadata).returns([parent_metadata, child_metadata])
+      end
+
+      expect(@compiler.send(:inline_metadata, catalog, checksum_type)).to eq(catalog)
+      expect(catalog.resources.select{ |r| r.type == 'File' }.size).to eq(2)
+    end
   end
 end

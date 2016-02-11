@@ -641,7 +641,7 @@ Puppet::Type.newtype(:file) do
 
   # Recurse against our remote file.
   def recurse_remote(children)
-    recurse_remote_metadata do |meta|
+    recurse_remote_metadata.each do |meta|
       if meta.relative_path == "."
         parameter(:source).metadata = meta
         next
@@ -654,12 +654,12 @@ Puppet::Type.newtype(:file) do
     children
   end
 
-  def recurse_remote_metadata(&block)
+  def recurse_remote_metadata
     sourceselect = self[:sourceselect]
 
     total = self[:source].collect do |source|
       next unless result = perform_recursion(source)
-      return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      return [] if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
       result.each do |data|
         if data.relative_path == '.'
           data.source = source
@@ -682,9 +682,7 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    total.each do |meta|
-      yield meta
-    end
+    total
   end
 
   def perform_recursion(path)

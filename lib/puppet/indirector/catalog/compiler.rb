@@ -135,7 +135,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
-        file.recurse_remote_metadata do |meta|
+        file.recurse_remote_metadata.each do |meta|
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."
 
