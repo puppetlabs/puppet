@@ -81,8 +81,8 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.environment_timeout).to eq(0)
     end
 
-    it "returns default of false for static_catalogs when config has none" do
-      expect(envconf.static_catalogs).to eq(false)
+    it "returns default of true for static_catalogs when config has none" do
+      expect(envconf.static_catalogs).to eq(true)
     end
 
     it "can still retrieve raw setting" do

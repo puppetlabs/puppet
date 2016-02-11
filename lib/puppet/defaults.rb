@@ -149,7 +149,7 @@ module Puppet
         :desc     => "Whether to enable experimental performance profiling",
     },
     :static_catalogs => {
-      :default    => false,
+      :default    => true,
       :type       => :boolean,
       :desc       => "Whether to compile a static catalog."
     },
