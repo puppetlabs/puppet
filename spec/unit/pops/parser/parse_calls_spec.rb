@@ -26,6 +26,10 @@ describe "egrammar parsing function calls" do
         expect(dump(parse("foo(bar)"))).to eq("(invoke foo bar)")
       end
 
+      it "notice {a=>2}" do
+        expect(dump(parse("notice {a => 2}"))).to eq("(invoke notice ({} ('a' 2)))")
+      end
+
       it "foo(bar,)" do
         expect(dump(parse("foo(bar,)"))).to eq("(invoke foo bar)")
       end

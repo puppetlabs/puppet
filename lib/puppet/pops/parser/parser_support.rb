@@ -206,8 +206,8 @@ class Parser
   end
 
   # Transforms a LEFT followed by the result of attribute_operations, this may be a call or an invalid sequence
-  def transform_resource_wo_title(left, resource)
-    Factory.transform_resource_wo_title(left, resource)
+  def transform_resource_wo_title(left, resource, lbrace_token, rbrace_token)
+    Factory.transform_resource_wo_title(left, resource, lbrace_token, rbrace_token)
   end
 
   # Creates a program with the given body.
