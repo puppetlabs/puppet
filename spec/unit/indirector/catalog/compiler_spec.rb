@@ -656,8 +656,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
       describe "when recurse is true" do
         it "inlines child metadata" do
-          pending "child resources doesn't have ensure set"
-
           catalog = compile_to_catalog(<<-MANIFEST, node)
             file { '#{path}':
               ensure  => directory,

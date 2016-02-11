@@ -141,6 +141,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
           # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
           child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
+          child_resource[:ensure] = meta.ftype
           replace_metadata(child_resource, meta, true)
 
           # Copy parameters from original parent directory
