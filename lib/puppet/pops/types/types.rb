@@ -1901,7 +1901,7 @@ class POptionalType < PAnyType
   end
 end
 
-class PTypeReference < PAnyType
+class PTypeReferenceType < PAnyType
   attr_reader :name, :parameters
 
   def initialize(name, parameters = nil)
@@ -1932,7 +1932,7 @@ class PTypeReference < PAnyType
     o == self
   end
 
-  DEFAULT = PTypeReference.new('UnresolvedReference')
+  DEFAULT = PTypeReferenceType.new('UnresolvedReference')
 end
 
 # Describes a named alias for another Type.
@@ -1997,8 +1997,8 @@ class PTypeAliasType < PAnyType
   # @api private
   def resolve(type_parser, scope)
     if @resolved_type.nil?
-      # resolved to PTypeReference::DEFAULT during resolve to avoid endless recursion
-      @resolved_type = PTypeReference::DEFAULT
+      # resolved to PTypeReferenceType::DEFAULT during resolve to avoid endless recursion
+      @resolved_type = PTypeReferenceType::DEFAULT
       @self_recursion = true # assumed while it being found out below
       begin
         @resolved_type = type_parser.interpret(@type_expr, scope)
@@ -2056,7 +2056,7 @@ class PTypeAliasType < PAnyType
     end
   end
 
-  DEFAULT = PTypeAliasType.new('UnresolvedAlias', nil, PTypeReference::DEFAULT)
+  DEFAULT = PTypeAliasType.new('UnresolvedAlias', nil, PTypeReferenceType::DEFAULT)
 end
 end
 end

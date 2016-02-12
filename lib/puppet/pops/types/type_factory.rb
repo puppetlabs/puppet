@@ -442,9 +442,9 @@ module TypeFactory
   # parameters.
   # @param name [String] the name of the type
   # @param parameters [Array] the parameters
-  # @return [PTypeReference] the type reference
+  # @return [PTypeReferenceType] the type reference
   def self.type_reference(name, parameters = nil)
-    PTypeReference.new(name, parameters)
+    PTypeReferenceType.new(name, parameters)
   end
 
   # Returns true if the given type t is of valid range parameter type (integer
