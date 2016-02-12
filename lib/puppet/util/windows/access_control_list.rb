@@ -76,7 +76,7 @@ class Puppet::Util::Windows::AccessControlList
         else
           new_ace.sid = new_sid
 
-          prepend_needed = old_sid == Win32::Security::SID::LocalSystem
+          prepend_needed = old_sid == Puppet::Util::Windows::SID::LocalSystem
         end
       end
       new_aces << new_ace
@@ -87,7 +87,7 @@ class Puppet::Util::Windows::AccessControlList
     if prepend_needed
       mask = Puppet::Util::Windows::File::STANDARD_RIGHTS_ALL | Puppet::Util::Windows::File::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
-              Win32::Security::SID::LocalSystem,
+              Puppet::Util::Windows::SID::LocalSystem,
               mask)
       @aces << ace
     end

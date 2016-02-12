@@ -35,6 +35,7 @@ gem_platform_dependencies:
       win32-dir: '~> 0.4.9'
       win32-eventlog: '~> 0.6.2'
       win32-process: '~> 0.7.4'
+      # Use of win32-security is deprecated
       win32-security: '~> 0.2.5'
       win32-service: '~> 0.8.6'
       minitar: '~> 0.5.4'
@@ -44,6 +45,7 @@ gem_platform_dependencies:
       win32-dir: '~> 0.4.9'
       win32-eventlog: '~> 0.6.2'
       win32-process: '~> 0.7.4'
+      # Use of win32-security is deprecated
       win32-security: '~> 0.2.5'
       win32-service: '~> 0.8.6'
       minitar: '~> 0.5.4'

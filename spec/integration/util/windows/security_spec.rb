@@ -14,13 +14,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   before :all do
     @sids = {
       :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
-      :system => Win32::Security::SID::LocalSystem,
-      :administrators => Win32::Security::SID::BuiltinAdministrators,
+      :system => Puppet::Util::Windows::SID::LocalSystem,
+      :administrators => Puppet::Util::Windows::SID::BuiltinAdministrators,
       :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
-      :users => Win32::Security::SID::BuiltinUsers,
-      :power_users => Win32::Security::SID::PowerUsers,
-      :none => Win32::Security::SID::Nobody,
-      :everyone => Win32::Security::SID::Everyone
+      :users => Puppet::Util::Windows::SID::BuiltinUsers,
+      :power_users => Puppet::Util::Windows::SID::PowerUsers,
+      :none => Puppet::Util::Windows::SID::Nobody,
+      :everyone => Puppet::Util::Windows::SID::Everyone
     }
     # The TCP/IP NetBIOS Helper service (aka 'lmhosts') has ended up
     # disabled on some VMs for reasons we couldn't track down. This

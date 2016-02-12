@@ -65,8 +65,6 @@ require 'puppet/util/windows'
 require 'pathname'
 require 'ffi'
 
-require 'win32/security'
-
 module Puppet::Util::Windows::Security
   include Puppet::Util::Windows::String
 
@@ -199,9 +197,9 @@ module Puppet::Util::Windows::Security
   def get_mode(path)
     return unless supports_acl?(path)
 
-    well_known_world_sid = Win32::Security::SID::Everyone
-    well_known_nobody_sid = Win32::Security::SID::Nobody
-    well_known_system_sid = Win32::Security::SID::LocalSystem
+    well_known_world_sid = Puppet::Util::Windows::SID::Everyone
+    well_known_nobody_sid = Puppet::Util::Windows::SID::Nobody
+    well_known_system_sid = Puppet::Util::Windows::SID::LocalSystem
 
     mode = S_ISYSTEM_MISSING
 
@@ -278,9 +276,9 @@ module Puppet::Util::Windows::Security
   # that they do not have read and write access to.
   def set_mode(mode, path, protected = true)
     sd = get_security_descriptor(path)
-    well_known_world_sid = Win32::Security::SID::Everyone
-    well_known_nobody_sid = Win32::Security::SID::Nobody
-    well_known_system_sid = Win32::Security::SID::LocalSystem
+    well_known_world_sid = Puppet::Util::Windows::SID::Everyone
+    well_known_nobody_sid = Puppet::Util::Windows::SID::Nobody
+    well_known_system_sid = Puppet::Util::Windows::SID::LocalSystem
 
     owner_allow = FILE::STANDARD_RIGHTS_ALL  |
       FILE::FILE_READ_ATTRIBUTES |
@@ -361,12 +359,12 @@ module Puppet::Util::Windows::Security
     inherit_only = Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
     if isdir
       inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
-      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow, inherit)
-      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow, inherit)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorOwner, owner_allow, inherit)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorGroup, group_allow, inherit)
 
       inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
-      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
-      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
     end
 
     new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, protected)

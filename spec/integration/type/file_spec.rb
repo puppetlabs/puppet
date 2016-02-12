@@ -1394,11 +1394,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         before do
           @sids = {
             :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
-            :system => Win32::Security::SID::LocalSystem,
+            :system => Puppet::Util::Windows::SID::LocalSystem,
             :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
-            :users => Win32::Security::SID::BuiltinUsers,
-            :power_users => Win32::Security::SID::PowerUsers,
-            :none => Win32::Security::SID::Nobody
+            :users => Puppet::Util::Windows::SID::BuiltinUsers,
+            :power_users => Puppet::Util::Windows::SID::PowerUsers,
+            :none => Puppet::Util::Windows::SID::Nobody
           }
         end
 
