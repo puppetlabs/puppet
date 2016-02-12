@@ -1226,6 +1226,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           :backup => false
         }
       end
+
       describe "on POSIX systems", :if => Puppet.features.posix? do
         it "should apply the source metadata values" do
           @options[:source_permissions] = :use
@@ -1784,6 +1785,99 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expect(Puppet::FileSystem).to be_symlink(copy)
         expect(Dir.entries(link)).to eq(Dir.entries(copy))
       end
+    end
+  end
+
+  [:md5, :sha256, :md5lite, :sha256lite].each do |checksum|
+    describe "setting checksum_value explicitly with checksum #{checksum}" do
+      let(:path) { tmpfile('target') }
+      let(:contents) { 'yay' }
+
+      before :each do
+        @options = {
+          :path           => path,
+          :ensure         => :file,
+          :checksum       => checksum,
+          :checksum_value => Puppet::Util::Checksums.send(checksum, contents)
+        }
+      end
+
+      def verify_file(transaction)
+        status = transaction.report.resource_statuses["File[#{path}]"]
+        expect(status).not_to be_failed
+        expect(Puppet::FileSystem).to be_file(path)
+        expect(File.read(path)).to eq(contents)
+        status
+      end
+
+      [:source, :content].each do |prop|
+        context "from #{prop}" do
+          let(:source) { tmpfile_with_contents("source_default_values", contents) }
+
+          before :each do
+            @options[prop] = {:source => source, :content => contents}[prop]
+          end
+
+          it "should create a new file" do
+            catalog.add_resource described_class.new(@options)
+            status = verify_file catalog.apply
+            expect(status).to be_changed
+          end
+
+          it "should overwrite an existing file" do
+            File.open(path, "w") { |f| f.write('bar') }
+            catalog.add_resource described_class.new(@options)
+            status = verify_file catalog.apply
+            expect(status).to be_changed
+          end
+
+          it "should not overwrite the same file" do
+            File.open(path, "w") { |f| f.write(contents) }
+            catalog.add_resource described_class.new(@options)
+            status = verify_file catalog.apply
+            expect(status).to_not be_changed
+          end
+
+          it "should not create a file when ensuring absent" do
+            @options[:ensure] = :absent
+            catalog.add_resource described_class.new(@options)
+            catalog.apply
+            expect(Puppet::FileSystem).to_not be_file(path)
+          end
+        end
+      end
+    end
+  end
+
+  describe "setting checksum_value explicitly with checksum mtime" do
+    let(:path) { tmpfile('target_dir') }
+    let(:time) { Time.now }
+
+    before :each do
+      @options = {
+        :path           => path,
+        :ensure         => :directory,
+        :checksum       => :mtime,
+        :checksum_value => time
+      }
+    end
+
+    it "should create a new directory" do
+      catalog.add_resource described_class.new(@options)
+      status = catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).not_to be_failed
+      expect(status).to be_changed
+      expect(Puppet::FileSystem).to be_directory(path)
+    end
+
+    it "should not update mtime on an old directory" do
+      disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
+      FileUtils.mkdir_p path
+      FileUtils.touch path, :mtime => disk_mtime
+      status = catalog.apply.report.resource_statuses["File[#{path}]"]
+      expect(status).to be_nil
+      expect(Puppet::FileSystem).to be_directory(path)
+      expect(File.stat(path).mtime).to eq(disk_mtime)
     end
   end
 end

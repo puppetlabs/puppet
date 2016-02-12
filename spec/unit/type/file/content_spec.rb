@@ -1,8 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/network/http_pool'
-
-require 'puppet/network/resolver'
 
 describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true do
   include PuppetSpec::Files
@@ -183,6 +180,10 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
           expect(content).to be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
         end
 
+        it "should include the diff module" do
+          expect(content.respond_to?("diff")).to eq(false)
+        end
+
         [true, false].product([true, false]).each do |cfg, param|
           describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
             before do
@@ -208,21 +209,21 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
     end
 
-    SAVED_TIME = Time.now
+    let(:saved_time) { Time.now }
     [:ctime, :mtime].each do |time_stat|
-      [["older", SAVED_TIME-1, false], ["same", SAVED_TIME, true], ["newer", SAVED_TIME+1, true]].each do
+      [["older", -1, false], ["same", 0, true], ["newer", 1, true]].each do
         |compare, target_time, success|
         describe "with #{compare} target #{time_stat} compared to source" do
           before do
             resource[:checksum] = time_stat
-            content.should = "{#{time_stat}}#{SAVED_TIME}"
+            content.should = "{#{time_stat}}#{saved_time}"
           end
 
           it "should return #{success}" do
             if success
-              expect(content).to be_safe_insync("{#{time_stat}}#{target_time}")
+              expect(content).to be_safe_insync("{#{time_stat}}#{saved_time+target_time}")
             else
-              expect(content).not_to be_safe_insync("{#{time_stat}}#{target_time}")
+              expect(content).not_to be_safe_insync("{#{time_stat}}#{saved_time+target_time}")
             end
           end
         end
@@ -234,14 +235,14 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         end
 
         it "should not be insync if trying to create it" do
-          content.should = "{#{time_stat}}#{SAVED_TIME}"
+          content.should = "{#{time_stat}}#{saved_time}"
           expect(content).not_to be_safe_insync(:absent)
         end
 
         it "should raise an error if content is not a checksum" do
           content.should = "some content"
           expect {
-            content.safe_insync?("{#{time_stat}}#{SAVED_TIME}")
+            content.safe_insync?("{#{time_stat}}#{saved_time}")
           }.to raise_error(/Resource with checksum_type #{time_stat} didn't contain a date in/)
         end
 
@@ -316,7 +317,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
 
     it "should use the file's :write method to write the content" do
-      resource.expects(:write).with(:content)
+      resource.expects(:write).with(content)
 
       content.sync
     end
@@ -387,188 +388,6 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         fh = mock 'filehandle'
         fh.expects(:print).with("mycontent")
         content.write(fh)
-      end
-    end
-
-    describe "from local source" do
-      let(:source_content) { "source file content\r\n"*10 }
-      before(:each) do
-        sourcename = tmpfile('source')
-        resource[:backup] = false
-        resource[:source] = sourcename
-
-        File.open(sourcename, 'wb') {|f| f.write source_content}
-
-        # This needs to be invoked to properly initialize the content property,
-        # or attempting to write a file will fail.
-        resource.newattr(:content)
-      end
-
-      it "should copy content from the source to the file" do
-        source = resource.parameter(:source)
-        resource.write(source)
-
-        expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
-      end
-
-      with_digest_algorithms do
-        it "should return the checksum computed" do
-          File.open(filename, 'wb') do |file|
-            resource[:checksum] = digest_algorithm
-            expect(content.write(file)).to eq("{#{digest_algorithm}}#{digest(source_content)}")
-          end
-        end
-      end
-    end
-
-    describe 'from remote source' do
-      let(:source_content) { "source file content\n"*10 }
-      let(:source) { resource.newattr(:source) }
-      let(:response) { stub_everything('response') }
-      let(:conn) { mock('connection') }
-
-      before(:each) do
-        resource[:backup] = false
-        # This needs to be invoked to properly initialize the content property,
-        # or attempting to write a file will fail.
-        resource.newattr(:content)
-
-        response.stubs(:read_body).multiple_yields(*source_content.lines)
-        conn.stubs(:request_get).yields(response)
-      end
-
-      it 'should use an explicit fileserver if source starts with puppet://' do
-        response.stubs(:code).returns('200')
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname', anything).returns(conn)
-
-        resource.write(source)
-      end
-
-      it 'should use the default fileserver if source starts with puppet:///' do
-        response.stubs(:code).returns('200')
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with(Puppet.settings[:server], anything).returns(conn)
-
-        resource.write(source)
-      end
-
-      it 'should percent encode reserved characters' do
-        response.stubs(:code).returns('200')
-        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
-
-        conn.unstub(:request_get)
-        conn.expects(:request_get).with("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3/file_content/test/foo%20bar?environment=testing&", anything).yields(response)
-
-        resource.write(source)
-      end
-
-      describe 'when handling file_content responses' do
-        before(:each) do
-          Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
-          source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
-        end
-
-        it 'should not write anything if source is not found' do
-          response.stubs(:code).returns('404')
-
-          expect { resource.write(source) }.to raise_error(Net::HTTPError, /404/)
-          expect(File.read(filename)).to eq('initial file content')
-        end
-
-        it 'should raise an HTTP error in case of server error' do
-          response.stubs(:code).returns('500')
-
-          expect { resource.write(source) }.to raise_error(Net::HTTPError, /500/)
-        end
-
-        context 'and the request was successful' do
-          before(:each) { response.stubs(:code).returns '200' }
-
-          it 'should write the contents to the file' do
-            resource.write(source)
-            expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
-          end
-
-          with_digest_algorithms do
-            it 'should return the checksum computed' do
-              File.open(filename, 'w') do |file|
-                resource[:checksum] = digest_algorithm
-                expect(content.write(file)).to eq("{#{digest_algorithm}}#{digest(source_content)}")
-              end
-            end
-          end
-
-        end
-
-      end
-    end
-
-    # These are testing the implementation rather than the desired behaviour; while that bites, there are a whole
-    # pile of other methods in the File type that depend on intimate details of this implementation and vice-versa.
-    # If these blow up, you are gonna have to review the callers to make sure they don't explode! --daniel 2011-02-01
-    describe "each_chunk_from should work" do
-
-      it "when content is a string" do
-        content.each_chunk_from('i_am_a_string') { |chunk| expect(chunk).to eq('i_am_a_string') }
-      end
-
-      # The following manifest is a case where source and content.should are both set
-      # file { "/tmp/mydir" :
-      #   source  => '/tmp/sourcedir',
-      #   recurse => true,
-      # }
-      it "when content checksum comes from source" do
-        source_param = Puppet::Type.type(:file).attrclass(:source)
-        source = source_param.new(:resource => resource)
-        content.should = "{md5}123abcd"
-
-        content.expects(:chunk_file_from_source).returns('from_source')
-        content.each_chunk_from(source) { |chunk| expect(chunk).to eq('from_source') }
-      end
-
-      it "when no content, source, but ensure present" do
-        resource[:ensure] = :present
-        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
-      end
-
-      # you might do this if you were just auditing
-      it "when no content, source, but ensure file" do
-        resource[:ensure] = :file
-        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
-      end
-
-      it "when source_or_content is nil and content not a checksum" do
-        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('') }
-      end
-
-      # the content is munged so that if it's a checksum nil gets passed in
-      it "when content is a checksum it should try to read from filebucket" do
-        content.should = "{md5}123abcd"
-        content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
-        content.each_chunk_from(nil) { |chunk| expect(chunk).to eq('im_a_filebucket') }
-      end
-
-      it "when running as puppet apply" do
-        Puppet[:default_file_terminus] = "file_server"
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:content).once.returns :whoo
-        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq(:whoo) }
-      end
-
-      it "when running from source with a local file" do
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:local?).returns true
-        content.expects(:chunk_file_from_disk).with(source_or_content).once.yields 'woot'
-        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq('woot') }
-      end
-
-      it "when running from source with a remote file" do
-        source_or_content = stubs('source_or_content')
-        source_or_content.expects(:local?).returns false
-        content.expects(:chunk_file_from_source).with(source_or_content).once.yields 'woot'
-        content.each_chunk_from(source_or_content) { |chunk| expect(chunk).to eq('woot') }
       end
     end
   end

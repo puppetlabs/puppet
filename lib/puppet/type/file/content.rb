@@ -1,19 +1,14 @@
 require 'net/http'
 require 'uri'
 require 'tempfile'
-require 'date'
 
 require 'puppet/util/checksums'
-require 'puppet/util/http_proxy'
-require 'puppet/network/http'
-require 'puppet/network/http/api/indirected_routes'
-require 'puppet/network/http/compression'
+require 'puppet/type/file/data_sync.rb'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do
-    include Puppet::Util::Diff
     include Puppet::Util::Checksums
-    include Puppet::Network::HTTP::Compression.module
+    include Puppet::DataSync
 
     attr_reader :actual_content
 
@@ -87,53 +82,29 @@ module Puppet
     # Also, fix #872: when content is used, and replace is true, the file
     # should be insync when it exists
     def insync?(is)
-      if resource.should_be_file?
-        return false if is == :absent
-      else
-        if resource[:ensure] == :present and resource[:content] and s = resource.stat
-          resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
-        end
-        return true
+      if resource[:source] && resource[:checksum_value]
+        # Asserts that nothing has changed since validate ran.
+        devfail "content property should not exist if source and checksum_value are specified"
       end
 
-      return true if ! @resource.replace?
-
-      result = super
-
-      if ! result and Puppet[:show_diff] and resource.show_diff?
-        write_temporarily do |path|
-          send @resource[:loglevel], "\n" + diff(@resource[:path], path)
-        end
-      end
-      result
+      contents_prop = resource.parameter(:source) || self
+      checksum_insync?(contents_prop, is, !resource[:content].nil?) {|_is| super(_is)}
     end
 
     def property_matches?(current, desired)
-      basic = super
-      # The inherited equality is always accepted, so use it if valid.
-      time_types = [:mtime, :ctime]
+      # If checksum_value is specified, it overrides comparing the content field.
       checksum_type = resource.parameter(:checksum).value
-      return basic if basic || !time_types.include?(checksum_type)
-      return false unless current && desired
-      begin
-        raise if !time_types.include?(sumtype(current).to_sym) || !time_types.include?(sumtype(desired).to_sym)
-        DateTime.parse(sumdata(current)) >= DateTime.parse(sumdata(desired))
-      rescue => detail
-        self.fail Puppet::Error, "Resource with checksum_type #{checksum_type} didn't contain a date in #{current} or #{desired}", detail.backtrace
+      if checksum_value = resource.parameter(:checksum_value)
+        desired = "{#{checksum_type}}#{checksum_value.value}"
       end
+
+      # The inherited equality is always accepted, so use it if valid.
+      return true if super(current, desired)
+      return date_matches?(checksum_type, current, desired)
     end
 
     def retrieve
-      return :absent unless stat = @resource.stat
-      ftype = stat.ftype
-      # Don't even try to manage the content on directories or links
-      return nil if ["directory","link"].include?(ftype)
-
-      begin
-        resource.parameter(:checksum).sum_file(resource[:path])
-      rescue => detail
-        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}", detail.backtrace
-      end
+      retrieve_checksum(resource)
     end
 
     # Make sure we're also managing the checksum property.
@@ -147,104 +118,34 @@ module Puppet
 
     # Just write our content out to disk.
     def sync
-      return_event = @resource.stat ? :file_changed : :file_created
-
-      # We're safe not testing for the 'source' if there's no 'should'
-      # because we wouldn't have gotten this far if there weren't at least
-      # one valid value somewhere.
-      @resource.write(:content)
-
-      return_event
-    end
-
-    def write_temporarily
-      tempfile = Tempfile.new("puppet-file")
-      tempfile.open
-
-      write(tempfile)
-
-      tempfile.close
-
-      yield tempfile.path
-
-      tempfile.delete
+      contents_sync(resource.parameter(:source) || self)
     end
 
     def write(file)
       resource.parameter(:checksum).sum_stream { |sum|
-        each_chunk_from(actual_content || resource.parameter(:source)) { |chunk|
+        each_chunk_from { |chunk|
           sum << chunk
           file.print chunk
         }
       }
     end
 
+    private
+
     # the content is munged so if it's a checksum source_or_content is nil
     # unless the checksum indirectly comes from source
-    def each_chunk_from(source_or_content)
-      if source_or_content.is_a?(String)
-        yield source_or_content
-      elsif content_is_really_a_checksum? && source_or_content.nil?
+    def each_chunk_from
+      if actual_content.is_a?(String)
+        yield actual_content
+      elsif content_is_really_a_checksum? && actual_content.nil?
         yield read_file_from_filebucket
-      elsif source_or_content.nil?
+      elsif actual_content.nil?
         yield ''
-      elsif Puppet[:default_file_terminus] == :file_server
-        yield source_or_content.content
-      elsif source_or_content.local?
-        chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
-      else
-        chunk_file_from_source(source_or_content) { |chunk| yield chunk }
       end
     end
-
-    private
 
     def content_is_really_a_checksum?
       checksum?(should)
-    end
-
-    def chunk_file_from_disk(source_or_content)
-      File.open(source_or_content.full_path, "rb") do |src|
-        while chunk = src.read(8192)
-          yield chunk
-        end
-      end
-    end
-
-    def get_from_puppet_source(source_or_content, &block)
-      source = source_or_content.metadata.source
-      request = Puppet::Indirector::Request.new(:file_content, :find, source, nil, :environment => resource.catalog.environment_instance)
-
-      request.do_request(:fileserver) do |req|
-        connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "binary"}), &block)
-      end
-    end
-
-    def get_from_http_source(source, &block)
-      Puppet::Util::HttpProxy.request_with_redirects(URI(source), :get, &block)
-    end
-
-    def get_from_source(source_or_content, &block)
-      source = source_or_content.metadata.source
-      if source =~ /^https?:/
-        get_from_http_source(source, &block)
-      else
-        get_from_puppet_source(source_or_content, &block)
-      end
-    end
-
-
-    def chunk_file_from_source(source_or_content)
-      get_from_source(source_or_content) do |response|
-        case response.code
-        when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
-        else
-          # Raise the http error if we didn't get a 'success' of some kind.
-          message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-          raise Net::HTTPError.new(message, response)
-        end
-      end
     end
 
     def read_file_from_filebucket
