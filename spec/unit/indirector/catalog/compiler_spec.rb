@@ -683,6 +683,91 @@ describe Puppet::Resource::Catalog::Compiler do
             .with_parameter(:checksum, checksum_type)
             .with_parameter(:checksum_value, checksum_value)
         end
+
+        it "copies containment relationships from the parent to all generated resources" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+              before  => Notify['hi']
+            }
+            notify { 'hi' : }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          notify_hi = catalog.resource('Notify[hi]')
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [notify_hi, file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [notify_hi, file_b])
+        end
+
+        it "copies multiple containment relationships from the parent to all generated resources" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+              before  => [Notify['hi'], Notify['there']]
+            }
+            notify { 'hi' : }
+            notify { 'there': }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          notify_hi = catalog.resource('Notify[hi]')
+          notify_there = catalog.resource('Notify[there]')
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [notify_hi, notify_there, file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [notify_hi, notify_there, file_b])
+        end
+
+        it "adds relationships from the generated child's parent to the child" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [file_b])
+          expect(catalog).to have_resource("File[#{path}/a/b.txt]")
+            .with_parameter(:before, [])
+        end
       end
     end
 

@@ -135,28 +135,56 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
+        # memoize parent and children resources so we don't have to
+        # call `catalog.resource` each time, which generates a
+        # Puppet::Resource object.
+        children = []
+        resource_table = {}
+        resource_table[resource.title] = resource
+
         file.recurse_remote_metadata.each do |meta|
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."
 
           # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
-          child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
+          title = File.join(file[:path], meta.relative_path)
+          child_resource = Puppet::Resource.new(:file, title)
           child_resource[:ensure] = meta.ftype
           replace_metadata(child_resource, meta, true)
 
           # Copy parameters from original parent directory
           file.original_parameters.each do |param, value|
             # These should never be passed to our children
+            # REMIND: refactor this with Puppet::Type::File#recurse and skip source_permissions
             unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
-              child_resource[param] = value.to_s
+              if [:before, :notify].include? param
+                child_resource[param] = value.dup
+              else
+                child_resource[param] = value
+              end
             end
           end
-          #TODO: Add edge between `child_resource` and its nearest ancestor and
-          # add an edge between `child_resource` and all other resources that depend
-          # on `file`
-          catalog.add_resource(child_resource)
-          catalog.add_edge(file, child_resource)
+
+          children << child_resource
+          resource_table[title] = child_resource
+        end
+
+        [:before, :notify].each do |param|
+          resource_table.values.each do |res|
+            # res[param] can be nil, String or Array
+            res[param] = [res[param]].flatten.compact
           end
+        end
+
+        # Have to add children in reverse order
+        children.reverse.each do |child|
+          catalog.add_resource_after(resource, child)
+
+          # ensure child's immediate ancestor is evaluated before the child
+          parent = resource_table[File.dirname(child.title)]
+          parent[:before] ||= []
+          parent[:before] << child
+        end
       else
         metadata = file.parameter(:source).metadata
         raise "Could not get metadata for #{resource[:source]}" unless metadata
