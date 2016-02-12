@@ -2069,7 +2069,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 292)
 
 module_eval(<<'.,.,', 'egrammar.ra', 293)
   def _reduce_94(val, _values, result)
-     result = Factory.QNAME(val[0]); loc result, val[0] 
+     result = Factory.QNAME(val[0][:value]); loc result, val[0] 
     result
   end
 .,.,
