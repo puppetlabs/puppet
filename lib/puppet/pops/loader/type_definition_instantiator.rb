@@ -5,7 +5,7 @@ module Loader
 class TypeDefinitionInstantiator
   def self.create(loader, typed_name, source_ref, pp_code_string)
     # parse and validate
-    parser = Puppet::Pops::Parser::EvaluatingParser.new()
+    parser = Parser::EvaluatingParser.new()
     model = parser.parse_string(pp_code_string, source_ref).model
     # Only one type is allowed (and no other definitions)
 
@@ -41,14 +41,14 @@ class TypeDefinitionInstantiator
     # loader to use when resolving contained aliases API. Such logic have a hard time finding the closure (where
     # the loader is known - hence this mechanism
     private_loader = loader.private_loader
-    Puppet::Pops::Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
+    Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
 
-    Puppet::Pops::Types::PTypeAlias.new(name, type_definition.type_expr)
+    Types::PTypeAlias.new(name, type_definition.type_expr)
   end
 
   def self.create_from_model(type_definition, loader)
     name = type_definition.name
-    [Loader::TypedName.new(:type, name.downcase), Puppet::Pops::Types::PTypeAlias.new(name, type_definition.type_expr)]
+    [Loader::TypedName.new(:type, name.downcase), Types::PTypeAlias.new(name, type_definition.type_expr)]
   end
 end
 end
