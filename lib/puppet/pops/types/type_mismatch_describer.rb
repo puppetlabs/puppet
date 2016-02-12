@@ -214,7 +214,7 @@ module Types
         # Use simple names when classes differ, or in other words, only include details
         # when the classes are equal.
         #
-        if e.find { |t| t.class == a.class }
+        if a.is_a?(PTypeAliasType) || e.find { |t| t.class == a.class || t.is_a?(PTypeAliasType) }
           e = e.map { |t| t.to_s }
           a = a.to_s
         else
@@ -233,7 +233,7 @@ module Types
           multi = true
         end
       else
-        if e.class != a.class
+        if e.class != a.class && !(e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType))
           e = e.simple_name
           a = a.simple_name
         else
