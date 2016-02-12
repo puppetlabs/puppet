@@ -466,7 +466,7 @@ describe Puppet::Resource::Catalog::Compiler do
       metadata
     end
 
-    def stubs_directory_metadata(checksum_type, relative_path, children)
+    def stubs_directory_metadata(relative_path)
       full_path =  File.join(Puppet[:environmentpath], 'production', relative_path)
 
       metadata = stub 'metadata'
@@ -477,9 +477,13 @@ describe Puppet::Resource::Catalog::Compiler do
 
       Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
 
+      metadata
+    end
+
+    def stubs_top_directory_metadata(children)
       Puppet::Type.type(:file).any_instance.stubs(:recurse_remote_metadata).returns(children)
 
-      metadata
+      stubs_directory_metadata('.')
     end
 
     def expects_no_source_metadata
@@ -644,7 +648,7 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          stubs_directory_metadata(checksum_type, '.', [])
+          stubs_top_directory_metadata([])
 
           @compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -665,7 +669,7 @@ describe Puppet::Resource::Catalog::Compiler do
           MANIFEST
 
           child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
-          stubs_directory_metadata(checksum_type, '.', [child_metadata])
+          stubs_top_directory_metadata([child_metadata])
 
           @compiler.send(:inline_metadata, catalog, checksum_type)
 
