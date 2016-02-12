@@ -68,7 +68,7 @@ class PAnyType < TypedModelObject
       _assignable?(TypeCalculator.singleton.type(o), guard)
     when PUnitType
       true
-    when PTypeAlias
+    when PTypeAliasType
       # An alias may contain self recursive constructs.
       if o.self_recursion?
         guard ||= RecursionGuard.new
@@ -1941,7 +1941,7 @@ end
 # might contain self recursion. Whether or not that is the case is computed and remembered when the alias
 # is resolved since guarding against self recursive constructs is relatively expensive.
 #
-class PTypeAlias < PAnyType
+class PTypeAliasType < PAnyType
   attr_reader :name
 
   # @param name [String] The name of the type
@@ -1993,7 +1993,7 @@ class PTypeAlias < PAnyType
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.
   #
-  # @return [PTypeAlias] the receiver of the call, i.e. `self`
+  # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
   def resolve(type_parser, scope)
     if @resolved_type.nil?
@@ -2056,7 +2056,7 @@ class PTypeAlias < PAnyType
     end
   end
 
-  DEFAULT = PTypeAlias.new('UnresolvedAlias', nil, PTypeReference::DEFAULT)
+  DEFAULT = PTypeAliasType.new('UnresolvedAlias', nil, PTypeReference::DEFAULT)
 end
 end
 end

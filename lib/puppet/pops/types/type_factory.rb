@@ -433,9 +433,9 @@ module TypeFactory
   # Returns the type alias for the given expression
   # @param name [String] the name of the unresolved type
   # @param expression [Model::Expression] an expression that will evaluate to a type
-  # @return [PTypeAlias] the type alias
+  # @return [PTypeAliasType] the type alias
   def self.type_alias(name, expression)
-    PTypeAlias.new(name, expression)
+    PTypeAliasType.new(name, expression)
   end
 
   # Returns the type that represents a type reference with a given name and optional

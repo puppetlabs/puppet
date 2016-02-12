@@ -43,12 +43,12 @@ class TypeDefinitionInstantiator
     private_loader = loader.private_loader
     Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
 
-    Types::PTypeAlias.new(name, type_definition.type_expr)
+    Types::PTypeAliasType.new(name, type_definition.type_expr)
   end
 
   def self.create_from_model(type_definition, loader)
     name = type_definition.name
-    [Loader::TypedName.new(:type, name.downcase), Types::PTypeAlias.new(name, type_definition.type_expr)]
+    [Loader::TypedName.new(:type, name.downcase), Types::PTypeAliasType.new(name, type_definition.type_expr)]
   end
 end
 end

@@ -151,7 +151,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::POptionalType,
         Puppet::Pops::Types::PDefaultType,
         Puppet::Pops::Types::PTypeReference,
-        Puppet::Pops::Types::PTypeAlias,
+        Puppet::Pops::Types::PTypeAliasType,
       ]
     end
 
@@ -713,7 +713,7 @@ describe 'The type calculator' do
         all_instances = (all_types - [
           Puppet::Pops::Types::PTypeReference, # Avoid comparison with t
           Puppet::Pops::Types::PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
-          Puppet::Pops::Types::PTypeAlias      # DEFAULT resolves to PTypeReference::DEFAULT, i.e. t
+          Puppet::Pops::Types::PTypeAliasType      # DEFAULT resolves to PTypeReference::DEFAULT, i.e. t
         ]).map {|c| c::DEFAULT }
 
         # Add a non-empty variant

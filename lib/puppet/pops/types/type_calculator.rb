@@ -1043,7 +1043,7 @@ class TypeCalculator
   end
 
   # @api private
-  def string_PTypeAlias(t)
+  def string_PTypeAliasType(t)
     t.name
   end
 
