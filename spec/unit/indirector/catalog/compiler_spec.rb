@@ -435,55 +435,103 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
     end
 
-    def stubs_file_metadata(checksum_type, sha, relative_path, full_path = nil)
+    def stubs_resource_metadata(ftype, relative_path, full_path = nil)
       full_path ||=  File.join(Puppet[:environmentpath], 'production', relative_path)
 
       metadata = stub 'metadata'
-      metadata.stubs(:ftype).returns("file")
+      metadata.stubs(:ftype).returns(ftype)
       metadata.stubs(:full_path).returns(full_path)
       metadata.stubs(:relative_path).returns(relative_path)
       metadata.stubs(:source).returns("puppet:///#{relative_path}")
-      metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
-      metadata.stubs(:checksum_type).returns(checksum_type)
 
       Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
 
+      metadata
+    end
+
+    def stubs_file_metadata(checksum_type, sha, relative_path, full_path = nil)
+      metadata = stubs_resource_metadata('file', relative_path, full_path)
+      metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
+      metadata.stubs(:checksum_type).returns(checksum_type)
       metadata
     end
 
     def stubs_link_metadata(relative_path, destination)
-      full_path =  File.join(Puppet[:environmentpath], 'production', relative_path)
-
-      metadata = stub 'metadata'
-      metadata.stubs(:ftype).returns("link")
-      metadata.stubs(:full_path).returns(full_path)
-      metadata.stubs(:relative_path).returns(relative_path)
-      metadata.stubs(:source).returns("puppet:///#{relative_path}")
-      metadata.stubs(:destination).returns('/tmp/some/absolute/path')
-
-      Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
-
+      metadata = stubs_resource_metadata('link', relative_path)
+      metadata.stubs(:destination).returns(destination)
       metadata
     end
 
     def stubs_directory_metadata(checksum_type, relative_path, children)
-      full_path =  File.join(Puppet[:environmentpath], 'production', relative_path)
-
-      metadata = stub 'metadata'
-      metadata.stubs(:ftype).returns("directory")
-      metadata.stubs(:full_path).returns(full_path)
-      metadata.stubs(:relative_path).returns(relative_path)
-      metadata.stubs(:source).returns("puppet:///#{relative_path}")
-
-      Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
-
+      metadata = stubs_resource_metadata('directory', relative_path)
       Puppet::Type.type(:file).any_instance.stubs(:recurse_remote_metadata).returns(children)
-
       metadata
     end
 
     def expects_no_source_metadata
       Puppet::Type.type(:file).attrclass(:source).any_instance.expects(:metadata).never
+    end
+
+    ['file', 'directory', 'link', 'present'].each do |ensure_type|
+      it "ensures a file when ensure says #{ensure_type} but the metadata says file" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          file { '#{path}':
+            ensure => #{ensure_type},
+            source => 'puppet:///modules/mymodule/config_file.txt',
+          }
+        MANIFEST
+
+        stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+        if ['directory', 'link'].include?(ensure_type)
+          Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a file. "+
+                                        "The source metadata will override the 'ensure' property.")
+        end
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref).with_parameter(:ensure, 'file')
+      end
+
+      it "ensures a directory when ensure says #{ensure_type} but the medatata says directory" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          file { '#{path}':
+            ensure => #{ensure_type},
+            source => 'puppet:///modules/mymodule/config_file.txt',
+          }
+        MANIFEST
+
+        stubs_directory_metadata(checksum_type, '.', [])
+
+        if ['file', 'link'].include?(ensure_type)
+          Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a directory. "+
+                                        "The source metadata will override the 'ensure' property.")
+        end
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref).with_parameter(:ensure, 'directory')
+      end
+
+      it "ensures a link when ensure says #{ensure_type} but the medatata says link" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          file { '#{path}':
+            ensure => #{ensure_type},
+            source => 'puppet:///modules/mymodule/config_file.txt',
+          }
+        MANIFEST
+
+        stubs_link_metadata('modules/mymodule/files/config_file.txt', '/tmp/some/absolute/path')
+
+        if ['file', 'directory'].include?(ensure_type)
+          Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a link. "+
+                                        "The source metadata will override the 'ensure' property.")
+        end
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref).with_parameter(:ensure, 'link')
+      end
     end
 
     [['md5', 'b1946ac92492d2347c6235b4d2611184'],
