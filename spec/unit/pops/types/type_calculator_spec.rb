@@ -1853,6 +1853,8 @@ describe 'The type calculator' do
   end
 
   context 'when representing the type as string' do
+    include_context 'types_setup'
+
     it 'should yield \'Type\' for PType' do
       expect(calculator.string(Puppet::Pops::Types::PType::DEFAULT)).to eq('Type')
     end
@@ -2117,6 +2119,14 @@ describe 'The type calculator' do
     it "should yield the name of a type alias" do
       t = type_alias_t('Alias', 'Integer')
       expect(calculator.string(t)).to eq('Alias')
+    end
+
+    it 'should present a valid simple name' do
+      (all_types - [Puppet::Pops::Types::PType]).each do |t|
+        name = t::DEFAULT.simple_name
+        expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
+      end
+      expect(Puppet::Pops::Types::PType::DEFAULT.simple_name).to eql('Type')
     end
   end
 
