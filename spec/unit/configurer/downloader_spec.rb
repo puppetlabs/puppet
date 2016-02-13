@@ -82,13 +82,13 @@ describe Puppet::Configurer::Downloader do
       expect(file[:source_permissions]).to eq(:ignore)
     end
 
-    it "should allow source_permissions to be overridden" do
-      file = generate_file_resource(:source_permissions => :use)
-
-      expect(file[:source_permissions]).to eq(:use)
-    end
-
     describe "on POSIX", :if => Puppet.features.posix? do
+      it "should allow source_permissions to be overridden" do
+        file = generate_file_resource(:source_permissions => :use)
+
+        expect(file[:source_permissions]).to eq(:use)
+      end
+
       it "should always set the owner to the current UID" do
         Process.expects(:uid).returns 51
 

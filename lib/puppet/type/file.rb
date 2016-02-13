@@ -727,6 +727,24 @@ Puppet::Type.newtype(:file) do
   end
 
   def retrieve
+    # This check is done in retrieve to ensure it happens before we try to use
+    # metadata in `copy_source_values`, but so it only fails the resource and not
+    # catalog validation (because that would be a breaking change from Puppet 4).
+    if Puppet.features.microsoft_windows? && parameter(:source) &&
+      [:use, :use_when_creating].include?(self[:source_permissions])
+      err_msg = "Copying owner/mode/group from the source file on Windows" <<
+      " is not supported; use source_permissions => ignore."
+
+      if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
+        # Fail on Windows if source permissions are being used and the file resource
+        # does not have mode owner, group, and mode all set (which would take precedence).
+        self.fail err_msg
+      else
+        # Warn if use source permissions is specified on Windows
+        self.warning err_msg
+      end
+    end
+
     # `checksum_value` implies explicit management of all metadata, so skip metadata
     # retrieval. Otherwise, if source is set, retrieve metadata for source.
     if (source = parameter(:source)) && property(:checksum_value).nil?

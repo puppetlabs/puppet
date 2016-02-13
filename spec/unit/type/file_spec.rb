@@ -1397,6 +1397,7 @@ describe Puppet::Type.type(:file) do
         :ctime => 'Jan 26 13:59:49 2016'
       }
     end
+
     Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
       describe "with checksum '#{checksum_type}'" do
         before do
@@ -1416,6 +1417,51 @@ describe Puppet::Type.type(:file) do
           file[:checksum_value] = @checksum_values[checksum_type]
           expect { file.validate }.to_not raise_error
         end
+      end
+    end
+
+    describe "on Windows when source_permissions is `use`" do
+      before :each do
+        Puppet.features.stubs(:microsoft_windows?).returns true
+        file[:source_permissions] = "use"
+      end
+      let(:err_message) { "Copying owner/mode/group from the" <<
+                          " source file on Windows is not supported;" <<
+                          " use source_permissions => ignore." }
+
+      it "should issue error when retrieving" do
+        expect { file.retrieve }.to raise_error(err_message)
+      end
+
+      it "should issue error when retrieving if only user is unspecified" do
+        file[:group] = 2
+        file[:mode] = "0003"
+
+        expect { file.retrieve }.to raise_error(err_message)
+      end
+
+      it "should issue error when retrieving if only group is unspecified" do
+        file[:owner] = 1
+        file[:mode] = "0003"
+
+        expect { file.retrieve }.to raise_error(err_message)
+      end
+
+      it "should issue error when retrieving if only mode is unspecified" do
+        file[:owner] = 1
+        file[:group] = 2
+
+        expect { file.retrieve }.to raise_error(err_message)
+      end
+
+      it "should issue warning when retrieve if group, owner, and mode are all specified" do
+        file[:owner] = 1
+        file[:group] = 2
+        file[:mode] = "0003"
+
+        file.parameter(:source).expects(:copy_source_values)
+        file.expects(:warning).with(err_message)
+        expect { file.retrieve }.not_to raise_error
       end
     end
 

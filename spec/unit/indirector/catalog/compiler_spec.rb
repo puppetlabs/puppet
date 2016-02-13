@@ -430,6 +430,9 @@ describe Puppet::Resource::Catalog::Compiler do
     let(:checksum_value) { 'b1946ac92492d2347c6235b4d2611184' }
     let(:path) { File.expand_path('/foo') }
     let(:resource_ref) { "File[#{path}]" }
+    let(:owner) { 12 }
+    let(:group) { 42 }
+    let(:mode) { '0' }
 
     before :each do
       @compiler = Puppet::Resource::Catalog::Compiler.new
@@ -453,6 +456,9 @@ describe Puppet::Resource::Catalog::Compiler do
       metadata = stubs_resource_metadata('file', relative_path, full_path)
       metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
       metadata.stubs(:checksum_type).returns(checksum_type)
+      metadata.stubs(:owner).returns(owner)
+      metadata.stubs(:group).returns(group)
+      metadata.stubs(:mode).returns(mode)
       metadata
     end
 
@@ -472,6 +478,113 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Type.type(:file).attrclass(:source).any_instance.expects(:metadata).never
     end
 
+    it "does not inline source permissions if source_permissions => ignore" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt'
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        .with_parameter(:mode, nil)
+        .with_parameter(:group, nil)
+        .with_parameter(:owner, nil)
+    end
+
+    it "inlines permissions if source_permissions => use" do
+      Puppet.features.stubs(:microsoft_windows?).returns false
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt',
+          source_permissions => use
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        .with_parameter(:mode, mode)
+        .with_parameter(:group, group)
+        .with_parameter(:owner, owner)
+    end
+
+    [:owner, :group, :mode].each do |meta|
+      it "inlines #{meta} if other permissions are set and source_permissions => use" do
+        Puppet.features.stubs(:microsoft_windows?).returns false
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          file { '#{path}':
+            ensure => file,
+            source => 'puppet:///modules/mymodule/config_file.txt',
+            source_permissions => use,
+            #{meta} => '1',
+          }
+        MANIFEST
+
+        stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        res = have_resource(resource_ref)
+          .with_parameter(:ensure, 'file')
+          .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        [:owner, :group, :mode].reject {|key| key == meta}.each do |param|
+          res = res.with_parameter(param, send(param))
+        end
+        expect(catalog).to res.with_parameter(meta, '1')
+      end
+    end
+
+    it "does not override permissions if source_permissions => use" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt',
+          source_permissions => use,
+          owner => 0,
+          group => 0,
+          mode => '0777'
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        .with_parameter(:mode, '0777')
+        .with_parameter(:group, 0)
+        .with_parameter(:owner, 0)
+    end
+
+    it "fails when inlining and source_permissions => use_when_creating is set" do
+      Puppet.features.stubs(:microsoft_windows?).returns false
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt',
+          source_permissions => use_when_creating,
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+      expect { @compiler.send(:inline_metadata, catalog, checksum_type) }.to raise_error Puppet::Error,
+        "source_permissions => use_when_creating cannot be set when creating static catalogs"
+    end
+
     ['file', 'directory', 'link', 'present'].each do |ensure_type|
       it "ensures a file when ensure says #{ensure_type} but the metadata says file" do
         catalog = compile_to_catalog(<<-MANIFEST, node)
@@ -486,6 +599,8 @@ describe Puppet::Resource::Catalog::Compiler do
         if ['directory', 'link'].include?(ensure_type)
           Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a file. "+
                                         "The source metadata will override the 'ensure' property.")
+        else
+          Puppet.expects(:warning).never
         end
 
         @compiler.send(:inline_metadata, catalog, checksum_type)
@@ -506,6 +621,8 @@ describe Puppet::Resource::Catalog::Compiler do
         if ['file', 'link'].include?(ensure_type)
           Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a directory. "+
                                         "The source metadata will override the 'ensure' property.")
+        else
+          Puppet.expects(:warning).never
         end
 
         @compiler.send(:inline_metadata, catalog, checksum_type)
@@ -526,6 +643,8 @@ describe Puppet::Resource::Catalog::Compiler do
         if ['file', 'directory'].include?(ensure_type)
           Puppet.expects(:warning).with("File[#{path}] expected to create a #{ensure_type}, but its source is a link. "+
                                         "The source metadata will override the 'ensure' property.")
+        else
+          Puppet.expects(:warning).never
         end
 
         @compiler.send(:inline_metadata, catalog, checksum_type)

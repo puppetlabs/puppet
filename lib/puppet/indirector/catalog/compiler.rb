@@ -96,7 +96,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # ensure is `present` (it could be anything), or a path (implies creating a link).
     # `to_ral` caused the path case to munge to managing links, so we warn if there's
     # a mismatch that's not `present`.
-    if resource[:ensure] != :present && resource[:ensure] != metadata.ftype
+    if resource[:ensure] != "present" && resource[:ensure] != metadata.ftype
       Puppet.warning "#{resource} expected to create a #{resource[:ensure]}, but its source "+
         "is a #{metadata.ftype}. The source metadata will override the 'ensure' property."
     end
@@ -109,6 +109,19 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # expression of intent.
       resource[:checksum_value] = sumdata(metadata.checksum)
       resource[:checksum] = metadata.checksum_type
+    end
+
+    case resource[:source_permissions]
+    when "use"
+      resource[:owner] ||= metadata.owner
+      resource[:group] ||= metadata.group
+      if resource[:mode].nil?
+        mode = metadata.mode
+        mode = mode.to_s(8) if mode.is_a?(Numeric)
+        resource[:mode] = mode
+      end
+    when "use_when_creating"
+      raise Puppet::Error, "source_permissions => use_when_creating cannot be set when creating static catalogs"
     end
   end
 
@@ -146,7 +159,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."
 
-          # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
           child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
           child_resource[:source] = meta.source
           replace_metadata(child_resource, meta)
