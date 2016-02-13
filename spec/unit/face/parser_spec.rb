@@ -30,9 +30,17 @@ describe Puppet::Face[:parser, :current] do
       end
 
       it "runs error free when there are no validation errors" do
-        manifest = file_containing('site.pp', "notify { valid: }")
+        expect {
+            manifest = file_containing('site.pp', "notify { valid: }")
+            parser.validate(manifest)
+        }.to_not raise_error
+      end
 
-        parser.validate(manifest)
+      it "runs error free when there is a puppet function in manifest being validated" do
+        expect {
+          manifest = file_containing('site.pp', "function valid() { 'valid' } notify{ valid(): }")
+          parser.validate(manifest)
+        }.to_not raise_error
       end
 
       it "reports missing files" do
