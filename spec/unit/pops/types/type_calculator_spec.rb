@@ -150,8 +150,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PType,
         Puppet::Pops::Types::POptionalType,
         Puppet::Pops::Types::PDefaultType,
-        Puppet::Pops::Types::PTypeReference,
-        Puppet::Pops::Types::PTypeAlias,
+        Puppet::Pops::Types::PTypeReferenceType,
+        Puppet::Pops::Types::PTypeAliasType,
       ]
     end
 
@@ -709,11 +709,11 @@ describe 'The type calculator' do
 
     context "for TypeReference, such that" do
       it 'no other type is assignable' do
-        t = Puppet::Pops::Types::PTypeReference::DEFAULT
+        t = Puppet::Pops::Types::PTypeReferenceType::DEFAULT
         all_instances = (all_types - [
-          Puppet::Pops::Types::PTypeReference, # Avoid comparison with t
+          Puppet::Pops::Types::PTypeReferenceType, # Avoid comparison with t
           Puppet::Pops::Types::PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
-          Puppet::Pops::Types::PTypeAlias      # DEFAULT resolves to PTypeReference::DEFAULT, i.e. t
+          Puppet::Pops::Types::PTypeAliasType      # DEFAULT resolves to PTypeReferenceType::DEFAULT, i.e. t
         ]).map {|c| c::DEFAULT }
 
         # Add a non-empty variant
@@ -1853,6 +1853,8 @@ describe 'The type calculator' do
   end
 
   context 'when representing the type as string' do
+    include_context 'types_setup'
+
     it 'should yield \'Type\' for PType' do
       expect(calculator.string(Puppet::Pops::Types::PType::DEFAULT)).to eq('Type')
     end
@@ -2117,6 +2119,14 @@ describe 'The type calculator' do
     it "should yield the name of a type alias" do
       t = type_alias_t('Alias', 'Integer')
       expect(calculator.string(t)).to eq('Alias')
+    end
+
+    it 'should present a valid simple name' do
+      (all_types - [Puppet::Pops::Types::PType]).each do |t|
+        name = t::DEFAULT.simple_name
+        expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
+      end
+      expect(Puppet::Pops::Types::PType::DEFAULT.simple_name).to eql('Type')
     end
   end
 
