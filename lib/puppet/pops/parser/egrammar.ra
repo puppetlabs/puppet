@@ -291,7 +291,7 @@ call_function_expression
 
 call_function_start
   : expression LPAREN { result = val[0] }
-  | TYPE LPAREN { result = Factory.QNAME(val[0]); loc result, val[0] }
+  | TYPE LPAREN { result = Factory.QNAME(val[0][:value]); loc result, val[0] }
 
 #---CALL METHOD
 #
