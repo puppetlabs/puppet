@@ -185,11 +185,13 @@ module Puppet::Plugins::DataProviders
 
     # @param name [String] The name of the data provider
     # @param paths [Array<ResolvedPath>] Paths used by this provider
+    # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
     #
     # @api public
-    def initialize(name, paths)
+    def initialize(name, paths, parent_data_provider = nil)
       @name = name
       @paths = paths
+      @parent_data_provider = parent_data_provider
     end
 
     # Performs a lookup by searching all given paths for the given _key_. A merge will be performed if
@@ -236,10 +238,11 @@ module Puppet::Plugins::DataProviders
     #
     # @param name [String] the name of the created provider (for logging and debugging)
     # @param paths [Array<String>] array of resolved paths
+    # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
     # @return [DataProvider] The created data provider
     #
     # @api public
-    def create(name, paths)
+    def create(name, paths, parent_data_provider)
       raise NotImplementedError, "Subclass of PathBasedDataProviderFactory must implement 'create' method"
     end
 
@@ -258,6 +261,14 @@ module Puppet::Plugins::DataProviders
     # @api public
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       []
+    end
+
+    # Returns the data provider factory version.
+    #
+    # return [Integer] the version of this data provider factory
+    # @api public
+    def version
+      2
     end
   end
 
