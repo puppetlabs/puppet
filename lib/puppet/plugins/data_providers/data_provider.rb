@@ -114,17 +114,26 @@ module Puppet::Plugins::DataProviders
     end
     protected :data_key
 
-    # Assert that all keys in the given _data_ are prefixed with the given _module_name_.
+    # Assert that all keys in the given _data_ are prefixed with the given _module_name_. Remove entries
+    # that does not follow the convention and log a warning.
     #
     # @param data [Hash] The data hash
     # @param module_name [String] The name of the module where the data was found
-    # @return [Hash] The data_hash unaltered
+    # @return [Hash] The possibly pruned hash
+    # @api public
     def validate_data(data, module_name)
       module_prefix = "#{module_name}::"
-      data.each_key do |k|
-        unless k.is_a?(String) && (k == LOOKUP_OPTIONS || k.start_with?(module_prefix))
-          raise Puppet::DataBinding::LookupError, "Module data for module '#{module_name}' must use keys qualified with the name of the module"
+      data.each_key.reduce(data) do |memo, k|
+        if k.is_a?(String)
+          next memo if k == LOOKUP_OPTIONS || k.start_with?(module_prefix)
+          msg = 'must use keys qualified with the name of the module'
+        else
+          msg = "must use keys of type String, got #{k.class.name}"
         end
+        memo = memo.clone if memo.equal?(data)
+        memo.delete(k)
+        Puppet.warning("Module data for module '#{module_name}' #{msg}")
+        memo
       end
     end
     protected :validate_data
