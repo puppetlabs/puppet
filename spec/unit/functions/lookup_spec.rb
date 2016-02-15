@@ -406,7 +406,7 @@ describe "when performing lookup" do
     end
 
     it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
-      Puppet[:code] = "include bad_data\nlookup('hieraprovider::test::param_a')"
+      Puppet[:code] = "include hieraprovider\nlookup('hieraprovider::test::param_a')"
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
