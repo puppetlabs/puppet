@@ -72,7 +72,6 @@ module Puppet::Plugins::DataProviders
     def data_key(key, lookup_invocation)
       nil
     end
-    protected :data_key
 
     # Should be reimplemented by subclass to provide the hash that corresponds to the given name.
     #
@@ -94,7 +93,6 @@ module Puppet::Plugins::DataProviders
     def validate_data(data, data_key)
       data
     end
-    protected :validate_data
   end
 
   class ModuleDataProvider
@@ -112,7 +110,6 @@ module Puppet::Plugins::DataProviders
       throw :no_such_key if qual_index.nil?
       key[0..qual_index-1]
     end
-    protected :data_key
 
     # Assert that all keys in the given _data_ are prefixed with the given _module_name_. Remove entries
     # that does not follow the convention and log a warning.
@@ -136,7 +133,6 @@ module Puppet::Plugins::DataProviders
         memo
       end
     end
-    protected :validate_data
   end
 
   class EnvironmentDataProvider
@@ -145,7 +141,6 @@ module Puppet::Plugins::DataProviders
     def data_key(key, lookup_invocation)
       'environment'
     end
-    protected :data_key
   end
 
   # Class that keeps track of the original path (as it appears in the declaration, before interpolation),
@@ -194,6 +189,31 @@ module Puppet::Plugins::DataProviders
       @parent_data_provider = parent_data_provider
     end
 
+    # Gets the data from the compiler, or initializes it by calling #initialize_data if not present in the compiler.
+    # This means, that data is initialized once per compilation, and the data is cached for as long as the compiler
+    # lives (which is for one catalog production). This makes it possible to return data that is tailored for the
+    # request.
+    #
+    # If data is obtained using the #initialize_data method it will be sent to the #validate_data for validation
+    #
+    # @param path [String] The path to the data to be loaded (passed to #initialize_data)
+    # @param data_key [String] The data key such as the name of a module or the constant 'environment'
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
+    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
+    # @return [Hash] The data hash for the given _key_
+    #
+    # @api public
+    def load_data(path, data_key, lookup_invocation)
+      compiler = lookup_invocation.scope.compiler
+      adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
+      adapter.data[path] ||= validate_data(initialize_data(path, lookup_invocation), data_key)
+    end
+    protected :data
+
+    def validate_data(data, module_name)
+      @parent_data_provider.nil? ? data : @parent_data_provider.validate_data(data, module_name)
+    end
+
     # Performs a lookup by searching all given paths for the given _key_. A merge will be performed if
     # the value is found in more than one location and _merge_ is not nil.
     #
@@ -203,13 +223,14 @@ module Puppet::Plugins::DataProviders
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
+      module_name = @parent_data_provider.nil? ? nil : @parent_data_provider.data_key(key, lookup_invocation)
       lookup_invocation.with(:data_provider, self) do
         merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
         lookup_invocation.with(:merge, merge_strategy) do
           merged_result = merge_strategy.merge_lookup(@paths) do |path|
             lookup_invocation.with(:path, path) do
               if path.exists?
-                hash = data(path.path, lookup_invocation)
+                hash = load_data(path.path, module_name, lookup_invocation)
                 value = hash[key]
                 if value || hash.include?(key)
                   lookup_invocation.report_found(key, post_process(value, lookup_invocation))
