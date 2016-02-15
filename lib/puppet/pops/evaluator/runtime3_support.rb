@@ -306,6 +306,7 @@ module Runtime3Support
     # a proper Issue. Now the result is "Error while evaluating a Resource Statement" with the message
     # from the raised exception. (It may be good enough).
 
+
     # resolve in scope.
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 
