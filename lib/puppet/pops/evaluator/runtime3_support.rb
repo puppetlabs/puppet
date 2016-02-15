@@ -315,14 +315,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # from the raised exception. (It may be good enough).
 
 
-    # In 3.x scope does not resolve classes as absolute names.
-    # In 4.x it does. This comment, and the conditional logic in the if below
-    # should be removed when merged to 4.x
-    #
-    if type_name == CLASS_STRING
-      resource_titles = resource_titles.map {|s| s.index('::') != 0 ? "::#{s}" : s }
-    end
-
     # resolve in scope.
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 
