@@ -631,6 +631,8 @@ class TypeCalculator
     case o
     when :default
       PDefaultType::DEFAULT
+    when :undef
+      PUndefType::DEFAULT
     else
       infer_Object(o)
     end
