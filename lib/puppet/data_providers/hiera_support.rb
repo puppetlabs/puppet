@@ -31,7 +31,7 @@ module Puppet::DataProviders::HieraSupport
 
   def data_providers(data_key, lookup_invocation)
     @hiera_config ||= Puppet::DataProviders::HieraConfig.new(provider_root(data_key, lookup_invocation.scope))
-    @data_providers ||= @hiera_config.create_data_providers(lookup_invocation)
+    @data_providers ||= @hiera_config.create_configured_data_providers(lookup_invocation, self)
   end
   private :data_providers
 end
