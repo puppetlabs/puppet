@@ -416,6 +416,19 @@ describe "when performing lookup" do
     end
   end
 
+  context 'when accessing empty files' do
+    # An empty YAML file is OK and should be treated as a file that contains no keys
+    it "will fail normally with a 'did not find a value' error when a yaml file is empty" do
+      Puppet[:code] = "include empty_yaml\nlookup('empty_yaml::a')"
+      expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'empty_yaml::a'/)
+    end
+
+    # An empty JSON file is not OK. Should yield a parse error
+    it "will fail with a LookupError indicating a parser failure when a json file is empty" do
+      Puppet[:code] = "include empty_json\nlookup('empty_json::a')"
+      expect { compiler.compile }.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse/)
+    end
+  end
 
   context 'when using explain' do
     it 'will explain that module is not found' do
