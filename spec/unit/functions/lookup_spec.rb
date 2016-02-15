@@ -395,7 +395,7 @@ describe "when performing lookup" do
   end
 
   context 'when accessing bad data' do
-    it 'will log a warning when key in the function provided module data is not prefixed' do
+    it 'a warning will be logged when key in the function provided module data is not prefixed' do
       Puppet[:code] = "include bad_data\nlookup('bad_data::c')"
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
@@ -405,7 +405,7 @@ describe "when performing lookup" do
       expect(warnings).to include("Module data for module 'bad_data' must use keys qualified with the name of the module")
     end
 
-    it 'will log a warning when key in the hiera provided module data is not prefixed' do
+    it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
       Puppet[:code] = "include bad_data\nlookup('hieraprovider::test::param_a')"
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do

@@ -111,7 +111,7 @@ module Puppet::Plugins::DataProviders
       key[0..qual_index-1]
     end
 
-    # Assert that all keys in the given _data_ are prefixed with the given _module_name_. Remove entries
+    # Asserts that all keys in the given _data_ are prefixed with the given _module_name_. Remove entries
     # that does not follow the convention and log a warning.
     #
     # @param data [Hash] The data hash
