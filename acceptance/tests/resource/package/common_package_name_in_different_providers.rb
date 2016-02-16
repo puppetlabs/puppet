@@ -83,9 +83,10 @@ end
 
 verify_absent agents, 'guid'
 
+gem_source = if ENV['GEM_SOURCE'] then "source => #{ENV['GEM_SOURCE']}," else '' end
 collide2_manifest = <<MANIFEST
-  package {'guid': ensure => '0.1.0', provider => #{gem_provider}}
-  package {'other-guid': name => 'guid', ensure => installed, provider => #{gem_provider}}
+  package {'guid': ensure => '0.1.0', provider => #{gem_provider}, #{gem_source}}
+  package {'other-guid': name => 'guid', ensure => installed, provider => #{gem_provider}, #{gem_source}}
 MANIFEST
 
 apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]) do |result|
@@ -102,6 +103,7 @@ install_manifest = <<MANIFEST
     provider => #{gem_provider},
     name => 'guid',
     ensure => installed,
+    #{gem_source}
   }
 MANIFEST
 
@@ -118,6 +120,7 @@ remove_manifest = <<MANIFEST
     provider => #{gem_provider},
     name => 'guid',
     ensure => absent,
+    #{gem_source}
   }
 
   package {'guid': ensure => absent}
