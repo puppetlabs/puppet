@@ -97,6 +97,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
   end
 
+  # Add `resources` to the catalog after `other`. WARNING: adding
+  # multiple resources will produce the reverse ordering, e.g. calling
+  # `add_resource_after(A, [B,C])` will result in `[A,C,B]`.
   def add_resource_after(other, *resources)
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
@@ -105,7 +108,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       add_one_resource(resource, idx+1)
     end
   end
-
 
   def add_resource(*resources)
     resources.each do |resource|
