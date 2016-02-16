@@ -51,6 +51,13 @@ describe provider_class do
       expect(v[:release]).to eq('4.el5')
     end
 
+    it 'should parse evr with non-zero epoch' do
+      v = provider.yum_parse_evr('1:1.2.3-4.el5')
+      expect(v[:epoch]).to eq('1')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.el5')
+    end
+
     it 'should parse version only' do
       v = provider.yum_parse_evr('1.2.3')
       expect(v[:epoch]).to eq('0')
