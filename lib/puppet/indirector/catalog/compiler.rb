@@ -122,7 +122,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
     environment_path = File.join(Puppet[:environmentpath], catalog.environment, "")
-    catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
+    list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
+
+    list_of_resources.each do |resource|
       next if resource[:ensure] == 'absent'
 
       next unless source = resource[:source]
@@ -135,7 +137,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
-        file.recurse_remote_metadata.each do |meta|
+        child_resources = file.recurse_remote_metadata.map do |meta|
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."
 
@@ -151,12 +153,19 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
               child_resource[param] = value.to_s
             end
           end
-          #TODO: Add edge between `child_resource` and its nearest ancestor and
-          # add an edge between `child_resource` and all other resources that depend
-          # on `file`
-          catalog.add_resource(child_resource)
-          catalog.add_edge(file, child_resource)
-          end
+          child_resource
+        end.compact
+        child_resources = Puppet::Type::File.remove_less_specific_files(child_resources, resource[:path] || resource.title, list_of_resources) do |file_resource|
+          file_resource[:path] || file_resource.title
+        end
+
+        #TODO: Add edge between `child_resource` and its nearest ancestor and
+        # add an edge between `child_resource` and all other resources that depend
+        # on `file`
+        child_resources.each do |child|
+          catalog.add_resource(child)
+          catalog.add_edge(file, child)
+        end
       else
         metadata = file.parameter(:source).metadata
         raise "Could not get metadata for #{resource[:source]}" unless metadata
