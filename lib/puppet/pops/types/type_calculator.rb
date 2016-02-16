@@ -886,6 +886,8 @@ class Puppet::Pops::Types::TypeCalculator
     case o
     when :default
       Types::PDefaultType.new()
+    when :undef
+      Types::PUndefType.new()
     else
       infer_Object(o)
     end
