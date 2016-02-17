@@ -208,6 +208,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             end
           end
         end
+        # We're done with the parent, don't recurse again on the agent.
+        resource[:recurse] = false
       else
         metadata = file.parameter(:source).metadata
         raise "Could not get metadata for #{resource[:source]}" unless metadata

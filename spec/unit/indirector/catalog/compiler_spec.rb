@@ -675,7 +675,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
           expect(catalog).to have_resource(resource_ref)
             .with_parameter(:ensure, 'directory')
-            .with_parameter(:recurse, true) # REMIND this is surprising
+            .with_parameter(:recurse, false)
             .with_parameter(:source, 'puppet:///modules/mymodule/directory')
 
           expect(catalog).to have_resource("File[#{path}/myfile.txt]")
