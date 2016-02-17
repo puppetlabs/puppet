@@ -679,6 +679,38 @@ describe Puppet::Resource::Catalog::Compiler do
             .with_parameter(:checksum, checksum_type)
             .with_parameter(:checksum_value, checksum_value)
         end
+
+        it "does not create duplicate resources for explicitly managed files" do
+          pending "Update this test once we've removed the call to to_ral"
+                  catalog = compile_to_catalog(<<-MANIFEST, node)
+          file {'#{path}':
+            ensure => directory,
+            recurse => true,
+            source => 'puppet:///modules/mymodule/directory'
+          }
+          file {'#{path}/myfile.txt':
+            ensure => file,
+            source => 'puppet:///modules/mymodule/myfile.txt'
+          }
+        MANIFEST
+
+        child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
+        stubs_directory_metadata(checksum_type, '.', [child_metadata])
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref)
+          .with_parameter(:ensure, 'directory')
+          .with_parameter(:recurse, true) # REMIND this is surprising
+          .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+
+        expect(catalog).to have_resource("File[#{path}/myfile.txt]")
+          .with_parameter(:ensure, 'file')
+          .with_parameter(:checksum, checksum_type)
+          .with_parameter(:checksum_value, checksum_value)
+
+          expect(catalog.resources.select{ |r| r.type == 'File' }.size).to eq(2)
+        end
       end
     end
 
