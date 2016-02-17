@@ -83,7 +83,7 @@ end
 
 verify_absent agents, 'guid'
 
-gem_source = if ENV['GEM_SOURCE'] then "source => #{ENV['GEM_SOURCE']}," else '' end
+gem_source = if ENV['GEM_SOURCE'] then "source => '#{ENV['GEM_SOURCE']}'," else '' end
 collide2_manifest = <<MANIFEST
   package {'guid': ensure => '0.1.0', provider => #{gem_provider}, #{gem_source}}
   package {'other-guid': name => 'guid', ensure => installed, provider => #{gem_provider}, #{gem_source}}
