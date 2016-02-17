@@ -207,8 +207,13 @@ class Puppet::Configurer
       if catalog = prepare_and_retrieve_catalog_from_cache
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
-        @environment = catalog.environment
-        report.environment = catalog.environment
+
+        if @environment != catalog.environment
+          Puppet.notice "Local environment: '#{@environment}' doesn't match the environment of the cached catalog '#{catalog.environment}', switching agent to '#{catalog.environment}'."
+          @environment = catalog.environment
+        end
+
+        report.environment = @environment
       else
         # Don't try to retrieve a catalog from the cache again after we've already
         # failed to do so the first time.
