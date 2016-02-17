@@ -238,8 +238,8 @@ describe 'The type calculator' do
       expect(calculator.infer(nil).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
-    it ':undef translates to PRuntimeType' do
-      expect(calculator.infer(:undef).class).to eq(Puppet::Pops::Types::PRuntimeType)
+    it ':undef translates to PUndefType' do
+      expect(calculator.infer(:undef).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
     it 'an instance of class Foo translates to PRuntimeType[ruby, Foo]' do
@@ -1340,8 +1340,16 @@ describe 'The type calculator' do
       end
     end
 
-    it "should consider :undef to be instance of Runtime['ruby', 'Symbol]" do
-      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :undef)).to eq(true)
+    it "should infer :undef to be Undef" do
+      expect(calculator.infer(:undef)).to be_assignable_to(undef_t)
+    end
+
+    it "should not consider :default to be instance of Runtime['ruby', 'Symbol]" do
+      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :default)).to eq(false)
+    end
+
+    it "should not consider :undef to be instance of Runtime['ruby', 'Symbol]" do
+      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :undef)).to eq(false)
     end
 
     it 'should consider :undef to be instance of an Optional type' do
