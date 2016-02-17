@@ -684,6 +684,29 @@ describe Puppet::Resource::Catalog::Compiler do
             .with_parameter(:checksum_value, checksum_value)
         end
 
+        it "copies tags from the parent to all generated children" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              tag     => 'muppets',
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:tag, 'muppets')
+          expect(catalog).to have_resource("File[#{path}/a/b.txt]")
+            .with_parameter(:tag, 'muppets')
+        end
+
         it "adds a before relationship using the parent's path as the title" do
           catalog = compile_to_catalog(<<-MANIFEST, node)
             file { 'my title':
