@@ -135,6 +135,22 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
+        # memoize all resources that require/subscribe the parent file
+        direct_dependents = { :require => [], :subscribe => []}
+        catalog.resources.find_all do |other|
+          if other.ref != resource.ref
+            [:require, :subscribe].each do |param|
+              # other[param] can be nil, String or Array
+              target_refs = [other[param]].flatten.compact
+              target_refs.each do |target|
+                if target.ref == resource.ref
+                  direct_dependents[param] << other
+                end
+              end
+            end
+          end
+        end
+
         # memoize parent and children resources so we don't have to
         # call `catalog.resource` each time, which generates a
         # Puppet::Resource object.
@@ -184,6 +200,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           parent = resource_table[File.dirname(child.title)]
           parent[:before] ||= []
           parent[:before] << child
+
+          # ensure child is evaluated before dependents that require the parent
+          {:before => :require, :notify => :subscribe}.each_pair do |child_param, dependent_param|
+            if !direct_dependents[dependent_param].empty?
+              child[child_param].concat(direct_dependents[dependent_param])
+            end
+          end
         end
       else
         metadata = file.parameter(:source).metadata

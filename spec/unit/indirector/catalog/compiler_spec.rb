@@ -768,6 +768,105 @@ describe Puppet::Resource::Catalog::Compiler do
           expect(catalog).to have_resource("File[#{path}/a/b.txt]")
             .with_parameter(:before, [])
         end
+
+        it "adds 'before' relationships from each generated resource to a single resource that 'require's the parent" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+            notify { 'hi':
+              require => File['#{path}']
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          notify_hi = catalog.resource('Notify[hi]')
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [file_b, notify_hi])
+          expect(catalog).to have_resource("File[#{path}/a/b.txt]")
+            .with_parameter(:before, [notify_hi])
+        end
+
+        it "adds 'before' relationships from each generated resource to all resources that 'require' the parent" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+            notify { 'much':
+              require => File['#{path}']
+            }
+            notify { 'later':
+              require => File['#{path}']
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          notify_much = catalog.resource('Notify[much]')
+          notify_later = catalog.resource('Notify[later]')
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [file_b, notify_much, notify_later])
+          expect(catalog).to have_resource("File[#{path}/a/b.txt]")
+            .with_parameter(:before, [notify_much, notify_later])
+        end
+
+        it "adds 'before' relationships from each generated resource to Notify['much'] which has at least one 'require' relationship to the parent" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+            notify { 'much': }
+            notify { 'later':
+              require => [File['#{path}'], Notify['much']]
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          meta_b = stubs_file_metadata(checksum_type, checksum_value, 'a/b.txt')
+
+          stubs_top_directory_metadata([meta_a, meta_b])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          notify_much = catalog.resource('Notify[much]')
+          notify_later = catalog.resource('Notify[later]')
+          file_a = catalog.resource("File[#{path}/a]")
+          file_b = catalog.resource("File[#{path}/a/b.txt]")
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:before, [file_a])
+          expect(catalog).to have_resource("File[#{path}/a]")
+            .with_parameter(:before, [file_b, notify_later])
+          expect(catalog).to have_resource("File[#{path}/a/b.txt]")
+            .with_parameter(:before, [notify_later])
+        end
       end
     end
 
