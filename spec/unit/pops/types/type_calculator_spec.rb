@@ -241,8 +241,8 @@ describe 'The type calculator' do
       calculator.infer(nil).class.should == Puppet::Pops::Types::PUndefType
     end
 
-    it ':undef translates to PRuntimeType' do
-      calculator.infer(:undef).class.should == Puppet::Pops::Types::PRuntimeType
+    it ':undef translates to PUndefType' do
+      calculator.infer(:undef).class.should == Puppet::Pops::Types::PUndefType
     end
 
     it 'an instance of class Foo translates to PRuntimeType[ruby, Foo]' do
@@ -1359,8 +1359,8 @@ describe 'The type calculator' do
       end
     end
 
-    it "should consider :undef to be instance of Runtime['ruby', 'Symbol]" do
-      calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => 'Symbol'), :undef).should == true
+    it "should consider :undef to be instance of Undef" do
+      calculator.instance?(Puppet::Pops::Types::PUndefType.new(), :undef).should == true
     end
 
     it "should consider :undef to be instance of an Optional type" do
