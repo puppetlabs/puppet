@@ -761,7 +761,7 @@ describe Puppet::Resource::Catalog::Compiler do
         .with_parameter(:before, catalog.resource('Notify[omega]'))
     end
 
-    it "inlines windows file paths" do
+    it "inlines windows file paths", :if => Puppet.features.posix? do
       pending "Calling Puppet::Resource#to_ral on windows path is not safe on *nix master"
 
       catalog = compile_to_catalog(<<-MANIFEST, node)
@@ -775,7 +775,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
       @compiler.send(:inline_metadata, catalog, checksum_type)
 
-      expect(catalog).to have_resource(resource_ref)
+      expect(catalog).to have_resource("File[c:/foo]")
         .with_parameter(:ensure, 'file')
         .with_parameter(:checksum, checksum_type)
         .with_parameter(:checksum_value, checksum_value)
