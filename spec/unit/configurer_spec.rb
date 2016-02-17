@@ -677,6 +677,11 @@ describe Puppet::Configurer do
 
     describe "and strict environment mode is set" do
       before do
+        @catalog.stubs(:to_ral).returns(@catalog)
+        @catalog.stubs(:write_class_file)
+        @catalog.stubs(:write_resource_file)
+        @agent.stubs(:send_report)
+        @agent.stubs(:save_last_run_summary)
         Puppet.settings[:strict_environment_mode] = true
       end
 
@@ -690,7 +695,6 @@ describe Puppet::Configurer do
         @agent.instance_variable_set(:@environment, 'second_env')
         expects_new_catalog_only(@catalog)
 
-        Puppet.expects(:err).with(regexp_matches(/Could not/)).times(3)
         Puppet.expects(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
         expect(@agent.run).to be_nil
       end
