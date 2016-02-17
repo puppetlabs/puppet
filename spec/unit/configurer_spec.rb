@@ -675,6 +675,34 @@ describe Puppet::Configurer do
       end
     end
 
+    describe "and strict environment mode is set" do
+      before do
+        Puppet.settings[:strict_environment_mode] = true
+      end
+
+      it "should not make a node request" do
+        Puppet::Node.indirection.expects(:find).never
+
+        @agent.run
+      end
+
+      it "should return nil when the catalog's environment doesn't match the agent specified environment" do
+        @agent.instance_variable_set(:@environment, 'second_env')
+        expects_new_catalog_only(@catalog)
+
+        Puppet.expects(:err).with(regexp_matches(/Could not/)).times(3)
+        Puppet.expects(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
+        expect(@agent.run).to be_nil
+      end
+
+      it "should not return nil when the catalog's environment matches the agent specified environment" do
+        @agent.instance_variable_set(:@environment, 'production')
+        expects_new_catalog_only(@catalog)
+
+        expect(@agent.run).to eq(0)
+      end
+    end
+
     it "should use the Catalog class to get its catalog" do
       Puppet::Resource::Catalog.indirection.expects(:find).returns @catalog
 

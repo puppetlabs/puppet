@@ -207,8 +207,13 @@ class Puppet::Configurer
       if catalog = prepare_and_retrieve_catalog_from_cache
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
-        @environment = catalog.environment
-        report.environment = catalog.environment
+
+        if @environment != catalog.environment
+          Puppet.notice "Local environment: '#{@environment}' doesn't match the environment of the cached catalog '#{catalog.environment}', switching agent to '#{catalog.environment}'."
+          @environment = catalog.environment
+        end
+
+        report.environment = @environment
       else
         # Don't try to retrieve a catalog from the cache again after we've already
         # failed to do so the first time.
@@ -226,7 +231,7 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless options[:catalog]
+      unless (options[:catalog] || Puppet[:strict_environment_mode])
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
@@ -274,6 +279,11 @@ class Puppet::Configurer
       query_options[:configured_environment] = configured_environment
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        return nil
+      end
+
+      if Puppet[:strict_environment_mode] && catalog.environment != @environment
+        Puppet.err "Not using catalog because its environment '#{catalog.environment}' does not match agent specified environment '#{@environment}' and strict_environment_mode is set"
         return nil
       end
 

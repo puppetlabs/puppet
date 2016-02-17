@@ -153,6 +153,12 @@ module Puppet
       :type       => :boolean,
       :desc       => "Whether to compile a static catalog."
     },
+    :strict_environment_mode => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether the agent specified environment should be considered authoritative,
+        causing the run to fail if the retrieved catalog does not match it.",
+    },
     :autoflush => {
       :default => true,
       :type       => :boolean,
