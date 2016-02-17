@@ -156,7 +156,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         # Puppet::Resource object.
         children = []
         resource_table = {}
-        resource_table[resource.title] = resource
+        resource_table[resource[:path] || resource.title] = resource
 
         file.recurse_remote_metadata.each do |meta|
           # Don't create a new resource for the parent directory

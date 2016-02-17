@@ -684,6 +684,25 @@ describe Puppet::Resource::Catalog::Compiler do
             .with_parameter(:checksum_value, checksum_value)
         end
 
+        it "adds a before relationship using the parent's path as the title" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { 'my title':
+              ensure  => directory,
+              path    => '#{path}',
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory',
+            }
+          MANIFEST
+
+          meta_a = stubs_directory_metadata('a')
+          stubs_top_directory_metadata([meta_a])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          expect(catalog).to have_resource("File[my title]")
+            .with_parameter(:before, [catalog.resource("File[#{path}/a]")])
+        end
+
         it "copies containment relationships from the parent to all generated resources" do
           catalog = compile_to_catalog(<<-MANIFEST, node)
             file { '#{path}':
