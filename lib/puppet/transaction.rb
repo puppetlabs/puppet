@@ -275,30 +275,6 @@ class Puppet::Transaction
     resource_status(resource).failed_dependencies = failed.to_a
   end
 
-  # A general method for recursively generating new resources from a
-  # resource.
-  def generate_additional_resources(resource)
-    return unless resource.respond_to?(:generate)
-    begin
-      made = resource.generate
-    rescue => detail
-      resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
-    end
-    return unless made
-    made = [made] unless made.is_a?(Array)
-    made.uniq.each do |res|
-      begin
-        res.tag(*resource.tags)
-        @catalog.add_resource(res)
-        res.finish
-        add_conditional_directed_dependency(resource, res)
-        generate_additional_resources(res)
-      rescue Puppet::Resource::Catalog::DuplicateResourceError
-        res.info "Duplicate generated resource; skipping"
-      end
-    end
-  end
-
   # Should we ignore tags?
   def ignore_tags?
     ! @catalog.host_config?
