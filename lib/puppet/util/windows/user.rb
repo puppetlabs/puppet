@@ -43,7 +43,7 @@ module Puppet::Util::Windows::User
         end
 
         # Is administrators SID enabled in calling thread's access token?
-        is_admin = ismember_pointer.read_win32_bool != FFI::WIN32_FALSE
+        is_admin = ismember_pointer.read_win32_bool
       end
     end
 
