@@ -157,6 +157,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       file = resource.to_ral
 
       if file.recurse?
+        # Skip recurse resources if the static_catalogs_recursion feature is disabled
+        next unless Puppet[:static_catalogs_recursion]
+
         child_resources = file.recurse_remote_metadata.map do |meta|
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."

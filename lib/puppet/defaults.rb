@@ -153,6 +153,13 @@ module Puppet
       :type       => :boolean,
       :desc       => "Whether to compile a static catalog."
     },
+    :static_catalogs_recursion => {
+      :default    => false,
+      :type       => :boolean,
+      :internal   => true,
+      :desc       => "Whether to inline metadata for recursive directory resources
+        for static catalogs."
+    },
     :strict_environment_mode => {
       :default    => false,
       :type       => :boolean,

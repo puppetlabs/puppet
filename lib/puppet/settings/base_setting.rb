@@ -2,7 +2,7 @@ require 'puppet/settings/errors'
 
 # The base setting type
 class Puppet::Settings::BaseSetting
-  attr_accessor :name, :desc, :section, :default, :call_hook
+  attr_accessor :name, :desc, :section, :default, :call_hook, :internal
   attr_reader :short, :deprecated
 
   def self.available_call_hook_values
