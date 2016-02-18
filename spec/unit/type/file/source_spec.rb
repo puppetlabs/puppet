@@ -200,7 +200,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       @metadata.stubs(:mode).returns 0173
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        expect { @source.copy_source_values }.to raise_error("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
+        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows")
       else
         expect { @source.copy_source_values }.not_to raise_error
       end
@@ -210,7 +210,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       @metadata.stubs(:mode).returns "173"
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        expect { @source.copy_source_values }.to raise_error("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
+        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows")
       else
         expect { @source.copy_source_values }.not_to raise_error
       end
@@ -396,64 +396,13 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
           expect(@resource[:mode]).to be_nil
         end
       end
-
-      describe "on Windows when source_permissions is `use`" do
-        before :each do
-          Puppet.features.stubs(:microsoft_windows?).returns true
-          @resource[:source_permissions] = "use"
-        end
-        let(:err_message) { "Copying owner/mode/group from the" <<
-              " source file on Windows is not supported;" <<
-              " use source_permissions => ignore." }
-
-        it "should issue error when copying from remote sources" do
-          @source.stubs(:local?).returns false
-
-          expect { @source.copy_source_values }.to raise_error(err_message)
-        end
-
-        it "should issue error when copying from local sources" do
-          @source.stubs(:local?).returns true
-
-          expect { @source.copy_source_values }.to raise_error(err_message)
-        end
-
-        it "should issue error when copying metadata from remote sources if only user is unspecified" do
-          @source.stubs(:local?).returns false
-          @resource[:group] = 2
-          @resource[:mode] = "0003"
-
-          expect { @source.copy_source_values }.to raise_error(err_message)
-        end
-
-        it "should issue error when copying metadata from remote sources if only group is unspecified" do
-          @source.stubs(:local?).returns false
-          @resource[:owner] = 1
-          @resource[:mode] = "0003"
-
-          expect { @source.copy_source_values }.to raise_error(err_message)
-        end
-
-        it "should issue error when copying metadata from remote sources if only mode is unspecified" do
-          @source.stubs(:local?).returns false
-          @resource[:owner] = 1
-          @resource[:group] = 2
-
-          expect { @source.copy_source_values }.to raise_error(err_message)
-        end
-
-        it "should not issue error when copying metadata from remote sources if group, owner, and mode are all specified" do
-          @source.stubs(:local?).returns false
-          @resource[:owner] = 1
-          @resource[:group] = 2
-          @resource[:mode] = "0003"
-
-          expect { @source.copy_source_values }.not_to raise_error
-        end
-      end
     end
 
     describe "and the source is a link" do
+      before do
+        Puppet.features.stubs(:microsoft_windows?).returns false
+      end
+
       it "should set the target to the link destination" do
         @metadata.stubs(:ftype).returns "link"
         @metadata.stubs(:links).returns "manage"

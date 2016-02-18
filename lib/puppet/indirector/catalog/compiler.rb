@@ -84,24 +84,44 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Rewrite a given file resource with the metadata from a fileserver based file
-  def replace_metadata(resource, metadata, recurse = false)
+  def replace_metadata(resource, metadata)
+    # TODO: when we stop using to_ral, we'll have to add a case for ensure => <path>
+    # implying a link.
     if resource[:links] == "manage" && metadata.ftype == "link"
       resource.delete(:source)
-      resource[:ensure] = "link"
       resource[:target] = metadata.destination
-    elsif resource[:links] == "follow"
-      resource[:ensure] = metadata.ftype
     end
+
+    # Most of the time, ensure should match the returned metadata. Exceptions are when
+    # ensure is `present` (it could be anything), or a path (implies creating a link).
+    # `to_ral` caused the path case to munge to managing links, so we warn if there's
+    # a mismatch that's not `present`.
+    if resource[:ensure] != "present" && resource[:ensure] != metadata.ftype
+      Puppet.warning "#{resource} expected to create a #{resource[:ensure]}, but its source "+
+        "is a #{metadata.ftype}. The source metadata will override the 'ensure' property."
+    end
+
+    resource[:ensure] = metadata.ftype
 
     if metadata.ftype == "file"
+      # Since we use the checksum from metadata, it makes sense to pick up the checksum type
+      # from the same source. This should never differ, but seems like the most correct
+      # expression of intent.
       resource[:checksum_value] = sumdata(metadata.checksum)
+      resource[:checksum] = metadata.checksum_type
     end
 
-    if recurse
-      resource[:source] = metadata.source
-      if metadata.ftype == "file"
-        resource[:checksum] = metadata.checksum_type
+    case resource[:source_permissions]
+    when "use"
+      resource[:owner] ||= metadata.owner
+      resource[:group] ||= metadata.group
+      if resource[:mode].nil?
+        mode = metadata.mode
+        mode = mode.to_s(8) if mode.is_a?(Numeric)
+        resource[:mode] = mode
       end
+    when "use_when_creating"
+      raise Puppet::Error, "source_permissions => use_when_creating cannot be set when creating static catalogs"
     end
   end
 
@@ -141,10 +161,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           # Don't create a new resource for the parent directory
           next if meta.relative_path == "."
 
-          # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
           child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
-          child_resource[:ensure] = meta.ftype
-          replace_metadata(child_resource, meta, true)
+          child_resource[:source] = meta.source
+          replace_metadata(child_resource, meta)
 
           # Copy parameters from original parent directory
           file.original_parameters.each do |param, value|

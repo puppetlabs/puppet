@@ -137,21 +137,6 @@ module Puppet
         next if metadata_method == :owner and !Puppet.features.root?
         next if metadata_method == :group and !Puppet.features.root?
 
-        if Puppet.features.microsoft_windows?
-          # Warn on Windows if source permissions are being used and the file resource
-          # does not have mode owner and group all set (which would take precedence).
-          if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
-            (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
-
-            err_msg = "Copying %s from the source" <<
-                      " file on Windows is not supported;" <<
-                      " use source_permissions => ignore."
-            self.fail Puppet::Error, err_msg % 'owner/mode/group'
-          end
-          # But never try to copy remote owner/group on Windows
-          next if [:owner, :group].include?(metadata_method) && !local?
-        end
-
         case resource[:source_permissions]
         when :ignore
           next
@@ -250,6 +235,10 @@ module Puppet
     def copy_source_value(metadata_method)
       param_name = (metadata_method == :checksum) ? :content : metadata_method
       if resource[param_name].nil? or resource[param_name] == :absent
+        if Puppet.features.microsoft_windows? && [:owner, :group, :mode].include?(metadata_method)
+          devfail "Should not have tried to use source owner/mode/group on Windows"
+        end
+
         value = metadata.send(metadata_method)
         # Force the mode value in file resources to be a string containing octal.
         value = value.to_s(8) if param_name == :mode && value.is_a?(Numeric)
