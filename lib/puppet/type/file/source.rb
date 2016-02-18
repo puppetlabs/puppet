@@ -265,7 +265,13 @@ module Puppet
     end
 
     def get_from_puppet_source(source_uri, &block)
-      request = Puppet::Indirector::Request.new(:file_content, :find, source_uri, nil, :environment => resource.catalog.environment_instance)
+      options = { :environment => resource.catalog.environment_instance }
+      if content_uri = resource[:content_uri]
+        options[:code_id] = resource.catalog.code_id
+        request = Puppet::Indirector::Request.new(:static_file_content, :find, content_uri, nil, options)
+      else
+        request = Puppet::Indirector::Request.new(:file_content, :find, source_uri, nil, options)
+      end
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
