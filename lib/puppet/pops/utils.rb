@@ -1,5 +1,6 @@
 # Provides utility methods
-module Puppet::Pops::Utils
+module Puppet::Pops
+module Utils
   # Can the given o be converted to numeric? (or is numeric already)
   # Accepts a leading '::'
   # Returns a boolean if the value is numeric
@@ -10,11 +11,11 @@ module Puppet::Pops::Utils
     when Numeric
       true
     else
-      !!Puppet::Pops::Patterns::NUMERIC.match(relativize_name(o.to_s))
+      !!Patterns::NUMERIC.match(relativize_name(o.to_s))
     end
   end
 
-  # Convert a match from Puppet::Pops::Patterns::NUMERIC to floating point value if
+  # Convert a match from Patterns::NUMERIC to floating point value if
   # possible
   def self.match_to_fp(match)
     if match[5].to_s.length > 0
@@ -45,7 +46,7 @@ module Puppet::Pops::Utils
     begin
       case o
       when String
-        match = Puppet::Pops::Patterns::NUMERIC.match(relativize_name(o))
+        match = Patterns::NUMERIC.match(relativize_name(o))
         if !match
           nil
         elsif match[5].to_s.length > 0
@@ -84,7 +85,7 @@ module Puppet::Pops::Utils
     begin
       case o
       when String
-        match = Puppet::Pops::Patterns::NUMERIC.match(relativize_name(o))
+        match = Patterns::NUMERIC.match(relativize_name(o))
         if !match
           nil
         elsif match[5].to_s.length > 0
@@ -129,14 +130,14 @@ module Puppet::Pops::Utils
     return find_adapter(o.eContainer, adapter)
   end
 
-  # Finds the closest positioned Puppet::Pops::Model::Positioned object, or object decorated with
+  # Finds the closest positioned Model::Positioned object, or object decorated with
   # a SourcePosAdapter, and returns
   # a SourcePosAdapter for the first found, or nil if not found.
   #
   def self.find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program) || (o.is_a?(Array) && o.empty?)
-    return find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter) unless o.is_a?(Puppet::Pops::Model::Positioned)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+    return nil if o.nil? || o.is_a?(Model::Program) || (o.is_a?(Array) && o.empty?)
+    return find_adapter(o, Adapters::SourcePosAdapter) unless o.is_a?(Model::Positioned)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Adapters::SourcePosAdapter.adapt(o)
   end
-
+end
 end

@@ -1,4 +1,5 @@
-module Puppet::Pops::Types
+module Puppet::Pops
+module Types
   EMPTY_ARRAY = [].freeze
 
   class TypePathElement
@@ -198,7 +199,7 @@ module Puppet::Pops::Types
   end
 
   class TypeMismatch < ExpectedActualMismatch
-    include Puppet::Pops::LabelProvider
+    include LabelProvider
 
     # @return A new instance with the least restrictive respective boundaries
     def merge(path, o)
@@ -213,12 +214,12 @@ module Puppet::Pops::Types
         # Use simple names when classes differ, or in other words, only include details
         # when the classes are equal.
         #
-        if e.find { |t| t.class == a.class }
+        if a.is_a?(PTypeAliasType) || e.find { |t| t.class == a.class || t.is_a?(PTypeAliasType) }
           e = e.map { |t| t.to_s }
           a = a.to_s
         else
-          sns = e.map { |t| t.simple_name }
-          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }
+          sns = e.map { |t| t.simple_name }.uniq
+          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
           a = a.simple_name
         end
         case e.size
@@ -232,7 +233,7 @@ module Puppet::Pops::Types
           multi = true
         end
       else
-        if e.class != a.class
+        if e.class != a.class && !(e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType))
           e = e.simple_name
           a = a.simple_name
         else
@@ -688,12 +689,12 @@ module Puppet::Pops::Types
       required_count = from
       types =
         case param_types
-        when Puppet::Pops::Types::PTupleType
+        when PTupleType
           param_types.types
-        when Puppet::Pops::Types::PArrayType
+        when PArrayType
           [param_types.element_type]
         end
-      tc = Puppet::Pops::Types::TypeCalculator.singleton
+      tc = TypeCalculator.singleton
 
       # join type with names (types are always present, names are optional)
       # separate entries with comma
@@ -708,17 +709,17 @@ module Puppet::Pops::Types
           indicator = from == param_names.size ? '+' : '*'
         elsif optional(index, required_count)
           indicator = '?'
-          type = type.optional_type if type.is_a?(Puppet::Pops::Types::POptionalType)
+          type = type.optional_type if type.is_a?(POptionalType)
         end
         "#{tc.string(type)} #{name}#{indicator}"
       end.join(', ')
 
       # If there is a block, include it
       case signature.type.block_type
-      when Puppet::Pops::Types::POptionalType
+      when POptionalType
         result << ', ' unless result == ''
         result << "#{signature.type.block_type.optional_type} #{signature.block_name}?"
-      when Puppet::Pops::Types::PCallableType
+      when PCallableType
         result << ', ' unless result == ''
         result << "#{signature.type.block_type} #{signature.block_name}"
       when NilClass
@@ -740,4 +741,4 @@ module Puppet::Pops::Types
     end
   end
 end
-
+end

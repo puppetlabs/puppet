@@ -28,7 +28,7 @@ test_name "certificate extensions available as trusted data" do
       'environmentpath' => environments_dir,
     },
     'master' => {
-      'autosign' => '/bin/true',
+      'autosign' => true,
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
     }
   }

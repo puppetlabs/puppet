@@ -1,8 +1,9 @@
+module Puppet::Pops
 # @api public
-module Puppet::Pops::Binder::BinderIssues
+module Binder::BinderIssues
 
   # NOTE: The methods #issue and #hard_issue are done in a somewhat funny way
-  # since the Puppet::Pops::Issues is a module with these methods defined on the module-class
+  # since the Issues is a module with these methods defined on the module-class
   # This makes it hard to inherit them in this module. (Likewise if Issues was a class, and they
   # need to be defined for the class, and such methods are also not inherited, it becomes more
   # difficult to reuse these. It did not seem as a good idea to refactor Issues at this point
@@ -10,14 +11,14 @@ module Puppet::Pops::Binder::BinderIssues
   # Meanwhile, they delegate to Issues.
 
 
-  # (see Puppet::Pops::Issues#issue)
+  # (see Issues#issue)
   def self.issue (issue_code, *args, &block)
-    Puppet::Pops::Issues.issue(issue_code, *args, &block)
+    Issues.issue(issue_code, *args, &block)
   end
 
-  # (see Puppet::Pops::Issues#hard_issue)
+  # (see Issues#hard_issue)
   def self.hard_issue(issue_code, *args, &block)
-    Puppet::Pops::Issues.hard_issue(issue_code, *args, &block)
+    Issues.hard_issue(issue_code, *args, &block)
   end
 
   # Producer issues (binding identified using :binding argument)
@@ -119,4 +120,5 @@ module Puppet::Pops::Binder::BinderIssues
     "#{label.a_an_uc(semantic)} has zero bindings in #{label.label(layer)}"
   end
 
+end
 end

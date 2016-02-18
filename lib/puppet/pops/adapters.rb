@@ -1,11 +1,12 @@
 # The Adapters module contains adapters for Documentation, Origin, SourcePosition, and Loader.
 #
-module Puppet::Pops::Adapters
+module Puppet::Pops
+module Adapters
   # A documentation adapter adapts an object with a documentation string.
   # (The intended use is for a source text parser to extract documentation and store this
   # in DocumentationAdapter instances).
   #
-  class DocumentationAdapter < Puppet::Pops::Adaptable::Adapter
+  class DocumentationAdapter < Adaptable::Adapter
     # @return [String] The documentation associated with an object
     attr_accessor :documentation
   end
@@ -19,9 +20,9 @@ module Puppet::Pops::Adapters
   # @note It is relatively expensive to compute line and position on line - it is not something that
   #   should be done for every token or model object.
   #
-  # @see Puppet::Pops::Utils#find_adapter, Puppet::Pops::Utils#find_closest_positioned
+  # @see Utils#find_adapter, Utils#find_closest_positioned
   #
-  class SourcePosAdapter < Puppet::Pops::Adaptable::Adapter
+  class SourcePosAdapter < Adaptable::Adapter
     attr_accessor :locator
     attr_reader :adapted
 
@@ -45,10 +46,10 @@ module Puppet::Pops::Adapters
         raise ArgumentError, "InternalError: SourcePosAdapter for something that has no locator among parents"
       end
       case
-      when o.is_a?(Puppet::Pops::Model::Program)
+      when o.is_a?(Model::Program)
         return o.locator
       # TODO_HEREDOC use case of SubLocator instead
-      when o.is_a?(Puppet::Pops::Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
+      when o.is_a?(Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
         return found_locator
       when adapter = self.class.get(o)
         return adapter.locator
@@ -91,6 +92,7 @@ module Puppet::Pops::Adapters
       last = first + @adapted.length
       @adapted.eAllContents.each do |m|
         m_offset = m.offset
+        next if m_offset.nil?
         first = m_offset if m_offset < first
         m_last = m_offset + m.length
         last = m_last if m_last > last
@@ -106,18 +108,40 @@ module Puppet::Pops::Adapters
     end
   end
 
-  # A LoaderAdapter adapts an object with a {Puppet::Pops::Loader}. This is used to make further loading from the
+  # A LoaderAdapter adapts an object with a {Loader}. This is used to make further loading from the
   # perspective of the adapted object take place in the perspective of this Loader.
   #
   # It is typically enough to adapt the root of a model as a search is made towards the root of the model
   # until a loader is found, but there is no harm in duplicating this information provided a contained
   # object is adapted with the correct loader.
   #
-  # @see Puppet::Pops::Utils#find_adapter
+  # @see Utils#find_adapter
   #
-  class LoaderAdapter < Puppet::Pops::Adaptable::Adapter
-    # @return [Puppet::Pops::Loader::Loader] the loader
+  class LoaderAdapter < Adaptable::Adapter
+    # @return [Loader::Loader] the loader
     attr_accessor :loader
+
+    # Finds the loader to use when loading originates from the source position of the given argument.
+    #
+    # @param instance [Model::PopsObject] The model object
+    # @param scope [Puppet::Parser::Scope] The scope to use
+    # @return [Loader,nil] the found loader or `nil` if it could not be found
+    #
+    def self.loader_for_model_object(model, scope)
+      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+      adapter = Utils.find_adapter(model, self)
+      return adapter.loader unless adapter.nil?
+
+      if scope.nil?
+        loaders = Puppet.lookup(:loaders) { nil }
+        loaders.nil? ? nil : loaders.private_environment_loader
+      else
+        # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
+        # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
+        adapter = adapt_by_source(scope, model)
+        adapter.nil? ? scope.compiler.loaders.private_environment_loader : adapter.loader
+      end
+    end
 
     # Attempts to find the module that `instance` originates from by looking at it's {SourcePosAdapter} and
     # compare the `locator.file` found there with the module paths given in the environment found in the
@@ -130,7 +154,7 @@ module Puppet::Pops::Adapters
     # @param scope
     # @param instance
     def self.adapt_by_source(scope, instance)
-      source_pos = Puppet::Pops::Utils.find_adapter(instance, SourcePosAdapter)
+      source_pos = Utils.find_adapter(instance, SourcePosAdapter)
       unless source_pos.nil?
         mod = find_module_for_file(scope.environment, source_pos.locator.file)
         unless mod.nil?
@@ -161,4 +185,5 @@ module Puppet::Pops::Adapters
     end
     private_class_method :find_module_for_file
   end
+end
 end

@@ -15,7 +15,8 @@
 #   be exploited as the implementation of _being adaptable_ may change in the future.
 # @api private
 #
-module Puppet::Pops::Adaptable
+module Puppet::Pops
+module Adaptable
   # Base class for an Adapter.
   #
   # A typical adapter just defines some accessors.
@@ -199,3 +200,5 @@ module Puppet::Pops::Adaptable
     end
   end
 end
+end
+

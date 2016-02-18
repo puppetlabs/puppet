@@ -1,3 +1,4 @@
 {
-    "hieraprovider::test::param_a": "module data param_a is 100"
+    "hieraprovider::test::param_a": "module data param_a is 100",
+    "test::param_b": "module data param_a is 100"
 }

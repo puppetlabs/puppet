@@ -214,7 +214,7 @@ the puppet lookup function linked to above.
 
 EXAMPLE
 -------
-  If you wanted to lookup 'key_name' within the scope of the master, you would 
+  If you wanted to lookup 'key_name' within the scope of the master, you would
   call lookup like this:
   $ puppet lookup key_name
 
@@ -302,11 +302,11 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     renderer = Puppet::Network::FormatHandler.format(format == :json ? :pson : format)
     raise "Unknown rendering format '#{format}'" if renderer.nil?
 
-    type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type]) : nil
 
     generate_scope do |scope|
       lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
       begin
+        type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type], scope) : nil
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
       rescue Puppet::DataBinding::LookupError
@@ -335,9 +335,9 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if fact_file
       original_facts = node.parameters
       if fact_file.end_with?("json")
-        given_facts = JSON.parse(File.read(fact_file))
+        given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
-        given_facts = YAML.load(File.read(fact_file))
+        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       end
 
       unless given_facts.instance_of?(Hash)

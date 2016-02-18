@@ -1,3 +1,4 @@
+module Puppet::Pops
 # A module with base functionality for validation of a model.
 #
 # * **Factory** - an abstract factory implementation that makes it easier to create a new validation factory.
@@ -6,7 +7,7 @@
 # * **Acceptor** - the receiver/sink/collector of computed diagnostics
 # * **DiagnosticFormatter** - produces human readable output for a Diagnostic
 #
-module Puppet::Pops::Validation
+module Validation
 
   # This class is an abstract base implementation of a _model validation factory_ that creates a validator instance
   # and associates it with a fully configured DiagnosticProducer.
@@ -45,7 +46,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def diagnostic_producer(acceptor)
-      Puppet::Pops::Validation::DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
+      DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
     end
 
     # Produces the SeverityProducer to use
@@ -56,7 +57,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def severity_producer
-      Puppet::Pops::Validation::SeverityProducer.new
+      SeverityProducer.new
     end
 
     # Produces the checker to use.
@@ -119,12 +120,12 @@ module Puppet::Pops::Validation
 
     # Override a default severity with the given severity level.
     #
-    # @param issue [Puppet::Pops::Issues::Issue] the issue for which to set severity
+    # @param issue [Issues::Issue] the issue for which to set severity
     # @param level [Symbol] the severity level (:error, :warning, or :ignore).
     # @api public
     #
     def []=(issue, level)
-      raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
+      raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Issues::Issue
       raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
@@ -144,7 +145,7 @@ module Puppet::Pops::Validation
     # @api private
     #
     def assert_issue issue
-      raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
+      raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Issues::Issue
     end
 
     # Checks if the given severity level is valid.
@@ -203,7 +204,7 @@ module Puppet::Pops::Validation
         source_pos = semantic
         file = semantic.file
       else
-        source_pos = Puppet::Pops::Utils.find_closest_positioned(semantic)
+        source_pos = Utils.find_closest_positioned(semantic)
         file = source_pos ? source_pos.locator.file : nil
       end
 
@@ -404,7 +405,7 @@ module Puppet::Pops::Validation
     end
 
     # Add a diagnostic, or all diagnostics from another acceptor to the set of diagnostics
-    # @param diagnostic [Puppet::Pops::Validation::Diagnostic, Puppet::Pops::Validation::Acceptor] diagnostic(s) that should be accepted
+    # @param diagnostic [Diagnostic, Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
         diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
@@ -415,7 +416,7 @@ module Puppet::Pops::Validation
 
     # Prunes the contain diagnostics by removing those for which the given block returns true.
     # The internal statistics is updated as a consequence of removing.
-    # @return [Array<Puppet::Pops::Validation::Diagnostic, nil] the removed set of diagnostics or nil if nothing was removed
+    # @return [Array<Diagnostic, nil] the removed set of diagnostics or nil if nothing was removed
     #
     def prune(&block)
       removed = []
@@ -457,4 +458,5 @@ module Puppet::Pops::Validation
       warning diagnostic
     end
   end
+end
 end

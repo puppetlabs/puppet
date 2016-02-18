@@ -1,3 +1,5 @@
+module Puppet::Pops
+module Evaluator
 # The RelationshipOperator implements the semantics of the -> <- ~> <~ operators creating relationships or notification
 # relationships between the left and right hand side's references to resources.
 #
@@ -6,14 +8,12 @@
 # This is done to separate the concerns of the new evaluator from the 3x runtime; messy logic goes into the runtime support
 # module. Later when more is cleaned up this can be simplified further.
 #
-class Puppet::Pops::Evaluator::RelationshipOperator
+class RelationshipOperator
 
   # Provides access to the Puppet 3.x runtime (scope, etc.)
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
-  include Puppet::Pops::Evaluator::Runtime3Support
-
-  Issues = Puppet::Pops::Issues
+  include Runtime3Support
 
   class IllegalRelationshipOperandError < RuntimeError
     attr_reader :operand
@@ -30,11 +30,11 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   end
 
   def initialize
-    @type_transformer_visitor = Puppet::Pops::Visitor.new(self, "transform", 1, 1)
-    @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
-    @type_parser = Puppet::Pops::Types::TypeParser.new()
+    @type_transformer_visitor = Visitor.new(self, "transform", 1, 1)
+    @type_calculator = Types::TypeCalculator.new()
+    @type_parser = Types::TypeParser.new()
 
-    tf = Puppet::Pops::Types::TypeFactory
+    tf = Types::TypeFactory
     @catalog_type = tf.variant(tf.catalog_entry, tf.type_type(tf.catalog_entry))
   end
 
@@ -51,19 +51,19 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   # A Resource is by definition a Catalog type, but of 3.x type
   # @api private
   def transform_Resource(o, scope)
-    Puppet::Pops::Types::TypeFactory.resource(o.type, o.title)
+    Types::TypeFactory.resource(o.type, o.title)
   end
 
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
-    assert_catalog_type(@type_parser.parse(o), scope)
+    assert_catalog_type(@type_parser.parse(o, scope), scope)
   end
 
   # A qualified name is short hand for a class with this name
   # @api private
   def transform_QualifiedName(o, scope)
-    Puppet::Pops::Types::TypeFactory.host_class(o.value)
+    Types::TypeFactory.host_class(o.value)
   end
 
   # Types are what they are, just check the type
@@ -164,4 +164,6 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   def reverse_operator?(o)
     REVERSE_OPERATORS.include?(o.operator)
   end
+end
+end
 end

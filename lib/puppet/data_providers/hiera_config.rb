@@ -27,6 +27,8 @@ module Puppet::DataProviders
         Hash[struct.map { |k,v| [k.to_s, symkeys_to_string(v)] }]
       when Array
         struct.map { |v| symkeys_to_string(v) }
+      when nil
+        {}
       else
         struct
       end
@@ -70,6 +72,18 @@ module Puppet::DataProviders
     end
 
     def create_data_providers(lookup_invocation)
+      Puppet.deprecation_warning('Method HieraConfig#create_data_providers is deprecated. Use create_configured_data_providers instead')
+      create_configured_data_providers(lookup_invocation, nil)
+    end
+
+    # Creates the data providers for this config
+    #
+    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] Invocation data containing scope, overrides, and defaults
+    # @param parent_data_provider [Puppet::Plugins::DataProviders::DataProvider] The data provider that loaded this configuration
+    # @return [Array[DataProvider]] the created providers
+    #
+    # @api private
+    def create_configured_data_providers(lookup_invocation, parent_data_provider)
       injector = Puppet.lookup(:injector)
       service_type = Registry.hash_of_path_based_data_provider_factories
       default_datadir = @config['datadir']
@@ -92,11 +106,22 @@ module Puppet::DataProviders
         raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
 
         datadir = @config_root + (he['datadir'] || default_datadir)
-        resolved_paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-        data_providers[name] = provider_factory.create(name, resolved_paths)
+        data_providers[name] = create_data_provider(parent_data_provider, provider_factory, name,
+          provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation))
       end
       data_providers.values
     end
+
+    def create_data_provider(parent_data_provider, provider_factory, name, resolved_paths)
+      provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
+      if provider_factory_version == 1
+        # Version 1 is not aware of the parent provider
+        provider_factory.create(name, resolved_paths)
+      else
+        provider_factory.create(name, resolved_paths, parent_data_provider)
+      end
+    end
+    private :create_data_provider
 
     def validate_config(hiera_config)
       Puppet::Pops::Types::TypeAsserter.assert_instance_of(@config_path, self.class.config_type, hiera_config)

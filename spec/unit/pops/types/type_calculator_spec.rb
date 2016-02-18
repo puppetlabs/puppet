@@ -40,6 +40,15 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.variant(*types)
   end
 
+  def type_alias_t(name, type_string)
+    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string).current
+    Puppet::Pops::Types::TypeFactory.type_alias(name, type_expr)
+  end
+
+  def type_reference_t(name, *args)
+    Puppet::Pops::Types::TypeFactory.type_reference(name, args)
+  end
+
   def integer_t
     Puppet::Pops::Types::TypeFactory.integer
   end
@@ -88,6 +97,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.optional(t)
   end
 
+  def type_t(t)
+    Puppet::Pops::Types::TypeFactory.type_type(t)
+  end
+
   def not_undef_t(t = nil)
     Puppet::Pops::Types::TypeFactory.not_undef(t)
   end
@@ -123,6 +136,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCollectionType,
         Puppet::Pops::Types::PArrayType,
         Puppet::Pops::Types::PHashType,
+        Puppet::Pops::Types::PIterableType,
+        Puppet::Pops::Types::PIteratorType,
         Puppet::Pops::Types::PRuntimeType,
         Puppet::Pops::Types::PHostClassType,
         Puppet::Pops::Types::PResourceType,
@@ -135,6 +150,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PType,
         Puppet::Pops::Types::POptionalType,
         Puppet::Pops::Types::PDefaultType,
+        Puppet::Pops::Types::PTypeReferenceType,
+        Puppet::Pops::Types::PTypeAliasType,
       ]
     end
 
@@ -234,12 +251,16 @@ describe 'The type calculator' do
       expect(calculator.infer(/^a regular expression$/).class).to eq(Puppet::Pops::Types::PRegexpType)
     end
 
+    it 'iterable translates to PIteratorType' do
+      expect(calculator.infer(Puppet::Pops::Types::Iterable.on(1))).to be_a(Puppet::Pops::Types::PIteratorType)
+    end
+
     it 'nil translates to PUndefType' do
       expect(calculator.infer(nil).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
-    it ':undef translates to PRuntimeType' do
-      expect(calculator.infer(:undef).class).to eq(Puppet::Pops::Types::PRuntimeType)
+    it ':undef translates to PUndefType' do
+      expect(calculator.infer(:undef).class).to eq(Puppet::Pops::Types::PUndefType)
     end
 
     it 'an instance of class Foo translates to PRuntimeType[ruby, Foo]' do
@@ -686,6 +707,36 @@ describe 'The type calculator' do
       end
     end
 
+    context "for TypeReference, such that" do
+      it 'no other type is assignable' do
+        t = Puppet::Pops::Types::PTypeReferenceType::DEFAULT
+        all_instances = (all_types - [
+          Puppet::Pops::Types::PTypeReferenceType, # Avoid comparison with t
+          Puppet::Pops::Types::PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
+          Puppet::Pops::Types::PTypeAliasType      # DEFAULT resolves to PTypeReferenceType::DEFAULT, i.e. t
+        ]).map {|c| c::DEFAULT }
+
+        # Add a non-empty variant
+        all_instances << variant_t(Puppet::Pops::Types::PAnyType::DEFAULT)
+        # Add a type alias that doesn't resolve to 't'
+        all_instances << type_alias_t('MyInt', 'Integer').resolve(Puppet::Pops::Types::TypeParser.new, nil)
+
+        all_instances.each { |i| expect(i).not_to be_assignable_to(t) }
+      end
+
+      it 'a TypeReference to the exact same type is assignable' do
+        expect(type_reference_t('Integer[0,10]')).to be_assignable_to(type_reference_t('Integer[0,10]'))
+      end
+
+      it 'a TypeReference to the different type is not assignable' do
+        expect(type_reference_t('String')).not_to be_assignable_to(type_reference_t('Integer'))
+      end
+
+      it 'a TypeReference to the different type is not assignable even if the referenced type is' do
+        expect(type_reference_t('Integer[1,2]')).not_to be_assignable_to(type_reference_t('Integer[0,3]'))
+      end
+    end
+
     context 'for Data, such that' do
       it 'all scalars + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType::DEFAULT
@@ -793,7 +844,11 @@ describe 'The type calculator' do
       end
 
       it 'Collection is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::POptionalType, Puppet::Pops::Types::PNotUndefType] - collection_types
+        tested_types = all_types - [
+          Puppet::Pops::Types::PAnyType,
+          Puppet::Pops::Types::POptionalType,
+          Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType] - collection_types
         t = Puppet::Pops::Types::PCollectionType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -815,6 +870,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -841,6 +897,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -878,6 +935,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PTupleType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -899,6 +957,7 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PAnyType,
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType,
+          Puppet::Pops::Types::PIterableType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -1323,6 +1382,121 @@ describe 'The type calculator' do
       expect(calculator.assignable?(r1, r2)).to eq(false)
     end
 
+    context 'for TypeAlias, such that' do
+      let!(:parser) { Puppet::Pops::Types::TypeParser.new }
+
+      it 'it is assignable to the type that it is an alias for' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.assignable?(integer_t, t)).to be_truthy
+      end
+
+      it 'the type that it is an alias for is assignable to it' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.assignable?(t, integer_t)).to be_truthy
+      end
+
+      it 'a recursive alias can be assignable from a conformant type with any depth' do
+        scope = mock
+
+        t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+
+        t.resolve(parser, scope)
+        expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
+      end
+
+
+      it 'similar recursive aliases are assignable' do
+        scope = mock
+
+        t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree1]]')
+        t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree2]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree1').returns t1
+        loader.expects(:load).with(:type, 'tree2').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        t2.resolve(parser, scope)
+        expect(calculator.assignable?(t1, t2)).to be_truthy
+      end
+
+      it 'crossing recursive aliases are assignable' do
+        scope = mock
+
+        t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
+        t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree1').returns t1
+        loader.expects(:load).with(:type, 'tree2').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        t2.resolve(parser, scope)
+        expect(calculator.assignable?(t1, t2)).to be_truthy
+      end
+
+      it 'Type[T] is assignable to Type[AT] when AT is an alias for T' do
+        scope = mock
+
+        ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveinteger').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(range_t(0, :default))
+        t2 = parser.parse('Type[PositiveInteger]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[T] is assignable to AT when AT is an alias for Type[T]' do
+        scope = mock
+
+        ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(range_t(0, :default))
+        t2 = parser.parse('PositiveIntegerType', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[Type[T]] is assignable to Type[Type[AT]] when AT is an alias for T' do
+        scope = mock
+
+        ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveinteger').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(type_t(range_t(0, :default)))
+        t2 = parser.parse('Type[Type[PositiveInteger]]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'Type[Type[T]] is assignable to Type[AT] when AT is an alias for Type[T]' do
+        scope = mock
+
+        ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object)
+          .with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).returns loader
+
+        t1 = type_t(type_t(range_t(0, :default)))
+        t2 = parser.parse('Type[PositiveIntegerType]', scope)
+        expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+    end
   end
 
   context 'when testing if x is instance of type t' do
@@ -1340,8 +1514,16 @@ describe 'The type calculator' do
       end
     end
 
-    it "should consider :undef to be instance of Runtime['ruby', 'Symbol]" do
-      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :undef)).to eq(true)
+    it "should infer :undef to be Undef" do
+      expect(calculator.infer(:undef)).to be_assignable_to(undef_t)
+    end
+
+    it "should not consider :default to be instance of Runtime['ruby', 'Symbol]" do
+      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :default)).to eq(false)
+    end
+
+    it "should not consider :undef to be instance of Runtime['ruby', 'Symbol]" do
+      expect(calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:ruby, 'Symbol'), :undef)).to eq(false)
     end
 
     it 'should consider :undef to be instance of an Optional type' do
@@ -1591,6 +1773,48 @@ describe 'The type calculator' do
         expect(calculator.instance?(callable_t(String), f)).to be_truthy
       end
     end
+
+    context 'and t is a TypeAlias' do
+      let!(:parser) { Puppet::Pops::Types::TypeParser.new }
+
+      it 'should consider x an instance of the aliased simple type' do
+        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        expect(calculator.instance?(t, 15)).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased parameterized type' do
+        t = type_alias_t('Alias', 'Integer[0,20]').resolve(parser, nil)
+        expect(calculator.instance?(t, 15)).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased type that uses self recursion' do
+        scope = mock
+
+        t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+
+        t.resolve(parser, scope)
+        expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
+      end
+
+      it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
+        scope = mock
+
+        t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
+        t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
+        loader = mock
+        loader.expects(:load).with(:type, 'tree').returns t1
+        loader.expects(:load).with(:type, 'othertree').returns t2
+
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
+
+        t1.resolve(parser, scope)
+        expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
+      end
+    end
   end
 
   context 'when converting a ruby class' do
@@ -1637,6 +1861,8 @@ describe 'The type calculator' do
   end
 
   context 'when representing the type as string' do
+    include_context 'types_setup'
+
     it 'should yield \'Type\' for PType' do
       expect(calculator.string(Puppet::Pops::Types::PType::DEFAULT)).to eq('Type')
     end
@@ -1708,6 +1934,10 @@ describe 'The type calculator' do
       expect(calculator.string(t)).to eq('Array[Integer]')
     end
 
+    it 'should yield \'Array\' for PArrayType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PArrayType::DATA)).to eq('Array')
+    end
+
     it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
       t = empty_array_t
       expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')
@@ -1725,6 +1955,22 @@ describe 'The type calculator' do
       expect(calculator.string(array_t(string_t, range_t(1,2)))).to eq('Array[String, 1, 2]')
       expect(calculator.string(array_t(string_t, range_t(:default, 2)))).to eq('Array[String, default, 2]')
       expect(calculator.string(array_t(string_t, range_t(2, :default)))).to eq('Array[String, 2, default]')
+    end
+
+    it 'should yield \'Iterable\' for PIterableType' do
+      expect(calculator.string(Puppet::Pops::Types::PIterableType::DEFAULT)).to eq('Iterable')
+    end
+
+    it 'should yield \'Iterable[Integer]\' for PIterableType[PIntegerType]' do
+      expect(calculator.string(Puppet::Pops::Types::PIterableType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterable[Integer]')
+    end
+
+    it 'should yield \'Iterator\' for PIteratorType' do
+      expect(calculator.string(Puppet::Pops::Types::PIteratorType::DEFAULT)).to eq('Iterator')
+    end
+
+    it 'should yield \'Iterator[Integer]\' for PIteratorType[PIntegerType]' do
+      expect(calculator.string(Puppet::Pops::Types::PIteratorType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterator[Integer]')
     end
 
     it 'should yield \'Tuple[Integer]\' for PTupleType[PIntegerType]' do
@@ -1761,6 +2007,10 @@ describe 'The type calculator' do
       expect(calculator.string(hash_t(string_t, string_t, range_t(1,2)))).to eq('Hash[String, String, 1, 2]')
       expect(calculator.string(hash_t(string_t, string_t, range_t(:default, 2)))).to eq('Hash[String, String, default, 2]')
       expect(calculator.string(hash_t(string_t, string_t, range_t(2, :default)))).to eq('Hash[String, String, 2, default]')
+    end
+
+    it 'should yield \'Hash\' for PHashType::DATA' do
+      expect(calculator.string(Puppet::Pops::Types::PHashType::DATA)).to eq('Hash')
     end
 
     it "should yield 'Class' for a PHostClassType" do
@@ -1863,6 +2113,29 @@ describe 'The type calculator' do
       t = not_undef_t('hey')
       expect(calculator.string(t)).to eq("NotUndef['hey']")
     end
+
+    it "should yield the name of an unparameterized type reference" do
+      t = type_reference_t('What')
+      expect(calculator.string(t)).to eq('What')
+    end
+
+    it "should yield the name and arguments of an parameterized type reference" do
+      t = type_reference_t('What', undef_t, string_t)
+      expect(calculator.string(t)).to eq('What[Undef, String]')
+    end
+
+    it "should yield the name of a type alias" do
+      t = type_alias_t('Alias', 'Integer')
+      expect(calculator.string(t)).to eq('Alias')
+    end
+
+    it 'should present a valid simple name' do
+      (all_types - [Puppet::Pops::Types::PType]).each do |t|
+        name = t::DEFAULT.simple_name
+        expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
+      end
+      expect(Puppet::Pops::Types::PType::DEFAULT.simple_name).to eql('Type')
+    end
   end
 
   context 'when processing meta type' do
@@ -1880,6 +2153,7 @@ describe 'The type calculator' do
       expect(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ).is_a?(ptype)).to eq(true)
@@ -1904,6 +2178,7 @@ describe 'The type calculator' do
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT))).to eq('Type[Collection]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ))).to eq('Type[Array[?]]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ))).to eq('Type[Hash[?, ?]]')
+      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ))).to eq('Type[Iterable]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ))).to eq('Type[Runtime[?, ?]]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ))).to eq('Type[Class]')
       expect(calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ))).to eq('Type[Resource]')
@@ -1962,23 +2237,23 @@ describe 'The type calculator' do
     end
   end
 
-  context 'when asking for an enumerable ' do
-    it 'should produce an enumerable for an Integer range that is not infinite' do
+  context 'when asking for an iterable ' do
+    it 'should produce an iterable for an Integer range that is finite' do
       t = Puppet::Pops::Types::PIntegerType.new(1, 10)
-      expect(calculator.enumerable(t).respond_to?(:each)).to eq(true)
+      expect(calculator.iterable(t).respond_to?(:each)).to eq(true)
     end
 
-    it 'should not produce an enumerable for an Integer range that has an infinite side' do
+    it 'should not produce an iterable for an Integer range that has an infinite side' do
       t = Puppet::Pops::Types::PIntegerType.new(nil, 10)
-      expect(calculator.enumerable(t)).to eq(nil)
+      expect(calculator.iterable(t)).to eq(nil)
 
       t = Puppet::Pops::Types::PIntegerType.new(1, nil)
-      expect(calculator.enumerable(t)).to eq(nil)
+      expect(calculator.iterable(t)).to eq(nil)
     end
 
-    it 'all but Integer range are not enumerable' do
+    it 'all but Integer range are not iterable' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
-        expect(calculator.enumerable(calculator.type(t))).to eq(nil)
+        expect(calculator.iterable(calculator.type(t))).to eq(nil)
       end
     end
   end

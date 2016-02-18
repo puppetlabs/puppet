@@ -177,6 +177,75 @@ describe Puppet::Util::Logging do
     end
   end
 
+  describe "when sending a warn_once" do
+    before(:each) {
+      @logger.clear_deprecation_warnings
+    }
+    after(:each) {
+      # this is required because of bugs in Mocha whe tearing down expectations for each test
+      # why it works elsewhere is a mystery.
+      @logger.unstub(:warning)
+    }
+
+    it "warns with file when only file is given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in aFile\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint", 'aFile')
+    end
+
+    it "warns with unknown file and line when only line is given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in unknown file, line 5\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint", nil, 5)
+    end
+
+    it "warns with file and line when both are given" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(at aFile:5\)/m))
+      @logger.warn_once('kind', 'wp', "wet paint",'aFile', 5)
+    end
+
+    it "warns once per key" do
+      @logger.expects(:warning).with(regexp_matches(/wet paint.*/m)).once
+      5.times do
+        @logger.warn_once('kind', 'wp', "wet paint")
+      end
+    end
+  end
+
+  describe "does not warn about undefined variables when disabled_warnings says so" do
+    let(:logger) { LoggingTester.new }
+
+    around(:each) do |example|
+      Puppet.settings.initialize_global_settings
+      logger.clear_deprecation_warnings
+      Puppet[:disable_warnings] = ['undefined_variables']
+      example.run
+      Puppet[:disable_warnings] = []
+      logger.unstub(:warning)
+    end
+
+    it "does not produce warning if kind is disabled" do
+      logger.expects(:warning).never
+      logger.warn_once('undefined_variables', 'wp', "wet paint")
+    end
+  end
+
+  describe "warns about undefined variables when deprecations are in disabled_warnings" do
+    let(:logger) { LoggingTester.new }
+
+    around(:each) do |example|
+      Puppet.settings.initialize_global_settings
+      logger.clear_deprecation_warnings
+      Puppet[:disable_warnings] = ['deprecations']
+      example.run
+      Puppet[:disable_warnings] = []
+      logger.unstub(:warning)
+    end
+
+    it "produces warning even if deprecation warnings are disabled " do
+      logger.expects(:warning).once
+      logger.warn_once('undefined_variables', 'wp', "wet paint")
+    end
+  end
+
   describe "when formatting exceptions" do
     it "should be able to format a chain of exceptions" do
       exc3 = Puppet::Error.new("original")

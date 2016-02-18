@@ -2,12 +2,14 @@ require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
 require 'puppet/util/profiler'
+require 'puppet/util/checksums'
 require 'yaml'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   desc "Compiles catalogs on demand using Puppet's compiler."
 
   include Puppet::Util
+  include Puppet::Util::Checksums
 
   attr_accessor :code
 
@@ -47,7 +49,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    if catalog = compile(node, request.options[:code_id])
+    if catalog = compile(node, request.options)
       return catalog
     else
       # This shouldn't actually happen; we should either return
@@ -81,19 +83,129 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node.add_server_facts(@server_facts)
   end
 
+  # Rewrite a given file resource with the metadata from a fileserver based file
+  def replace_metadata(resource, metadata, recurse = false)
+    if resource[:links] == "manage" && metadata.ftype == "link"
+      resource.delete(:source)
+      resource[:ensure] = "link"
+      resource[:target] = metadata.destination
+    elsif resource[:links] == "follow"
+      resource[:ensure] = metadata.ftype
+    end
+
+    if metadata.ftype == "file"
+      resource[:checksum_value] = sumdata(metadata.checksum)
+    end
+
+    if recurse
+      resource[:source] = metadata.source
+      if metadata.ftype == "file"
+        resource[:checksum] = metadata.checksum_type
+      end
+    end
+  end
+
+  # Determine which checksum to use; if agent_checksum_type is not nil,
+  # use the first entry in it that is also in known_checksum_types.
+  # If no match is found, return nil.
+  def common_checksum_type(agent_checksum_type)
+    if agent_checksum_type
+      agent_checksum_types = agent_checksum_type.split('.').map {|type| type.to_sym}
+      checksum_type = agent_checksum_types.drop_while do |type|
+        not known_checksum_types.include? type
+      end.first
+    end
+    checksum_type
+  end
+
+  # Inline file metadata for static catalogs
+  # Initially restricted to files sourced from codedir via puppet:/// uri.
+  def inline_metadata(catalog, checksum_type)
+    environment_path = File.join(Puppet[:environmentpath], catalog.environment, "")
+    list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
+
+    list_of_resources.each do |resource|
+      next if resource[:ensure] == 'absent'
+
+      next unless source = resource[:source]
+      next unless source =~ /^puppet:/
+
+      if checksum_type && resource[:checksum].nil?
+        resource[:checksum] = checksum_type
+      end
+
+      file = resource.to_ral
+
+      if file.recurse?
+        child_resources = file.recurse_remote_metadata.map do |meta|
+          # Don't create a new resource for the parent directory
+          next if meta.relative_path == "."
+
+          # TODO: Conditionally copy owner, group, and mode when we can check if permissions are set
+          child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
+          child_resource[:ensure] = meta.ftype
+          replace_metadata(child_resource, meta, true)
+
+          # Copy parameters from original parent directory
+          file.original_parameters.each do |param, value|
+            # These should never be passed to our children
+            unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
+              child_resource[param] = value.to_s
+            end
+          end
+          child_resource
+        end.compact
+        child_resources = Puppet::Type::File.remove_less_specific_files(child_resources, resource[:path] || resource.title, list_of_resources) do |file_resource|
+          file_resource[:path] || file_resource.title
+        end
+
+        #TODO: Add edge between `child_resource` and its nearest ancestor and
+        # add an edge between `child_resource` and all other resources that depend
+        # on `file`
+        child_resources.each do |child|
+          catalog.add_resource(child)
+          catalog.add_edge(file, child)
+        end
+      else
+        metadata = file.parameter(:source).metadata
+        raise "Could not get metadata for #{resource[:source]}" unless metadata
+        if metadata.full_path.start_with? environment_path
+          # If the file is in the environment directory, we can safely inline
+          replace_metadata(resource, metadata)
+        end
+      end
+    end
+  end
+
   # Compile the actual catalog.
-  def compile(node, code_id)
-    str = "Compiled catalog for #{node.name}"
+  def compile(node, options)
+    if node.environment && node.environment.static_catalogs? && options[:static_catalog] && options[:code_id]
+      # Check for errors before compiling the catalog
+      checksum_type = common_checksum_type(options[:checksum_type])
+      raise Puppet::Error, "Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'." unless checksum_type
+    end
+
+    str = "Compiled %s for #{node.name}" % [checksum_type ? 'static catalog' : 'catalog']
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
     benchmark(:notice, str) do
       Puppet::Util::Profiler.profile(str, [:compiler, :compile, node.environment, node.name]) do
         begin
-          config = Puppet::Parser::Compiler.compile(node, code_id)
+          config = Puppet::Parser::Compiler.compile(node, options[:code_id])
         rescue Puppet::Error => detail
           Puppet.err(detail.to_s) if networked?
           raise
+        end
+      end
+    end
+
+    if checksum_type && config.is_a?(model)
+      str = "Inlined resource metadata into static catalog for #{node.name}"
+      str += " in environment #{node.environment}" if node.environment
+      benchmark(:notice, str) do
+        Puppet::Util::Profiler.profile(str, [:compiler, :static_inline, node.environment, node.name]) do
+          inline_metadata(config, checksum_type)
         end
       end
     end

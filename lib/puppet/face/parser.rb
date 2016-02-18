@@ -107,7 +107,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         missing_files = files - available_files
 
         dumps = available_files.collect do |file|
-          dump_parse(File.read(file), file, options)
+          dump_parse(Puppet::FileSystem.read(file, :encoding => 'utf-8'), file, options)
         end.join("")
 
         if missing_files.empty?
@@ -146,13 +146,16 @@ Puppet::Face.define(:parser, '0.0.1') do
   # @api private
   def validate_manifest(manifest = nil)
     env = Puppet.lookup(:current_environment)
-    validation_environment = manifest ? env.override_with(:manifest => manifest) : env
-
-    validation_environment.check_for_reparse
-    validation_environment.known_resource_types.clear
-
-  rescue => detail
-    Puppet.log_exception(detail)
-    exit(1)
+    loaders = Puppet::Pops::Loaders.new(env)
+    Puppet.override( {:loaders => loaders } , 'For puppet parser validate') do
+      begin
+        validation_environment = manifest ? env.override_with(:manifest => manifest) : env
+        validation_environment.check_for_reparse
+        validation_environment.known_resource_types.clear
+      rescue => detail
+        Puppet.log_exception(detail)
+        exit(1)
+      end
+    end
   end
 end

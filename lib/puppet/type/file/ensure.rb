@@ -64,8 +64,10 @@ module Puppet
       # Make sure we're not managing the content some other way
       if property = @resource.property(:content)
         property.sync
+      elsif property = @resource.property(:checksum_value)
+        property.sync
       else
-        @resource.write(:ensure)
+        @resource.write
         @resource.should(:mode)
       end
     end

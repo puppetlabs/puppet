@@ -343,7 +343,17 @@ describe Puppet::Application::Agent do
 
     it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
       Puppet[:catalog_cache_terminus] = nil
+      Puppet::Resource::Catalog.indirection.unstub(:cache_class=)
       Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+
+      @puppetd.initialize_app_defaults
+      @puppetd.setup
+    end
+
+    it "should set catalog cache class to nil during a noop run" do
+      Puppet[:catalog_cache_terminus] = "json"
+      Puppet[:noop] = true
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(nil)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup

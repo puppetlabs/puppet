@@ -19,9 +19,9 @@ module Puppet::Pops
   module Model
 
     class PopsObject
-      include Puppet::Pops::Visitable
-      include Puppet::Pops::Adaptable
-      include Puppet::Pops::Containment
+      include Visitable
+      include Adaptable
+      include Containment
     end
 
     class Positioned
@@ -43,7 +43,7 @@ module Puppet::Pops
         #
         def locator
           unless result = getLocator
-            setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+            setLocator(result = Parser::Locator.locator(source_text, source_ref(), line_offsets))
           end
           result
         end
@@ -55,18 +55,18 @@ module Puppet::Pops
         def locator
           unless result = getLocator
             # Adapt myself to get the Locator for me
-            adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(self)
+            adapter = Adapters::SourcePosAdapter.adapt(self)
             # Get the program (root), and deal with case when not contained in a program
             program = eAllContainers.find {|c| c.is_a?(Program) }
             source_ref = program.nil? ? '' : program.source_ref
 
             # An outer locator is needed since SubLocator only deals with offsets. This outer locator
             # has 0,0 as origin.
-            outer_locator = Puppet::Pops::Parser::Locator.locator(adpater.extract_text, source_ref, line_offsets)
+            outer_locator = Parser::Locator.locator(adpater.extract_text, source_ref, line_offsets)
 
             # Create a sublocator that describes an offset from the outer
             # NOTE: the offset of self is the same as the sublocator's leading_offset
-            result = Puppet::Pops::Parser::Locator::SubLocator.new(outer_locator,
+            result = Parser::Locator::SubLocator.new(outer_locator,
               leading_line_count, offset, leading_line_offset)
             setLocator(result)
           end
@@ -111,7 +111,7 @@ module Puppet::Pops
       module ClassModule
         def locator
           unless result = getLocator
-            setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets, char_offsets))
+            setLocator(result = Parser::Locator.locator(source_text, source_ref(), line_offsets, char_offsets))
           end
           result
         end

@@ -702,4 +702,79 @@ describe 'Lexer2' do
       expect_issue('"asd', Puppet::Pops::Issues::UNCLOSED_QUOTE)
     end
   end
+
+  context 'when dealing with non UTF-8 and Byte Order Marks (BOMs)' do
+      {
+      'UTF_8'      => [0xEF, 0xBB, 0xBF],
+      'UTF_16_1'   => [0xFE, 0xFF],
+      'UTF_16_2'   => [0xFF, 0xFE],
+      'UTF_32_1'   => [0x00, 0x00, 0xFE, 0xFF],
+      'UTF_32_2'   => [0xFF, 0xFE, 0x00, 0x00],
+      'UTF_1'      => [0xF7, 0x64, 0x4C],
+      'UTF_EBCDIC' => [0xDD, 0x73, 0x66, 0x73],
+      'SCSU'       => [0x0E, 0xFE, 0xFF],
+      'BOCU'       => [0xFB, 0xEE, 0x28],
+      'GB_18030'   => [0x84, 0x31, 0x95, 0x33]
+      }.each do |key, bytes|
+        it "errors on the byte order mark for #{key} '[#{bytes.map() {|b| '%X' % b}.join(' ')}]'" do
+          format_name = key.split('_')[0,2].join('-')
+          bytes_str = "\\[#{bytes.map {|b| '%X' % b}.join(' ')}\\]"
+          fix =  " - remove these from the puppet source"
+          expect {
+            tokens_scanned_from(bytes.pack('C*'))
+          }.to raise_error(Puppet::ParseErrorWithIssue,
+            /Illegal #{format_name} .* at beginning of input: #{bytes_str}#{fix}/)
+        end
+
+       it "can use a possibly 'broken' UTF-16 string without problems for #{key}" do
+         format_name = key.split('_')[0,2].join('-')
+         string = bytes.pack('C*').force_encoding('UTF-16')
+         bytes_str = "\\[#{string.bytes.map {|b| '%X' % b}.join(' ')}\\]"
+         fix =  " - remove these from the puppet source"
+         expect {
+           tokens_scanned_from(string)
+         }.to raise_error(Puppet::ParseErrorWithIssue,
+           /Illegal #{format_name} .* at beginning of input: #{bytes_str}#{fix}/)
+       end
+    end
+  end
+end
+
+describe Puppet::Pops::Parser::Lexer2 do
+
+  include PuppetSpec::Files
+
+  # First line of Rune version of Rune poem at http://www.columbia.edu/~fdc/utf8/
+  # characters chosen since they will not parse on Windows with codepage 437 or 1252
+  # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
+  # ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
+  let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+
+  context 'when lexing files from disk' do
+    it 'should always read files as UTF-8' do
+      if Puppet.features.microsoft_windows? && Encoding.default_external == Encoding::UTF_8
+        raise 'This test must be run in a codepage other than 65001 to validate behavior'
+      end
+
+      manifest_code = "notify { '#{rune_utf8}': }"
+      manifest = file_containing('manifest.pp', manifest_code)
+      lexed_file = described_class.new.lex_file(manifest)
+
+      expect(lexed_file.string.encoding).to eq(Encoding::UTF_8)
+      expect(lexed_file.string).to eq(manifest_code)
+    end
+
+    it 'currently errors when the UTF-8 BOM (Byte Order Mark) is present when lexing files' do
+      bom = "\uFEFF"
+
+        manifest_code = "#{bom}notify { '#{rune_utf8}': }"
+        manifest = file_containing('manifest.pp', manifest_code)
+
+        expect {
+          lexed_file = described_class.new.lex_file(manifest)
+        }.to raise_error(Puppet::ParseErrorWithIssue,
+          'Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source')
+    end
+  end
+
 end

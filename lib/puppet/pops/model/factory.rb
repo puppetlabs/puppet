@@ -334,6 +334,20 @@ class Factory
     o
   end
 
+  def build_TypeAlias(o, name, type_expr)
+    o.type_expr = build(type_expr)
+    o.name = name
+    o
+  end
+
+  def build_TypeDefinition(o, name, parent, body)
+    b = f_build_body(body)
+    o.body = b.current if b
+    o.parent = parent
+    o.name = name
+    o
+  end
+
   def build_UnaryExpression(o, expr)
     ops = to_ops(expr)
     o.expr = ops unless Factory.nop? ops
@@ -792,6 +806,14 @@ class Factory
     new(LambdaExpression, parameters, body)
   end
 
+  def self.TYPE_ALIAS(name, type_expr)
+    new(TypeAlias, name, type_expr)
+  end
+
+  def self.TYPE_DEFINITION(name, parent, body)
+    new(TypeDefinition, name, parent, body)
+  end
+
   def self.nop? o
     o.nil? || o.is_a?(Nop)
   end
@@ -867,7 +889,7 @@ class Factory
 
   # Transforms a left expression followed by an untitled resource (in the form of attribute_operations)
   # @param left [Factory, Expression] the lhs followed what may be a hash
-  def self.transform_resource_wo_title(left, attribute_ops)
+  def self.transform_resource_wo_title(left, attribute_ops, lbrace_token, rbrace_token)
     # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
     return nil unless left.current.is_a?(QualifiedName)
@@ -875,7 +897,9 @@ class Factory
       return nil if ao.operator == :'+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
     end
-    result = block_or_expression(*transform_calls([left, HASH(keyed_entries)]))
+    a_hash = HASH(keyed_entries)
+    a_hash.record_position(lbrace_token, rbrace_token)
+    result = block_or_expression(*transform_calls([left, a_hash]))
     result
   end
 

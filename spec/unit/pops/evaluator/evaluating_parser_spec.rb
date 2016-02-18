@@ -598,6 +598,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(result).to include(['b', 20])
     end
 
+    it "should create an array from an Iterator" do
+      expect(parser.evaluate_string(scope, '[1,2,3].reverse_each', __FILE__).is_a?(Array)).to be(false)
+      result = parser.evaluate_string(scope, '*[1,2,3].reverse_each', __FILE__)
+      expect(result).to eql([3,2,1])
+    end
   end
 
   context "When evaluator performs [] operations" do

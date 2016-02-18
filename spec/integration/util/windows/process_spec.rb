@@ -31,4 +31,35 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
       expect { Puppet::Util::Windows::Process.lookup_privilege_value('foo') }.to raise_error(Puppet::Util::Windows::Error, fail_msg)
     end
   end
+
+  describe "when setting environment variables" do
+    it "can properly handle env var values with = in them" do
+      begin
+        name = SecureRandom.uuid
+        value = 'foo=bar'
+
+        Puppet::Util::Windows::Process.set_environment_variable(name, value)
+
+        env = Puppet::Util::Windows::Process.get_environment_strings
+
+        expect(env[name]).to eq(value)
+      ensure
+        Puppet::Util::Windows::Process.set_environment_variable(name, nil)
+      end
+    end
+
+    it "can properly handle empty env var values" do
+      begin
+        name = SecureRandom.uuid
+
+        Puppet::Util::Windows::Process.set_environment_variable(name, '')
+
+        env = Puppet::Util::Windows::Process.get_environment_strings
+
+        expect(env[name]).to eq('')
+      ensure
+        Puppet::Util::Windows::Process.set_environment_variable(name, nil)
+      end
+    end
+  end
 end

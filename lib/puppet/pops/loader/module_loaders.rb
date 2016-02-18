@@ -1,4 +1,5 @@
-
+module Puppet::Pops
+module Loader
 # =ModuleLoaders
 # A ModuleLoader loads items from a single module.
 # The ModuleLoaders (ruby) module contains various such loaders. There is currently one concrete
@@ -14,12 +15,12 @@
 # internal layout etc.)
 #
 # A module loader is also not aware of the mapping of name to relative paths - this is performed by the
-# included module Puppet::Pops::Loader::PathBasedInstantatorConfig which knows about the map from type/name to
+# included module PathBasedInstantatorConfig which knows about the map from type/name to
 # relative path, and the logic that can instantiate what is expected to be found in the content of that path.
 #
 # @api private
 #
-module Puppet::Pops::Loader::ModuleLoaders
+module ModuleLoaders
   def self.system_loader_from(parent_loader, loaders)
     # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
     # The only way to find this across the different ways puppet can be installed is
@@ -27,7 +28,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # puppet.
     #
     puppet_lib = File.join(File.dirname(__FILE__), '../../..')
-    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader,
+    ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        nil,
                                                        puppet_lib,   # may or may not have a 'lib' above 'puppet'
@@ -37,7 +38,7 @@ module Puppet::Pops::Loader::ModuleLoaders
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
-    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader,
+    ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        module_name,
                                                        File.join(module_path, 'lib'),
@@ -45,7 +46,7 @@ module Puppet::Pops::Loader::ModuleLoaders
                                                        )
   end
 
-  class AbstractPathBasedModuleLoader < Puppet::Pops::Loader::BaseLoader
+  class AbstractPathBasedModuleLoader < BaseLoader
 
     # The name of the module, or nil, if this is a global "component"
     attr_reader :module_name
@@ -64,7 +65,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     attr_accessor :private_loader
 
     # Initialize a kind of ModuleLoader for one module
-    # @param parent_loader [Puppet::Pops::Loader] loader with higher priority
+    # @param parent_loader [Loader] loader with higher priority
     # @param module_name [String] the name of the module (non qualified name), may be nil for a global "component"
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that is used for human identification (useful when module_name is nil)
@@ -74,7 +75,7 @@ module Puppet::Pops::Loader::ModuleLoaders
 
       @module_name = module_name
       @path = path
-      @smart_paths = Puppet::Pops::Loader::LoaderPaths::SmartPaths.new(self)
+      @smart_paths = LoaderPaths::SmartPaths.new(self)
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
@@ -87,8 +88,8 @@ module Puppet::Pops::Loader::ModuleLoaders
     end
 
     # Finds typed/named entity in this module
-    # @param typed_name [Puppet::Pops::Loader::TypedName] the type/name to find
-    # @return [Puppet::Pops::Loader::Loader::NamedEntry, nil found/created entry, or nil if not found
+    # @param typed_name [TypedName] the type/name to find
+    # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
     #
     def find(typed_name)
       # Assume it is a global name, and that all parts of the name should be used when looking up
@@ -115,6 +116,7 @@ module Puppet::Pops::Loader::ModuleLoaders
         case typed_name.type
         when :function
         when :resource_type
+        when :type
         else
           # anything else cannot possibly be in this module
           # TODO: should not be allowed anyway... may have to revisit this decision
@@ -201,7 +203,7 @@ module Puppet::Pops::Loader::ModuleLoaders
 
     # Create a kind of ModuleLoader for one module (Puppet Module, or module like)
     #
-    # @param parent_loader [Puppet::Pops::Loader::Loader] typically the loader for the environment or root
+    # @param parent_loader [Loader] typically the loader for the environment or root
     # @param module_name [String] the name of the module (non qualified name), may be nil for "modules" only containing globals
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that identifies the loader
@@ -231,7 +233,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     end
 
     def get_contents(effective_path)
-      Puppet::FileSystem.read(effective_path)
+      Puppet::FileSystem.read(effective_path, :encoding => 'utf-8')
     end
   end
 
@@ -246,7 +248,7 @@ module Puppet::Pops::Loader::ModuleLoaders
   # @api private
   #
   class GemBased < FileBased
-    include Puppet::Pops::Loader::GemSupport
+    include GemSupport
 
     attr_reader :gem_ref
 
@@ -266,4 +268,6 @@ module Puppet::Pops::Loader::ModuleLoaders
       "(ModuleLoader::GemBased '#{loader_name()}' '#{@gem_ref}' [#{module_name()}])"
     end
   end
+end
+end
 end

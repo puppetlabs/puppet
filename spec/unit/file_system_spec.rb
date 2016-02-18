@@ -134,6 +134,32 @@ describe "Puppet::FileSystem" do
     end
   end
 
+  context "read should allow an encoding to be specified" do
+    # First line of Rune version of Rune poem at http://www.columbia.edu/~fdc/utf8/
+    # characters chosen since they will not parse on Windows with codepage 437 or 1252
+    # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
+    let (:rune_utf8) { "\u16A0\u16C7\u16BB" } # 'ᚠᛇᚻ'
+
+    it "and should read a UTF8 file properly" do
+      temp_file = file_containing('utf8.txt', rune_utf8)
+
+      contents = Puppet::FileSystem.read(temp_file, :encoding => 'utf-8')
+
+      expect(contents.encoding).to eq(Encoding::UTF_8)
+      expect(contents).to eq(rune_utf8)
+    end
+
+    it "does not strip the UTF8 BOM (Byte Order Mark) if present in a file" do
+      bom = "\uFEFF"
+
+      temp_file = file_containing('utf8bom.txt', "#{bom}#{rune_utf8}")
+      contents = Puppet::FileSystem.read(temp_file, :encoding => 'utf-8')
+
+      expect(contents.encoding).to eq(Encoding::UTF_8)
+      expect(contents).to eq("#{bom}#{rune_utf8}")
+    end
+  end
+
   describe "symlink",
     :if => ! Puppet.features.manages_symlinks? &&
     Puppet.features.microsoft_windows? do

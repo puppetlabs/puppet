@@ -5,8 +5,8 @@ require_relative 'hiera_interpolate'
 
 module Puppet::DataProviders
   class YamlDataProviderFactory < Puppet::Plugins::DataProviders::FileBasedDataProviderFactory
-    def create(name, paths)
-      YamlDataProvider.new(name, paths)
+    def create(name, paths, parent_data_provider)
+      YamlDataProvider.new(name, paths, parent_data_provider)
     end
 
     def path_extension

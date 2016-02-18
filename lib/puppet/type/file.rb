@@ -367,9 +367,12 @@ Puppet::Type.newtype(:file) do
       creator_count += 1 if self.should(param)
     end
     creator_count += 1 if @parameters.include?(:source)
+
+    self.fail "You cannot specify more than one of content and content_uri" if @parameters.include?(:content_uri) && @parameters.include?(:content)
+
     self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
-    self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+    self.fail "You cannot specify a remote recursion without a source" if !self[:source] && self[:recurse] == :remote
 
     self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
 
@@ -377,12 +380,18 @@ Puppet::Type.newtype(:file) do
       self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
-    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] && self[:recurselimit]
 
     if @parameters[:content] && @parameters[:content].actual_content
       # Now that we know the checksum, update content (in case it was created before checksum was known).
       @parameters[:content].value = @parameters[:checksum].sum(@parameters[:content].actual_content)
     end
+
+    if self[:checksum] && self[:checksum_value] && !send("#{self[:checksum]}?", self[:checksum_value])
+      self.fail "Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}"
+    end
+
+    self.warning "Checksum value is ignored unless content or source are specified" if self[:checksum_value] && !self[:content] && !self[:source]
 
     provider.validate if provider.respond_to?(:validate)
   end
@@ -398,7 +407,7 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
+    if self.should(:owner) && ! self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
@@ -571,22 +580,29 @@ Puppet::Type.newtype(:file) do
     remove_less_specific_files(result)
   end
 
+  def remove_less_specific_files(files)
+    existing_files = catalog.vertices.select { |r| r.is_a?(self.class) }
+    self.class.remove_less_specific_files(files, self[:path], existing_files) do |file|
+      file[:path]
+    end
+  end
+
   # This is to fix bug #2296, where two files recurse over the same
   # set of files.  It's a rare case, and when it does happen you're
   # not likely to have many actual conflicts, which is good, because
   # this is a pretty inefficient implementation.
-  def remove_less_specific_files(files)
+  def self.remove_less_specific_files(files, parent_path, existing_files, &block)
     # REVISIT: is this Windows safe?  AltSeparator?
-    mypath = self[:path].split(::File::Separator)
-    other_paths = catalog.vertices.
-      select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
-      collect { |r| r[:path].split(::File::Separator) }.
+    mypath = parent_path.split(::File::Separator)
+    other_paths = existing_files.
+      select { |r| (yield r) != parent_path}.
+      collect { |r| (yield r).split(::File::Separator) }.
       select  { |p| p[0,mypath.length]  == mypath }
 
     return files if other_paths.empty?
 
     files.reject { |file|
-      path = file[:path].split(::File::Separator)
+      path = (yield file).split(::File::Separator)
       other_paths.any? { |p| path[0,p.length] == p }
       }
   end
@@ -629,27 +645,7 @@ Puppet::Type.newtype(:file) do
 
   # Recurse against our remote file.
   def recurse_remote(children)
-    sourceselect = self[:sourceselect]
-
-    total = self[:source].collect do |source|
-      next unless result = perform_recursion(source)
-      return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
-      result.each { |data| data.source = "#{source}/#{data.relative_path}" }
-      break result if result and ! result.empty? and sourceselect == :first
-      result
-    end.flatten.compact
-
-    # This only happens if we have sourceselect == :all
-    unless sourceselect == :first
-      found = []
-      total.reject! do |data|
-        result = found.include?(data.relative_path)
-        found << data.relative_path unless found.include?(data.relative_path)
-        result
-      end
-    end
-
-    total.each do |meta|
+    recurse_remote_metadata.each do |meta|
       if meta.relative_path == "."
         parameter(:source).metadata = meta
         next
@@ -660,6 +656,37 @@ Puppet::Type.newtype(:file) do
     end
 
     children
+  end
+
+  def recurse_remote_metadata
+    sourceselect = self[:sourceselect]
+
+    total = self[:source].collect do |source|
+      next unless result = perform_recursion(source)
+      return [] if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      result.each do |data|
+        if data.relative_path == '.'
+          data.source = source
+        else
+          # REMIND: appending file paths to URL may not be safe, e.g. foo+bar
+          data.source = "#{source}/#{data.relative_path}"
+        end
+      end
+      break result if result and ! result.empty? and sourceselect == :first
+      result
+    end.flatten.compact
+
+    # This only happens if we have sourceselect == :all
+    unless sourceselect == :first
+      found = []
+      total.reject! do |data|
+        result = found.include?(data.relative_path)
+        found << data.relative_path unless result
+        result
+      end
+    end
+
+    total
   end
 
   def perform_recursion(path)
@@ -707,7 +734,9 @@ Puppet::Type.newtype(:file) do
   end
 
   def retrieve
-    if source = parameter(:source)
+    # `checksum_value` implies explicit management of all metadata, so skip metadata
+    # retrieval. Otherwise, if source is set, retrieve metadata for source.
+    if (source = parameter(:source)) && property(:checksum_value).nil?
       source.copy_source_values
     end
     super
@@ -786,9 +815,10 @@ Puppet::Type.newtype(:file) do
     resource
   end
 
-  # Write out the file.  Requires the property name for logging.
-  # Write will be done by the content property, along with checksum computation
-  def write(property)
+  # Write out the file. To write content, pass the property as an argument
+  # to delegate writing to; must implement a #write method that takes the file
+  # as an argument.
+  def write(property = nil)
     remove_existing(:file)
 
     mode = self.should(:mode) # might be nil
@@ -797,7 +827,8 @@ Puppet::Type.newtype(:file) do
     if write_temporary_file?
       Puppet::Util.replace_file(self[:path], mode_int) do |file|
         file.binmode
-        content_checksum = write_content(file)
+        devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
+        content_checksum = property.write(file)
         file.flush
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
         if self[:validate_cmd]
@@ -809,7 +840,7 @@ Puppet::Type.newtype(:file) do
       end
     else
       umask = mode ? 000 : 022
-      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_content(f) } }
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| property.write(f) if property } }
     end
 
     # make sure all of the modes are actually correct
@@ -889,16 +920,9 @@ Puppet::Type.newtype(:file) do
     self.fail "File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})"
   end
 
-  # write the current content. Note that if there is no content property
-  # simply opening the file with 'w' as done in write is enough to truncate
-  # or write an empty length file.
-  def write_content(file)
-    (content = property(:content)) && content.write(file)
-  end
-
   def write_temporary_file?
-    # unfortunately we don't know the source file size before fetching it
-    # so let's assume the file won't be empty
+    # Unfortunately we don't know the source file size before fetching it so
+    # let's assume the file won't be empty. Why isn't it part of the metadata?
     (c = property(:content) and c.length) || @parameters[:source]
   end
 
@@ -914,6 +938,7 @@ Puppet::Type.newtype(:file) do
       thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
+
 end
 
 # We put all of the properties in separate files, because there are so many
@@ -922,6 +947,8 @@ end
 require 'puppet/type/file/checksum'
 require 'puppet/type/file/content'     # can create the file
 require 'puppet/type/file/source'      # can create the file
+require 'puppet/type/file/checksum_value' # can create the file, in place of content
+require 'puppet/type/file/content_uri'
 require 'puppet/type/file/target'      # creates a different type of file
 require 'puppet/type/file/ensure'      # can create the file
 require 'puppet/type/file/owner'

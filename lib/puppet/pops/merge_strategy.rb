@@ -6,12 +6,9 @@ module Puppet::Pops
   class MergeStrategy
     NOT_FOUND = Object.new.freeze
 
-    TypeAsserter = Puppet::Pops::Types::TypeAsserter
-    TypeParser = Puppet::Pops::Types::TypeParser
-
     # The type used for validation of the _merge_ argument
     def self.merge_t
-      @@merge_t ||=  TypeParser.new.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
+      @@merge_t ||=  Types::TypeParser.new.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
     end
     private_class_method :merge_t
 
@@ -22,14 +19,14 @@ module Puppet::Pops
 
     # Finds the merge strategy for the given _merge_, creates an instance of it and returns that instance.
     #
-    # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] The merge strategy. Can be a string or symbol denoting the key
+    # @param merge [MergeStrategy,String,Hash<String,Object>,nil] The merge strategy. Can be a string or symbol denoting the key
     #   identifier or a hash with options where the key 'strategy' denotes the key
     # @return [MergeStrategy] The matching merge strategy
     #
     def self.strategy(merge)
       return merge if merge.is_a?(MergeStrategy)
       merge = :first if merge.nil?
-      TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
+      Types::TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
@@ -149,15 +146,15 @@ module Puppet::Pops
 
     # Returns the type used to validate the options hash
     #
-    # @return [Puppet::Pops::Types::PStructType] the puppet type
+    # @return [Types::PStructType] the puppet type
     #
     def options_t
-      @options_t ||=TypeParser.new.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
+      @options_t ||=Types::TypeParser.new.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
     end
 
     # Returns the type used to validate the options hash
     #
-    # @return [Puppet::Pops::Types::PAnyType] the puppet type
+    # @return [Types::PAnyType] the puppet type
     #
     def value_t
       raise NotImplementedError, "Subclass must implement 'value_t'"
@@ -168,7 +165,7 @@ module Puppet::Pops
     end
 
     def assert_type(param, type, value)
-      TypeAsserter.assert_instance_of(param, type, value)
+      Types::TypeAsserter.assert_instance_of(param, type, value)
     end
   end
 
@@ -195,7 +192,7 @@ module Puppet::Pops
     protected
 
     def value_t
-      @value_t ||= Puppet::Pops::Types::PAnyType::DEFAULT
+      @value_t ||= Types::PAnyType::DEFAULT
     end
 
     MergeStrategy.add_strategy(self)
@@ -220,7 +217,7 @@ module Puppet::Pops
     protected
 
     def value_t
-      @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Hash[String,Data]')
+      @value_t ||= Types::TypeParser.new.parse('Hash[String,Data]')
     end
 
     MergeStrategy.add_strategy(self)
@@ -252,7 +249,7 @@ module Puppet::Pops
     protected
 
     def value_t
-      @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Variant[Scalar,Array[Data]]')
+      @value_t ||= Types::TypeParser.new.parse('Variant[Scalar,Array[Data]]')
     end
 
     MergeStrategy.add_strategy(self)
@@ -330,9 +327,9 @@ module Puppet::Pops
     # Returns a type that allows all deep_merge options except 'preserve_unmergeables' since we force
     # the setting of that option to false
     #
-    # @return [Puppet::Pops::Types::PAnyType] the puppet type used when validating the options hash
+    # @return [Types::PAnyType] the puppet type used when validating the options hash
     def options_t
-      @options_t ||= Puppet::Pops::Types::TypeParser.new.parse('Struct[{'\
+      @options_t ||= Types::TypeParser.new.parse('Struct[{'\
           "strategy=>Optional[Pattern[#{self.class.key}]],"\
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
@@ -343,7 +340,7 @@ module Puppet::Pops
     end
 
     def value_t
-      @value_t ||= Puppet::Pops::Types::TypeParser.new.parse('Variant[Array[Data],Hash[String,Data]]')
+      @value_t ||= Types::TypeParser.new.parse('Variant[Array[Data],Hash[String,Data]]')
     end
 
     MergeStrategy.add_strategy(self)

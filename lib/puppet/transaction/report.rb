@@ -54,6 +54,11 @@ class Puppet::Transaction::Report
   # A master generated catalog uuid, useful for connecting a single catalog to multiple reports.
   attr_accessor :catalog_uuid
 
+  # Whether a cached catalog was used in the run, and if so, the reason that it was used.
+  # @return [String] One of the values: 'not_used', 'explicitly_requested',
+  # or 'on_failure'
+  attr_accessor :cached_catalog_status
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
@@ -178,12 +183,13 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 4
+    @report_format = 5
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
     @code_id = nil
     @catalog_uuid = nil
+    @cached_catalog_status = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
   end
@@ -205,6 +211,10 @@ class Puppet::Transaction::Report
 
     if code_id = data['code_id']
       @code_id = code_id
+    end
+
+    if cached_catalog_status = data['cached_catalog_status']
+      @cached_catalog_status = cached_catalog_status
     end
 
     if @time.is_a? String
@@ -240,6 +250,7 @@ class Puppet::Transaction::Report
       'transaction_uuid' => @transaction_uuid,
       'catalog_uuid' => @catalog_uuid,
       'code_id' => @code_id,
+      'cached_catalog_status' => @cached_catalog_status,
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
       'kind' => @kind,

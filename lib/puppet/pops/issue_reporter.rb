@@ -1,6 +1,7 @@
-class Puppet::Pops::IssueReporter
+module Puppet::Pops
+class IssueReporter
 
-  # @param acceptor [Puppet::Pops::Validation::Acceptor] the acceptor containing reported issues
+  # @param acceptor [Validation::Acceptor] the acceptor containing reported issues
   # @option options [String] :message (nil) A message text to use as prefix in
   #   a single Error message
   # @option options [Boolean] :emit_warnings (false) whether warnings should be emitted
@@ -23,7 +24,7 @@ class Puppet::Pops::IssueReporter
     # If there are warnings output them
     warnings = acceptor.warnings
     if emit_warnings && warnings.size > 0
-      formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
+      formatter = Validation::DiagnosticFormatterPuppetStyle.new
       emitted_w = 0
       emitted_dw = 0
       acceptor.warnings.each do |w|
@@ -48,7 +49,7 @@ class Puppet::Pops::IssueReporter
       unless emit_errors
         raise emit_exception.new(emit_message)
       end
-      formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
+      formatter = Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
         exception = create_exception(emit_exception, emit_message, formatter, errors[0])
@@ -110,4 +111,5 @@ class Puppet::Pops::IssueReporter
       })
   end
   private_class_method :log_message
+end
 end

@@ -1,6 +1,6 @@
 require 'puppet'
 require 'puppet/pops'
-require 'puppet/pops/evaluator/literal_evaluator'
+require 'puppet/pops/evaluator/json_strict_literal_evaluator'
 
 class Puppet::InfoService::ClassInformationService
 
@@ -41,7 +41,7 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def literal_evaluator
-    @@literal_evaluator ||= Puppet::Pops::Evaluator::LiteralEvaluator.new
+    @@literal_evaluator ||= Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator.new
   end
 
   def result_of(f)
@@ -53,13 +53,17 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def parse_file(f)
+    return {:error => "The file #{f} does not exist"} unless Puppet::FileSystem.exist?(f)
+
     begin
       parse_result = @parser.parse_file(f)
-      parse_result.definitions.select {|d| d.is_a?(Puppet::Pops::Model::HostClassDefinition)}.map do |d|
-        {:name   => d.name,
-         :params => params = d.parameters.map {|p| extract_param(p) }
-        }
-      end
+      {:classes =>
+        parse_result.definitions.select {|d| d.is_a?(Puppet::Pops::Model::HostClassDefinition)}.map do |d|
+          {:name   => d.name,
+           :params => params = d.parameters.map {|p| extract_param(p) }
+          }
+        end
+      }
     rescue StandardError => e
       {:error => e.message }
     end
@@ -79,17 +83,14 @@ class Puppet::InfoService::ClassInformationService
     value_expr = p.value
     return structure if value_expr.nil?
     default_value = value_as_literal(value_expr)
-    if !default_value.nil?
-      structure[:default_literal] = default_value
-      return structure
-    end
+    structure[:default_literal] = default_value unless default_value.nil?
     structure[:default_source] = extract_value_source(value_expr)
     structure
   end
 
   def typeexpr_to_string(type_expr)
     begin
-      type_parser.interpret_any(type_expr).to_s
+      type_parser.interpret_any(type_expr, nil).to_s
     rescue Puppet::ParseError
       # type is to complex - contains expressions that are not literal
       nil

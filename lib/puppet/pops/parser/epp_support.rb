@@ -1,8 +1,10 @@
+module Puppet::Pops
+module Parser
 # This module is an integral part of the Lexer.
 # It handles scanning of EPP (Embedded Puppet), a form of string/expression interpolation similar to ERB.
 #
 require 'strscan'
-module Puppet::Pops::Parser::EppSupport
+module EppSupport
 
   TOKEN_RENDER_STRING = [:RENDER_STRING, nil, 0]
   TOKEN_RENDER_EXPR   = [:RENDER_EXPR, nil, 0]
@@ -33,7 +35,7 @@ module Puppet::Pops::Parser::EppSupport
     ctx   = @lexing_context
     queue = @token_queue
 
-    lex_error(Puppet::Pops::Issues::EPP_INTERNAL_ERROR, :error => 'No string or file given to lexer to process.') unless scn
+    lex_error(Issues::EPP_INTERNAL_ERROR, :error => 'No string or file given to lexer to process.') unless scn
 
     ctx[:epp_mode] = :text
     enqueue_completed([:EPP_START, nil, 0], 0)
@@ -47,7 +49,7 @@ module Puppet::Pops::Parser::EppSupport
       end
     end
     if ctx[:epp_open_position]
-      lex_error(Puppet::Pops::Issues::EPP_UNBALANCED_TAG, {}, ctx[:epp_position])
+      lex_error(Issues::EPP_UNBALANCED_TAG, {}, ctx[:epp_position])
     end
 
     # Signals end of input
@@ -66,7 +68,7 @@ module Puppet::Pops::Parser::EppSupport
     when :text
       # Should be at end of scan, or something is terribly wrong
       unless @scanner.eos?
-        lex_error(Puppet::Pops::Issues::EPP_INTERNAL_ERROR, :error => 'template scanner returns text mode and is not and end of input')
+        lex_error(Issues::EPP_INTERNAL_ERROR, :error => 'template scanner returns text mode and is not and end of input')
       end
       if s
         # s may be nil if scanned text ends with an epp tag (i.e. no trailing text).
@@ -99,7 +101,7 @@ module Puppet::Pops::Parser::EppSupport
       ctx[:epp_mode] = :expr
       ctx[:epp_open_position] = scn.pos
     else
-      lex_error(Puppet::Pops::Issues::EPP_INTERNAL_ERROR, :error => "Unknown mode #{eppscanner.mode} returned by template scanner")
+      lex_error(Issues::EPP_INTERNAL_ERROR, :error => "Unknown mode #{eppscanner.mode} returned by template scanner")
     end
     nil
   end
@@ -198,7 +200,7 @@ module Puppet::Pops::Parser::EppSupport
           # if s ends with <% then this is an error (unbalanced <% %>)
           if s.end_with? "<%"
             @mode = :error
-            @issue = Puppet::Pops::Issues::EPP_UNBALANCED_EXPRESSION
+            @issue = Issues::EPP_UNBALANCED_EXPRESSION
           else
             mode = :epp
           end
@@ -236,7 +238,7 @@ module Puppet::Pops::Parser::EppSupport
           # preceded by a % (i.e. skip %%>)
           part = scanner.scan_until(/[^%]%>/)
           unless part
-            @issue = Puppet::Pops::Issues::EPP_UNBALANCED_COMMENT
+            @issue = Issues::EPP_UNBALANCED_COMMENT
             @mode = :error
             return s
           end
@@ -255,4 +257,6 @@ module Puppet::Pops::Parser::EppSupport
     end
   end
 
+end
+end
 end

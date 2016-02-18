@@ -1,0 +1,2 @@
+class empty_yaml {
+}

@@ -175,7 +175,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if options[:catalog] == "-"
       text = $stdin.read
     else
-      text = ::File.read(options[:catalog])
+      text = Puppet::FileSystem.read(options[:catalog], :encoding => 'utf-8')
     end
     catalog = read_catalog(text)
     apply_catalog(catalog)
@@ -239,7 +239,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
             $stderr.puts "#{file} is not readable"
             exit(63)
           end
-          node.classes = ::File.read(file).split(/[\s\n]+/)
+          node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/[\s\n]+/)
         end
       end
 
@@ -315,7 +315,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.use :main, :agent, :ssl
 
-    if Puppet[:catalog_cache_terminus]
+
+    if Puppet[:noop]
+      Puppet::Resource::Catalog.indirection.cache_class = nil
+    elsif Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 

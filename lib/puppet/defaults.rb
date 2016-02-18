@@ -111,10 +111,11 @@ module Puppet
 
         Valid values for this setting are:
 
-        * `deprecations` --- disables deprecation warnings.",
+        * `deprecations` --- disables deprecation warnings.
+        * `undefined_variables` --- disables warnings about non existing variables.",
       :hook      => proc do |value|
         values = munge(value)
-        valid   = %w[deprecations]
+        valid   = %w[deprecations undefined_variables]
         invalid = values - (values & valid)
         if not invalid.empty?
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
@@ -146,6 +147,17 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
+    },
+    :static_catalogs => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Whether to compile a static catalog."
+    },
+    :strict_environment_mode => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether the agent specified environment should be considered authoritative,
+        causing the run to fail if the retrieved catalog does not match it.",
     },
     :autoflush => {
       :default => true,
@@ -781,6 +793,21 @@ EOT
         :values => ["md5", "sha256"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
                       Valid values are md5, sha256. Default is md5.',
+    },
+    :supported_checksum_types => {
+      :default => ['md5', 'sha256'],
+      :type    => :array,
+      :desc    => 'Checksum types supported by this agent for use in file resources of a
+                   static catalog. Values must be comma-separated. Valid types are md5,
+                   md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
+      :hook    => proc do |value|
+        values = munge(value)
+        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
+        invalid = values.reject {|alg| valid.include?(alg)}
+        if not invalid.empty?
+          raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
+        end
+      end
     }
   )
 
@@ -1565,7 +1592,11 @@ EOT
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether plugins should be synced with the central server.",
+      :desc       => "Whether plugins should be synced with the central server. This setting is
+        deprecated.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
+      }
     },
 
     :pluginsignore => {

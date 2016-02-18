@@ -20,8 +20,8 @@ token NUMBER
 token HEREDOC SUBLOCATE
 token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
-token PRIVATE ATTR TYPE
-token FUNCTION
+token TYPE
+token PRIVATE ATTR
 token APPLICATION_R CONSUMES_R PRODUCES_R SITE_R
 token APPLICATION PRODUCES CONSUMES SITE
 token LOW
@@ -160,7 +160,7 @@ resource
         # If the attribute operations does not include +>, then the found expression
         # is actually a LEFT followed by LITERAL_HASH
         #
-        unless tmp = transform_resource_wo_title(val[0], val[2])
+        unless tmp = transform_resource_wo_title(val[0], val[2], val[1], val[4])
           error val[1], "Syntax error resource body without title or hash with +>"
         end
         tmp
@@ -250,6 +250,8 @@ primary_expression
   | site_definition_expression
   | epp_render_expression
   | function_definition
+  | type_alias
+  | type_definition
   | reserved_word
   | array
   | hash
@@ -268,24 +270,28 @@ primary_expression
 # Produces Model::CallNamedFunction
 
 call_function_expression
-  : expression LPAREN assignments endcomma RPAREN {
-      result = Factory.CALL_NAMED(val[0], true, val[2])
-      loc result, val[0], val[4]
+  : call_function_start assignments endcomma RPAREN {
+      result = Factory.CALL_NAMED(val[0], true, val[1])
+      loc result, val[0], val[3]
     }
-  | expression LPAREN RPAREN {
+  | call_function_start RPAREN {
+      result = Factory.CALL_NAMED(val[0], true, [])
+      loc result, val[0], val[1]
+    }
+  | call_function_start assignments endcomma RPAREN lambda {
+      result = Factory.CALL_NAMED(val[0], true, val[1])
+      loc result, val[0], val[4]
+      result.lambda = val[4]
+    }
+  | call_function_start RPAREN  lambda {
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[2]
+      result.lambda = val[2]
     }
-  | expression LPAREN assignments endcomma RPAREN lambda {
-      result = Factory.CALL_NAMED(val[0], true, val[2])
-      loc result, val[0], val[4]
-      result.lambda = val[5]
-    }
-  | expression LPAREN RPAREN  lambda {
-      result = Factory.CALL_NAMED(val[0], true, [])
-      loc result, val[0], val[2]
-      result.lambda = val[3]
-    }
+
+call_function_start
+  : expression LPAREN { result = val[0] }
+  | TYPE LPAREN { result = Factory.QNAME(val[0][:value]); loc result, val[0] }
 
 #---CALL METHOD
 #
@@ -676,6 +682,25 @@ parameter_type
   : type { result = val[0] }
   | type LBRACK expressions RBRACK { result = val[0][*val[2]] ; loc result, val[0], val[3] }
 
+#--TYPE ALIAS
+type_alias
+  : TYPE CLASSREF EQUALS expression {
+      result = add_definition(Factory.TYPE_ALIAS(val[1][:value], val[3]))
+      loc(result, val[0], val[3])
+    }
+
+#--TYPE definition
+# TODO: Uses the optional_statements rule temporarily since the actual body awaits final spec on methods and attributes.
+type_definition
+  : TYPE CLASSREF LBRACE optional_statements RBRACE {
+        result = add_definition(Factory.TYPE_DEFINITION(val[1][:value], nil, val[3]))
+        loc(result, val[0], val[4])
+      }
+  | TYPE CLASSREF INHERITS CLASSREF LBRACE optional_statements RBRACE {
+        result = add_definition(Factory.TYPE_DEFINITION(val[1][:value], val[3][:value], val[5]))
+        loc(result, val[0], val[6])
+      }
+
 #--VARIABLE
 #
 variable
@@ -685,7 +710,6 @@ variable
 #
 reserved_word
   : PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
-  | TYPE      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | APPLICATION_R { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
   | CONSUMES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }

@@ -1,7 +1,8 @@
 # This class is the backing implementation of the Puppet function 'lookup'.
 # See puppet/functions/lookup.rb for documentation.
 #
-module Puppet::Pops::Lookup
+module Puppet::Pops
+module Lookup
   LOOKUP_OPTIONS = 'lookup_options'.freeze
   GLOBAL = '__global__'.freeze
 
@@ -11,20 +12,20 @@ module Puppet::Pops::Lookup
   # See puppet/functions/lookup.rb for full documentation and all parameter combinations.
   #
   # @param name [String|Array<String>] The name or names to lookup
-  # @param type [Puppet::Pops::Types::PAnyType|nil] The expected type of the found value
+  # @param type [Types::PAnyType|nil] The expected type of the found value
   # @param default_value [Object] The value to use as default when no value is found
   # @param has_default [Boolean] Set to _true_ if _default_value_ is included (_nil_ is a valid _default_value_)
-  # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-  # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] Invocation data containing scope, overrides, and defaults
+  # @param merge [MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
+  # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
-    value_type = Puppet::Pops::Types::PDataType::DEFAULT if value_type.nil?
+    value_type = Types::PDataType::DEFAULT if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array
     # with name and value.
-    not_found = Puppet::Pops::MergeStrategy::NOT_FOUND
+    not_found = MergeStrategy::NOT_FOUND
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil, not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type('override', value_type, override_values[key]) : not_found
@@ -65,7 +66,7 @@ module Puppet::Pops::Lookup
   end
 
   def self.assert_type(subject, type, value)
-    Puppet::Pops::Types::TypeAsserter.assert_instance_of(subject, type, value)
+    Types::TypeAsserter.assert_instance_of(subject, type, value)
   end
   private_class_method :assert_type
 
@@ -74,4 +75,5 @@ module Puppet::Pops::Lookup
     raise Puppet::DataBinding::LookupError, "Function lookup() did not find a value for #{name_part}"
   end
   private_class_method :fail_lookup
+end
 end

@@ -478,7 +478,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             user = Puppet::Util::Windows::ADSI::User.create("puppet#{rand(10000)}")
             user.commit
             begin
-              sid = Puppet::Util::Windows::ADSI::User.new(user.name).sid.to_s
+              sid = Puppet::Util::Windows::ADSI::User.new(user.name).sid.sid
               winsec.set_owner(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
             ensure
@@ -494,7 +494,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             group = Puppet::Util::Windows::ADSI::Group.create("puppet#{rand(10000)}")
             group.commit
             begin
-              sid = Puppet::Util::Windows::ADSI::Group.new(group.name).sid.to_s
+              sid = Puppet::Util::Windows::ADSI::Group.new(group.name).sid.sid
               winsec.set_group(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXG, path)
             ensure

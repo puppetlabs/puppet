@@ -30,9 +30,25 @@ describe Puppet::Face[:parser, :current] do
       end
 
       it "runs error free when there are no validation errors" do
-        manifest = file_containing('site.pp', "notify { valid: }")
+        expect {
+            manifest = file_containing('site.pp', "notify { valid: }")
+            parser.validate(manifest)
+        }.to_not raise_error
+      end
 
-        parser.validate(manifest)
+      it "runs error free when there is a puppet function in manifest being validated" do
+        expect {
+          manifest = file_containing('site.pp', "function valid() { 'valid' } notify{ valid(): }")
+          parser.validate(manifest)
+        }.to_not raise_error
+      end
+
+      it "runs error free when there is a type alias in a manifest that requires type resolution" do
+        expect {
+          manifest = file_containing('site.pp',
+            "type A = String; type B = Array[A]; function valid(B $x) { $x } notify{ valid([valid]): }")
+          parser.validate(manifest)
+        }.to_not raise_error
       end
 
       it "reports missing files" do
@@ -97,6 +113,31 @@ describe Puppet::Face[:parser, :current] do
       expect(output).to eq("")
       expect(@logs[0].message).to eq("Syntax error at end of file")
       expect(@logs[0].level).to eq(:err)
+    end
+
+    it "logs an error if the input begins with a UTF-8 BOM (Byte Order Mark)" do
+      utf8_bom_manifest = file_containing('utf8_bom.pp', "\uFEFFnotice hi")
+
+      output = parser.dump(utf8_bom_manifest)
+
+      expect(output).to eq("")
+      expect(@logs[1].message).to eq("Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source")
+      expect(@logs[1].level).to eq(:err)
+    end
+
+    it "runs error free when there is a puppet function in manifest being dumped" do
+      expect {
+        manifest = file_containing('site.pp', "function valid() { 'valid' } notify{ valid(): }")
+        parser.dump(manifest)
+      }.to_not raise_error
+    end
+
+    it "runs error free when there is a type alias in a manifest that requires type resolution" do
+      expect {
+        manifest = file_containing('site.pp',
+          "type A = String; type B = Array[A]; function valid(B $x) { $x } notify{ valid([valid]): }")
+        parser.dump(manifest)
+      }.to_not raise_error
     end
   end
 

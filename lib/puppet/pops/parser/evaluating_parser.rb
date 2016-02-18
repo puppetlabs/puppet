@@ -1,12 +1,14 @@
+module Puppet::Pops
+module Parser
 
 # Does not support "import" and parsing ruby files
 #
-class Puppet::Pops::Parser::EvaluatingParser
+class EvaluatingParser
 
   attr_reader :parser
 
   def initialize()
-    @parser = Puppet::Pops::Parser::Parser.new()
+    @parser = Parser.new()
   end
 
   def parse_string(s, file_source = nil)
@@ -49,7 +51,7 @@ class Puppet::Pops::Parser::EvaluatingParser
 
   # Create a closure that can be called in the given scope
   def closure(model, scope)
-    Puppet::Pops::Evaluator::Closure.new(evaluator, model, scope)
+    Evaluator::Closure.new(evaluator, model, scope)
   end
 
   def evaluate(scope, model)
@@ -67,9 +69,9 @@ class Puppet::Pops::Parser::EvaluatingParser
   def evaluator
     # Do not use the cached evaluator if this is a migration run
     if (Puppet.lookup(:migration_checker) { nil })
-      return Puppet::Pops::Evaluator::EvaluatorImpl.new()
+      return Evaluator::EvaluatorImpl.new()
     end
-    @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
+    @@evaluator ||= Evaluator::EvaluatorImpl.new()
     @@evaluator
   end
 
@@ -84,11 +86,11 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   def acceptor()
-    Puppet::Pops::Validation::Acceptor.new
+    Validation::Acceptor.new
   end
 
   def validator(acceptor)
-    Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor)
+    Validation::ValidatorFactory_4_0.new().validator(acceptor)
   end
 
   def assert_and_report(parse_result)
@@ -98,7 +100,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     end
     validation_result = validate(parse_result)
 
-    Puppet::Pops::IssueReporter.assert_and_report(validation_result,
+    IssueReporter.assert_and_report(validation_result,
                                           :emit_warnings => true)
     parse_result
   end
@@ -149,9 +151,11 @@ class Puppet::Pops::Parser::EvaluatingParser
     escaped << '"'
   end
 
-  class EvaluatingEppParser < Puppet::Pops::Parser::EvaluatingParser
+  class EvaluatingEppParser < EvaluatingParser
     def initialize()
-      @parser = Puppet::Pops::Parser::EppParser.new()
+      @parser = EppParser.new()
     end
   end
+end
+end
 end

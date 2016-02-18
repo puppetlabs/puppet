@@ -1,7 +1,9 @@
+module Puppet::Pops
+module Binder
 # The KeyFactory is responsible for creating keys used for lookup of bindings.
 # @api public
 #
-class Puppet::Pops::Binder::KeyFactory
+class KeyFactory
 
   # @api public
   def binding_key(binding)
@@ -10,12 +12,12 @@ class Puppet::Pops::Binder::KeyFactory
 
   # @api public
   def named_key(type, name)
-    [(Puppet::Pops::Types::PDataType::DEFAULT.assignable?(type) ? Puppet::Pops::Types::PDataType::DEFAULT : type), name]
+    [(Types::PDataType::DEFAULT.assignable?(type) ? Types::PDataType::DEFAULT : type), name]
   end
 
   # @api public
   def data_key(name)
-    [Puppet::Pops::Types::PDataType::DEFAULT, name]
+    [Types::PDataType::DEFAULT, name]
   end
 
   # @api public
@@ -42,13 +44,13 @@ class Puppet::Pops::Binder::KeyFactory
 
   # @api public
   def is_data?(key)
-    return false unless key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PAnyType)
-    Puppet::Pops::Types::PDataType::DEFAULT.assignable?(key[0])
+    return false unless key.is_a?(Array) && key[0].is_a?(Types::PAnyType)
+    Types::PDataType::DEFAULT.assignable?(key[0])
   end
 
   # @api public
   def is_ruby?(key)
-    key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PRuntimeType) && key[0].runtime == :ruby
+    key.is_a?(Array) && key[0].is_a?(Types::PRuntimeType) && key[0].runtime == :ruby
   end
 
   # Returns the type of the key
@@ -58,4 +60,6 @@ class Puppet::Pops::Binder::KeyFactory
     return nil unless key.is_a?(Array)
     key[0]
   end
+end
+end
 end

@@ -258,6 +258,22 @@ describe Puppet::Parser::Compiler do
       expect(@compiler.topscope['c']).to eq("d")
     end
 
+    it "should set node parameters thar are of Symbol type as String variables in the top scope" do
+      params = {"a" => :b}
+      @node.stubs(:parameters).returns(params)
+      compile_stub(:set_node_parameters)
+      @compiler.compile
+      expect(@compiler.topscope['a']).to eq("b")
+    end
+
+    it "should set the node's environment as a string variable in top scope" do
+      compile_stub(:set_node_parameters)
+      @node.merge({'wat' => 'this is how the sausage is made'})
+      @compiler.compile
+      expect(@compiler.topscope['environment']).to eq("testing")
+      expect(@compiler.topscope['wat']).to eq('this is how the sausage is made')
+    end
+
     it "should set the client and server versions on the catalog" do
       params = {"clientversion" => "2", "serverversion" => "3"}
       @node.stubs(:parameters).returns(params)

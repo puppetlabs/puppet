@@ -6,8 +6,6 @@ describe Puppet::Pops::Types::TypeParser do
 
   let(:parser) { Puppet::Pops::Types::TypeParser.new }
   let(:types)  { Puppet::Pops::Types::TypeFactory }
-
-
   it "rejects a puppet expression" do
     expect { parser.parse("1 + 1") }.to raise_error(Puppet::ParseError, /The expression <1 \+ 1> is not a valid type specification/)
   end
@@ -135,20 +133,40 @@ describe Puppet::Pops::Types::TypeParser do
     expect { parser.parse("Hash[Integer, Integer, 1,2,3]") }.to raise_the_parameter_error("Hash", "2 to 4", 5)
   end
 
-  it "interprets anything that is not a built in type to be a resource type" do
-    expect(parser.parse("File")).to be_the_type(types.resource('file'))
+  context 'with scope and loader' do
+    let!(:scope) { {} }
+
+    before :each do
+      loader = mock
+      loader.stubs(:load).returns nil
+      Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+    end
+
+    it "interprets anything that is not a built in type to be a resource type" do
+      expect(parser.parse('File', scope)).to be_the_type(types.resource('file'))
+    end
+
+    it "parses a resource type with title" do
+      expect(parser.parse("File['/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
+    end
+
+    it "parses a resource type using 'Resource[type]' form" do
+      expect(parser.parse("Resource[File]", scope)).to be_the_type(types.resource('file'))
+    end
+
+    it "parses a resource type with title using 'Resource[type, title]'" do
+      expect(parser.parse("Resource[File, '/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
+    end
   end
 
-  it "parses a resource type with title" do
-    expect(parser.parse("File['/tmp/foo']")).to be_the_type(types.resource('file', '/tmp/foo'))
-  end
+  context 'without a scope' do
+    it "interprets anything that is not a built in type to be a type reference" do
+      expect(parser.parse('File')).to eq(types.type_reference('File'))
+    end
 
-  it "parses a resource type using 'Resource[type]' form" do
-    expect(parser.parse("Resource[File]")).to be_the_type(types.resource('file'))
-  end
-
-  it "parses a resource type with title using 'Resource[type, title]'" do
-    expect(parser.parse("Resource[File, '/tmp/foo']")).to be_the_type(types.resource('file', '/tmp/foo'))
+    it "interprets anything that is not a built in type with parameterers to be type reference with parameters" do
+      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference('File', ['/tmp/foo']))
+    end
   end
 
   it "parses a host class type" do
@@ -161,6 +179,10 @@ describe Puppet::Pops::Types::TypeParser do
 
   it 'parses an integer range' do
    expect(parser.parse("Integer[1,2]")).to be_the_type(types.range(1,2))
+  end
+
+  it 'parses a negative integer range' do
+    expect(parser.parse("Integer[-3,-1]")).to be_the_type(types.range(-3,-1))
   end
 
   it 'parses a float range' do

@@ -1,12 +1,14 @@
+module Puppet::Pops
+module Model
 # A provider of labels for model object, producing a human name for the model object.
 # As an example, if object is an ArithmeticExpression with operator +, `#a_an(o)` produces "a '+' Expression",
 # #the(o) produces "the + Expression", and #label produces "+ Expression".
 #
-class Puppet::Pops::Model::ModelLabelProvider
-  include Puppet::Pops::LabelProvider
+class ModelLabelProvider
+  include LabelProvider
 
   def initialize
-    @@label_visitor ||= Puppet::Pops::Visitor.new(self,"label",0,0)
+    @@label_visitor ||= Visitor.new(self,"label",0,0)
   end
 
   # Produces a label for the given objects type/operator without article.
@@ -89,16 +91,18 @@ class Puppet::Pops::Model::ModelLabelProvider
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
   def label_QualifiedReference o          ; "Type-Name"                         end
-  def label_PAnyType o                    ; "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type" end
+  def label_PAnyType o                    ; "#{Types::TypeCalculator.string(o)}-Type" end
   def label_ReservedWord o                ; "Reserved Word '#{o.word}'"         end
   def label_CatalogCollector o            ; "Catalog-Collector"                 end
   def label_ExportedCollector o           ; "Exported-Collector"                end
+  def label_TypeAlias o                   ; "Type Alias"                        end
+  def label_TypeDefinition o              ; "Type Definition"                   end
 
   def label_PResourceType o
     if o.title
-      "#{Puppet::Pops::Types::TypeCalculator.string(o)} Resource-Reference"
+      "#{Types::TypeCalculator.string(o)} Resource-Reference"
     else
-      "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type"
+      "#{Types::TypeCalculator.string(o)}-Type"
     end
   end
 
@@ -108,11 +112,13 @@ class Puppet::Pops::Model::ModelLabelProvider
 
 
   def label_Class o
-    if o <= Puppet::Pops::Types::PAnyType
+    if o <= Types::PAnyType
       simple_name = o.name.split('::').last
       simple_name[1..-5] + "-Type"
     else
       o.name
     end
   end
+end
+end
 end

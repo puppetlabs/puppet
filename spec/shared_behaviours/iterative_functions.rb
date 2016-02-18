@@ -16,7 +16,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         3.14.#{func} |$k, $v| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /must be something enumerable/)
+    end.to raise_error(Puppet::Error, /expects an Iterable value, got Float/)
   end
 
   it 'raises an error when called with any parameters besides a block' do

@@ -21,25 +21,70 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
+  require 'puppet/util/windows/process' if Puppet::Util::Platform.windows?
+
   extend Puppet::Util::SymbolicFileMode
 
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
-  def self.withenv(hash)
-    saved = ENV.to_hash
-    hash.each do |name, val|
-      ENV[name.to_s] = val
-    end
-
+  # Windows can store unicode chars in the environment as keys or values, but
+  # Rubys ENV tries to roundtrip them through the local codepage, which can
+  # cause encoding problems - underlying helpers use Windows APIs on Windows
+  # see https://bugs.ruby-lang.org/issues/8822
+  def self.withenv(hash, mode = :posix)
+    saved = get_environment(mode)
+    merge_environment(hash, mode)
     yield
   ensure
-    ENV.clear
-    saved.each do |name, val|
-      ENV[name] = val
+    if saved
+      clear_environment(mode)
+      merge_environment(saved, mode)
     end
   end
 
+  private
+  # @api private
+  def self.get_environment(mode = :posix)
+    case mode
+      when :posix
+        ENV.to_hash
+      when :windows
+        Puppet::Util::Windows::Process.get_environment_strings
+      else
+        raise "Unable to retrieve the environment for mode #{mode}"
+    end
+  end
 
+  # env_hash may contain both string and symbol keys
+  # @api private
+  def self.merge_environment(env_hash, mode = :posix)
+    case mode
+      when :posix
+        env_hash.each { |name, val| ENV[name.to_s] = val }
+      when :windows
+        env_hash.each do |name, val|
+          Puppet::Util::Windows::Process.set_environment_variable(name.to_s, val)
+        end
+      else
+        raise "Unable to merge given values into the current environment for mode #{mode}"
+    end
+  end
+
+  # @api private
+  def self.clear_environment(mode = :posix)
+    case mode
+      when :posix
+        ENV.clear
+      when :windows
+        Puppet::Util::Windows::Process.get_environment_strings.each do |key, _|
+          Puppet::Util::Windows::Process.set_environment_variable(key, nil)
+        end
+      else
+        raise "Unable to clear the environment for mode #{mode}"
+    end
+  end
+
+  public
   # Execute a given chunk of code with a new umask.
   def self.withumask(mask)
     cur = File.umask(mask)
@@ -467,14 +512,7 @@ module Util
   module_function :deterministic_rand
 
   def deterministic_rand_int(seed,max)
-    if defined?(Random) == 'constant' && Random.class == Class
-      Random.new(seed).rand(max)
-    else
-      srand(seed)
-      result = rand(max)
-      srand()
-      result
-    end
+    Random.new(seed).rand(max)
   end
   module_function :deterministic_rand_int
 end

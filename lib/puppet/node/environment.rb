@@ -186,6 +186,15 @@ class Puppet::Node::Environment
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
   end
 
+  # @api private
+  def static_catalogs?
+    if @static_catalogs.nil?
+      environment_conf = Puppet.lookup(:environments).get_conf(name)
+      @static_catalogs = (environment_conf.nil? ? Puppet[:static_catalogs] : environment_conf.static_catalogs)
+    end
+    @static_catalogs
+  end
+
   # Return the environment configuration
   # @return [Puppet::Settings::EnvironmentConf] The configuration
   #

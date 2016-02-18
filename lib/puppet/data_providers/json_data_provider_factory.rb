@@ -5,8 +5,8 @@ require_relative 'hiera_interpolate'
 
 module Puppet::DataProviders
   class JsonDataProviderFactory < Puppet::Plugins::DataProviders::FileBasedDataProviderFactory
-    def create(name, paths)
-      JsonDataProvider.new(name, paths)
+    def create(name, paths, parent_data_provider)
+      JsonDataProvider.new(name, paths, parent_data_provider)
     end
 
     def path_extension

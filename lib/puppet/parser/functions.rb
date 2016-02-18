@@ -1,5 +1,6 @@
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
+require 'puppet/pops/adaptable'
 
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
@@ -17,12 +18,12 @@ module Puppet::Parser::Functions
   #
   # @api private
   def self.reset
-    @modules = {}
-
     # Runs a newfunction to create a function for each of the log levels
+    root_env = Puppet.lookup(:root_environment)
+    AnonymousModuleAdapter.clear(root_env)
     Puppet::Util::Log.levels.each do |level|
       newfunction(level,
-                  :environment => Puppet.lookup(:root_environment),
+                  :environment => root_env,
                   :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
         send(level, vals.join(" "))
       end
@@ -36,26 +37,37 @@ module Puppet::Parser::Functions
     @autoloader ||= Puppet::Util::Autoload.new(self, "puppet/parser/functions")
   end
 
+  # An adapter that ties the anonymous module that acts as the container for all 3x functions to the environment
+  # where the functions are created. This adapter ensures that the life-cycle of those functions doesn't exceed
+  # the life-cycle of the environment.
+  #
+  # @api private
+  class AnonymousModuleAdapter < Puppet::Pops::Adaptable::Adapter
+    attr_accessor :module
+  end
+
   # Get the module that functions are mixed into corresponding to an
   # environment
   #
   # @api private
   def self.environment_module(env)
-    @modules[env.name] ||= Module.new do
-      @metadata = {}
+    AnonymousModuleAdapter.adapt(env) do |a|
+      a.module ||= Module.new do
+        @metadata = {}
 
-      def self.all_function_info
-        @metadata
-      end
+        def self.all_function_info
+          @metadata
+        end
 
-      def self.get_function_info(name)
-        @metadata[name]
-      end
+        def self.get_function_info(name)
+          @metadata[name]
+        end
 
-      def self.add_function_info(name, info)
-        @metadata[name] = info
+        def self.add_function_info(name, info)
+          @metadata[name] = info
+        end
       end
-    end
+    end.module
   end
 
   # Create a new Puppet DSL function.

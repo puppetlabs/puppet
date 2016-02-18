@@ -1,16 +1,18 @@
+module Puppet::Pops
+module Validation
 # Configures validation suitable for 4.0
 #
-class Puppet::Pops::Validation::ValidatorFactory_4_0 < Puppet::Pops::Validation::Factory
-  Issues = Puppet::Pops::Issues
+class ValidatorFactory_4_0 < Factory
+  Issues = Issues
 
   # Produces the checker to use
   def checker diagnostic_producer
-    Puppet::Pops::Validation::Checker4_0.new(diagnostic_producer)
+    Checker4_0.new(diagnostic_producer)
   end
 
   # Produces the label provider to use
   def label_provider
-    Puppet::Pops::Model::ModelLabelProvider.new()
+    Model::ModelLabelProvider.new()
   end
 
   # Produces the severity producer to use
@@ -29,4 +31,6 @@ class Puppet::Pops::Validation::ValidatorFactory_4_0 < Puppet::Pops::Validation:
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
     p
   end
+end
+end
 end

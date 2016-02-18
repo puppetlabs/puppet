@@ -1,5 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 require 'puppet/indirector/catalog/compiler'
 
@@ -46,7 +48,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @request.stubs(:options).returns(:use_node => @node)
       @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
@@ -63,7 +65,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should use the authenticated node name if no request key is provided" do
       @request.stubs(:key).returns(nil)
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -71,7 +73,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request.expects(:key).returns "my_node"
 
       Puppet::Node.indirection.expects(:find).with("my_node", anything).returns @node
-      @compiler.expects(:compile).with(@node, nil)
+      @compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -88,7 +90,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should pass the found node to the compiler for compiling" do
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       config = mock 'config'
-      Puppet::Parser::Compiler.expects(:compile).with(@node, nil)
+      Puppet::Parser::Compiler.expects(:compile).with(@node, anything)
       @compiler.find(@request)
     end
 
@@ -144,6 +146,96 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile).returns catalog
 
       expect(@compiler.find(@request).code_id).to eq(code_id)
+    end
+
+    it "does not inline metadata when the static_catalog option is false" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = false
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      @compiler.find(@request)
+    end
+
+    it "does not inline metadata when static_catalogs are disabled" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'md5'
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns false
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      @compiler.find(@request)
+    end
+
+    it "does not inline metadata when code_id is not specified" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'md5'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).never
+      expect(@compiler.find(@request)).to eq(catalog)
+    end
+
+    it "inlines metadata when the static_catalog option is true, static_catalogs are enabled, and a code_id is provided" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'sha256'
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).with(catalog, :sha256).returns catalog
+      @compiler.find(@request)
+    end
+
+    it "inlines metadata with the first common checksum type" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'atime.md5.sha256.mtime'
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
+      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+
+      @compiler.expects(:inline_metadata).with(catalog, :md5).returns catalog
+      @compiler.find(@request)
+    end
+
+    it "errors if checksum_type contains no shared checksum types" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = 'atime.sha512'
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      expect { @compiler.find(@request) }.to raise_error Puppet::Error,
+        "Unable to find a common checksum type between agent 'atime.sha512' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+    end
+
+    it "errors if checksum_type contains no shared checksum types" do
+      Puppet::Node.indirection.stubs(:find).returns(@node)
+      @request.options[:static_catalog] = true
+      @request.options[:checksum_type] = nil
+      @request.options[:code_id] = 'some_code_id'
+      @node.environment.stubs(:static_catalogs?).returns true
+
+      expect { @compiler.find(@request) }.to raise_error Puppet::Error,
+        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
     end
   end
 
@@ -299,5 +391,379 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(@compiler.filter(@catalog)).to eq(catalog)
     end
 
+  end
+
+  def build_catalog(node, num_resources, sources = nil, parameters = {:ensure => 'file'})
+    catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
+
+    resources = []
+    resources << Puppet::Resource.new("notify", "alpha")
+    resources << Puppet::Resource.new("notify", "omega")
+
+    0.upto(num_resources-1) do |idx|
+      parameters.merge! :require => "Notify[alpha]", :before  => "Notify[omega]"
+      if sources
+        parameters.merge! :source => sources[idx % sources.size]
+      end
+      # The compiler does not operate on a RAL catalog, so we're
+      # using Puppet::Resource to produce a resource catalog.
+      agnostic_path = File.expand_path("/tmp/file_#{idx}.txt") # Windows Friendly
+      rsrc = Puppet::Resource.new("file", agnostic_path, :parameters => parameters)
+      rsrc.file = 'site.pp'
+      rsrc.line = idx+1
+      resources << rsrc
+    end
+
+    resources.each do |rsrc|
+      catalog.add_resource(rsrc)
+    end
+    catalog
+  end
+
+  describe "when inlining metadata" do
+    include PuppetSpec::Compiler
+    include Matchers::Resource
+
+    let(:node) { Puppet::Node.new 'me' }
+    let(:num_resources) { 3 }
+    let(:checksum_type) { 'md5' }
+    let(:checksum_value) { 'b1946ac92492d2347c6235b4d2611184' }
+    let(:path) { File.expand_path('/foo') }
+    let(:resource_ref) { "File[#{path}]" }
+
+    before :each do
+      @compiler = Puppet::Resource::Catalog::Compiler.new
+    end
+
+    def stubs_file_metadata(checksum_type, sha, relative_path, full_path = nil)
+      full_path ||=  File.join(Puppet[:environmentpath], 'production', relative_path)
+
+      metadata = stub 'metadata'
+      metadata.stubs(:ftype).returns("file")
+      metadata.stubs(:full_path).returns(full_path)
+      metadata.stubs(:relative_path).returns(relative_path)
+      metadata.stubs(:source).returns("puppet:///#{relative_path}")
+      metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
+      metadata.stubs(:checksum_type).returns(checksum_type)
+
+      Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
+
+      metadata
+    end
+
+    def stubs_link_metadata(relative_path, destination)
+      full_path =  File.join(Puppet[:environmentpath], 'production', relative_path)
+
+      metadata = stub 'metadata'
+      metadata.stubs(:ftype).returns("link")
+      metadata.stubs(:full_path).returns(full_path)
+      metadata.stubs(:relative_path).returns(relative_path)
+      metadata.stubs(:source).returns("puppet:///#{relative_path}")
+      metadata.stubs(:destination).returns('/tmp/some/absolute/path')
+
+      Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
+
+      metadata
+    end
+
+    def stubs_directory_metadata(checksum_type, relative_path, children)
+      full_path =  File.join(Puppet[:environmentpath], 'production', relative_path)
+
+      metadata = stub 'metadata'
+      metadata.stubs(:ftype).returns("directory")
+      metadata.stubs(:full_path).returns(full_path)
+      metadata.stubs(:relative_path).returns(relative_path)
+      metadata.stubs(:source).returns("puppet:///#{relative_path}")
+
+      Puppet::Type.type(:file).attrclass(:source).any_instance.stubs(:metadata).returns(metadata)
+
+      Puppet::Type.type(:file).any_instance.stubs(:recurse_remote_metadata).returns(children)
+
+      metadata
+    end
+
+    def expects_no_source_metadata
+      Puppet::Type.type(:file).attrclass(:source).any_instance.expects(:metadata).never
+    end
+
+    [['md5', 'b1946ac92492d2347c6235b4d2611184'],
+     ['sha256', '5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03']].each do |checksum_type, sha|
+      describe "with agent requesting checksum_type #{checksum_type}" do
+        it "sets checksum and checksum_value for resources with puppet:// source URIs" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure => file,
+              source => 'puppet:///modules/mymodule/config_file.txt'
+            }
+          MANIFEST
+
+          stubs_file_metadata(checksum_type, sha, 'modules/mymodule/files/config_file.txt')
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:ensure, 'file')
+            .with_parameter(:checksum, checksum_type)
+            .with_parameter(:checksum_value, sha)
+            .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        end
+      end
+    end
+
+    describe "when inlining symlinks" do
+      it "sets ensure and target for links which are managed" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          file { '#{path}':
+            ensure => link,
+            links  => manage,
+            source => 'puppet:///modules/mymodule/config_file_link.txt'
+          }
+        MANIFEST
+
+        stubs_link_metadata('modules/mymodule/files/config_file.txt', '/tmp/some/absolute/path')
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref)
+          .with_parameter(:ensure, 'link')
+          .with_parameter(:target, '/tmp/some/absolute/path')
+          .with_parameter(:source, nil)
+      end
+
+      it "sets checksum and checksum_value for links which are followed" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+           file { '#{path}':
+            ensure => link,
+            links  => follow,
+            source => 'puppet:///modules/mymodule/config_file_link.txt'
+          }
+        MANIFEST
+
+        stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref)
+          .with_parameter(:ensure, 'file')
+          .with_parameter(:checksum, checksum_type)
+          .with_parameter(:checksum_value, checksum_value)
+          .with_parameter(:source, 'puppet:///modules/mymodule/config_file_link.txt')
+      end
+    end
+
+    it "skips absent resources" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => absent,
+        }
+      MANIFEST
+
+      expects_no_source_metadata
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref).with_parameter(:ensure, 'absent')
+    end
+
+    it "skips resources without a source" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+        }
+      MANIFEST
+
+      expects_no_source_metadata
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref).with_parameter(:ensure, 'file')
+    end
+
+    it "skips resources with a local source" do
+      local_source = File.expand_path('/tmp/source')
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{local_source}',
+        }
+      MANIFEST
+
+      expects_no_source_metadata
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, local_source)
+    end
+
+    it "skips resources with a http source" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => ['http://foo.source.io', 'https://foo.source.io']
+        }
+      MANIFEST
+
+      expects_no_source_metadata
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, ['http://foo.source.io', 'https://foo.source.io'])
+    end
+
+    it "skips resources with a source outside the environment path" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt'
+        }
+      MANIFEST
+
+      full_path = File.join(Puppet[:codedir], "modules/mymodule/files/config_file.txt")
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt', full_path)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+        .with_parameter(:checksum_value, nil)
+    end
+
+    describe "when inlining directories" do
+      describe "when recurse is false" do
+        it "skips children" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              source  => 'puppet:///modules/mymodule/directory'
+            }
+          MANIFEST
+
+          stubs_directory_metadata(checksum_type, '.', [])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:ensure, 'directory')
+            .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+        end
+      end
+
+      describe "when recurse is true" do
+        it "inlines child metadata" do
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => 'puppet:///modules/mymodule/directory'
+            }
+          MANIFEST
+
+          child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
+          stubs_directory_metadata(checksum_type, '.', [child_metadata])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
+          expect(catalog).to have_resource(resource_ref)
+            .with_parameter(:ensure, 'directory')
+            .with_parameter(:recurse, true) # REMIND this is surprising
+            .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+
+          expect(catalog).to have_resource("File[#{path}/myfile.txt]")
+            .with_parameter(:ensure, 'file')
+            .with_parameter(:checksum, checksum_type)
+            .with_parameter(:checksum_value, checksum_value)
+        end
+
+        it "does not create duplicate resources for explicitly managed files" do
+          pending "Update this test once we've removed the call to to_ral"
+                  catalog = compile_to_catalog(<<-MANIFEST, node)
+          file {'#{path}':
+            ensure => directory,
+            recurse => true,
+            source => 'puppet:///modules/mymodule/directory'
+          }
+          file {'#{path}/myfile.txt':
+            ensure => file,
+            source => 'puppet:///modules/mymodule/myfile.txt'
+          }
+        MANIFEST
+
+        child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
+        stubs_directory_metadata(checksum_type, '.', [child_metadata])
+
+        @compiler.send(:inline_metadata, catalog, checksum_type)
+
+        expect(catalog).to have_resource(resource_ref)
+          .with_parameter(:ensure, 'directory')
+          .with_parameter(:recurse, true) # REMIND this is surprising
+          .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+
+        expect(catalog).to have_resource("File[#{path}/myfile.txt]")
+          .with_parameter(:ensure, 'file')
+          .with_parameter(:checksum, checksum_type)
+          .with_parameter(:checksum_value, checksum_value)
+
+          expect(catalog.resources.select{ |r| r.type == 'File' }.size).to eq(2)
+        end
+      end
+    end
+
+    it "skips non-file resources" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        notify { 'hi': }
+      MANIFEST
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource('Notify[hi]').with_parameter(:name, 'hi')
+    end
+
+    it "preserves relationships to other resources" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        notify { 'alpha': }
+        notify { 'omega': }
+        file { '#{path}':
+          ensure  => file,
+          source  => 'puppet:///modules/mymodule/config_file.txt',
+          require => Notify[alpha],
+          before  => Notify[omega]
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:require, catalog.resource('Notify[alpha]'))
+        .with_parameter(:before, catalog.resource('Notify[omega]'))
+    end
+
+    it "inlines windows file paths" do
+      pending "Calling Puppet::Resource#to_ral on windows path is not safe on *nix master"
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { 'c:/foo':
+          ensure => file,
+          source => 'puppet:///modules/mymodule/config_file.txt'
+        }
+      MANIFEST
+
+      stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+
+      expect(catalog).to have_resource(resource_ref)
+        .with_parameter(:ensure, 'file')
+        .with_parameter(:checksum, checksum_type)
+        .with_parameter(:checksum_value, checksum_value)
+        .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+    end
   end
 end

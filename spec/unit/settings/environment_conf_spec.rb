@@ -39,6 +39,19 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.environment_timeout).to eq(180)
     end
 
+    it "reads a static_catalogs from config" do
+      setup_environment_conf(config, :static_catalogs => true)
+
+      expect(envconf.static_catalogs).to eq(true)
+    end
+
+    it "can retrieve untruthy settings" do
+      Puppet[:static_catalogs] = true
+      setup_environment_conf(config, :static_catalogs => false)
+
+      expect(envconf.static_catalogs).to eq(false)
+    end
+
     it "can retrieve raw settings" do
       setup_environment_conf(config, :manifest => 'manifest.pp')
 
@@ -64,8 +77,12 @@ describe Puppet::Settings::EnvironmentConf do
       expect(envconf.config_version).to be_nil
     end
 
-    it "returns a defult of 0 for environment_timeout when config has none" do
+    it "returns a default of 0 for environment_timeout when config has none" do
       expect(envconf.environment_timeout).to eq(0)
+    end
+
+    it "returns default of true for static_catalogs when config has none" do
+      expect(envconf.static_catalogs).to eq(true)
     end
 
     it "can still retrieve raw setting" do

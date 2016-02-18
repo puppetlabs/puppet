@@ -39,7 +39,7 @@ class Puppet::FileSystem::MemoryImpl
     object.path
   end
 
-  def read(path)
+  def read(path, opts = {})
     handle = assert_path(path).handle
     handle.read
   end

@@ -1,16 +1,18 @@
-class Puppet::Pops::Evaluator::CollectorTransformer
+module Puppet::Pops
+module Evaluator
+class CollectorTransformer
 
   def initialize
-    @@query_visitor    ||= Puppet::Pops::Visitor.new(nil, "query", 1, 1)
-    @@match_visitor    ||= Puppet::Pops::Visitor.new(nil, "match", 1, 1)
-    @@evaluator        ||= Puppet::Pops::Evaluator::EvaluatorImpl.new
-    @@compare_operator ||= Puppet::Pops::Evaluator::CompareOperator.new()
+    @@query_visitor    ||= Visitor.new(nil, "query", 1, 1)
+    @@match_visitor    ||= Visitor.new(nil, "match", 1, 1)
+    @@evaluator        ||= EvaluatorImpl.new
+    @@compare_operator ||= CompareOperator.new()
   end
 
   def transform(o, scope)
-    raise ArgumentError, "Expected CollectExpression" unless o.is_a? Puppet::Pops::Model::CollectExpression
+    raise ArgumentError, "Expected CollectExpression" unless o.is_a? Model::CollectExpression
 
-    raise "LHS is not a type" unless o.type_expr.is_a? Puppet::Pops::Model::QualifiedReference
+    raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
     type = o.type_expr.value().downcase()
 
     if type == 'class'
@@ -20,7 +22,7 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     resource_type = scope.find_resource_type(type)
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+    adapter = Adapters::SourcePosAdapter.adapt(o)
     line_num = adapter.line
     position = adapter.pos
     file_path = adapter.locator.file
@@ -38,11 +40,11 @@ class Puppet::Pops::Evaluator::CollectorTransformer
     code = query_unless_nop(o.query, scope)
 
     case o.query
-    when Puppet::Pops::Model::VirtualQuery
-      newcoll = Puppet::Pops::Evaluator::Collectors::CatalogCollector.new(scope, resource_type.name, code, overrides)
-    when Puppet::Pops::Model::ExportedQuery
+    when Model::VirtualQuery
+      newcoll = Collectors::CatalogCollector.new(scope, resource_type.name, code, overrides)
+    when Model::ExportedQuery
       match = match_unless_nop(o.query, scope)
-      newcoll = Puppet::Pops::Evaluator::Collectors::ExportedCollector.new(scope, resource_type.name, match, code, overrides)
+      newcoll = Collectors::ExportedCollector.new(scope, resource_type.name, match, code, overrides)
     end
 
     scope.compiler.add_collection(newcoll)
@@ -61,13 +63,13 @@ protected
   end
 
   def query_unless_nop(query, scope)
-    unless query.expr.nil? || query.expr.is_a?(Puppet::Pops::Model::Nop)
+    unless query.expr.nil? || query.expr.is_a?(Model::Nop)
       query(query.expr, scope)
     end
   end
 
   def match_unless_nop(query, scope)
-    unless query.expr.nil? || query.expr.is_a?(Puppet::Pops::Model::Nop)
+    unless query.expr.nil? || query.expr.is_a?(Model::Nop)
       match(query.expr, scope)
     end
   end
@@ -222,4 +224,6 @@ protected
   def match_Object(o, scope)
     raise ArgumentError, "Cannot transform object of class #{o.class}"
   end
+end
+end
 end

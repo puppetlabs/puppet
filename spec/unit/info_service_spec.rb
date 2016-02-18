@@ -19,6 +19,9 @@ describe "Puppet::InfoService" do
            class bar($bar_a, Integer $bar_b, String $bar_c = 'c default value') { }
            class bar2($bar2_a, Integer $bar2_b, String $bar2_c = 'c default value') { }
         CODE
+        'intp.pp' => <<-CODE,
+           class intp(String $intp_a = "default with interpolated $::os_family") { }
+        CODE
         'fee.pp' => <<-CODE,
            class fee(Integer $fee_a = 1+1) { }
         CODE
@@ -31,6 +34,9 @@ describe "Puppet::InfoService" do
         'borked.pp' => <<-CODE,
            class Borked($Herp+$Derp) {}
         CODE
+        'json_unsafe.pp' => <<-CODE,
+             class json_unsafe($arg1 = /.*/, $arg2 = default, $arg3 = {1 => 1}) {}
+          CODE
        })
     end
 
@@ -47,21 +53,23 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=> {:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
-           ]} # end production env
+           ]}} # end production env
         })
     end
 
@@ -70,36 +78,40 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=>{:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
-           ],
-          "#{code_dir}/bar.pp"=>[
+           ]},
+          "#{code_dir}/bar.pp"=> {:classes =>[
             {:name=>"bar",
               :params=>[
                 {:name=>"bar_a"},
                 {:name=>"bar_b", :type=>"Integer"},
-                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
               ]},
             {:name=>"bar2",
               :params=>[
                 {:name=>"bar2_a"},
                 {:name=>"bar2_b", :type=>"Integer"},
-                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value",
+                :default_source=>"'c default value'"}
               ]
             }
-          ],
+          ]},
 
           } # end production env
         }
@@ -116,50 +128,54 @@ describe "Puppet::InfoService" do
 
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/foo.pp"=>[
+           "#{code_dir}/foo.pp"=>{:classes => [
              {:name=>"foo",
                :params=>[
                  {:name=>"foo_a"},
                  {:name=>"foo_b", :type=>"Integer"},
-                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]},
              {:name=>"foo2",
                :params=>[
                  {:name=>"foo2_a"},
                  {:name=>"foo2_b", :type=>"Integer"},
-                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value"}
+                 {:name=>"foo2_c", :type=>"String", :default_literal=>"c default value",
+                   :default_source=>"'c default value'"}
                ]
              }
-           ],
-          "#{code_dir}/bar.pp"=>[
+           ]},
+          "#{code_dir}/bar.pp"=>{:classes => [
             {:name=>"bar",
               :params=>[
                 {:name=>"bar_a"},
                 {:name=>"bar_b", :type=>"Integer"},
-                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
               ]},
             {:name=>"bar2",
               :params=>[
                 {:name=>"bar2_a"},
                 {:name=>"bar2_b", :type=>"Integer"},
-                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value"}
+                {:name=>"bar2_c", :type=>"String", :default_literal=>"c default value",
+                  :default_source=>"'c default value'"}
                 ]
               }
-            ],
+          ]},
           }, # end production env
         "test"=>{
-           "#{code_dir}/fee.pp"=>[
+           "#{code_dir}/fee.pp"=>{:classes => [
              {:name=>"fee",
                :params=>[
                  {:name=>"fee_a", :type=>"Integer", :default_source=>"1+1"}
                ]},
-           ],
-          "#{code_dir}/fum.pp"=>[
+           ]},
+          "#{code_dir}/fum.pp"=>{:classes => [
             {:name=>"fum",
               :params=>[
                 {:name=>"fum_a"}
               ]},
-          ],
+          ]},
          } # end test env
         }
       )
@@ -177,8 +193,8 @@ describe "Puppet::InfoService" do
         'test'       => files_test
         })
        expect(result).to eq({
-        "production"=>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]},
-        "test"      =>{ "#{code_dir}/fum.pp"=>[ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}
+         "production"=>{ "#{code_dir}/fum.pp"=>{:classes => [ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}},
+         "test"      =>{ "#{code_dir}/fum.pp"=>{:classes => [ {:name=>"fum", :params=>[ {:name=>"fum_a"}]}]}}
        }
       )
     end
@@ -188,13 +204,32 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/fee.pp"=>[
+           "#{code_dir}/fee.pp"=>{:classes => [
              {:name=>"fee",
                :params=>[
                  {:name=>"fee_a", :type=>"Integer", :default_source=>"1+1"}
                ]},
-           ]} # end production env
+           ]}} # end production env
         })
+     end
+
+     it "produces source string for literals that are not pure json" do
+       files = ['json_unsafe.pp'].map {|f| File.join(code_dir, f) }
+       result = Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(result).to eq({
+         "production"=>{
+            "#{code_dir}/json_unsafe.pp" => {:classes => [
+              {:name=>"json_unsafe",
+                :params => [
+                  {:name => "arg1",
+                    :default_source => "/.*/" },
+                  {:name => "arg2",
+                    :default_source => "default" },
+                  {:name => "arg3",
+                    :default_source => "{1 => 1}" }
+                ]}
+            ]}} # end production env
+         })
      end
 
     it "produces no type entry if type is not given" do
@@ -202,13 +237,29 @@ describe "Puppet::InfoService" do
       result = Puppet::InfoService.classes_per_environment({'production' => files })
       expect(result).to eq({
         "production"=>{
-           "#{code_dir}/fum.pp"=>[
+           "#{code_dir}/fum.pp"=>{:classes => [
              {:name=>"fum",
                :params=>[
                  {:name=>"fum_a" }
                ]},
-           ]} # end production env
+           ]}} # end production env
         })
+    end
+
+    it 'does not evaluate default expressions' do
+      files = ['intp.pp'].map {|f| File.join(code_dir, f) }
+      result = Puppet::InfoService.classes_per_environment({'production' => files })
+      expect(result).to eq({
+        'production' =>{
+          "#{code_dir}/intp.pp"=>{:classes => [
+            {:name=> 'intp',
+              :params=>[
+                {:name=> 'intp_a',
+                  :type=> 'String',
+                  :default_source=>'"default with interpolated $::os_family"'}
+              ]},
+          ]}} # end production env
+      })
     end
 
     it "produces error entry if file is broken" do
@@ -228,9 +279,20 @@ describe "Puppet::InfoService" do
        result = Puppet::InfoService.classes_per_environment({'production' => files })
        expect(result).to eq({
          "production"=>{
-            "#{code_dir}/nothing.pp"=> []
-              },
+           "#{code_dir}/nothing.pp"=> {:classes => [] }
+           },
          })
     end
+
+    it "produces error when given a file that does not exist" do
+      files = ['the_tooth_fairy_does_not_exist.pp'].map {|f| File.join(code_dir, f) }
+      result = Puppet::InfoService.classes_per_environment({'production' => files })
+      expect(result).to eq({
+        "production"=>{
+          "#{code_dir}/the_tooth_fairy_does_not_exist.pp" => {:error  => "The file #{code_dir}/the_tooth_fairy_does_not_exist.pp does not exist"}
+             },
+        })
+    end
+
   end
 end

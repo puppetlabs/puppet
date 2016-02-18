@@ -199,7 +199,7 @@ Licensed under the Apache 2.0 License
 
         require 'puppet/configurer'
         configurer = Puppet::Configurer.new
-        configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
+        configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
       rescue => detail
         Puppet.log_exception(detail)
         # If we rescued an error, then we return 1 as the exit code

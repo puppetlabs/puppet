@@ -345,11 +345,28 @@ describe "when performing lookup" do
   end
 
   context 'when accessing from outside a module' do
-    it 'will raise an exception when key in the function provided module data is not prefixed' do
-      Puppet[:code] = "include bad_data\nlookup(bad_data::b)"
-      expect do
-        compiler.compile()
-      end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
+    it 'will both log a warning and raise an exception when key in the function provided module data is not prefixed' do
+      logs = []
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        Puppet[:code] = "include bad_data\nlookup('bad_data::b')"
+        expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'bad_data::b'/)
+      end
+      warnings = logs.select {|log| log.level == :warning }.map {|log| log.message }
+      expect(warnings).to include("Module data for module 'bad_data' must use keys qualified with the name of the module")
+    end
+
+    it 'will succeed finding prefixed keys even when a key in the function provided module data is not prefixed' do
+      logs = []
+      resources = nil
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        resources = compile_and_get_notifications(<<-END.gsub(/^ {10}/, ''))
+          include bad_data
+          notify { lookup('bad_data::c'): }
+        END
+        expect(resources).to include('module_c')
+      end
+      warnings = logs.select {|log| log.level == :warning }.map {|log| log.message }
+      expect(warnings).to include("Module data for module 'bad_data' must use keys qualified with the name of the module")
     end
 
     it 'will resolve global, environment, and module correctly' do
@@ -378,14 +395,40 @@ describe "when performing lookup" do
   end
 
   context 'when accessing bad data' do
-    it 'will raise an exception when key in the function provided module data is not prefixed' do
-      Puppet[:code] = 'include bad_data'
-      expect do
-        compiler.compile()
-      end.to raise_error(Puppet::ParseError, /data for module 'bad_data' must use keys qualified with the name of the module/)
+    it 'a warning will be logged when key in the function provided module data is not prefixed' do
+      Puppet[:code] = "include bad_data\nlookup('bad_data::c')"
+      logs = []
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        compiler.compile
+      end
+      warnings = logs.select {|log| log.level == :warning }.map {|log| log.message }
+      expect(warnings).to include("Module data for module 'bad_data' must use keys qualified with the name of the module")
+    end
+
+    it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
+      Puppet[:code] = "include hieraprovider\nlookup('hieraprovider::test::param_a')"
+      logs = []
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        compiler.compile
+      end
+      warnings = logs.select {|log| log.level == :warning }.map {|log| log.message }
+      expect(warnings).to include("Module data for module 'hieraprovider' must use keys qualified with the name of the module")
     end
   end
 
+  context 'when accessing empty files' do
+    # An empty YAML file is OK and should be treated as a file that contains no keys
+    it "will fail normally with a 'did not find a value' error when a yaml file is empty" do
+      Puppet[:code] = "include empty_yaml\nlookup('empty_yaml::a')"
+      expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'empty_yaml::a'/)
+    end
+
+    # An empty JSON file is not OK. Should yield a parse error
+    it "will fail with a LookupError indicating a parser failure when a json file is empty" do
+      Puppet[:code] = "include empty_json\nlookup('empty_json::a')"
+      expect { compiler.compile }.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse/)
+    end
+  end
 
   context 'when using explain' do
     it 'will explain that module is not found' do

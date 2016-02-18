@@ -1,5 +1,7 @@
+module Puppet::Pops
+module Binder
 # The BindingsComposer handles composition of multiple bindings sources
-# It is directed by a {Puppet::Pops::Binder::Config::BinderConfig BinderConfig} that indicates how
+# It is directed by a {Config::BinderConfig BinderConfig} that indicates how
 # the final composition should be layered, and what should be included/excluded in each layer
 #
 # The bindings composer is intended to be used once per environment as the compiler starts its work.
@@ -11,7 +13,7 @@
 #
 require 'puppet/plugins/binding_schemes'
 
-class Puppet::Pops::Binder::BindingsComposer
+class BindingsComposer
 
   # The BindingsConfig instance holding the read and parsed, but not evaluated configuration
   # @api public
@@ -39,11 +41,11 @@ class Puppet::Pops::Binder::BindingsComposer
 
   # @api public
   def initialize()
-    @acceptor = Puppet::Pops::Validation::Acceptor.new()
-    @diagnostics = Puppet::Pops::Binder::Config::DiagnosticProducer.new(acceptor)
-    @config = Puppet::Pops::Binder::Config::BinderConfig.new(@diagnostics)
+    @acceptor = Validation::Acceptor.new()
+    @diagnostics = Config::DiagnosticProducer.new(acceptor)
+    @config = Config::BinderConfig.new(@diagnostics)
     if acceptor.errors?
-      Puppet::Pops::IssueReporter.assert_and_report(acceptor, :message => 'Binding Composer: error while reading config.')
+      IssueReporter.assert_and_report(acceptor, :message => 'Binding Composer: error while reading config.')
       raise Puppet::DevError.new("Internal Error: IssueReporter did not raise exception for errors in bindings config.")
     end
   end
@@ -66,7 +68,7 @@ class Puppet::Pops::Binder::BindingsComposer
     scheme_extensions = @config.scheme_extensions
 
     # Define a named bindings that are known by the SystemBindings
-    boot_bindings = Puppet::Pops::Binder::BindingsFactory.named_bindings(Puppet::Pops::Binder::SystemBindings::ENVIRONMENT_BOOT_BINDINGS_NAME) do
+    boot_bindings = BindingsFactory.named_bindings(SystemBindings::ENVIRONMENT_BOOT_BINDINGS_NAME) do
       scheme_extensions.each_pair do |scheme, class_name|
         # turn each scheme => class_name into a binding (contribute to the buildings-schemes multibind).
         # do this in category 'extensions' to allow them to override the 'default'
@@ -82,7 +84,7 @@ class Puppet::Pops::Binder::BindingsComposer
     @injector = scope.compiler.create_boot_injector(boot_bindings.model)
   end
 
-  # @return [Puppet::Pops::Binder::Bindings::LayeredBindings]
+  # @return [Bindings::LayeredBindings]
   def compose(scope)
     # The boot injector is used to lookup scheme-handlers
     configure_and_create_injector(scope)
@@ -94,7 +96,7 @@ class Puppet::Pops::Binder::BindingsComposer
     # setup the confdir
     @confdir = Puppet.settings[:confdir]
 
-    factory = Puppet::Pops::Binder::BindingsFactory
+    factory = BindingsFactory
     contributions = []
     configured_layers = @config.layering_config.collect do |  layer_config |
       # get contributions
@@ -108,8 +110,8 @@ class Puppet::Pops::Binder::BindingsComposer
     # Add the two system layers; the final - highest ("can not be overridden" layer), and the lowest
     # Everything here can be overridden 'default' layer.
     #
-    configured_layers.insert(0, Puppet::Pops::Binder::SystemBindings.final_contribution)
-    configured_layers.insert(-1, Puppet::Pops::Binder::SystemBindings.default_contribution)
+    configured_layers.insert(0, SystemBindings.final_contribution)
+    configured_layers.insert(-1, SystemBindings.default_contribution)
 
     # and finally... create the resulting structure
     factory.layered_bindings(*configured_layers)
@@ -158,7 +160,7 @@ class Puppet::Pops::Binder::BindingsComposer
   end
 
   class SchemeHandlerHelper
-    T = Puppet::Pops::Types::TypeFactory
+    T = Types::TypeFactory
     HASH_OF_HANDLER = T.hash_of(T.type_of(Puppet::Plugins::BindingSchemes::BINDINGS_SCHEMES_TYPE))
     def initialize(scope)
       @scope = scope
@@ -174,4 +176,6 @@ class Puppet::Pops::Binder::BindingsComposer
     end
   end
 
+end
+end
 end
