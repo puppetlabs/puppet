@@ -529,19 +529,6 @@ describe Puppet::Type.type(:file) do
 
       expect(file.remove_less_specific_files([foo, bar, baz])).to eq([baz])
     end
-  end
-
-  describe "#remove_less_specific_files" do
-    it "should remove any nested files that are already in the catalog" do
-      foo = described_class.new :path => File.join(file[:path], 'foo')
-      bar = described_class.new :path => File.join(file[:path], 'bar')
-      baz = described_class.new :path => File.join(file[:path], 'baz')
-
-      catalog.add_resource(foo)
-      catalog.add_resource(bar)
-
-      expect(file.remove_less_specific_files([foo, bar, baz])).to eq([baz])
-    end
 
   end
 
