@@ -705,6 +705,28 @@ describe Puppet::Configurer do
 
         expect(@agent.run).to eq(0)
       end
+
+      describe "and a cached catalog is explicitly requested" do
+        before do
+          Puppet.settings[:use_cached_catalog] = true
+        end
+
+        it "should return nil when the cached catalog's environment doesn't match the agent specified environment" do
+          @agent.instance_variable_set(:@environment, 'second_env')
+          expects_cached_catalog_only(@catalog)
+
+          Puppet.expects(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
+          expect(@agent.run).to be_nil
+        end
+
+        it "should proceed with the cached catalog if its environment matchs the local environment" do
+          Puppet.settings[:use_cached_catalog] = true
+          @agent.instance_variable_set(:@environment, 'production')
+          expects_cached_catalog_only(@catalog)
+
+          expect(@agent.run).to eq(0)
+        end
+      end
     end
 
     it "should use the Catalog class to get its catalog" do

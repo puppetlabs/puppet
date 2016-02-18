@@ -208,7 +208,7 @@ class Puppet::Configurer
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
 
-        if @environment != catalog.environment
+        if @environment != catalog.environment && !Puppet[:strict_environment_mode]
           Puppet.notice "Local environment: '#{@environment}' doesn't match the environment of the cached catalog '#{catalog.environment}', switching agent to '#{catalog.environment}'."
           @environment = catalog.environment
         end
