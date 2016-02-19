@@ -365,9 +365,7 @@ describe Puppet::Resource do
             Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
             Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns(nil)
 
-            rt = resource.resource_type
-            rt.send(:inject_external_parameters, resource, scope)
-            rt.send(:assign_defaults, resource, scope, {})
+            inject_and_set_defaults(resource, scope)
 
             expect(resource[:port]).to eq('80')
           end
