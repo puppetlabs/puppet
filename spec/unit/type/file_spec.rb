@@ -1591,10 +1591,10 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when validating" do
-    [[:source, :target], [:source, :content], [:target, :content], [:content, :content_uri]].each do |prop1,prop2|
+    [[:source, :target], [:source, :content], [:target, :content]].each do |prop1,prop2|
       it "should fail if both #{prop1} and #{prop2} are specified" do
           file[prop1] = prop1 == :source ? File.expand_path("prop1 value") : "prop1 value"
-          file[prop2] = prop2 == :content_uri ? "puppet:///some_uri" : "prop2 value"
+          file[prop2] = "prop2 value"
         expect do
           file.validate
         end.to raise_error(Puppet::Error, /You cannot specify more than one of/)

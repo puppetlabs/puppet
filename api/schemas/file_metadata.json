@@ -40,6 +40,12 @@
             },
             "required": ["type", "value"],
             "additionalProperties": false
+        },
+        "source": {
+            "type": "string"
+        },
+        "content_uri": {
+            "type": "string"
         }
     },
     "required": ["path", "relative_path", "links", "owner", "group", "mode", "type", "destination", "checksum"],

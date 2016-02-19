@@ -94,8 +94,88 @@
             "items": {
                 "type": "string"
             }
+        },
+        "metadata": {
+            "description": "A mapping of non-recursive File resources to their required metadata",
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "$ref": "#/definitions/file_metadata"
+                }
+            }
+        },
+        "recursive_metadata": {
+            "description": "A mapping of recursive File resources to a hash of sources and arrays of associated metadata for that resource",
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.+$": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/file_metadata"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "required": ["tags", "name", "version", "code_id", "catalog_uuid", "environment", "resources", "edges", "classes"],
-    "additionalProperties": false
+    "additionalProperties": false,
+
+    "definitions" : {
+        "file_metadata": {
+            "description": "Metadata about a file, directory, or symbolic link; as described in file_metadata.json",
+            "type":        "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                },
+                "relative_path": {
+                    "oneOf": [{"type": "string"}, {"type": "null"}]
+                },
+                "links": {
+                    "enum": ["manage", "follow"]
+                },
+                "owner": {
+                    "type": "integer"
+                },
+                "group": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "type": {
+                    "enum": ["file", "directory", "link"]
+                },
+                "destination": {
+                    "oneOf": [{"type": "string"}, {"type": "null"}]
+                },
+                "checksum": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "enum": ["md5", "sha256", "ctime"]
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["type", "value"],
+                    "additionalProperties": false
+                },
+                "source": {
+                    "type": "string"
+                },
+                "content_uri": {
+                    "type": "string"
+                }
+            },
+            "required": ["path", "relative_path", "links", "owner", "group", "mode", "type", "destination", "checksum"],
+            "additionalProperties": false
+        }
+    }
 }
