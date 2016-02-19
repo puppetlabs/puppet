@@ -315,7 +315,10 @@ describe Puppet::Resource do
       let(:environment_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }
       let(:port) { Puppet::Parser::AST::Leaf.new(:value => '80') }
-      let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
+
+      def inject_and_set_defaults(resource, scope)
+        resource.resource_type.set_resource_parameters(resource, scope)
+      end
 
       before do
         environment.known_resource_types.add(apache)
@@ -325,82 +328,120 @@ describe Puppet::Resource do
         scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
       end
 
-      context "when no value is provided" do
-        let(:resource) do
-          Puppet::Parser::Resource.new("class", "apache", :scope => scope)
+      context 'with a default value expression' do
+        let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
+
+        context "when no value is provided" do
+          let(:resource) do
+            Puppet::Parser::Resource.new("class", "apache", :scope => scope)
+          end
+
+          it "should query the data_binding terminus using a namespaced key" do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with(
+              'apache::port', all_of(has_key(:environment), has_key(:variables)))
+            inject_and_set_defaults(resource, scope)
+          end
+
+          it "should use the value from the data_binding terminus" do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
+
+            inject_and_set_defaults(resource, scope)
+
+            expect(resource[:port]).to eq('443')
+          end
+
+          it 'should use the default value if no value is found using the data_binding terminus' do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).throws(:no_such_key)
+
+            inject_and_set_defaults(resource, scope)
+
+            expect(resource[:port]).to eq('80')
+          end
+
+          it 'should use the default value if an undef value is found using the data_binding terminus' do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns(nil)
+
+            rt = resource.resource_type
+            rt.send(:inject_external_parameters, resource, scope)
+            rt.send(:assign_defaults, resource, scope, {})
+
+            expect(resource[:port]).to eq('80')
+          end
+
+          it "should fail with error message about data binding on a hiera failure" do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
+            expect {
+              inject_and_set_defaults(resource, scope)
+            }.to raise_error(Puppet::Error, /Lookup of key 'apache::port' failed: Forgettabotit/)
+          end
         end
 
-        it "should query the data_binding terminus using a namespaced key" do
-          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
-          Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', all_of(has_key(:environment), has_key(:variables)))
-          resource.set_default_parameters(scope)
+        context "when a value is provided" do
+          let(:port_parameter) do
+            Puppet::Parser::Resource::Param.new(
+              { :name => 'port', :value => '8080' }
+            )
+          end
+
+          let(:resource) do
+            Puppet::Parser::Resource.new("class", "apache", :scope => scope,
+              :parameters => [port_parameter])
+          end
+
+          it "should not query the data_binding terminus" do
+            Puppet::DataBinding.indirection.expects(:find).never
+            inject_and_set_defaults(resource, scope)
+          end
+
+          it "should not query the injector" do
+            compiler.injector.expects(:find).never
+            inject_and_set_defaults(resource, scope)
+          end
+
+          it "should use the value provided" do
+            Puppet::DataBinding.indirection.expects(:find).never
+            expect(resource.set_default_parameters(scope)).to eq([])
+            expect(resource[:port]).to eq('8080')
+          end
+
+          it "should use the value from the data_binding terminus when provided value is undef" do
+            Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
+            Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
+
+            rs = Puppet::Parser::Resource.new("class", "apache", :scope => scope,
+              :parameters => [Puppet::Parser::Resource::Param.new({ :name => 'port', :value => nil })])
+
+            rs.resource_type.set_resource_parameters(rs, scope)
+            expect(rs[:port]).to eq('443')
+          end
         end
+      end
+
+      context 'without a default value expression' do
+        let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => nil }) }
+        let(:resource) { Puppet::Parser::Resource.new("class", "apache", :scope => scope) }
 
         it "should use the value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
           Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
 
-          resource.set_default_parameters(scope)
+          inject_and_set_defaults(resource, scope)
 
           expect(resource[:port]).to eq('443')
         end
 
-        it "should use the default value if the data_binding terminus returns nil" do
+        it "should use an undef value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
           Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns(nil)
 
-          resource.set_default_parameters(scope)
+          inject_and_set_defaults(resource, scope)
 
-          expect(resource[:port]).to eq('80')
-        end
-
-        it "should fail with error message about data binding on a hiera failure" do
-          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
-          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
-          expect {
-            resource.set_default_parameters(scope)
-          }.to raise_error(Puppet::Error, /Lookup of key 'apache::port' failed: Forgettabotit/)
-        end
-      end
-
-      context "when a value is provided" do
-        let(:port_parameter) do
-          Puppet::Parser::Resource::Param.new(
-            { :name => 'port', :value => '8080' }
-          )
-        end
-
-        let(:resource) do
-          Puppet::Parser::Resource.new("class", "apache", :scope => scope,
-            :parameters => [port_parameter])
-        end
-
-        it "should not query the data_binding terminus" do
-          Puppet::DataBinding.indirection.expects(:find).never
-          resource.set_default_parameters(scope)
-        end
-
-        it "should not query the injector" do
-          compiler.injector.expects(:find).never
-          resource.set_default_parameters(scope)
-        end
-
-        it "should use the value provided" do
-          Puppet::DataBinding.indirection.expects(:find).never
-          expect(resource.set_default_parameters(scope)).to eq([])
-          expect(resource[:port]).to eq('8080')
-        end
-
-        it "should use the value from the data_binding terminus when provided value is undef" do
-          Puppet::DataBinding.indirection.expects(:find).with('lookup_options', any_parameters).throws(:no_such_key)
-          Puppet::DataBinding.indirection.expects(:find).with('apache::port', any_parameters).returns('443')
-
-          rs = Puppet::Parser::Resource.new("class", "apache", :scope => scope,
-            :parameters => [Puppet::Parser::Resource::Param.new({ :name => 'port', :value => nil })])
-
-          rs.resource_type.set_resource_parameters(rs, scope)
-          expect(rs[:port]).to eq('443')
+          expect(resource[:port]).to be_nil
         end
       end
     end

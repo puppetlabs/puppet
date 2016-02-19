@@ -438,19 +438,22 @@ class Puppet::Resource
     end
 
     missing_arguments.collect do |param, default|
-      # Using 'send' since this private method moved from here to type. The caller method is deprecated
-      # and doesn't really motivate making the callee public
-      external_value = resource_type.send(:lookup_external_default_for, param, scope)
-
-      if external_value.nil? && default.nil?
-        next
-      elsif external_value.nil?
-        value = default.safeevaluate(scope)
-      else
-        value = external_value
+      rtype = resource_type
+      if rtype.type == :hostclass
+        using_bound_value = false
+        catch(:no_such_key) do
+          bound_value = Puppet::Pops::Lookup.search_and_merge("#{rtype.name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
+          # Assign bound value but don't let an undef trump a default expression
+          unless bound_value.nil? && !default.nil?
+            self[param.to_sym] = bound_value
+            using_bound_value = true
+          end
+        end
       end
-
-      self[param.to_sym] = value
+      unless using_bound_value
+        next if default.nil?
+        self[param.to_sym] = default.safeevaluate(scope)
+      end
       param
     end.compact
   end

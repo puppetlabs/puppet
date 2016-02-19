@@ -385,12 +385,15 @@ class Puppet::Resource::Type
     # Only lookup parameters for host classes
     return unless type == :hostclass
     parameters = resource.parameters
-    arguments.each do |param_name, _|
-      name = param_name.to_sym
-      param = parameters[name]
+    arguments.each do |param_name, default|
+      sym_name = param_name.to_sym
+      param = parameters[sym_name]
       next unless param.nil? || param.value.nil?
-      value = lookup_external_default_for(param_name, scope)
-      resource[name] = value unless value.nil?
+      catch(:no_such_key) do
+        bound_value = Puppet::Pops::Lookup.search_and_merge("#{name}::#{param_name}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
+        # Assign bound value but don't let an undef trump a default expression
+        resource[sym_name] = bound_value unless bound_value.nil? && !default.nil?
+      end
     end
   end
   private :inject_external_parameters
@@ -552,21 +555,4 @@ class Puppet::Resource::Type
     type_factory.struct(members)
   end
   private :create_params_struct
-
-  # Consult external data bindings for class parameter values which must be
-  # namespaced in the backend.
-  #
-  # Example:
-  #
-  #   class foo($port=0){ ... }
-  #
-  # We make a request to the backend for the key 'foo::port' not 'foo'
-  #
-  def lookup_external_default_for(param, scope)
-    if type == :hostclass
-      catch(:no_such_key) { return Puppet::Pops::Lookup.search_and_merge("#{name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil) }
-    end
-    nil
-  end
-  private :lookup_external_default_for
 end
