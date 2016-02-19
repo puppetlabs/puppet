@@ -811,26 +811,6 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          stubs_directory_metadata(checksum_type, '.', [])
-
-          @compiler.send(:inline_metadata, catalog, checksum_type)
-
-          expect(catalog).to have_resource(resource_ref)
-            .with_parameter(:ensure, 'directory')
-            .with_parameter(:source, 'puppet:///modules/mymodule/directory')
-        end
-      end
-
-      describe "when recurse is true" do
-        it "inlines child metadata" do
-          catalog = compile_to_catalog(<<-MANIFEST, node)
-            file { '#{path}':
-              ensure  => directory,
-              recurse => true,
-              source  => 'puppet:///modules/mymodule/directory'
-            }
-          MANIFEST
-
           child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
           stubs_directory_metadata(checksum_type, '.', [child_metadata])
 
@@ -838,13 +818,71 @@ describe Puppet::Resource::Catalog::Compiler do
 
           expect(catalog).to have_resource(resource_ref)
             .with_parameter(:ensure, 'directory')
-            .with_parameter(:recurse, true) # REMIND this is surprising
             .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+            .with_parameter(:checksum_value, nil)
 
-          expect(catalog).to have_resource("File[#{path}/myfile.txt]")
-            .with_parameter(:ensure, 'file')
-            .with_parameter(:checksum, checksum_type)
-            .with_parameter(:checksum_value, checksum_value)
+          expect(catalog).not_to have_resource("File[#{path}/myfile.txt")
+        end
+      end
+
+      describe "when recurse is true" do
+        describe "when the recursion feature flag is on" do
+          before do
+            Puppet[:static_catalogs_recursion] = true
+          end
+
+          it "inlines child metadata" do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              file { '#{path}':
+                ensure  => directory,
+                recurse => true,
+                source  => 'puppet:///modules/mymodule/directory'
+              }
+            MANIFEST
+
+            child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
+            stubs_directory_metadata(checksum_type, '.', [child_metadata])
+
+            @compiler.send(:inline_metadata, catalog, checksum_type)
+
+            expect(catalog).to have_resource(resource_ref)
+              .with_parameter(:ensure, 'directory')
+              .with_parameter(:recurse, true) # REMIND this is surprising
+              .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+              .with_parameter(:checksum_value, nil)
+
+            expect(catalog).to have_resource("File[#{path}/myfile.txt]")
+              .with_parameter(:ensure, 'file')
+              .with_parameter(:checksum, checksum_type)
+              .with_parameter(:checksum_value, checksum_value)
+          end
+        end
+
+        describe "when the recursion feature flag is off" do
+          before do
+            Puppet[:static_catalogs_recursion] = false
+          end
+
+          it "skips directory resources" do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              file { '#{path}':
+                ensure  => directory,
+                source  => 'puppet:///modules/mymodule/directory'
+              }
+            MANIFEST
+
+            child_metadata = stubs_file_metadata(checksum_type, checksum_value, 'myfile.txt')
+            stubs_directory_metadata(checksum_type, '.', [child_metadata])
+
+            @compiler.send(:inline_metadata, catalog, checksum_type)
+
+            expect(catalog).to have_resource(resource_ref)
+              .with_parameter(:ensure, 'directory')
+              .with_parameter(:source, 'puppet:///modules/mymodule/directory')
+              .with_parameter(:checksum_value, nil)
+
+            expect(catalog).not_to have_resource("File[#{path}/myfile.txt")
+          end
         end
 
         it "does not create duplicate resources for explicitly managed files" do

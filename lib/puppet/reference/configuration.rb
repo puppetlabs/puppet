@@ -1,6 +1,9 @@
 config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc => "A reference for all settings") do
   docs = {}
   Puppet.settings.each do |name, object|
+    # Skip documenting internal settings
+    next if object[:internal]
+
     docs[name] = object
   end
 
