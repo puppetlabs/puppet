@@ -181,22 +181,12 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 # Create puppet modules directory for puppet module tool
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
-
-# Install a NetworkManager dispatcher script to pickup changes to
-# # /etc/resolv.conf and such (https://bugzilla.redhat.com/532085).
-mkdir -p %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d
-cp -pr ext/puppet-nm-dispatcher \
-  %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d/98-%{name}
-
 %files
 %defattr(-, root, root, 0755)
 %doc LICENSE README.md examples
 %{_bindir}/puppet
 %{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
-%dir %{_sysconfdir}/NetworkManager
-%dir %{_sysconfdir}/NetworkManager/dispatcher.d
-%{_sysconfdir}/NetworkManager/dispatcher.d/98-puppet
 %if 0%{?_with_systemd}
 %{_unitdir}/puppet.service
 %{_unitdir}/puppetagent.service
