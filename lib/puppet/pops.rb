@@ -77,6 +77,7 @@ module Puppet
     end
 
     module Evaluator
+      require 'puppet/pops/evaluator/literal_evaluator'
       require 'puppet/pops/evaluator/callable_signature'
       require 'puppet/pops/evaluator/runtime3_converter'
       require 'puppet/pops/evaluator/runtime3_support'

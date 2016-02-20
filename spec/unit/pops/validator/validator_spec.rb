@@ -34,6 +34,13 @@ describe "validating 4x" do
     expect(validate(fqn('::_aa').var())).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_VAR_NAME)
   end
 
+  it 'produces a warning for duplicate keyes in a literal hash' do
+    acceptor = validate(parse('{ a => 1, a => 2 }'))
+    expect(acceptor.warning_count).to eql(1)
+    expect(acceptor.error_count).to eql(0)
+    expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+  end
+
   context 'for non productive expressions' do
     [ '1',
       '3.14',
