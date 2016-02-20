@@ -594,6 +594,10 @@ module Issues
     "The parameter '#{param_name}' is declared more than once in the parameter list"
   end
 
+  DUPLICATE_KEY = issue :DUPLICATE_KEY, :key do
+    "The key '#{key}' is declared more than once"
+  end
+
   RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
     "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
   end
