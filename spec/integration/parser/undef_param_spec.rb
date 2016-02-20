@@ -84,4 +84,12 @@ describe "Parameter passing" do
     MANIFEST
     end
   end
+
+  it "uses a given undef and do not require a default expression" do
+    expect_the_message_to_be(true) do <<-MANIFEST
+        define a(Optional[Integer] $x) { notify { 'something': message => $x == undef}}
+        a {'a': x => undef }
+    MANIFEST
+    end
+  end
 end
