@@ -1,5 +1,5 @@
-require 'rgen/ecore/ecore'
-
+module Puppet::Pops
+module Evaluator
 # Literal values for
 # String (not containing interpolation)
 # Numbers
@@ -14,14 +14,13 @@ require 'rgen/ecore/ecore'
 # Not considered literal
 # QualifiedReference  # i.e. File, FooBar
 #
-class Puppet::Pops::Evaluator::LiteralEvaluator
-  #include Puppet::Pops::Utils
+class LiteralEvaluator
 
   EMPTY_STRING = ''.freeze
   COMMA_SEPARATOR = ', '.freeze
 
   def initialize
-    @@literal_visitor ||= Puppet::Pops::Visitor.new(self, "literal", 0, 0)
+    @@literal_visitor ||= Visitor.new(self, "literal", 0, 0)
   end
 
   def literal(ast)
@@ -70,7 +69,7 @@ class Puppet::Pops::Evaluator::LiteralEvaluator
 
   def literal_ConcatenatedString(o)
     # use double quoted string value if there is no interpolation
-    throw :not_literal unless o.segments.size == 1 && o.segments[0].is_a?(Puppet::Pops::Model::LiteralString)
+    throw :not_literal unless o.segments.size == 1 && o.segments[0].is_a?(Model::LiteralString)
     o.segments[0].value
   end
 
@@ -84,4 +83,6 @@ class Puppet::Pops::Evaluator::LiteralEvaluator
       result
     end
   end
+end
+end
 end
