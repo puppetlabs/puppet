@@ -647,11 +647,13 @@ Puppet::Type.newtype(:file) do
   def recurse_remote(children)
     recurse_remote_metadata.each do |meta|
       if meta.relative_path == "."
+        self[:checksum] = meta.checksum_type
         parameter(:source).metadata = meta
         next
       end
       children[meta.relative_path] ||= newchild(meta.relative_path)
       children[meta.relative_path][:source] = meta.source
+      children[meta.relative_path][:checksum] = meta.checksum_type
       children[meta.relative_path].parameter(:source).metadata = meta
     end
 

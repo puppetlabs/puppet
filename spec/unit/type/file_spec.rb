@@ -418,7 +418,7 @@ describe Puppet::Type.type(:file) do
     it "should not copy values to the child which were set by the source" do
       source = File.expand_path(__FILE__)
       file[:source] = source
-      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :source => source
+      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :checksum_type => "md5", :source => source
       file.parameter(:source).stubs(:metadata).returns metadata
 
       file.parameter(:source).copy_source_values
@@ -707,6 +707,13 @@ describe Puppet::Type.type(:file) do
       file.recurse_remote("first" => @resource)
     end
 
+    it "should set the checksum parameter based on the metadata" do
+      file.stubs(:perform_recursion).returns [@first]
+      @resource.stubs(:[]=)
+      @resource.expects(:[]=).with(:checksum, "md5")
+      file.recurse_remote("first" => @resource)
+    end
+
     it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
       file.stubs(:perform_recursion).returns [@first]
       @resource.expects(:parameter).with(:source).returns @parameter
@@ -730,6 +737,16 @@ describe Puppet::Type.type(:file) do
       file.stubs(:perform_recursion).returns [@first]
 
       file.parameter(:source).expects(:metadata=).with @first
+
+      file.recurse_remote("first" => @resource)
+    end
+
+    it "should update the main file's checksum parameter if the relative path is '.'" do
+      @first.stubs(:relative_path).returns "."
+      file.stubs(:perform_recursion).returns [@first]
+
+      file.stubs(:[]=)
+      file.expects(:[]=).with(:checksum, "md5")
 
       file.recurse_remote("first" => @resource)
     end

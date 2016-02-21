@@ -190,7 +190,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = described_class.new(:resource => @resource)
-      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => "173", :checksum => "{md5}asdfasdf", :ftype => "file", :source => @foobar
+      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => "173", :checksum => "{md5}asdfasdf", :checksum_type => "md5", :ftype => "file", :source => @foobar
       @source.stubs(:metadata).returns @metadata
 
       Puppet.features.stubs(:root?).returns true
@@ -246,20 +246,22 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       context "when source_permissions is `use`" do
         before :each do
           @resource[:source_permissions] = "use"
+          @resource[:checksum] = :sha256
         end
 
-        it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
+        it "should copy the metadata's owner, group, checksum, checksum_type, and mode to the resource if they are not set on the resource" do
           @source.copy_source_values
 
           expect(@resource[:owner]).to eq(100)
           expect(@resource[:group]).to eq(200)
           expect(@resource[:mode]).to eq("173")
 
-          # Metadata calls it checksum, we call it content.
+          # Metadata calls it checksum and checksum_type, we call it content and checksum.
           expect(@resource[:content]).to eq(@metadata.checksum)
+          expect(@resource[:checksum]).to eq(@metadata.checksum_type.to_sym)
         end
 
-        it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
+        it "should not copy the metadata's owner, group, checksum, checksum_type, and mode to the resource if they are already set" do
           @resource[:owner] = 1
           @resource[:group] = 2
           @resource[:mode] = '173'
@@ -271,6 +273,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
           expect(@resource[:group]).to eq(2)
           expect(@resource[:mode]).to eq('173')
           expect(@resource[:content]).not_to eq(@metadata.checksum)
+          expect(@resource[:checksum]).not_to eq(@metadata.checksum_type.to_sym)
         end
 
         describe "and puppet is not running as root" do
@@ -406,6 +409,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       it "should set the target to the link destination" do
         @metadata.stubs(:ftype).returns "link"
         @metadata.stubs(:links).returns "manage"
+        @metadata.stubs(:checksum_type).returns nil
         @resource.stubs(:[])
         @resource.stubs(:[]=)
 
