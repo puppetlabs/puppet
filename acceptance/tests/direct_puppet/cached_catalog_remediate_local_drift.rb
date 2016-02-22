@@ -1,4 +1,7 @@
 test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri" do
+
+  skip_test 'requires puppetserver installation' if @options[:type] != 'aio'
+
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))
   module_dir = "#{basedir}/environments/production/modules"
   modulepath = "#{module_dir}"
