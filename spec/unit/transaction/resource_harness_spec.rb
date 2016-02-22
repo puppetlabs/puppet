@@ -418,53 +418,6 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
-  describe "when applying changes" do
-    it "should not apply changes if allow_changes?() returns false" do
-      test_file = tmpfile('foo')
-      resource = Puppet::Type.type(:file).new :path => test_file, :backup => false, :ensure => :file
-      resource.expects(:err).never # make sure no exceptions get swallowed
-      @harness.expects(:allow_changes?).with(resource).returns false
-      status = @harness.evaluate(resource)
-      expect(Puppet::FileSystem.exist?(test_file)).to eq(false)
-    end
-  end
-
-  describe "when determining whether the resource can be changed" do
-    before do
-      @resource.stubs(:purging?).returns true
-      @resource.stubs(:deleting?).returns true
-    end
-
-    it "should be true if the resource is not being purged" do
-      @resource.expects(:purging?).returns false
-      expect(@harness).to be_allow_changes(@resource)
-    end
-
-    it "should be true if the resource is not being deleted" do
-      @resource.expects(:deleting?).returns false
-      expect(@harness).to be_allow_changes(@resource)
-    end
-
-    it "should be true if the resource has no dependents" do
-      @harness.relationship_graph.expects(:dependents).with(@resource).returns []
-      expect(@harness).to be_allow_changes(@resource)
-    end
-
-    it "should be true if all dependents are being deleted" do
-      dep = stub 'dependent', :deleting? => true
-      @harness.relationship_graph.expects(:dependents).with(@resource).returns [dep]
-      @resource.expects(:purging?).returns true
-      expect(@harness).to be_allow_changes(@resource)
-    end
-
-    it "should be false if the resource's dependents are not being deleted" do
-      dep = stub 'dependent', :deleting? => false, :ref => "myres"
-      @resource.expects(:warning)
-      @harness.relationship_graph.expects(:dependents).with(@resource).returns [dep]
-      expect(@harness).not_to be_allow_changes(@resource)
-    end
-  end
-
   describe "when finding the schedule" do
     before do
       @catalog = Puppet::Resource::Catalog.new

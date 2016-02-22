@@ -69,8 +69,6 @@ class Puppet::Transaction::ResourceHarness
   def perform_changes(resource, context)
     cache(resource, :checked, Time.now)
 
-    return [] if ! allow_changes?(resource)
-
     # Record the current state in state.yml.
     context.audited_params.each do |param|
       cache(resource, param, context.current_values[param])
@@ -95,29 +93,6 @@ class Puppet::Transaction::ResourceHarness
 
     capture_audit_events(resource, context)
   end
-
-  def allow_changes?(resource)
-    if resource.purging? and resource.deleting? and deps = relationship_graph.dependents(resource) \
-            and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-      real_deps = deps.reject { |r| r.class.name == :whit }
-      if real_deps.empty?
-        true
-      else
-        deplabel = real_deps.collect { |r| r.ref }.join(",")
-        plurality = real_deps.length > 1 ? "":"s"
-        resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
-        false
-      end
-    else
-      true
-    end
-  end
-
-  # allow_changes? is only made public to enable the existing spec tests to run
-  # under rspec 3 (apparently rspec 2 didn't enforce access controls?). Please do not
-  # treat this as part of a public API.
-  # Possible future improvement: rewrite to not require access to private methods.
-  public :allow_changes?
 
   def sync_if_needed(param, context)
     historical_value = context.historical_values[param.name]
