@@ -673,6 +673,7 @@ describe Puppet::Resource::Catalog::Compiler do
             .with_parameter(:checksum, checksum_type)
             .with_parameter(:checksum_value, sha)
             .with_parameter(:source, 'puppet:///modules/mymodule/config_file.txt')
+            .with_parameter(:content_uri, 'puppet:///modules/mymodule/files/config_file.txt')
         end
       end
     end

@@ -84,9 +84,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Rewrite a given file resource with the metadata from a fileserver based file
-  def replace_metadata(resource, metadata)
-    # TODO: when we stop using to_ral, we'll have to add a case for ensure => <path>
-    # implying a link.
+  def replace_metadata(resource, metadata, environment_path)
     if resource[:links] == "manage" && metadata.ftype == "link"
       resource.delete(:source)
       resource[:target] = metadata.destination
@@ -123,6 +121,18 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when "use_when_creating"
       raise Puppet::Error, "source_permissions => use_when_creating cannot be set when creating static catalogs"
     end
+
+    # The static file content server doesn't know how to expand
+    # mountpoints, so we need to do that ourselves from the actual
+    # system math of the source file. This does that, while preserving
+    # any user-specified server or port.
+    source_path = Pathname.new(metadata.full_path)
+    environment_path = Pathname.new(environment_path)
+    path = source_path.relative_path_from(environment_path).to_s
+    source_as_uri = URI.parse(CGI.escape(metadata.source))
+    server = source_as_uri.host
+    port = ":#{source_as_uri.port}" if source_as_uri.port
+    resource[:content_uri] = "puppet://#{server}#{port}/#{path}"
   end
 
   # Determine which checksum to use; if agent_checksum_type is not nil,
@@ -163,7 +173,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
           child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
           child_resource[:source] = meta.source
-          replace_metadata(child_resource, meta)
+          replace_metadata(child_resource, meta, environment_path)
 
           # Copy parameters from original parent directory
           file.original_parameters.each do |param, value|
@@ -190,7 +200,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         raise "Could not get metadata for #{resource[:source]}" unless metadata
         if metadata.full_path.start_with? environment_path
           # If the file is in the environment directory, we can safely inline
-          replace_metadata(resource, metadata)
+          replace_metadata(resource, metadata, environment_path)
         end
       end
     end
