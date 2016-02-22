@@ -17,6 +17,7 @@ gem "beaker-hostgenerator", *location_for(ENV['BEAKER_HOSTGENERATOR_VERSION'] ||
 gem "rake", "~> 10.1"
 gem "httparty", :require => false
 gem 'uuidtools', :require => false
+gem 'rbtree', :require => false
 
 group(:test) do
   gem "rspec", "~> 2.14.0", :require => false
