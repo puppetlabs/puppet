@@ -154,6 +154,9 @@ class Puppet::Module
       end
 
       if attr == :dependencies
+        unless value.is_a?(Array)
+          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'"
+        end
         value.each do |dep|
           name = dep['name']
           dep['name'] = name.tr('-', '/') unless name.nil?
