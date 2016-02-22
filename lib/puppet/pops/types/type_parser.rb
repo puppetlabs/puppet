@@ -202,6 +202,9 @@ class TypeParser
     when 'struct'
       TypeFactory.struct
 
+    when 'object'
+      TypeFactory.object
+
     when 'callable'
       # A generic callable as opposed to one that does not accept arguments
       TypeFactory.all_callables
@@ -364,6 +367,29 @@ class TypeParser
       raise_invalid_type_specification_error unless h.is_a?(Hash)
       TypeFactory.struct(h)
 
+    when 'object'
+      # 0..2 parameters. An optional parent and a literal hash describing the members
+      case parameters.size
+      when 0
+        TypeFactory.object
+      when 1
+        p = parameters[0]
+        case p
+        when Hash
+          TypeFactory.object(nil, p)
+        when PAnyType
+          TypeFactory.object(p)
+        else
+          raise_invalid_type_specification_error
+        end
+      when 2
+        p = parameters[0]
+        h = parameters[1]
+        raise_invalid_type_specification_error unless p.is_a?(PAnyType) && h.is_a?(Hash)
+        TypeFactory.object(p, h)
+      else
+        raise_invalid_parameters_error('Object', '0 to 2', parameters.size)
+      end
     when 'integer'
       if parameters.size == 1
         case parameters[0]

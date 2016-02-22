@@ -116,6 +116,19 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(struct_t)).to be_the_type(struct_t)
   end
 
+  it "parses object type" do
+    object_t = types.object(nil, {'a'=>Integer, 'b'=>String})
+    expect(the_type_parsed_from(object_t)).to be_the_type(object_t)
+  end
+
+  it "parses object type with inheritance" do
+    super_t = types.object(nil, {'a'=>Integer, 'b'=>String})
+    object_t = types.object(super_t, {'c'=>Integer, 'd'=>String})
+    parsed_t = the_type_parsed_from(object_t)
+    expect(parsed_t).to be_the_type(object_t)
+    expect(parsed_t.parent).to be_the_type(super_t)
+  end
+
   describe "handles parsing of patterns and regexp" do
     { 'Pattern[/([a-z]+)([1-9]+)/]'        => [:pattern, [/([a-z]+)([1-9]+)/]],
       'Pattern["([a-z]+)([1-9]+)"]'        => [:pattern, [/([a-z]+)([1-9]+)/]],

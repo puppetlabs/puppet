@@ -932,6 +932,14 @@ class TypeCalculator
     'Struct[{' << t.elements.map {|element| string(element) }.join(', ') << '}]'
   end
 
+  # @api private
+  def string_PObjectType(t)
+    preamble = t.parent.nil? ? 'Object[{' : "Object[#{string(t.parent)},{"
+    elements_string = t.members.elements.map {|element| string(element) }.join(', ')
+    "#{preamble}#{elements_string}}]"
+  end
+
+  # @api private
   def string_PStructElement(t)
     k = t.key_type
     value_optional = t.value_type.assignable?(PUndefType::DEFAULT)
