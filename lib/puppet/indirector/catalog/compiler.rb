@@ -83,48 +83,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node.add_server_facts(@server_facts)
   end
 
-  # Rewrite a given file resource with the metadata from a fileserver based file
-  def replace_metadata(resource, metadata)
-    # TODO: when we stop using to_ral, we'll have to add a case for ensure => <path>
-    # implying a link.
-    if resource[:links] == "manage" && metadata.ftype == "link"
-      resource.delete(:source)
-      resource[:target] = metadata.destination
-    end
-
-    # Most of the time, ensure should match the returned metadata. Exceptions are when
-    # ensure is `present` (it could be anything), or a path (implies creating a link).
-    # `to_ral` caused the path case to munge to managing links, so we warn if there's
-    # a mismatch that's not `present`.
-    if resource[:ensure] != "present" && resource[:ensure] != metadata.ftype
-      Puppet.warning "#{resource} expected to create a #{resource[:ensure]}, but its source "+
-        "is a #{metadata.ftype}. The source metadata will override the 'ensure' property."
-    end
-
-    resource[:ensure] = metadata.ftype
-
-    if metadata.ftype == "file"
-      # Since we use the checksum from metadata, it makes sense to pick up the checksum type
-      # from the same source. This should never differ, but seems like the most correct
-      # expression of intent.
-      resource[:checksum_value] = sumdata(metadata.checksum)
-      resource[:checksum] = metadata.checksum_type
-    end
-
-    case resource[:source_permissions]
-    when "use"
-      resource[:owner] ||= metadata.owner
-      resource[:group] ||= metadata.group
-      if resource[:mode].nil?
-        mode = metadata.mode
-        mode = mode.to_s(8) if mode.is_a?(Numeric)
-        resource[:mode] = mode
-      end
-    when "use_when_creating"
-      raise Puppet::Error, "source_permissions => use_when_creating cannot be set when creating static catalogs"
-    end
-  end
-
   # Determine which checksum to use; if agent_checksum_type is not nil,
   # use the first entry in it that is also in known_checksum_types.
   # If no match is found, return nil.
@@ -138,59 +96,105 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     checksum_type
   end
 
+  def get_content_uri(metadata, source, environment_path)
+    # The static file content server doesn't know how to expand mountpoints, so
+    # we need to do that ourselves from the actual system path of the source file.
+    # This does that, while preserving any user-specified server or port.
+    source_path = Pathname.new(metadata.full_path)
+    path = source_path.relative_path_from(environment_path).to_s
+    source_as_uri = URI.parse(CGI.escape(source))
+    server = source_as_uri.host
+    port = ":#{source_as_uri.port}" if source_as_uri.port
+    return "puppet://#{server}#{port}/#{path}"
+  end
+
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
-    environment_path = File.join(Puppet[:environmentpath], catalog.environment, "")
+    environment_path = Pathname.new File.join(Puppet[:environmentpath], catalog.environment, "")
     list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
 
+    # TODO: get property/parameter defaults if entries are nil in the resource
+    # For now they're hard-coded to match the File type.
+
+    file_metadata = {}
     list_of_resources.each do |resource|
       next if resource[:ensure] == 'absent'
 
-      next unless source = resource[:source]
-      next unless source =~ /^puppet:/
+      sources = [resource[:source]].flatten.compact
+      next if sources.empty?
+      next unless sources.all? {|source| source =~ /^puppet:/}
 
-      if checksum_type && resource[:checksum].nil?
-        resource[:checksum] = checksum_type
-      end
+      # both need to handle multiple sources
+      if resource[:recurse] == true || resource[:recurse] == 'true' || resource[:recurse] == 'remote'
+        # Construct a hash mapping sources to arrays (list of files found recursively) of metadata
+        options = {
+          :environment        => catalog.environment_instance,
+          :links              => resource[:links] ? resource[:links].to_sym : :manage,
+          :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
+          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore,
+          :recurse            => true,
+          :recurselimit       => resource[:recurselimit],
+          :ignore             => resource[:ignore],
+        }
 
-      file = resource.to_ral
+        sources_in_environment = true
 
-      if file.recurse?
-        child_resources = file.recurse_remote_metadata.map do |meta|
-          # Don't create a new resource for the parent directory
-          next if meta.relative_path == "."
+        source_to_metadatas = {}
+        sources.each do |source|
+          if list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
+            basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
+            devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-          child_resource = Puppet::Resource.new(:file, File.join(file[:path], meta.relative_path))
-          child_resource[:source] = meta.source
-          replace_metadata(child_resource, meta)
+            if ! basedir_meta.full_path.start_with? environment_path.to_s
+              # If any source is not in the environment path, skip inlining this resource.
+              sources_in_environment = false
+              break
+            end
 
-          # Copy parameters from original parent directory
-          file.original_parameters.each do |param, value|
-            # These should never be passed to our children
-            unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
-              child_resource[param] = value.to_s
+            base_content_uri = get_content_uri(basedir_meta, source, environment_path)
+            list_of_data.each do |metadata|
+              if metadata.relative_path == '.'
+                metadata.content_uri = base_content_uri
+              else
+                metadata.content_uri = "#{base_content_uri}/#{metadata.relative_path}"
+              end
+            end
+
+            source_to_metadatas[source] = list_of_data
+            # Optimize for returning less data if sourceselect is first
+            if resource[:sourceselect] == 'first' || resource[:sourceselect].nil?
+              break
             end
           end
-          child_resource
-        end.compact
-        child_resources = Puppet::Type::File.remove_less_specific_files(child_resources, resource[:path] || resource.title, list_of_resources) do |file_resource|
-          file_resource[:path] || file_resource.title
         end
 
-        #TODO: Add edge between `child_resource` and its nearest ancestor and
-        # add an edge between `child_resource` and all other resources that depend
-        # on `file`
-        child_resources.each do |child|
-          catalog.add_resource(child)
-          catalog.add_edge(file, child)
+        if sources_in_environment && !source_to_metadatas.empty?
+          catalog.recursive_metadata[resource.title] = source_to_metadatas
         end
       else
-        metadata = file.parameter(:source).metadata
+        options = {
+          :environment        => catalog.environment_instance,
+          :links              => resource[:links] ? resource[:links].to_sym : :manage,
+          :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
+          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore
+        }
+
+        metadata = nil
+        sources.each do |source|
+          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
+            metadata = data
+            metadata.source = source
+            break
+          end
+        end
+
         raise "Could not get metadata for #{resource[:source]}" unless metadata
-        if metadata.full_path.start_with? environment_path
+        if metadata.full_path.start_with? environment_path.to_s
+          metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
+
           # If the file is in the environment directory, we can safely inline
-          replace_metadata(resource, metadata)
+          catalog.metadata[resource.title] = metadata
         end
       end
     end

@@ -418,7 +418,7 @@ describe Puppet::Type.type(:file) do
     it "should not copy values to the child which were set by the source" do
       source = File.expand_path(__FILE__)
       file[:source] = source
-      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :source => source
+      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :checksum_type => "md5", :source => source
       file.parameter(:source).stubs(:metadata).returns metadata
 
       file.parameter(:source).copy_source_values
@@ -707,6 +707,13 @@ describe Puppet::Type.type(:file) do
       file.recurse_remote("first" => @resource)
     end
 
+    it "should set the checksum parameter based on the metadata" do
+      file.stubs(:perform_recursion).returns [@first]
+      @resource.stubs(:[]=)
+      @resource.expects(:[]=).with(:checksum, "md5")
+      file.recurse_remote("first" => @resource)
+    end
+
     it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
       file.stubs(:perform_recursion).returns [@first]
       @resource.expects(:parameter).with(:source).returns @parameter
@@ -730,6 +737,16 @@ describe Puppet::Type.type(:file) do
       file.stubs(:perform_recursion).returns [@first]
 
       file.parameter(:source).expects(:metadata=).with @first
+
+      file.recurse_remote("first" => @resource)
+    end
+
+    it "should update the main file's checksum parameter if the relative path is '.'" do
+      @first.stubs(:relative_path).returns "."
+      file.stubs(:perform_recursion).returns [@first]
+
+      file.stubs(:[]=)
+      file.expects(:[]=).with(:checksum, "md5")
 
       file.recurse_remote("first" => @resource)
     end
@@ -1574,10 +1591,10 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when validating" do
-    [[:source, :target], [:source, :content], [:target, :content], [:content, :content_uri]].each do |prop1,prop2|
+    [[:source, :target], [:source, :content], [:target, :content]].each do |prop1,prop2|
       it "should fail if both #{prop1} and #{prop2} are specified" do
           file[prop1] = prop1 == :source ? File.expand_path("prop1 value") : "prop1 value"
-          file[prop2] = prop2 == :content_uri ? "puppet:///some_uri" : "prop2 value"
+          file[prop2] = "prop2 value"
         expect do
           file.validate
         end.to raise_error(Puppet::Error, /You cannot specify more than one of/)

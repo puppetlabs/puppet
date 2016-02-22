@@ -3,6 +3,7 @@ require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/file_serving/base'
 require 'puppet/util/checksums'
+require 'uri'
 
 # A class that handles retrieving file metadata.
 class Puppet::FileServing::Metadata < Puppet::FileServing::Base
@@ -12,7 +13,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   extend Puppet::Indirector
   indirects :file_metadata, :terminus_class => :selector
 
-  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination, :source_permissions
+  attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination, :source_permissions, :content_uri
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
@@ -26,6 +27,18 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     raise(ArgumentError, "Unsupported source_permission #{source_permissions}") unless [:use, :use_when_creating, :ignore].include?(source_permissions.intern)
 
     @source_permissions = source_permissions.intern
+  end
+
+  def content_uri=(path)
+    begin
+      uri = URI.parse(path)
+    rescue URI::InvalidURIError => detail
+      raise(ArgumentError, "Could not understand URI #{path}: #{detail}")
+    end
+    raise(ArgumentError, "Cannot use opaque URLs '#{path}'") unless uri.hierarchical?
+    raise(ArgumentError, "Must use URLs of type puppet as content URI") if uri.scheme != "puppet"
+
+    @content_uri = path
   end
 
   class MetaStat
@@ -121,6 +134,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @checksum_type ||= Puppet[:digest_algorithm]
     @ftype       = data.delete('type')
     @destination = data.delete('destination')
+    @source      = data.delete('source')
+    @content_uri = data.delete('content_uri')
     super(path,data)
   end
 
@@ -136,7 +151,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
         },
         'type'         => ftype,
         'destination'  => destination,
-      }
+      }.merge(content_uri ? {'content_uri' => content_uri} : {})
+       .merge(source ? {'source' => source} : {})
     )
   end
 

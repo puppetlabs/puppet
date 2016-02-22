@@ -36,6 +36,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The UUID of the catalog
   attr_accessor :catalog_uuid
 
+  # Inlined file metadata for non-recursive find
+  # A hash of title => metadata
+  attr_accessor :metadata
+
+  # Inlined file metadata for recursive search
+  # A hash of title => { source => [metadata, ...] }
+  attr_accessor :recursive_metadata
+
   # How long this catalog took to retrieve.  Used for reporting stats.
   attr_accessor :retrieval_duration
 
@@ -277,6 +285,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     super()
     @name = name
     @catalog_uuid = SecureRandom.uuid
+    @metadata = {}
+    @recursive_metadata = {}
     @classes = []
     @resource_table = {}
     @resources = []
@@ -420,10 +430,32 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.add_class(*classes)
     end
 
+    if metadata = data['metadata']
+      result.metadata = metadata.inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h }
+    end
+
+    if recursive_metadata = data['recursive_metadata']
+      result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
+        h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
+          inner_h[source] = metas.map {|meta| Puppet::FileServing::Metadata.from_data_hash(meta)}
+          inner_h
+        end
+        h
+      end
+    end
+
     result
   end
 
   def to_data_hash
+    metadata_hash = metadata.inject({}) { |h, (k, v)| h[k] = v.to_data_hash; h }
+    recursive_metadata_hash = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
+      h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
+        inner_h[source] = metas.map {|meta| meta.to_data_hash}
+        inner_h
+      end
+      h
+    end
     {
       'tags'      => tags,
       'name'      => name,
@@ -433,8 +465,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'environment'  => environment.to_s,
       'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
       'edges'     => edges.   collect { |e| e.to_data_hash },
-      'classes'   => classes
-    }
+      'classes'   => classes,
+    }.merge(metadata_hash.empty? ? {} : {'metadata' => metadata_hash})
+     .merge(recursive_metadata_hash.empty? ? {} : {'recursive_metadata' => recursive_metadata_hash})
   end
 
   # Convert our catalog into a RAL catalog.
@@ -547,6 +580,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result.version = self.version
     result.code_id = self.code_id
     result.catalog_uuid = self.catalog_uuid
+    result.metadata = self.metadata
+    result.recursive_metadata = self.recursive_metadata
 
     map = {}
     resources.each do |resource|

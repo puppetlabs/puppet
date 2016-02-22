@@ -368,8 +368,6 @@ Puppet::Type.newtype(:file) do
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail "You cannot specify more than one of content and content_uri" if @parameters.include?(:content_uri) && @parameters.include?(:content)
-
     self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] && self[:recurse] == :remote
@@ -647,11 +645,13 @@ Puppet::Type.newtype(:file) do
   def recurse_remote(children)
     recurse_remote_metadata.each do |meta|
       if meta.relative_path == "."
+        self[:checksum] = meta.checksum_type
         parameter(:source).metadata = meta
         next
       end
       children[meta.relative_path] ||= newchild(meta.relative_path)
       children[meta.relative_path][:source] = meta.source
+      children[meta.relative_path][:checksum] = meta.checksum_type
       children[meta.relative_path].parameter(:source).metadata = meta
     end
 
@@ -662,7 +662,15 @@ Puppet::Type.newtype(:file) do
     sourceselect = self[:sourceselect]
 
     total = self[:source].collect do |source|
-      next unless result = perform_recursion(source)
+      # For each inlined file resource, the catalog contains a hash mapping
+      # source path to lists of metadata returned by a server-side search.
+      if recursive_metadata = catalog.recursive_metadata[title]
+        result = recursive_metadata[source]
+      else
+        result = perform_recursion(source)
+      end
+
+      next unless result
       return [] if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
       result.each do |data|
         if data.relative_path == '.'
@@ -966,7 +974,6 @@ require 'puppet/type/file/checksum'
 require 'puppet/type/file/content'     # can create the file
 require 'puppet/type/file/source'      # can create the file
 require 'puppet/type/file/checksum_value' # can create the file, in place of content
-require 'puppet/type/file/content_uri'
 require 'puppet/type/file/target'      # creates a different type of file
 require 'puppet/type/file/ensure'      # can create the file
 require 'puppet/type/file/owner'
