@@ -2080,13 +2080,16 @@ class PObjectType < PAnyType
   #
   # @api public
   def initialize(parent, members)
-    raise Puppet::Error, "An Object can only inherit from a Type"  unless parent.nil? || parent.is_a?(PAnyType)
+    raise Puppet::Error, 'An Object can only inherit from a Type' unless parent.nil? || parent.is_a?(PAnyType)
     @parent = parent
 
     if members.nil?
       members = PStructType::DEFAULT if members.nil?
     else
-      raise Puppet::Error, "The members of an Object must be represented by a Struct" unless members.is_a?(PStructType)
+      unless members.is_a?(PStructType)
+        raise Puppet::Error, 'The members (e.g. attributes or functions) of an Object must be represented by a Struct'
+      end
+
       # Assert that each key pair is valid
       rp = resolved_parent
       parent_hash = rp.is_a?(PObjectType) ? rp.members(true).hashed_elements : {}
@@ -2095,9 +2098,9 @@ class PObjectType < PAnyType
         parent_member = parent_hash[name]
         unless parent_member.nil? || parent_member.value_type.assignable?(e.value_type)
           raise Puppet::Error,
-            "Member '#{name}' redefines member of inherited object to type that does not match"
+            "The member (e.g. attribute or function) '#{name}' redefines inherited member to a type that does not match"
         end
-        TypeAsserter.assert_assignable('Member key', MEMBER_NAME_TYPE, e.key_type)
+        TypeAsserter.assert_assignable('Member (e.g. attribute or function) key', MEMBER_NAME_TYPE, e.key_type)
       end
     end
     @members = members

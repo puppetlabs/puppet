@@ -54,11 +54,13 @@ describe 'The Object Type' do
         expect{ |b| tp.members.each {|m| m.name.tap(&b) }}.to yield_successive_args('c', 'd')
         expect{ |b| tp.members.each {|m| m.value_type.simple_name.tap(&b) }}.to yield_successive_args('String', 'Boolean')
         expect{ |b| tp.members(true).each {|m| m.name.tap(&b) }}.to yield_successive_args('a', 'b', 'c', 'd')
-        expect{ |b| tp.members(true).each {|m| m.value_type.simple_name.tap(&b) }}.to yield_successive_args('Integer', 'Callable', 'String', 'Boolean')
+        expect{ |b| tp.members(true).each {|m| m.value_type.simple_name.tap(&b) }}.to(
+          yield_successive_args('Integer', 'Callable', 'String', 'Boolean'))
       end
 
       it 'can redefine inherited member to assignable type' do
-        loader.expects(:load).with(:type, 'myderivedobject').returns type_object_t('MyDerivedObject', 'MyObject', '{ a=> Integer[0,default], d => Boolean }')
+        loader.expects(:load).with(:type, 'myderivedobject').returns(
+          type_object_t('MyDerivedObject', 'MyObject', '{ a=> Integer[0,default], d => Boolean }'))
         tp = parser.parse('MyDerivedObject', scope)
         expect(tp).to eql(derived)
         tp = tp.resolved_type
@@ -66,12 +68,14 @@ describe 'The Object Type' do
         expect{ |b| tp.members.each {|m| m.name.tap(&b) }}.to yield_successive_args('a', 'd')
         expect{ |b| tp.members.each {|m| m.value_type.to_s.tap(&b) }}.to yield_successive_args('Integer[0, default]', 'Boolean')
         expect{ |b| tp.members(true).each {|m| m.name.tap(&b) }}.to yield_successive_args('a', 'b', 'd')
-        expect{ |b| tp.members(true).each {|m| m.value_type.to_s.tap(&b) }}.to yield_successive_args('Integer[0, default]', 'Callable', 'Boolean')
+        expect{ |b| tp.members(true).each {|m| m.value_type.to_s.tap(&b) }}.to(
+          yield_successive_args('Integer[0, default]', 'Callable', 'Boolean'))
       end
 
       it 'can not redefine inherited member to a unassignable type' do
-        loader.expects(:load).with(:type, 'myderivedobject').returns type_object_t('MyDerivedObject', 'MyObject', '{ a=> String, d => Boolean }')
-        expect { parser.parse('MyDerivedObject', scope) }.to raise_error(Puppet::Error, "Member 'a' redefines member of inherited object to type that does not match")
+        loader.expects(:load).with(:type, 'myderivedobject').returns(
+          type_object_t('MyDerivedObject', 'MyObject', '{ a=> String, d => Boolean }'))
+        expect { parser.parse('MyDerivedObject', scope) }.to raise_error(Puppet::Error, /redefines inherited member/)
       end
 
       it 'will be assignable to its inherited type' do
