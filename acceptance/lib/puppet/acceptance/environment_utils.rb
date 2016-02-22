@@ -1,5 +1,4 @@
 require 'puppet/acceptance/module_utils'
-require 'rbtree'
 
 module Puppet
   module Acceptance
@@ -373,8 +372,8 @@ module Puppet
       # create a tmpdir to hold a temporary environment bound by puppet environment naming restrictions
       # symbolically link environment into environmentpath
       def mk_tmp_environment(environment)
-        # add the tmp_environment to a sortedset so we ensure no collisions
-        @@tmp_environment_set ||= SortedSet.new
+        # add the tmp_environment to a set to ensure no collisions
+        @@tmp_environment_set ||= Set.new
         deadman = 100; loop_num = 0
         while @@tmp_environment_set.include?(tmp_environment = environment.downcase + '_' + random_string) do
           break if (loop_num = loop_num + 1) > deadman
