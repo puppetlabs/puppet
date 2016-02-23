@@ -129,6 +129,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     Puppet::Util::Profiler.profile("Not inlining file outside environment", [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
   end
 
+  # Helper method to log file resources that were successfully inlined.
+  def log_metadata_inlining
+    Puppet::Util::Profiler.profile("Inlining file metadata", [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
+  end
+
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
@@ -189,6 +194,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if sources_in_environment && !source_to_metadatas.empty?
+          log_metadata_inlining
           catalog.recursive_metadata[resource.title] = source_to_metadatas
         end
       else
@@ -211,6 +217,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         raise "Could not get metadata for #{resource[:source]}" unless metadata
         if metadata.full_path.start_with? environment_path.to_s
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
+          log_metadata_inlining
 
           # If the file is in the environment directory, we can safely inline
           catalog.metadata[resource.title] = metadata
