@@ -90,7 +90,7 @@ module Runtime3Support
     unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       optionally_fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
     end
-    nil # in case unknown variable is configured as a warning
+    nil # in case unknown variable is configured as a warning or ignore
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
@@ -497,7 +497,19 @@ module Runtime3Support
         p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
       end
 
-      p[Issues::UNKNOWN_VARIABLE]             = Puppet[:strict_variables] ? :error : :warning
+      # if strict variables are on, an error is raised
+      # if strict variables are off, the Puppet[strict] defines what is done
+      #
+      if Puppet[:strict_variables]
+        p[Issues::UNKNOWN_VARIABLE] = :error
+      elsif Puppet[:strict] == :ignore
+        p[Issues::UNKNOWN_VARIABLE] = :ignore
+      else
+        Puppet[:strict_variables] 
+        p[Issues::UNKNOWN_VARIABLE] = Puppet[:strict]
+      end
+
+#      Puppet[:strict_variables] ? :error : :warning
 
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
