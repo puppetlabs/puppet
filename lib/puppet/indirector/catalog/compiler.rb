@@ -108,6 +108,32 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     return "puppet://#{server}#{port}/#{path}"
   end
 
+  # Helper method to decide if a file resource's metadata can be inlined.
+  # Also used to profile/log reasons for not inlining.
+  def inlineable?(resource, sources)
+    case
+      when resource[:ensure] == 'absent'
+        return Puppet::Util::Profiler.profile("Not inlining absent resource", [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
+      when sources.empty?
+        return Puppet::Util::Profiler.profile("Not inlining resource without sources", [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
+      when (not (sources.all? {|source| source =~ /^puppet:/}))
+        return Puppet::Util::Profiler.profile("Not inlining unsupported source scheme", [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
+      else
+        return true
+    end
+  end
+
+  # Helper method to log file resources that could not be inlined because they
+  # fall outside of an environment.
+  def log_file_outside_environment
+    Puppet::Util::Profiler.profile("Not inlining file outside environment", [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
+  end
+
+  # Helper method to log file resources that were successfully inlined.
+  def log_metadata_inlining
+    Puppet::Util::Profiler.profile("Inlining file metadata", [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
+  end
+
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
@@ -119,11 +145,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     file_metadata = {}
     list_of_resources.each do |resource|
-      next if resource[:ensure] == 'absent'
-
       sources = [resource[:source]].flatten.compact
-      next if sources.empty?
-      next unless sources.all? {|source| source =~ /^puppet:/}
+      next unless inlineable?(resource, sources)
 
       # both need to handle multiple sources
       if resource[:recurse] == true || resource[:recurse] == 'true' || resource[:recurse] == 'remote'
@@ -148,6 +171,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
             if ! basedir_meta.full_path.start_with? environment_path.to_s
               # If any source is not in the environment path, skip inlining this resource.
+              log_file_outside_environment
               sources_in_environment = false
               break
             end
@@ -170,6 +194,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if sources_in_environment && !source_to_metadatas.empty?
+          log_metadata_inlining
           catalog.recursive_metadata[resource.title] = source_to_metadatas
         end
       else
@@ -192,9 +217,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         raise "Could not get metadata for #{resource[:source]}" unless metadata
         if metadata.full_path.start_with? environment_path.to_s
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
+          log_metadata_inlining
 
           # If the file is in the environment directory, we can safely inline
           catalog.metadata[resource.title] = metadata
+        else
+          # Log a profiler event that we skipped this file because it is not in an environment.
+          log_file_outside_environment
         end
       end
     end
@@ -213,25 +242,27 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     config = nil
 
     benchmark(:notice, str) do
-      Puppet::Util::Profiler.profile(str, [:compiler, :compile, node.environment, node.name]) do
+      compile_type = checksum_type ? :static_compile : :compile
+      Puppet::Util::Profiler.profile(str, [:compiler, compile_type, node.environment, node.name]) do
         begin
           config = Puppet::Parser::Compiler.compile(node, options[:code_id])
         rescue Puppet::Error => detail
           Puppet.err(detail.to_s) if networked?
           raise
         end
-      end
-    end
 
-    if checksum_type && config.is_a?(model)
-      str = "Inlined resource metadata into static catalog for #{node.name}"
-      str += " in environment #{node.environment}" if node.environment
-      benchmark(:notice, str) do
-        Puppet::Util::Profiler.profile(str, [:compiler, :static_inline, node.environment, node.name]) do
-          inline_metadata(config, checksum_type)
+        if checksum_type && config.is_a?(model)
+          str = "Inlined resource metadata into static catalog for #{node.name}"
+          str += " in environment #{node.environment}" if node.environment
+          benchmark(:notice, str) do
+            Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
+              inline_metadata(config, checksum_type)
+            end
+          end
         end
       end
     end
+
 
     config
   end
