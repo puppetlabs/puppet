@@ -14,6 +14,7 @@ class Puppet::Settings
   require 'puppet/settings/base_setting'
   require 'puppet/settings/string_setting'
   require 'puppet/settings/enum_setting'
+  require 'puppet/settings/symbolic_enum_setting'
   require 'puppet/settings/array_setting'
   require 'puppet/settings/file_setting'
   require 'puppet/settings/directory_setting'
@@ -663,6 +664,7 @@ class Puppet::Settings
       :ttl        => TTLSetting,
       :array      => ArraySetting,
       :enum       => EnumSetting,
+      :symbolic_enum   => SymbolicEnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
   }

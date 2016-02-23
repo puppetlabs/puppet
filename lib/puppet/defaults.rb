@@ -121,6 +121,27 @@ module Puppet
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
         end
       end
+    },
+    :strict => {
+      :default    => :warning,
+      :type       => :symbolic_enum,
+      :values     => [:ignore, :warning, :error],
+      :desc       => "The strictness level of puppet. Allowed values are:
+
+        * ignored
+        * warning
+        * error
+
+        where 'ignored' is the default. When set to 'warning' or 'error' additional
+        checks and validations are performed at runtime (e.g. when compiling
+        a catalog, or applying a catalog). When set to 'warning' a warning is logged when a
+        strictness problem is found, and when set to 'error' and error is logged and
+        the operation fails. In addition to this master switch the behavior of
+        some individual warnings may be controlled by the disable_warnings setting.",
+      :hook    => proc do |value|
+        munge(value)
+        value.to_sym
+      end
     }
   )
 
