@@ -108,6 +108,21 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     return "puppet://#{server}#{port}/#{path}"
   end
 
+  # Helper method to decide if a file resource's metadata can be inlined.
+  # Also used to profile/log reasons for not inlining.
+  def inlineable?(resource, sources)
+    case
+      when resource[:ensure] == 'absent'
+        return Puppet::Util::Profiler.profile("Not inlining absent resource", [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
+      when sources.empty?
+        return Puppet::Util::Profiler.profile("Not inlining resource without sources", [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
+      when (not (sources.all? {|source| source =~ /^puppet:/}))
+        return Puppet::Util::Profiler.profile("Not inlining unsupported source scheme", [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
+      else
+        return true
+    end
+  end
+
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
@@ -119,11 +134,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     file_metadata = {}
     list_of_resources.each do |resource|
-      next if resource[:ensure] == 'absent'
-
       sources = [resource[:source]].flatten.compact
-      next if sources.empty?
-      next unless sources.all? {|source| source =~ /^puppet:/}
+      next unless inlineable?(resource, sources)
 
       # both need to handle multiple sources
       if resource[:recurse] == true || resource[:recurse] == 'true' || resource[:recurse] == 'remote'
