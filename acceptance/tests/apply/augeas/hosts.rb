@@ -1,5 +1,7 @@
 test_name "Augeas hosts file" do
 
+skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
+
 tag 'risk:medium'
 
   confine :except, :platform => 'windows'
