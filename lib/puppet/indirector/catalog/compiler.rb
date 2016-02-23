@@ -123,6 +123,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
   end
 
+  # Helper method to log file resources that could not be inlined because they
+  # fall outside of an environment.
+  def log_file_outside_environment
+    Puppet::Util::Profiler.profile("Not inlining file outside environment", [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
+  end
+
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
@@ -160,6 +166,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
             if ! basedir_meta.full_path.start_with? environment_path.to_s
               # If any source is not in the environment path, skip inlining this resource.
+              log_file_outside_environment
               sources_in_environment = false
               break
             end
@@ -207,6 +214,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
           # If the file is in the environment directory, we can safely inline
           catalog.metadata[resource.title] = metadata
+        else
+          # Log a profiler event that we skipped this file because it is not in an environment.
+          log_file_outside_environment
         end
       end
     end
