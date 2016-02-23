@@ -1,3 +1,6 @@
+require 'puppet/acceptance/static_catalog_utils'
+extend Puppet::Acceptance::StaticCatalogUtils
+
 test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri" do
 
   skip_test 'requires puppetserver installation' if @options[:type] != 'aio'
@@ -8,39 +11,16 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
   agent_test_file_path = agent.tmpfile('foo_file')
 
   master_opts = {
-   'master' => {
-      'static_catalogs' => true
-    },
    'main' => {
       'environmentpath' => "#{basedir}/environments"
     }
   }
 
   step "Add versioned-code parameters to puppetserver.conf and ensure the server is running" do
-    puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
-    versioned_code_settings = {"code-id-command" => "#{basedir}/code_id.sh", "code-content-command" => "#{basedir}/code_content.sh"}
-
-    modify_tk_config(master, puppetserver_config, versioned_code_settings)
-    on(master, puppet_resource('service', 'puppetserver', 'ensure=running'))
+    setup_puppetserver_code_id_scripts(master, basedir)
   end
 
-  step "Create a module and a file with content representing the first code_id version, and Setup code-id-command and code-content-command scripts" do
-    code_id_command = <<EOF
-    #! /bin/sh
-
-    echo 'code_version_1'
-EOF
-
-    code_content_command = <<EOF
-    #! /bin/sh
-
-    if [ \\\$2 == 'code_version_1' ] ; then
-      echo 'code_version_1'
-    else
-      echo 'newer_code_version'
-    fi
-EOF
-
+  step "Create a module and a file with content representing the first code_id version" do
     apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
     File {
       ensure => directory,
@@ -72,18 +52,6 @@ EOF
       content => "code_version_1",
       mode => "0640",
     }
-
-    file { '#{basedir}/code_id.sh':
-      ensure => file,
-      content => "#{code_id_command}",
-      mode => "0755",
-    }
-
-    file { '#{basedir}/code_content.sh':
-      ensure => file,
-      content => "#{code_content_command}",
-      mode => "0755",
-    }
 MANIFEST
   end
 
@@ -107,10 +75,8 @@ MANIFEST
 
       step "Run agent again using --use_cached_catalog and ensure content from the first code_id is used"
       on(agent, puppet("agent", "-t", "--use_cached_catalog", "--server #{master}"), :acceptable_exit_codes => [0,2])
-      expect_failure('expected to fail until checksum_value is used to check insync-ness (PUP-5701)') do
-        on(agent, "cat #{agent_test_file_path}") do
-          assert_equal('code_version_1', stdout)
-        end
+      on(agent, "cat #{agent_test_file_path}") do
+        assert_equal('code_version_1', stdout)
       end
     end
   end
