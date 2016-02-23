@@ -242,25 +242,27 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     config = nil
 
     benchmark(:notice, str) do
-      Puppet::Util::Profiler.profile(str, [:compiler, :compile, node.environment, node.name]) do
+      compile_type = checksum_type ? :static_compile : :compile
+      Puppet::Util::Profiler.profile(str, [:compiler, compile_type, node.environment, node.name]) do
         begin
           config = Puppet::Parser::Compiler.compile(node, options[:code_id])
         rescue Puppet::Error => detail
           Puppet.err(detail.to_s) if networked?
           raise
         end
-      end
-    end
 
-    if checksum_type && config.is_a?(model)
-      str = "Inlined resource metadata into static catalog for #{node.name}"
-      str += " in environment #{node.environment}" if node.environment
-      benchmark(:notice, str) do
-        Puppet::Util::Profiler.profile(str, [:compiler, :static_inline, node.environment, node.name]) do
-          inline_metadata(config, checksum_type)
+        if checksum_type && config.is_a?(model)
+          str = "Inlined resource metadata into static catalog for #{node.name}"
+          str += " in environment #{node.environment}" if node.environment
+          benchmark(:notice, str) do
+            Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
+              inline_metadata(config, checksum_type)
+            end
+          end
         end
       end
     end
+
 
     config
   end
