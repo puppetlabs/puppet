@@ -22,9 +22,10 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
     return unless generated
     generated = [generated] unless generated.is_a?(Array)
-    generated.collect do |res|
+    generated.collect! do |res|
       @catalog.resource(res.ref) || res
-    end.reverse_each do |res|
+    end
+    unless resource.depthfirst?
       # This is reversed becuase PUP-1963 changed how generated
       # resources were added to the catalog. It exists for backwards
       # compatibility only, and can probably be removed in Puppet 5
@@ -34,6 +35,9 @@ class Puppet::Transaction::AdditionalResourceGenerator
       # catalog one by one adjacent to the parent resource. This
       # causes an implicit reversal of their application order from
       # the old code. The reverse makes it all work like it did.
+      generated.reverse!
+    end
+    generated.each do |res|
       add_resource(res, resource)
 
       add_generated_directed_dependency(resource, res)
