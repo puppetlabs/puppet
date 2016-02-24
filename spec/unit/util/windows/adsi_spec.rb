@@ -108,14 +108,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to confirm the existence of a user with a well-known SID" do
-      system_user = Win32::Security::SID::LocalSystem
+      system_user = Puppet::Util::Windows::SID::LocalSystem
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::User.exists?(system_user)).to be_truthy
     end
 
     it "should return false with a well-known Group SID" do
-      group = Win32::Security::SID::BuiltinAdministrators
+      group = Puppet::Util::Windows::SID::BuiltinAdministrators
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::User.exists?(group)).to be_falsey
@@ -446,14 +446,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
     it "should be able to confirm the existence of a group with a well-known SID" do
 
-      service_group = Win32::Security::SID::Service
+      service_group = Puppet::Util::Windows::SID::Service
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::Group.exists?(service_group)).to be_truthy
     end
 
     it "will return true with a well-known User SID, as there is no way to resolve it with a WinNT:// style moniker" do
-      user = Win32::Security::SID::NtLocal
+      user = Puppet::Util::Windows::SID::NtLocal
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
       expect(Puppet::Util::Windows::ADSI::Group.exists?(user)).to be_truthy

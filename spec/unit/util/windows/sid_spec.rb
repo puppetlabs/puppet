@@ -7,7 +7,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   end
 
   let(:subject)      { Puppet::Util::Windows::SID }
-  let(:sid)          { Win32::Security::SID::LocalSystem }
+  let(:sid)          { Puppet::Util::Windows::SID::LocalSystem }
   let(:invalid_sid)  { 'bogus' }
   let(:unknown_sid)  { 'S-0-0-0' }
   let(:unknown_name) { 'chewbacca' }

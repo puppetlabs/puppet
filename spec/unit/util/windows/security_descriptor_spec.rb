@@ -4,9 +4,9 @@ require 'spec_helper'
 require 'puppet/util/windows'
 
 describe "Puppet::Util::Windows::SecurityDescriptor", :if => Puppet.features.microsoft_windows? do
-  let(:system_sid) { Win32::Security::SID::LocalSystem }
-  let(:admins_sid) { Win32::Security::SID::BuiltinAdministrators }
-  let(:group_sid) { Win32::Security::SID::Nobody }
+  let(:system_sid) { Puppet::Util::Windows::SID::LocalSystem }
+  let(:admins_sid) { Puppet::Util::Windows::SID::BuiltinAdministrators }
+  let(:group_sid) { Puppet::Util::Windows::SID::Nobody }
   let(:new_sid)   { 'S-1-5-32-500-1-2-3' }
 
   def empty_dacl
