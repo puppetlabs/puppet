@@ -124,7 +124,7 @@ module Puppet::DataProviders
     private :create_data_provider
 
     def validate_config(hiera_config)
-      Puppet::Pops::Types::TypeAsserter.assert_instance_of(@config_path, self.class.config_type, hiera_config)
+      Puppet::Pops::Types::TypeAsserter.assert_instance_of(["The Hiera Configuration at '%s'", @config_path], self.class.config_type, hiera_config)
     end
     private :validate_config
   end

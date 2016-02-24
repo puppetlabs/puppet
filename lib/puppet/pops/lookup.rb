@@ -28,9 +28,9 @@ module Lookup
     not_found = MergeStrategy::NOT_FOUND
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil, not_found]) do |memo, key|
-      value = override_values.include?(key) ? assert_type('override', value_type, override_values[key]) : not_found
+      value = override_values.include?(key) ? assert_type(["Value found for key '%s' in override hash", key], value_type, override_values[key]) : not_found
       catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge) } if value.equal?(not_found)
-      break [key, assert_type('found', value_type, value)] unless value.equal?(not_found)
+      break [key, assert_type('Found value', value_type, value)] unless value.equal?(not_found)
       memo
     end
 
@@ -39,7 +39,7 @@ module Lookup
       default_values = lookup_invocation.default_values
       unless default_values.empty?
         result_with_name = names.reduce(result_with_name) do |memo, key|
-          value = default_values.include?(key) ? assert_type('default_values_hash', value_type, default_values[key]) : not_found
+          value = default_values.include?(key) ? assert_type(["Value found for key '%s' in default values hash", key], value_type, default_values[key]) : not_found
           memo = [key, value]
           break memo unless value.equal?(not_found)
           memo
@@ -50,9 +50,9 @@ module Lookup
     answer = result_with_name[1]
     if answer.equal?(not_found)
       if block_given?
-        answer = assert_type('default_block', value_type, yield(name))
+        answer = assert_type('Value returned from default block', value_type, yield(name))
       elsif has_default
-        answer = assert_type('default_value', value_type, default_value)
+        answer = assert_type('Default value', value_type, default_value)
       else
         fail_lookup(names)
       end
