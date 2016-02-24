@@ -38,8 +38,17 @@ EOF
 MANIFEST
 
         puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
+        on master, "cp #{puppetserver_config} #{scriptdir}/puppetserver.conf.bak"
         versioned_code_settings = {"versioned-code" => {"code-id-command" => "#{scriptdir}/code_id.sh", "code-content-command" => "#{scriptdir}/code_content.sh"}}
         modify_tk_config(master, puppetserver_config, versioned_code_settings)
+      end
+
+      def cleanup_puppetserver_code_id_scripts(master, scriptdir)
+        # These are -f so we don't bail on the teardown if for some reason they didn't get laid down
+        on master, "rm -f #{scriptdir}/code_id.sh"
+        on master, "rm -f #{scriptdir}/code_content.sh"
+        puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
+        on master, "cp #{scriptdir}/puppetserver.conf.bak #{puppetserver_config}"
       end
     end
   end
