@@ -27,7 +27,7 @@ class ValidatorFactory_4_0 < Factory
 
     p[Issues::FUTURE_RESERVED_WORD]          = :deprecation
 
-    p[Issues::DUPLICATE_KEY]                 = :warning
+    p[Issues::DUPLICATE_KEY]                 = Puppet[:strict]
     p[Issues::NAME_WITH_HYPHEN]              = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
     p
