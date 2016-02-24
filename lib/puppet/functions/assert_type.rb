@@ -71,16 +71,14 @@ Puppet::Functions.create_function(:assert_type, Puppet::Functions::InternalFunct
     unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
       inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value)
       if block_given?
-        # Give the inferred type to allow richer comparisson in the given block (if generalized
+        # Give the inferred type to allow richer comparison in the given block (if generalized
         # information is lost).
         #
         value = yield(type, inferred_type)
       else
-        # Do not give all the details - i.e. format as Integer, instead of Integer[n, n] for exact value, which
-        # is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output.
-        #
-        actual = Puppet::Pops::Types::TypeCalculator.generalize(inferred_type)
-        raise Puppet::Pops::Types::TypeAssertionError.new("assert_type(): Expected type #{type} does not match actual: #{actual}", type,actual)
+        raise Puppet::Pops::Types::TypeAssertionError.new(
+          Puppet::Pops::Types::TypeMismatchDescriber.singleton.describe_mismatch('assert_type():', type, inferred_type),
+          type, inferred_type)
       end
     end
     value
