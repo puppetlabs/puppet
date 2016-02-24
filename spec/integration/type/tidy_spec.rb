@@ -1,11 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'puppet_spec/compiler'
 require 'puppet_spec/files'
 require 'puppet/file_bucket/dipper'
 
 describe Puppet::Type.type(:tidy) do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   before do
     Puppet::Util::Storage.stubs(:store)
@@ -15,15 +17,12 @@ describe Puppet::Type.type(:tidy) do
     dir = tmpfile("tidy_testing")
     FileUtils.mkdir_p(File.join(dir, "foo", "bar"))
 
-    tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true, :rmdirs => true
-
-    catalog = Puppet::Resource::Catalog.new
-    catalog.add_resource(tidy)
-    # avoid crude failures because of nil resources that result
-    # from implicit containment and lacking containers
-    catalog.stubs(:container_of).returns tidy
-
-    catalog.apply
+    apply_compiled_manifest(<<-MANIFEST)
+      tidy { '#{dir}':
+        recurse => true,
+        rmdirs  => true,
+      }
+    MANIFEST
 
     expect(Puppet::FileSystem.directory?(dir)).to be_falsey
   end
@@ -36,15 +35,11 @@ describe Puppet::Type.type(:tidy) do
     Dir.mkdir(dir)
     Puppet::FileSystem.symlink(target, link)
 
-    tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true
-
-    catalog = Puppet::Resource::Catalog.new
-    catalog.add_resource(tidy)
-    # avoid crude failures because of nil resources that result
-    # from implicit containment and lacking containers
-    catalog.stubs(:container_of).returns tidy
-
-    catalog.apply
+    apply_compiled_manifest(<<-MANIFEST)
+      tidy { '#{dir}':
+        recurse => true,
+      }
+    MANIFEST
 
     expect(Puppet::FileSystem.symlink?(link)).to be_falsey
   end
