@@ -288,21 +288,21 @@ TREE
     it 'parses a dependency without a version range expression' do
       name, range, expr = subject.parse_module_dependency('source', 'name' => 'foo-bar')
       expect(name).to eql('foo-bar')
-      expect(range).to eql(Semantic::VersionRange.parse('>= 0.0.0'))
+      expect(range).to eql(SemanticPuppet::VersionRange.parse('>= 0.0.0'))
       expect(expr).to eql('>= 0.0.0')
     end
 
     it 'parses a dependency with a version range expression' do
       name, range, expr = subject.parse_module_dependency('source', 'name' => 'foo-bar', 'version_requirement' => '1.2.x')
       expect(name).to eql('foo-bar')
-      expect(range).to eql(Semantic::VersionRange.parse('1.2.x'))
+      expect(range).to eql(SemanticPuppet::VersionRange.parse('1.2.x'))
       expect(expr).to eql('1.2.x')
     end
 
     it 'does not raise an error on invalid version range expressions' do
       name, range, expr = subject.parse_module_dependency('source', 'name' => 'foo-bar', 'version_requirement' => 'nope')
       expect(name).to eql('foo-bar')
-      expect(range).to eql(Semantic::VersionRange::EMPTY_RANGE)
+      expect(range).to eql(SemanticPuppet::VersionRange::EMPTY_RANGE)
       expect(expr).to eql('nope')
     end
   end

@@ -5,7 +5,7 @@ require 'puppet/forge'
 require 'puppet/module_tool'
 
 module Puppet::ModuleTool
-  class LocalTarball < Semantic::Dependency::Source
+  class LocalTarball < SemanticPuppet::Dependency::Source
     attr_accessor :release
 
     def initialize(filename)
@@ -40,14 +40,14 @@ module Puppet::ModuleTool
       FileUtils.mv(staging_dir, module_dir)
     end
 
-    class ModuleRelease < Semantic::Dependency::ModuleRelease
+    class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
       attr_reader :mod, :install_dir, :metadata
 
       def initialize(source, mod)
         @mod = mod
         @metadata = mod.metadata
         name = mod.forge_name.tr('/', '-')
-        version = Semantic::Version.parse(mod.version)
+        version = SemanticPuppet::Version.parse(mod.version)
         release = "#{name}@#{version}"
 
         if mod.dependencies

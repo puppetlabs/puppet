@@ -157,12 +157,12 @@ module Puppet
     end
 
     # Handles parsing of module dependency expressions into proper
-    # {Semantic::VersionRange}s, including reasonable error handling.
+    # {SemanticPuppet::VersionRange}s, including reasonable error handling.
     #
     # @param where [String] a description of the thing we're parsing the
     #        dependency expression for
     # @param dep [Hash] the dependency description to parse
-    # @return [Array(String, Semantic::VersionRange, String)] an tuple of the
+    # @return [Array(String, SemanticPuppet::VersionRange, String)] an tuple of the
     #         dependent module's name, the version range dependency, and the
     #         unparsed range expression.
     def self.parse_module_dependency(where, dep)
@@ -170,10 +170,10 @@ module Puppet
       range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
-        parsed_range = Semantic::VersionRange.parse(range)
+        parsed_range = SemanticPuppet::VersionRange.parse(range)
       rescue ArgumentError => e
         Puppet.debug "Error in #{where} parsing dependency #{dep_name} (#{e.message}); using empty range."
-        parsed_range = Semantic::VersionRange::EMPTY_RANGE
+        parsed_range = SemanticPuppet::VersionRange::EMPTY_RANGE
       end
 
       [ dep_name, parsed_range, range ]
