@@ -34,11 +34,43 @@ describe "validating 4x" do
     expect(validate(fqn('::_aa').var())).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_VAR_NAME)
   end
 
-  it 'produces a warning for duplicate keyes in a literal hash' do
-    acceptor = validate(parse('{ a => 1, a => 2 }'))
-    expect(acceptor.warning_count).to eql(1)
-    expect(acceptor.error_count).to eql(0)
-    expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+  context 'with the default settings for --strict' do
+    it 'produces a warning for duplicate keyes in a literal hash' do
+      acceptor = validate(parse('{ a => 1, a => 2 }'))
+      expect(acceptor.warning_count).to eql(1)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+  end
+
+  context 'with --strict set to warning' do
+    before(:each) { Puppet[:strict] = :warning }
+    it 'produces a warning for duplicate keyes in a literal hash' do
+      acceptor = validate(parse('{ a => 1, a => 2 }'))
+      expect(acceptor.warning_count).to eql(1)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+  end
+
+  context 'with --strict set to error' do
+    before(:each) { Puppet[:strict] = :error }
+    it 'produces an error for duplicate keyes in a literal hash' do
+      acceptor = validate(parse('{ a => 1, a => 2 }'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+  end
+
+  context 'with --strict set to off' do
+    before(:each) { Puppet[:strict] = :off }
+    it 'produces an error for duplicate keyes in a literal hash' do
+      acceptor = validate(parse('{ a => 1, a => 2 }'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
   end
 
   context 'for non productive expressions' do
