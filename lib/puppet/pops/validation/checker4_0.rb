@@ -11,7 +11,7 @@ module Validation
 #       Model objects via their metamodel. (I.e an extra call to multiplicity check in polymorph check).
 #       This is however mostly valuable when validating model to model transformations, and is therefore T.B.D
 #
-class Checker4_0
+class Checker4_0 < Evaluator::LiteralEvaluator
   attr_reader :acceptor
   attr_reader :migration_checker
 
@@ -19,6 +19,7 @@ class Checker4_0
   # `:will_accept?` and `:accept`.
   #
   def initialize(diagnostics_producer)
+    super()
     @@check_visitor       ||= Visitor.new(nil, "check", 0, 0)
     @@rvalue_visitor      ||= Visitor.new(nil, "rvalue", 0, 0)
     @@hostname_visitor    ||= Visitor.new(nil, "hostname", 1, 2)
@@ -465,6 +466,17 @@ class Checker4_0
 
   def check_LiteralList(o)
     o.values.each {|v| rvalue(v) }
+  end
+
+  def check_LiteralHash(o)
+    # the keys of a literal hash may be non-literal expressions. They cannot be checked.
+    unique = Set.new
+    o.entries.each do |entry|
+      catch(:not_literal) do
+        literal_key = literal(entry.key)
+        acceptor.accept(Issues::DUPLICATE_KEY, entry, {:key => literal_key}) if unique.add?(literal_key).nil?
+      end
+    end
   end
 
   def check_NodeDefinition(o)
