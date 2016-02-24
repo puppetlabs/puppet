@@ -211,12 +211,9 @@ module Types
       a = actual
       multi = false
       if e.is_a?(Array)
-        # Use simple names when classes differ, or in other words, only include details
-        # when the classes are equal.
-        #
-        if a.is_a?(PTypeAliasType) || e.find { |t| t.class == a.class || t.is_a?(PTypeAliasType) }
+        if report_detailed?(e, a)
+          a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_s }
-          a = a.to_s
         else
           sns = e.map { |t| t.simple_name }.uniq
           e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
@@ -233,12 +230,12 @@ module Types
           multi = true
         end
       else
-        if e.class != a.class && !(e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType))
+        if report_detailed?(e, a)
+          a = detailed_actual_to_s(e, a)
+          e = e.to_s
+        else
           e = e.simple_name
           a = a.simple_name
-        else
-          e = e.to_s
-          a = a.to_s
         end
       end
       multi ? "#{variant}#{position} expects a value of type #{e}, got #{label(a)}" :  "#{variant}#{position} expects #{a_an(e)} value, got #{label(a)}"
@@ -246,6 +243,60 @@ module Types
 
     def label(o)
       o.to_s
+    end
+
+    private
+
+    # Decides whether or not the report must be fully detailed, or if generalization can be permitted
+    # in the mismatch report.
+    #
+    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # param a [PAnyType] the actual type
+    # @return [Boolean] `true` when aliases are used or when the class of _a_ equals the class _e_ or,
+    #   in case _e_ is an `Array`, the class of at least one element of _e_
+    def always_fully_detailed?(e, a)
+      if e.is_a?(Array)
+        e.any? { |t| always_fully_detailed?(t, a) }
+      else
+        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType)
+      end
+    end
+
+    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # param a [PAnyType] the actual type
+    # @return [Boolean] `true` when _a_ is assignable to _e_ or, in case _e_ is an `Array`,
+    #   to at least one element of _e_
+    def any_assignable?(e, a)
+      e.is_a?(Array) ? e.any? { |t| t.assignable?(a) } : e.assignable?(a)
+    end
+
+    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # param a [PAnyType] the actual type
+    # @return [Boolean] `true` when _a_ is assignable to the default generalization of _e_ or,
+    #   in case _e_ is an `Array`, to the default generalization of at least one element of _e_
+    def assignable_to_default?(e, a)
+      e.is_a?(Array) ? e.any? { |t| assignable_to_default?(t, a) } : e.class::DEFAULT.assignable?(a)
+    end
+
+    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # param a [PAnyType] the actual type
+    # @return [Boolean] `true` when either #always_fully_detailed or #assignable_to_default returns `true`
+    def report_detailed?(e, a)
+      always_fully_detailed?(e, a) || assignable_to_default?(e, a)
+    end
+
+    # Returns a string that either represents the generalized type _a_ or the type _a_ verbatim. The latter
+    # form is used when either #always_fully_detailed? or #any_assignable? returns `true`
+    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # param a [PAnyType] the actual type
+    # @return [String] The string representation of the type _a_ or generalized type _a_
+    def detailed_actual_to_s(e, a)
+      if always_fully_detailed?(e, a)
+        a.to_s
+      else
+        g = a.generalize
+        any_assignable?(e, g) ? a.to_s : g.to_s
+      end
     end
   end
 
