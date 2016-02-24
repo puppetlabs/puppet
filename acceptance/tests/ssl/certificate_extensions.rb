@@ -10,6 +10,7 @@ disable_pe_enterprise_mcollective_agent_classes
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
+  confine :except, :platform => /^cisco-/ # See PUP-5827
 
   agent_certnames = []
 
@@ -28,7 +29,7 @@ test_name "certificate extensions available as trusted data" do
       'environmentpath' => environments_dir,
     },
     'master' => {
-      'autosign' => true,
+      'autosign' => '/bin/true',
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
     }
   }

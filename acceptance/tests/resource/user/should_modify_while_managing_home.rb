@@ -1,5 +1,6 @@
 test_name "should modify a user without changing home directory (pending #19542)"
 confine :except, :platform => /^eos-/ # See ARISTA-37
+confine :except, :platform => /^cisco-/ # See PUP-5828
 
 require 'puppet/acceptance/windows_utils'
 extend Puppet::Acceptance::WindowsUtils

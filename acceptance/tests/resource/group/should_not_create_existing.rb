@@ -1,4 +1,5 @@
 test_name "group should not create existing group"
+confine :except, :platform => /^cisco-/ # See PUP-5828
 
 name = "gr#{rand(999999).to_i}"
 

@@ -1,4 +1,5 @@
 test_name "Puppet facts face should resolve custom and external facts"
+confine :except, :platform => /cisco-7/
 
 #
 # This test is intended to ensure that custom and external facts present

@@ -1,4 +1,5 @@
 test_name "Pluginsync'ed custom facts should be resolvable during application runs"
+confine :except, :platform => /cisco-5/
 
 #
 # This test is intended to ensure that custom facts downloaded onto an agent via

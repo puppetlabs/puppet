@@ -1,4 +1,5 @@
 test_name "should not create host if it exists"
+confine :except, :platform => /cisco-5/
 
 agents.each do |agent|
   file = agent.tmpfile('host-not-create-existing')

@@ -1,4 +1,6 @@
 test_name "Use environments from the environmentpath"
+confine :except, :platform => /^cisco-/
+
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 

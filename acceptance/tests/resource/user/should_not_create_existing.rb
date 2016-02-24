@@ -1,5 +1,6 @@
 test_name "tests that user resource will not add users that already exist."
 confine :except, :platform => /^eos-/ # See ARISTA-37
+confine :except, :platform => /^cisco-/ # See PUP-5828
 
 user  = "u#{rand(999999).to_i}"
 group = "g#{rand(999999).to_i}"

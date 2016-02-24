@@ -1,4 +1,5 @@
 test_name "file resource: set default modes"
+confine :except, :platform => /cisco-5/
 
 def regexp_mode(mode)
   Regexp.new("mode\s*=>\s*'0?#{mode}'")

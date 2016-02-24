@@ -1,4 +1,5 @@
 test_name 'PUP-2630 ensure $server_facts is set and warning is issued if any value is overwritten by an agent'
+confine :except, :platform => /^cisco-/
 
 step 'ensure :trusted_server_facts is false by default'
 on(master, puppet('master', '--configprint trusted_server_facts')) do |result|

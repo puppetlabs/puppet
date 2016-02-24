@@ -1,5 +1,6 @@
 test_name "file resource: symbolic modes"
 confine :except, :platform => /^eos-/ # See ARISTA-37
+confine :except, :platform => /cisco-5/
 confine :except, :platform => /^solaris-10/
 confine :except, :platform => /^windows/
 confine :to, {}, hosts.select { |host| ! host[:roles].include?('master') }

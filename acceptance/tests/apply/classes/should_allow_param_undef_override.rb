@@ -1,4 +1,5 @@
 test_name "should allow overriding a parameter to undef in inheritence"
+confine :except, :platform => /cisco-5/
 
 agents.each do |agent|
   dir = agent.tmpdir('class_undef_override')

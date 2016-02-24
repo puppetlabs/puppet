@@ -1,4 +1,6 @@
 test_name "puppet module uninstall (with module installed)"
+confine :except, :platform => /cisco-7/
+
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
