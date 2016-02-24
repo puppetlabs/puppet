@@ -1413,7 +1413,16 @@ EOT
       :default    => false,
       :type       => :boolean,
       :desc       => "Whether to sleep for a pseudo-random (but consistent) amount of time before
-        a run.",
+        a run.
+
+        For example, without `splay` enabled, your agent checks in every 30
+        minutes at :01 and :31 past the hour. After enabling `splay`, the agent
+        will wait the pseudorandom sleep time, say eight minutes, and then check
+        in every 30 minutes, at :09 and :39 after the hour. If you restart the
+        same agent at 12:45 PM, it will wait its eight minutes, and check in at
+        12:52 PM, and every 30 minutes after that, at 1:22 PM, 1:52 PM, and so
+        on. Other agents will have different sleep times, and so will check in
+        at different times even if they are all restarted at the same time.",
     },
     :clientbucketdir => {
       :default  => "$vardir/clientbucket",
