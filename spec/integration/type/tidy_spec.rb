@@ -11,6 +11,23 @@ describe Puppet::Type.type(:tidy) do
     Puppet::Util::Storage.stubs(:store)
   end
 
+  it "should be able to recursively remove directories" do
+    dir = tmpfile("tidy_testing")
+    FileUtils.mkdir_p(File.join(dir, "foo", "bar"))
+
+    tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true, :rmdirs => true
+
+    catalog = Puppet::Resource::Catalog.new
+    catalog.add_resource(tidy)
+    # avoid crude failures because of nil resources that result
+    # from implicit containment and lacking containers
+    catalog.stubs(:container_of).returns tidy
+
+    catalog.apply
+
+    expect(Puppet::FileSystem.directory?(dir)).to be_falsey
+  end
+
   # Testing #355.
   it "should be able to remove dead links", :if => Puppet.features.manages_symlinks? do
     dir = tmpfile("tidy_link_testing")
