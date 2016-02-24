@@ -1504,11 +1504,9 @@ class PArrayType < PCollectionType
   def _assignable?(o, guard)
     s_entry = element_type
     if o.is_a?(PTupleType)
-
-      # Tuple of anything can not be assigned (unless array is tuple of anything) - this case
-      # was handled at the top of this method.
-      #
-      return false if s_entry.nil?
+      # If s_entry is nil, this Array type has no opinion on element types. Therefore any
+      # tuple can be assigned.
+      return true if s_entry.nil?
 
       return false unless o.types.all? {|o_element_t| s_entry.assignable?(o_element_t, guard) }
       o_regular = o.types[0..-2]
