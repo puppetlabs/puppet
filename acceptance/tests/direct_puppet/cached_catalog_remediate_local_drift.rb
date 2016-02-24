@@ -20,6 +20,11 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
     setup_puppetserver_code_id_scripts(master, basedir)
   end
 
+  teardown do
+    cleanup_puppetserver_code_id_scripts(master, basedir)
+    on master, "rm -rf #{basedir}"
+  end
+
   step "Create a module and a file with content representing the first code_id version" do
     apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
     File {
