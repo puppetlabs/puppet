@@ -36,13 +36,10 @@ module TypeAsserter
   end
 
   def self.report_type_mismatch(subject, expected_type, actual_type)
-    # Do not give all the details for inferred types - i.e. format as Integer, instead of Integer[n, n] for exact
-    # value, which is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output).
-    #
     subject = yield(subject) if block_given?
     subject = subject[0] % subject[1..-1] if subject.is_a?(Array)
     raise TypeAssertionError.new(
-        "#{subject} value has wrong type, expected #{expected_type}, actual #{actual_type}", expected_type, actual_type)
+      TypeMismatchDescriber.singleton.describe_mismatch("#{subject} has wrong type,", expected_type, actual_type), expected_type, actual_type)
   end
   private_class_method :report_type_mismatch
 end

@@ -79,7 +79,7 @@ module Puppet::Pops
     # Create a new instance of this strategy configured with the given _options_
     # @param merge_options [Hash<String,Object>] Merge options
     def initialize(options)
-      assert_type('merge_options', options_t, options)
+      assert_type('The merge options', options_t, options)
       @options = options
     end
 
@@ -92,8 +92,8 @@ module Puppet::Pops
     #
     def merge(e1, e2)
       checked_merge(
-        assert_type('e1', value_t, e1),
-        assert_type('e2', value_t, e2))
+        assert_type('The first element of the merge', value_t, e1),
+        assert_type('The second element of the merge', value_t, e2))
     end
 
     # Merges the result of yielding the given _lookup_variants_ to a given block.

@@ -170,7 +170,7 @@ describe "when performing lookup" do
     it 'will not accept a succesful lookup of an undef value when the type rejects it' do
       expect do
         assemble_and_compile('${r}', "'abc::n'", 'String')
-      end.to raise_error(Puppet::ParseError, /found value has wrong type/)
+      end.to raise_error(Puppet::ParseError, /Found value has wrong type, expected a String value, got Undef/)
     end
 
     it 'will raise an exception when value is not found for array key and no default is provided' do
@@ -248,7 +248,8 @@ describe "when performing lookup" do
       it 'fails unless default is an instance of value_type' do
         expect do
           assemble_and_compile('${r[a]}_${r[b]}', "'abc::x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 32}")
-        end.to raise_error(Puppet::ParseError, /default_value value has wrong type/)
+        end.to raise_error(Puppet::ParseError,
+          /Default value has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a'=>String, 'b'=>Integer\}\]/)
       end
     end
 
@@ -281,7 +282,8 @@ describe "when performing lookup" do
       it 'fails unless block returns an instance of value_type' do
         expect do
           assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 32}", "'abc::x'", 'Hash[String,String]')
-        end.to raise_error(Puppet::ParseError, /default_block value has wrong type/)
+        end.to raise_error(Puppet::ParseError,
+          /Value returned from default block has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a'=>String, 'b'=>Integer\}\]/)
       end
 
       it 'receives a single name parameter' do

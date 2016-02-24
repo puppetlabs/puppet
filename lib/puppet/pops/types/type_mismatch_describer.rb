@@ -20,6 +20,12 @@ module Types
     alias :eql? :==
   end
 
+  class SubjectPathElement < TypePathElement
+    def to_s
+      key
+    end
+  end
+
   class MemberPathElement < TypePathElement
     def to_s
       "struct member #{key}"
@@ -392,6 +398,34 @@ module Types
       else
         raise Puppet::ParseError.new("#{subject}:\n #{errors.join("\n ")}")
       end
+    end
+
+    # Describe a confirmed mismatch using present tense
+    #
+    # @param name [String] name of mismatch
+    # @param expected [PAnyType] expected type
+    # @param actual [PAnyType] actual type
+    #
+    def describe_mismatch_present(name, expected, actual)
+      errors = describe(expected, actual, [SubjectPathElement.new(name)])
+      case errors.size
+      when 0
+        ''
+      when 1
+        errors[0].to_s.strip
+      else
+        errors.join("\n ")
+      end
+    end
+
+    # Describe a confirmed mismatch using past tense
+    #
+    # @param name [String] name of mismatch
+    # @param expected [PAnyType] expected type
+    # @param actual [PAnyType] actual type
+    #
+    def describe_mismatch(name, expected, actual)
+      describe_mismatch_present(name, expected, actual).gsub(/expects/, 'expected')
     end
 
     # @param subject [String] string to be prepended to the exception message

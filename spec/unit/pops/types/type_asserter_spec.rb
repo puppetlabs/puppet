@@ -8,19 +8,19 @@ describe 'the type asserter' do
   context 'when deferring formatting of subject'
   it 'can use an array' do
     expect{ asserter.assert_instance_of(['The %s in the %s', 'gizmo', 'gadget'], PIntegerType::DEFAULT, 'lens') }.to(
-    raise_error(TypeAssertionError, 'The gizmo in the gadget value has wrong type, expected Integer, actual String'))
+    raise_error(TypeAssertionError, 'The gizmo in the gadget has wrong type, expected an Integer value, got String'))
   end
 
   it 'can use an array obtained from block' do
     expect do
       asserter.assert_instance_of('gizmo', PIntegerType::DEFAULT, 'lens') { |s| ['The %s in the %s', s, 'gadget'] }
-    end.to(raise_error(TypeAssertionError, 'The gizmo in the gadget value has wrong type, expected Integer, actual String'))
+    end.to(raise_error(TypeAssertionError, 'The gizmo in the gadget has wrong type, expected an Integer value, got String'))
   end
 
   it 'can use an subject obtained from zero argument block' do
     expect do
       asserter.assert_instance_of(nil, PIntegerType::DEFAULT, 'lens') { 'The gizmo in the gadget' }
-    end.to(raise_error(TypeAssertionError, 'The gizmo in the gadget value has wrong type, expected Integer, actual String'))
+    end.to(raise_error(TypeAssertionError, 'The gizmo in the gadget has wrong type, expected an Integer value, got String'))
   end
 
   it 'does not produce a string unless the assertion fails' do
@@ -41,4 +41,3 @@ describe 'the type asserter' do
   end
 end
 end
-
