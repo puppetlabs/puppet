@@ -53,6 +53,7 @@ example is formatted for readability)
      "transaction_uuid"=>"df34516e-4050-402d-a166-05b03b940749",
      "code_id"=>null,
      "catalog_uuid"=>"827a74c8-cf98-44da-9ff7-18c5e4bee41e",
+     "catalog_format"=>1,
      "report_format"=>5,
      "puppet_version"=>"3.3.0",
      "kind"=>"apply",
