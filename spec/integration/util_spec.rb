@@ -108,4 +108,26 @@ describe Puppet::Util do
     actual_content = File.read(destination_file)
     expect(actual_content).to eq(expected_content)
   end
+
+  describe "#which on Windows", :if => Puppet.features.microsoft_windows? do
+    let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+    let (:filename) { 'foo.exe' }
+    let (:filepath) { File.expand_path('C:\\' + rune_utf8 + '\\' + filename) }
+
+    before :each do
+      FileTest.stubs(:file?).returns false
+      FileTest.stubs(:file?).with(filepath).returns true
+
+      FileTest.stubs(:executable?).returns false
+      FileTest.stubs(:executable?).with(filepath).returns true
+    end
+
+    it "should be able to use UTF8 characters in the path" do
+      path = "C:\\" + rune_utf8 + "#{File::PATH_SEPARATOR}c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows"
+      Puppet::Util.withenv( { "PATH" => path } , :windows) do
+        expect(Puppet::Util.which(filename)).to eq(filepath)
+      end
+    end
+  end
+
 end
