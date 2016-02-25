@@ -116,11 +116,25 @@ describe "Puppet defaults" do
   end
 
   describe "on a Windows-like platform it", :if => Puppet.features.microsoft_windows? do
-    it "should not add anything" do
+    require 'puppet/util/windows/process'
+
+    let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+
+    it "path should not add anything" do
       path = "c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows"
-      Puppet::Util.withenv("PATH" => path) do
+      Puppet::Util.withenv( {"PATH" => path }, :windows ) do
         Puppet.settings[:path] = "none" # this causes it to ignore the setting
         expect(ENV["PATH"]).to eq(path)
+      end
+    end
+
+    it "path should support UTF8 characters" do
+      path = "c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows#{File::PATH_SEPARATOR}C:\\" + rune_utf8
+      Puppet::Util.withenv( {"PATH" => path }, :windows) do
+        Puppet.settings[:path] = "none" # this causes it to ignore the setting
+
+        envhash = Puppet::Util::Windows::Process.get_environment_strings
+        expect(envhash['Path']).to eq(path)
       end
     end
   end
