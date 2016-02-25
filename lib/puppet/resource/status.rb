@@ -1,5 +1,6 @@
 require 'time'
 require 'puppet/network/format_support'
+require 'puppet/util/psych_support'
 
 module Puppet
   class Resource
@@ -11,6 +12,7 @@ module Puppet
     #
     # @api private
     class Status
+      include Puppet::Util::PsychSupport
       include Puppet::Util::Tagging
       include Puppet::Network::FormatSupport
 
@@ -181,7 +183,14 @@ module Puppet
         @failed = data['failed']
 
         @events = data['events'].map do |event|
-          Puppet::Transaction::Event.from_data_hash(event)
+          # in YAML (for reports) we serialize this as an object, but
+          # in PSON it becomes a hash. Depending on where we came from
+          # we might not need to deserialize it.
+          if event.class == Puppet::Transaction::Event
+            event
+          else
+            Puppet::Transaction::Event.from_data_hash(event)
+          end
         end
       end
 
@@ -194,7 +203,7 @@ module Puppet
           'resource_type' => @resource_type,
           'containment_path' => @containment_path,
           'evaluation_time' => @evaluation_time,
-          'tags' => @tags,
+          'tags' => @tags.to_a,
           'time' => @time.iso8601(9),
           'failed' => @failed,
           'changed' => @changed,
