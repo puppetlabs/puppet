@@ -44,16 +44,20 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
       '#{module_dir}/foo/files':;
     }
 
-    file { "site.pp":
+    file { "#{basedir}/environments/production/manifests/site.pp" :
       ensure => file,
-      path => "#{basedir}/environments/production/manifests/site.pp",
-      content => "node default { file { 'foo_file': ensure => file, path => '#{agent_test_file_path}', source => 'puppet:///modules/foo/foo.txt' } }",
       mode => "0640",
+      content => "node default {
+  file { 'foo_file':
+    ensure => file,
+    path => '#{agent_test_file_path}',
+    source => 'puppet:///modules/foo/foo.txt' 
+   }
+}",
     }
 
-    file { "foo_file":
+    file { "#{module_dir}/foo/files/foo.txt" :
       ensure => file,
-      path => "#{module_dir}/foo/files/foo.txt",
       content => "code_version_1",
       mode => "0640",
     }
@@ -62,8 +66,35 @@ MANIFEST
 
   with_puppet_running_on master, master_opts, basedir do
     agents.each do |agent|
+
       step "agent: #{agent}: Initial run: create the file with code version 1 and cache the catalog"
       on(agent, puppet("agent", "-t", "--server #{master}"), :acceptable_exit_codes => [0,2])
+
+      # When there is no drift, there should be no requeset made to the server
+      # for file metadata or file content.  A puppet run depending on 
+      # a non-server will fail if such a request is made.  Verify the agent
+      # sends a report.
+
+      step "Remove existing reports from server reports directory"
+      on(master, "rm -rf /opt/puppetlabs/server/data/puppetserver/reports/#{agent.hostname}/*")
+      r = on(master, "ls /opt/puppetlabs/server/data/puppetserver/reports/#{agent.hostname} | wc -l").stdout.chomp
+      assert_equal(r, '0', "reports directory should be empty!")
+
+      step "Verify puppet run without drift does not make file request from server"
+      r = on(agent, puppet("agent",
+        "--use_cached_catalog",
+        "--server", "no_such_host",
+        "--report_server", master.hostname,
+        "--onetime",
+        "--no-daemonize",
+        "--detailed-exitcodes",
+        "--verbose"
+      )).stderr
+      assert_equal(r, "", "Fail: Did agent try to contact server?")
+     
+      step "Verify report was delivered to server" 
+      r = on(master, "ls /opt/puppetlabs/server/data/puppetserver/reports/#{agent.hostname} | wc -l").stdout.chomp
+      assert_equal(r, '1', "Reports directory should have one file")
 
       step "agent: #{agent}: Remove the test file to simulate drift"
       on(agent, "rm -rf #{agent_test_file_path}")
