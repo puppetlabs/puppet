@@ -44,6 +44,10 @@ describe 'the regsubst function' do
     it 'should handle case insensitive flag' do
       expect(regsubst('the monkey breaks baNAna trees', 'b[an]+a', 'coconut', 'I')).to eql('the monkey breaks coconut trees')
     end
+
+    it 'should allow hash as replacement' do
+      expect(regsubst('tuto', '[uo]', { 'u' => 'o', 'o' => 'u' }, 'G')).to eql('totu')
+    end
   end
 
   context 'when using a regexp pattern' do
@@ -69,6 +73,10 @@ describe 'the regsubst function' do
 
     it 'should treat Regexp as Regexp[//]' do
       expect(regsubst('abc', type_parser.parse("Regexp"), '_', 'G')).to eql('_a_b_c_')
+    end
+
+    it 'should allow hash as replacement' do
+      expect(regsubst('tuto', /[uo]/, { 'u' => 'o', 'o' => 'u' }, 'G')).to eql('totu')
     end
   end
 

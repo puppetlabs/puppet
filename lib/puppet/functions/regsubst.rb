@@ -16,9 +16,10 @@
 # @param regexp [String|Regexp|Type[Regexp]]
 #      The regular expression matching the target string.  If you want it anchored at the start
 #      and or end of the string, you must do that with ^ and $ yourself.
-# @param replacement [String]
+# @param replacement [String|Hash[String, String]]
 #      Replacement string. Can contain backreferences to what was matched using \\0 (whole match),
 #      \\1 (first set of parentheses), and so on.
+#      If the second argument is a Hash, and the matched text is one of its keys, the corresponding value is the replacement string.
 # @param flags [String]
 #      Optional. String of single letter flags for how the regexp is interpreted (E, I, and M cannot be used
 #      if pattern is a precompiled regexp):
@@ -37,18 +38,18 @@
 #
 Puppet::Functions.create_function(:regsubst) do
   dispatch :regsubst_string do
-    param          'Variant[Array[String],String]',  :target
-    param          'String',                         :pattern
-    param          'String',                         :replacement
-    optional_param 'Optional[Pattern[/^[GEIM]*$/]]', :flags
-    optional_param "Enum['N','E','S','U']",          :encoding
+    param          'Variant[Array[String],String]',       :target
+    param          'String',                              :pattern
+    param          'Variant[String,Hash[String,String]]', :replacement
+    optional_param 'Optional[Pattern[/^[GEIM]*$/]]',      :flags
+    optional_param "Enum['N','E','S','U']",               :encoding
   end
 
   dispatch :regsubst_regexp do
-    param          'Variant[Array[String],String]',  :target
-    param          'Variant[Regexp,Type[Regexp]]',   :pattern
-    param          'String',                         :replacement
-    optional_param 'Pattern[/^G?$/]',                :flags
+    param          'Variant[Array[String],String]',       :target
+    param          'Variant[Regexp,Type[Regexp]]',        :pattern
+    param          'Variant[String,Hash[String,String]]', :replacement
+    optional_param 'Pattern[/^G?$/]',                     :flags
   end
 
   def regsubst_string(target, pattern, replacement, flags = nil, encoding = nil)
