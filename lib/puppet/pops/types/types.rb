@@ -114,6 +114,14 @@ class PAnyType < TypedModelObject
     false
   end
 
+  # Called from the `PTypeAliasType` when it detects self recursion. The default is to do nothing
+  # but some self recursive constructs are illegal such as when a `PObjectType` somehow inherits itself
+  # @param originator [PTypeAliasType] the starting point for the check
+  # @raise Puppet::Error if an illegal self recursion is detected
+  # @api private
+  def check_self_recursion(originator)
+  end
+
   # Generalizes value specific types. Types that are not value specific will return `self` otherwise
   # the generalized type is returned.
   #
@@ -1968,6 +1976,10 @@ class PTypeAliasType < PAnyType
     guarded_recursion(guard, false) { |g| resolved_type.callable_args?(callable, g) }
   end
 
+  def check_self_recursion(originator)
+    resolved_type.check_self_recursion(originator) unless originator.equal?(self)
+  end
+
   def kind_of_callable?(optional=true, guard = nil)
     guarded_recursion(guard, false) { |g| resolved_type.kind_of_callable?(optional, g) }
   end
@@ -2009,6 +2021,7 @@ class PTypeAliasType < PAnyType
         guard = RecursionGuard.new
         accept(NoopTypeAcceptor::INSTANCE, guard)
         @self_recursion = guard.recursive_this?(self)
+        @resolved_type.check_self_recursion(self) if @self_recursion
       rescue
         @resolved_type = nil
         raise
@@ -2057,6 +2070,138 @@ class PTypeAliasType < PAnyType
   end
 
   DEFAULT = PTypeAliasType.new('UnresolvedAlias', nil, PTypeReferenceType::DEFAULT)
+end
+
+class PObjectType < PAnyType
+  attr_reader :parent, :members
+
+  # @param parent [String,nil] The name of the parent type
+  # @param members [PStructType,nil] The struct expression that describes the members of this type
+  #
+  # @api public
+  def initialize(parent, members)
+    raise Puppet::Error, 'An Object can only inherit from a Type' unless parent.nil? || parent.is_a?(PAnyType)
+    @parent = parent
+
+    if members.nil?
+      members = PStructType::DEFAULT if members.nil?
+    else
+      unless members.is_a?(PStructType)
+        raise Puppet::Error, 'The members (e.g. attributes or functions) of an Object must be represented by a Struct'
+      end
+
+      # Assert that each key pair is valid
+      rp = resolved_parent
+      parent_hash = rp.is_a?(PObjectType) ? rp.members(true).hashed_elements : {}
+      members.each do |e|
+        name = e.name
+        parent_member = parent_hash[name]
+        unless parent_member.nil? || parent_member.value_type.assignable?(e.value_type)
+          raise Puppet::Error,
+            "The member (e.g. attribute or function) '#{name}' redefines inherited member to a type that does not match"
+        end
+        TypeAsserter.assert_assignable('Member (e.g. attribute or function) key', MEMBER_NAME_TYPE, e.key_type)
+      end
+    end
+    @members = members
+  end
+
+  def accept(visitor, guard)
+    super
+    @parent.accept(visitor, guard) unless parent.nil?
+    @members.accept(visitor, guard)
+  end
+
+  def callable_args?(callable, guard)
+    @parent.nil? ? false : @parent.callable_args?(optional, guard)
+  end
+
+  def ==(o)
+    self.class == o.class && @parent == o.parent && @members == o.members
+  end
+
+  def hash
+    @parent.hash * 17 + @members.hash
+  end
+
+  def kind_of_callable?(optional=true, guard = nil)
+    @parent.nil? ? false : @parent.kind_of_callable(optional, guard)
+  end
+
+  def instance?(o)
+    assignable(TypeCalculator.infer(o))
+  end
+
+  def iterable?(guard = nil)
+    @parent.nil? ? false : @parent.iterable?(optional, guard)
+  end
+
+  def iterable_type(guard = nil)
+    @parent.nil? ? false : @parent.iterable_type(guard)
+  end
+
+  # Returns the members of this `Object` type. If _include_parent_members_ is `true`, then all
+  # inherited members will be included in the returned `Struct`.
+  #
+  # @param include_parent_members [Boolean] `true` if inherited members should be included
+  # @return [PStructType] the Struct that represents the members
+  # @api public
+  def members(include_parent_members = false)
+    if include_parent_members && !@parent.nil?
+      all = {}
+      collect_members(all)
+      PStructType.new(all.values)
+    else
+      @members
+    end
+  end
+
+  MEMBER_NAME_TYPE = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
+  DEFAULT = PObjectType.new(nil, nil)
+
+  # @api private
+  def collect_members(collector)
+    parent = resolved_parent
+    parent.collect_members(collector) if parent.is_a?(PObjectType)
+    collector.merge!(@members.hashed_elements)
+    nil
+  end
+
+  # Assert that this type does not inherit from itself
+  # @api private
+  def check_self_recursion(originator)
+    unless @parent.nil?
+      raise Puppet::Error, "The Object type aliased by '#{originator}' inherits from itself" if @parent.equal?(originator)
+      @parent.check_self_recursion(originator)
+    end
+  end
+
+  protected
+
+  # An Object type is only assignable from another Object type. The other type
+  # or one of its parents must be equal to this type.
+  def _assignable?(o, guard)
+    if self == o
+      true
+    else
+      if o.is_a?(PObjectType)
+        op = o.parent
+        op.nil? ? false : assignable?(op, guard)
+      else
+        false
+      end
+    end
+  end
+
+  private
+
+  def resolved_parent
+    parent = @parent
+    while(parent.is_a?(PTypeAliasType))
+      parent = parent.resolved_type
+    end
+    parent
+  end
 end
 end
 end

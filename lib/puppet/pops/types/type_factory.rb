@@ -110,7 +110,7 @@ module TypeFactory
   # The value can be a ruby class, a String (interpreted as the name of a ruby class) or
   # a Type.
   #
-  # @param hash [Hash<Object, Object>] key => value hash
+  # @param hash [{String,PAnyType=>PAnyType}] key => value hash
   # @return [PStructType] the created Struct type
   #
   def self.struct(hash = {})
@@ -146,6 +146,18 @@ module TypeFactory
       PStructElement.new(key_type, value_type)
     end
     PStructType.new(elements)
+  end
+
+  # Produces an `Object` type with from the given inherited _parent_ and a _hash_ that represent the members
+  # of this type. The hash follows the same semantics as the hash used when creating a struct but all keys
+  # in the hash must be non-empty strings.
+  #
+  # @param parent [PAnyType] The type that the new type inherits from
+  # @param hash [{String=>PAnyType}] the members hash
+  # @return [PObjectType] the created type
+  #
+  def self.object(parent = nil, hash = {})
+    PObjectType.new(parent, struct(hash))
   end
 
   def self.tuple(types = [], size_type = nil)

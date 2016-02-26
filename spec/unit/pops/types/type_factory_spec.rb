@@ -59,6 +59,10 @@ describe 'The type factory' do
       expect(Puppet::Pops::Types::TypeFactory.struct().class()).to eq(Puppet::Pops::Types::PStructType)
     end
 
+    it "object() returns PObjectType" do
+      expect(Puppet::Pops::Types::TypeFactory.object.class).to eq(Puppet::Pops::Types::PObjectType)
+    end
+
     it 'tuple() returns PTupleType' do
       expect(Puppet::Pops::Types::TypeFactory.tuple.class()).to eq(Puppet::Pops::Types::PTupleType)
     end
@@ -173,6 +177,20 @@ describe 'The type factory' do
       expect(t.size_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       expect(t.size_type.from).to eq(1)
       expect(t.size_type.to).to eq(2)
+    end
+
+    context 'when producing object types' do
+      it "creates an Object with a members struct based on a Hash" do
+        t = Puppet::Pops::Types::TypeFactory.object(nil, {'a'=>Integer, 'b'=>String})
+        expect(t.members).to be_a(Puppet::Pops::Types::PStructType)
+      end
+
+      it "creates an Object with from a parent type and and a Hash" do
+        super_t = Puppet::Pops::Types::TypeFactory.object(nil, {'a'=>Integer, 'b'=>String})
+        t = Puppet::Pops::Types::TypeFactory.object(super_t, {'c'=>Integer, 'd'=>String})
+        expect(t.parent).to equal(super_t)
+        expect(t.members).to be_a(Puppet::Pops::Types::PStructType)
+      end
     end
 
     context 'callable types' do
