@@ -8,7 +8,6 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))
   module_dir = "#{basedir}/environments/production/modules"
   modulepath = "#{module_dir}"
-  agent_test_file_path = agent.tmpfile('foo_file')
 
   master_opts = {
    'main' => {
@@ -43,25 +42,36 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
       '#{module_dir}/foo':;
       '#{module_dir}/foo/files':;
     }
-
-    file { "site.pp":
-      ensure => file,
-      path => "#{basedir}/environments/production/manifests/site.pp",
-      content => "node default { file { 'foo_file': ensure => file, path => '#{agent_test_file_path}', source => 'puppet:///modules/foo/foo.txt' } }",
-      mode => "0640",
-    }
-
-    file { "foo_file":
-      ensure => file,
-      path => "#{module_dir}/foo/files/foo.txt",
-      content => "code_version_1",
-      mode => "0640",
-    }
 MANIFEST
   end
 
   with_puppet_running_on master, master_opts, basedir do
     agents.each do |agent|
+      agent_test_file_path = agent.tmpfile('foo_file')
+
+      step "Add test file resource to site.pp on master with agent-specific file path" do
+        apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
+        File {
+          owner => #{master.puppet['user']},
+          group => #{master.puppet['group']},
+        }
+
+        file { "site.pp":
+          ensure => file,
+          path => "#{basedir}/environments/production/manifests/site.pp",
+          content => "node default { file { 'foo_file': ensure => file, path => '#{agent_test_file_path}', source => 'puppet:///modules/foo/foo.txt' } }",
+          mode => "0640",
+        }
+
+        file { "foo_file":
+          ensure => file,
+          path => "#{module_dir}/foo/files/foo.txt",
+          content => "code_version_1",
+          mode => "0640",
+        }
+MANIFEST
+      end
+
       step "agent: #{agent}: Initial run: create the file with code version 1 and cache the catalog"
       on(agent, puppet("agent", "-t", "--server #{master}"), :acceptable_exit_codes => [0,2])
 
