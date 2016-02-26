@@ -28,7 +28,7 @@ describe 'the assert_type function' do
   it 'checks that first argument is a type' do
     expect do
       func.call({}, 10, 10)
-    end.to raise_error(ArgumentError, "'assert_type' expected one of:
+    end.to raise_error(ArgumentError, "'assert_type' expects one of:
   (Type type, Any value, Callable[Type, Type] block?)
     rejected: parameter 'type' expects a Type value, got Integer
   (String type_string, Any value, Callable[Type, Type] block?)
