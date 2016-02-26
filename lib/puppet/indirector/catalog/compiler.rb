@@ -140,8 +140,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     environment_path = Pathname.new File.join(Puppet[:environmentpath], catalog.environment, "")
     list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
 
-    # TODO: get property/parameter defaults if entries are nil in the resource
-    # For now they're hard-coded to match the File type.
+    defaults_resource = Puppet::Type.type(:file).new(:name => '/defaults')
+    links_default = defaults_resource[:links]
+    source_permissions_default = defaults_resource[:source_permissions]
 
     file_metadata = {}
     list_of_resources.each do |resource|
@@ -153,9 +154,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         # Construct a hash mapping sources to arrays (list of files found recursively) of metadata
         options = {
           :environment        => catalog.environment_instance,
-          :links              => resource[:links] ? resource[:links].to_sym : :manage,
+          :links              => resource[:links] ? resource[:links].to_sym : links_default,
           :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
-          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore,
+          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : source_permissions_default,
           :recurse            => true,
           :recurselimit       => resource[:recurselimit],
           :ignore             => resource[:ignore],
@@ -200,9 +201,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       else
         options = {
           :environment        => catalog.environment_instance,
-          :links              => resource[:links] ? resource[:links].to_sym : :manage,
+          :links              => resource[:links] ? resource[:links].to_sym : links_default,
           :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
-          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore
+          :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : source_permissions_default
         }
 
         metadata = nil
