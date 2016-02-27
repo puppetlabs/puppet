@@ -433,7 +433,8 @@ describe Puppet::Util do
       end
 
       it "should walk the search PATH returning the first executable" do
-        ENV.stubs(:[]).with('PATH').returns(File.expand_path('/bin'))
+        Puppet::Util.stubs(:get_env).with('PATH').returns(File.expand_path('/bin'))
+        Puppet::Util.stubs(:get_env).with('PATHEXT').returns(nil)
 
         expect(Puppet::Util.which('foo')).to eq(path)
       end
@@ -449,11 +450,11 @@ describe Puppet::Util do
 
       describe "when a file extension is specified" do
         it "should walk each directory in PATH ignoring PATHEXT" do
-          ENV.stubs(:[]).with('PATH').returns(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+          Puppet::Util.stubs(:get_env).with('PATH').returns(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+          Puppet::Util.stubs(:get_env).with('PATHEXT').returns('.FOOBAR')
 
           FileTest.expects(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).returns false
 
-          ENV.expects(:[]).with('PATHEXT').never
           expect(Puppet::Util.which('foo.CMD')).to eq(path)
         end
       end
@@ -461,8 +462,8 @@ describe Puppet::Util do
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
           bar = File.expand_path('/bar')
-          ENV.stubs(:[]).with('PATH').returns("#{bar}#{File::PATH_SEPARATOR}#{base}")
-          ENV.stubs(:[]).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
+          Puppet::Util.stubs(:get_env).with('PATH').returns("#{bar}#{File::PATH_SEPARATOR}#{base}")
+          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
 
           exts = sequence('extensions')
           FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.EXE')).returns false
@@ -474,8 +475,8 @@ describe Puppet::Util do
         end
 
         it "should walk the default extension path if the environment variable is not defined" do
-          ENV.stubs(:[]).with('PATH').returns(base)
-          ENV.stubs(:[]).with('PATHEXT').returns(nil)
+          Puppet::Util.stubs(:get_env).with('PATH').returns(base)
+          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(nil)
 
           exts = sequence('extensions')
           %w[.COM .EXE .BAT].each do |ext|
@@ -487,8 +488,8 @@ describe Puppet::Util do
         end
 
         it "should fall back if no extension matches" do
-          ENV.stubs(:[]).with('PATH').returns(base)
-          ENV.stubs(:[]).with('PATHEXT').returns(".EXE")
+          Puppet::Util.stubs(:get_env).with('PATH').returns(base)
+          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(".EXE")
 
           FileTest.stubs(:file?).with(File.join(base, 'foo.EXE')).returns false
           FileTest.stubs(:file?).with(File.join(base, 'foo')).returns true

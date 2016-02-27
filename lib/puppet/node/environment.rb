@@ -458,8 +458,8 @@ class Puppet::Node::Environment
   private
 
   def self.extralibs()
-    if ENV["PUPPETLIB"]
-      split_path(ENV["PUPPETLIB"])
+    if Puppet::Util.get_env("PUPPETLIB")
+      split_path(Puppet::Util.get_env("PUPPETLIB"))
     else
       []
     end

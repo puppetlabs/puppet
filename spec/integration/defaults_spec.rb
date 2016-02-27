@@ -116,8 +116,6 @@ describe "Puppet defaults" do
   end
 
   describe "on a Windows-like platform it", :if => Puppet.features.microsoft_windows? do
-    require 'puppet/util/windows/process'
-
     let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
 
     it "path should not add anything" do

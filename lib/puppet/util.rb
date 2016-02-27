@@ -25,6 +25,130 @@ module Util
 
   extend Puppet::Util::SymbolicFileMode
 
+  public
+  # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
+  require 'puppet/util/windows/process' if !!File::ALT_SEPARATOR
+
+  public
+
+  # @param name [String] The name of the environment variable to retrieve
+  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @return [String] Value of the specified environment variable.  nil if it does not exist
+  # @api public
+  def self.get_env(name, mode = nil)
+    if mode.nil?
+      if Puppet.features.microsoft_windows?
+        mode = :windows
+      else
+        mode = :posix
+      end
+    end
+
+    if mode == :windows
+      Puppet::Util::Windows::Process.get_environment_strings.each do |key, value |
+        if name.casecmp(key) == 0 then
+          return value
+        end
+      end
+      return nil
+    else
+      ENV[name]
+    end
+  end
+
+  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @return [Hash] A hashtable of all environment variables
+  # @api public
+  def self.get_environment(mode = nil)
+    if mode.nil?
+      if Puppet.features.microsoft_windows?
+        mode = :windows
+      else
+        mode = :posix
+      end
+    end
+
+    case mode
+      when :posix
+        ENV.to_hash
+      when :windows
+        Puppet::Util::Windows::Process.get_environment_strings
+      else
+        raise "Unable to retrieve the environment for mode #{mode}"
+    end
+  end
+
+  # Removes all environment variables
+  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @api public
+  def self.clear_environment(mode = nil)
+    if mode.nil?
+      if Puppet.features.microsoft_windows?
+        mode = :windows
+      else
+        mode = :posix
+      end
+    end
+
+    case mode
+      when :posix
+        ENV.clear
+      when :windows
+        Puppet::Util::Windows::Process.get_environment_strings.each do |key, _|
+          Puppet::Util::Windows::Process.set_environment_variable(key, nil)
+        end
+      else
+        raise "Unable to clear the environment for mode #{mode}"
+    end
+  end
+
+  # @param name [String] The name of the environment variable to set
+  # @param value [String] The value to set the variable to.  nil deletes the environment variable
+  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @api public
+  def self.set_env(name,value = nil,mode = nil)
+    if mode.nil?
+      if Puppet.features.microsoft_windows?
+        mode = :windows
+      else
+        mode = :posix
+      end
+    end
+
+    case mode
+      when :posix
+        ENV[name] = value
+      when :windows
+        Puppet::Util::Windows::Process.set_environment_variable(name,value)
+      else
+        raise "Unable to set the environment variable #{name} for mode #{mode}"
+    end
+  end
+
+  # @param name [Hash] Environment variables to merge into the existing environment.  nil values will remove the variable
+  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @api public
+  def self.merge_environment(env_hash, mode = :nil)
+    if mode.nil?
+      if Puppet.features.microsoft_windows?
+        mode = :windows
+      else
+        mode = :posix
+      end
+    end
+
+    case mode
+      when :posix
+        env_hash.each { |name, val| ENV[name.to_s] = val }
+      when :windows
+        env_hash.each do |name, val|
+          Puppet::Util::Windows::Process.set_environment_variable(name.to_s, val)
+        end
+      else
+        raise "Unable to merge given values into the current environment for mode #{mode}"
+    end
+  end
+
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
   # Windows can store unicode chars in the environment as keys or values, but
@@ -42,49 +166,6 @@ module Util
     end
   end
 
-  private
-  # @api private
-  def self.get_environment(mode = :posix)
-    case mode
-      when :posix
-        ENV.to_hash
-      when :windows
-        Puppet::Util::Windows::Process.get_environment_strings
-      else
-        raise "Unable to retrieve the environment for mode #{mode}"
-    end
-  end
-
-  # env_hash may contain both string and symbol keys
-  # @api private
-  def self.merge_environment(env_hash, mode = :posix)
-    case mode
-      when :posix
-        env_hash.each { |name, val| ENV[name.to_s] = val }
-      when :windows
-        env_hash.each do |name, val|
-          Puppet::Util::Windows::Process.set_environment_variable(name.to_s, val)
-        end
-      else
-        raise "Unable to merge given values into the current environment for mode #{mode}"
-    end
-  end
-
-  # @api private
-  def self.clear_environment(mode = :posix)
-    case mode
-      when :posix
-        ENV.clear
-      when :windows
-        Puppet::Util::Windows::Process.get_environment_strings.each do |key, _|
-          Puppet::Util::Windows::Process.set_environment_variable(key, nil)
-        end
-      else
-        raise "Unable to clear the environment for mode #{mode}"
-    end
-  end
-
-  public
   # Execute a given chunk of code with a new umask.
   def self.withumask(mask)
     cur = File.umask(mask)
@@ -192,14 +273,16 @@ module Util
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
-      ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
+      exts = Puppet::Util.get_env('PATHEXT')
+      exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
+      Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR).each do |dir|
         begin
           dest = File.expand_path(File.join(dir, bin))
         rescue ArgumentError => e
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
+          if e.to_s =~ /HOME/ and (Puppet::Util.get_env('HOME').nil? || Puppet::Util.get_env('HOME') == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
             Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
@@ -211,8 +294,6 @@ module Util
           end
         else
           if Puppet.features.microsoft_windows? && File.extname(dest).empty?
-            exts = ENV['PATHEXT']
-            exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
             exts.each do |ext|
               destext = File.expand_path(dest + ext)
               return destext if FileTest.file? destext and FileTest.executable? destext
