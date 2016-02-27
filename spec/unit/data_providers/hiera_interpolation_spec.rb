@@ -13,7 +13,7 @@ describe "Puppet::DataProviders::HieraInterpolate" do
   context 'when interpolating nested data' do
     let(:nested_hash) { { 'a' => { 'aa' => "%{alias('aaa')}" } } }
 
-    it 'should should produce an empty string for the interpolation' do
+    it 'produces a nested hash with arrays from nested aliases with hashes and arrays' do
       Puppet::Pops::Lookup.expects(:lookup).with('aaa', nil, '', true, nil, lookup_invocation).returns({ 'b' => { 'bb' => "%{alias('bbb')}" } })
       Puppet::Pops::Lookup.expects(:lookup).with('bbb', nil, '', true, nil, lookup_invocation).returns([ "%{alias('ccc')}" ])
       Puppet::Pops::Lookup.expects(:lookup).with('ccc', nil, '', true, nil, lookup_invocation).returns('text')
@@ -30,7 +30,7 @@ describe "Puppet::DataProviders::HieraInterpolate" do
     let(:whitespace1) {'%{ :: }'}
     let(:whitespace2) {'%{   }'}
 
-    it 'should should produce an empty string for the interpolation' do
+    it 'should produce an empty string for the interpolation' do
       expect(interpolator.interpolate(empty_interpolation, lookup_invocation, true)).to eq('clownshoe')
     end
 
