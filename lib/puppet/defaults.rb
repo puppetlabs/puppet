@@ -245,11 +245,11 @@ module Puppet
           be set in `[master]`, `[agent]`, or an environment config section.",
         :call_hook => :on_define_and_write,
         :hook             => proc do |value|
-          ENV["PATH"] = "" if ENV["PATH"].nil?
-          ENV["PATH"] = value unless value == "none"
-          paths = ENV["PATH"].split(File::PATH_SEPARATOR)
+          Puppet::Util.set_env('PATH', '') if Puppet::Util.get_env('PATH').nil?
+          Puppet::Util.set_env('PATH', value) unless value == 'none'
+          paths = Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR)
           Puppet::Util::Platform.default_paths.each do |path|
-            ENV["PATH"] += File::PATH_SEPARATOR + path unless paths.include?(path)
+            Puppet::Util.set_env('PATH', Puppet::Util.get_env('PATH') + File::PATH_SEPARATOR + path) unless paths.include?(path)
           end
           value
         end

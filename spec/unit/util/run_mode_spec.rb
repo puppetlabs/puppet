@@ -301,11 +301,11 @@ describe Puppet::Util::RunMode do
   end
 
   def without_env(name, &block)
-    saved = ENV[name]
-    ENV.delete name
+    saved = Puppet::Util.get_env(name)
+    Puppet::Util.set_env(name, nil)
     yield
   ensure
-    ENV[name] = saved
+    Puppet::Util.set_env(name, saved)
   end
 
   def without_home(&block)
