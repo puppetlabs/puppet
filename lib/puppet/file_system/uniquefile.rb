@@ -156,7 +156,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     if $SAFE > 0
       tmp = @@systmpdir
     else
-      for dir in [ENV['TMPDIR'], ENV['TMP'], ENV['TEMP'], @@systmpdir, '/tmp']
+      for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
         if dir and stat = File.stat(dir) and stat.directory? and stat.writable?
           tmp = dir
           break
