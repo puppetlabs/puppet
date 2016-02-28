@@ -55,23 +55,38 @@ class Puppet::Resource::TypeCollection
   end
 
   def add(instance)
-    if instance.type == :hostclass and other = @hostclasses[instance.name] and other.type == :hostclass
-      other.merge(instance)
-      return other
-    end
-    method = "add_#{instance.type}"
-    send(method, instance)
-    instance.resource_type_collection = self
-    instance
+    # return a merged instance, or the given
+    result = catch(:merged) {
+      send("add_#{instance.type}", instance)
+      instance.resource_type_collection = self
+      instance
+    }
   end
 
   def add_hostclass(instance)
+    handle_hostclass_merge(instance)
     dupe_check(instance, @hostclasses) { |dupe| "Class '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
     dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
     dupe_check(instance, @applications) { |dupe| "Application '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
 
     @hostclasses[instance.name] = instance
     instance
+  end
+
+  def handle_hostclass_merge(instance)
+    if instance.type == :hostclass && (other = @hostclasses[instance.name]) && other.type == :hostclass
+      unless instance.name == ''
+        case Puppet[:strict]
+        when :warning
+          Puppet.warning("Class '#{instance.name}' is already defined#{other.error_context}; cannot redefine at #{instance.file}:#{instance.line}") 
+        when :error
+          # returning means a merge (with throw) is not performed, that will then trigger a duplication check with error.
+          return instance
+        end
+      end
+      other.merge(instance)
+      throw :merged, other
+    end
   end
 
   def hostclass(name)
