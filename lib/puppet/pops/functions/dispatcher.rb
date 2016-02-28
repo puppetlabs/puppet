@@ -49,7 +49,7 @@ class Puppet::Pops::Functions::Dispatcher
     add(Puppet::Pops::Functions::Dispatch.new(type, method_name, param_names, block_name, injections, weaving, last_captures))
   end
 
-  # Adds a dispatch directly to the set of dispathers.
+  # Adds a dispatch directly to the set of dispatchers.
   # @api private
   def add(a_dispatch)
     @dispatchers << a_dispatch
