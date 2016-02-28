@@ -11,7 +11,6 @@ class E4ParserAdapter
     @file = ''
     @string = ''
     @use = :unspecified
-    @@evaluating_parser ||= Pops::Parser::EvaluatingParser.new()
   end
 
   def file=(file)
@@ -21,15 +20,15 @@ class E4ParserAdapter
 
   def parse(string = nil)
     self.string= string if string
-
+    parser = Pops::Parser::EvaluatingParser.singleton
     parse_result =
     if @use == :string
       # Parse with a source_file to set in created AST objects (it was either given, or it may be unknown
       # if caller did not set a file and the present a string.
       #
-      @@evaluating_parser.parse_string(@string, @file || "unknown-source-location")
+      parser.parse_string(@string, @file || "unknown-source-location")
     else
-      @@evaluating_parser.parse_file(@file)
+      parser.parse_file(@file)
     end
 
     # the parse_result may be
