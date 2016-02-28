@@ -35,6 +35,22 @@ describe provider_class do
     it { is_expected.to be_virtual_packages }
   end
 
+  describe "default provider" do
+    before do
+      Facter.expects(:value).with(:operatingsystem).returns("fedora")
+    end
+
+    it "should be the default provider on Fedora 22" do
+      Facter.expects(:value).with(:operatingsystemmajrelease).returns('22')
+      expect(described_class.default?).to be_truthy
+    end
+
+    it "should be the default provider on Fedora 23" do
+      Facter.expects(:value).with(:operatingsystemmajrelease).returns('23')
+      expect(described_class.default?).to be_truthy
+    end
+  end
+
   # provider should repond to the following methods
    [:install, :latest, :update, :purge, :install_options].each do |method|
      it "should have a(n) #{method}" do

@@ -211,14 +211,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       e = s[0,ei]
       s = s[ei+1,s.length]
     else
-      e = '0'
+      e = nil
     end
-    begin
-      e = String(Integer(e))
-    rescue ArgumentError
-      # If there are non-digits in the epoch field, default to 0
-      e = '0'
-    end
+    e = String(Bignum(e)) rescue '0'
     ri = s.index('-')
     if ri
       v = s[0,ri]
