@@ -493,6 +493,34 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(catalog.recursive_metadata).to be_empty
     end
 
+    it "uses file parameters which match the true file type defaults" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}'
+        }
+      MANIFEST
+
+      if Puppet::Util::Platform.windows?
+        default_file = Puppet::Type.type(:file).new(:name => 'C:\defaults')
+      else
+        default_file = Puppet::Type.type(:file).new(:name => '/defaults')
+      end
+
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+
+      options = {
+        :environment => catalog.environment_instance,
+        :links => default_file[:links],
+        :checksum_type => checksum_type.to_sym,
+        :source_permissions => default_file[:source_permissions]
+      }
+
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, options).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+    end
+
     it "inlines metadata for the first source found" do
       alt_source = 'puppet:///modules/files/other.txt'
       catalog = compile_to_catalog(<<-MANIFEST, node)
