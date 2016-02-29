@@ -504,29 +504,32 @@ class Puppet::Parser::Scope
   end
 
   UNDEFINED_VARIABLES_KIND = 'undefined_variables'.freeze
+  DEPRECATION_KIND = 'deprecation'.freeze
+
+  # The exception raised when a throw is uncaught is different in different versions
+  # of ruby. In >=2.2.0 it is UncaughtThrowError (which did not exist prior to this)
+  #
+  UNCAUGHT_THROW_EXCEPTION = defined?(UncaughtThrowError) ? UncaughtThrowError : ArgumentError
 
   def variable_not_found(name, reason=nil)
-    # Built in variables always exist
-    if BUILT_IN_VARS.include?(name)
+    # Built in variables and numeric variables always exist
+    if BUILT_IN_VARS.include?(name) || name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       return nil
     end
-    if Puppet[:strict_variables]
+    begin
       throw(:undefined_variable, reason)
-    else
-      # Always warn, unfortunately without location (unless given in "reason") since
-      # a location is in most cases not given to scope (operator [], and lookupvar), and
-      # would be too expensive to always give.
-      # The ideal solution would be to always throw :undefined_variable, but that has to
-      # wait until a major release. It would then force all callers of scope to deal with
-      # the case of :undefined_variable. (Should check with include? first or catch the throw).
-      # Use deprecation warning to enable turning off these warnings, and to ensure each variable
-      # is only logged once.
-      unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
+    rescue  UNCAUGHT_THROW_EXCEPTION
+      case Puppet[:strict]
+      when :off
+        # do nothing
+      when :warning
         Puppet.warn_once(UNDEFINED_VARIABLES_KIND, "Variable: #{name}",
-          "Undefined variable '#{name}'; #{reason}" )
+        "Undefined variable '#{name}'; #{reason}" )
+      when :error
+        raise ArgumentError, "Undefined variable '#{name}'; #{reason}"
       end
-      nil
     end
+    nil
   end
 
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,

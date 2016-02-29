@@ -72,6 +72,24 @@ describe "Defaults" do
 
   end
 
+  describe 'strict' do
+    it 'should accept the valid value :off' do
+      expect {Puppet.settings[:strict] = 'off'}.to_not raise_exception
+    end
+
+    it 'should accept the valid value :warning' do
+      expect {Puppet.settings[:strict] = 'warning'}.to_not raise_exception
+    end
+
+    it 'should accept the valid value :error' do
+      expect {Puppet.settings[:strict] = 'error'}.to_not raise_exception
+    end
+
+    it 'should fail if given an invalid value' do
+      expect {Puppet.settings[:strict] = 'ignore'}.to raise_exception(/Invalid value 'ignore' for parameter strict\./)
+    end
+  end
+
   describe 'supported_checksum_types' do
     it 'should default to md5,sha256' do
       expect(Puppet.settings[:supported_checksum_types]).to eq(['md5', 'sha256'])

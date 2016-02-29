@@ -121,6 +121,30 @@ module Puppet
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
         end
       end
+    },
+    :strict => {
+      :default    => :warning,
+      :type       => :symbolic_enum,
+      :values     => [:off, :warning, :error],
+      :desc       => "The strictness level of puppet. Allowed values are:
+
+        * off     - do not perform extra validation, do not report
+        * warning - perform extra validation, report as warning (default)
+        * error   - perform extra validation, fail with error
+
+        The strictness level is for both language semantics and runtime
+        evaluation validation. In addition to controlling the behavior with
+        this master switch some individual warnings may also be controlled
+        by the disable_warnings setting.
+
+        No new validations will be added to a micro (x.y.z) release,
+        but may be added in minor releases (x.y.0). In major releases
+        it expected that most (if not all) strictness validation become
+        standard behavior.",
+      :hook    => proc do |value|
+        munge(value)
+        value.to_sym
+      end
     }
   )
 

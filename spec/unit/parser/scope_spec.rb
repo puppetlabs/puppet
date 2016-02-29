@@ -324,6 +324,51 @@ describe Puppet::Parser::Scope do
         expect { @scope['module_name'] }.to_not raise_error
       end
     end
+
+    context "and strict_variables is false and --strict=off" do
+      before(:each) do
+        Puppet[:strict_variables] = false
+        Puppet[:strict] = :off
+      end
+
+      it "should not error when unknown variable is looked up and produce nil" do
+        expect(@scope['john_doe']).to be_nil
+      end
+
+      it "should not error when unknown qualified variable is looked up and produce nil" do
+        expect(@scope['nowhere::john_doe']).to be_nil
+      end
+    end
+
+    context "and strict_variables is false and --strict=warning" do
+      before(:each) do
+        Puppet[:strict_variables] = false
+        Puppet[:strict] = :warning
+      end
+
+      it "should not error when unknown variable is looked up" do
+        expect(@scope['john_doe']).to be_nil
+      end
+
+      it "should not error when unknown qualified variable is looked up" do
+        expect(@scope['nowhere::john_doe']).to be_nil
+      end
+    end
+
+    context "and strict_variables is false and --strict=error" do
+      before(:each) do
+        Puppet[:strict_variables] = false
+        Puppet[:strict] = :error
+      end
+
+      it "should raise error when unknown variable is looked up" do
+        expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+      end
+
+      it "should not throw a symbol when unknown qualified variable is looked up" do
+        expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
+      end
+    end
   end
 
   describe "when variables are set with append=true" do
