@@ -125,19 +125,22 @@ module Puppet
     :strict => {
       :default    => :warning,
       :type       => :symbolic_enum,
-      :values     => [:ignore, :warning, :error],
+      :values     => [:off, :warning, :error],
       :desc       => "The strictness level of puppet. Allowed values are:
 
-        * ignored
-        * warning
-        * error
+        * off     - do not perform extra validation, do not report
+        * warning - perform extra validation, report as warning (default)
+        * error   - perform extra validation, fail with error
 
-        where 'ignored' is the default. When set to 'warning' or 'error' additional
-        checks and validations are performed at runtime (e.g. when compiling
-        a catalog, or applying a catalog). When set to 'warning' a warning is logged when a
-        strictness problem is found, and when set to 'error' and error is logged and
-        the operation fails. In addition to this master switch the behavior of
-        some individual warnings may be controlled by the disable_warnings setting.",
+        The strictness level is for both language semantics and runtime
+        evaluation validation. In addition to controlling the behavior with
+        this master switch some individual warnings may also be controlled
+        by the disable_warnings setting.
+
+        No new validations will be added to a micro (x.y.z) release,
+        but may be added in minor releases (x.y.0). In major releases
+        it expected that most (if not all) strictness validation become
+        standard behavior.",
       :hook    => proc do |value|
         munge(value)
         value.to_sym

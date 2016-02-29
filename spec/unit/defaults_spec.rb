@@ -73,20 +73,20 @@ describe "Defaults" do
   end
 
   describe 'strict' do
-    it 'should accept the vaid value ignore' do
-      expect {Puppet.settings[:strict] = 'ignore'}.to_not raise_exception
+    it 'should accept the valid value :off' do
+      expect {Puppet.settings[:strict] = 'off'}.to_not raise_exception
     end
 
-    it 'should accept the vaid value warning' do
+    it 'should accept the valid value :warning' do
       expect {Puppet.settings[:strict] = 'warning'}.to_not raise_exception
     end
 
-    it 'should accept the vaid value error' do
+    it 'should accept the valid value :error' do
       expect {Puppet.settings[:strict] = 'error'}.to_not raise_exception
     end
 
     it 'should fail if given an invalid value' do
-      expect {Puppet.settings[:strict] = 'off'}.to raise_exception(/Invalid value 'off' for parameter strict\./)
+      expect {Puppet.settings[:strict] = 'ignore'}.to raise_exception(/Invalid value 'ignore' for parameter strict\./)
     end
   end
 

@@ -520,7 +520,7 @@ class Puppet::Parser::Scope
       throw(:undefined_variable, reason)
     rescue  UNCAUGHT_THROW_EXCEPTION
       case Puppet[:strict]
-      when :ignored
+      when :off
         # do nothing
       when :warning
         Puppet.warn_once(UNDEFINED_VARIABLES_KIND, "Variable: #{name}",

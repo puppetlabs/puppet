@@ -325,10 +325,10 @@ describe Puppet::Parser::Scope do
       end
     end
 
-    context "and strict_variables is false and --strict=ignore" do
+    context "and strict_variables is false and --strict=off" do
       before(:each) do
         Puppet[:strict_variables] = false
-        Puppet[:strict] = :ignore
+        Puppet[:strict] = :off
       end
 
       it "should not error when unknown variable is looked up and produce nil" do

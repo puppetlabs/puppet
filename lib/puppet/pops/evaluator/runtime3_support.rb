@@ -502,14 +502,12 @@ module Runtime3Support
       #
       if Puppet[:strict_variables]
         p[Issues::UNKNOWN_VARIABLE] = :error
-      elsif Puppet[:strict] == :ignore
+      elsif Puppet[:strict] == :off
         p[Issues::UNKNOWN_VARIABLE] = :ignore
       else
         Puppet[:strict_variables] 
         p[Issues::UNKNOWN_VARIABLE] = Puppet[:strict]
       end
-
-#      Puppet[:strict_variables] ? :error : :warning
 
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
