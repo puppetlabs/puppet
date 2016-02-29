@@ -1,8 +1,10 @@
 module Puppet
   Type.newtype(:sshkey) do
-    @doc = "Installs and manages ssh host keys.  At this point, this type
-      only knows how to install keys into `/etc/ssh/ssh_known_hosts`.  See
-      the `ssh_authorized_key` type to manage authorized keys."
+    @doc = "Installs and manages ssh host keys.  By default, this type will
+      install keys into `/etc/ssh/ssh_known_hosts`. To manage ssh keys in a
+      different `known_hosts` file, such as a user's personal `known_hosts`,
+      pass its path to the `target` parameter. See the `ssh_authorized_key`
+      type to manage authorized keys."
 
     ensurable
 
