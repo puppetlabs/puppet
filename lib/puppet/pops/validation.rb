@@ -126,7 +126,7 @@ module Validation
     #
     def []=(issue, level)
       raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Issues::Issue
-      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
+      raise Puppet::DevError.new("Illegal severity level: #{level} for '#{issue.issue_code}'") unless @@severity_hash[level]
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
