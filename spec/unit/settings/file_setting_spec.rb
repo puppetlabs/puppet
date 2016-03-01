@@ -169,6 +169,12 @@ describe Puppet::Settings::FileSetting do
       expect(resource.title).to eq(@basepath)
     end
 
+    it "should have a working directory with a root directory not called dev", :if => Puppet.features.microsoft_windows? do
+      # Although C:\Dev\.... is a valid path on Windows, some other code may regard it as a path to be ignored.  e.g. /dev/null resolves to C:\dev\null on Windows.
+      path = File.expand_path('somefile')
+      expect(path).to_not match(/^[A-Z]:\/dev/i)
+    end
+
     it "should fully qualified returned files if necessary (#795)" do
       @settings.stubs(:value).with(:myfile, nil, false).returns "myfile"
       path = File.expand_path('myfile')
