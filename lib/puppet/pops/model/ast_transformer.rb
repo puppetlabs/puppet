@@ -47,8 +47,11 @@ class Puppet::Pops::Model::AstTransformer
       if source_pos
         pos[:line] = source_pos.line
         pos[:pos]  = source_pos.pos
+        pos[:file] = source_pos.locator.file
       end
-      pos[:file] = @source_file if @source_file
+      if nil_or_empty?(pos[:file]) && !nil_or_empty?(@source_file)
+        pos[:file] = @source_file
+      end
       hash = hash.merge(pos)
     end
     hash
@@ -121,5 +124,9 @@ class Puppet::Pops::Model::AstTransformer
   #
   def is_nop?(o)
     o.nil? || o.is_a?(Model::Nop)
+  end
+
+  def nil_or_empty?(x)
+    x.nil? || x == ''
   end
 end
