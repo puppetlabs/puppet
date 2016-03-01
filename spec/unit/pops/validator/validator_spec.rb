@@ -65,7 +65,7 @@ describe "validating 4x" do
 
   context 'with --strict set to off' do
     before(:each) { Puppet[:strict] = :off }
-    it 'produces an error for duplicate keyes in a literal hash' do
+    it 'does not produce an error or warning for duplicate keyes in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(0)
