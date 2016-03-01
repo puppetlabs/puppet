@@ -9,32 +9,32 @@ module Puppet
       # @param scriptdir [String] the path to the directory where the scripts should be placed.
       def setup_puppetserver_code_id_scripts(master, scriptdir)
         code_id_command = <<EOF
-        #! /bin/sh
+#! /bin/bash
 
-        echo -n 'code_version_1'
+echo -n 'code_version_1'
 EOF
 
         code_content_command = <<EOF
-        #! /bin/sh
+#! /bin/bash
 
-        if [ \\\$2 == 'code_version_1' ] ; then
-          echo -n 'code_version_1'
-        else
-          echo -n 'newer_code_version'
-        fi
+if [ \\\$2 == 'code_version_1' ] ; then
+  echo -n 'code_version_1'
+else
+  echo -n 'newer_code_version'
+fi
 EOF
         apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
-        file { '#{scriptdir}/code_id.sh':
-          ensure => file,
-          content => "#{code_id_command}",
-          mode => "0755",
-        }
+file { '#{scriptdir}/code_id.sh':
+  ensure => file,
+  content => "#{code_id_command}",
+  mode => "0755",
+}
 
-        file { '#{scriptdir}/code_content.sh':
-          ensure => file,
-          content => "#{code_content_command}",
-          mode => "0755",
-        }
+file { '#{scriptdir}/code_content.sh':
+  ensure => file,
+  content => "#{code_content_command}",
+  mode => "0755",
+}
 MANIFEST
 
         puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
