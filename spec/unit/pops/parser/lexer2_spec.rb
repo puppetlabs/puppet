@@ -747,8 +747,12 @@ describe Puppet::Pops::Parser::Lexer2 do
   # First line of Rune version of Rune poem at http://www.columbia.edu/~fdc/utf8/
   # characters chosen since they will not parse on Windows with codepage 437 or 1252
   # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
-  # ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
-  let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+  # Runes (may show up as garbage if font is not available): ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
+  let (:rune_utf8) {
+    "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2"
+    "\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA"
+    "\u16B3\u16A2\u16D7"
+  }
 
   context 'when lexing files from disk' do
     it 'should always read files as UTF-8' do
