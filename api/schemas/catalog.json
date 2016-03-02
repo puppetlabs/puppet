@@ -24,6 +24,9 @@
         "catalog_uuid": {
             "type": "string"
         },
+        "catalog_format": {
+            "type": "integer"
+        },
         "environment": {
             "type": "string"
         },
@@ -122,7 +125,7 @@
             }
         }
     },
-    "required": ["tags", "name", "version", "code_id", "catalog_uuid", "environment", "resources", "edges", "classes"],
+    "required": ["tags", "name", "version", "code_id", "catalog_uuid", "catalog_format", "environment", "resources", "edges", "classes"],
     "additionalProperties": false,
 
     "definitions" : {

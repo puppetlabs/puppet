@@ -36,6 +36,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The UUID of the catalog
   attr_accessor :catalog_uuid
 
+  # @return [Integer] catalog format version number. This value is constant
+  #  for a given version of Puppet; it is incremented when a new release of
+  #  Puppet changes the API for the various objects that make up the catalog.
+  attr_accessor :catalog_format
+
   # Inlined file metadata for non-recursive find
   # A hash of title => metadata
   attr_accessor :metadata
@@ -287,6 +292,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     super()
     @name = name
     @catalog_uuid = SecureRandom.uuid
+    @catalog_format = 1
     @metadata = {}
     @recursive_metadata = {}
     @classes = []
@@ -400,6 +406,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.catalog_uuid = catalog_uuid
     end
 
+    result.catalog_format = data['catalog_format'] || 0
+
     if environment = data['environment']
       result.environment = environment
       result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
@@ -458,12 +466,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       end
       h
     end
+
     {
       'tags'      => tags,
       'name'      => name,
       'version'   => version,
       'code_id'   => code_id,
       'catalog_uuid' => catalog_uuid,
+      'catalog_format' => catalog_format,
       'environment'  => environment.to_s,
       'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
       'edges'     => edges.   collect { |e| e.to_data_hash },
@@ -582,6 +592,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result.version = self.version
     result.code_id = self.code_id
     result.catalog_uuid = self.catalog_uuid
+    result.catalog_format = self.catalog_format
     result.metadata = self.metadata
     result.recursive_metadata = self.recursive_metadata
 
