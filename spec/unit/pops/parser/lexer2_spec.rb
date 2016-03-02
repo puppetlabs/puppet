@@ -477,6 +477,18 @@ describe 'Lexer2' do
       end
     end
   end
+  context 'when not given multi byte characters' do
+    it 'produces byte offsets for tokens' do
+      code = <<-"CODE"
+1 2\n3
+      CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:NUMBER, '1', {:line => 1, :offset => 0, :length=>1}],
+        [:NUMBER, '2', {:line => 1, :offset => 2, :length=>1}],
+        [:NUMBER, '3', {:line => 2, :offset => 4, :length=>1}]
+      )
+    end
+  end
 
   context 'when dealing with multi byte characters' do
     it 'should support unicode characters' do
@@ -486,11 +498,29 @@ describe 'Lexer2' do
       # >= Ruby 1.9.3 reports \u
        expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713y"])
     end
+
     it 'should support unicode characters in long form' do
       code = <<-CODE
       "x\\u{1f452}y"
       CODE
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u{1f452}y"])
+    end
+
+    it 'produces byte offsets that counts each byte in a comment' do
+      code = <<-"CODE"
+      # \u{0400}\na
+      CODE
+      expect(tokens_scanned_from(code.strip)).to match_tokens2([:NAME, 'a', {:line => 2, :offset => 5, :length=>1}])
+    end
+
+    it 'produces byte offsets that counts each byte in value token' do
+      code = <<-"CODE"
+      '\u{0400}'\na
+      CODE
+      expect(tokens_scanned_from(code.strip)).to match_tokens2(
+        [:STRING, "\u{400}", {:line => 1, :offset => 0, :length=>4}],
+        [:NAME, 'a', {:line => 2, :offset => 5, :length=>1}]
+      )
     end
 
     it 'should not select LISTSTART token when preceded by multibyte chars' do
