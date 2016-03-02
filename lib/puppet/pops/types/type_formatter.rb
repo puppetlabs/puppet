@@ -56,20 +56,6 @@ class TypeFormatter
   end
 
   # @api private
-  def string_Module(t)
-    string(TypeCalculator.singleton.type(t))
-  end
-
-  # @api private
-  def string_NilClass(t)     ; '?'       ; end
-
-  # @api private
-  def string_String(t)       ; t.inspect ; end
-
-  # @api private
-  def string_Symbol(t)       ; t.to_s    ; end
-
-  # @api private
   def string_PAnyType(t)     ; 'Any'     ; end
 
   # @api private
@@ -283,6 +269,42 @@ class TypeFormatter
       append_array(t.name, t.parameters.map {|p| string(p) })
     end
   end
+
+  # @api private
+  def string_Array(t)
+    t.empty? ? '[]' : append_array('', t.map { |e| string(e) })
+  end
+
+  # @api private
+  def string_FalseClass(t)   ; 'false'       ; end
+
+  # @api private
+  def string_Hash(t)
+    append_hash('', Hash[t.map {|k,v| [string(k), string(v)]}])
+  end
+
+  # @api private
+  def string_Module(t)
+    string(TypeCalculator.singleton.type(t))
+  end
+
+  # @api private
+  def string_NilClass(t)     ; '?'       ; end
+
+  # @api private
+  def string_Numeric(t)      ; t.to_s    ; end
+
+  # @api private
+  def string_Regexp(t)       ; "/#{t.source}/"; end
+
+  # @api private
+  def string_String(t)       ; t.inspect ; end
+
+  # @api private
+  def string_Symbol(t)       ; t.to_s    ; end
+
+  # @api private
+  def string_TrueClass(t)    ; 'true'       ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

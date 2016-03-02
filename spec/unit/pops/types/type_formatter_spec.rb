@@ -6,6 +6,24 @@ describe 'The type formatter' do
   let(:s) { TypeFormatter.new }
   let(:f) { TypeFactory }
 
+  context 'when representing a literal as a string' do
+    {
+      'true' => true,
+      'false' => false,
+      '?' => nil,
+      '23.4' => 23.4,
+      '145' => 145,
+      '"string"' => 'string',
+      '/expr/' => /expr/,
+      '[1, 2, 3]' => [1, 2, 3],
+      '{"a" => 32, "b" => [1, 2, 3]}' => {'a' => 32,'b' => [1, 2, 3]}
+    }.each_pair do |str, value|
+      it "should yield '#{str}' for a value of #{str}" do
+        expect(s.string(value)).to eq(str)
+      end
+    end
+  end
+
   context 'when representing the type as string' do
     include_context 'types_setup'
 
