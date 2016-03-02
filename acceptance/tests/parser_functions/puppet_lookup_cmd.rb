@@ -6,12 +6,11 @@ test_name "Puppet Lookup Command"
 
 ### @testroot = "/etc/puppetlabs"
 @testroot = master.tmpdir("#{@module_name}")
-
 @coderoot = "#{@testroot}/code"
 @confdir = "#{@testroot}/puppet"
-
-@mastername = on(master, facter('fqdn')).stdout.chomp
-@agentname = on(agent, facter('fqdn')).stdout.chomp
+@agent = [agent].flatten.find { |host| host != master }
+@mastername = master.hostname
+@agentname = @agent.hostname
 
 @master_opts = {
   'main' => {
@@ -2195,10 +2194,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 environment_key lookup failed, expected 'env-env2-ruby-function data() provided value'"
   )
- 
+
   step "environment_key from environment env4"
   re4 = on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
- 
+
   step "production mod1 module_key"
   repm1 = on(master, puppet('lookup', 'mod1::module_key'))
   result = repm1.stdout
@@ -2207,7 +2206,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod1 module_key lookup failed, expected 'module-production-mod1-hiera'"
   )
- 
+
   step "production mod2 module_key"
   repm2 = on(master, puppet('lookup', 'mod2::module_key'))
   result = repm2.stdout
@@ -2216,7 +2215,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod2 module_key lookup failed, expected 'module-production-mod2-ruby-function'"
   )
- 
+
   step "production mod3 module_key"
   repm3 = on(master, puppet('lookup', 'mod3::module_key'))
   result = repm3.stdout
@@ -2225,10 +2224,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod3 module_key lookup failed, expected 'module-production-mod3-puppet-function'"
   )
- 
+
   step "production mod4 module_key"
   repm4 = on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env1 mod1 module_key"
   re1m1 = on(master, puppet('lookup', '--environment env1', 'mod1::module_key'))
   result = re1m1.stdout
@@ -2237,7 +2236,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod1 module_key lookup failed, expected 'module-env1-mod1-hiera'"
   )
- 
+
   step "env1 mod2 module_key"
   re1m2 = on(master, puppet('lookup', '--environment env1', 'mod2::module_key'))
   result = re1m2.stdout
@@ -2246,7 +2245,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod2 module_key lookup failed, expected 'module-env1-mod2-ruby-function'"
   )
-  
+
   step "env1 mod3 module_key"
   re1m3 = on(master, puppet('lookup', '--environment env1', 'mod3::module_key'))
   result = re1m3.stdout
@@ -2255,10 +2254,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod3 module_key lookup failed, expected 'module-env1-mod3-puppet-function'"
   )
- 
+
   step "env1 mod4 module_key"
   re1m4 = on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env2 mod1 module_key"
   re2m1 = on(master, puppet('lookup', '--environment env2', 'mod1::module_key'))
   result = re2m1.stdout
@@ -2285,10 +2284,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env2 mod3 module_key lookup failed, expected 'module-env2-mod3-puppet-function'"
   )
- 
+
   step "env2 mod4 module_key"
   re2m4 = on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env3 mod1 module_key"
   re3m1 = on(master, puppet('lookup', '--environment env3', 'mod1::module_key'))
   result = re3m1.stdout
@@ -2297,7 +2296,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod1 module_key lookup failed, expected 'module-env3-mod1-hiera'"
   )
- 
+
   step "env3 mod2 module_key"
   re3m2 = on(master, puppet('lookup', '--environment env3', 'mod2::module_key'))
   result = re3m2.stdout
@@ -2306,7 +2305,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod2 module_key lookup failed, expected 'module-env3-mod2-ruby-function'"
   )
- 
+
   step "env3 mod3 module_key"
   re3m3 = on(master, puppet('lookup', '--environment env3', 'mod3::module_key'))
   result = re3m3.stdout
@@ -2315,7 +2314,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod3 module_key lookup failed, expected 'module-env3-mod3-puppet-function'"
   )
- 
+
   step "env3 mod4 module_key"
 #   re3m4 = on(master, puppet('lookup', '--environment env3', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
@@ -2327,7 +2326,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod2 environent_key lookup failed, expected 'module-env4-hiera'"
   )
- 
+
 
   step "env4 mod2 module_key"
   re4m2 = on(master, puppet('lookup', '--environment env4', 'mod2::module_key'))
@@ -2337,7 +2336,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod2 environent_key lookup failed, expected 'module-env4-mod2-ruby-function'"
   )
- 
+
   step "env4 mod3 module_key"
   re4m3 = on(master, puppet('lookup', '--environment env4', 'mod3::module_key'))
   result = re4m3.stdout
@@ -2346,7 +2345,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod3 module_key lookup failed, expected 'module-env4-mod3-puppet-function'"
   )
- 
+
   step "env4 mod4 module_key"
   re4m4 = on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
@@ -2358,7 +2357,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "global_key explained failed, expected /Found key: \"global_key\" value: \"Data Binding \"hiera\"\s*Found key.*global-hiera/"
   )
- 
+
   step "environment env1 environment_key explained"
   rxe1 = on(master, puppet('lookup', '--explain', '--environment env1', 'environment_key'))
   result = rxe1.stdout
@@ -2423,7 +2422,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe2m3 = on(master, puppet('lookup', '--explain', '--environment env2', 'mod3::module_key'))
   result = rxe2m3.stdout
   assert_match(
-    /Binding.*hiera.*\n\s*No such key.*\n\s*.*FunctionEnvDataProvider.*\n\s*No such key.*\n\s*.*FunctionModuleDataProvider.*\n\s*Found key.*module-env2-mod3-puppet-function/, 
+    /Binding.*hiera.*\n\s*No such key.*\n\s*.*FunctionEnvDataProvider.*\n\s*No such key.*\n\s*.*FunctionModuleDataProvider.*\n\s*Found key.*module-env2-mod3-puppet-function/,
     result,
     "environment env2 mod3::module_key lookup failed."
   )
@@ -2539,4 +2538,4 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "enc specified environment env2 environment_key lookup failed"
   )
 
-end 
+end
