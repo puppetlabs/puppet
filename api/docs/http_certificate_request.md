@@ -2,7 +2,7 @@ Certificate Request
 =============
 
 The `certificate_request` endpoint submits a Certificate Signing Request (CSR)
-to the master.  The master must be configured to be a CA.  The returned
+to the master. The master must be configured to be a CA. The returned
 CSR is always in the `.pem` format.
 
 Under Puppet Server's CA service, the `environment` parameter is ignored and can

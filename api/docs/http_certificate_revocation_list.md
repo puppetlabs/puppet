@@ -2,7 +2,7 @@ Certificate Revocation List
 ===========================
 
 The `certificate_revocation_list` endpoint retrieves a Certificate Revocation List (CRL)
-from the master.  The master must be configured to be a CA.  The returned
+from the master. The master must be configured to be a CA. The returned
 CRL is always in the `.pem` format.
 
 Under Puppet Server's CA service, the `environment` parameter is ignored and can

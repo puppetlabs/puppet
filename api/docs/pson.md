@@ -32,7 +32,7 @@ characters:
 
 In addition, any character between 0x00 and 0x1F, (except the ones listed
 above) must be encoded as a six byte sequence of \u followed by four ASCII
-digits of the hex number of the desired character.  For example the ASCII
+digits of the hex number of the desired character. For example the ASCII
 Record Separator character (0x1E) is represented as \u001E (0x5C, 0x75, 0x30,
 0x30, 0x31, 0x45).
 
