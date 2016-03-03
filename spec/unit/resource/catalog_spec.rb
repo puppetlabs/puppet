@@ -97,6 +97,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     expect(catalog.catalog_uuid).to eq("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
   end
 
+  it "should include the current catalog_format" do
+    catalog = Puppet::Resource::Catalog.new("host")
+    expect(catalog.catalog_format).to eq(1)
+  end
+
   describe "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
@@ -278,6 +283,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it 'copies the catalog_uuid' do
       @original.catalog_uuid = '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
       expect(@original.filter.catalog_uuid).to eq(@original.catalog_uuid)
+    end
+
+    it 'copies the catalog_format' do
+      @original.catalog_format = 42
+      expect(@original.filter.catalog_format).to eq(@original.catalog_format)
     end
   end
 
@@ -811,7 +821,8 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   { :name => 'myhost',
     :version => 42,
     :code_id => 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe',
-    :catalog_uuid => '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
+    :catalog_uuid => '827a74c8-cf98-44da-9ff7-18c5e4bee41e',
+    :catalog_format => 42
   }.each do |param, value|
     it "emits a #{param} equal to #{value.inspect}" do
       @catalog.send(param.to_s + "=", value)
@@ -866,6 +877,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     @data['version'] = 50
     @data['code_id'] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
     @data['catalog_uuid'] = '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
+    @data['catalog_format'] = 42
     @data['tags'] = %w{one two}
     @data['classes'] = %w{one two}
     @data['edges'] = [Puppet::Relationship.new("File[/foo]", "File[/bar]",
@@ -881,6 +893,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     expect(catalog.version).to eq(@data['version'])
     expect(catalog.code_id).to eq(@data['code_id'])
     expect(catalog.catalog_uuid).to eq(@data['catalog_uuid'])
+    expect(catalog.catalog_format).to eq(@data['catalog_format'])
     expect(catalog).to be_tagged("one")
     expect(catalog).to be_tagged("two")
 
@@ -890,6 +903,11 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     expect(catalog.edges.collect(&:event)).to eq(["one"])
     expect(catalog.edges[0].source).to eq(catalog.resource(:file, "/foo"))
     expect(catalog.edges[0].target).to eq(catalog.resource(:file, "/bar"))
+  end
+
+  it "defaults the catalog_format to 0" do
+    catalog = Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson
+    expect(catalog.catalog_format).to eq(0)
   end
 
   it "should fail if the source resource cannot be found" do

@@ -160,6 +160,7 @@ MANIFEST
       on(master, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"))
     end
     agents.each do |agent|
+      next if agent == master
       step 'run the agents to collect exported resources' do
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
            :acceptable_exit_codes => 2)

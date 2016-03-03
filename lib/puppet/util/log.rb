@@ -1,5 +1,6 @@
 require 'puppet/util/tagging'
 require 'puppet/util/classgen'
+require 'puppet/util/psych_support'
 require 'puppet/network/format_support'
 require 'facter'
 
@@ -9,6 +10,7 @@ require 'facter'
 class Puppet::Util::Log
   include Puppet::Util
   extend Puppet::Util::ClassGen
+  include Puppet::Util::PsychSupport
   include Puppet::Util::Tagging
   include Puppet::Network::FormatSupport
 
