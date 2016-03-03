@@ -60,7 +60,7 @@ describe 'the regsubst function' do
     end
 
     it 'should raise an Error if given a flag other thant G' do
-      expect { regsubst('foo', /bar/, 'gazonk', 'I') }.to raise_error(/expected one of/)
+      expect { regsubst('foo', /bar/, 'gazonk', 'I') }.to raise_error(/expects one of/)
     end
 
     it 'should handle global substitutions' do

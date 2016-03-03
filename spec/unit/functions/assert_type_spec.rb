@@ -22,13 +22,13 @@ describe 'the assert_type function' do
   it 'asserts non compliant type by raising an error' do
     expect do
       func.call({}, type(Integer), 'hello world')
-    end.to raise_error(Puppet::Pops::Types::TypeAssertionError, /does not match actual/)
+    end.to raise_error(Puppet::Pops::Types::TypeAssertionError, /expected an Integer value, got String/)
   end
 
   it 'checks that first argument is a type' do
     expect do
       func.call({}, 10, 10)
-    end.to raise_error(ArgumentError, "'assert_type' expected one of:
+    end.to raise_error(ArgumentError, "'assert_type' expects one of:
   (Type type, Any value, Callable[Type, Type] block?)
     rejected: parameter 'type' expects a Type value, got Integer
   (String type_string, Any value, Callable[Type, Type] block?)
@@ -84,6 +84,6 @@ describe 'the assert_type function' do
       assert_type(UnprivilegedPort, 345)
       notice('ok')
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Expected type UnprivilegedPort does not match actual: Integer/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expected an UnprivilegedPort value, got Integer\[345, 345\]/)
   end
 end
