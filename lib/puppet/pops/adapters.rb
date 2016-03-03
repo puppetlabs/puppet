@@ -84,7 +84,7 @@ module Adapters
 
     # Extracts the text represented by this source position (the string is obtained from the locator)
     def extract_text
-      locator.string.slice(offset, length)
+      locator.extract_text(offset, length)
     end
 
     def extract_tree_text
@@ -97,7 +97,7 @@ module Adapters
         m_last = m_offset + m.length
         last = m_last if m_last > last
       end
-      locator.string.slice(first, last-first)
+      locator.extract_text(first, last-first)
     end
 
     # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n

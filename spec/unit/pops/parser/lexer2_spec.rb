@@ -339,9 +339,9 @@ describe 'Lexer2' do
     "!~" => [:NOMATCH, "!~ /./"],
     ","  => [:COMMA, ", /./"],
     "("  => [:LPAREN, "( /./"],
-    "["  => [:LISTSTART, "[ /./"],
-    "["  => [[:NAME, :LBRACK], "a[ /./"],
-    "["  => [[:NAME, :LISTSTART], "a [ /./"],
+    "[ (liststart)"             => [:LISTSTART, "[ /./"],
+    "[ (LBRACK)"                => [[:NAME, :LBRACK], "a[ /./"],
+    "[ (liststart after name)"  => [[:NAME, :LISTSTART], "a [ /./"],
     "{"  => [:LBRACE, "{ /./"],
     "+"  => [:PLUS, "+ /./"],
     "-"  => [:MINUS, "- /./"],
@@ -477,6 +477,18 @@ describe 'Lexer2' do
       end
     end
   end
+  context 'when not given multi byte characters' do
+    it 'produces byte offsets for tokens' do
+      code = <<-"CODE"
+1 2\n3
+      CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:NUMBER, '1', {:line => 1, :offset => 0, :length=>1}],
+        [:NUMBER, '2', {:line => 1, :offset => 2, :length=>1}],
+        [:NUMBER, '3', {:line => 2, :offset => 4, :length=>1}]
+      )
+    end
+  end
 
   context 'when dealing with multi byte characters' do
     it 'should support unicode characters' do
@@ -486,11 +498,29 @@ describe 'Lexer2' do
       # >= Ruby 1.9.3 reports \u
        expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713y"])
     end
+
     it 'should support unicode characters in long form' do
       code = <<-CODE
       "x\\u{1f452}y"
       CODE
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u{1f452}y"])
+    end
+
+    it 'produces byte offsets that counts each byte in a comment' do
+      code = <<-"CODE"
+      # \u{0400}\na
+      CODE
+      expect(tokens_scanned_from(code.strip)).to match_tokens2([:NAME, 'a', {:line => 2, :offset => 5, :length=>1}])
+    end
+
+    it 'produces byte offsets that counts each byte in value token' do
+      code = <<-"CODE"
+      '\u{0400}'\na
+      CODE
+      expect(tokens_scanned_from(code.strip)).to match_tokens2(
+        [:STRING, "\u{400}", {:line => 1, :offset => 0, :length=>4}],
+        [:NAME, 'a', {:line => 2, :offset => 5, :length=>1}]
+      )
     end
 
     it 'should not select LISTSTART token when preceded by multibyte chars' do
@@ -747,8 +777,12 @@ describe Puppet::Pops::Parser::Lexer2 do
   # First line of Rune version of Rune poem at http://www.columbia.edu/~fdc/utf8/
   # characters chosen since they will not parse on Windows with codepage 437 or 1252
   # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
-  # ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
-  let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
+  # Runes (may show up as garbage if font is not available): ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
+  let (:rune_utf8) {
+    "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2"
+    "\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA"
+    "\u16B3\u16A2\u16D7"
+  }
 
   context 'when lexing files from disk' do
     it 'should always read files as UTF-8' do

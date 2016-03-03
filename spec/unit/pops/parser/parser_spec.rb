@@ -31,6 +31,16 @@ describe Puppet::Pops::Parser::Parser do
     expect(adapter.length).to eq(0)
   end
 
+  it "multi byte characters in a comment are counted as individual bytes" do
+    parser = Puppet::Pops::Parser::Parser.new()
+    model = parser.parse_string("# \u{0400}comment\n").current
+    expect(model.class).to eq(Puppet::Pops::Model::Program)
+    expect(model.body.class).to eq(Puppet::Pops::Model::Nop)
+    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.body)
+    expect(adapter.offset).to eq(12)
+    expect(adapter.length).to eq(0)
+  end
+
   it "should raise an error with position information when error is raised from within parser" do
     parser = Puppet::Pops::Parser::Parser.new()
     the_error = nil

@@ -41,6 +41,15 @@ class Puppet::Pops::Parser::Locator
   def char_length(offset, end_offset)
   end
 
+  # Returns the length measured in number of characters from the given start and end byte offseta
+  def char_length(offset, end_offset)
+  end
+
+  # Extracts the text from offset with given length (measured in what the locator uses for offset)
+  # @returns String - the extracted text
+  def extract_text(offset, length)
+  end
+
   # Returns the line index - an array of line offsets for the start position of each line, starting at 0 for
   # the first line.
   #
@@ -238,6 +247,12 @@ class Puppet::Pops::Parser::Locator
       end_offset - offset
     end
 
+    # Extracts the text from char offset with given byte length
+    # @returns String - the extracted text
+    def extract_text(offset, length)
+      string.slice(offset, length)
+    end
+
   end
 
   # This implementation is for Ruby19 and Ruby20. It uses byteslice to get strings from byte based offsets.
@@ -262,6 +277,12 @@ class Puppet::Pops::Parser::Locator
     # Returns the length measured in number of characters from the given start and end byte offseta
     def char_length(offset, end_offset)
       string.byteslice(offset, end_offset - offset).length
+    end
+
+    # Extracts the text from byte offset with given byte length
+    # @returns String - the extracted text
+    def extract_text(offset, length)
+      string.byteslice(offset, length)
     end
   end
 end
