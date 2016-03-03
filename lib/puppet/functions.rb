@@ -153,6 +153,28 @@ module Puppet::Functions
   #
   # @api public
   def self.create_function(func_name, function_base = Function, &block)
+    # Ruby < 2.1.0 does not have method on Binding, can only do eval
+    # and it will fail unless protected with an if defined? if the local
+    # variable does not exist in the block's binder.
+    #
+    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+    create_loaded_function(func_name, loader, function_base, &block)
+  end
+
+  # Creates a function in, or in a local loader under the given loader.
+  # This method should only be used when manually creating functions 
+  # for the sake of testing. Functions that are autoloaded should
+  # always use the `create_function` method and the autoloader will supply
+  # the correct loader.
+  #
+  # @param func_name [String, Symbol] a simple or qualified function name
+  # @param loader [Puppet::Pops::Loaders::Loader] the loader loading the function
+  # @param block [Proc] the block that defines the methods and dispatch of the
+  #   Function to create
+  # @return [Class<Function>] the newly created Function class
+  #
+  # @api public
+  def self.create_loaded_function(func_name, loader, function_base = Function, &block)
     if function_base.ancestors.none? { |s| s == Puppet::Pops::Functions::Function }
       raise ArgumentError, "Functions must be based on Puppet::Pops::Functions::Function. Got #{function_base}"
     end
@@ -162,7 +184,12 @@ module Puppet::Functions
     # The idea being that it is garbage collected when there are no more
     # references to it.
     #
-    the_class = Class.new(function_base, &block)
+    # (Do not give the class the block here, as instance variables should be set first)
+    the_class = Class.new(function_base)
+
+    unless loader.nil?
+      the_class.instance_variable_set(:'@loader', loader.private_loader)
+    end
 
     # Make the anonymous class appear to have the class-name <func_name>
     # Even if this class is not bound to such a symbol in a global ruby scope and
@@ -175,10 +202,19 @@ module Puppet::Functions
     #
     the_class.instance_eval do
       @func_name = func_name
+
       def name
         @func_name
       end
+
+      def loader
+        @loader
+      end
     end
+
+    # The given block can now be evaluated and have access to name and loader
+    #
+    the_class.class_eval(&block)
 
     # Automatically create an object dispatcher based on introspection if the
     # loaded user code did not define any dispatchers. Fail if function name
@@ -238,7 +274,7 @@ module Puppet::Functions
     def self.builder
       @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables)
+      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables, loader)
     end
 
     # Dispatch any calls that match the signature to the provided method name.
@@ -253,6 +289,46 @@ module Puppet::Functions
       builder().instance_eval do
         dispatch(meth_name, &block)
       end
+    end
+
+    # Allows types local to the function to be defined to ease the use of complex types
+    # in a 4.x function. Within the given block, calls to `type` can be made with a string
+    # 'AliasType = ExistingType` can be made to define aliases. The defined aliases are
+    # available for further aliases, and in all dispatchers.
+    #
+    # @since 4.5.0
+    # @api public
+    #
+    def self.local_types(&block)
+      if loader.nil?
+        raise ArgumentError, "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
+      end
+      aliases = LocalTypeAliasesBuilder.new(loader, name)
+      aliases.instance_eval(&block)
+      # Add the loaded types to the builder
+      aliases.local_types.each do |type_alias_expr|
+        # Bind the type alias to the local_loader using the alias
+        typed_name, t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias_expr, loader)
+        loader.set_entry(typed_name, t, Puppet::Pops::Adapters::SourcePosAdapter.adapt(type_alias_expr).to_uri)
+
+        # Also define a method for convenient access to the defined type alias.
+        # Since initial capital letter in Ruby means a Constant these names use a prefix of 
+        # `type`. As an example, the type 'MyType' is accessed by calling `type_MyType`.
+        define_method("type_#{t.name}") { t }
+      end
+      # Store the loader in the class
+      @loader = aliases.loader
+    end
+
+    # Creates a new function instance in the given closure scope (visibility to variables), and a loader
+    # (visibility to other definitions). The created function will either use the `given_loader` or
+    # (if it has local type aliases) a loader that was constructed from the loader used when loading
+    # the function's class.
+    #
+    # TODO: It would be of value to get rid of the second parameter here, but that would break API.
+    #
+    def self.new(closure_scope, given_loader)
+      super(closure_scope, @loader || given_loader)
     end
   end
 
@@ -269,11 +345,14 @@ module Puppet::Functions
   #
   # @api public
   class DispatcherBuilder
+    attr_reader :loader
+
     # @api private
-    def initialize(dispatcher, type_parser, all_callables)
+    def initialize(dispatcher, type_parser, all_callables, loader)
       @type_parser = type_parser
       @all_callables = all_callables
       @dispatcher = dispatcher
+      @loader = loader
     end
 
     # Defines a required positional parameter with _type_ and _name_.
@@ -356,7 +435,7 @@ module Puppet::Functions
         name = type_and_name[0]
       when 2
         type_string, name = type_and_name
-        type = @type_parser.parse(type_string)
+        type = @type_parser.parse(type_string, loader)
       else
         raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
       end
@@ -441,7 +520,7 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, from, to)
       mapped_types = types.map do |t|
-        @type_parser.parse(t)
+        @type_parser.parse(t, loader)
       end
 
       if from != to
@@ -455,6 +534,36 @@ module Puppet::Functions
       end
 
       Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
+    end
+  end
+
+  # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
+  # type aliases given by the function's author.
+  # 
+  class LocalTypeAliasesBuilder
+    attr_reader :local_types, :parser, :loader
+
+    def initialize(loader, name)
+      @loader = Puppet::Pops::Loader::BaseLoader.new(loader, :"local_function_#{name}")
+      @local_types = []
+      # get the shared parser used by puppet's compiler
+      @parser = Puppet::Pops::Parser::EvaluatingParser.singleton()
+    end
+
+    # Defines a local type alias, the given string should be a Puppet Language type alias expression
+    # in string form without the leading 'type' keyword.
+    # Calls to local_type must be made before the first parameter definition or an error will
+    # be raised.
+    # 
+    # @param assignment_string [String] a string on the form 'AliasType = ExistingType'
+    # @api public
+    #
+    def type(assignment_string)
+      result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
+      unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
+        raise ArgumentError, "Expected a type alias assignment on the form 'AliasType = T', got '#{assignment_string}'"
+      end
+      @local_types << result.body
     end
   end
 
@@ -496,7 +605,7 @@ module Puppet::Functions
     def self.builder
       @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables)
+      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables, loader)
     end
 
     # Defines class level injected attribute with reader method
