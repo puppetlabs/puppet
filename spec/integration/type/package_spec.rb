@@ -28,7 +28,11 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
         :yum
       end
     when 'Fedora'
-      :yum
+      if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemmajrelease), '22') >= 0
+        :dnf
+      else
+        :yum
+      end
     when 'FreeBSD'
       :ports
     when 'OpenBSD'
