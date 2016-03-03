@@ -33,22 +33,24 @@ The examples below use the POST method.
 
 Four parameters should be provided to the POST or GET:
 
-- `environment`: the environment name
-- `facts_format`: must be `pson`
-- `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
-doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
+- `environment`: the environment name.
+- `facts_format`: must be `pson`.
+- `facts`: serialized pson of the facts hash. One odd note: due to a long-ago misunderstanding in the code, this is
+doubly-escaped (it should just be singly-escaped). To keep backward compatibility, the extraneous
 escaping is still used/supported.
-- `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
+- `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well).
 
 Two optional parameters are required for static catalogs:
-- `static_catalog`: a boolean requesting a static catalog if available; should always be `true`
+- `static_catalog`: a boolean requesting a
+[static catalog](https://docs.puppetlabs.com/puppet/latest/reference/static_catalogs.html) if available; should always
+be `true`.
 - `checksum_type`: a dot-separated list of checksum types supported by the agent, for use in file resources of a static
 catalog. The order signifies preference, highest first.
 
 An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
 environment, which might differ from what the client believes is its current environment:
 
-- `configured_environment`: the environment configured on the client
+- `configured_environment`: the environment configured on the client.
 
 ### Example Response
 
