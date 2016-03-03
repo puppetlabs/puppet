@@ -16,6 +16,10 @@ CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
 # then assume we can depend on them here
 EPEL_MIRROR = ENV['BEAKER_EPEL_MIRROR']
 
+# Default test target if none specified
+DEFAULT_MASTER_TEST_TARGET = 'redhat7-64m'
+DEFAULT_TEST_TARGETS = "#{DEFAULT_MASTER_TEST_TARGET}a-windows2012r2-64a"
+
 module HarnessOptions
   defaults = {
     :type => 'git',
@@ -116,12 +120,15 @@ EOS
   tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
-  agent_target = ENV['TEST_TARGET']
   if config and File.exists?(config)
     config_opt = "--hosts=#{config}"
-  elsif agent_target
-    master_target = ENV['MASTER_TEST_TARGET'] || 'redhat7-64m'
-    targets = "#{master_target}-#{agent_target}"
+  else
+    if agent_target = ENV['TEST_TARGET']
+      master_target = ENV['MASTER_TEST_TARGET'] || DEFAULT_MASTER_TEST_TARGET
+      targets = "#{master_target}-#{agent_target}"
+    else
+      targets = DEFAULT_TEST_TARGETS
+    end
     cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
     ENV['BEAKER_HOSTS'] = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
     FileUtils.mkdir_p('tmp')
