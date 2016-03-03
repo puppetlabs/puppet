@@ -35,8 +35,8 @@ Six parameters should be provided to the POST or GET:
 
 - `environment`: the environment name
 - `facts_format`: must be `pson`
-- `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
-doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
+- `facts`: serialized pson of the facts hash. One odd note: due to a long-ago misunderstanding in the code, this is
+doubly-escaped (it should just be singly-escaped). To keep backward compatibility, the extraneous
 escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 - `static_catalog`: a boolean requesting a static catalog if available; should always be `true`

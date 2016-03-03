@@ -6,7 +6,7 @@ file bucket. All access to files is managed with the md5 checksum of the
 file contents, represented as `:md5`. Where used, `:filename` means the
 full absolute path of the file on the client system. This is usually
 optional and used as an error check to make sure correct file is
-retrieved.  The environment is required in all requests but ignored, as
+retrieved. The environment is required in all requests but ignored, as
 the file bucket does not distinguish between environments.
 
 Find
