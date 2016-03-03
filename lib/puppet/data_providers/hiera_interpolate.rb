@@ -5,8 +5,21 @@ require_relative 'hiera_config'
 #
 module Puppet::DataProviders::HieraInterpolate
   def interpolate(subject, lookup_invocation, allow_methods)
-    return subject unless subject.is_a?(String) && !subject.index('%{').nil?
+    case subject
+    when String
+      subject.index('%{').nil? ? subject : interpolate_string(subject, lookup_invocation, allow_methods)
+    when Array
+      subject.map { |element| interpolate(element, lookup_invocation, allow_methods) }
+    when Hash
+      Hash[subject.map { |k, v| [k, interpolate(v, lookup_invocation, allow_methods)] }]
+    else
+      subject
+    end
+  end
 
+  private
+
+  def interpolate_string(subject, lookup_invocation, allow_methods)
     lookup_invocation.with(:interpolate, subject) do
       subject.gsub(/%\{([^\}]*)\}/) do |match|
         expr = $1
@@ -22,7 +35,7 @@ module Puppet::DataProviders::HieraInterpolate
           segments = key.split('.')
           value = interpolate_method(method_key).call(segments[0], lookup_invocation)
           value = qualified_lookup(segments.drop(1), value) if segments.size > 1
-          value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) } if value.is_a?(String)
+          value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
           return value if is_alias
@@ -31,8 +44,6 @@ module Puppet::DataProviders::HieraInterpolate
       end
     end
   end
-
-  private
 
   def interpolate_method(method_key)
     @@interpolate_methods ||= begin
