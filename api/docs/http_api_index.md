@@ -103,6 +103,14 @@ with JSON (MIME type of `application/json`).
 * [Environments](./http_environments.md)
 * [Environment Catalog](./http_environment.md)
 
+### Puppet Server-specific endpoints
+
+When using [Puppet Server 2.3 or newer](https://docs.puppetlabs.com/puppetserver/2.3/)
+as a Puppet master, Puppet Server adds additional `/puppet/v3/` endpoints:
+
+* [Static File Content](https://docs.puppetlabs.com/puppetserver/latest/puppet-api/v3/static_file_content.md)
+* [Environment Classes](https://docs.puppetlabs.com/puppetserver/latest/puppet-api/v3/environment_classaes.md)
+
 #### Error Responses
 
 The `environments` endpoint will respond to error conditions in a uniform manner
