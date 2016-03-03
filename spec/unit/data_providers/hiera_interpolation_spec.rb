@@ -6,14 +6,23 @@ require 'puppet/data_providers/hiera_interpolate'
 
 describe "Puppet::DataProviders::HieraInterpolate" do
 
-  context "when there are empty interpolations %{} in data" do
+  let(:interpolator) { Class.new { include Puppet::DataProviders::HieraInterpolate }.new }
+  let(:scope) { {} }
+  let(:lookup_invocation) { Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, nil) }
 
-    let(:scope) { {} }
-    let(:lookup_invocation) {
-      Puppet::Pops::Lookup::Invocation.new(
-        scope, {}, {}, nil)
-    }
-    let(:interpolator) { Class.new { include Puppet::DataProviders::HieraInterpolate }.new }
+  context 'when interpolating nested data' do
+    let(:nested_hash) { { 'a' => { 'aa' => "%{alias('aaa')}" } } }
+
+    it 'produces a nested hash with arrays from nested aliases with hashes and arrays' do
+      Puppet::Pops::Lookup.expects(:lookup).with('aaa', nil, '', true, nil, lookup_invocation).returns({ 'b' => { 'bb' => "%{alias('bbb')}" } })
+      Puppet::Pops::Lookup.expects(:lookup).with('bbb', nil, '', true, nil, lookup_invocation).returns([ "%{alias('ccc')}" ])
+      Puppet::Pops::Lookup.expects(:lookup).with('ccc', nil, '', true, nil, lookup_invocation).returns('text')
+      expect(interpolator.interpolate(nested_hash, lookup_invocation, true)).to eq('a'=>{'aa'=>{'b'=>{'bb'=>['text']}}})
+    end
+  end
+
+  context 'when there are empty interpolations %{} in data' do
+
     let(:empty_interpolation) {'clown%{}shoe'}
     let(:empty_interpolation_as_escape) {'clown%%{}{shoe}s'}
     let(:only_empty_interpolation) {'%{}'}
@@ -21,7 +30,7 @@ describe "Puppet::DataProviders::HieraInterpolate" do
     let(:whitespace1) {'%{ :: }'}
     let(:whitespace2) {'%{   }'}
 
-    it 'should should produce an empty string for the interpolation' do
+    it 'should produce an empty string for the interpolation' do
       expect(interpolator.interpolate(empty_interpolation, lookup_invocation, true)).to eq('clownshoe')
     end
 
