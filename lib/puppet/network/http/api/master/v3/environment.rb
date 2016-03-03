@@ -5,14 +5,18 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
   def call(request, response)
     env_name = request.routing_path.split('/').last
     env = Puppet.lookup(:environments).get(env_name)
+    code_id = request.params[:code_id]
 
     if env.nil?
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("#{env_name} is not a known environment", Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
-    catalog = Puppet::Parser::EnvironmentCompiler.compile(env).to_resource
+    catalog = Puppet::Parser::EnvironmentCompiler.compile(env, code_id).to_resource
 
-    env_graph = {:environment => env.name, :applications => {}}
+    # This reads code_id off the catalog rather than using the one from the
+    # request. There shouldn't really be a case where the two differ, but if
+    # they do, the one from the catalog itself is authoritative.
+    env_graph = {:environment => env.name, :applications => {}, :code_id => catalog.code_id}
     applications = catalog.resources.select do |res|
       type = res.resource_type
       type.is_a?(Puppet::Resource::Type) && type.application?
