@@ -224,7 +224,6 @@ module Puppet::Util::Windows::Process
   end
   module_function :windows_major_version
 
-  ENVSTRINGS_TERMINATOR_WCHAR = [0,0]
   # Returns a hash of the current environment variables encoded as UTF-8
   # The memory block returned from GetEnvironmentStringsW is double-null terminated and the vars are paired as below;
   # Var1=Value1\0
@@ -237,7 +236,7 @@ module Puppet::Util::Windows::Process
   def get_environment_strings
     env_ptr = GetEnvironmentStringsW()
 
-    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, ENVSTRINGS_TERMINATOR_WCHAR)
+    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null)
       .split(?\x00)
       .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
       .map { |env_pair| env_pair.split('=', 2) }

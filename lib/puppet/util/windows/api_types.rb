@@ -19,7 +19,6 @@ module Puppet::Util::Windows::APITypes
 
   class ::FFI::Pointer
     NULL_HANDLE = 0
-    NULL_TERMINATOR_WCHAR = 0
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
@@ -60,18 +59,24 @@ module Puppet::Util::Windows::APITypes
       str.encode(dst_encoding)
     end
 
-    def read_arbitrary_wide_string_up_to(max_char_length = 512, terminal_array = [NULL_TERMINATOR_WCHAR])
-      # max_char_length is number of wide chars (typically excluding NULLs), *not* bytes
-      # use a pointer to read one UTF-16LE char (2 bytes) at a time
-      wchar_ptr = FFI::Pointer.new(:wchar, address)
-
-      # now iterate 2 bytes at a time until an offset lower than max_char_length is found
-      0.upto(max_char_length - terminal_array.length) do |i|
-        if wchar_ptr[i].read_array_of_wchar(terminal_array.length) == terminal_array
-          return read_wide_string(i)
-        end
+    # @param max_char_length [Integer] Maximum number of wide chars tp return (typically excluding NULLs), *not* bytes
+    # @param null_terminator [Symbol] Number of number of null wchar characters, *not* bytes, that determine the end of the string
+    #   null_terminator = :single_null, then the terminating sequence is two bytes of zero.   This is UNIT16 = 0
+    #   null_terminator = :double_null, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
+    def read_arbitrary_wide_string_up_to(max_char_length = 512, null_terminator = :single_null)
+      if null_terminator != :single_null && null_terminator != :double_null
+        raise "Unable to read wide strings with #{null_terminator} terminal nulls"
       end
 
+      terminator_width = null_terminator == :single_null ? 1 : 2
+      reader_method = null_terminator == :single_null ? :get_uint16 : :get_uint32
+
+      # Look for a null terminating characters; if found, read up to that null (exclusive)
+      (0...max_char_length - terminator_width).each do |i|
+        return read_wide_string(i) if send(reader_method, (i * 2)) == 0
+      end
+
+      # String is longer than the max; read just to the max
       read_wide_string(max_char_length)
     end
 
