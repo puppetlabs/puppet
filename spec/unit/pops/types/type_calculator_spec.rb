@@ -1912,16 +1912,16 @@ describe 'The type calculator' do
 
     it 'ensures that Struct key types are not generalized' do
       generic = struct_t({'a' => object_t}).generalize
-      expect(calculator.string(generic)).to eq("Struct[{'a'=>Any}]")
+      expect(generic.to_s).to eq("Struct[{'a' => Any}]")
       generic = struct_t({not_undef_t('a') => object_t}).generalize
-      expect(calculator.string(generic)).to eq("Struct[{NotUndef['a']=>Any}]")
+      expect(generic.to_s).to eq("Struct[{NotUndef['a'] => Any}]")
       generic = struct_t({optional_t('a') => string_t}).generalize
-      expect(calculator.string(generic)).to eq("Struct[{Optional['a']=>String}]")
+      expect(generic.to_s).to eq("Struct[{Optional['a'] => String}]")
     end
 
     it 'ensures that Struct value types are generalized' do
       generic = struct_t({'a' => range_t(1, 3)}).generalize
-      expect(calculator.string(generic)).to eq("Struct[{'a'=>Integer}]")
+      expect(generic.to_s).to eq("Struct[{'a' => Integer}]")
     end
 
     it "does not reduce by combining types when using infer_set" do

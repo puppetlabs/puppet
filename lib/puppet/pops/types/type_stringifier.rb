@@ -278,7 +278,7 @@ class TypeStringifier
 
   COMMA_SEP = ', '.freeze
 
-  HASH_ENTRY_OP = '=>'.freeze
+  HASH_ENTRY_OP = ' => '.freeze
 
   def range_array_part(t)
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]

@@ -249,7 +249,7 @@ describe "when performing lookup" do
         expect do
           assemble_and_compile('${r[a]}_${r[b]}', "'abc::x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 32}")
         end.to raise_error(Puppet::ParseError,
-          /Default value has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a'=>String, 'b'=>Integer\}\]/)
+          /Default value has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
       end
     end
 
@@ -283,7 +283,7 @@ describe "when performing lookup" do
         expect do
           assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 32}", "'abc::x'", 'Hash[String,String]')
         end.to raise_error(Puppet::ParseError,
-          /Value returned from default block has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a'=>String, 'b'=>Integer\}\]/)
+          /Value returned from default block has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
       end
 
       it 'receives a single name parameter' do

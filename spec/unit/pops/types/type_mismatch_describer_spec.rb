@@ -15,7 +15,7 @@ describe 'the type mismatch describer' do
       }
       f({'a' => 'a', 'b' => 23})
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects a Hash\[String, String\] value, got Struct\[\{'a'=>String, 'b'=>Integer\}\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
   end
 
   it 'will report a mismatch between a array and tuple with details' do

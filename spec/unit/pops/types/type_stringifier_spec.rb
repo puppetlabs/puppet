@@ -129,7 +129,7 @@ describe 'The type stringifier' do
 
     it "should yield 'Struct' and details for PStructType" do
       struct_t = f.struct({'a'=>Integer, 'b'=>String})
-      expect(s.string(struct_t)).to eq("Struct[{'a'=>Integer, 'b'=>String}]")
+      expect(s.string(struct_t)).to eq("Struct[{'a' => Integer, 'b' => String}]")
       struct_t = f.struct({})
       expect(s.string(struct_t)).to eq('Struct')
     end
