@@ -31,7 +31,7 @@ class Puppet::ModuleTool::Tar::Mini
     Archive::Tar::Minitar.open(tarfile).collect do |entry|
       flag = entry.typeflag
       if flag.nil? || flag =~ /[[:digit:]]/ && (0..7).include?(flag.to_i)
-        entry.name
+        entry.full_name
       else
         Puppet.debug "Invalid tar flag '#{flag}' will not be extracted: #{entry.name}"
         next
