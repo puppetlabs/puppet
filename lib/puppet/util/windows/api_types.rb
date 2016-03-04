@@ -19,7 +19,6 @@ module Puppet::Util::Windows::APITypes
 
   class ::FFI::Pointer
     NULL_HANDLE = 0
-    NULL_TERMINATOR_WCHAR = 0
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
@@ -60,18 +59,27 @@ module Puppet::Util::Windows::APITypes
       str.encode(dst_encoding)
     end
 
-    def read_arbitrary_wide_string_up_to(max_char_length = 512, terminal_array = [NULL_TERMINATOR_WCHAR])
-      # max_char_length is number of wide chars (typically excluding NULLs), *not* bytes
-      # use a pointer to read one UTF-16LE char (2 bytes) at a time
-      wchar_ptr = FFI::Pointer.new(:wchar, address)
+    # @param max_char_length [Integer] Maximum number of wide chars tp return (typically excluding NULLs), *not* bytes
+    # @param num_term_chars [Integer] Number of number of null wchar characters, *not* bytes, that determine the end of the string
+    #   num_term_chars = 1, then the terminating sequence is two bytes of zero.   This is UNIT16 = 0
+    #   num_term_chars = 2, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
+    def read_arbitrary_wide_string_up_to(max_char_length = 512, num_term_chars = 1)
+      # Look for a null terminating characters; if found, read up to that null (exclusive)
 
-      # now iterate 2 bytes at a time until an offset lower than max_char_length is found
-      0.upto(max_char_length - terminal_array.length) do |i|
-        if wchar_ptr[i].read_array_of_wchar(terminal_array.length) == terminal_array
-          return read_wide_string(i)
-        end
+      case (num_term_chars)
+        when 1
+          (0...max_char_length - 1).each { |i|
+            return read_wide_string(i) if get_uint16(i * 2) == 0
+          }
+        when 2
+          (0...max_char_length - 2).each { |i|
+            return read_wide_string(i) if get_uint32(i * 2) == 0
+          }
+        else
+          raise "Unable to read wide strings with #{num_term_chars} terminal nulls"
       end
 
+      # String is longer than the max; read just to the max
       read_wide_string(max_char_length)
     end
 
