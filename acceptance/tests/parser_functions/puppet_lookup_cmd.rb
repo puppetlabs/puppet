@@ -11,7 +11,8 @@ test_name "Puppet Lookup Command"
 @confdir = "#{@testroot}/puppet"
 
 @mastername = on(master, facter('fqdn')).stdout.chomp
-@agentname = on(agent, facter('fqdn')).stdout.chomp
+host = agents.find { |host| host != master }
+@agentname = on(host, facter('fqdn')).stdout.chomp
 
 @master_opts = {
   'main' => {
@@ -2121,7 +2122,7 @@ MANI4
 file { '#{@coderoot}/enc.rb' :
   ensure => file,
   mode => "0755",
-  content => "#! /bin/ruby
+  content => "#!#{master['privatebindir']}/ruby
 nodename = ARGV.shift
 node2env = {
   '#{@mastername}' => \\\"---\\\\n  environment: env2\\\\n\\\",
@@ -2539,4 +2540,4 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "enc specified environment env2 environment_key lookup failed"
   )
 
-end 
+end
