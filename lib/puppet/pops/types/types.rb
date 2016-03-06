@@ -185,6 +185,10 @@ class PAnyType < TypedModelObject
     n[n.rindex('::')+3..n.size-5]
   end
 
+  def to_alias_expanded_s
+    TypeStringifier.new.alias_expanded_string(self)
+  end
+
   def to_s
     TypeStringifier.string(self)
   end

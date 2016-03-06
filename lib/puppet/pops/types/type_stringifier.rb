@@ -31,6 +31,18 @@ class TypeStringifier
     @@string_visitor.visit_this_0(self, t)
   end
 
+  # Produces a string representing the type where type aliases have been expanded
+  # @api public
+  #
+  def alias_expanded_string(t)
+    @expand_aliases = true
+    begin
+      string(t)
+    ensure
+      @expand_aliases = false
+    end
+  end
+
   # Produces a debug string representing the type (possibly with more information that the regular string format)
   # @api public
   #
@@ -255,7 +267,12 @@ class TypeStringifier
 
   # @api private
   def string_PTypeAliasType(t)
-    t.name
+    expand = @expand_aliases
+    if expand && t.self_recursion?
+      @guard ||= RecursionGuard.new
+      expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
+    end
+    expand ? "#{t.name} = #{string(t.resolved_type)}" : t.name
   end
 
   # @api private

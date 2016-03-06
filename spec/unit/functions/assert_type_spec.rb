@@ -84,6 +84,6 @@ describe 'the assert_type function' do
       assert_type(UnprivilegedPort, 345)
       notice('ok')
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expected an UnprivilegedPort value, got Integer\[345, 345\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expected an UnprivilegedPort = Integer\[1024, 65537\] value, got Integer\[345, 345\]/)
   end
 end

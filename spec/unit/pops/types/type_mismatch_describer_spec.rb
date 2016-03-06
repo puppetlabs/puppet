@@ -48,16 +48,37 @@ describe 'the type mismatch describer' do
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects a Hash value, got Tuple/)
   end
 
-  it 'will report a mismatch against an aliased type correctly' do
+  it 'will include the aliased type when reporting a mismatch that involves an alias' do
     code = <<-CODE
       type UnprivilegedPort = Integer[1024,65537]
 
-      function check_port(UnprivilegedPort $port) {
-         $port
-      }
+      function check_port(UnprivilegedPort $port) {}
       check_port(34)
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'port' expects an UnprivilegedPort value, got Integer\[34, 34\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'port' expects an UnprivilegedPort = Integer\[1024, 65537\] value, got Integer\[34, 34\]/)
+  end
+
+  it 'will include the aliased type when reporting a mismatch that involves an alias nested in another type' do
+    code = <<-CODE
+      type UnprivilegedPort = Integer[1024,65537]
+      type PortMap = Hash[UnprivilegedPort,String]
+
+      function check_port(PortMap $ports) {}
+      check_port({ 34 => 'some service'})
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\[12, 12\], 1, 1\]/))
+  end
+
+  it 'will not include the aliased type more than once when reporting a mismatch that involves an alias that is self recursive' do
+    code = <<-CODE
+      type Tree = Hash[String,Tree]
+
+      function check_tree(Tree $tree) {}
+      check_tree({ 'x' => {'y' => {32 => 'n'}}})
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'tree' expects a Tree = Hash\[String, Tree\] value, got Struct\[\{'x' => Struct\[\{'y' => Hash\[Integer, String\]\}\]\}\]/))
   end
 
   context 'when using present tense' do

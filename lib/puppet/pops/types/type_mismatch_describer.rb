@@ -258,7 +258,7 @@ module Types
       if e.is_a?(Array)
         if report_detailed?(e, a)
           a = detailed_actual_to_s(e, a)
-          e = e.map { |t| t.to_s }
+          e = e.map { |t| t.to_alias_expanded_s }
         else
           sns = e.map { |t| t.simple_name }.uniq
           e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
@@ -277,7 +277,7 @@ module Types
       else
         if report_detailed?(e, a)
           a = detailed_actual_to_s(e, a)
-          e = e.to_s
+          e = e.to_alias_expanded_s
         else
           e = e.simple_name
           a = a.simple_name
@@ -297,17 +297,20 @@ module Types
     private
 
     # Decides whether or not the report must be fully detailed, or if generalization can be permitted
-    # in the mismatch report.
+    # in the mismatch report. All comparisons are made using resolved aliases rather than the alias
+    # itself.
     #
     # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
     # param a [PAnyType] the actual type
-    # @return [Boolean] `true` when aliases are used or when the class of _a_ equals the class _e_ or,
+    # @return [Boolean] `true` when the class of _a_ equals the class _e_ or,
     #   in case _e_ is an `Array`, the class of at least one element of _e_
     def always_fully_detailed?(e, a)
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
       else
-        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType)
+        e = e.resolved_type if e.is_a?(PTypeAliasType)
+        a = a.resolved_type if a.is_a?(PTypeAliasType)
+        e.class == a.class
       end
     end
 
@@ -324,7 +327,12 @@ module Types
     # @return [Boolean] `true` when _a_ is assignable to the default generalization of _e_ or,
     #   in case _e_ is an `Array`, to the default generalization of at least one element of _e_
     def assignable_to_default?(e, a)
-      e.is_a?(Array) ? e.any? { |t| assignable_to_default?(t, a) } : e.class::DEFAULT.assignable?(a)
+      if e.is_a?(Array)
+        e.any? { |t| assignable_to_default?(t, a) }
+      else
+        e = e.resolved_type if e.is_a?(PTypeAliasType)
+        e.class::DEFAULT.assignable?(a)
+      end
     end
 
     # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
@@ -341,10 +349,10 @@ module Types
     # @return [String] The string representation of the type _a_ or generalized type _a_
     def detailed_actual_to_s(e, a)
       if always_fully_detailed?(e, a)
-        a.to_s
+        a.to_alias_expanded_s
       else
         g = a.generalize
-        any_assignable?(e, g) ? a.to_s : g.to_s
+        any_assignable?(e, g) ? a.to_alias_expanded_s : g.to_s
       end
     end
   end
