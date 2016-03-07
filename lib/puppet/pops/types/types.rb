@@ -252,12 +252,37 @@ class PAnyType < TypedModelObject
     to = size_type.to
     [from.nil? ? 1 : from, to.nil? ? Float::INFINITY : to]
   end
+
+  # Applies a transformation by sending the given _method_ and _method_args_ to each of the types of the given array
+  # and collecting the results in a new array. If all transformation calls returned the type instance itself (i.e. no
+  # transformation took place), then this method will return `self`. If a transformation did occur, then this method
+  # will either return the transformed array or in case a block was given, the result of calling a given block with
+  # the transformed array.
+  #
+  # @param types [Array<PAnyType>] the array of types to transform
+  # @param method [Symbol] The method to call on each type
+  # @param method_args [Object] The arguments to pass to the method, if any
+  # @return [Object] self, the transformed array, or the result of calling a given block with the transformed array
+  # @yieldparam altered_types [Array<PAnyType>] the altered type array
+  # @api private
+  def alter_type_array(types, method, *method_args)
+    modified = false
+    modified_types = types.map do |t|
+      t_mod = t.send(method, *method_args)
+      modified = !t.equal?(t_mod) unless modified
+      t_mod
+    end
+    if modified
+      block_given? ? yield(modified_types) : modified_types
+    else
+      self
+    end
+  end
 end
 
-# The type of types.
+# @abstract Encapsulates common behavior for a type that contains one type
 # @api public
-#
-class PType < PAnyType
+class PTypeWithContainedType < PAnyType
   attr_reader :type
 
   def initialize(type)
@@ -269,20 +294,34 @@ class PType < PAnyType
     @type.accept(visitor, guard) unless @type.nil?
   end
 
+  def generalize
+    if @type.nil?
+      self.class::DEFAULT
+    else
+      ge_type = @type.generalize
+      @type.equal?(ge_type) ? self : self.class.new(ge_type)
+    end
+  end
+
+  def hash
+    self.class.hash * 31 * @type.hash
+  end
+
+  def eql?(o)
+    self.class == o.class && @type == o.type
+  end
+end
+
+# The type of types.
+# @api public
+#
+class PType < PTypeWithContainedType
   def instance?(o)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o)
     else
       assignable?(TypeCalculator.infer(o))
     end
-  end
-
-  def generalize
-    @type.nil? ? DEFAULT : PType.new(type.generalize)
-  end
-
-  def hash
-    31 * @type.hash
   end
 
   def iterable?(guard = nil)
@@ -334,32 +373,13 @@ class PType < PAnyType
   end
 end
 
-class PNotUndefType < PAnyType
-  attr_reader :type
-
+class PNotUndefType < PTypeWithContainedType
   def initialize(type = nil)
-    @type = type.class == PAnyType ? nil : type
-  end
-
-  def accept(visitor, guard)
-    super
-    @type.accept(visitor, guard) unless @type.nil?
+    super(type.class == PAnyType ? nil : type)
   end
 
   def instance?(o)
     !(o.nil? || o == :undef) && (@type.nil? || @type.instance?(o))
-  end
-
-  def generalize
-    @type.nil? ? DEFAULT : PNotUndefType.new(type.generalize)
-  end
-
-  def hash
-    31 * @type.hash
-  end
-
-  def eql?(o)
-    self.class == o.class && @type == o.type
   end
 
   DEFAULT = PNotUndefType.new
@@ -512,7 +532,7 @@ class PEnumType < PScalarType
     self.class == o.class && @values == o.values
   end
 
-  DEFAULT = PEnumType.new([])
+  DEFAULT = PEnumType.new(EMPTY_ARRAY)
 
   protected
 
@@ -685,7 +705,12 @@ class PCollectionType < PAnyType
   end
 
   def generalize
-    @element_type.nil? ? DEFAULT : PCollectionType.new(element_type.generalize, nil)
+    if @element_type.nil?
+      DEFAULT
+    else
+      ge_type = @element_type.generalize
+      @size_type.nil? && @element_type.equal?(ge_type) ? self : self.class.new(ge_type, nil)
+    end
   end
 
   def instance?(o)
@@ -741,20 +766,13 @@ class PCollectionType < PAnyType
   end
 end
 
-class PIterableType < PAnyType
-  attr_reader :element_type
-
-  def initialize(type)
-    @element_type = type
-  end
-
-  def accept(visitor, guard)
-    super
-    @element_type.accept(visitor, guard) unless @element_type.nil?
+class PIterableType < PTypeWithContainedType
+  def element_type
+    @type
   end
 
   def instance?(o)
-    if @element_type.nil? || @element_type.assignable?(PAnyType::DEFAULT)
+    if @type.nil? || @type.assignable?(PAnyType::DEFAULT)
       # Any element_type will do
       case o
       when Iterable, String, Hash, Array, Range, PEnumType
@@ -771,14 +789,6 @@ class PIterableType < PAnyType
     end
   end
 
-  def generalize
-    @element_type.nil? ? DEFAULT : PIterableType.new(@element_type.generalize)
-  end
-
-  def hash
-    67 * @element_type.hash
-  end
-
   def iterable?(guard = nil)
     true
   end
@@ -787,50 +797,31 @@ class PIterableType < PAnyType
     self
   end
 
-  def eql?(o)
-    self.class == o.class && @element_type == o.element_type
-  end
-
   DEFAULT = PIterableType.new(nil)
 
   protected
 
   # @api private
   def _assignable?(o, guard)
-    if @element_type.nil? || @element_type.assignable?(PAnyType::DEFAULT, guard)
+    if @type.nil? || @type.assignable?(PAnyType::DEFAULT, guard)
       # Don't request the iterable_type. Since this Iterable accepts Any element, it is enough that o is iterable.
       o.iterable?
     else
       o = o.iterable_type
-      o.nil? || o.element_type.nil? ? false : @element_type.assignable?(o.element_type, guard)
+      o.nil? || o.element_type.nil? ? false : @type.assignable?(o.element_type, guard)
     end
   end
 end
 
 # @api public
 #
-class PIteratorType < PAnyType
-  attr_reader :element_type
-
-  def initialize(type)
-    @element_type = type
-  end
-
-  def accept(visitor, guard)
-    super
-    @element_type.accept(visitor, guard) unless @element_type.nil?
+class PIteratorType < PTypeWithContainedType
+  def element_type
+    @type
   end
 
   def instance?(o)
     o.is_a?(Iterable) && (@element_type.nil? || @element_type.assignable?(o.element_type))
-  end
-
-  def generalize
-    @element_type.nil? ? DEFAULT : PIteratorType.new(@element_type.generalize)
-  end
-
-  def hash
-    71 * @element_type.hash
   end
 
   def iterable?(guard = nil)
@@ -838,11 +829,7 @@ class PIteratorType < PAnyType
   end
 
   def iterable_type(guard = nil)
-    element_type.nil? ? PIteratbleType::DEFAULT : PIterableType.new(@element_type)
-  end
-
-  def eql?(o)
-    self.class == o.class && @element_type == o.element_type
+    @type.nil? ? PIteratbleType::DEFAULT : PIterableType.new(@element_type)
   end
 
   DEFAULT = PIteratorType.new(nil)
@@ -860,7 +847,7 @@ end
 class PStringType < PScalarType
   attr_reader :size_type, :values
 
-  def initialize(size_type, values = [])
+  def initialize(size_type, values = EMPTY_ARRAY)
     @size_type = size_type
     @values = values.sort.freeze
   end
@@ -1008,7 +995,7 @@ class PPatternType < PScalarType
     self.class == o.class && (@patterns | o.patterns).size == @patterns.size
   end
 
-  DEFAULT = PPatternType.new([])
+  DEFAULT = PPatternType.new(EMPTY_ARRAY)
 
   protected
 
@@ -1083,7 +1070,8 @@ class PStructElement < TypedModelObject
   end
 
   def generalize
-    PStructElement.new(@key_type, @value_type.generalize)
+    gv_type = @value_type.generalize
+    @value_type.equal?(gv_type) ? self : PStructElement.new(@key_type, gv_type)
   end
 
   def <=>(o)
@@ -1118,7 +1106,11 @@ class PStructType < PAnyType
   end
 
   def generalize
-    @elements.empty? ? DEFAULT : PStructType.new(@elements.map { |se| se.generalize })
+    if @elements.empty?
+      DEFAULT
+    else
+      alter_type_array(@elements, :generalize) { |altered| PStructType.new(altered) }
+    end
   end
 
   def hashed_elements
@@ -1170,7 +1162,7 @@ class PStructType < PAnyType
     end && matched == o.size
   end
 
-  DEFAULT = PStructType.new([])
+  DEFAULT = PStructType.new(EMPTY_ARRAY)
 
   protected
 
@@ -1275,7 +1267,11 @@ class PTupleType < PAnyType
   end
 
   def generalize
-    self == DEFAULT ? self : PTupleType.new(@types.map {|t| t.generalize })
+    if self == DEFAULT
+      DEFAULT
+    else
+      alter_type_array(@types, :generalize) { |altered_types| PTupleType.new(altered_types, @size_type) }
+    end
   end
 
   def instance?(o)
@@ -1332,7 +1328,7 @@ class PTupleType < PAnyType
   end
 
   DATA = PTupleType.new([PDataType::DEFAULT], PCollectionType::DEFAULT_SIZE)
-  DEFAULT = PTupleType.new([])
+  DEFAULT = PTupleType.new(EMPTY_ARRAY)
 
   protected
 
@@ -1399,10 +1395,13 @@ class PCallableType < PAnyType
   end
 
   def generalize
-    return self if self == DEFAULT
-    params_t = @param_types.nil? ? nil : @param_types.generalize
-    block_t = @block_type.nil? ? nil : @block_type.generalize
-    PCallableType.new(params_t, block_t)
+    if self == DEFAULT
+      DEFAULT
+    else
+      params_t = @param_types.nil? ? nil : @param_types.generalize
+      block_t = @block_type.nil? ? nil : @block_type.generalize
+      @param_types.equal?(params_t) && @block_type.equal?(block_t) ? self : PCallableType.new(params_t, block_t)
+    end
   end
 
   def instance?(o)
@@ -1485,10 +1484,10 @@ class PArrayType < PCollectionType
   end
 
   def generalize
-    if self == DEFAULT
+    if self == DATA
       self
     else
-      PArrayType.new(element_type.nil? ? nil : element_type.generalize)
+      super
     end
   end
 
@@ -1500,9 +1499,9 @@ class PArrayType < PCollectionType
     size_t.nil? || size_t.instance?(o.size)
   end
 
-  DATA = PArrayType.new(PDataType::DEFAULT, PCollectionType::DEFAULT_SIZE)
+  DATA = PArrayType.new(PDataType::DEFAULT, DEFAULT_SIZE)
   DEFAULT = PArrayType.new(nil)
-  EMPTY = PArrayType.new(PUnitType::DEFAULT, PCollectionType::ZERO_SIZE)
+  EMPTY = PArrayType.new(PUnitType::DEFAULT, ZERO_SIZE)
 
   protected
 
@@ -1559,14 +1558,14 @@ class PHashType < PCollectionType
   end
 
   def generalize
-    if self == DEFAULT || self == EMPTY
+    if self == DEFAULT || self == DATA || self == EMPTY
       self
     else
       key_t = @key_type
       key_t = key_t.generalize unless key_t.nil?
-      value_t = element_type
+      value_t = @element_type
       value_t = value_t.generalize unless value_t.nil?
-      PHashType.new(key_t, value_t)
+      @size_type.nil? && @key_type.equal?(key_t) && @element_type.equal(value_t) ? self : PHashType.new(key_t, value_t, nil)
     end
   end
 
@@ -1664,7 +1663,11 @@ class PVariantType < PAnyType
   end
 
   def generalize
-    (self == DEFAULT || self == DATA) ? self : PVariantType.new(@types.map {|t| t.generalize})
+    if self == DEFAULT || self == DATA
+      self
+    else
+      alter_type_array(@types, :generalize) { |altered| PVariantType.new(mod_types) }
+    end
   end
 
   def hash
@@ -1693,7 +1696,7 @@ class PVariantType < PAnyType
   # Variant compatible with the Data type.
   DATA = PVariantType.new([PHashType::DATA, PArrayType::DATA, PScalarType::DEFAULT, PUndefType::DEFAULT, PTupleType::DATA])
 
-  DEFAULT = PVariantType.new([])
+  DEFAULT = PVariantType.new(EMPTY_ARRAY)
 
   protected
 
@@ -1858,36 +1861,17 @@ end
 # required_type - is a short hand for Variant[T, Undef]
 # @api public
 #
-class POptionalType < PAnyType
-  attr_reader :optional_type
-
-  def initialize(optional_type)
-    @optional_type = optional_type
-  end
-
-  def accept(visitor, guard)
-    super
-    @optional_type.accept(visitor, guard) unless @optional_type.nil?
-  end
-
-  def generalize
-    @optional_type.nil? ? self : PType.new(@optional_type.generalize)
-  end
-
-  def hash
-    7 * @optional_type.hash
+class POptionalType < PTypeWithContainedType
+  def optional_type
+    @type
   end
 
   def kind_of_callable?(optional=true, guard = nil)
-      optional && !@optional_type.nil? && @optional_type.kind_of_callable?(optional, guard)
-  end
-
-  def eql?(o)
-    self.class == o.class && @optional_type == o.optional_type
+      optional && !@type.nil? && @type.kind_of_callable?(optional, guard)
   end
 
   def instance?(o)
-    PUndefType::DEFAULT.instance?(o) || (!optional_type.nil? && optional_type.instance?(o))
+    PUndefType::DEFAULT.instance?(o) || (!@type.nil? && @type.instance?(o))
   end
 
   DEFAULT = POptionalType.new(nil)
@@ -1897,11 +1881,11 @@ class POptionalType < PAnyType
   # @api private
   def _assignable?(o, guard)
     return true if o.is_a?(PUndefType)
-    return true if @optional_type.nil?
+    return true if @type.nil?
     if o.is_a?(POptionalType)
-      @optional_type.assignable?(o.optional_type, guard)
+      @type.assignable?(o.optional_type, guard)
     else
-      @optional_type.assignable?(o, guard)
+      @type.assignable?(o, guard)
     end
   end
 end
@@ -1911,7 +1895,7 @@ class PTypeReferenceType < PAnyType
 
   def initialize(name, parameters = nil)
     @name = name
-    @parameters = parameters.nil? ? [] : parameters
+    @parameters = parameters.nil? ? EMPTY_ARRAY : parameters
   end
 
   def callable?(args)
