@@ -122,8 +122,8 @@ class TypeCalculator
   # @api public
   #
   def self.string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeStringifier')
-    TypeStringifier.string(t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.string(t)
   end
 
   # @api public
@@ -143,8 +143,8 @@ class TypeCalculator
 
   # @api public
   def self.debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeStringifier')
-    TypeStringifier.debug_string(t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.debug_string(t)
   end
 
   # @api public
@@ -501,16 +501,16 @@ class TypeCalculator
   # @api public
   #
   def string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeStringifier')
-    TypeStringifier.singleton.string(t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.string(t)
   end
 
   # Produces a debug string representing the type (possibly with more information that the regular string format)
   # @api public
   #
   def debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeStringifier')
-    TypeStringifier.singleton.debug_string(t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.debug_string(t)
   end
 
 

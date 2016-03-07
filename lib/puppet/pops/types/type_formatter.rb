@@ -6,7 +6,7 @@ module Types
 #
 # @api public
 #
-class TypeStringifier
+class TypeFormatter
   # Produces a String representation of the given type.
   # @param t [PAnyType] the type to produce a string form
   # @return [String] the type in string form
@@ -286,7 +286,7 @@ class TypeStringifier
 
   # Debugging to_s to reduce the amount of output
   def to_s
-    '[a TypeStringifier]'
+    '[a TypeFormatter]'
   end
 
   private

@@ -4,7 +4,7 @@ require_relative 'recursion_guard'
 require_relative 'type_acceptor'
 require_relative 'type_asserter'
 require_relative 'type_assertion_error'
-require_relative 'type_stringifier'
+require_relative 'type_formatter'
 require_relative 'type_calculator'
 require_relative 'type_factory'
 require_relative 'type_parser'
@@ -186,11 +186,11 @@ class PAnyType < TypedModelObject
   end
 
   def to_alias_expanded_s
-    TypeStringifier.new.alias_expanded_string(self)
+    TypeFormatter.new.alias_expanded_string(self)
   end
 
   def to_s
-    TypeStringifier.string(self)
+    TypeFormatter.string(self)
   end
 
   # The default instance of this type. Each type in the type system has this constant

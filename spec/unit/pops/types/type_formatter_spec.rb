@@ -2,8 +2,8 @@ require 'spec_helper'
 require 'puppet/pops'
 
 module Puppet::Pops::Types
-describe 'The type stringifier' do
-  let(:s) { TypeStringifier.new }
+describe 'The type formatter' do
+  let(:s) { TypeFormatter.new }
   let(:f) { TypeFactory }
 
   context 'when representing the type as string' do

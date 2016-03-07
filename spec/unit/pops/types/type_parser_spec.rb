@@ -259,6 +259,6 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   def the_type_spec_for(type)
-    Puppet::Pops::Types::TypeStringifier.string(type)
+    Puppet::Pops::Types::TypeFormatter.string(type)
   end
 end
