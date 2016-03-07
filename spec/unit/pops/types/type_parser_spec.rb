@@ -259,7 +259,6 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   def the_type_spec_for(type)
-    calc = Puppet::Pops::Types::TypeCalculator.new
-    calc.string(type)
+    Puppet::Pops::Types::TypeStringifier.string(type)
   end
 end

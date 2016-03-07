@@ -819,7 +819,6 @@ module Types
         when PArrayType
           [param_types.element_type]
         end
-      tc = TypeCalculator.singleton
 
       # join type with names (types are always present, names are optional)
       # separate entries with comma
@@ -836,7 +835,7 @@ module Types
           indicator = '?'
           type = type.optional_type if type.is_a?(POptionalType)
         end
-        "#{tc.string(type)} #{name}#{indicator}"
+        "#{type} #{name}#{indicator}"
       end.join(', ')
 
       # If there is a block, include it

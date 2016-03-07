@@ -186,7 +186,7 @@ class PAnyType < TypedModelObject
   end
 
   def to_s
-    TypeCalculator.string(self)
+    TypeStringifier.string(self)
   end
 
   # The default instance of this type. Each type in the type system has this constant
