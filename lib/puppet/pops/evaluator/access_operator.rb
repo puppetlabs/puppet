@@ -431,7 +431,7 @@ class AccessOperator
 
     if keys.size == 0
       fail(Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
+        :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
     end
 
     # Must know which concrete resource type to operate on in all cases.
@@ -511,7 +511,7 @@ class AccessOperator
 
     if keys_orig_size == 0
       fail(Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
+        :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
     end
 
     # The result is an array if multiple classnames are given, or if classnames are specified with an array

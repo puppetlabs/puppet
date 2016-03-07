@@ -536,8 +536,8 @@ module Producers
       tc = injector.type_calculator
       expected = [expected] unless expected.is_a?(Array)
       actual_t = tc.is_ptype?(actual) ? actual : tc.infer(actual)
-      expstrs = expected.collect {|t| tc.string(t) }
-      "expected: #{expstrs.join(', or ')}, got: #{tc.string(actual_t)}"
+      expstrs = expected.collect {|t| t.to_s }
+      "expected: #{expstrs.join(', or ')}, got: #{actual_t}"
     end
   end
 
@@ -729,7 +729,7 @@ module Producers
           detail << ":flatten" if flatten
           detail << ":conflict_resolution => :append" if conflict_resolution.to_s == 'append'
           raise ArgumentError, ["Options #{detail.join(', and ')} cannot be used with a Multibind ",
-            "of type #{injector.type_calculator.string(binding.type)}"].join()
+            "of type #{binding.type}"].join()
         end
       end
     end

@@ -122,7 +122,8 @@ class TypeCalculator
   # @api public
   #
   def self.string(t)
-    singleton.string(t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.string(t)
   end
 
   # @api public
@@ -142,7 +143,8 @@ class TypeCalculator
 
   # @api public
   def self.debug_string(t)
-    singleton.debug_string(t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.debug_string(t)
   end
 
   # @api public
@@ -167,8 +169,6 @@ class TypeCalculator
   #
   def initialize
     @@infer_visitor ||= Visitor.new(nil, 'infer',0,0)
-    @@string_visitor ||= Visitor.new(nil, 'string',0,0)
-    @@inspect_visitor ||= Visitor.new(nil, 'debug_string',0,0)
     @@extract_visitor ||= Visitor.new(nil, 'extract',0,0)
   end
 
@@ -501,20 +501,16 @@ class TypeCalculator
   # @api public
   #
   def string(t)
-    if t.is_a?(Module)
-      t = type(t)
-    end
-    @@string_visitor.visit_this_0(self, t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.string(t)
   end
 
   # Produces a debug string representing the type (possibly with more information that the regular string format)
   # @api public
   #
   def debug_string(t)
-    if t.is_a?(Module)
-      t = type(t)
-    end
-    @@inspect_visitor.visit_this_0(self, t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.debug_string(t)
   end
 
 
@@ -763,314 +759,12 @@ class TypeCalculator
     end
   end
 
-  # @api private
-  def debug_string_Object(t)
-    string(t)
-  end
-
-  # @api private
-  def string_PType(t)
-    if t.type.nil?
-      'Type'
-    else
-      "Type[#{string(t.type)}]"
-    end
-  end
-
-  # @api private
-  def string_NilClass(t)     ; '?'       ; end
-
-  # @api private
-  def string_String(t)       ; t         ; end
-
-  # @api private
-  def string_Symbol(t)       ; t.to_s    ; end
-
-  def string_PAnyType(t)     ; 'Any'; end
-
-  # @api private
-  def string_PUndefType(t)     ; 'Undef'   ; end
-
-  # @api private
-  def string_PDefaultType(t) ; 'Default' ; end
-
-  # @api private
-  def string_PBooleanType(t) ; 'Boolean'; end
-
-  # @api private
-  def string_PScalarType(t)  ; 'Scalar'; end
-
-  # @api private
-  def string_PDataType(t)    ; 'Data'; end
-
-  # @api private
-  def string_PNumericType(t) ; 'Numeric'; end
-
-  # @api private
-  def string_PIntegerType(t)
-    range = range_array_part(t)
-    if range.empty?
-      'Integer'
-    else
-      "Integer[#{range.join(', ')}]"
-    end
-  end
-
-  # @api private
-  def string_PIterableType(t)
-    if t.element_type.nil?
-      'Iterable'
-    else
-      "Iterable[#{string(t.element_type)}]"
-    end
-  end
-
-  # @api private
-  def string_PIteratorType(t)
-    if t.element_type.nil?
-      'Iterator'
-    else
-      "Iterator[#{string(t.element_type)}]"
-    end
-  end
-
-  # Produces a string from an Integer range type that is used inside other type strings
-  # @api private
-  def range_array_part(t)
-    return [] if t.nil? || t.unbounded?
-    [t.from.nil? ? 'default' : t.from , t.to.nil? ? 'default' : t.to ]
-  end
-
-  # @api private
-  def string_PFloatType(t)
-    range = range_array_part(t)
-    if range.empty?
-      'Float'
-    else
-      "Float[#{range.join(', ')}]"
-    end
-  end
-
-  # @api private
-  def string_PRegexpType(t)
-    t.pattern.nil? ? 'Regexp' : "Regexp[#{t.regexp.inspect}]"
-  end
-
-  # @api private
-  def string_PStringType(t)
-    # skip values in regular output - see debug_string
-    range = range_array_part(t.size_type)
-    if range.empty?
-      'String'
-    else
-      "String[#{range.join(', ')}]"
-    end
-  end
-
-  # @api private
-  def debug_string_PStringType(t)
-    range = range_array_part(t.size_type)
-    range_part = range.empty? ? '' : '[' << range.join(' ,') << '], '
-    'String[' << range_part << (t.values.map {|s| "'#{s}'" }).join(', ') << ']'
-  end
-
-  # @api private
-  def string_PEnumType(t)
-    return 'Enum' if t.values.empty?
-    'Enum[' << t.values.map {|s| "'#{s}'" }.join(', ') << ']'
-  end
-
-  # @api private
-  def string_PVariantType(t)
-    return 'Variant' if t.types.empty?
-    'Variant[' << t.types.map {|t2| string(t2) }.join(', ') << ']'
-  end
-
-  # @api private
-  def string_PTupleType(t)
-    range = range_array_part(t.size_type)
-    return 'Tuple' if t.types.empty?
-    s = 'Tuple[' << t.types.map {|t2| string(t2) }.join(', ')
-    unless range.empty?
-      s << ', ' << range.join(', ')
-    end
-    s << ']'
-    s
-  end
-
-  # @api private
-  def string_PCallableType(t)
-    # generic
-    return 'Callable' if t.param_types.nil?
-
-    if t.param_types.types.empty?
-      range = [0, 0]
-    else
-      range = range_array_part(t.param_types.size_type)
-    end
-    # translate to string, and skip Unit types
-    types = t.param_types.types.map {|t2| string(t2) unless t2.class == PUnitType }.compact
-
-    s = 'Callable[' << types.join(', ')
-    unless range.empty?
-      (s << ', ') unless types.empty?
-      s << range.join(', ')
-    end
-    # Add block T last (after min, max) if present)
-    #
-    unless t.block_type.nil?
-      (s << ', ') unless types.empty? && range.empty?
-      s << string(t.block_type)
-    end
-    s << ']'
-    s
-  end
-
-  # @api private
-  def string_PStructType(t)
-    return 'Struct' if t.elements.empty?
-    'Struct[{' << t.elements.map {|element| string(element) }.join(', ') << '}]'
-  end
-
-  def string_PStructElement(t)
-    k = t.key_type
-    value_optional = t.value_type.assignable?(PUndefType::DEFAULT)
-    key_string =
-      if k.is_a?(POptionalType)
-        # Output as literal String
-        value_optional ? "'#{t.name}'" : string(k)
-      else
-        value_optional ? "NotUndef['#{t.name}']" : "'#{t.name}'"
-      end
-    "#{key_string}=>#{string(t.value_type)}"
-  end
-
-  # @api private
-  def string_PPatternType(t)
-    return 'Pattern' if t.patterns.empty?
-    'Pattern[' << t.patterns.map {|s| "#{s.regexp.inspect}" }.join(', ') << ']'
-  end
-
-  # @api private
-  def string_PCollectionType(t)
-    range = range_array_part(t.size_type)
-    if range.empty?
-      'Collection'
-    else
-      "Collection[#{range.join(', ')}]"
-    end
-  end
-
-  # @api private
-  def string_PUnitType(t)
-    'Unit'
-  end
-
-  # @api private
-  def string_PRuntimeType(t)   ; "Runtime[#{string(t.runtime)}, #{string(t.runtime_type_name)}]"  ; end
-
-  # @api private
-  def string_PArrayType(t)
-    if t == PArrayType::DATA
-      "Array"
-    else
-      parts = [string(t.element_type)] + range_array_part(t.size_type)
-      "Array[#{parts.join(', ')}]"
-  end
-  end
-
-  # @api private
-  def string_PHashType(t)
-    if t == PHashType::DATA
-      "Hash"
-    else
-      parts = [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type)
-      "Hash[#{parts.join(', ')}]"
-    end
-  end
-
-  # @api private
-  def string_PCatalogEntryType(t)
-    'CatalogEntry'
-  end
-
-  # @api private
-  def string_PHostClassType(t)
-    if t.class_name
-      "Class[#{t.class_name}]"
-    else
-      'Class'
-    end
-  end
-
-  # @api private
-  def string_PResourceType(t)
-    if t.type_name
-      if t.title
-        "#{capitalize_segments(t.type_name)}['#{t.title}']"
-      else
-        capitalize_segments(t.type_name)
-      end
-    else
-      'Resource'
-    end
-  end
-
-  # @api private
-  def string_PNotUndefType(t)
-    contained_type = t.type
-    if contained_type.nil? || contained_type.class == PAnyType
-      'NotUndef'
-    else
-      if contained_type.is_a?(PStringType) && contained_type.values.size == 1
-        "NotUndef['#{contained_type.values[0]}']"
-      else
-        "NotUndef[#{string(contained_type)}]"
-      end
-    end
-  end
-
-  # @api private
-  def string_POptionalType(t)
-    optional_type = t.optional_type
-    if optional_type.nil?
-      'Optional'
-    else
-      if optional_type.is_a?(PStringType) && optional_type.values.size == 1
-        "Optional['#{optional_type.values[0]}']"
-      else
-        "Optional[#{string(optional_type)}]"
-      end
-    end
-  end
-
-  # @api private
-  def string_PTypeAliasType(t)
-    t.name
-  end
-
-  # @api private
-  def string_PTypeReferenceType(t)
-    if t.parameters.empty?
-      t.name
-    else
-      params_string = t.parameters.map {|p| string(p) }.join(', ')
-      "#{t.name}[#{params_string}]"
-    end
-  end
-
   # Debugging to_s to reduce the amount of output
   def to_s
     '[a TypeCalculator]'
   end
 
   private
-
-  NAME_SEGMENT_SEPARATOR = '::'.freeze
-
-  def capitalize_segments(s)
-    s.split(NAME_SEGMENT_SEPARATOR).map(&:capitalize).join(NAME_SEGMENT_SEPARATOR)
-  end
 
   def common_data?(t1, t2)
     PDataType::DEFAULT.assignable?(t1) && PDataType::DEFAULT.assignable?(t2)
