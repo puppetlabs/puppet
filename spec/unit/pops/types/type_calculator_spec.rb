@@ -379,35 +379,35 @@ describe 'The type calculator' do
     it 'computes given resource type commonality' do
       r1 = Puppet::Pops::Types::PResourceType.new('File', nil)
       r2 = Puppet::Pops::Types::PResourceType.new('File', nil)
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('File')
+      expect(calculator.common_type(r1, r2).to_s).to eq('File')
 
 
       r2 = Puppet::Pops::Types::PResourceType.new('File', '/tmp/foo')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('File')
+      expect(calculator.common_type(r1, r2).to_s).to eq('File')
 
       r1 = Puppet::Pops::Types::PResourceType.new('File', '/tmp/foo')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq("File['/tmp/foo']")
+      expect(calculator.common_type(r1, r2).to_s).to eq("File['/tmp/foo']")
 
       r1 = Puppet::Pops::Types::PResourceType.new('File', '/tmp/bar')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('File')
+      expect(calculator.common_type(r1, r2).to_s).to eq('File')
 
       r2 = Puppet::Pops::Types::PResourceType.new('Package', 'apache')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('Resource')
+      expect(calculator.common_type(r1, r2).to_s).to eq('Resource')
     end
 
     it 'computes given hostclass type commonality' do
       r1 = Puppet::Pops::Types::PHostClassType.new('foo')
       r2 = Puppet::Pops::Types::PHostClassType.new('foo')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('Class[foo]')
+      expect(calculator.common_type(r1, r2).to_s).to eq('Class[foo]')
 
       r2 = Puppet::Pops::Types::PHostClassType.new('bar')
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('Class')
+      expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
       r2 = Puppet::Pops::Types::PHostClassType.new(nil)
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('Class')
+      expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
       r1 = Puppet::Pops::Types::PHostClassType.new(nil)
-      expect(calculator.string(calculator.common_type(r1, r2))).to eq('Class')
+      expect(calculator.common_type(r1, r2).to_s).to eq('Class')
     end
 
     context 'of strings' do
@@ -450,7 +450,7 @@ describe 'The type calculator' do
       common_t = calculator.common_type(t1,t2)
       expect(common_t.class).to eq(Puppet::Pops::Types::PPatternType)
       expect(common_t.patterns.map { |pr| pr.pattern }).to eq(['abc', 'xyz'])
-      expect(calculator.string(common_t)).to eq('Pattern[/abc/, /xyz/]')
+      expect(common_t.to_s).to eq('Pattern[/abc/, /xyz/]')
     end
 
     it 'computes enum commonality to value set sum' do
@@ -1763,284 +1763,6 @@ describe 'The type calculator' do
     end
   end
 
-  context 'when representing the type as string' do
-    include_context 'types_setup'
-
-    it 'should yield \'Type\' for PType' do
-      expect(calculator.string(Puppet::Pops::Types::PType::DEFAULT)).to eq('Type')
-    end
-
-    it 'should yield \'Object\' for PAnyType' do
-      expect(calculator.string(Puppet::Pops::Types::PAnyType::DEFAULT)).to eq('Any')
-    end
-
-    it 'should yield \'Scalar\' for PScalarType' do
-      expect(calculator.string(Puppet::Pops::Types::PScalarType::DEFAULT)).to eq('Scalar')
-    end
-
-    it 'should yield \'Boolean\' for PBooleanType' do
-      expect(calculator.string(Puppet::Pops::Types::PBooleanType::DEFAULT)).to eq('Boolean')
-    end
-
-    it 'should yield \'Data\' for PDataType' do
-      expect(calculator.string(Puppet::Pops::Types::PDataType::DEFAULT)).to eq('Data')
-    end
-
-    it 'should yield \'Numeric\' for PNumericType' do
-      expect(calculator.string(Puppet::Pops::Types::PNumericType::DEFAULT)).to eq('Numeric')
-    end
-
-    it 'should yield \'Integer\' and from/to for PIntegerType' do
-      int_T = Puppet::Pops::Types::PIntegerType
-      expect(calculator.string(int_T::DEFAULT)).to eq('Integer')
-      int = int_T.new(1, 1)
-      expect(calculator.string(int)).to eq('Integer[1, 1]')
-      int = int_T.new(1, 2)
-      expect(calculator.string(int)).to eq('Integer[1, 2]')
-      int = int_T.new(nil, 2)
-      expect(calculator.string(int)).to eq('Integer[default, 2]')
-      int = int_T.new(2, nil)
-      expect(calculator.string(int)).to eq('Integer[2, default]')
-    end
-
-    it 'should yield \'Float\' for PFloatType' do
-      expect(calculator.string(Puppet::Pops::Types::PFloatType::DEFAULT)).to eq('Float')
-    end
-
-    it 'should yield \'Regexp\' for PRegexpType' do
-      expect(calculator.string(Puppet::Pops::Types::PRegexpType::DEFAULT)).to eq('Regexp')
-    end
-
-    it 'should yield \'Regexp[/pat/]\' for parameterized PRegexpType' do
-      t = Puppet::Pops::Types::PRegexpType.new('a/b')
-      expect(calculator.string(t)).to eq('Regexp[/a\/b/]')
-    end
-
-    it 'should yield \'String\' for PStringType' do
-      expect(calculator.string(Puppet::Pops::Types::PStringType::DEFAULT)).to eq('String')
-    end
-
-    it 'should yield \'String\' for PStringType with multiple values' do
-      expect(calculator.string(string_t('a', 'b', 'c'))).to eq('String')
-    end
-
-    it 'should yield \'String\' and from/to for PStringType' do
-      string_T = Puppet::Pops::Types::PStringType
-      expect(calculator.string(string_T.new(range_t(1,1)))).to eq('String[1, 1]')
-      expect(calculator.string(string_T.new(range_t(1,2)))).to eq('String[1, 2]')
-      expect(calculator.string(string_T.new(range_t(:default, 2)))).to eq('String[default, 2]')
-      expect(calculator.string(string_T.new(range_t(2, :default)))).to eq('String[2, default]')
-    end
-
-    it 'should yield \'Array[Integer]\' for PArrayType[PIntegerType]' do
-      t = Puppet::Pops::Types::PArrayType.new(Puppet::Pops::Types::PIntegerType::DEFAULT)
-      expect(calculator.string(t)).to eq('Array[Integer]')
-    end
-
-    it 'should yield \'Array\' for PArrayType::DATA' do
-      expect(calculator.string(Puppet::Pops::Types::PArrayType::DATA)).to eq('Array')
-    end
-
-    it 'should yield \'Array[Unit, 0, 0]\' for an empty array' do
-      t = empty_array_t
-      expect(calculator.string(t)).to eq('Array[Unit, 0, 0]')
-    end
-
-    it 'should yield \'Collection\' and from/to for PCollectionType' do
-      expect(calculator.string(collection_t(range_t(1,1)))).to eq('Collection[1, 1]')
-      expect(calculator.string(collection_t(range_t(1,2)))).to eq('Collection[1, 2]')
-      expect(calculator.string(collection_t(range_t(:default, 2)))).to eq('Collection[default, 2]')
-      expect(calculator.string(collection_t(range_t(2, :default)))).to eq('Collection[2, default]')
-    end
-
-    it 'should yield \'Array\' and from/to for PArrayType' do
-      expect(calculator.string(array_t(string_t, range_t(1,1)))).to eq('Array[String, 1, 1]')
-      expect(calculator.string(array_t(string_t, range_t(1,2)))).to eq('Array[String, 1, 2]')
-      expect(calculator.string(array_t(string_t, range_t(:default, 2)))).to eq('Array[String, default, 2]')
-      expect(calculator.string(array_t(string_t, range_t(2, :default)))).to eq('Array[String, 2, default]')
-    end
-
-    it 'should yield \'Iterable\' for PIterableType' do
-      expect(calculator.string(Puppet::Pops::Types::PIterableType::DEFAULT)).to eq('Iterable')
-    end
-
-    it 'should yield \'Iterable[Integer]\' for PIterableType[PIntegerType]' do
-      expect(calculator.string(Puppet::Pops::Types::PIterableType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterable[Integer]')
-    end
-
-    it 'should yield \'Iterator\' for PIteratorType' do
-      expect(calculator.string(Puppet::Pops::Types::PIteratorType::DEFAULT)).to eq('Iterator')
-    end
-
-    it 'should yield \'Iterator[Integer]\' for PIteratorType[PIntegerType]' do
-      expect(calculator.string(Puppet::Pops::Types::PIteratorType.new(Puppet::Pops::Types::PIntegerType::DEFAULT))).to eq('Iterator[Integer]')
-    end
-
-    it 'should yield \'Tuple[Integer]\' for PTupleType[PIntegerType]' do
-      t = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PIntegerType::DEFAULT])
-      expect(calculator.string(t)).to eq('Tuple[Integer]')
-    end
-
-    it 'should yield \'Tuple[T, T,..]\' for PTupleType[T, T, ...]' do
-      t = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PIntegerType::DEFAULT, Puppet::Pops::Types::PIntegerType::DEFAULT, Puppet::Pops::Types::PStringType::DEFAULT])
-      expect(calculator.string(t)).to eq('Tuple[Integer, Integer, String]')
-    end
-
-    it 'should yield \'Tuple\' and from/to for PTupleType' do
-      expect(calculator.string(constrained_tuple_t(range_t(1,1), string_t))).to eq('Tuple[String, 1, 1]')
-      expect(calculator.string(constrained_tuple_t(range_t(1,2), string_t))).to eq('Tuple[String, 1, 2]')
-      expect(calculator.string(constrained_tuple_t(range_t(:default, 2), string_t))).to eq('Tuple[String, 0, 2]')
-      expect(calculator.string(constrained_tuple_t(range_t(2, :default), string_t))).to eq('Tuple[String, 2, default]')
-    end
-
-    it 'should yield \'Struct\' and details for PStructType' do
-      struct_t = struct_t({'a'=>Integer, 'b'=>String})
-      expect(calculator.string(struct_t)).to eq("Struct[{'a'=>Integer, 'b'=>String}]")
-      struct_t = struct_t({})
-      expect(calculator.string(struct_t)).to eq('Struct')
-    end
-
-    it 'should yield \'Hash[String, Integer]\' for PHashType[PStringType, PIntegerType]' do
-      t = Puppet::Pops::Types::PHashType.new(Puppet::Pops::Types::PStringType::DEFAULT, Puppet::Pops::Types::PIntegerType::DEFAULT)
-      expect(calculator.string(t)).to eq('Hash[String, Integer]')
-    end
-
-    it 'should yield \'Hash\' and from/to for PHashType' do
-      expect(calculator.string(hash_t(string_t, string_t, range_t(1,1)))).to eq('Hash[String, String, 1, 1]')
-      expect(calculator.string(hash_t(string_t, string_t, range_t(1,2)))).to eq('Hash[String, String, 1, 2]')
-      expect(calculator.string(hash_t(string_t, string_t, range_t(:default, 2)))).to eq('Hash[String, String, default, 2]')
-      expect(calculator.string(hash_t(string_t, string_t, range_t(2, :default)))).to eq('Hash[String, String, 2, default]')
-    end
-
-    it 'should yield \'Hash\' for PHashType::DATA' do
-      expect(calculator.string(Puppet::Pops::Types::PHashType::DATA)).to eq('Hash')
-    end
-
-    it "should yield 'Class' for a PHostClassType" do
-      t = Puppet::Pops::Types::PHostClassType::DEFAULT
-      expect(calculator.string(t)).to eq('Class')
-    end
-
-    it "should yield 'Class[x]' for a PHostClassType[x]" do
-      t = Puppet::Pops::Types::PHostClassType.new('x')
-      expect(calculator.string(t)).to eq('Class[x]')
-    end
-
-    it "should yield 'Resource' for a PResourceType" do
-      t = Puppet::Pops::Types::PResourceType::DEFAULT
-      expect(calculator.string(t)).to eq('Resource')
-    end
-
-    it 'should yield \'File\' for a PResourceType[\'File\']' do
-      t = Puppet::Pops::Types::PResourceType.new('File')
-      expect(calculator.string(t)).to eq('File')
-    end
-
-    it "should yield 'File['/tmp/foo']' for a PResourceType['File', '/tmp/foo']" do
-      t = Puppet::Pops::Types::PResourceType.new('File', '/tmp/foo')
-      expect(calculator.string(t)).to eq("File['/tmp/foo']")
-    end
-
-    it "should yield 'Enum[s,...]' for a PEnumType[s,...]" do
-      t = enum_t('a', 'b', 'c')
-      expect(calculator.string(t)).to eq("Enum['a', 'b', 'c']")
-    end
-
-    it "should yield 'Pattern[/pat/,...]' for a PPatternType['pat',...]" do
-      t = pattern_t('a')
-      t2 = pattern_t('a', 'b', 'c')
-      expect(calculator.string(t)).to eq('Pattern[/a/]')
-      expect(calculator.string(t2)).to eq('Pattern[/a/, /b/, /c/]')
-    end
-
-    it "should escape special characters in the string for a PPatternType['pat',...]" do
-      t = pattern_t('a/b')
-      expect(calculator.string(t)).to eq("Pattern[/a\\/b/]")
-    end
-
-    it "should yield 'Variant[t1,t2,...]' for a PVariantType[t1, t2,...]" do
-      t1 = string_t
-      t2 = integer_t
-      t3 = pattern_t('a')
-      t = variant_t(t1, t2, t3)
-      expect(calculator.string(t)).to eq('Variant[String, Integer, Pattern[/a/]]')
-    end
-
-    it "should yield 'Callable' for generic callable" do
-      expect(calculator.string(all_callables_t)).to eql('Callable')
-    end
-
-    it "should yield 'Callable[0,0]' for callable without params" do
-      expect(calculator.string(callable_t)).to eql('Callable[0, 0]')
-    end
-
-    it "should yield 'Callable[t,t]' for callable with typed parameters" do
-      expect(calculator.string(callable_t(String, Integer))).to eql('Callable[String, Integer]')
-    end
-
-    it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do
-      expect(calculator.string(callable_t(String, 0))).to eql('Callable[String, 0, default]')
-    end
-
-    it "should yield 'Callable[t,min,max]' for callable with size constraint (capped max)" do
-      expect(calculator.string(callable_t(String, 0, 3))).to eql('Callable[String, 0, 3]')
-    end
-
-    it "should yield 'Callable[min,max]' callable with size > 0" do
-      expect(calculator.string(callable_t(0, 0))).to eql('Callable[0, 0]')
-      expect(calculator.string(callable_t(0, 1))).to eql('Callable[0, 1]')
-      expect(calculator.string(callable_t(0, :default))).to eql('Callable[0, default]')
-    end
-
-    it "should yield 'Callable[Callable]' for callable with block" do
-      expect(calculator.string(callable_t(all_callables_t))).to eql('Callable[0, 0, Callable]')
-      expect(calculator.string(callable_t(string_t, all_callables_t))).to eql('Callable[String, Callable]')
-      expect(calculator.string(callable_t(string_t, 1,1, all_callables_t))).to eql('Callable[String, 1, 1, Callable]')
-    end
-
-    it 'should yield Unit for a Unit type' do
-      expect(calculator.string(unit_t)).to eql('Unit')
-    end
-
-    it "should yield 'NotUndef' for a PNotUndefType" do
-      t = not_undef_t
-      expect(calculator.string(t)).to eq('NotUndef')
-    end
-
-    it "should yield 'NotUndef[T]' for a PNotUndefType[T]" do
-      t = not_undef_t(data_t)
-      expect(calculator.string(t)).to eq('NotUndef[Data]')
-    end
-
-    it "should yield 'NotUndef['string']' for a PNotUndefType['string']" do
-      t = not_undef_t('hey')
-      expect(calculator.string(t)).to eq("NotUndef['hey']")
-    end
-
-    it "should yield the name of an unparameterized type reference" do
-      t = type_reference_t('What')
-      expect(calculator.string(t)).to eq('What')
-    end
-
-    it "should yield the name and arguments of an parameterized type reference" do
-      t = type_reference_t('What', undef_t, string_t)
-      expect(calculator.string(t)).to eq('What[Undef, String]')
-    end
-
-    it "should yield the name of a type alias" do
-      t = type_alias_t('Alias', 'Integer')
-      expect(calculator.string(t)).to eq('Alias')
-    end
-
-    it 'should present a valid simple name' do
-      (all_types - [Puppet::Pops::Types::PType]).each do |t|
-        name = t::DEFAULT.simple_name
-        expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
-      end
-      expect(Puppet::Pops::Types::PType::DEFAULT.simple_name).to eql('Type')
-    end
-  end
-
   context 'when processing meta type' do
     it 'should infer PType as the type of all other types' do
       ptype = Puppet::Pops::Types::PType
@@ -2069,39 +1791,39 @@ describe 'The type calculator' do
     end
 
     it 'should infer PType as the type of all other types' do
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PUndefType::DEFAULT     ))).to eq('Type[Undef]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PDataType::DEFAULT      ))).to eq('Type[Data]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PScalarType::DEFAULT    ))).to eq('Type[Scalar]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PStringType::DEFAULT    ))).to eq('Type[String]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PNumericType::DEFAULT   ))).to eq('Type[Numeric]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PIntegerType::DEFAULT   ))).to eq('Type[Integer]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PFloatType::DEFAULT     ))).to eq('Type[Float]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PRegexpType::DEFAULT    ))).to eq('Type[Regexp]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PBooleanType::DEFAULT   ))).to eq('Type[Boolean]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT))).to eq('Type[Collection]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ))).to eq('Type[Array[?]]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ))).to eq('Type[Hash[?, ?]]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ))).to eq('Type[Iterable]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ))).to eq('Type[Runtime[?, ?]]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ))).to eq('Type[Class]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ))).to eq('Type[Resource]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PEnumType::DEFAULT      ))).to eq('Type[Enum]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PVariantType::DEFAULT   ))).to eq('Type[Variant]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PPatternType::DEFAULT   ))).to eq('Type[Pattern]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PTupleType::DEFAULT     ))).to eq('Type[Tuple]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::POptionalType::DEFAULT  ))).to eq('Type[Optional]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PCallableType::DEFAULT  ))).to eq('Type[Callable]')
+      expect(calculator.infer(Puppet::Pops::Types::PUndefType::DEFAULT     ).to_s).to eq('Type[Undef]')
+      expect(calculator.infer(Puppet::Pops::Types::PDataType::DEFAULT      ).to_s).to eq('Type[Data]')
+      expect(calculator.infer(Puppet::Pops::Types::PScalarType::DEFAULT    ).to_s).to eq('Type[Scalar]')
+      expect(calculator.infer(Puppet::Pops::Types::PStringType::DEFAULT    ).to_s).to eq('Type[String]')
+      expect(calculator.infer(Puppet::Pops::Types::PNumericType::DEFAULT   ).to_s).to eq('Type[Numeric]')
+      expect(calculator.infer(Puppet::Pops::Types::PIntegerType::DEFAULT   ).to_s).to eq('Type[Integer]')
+      expect(calculator.infer(Puppet::Pops::Types::PFloatType::DEFAULT     ).to_s).to eq('Type[Float]')
+      expect(calculator.infer(Puppet::Pops::Types::PRegexpType::DEFAULT    ).to_s).to eq('Type[Regexp]')
+      expect(calculator.infer(Puppet::Pops::Types::PBooleanType::DEFAULT   ).to_s).to eq('Type[Boolean]')
+      expect(calculator.infer(Puppet::Pops::Types::PCollectionType::DEFAULT).to_s).to eq('Type[Collection]')
+      expect(calculator.infer(Puppet::Pops::Types::PArrayType::DEFAULT     ).to_s).to eq('Type[Array[?]]')
+      expect(calculator.infer(Puppet::Pops::Types::PHashType::DEFAULT      ).to_s).to eq('Type[Hash[?, ?]]')
+      expect(calculator.infer(Puppet::Pops::Types::PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
+      expect(calculator.infer(Puppet::Pops::Types::PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime[?, ?]]')
+      expect(calculator.infer(Puppet::Pops::Types::PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
+      expect(calculator.infer(Puppet::Pops::Types::PResourceType::DEFAULT  ).to_s).to eq('Type[Resource]')
+      expect(calculator.infer(Puppet::Pops::Types::PEnumType::DEFAULT      ).to_s).to eq('Type[Enum]')
+      expect(calculator.infer(Puppet::Pops::Types::PVariantType::DEFAULT   ).to_s).to eq('Type[Variant]')
+      expect(calculator.infer(Puppet::Pops::Types::PPatternType::DEFAULT   ).to_s).to eq('Type[Pattern]')
+      expect(calculator.infer(Puppet::Pops::Types::PTupleType::DEFAULT     ).to_s).to eq('Type[Tuple]')
+      expect(calculator.infer(Puppet::Pops::Types::POptionalType::DEFAULT  ).to_s).to eq('Type[Optional]')
+      expect(calculator.infer(Puppet::Pops::Types::PCallableType::DEFAULT  ).to_s).to eq('Type[Callable]')
 
       expect(calculator.infer(Puppet::Pops::Types::PResourceType.new('foo::fee::fum')).to_s).to eq('Type[Foo::Fee::Fum]')
-      expect(calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType.new('foo::fee::fum')))).to eq('Type[Foo::Fee::Fum]')
+      expect(calculator.infer(Puppet::Pops::Types::PResourceType.new('foo::fee::fum')).to_s).to eq('Type[Foo::Fee::Fum]')
       expect(calculator.infer(Puppet::Pops::Types::PResourceType.new('Foo::Fee::Fum')).to_s).to eq('Type[Foo::Fee::Fum]')
     end
 
     it "computes the common type of PType's type parameter" do
       int_t    = Puppet::Pops::Types::PIntegerType::DEFAULT
       string_t = Puppet::Pops::Types::PStringType::DEFAULT
-      expect(calculator.string(calculator.infer([int_t]))).to eq('Array[Type[Integer], 1, 1]')
-      expect(calculator.string(calculator.infer([int_t, string_t]))).to eq('Array[Type[Scalar], 2, 2]')
+      expect(calculator.infer([int_t]).to_s).to eq('Array[Type[Integer], 1, 1]')
+      expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[Scalar], 2, 2]')
     end
 
     it 'should infer PType as the type of ruby classes' do
