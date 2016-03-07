@@ -495,7 +495,7 @@ module Private
     # @api private
     def type_error_detail(expected, actual)
       actual_t = type_calculator.infer(actual)
-      "expected: #{type_calculator.string(expected)}, got: #{type_calculator.string(actual_t)}"
+      "expected: #{expected}, got: #{actual_t}"
     end
 
     # @api private

@@ -22,7 +22,7 @@ class TypeParser
   #     parser.parse('Hash[Integer, Array[String]]')
   #
   # @param string [String] a string with the type expressed in stringified form as produced by the 
-  #   {TypeCalculator#string TypeCalculator#string} method.
+  #   types {"#to_s} method.
   # @param scope [Puppet::Parser::Scope] scope to use when loading type aliases
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #

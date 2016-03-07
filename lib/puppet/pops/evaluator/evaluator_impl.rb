@@ -994,7 +994,7 @@ class EvaluatorImpl
   end
 
   def string_PAnyType(o, scope)
-    @@type_calculator.string(o)
+    o.to_s
   end
 
   # Produces concatenation / merge of x and y.

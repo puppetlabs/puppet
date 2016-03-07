@@ -91,7 +91,7 @@ class ModelLabelProvider
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
   def label_QualifiedReference o          ; "Type-Name"                         end
-  def label_PAnyType o                    ; "#{Types::TypeCalculator.string(o)}-Type" end
+  def label_PAnyType o                    ; "#{o}-Type" end
   def label_ReservedWord o                ; "Reserved Word '#{o.word}'"         end
   def label_CatalogCollector o            ; "Catalog-Collector"                 end
   def label_ExportedCollector o           ; "Exported-Collector"                end
@@ -100,9 +100,9 @@ class ModelLabelProvider
 
   def label_PResourceType o
     if o.title
-      "#{Types::TypeCalculator.string(o)} Resource-Reference"
+      "#{o} Resource-Reference"
     else
-      "#{Types::TypeCalculator.string(o)}-Type"
+      "#{o}-Type"
     end
   end
 
