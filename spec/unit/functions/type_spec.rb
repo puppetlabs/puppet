@@ -30,6 +30,6 @@ describe 'the type function' do
   it 'errors when given a fault inference quality' do
     expect do
       compile_to_catalog("notify { type([2, 4.14], gobbledygooked): }")
-    end.to raise_error(/gobbledygooked/m)
+    end.to raise_error(/expects a match for Enum\['detailed', 'generalized', 'reduced'\], got 'gobbledygooked'/)
   end
 end

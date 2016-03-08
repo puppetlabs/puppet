@@ -67,7 +67,7 @@ describe 'the type mismatch describer' do
       check_port({ 34 => 'some service'})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\[12, 12\], 1, 1\]/))
+      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\[12, 12\]\]/))
   end
 
   it 'will not include the aliased type more than once when reporting a mismatch that involves an alias that is self recursive' do
@@ -79,6 +79,17 @@ describe 'the type mismatch describer' do
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
       /parameter 'tree' expects a Tree = Hash\[String, Tree\] value, got Struct\[\{'x' => Struct\[\{'y' => Hash\[Integer, String\]\}\]\}\]/))
+  end
+
+  it 'will use type normalization' do
+    code = <<-CODE
+      type EVariants = Variant[Enum[a,b],Enum[b,c],Enum[c,d]]
+
+      function check_enums(EVariants $evars) {}
+      check_enums('n')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+       /parameter 'evars' expects a match for EVariants = Enum\['a', 'b', 'c', 'd'\], got 'n'/))
   end
 
   context 'when using present tense' do

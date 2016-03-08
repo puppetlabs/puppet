@@ -228,8 +228,8 @@ module Types
 
     def initialize(path, expected, actual)
       super(path)
-      @expected = expected
-      @actual = actual
+      @expected = (expected.is_a?(Array) ? PVariantType.new(expected) : expected).normalize
+      @actual = actual.normalize
     end
 
     def ==(o)
@@ -240,6 +240,12 @@ module Types
       hash = super.hash
       hash = hash * 31 + expected.hash
       hash * 31 + actual.hash
+    end
+
+    def swap_expected(expected)
+      copy = self.clone
+      copy.instance_variable_set(:@expected, expected)
+      copy
     end
   end
 
@@ -255,7 +261,8 @@ module Types
       e = expected
       a = actual
       multi = false
-      if e.is_a?(Array)
+      if e.is_a?(PVariantType)
+        e = e.types
         if report_detailed?(e, a)
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
@@ -300,30 +307,28 @@ module Types
     # in the mismatch report. All comparisons are made using resolved aliases rather than the alias
     # itself.
     #
-    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
-    # param a [PAnyType] the actual type
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @param a [PAnyType] the actual type
     # @return [Boolean] `true` when the class of _a_ equals the class _e_ or,
     #   in case _e_ is an `Array`, the class of at least one element of _e_
     def always_fully_detailed?(e, a)
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
       else
-        e = e.resolved_type if e.is_a?(PTypeAliasType)
-        a = a.resolved_type if a.is_a?(PTypeAliasType)
-        e.class == a.class
+        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType)
       end
     end
 
-    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
-    # param a [PAnyType] the actual type
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @param a [PAnyType] the actual type
     # @return [Boolean] `true` when _a_ is assignable to _e_ or, in case _e_ is an `Array`,
     #   to at least one element of _e_
     def any_assignable?(e, a)
       e.is_a?(Array) ? e.any? { |t| t.assignable?(a) } : e.assignable?(a)
     end
 
-    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
-    # param a [PAnyType] the actual type
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @param a [PAnyType] the actual type
     # @return [Boolean] `true` when _a_ is assignable to the default generalization of _e_ or,
     #   in case _e_ is an `Array`, to the default generalization of at least one element of _e_
     def assignable_to_default?(e, a)
@@ -335,19 +340,35 @@ module Types
       end
     end
 
-    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
-    # param a [PAnyType] the actual type
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @param a [PAnyType] the actual type
     # @return [Boolean] `true` when either #always_fully_detailed or #assignable_to_default returns `true`
     def report_detailed?(e, a)
       always_fully_detailed?(e, a) || assignable_to_default?(e, a)
     end
 
+    # Returns its argument with all type aliases resolved
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @return [PAnyType,Array[PAnyType]] the resolved result
+    def all_resolved(e)
+      if e.is_a?(Array)
+        e.map { |t| all_resolved(t) }
+      else
+        e.is_a?(PTypeAliasType) ? e.resolved_type : e
+      end
+    end
+
     # Returns a string that either represents the generalized type _a_ or the type _a_ verbatim. The latter
-    # form is used when either #always_fully_detailed? or #any_assignable? returns `true`
-    # param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
-    # param a [PAnyType] the actual type
+    # form is used when at least one of the following conditions are met:
+    #
+    # - #always_fully_detailed returns `true` for the resolved type of _e_ and _a_
+    # - #any_assignable? returns `true` for the resolved type of _e_ and the generalized type of _a_.
+    #
+    # @param e [PAnyType,Array[PAnyType]] the expected type or array of expected types
+    # @param a [PAnyType] the actual type
     # @return [String] The string representation of the type _a_ or generalized type _a_
     def detailed_actual_to_s(e, a)
+      e = all_resolved(e)
       if always_fully_detailed?(e, a)
         a.to_alias_expanded_s
       else
@@ -359,7 +380,7 @@ module Types
 
   class PatternMismatch < TypeMismatch
     def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} a match for #{expected}, got #{actual_string}"
+      "#{variant}#{position} #{it_expects(tense)} a match for #{expected.to_alias_expanded_s}, got #{actual_string}"
     end
 
     def actual_string
@@ -665,6 +686,17 @@ module Types
       [PatternMismatch.new(path, expected, actual)]
     end
 
+    def describe_PTypeAliasType(expected, actual, path)
+      resolved_type = expected.resolved_type.normalize
+      describe(resolved_type, actual, path).map do |description|
+        if description.is_a?(ExpectedActualMismatch) && description.expected.equal?(resolved_type)
+          description.swap_expected(expected)
+        else
+          description
+        end
+      end
+    end
+
     def describe_PStructType(expected, actual, path)
       elements = expected.elements
       descriptions = []
@@ -801,6 +833,8 @@ module Types
         describe_PPatternType(expected, actual, path)
       when PEnumType
         describe_PEnumType(expected, actual, path)
+      when PTypeAliasType
+        describe_PTypeAliasType(expected, actual, path)
       else
         describe_PAnyType(expected, actual, path)
       end
