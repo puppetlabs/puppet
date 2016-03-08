@@ -120,7 +120,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces an Integer[1]' do
       expr = fqr('Integer')[1]
-      expect(evaluate(expr)).to eql(range(1,1))
+      expect(evaluate(expr)).to eql(range(1,:default))
     end
 
     it 'gives an error for Integer[from, <from]' do
@@ -146,12 +146,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces a Float[1.0]' do
       expr = fqr('Float')[1.0]
-      expect(evaluate(expr)).to eql(float_range(1.0,1.0))
+      expect(evaluate(expr)).to eql(float_range(1.0,:default))
     end
 
     it 'produces a Float[1]' do
       expr = fqr('Float')[1]
-      expect(evaluate(expr)).to eql(float_range(1.0,1.0))
+      expect(evaluate(expr)).to eql(float_range(1.0,:default))
     end
 
     it 'gives an error for Float[from, <from]' do

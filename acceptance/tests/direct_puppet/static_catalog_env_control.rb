@@ -14,7 +14,7 @@ require 'json'
 @agent_manifests = {}
 @catalog_files = {}
 agents.each do |agent|
-  hn = agent.hostname
+  hn = agent.node_name
   resdir = agent.tmpdir('results')
   @production_files[hn] = "#{resdir}/prod_hello_from_puppet_uri"
   @canary_files[hn] = "#{resdir}/can_hello_from_puppet_uri"
@@ -179,7 +179,7 @@ modify_tk_config(master, puppetserver_config, versioned_code_settings)
 step 'start puppet server'
 with_puppet_running_on master, @master_opts, @coderoot do
   agents.each do |agent|
-    hn = agent.hostname
+    hn = agent.node_name
 
     apply_manifest_on(master, @agent_manifests[hn], :catch_failures => true)
 
@@ -190,7 +190,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
         'agent',
         '-t',
         '--environment', 'production',
-        '--server', master.hostname
+        '--server', master.node_name
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -217,7 +217,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
         'agent',
         '-t',
         '--environment', 'canary',
-        '--server', master.hostname
+        '--server', master.node_name
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -265,7 +265,7 @@ step 'disable global static catalog setting'
 step 'bounce server for static catalog disable setting to take effect.'
 with_puppet_running_on master, @master_opts, @coderoot do
   agents.each do |agent|
-    hn = agent.hostname
+    hn = agent.node_name
 
     apply_manifest_on(master, @agent_manifests[hn], :catch_failures => true)
 
@@ -276,7 +276,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
         'agent',
         '-t',
         '--environment', 'production',
-        '--server', master.hostname
+        '--server', master.node_name
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -303,7 +303,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
         'agent',
         '-t',
         '--environment', 'canary',
-        '--server', master.hostname
+        '--server', master.node_name
       ),
       :acceptable_exit_codes => [0, 2]
     )
