@@ -171,11 +171,13 @@ class PAnyType < TypedModelObject
     true
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class
   end
 
-  alias eql? ==
+  def ==(o)
+    eql?(o)
+  end
 
   # Strips the class name from all module prefixes, the leading 'P' and the ending 'Type'. I.e.
   # an instance of PVariantType will return 'Variant'
@@ -310,7 +312,7 @@ class PType < PAnyType
     end
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @type == o.type
   end
 
@@ -356,7 +358,7 @@ class PNotUndefType < PAnyType
     31 * @type.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @type == o.type
   end
 
@@ -430,7 +432,7 @@ end
 # @api public
 #
 class PDataType < PAnyType
-  def ==(o)
+  def eql?(o)
     self.class == o.class || o.class == PVariantType && o == PVariantType::DATA
   end
 
@@ -506,7 +508,7 @@ class PEnumType < PScalarType
     @values.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @values == o.values
   end
 
@@ -572,7 +574,7 @@ class PNumericType < PScalarType
     @from.hash * 31 + @to.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
   end
 
@@ -707,7 +709,7 @@ class PCollectionType < PAnyType
     @element_type.nil? ? PIterableType::DEFAULT : PIterableType.new(@element_type)
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @element_type == o.element_type && @size_type == o.size_type
   end
 
@@ -785,7 +787,7 @@ class PIterableType < PAnyType
     self
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @element_type == o.element_type
   end
 
@@ -839,7 +841,7 @@ class PIteratorType < PAnyType
     element_type.nil? ? PIteratbleType::DEFAULT : PIterableType.new(@element_type)
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @element_type == o.element_type
   end
 
@@ -884,7 +886,7 @@ class PStringType < PScalarType
     ITERABLE_TYPE
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @size_type == o.size_type && @values == o.values
   end
 
@@ -966,7 +968,7 @@ class PRegexpType < PScalarType
     @pattern.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @pattern == o.pattern
   end
 
@@ -1002,7 +1004,7 @@ class PPatternType < PScalarType
     @patterns.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && (@patterns | o.patterns).size == @patterns.size
   end
 
@@ -1088,7 +1090,7 @@ class PStructElement < TypedModelObject
     self.name <=> o.name
   end
 
-  def ==(o)
+  def eql?(o)
      self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
 end
@@ -1144,7 +1146,7 @@ class PStructType < PAnyType
     end
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @elements == o.elements
   end
 
@@ -1325,7 +1327,7 @@ class PTupleType < PAnyType
     @size_type.hash * 31 + @types.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @types == o.types && @size_type == o.size_type
   end
 
@@ -1445,7 +1447,7 @@ class PCallableType < PAnyType
     @param_types.hash * 31 + @block_type.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
   end
 
@@ -1597,7 +1599,7 @@ class PHashType < PCollectionType
     end
   end
 
-  def ==(o)
+  def eql?(o)
     super && @key_type == o.key_type
   end
 
@@ -1682,7 +1684,7 @@ class PVariantType < PAnyType
     @types.all? { |type| type.resolved? }
   end
 
-  def ==(o)
+  def eql?(o)
     # TODO: This special case doesn't look like it belongs here
     self.class == o.class && (@types | o.types).size == @types.size ||
         o.class == PDataType && self == DATA
@@ -1732,7 +1734,7 @@ class PRuntimeType < PAnyType
     @runtime.hash * 31 + @runtime_type_name.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @runtime == o.runtime && @runtime_type_name == o.runtime_type_name
   end
 
@@ -1801,7 +1803,7 @@ class PHostClassType < PCatalogEntryType
   def hash
     11 * @class_name.hash
   end
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @class_name == o.class_name
   end
 
@@ -1834,7 +1836,7 @@ class PResourceType < PCatalogEntryType
     @type_name.hash * 31 + @title.hash
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @type_name == o.type_name && @title == o.title
   end
 
@@ -1880,7 +1882,7 @@ class POptionalType < PAnyType
       optional && !@optional_type.nil? && @optional_type.kind_of_callable?(optional, guard)
   end
 
-  def ==(o)
+  def eql?(o)
     self.class == o.class && @optional_type == o.optional_type
   end
 
@@ -1924,7 +1926,7 @@ class PTypeReferenceType < PAnyType
     @name.hash * 31 + @parameters.hash
   end
 
-  def ==(o)
+  def eql?(o)
     super && o.name == @name && o.parameters == @parameters
   end
 
@@ -2020,7 +2022,7 @@ class PTypeAliasType < PAnyType
     self
   end
 
-  def ==(o)
+  def eql?(o)
     super && o.name == @name
   end
 
