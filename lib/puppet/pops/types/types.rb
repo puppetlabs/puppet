@@ -453,7 +453,7 @@ end
 #
 class PDataType < PAnyType
   def eql?(o)
-    self.class == o.class || o.class == PVariantType && o == PVariantType::DATA
+    self.class == o.class || o == PVariantType::DATA
   end
 
   def instance?(o)
@@ -992,7 +992,7 @@ class PPatternType < PScalarType
   end
 
   def eql?(o)
-    self.class == o.class && (@patterns | o.patterns).size == @patterns.size
+    self.class == o.class && @patterns.size == o.patterns.size && (@patterns - o.patterns).empty?
   end
 
   DEFAULT = PPatternType.new(EMPTY_ARRAY)
@@ -1688,9 +1688,8 @@ class PVariantType < PAnyType
   end
 
   def eql?(o)
-    # TODO: This special case doesn't look like it belongs here
-    self.class == o.class && (@types | o.types).size == @types.size ||
-        o.class == PDataType && self == DATA
+    o = DATA if o.is_a?(PDataType)
+    self.class == o.class && @types.size == o.types.size && (@types - o.types).empty?
   end
 
   # Variant compatible with the Data type.
