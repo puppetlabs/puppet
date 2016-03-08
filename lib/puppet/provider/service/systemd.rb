@@ -114,15 +114,6 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
   end
 
-  def status
-    begin
-      systemctl("is-active", @resource[:name])
-    rescue Puppet::ExecutionFailure
-      return :stopped
-    end
-    return :running
-  end
-
   def enable
     self.unmask
     output = systemctl("enable", @resource[:name])
@@ -158,6 +149,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def stopcmd
     [command(:systemctl), "stop", @resource[:name]]
+  end
+
+  def statuscmd
+    [command(:systemctl), "is-active", @resource[:name]]
   end
 end
 

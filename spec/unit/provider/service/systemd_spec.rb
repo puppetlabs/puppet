@@ -253,16 +253,26 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   # Note: systemd provider does not care about hasstatus or a custom status
   # command. I just assume that it does not make sense for systemd.
   describe "#status" do
-    it "should return running if active" do
+    it "should return running if if the command returns 0" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('is-active', 'sshd.service').returns 'active'
+      provider.expects(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).returns "active\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.status).to eq(:running)
     end
 
-    it "should return stopped if inactive" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('is-active', 'sshd.service').raises Puppet::ExecutionFailure, "Execution of '/bin/systemctl is-active sshd.service' returned 3: inactive"
-      expect(provider.status).to eq(:stopped)
+    [-10,-1,3,10].each { |ec|
+      it "should return stopped if the command returns something non-0" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider.expects(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).returns "inactive\n"
+        $CHILD_STATUS.stubs(:exitstatus).returns(ec)
+        expect(provider.status).to eq(:stopped)
+      end
+    }
+
+    it "should use the supplied status command if specified" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+      provider.status
     end
   end
 
