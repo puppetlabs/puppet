@@ -269,9 +269,6 @@ describe Puppet::Util::RunMode do
       before do
         Puppet::Util::Windows::Process.set_environment_variable(varname, rune_utf8)
       end
-      after do
-        Puppet::Util::Windows::Process.set_environment_variable(varname, nil)
-      end
 
       it "removes environment variables within the block with UTF8 name" do
         without_env(varname) do
