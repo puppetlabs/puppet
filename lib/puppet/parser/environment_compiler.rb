@@ -1,13 +1,13 @@
 require 'puppet/parser/compiler'
 
 class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
-  def self.compile(env)
+  def self.compile(env, code_id=nil)
     begin
       env.check_for_reparse
 
       node = Puppet::Node.new(env)
       node.environment = env
-      new(node).compile
+      new(node, :code_id => code_id).compile
     rescue => detail
       message = "#{detail} in environment #{env.name}"
       Puppet.log_exception(detail, message)

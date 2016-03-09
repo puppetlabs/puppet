@@ -11,10 +11,10 @@ describe "Application instantiation" do
   # no really elegant way to do this
   include ParserRspecHelper
 
-  def compile_to_env_catalog(string)
+  def compile_to_env_catalog(string, code_id=nil)
     Puppet[:code] = string
     env = Puppet::Node::Environment.create("test", ["/dev/null"])
-    Puppet::Parser::EnvironmentCompiler.compile(env).filter { |r| r.virtual? }
+    Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
 
@@ -573,6 +573,16 @@ EOS
         catalog = compile_to_env_catalog(MANIFEST_WITH_ILLEGAL_RESOURCE).to_resource
         }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed at line 20/)
       end
+    end
+
+    it "includes code_id if specified" do
+      catalog = compile_to_env_catalog(MANIFEST_WITH_SITE, "12345")
+      expect(catalog.code_id).to eq("12345")
+    end
+
+    it "omits code_id if unspecified" do
+      catalog = compile_to_env_catalog(MANIFEST_WITH_SITE)
+      expect(catalog.code_id).to be_nil
     end
   end
 
