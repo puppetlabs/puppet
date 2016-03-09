@@ -290,6 +290,46 @@ module Puppet::Functions
         dispatch(meth_name, &block)
       end
     end
+
+    # Allows types local to the function to be defined to ease the use of complex types
+    # in a 4.x function. Within the given block, calls to `type` can be made with a string
+    # 'AliasType = ExistingType` can be made to define aliases. The defined aliases are
+    # available for further aliases, and in all dispatchers.
+    #
+    # @since 4.5.0
+    # @api public
+    #
+    def self.local_types(&block)
+      if loader.nil?
+        raise ArgumentError, "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
+      end
+      aliases = LocalTypeAliasesBuilder.new(loader, name)
+      aliases.instance_eval(&block)
+      # Add the loaded types to the builder
+      aliases.local_types.each do |type_alias_expr|
+        # Bind the type alias to the local_loader using the alias
+        typed_name, t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias_expr, loader)
+        loader.set_entry(typed_name, t, Puppet::Pops::Adapters::SourcePosAdapter.adapt(type_alias_expr).to_uri)
+
+        # Also define a method for convenient access to the defined type alias.
+        # Since initial capital letter in Ruby means a Constant these names use a prefix of 
+        # `type`. As an example, the type 'MyType' is accessed by calling `type_MyType`.
+        define_method("type_#{t.name}") { t }
+      end
+      # Store the loader in the class
+      @loader = aliases.loader
+    end
+
+    # Creates a new function instance in the given closure scope (visibility to variables), and a loader
+    # (visibility to other definitions). The created function will either use the `given_loader` or
+    # (if it has local type aliases) a loader that was constructed from the loader used when loading
+    # the function's class.
+    #
+    # TODO: It would be of value to get rid of the second parameter here, but that would break API.
+    #
+    def self.new(closure_scope, given_loader)
+      super(closure_scope, @loader || given_loader)
+    end
   end
 
   # Base class for all functions implemented in the puppet language
@@ -494,6 +534,36 @@ module Puppet::Functions
       end
 
       Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
+    end
+  end
+
+  # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
+  # type aliases given by the function's author.
+  # 
+  class LocalTypeAliasesBuilder
+    attr_reader :local_types, :parser, :loader
+
+    def initialize(loader, name)
+      @loader = Puppet::Pops::Loader::BaseLoader.new(loader, :"local_function_#{name}")
+      @local_types = []
+      # get the shared parser used by puppet's compiler
+      @parser = Puppet::Pops::Parser::EvaluatingParser.singleton()
+    end
+
+    # Defines a local type alias, the given string should be a Puppet Language type alias expression
+    # in string form without the leading 'type' keyword.
+    # Calls to local_type must be made before the first parameter definition or an error will
+    # be raised.
+    # 
+    # @param assignment_string [String] a string on the form 'AliasType = ExistingType'
+    # @api public
+    #
+    def type(assignment_string)
+      result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
+      unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
+        raise ArgumentError, "Expected a type alias assignment on the form 'AliasType = T', got '#{assignment_string}'"
+      end
+      @local_types << result.body
     end
   end
 

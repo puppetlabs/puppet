@@ -11,6 +11,10 @@ class EvaluatingParser
     @parser = Parser.new()
   end
 
+  def self.singleton
+    @instance ||= new
+  end
+
   def parse_string(s, file_source = nil)
     @file_source = file_source
     clear()

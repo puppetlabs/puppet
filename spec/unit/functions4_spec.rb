@@ -14,15 +14,15 @@ module FunctionAPISpecModule
     end
 
     def add_function(name, function)
-      typed_name = Puppet::Pops::Loader::Loader::TypedName.new(:function, name)
-      entry = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, function, __FILE__)
-      @constants[typed_name] = entry
+      set_entry(Puppet::Pops::Loader::Loader::TypedName.new(:function, name), function, __FILE__)
     end
 
     def add_type(name, type)
-      typed_name = Puppet::Pops::Loader::Loader::TypedName.new(:type, name)
-      entry = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, type, __FILE__)
-      @constants[typed_name] = entry
+      set_entry(Puppet::Pops::Loader::Loader::TypedName.new(:type, name), type, __FILE__)
+    end
+
+    def set_entry(typed_name, value, origin = nil)
+      @constants[typed_name] = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
     end
 
     # override StaticLoader
@@ -472,10 +472,10 @@ describe 'the 4x function api' do
       end
     end
 
-    context 'can use a loader when parsing types in function dispatch' do
+    context 'can use a loader when parsing types in function dispatch, and' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
-      it 'and resolve a referenced Type alias' do
+      it 'resolve a referenced Type alias' do
         the_loader = loader()
         the_loader.add_type('myalias', type_alias_t('MyAlias', 'Integer'))
         here = get_binding(the_loader)
@@ -495,7 +495,7 @@ describe 'the 4x function api' do
         expect(parser.evaluate({}, program)).to eql(10)
       end
 
-      it 'and distinguish between a Type alias and a Resource type' do
+      it 'distinguish between a Type alias and a Resource type' do
         the_loader = loader()
         here = get_binding(the_loader)
         fc = eval(<<-CODE, here)
@@ -513,8 +513,76 @@ describe 'the 4x function api' do
         Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' expects a Resource value, got Integer/)
       end
+
+      it 'create local Type aliases' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        fc = eval(<<-CODE, here)
+          Puppet::Functions.create_function('testing::test') do
+            local_types do
+              type 'MyType = Array[Integer]'
+            end
+            dispatch :test do
+              param 'MyType', :x
+            end
+            def test(x)
+              x
+            end
+          end
+        CODE
+        the_loader.add_function('testing::test', fc.new({}, the_loader))
+        program = parser.parse_string('testing::test([10,20])', __FILE__)
+        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        expect(parser.evaluate({}, program)).to eq([10,20])
+      end
+
+      it 'create nested local Type aliases' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        fc = eval(<<-CODE, here)
+          Puppet::Functions.create_function('testing::test') do
+            local_types do
+              type 'InnerType = Array[Integer]'
+              type 'OuterType = Hash[String,InnerType]'
+            end
+            dispatch :test do
+              param 'OuterType', :x
+            end
+            def test(x)
+              x
+            end
+          end
+        CODE
+        the_loader.add_function('testing::test', fc.new({}, the_loader))
+        program = parser.parse_string("testing::test({'x' => [10,20]})", __FILE__)
+        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        expect(parser.evaluate({}, program)).to eq({'x' => [10,20]})
+      end
+
+      it 'create self referencing local Type aliases' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        fc = eval(<<-CODE, here)
+          Puppet::Functions.create_function('testing::test') do
+            local_types do
+              type 'Tree = Hash[String,Variant[String,Tree]]'
+            end
+            dispatch :test do
+              param 'Tree', :x
+            end
+            def test(x)
+              x
+            end
+          end
+        CODE
+        the_loader.add_function('testing::test', fc.new({}, the_loader))
+        program = parser.parse_string("testing::test({'x' => {'y' => 'n'}})", __FILE__)
+        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        expect(parser.evaluate({}, program)).to eq({'x' => {'y' => 'n'}})
+      end
     end
   end
+
 
   def create_noargs_function_class
     f = Puppet::Functions.create_function('test') do
