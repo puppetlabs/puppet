@@ -28,7 +28,7 @@ module PuppetSpec::Files
   def self.tmpfile(name, dir = nil)
     # Generate a temporary file, just for the name...
     source = dir ? Tempfile.new(name, dir) : Tempfile.new(name)
-    path = source.path
+    path = source.path.encode(Encoding::UTF_8)
     source.close!
 
     record_tmp(File.expand_path(path))
@@ -59,7 +59,7 @@ module PuppetSpec::Files
 
   def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
   def self.tmpdir(name)
-    dir = Dir.mktmpdir(name)
+    dir = Dir.mktmpdir(name).encode!(Encoding::UTF_8)
 
     record_tmp(dir)
 
