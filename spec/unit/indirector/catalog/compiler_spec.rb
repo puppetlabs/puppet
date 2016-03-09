@@ -713,6 +713,28 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(catalog.recursive_metadata).to be_empty
     end
 
+    # It's bizarre to strip trailing slashes for a file, but it's how
+    # puppet currently behaves, so match that.
+    it "inlines resources with a trailing slash" do
+      source = 'puppet:///modules/mymodule/myfile'
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}/'
+        }
+      MANIFEST
+
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/myfile')
+      metadata.stubs(:source).returns(source)
+
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+      expect(catalog.metadata[path]).to eq(metadata)
+      expect(catalog.recursive_metadata).to be_empty
+    end
+
     describe "when inlining directories" do
       let(:source_dir) { 'puppet:///modules/mymodule/directory' }
       let(:metadata) { stubs_directory_metadata('modules/mymodule/files/directory') }
@@ -902,6 +924,31 @@ describe Puppet::Resource::Catalog::Compiler do
           Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([dir_metadata, child_metadata])
 
           @compiler.send(:inline_metadata, catalog, checksum_type)
+          expect(catalog.metadata).to be_empty
+          expect(catalog.recursive_metadata[path][source]).to eq([dir_metadata, child_metadata])
+        end
+
+        it "inlines resources with a trailing slash" do
+          source = 'puppet:///modules/mymodule/directory'
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => '#{source}/'
+            }
+          MANIFEST
+
+          dir_metadata = stubs_directory_metadata('modules/mymodule/files/directory')
+          dir_metadata.stubs(:source).returns(source)
+
+          child_metadata = stubs_file_metadata(checksum_type, checksum_value, './file')
+          child_metadata.stubs(:source).returns("#{source}/file")
+
+          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([dir_metadata, child_metadata])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+
           expect(catalog.metadata).to be_empty
           expect(catalog.recursive_metadata[path][source]).to eq([dir_metadata, child_metadata])
         end
