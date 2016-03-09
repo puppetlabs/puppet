@@ -1425,10 +1425,7 @@ EOT
     :ignorecache => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Ignore cache and always recompile the configuration.  This is
-        useful for testing new configurations, where the local cache may in
-        fact be stale even if the timestamps are up to date - if the facts
-        change or if the server changes.",
+      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
     },
     :splaylimit => {
       :default    => "$runinterval",
