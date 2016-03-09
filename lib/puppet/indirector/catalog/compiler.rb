@@ -4,6 +4,7 @@ require 'puppet/indirector/code'
 require 'puppet/util/profiler'
 require 'puppet/util/checksums'
 require 'yaml'
+require 'uri'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   desc "Compiles catalogs on demand using Puppet's compiler."
@@ -123,6 +124,17 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
   end
 
+  # Return true if metadata is inlineable, meaning the request's source is
+  # for the 'modules' mount and the resolved path is of the form:
+  #   $codedir/environments/$environment/*/*/files/**
+  def inlineable_metadata?(metadata, source, environment_path)
+    source_as_uri = URI(URI.escape(source))
+    location = Puppet::Module::FILETYPES['files']
+
+    !!(source_as_uri.path =~ /^\/modules\// &&
+       metadata.full_path =~ /#{environment_path}[^\/]+\/[^\/]+\/#{location}\/.+/)
+  end
+
   # Helper method to log file resources that could not be inlined because they
   # fall outside of an environment.
   def log_file_outside_environment
@@ -169,7 +181,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            if ! basedir_meta.full_path.start_with? environment_path.to_s
+            if ! inlineable_metadata?(basedir_meta, source,  environment_path)
               # If any source is not in the environment path, skip inlining this resource.
               log_file_outside_environment
               sources_in_environment = false
@@ -215,7 +227,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         raise "Could not get metadata for #{resource[:source]}" unless metadata
-        if metadata.full_path.start_with? environment_path.to_s
+
+        if inlineable_metadata?(metadata, metadata.source,  environment_path)
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
           log_metadata_inlining
 

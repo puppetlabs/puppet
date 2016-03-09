@@ -640,6 +640,79 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(catalog.recursive_metadata).to be_empty
     end
 
+    it "skips resources whose mount point is not 'modules'" do
+      source = 'puppet:///secure/data'
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}',
+        }
+      MANIFEST
+
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'secure/files/data.txt')
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+      expect(catalog.metadata).to be_empty
+      expect(catalog.recursive_metadata).to be_empty
+    end
+
+    it "skips resources with 'modules' mount point resolving to a path not in 'modules/*/files'" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}',
+        }
+      MANIFEST
+
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/not_in_files/config_file.txt')
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+      expect(catalog.metadata).to be_empty
+      expect(catalog.recursive_metadata).to be_empty
+    end
+
+    it "skips resources with 'modules' mount point resolving to a path with an empty module name" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}',
+        }
+      MANIFEST
+
+      # note empty module name "modules//files"
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules//files/config_file.txt')
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+      expect(catalog.metadata).to be_empty
+      expect(catalog.recursive_metadata).to be_empty
+    end
+
+    it "inlines resources in 'modules' mount point resolving to a 'site' directory within the per-environment codedir" do
+      # example taken from https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/manifests/puppetmaster.pp#L45-L49
+      source = 'puppet:///modules/profile/puppetmaster/update-classes.sh'
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}'
+        }
+      MANIFEST
+
+      # See https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/files/puppetmaster/update-classes.sh
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'site/profile/files/puppetmaster/update-classes.sh')
+      metadata.stubs(:source).returns(source)
+
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+      expect(catalog.metadata[path]).to eq(metadata)
+      expect(catalog.recursive_metadata).to be_empty
+    end
+
     describe "when inlining directories" do
       let(:source_dir) { 'puppet:///modules/mymodule/directory' }
       let(:metadata) { stubs_directory_metadata('modules/mymodule/files/directory') }
@@ -765,6 +838,72 @@ describe Puppet::Resource::Catalog::Compiler do
           expect(catalog.metadata[path]).to be_nil
           expect(catalog.recursive_metadata[path][source_dir]).to be_nil
           expect(catalog.recursive_metadata[path][alt_source_dir]).to eq([metadata, child_metadata])
+        end
+
+        it "skips resources whose mount point is not 'modules'" do
+          source = 'puppet:///secure/data'
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => '#{source}',
+            }
+          MANIFEST
+
+          metadata = stubs_directory_metadata('secure/files/data')
+          metadata.stubs(:source).returns(source)
+
+          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([metadata])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+          expect(catalog.metadata).to be_empty
+          expect(catalog.recursive_metadata).to be_empty
+        end
+
+        it "skips resources with 'modules' mount point resolving to a path not in 'modules/*/files'" do
+          source = 'puppet:///modules/mymodule/directory'
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => directory,
+              recurse => true,
+              source  => '#{source}',
+            }
+          MANIFEST
+
+          metadata = stubs_directory_metadata('modules/mymodule/not_in_files/directory')
+          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([metadata])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+          expect(catalog.metadata).to be_empty
+          expect(catalog.recursive_metadata).to be_empty
+        end
+
+        it "inlines resources in 'modules' mount point resolving to a 'site' directory within the per-environment codedir" do
+          # example adopted from https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/manifests/puppetmaster.pp#L45-L49
+          source = 'puppet:///modules/profile/puppetmaster'
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { '#{path}':
+              ensure  => file,
+              recurse => true,
+              source  => '#{source}'
+            }
+          MANIFEST
+
+          # See https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/files/puppetmaster/update-classes.sh
+          dir_metadata = stubs_directory_metadata('site/profile/files/puppetmaster')
+          dir_metadata.stubs(:source).returns(source)
+
+          child_metadata = stubs_file_metadata(checksum_type, checksum_value, './update-classes.sh')
+          child_metadata.stubs(:source).returns("#{source}/update-classes.sh")
+
+          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([dir_metadata, child_metadata])
+
+          @compiler.send(:inline_metadata, catalog, checksum_type)
+          expect(catalog.metadata).to be_empty
+          expect(catalog.recursive_metadata[path][source]).to eq([dir_metadata, child_metadata])
         end
       end
     end
