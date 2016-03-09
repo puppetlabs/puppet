@@ -1336,6 +1336,7 @@ describe 'The type calculator' do
         loader = mock
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
+        loader.expects(:is_a?).with(Puppet::Pops::Loader::Loader).returns true
 
         Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
 
@@ -1711,6 +1712,7 @@ describe 'The type calculator' do
         loader = mock
         loader.expects(:load).with(:type, 'tree').returns t1
         loader.expects(:load).with(:type, 'othertree').returns t2
+        loader.expects(:is_a?).with(Puppet::Pops::Loader::Loader).returns true
 
         Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_least_once.returns loader
 

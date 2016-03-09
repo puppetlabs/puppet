@@ -133,7 +133,7 @@ describe Puppet::Pops::Types::TypeParser do
     expect { parser.parse("Hash[Integer, Integer, 1,2,3]") }.to raise_the_parameter_error("Hash", "2 to 4", 5)
   end
 
-  context 'with scope and loader' do
+  context 'with scope context and loader' do
     let!(:scope) { {} }
 
     before :each do
@@ -156,6 +156,30 @@ describe Puppet::Pops::Types::TypeParser do
 
     it "parses a resource type with title using 'Resource[type, title]'" do
       expect(parser.parse("Resource[File, '/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
+    end
+  end
+
+  context 'with loader context' do
+    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader") }
+    before :each do
+      loader.stubs(:load).returns nil
+      Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).never
+    end
+
+    it "interprets anything that is not a built in type to be a resource type" do
+      expect(parser.parse('File', loader)).to be_the_type(types.resource('file'))
+    end
+
+    it "parses a resource type with title" do
+      expect(parser.parse("File['/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
+    end
+
+    it "parses a resource type using 'Resource[type]' form" do
+      expect(parser.parse("Resource[File]", loader)).to be_the_type(types.resource('file'))
+    end
+
+    it "parses a resource type with title using 'Resource[type, title]'" do
+      expect(parser.parse("Resource[File, '/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
   end
 

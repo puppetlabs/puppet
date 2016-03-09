@@ -153,6 +153,28 @@ module Puppet::Functions
   #
   # @api public
   def self.create_function(func_name, function_base = Function, &block)
+    # Ruby < 2.1.0 does not have method on Binding, can only do eval
+    # and it will fail unless protected with an if defined? if the local
+    # variable does not exist in the block's binder.
+    #
+    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+    create_loaded_function(func_name, loader, function_base, &block)
+  end
+
+  # Creates a function in, or in a local loader under the given loader.
+  # This method should only be used when manually creating functions 
+  # for the sake of testing. Functions that are autoloaded should
+  # always use the `create_function` method and the autoloader will supply
+  # the correct loader.
+  #
+  # @param func_name [String, Symbol] a simple or qualified function name
+  # @param loader [Puppet::Pops::Loaders::Loader] the loader loading the function
+  # @param block [Proc] the block that defines the methods and dispatch of the
+  #   Function to create
+  # @return [Class<Function>] the newly created Function class
+  #
+  # @api public
+  def self.create_loaded_function(func_name, loader, function_base = Function, &block)
     if function_base.ancestors.none? { |s| s == Puppet::Pops::Functions::Function }
       raise ArgumentError, "Functions must be based on Puppet::Pops::Functions::Function. Got #{function_base}"
     end
@@ -162,7 +184,12 @@ module Puppet::Functions
     # The idea being that it is garbage collected when there are no more
     # references to it.
     #
-    the_class = Class.new(function_base, &block)
+    # (Do not give the class the block here, as instance variables should be set first)
+    the_class = Class.new(function_base)
+
+    unless loader.nil?
+      the_class.instance_variable_set(:'@loader', loader.private_loader)
+    end
 
     # Make the anonymous class appear to have the class-name <func_name>
     # Even if this class is not bound to such a symbol in a global ruby scope and
@@ -175,10 +202,19 @@ module Puppet::Functions
     #
     the_class.instance_eval do
       @func_name = func_name
+
       def name
         @func_name
       end
+
+      def loader
+        @loader
+      end
     end
+
+    # The given block can now be evaluated and have access to name and loader
+    #
+    the_class.class_eval(&block)
 
     # Automatically create an object dispatcher based on introspection if the
     # loaded user code did not define any dispatchers. Fail if function name
@@ -238,7 +274,7 @@ module Puppet::Functions
     def self.builder
       @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables)
+      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables, loader)
     end
 
     # Dispatch any calls that match the signature to the provided method name.
@@ -269,11 +305,14 @@ module Puppet::Functions
   #
   # @api public
   class DispatcherBuilder
+    attr_reader :loader
+
     # @api private
-    def initialize(dispatcher, type_parser, all_callables)
+    def initialize(dispatcher, type_parser, all_callables, loader)
       @type_parser = type_parser
       @all_callables = all_callables
       @dispatcher = dispatcher
+      @loader = loader
     end
 
     # Defines a required positional parameter with _type_ and _name_.
@@ -356,7 +395,7 @@ module Puppet::Functions
         name = type_and_name[0]
       when 2
         type_string, name = type_and_name
-        type = @type_parser.parse(type_string)
+        type = @type_parser.parse(type_string, loader)
       else
         raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
       end
@@ -441,7 +480,7 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, from, to)
       mapped_types = types.map do |t|
-        @type_parser.parse(t)
+        @type_parser.parse(t, loader)
       end
 
       if from != to
@@ -496,7 +535,7 @@ module Puppet::Functions
     def self.builder
       @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables)
+      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables, loader)
     end
 
     # Defines class level injected attribute with reader method
