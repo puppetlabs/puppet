@@ -177,6 +177,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         source_to_metadatas = {}
         sources.each do |source|
+          source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
+
           if list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
@@ -219,6 +221,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         metadata = nil
         sources.each do |source|
+          source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
+
           if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             metadata = data
             metadata.source = source
