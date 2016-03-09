@@ -2287,15 +2287,17 @@ class PTypeAliasType < PAnyType
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.
   #
+  # @param type_parser [TypeParser] type parser that will interpret the type expression
+  # @param loader [Loader::Loader] loader to use when loading type aliases
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, scope)
+  def resolve(type_parser, loader)
     if @resolved_type.nil?
       # resolved to PTypeReferenceType::DEFAULT during resolve to avoid endless recursion
       @resolved_type = PTypeReferenceType::DEFAULT
       @self_recursion = true # assumed while it being found out below
       begin
-        @resolved_type = type_parser.interpret(@type_expr, scope).normalize
+        @resolved_type = type_parser.interpret(@type_expr, loader).normalize
 
         # Find out if this type is recursive. A recursive type has performance implications
         # on several methods and this knowledge is used to avoid that for non-recursive
