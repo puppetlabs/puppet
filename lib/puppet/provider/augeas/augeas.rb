@@ -425,7 +425,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
 
       unless force
-        # If we have a verison of augeas which is at least 0.3.6 then we
+        # If we have a version of augeas which is at least 0.3.6 then we
         # can make the changes now and see if changes were made.
         if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
