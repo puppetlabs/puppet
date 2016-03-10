@@ -31,7 +31,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
   def content_uri=(path)
     begin
-      uri = URI.parse(path)
+      uri = URI.parse(URI.escape(path))
     rescue URI::InvalidURIError => detail
       raise(ArgumentError, "Could not understand URI #{path}: #{detail}")
     end

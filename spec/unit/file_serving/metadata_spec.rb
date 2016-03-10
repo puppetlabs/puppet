@@ -98,7 +98,13 @@ describe Puppet::FileServing::Metadata do
 
     describe "when assigning a content_uri" do
       it "should fail if uri is invalid" do
-        expect { metadata.content_uri = 'some foo' }.to raise_error ArgumentError, /Could not understand URI some foo: /
+        expect { metadata.content_uri = '://' }.to raise_error ArgumentError, /Could not understand URI :\/\//
+      end
+
+      it "should accept characters that require percent-encoding" do
+        uri = 'puppet:///modules/foo/files/ %:?#[]@!$&\'()*+,;='
+        metadata.content_uri = uri
+        expect(metadata.content_uri).to eq(uri)
       end
 
       it "should fail if uri is opaque" do
