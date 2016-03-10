@@ -571,6 +571,26 @@ describe Puppet::Resource::Catalog::Compiler do
       end
     end
 
+    it "preserves source host and port in the content_uri" do
+      source = 'puppet://myhost:8888/modules/mymodule/config_file.txt'
+
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}'
+        }
+      MANIFEST
+
+      metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
+      metadata.stubs(:source).returns(source)
+
+      metadata.expects(:content_uri=).with('puppet://myhost:8888/modules/mymodule/files/config_file.txt')
+
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+
+      @compiler.send(:inline_metadata, catalog, checksum_type)
+    end
+
     it "skips absent resources" do
       catalog = compile_to_catalog(<<-MANIFEST, node)
         file { '#{path}':
