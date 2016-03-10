@@ -1,7 +1,11 @@
 # Manage systemd services using systemctl
 
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
-  desc "Manages `systemd` services using `systemctl`."
+  desc "Manages `systemd` services using `systemctl`.
+
+  Because `systemd` defaults to assuming the `.service` unit type, the suffix
+  may be omitted.  Other unit types (such as `.path`) may be managed by
+  providing the proper suffix."
 
   commands :systemctl => "systemctl"
 
