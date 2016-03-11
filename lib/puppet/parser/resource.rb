@@ -182,11 +182,20 @@ class Puppet::Parser::Resource < Puppet::Resource
   alias []= set_parameter
 
   def to_hash
-    @parameters.inject({}) do |hash, ary|
-      param = ary[1]
-      # Skip "undef" and nil values.
-      hash[param.name] = param.value if param.value != :undef && !param.value.nil?
-      hash
+    @parameters.reduce({}) do |result, (_, param)|
+      value = param.value
+      value = (value == :undef) ? nil : value
+
+      unless value.nil?
+        case param.name
+        when :before, :subscribe, :notify, :require
+          value = value.flatten if value.is_a?(Array)
+          result[param.name] = value
+        else
+          result[param.name] = value
+        end
+      end
+      result
     end
   end
 
