@@ -16,7 +16,7 @@
             "type": "string"
         },
         "version": {
-            "type": "integer"
+            "type": ["string", "integer"]
         },
         "code_id": {
             "type": ["string", "null"]
