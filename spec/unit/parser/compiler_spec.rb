@@ -258,7 +258,7 @@ describe Puppet::Parser::Compiler do
       expect(@compiler.topscope['c']).to eq("d")
     end
 
-    it "should set node parameters thar are of Symbol type as String variables in the top scope" do
+    it "should set node parameters that are of Symbol type as String variables in the top scope" do
       params = {"a" => :b}
       @node.stubs(:parameters).returns(params)
       compile_stub(:set_node_parameters)
