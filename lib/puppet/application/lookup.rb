@@ -35,7 +35,7 @@ class Puppet::Application::Lookup < Puppet::Application
 
   option('--sort-merge-arrays')
 
-  option('--unpack-arrays') do |arg|
+  option('--unpack-arrays DELIMITER') do |arg|
     options[:unpack_arrays] = arg
   end
 
@@ -164,19 +164,19 @@ the puppet lookup function linked to above.
   removed. 'deep' Performs a deep merge on values of Array and Hash type. There
   are additional option flags that can be used with 'deep'.
 
-* --knock_out_prefix <PREFIX-STRING>
+* --knock-out-prefix <PREFIX-STRING>
   Can be used with the 'deep' merge strategy. Specify string value to signify
   prefix which deletes elements from existing element.
 
-* --sort_merged_arrays
+* --sort-merged-arrays
   Can be used with the 'deep' merge strategy. When this flag is used all
   merged arrays will be sorted.
 
-* --unpack_arrays <STRING-VALUE>
+* --unpack-arrays <STRING-VALUE>
   Can be used with the 'deep' merge strategy. Specify a string value used
   as a deliminator to join all array values and then split them again.
 
-* --merge_hash_arrays
+* --merge-hash-arrays
   Can be used with the 'deep' merge strategy. When this flag is used arrays
   and hashes will be merged.
 
@@ -272,11 +272,11 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
 
         if options[:prefix]
-          merge_options.merge({'prefix' => options[:prefix]})
+          merge_options.merge!({'knockout_prefix' => options[:prefix]})
         end
 
         if options[:unpack_arrays]
-          merge_options.merge({'unpack_arrays' => options[:unpack_arrays]})
+          merge_options.merge!({'unpack_arrays' => options[:unpack_arrays]})
         end
 
       else
