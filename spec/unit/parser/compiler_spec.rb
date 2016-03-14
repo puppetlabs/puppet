@@ -258,7 +258,7 @@ describe Puppet::Parser::Compiler do
       expect(@compiler.topscope['c']).to eq("d")
     end
 
-    it "should set node parameters thar are of Symbol type as String variables in the top scope" do
+    it "should set node parameters that are of Symbol type as String variables in the top scope" do
       params = {"a" => :b}
       @node.stubs(:parameters).returns(params)
       compile_stub(:set_node_parameters)
@@ -838,6 +838,24 @@ describe Puppet::Parser::Compiler do
     end
   end
 
+  describe 'when using meta parameters to form relationships' do
+    include PuppetSpec::Compiler
+    [:before, :subscribe, :notify, :require].each do | meta_p |
+      it "an entry consisting of nested empty arrays is flattened for parameter #{meta_p}" do
+          expect {
+          node = Puppet::Node.new('someone')
+          manifest = <<-"MANIFEST"
+            notify{hello_kitty: message => meow, #{meta_p} => [[],[]]}
+            notify{hello_kitty2: message => meow, #{meta_p} => [[],[[]],[]]}
+          MANIFEST
+
+          catalog = compile_to_catalog(manifest, node)
+          catalog.to_ral
+        }.not_to raise_error
+      end
+    end
+  end
+
   describe "when evaluating node classes" do
     include PuppetSpec::Compiler
 
@@ -950,6 +968,7 @@ describe Puppet::Parser::Compiler do
       end
     end
   end
+
 
   describe "when managing resource overrides" do
 

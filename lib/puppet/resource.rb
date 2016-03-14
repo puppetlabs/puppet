@@ -251,9 +251,9 @@ class Puppet::Resource
         extract_parameters(params)
       end
 
-    	if resource_type && resource_type.respond_to?(:deprecate_params)
+      if resource_type && resource_type.respond_to?(:deprecate_params)
         resource_type.deprecate_params(title, attributes[:parameters])
-    	end
+      end
 
       tag(self.type)
       tag_if_valid(self.title)
