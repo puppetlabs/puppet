@@ -1271,7 +1271,7 @@ describe Puppet::Parser::Compiler do
         'subscribe',
         'notify',
         'require'].each do |meta_param|
-        it "are reported as an error when formed via meta parameter #{meta_param}" do
+        it "are reported as a warning when formed via meta parameter #{meta_param}" do
           expect { 
             compile_to_catalog(<<-PP)
               notify{ x : #{meta_param} => Notify[tooth_fairy] }
