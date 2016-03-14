@@ -125,54 +125,67 @@
 #
 # @since 4.0.0
 Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) do
-  name_t = 'Variant[String,Array[String]]'
-  value_type_t = 'Type'
-  default_value_t = 'Any'
-  merge_t = 'Variant[String[1],Hash[String,Scalar]]'
-  block_t = "Callable[#{name_t}]"
-  option_pairs =
-      "value_type=>Optional[#{value_type_t}],"\
-      "default_value=>Optional[#{default_value_t}],"\
-      "override=>Optional[Hash[String,Any]],"\
-      "default_values_hash=>Optional[Hash[String,Any]],"\
-      "merge=>Optional[#{merge_t}]"
+
+  local_types do
+    type 'NameType         = Variant[String, Array[String]]'
+    type 'ValueType        = Type'
+    type 'DefaultValueType = Any'
+    type 'MergeType        = Variant[String[1], Hash[String, Scalar]]'
+    type 'BlockType        = Callable[NameType]'
+    type "OptionsWithName  = Struct[{\
+      name                => NameType,\
+      value_type          => Optional[ValueType],\
+      default_value       => Optional[DefaultValueType],\
+      override            => Optional[Hash[String,Any]],\
+      default_values_hash => Optional[Hash[String,Any]],\
+      merge               => Optional[MergeType]\
+    }]"
+    type "OptionsWithoutName = Struct[{\
+      value_type          => Optional[ValueType],\
+      default_value       => Optional[DefaultValueType],\
+      override            => Optional[Hash[String,Any]],\
+      default_values_hash => Optional[Hash[String,Any]],\
+      merge               => Optional[MergeType]\
+    }]"
+
+  end
 
   dispatch :lookup_1 do
     scope_param
-    param           name_t,       :name
-    optional_param  value_type_t, :value_type
-    optional_param  merge_t,      :merge
+    param           'NameType',       :name
+    optional_param  'ValueType',      :value_type
+    optional_param  'MergeType',      :merge
   end
 
   dispatch :lookup_2 do
     scope_param
-    param name_t,                     :name
-    param "Optional[#{value_type_t}]", :value_type
-    param "Optional[#{merge_t}]",      :merge
-    param default_value_t,            :default_value
+    param 'NameType',                 :name
+    param 'Optional[ValueType]',      :value_type
+    param 'Optional[MergeType]',      :merge
+    param 'DefaultValueType',         :default_value
   end
 
   dispatch :lookup_3 do
     scope_param
-    param           name_t,       :name
-    optional_param  value_type_t, :value_type
-    optional_param  merge_t,      :merge
-    required_block_param block_t, :block
+    param                'NameType',   :name
+    optional_param       'ValueType',  :value_type
+    optional_param       'MergeType',  :merge
+    required_block_param 'BlockType',  :block
   end
 
   # Lookup without name. Name then becomes a required entry in the options hash
   dispatch :lookup_4 do
     scope_param
-    param "Struct[{name=>#{name_t},#{option_pairs}}]", :options_hash
-    optional_block_param block_t, :block
+    param                'OptionsWithName', :options_hash
+    optional_block_param 'BlockType',       :block
   end
 
   # Lookup using name and options hash.
   dispatch :lookup_5 do
     scope_param
-    param 'Variant[String,Array[String]]', :name
-    param "Struct[{#{option_pairs}}]", :options_hash
-    optional_block_param block_t, :block
+    param                'Variant[String,Array[String]]', :name
+    param                'OptionsWithoutName',            :options_hash
+    optional_block_param 'BlockType',                     :block
   end
 
   def lookup_1(scope, name, value_type=nil, merge=nil)
