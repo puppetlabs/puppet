@@ -1243,6 +1243,66 @@ describe Puppet::Parser::Compiler do
       end
     end
 
+    describe "relationships to non existing resources when strict == :error" do
+      before(:each) do
+        Puppet[:strict] = :error
+      end
+
+      [ 'before',
+        'subscribe',
+        'notify',
+        'require'].each do |meta_param|
+        it "are reported as an error when formed via meta parameter #{meta_param}" do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notify{ x : #{meta_param} => Notify[tooth_fairy] }
+            PP
+          }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
+        end
+      end
+    end
+
+    describe "relationships to non existing resources when strict == :warning" do
+      before(:each) do
+        Puppet[:strict] = :warning
+      end
+
+      [ 'before',
+        'subscribe',
+        'notify',
+        'require'].each do |meta_param|
+        it "are reported as a warning when formed via meta parameter #{meta_param}" do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notify{ x : #{meta_param} => Notify[tooth_fairy] }
+            PP
+            expect(@logs).to have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
+
+          }.to_not raise_error()
+        end
+      end
+    end
+
+    describe "relationships to non existing resources when strict == :off" do
+      before(:each) do
+        Puppet[:strict] = :off
+      end
+
+      [ 'before',
+        'subscribe',
+        'notify',
+        'require'].each do |meta_param|
+        it "does not log an error for meta parameter #{meta_param}" do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notify{ x : #{meta_param} => Notify[tooth_fairy] }
+            PP
+            expect(@logs).to_not have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
+          }.to_not raise_error()
+        end
+      end
+    end
+
     describe "relationships can be formed" do
       def extract_name(ref)
         ref.sub(/File\[(\w+)\]/, '\1')
