@@ -3,7 +3,7 @@
   #
 module Puppet::Pops
 module Loader
-class StaticLoader < Puppet::Pops::Loader::Loader
+class StaticLoader < Loader
 
   attr_reader :loaded
   def initialize
@@ -76,7 +76,7 @@ class StaticLoader < Puppet::Pops::Loader::Loader
       typed_name = TypedName.new(:function, level)
       # TODO:closure scope is fake (an empty hash) - waiting for new global scope to be available via lookup of :scopes
       func = fc.new({},self)
-      @loaded[ typed_name ] = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, func, __FILE__)
+      @loaded[ typed_name ] = NamedEntry.new(typed_name, func, __FILE__)
     end
   end
 
