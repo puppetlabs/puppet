@@ -827,9 +827,20 @@ class EvaluatorImpl
   # Evaluates function call by name.
   #
   def eval_CallNamedFunctionExpression(o, scope)
+    # If LHS is a type (i.e. Integer, or Integer[...]
+    # the call is taken as an instantiation of the given type
+    #
+    functor = o.functor_expr
+    if functor.is_a?(Model::QualifiedReference) || 
+      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+      # instantiation
+      type = evaluate(functor, scope)
+      return call_function_with_block('new', unfold([type], o.arguments || [], scope), o, scope)
+    end 
+
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
-    case o.functor_expr
+    case functor
     when Model::QualifiedName
       # ok
     when Model::RenderStringExpression

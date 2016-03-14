@@ -236,7 +236,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_CallNamedFunctionExpression(o)
-    case o.functor_expr
+    functor = o.functor_expr
+    if functor.is_a?(Model::QualifiedReference) || 
+      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+      # ok (a call to a type)
+      return nil
+    end
+    case functor
     when Model::QualifiedName
       # ok
       nil
