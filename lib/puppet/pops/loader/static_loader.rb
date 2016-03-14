@@ -108,6 +108,8 @@ class StaticLoader < Loader
       Nagios_host
       Nagios_hostdependency
       Nagios_hostescalation
+      Nagios_hostgroup
+      Nagios_hostextinfo
       Nagios_service
       Nagios_servicedependency
       Nagios_serviceescalation

@@ -72,6 +72,8 @@ describe 'the static loader' do
       Nagios_host
       Nagios_hostdependency
       Nagios_hostescalation
+      Nagios_hostescalation
+      Nagios_hostgroup
       Nagios_service
       Nagios_servicedependency
       Nagios_serviceescalation
