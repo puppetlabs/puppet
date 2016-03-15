@@ -856,6 +856,18 @@ Puppet::Type.newtype(:file) do
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)
         file.flush
+        begin
+          file.fsync
+        rescue NotImplementedError
+          # fsync may not be implemented by Ruby on all platforms, but
+          # there is absolutely no recovery path if we detect that.  So, we just
+          # ignore the return code.
+          #
+          # However, don't be fooled: that is accepting that we are running in
+          # an unsafe fashion.  If you are porting to a new platform don't stub
+          # that out.
+        end
+
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
         if self[:validate_cmd]
           output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], file.path), :failonfail => true, :combine => true)
