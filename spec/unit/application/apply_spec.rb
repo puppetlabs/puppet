@@ -189,16 +189,8 @@ describe Puppet::Application::Apply do
         Puppet.expects(:notice).with(regexp_matches /Run of Puppet already in progress; skipping  (.+ exists)/)
       end
 
-      it "should exit" do
-        expect { @apply.run_command }.to raise_error(SystemExit)
-      end
-
       it "should return an exit code of 1" do
-        begin
-          @apply.run_command
-        rescue SystemExit => e
-          expect(e.status).to eq(1)
-        end
+        expect { @apply.run_command }.to exit_with(1)
       end
     end
 
