@@ -91,7 +91,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     set_log_level
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
-    Puppet::Resource::Catalog.indirection.terminus_class = :yaml
+    Puppet::Resource::Catalog.indirection.terminus_class = Puppet[:catalog_cache_terminus] || :json
   end
 
   def preinit
