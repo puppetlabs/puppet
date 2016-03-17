@@ -42,7 +42,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
-  [ 17, 18, 19, 20, 21 ].each do |ver|
+  [ 17, 18, 19, 20, 21, 22, 23 ].each do |ver|
     it "should be the default provider on fedora#{ver}" do
       Facter.stubs(:value).with(:osfamily).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
