@@ -296,6 +296,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog = Puppet::Resource::Catalog.new("host")
       @one = Puppet::Type.type(:notify).new :name => "one"
       @two = Puppet::Type.type(:notify).new :name => "two"
+      @three = Puppet::Type.type(:notify).new :name => "three"
       @dupe = Puppet::Type.type(:notify).new :name => "one"
     end
 
@@ -347,6 +348,32 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
       @catalog.add_resource(@one)
       expect(@catalog.resource("notify[one]", nil)).to equal(@one)
+    end
+
+    it "adds resources before an existing resource" do
+      @catalog.add_resource(@one)
+      @catalog.add_resource_before(@one, @two, @three)
+
+      expect(@catalog.resources).to eq([@two, @three, @one])
+    end
+
+    it "raises if adding a resource before a resource not in the catalog" do
+      expect {
+        @catalog.add_resource_before(@one, @two)
+      }.to raise_error(ArgumentError, "Cannot add resource Notify[two] before Notify[one] because Notify[one] is not yet in the catalog")
+    end
+
+    it "adds resources after an existing resource in reverse order" do
+      @catalog.add_resource(@one)
+      @catalog.add_resource_after(@one, @two, @three)
+
+      expect(@catalog.resources).to eq([@one, @three, @two])
+    end
+
+    it "raises if adding a resource after a resource not in the catalog" do
+      expect {
+        @catalog.add_resource_after(@one, @two)
+      }.to raise_error(ArgumentError, "Cannot add resource Notify[two] after Notify[one] because Notify[one] is not yet in the catalog")
     end
 
     describe 'with a duplicate resource' do
