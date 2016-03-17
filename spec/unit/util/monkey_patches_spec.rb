@@ -5,9 +5,73 @@ require 'puppet/util/monkey_patches'
 
 
 describe Symbol do
+  after :all do
+    $unique_warnings.delete('symbol_comparison')
+  end
+
   it "should return self from #intern" do
     symbol = :foo
     expect(symbol).to equal symbol.intern
+  end
+
+  describe "when :strict is off" do
+    before :each do
+      Puppet.settings[:strict] = :off
+    end
+
+    after :all do
+      Puppet.settings[:strict] = Puppet.settings.setting(:strict).default
+    end
+
+    it "should not warn if compared against another symbol" do
+      Puppet.expects(:warn_once).never
+      expect(:foo <=> :bar).to equal(1)
+    end
+
+    it "should not warn if compared against a non-symbol value" do
+      Puppet.expects(:warn_once).never
+      expect(:foo <=> "foo").to equal(0)
+    end
+  end
+
+  describe "when :strict is warning" do
+    before :each do
+      Puppet.settings[:strict] = :warning
+    end
+
+    after :all do
+      Puppet.settings[:strict] = Puppet.settings.setting(:strict).default
+    end
+
+    it "should not warn if compared against another symbol" do
+      Puppet.expects(:warn_once).never
+      expect(:foo <=> :bar).to equal(1)
+    end
+
+    it "should warn if compared against a non-symbol value" do
+      Puppet.expects(:warn_once).once
+      expect(:foo <=> "foo").to equal(0)
+    end
+  end
+
+  describe "when :strict is error" do
+    before :each do
+      Puppet.settings[:strict] = :error
+    end
+
+    after :all do
+      Puppet.settings[:strict] = Puppet.settings.setting(:strict).default
+    end
+
+    it "should not raise if compared against another symbol" do
+      Puppet.expects(:warn_once).never
+      expect(:foo <=> :bar).to equal(1)
+    end
+
+    it "should raise if compared against a non-symbol value" do
+      Puppet.expects(:warn_once).never
+      expect { :foo <=> "foo" }.to raise_error(ArgumentError, "Comparing Symbols to non-Symbol values is no longer allowed")
+    end
   end
 end
 

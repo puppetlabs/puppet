@@ -20,6 +20,14 @@ end
 
 class Symbol
   def <=> (other)
+    if (other.class != Symbol)
+      case Puppet[:strict]
+      when :warning
+        Puppet.warn_once('deprecation', 'symbol_comparison', 'Comparing Symbols to non-Symbol values is deprecated')
+      when :error
+        raise ArgumentError.new("Comparing Symbols to non-Symbol values is no longer allowed")
+      end
+    end
     self.to_s <=> other.to_s
   end
 
