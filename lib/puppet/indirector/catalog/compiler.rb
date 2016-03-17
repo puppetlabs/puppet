@@ -4,6 +4,7 @@ require 'puppet/indirector/code'
 require 'puppet/util/profiler'
 require 'puppet/util/checksums'
 require 'yaml'
+require 'uri'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   desc "Compiles catalogs on demand using Puppet's compiler."
@@ -102,7 +103,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # This does that, while preserving any user-specified server or port.
     source_path = Pathname.new(metadata.full_path)
     path = source_path.relative_path_from(environment_path).to_s
-    source_as_uri = URI.parse(CGI.escape(source))
+    source_as_uri = URI.parse(URI.escape(source))
     server = source_as_uri.host
     port = ":#{source_as_uri.port}" if source_as_uri.port
     return "puppet://#{server}#{port}/#{path}"
@@ -121,6 +122,17 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       else
         return true
     end
+  end
+
+  # Return true if metadata is inlineable, meaning the request's source is
+  # for the 'modules' mount and the resolved path is of the form:
+  #   $codedir/environments/$environment/*/*/files/**
+  def inlineable_metadata?(metadata, source, environment_path)
+    source_as_uri = URI.parse(URI.escape(source))
+    location = Puppet::Module::FILETYPES['files']
+
+    !!(source_as_uri.path =~ /^\/modules\// &&
+       metadata.full_path =~ /#{environment_path}[^\/]+\/[^\/]+\/#{location}\/.+/)
   end
 
   # Helper method to log file resources that could not be inlined because they
@@ -165,11 +177,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         source_to_metadatas = {}
         sources.each do |source|
+          source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
+
           if list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            if ! basedir_meta.full_path.start_with? environment_path.to_s
+            if ! inlineable_metadata?(basedir_meta, source,  environment_path)
               # If any source is not in the environment path, skip inlining this resource.
               log_file_outside_environment
               sources_in_environment = false
@@ -207,6 +221,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         metadata = nil
         sources.each do |source|
+          source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
+
           if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             metadata = data
             metadata.source = source
@@ -215,7 +231,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         raise "Could not get metadata for #{resource[:source]}" unless metadata
-        if metadata.full_path.start_with? environment_path.to_s
+
+        if inlineable_metadata?(metadata, metadata.source,  environment_path)
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
           log_metadata_inlining
 

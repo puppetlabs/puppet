@@ -236,11 +236,9 @@ Puppet::Type.newtype(:file) do
 
   newparam(:links) do
     desc "How to handle links during file actions.  During file copying,
-      `follow` will copy the target file instead of the link, `manage`
-      will copy the link itself, and `ignore` will just pass it by.
-      When not copying, `manage` and `ignore` behave equivalently
-      (because you cannot really ignore links entirely during local
-      recursion), and `follow` will manage the file to which the link points."
+      `follow` will copy the target file instead of the link and `manage`
+      will copy the link itself. When not copying, `manage` will manage
+      the link, and `follow` will manage the file to which the link points."
 
     newvalues(:follow, :manage)
 

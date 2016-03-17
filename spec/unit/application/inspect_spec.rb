@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/application/inspect'
 require 'puppet/resource/catalog'
-require 'puppet/indirector/catalog/yaml'
+require 'puppet/indirector/catalog/json'
 require 'puppet/indirector/report/rest'
 require 'puppet/indirector/file_bucket_file/rest'
 
@@ -31,6 +31,17 @@ describe Puppet::Application::Inspect do
       Puppet[:report] = false
       expect { @inspect.setup }.to raise_error(/report=true/)
     end
+
+    it "should default to the json terminus class when catalog_cache_terminus is not set" do
+      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:json)
+      expect { @inspect.setup }.not_to raise_error
+    end
+
+    it "should respect the catalog_cache_terminus if set" do
+      Puppet[:catalog_cache_terminus] = :yaml
+      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:yaml)
+      expect { @inspect.setup }.not_to raise_error
+    end
   end
 
   describe "when executing", :uses_checksums => true do
@@ -42,13 +53,13 @@ describe Puppet::Application::Inspect do
     end
 
     it "should retrieve the local catalog" do
-      Puppet::Resource::Catalog::Yaml.any_instance.expects(:find).with {|request| request.key == Puppet[:certname] }.returns(Puppet::Resource::Catalog.new)
+      Puppet::Resource::Catalog::Json.any_instance.expects(:find).with {|request| request.key == Puppet[:certname] }.returns(Puppet::Resource::Catalog.new)
 
       @inspect.run_command
     end
 
     it "should save the report to REST" do
-      Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(Puppet::Resource::Catalog.new)
+      Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(Puppet::Resource::Catalog.new)
       Puppet::Transaction::Report::Rest.any_instance.expects(:save).with {|request| request.instance.host == Puppet[:certname] }
 
       @inspect.run_command
@@ -63,7 +74,7 @@ describe Puppet::Application::Inspect do
         file.close
         resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
         catalog.add_resource(resource)
-        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
+        Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(catalog)
 
         events = nil
 
@@ -87,7 +98,7 @@ describe Puppet::Application::Inspect do
       file = Tempfile.new("foo")
       resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
       catalog.add_resource(resource)
-      Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
+      Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(catalog)
 
       events = nil
 
@@ -109,7 +120,7 @@ describe Puppet::Application::Inspect do
       file.close
       file.delete
       catalog.add_resource(resource)
-      Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
+      Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(catalog)
 
       events = nil
 
@@ -130,7 +141,7 @@ describe Puppet::Application::Inspect do
         Puppet[:archive_files] = true
         Puppet[:archive_file_server] = "filebucketserver"
         @catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(@catalog)
       end
 
       describe "when auditing files" do
@@ -236,7 +247,7 @@ describe Puppet::Application::Inspect do
         end
 
         @catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(@catalog)
 
         Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
           @report = request.instance

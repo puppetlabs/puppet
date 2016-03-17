@@ -88,7 +88,7 @@ module Puppet
     munge do |sources|
       sources = [sources] unless sources.is_a?(Array)
       sources.map do |source|
-        source = source.sub(/[#{SEPARATOR_REGEX}]+$/, '')
+        source = self.class.normalize(source)
 
         if Puppet::Util.absolute_path?(source)
           URI.unescape(Puppet::Util.path_to_uri(source).to_s)
@@ -96,6 +96,10 @@ module Puppet
           source
         end
       end
+    end
+
+    def self.normalize(source)
+      source.sub(/[#{SEPARATOR_REGEX}]+$/, '')
     end
 
     def change_to_s(currentvalue, newvalue)
