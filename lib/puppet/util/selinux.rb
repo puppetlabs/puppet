@@ -47,8 +47,25 @@ module Puppet::Util::SELinux
     rescue Errno::EACCES, Errno::ENOENT
       mode = 0
     end
-
-    retval = Selinux.matchpathcon(file, mode)
+    # matchpathcon does only act on the passed string and not resolve the real path
+    # problematic if puppet manages /etc/init.d/script on RHEL which symlinks
+    # /etc/init.d to /etc/rc.d/init.d. matchpathcon will return the wrong label.
+    #
+    # This mimics restorecon behaviour.
+    #
+    # Not all files requested exist. Fall back to the requested file string.
+    begin
+      if !File.symlink?(file) && File.directory?(file)
+        file_realpath = File.realpath(file)
+      else
+        dirname_realpath = File.realpath(File.dirname(file))
+        file_basename = File.basename(file)
+        file_realpath = dirname_realpath + '/' + file_basename
+      end
+    rescue
+      file_realpath = file
+    end
+    retval = Selinux.matchpathcon(file_realpath, mode)
     if retval == -1
       return nil
     end
