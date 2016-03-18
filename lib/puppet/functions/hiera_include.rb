@@ -1,7 +1,7 @@
 require 'hiera/puppet_function'
 
 # Assigns classes to a node using an
-# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.htmlarray-merge)
+# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
 # that retrieves the value for a user-specified key from Hiera's data.
 #
 # The `hiera_include` function requires:
@@ -26,7 +26,7 @@ require 'hiera/puppet_function'
 #     searching the rest of the hierarchy.
 #
 # The function uses an
-# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.htmlarray-merge)
+# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
 # to retrieve the `classes` array, so every node gets every class from the hierarchy.
 #
 # @example Using `hiera_include`
