@@ -28,7 +28,7 @@
 # `inline_epp` function fails to pass any required parameter.
 #
 # An inline EPP template should be written as a single-quoted string or
-# [heredoc](puppet/latest/reference/lang_data_string.html#heredocs).
+# [heredoc](/puppet/latest/reference/lang_data_string.html#heredocs).
 # A double-quoted string is subject to expression interpolation before the string
 # is parsed as an EPP template.
 #
