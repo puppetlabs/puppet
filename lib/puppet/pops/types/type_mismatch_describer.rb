@@ -183,7 +183,7 @@ module Types
     end
 
     def hash
-      super.hash * 31 + key.hash
+      super.hash ^ key.hash
     end
   end
 
@@ -237,9 +237,7 @@ module Types
     end
 
     def hash
-      hash = super.hash
-      hash = hash * 31 + expected.hash
-      hash * 31 + actual.hash
+      [canonical_path, expected, actual].hash
     end
 
     def swap_expected(expected)

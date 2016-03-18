@@ -324,7 +324,7 @@ class PTypeWithContainedType < PAnyType
   end
 
   def hash
-    self.class.hash * 31 * @type.hash
+    self.class.hash ^ @type.hash
   end
 
   def eql?(o)
@@ -637,7 +637,7 @@ class PNumericType < PScalarType
   end
 
   def hash
-    @from.hash * 31 + @to.hash
+    @from.hash ^ @to.hash
   end
 
   def eql?(o)
@@ -819,7 +819,7 @@ class PCollectionType < PAnyType
   end
 
   def hash
-    @element_type.hash * 31 + @size_type.hash
+    @element_type.hash ^ @size_type.hash
   end
 
   def iterable?(guard = nil)
@@ -958,7 +958,7 @@ class PStringType < PScalarType
   end
 
   def hash
-    @size_type.hash * 31 + @values.hash
+    @size_type.hash ^ @values.hash
   end
 
   def iterable?(guard = nil)
@@ -1151,7 +1151,7 @@ class PStructElement < TypedModelObject
   end
 
   def hash
-    value_type.hash * 31 + key_type.hash
+    value_type.hash ^ key_type.hash
   end
 
   def name
@@ -1437,7 +1437,7 @@ class PTupleType < PAnyType
   end
 
   def hash
-    @size_type.hash * 31 + @types.hash
+    @size_type.hash ^ @types.hash
   end
 
   def eql?(o)
@@ -1570,7 +1570,7 @@ class PCallableType < PAnyType
   end
 
   def hash
-    @param_types.hash * 31 + @block_type.hash
+    @param_types.hash ^ @block_type.hash
   end
 
   def eql?(o)
@@ -1717,7 +1717,7 @@ class PHashType < PCollectionType
   end
 
   def hash
-    @key_type.hash * 31 + super
+    super ^ @key_type.hash
   end
 
   def instance?(o)
@@ -2022,7 +2022,7 @@ class PRuntimeType < PAnyType
   end
 
   def hash
-    @runtime.hash * 31 + @runtime_type_name.hash
+    @runtime.hash ^ @runtime_type_name.hash
   end
 
   def eql?(o)
@@ -2092,7 +2092,7 @@ class PHostClassType < PCatalogEntryType
   end
 
   def hash
-    11 * @class_name.hash
+    11 ^ @class_name.hash
   end
   def eql?(o)
     self.class == o.class && @class_name == o.class_name
@@ -2124,7 +2124,7 @@ class PResourceType < PCatalogEntryType
   end
 
   def hash
-    @type_name.hash * 31 + @title.hash
+    @type_name.hash ^ @title.hash
   end
 
   def eql?(o)
@@ -2212,7 +2212,7 @@ class PTypeReferenceType < PAnyType
   end
 
   def hash
-    @name.hash * 31 + @parameters.hash
+    @name.hash ^ @parameters.hash
   end
 
   def eql?(o)
