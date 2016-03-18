@@ -6,7 +6,7 @@ module Puppet::Parser::Functions
     :arity => -2,
     :doc => <<-DOC
 Assigns classes to a node using an
-[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.htmlarray-merge)
+[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
 that retrieves the value for a user-specified key from Hiera's data.
 
 The `hiera_include` function requires:
@@ -31,7 +31,7 @@ top of the hierarchy. This lets you temporarily modify the hierarchy for a singl
     searching the rest of the hierarchy.
 
 The function uses an
-[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.htmlarray-merge)
+[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
 to retrieve the `classes` array, so every node gets every class from the hierarchy.
 
 **Example**: Using `hiera_include`

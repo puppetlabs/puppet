@@ -48,7 +48,7 @@ OPTIONS
 Any configuration setting which is valid in the configuration file is
 also a valid long argument, e.g. '--server=master.domain.com'. See the
 configuration file documentation at
-https://docs.puppetlabs.com/references/latest/configuration.html for
+https://docs.puppetlabs.com/puppet/latest/reference/configuration.html for
 the full list of acceptable settings.
 
 * --archive_files:
