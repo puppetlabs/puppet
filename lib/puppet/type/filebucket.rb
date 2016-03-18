@@ -21,7 +21,7 @@ module Puppet
         puppet master's filebucket with the _desired_ content for each file,
         then instructs the agent to retrieve the content for a specific
         checksum. For more details,
-        [see the `static_compiler` section in the catalog indirection docs](https://docs.puppetlabs.com/references/latest/indirection.html#catalog).
+        [see the `static_compiler` section in the catalog indirection docs](https://docs.puppetlabs.com/puppet/latest/reference/indirection.html#catalog).
 
       To use a central filebucket for backups, you will usually want to declare
       a filebucket resource and a resource default for the `backup` attribute

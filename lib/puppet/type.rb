@@ -1246,7 +1246,7 @@ class Type
       event _would_ have been sent.
 
       **Important note:**
-      [The `noop` setting](https://docs.puppetlabs.com/references/latest/configuration.html#noop)
+      [The `noop` setting](https://docs.puppetlabs.com/puppet/latest/reference/configuration.html#noop)
       allows you to globally enable or disable noop mode, but it will _not_ override
       the `noop` metaparameter on individual resources. That is, the value of the
       global `noop` setting will _only_ affect resources that do not have an explicit
@@ -1266,7 +1266,7 @@ class Type
       The value of this metaparameter must be the `name` of a `schedule`
       resource. This means you must declare a schedule resource, then
       refer to it by name; see
-      [the docs for the `schedule` type](https://docs.puppetlabs.com/references/latest/type.html#schedule)
+      [the docs for the `schedule` type](https://docs.puppetlabs.com/puppet/latest/reference/type.html#schedule)
       for more info.
 
           schedule { 'everyday':
@@ -1441,7 +1441,7 @@ class Type
           }
 
       Tags are useful for things like applying a subset of a host's configuration
-      with [the `tags` setting](/references/latest/configuration.html#tags)
+      with [the `tags` setting](/puppet/latest/reference/configuration.html#tags)
       (e.g. `puppet agent --test --tags bootstrap`)."
 
     munge do |tags|
@@ -1630,7 +1630,7 @@ class Type
       By default, all classes are declared in the `main` stage. To assign a class
       to a different stage, you must:
 
-      * Declare the new stage as a [`stage` resource](https://docs.puppetlabs.com/references/latest/type.html#stage).
+      * Declare the new stage as a [`stage` resource](https://docs.puppetlabs.com/puppet/latest/reference/type.html#stage).
       * Declare an order relationship between the new stage and the `main` stage.
       * Use the resource-like syntax to declare the class, and set the `stage`
         metaparameter to the name of the desired stage.
