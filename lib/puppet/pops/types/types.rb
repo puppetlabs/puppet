@@ -136,6 +136,18 @@ class PAnyType < TypedModelObject
     self
   end
 
+  # Called from the TypeParser once it has found a type using the Loader to enable that this type can
+  # resolve internal type expressions using a loader. Presently, this method is a no-op for all types
+  # except the {{PTypeAliasType}}.
+  #
+  # @param type_parser [TypeParser] type parser
+  # @param loader [Loader::Loader] loader to use
+  # @return [PTypeAliasType] the receiver of the call, i.e. `self`
+  # @api private
+  def resolve(type_parser, loader)
+    self
+  end
+
   # Responds `true` for all callables, variants of callables and unless _optional_ is
   # false, all optional callables.
   # @param optional [Boolean]

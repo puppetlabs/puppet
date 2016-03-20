@@ -137,9 +137,9 @@ class StaticLoader < Loader
       Zone
       Zpool
     }.each do |name |
-      typed_name = TypedName.new(:type, name)
+      typed_name = TypedName.new(:type, name.downcase)
       type = Puppet::Pops::Types::TypeFactory.resource(name)
-      @loaded[ typed_name ] = NamedEntry.new(TypedName.new(:type, name), type, __FILE__)
+      @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
     end
   end
 end
