@@ -102,7 +102,7 @@ describe 'the static loader' do
       Zpool
     }.each do |name |
       it "such that #{name} is available" do
-        expect(loader.load(:type, name)).to be_the_type(resource_type(name))
+        expect(loader.load(:type, name.downcase)).to be_the_type(resource_type(name))
       end
     end
   end
