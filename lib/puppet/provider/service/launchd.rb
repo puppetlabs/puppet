@@ -206,7 +206,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def self.read_plist(path)
     begin
       return Plist::parse_xml(path)
-    rescue ArgumentError => detail
+    rescue ArgumentError, NoMethodError => detail
       Puppet.debug("Error reading #{path}: #{detail}. Retrying with plutil.")
     end
 
