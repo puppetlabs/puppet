@@ -13,6 +13,30 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   commands :cmd => "yum", :rpm => "rpm"
 
+  YUM_ARCH_LIST = [
+    'i386',
+    'i686',
+    'ppc',
+    'ppc64',
+    'armv3l',
+    'armv4b',
+    'armv4l',
+    'armv4tl',
+    'armv5tel',
+    'armv5tejl',
+    'armv6l',
+    'armv7l',
+    'm68kmint',
+    's390',
+    's390x',
+    'ia64',
+    'x86_64',
+    'sh3',
+    'sh4',
+  ]
+
+  ARCH_REGEX = Regexp.new(YUM_ARCH_LIST.join('|\.'))
+
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -149,6 +173,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     else
       # Add the package version
       wanted += "-#{should}"
+      if wanted.scan(ARCH_REGEX)
+        self.debug "Detected Arch argument in package! - Moving arch to end of version string"
+        wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+      end
       is = self.query
       if is && yum_compareEVR(yum_parse_evr(should), yum_parse_evr(is[:ensure])) < 0
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
