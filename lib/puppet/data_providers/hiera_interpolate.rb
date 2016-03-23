@@ -100,10 +100,16 @@ module Puppet::DataProviders::HieraInterpolate
       throw :no_such_key if value.nil?
       if segment =~ /^[0-9]+$/
         segment = segment.to_i
-        raise Puppet::DataBinding::LookupError, "Data provider type mismatch: Got #{value.class.name} when Array was expected to enable lookup using key '#{segment}'" unless value.instance_of?(Array)
+        unless value.instance_of?(Array)
+          raise Puppet::DataBinding::LookupError,
+                "Data provider type mismatch: Got #{value.class.name} when Array was expected to enable lookup using key '#{segment}'"
+        end
         throw :no_such_key unless segment < value.size
       else
-        raise Puppet::DataBinding::LookupError, "Data provider type mismatch: Got #{value.class.name} when a non Array object that responds to '[]' was expected to enable lookup using key '#{segment}'" unless value.respond_to?(:'[]') && !value.instance_of?(Array)
+        unless value.respond_to?(:'[]') && !(value.instance_of?(Array) || value.instance_of?(String))
+          raise Puppet::DataBinding::LookupError,
+                "Data provider type mismatch: Got #{value.class.name} when a hash-like object was expected to enable lookup using key '#{segment}'"
+        end
         throw :no_such_key unless value.include?(segment)
       end
       value = value[segment]

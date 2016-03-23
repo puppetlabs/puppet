@@ -118,6 +118,7 @@ describe 'Puppet::DataProviders::HieraInterpolate' do
           }
         },
         'x.1' => '(lookup) x dot 1',
+        'key' => 'subkey'
       }
     }
 
@@ -216,6 +217,11 @@ describe 'Puppet::DataProviders::HieraInterpolate' do
     it 'should not find a subkey when the dotted key is quoted with method lookup' do
       expect_lookup('a.d')
       expect(interpolator.interpolate("a dot f: %{lookup(\"'a.d'\")}", lookup_invocation, true)).to eq('a dot f: ')
+    end
+
+    it 'should not find a subkey that is matched within a string' do
+      expect_lookup('key')
+      expect{ interpolator.interpolate('%{hiera("key.subkey")}', lookup_invocation, true) }.to raise_error(/Got String when a hash-like object was expected to enable lookup using key 'subkey'/)
     end
   end
 
