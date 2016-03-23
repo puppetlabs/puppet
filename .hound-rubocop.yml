@@ -158,6 +158,17 @@ Metrics/MethodLength:
   Enabled: false
   CountComments: false
   Max: 10
+Metrics/LineLength
+  Description: Avoid lines longer than the specified line length
+  Enabled: false
+  Max: 80
+  # To make it possible to copy or click on URIs in the code, we allow lines
+  # containing a URI to be longer than Max.
+  AllowHeredoc: true
+  AllowURI: true
+  URISchemes:
+    - http
+    - https
 Metrics/ParameterLists:
   Description: Avoid parameter lists longer than three or four parameters.
   StyleGuide: https://github.com/bbatsov/ruby-style-guide#too-many-params
