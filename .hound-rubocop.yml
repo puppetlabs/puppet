@@ -163,8 +163,8 @@ Metrics/MethodLength:
   Max: 10
 Metrics/LineLength
   Description: Avoid lines longer than the specified line length
-  Enabled: false
-  Max: 80
+  Enabled: true
+  Max: 120
   # To make it possible to copy or click on URIs in the code, we allow lines
   # containing a URI to be longer than Max.
   AllowHeredoc: true
