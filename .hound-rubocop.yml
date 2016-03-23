@@ -98,6 +98,9 @@ Style/SingleLineMethods:
   StyleGuide: https://github.com/bbatsov/ruby-style-guide#no-single-line-methods
   Enabled: false
   AllowIfMethodIsEmpty: true
+Style/SpaceAfterComma:
+  Description: Provide a space after comma
+  Enabled: false
 Style/StringLiterals:
   Description: Checks if uses of quotes match the configured preference.
   StyleGuide: https://github.com/bbatsov/ruby-style-guide#consistent-string-literals
