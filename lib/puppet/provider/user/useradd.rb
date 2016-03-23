@@ -104,7 +104,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if not @resource.allowdupe? and @resource.forcelocal?
+    if not @resource.allowdupe? && @resource.forcelocal?
        if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
