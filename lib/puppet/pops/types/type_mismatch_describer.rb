@@ -17,8 +17,10 @@ module Types
       self.class == o.class && key == o.key
     end
 
-    alias :eql? :==
-  end
+    def eql?(o)
+      self == o
+    end
+   end
 
   class SubjectPathElement < TypePathElement
     def to_s
@@ -130,7 +132,9 @@ module Types
       self.class == o.class && canonical_path == o.canonical_path
     end
 
-    alias :eql? :==
+    def eql?(o)
+      self == o
+    end
 
     def hash
       canonical_path.hash
