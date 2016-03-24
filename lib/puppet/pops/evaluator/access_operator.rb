@@ -442,7 +442,7 @@ class AccessOperator
     when Types::PResourceType
       type_name.type_name
     when String
-      type_name.downcase
+      type_name
     else
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
@@ -450,7 +450,7 @@ class AccessOperator
     end
 
     # type name must conform
-    if type_name !~ Patterns::CLASSREF
+    if type_name.downcase !~ Patterns::CLASSREF
       fail(Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
     end
 

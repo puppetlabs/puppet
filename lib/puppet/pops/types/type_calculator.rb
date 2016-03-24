@@ -652,7 +652,7 @@ class TypeCalculator
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     title = '' if :undef == title
-    PType.new(PResourceType.new(o.type.to_s.downcase, title))
+    PType.new(PResourceType.new(o.type.to_s, title))
   end
 
   # @api private

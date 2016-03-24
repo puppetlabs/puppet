@@ -2128,19 +2128,20 @@ end
 # @api public
 #
 class PResourceType < PCatalogEntryType
-  attr_reader :type_name, :title
+  attr_reader :type_name, :title, :downcased_name
 
   def initialize(type_name, title = nil)
     @type_name = type_name
     @title = title
-  end
-
-  def hash
-    @type_name.hash ^ @title.hash
+    @downcased_name = type_name.nil? ? nil : @type_name.downcase
   end
 
   def eql?(o)
-    self.class == o.class && @type_name == o.type_name && @title == o.title
+    self.class == o.class && @downcased_name == o.downcased_name && @title == o.title
+  end
+
+  def hash
+    @downcased_name.hash ^ @title.hash
   end
 
   DEFAULT = PResourceType.new(nil)
@@ -2149,11 +2150,7 @@ class PResourceType < PCatalogEntryType
 
   # @api private
   def _assignable?(o, guard)
-    return false unless o.is_a?(PResourceType)
-    return true if @type_name.nil?
-    return false if @type_name != o.type_name
-    return true if @title.nil?
-    @title == o.title
+    o.is_a?(PResourceType) && (@downcased_name.nil? || @downcased_name == o.downcased_name && (@title.nil? || @title == o.title))
   end
 end
 
