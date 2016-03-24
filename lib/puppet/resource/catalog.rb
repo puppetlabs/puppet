@@ -167,14 +167,15 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Create an alias for a resource.
   def alias(resource, key)
-    resource.ref =~ /^(.+)\[/
+    ref = resource.ref
+    ref =~ /^(.+)\[/
     class_name = $1 || resource.class.name
 
     newref = [class_name, key].flatten
 
     if key.is_a? String
       ref_string = "#{class_name}[#{key}]"
-      return if ref_string == resource.ref
+      return if ref_string == ref
     end
 
     # LAK:NOTE It's important that we directly compare the references,
@@ -185,12 +186,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       return if existing == resource
       resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
       existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
+      msg = "Cannot alias #{ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
-    @aliases[resource.ref] ||= []
-    @aliases[resource.ref] << newref
+    @aliases[ref] ||= []
+    @aliases[ref] << newref
   end
 
   # Apply our catalog to the local host.
@@ -332,11 +333,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # references to the resource instances.
   def remove_resource(*resources)
     resources.each do |resource|
-      title_key = title_key_for_ref(resource.ref)
+      ref = resource.ref
+      title_key = title_key_for_ref(ref)
       @resource_table.delete(title_key)
-      if aliases = @aliases[resource.ref]
+      if aliases = @aliases[ref]
         aliases.each { |res_alias| @resource_table.delete(res_alias) }
-        @aliases.delete(resource.ref)
+        @aliases.delete(ref)
       end
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
@@ -348,27 +350,27 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    # Always create a resource reference, so that it always
-    # canonicalizes how we are referring to them.
-    attributes = { :environment => environment_instance }
-    if title
-      res = Puppet::Resource.new(type, title, attributes)
-    else
-      # If they didn't provide a title, then we expect the first
-      # argument to be of the form 'Class[name]', which our
-      # Reference class canonicalizes for us.
-      res = Puppet::Resource.new(nil, type, attributes)
-    end
-    res.catalog = self
-    title_key      = [res.type, res.title.to_s]
-    uniqueness_key = [res.type, res.uniqueness_key].flatten
-    result = @resource_table[title_key] || @resource_table[uniqueness_key]
-    if ! result && res.resource_type && res.resource_type.is_capability?
-      # @todo lutter 2015-03-10: this assumes that it is legal to just
-      # mention a capability resource in code and have it automatically
-      # made available, even if the current component does not require it
-      result = Puppet::Resource::CapabilityFinder.find(environment, code_id, res)
-      add_resource(result) if result
+    type, title = Puppet::Resource.type_and_title(type, title)
+    title_key   = [type, title.to_s]
+    result = @resource_table[title_key]
+    if result.nil?
+      # an instance has to be created in order to construct the unique key used when
+      # searching for aliases.
+      unless @aliases.empty? && !Puppet[:app_management]
+        res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
+        result = @resource_table[[type, res.uniqueness_key].flatten]
+      end
+
+      if result.nil? && Puppet[:app_management]
+        resource_type = res.resource_type
+        if resource_type && resource_type.is_capability?
+          # @todo lutter 2015-03-10: this assumes that it is legal to just
+          # mention a capability resource in code and have it automatically
+          # made available, even if the current component does not require it
+          result = Puppet::Resource::CapabilityFinder.find(environment, code_id, res)
+          add_resource(result) if result
+        end
+      end
     end
     result
   end

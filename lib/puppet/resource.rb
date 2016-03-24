@@ -21,7 +21,10 @@ class Puppet::Resource
   extend Puppet::Indirector
   indirects :resource, :terminus_class => :ral
 
-  ATTRIBUTES = [:file, :line, :exported]
+  ATTRIBUTES = [:file, :line, :exported].freeze
+  TYPE_CLASS = 'Class'.freeze
+  TYPE_NODE  = 'Node'.freeze
+  TYPE_SITE  = 'Site'.freeze
 
   def self.from_data_hash(data)
     raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
@@ -162,7 +165,7 @@ class Puppet::Resource
   end
 
   def class?
-    @is_class ||= @type == "Class"
+    @is_class ||= @type == TYPE_CLASS
   end
 
   def stage?
@@ -222,6 +225,11 @@ class Puppet::Resource
         self[p] = v
       end
     else
+      if type.is_a?(Hash)
+        raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
+          "Did you mean (#{(type[:type] || type["type"]).inspect}, #{(type[:title] || type["title"]).inspect }) ?"
+      end
+
       environment = attributes[:environment]
       if type.is_a?(Class) && type < Puppet::Type
         # Set the resource type to avoid an expensive `known_resource_types`
@@ -238,14 +246,7 @@ class Puppet::Resource
         send(attr.to_s + "=", value)
       end
 
-      @type, @title = extract_type_and_title(type, title)
-
-      @type = munge_type_name(@type)
-
-      if self.class?
-        @title = :main if @title == ""
-        @title = munge_type_name(@title)
-      end
+      @type, @title = self.class.type_and_title(type, title)
 
       if params = attributes[:parameters]
         extract_parameters(params)
@@ -304,10 +305,17 @@ class Puppet::Resource
   # @return [Puppet::Type, Puppet::Resource::Type]
   # @api private
   def resource_type
-    @rstype ||= case type
-    when "Class"; environment.known_resource_types.hostclass(title == :main ? "" : title)
-    when "Node"; environment.known_resource_types.node(title)
-    when "Site"; environment.known_resource_types.site(nil)
+    @rstype ||= self.class.resource_type(type, title, environment)
+  end
+
+  # The resource's type implementation
+  # @return [Puppet::Type, Puppet::Resource::Type]
+  # @api private
+  def self.resource_type(type, title, environment)
+    case type
+    when TYPE_CLASS; environment.known_resource_types.hostclass(title == :main ? "" : title)
+    when TYPE_NODE; environment.known_resource_types.node(title)
+    when TYPE_SITE; environment.known_resource_types.site(nil)
     else
       result = Puppet::Type.type(type)
       if !result
@@ -516,6 +524,35 @@ class Puppet::Resource
     self
   end
 
+  # @api private
+  def self.type_and_title(type, title)
+    type, title = extract_type_and_title(type, title)
+    type = munge_type_name(type)
+    if type == TYPE_CLASS
+      title = title == '' ? :main : munge_type_name(title)
+    end
+    [type, title]
+  end
+
+
+  def self.extract_type_and_title(argtype, argtitle)
+    if (argtype.nil? || argtype == :component || argtype == :whit) &&
+          argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1,                 $2            ]
+    elsif argtitle.nil? && argtype =~ /^([^\[\]]+)\[(.+)\]$/m  then [ $1,                 $2            ]
+    elsif argtitle                                             then [ argtype,            argtitle      ]
+    elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
+    else  raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+    end
+  end
+  private_class_method :extract_type_and_title
+
+  def self.munge_type_name(value)
+    return :main if value == :main
+    return TYPE_CLASS if value == '' || value.nil? || value.to_s.casecmp('component') == 0
+    Puppet::Pops::Types::TypeFormatter.singleton.capitalize_segments(value.to_s)
+  end
+  private_class_method :munge_type_name
+
   private
 
   # Produce a canonical method name.
@@ -530,7 +567,7 @@ class Puppet::Resource
   # The namevar for our resource type. If the type doesn't exist,
   # always use :name.
   def namevar
-    if builtin_type? and t = resource_type and t.key_attributes.length == 1
+    if builtin_type? && !(t = resource_type).nil? && t.key_attributes.length == 1
       t.key_attributes.first
     else
       :name
@@ -542,26 +579,6 @@ class Puppet::Resource
       validate_parameter(param) if strict?
       self[param] = value
     end
-  end
-
-  def extract_type_and_title(argtype, argtitle)
-    if    (argtype.nil? || argtype == :component || argtype == :whit) &&
-           argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                 then [ $1,                 $2            ]
-    elsif argtitle.nil? && argtype =~ /^([^\[\]]+)\[(.+)\]$/m  then [ $1,                 $2            ]
-    elsif argtitle                                             then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
-    elsif argtype.is_a?(Hash)                                  then
-      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
-        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
-    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
-    end
-  end
-
-  def munge_type_name(value)
-    return :main if value == :main
-    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
-
-    value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end
 
   def parse_title
