@@ -1,15 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
-require_relative 'pops/parser/parser_rspec_helper'
 require 'puppet/parser/environment_compiler'
 
 describe "Application instantiation" do
   include PuppetSpec::Compiler
-  # We pull this in because we need access to with_app_management; and
-  # since that has to root around in the guts of the Pops parser, there's
-  # no really elegant way to do this
-  include ParserRspecHelper
 
   def compile_to_env_catalog(string, code_id=nil)
     Puppet[:code] = string
@@ -17,18 +12,15 @@ describe "Application instantiation" do
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
-
-  before :each do
-    with_app_management(true)
+  around :each do |example|
+    Puppet[:app_management] = true
     Puppet::Type.newtype :cap, :is_capability => true do
       newparam :name
       newparam :host
     end
-  end
-
-  after :each do
+    example.run
     Puppet::Type.rmtype(:cap)
-    with_app_management(false)
+    Puppet[:app_management] = false
   end
 
   MANIFEST = <<-EOS

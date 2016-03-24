@@ -1,31 +1,22 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
-require_relative 'pops/parser/parser_rspec_helper'
 
 describe "Capability types" do
   include PuppetSpec::Compiler
-  # We pull this in because we need access to with_app_management; and
-  # since that has to root around in the guts of the Pops parser, there's
-  # no really elegant way to do this
-  include ParserRspecHelper
 
-  def make_cap_type
+  around :each do |example|
+    Puppet[:app_management] = true
     Puppet::Type.newtype :cap, :is_capability => true do
       newparam :name
       newparam :host
     end
+    example.run
+    Puppet::Type.rmtype(:cap)
+    Puppet[:app_management] = false
   end
 
-  before :each do
-    with_app_management(true)
-  end
-
-  after :each do
-    with_app_management(false)
-  end
-
-  describe "annotations" do
+  context 'annotations' do
     it "adds a blueprint for a produced resource" do
       catalog = compile_to_catalog(<<-MANIFEST)
       define test($hostname) {
@@ -163,7 +154,6 @@ describe "Capability types" do
     end
 
     it "does not allow 'before' relationship to capability mapping" do
-      make_cap_type
       expect do
         compile_to_catalog(<<-MANIFEST)
         define test() {
@@ -193,15 +183,7 @@ describe "Capability types" do
     end
   end
 
-  describe "exporting a capability" do
-    before(:each) do
-      make_cap_type
-    end
-
-    after :each do
-      Puppet::Type.rmtype(:cap)
-    end
-
+  context 'exporting a capability' do
     it "does not add produced resources that are not exported" do
       manifest = <<-MANIFEST
 define test($hostname) {
@@ -251,15 +233,7 @@ test { one: hostname => "ahost", export => Cap[two] }
     end
   end
 
-  describe "consuming a capability" do
-    before(:each) do
-      make_cap_type
-    end
-
-    after :each do
-      Puppet::Type.rmtype(:cap)
-    end
-
+  context 'consuming a capability' do
     def make_catalog(instance)
       manifest = <<-MANIFEST
       define test($hostname = nohost) {

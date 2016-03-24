@@ -1,18 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-require_relative './parser_rspec_helper'
+require_relative 'parser_rspec_helper'
 
 describe "egrammar parsing of 'application'" do
   include ParserRspecHelper
 
-  before(:each) do
-    with_app_management(true)
-  end
-
-  after(:each) do
-    with_app_management(false)
-  end
+  before(:each) { Puppet[:app_management] = true }
+  after(:each) { Puppet[:app_management] = false }
 
   it "an empty body" do
     expect(dump(parse("application foo { }"))).to eq("(application foo () ())")
