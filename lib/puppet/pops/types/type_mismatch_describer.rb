@@ -28,13 +28,13 @@ module Types
 
   class MemberPathElement < TypePathElement
     def to_s
-      "struct member #{key}"
+      "struct member '#{key}'"
     end
   end
 
   class MemberKeyPathElement < TypePathElement
     def to_s
-      "struct member key #{key}"
+      "struct member key '#{key}'"
     end
   end
 
