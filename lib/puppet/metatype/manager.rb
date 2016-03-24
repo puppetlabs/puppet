@@ -116,6 +116,14 @@ module Manager
     klass.providerloader.loadall Puppet.lookup(:current_environment)
     klass.providify unless klass.providers.empty?
 
+    if klass.is_capability?
+      # A capability type is a resource (sort of) so it must be registered with the loader
+      loader = Puppet::Pops::Loaders.loaders.public_environment_loader
+      string_name = name.to_s
+      typed_name = Puppet::Pops::Loader::Loader::TypedName.new(:type, string_name.downcase)
+      loader.set_entry(typed_name, Puppet::Pops::Types::PResourceType.new(string_name.capitalize))
+    end
+
     klass
   end
 

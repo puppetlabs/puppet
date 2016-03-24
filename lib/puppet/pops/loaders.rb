@@ -36,18 +36,26 @@ class Loaders
     @puppet_system_loader = nil
   end
 
-  # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context and then uses it to
-  # find the appropriate loader for the given `module_name`, or for the environment in case `module_name`
-  # is `nil` or empty.
+  # Calls {#loaders} to obtain the {{Loaders}} instance and then uses it to find the appropriate loader
+  # for the given `module_name`, or for the environment in case `module_name` is `nil` or empty.
   #
   # @param module_name [String,nil] the name of the module
   # @return [Loader::Loader] the found loader
   # @raise [Puppet::ParseError] if no loader can be found
   # @api private
   def self.find_loader(module_name)
+    loaders.find_loader(module_name)
+  end
+
+  # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context
+  #
+  # @return [Loaders] the loaders instance
+  # @raise [Puppet::ParseError] if loader has been bound to the global context
+  # @api private
+  def self.loaders
     loaders = Puppet.lookup(:loaders) { nil }
     raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing" if loaders.nil?
-    loaders.find_loader(module_name)
+    loaders
   end
 
   # Finds the appropriate loader for the given `module_name`, or for the environment in case `module_name`

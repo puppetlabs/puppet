@@ -1,14 +1,14 @@
 module PuppetSpec::Compiler
   module_function
 
-  def compile_to_catalog(string, node = Puppet::Node.new('foonode'))
+  def compile_to_catalog(string, node = Puppet::Node.new('test'))
     Puppet[:code] = string
     # see lib/puppet/indirector/catalog/compiler.rb#filter
     Puppet::Parser::Compiler.compile(node).filter { |r| r.virtual? }
   end
 
-  def compile_to_ral(manifest)
-    catalog = compile_to_catalog(manifest)
+  def compile_to_ral(manifest, node = Puppet::Node.new('test'))
+    catalog = compile_to_catalog(manifest, node)
     ral = catalog.to_ral
     ral.finalize
     ral

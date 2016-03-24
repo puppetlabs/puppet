@@ -2,23 +2,29 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-describe "Capability types" do
+describe 'Capability types' do
   include PuppetSpec::Compiler
+  let(:env) { Puppet::Node::Environment.create(:testing, []) }
+  let(:node) { Puppet::Node.new('test', :environment => env) }
+  let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
   around :each do |example|
     Puppet[:app_management] = true
-    Puppet::Type.newtype :cap, :is_capability => true do
-      newparam :name
-      newparam :host
+    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+    Puppet.override(:loaders => loaders, :current_environment => env) do
+      Puppet::Type.newtype :cap, :is_capability => true do
+        newparam :name
+        newparam :host
+      end
+      example.run
+      Puppet::Type.rmtype(:cap)
     end
-    example.run
-    Puppet::Type.rmtype(:cap)
     Puppet[:app_management] = false
   end
 
   context 'annotations' do
     it "adds a blueprint for a produced resource" do
-      catalog = compile_to_catalog(<<-MANIFEST)
+      catalog = compile_to_catalog(<<-MANIFEST, node)
       define test($hostname) {
         notify { "hostname ${hostname}":}
       }
@@ -40,7 +46,7 @@ describe "Capability types" do
     end
 
     it "adds a blueprint for a consumed resource" do
-      catalog = compile_to_catalog(<<-MANIFEST)
+      catalog = compile_to_catalog(<<-MANIFEST, node)
       define test($hostname) {
         notify { "hostname ${hostname}":}
       }
@@ -127,7 +133,7 @@ describe "Capability types" do
     end
     it "does not allow operator '+>' in a mapping" do
       expect do
-      compile_to_catalog(<<-MANIFEST)
+      compile_to_catalog(<<-MANIFEST, node)
         define test($hostname) {
           notify { "hostname ${hostname}":}
         }
@@ -141,7 +147,7 @@ describe "Capability types" do
 
     it "does not allow operator '*=>' in a mapping" do
       expect do
-        compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST, node)
         define test($hostname) {
           notify { "hostname ${hostname}":}
         }
@@ -155,7 +161,7 @@ describe "Capability types" do
 
     it "does not allow 'before' relationship to capability mapping" do
       expect do
-        compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST, node)
         define test() {
           notify { "hello":}
         }
@@ -176,7 +182,7 @@ describe "Capability types" do
       MANIFEST
 
         expect {
-          compile_to_catalog(manifest)
+          compile_to_catalog(manifest, node)
         }.to raise_error(Puppet::Error,
                          /#{kw} clause references nonexistent type Test/)
       end
@@ -196,7 +202,7 @@ Test produces Cap {
 
 test { one: hostname => "ahost" }
     MANIFEST
-      catalog = compile_to_catalog(manifest)
+      catalog = compile_to_catalog(manifest, node)
       expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
       expect(catalog.resource_keys.find { |type, _| type == "Cap" }).to be_nil
     end
@@ -218,7 +224,7 @@ Test produces Cap {
 
 test { one: hostname => "ahost", export => Cap[two] }
     MANIFEST
-      catalog = compile_to_catalog(manifest)
+      catalog = compile_to_catalog(manifest, node)
       expect(catalog.resource("Test[one]")).to be_instance_of(Puppet::Resource)
 
       caps = catalog.resource_keys.select { |type, _| type == "Cap" }
@@ -229,7 +235,7 @@ test { one: hostname => "ahost", export => Cap[two] }
       expect(cap["require"]).to eq("Test[one]")
       expect(cap["host"]).to eq("ahost")
       expect(cap.resource_type).to eq(Puppet::Type::Cap)
-      expect(cap.tags.any? { |t| t == "producer:production" }).to eq(true)
+      expect(cap.tags.any? { |t| t == 'producer:testing' }).to eq(true)
     end
   end
 
@@ -244,7 +250,7 @@ test { one: hostname => "ahost", export => Cap[two] }
         hostname => $host
       }
     MANIFEST
-      compile_to_catalog(manifest + instance)
+      compile_to_catalog(manifest + instance, node)
     end
 
     def mock_cap_finding
@@ -296,10 +302,10 @@ test { one: hostname => "ahost", export => Cap[two] }
       end
     end
 
-    describe 'producing/consuming resources' do
+    context 'producing/consuming resources' do
 
       let(:ral) do
-        compile_to_ral(<<-MANIFEST)
+        compile_to_ral(<<-MANIFEST, node)
   define producer() {
     notify { "producer":}
   }
@@ -339,10 +345,10 @@ test { one: hostname => "ahost", export => Cap[two] }
       end
     end
 
-    describe 'producing/consuming resources to/from classes' do
+    context 'producing/consuming resources to/from classes' do
 
       let(:ral) do
-        compile_to_ral(<<-MANIFEST)
+        compile_to_ral(<<-MANIFEST, node)
   define test($hostname) {
     notify { $hostname:}
   }
