@@ -12,86 +12,101 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
   include Matchers::Resource
 
   let(:prioritizer) { Puppet::Graph::SequentialPrioritizer.new }
+  let(:env) { Puppet::Node::Environment.create(:testing, []) }
+  let(:node) { Puppet::Node.new('test', :environment => env) }
+  let(:loaders) { Puppet::Pops::Loaders.new(env) }
+
+  around :each do |example|
+    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+    Puppet.override(:loaders => loaders, :current_environment => env) do
+      Puppet::Type.newtype(:generator) do
+        include PuppetSpec::Compiler
+
+        newparam(:name) do
+          isnamevar
+        end
+
+        newparam(:kind) do
+          defaultto :eval_generate
+          newvalues(:eval_generate, :generate)
+        end
+
+        newparam(:code)
+
+        def respond_to?(method_name)
+          method_name == self[:kind] || super
+        end
+
+        def eval_generate
+          eval_code
+        end
+
+        def generate
+          eval_code
+        end
+
+        def eval_code
+          if self[:code]
+            compile_to_ral(self[:code]).resources.select { |r| r.ref =~ /Notify/ }
+          else
+            []
+          end
+        end
+      end
+
+      Puppet::Type.newtype(:autorequire) do
+        newparam(:name) do
+          isnamevar
+        end
+
+        autorequire(:notify) do
+          self[:name]
+        end
+      end
+
+      Puppet::Type.newtype(:gen_auto) do
+        newparam(:name) do
+          isnamevar
+        end
+
+        newparam(:eval_after) do
+        end
+
+        def generate()
+          [ Puppet::Type.type(:autorequire).new(:name => self[:eval_after]) ]
+        end
+      end
+
+      Puppet::Type.newtype(:empty) do
+        newparam(:name) do
+          isnamevar
+        end
+      end
+
+      Puppet::Type.newtype(:gen_empty) do
+        newparam(:name) do
+          isnamevar
+        end
+
+        newparam(:eval_after) do
+        end
+
+        def generate()
+          [ Puppet::Type.type(:empty).new(:name => self[:eval_after], :require => "Notify[#{self[:eval_after]}]") ]
+        end
+      end
+
+      example.run
+
+      Puppet::Type.rmtype(:gen_empty)
+      Puppet::Type.rmtype(:eval_after)
+      Puppet::Type.rmtype(:autorequire)
+      Puppet::Type.rmtype(:generator)
+    end
+  end
 
   def find_vertex(graph, type, title)
     graph.vertices.find {|v| v.type == type and v.title == title}
-  end
-
-  Puppet::Type.newtype(:generator) do
-    include PuppetSpec::Compiler
-
-    newparam(:name) do
-      isnamevar
-    end
-
-    newparam(:kind) do
-      defaultto :eval_generate
-      newvalues(:eval_generate, :generate)
-    end
-
-    newparam(:code)
-
-    def respond_to?(method_name)
-      method_name == self[:kind] || super
-    end
-
-    def eval_generate
-      eval_code
-    end
-
-    def generate
-      eval_code
-    end
-
-    def eval_code
-      if self[:code]
-        compile_to_ral(self[:code]).resources.select { |r| r.ref =~ /Notify/ }
-      else
-        []
-      end
-    end
-  end
-
-  Puppet::Type.newtype(:autorequire) do
-    newparam(:name) do
-      isnamevar
-    end
-
-    autorequire(:notify) do
-      self[:name]
-    end
-  end
-
-  Puppet::Type.newtype(:gen_auto) do
-    newparam(:name) do
-      isnamevar
-    end
-
-    newparam(:eval_after) do
-    end
-
-    def generate()
-      [ Puppet::Type.type(:autorequire).new(:name => self[:eval_after]) ]
-    end
-  end
-
-  Puppet::Type.newtype(:empty) do
-    newparam(:name) do
-      isnamevar
-    end
-  end
-
-  Puppet::Type.newtype(:gen_empty) do
-    newparam(:name) do
-      isnamevar
-    end
-
-    newparam(:eval_after) do
-    end
-
-    def generate()
-      [ Puppet::Type.type(:empty).new(:name => self[:eval_after], :require => "Notify[#{self[:eval_after]}]") ]
-    end
   end
 
   context "when applying eval_generate" do

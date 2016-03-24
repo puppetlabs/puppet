@@ -32,13 +32,12 @@ class StaticLoader < Loader
   def to_s()
     "(StaticLoader)"
   end
+
   private
 
   def load_constant(typed_name)
     @loaded[typed_name]
   end
-
-  private
 
   # Creates a function for each of the specified log levels
   #

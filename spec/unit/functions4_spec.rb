@@ -495,7 +495,7 @@ describe 'the 4x function api' do
         expect(parser.evaluate({}, program)).to eql(10)
       end
 
-      it 'distinguish between a Type alias and a Resource type' do
+      it 'reports a reference to an unresolved type' do
         the_loader = loader()
         here = get_binding(the_loader)
         fc = eval(<<-CODE, here)
@@ -511,7 +511,7 @@ describe 'the 4x function api' do
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
         Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
-        expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' expects a Resource value, got Integer/)
+        expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' references an unresolved type 'Myalias'/)
       end
 
       it 'create local Type aliases' do

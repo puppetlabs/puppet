@@ -1548,10 +1548,10 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts a Resource as a Type' do
         catalog = compile_to_catalog(<<-MANIFEST)
+          define bar($text) { }
           define foo(Type[Bar] $x) {
             notify { 'test': message => $x[text] }
           }
-          define bar($text) { }
           bar { 'joke': text => 'knock knock' }
           foo { 'test': x => Bar[joke] }
         MANIFEST
@@ -1634,10 +1634,10 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts a Resource as a Type' do
         catalog = compile_to_catalog(<<-MANIFEST)
+          define bar($text) { }
           class foo(Type[Bar] $x) {
             notify { 'test': message => $x[text] }
           }
-          define bar($text) { }
           bar { 'joke': text => 'knock knock' }
           class { 'foo': x => Bar[joke] }
         MANIFEST

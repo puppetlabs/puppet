@@ -414,6 +414,11 @@ class AccessOperator
     access(t, scope, *keys)
   end
 
+  # If a type reference is encountered here, it's an error
+  def access_PTypeReferenceType(o, scope, keys)
+    fail(Issues::UNKNOWN_RESOURCE_TYPE, @semantic, {:type_name => o.name })
+  end
+
   # A Resource can create a new more specific Resource type, and/or an array of resource types
   # If the given type has title set, it can not be specified further.
   # @example
@@ -541,6 +546,8 @@ class AccessOperator
                  c.type_name
                elsif c.is_a?(String)
                  c.downcase
+               elsif c.is_a?(Types::PTypeReferenceType)
+                 c.name.downcase
                else
                  fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
                end
