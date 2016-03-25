@@ -156,7 +156,8 @@ module Manager
     # Try loading the type.
     if typeloader.load(name, Puppet.lookup(:current_environment))
       Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
-    else
+    elsif Puppet[:always_cache_misses]
+      # PUP-5482 - Only look for a type once if miss caching is enabled
       @types[name] = nil
     end
 

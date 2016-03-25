@@ -330,6 +330,27 @@ module Puppet
         improvement for features that are checked frequently.
       EOT
     },
+    :always_cache_misses => {
+        :type     => :boolean,
+        :default  => false,
+        :desc     => <<-'EOT'
+        Affects how we cache attempts to load Puppet 'types' and 'features'.  If
+        false, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
+        will always attempt to load the type or feature (which can be an
+        expensive operation) unless it has already been loaded successfully.
+        This makes it possible for a single agent run to, e.g., install a
+        package that provides the underlying capabilities for a type or feature,
+        and then later load that type or feature during the same run (even if
+        the type or feature had been tested earlier and had not been available).
+
+        If this setting is set to true, then types and features will only be
+        checked once, and if they are not available, the negative result is
+        cached and returned for all subsequent attempts to load the type or
+        feature.  This behavior is almost always appropriate for the server,
+        and can result in a significant performance improvement for types and
+        features that are checked frequently.
+      EOT
+    },
     :diff_args => {
         :default  => lambda { default_diffargs },
         :desc     => "Which arguments to pass to the diff command when printing differences between
