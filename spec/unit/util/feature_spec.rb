@@ -89,7 +89,7 @@ describe Puppet::Util::Feature do
   end
 
   it "should cache load failures when configured to do so" do
-    Puppet[:always_cache_features] = true
+    Puppet[:always_cache_misses] = true
 
     @features.add(:myfeature, :libs => %w{foo bar})
     @features.expects(:require).with("foo").raises(LoadError)

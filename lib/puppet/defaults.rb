@@ -314,6 +314,10 @@ module Puppet
     :always_cache_features => {
       :type     => :boolean,
       :default  => false,
+      :hook     => proc { |value|
+        Puppet.deprecation_warning "Setting 'always_cache_features' is
+deprecated and has been replaced by 'always_cache_misses'."
+      },
       :desc     => <<-'EOT'
         Affects how we cache attempts to load Puppet 'features'.  If false, then
         calls to `Puppet.features.<feature>?` will always attempt to load the
@@ -328,6 +332,8 @@ module Puppet
         for all subsequent attempts to load the feature.  This behavior is almost
         always appropriate for the server, and can result in a significant performance
         improvement for features that are checked frequently.
+
+        This setting is deprecated and has been replaced by always_cache_misses.
       EOT
     },
     :always_cache_misses => {
