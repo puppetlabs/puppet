@@ -20,6 +20,14 @@ module Manager
     }
   end
 
+  # Clears any types that were used but absent when types were last loaded.
+  # @note Used after each catalog compile when always_cache_missing is true
+  # @api private
+  #
+  def clear_misses
+    @types.delete_if {|_, v| v.nil? }
+  end
+
   # Iterates over all already loaded Type subclasses.
   # @yield [t] a block receiving each type
   # @yieldparam t [Puppet::Type] each defined type

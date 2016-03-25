@@ -266,6 +266,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         rescue Puppet::Error => detail
           Puppet.err(detail.to_s) if networked?
           raise
+        ensure
+          Puppet::Type.clear_misses if Puppet[:always_cache_misses]
         end
 
         if checksum_type && config.is_a?(model)
