@@ -316,10 +316,10 @@ module Puppet
       :default  => false,
       :hook     => proc { |value|
         Puppet.deprecation_warning "Setting 'always_cache_features' is
-deprecated and has been replaced by 'always_cache_misses'."
+deprecated and has been replaced by 'always_retry_plugins'."
       },
       :desc     => <<-'EOT'
-        This setting is deprecated and has been replaced by always_cache_misses.
+        This setting is deprecated and has been replaced by always_retry_plugins.
 
         Affects how we cache attempts to load Puppet 'features'.  If false, then
         calls to `Puppet.features.<feature>?` will always attempt to load the

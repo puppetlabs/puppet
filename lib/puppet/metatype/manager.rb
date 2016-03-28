@@ -21,7 +21,7 @@ module Manager
   end
 
   # Clears any types that were used but absent when types were last loaded.
-  # @note Used after each catalog compile when always_cache_missing is true
+  # @note Used after each catalog compile when always_retry_plugins is false
   # @api private
   #
   def clear_misses
