@@ -336,12 +336,12 @@ deprecated and has been replaced by 'always_cache_misses'."
         improvement for features that are checked frequently.
       EOT
     },
-    :always_cache_misses => {
+    :always_retry_plugins => {
         :type     => :boolean,
-        :default  => false,
+        :default  => true,
         :desc     => <<-'EOT'
         Affects how we cache attempts to load Puppet resource types and features.  If
-        false, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
+        true, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
         will always attempt to load the type or feature (which can be an
         expensive operation) unless it has already been loaded successfully.
         This makes it possible for a single agent run to, e.g., install a
@@ -349,7 +349,7 @@ deprecated and has been replaced by 'always_cache_misses'."
         and then later load that type or feature during the same run (even if
         the type or feature had been tested earlier and had not been available).
 
-        If this setting is set to true, then types and features will only be
+        If this setting is set to false, then types and features will only be
         checked once, and if they are not available, the negative result is
         cached and returned for all subsequent attempts to load the type or
         feature.  This behavior is almost always appropriate for the server,
