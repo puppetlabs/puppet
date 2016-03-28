@@ -340,7 +340,7 @@ deprecated and has been replaced by 'always_cache_misses'."
         :type     => :boolean,
         :default  => false,
         :desc     => <<-'EOT'
-        Affects how we cache attempts to load Puppet 'types' and 'features'.  If
+        Affects how we cache attempts to load Puppet resource types and features.  If
         false, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
         will always attempt to load the type or feature (which can be an
         expensive operation) unless it has already been loaded successfully.
