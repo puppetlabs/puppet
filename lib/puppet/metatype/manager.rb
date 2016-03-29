@@ -117,7 +117,8 @@ module Manager
     klass.providify unless klass.providers.empty?
 
     loc = block_given? ? block.source_location : nil
-    Puppet::Pops::Loaders.register_runtime3_type(name, loc.nil? ? nil : URI("#{loc[0]}?line=#{loc[1]}"))
+    uri = loc.nil? ? nil : URI("#{Puppet::Util.path_to_uri(loc[0])}?line=#{loc[1]}")
+    Puppet::Pops::Loaders.register_runtime3_type(name, uri)
 
     klass
   end
