@@ -1531,12 +1531,12 @@ class Type
             :event => self.class.events,
             :callback => method
           }
-          self.debug("subscribes to #{related_resource.ref}")
+          self.debug { "subscribes to #{related_resource.ref}" }
         else
           # If there's no callback, there's no point in even adding
           # a label.
           subargs = nil
-          self.debug("requires #{related_resource.ref}")
+          self.debug { "subscribes to #{related_resource.ref}" }
         end
 
         Puppet::Relationship.new(source, target, subargs)

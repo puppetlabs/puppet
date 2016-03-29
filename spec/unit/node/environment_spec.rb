@@ -428,6 +428,16 @@ describe Puppet::Node::Environment do
     end
 
     describe "when performing initial import" do
+      let(:loaders) { Puppet::Pops::Loaders.new(env) }
+
+      around :each do |example|
+        Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+        Puppet.override(:loaders => loaders, :current_environment => env) do
+          example.run
+          Puppet::Pops::Loaders.clear
+        end
+      end
+
       it "loads from Puppet[:code]" do
         Puppet[:code] = "define foo {}"
         krt = env.known_resource_types

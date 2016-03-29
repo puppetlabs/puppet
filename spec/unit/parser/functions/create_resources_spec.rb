@@ -103,7 +103,7 @@ describe 'function for dynamically creating resources' do
 
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one' on node foonode/)
+      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one' on node test/)
     end
 
     it 'should be able to add multiple defines' do
@@ -169,7 +169,7 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'blah'=>{'one'=>'two'}})
         MANIFEST
-      end.to raise_error(/Could not find declared class blah at line 1:11 on node foonode/)
+      end.to raise_error(/Could not find declared class blah at line 1:11 on node test/)
     end
 
     it 'should be able to add edges' do

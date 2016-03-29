@@ -207,20 +207,23 @@ class TypeParser
       TypeFactory.all_callables
 
     else
-      if context.nil?
-        TypeFactory.type_reference(name.capitalize)
-      else
-        if context.is_a?(Puppet::Pops::Loader::Loader)
-          loader = context
-        else
-          loader = Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(name_ast, context)
-        end
-        unless loader.nil?
-          type = loader.load(:type, name)
-          type = type.resolve(self, loader) unless type.nil?
-        end
-        type || TypeFactory.resource(name)
+      loader = loader_from_context(name_ast, context)
+      unless loader.nil?
+        type = loader.load(:type, name)
+        type = type.resolve(self, loader) unless type.nil?
       end
+      type || TypeFactory.type_reference(TypeFormatter.singleton.capitalize_segments(name))
+    end
+  end
+
+  # @api private
+  def loader_from_context(ast, context)
+    if context.nil?
+      nil
+    elsif context.is_a?(Puppet::Pops::Loader::Loader)
+      context
+    else
+      Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(ast, context)
     end
   end
 
@@ -228,11 +231,11 @@ class TypeParser
   def interpret_AccessExpression(parameterized_ast, context)
     parameters = parameterized_ast.keys.collect { |param| interpret_any(param, context) }
 
-    unless parameterized_ast.left_expr.is_a?(Model::QualifiedReference)
-      raise_invalid_type_specification_error
-    end
+    qref = parameterized_ast.left_expr
+    raise_invalid_type_specification_error unless qref.is_a?(Model::QualifiedReference)
 
-    case parameterized_ast.left_expr.value
+    type_name = qref.value
+    case type_name
     when 'array'
       case parameters.size
       when 1
@@ -306,12 +309,17 @@ class TypeParser
       TypeFactory.host_class(parameters[0])
 
     when 'resource'
-      if parameters.size == 1
-        TypeFactory.resource(parameters[0])
-      elsif parameters.size != 2
-        raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)
+      type = parameters[0]
+      if type.is_a?(PTypeReferenceType)
+        tps = type.parameters
+        if tps.empty?
+          create_resource(type.name, parameters)
+        else
+          raise_invalid_parameters_error(type.name, '1', tps.size) unless tps.size == 1
+          create_resource(type.name, tps)
+        end
       else
-        TypeFactory.resource(parameters[0], parameters[1])
+        create_resource(type, parameters)
       end
 
     when 'regexp'
@@ -438,7 +446,7 @@ class TypeParser
       TypeFactory.optional(param)
 
     when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default'
-      raise_unparameterized_type_error(parameterized_ast.left_expr)
+      raise_unparameterized_type_error(qref)
 
     when 'notundef'
       case parameters.size
@@ -464,22 +472,36 @@ class TypeParser
       TypeFactory.runtime(*parameters)
 
     else
-      type_name = parameterized_ast.left_expr.value
-      if context.nil?
-        # Will be impossible to tell from a typed alias (when implemented) so a type reference
-        # is returned here for now
-        TypeFactory.type_reference(type_name.capitalize, parameters)
+      loader = loader_from_context(qref, context)
+      type = nil
+      unless loader.nil?
+        type = loader.load(:type, type_name)
+        type = type.resolve(self, loader) unless type.nil?
+      end
+
+      if type.nil?
+        TypeFactory.type_reference(TypeFormatter.singleton.capitalize_segments(type_name), parameters)
+      elsif type.is_a?(PResourceType)
+        raise_invalid_parameters_error(type_name, 1, parameters.size) unless parameters.size == 1
+        TypeFactory.resource(type.type_name, parameters[0])
       else
-        # It is a resource such a File['/tmp/foo']
-       if parameters.size != 1
-          raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
-        end
-        TypeFactory.resource(type_name, parameters[0])
+        # Must be a type alias. They can't use parameters (yet)
+        raise_unparameterized_type_error(qref)
       end
     end
   end
 
   private
+
+  def create_resource(name, parameters)
+    if parameters.size == 1
+      TypeFactory.resource(name)
+    elsif parameters.size == 2
+      TypeFactory.resource(name, parameters[1])
+    else
+      raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)
+    end
+  end
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(PAnyType)

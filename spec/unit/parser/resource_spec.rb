@@ -556,7 +556,7 @@ describe Puppet::Parser::Resource do
 
   # part of #629 -- the undef keyword.  Make sure 'undef' params get skipped.
   it "should not include 'undef' parameters when converting itself to a hash" do
-    resource = Puppet::Parser::Resource.new "file", "/tmp/testing", :source => mock("source"), :scope => mock("scope")
+    resource = Puppet::Parser::Resource.new "file", "/tmp/testing", :source => mock("source"), :scope => @scope
     resource[:owner] = :undef
     resource[:mode] = "755"
     expect(resource.to_hash[:owner]).to be_nil

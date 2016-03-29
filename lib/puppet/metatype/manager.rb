@@ -116,6 +116,9 @@ module Manager
     klass.providerloader.loadall Puppet.lookup(:current_environment)
     klass.providify unless klass.providers.empty?
 
+    loc = block_given? ? block.source_location : nil
+    Puppet::Pops::Loaders.register_runtime3_type(name, loc.nil? ? nil : URI("#{loc[0]}?line=#{loc[1]}"))
+
     klass
   end
 

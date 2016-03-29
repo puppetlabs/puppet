@@ -289,9 +289,23 @@ class TypeFormatter
     '[a TypeFormatter]'
   end
 
-  private
-
   NAME_SEGMENT_SEPARATOR = '::'.freeze
+
+  # Capitalizes each segment in a name separated with the {NAME_SEPARATOR}
+  # @param qualified_name [String] the name to capitalize
+  # @return [String] the capitalized name
+  #
+  def capitalize_segments(qualified_name)
+    segments = qualified_name.split(NAME_SEGMENT_SEPARATOR)
+    if segments.size == 1
+      qualified_name.capitalize
+    else
+      segments.each(&:capitalize!)
+      segments.join(NAME_SEGMENT_SEPARATOR)
+    end
+  end
+
+  private
 
   COMMA_SEP = ', '.freeze
 
@@ -321,10 +335,6 @@ class TypeFormatter
     bld.chomp!(COMMA_SEP)
     bld << '}'
     bld
-  end
-
-  def capitalize_segments(s)
-    s.split(NAME_SEGMENT_SEPARATOR).map(&:capitalize).join(NAME_SEGMENT_SEPARATOR)
   end
 
   @singleton = new

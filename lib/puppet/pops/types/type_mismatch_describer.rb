@@ -17,8 +17,10 @@ module Types
       self.class == o.class && key == o.key
     end
 
-    alias :eql? :==
-  end
+    def eql?(o)
+      self == o
+    end
+   end
 
   class SubjectPathElement < TypePathElement
     def to_s
@@ -104,6 +106,15 @@ module Types
         'did not have a'
       end
     end
+
+    def it_references(tense)
+      case tense
+        when :present
+          'references'
+        else
+          'referenced'
+      end
+    end
   end
 
   class Mismatch
@@ -130,7 +141,9 @@ module Types
       self.class == o.class && canonical_path == o.canonical_path
     end
 
-    alias :eql? :==
+    def eql?(o)
+      self == o
+    end
 
     def hash
       canonical_path.hash
@@ -220,6 +233,27 @@ module Types
   class MissingRequiredBlock < Mismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_expects(tense)} a block"
+    end
+  end
+
+  class UnresolvedTypeReference < Mismatch
+    attr_reader :unresolved
+
+    def initialize(path, unresolved)
+      super(path)
+      @unresolved = unresolved
+    end
+
+    def ==(o)
+      super.==(o) && @unresolved == o.unresolved
+    end
+
+    def hash
+      @unresolved.hash
+    end
+
+    def message(variant, position, tense = :present)
+      "#{variant}#{position} #{it_references(tense)} an unresolved type '#{@unresolved}'"
     end
   end
 
@@ -815,26 +849,49 @@ module Types
       expected.assignable?(actual) ? EMPTY_ARRAY : [TypeMismatch.new(path, expected, actual)]
     end
 
+    class UnresolvedTypeFinder
+      include TypeAcceptor
+
+      attr_reader :unresolved
+
+      def initialize
+        @unresolved = nil
+      end
+
+      def visit(type, guard)
+        if @unresolved.nil? && type.is_a?(PTypeReferenceType)
+          @unresolved = type
+        end
+      end
+    end
+
     def describe(expected, actual, path)
-      case expected
-      when PVariantType
-        describe_PVariantType(expected, actual, path)
-      when PStructType
-        describe_PStructType(expected, actual, path)
-      when PTupleType
-        describe_PTupleType(expected, actual, path)
-      when PCallableType
-        describe_PCallableType(expected, actual, path)
-      when POptionalType
-        describe_POptionalType(expected, actual, path)
-      when PPatternType
-        describe_PPatternType(expected, actual, path)
-      when PEnumType
-        describe_PEnumType(expected, actual, path)
-      when PTypeAliasType
-        describe_PTypeAliasType(expected, actual, path)
+      ures_finder = UnresolvedTypeFinder.new
+      expected.accept(ures_finder, nil)
+      unresolved = ures_finder.unresolved
+      if unresolved
+        [UnresolvedTypeReference.new(path, unresolved)]
       else
-        describe_PAnyType(expected, actual, path)
+        case expected
+        when PVariantType
+          describe_PVariantType(expected, actual, path)
+        when PStructType
+          describe_PStructType(expected, actual, path)
+        when PTupleType
+          describe_PTupleType(expected, actual, path)
+        when PCallableType
+          describe_PCallableType(expected, actual, path)
+        when POptionalType
+          describe_POptionalType(expected, actual, path)
+        when PPatternType
+          describe_PPatternType(expected, actual, path)
+        when PEnumType
+          describe_PEnumType(expected, actual, path)
+        when PTypeAliasType
+          describe_PTypeAliasType(expected, actual, path)
+        else
+          describe_PAnyType(expected, actual, path)
+        end
       end
     end
 
