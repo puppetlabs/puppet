@@ -917,7 +917,7 @@ class PFloatType < PNumericType
     end
   end
 
-  # Returns a new function that produces Integer or Float value
+  # Returns a new function that produces a Float value
   #
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
