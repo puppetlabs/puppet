@@ -177,8 +177,9 @@ class PAnyType < TypedModelObject
   end
 
   # Returns true if the given argument _o_ is an instance of this type
+  # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
   # @return [Boolean]
-  def instance?(o)
+  def instance?(o, guard = nil)
     true
   end
 
@@ -336,11 +337,11 @@ end
 # @api public
 #
 class PType < PTypeWithContainedType
-  def instance?(o)
+  def instance?(o, guard = nil)
     if o.is_a?(PAnyType)
-      type.nil? || type.assignable?(o)
+      type.nil? || type.assignable?(o, guard)
     else
-      assignable?(TypeCalculator.infer(o))
+      assignable?(TypeCalculator.infer(o), guard)
     end
   end
 
@@ -398,8 +399,8 @@ class PNotUndefType < PTypeWithContainedType
     super(type.class == PAnyType ? nil : type)
   end
 
-  def instance?(o)
-    !(o.nil? || o == :undef) && (@type.nil? || @type.instance?(o))
+  def instance?(o, guard = nil)
+    !(o.nil? || o == :undef) && (@type.nil? || @type.instance?(o, guard))
   end
 
   def normalize(guard = nil)
@@ -432,7 +433,7 @@ end
 # @api public
 #
 class PUndefType < PAnyType
-  def instance?(o)
+  def instance?(o, guard = nil)
     o.nil? || o == :undef
   end
 
@@ -455,7 +456,7 @@ end
 # @api private
 #
 class PUnitType < PAnyType
-  def instance?(o)
+  def instance?(o, guard = nil)
     true
   end
 
@@ -471,7 +472,7 @@ end
 # @api public
 #
 class PDefaultType < PAnyType
-  def instance?(o)
+  def instance?(o, guard = nil)
     o == :default
   end
 
@@ -493,8 +494,8 @@ class PDataType < PAnyType
     self.class == o.class || o == PVariantType::DATA
   end
 
-  def instance?(o)
-    PVariantType::DATA.instance?(o)
+  def instance?(o, guard = nil)
+    PVariantType::DATA.instance?(o, guard)
   end
 
   DEFAULT = PDataType.new
@@ -521,8 +522,8 @@ end
 #
 class PScalarType < PAnyType
 
-  def instance?(o)
-    assignable?(TypeCalculator.infer(o))
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   DEFAULT = PScalarType.new
@@ -644,7 +645,7 @@ class PNumericType < PScalarType
     self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     o.is_a?(Numeric) && o >= @from && o <= @to
   end
 
@@ -678,7 +679,7 @@ class PIntegerType < PNumericType
     DEFAULT
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     o.is_a?(Integer) && o >= numeric_from && o <= numeric_to
   end
 
@@ -752,7 +753,7 @@ class PFloatType < PNumericType
     DEFAULT
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     o.is_a?(Float) && o >= numeric_from && o <= numeric_to
   end
 
@@ -809,8 +810,8 @@ class PCollectionType < PAnyType
     end
   end
 
-  def instance?(o)
-    assignable?(TypeCalculator.infer(o))
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   # Returns an array with from (min) size to (max) size
@@ -867,8 +868,8 @@ class PIterableType < PTypeWithContainedType
     @type
   end
 
-  def instance?(o)
-    if @type.nil? || @type.assignable?(PAnyType::DEFAULT)
+  def instance?(o, guard = nil)
+    if @type.nil? || @type.assignable?(PAnyType::DEFAULT, guard)
       # Any element_type will do
       case o
       when Iterable, String, Hash, Array, Range, PEnumType
@@ -881,7 +882,7 @@ class PIterableType < PTypeWithContainedType
         false
       end
     else
-      assignable?(TypeCalculator.infer(o))
+      assignable?(TypeCalculator.infer(o), guard)
     end
   end
 
@@ -916,8 +917,8 @@ class PIteratorType < PTypeWithContainedType
     @type
   end
 
-  def instance?(o)
-    o.is_a?(Iterable) && (@element_type.nil? || @element_type.assignable?(o.element_type))
+  def instance?(o, guard = nil)
+    o.is_a?(Iterable) && (@element_type.nil? || @element_type.assignable?(o.element_type, guard))
   end
 
   def iterable?(guard = nil)
@@ -973,9 +974,9 @@ class PStringType < PScalarType
     self.class == o.class && @size_type == o.size_type && @values == o.values
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     # true if size compliant
-    if o.is_a?(String) && (@size_type.nil? || @size_type.instance?(o.size))
+    if o.is_a?(String) && (@size_type.nil? || @size_type.instance?(o.size, guard))
       @values.empty? || @values.include?(o)
     else
       false
@@ -1123,7 +1124,7 @@ end
 #
 class PBooleanType < PScalarType
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     o == true || o == false
   end
 
@@ -1255,7 +1256,7 @@ class PStructType < PAnyType
     @elements
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     return false unless o.is_a?(Hash)
     matched = 0
     @elements.all? do |e|
@@ -1263,10 +1264,10 @@ class PStructType < PAnyType
       v = o[key]
       if v.nil? && !o.include?(key)
         # Entry is missing. Only OK when key is optional
-        e.key_type.assignable?(PUndefType::DEFAULT)
+        e.key_type.assignable?(PUndefType::DEFAULT, guard)
       else
         matched += 1
-        e.value_type.instance?(v)
+        e.value_type.instance?(v, guard)
       end
     end && matched == o.size
   end
@@ -1391,14 +1392,14 @@ class PTupleType < PAnyType
     end
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
     # compute the tuple's min/max size, and check if that size matches
     size_t = size_type || PIntegerType.new(*size_range)
 
-    return false unless size_t.instance?(o.size)
+    return false unless size_t.instance?(o.size, guard)
     o.each_with_index do |element, index|
-      return false unless (types[index] || types[-1]).instance?(element)
+      return false unless (types[index] || types[-1]).instance?(element, guard)
     end
     true
   end
@@ -1531,8 +1532,8 @@ class PCallableType < PAnyType
     end
   end
 
-  def instance?(o)
-    assignable?(TypeCalculator.infer(o))
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   # @api private
@@ -1626,12 +1627,12 @@ class PArrayType < PCollectionType
     end
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
     element_t = element_type
-    return false unless element_t.nil? || o.all? {|element| element_t.instance?(element) }
+    return false unless element_t.nil? || o.all? {|element| element_t.instance?(element, guard) }
     size_t = size_type
-    size_t.nil? || size_t.instance?(o.size)
+    size_t.nil? || size_t.instance?(o.size, guard)
   end
 
   DATA = PArrayType.new(PDataType::DEFAULT, DEFAULT_SIZE)
@@ -1720,14 +1721,14 @@ class PHashType < PCollectionType
     super ^ @key_type.hash
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     return false unless o.is_a?(Hash)
     key_t = key_type
     element_t = element_type
-    if (key_t.nil? || o.keys.all? {|key| key_t.instance?(key) }) &&
-        (element_t.nil? || o.values.all? {|value| element_t.instance?(value) })
+    if (key_t.nil? || o.keys.all? {|key| key_t.instance?(key, guard) }) &&
+        (element_t.nil? || o.values.all? {|value| element_t.instance?(value, guard) })
       size_t = size_type
-      size_t.nil? || size_t.instance?(o.size)
+      size_t.nil? || size_t.instance?(o.size, guard)
     else
       false
     end
@@ -1775,8 +1776,8 @@ class PHashType < PCollectionType
         # hash must accept all value types
         # hash must accept the size of the struct
         o_elements = o.elements
-        (size_type || DEFAULT_SIZE).instance?(o_elements.size) &&
-            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name)) && (element_type.nil? || element_type.assignable?(e.value_type, guard)) }
+        (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
+            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name, guard)) && (element_type.nil? || element_type.assignable?(e.value_type, guard)) }
       else
         false
     end
@@ -1868,9 +1869,9 @@ class PVariantType < PAnyType
     @types.hash
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     # instance of variant if o is instance? of any of variant's types
-    @types.any? { |type| type.instance?(o) }
+    @types.any? { |type| type.instance?(o, guard) }
   end
 
   def kind_of_callable?(optional = true, guard = nil)
@@ -2029,8 +2030,8 @@ class PRuntimeType < PAnyType
     self.class == o.class && @runtime == o.runtime && @runtime_type_name == o.runtime_type_name
   end
 
-  def instance?(o)
-    assignable?(TypeCalculator.infer(o))
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   def iterable?(guard = nil)
@@ -2070,8 +2071,8 @@ class PCatalogEntryType < PAnyType
 
   DEFAULT = PCatalogEntryType.new
 
-  def instance?(o)
-    assignable?(TypeCalculator.infer(o))
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   protected
@@ -2158,8 +2159,8 @@ class POptionalType < PTypeWithContainedType
       optional && !@type.nil? && @type.kind_of_callable?(optional, guard)
   end
 
-  def instance?(o)
-    PUndefType::DEFAULT.instance?(o) || (!@type.nil? && @type.instance?(o))
+  def instance?(o, guard = nil)
+    PUndefType::DEFAULT.instance?(o, guard) || (!@type.nil? && @type.instance?(o, guard))
   end
 
   def normalize(guard = nil)
@@ -2207,7 +2208,7 @@ class PTypeReferenceType < PAnyType
     false
   end
 
-  def instance?(o)
+  def instance?(o, guard = nil)
     false
   end
 
@@ -2266,9 +2267,13 @@ class PTypeAliasType < PAnyType
     guarded_recursion(guard, false) { |g| resolved_type.kind_of_callable?(optional, g) }
   end
 
-  def instance?(o)
-    # No value can ever be recursive so no guard is needed here
-    resolved_type.instance?(o)
+  def instance?(o, guard = nil)
+    if @self_recursion
+      guard ||= RecursionGuard.new
+      guard.add_that(o)
+      return true if (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_BOTH) == RecursionGuard::SELF_RECURSION_IN_BOTH
+    end
+    resolved_type.instance?(o, guard)
   end
 
   def iterable?(guard = nil)
@@ -2281,6 +2286,26 @@ class PTypeAliasType < PAnyType
 
   def hash
     @name.hash
+  end
+
+  # Acceptor used when checking for self recursion and that a type contains
+  # something other than aliases or type references
+  #
+  # @api private
+  class AssertOtherTypeAcceptor
+    def initialize
+      @other_type_detected = false
+    end
+
+    def visit(type, guard)
+      unless type.is_a?(PTypeAliasType) || type.is_a?(PVariantType) || type.is_a?(PTypeReferenceType)
+        @other_type_detected = true
+      end
+    end
+
+    def other_type_detected?
+      @other_type_detected
+    end
   end
 
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
@@ -2303,7 +2328,11 @@ class PTypeAliasType < PAnyType
         # on several methods and this knowledge is used to avoid that for non-recursive
         # types.
         guard = RecursionGuard.new
-        accept(NoopTypeAcceptor::INSTANCE, guard)
+        real_type_asserter = AssertOtherTypeAcceptor.new
+        accept(real_type_asserter, guard)
+        unless real_type_asserter.other_type_detected?
+          raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
+        end
         @self_recursion = guard.recursive_this?(self)
       rescue
         @resolved_type = nil
