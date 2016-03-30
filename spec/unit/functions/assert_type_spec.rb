@@ -86,4 +86,12 @@ describe 'the assert_type function' do
     CODE
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expected an UnprivilegedPort = Integer\[1024, 65537\] value, got Integer\[345, 345\]/)
   end
+
+  it 'will use infer_set to report detailed information about complex mismatches' do
+    code = <<-CODE
+      assert_type(Struct[{a=>Integer,b=>Boolean}], {a=>hej,x=>s})
+    CODE
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+      /struct member 'a' expected an Integer value, got String.*expected a value for key 'b'.*did not have a 'x' key/m)
+  end
 end

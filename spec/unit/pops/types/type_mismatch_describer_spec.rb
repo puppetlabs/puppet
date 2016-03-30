@@ -92,6 +92,31 @@ describe 'the type mismatch describer' do
        /parameter 'evars' expects a match for EVariants = Enum\['a', 'b', 'c', 'd'\], got 'n'/))
   end
 
+  context 'when reporting a mismatch between' do
+    let(:parser) { TypeParser.new }
+    let(:subject) { TypeMismatchDescriber.singleton }
+
+    context 'hash and struct' do
+      it 'reports a size mismatch when hash has unlimited size' do
+        expected = parser.parse('Struct[{a=>Integer,b=>Integer}]')
+        actual = parser.parse('Hash[String,Integer]')
+        expect(subject.describe_mismatch('', expected, actual)).to eq('expected size to be 2, got unlimited')
+      end
+
+      it 'reports a size mismatch when hash has specified but incorrect size' do
+        expected = parser.parse('Struct[{a=>Integer,b=>Integer}]')
+        actual = parser.parse('Hash[String,Integer,1,1]')
+        expect(subject.describe_mismatch('', expected, actual)).to eq('expected size to be 2, got 1')
+      end
+
+      it 'reports a full type mismatch when size is correct but hash value type is incorrect' do
+        expected = parser.parse('Struct[{a=>Integer,b=>String}]')
+        actual = parser.parse('Hash[String,Integer,2,2]')
+        expect(subject.describe_mismatch('', expected, actual)).to eq("expected a Struct[{'a' => Integer, 'b' => String}] value, got Hash[String, Integer]")
+      end
+    end
+  end
+
   context 'when using present tense' do
     let(:parser) { TypeParser.new }
     let(:subject) { TypeMismatchDescriber.singleton }

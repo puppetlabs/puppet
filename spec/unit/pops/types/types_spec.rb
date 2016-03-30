@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/pops'
+require 'puppet_spec/compiler'
 
 module Puppet::Pops
 module Types
@@ -234,6 +235,62 @@ describe 'Puppet Type System' do
           tf.optional(tf.range(1,20)))
         )
       end
+    end
+  end
+
+  context 'Type aliases' do
+    include PuppetSpec::Compiler
+
+    it 'will resolve nested objects using self recursion' do
+      code = <<-CODE
+      type Tree = Hash[String,Variant[String,Tree]]
+      notice({a => {b => {c => d}}} =~ Tree)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'will find mismatches using self recursion' do
+      code = <<-CODE
+      type Tree = Hash[String,Variant[String,Tree]]
+      notice({a => {b => {c => 1}}} =~ Tree)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false'])
+    end
+
+    it 'will not allow an alias chain to only contain aliases' do
+      code = <<-CODE
+      type Foo = Bar
+      type Fee = Foo
+      type Bar = Fee
+      notice(0 =~ Bar)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+    end
+
+    it 'will not allow an alias chain that contains nothing but aliases and variants' do
+      code = <<-CODE
+      type Foo = Bar
+      type Fee = Foo
+      type Bar = Variant[Fee,Foo]
+      notice(0 =~ Bar)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+    end
+
+    it 'will not allow an alias to directly reference itself' do
+      code = <<-CODE
+      type Foo = Foo
+      notice(0 =~ Foo)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+    end
+
+    it 'will allow an alias to directly reference itself in a variant with other types' do
+      code = <<-CODE
+      type Foo = Variant[Foo,String]
+      notice(a =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
     end
   end
 end
