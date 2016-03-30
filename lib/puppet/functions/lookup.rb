@@ -100,9 +100,6 @@
 #     disables this feature.
 #     * `'sort_merged_arrays'` (boolean) --- Whether to sort all arrays that are
 #     merged together. Defaults to `false`.
-#     * `'unpack_arrays'` (string or undef) --- A delimiter string; Puppet will
-#     join merged arrays with this delimiter, then split them again. Defaults to
-#     `undef`, which disables this feature.
 #     * `'merge_hash_arrays'` (boolean) --- Whether to merge hashes within arrays.
 #     Defaults to `false`.
 #
