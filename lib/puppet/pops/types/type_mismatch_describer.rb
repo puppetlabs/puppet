@@ -301,6 +301,22 @@ module Types
 
     private
 
+    # Answers the question if `e` is a specialized type of `a`
+    # @param e [PAnyType] the expected type
+    # @param a [PAnyType] the actual type
+    # @return [Boolean] `true` when the _e_ is a specialization of _a_
+    #
+    def specialization(e, a)
+      case e
+      when PStructType
+        a.is_a?(PHashType)
+      when PTupleType
+        a.is_a?(PArrayType)
+      else
+        false
+      end
+    end
+
     # Decides whether or not the report must be fully detailed, or if generalization can be permitted
     # in the mismatch report. All comparisons are made using resolved aliases rather than the alias
     # itself.
@@ -313,7 +329,7 @@ module Types
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
       else
-        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType)
+        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType) || specialization(e, a)
       end
     end
 
@@ -713,15 +729,11 @@ module Types
         h2.each_key { |key| descriptions << ExtraneousKey.new(path, key) }
       elsif actual.is_a?(PHashType)
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
-        expected_size = PIntegerType.new(elements.count { |e| !e.type.assignable?(PUndefType::DEFAULT) }, elements.size)
+        expected_size = PIntegerType.new(elements.count { |e| !e.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
         if expected_size.assignable?(actual_size)
-          if actual_size.to == 0 || PStringType::NON_EMPTY.assignable?(actual.key_type)
-            descriptions.concat(describe(e.type, actual.element_type, path + [MemberPathElement.new(e.key)]))
-          else
-            descriptions << TypeMismatch(path, @non_empty_string_, actual.key_type)
-          end
+          descriptions << TypeMismatch.new(path, expected, actual)
         else
-          descriptions << SizeMismatch(path, expected_size, actual_size)
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
       else
         descriptions << TypeMismatch.new(path, expected, actual)
