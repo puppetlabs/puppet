@@ -6,7 +6,7 @@ require 'puppet/parser/compiler'
 class Puppet::Application::Lookup < Puppet::Application
 
   RUN_HELP = "Run 'puppet lookup --help' for more details".freeze
-  DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, --unpack-arrays, and --merge-hash-arrays'.freeze
+  DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'.freeze
 
   run_mode :master
 
@@ -34,10 +34,6 @@ class Puppet::Application::Lookup < Puppet::Application
   end
 
   option('--sort-merge-arrays')
-
-  option('--unpack-arrays DELIMITER') do |arg|
-    options[:unpack_arrays] = arg
-  end
 
   option('--merge-hash-arrays')
 
@@ -124,7 +120,7 @@ USAGE
 -----
 puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
   [--knock-out-prefix <PREFIX-STRING>] [--sort-merged-arrays]
-  [--unpack-arrays <STRING-VALUE>] [--merge-hash-arrays] [--explain]
+  [--merge-hash-arrays] [--explain]
   [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>]
   [--compile]
   [--render-as s|json|yaml|binary|msgpack] <keys>
@@ -171,10 +167,6 @@ the puppet lookup function linked to above.
 * --sort-merged-arrays
   Can be used with the 'deep' merge strategy. When this flag is used all
   merged arrays will be sorted.
-
-* --unpack-arrays <STRING-VALUE>
-  Can be used with the 'deep' merge strategy. Specify a string value used
-  as a deliminator to join all array values and then split them again.
 
 * --merge-hash-arrays
   Can be used with the 'deep' merge strategy. When this flag is used arrays
@@ -251,7 +243,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
     #end
 
-    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix] || options[:unpack_arrays]) && options[:merge] != 'deep'
+    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
       raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
     end
 
@@ -273,10 +265,6 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
         if options[:prefix]
           merge_options.merge!({'knockout_prefix' => options[:prefix]})
-        end
-
-        if options[:unpack_arrays]
-          merge_options.merge!({'unpack_arrays' => options[:unpack_arrays]})
         end
 
       else
