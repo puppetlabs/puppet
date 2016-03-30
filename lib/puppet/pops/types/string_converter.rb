@@ -248,7 +248,6 @@ class StringConverter
   #
   def initialize
     @@string_visitor   ||= Visitor.new(self, "string", 3, 3)
-    @@type_calculator = TypeCalculator.singleton()
   end
 
   DEFAULT_INDENTATION = Indentation.new(0, true, false).freeze
@@ -455,7 +454,7 @@ class StringConverter
 
     if string_formats.is_a?(String)
       # add the format given for the exact type
-      t = @@type_calculator.infer_set(value)
+      t = TypeCalculator.infer_set(value)
       string_formats = { t => string_formats }
     end
 
@@ -472,7 +471,7 @@ class StringConverter
       raise ArgumentError, "string conversion expects a Default value or a Hash of type to format mappings, got a '#{string_formats.class}'"
     end
 
-    _convert(@@type_calculator.infer_set(value), value, options, DEFAULT_INDENTATION)
+    _convert(TypeCalculator.infer_set(value), value, options, DEFAULT_INDENTATION)
   end
 
 #  # A method only used for manual debugging as the default output of the formatting rules is
@@ -625,13 +624,13 @@ class StringConverter
       # Boolean in numeric form, formated by integer rule
       numeric_bool = val ? 1 : 0
       string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => f}
-      _convert(@@type_calculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
+      _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :e, :E, :f, :g, :G, :a, :A
       # Boolean in numeric form, formated by float rule
       numeric_bool = val ? 1.0 : 0.0
       string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => f}
-      _convert(@@type_calculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
+      _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :s
       val.to_s
@@ -762,7 +761,7 @@ class StringConverter
         if children_indentation.first?
           children_indentation = children_indentation.subsequent
         end
-        val_t = @@type_calculator.infer_set(v)
+        val_t = TypeCalculator.infer_set(v)
         _convert(val_t, v, is_container?(val_t) ? format_map : string_formats, children_indentation)
       end
 
@@ -836,7 +835,7 @@ class StringConverter
   # @api private
   def string_PIteratorType(val_type, val, format_map, indentation)
     v = val.to_a
-    _convert(@@type_calculator.infer_set(v), v, format_map, indentation)
+    _convert(TypeCalculator.infer_set(v), v, format_map, indentation)
   end
 
   # @api private
@@ -856,7 +855,7 @@ class StringConverter
     when :a
       # Convert to array and use array rules
       array_hash = val.to_a
-      _convert(@@type_calculator.infer_set(array_hash), array_hash, format_map, indentation)
+      _convert(TypeCalculator.infer_set(array_hash), array_hash, format_map, indentation)
 
     when :h, :s, :p
       indentation = indentation.indenting(format.alt? || indentation.is_indenting?)
@@ -874,8 +873,8 @@ class StringConverter
       buf << delims[0]
       buf << cond_break  # break after opening delimiter if pretty printing
       buf << val.map do |k,v|
-        key_type = @@type_calculator.infer_set(k)
-        val_type = @@type_calculator.infer_set(v)
+        key_type = TypeCalculator.infer_set(k)
+        val_type = TypeCalculator.infer_set(v)
         key = _convert(key_type, k, is_container?(key_type) ? format_map : string_formats, children_indentation)
         val = _convert(val_type, v, is_container?(val_type) ? format_map : string_formats, children_indentation)
         "#{padding}#{key}#{assoc}#{val}"
