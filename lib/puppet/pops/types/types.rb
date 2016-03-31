@@ -268,7 +268,7 @@ class PAnyType < TypedModelObject
   #
   # @api private
   #
-  def tuple_entry_at(tuple_t, from, to, index)
+  def tuple_entry_at(tuple_t, to, index)
     regular = (tuple_t.types.size - 1)
     if index < regular
       tuple_t.types[index]
@@ -439,7 +439,7 @@ class PNotUndefType < PTypeWithContainedType
     else
       if n.type.is_a?(POptionalType)
         # No point in having an optional in a NotUndef
-        PNotUndef.new(n.type.type).normalize
+        PNotUndefType.new(n.type.type).normalize
       elsif !n.type.assignable?(PUndefType::DEFAULT)
         # THe type is NotUndef anyway, so it can be stripped of
         n.type
@@ -1115,7 +1115,7 @@ class PIteratorType < PTypeWithContainedType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(Iterable) && (@element_type.nil? || @element_type.assignable?(o.element_type, guard))
+    o.is_a?(Iterable) && (@type.nil? || @type.assignable?(o.element_type, guard))
   end
 
   def iterable?(guard = nil)
@@ -1123,7 +1123,7 @@ class PIteratorType < PTypeWithContainedType
   end
 
   def iterable_type(guard = nil)
-    @type.nil? ? PIteratbleType::DEFAULT : PIterableType.new(@element_type)
+    @type.nil? ? PIterableType::DEFAULT : PIterableType.new(@type)
   end
 
   DEFAULT = PIteratorType.new(nil)
@@ -1132,7 +1132,7 @@ class PIteratorType < PTypeWithContainedType
 
   # @api private
   def _assignable?(o, guard)
-    o.is_a?(PIteratorType) && (@element_type.nil? || @element_type.assignable?(o.element_type, guard))
+    o.is_a?(PIteratorType) && (@type.nil? || @type.assignable?(o.element_type, guard))
   end
 end
 
@@ -1966,7 +1966,7 @@ class PArrayType < PCollectionType
       return false if o_regular.size + o_to > max
       # each tuple type must be assignable to the element type
       o_required.times do |index|
-        o_entry = tuple_entry_at(o, o_from, o_to, index)
+        o_entry = tuple_entry_at(o, o_to, index)
         return false unless s_entry.assignable?(o_entry, guard)
       end
       # ... and so must the last, possibly optional (ranged) type
@@ -2162,7 +2162,7 @@ class PVariantType < PAnyType
     if self == DEFAULT || self == DATA
       self
     else
-      alter_type_array(@types, :generalize) { |altered| PVariantType.new(mod_types) }
+      alter_type_array(@types, :generalize) { |altered| PVariantType.new(altered) }
     end
   end
 
@@ -2342,7 +2342,7 @@ class PVariantType < PAnyType
   # @api private
   def merge_ranges(ranges)
     result = []
-    while !ranges.empty?
+    until ranges.empty?
       unmerged = []
       x = ranges.pop
       result << ranges.inject(x) do |memo, y|
@@ -2646,7 +2646,7 @@ class PTypeAliasType < PAnyType
       @other_type_detected = false
     end
 
-    def visit(type, guard)
+    def visit(type, _)
       unless type.is_a?(PTypeAliasType) || type.is_a?(PVariantType) || type.is_a?(PTypeReferenceType)
         @other_type_detected = true
       end

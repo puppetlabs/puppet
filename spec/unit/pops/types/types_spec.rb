@@ -151,6 +151,40 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Iterator type' do
+    let!(:iterint) { tf.iterator(tf.integer) }
+
+    context 'when testing instance?' do
+      it 'will consider an iterable on an integer is an instance of Iterator[Integer]' do
+        expect(iterint.instance?(Iterable.on(3))).to be_truthy
+      end
+
+      it 'will consider an iterable on string to be an instance of Iterator[Integer]' do
+        expect(iterint.instance?(Iterable.on('string'))).to be_falsey
+      end
+    end
+
+    context 'when testing assignable?' do
+      it 'will consider an iterator with an assignable type as assignable' do
+        expect(tf.iterator(tf.numeric).assignable?(iterint)).to be_truthy
+      end
+
+      it 'will not consider an iterator with a non assignable type as assignable' do
+        expect(tf.iterator(tf.string).assignable?(iterint)).to be_falsey
+      end
+    end
+
+    context 'when asked for an iterable type' do
+      it 'the default iterator type returns the default iterable type' do
+        expect(PIteratorType::DEFAULT.iterable_type).to be(PIterableType::DEFAULT)
+      end
+
+      it 'a typed iterator type returns the an equally typed iterable type' do
+        expect(iterint.iterable_type).to eq(tf.iterable(tf.integer))
+      end
+    end
+  end
+
   context 'Optional type' do
     let!(:overlapping_ints) { tf.variant(tf.range(10, 20), tf.range(18, 28)) }
     let!(:optoptopt) { tf.optional(tf.optional(tf.optional(overlapping_ints))) }
@@ -170,6 +204,7 @@ describe 'Puppet Type System' do
   context 'NotUndef type' do
     let!(:nununu) { tf.not_undef(tf.not_undef(tf.not_undef(tf.any))) }
     let!(:nuopt) { tf.not_undef(tf.optional(tf.any)) }
+    let!(:nuoptint) { tf.not_undef(tf.optional(tf.integer)) }
 
     context 'when normalizing' do
       it 'compacts NotUndef in NotUndef in NotUndef to just NotUndef' do
@@ -178,6 +213,10 @@ describe 'Puppet Type System' do
 
       it 'compacts Optional in NotUndef to just NotUndef' do
         expect(nuopt.normalize).to eq(tf.not_undef(tf.any))
+      end
+
+      it 'compacts NotUndef[Optional[Integer]] in NotUndef to just Integer' do
+        expect(nuoptint.normalize).to eq(tf.integer)
       end
     end
   end
@@ -234,6 +273,12 @@ describe 'Puppet Type System' do
           tf.pattern('a', 'b', 'c'),
           tf.optional(tf.range(1,20)))
         )
+      end
+    end
+
+    context 'when generalizing' do
+      it 'will generalize and compact contained types' do
+        expect(tf.variant(tf.string(tf.range(3,3)), tf.string(tf.range(5,5))).generalize).to eq(tf.variant(tf.string))
       end
     end
   end
