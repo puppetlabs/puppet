@@ -9,7 +9,7 @@ describe 'the new function' do
 
   it 'yields converted value if given a block' do
     expect(compile_to_catalog(<<-MANIFEST
-      $x = Integer.new('42') |$x| { $x+2 }
+      $x = Integer.new('42') |$x| { $x+2 }
       notify { "${type($x, generalized)}, $x": }
     MANIFEST
     )).to have_resource('Notify[Integer, 44]')
