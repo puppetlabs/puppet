@@ -34,6 +34,7 @@ module Puppet
 
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
+    require 'puppet/pops/types/string_converter'
 
     require 'puppet/pops/merge_strategy'
 

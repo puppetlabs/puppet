@@ -293,6 +293,33 @@ describe 'Puppet Type System' do
       expect(eval_and_collect_notices(code)).to eq(['true'])
     end
   end
+
+  context 'instantiation via new_function is supported by' do
+    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "types_unit_test_loader") }
+    it 'Integer' do
+      func_class = tf.integer.new_function(loader)
+      expect(func_class).to be_a(Class)
+      expect(func_class.superclass).to be(Puppet::Functions::Function)
+    end
+
+    it 'Optional[Integer]' do
+      func_class = tf.optional(tf.integer).new_function(loader)
+      expect(func_class).to be_a(Class)
+      expect(func_class.superclass).to be(Puppet::Functions::Function)
+    end
+  end
+
+  context 'instantiation via new_function is not supported by' do
+    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "types_unit_test_loader") }
+
+      it 'Any, Scalar, Collection' do
+        [tf.any, tf.scalar, tf.collection ].each do |t|
+        expect { t.new_function(loader)
+        }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
+      end
+    end
+  end
+
 end
 end
 end
