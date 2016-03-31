@@ -20,7 +20,21 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
       checksum = checksum.unpack("m0").first.unpack("H*").first
       @checksums[:md5] = "{md5}#{checksum}"
     end
+    # Add support for artifactory headers.
+    # This adds support for all three algorithms, sha256, sha1, and md5.
+    if checksum = http_response['X-Checksum-Md5']
+      @checksums[:md5] = "{md5}#{checksum}"
+    end
 
+    if sha1checksum = http_response['X-Checksum-Sha1']
+      @checksums[:sha1] = "{sha1}#{sha1checksum}"
+    end
+
+    if sha256checksum = http_response['X-Checksum-Sha256']
+      @checksums[:sha256] = "{sha256}#{sha256checksum}"
+    end
+    
+    
     if last_modified = http_response['last-modified']
       mtime = DateTime.httpdate(last_modified).to_time
       @checksums[:mtime] = "{mtime}#{mtime.utc}"
@@ -37,7 +51,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
   def collect
     # Prefer the checksum_type from the indirector request options
     # but fall back to the alternative otherwise
-    [ @checksum_type, :md5, :mtime ].each do |type|
+    [ @checksum_type, :sha256, :sha1, :md5, :mtime ].each do |type|
       @checksum_type = type
       @checksum = @checksums[type]
       return if @checksum
