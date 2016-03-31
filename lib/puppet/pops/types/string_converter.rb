@@ -654,7 +654,7 @@ class StringConverter
       Kernel.format(f.orig_fmt, val.to_f)
 
     when :c
-      char = Kernel.format('%c', val)
+      char = [val].pack("U")
       char = f.alt? ? "\"#{char}\"" : char
       char = Kernel.format(f.orig_fmt.gsub('c','s'), char)
 
