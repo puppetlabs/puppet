@@ -610,7 +610,7 @@ class PNumericType < PScalarType
   # @return [Boolean] `true` if this range intersects with the other range
   # @api public
   def intersect?(o)
-    self.class == o.class && !(@to < o.from || o.to < @from)
+    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
   end
 
   # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
@@ -700,8 +700,8 @@ class PIntegerType < PNumericType
   # @api public
   def merge(o)
     if intersect?(o) || adjacent?(o)
-      min = @from <= o.from ? @from : o.from
-      max = @to >= o.to ? @to : o.to
+      min = @from <= o.numeric_from ? @from : o.numeric_from
+      max = @to >= o.numeric_to ? @to : o.numeric_to
       PIntegerType.new(min, max)
     else
       nil
