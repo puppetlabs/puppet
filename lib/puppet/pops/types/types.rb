@@ -2334,6 +2334,27 @@ class PTypeAliasType < PAnyType
           raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
         end
         @self_recursion = guard.recursive_this?(self)
+        if @self_recursion && @resolved_type.is_a?(PVariantType)
+          # Drop variants that are not real types
+          resolved_types = @resolved_type.types
+          real_types = resolved_types.select do |type|
+            next false if type == self
+            real_type_asserter = AssertOtherTypeAcceptor.new
+            accept(real_type_asserter, RecursionGuard.new)
+            real_type_asserter.other_type_detected?
+          end
+          if real_types.size != resolved_types.size
+            if real_types.size == 1
+              @resolved_type = real_types[0]
+            else
+              @resolved_type = PVariantType.new(real_types)
+            end
+            # Drop self recursion status in case it's not self recursive anymore
+            guard = RecursionGuard.new
+            accept(NoopTypeAcceptor::INSTANCE, guard)
+            @self_recursion = guard.recursive_this?(self)
+          end
+        end
       rescue
         @resolved_type = nil
         raise
