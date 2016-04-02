@@ -1278,6 +1278,15 @@ describe Puppet::Type.type(:file) do
         expect(reqs[0].target).to eq(file)
       end
 
+      it "should autorequire its parent mount point" do
+        mount = Puppet::Type.type(:mount).stubs(:defaultprovider).new(:name => File.dirname(path))
+        catalog.add_resource file
+        catalog.add_resource mount
+        reqs = file.autorequire
+        expect(reqs[0].source).to eq(mount)
+        expect(reqs[0].target).to eq(file)
+      end
+
       it "should autorequire its nearest ancestor directory" do
         dir = described_class.new(:path => File.dirname(path))
         grandparent = described_class.new(:path => File.dirname(File.dirname(path)))
@@ -1287,6 +1296,18 @@ describe Puppet::Type.type(:file) do
         reqs = file.autorequire
         expect(reqs.length).to eq(1)
         expect(reqs[0].source).to eq(dir)
+        expect(reqs[0].target).to eq(file)
+      end
+
+      it "should autorequire its nearest ancestor mount point" do
+        mount = Puppet::Type.type(:mount).stubs(:defaultprovider).new(:name => File.dirname(path))
+        grandparent = Puppet::Type.type(:mount).stubs(:defaultprovider).new(:name => File.dirname(File.dirname(path)))
+        catalog.add_resource file
+        catalog.add_resource mount
+        catalog.add_resource grandparent
+        reqs = file.autorequire
+        expect(reqs.length).to eq(1)
+        expect(reqs[0].source).to eq(mount)
         expect(reqs[0].target).to eq(file)
       end
 

@@ -293,5 +293,8 @@ module Puppet
       dependencies[0..-2]
     end
 
+    # Autorequire the mount point's file resource
+    autorequire(:file) { Pathname.new(@parameters[:name].value) }
+
   end
 end
