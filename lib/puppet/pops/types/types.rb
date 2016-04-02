@@ -2271,7 +2271,7 @@ class PTypeAliasType < PAnyType
     if @self_recursion
       guard ||= RecursionGuard.new
       guard.add_that(o)
-      return true if (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_BOTH) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      return guard.that_count > 1 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
     end
     resolved_type.instance?(o, guard)
   end
