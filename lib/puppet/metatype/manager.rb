@@ -25,7 +25,9 @@ module Manager
   # @api private
   #
   def clear_misses
-    @types.delete_if {|_, v| v.nil? }
+    unless @types.nil?
+      @types.delete_if {|_, v| v.nil? }
+    end
   end
 
   # Iterates over all already loaded Type subclasses.
