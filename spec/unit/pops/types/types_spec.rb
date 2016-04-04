@@ -337,6 +337,55 @@ describe 'Puppet Type System' do
       CODE
       expect(eval_and_collect_notices(code)).to eq(['true'])
     end
+
+    it 'will detect a mismatch in an alias that directly references itself in a variant with other types' do
+      code = <<-CODE
+      type Foo = Variant[Foo,String]
+      notice(3 =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false'])
+    end
+
+    it 'will normalize a Variant containing a self reference so that the self reference is removed' do
+      code = <<-CODE
+      type Foo = Variant[Foo,String,Integer]
+      assert_type(Foo, /x/)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expected a value of type String or Integer, got Regexp/)
+    end
+
+    it 'will handle a scalar correctly in combinations of nested aliased variants' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Integer]
+      type Foo = Variant[Bar,String]
+      notice(a =~ Foo)
+      notice(1 =~ Foo)
+      notice(/x/ =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
+    end
+
+    it 'will handle a non scalar correctly in combinations of nested aliased array with nested variants' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Integer]
+      type Foo = Array[Variant[Bar,String]]
+      notice([a] =~ Foo)
+      notice([1] =~ Foo)
+      notice([/x/] =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
+    end
+
+    it 'will handle a non scalar correctly in combinations of nested aliased variants with array' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Array[Integer]]
+      type Foo = Variant[Bar,Array[String]]
+      notice([a] =~ Foo)
+      notice([1] =~ Foo)
+      notice([/x/] =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
+    end
   end
 
   context 'instantiation via new_function is supported by' do

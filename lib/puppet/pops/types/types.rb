@@ -643,7 +643,7 @@ class PNumericType < PScalarType
   # @return [Boolean] `true` if this range intersects with the other range
   # @api public
   def intersect?(o)
-    self.class == o.class && !(@to < o.from || o.to < @from)
+    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
   end
 
   # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
@@ -783,8 +783,8 @@ class PIntegerType < PNumericType
   # @api public
   def merge(o)
     if intersect?(o) || adjacent?(o)
-      min = @from <= o.from ? @from : o.from
-      max = @to >= o.to ? @to : o.to
+      min = @from <= o.numeric_from ? @from : o.numeric_from
+      max = @to >= o.numeric_to ? @to : o.numeric_to
       PIntegerType.new(min, max)
     else
       nil
@@ -2620,7 +2620,7 @@ class PTypeAliasType < PAnyType
     if @self_recursion
       guard ||= RecursionGuard.new
       guard.add_that(o)
-      return true if (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_BOTH) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      return guard.that_count > 1 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
     end
     resolved_type.instance?(o, guard)
   end
@@ -2683,6 +2683,27 @@ class PTypeAliasType < PAnyType
           raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
         end
         @self_recursion = guard.recursive_this?(self)
+        if @self_recursion && @resolved_type.is_a?(PVariantType)
+          # Drop variants that are not real types
+          resolved_types = @resolved_type.types
+          real_types = resolved_types.select do |type|
+            next false if type == self
+            real_type_asserter = AssertOtherTypeAcceptor.new
+            accept(real_type_asserter, RecursionGuard.new)
+            real_type_asserter.other_type_detected?
+          end
+          if real_types.size != resolved_types.size
+            if real_types.size == 1
+              @resolved_type = real_types[0]
+            else
+              @resolved_type = PVariantType.new(real_types)
+            end
+            # Drop self recursion status in case it's not self recursive anymore
+            guard = RecursionGuard.new
+            accept(NoopTypeAcceptor::INSTANCE, guard)
+            @self_recursion = guard.recursive_this?(self)
+          end
+        end
       rescue
         @resolved_type = nil
         raise
