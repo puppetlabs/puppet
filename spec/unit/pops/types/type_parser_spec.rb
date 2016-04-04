@@ -272,6 +272,12 @@ describe TypeParser do
     expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
   end
 
+  it 'parses all known literals' do
+    t = parser.parse('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
+    expect(t).to be_a(PTypeReferenceType)
+    expect(t.parameters).to eql([{'a' =>nil,'b'=>true,'c'=>false,'d'=>:default,'e'=>'string','f'=>0,'g'=>1.0,'h'=>[1,2,3]}])
+  end
+
   matcher :be_the_type do |type|
     calc = TypeCalculator.new
 

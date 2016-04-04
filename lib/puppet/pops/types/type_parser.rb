@@ -72,32 +72,13 @@ class TypeParser
   end
 
   # @api private
-  def interpret_LiteralString(o, context)
+  def interpret_LiteralBoolean(o, context)
     o.value
-  end
-
-  def interpret_LiteralRegularExpression(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_String(o, context)
-    o
   end
 
   # @api private
   def interpret_LiteralDefault(o, context)
     :default
-  end
-
-  # @api private
-  def interpret_LiteralInteger(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_UnaryMinusExpression(o, context)
-    -@type_transformer.visit_this_1(self, o.expr, context)
   end
 
   # @api private
@@ -112,6 +93,41 @@ class TypeParser
       result[@type_transformer.visit_this_1(self, entry.key, context)] = @type_transformer.visit_this_1(self, entry.value, context)
     end
     result
+  end
+
+  # @api private
+  def interpret_LiteralInteger(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralList(o, context)
+    o.values.map { |value| @type_transformer.visit_this_1(self, value, context) }
+  end
+
+  # @api private
+  def interpret_LiteralRegularExpression(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralString(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralUndef(o, context)
+    nil
+  end
+
+  # @api private
+  def interpret_String(o, context)
+    o
+  end
+
+  # @api private
+  def interpret_UnaryMinusExpression(o, context)
+    -@type_transformer.visit_this_1(self, o.expr, context)
   end
 
   # @api private
