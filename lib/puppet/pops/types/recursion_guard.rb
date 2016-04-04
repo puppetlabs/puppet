@@ -54,6 +54,16 @@ class RecursionGuard
     @state
   end
 
+  # @return the number of objects added to the `this` map
+  def this_count
+    this_map.size
+  end
+
+  # @return the number of objects added to the `that` map
+  def that_count
+    that_map.size
+  end
+
   private
 
   def map_put(map, o)
