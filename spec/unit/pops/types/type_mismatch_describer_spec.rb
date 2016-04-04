@@ -15,7 +15,7 @@ describe 'the type mismatch describer' do
       }
       f({'a' => 'a', 'b' => 23})
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /'f' parameter 'h' entry 'b' expects a String value, got Integer/)
   end
 
   it 'will report a mismatch between a array and tuple with details' do
@@ -78,7 +78,7 @@ describe 'the type mismatch describer' do
       check_tree({ 'x' => {'y' => {32 => 'n'}}})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'tree' expects a Tree = Hash\[String, Tree\] value, got Struct\[\{'x' => Struct\[\{'y' => Hash\[Integer, String\]\}\]\}\]/))
+      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\[1, 1\]]/))
   end
 
   it 'will use type normalization' do

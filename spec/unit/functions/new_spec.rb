@@ -260,7 +260,7 @@ describe 'the new function' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new({from =>'10', radix=>3})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /rejected: parameter 'hash_args' struct member 'radix'/m)
+      )}.to raise_error(Puppet::Error, /rejected: parameter 'hash_args' entry 'radix'/m)
       end
 
       it 'value is not numeric and given directly' do
@@ -499,7 +499,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Struct[{a => Integer[2]}].new({a => 0})
       MANIFEST
-      )}.to raise_error(Puppet::Error, /struct member 'a' expected an Integer\[2, default\]/)
+      )}.to raise_error(Puppet::Error, /entry 'a' expected an Integer\[2, default\]/)
     end
   end
 
