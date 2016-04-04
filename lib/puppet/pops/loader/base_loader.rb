@@ -96,7 +96,10 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   #
   def internal_load(typed_name)
     # avoid calling get_entry, by looking it up
-    @named_values[typed_name] || parent.load_typed(typed_name) || find(typed_name)
+    te = @named_values[typed_name]
+    te = parent.load_typed(typed_name) if te.nil? || te.value.nil?
+    te = find(typed_name) if te.nil? || te.value.nil?
+    te
   end
 
 end
