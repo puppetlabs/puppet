@@ -697,7 +697,7 @@ class TypeCalculator
     if o.empty?
       PHashType::EMPTY
     elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
-      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(nil, [k]), infer_set(v)) })
+      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(size_as_type(k), [k]), infer_set(v)) })
     else
       ktype = PVariantType.new(o.keys.map {|k| infer_set(k) })
       etype = PVariantType.new(o.values.map {|e| infer_set(e) })
