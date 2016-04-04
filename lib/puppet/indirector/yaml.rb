@@ -19,17 +19,20 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
   def save(request)
     raise ArgumentError.new("You can only save objects that respond to :name") unless request.instance.respond_to?(:name)
 
-    file = path(request.key)
+    files = path(request.key)
+    files = [files].flatten.uniq
 
-    basedir = File.dirname(file)
+    files.each do |file|
+      basedir = File.dirname(file)
 
-    # This is quite likely a bad idea, since we're not managing ownership or modes.
-    Dir.mkdir(basedir) unless Puppet::FileSystem.exist?(basedir)
+      # This is quite likely a bad idea, since we're not managing ownership or modes.
+      Dir.mkdir(basedir) unless Puppet::FileSystem.exist?(basedir)
 
-    begin
-      Puppet::Util::Yaml.dump(request.instance, file)
-    rescue TypeError => detail
-      Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+      begin
+        Puppet::Util::Yaml.dump(request.instance, file)
+      rescue TypeError => detail
+        Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+      end
     end
   end
 
