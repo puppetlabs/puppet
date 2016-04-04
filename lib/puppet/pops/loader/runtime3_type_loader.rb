@@ -24,7 +24,23 @@ class Runtime3TypeLoader < BaseLoader
     if typed_name.type == :type
       name = typed_name.name
       value = @environment.known_resource_types.find_definition(name)
-      set_entry(typed_name, Types::TypeFactory.resource(name.capitalize)) unless value.nil?
+      if value.nil?
+        # Look for Puppet::Type
+        if Puppet::Type.type(name).nil?
+          # Cache the fact that it wasn't found
+          set_entry(typed_name, nil)
+        else
+          # Loaded types doesn't have the same life cycle as this loader, so we must start by
+          # checking if the type was created. If it was, an entry will already be stored in
+          # this loader. If not, then it was created before this loader was instantiated and
+          # we must therefore add it.
+          value = get_entry(typed_name)
+          value = set_entry(typed_name, Types::TypeFactory.resource(name.capitalize)) if value.nil?
+          value
+        end
+      else
+        set_entry(typed_name, Types::TypeFactory.resource(name.capitalize))
+      end
     else
       nil
     end
