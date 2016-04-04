@@ -39,7 +39,7 @@ module TypeAsserter
     subject = yield(subject) if block_given?
     subject = subject[0] % subject[1..-1] if subject.is_a?(Array)
     raise TypeAssertionError.new(
-      TypeMismatchDescriber.singleton.describe_mismatch("#{subject} has wrong type,", expected_type, actual_type), expected_type, actual_type)
+      TypeMismatchDescriber.singleton.describe_mismatch("#{subject} had wrong type,", expected_type, actual_type), expected_type, actual_type)
   end
   private_class_method :report_type_mismatch
 end
