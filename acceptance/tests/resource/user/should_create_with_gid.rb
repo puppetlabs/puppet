@@ -1,6 +1,7 @@
 test_name "verifies that puppet resource creates a user and assigns the correct group"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See ARISTA-37
+confine :except, :platform => /^cisco_/ # See PUP-5828
 
 user = "pl#{rand(999999).to_i}"
 group = "gp#{rand(999999).to_i}"

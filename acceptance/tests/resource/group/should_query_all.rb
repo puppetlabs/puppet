@@ -1,4 +1,5 @@
 test_name "should query all groups"
+confine :except, :platform => /^cisco_/ # See PUP-5828
 
 agents.each do |agent|
   step "query natively"
