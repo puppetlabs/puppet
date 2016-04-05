@@ -1,4 +1,5 @@
 test_name "the agent --disable/--enable functionality should manage the agent lockfile properly"
+confine :except, :platform => 'cisco_nexus' #See BKR-749
 
 #
 # This test is intended to ensure that puppet agent --enable/--disable

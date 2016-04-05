@@ -7,6 +7,18 @@ describe "A catalog" do
   include PuppetSpec::Compiler
 
   context "when compiled" do
+    let(:env) { Puppet::Node::Environment.create(:testing, []) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+    let(:loaders) { Puppet::Pops::Loaders.new(env) }
+
+    around :each do |example|
+      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+      Puppet.override(:loaders => loaders, :current_environment => env) do
+        example.run
+        Puppet::Pops::Loaders.clear
+      end
+    end
+
     context "when transmitted to the agent" do
 
       it "preserves the order in which the resources are added to the catalog" do
@@ -78,12 +90,12 @@ describe "A catalog" do
   end
 
   def master_catalog_for(manifest)
-    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest))
+    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest, node))
   end
 
   def master_and_agent_catalogs_for(manifest)
     compiler = Puppet::Resource::Catalog::Compiler.new
-    master_catalog = compiler.filter(compile_to_catalog(manifest))
+    master_catalog = compiler.filter(compile_to_catalog(manifest, node))
     agent_catalog = Puppet::Resource::Catalog.convert_from(:pson, master_catalog.render(:pson))
     [master_catalog, agent_catalog]
   end

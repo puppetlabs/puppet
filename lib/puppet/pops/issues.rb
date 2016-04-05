@@ -494,7 +494,7 @@ module Issues
   end
 
   UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
-    "Resource type not found: #{type_name.capitalize}"
+    "Resource type not found: #{type_name}"
   end
 
   ILLEGAL_RESOURCE_TYPE = hard_issue :ILLEGAL_RESOURCE_TYPE, :actual do

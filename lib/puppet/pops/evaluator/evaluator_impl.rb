@@ -278,7 +278,9 @@ class EvaluatorImpl
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
   #
   def eval_QualifiedReference(o, scope)
-    @@type_parser.interpret(o, scope)
+    type = @@type_parser.interpret(o, scope)
+    fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.to_s }) if type.is_a?(Types::PTypeReferenceType)
+    type
   end
 
   def eval_NotExpression(o, scope)
@@ -424,7 +426,15 @@ class EvaluatorImpl
   #
   def eval_AccessExpression(o, scope)
     left = evaluate(o.left_expr, scope)
-    keys = o.keys.nil? ? [] : o.keys.collect {|key| evaluate(key, scope) }
+    keys = o.keys || []
+    if left.is_a?(Types::PHostClassType)
+      # Evaluate qualified references without errors no undefined types
+      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? @@type_parser.interpret(key, scope) : evaluate(key, scope) }
+    else
+      keys = keys.map {|key| evaluate(key, scope) }
+      # Resource[File] becomes File
+      return keys[0] if Types::PResourceType::DEFAULT == left && keys.size == 1 && keys[0].is_a?(Types::PResourceType)
+    end
     AccessOperator.new(o).access(left, scope, *keys)
   end
 
@@ -692,6 +702,9 @@ class EvaluatorImpl
         end
         evaluated_name.type_name # assume validated
 
+      when Types::PTypeReferenceType
+        fail(Issues::UNKNOWN_RESOURCE_TYPE, o.type_name, {:type_name => evaluated_name.to_s})
+
       else
         actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
         fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
@@ -814,9 +827,20 @@ class EvaluatorImpl
   # Evaluates function call by name.
   #
   def eval_CallNamedFunctionExpression(o, scope)
+    # If LHS is a type (i.e. Integer, or Integer[...]
+    # the call is taken as an instantiation of the given type
+    #
+    functor = o.functor_expr
+    if functor.is_a?(Model::QualifiedReference) || 
+      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+      # instantiation
+      type = evaluate(functor, scope)
+      return call_function_with_block('new', unfold([type], o.arguments || [], scope), o, scope)
+    end 
+
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
-    case o.functor_expr
+    case functor
     when Model::QualifiedName
       # ok
     when Model::RenderStringExpression

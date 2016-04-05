@@ -1,20 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
+require_relative 'parser_rspec_helper'
 
 describe "egrammar parsing of site expression" do
   include ParserRspecHelper
 
-  before(:each) do
-    with_app_management(true)
-  end
-
-  after(:each) do
-    with_app_management(false)
-  end
+  before(:each) { Puppet[:app_management] = true }
+  after(:each) { Puppet[:app_management] = false }
 
   context "when parsing 'site'" do
     it "an empty body is allowed" do

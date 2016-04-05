@@ -114,7 +114,7 @@ describe "Puppet resource expressions" do
 
     fails( "define a::b { notify { testing: } } 'a::b' { title: }" => /Illegal Resource Type expression.*got String/)
 
-    fails( "Does::Not::Exist { title: }" => /Invalid resource type does::not::exist/)
+    fails( "Does::Not::Exist { title: }" => /Resource type not found: Does::Not::Exist/)
   end
 
   context "local defaults" do

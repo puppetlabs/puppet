@@ -189,7 +189,9 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def instantiate_ResourceTypeDefinition(o, modname)
-      Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
+      instance = Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
+      Puppet::Pops::Loaders.register_runtime3_type(instance.name, Puppet::Pops::Adapters::SourcePosAdapter.adapt(o).to_uri)
+      instance
     end
 
     def instantiate_CapabilityMapping(o, modname)

@@ -597,6 +597,10 @@ deprecated and has been replaced by 'always_retry_plugins'."
           :default  => false,
           :type     => :boolean,
           :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
+          :hook     => proc do |value|
+            # Statically loaded resource types differ depending on setting
+            Puppet::Pops::Loaders.clear
+          end
       }
   )
 

@@ -46,7 +46,7 @@ group(:development, :test) do
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
-  gem "rubocop", "~> 0.26.1", :platforms => [:ruby]
+  gem "rubocop", "~> 0.36.0", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
 
