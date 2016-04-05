@@ -314,7 +314,13 @@ module Puppet
     :always_cache_features => {
       :type     => :boolean,
       :default  => false,
+      :hook     => proc { |value|
+        Puppet.deprecation_warning "Setting 'always_cache_features' is
+deprecated and has been replaced by 'always_retry_plugins'."
+      },
       :desc     => <<-'EOT'
+        This setting is deprecated and has been replaced by always_retry_plugins.
+
         Affects how we cache attempts to load Puppet 'features'.  If false, then
         calls to `Puppet.features.<feature>?` will always attempt to load the
         feature (which can be an expensive operation) unless it has already been
@@ -328,6 +334,27 @@ module Puppet
         for all subsequent attempts to load the feature.  This behavior is almost
         always appropriate for the server, and can result in a significant performance
         improvement for features that are checked frequently.
+      EOT
+    },
+    :always_retry_plugins => {
+        :type     => :boolean,
+        :default  => true,
+        :desc     => <<-'EOT'
+        Affects how we cache attempts to load Puppet resource types and features.  If
+        true, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
+        will always attempt to load the type or feature (which can be an
+        expensive operation) unless it has already been loaded successfully.
+        This makes it possible for a single agent run to, e.g., install a
+        package that provides the underlying capabilities for a type or feature,
+        and then later load that type or feature during the same run (even if
+        the type or feature had been tested earlier and had not been available).
+
+        If this setting is set to false, then types and features will only be
+        checked once, and if they are not available, the negative result is
+        cached and returned for all subsequent attempts to load the type or
+        feature.  This behavior is almost always appropriate for the server,
+        and can result in a significant performance improvement for types and
+        features that are checked frequently.
       EOT
     },
     :diff_args => {
