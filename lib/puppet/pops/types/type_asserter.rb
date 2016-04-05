@@ -30,7 +30,7 @@ module TypeAsserter
   # @api public
   def self.assert_instance_of(subject, expected_type, value, nil_ok = false, &block)
     unless value.nil? && nil_ok
-      report_type_mismatch(subject, expected_type, TypeCalculator.singleton.infer_set(value).generalize, &block) unless expected_type.instance?(value)
+      report_type_mismatch(subject, expected_type, TypeCalculator.singleton.infer_set(value), &block) unless expected_type.instance?(value)
     end
     value
   end
