@@ -122,21 +122,23 @@ describe 'agent logging' do
   # @return Set<Symbol> of expected loggers
   def self.expected_loggers(argv)
     loggers = Set.new
-    loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
     loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
     loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
-    if Puppet.features.microsoft_windows?
-      # an explicit call to --logdest syslog on windows is swallowed silently with no
-      # logger created (see #suitable() of the syslog Puppet::Util::Log::Destination subclass)
-      # however Puppet::Util::Log.newdestination('syslog') does get called...so we have
-      # to set an expectation
-      loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
-
-      loggers << EVENTLOG if no_log_dest_set_in(argv)
+    if no_log_dest_set_in(argv) and verbose_or_debug_set_in_argv(argv)
+        loggers << CONSOLE
     else
-      # posix
-      loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
-      loggers << SYSLOG if no_log_dest_set_in(argv)
+      if Puppet.features.microsoft_windows?
+        # an explicit call to --logdest syslog on windows is swallowed silently with no
+        # logger created (see #suitable() of the syslog Puppet::Util::Log::Destination subclass)
+        # however Puppet::Util::Log.newdestination('syslog') does get called...so we have
+        # to set an expectation
+        loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
+        loggers << EVENTLOG if no_log_dest_set_in(argv)
+      else
+        # posix
+        loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
+        loggers << SYSLOG if no_log_dest_set_in(argv)
+      end
     end
     return loggers
   end

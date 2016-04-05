@@ -253,7 +253,6 @@ describe Puppet::Application::Agent do
         it "should set console as the log destination with level #{level}" do
           @puppetd.options[level] = true
 
-          Puppet::Util::Log.expects(:newdestination).at_least_once
           Puppet::Util::Log.expects(:newdestination).with(:console).once
 
           @puppetd.setup_logs
