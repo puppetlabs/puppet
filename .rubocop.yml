@@ -49,6 +49,10 @@ Lint/LiteralInInterpolation:
 Style/RedundantReturn:
   Enabled: false
 
+# Disabled. Throws an error trying to run.
+Style/RedundantParentheses:
+  Enabled: false
+
 # DISABLED since the instances do not seem to indicate any specific errors.
 Lint/AmbiguousOperator:
   Enabled: false
@@ -166,9 +170,6 @@ Style/AsciiComments:
 Style/Attr:
   Enabled: false
 
-Style/Blocks:
-  Enabled: false
-
 Style/BracesAroundHashParameters:
   Enabled: false
 
@@ -232,9 +233,6 @@ Style/SpaceInsideParens:
   Enabled: false
 
 Style/LeadingCommentSpace:
-  Enabled: false
-
-Style/SingleSpaceBeforeFirstArg:
   Enabled: false
 
 Style/SpaceAfterColon:
@@ -326,9 +324,6 @@ Style/EmptyLines:
 Style/EmptyLinesAroundAccessModifier:
   Enabled: false
 
-Style/EmptyLinesAroundBody:
-  Enabled: false
-
 Style/EmptyLiteral:
   Enabled: false
 
@@ -350,7 +345,10 @@ Style/TrailingWhitespace:
 Style/StringLiterals:
   Enabled: false
 
-Style/TrailingComma:
+Style/TrailingCommaInLiteral:
+  Enabled: false
+
+Style/TrailingCommaInArguments:
   Enabled: false
 
 Style/GlobalVars:
@@ -388,9 +386,6 @@ Style/TrivialAccessors:
   Enabled: false
 
 Style/UnlessElse:
-  Enabled: false
-
-Style/UnneededPercentX:
   Enabled: false
 
 Style/VariableInterpolation:
@@ -495,7 +490,7 @@ Metrics/ParameterLists:
 Lint/RequireParentheses:
   Enabled: false
 
-Lint/SpaceBeforeFirstArg:
+Style/SpaceBeforeFirstArg:
   Enabled: false
 
 Style/ModuleFunction:
@@ -530,3 +525,151 @@ Style/PercentQLiterals:
 
 Style/MultilineBlockLayout:
   Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
+
+Style/MutableConstant:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false
+
+Style/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Style/ConditionalAssignment:
+  Enabled: false
+
+Style/ExtraSpacing:
+  Enabled: false
+
+Style/EmptyLinesAroundBlockBody:
+  Enabled: false
+
+Style/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Style/MultilineOperationIndentation:
+  Enabled: false
+
+Style/EmptyElse:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Style/MultilineMethodCallIndentation:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Style/EmptyLinesAroundMethodBody:
+  Enabled: false
+
+Lint/IneffectiveAccessModifier:
+  Enabled: false
+
+Performance/StringReplacement:
+  Enabled: false
+
+Style/ClosingParenthesisIndentation:
+  Enabled: false
+
+Style/UnneededInterpolation:
+  Enabled: false
+
+Style/ElseAlignment:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/FirstParameterIndentation:
+  Enabled: false
+
+Style/IfInsideElse:
+  Enabled: false
+
+Style/IndentAssignment:
+  Enabled: false
+
+Style/SpaceAroundBlockParameters:
+  Enabled: false
+
+Style/ParallelAssignment:
+  Enabled: false
+
+Performance/RedundantBlockCall:
+  Enabled: false
+
+Style/IdenticalConditionalBranches:
+  Enabled: false
+
+Performance/RedundantMatch:
+  Enabled: false
+
+Style/CommandLiteral:
+  Enabled: false
+
+Performance/Casecmp:
+  Enabled: false
+
+Lint/NestedMethodDefinition:
+  Enabled: false
+
+Style/SpaceInsideStringInterpolation:
+  Enabled: false
+
+Performance/RedundantMerge:
+  Enabled: false
+
+Performance/ReverseEach:
+  Enabled: false
+
+Style/NestedModifier:
+  Enabled: false
+
+Lint/NonLocalExitFromIterator:
+  Enabled: false
+
+Performance/Count:
+  Enabled: false
+
+Style/NestedParenthesizedCalls:
+  Enabled: false
+
+Style/RescueEnsureAlignment:
+  Enabled: false
+
+Lint/DuplicateMethods:
+  Enabled: false
+
+Performance/RangeInclude:
+  Enabled: false
+
+Style/TrailingUnderscoreVariable:
+  Enabled: false
+
+Lint/LiteralInInterpolation:
+  Enabled: false
+
+Performance/DoubleStartEndWith:
+  Enabled: false
+
+Performance/RedundantSortBy:
+  Enabled: false
+
+Performance/TimesMap:
+  Enabled: false
+
+Style/InitialIndentation:
+  Enabled: false
+
+Style/StructInheritance:
+  Enabled: false
+
+Style/SymbolLiteral:
+  Enabled: false
+
