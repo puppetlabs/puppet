@@ -61,6 +61,10 @@ describe 'The type factory' do
       expect(TypeFactory.struct().class()).to eq(PStructType)
     end
 
+    it "object() returns PObjectType" do
+      expect(TypeFactory.object.class).to eq(PObjectType)
+    end
+
     it 'tuple() returns PTupleType' do
       expect(TypeFactory.tuple.class()).to eq(PTupleType)
     end

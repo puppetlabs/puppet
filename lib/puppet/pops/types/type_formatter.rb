@@ -237,6 +237,21 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PAnnotatedMember(m)
+    hash = m.i12n_hash
+    if hash.size == 1
+      string(m.type)
+    else
+      string(hash)
+    end
+  end
+
+  # @api private
+  def string_PObjectType(t)
+    append_array('Object', [string(t.i12n_hash)])
+  end
+
+  # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
     if optional_type.nil?

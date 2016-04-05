@@ -66,6 +66,10 @@ class TypeParser
     interpret(o.body, context)
   end
 
+  def interpret_LambdaExpression(o, context)
+    o
+  end
+
   # @api private
   def interpret_QualifiedName(o, context)
     o.value
@@ -217,6 +221,9 @@ class TypeParser
 
     when 'struct'
       TypeFactory.struct
+
+    when 'object'
+      TypeFactory.object
 
     when 'callable'
       # A generic callable as opposed to one that does not accept arguments
@@ -405,6 +412,10 @@ class TypeParser
      else
        TypeFactory.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
+
+    when 'object'
+      raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
+      TypeFactory.object(parameters[0])
 
     when 'iterable'
       if parameters.size != 1

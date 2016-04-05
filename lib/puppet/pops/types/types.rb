@@ -16,6 +16,8 @@ require 'rgen/metamodel_builder'
 
 module Puppet::Pops
 module Types
+
+EMPTY_HASH = {}.freeze
 # The Types model is a model of Puppet Language types.
 #
 # The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
@@ -114,6 +116,14 @@ class PAnyType < TypedModelObject
   # @api private
   def callable_args?(callable, guard)
     false
+  end
+
+  # Called from the `PTypeAliasType` when it detects self recursion. The default is to do nothing
+  # but some self recursive constructs are illegal such as when a `PObjectType` somehow inherits itself
+  # @param originator [PTypeAliasType] the starting point for the check
+  # @raise Puppet::Error if an illegal self recursion is detected
+  # @api private
+  def check_self_recursion(originator)
   end
 
   # Generalizes value specific types. Types that are not value specific will return `self` otherwise
@@ -1264,7 +1274,12 @@ class PRegexpType < PScalarType
   attr_reader :pattern
 
   def initialize(pattern)
-    @pattern = pattern
+    if pattern.is_a?(Regexp)
+      @regexp = pattern
+      @pattern = pattern.source
+    else
+      @pattern = pattern
+    end
   end
 
   def regexp
@@ -2585,6 +2600,7 @@ end
 # might contain self recursion. Whether or not that is the case is computed and remembered when the alias
 # is resolved since guarding against self recursive constructs is relatively expensive.
 #
+# @api public
 class PTypeAliasType < PAnyType
   attr_reader :name
 
@@ -2610,6 +2626,10 @@ class PTypeAliasType < PAnyType
 
   def callable_args?(callable, guard)
     guarded_recursion(guard, false) { |g| resolved_type.callable_args?(callable, g) }
+  end
+
+  def check_self_recursion(originator)
+    resolved_type.check_self_recursion(originator) unless originator.equal?(self)
   end
 
   def kind_of_callable?(optional=true, guard = nil)
@@ -2683,6 +2703,7 @@ class PTypeAliasType < PAnyType
           raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
         end
         @self_recursion = guard.recursive_this?(self)
+        @resolved_type.check_self_recursion(self) if @self_recursion
         if @self_recursion && @resolved_type.is_a?(PVariantType)
           # Drop variants that are not real types
           resolved_types = @resolved_type.types
@@ -2727,6 +2748,16 @@ class PTypeAliasType < PAnyType
     @self_recursion
   end
 
+  # Delegates to resolved type
+  def respond_to_missing?(name, include_private)
+    resolved_type.respond_to?(name, include_private)
+  end
+
+  # Delegates to resolved type
+  def method_missing(name, *arguments, &block)
+    resolved_type.send(name, *arguments, &block)
+  end
+
   protected
 
   def _assignable?(o, guard)
@@ -2755,3 +2786,5 @@ class PTypeAliasType < PAnyType
 end
 end
 end
+
+require_relative 'p_object_type'
