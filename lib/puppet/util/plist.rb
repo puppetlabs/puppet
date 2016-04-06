@@ -115,16 +115,16 @@ module Puppet::Util::Plist
       begin
         plist_to_save       = CFPropertyList::List.new
         plist_to_save.value = CFPropertyList.guess(plist)
-        plist_to_save.save(file_path, to_format(format))
+        plist_to_save.save(file_path, to_format(format), :formatted => true)
       rescue IOError => e
-        Puppet.error("Unable to write the file #{file_path}. #{e.inspect}")
+        Puppet.err("Unable to write the file #{file_path}. #{e.inspect}")
       end
     end
 
     def dump_plist(plist_data, format = :xml)
       plist_to_save       = CFPropertyList::List.new
       plist_to_save.value = CFPropertyList.guess(plist_data)
-      plist_to_save.to_str(to_format(format))
+      plist_to_save.to_str(to_format(format), :formatted => true)
     end
   end
 end
