@@ -301,15 +301,19 @@ module TypeFactory
   # name.  (There is no resource-type subtyping in Puppet (yet)).
   #
   def self.resource(type_name = nil, title = nil)
-    type_name = type_name.type_name if type_name.is_a?(PResourceType)
-    type_name = type_name.downcase unless type_name.nil?
-    unless type_name.nil? || type_name =~ Patterns::CLASSREF
-      raise ArgumentError, "Illegal type name '#{type.type_name}'"
+    case type_name
+    when PResourceType
+      PResourceType.new(type_name.type_name, title)
+    when String
+      type_name = TypeFormatter.singleton.capitalize_segments(type_name)
+      raise ArgumentError, "Illegal type name '#{type_name}'" unless type_name =~ Patterns::CLASSREF_EXT
+      PResourceType.new(type_name, title)
+    when nil
+      raise ArgumentError, 'The type name cannot be nil, if title is given' unless title.nil?
+      PResourceType::DEFAULT
+    else
+      raise ArgumentError, "The type name cannot be a #{type_name.class.name}"
     end
-    if type_name.nil? && !title.nil?
-      raise ArgumentError, 'The type name cannot be nil, if title is given'
-    end
-    PResourceType.new(type_name, title)
   end
 
   # Produces PHostClassType with a string class_name.  A PHostClassType with

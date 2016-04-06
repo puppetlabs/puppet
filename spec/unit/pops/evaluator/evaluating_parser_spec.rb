@@ -60,11 +60,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'should error when it encounters an unknown resource' do
-      expect {parser.evaluate_string(scope, '$a = SantaClause', __FILE__)}.to raise_error(/Resource type not found: Santaclause/)
+      expect {parser.evaluate_string(scope, '$a = SantaClause', __FILE__)}.to raise_error(/Resource type not found: SantaClause/)
     end
 
     it 'should error when it encounters an unknown resource with a parameter' do
-      expect {parser.evaluate_string(scope, '$b = ToothFairy[emea]', __FILE__)}.to raise_error(/Resource type not found: Toothfairy/)
+      expect {parser.evaluate_string(scope, '$b = ToothFairy[emea]', __FILE__)}.to raise_error(/Resource type not found: ToothFairy/)
     end
   end
 

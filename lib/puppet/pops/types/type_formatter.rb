@@ -280,7 +280,7 @@ class TypeFormatter
     if t.parameters.empty?
       t.name
     else
-      append_array(t.name.clone, t.parameters.map {|p| string(p) })
+      append_array(t.name, t.parameters.map {|p| string(p) })
     end
   end
 
@@ -290,18 +290,27 @@ class TypeFormatter
   end
 
   NAME_SEGMENT_SEPARATOR = '::'.freeze
+  STARTS_WITH_ASCII_CAPITAL = /^[A-Z]/
 
-  # Capitalizes each segment in a name separated with the {NAME_SEPARATOR}
+  # Capitalizes each segment in a name separated with the {NAME_SEPARATOR} conditionally. The name
+  # will not be subject to capitalization if it already starts with a capital letter. This to avoid
+  # that existing camel casing is lost.
+  #
   # @param qualified_name [String] the name to capitalize
   # @return [String] the capitalized name
   #
+  # @api private
   def capitalize_segments(qualified_name)
-    segments = qualified_name.split(NAME_SEGMENT_SEPARATOR)
-    if segments.size == 1
-      qualified_name.capitalize
+    if !qualified_name.is_a?(String) || qualified_name =~ STARTS_WITH_ASCII_CAPITAL
+      qualified_name
     else
-      segments.each(&:capitalize!)
-      segments.join(NAME_SEGMENT_SEPARATOR)
+      segments = qualified_name.split(NAME_SEGMENT_SEPARATOR)
+      if segments.size == 1
+        qualified_name.capitalize
+      else
+        segments.each(&:capitalize!)
+        segments.join(NAME_SEGMENT_SEPARATOR)
+      end
     end
   end
 
@@ -315,22 +324,25 @@ class TypeFormatter
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
   end
 
-  def append_array(bld, array)
+  def append_array(start, array)
     case array.size
     when 0
+      start
     when 1
-      bld << '[' << array[0] << ']'
+      "#{start}[#{array[0]}]"
     else
-      bld << '['
+      bld = ''
+      bld << start << '['
       array.each { |elem| bld << elem << COMMA_SEP }
       bld.chomp!(COMMA_SEP)
       bld << ']'
+      bld
     end
-    bld
   end
 
-  def append_hash(bld, hash_entries)
-    bld << '{'
+  def append_hash(start, hash_entries)
+    bld = ''
+    bld << start << '{'
     hash_entries.each { |k, v| bld << k  << HASH_ENTRY_OP << v << COMMA_SEP }
     bld.chomp!(COMMA_SEP)
     bld << '}'

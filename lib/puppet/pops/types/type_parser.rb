@@ -212,7 +212,7 @@ class TypeParser
         type = loader.load(:type, name)
         type = type.resolve(self, loader) unless type.nil?
       end
-      type || TypeFactory.type_reference(TypeFormatter.singleton.capitalize_segments(name))
+      type || TypeFactory.type_reference(name_ast.cased_value)
     end
   end
 
@@ -480,7 +480,7 @@ class TypeParser
       end
 
       if type.nil?
-        TypeFactory.type_reference(TypeFormatter.singleton.capitalize_segments(type_name), parameters)
+        TypeFactory.type_reference(qref.cased_value, parameters)
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(type_name, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])

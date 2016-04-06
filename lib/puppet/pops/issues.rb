@@ -526,7 +526,7 @@ module Issues
   end
 
   UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
-    "Resource not found: #{type_name.capitalize}['#{title}']"
+    "Resource not found: #{type_name}['#{title}']"
   end
 
   UNKNOWN_RESOURCE_PARAMETER = issue :UNKNOWN_RESOURCE_PARAMETER, :type_name, :title, :param_name do

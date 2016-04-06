@@ -108,7 +108,7 @@ describe 'The type factory' do
     it 'resource(x) creates a PResourceType[x]' do
       pr = Puppet::Pops::Types::TypeFactory.resource('x')
       expect(pr.class()).to eq(Puppet::Pops::Types::PResourceType)
-      expect(pr.type_name).to eq('x')
+      expect(pr.type_name).to eq('X')
     end
 
     it 'host_class() creates a generic PHostClassType' do
