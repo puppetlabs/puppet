@@ -4,6 +4,7 @@ extend Puppet::Acceptance::StaticCatalogUtils
 test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri" do
 
   skip_test 'requires puppetserver installation' if @options[:type] != 'aio'
+  confine :except, :platform => /^huaweios/ # See HUAWEI-14
 
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))
   module_dir = "#{basedir}/environments/production/modules"
