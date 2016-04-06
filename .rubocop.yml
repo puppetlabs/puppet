@@ -241,7 +241,7 @@ Style/SpaceAfterColon:
 Style/SpaceAfterComma:
   Enabled: false
 
-Style/SpaceAfterControlKeyword:
+Style/SpaceAroundKeyword:
   Enabled: false
 
 Style/SpaceAfterMethodName:
@@ -671,5 +671,11 @@ Style/StructInheritance:
   Enabled: false
 
 Style/SymbolLiteral:
+  Enabled: false
+
+Style/IfUnlessModifierOfIfUnless:
+  Enabled: false
+
+Style/ZeroLengthPredicate:
   Enabled: false
 
