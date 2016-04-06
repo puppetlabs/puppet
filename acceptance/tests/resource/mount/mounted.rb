@@ -5,6 +5,7 @@ confine :except, :platform => /osx/ # See PUP-4823
 confine :except, :platform => /solaris/ # See PUP-5201
 confine :except, :platform => /^eos-/ # Mount provider not supported on Arista EOS switches
 confine :except, :platform => /^cisco_/ # See PUP-5826
+confine :except, :platform => /^huawei/ # See PUP-6126
 
 require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils

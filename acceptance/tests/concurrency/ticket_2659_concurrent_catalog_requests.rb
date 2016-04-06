@@ -77,29 +77,55 @@ with_puppet_running_on(master, master_opts, testdir) do
     run_count = 6
     agent_tmpdir = agent.tmpdir("concurrent-loop-script")
     test_script = "#{agent_tmpdir}/loop.sh"
-    create_remote_file(agent, test_script, <<-EOF)
-      declare -a MYPIDS
-      loops=#{run_count}
+    if agent.platform.variant != 'huaweios'
+      create_remote_file(agent, test_script, <<-EOF)
+        declare -a MYPIDS
+        loops=#{run_count}
 
-      for (( i=0; i<$loops; i++ )); do
-        (
-          sleep_for="0.$(( $RANDOM % 49 ))"
-          sleep $sleep_for
-          url='https://#{master}:8140/puppet/v3/catalog/#{agent_cert}?environment=production'
-          echo "Curling: $url"
-          env PATH='#{agent[:privatebindir]}:${PATH}' curl --tlsv1 -v -# -H 'Accept: text/pson' --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} $url
-          echo "$PPID Completed"
-        ) > "#{agent_tmpdir}/catalog-request-$i.out" 2>&1 &
-        echo "Launched $!"
-        MYPIDS[$i]=$!
-      done
+        for (( i=0; i<$loops; i++ )); do
+          (
+            sleep_for="0.$(( $RANDOM % 49 ))"
+            sleep $sleep_for
+            url='https://#{master}:8140/puppet/v3/catalog/#{agent_cert}?environment=production'
+            echo "Curling: $url"
+            env PATH='#{agent[:privatebindir]}:${PATH}' curl --tlsv1 -v -# -H 'Accept: text/pson' --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} $url
+            echo "$PPID Completed"
+          ) > "#{agent_tmpdir}/catalog-request-$i.out" 2>&1 &
+          echo "Launched $!"
+          MYPIDS[$i]=$!
+        done
 
-      for (( i=0; i<$loops; i++ )); do
-        wait ${MYPIDS[$i]}
-      done
+        for (( i=0; i<$loops; i++ )); do
+          wait ${MYPIDS[$i]}
+        done
 
-      echo "All requests are finished"
-    EOF
+        echo "All requests are finished"
+      EOF
+    else
+      create_remote_file(agent, test_script, <<-EOF)
+        declare -a MYPIDS
+        loops=#{run_count}
+
+        for (( i=0; i<$loops; i++ )); do
+          (
+            sleep_for="0.$(( $RANDOM % 49 ))"
+            sleep $sleep_for
+            url='https://#{master}:8140/puppet/v3/catalog/#{agent_cert}?environment=production'
+            echo "Curling: $url"
+            env PATH=#{agent[:privatebindir]}:$PATH curl --tlsv1 -v -# -H 'Accept: text/pson' --cert #{cert_path} --key #{key_path} --cacert #{cacert_path} $url
+            echo "$PPID Completed"
+          ) > "#{agent_tmpdir}/catalog-request-$i.out" 2>&1 &
+          echo "Launched $!"
+          MYPIDS[$i]=$!
+        done
+
+        for (( i=0; i<$loops; i++ )); do
+          wait ${MYPIDS[$i]}
+        done
+
+        echo "All requests are finished"
+      EOF
+    end
     on(agent, "chmod +x #{test_script}")
     on(agent, "#{test_script}")
     run_count.times do |i|
