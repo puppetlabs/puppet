@@ -174,49 +174,25 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=loaded\nUnitFileState=enabled\n"
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "enabled\n"
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=loaded\nUnitFileState=disabled\n"
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "disabled\n"
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is masked and the resource is attempting to be disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=masked\nUnitFileState=\n"
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :mask if the service is masked and the resource is attempting to be masked" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
-      provider.expects(:systemctl).with(
-        'show',
-        'sshd.service',
-        '--property', 'LoadState',
-        '--property', 'UnitFileState',
-        '--no-pager'
-      ).returns "LoadState=masked\nUnitFileState=\n"
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
       expect(provider.enabled?).to eq(:mask)
     end
   end
@@ -299,7 +275,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         provider.stubs(:system)
         $CHILD_STATUS.expects(:exitstatus).returns(status)
-        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+        expect(provider.debian_enabled?).to eq(:true)
       end
     end
 
@@ -309,7 +285,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         provider.stubs(:system)
         provider.expects(:get_start_link_count).returns(4)
         $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
-        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:true)
+        expect(provider.debian_enabled?).to eq(:true)
       end
 
       it "should return false when status is #{status} and there are less than 4 start links" do
@@ -317,7 +293,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         provider.stubs(:system)
         provider.expects(:get_start_link_count).returns(1)
         $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
-        expect(provider.debian_enabled?({:LoadState => "loaded", :UnitFileState => "UnitFileState"})).to eq(:false)
+        expect(provider.debian_enabled?).to eq(:false)
       end
     end
   end
