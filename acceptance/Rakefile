@@ -34,7 +34,7 @@ module HarnessOptions
     :xml => true,
     :timesync => false,
     :repo_proxy => true,
-    :add_el_extras => true,
+    :add_el_extras => false,
     :preserve_hosts => 'onfail',
     :forge_host => 'forge-aio01-petest.puppetlabs.com',
     :'master-start-curl-retries' => 30
