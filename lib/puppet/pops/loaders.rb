@@ -307,8 +307,8 @@ class Loaders
     def create_loader_with_only_dependencies_visible(from_module_data)
       if from_module_data.unmet_dependencies?
         if Puppet[:strict] != :off
-          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
-              " - it will only see those that are resolved."+
+          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies" \
+              " - it will only see those that are resolved." \
               " Use 'puppet module list --tree' to see information about modules"
           case Puppet[:strict]
           when :error
