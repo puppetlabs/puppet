@@ -819,6 +819,11 @@ class PCollectionType < PAnyType
     (@size_type || DEFAULT_SIZE).range
   end
 
+  def has_empty_range?
+    from, to = size_range
+    from == 0 && to == 0
+  end
+
   def hash
     @element_type.hash ^ @size_type.hash
   end
