@@ -72,8 +72,8 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   private
 
   def fail_redefine(entry)
-    origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : "unknown location"
-    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}' originally set at #{origin_info}"
+    origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : "Set at unknown location"
+    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}"
   end
 
   # TODO: Should not really be here?? - TODO: A Label provider ? semantics for the URI?
