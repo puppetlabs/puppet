@@ -21,6 +21,11 @@ describe Puppet::Indirector::ResourceType::Parser do
     expect(Puppet::Indirector::Terminus.terminus_class(:resource_type, :parser)).to equal(Puppet::Indirector::ResourceType::Parser)
   end
 
+  it "is deprecated on the network, but still allows requests" do
+    Puppet.expects(:deprecation_warning)
+    expect(Puppet::Indirector::ResourceType::Parser.new.allow_remote_requests?).to eq(true)
+  end
+
   describe "when finding" do
     it "should return any found type from the request's environment" do
       type = Puppet::Resource::Type.new(:hostclass, "foo")
