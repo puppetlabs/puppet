@@ -310,9 +310,10 @@ class Loaders
           msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
               " - it will only see those that are resolved."+
               " Use 'puppet module list --tree' to see information about modules"
-          if Puppet[:strict] == :error
-            raise LoaderError.new(msg)
-          elsif Puppet[:strict] == :warning
+          case Puppet[:strict]
+          when :error
+              raise LoaderError.new(msg)
+          when :warning
             Puppet.warn_once(:unresolved_module_dependencies,
                              "unresolved_dependencies_for_module_#{from_module_data.name}",
                              msg)
