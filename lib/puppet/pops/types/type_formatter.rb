@@ -56,20 +56,6 @@ class TypeFormatter
   end
 
   # @api private
-  def string_Module(t)
-    string(TypeCalculator.singleton.type(t))
-  end
-
-  # @api private
-  def string_NilClass(t)     ; '?'       ; end
-
-  # @api private
-  def string_String(t)       ; t.inspect ; end
-
-  # @api private
-  def string_Symbol(t)       ; t.to_s    ; end
-
-  # @api private
   def string_PAnyType(t)     ; 'Any'     ; end
 
   # @api private
@@ -251,6 +237,51 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PAnnotatedMember(m)
+    hash = m.i12n_hash
+    if hash.size == 1
+      string(m.type)
+    else
+      string(hash)
+    end
+  end
+
+  # @api private
+  def string_PObjectType(t)
+    stringified = Hash[t.i12n_hash.map do |k,v|
+      case k
+      when PObjectType::KEY_PARENT
+        # never print parent expanded
+        save_expanded = @expand_aliases
+        begin
+          @expand_aliases = false
+          v = string(v)
+        ensure
+          @expand_aliases = save_expanded
+        end
+      when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+        v = append_hash('', Hash[v.map do |fk, fv|
+          if fv.is_a?(Hash)
+            fv = append_hash('', Hash[fv.map  do |fak,fav|
+                fav = string(fav) unless fak == PObjectType::KEY_KIND
+                [fak, fav]
+              end])
+          else
+            fv = string(fv)
+          end
+          [string(fk), fv]
+        end])
+      when PObjectType::KEY_EQUALITY
+        v = append_array('', v) if v.is_a?(Array)
+      else
+        v = string(v)
+      end
+      [k, v]
+    end]
+    append_array('Object', [append_hash('', stringified)])
+  end
+
+  # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
     if optional_type.nil?
@@ -283,6 +314,46 @@ class TypeFormatter
       append_array(t.name, t.parameters.map {|p| string(p) })
     end
   end
+
+  # @api private
+  def string_Array(t)
+    t.empty? ? '[]' : append_array('', t.map { |e| string(e) })
+  end
+
+  # @api private
+  def string_FalseClass(t)   ; 'false'       ; end
+
+  # @api private
+  def string_Hash(t)
+    append_hash('', Hash[t.map {|k,v| [string(k), string(v)]}])
+  end
+
+  # @api private
+  def string_Module(t)
+    string(TypeCalculator.singleton.type(t))
+  end
+
+  # @api private
+  def string_NilClass(t)     ; '?'       ; end
+
+  # @api private
+  def string_Numeric(t)      ; t.to_s    ; end
+
+  # @api private
+  def string_Regexp(t)       ; "/#{t.source}/"; end
+
+  # @api private
+  def string_String(t)
+    # Use single qoute on strings that does not contain single quotes, control characters, or backslashes.
+    # TODO: This should move to StringConverter when this formatter is changed to take advantage of it
+    t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect
+  end
+
+  # @api private
+  def string_Symbol(t)       ; t.to_s    ; end
+
+  # @api private
+  def string_TrueClass(t)    ; 'true'       ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

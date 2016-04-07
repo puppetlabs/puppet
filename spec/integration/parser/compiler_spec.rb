@@ -1564,7 +1564,7 @@ describe Puppet::Parser::Compiler do
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
-        end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' has no 'c' key/m)
+        end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' extraneous key 'c'/m)
       end
     end
 

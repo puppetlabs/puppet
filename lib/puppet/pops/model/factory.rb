@@ -157,8 +157,8 @@ class Factory
   end
 
   def build_KeyedEntry(o, k, v)
-    o.key = to_ops(k)
-    o.value = to_ops(v)
+    o.key = to_collection_entry(to_ops(k))
+    o.value = to_collection_entry(to_ops(v))
     o
   end
 
@@ -167,8 +167,21 @@ class Factory
     o
   end
 
+  def to_collection_entry(o)
+    if o.is_a?(Model::ReservedWord)
+      case o.word
+      when 'application', 'site', 'produces', 'consumes'
+        build(o.word)
+      else
+        o
+      end
+    else
+      o
+    end
+  end
+
   def build_LiteralList(o, *values)
-    o.values = values.map {|v| build(v) }
+    o.values = values.map {|v| to_collection_entry(build(v)) }
     o
   end
 

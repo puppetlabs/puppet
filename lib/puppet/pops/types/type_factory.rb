@@ -110,7 +110,7 @@ module TypeFactory
   # The value can be a ruby class, a String (interpreted as the name of a ruby class) or
   # a Type.
   #
-  # @param hash [Hash<Object, Object>] key => value hash
+  # @param hash [{String,PAnyType=>PAnyType}] key => value hash
   # @return [PStructType] the created Struct type
   #
   def self.struct(hash = {})
@@ -146,6 +146,15 @@ module TypeFactory
       PStructElement.new(key_type, value_type)
     end
     PStructType.new(elements)
+  end
+
+  # Produces an `Object` type from the given _hash_ that represents the features of the object
+  #
+  # @param hash [{String=>Object}] the hash of feature groups
+  # @return [PObjectType] the created type
+  #
+  def self.object(hash = nil)
+    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
   end
 
   def self.tuple(types = [], size_type = nil)
@@ -343,6 +352,17 @@ module TypeFactory
   #
   def self.hash_of(value, key = scalar, size_type = nil)
     PHashType.new(type_of(key), type_of(value), size_type)
+  end
+
+  # Produces a type for Hash[key,value,size]
+  # @param key_type [PAnyType] the key type
+  # @param value_type [PAnyType] the value type
+  # @param size_type [PIntegerType]
+  # @return [PHashType] the created hash type
+  # @api public
+  #
+  def self.hash_kv(key_type, value_type, size_type = nil)
+    PHashType.new(key_type, value_type, size_type)
   end
 
   # Produces a type for Array[Data]

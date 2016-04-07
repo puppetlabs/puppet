@@ -66,38 +66,23 @@ class TypeParser
     interpret(o.body, context)
   end
 
+  def interpret_LambdaExpression(o, context)
+    o
+  end
+
   # @api private
   def interpret_QualifiedName(o, context)
     o.value
   end
 
   # @api private
-  def interpret_LiteralString(o, context)
+  def interpret_LiteralBoolean(o, context)
     o.value
-  end
-
-  def interpret_LiteralRegularExpression(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_String(o, context)
-    o
   end
 
   # @api private
   def interpret_LiteralDefault(o, context)
     :default
-  end
-
-  # @api private
-  def interpret_LiteralInteger(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_UnaryMinusExpression(o, context)
-    -@type_transformer.visit_this_1(self, o.expr, context)
   end
 
   # @api private
@@ -112,6 +97,41 @@ class TypeParser
       result[@type_transformer.visit_this_1(self, entry.key, context)] = @type_transformer.visit_this_1(self, entry.value, context)
     end
     result
+  end
+
+  # @api private
+  def interpret_LiteralInteger(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralList(o, context)
+    o.values.map { |value| @type_transformer.visit_this_1(self, value, context) }
+  end
+
+  # @api private
+  def interpret_LiteralRegularExpression(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralString(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralUndef(o, context)
+    nil
+  end
+
+  # @api private
+  def interpret_String(o, context)
+    o
+  end
+
+  # @api private
+  def interpret_UnaryMinusExpression(o, context)
+    -@type_transformer.visit_this_1(self, o.expr, context)
   end
 
   # @api private
@@ -201,6 +221,9 @@ class TypeParser
 
     when 'struct'
       TypeFactory.struct
+
+    when 'object'
+      TypeFactory.object
 
     when 'callable'
       # A generic callable as opposed to one that does not accept arguments
@@ -389,6 +412,10 @@ class TypeParser
      else
        TypeFactory.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
+
+    when 'object'
+      raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
+      TypeFactory.object(parameters[0])
 
     when 'iterable'
       if parameters.size != 1

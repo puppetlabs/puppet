@@ -1,11 +1,13 @@
 require 'spec_helper'
 require 'puppet/pops'
 
-describe Puppet::Pops::Types::TypeParser do
+module Puppet::Pops
+module Types
+describe TypeParser do
   extend RSpec::Matchers::DSL
 
-  let(:parser) { Puppet::Pops::Types::TypeParser.new }
-  let(:types)  { Puppet::Pops::Types::TypeFactory }
+  let(:parser) { TypeParser.new }
+  let(:types)  { TypeFactory }
   it "rejects a puppet expression" do
     expect { parser.parse("1 + 1") }.to raise_error(Puppet::ParseError, /The expression <1 \+ 1> is not a valid type specification/)
   end
@@ -123,7 +125,7 @@ describe Puppet::Pops::Types::TypeParser do
       'Pattern[/x9/, /([a-z]+)([1-9]+)/]'  => [:pattern, [/x9/, /([a-z]+)([1-9]+)/]],
     }.each do |source, type|
       it "such that the source '#{source}' yields the type #{type.to_s}" do
-        expect(parser.parse(source)).to be_the_type(Puppet::Pops::Types::TypeFactory.send(type[0], *type[1]))
+        expect(parser.parse(source)).to be_the_type(TypeFactory.send(type[0], *type[1]))
       end
     end
   end
@@ -138,7 +140,7 @@ describe Puppet::Pops::Types::TypeParser do
     let(:loader) { Object.new }
 
     before :each do
-      Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Puppet::Pops::Model::QualifiedReference), scope).at_most_once.returns loader
+      Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
     end
 
     it 'interprets anything that is not found by the loader to be a type reference' do
@@ -267,11 +269,17 @@ describe Puppet::Pops::Types::TypeParser do
     t = parser.parse("Callable[0,1]")
     expect(t).to be_the_type(types.callable(0,1))
     # Contains a Unit type to indicate "called with what you accept"
-    expect(t.param_types.types[0]).to be_the_type(Puppet::Pops::Types::PUnitType.new())
+    expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
+  end
+
+  it 'parses all known literals' do
+    t = parser.parse('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
+    expect(t).to be_a(PTypeReferenceType)
+    expect(t.parameters).to eql([{'a' =>nil,'b'=>true,'c'=>false,'d'=>:default,'e'=>'string','f'=>0,'g'=>1.0,'h'=>[1,2,3]}])
   end
 
   matcher :be_the_type do |type|
-    calc = Puppet::Pops::Types::TypeCalculator.new
+    calc = TypeCalculator.new
 
     match do |actual|
       calc.assignable?(actual, type) && calc.assignable?(type, actual)
@@ -299,6 +307,8 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   def the_type_spec_for(type)
-    Puppet::Pops::Types::TypeFormatter.string(type)
+    TypeFormatter.string(type)
   end
+end
+end
 end

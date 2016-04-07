@@ -28,4 +28,20 @@ describe "egrammar parsing of site expression" do
       expect(dump(parse(prog))).to eq(ast)
     end
   end
+
+  context 'When parsing collections containing application management specific keywords' do
+    %w(application site produces consumes).each do |keyword|
+      it "allows the keyword '#{keyword}' in a list" do
+        expect(dump(parse("$a = [#{keyword}]"))).to(eq("(= $a ([] '#{keyword}'))"))
+      end
+
+      it "allows the keyword '#{keyword}' as a key in a hash" do
+        expect(dump(parse("$a = {#{keyword}=>'x'}"))).to(eq("(= $a ({} ('#{keyword}' 'x')))"))
+      end
+
+      it "allows the keyword '#{keyword}' as a value in a hash" do
+        expect(dump(parse("$a = {'x'=>#{keyword}}"))).to(eq("(= $a ({} ('x' '#{keyword}')))"))
+      end
+    end
+  end
 end
