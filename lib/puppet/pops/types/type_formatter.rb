@@ -248,7 +248,37 @@ class TypeFormatter
 
   # @api private
   def string_PObjectType(t)
-    append_array('Object', [string(t.i12n_hash)])
+    stringified = Hash[t.i12n_hash.map do |k,v|
+      case k
+      when PObjectType::KEY_PARENT
+        # never print parent expanded
+        save_expanded = @expand_aliases
+        begin
+          @expand_aliases = false
+          v = string(v)
+        ensure
+          @expand_aliases = save_expanded
+        end
+      when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+        v = append_hash('', Hash[v.map do |fk, fv|
+          if fv.is_a?(Hash)
+            fv = append_hash('', Hash[fv.map  do |fak,fav|
+                fav = string(fav) unless fak == PObjectType::KEY_KIND
+                [fak, fav]
+              end])
+          else
+            fv = string(fv)
+          end
+          [string(fk), fv]
+        end])
+      when PObjectType::KEY_EQUALITY
+        v = append_array('', v) if v.is_a?(Array)
+      else
+        v = string(v)
+      end
+      [k, v]
+    end]
+    append_array('Object', [append_hash('', stringified)])
   end
 
   # @api private
@@ -313,7 +343,11 @@ class TypeFormatter
   def string_Regexp(t)       ; "/#{t.source}/"; end
 
   # @api private
-  def string_String(t)       ; t.inspect ; end
+  def string_String(t)
+    # Use single qoute on strings that does not contain single quotes, control characters, or backslashes.
+    # TODO: This should move to StringConverter when this formatter is changed to take advantage of it
+    t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect
+  end
 
   # @api private
   def string_Symbol(t)       ; t.to_s    ; end

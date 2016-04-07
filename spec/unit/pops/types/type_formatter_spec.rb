@@ -13,10 +13,10 @@ describe 'The type formatter' do
       '?' => nil,
       '23.4' => 23.4,
       '145' => 145,
-      '"string"' => 'string',
+      "'string'" => 'string',
       '/expr/' => /expr/,
       '[1, 2, 3]' => [1, 2, 3],
-      '{"a" => 32, "b" => [1, 2, 3]}' => {'a' => 32,'b' => [1, 2, 3]}
+      "{'a' => 32, 'b' => [1, 2, 3]}" => {'a' => 32,'b' => [1, 2, 3]}
     }.each_pair do |str, value|
       it "should yield '#{str}' for a value of #{str}" do
         expect(s.string(value)).to eq(str)
@@ -279,11 +279,11 @@ describe 'The type formatter' do
     end
 
     it "should yield 'Type[Runtime[ruby, Puppet]]' for the Puppet module" do
-      expect(s.string(Puppet)).to eq('Runtime[ruby, "Puppet"]')
+      expect(s.string(Puppet)).to eq("Runtime[ruby, 'Puppet']")
     end
 
     it "should yield 'Type[Runtime[ruby, Puppet::Pops]]' for the Puppet::Resource class" do
-      expect(s.string(Puppet::Resource)).to eq('Runtime[ruby, "Puppet::Resource"]')
+      expect(s.string(Puppet::Resource)).to eq("Runtime[ruby, 'Puppet::Resource']")
     end
 
     it 'should present a valid simple name' do

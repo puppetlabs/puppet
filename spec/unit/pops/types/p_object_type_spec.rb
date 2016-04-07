@@ -566,7 +566,7 @@ describe 'The Object Type' do
           a => { type => Integer }
         }
       OBJECT
-      expect(TypeFormatter.string(obj)).to eql('Object[{"attributes" => {"a" => Integer}}]')
+      expect(TypeFormatter.string(obj)).to eql("Object[{attributes => {'a' => Integer}}]")
     end
 
     it 'produced hash does not include defaults' do
@@ -576,7 +576,7 @@ describe 'The Object Type' do
         },
         equality_include_type => true
       OBJECT
-      expect(TypeFormatter.string(obj)).to eql('Object[{"attributes" => {"a" => {"type" => Integer, "kind" => "constant", "value" => 23}}}]')
+      expect(TypeFormatter.string(obj)).to eql("Object[{attributes => {'a' => {type => Integer, kind => constant, value => 23}}}]")
     end
 
     it 'can create an equal copy from produced hash' do

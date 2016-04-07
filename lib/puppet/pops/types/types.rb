@@ -2748,6 +2748,14 @@ class PTypeAliasType < PAnyType
     @self_recursion
   end
 
+  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
+  #
+  # @return [String] the expanded form of this alias
+  # @api public
+  def to_s
+    TypeFormatter.singleton.alias_expanded_string(self)
+  end
+
   # Delegates to resolved type
   def respond_to_missing?(name, include_private)
     resolved_type.respond_to?(name, include_private)
