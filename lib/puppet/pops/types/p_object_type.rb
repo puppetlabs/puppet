@@ -78,7 +78,7 @@ class PObjectType < PAnyType
     attr_reader :annotations
 
     # @param name [String] The name of the member
-    # @param [Hash{String=>Object}] i12n_hash
+    # @param i12n_hash [Hash{String=>Object}] Hash containing feature options
     # @option i12n_hash [PAnyType] 'type' The member type (required)
     # @option i12n_hash [Boolean] 'override' `true` if this feature must override an inherited feature. Default is `false`.
     # @option i12n_hash [Boolean] 'final' `true` if this feature cannot be overridden. Default is `false`.
@@ -114,7 +114,7 @@ class PObjectType < PAnyType
     def assert_override(parent_members)
       parent_member = parent_members[@name]
       if parent_member.nil?
-        raise Puppet::ParseError, "expected #{label} to override an inherited #{feature_type}" if @override
+        raise Puppet::ParseError, "expected #{label} to override an inherited #{feature_type}, but no such #{feature_type} was found" if @override
         self
       else
         parent_member.assert_can_be_overridden(self)
@@ -130,7 +130,7 @@ class PObjectType < PAnyType
     def assert_can_be_overridden(member)
       raise Puppet::ParseError, "#{member.label} overrides inherited #{feature_type}" unless self.class == member.class
       raise Puppet::ParseError, "attempt to override final #{label}" if @final
-      raise Puppet::ParseError, "#{label} attempts to override without having override defined" unless member.override?
+      raise Puppet::ParseError, "#{label} attempts to override without having override => true" unless member.override?
       raise Puppet::ParseError, "attempt to override #{label} with a type that does not match" unless @type.assignable?(member.type)
       member
     end
@@ -154,7 +154,7 @@ class PObjectType < PAnyType
 
     # @api public
     def eql?(o)
-      self.class == o.class && @name == o.name && @type == o.type && @override == o.override? && @final == o.final? && @annotations == o.annotations
+      self.class == o.class && @name == o.name && @type == o.type && @override == o.override? && @final == o.final?
     end
 
     # @api public
@@ -192,12 +192,8 @@ class PObjectType < PAnyType
     #   indicate that
     attr_reader :kind
 
-    # @return [Object] the default value or the symbol :default to denote that there is no default value
-    # @api public
-    attr_reader :value
-
     # @param name [String] The name of the attribute
-    # @param [Hash{String=>Object}] i12n_hash
+    # @param i12n_hash [Hash{String=>Object}] Hash containing attribute options
     # @option i12n_hash [PAnyType] 'type' The attribute type (required)
     # @option i12n_hash [Object] 'value' The default value, must be an instanceof the given `type` (optional)
     # @option i12n_hash [String] 'kind' The attribute kind, matching #TYPE_ATTRIBUTE_KIND
@@ -205,7 +201,12 @@ class PObjectType < PAnyType
     def initialize(name, i12n_hash)
       super(name, TypeAsserter.assert_instance_of(["initializer for attribute '%s'", name], TYPE_ATTRIBUTE, i12n_hash))
       @kind = i12n_hash[KEY_KIND]
-      @final = true if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
+      if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
+        if i12n_hash.include?(KEY_FINAL) && !@final
+          raise Puppet::ParseError, "#{label} of kind 'constant' cannot be combined with final => false"
+        end
+        @final = true
+      end
 
       if i12n_hash.include?(KEY_VALUE)
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
@@ -214,13 +215,13 @@ class PObjectType < PAnyType
         @value = TypeAsserter.assert_instance_of(nil, type, i12n_hash[KEY_VALUE]) {"#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
-        @value = :default
+        @value = :undef # Not to be confused with nil or :default
       end
     end
 
     # @api public
     def eql?(o)
-      super && @kind == o.kind && @value == o.value
+      super && @kind == o.kind && @value == (o.value? ? o.value : :undef)
     end
 
     # Returns the member as a hash suitable as an argument for constructor. Name is excluded
@@ -232,13 +233,25 @@ class PObjectType < PAnyType
         hash[KEY_KIND] = @kind
         hash.delete(KEY_FINAL) if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
       end
-      hash[KEY_VALUE] = @value unless @value == :default
+      hash[KEY_VALUE] = @value unless @value == :undef
       hash
     end
 
-    # @return [Boolean] `true` if a value has been defined for this attribute. The value may be `nil`
+    # @return [Boolean] `true` if a value has been defined for this attribute.
     def value?
-      value != :default
+      @value != :undef
+    end
+
+    # Returns the value of this attribute, or raises an error if no value has been defined. Raising an error
+    # is necessary since a defined value may be `nil`.
+    #
+    # @return [Object] the value that has been defined for this attribute.
+    # @raise [Puppet::Error] if no value has been defined
+    # @api public
+    def value
+      # An error must be raised here since `nil` is a valid value and it would be bad to leak the :undef symbol
+      raise Puppet::Error, "#{label} has no value" if @value == :undef
+      @value
     end
 
     # @api private
@@ -314,7 +327,7 @@ class PObjectType < PAnyType
     equality = [equality] if equality.is_a?(String)
     if equality.is_a?(Array)
       unless equality.empty?
-        raise Puppet::ParseError, 'equality_include_type = false cannot be combined with attributes' unless @equality_include_type
+        raise Puppet::ParseError, 'equality_include_type = false cannot be combined with non empty equality specification' unless @equality_include_type
         parent_eq_attrs = nil
         equality.each do |attr_name|
 
@@ -343,7 +356,7 @@ class PObjectType < PAnyType
     @annotations = i12n_hash[KEY_ANNOTATIONS]
     @annotations.freeze unless @annotations.nil?
 
-    @hash = [parent, @attributes, @functions, @equality, @checks, @annotations].hash
+    @hash = [parent, @attributes, @functions, @equality, @checks].hash
   end
 
   def [](name)
@@ -384,8 +397,7 @@ class PObjectType < PAnyType
       @attributes == o.attributes &&
       @functions == o.functions &&
       @equality == o.equality &&
-      @checks == o.checks &&
-      @annotations == o.annotations
+      @checks == o.checks
   end
 
   def hash

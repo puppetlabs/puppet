@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/pops'
+require 'puppet_spec/compiler'
 
 module Puppet::Pops
 module Types
@@ -75,8 +76,37 @@ describe 'The Object Type' do
       expect(attr.value).to eql(3)
     end
 
+    it 'attribute with defined value responds true to value?' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer, value => 3 }
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value?).to be_truthy
+    end
+
+    it 'attribute without defined value responds false to value?' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => Integer
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value?).to be_falsey
+    end
+
+    it 'raises an error when value is requested from an attribute that has no value' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => Integer
+        }
+      OBJECT
+      expect { tp['a'].value }.to raise_error(Puppet::Error, /attribute 'a' has no value/)
+    end
+
     context 'that are constants' do
-      it 'sets final = true' do
+      it 'sets final => true' do
         tp = parse_object('MyObject', <<-OBJECT)
           attributes => {
             a => {
@@ -100,6 +130,20 @@ describe 'The Object Type' do
         OBJECT
         expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
           /attribute 'a' of kind 'constant' requires a value/)
+      end
+
+      it 'raises an error when final => false' do
+        obj = <<-OBJECT
+          attributes => {
+            a => {
+              type => Integer,
+              kind => constant,
+              final => false
+            }
+          }
+        OBJECT
+        expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+          /attribute 'a' of kind 'constant' cannot be combined with final => false/)
       end
     end
   end
@@ -147,7 +191,7 @@ describe 'The Object Type' do
       expect(tp['a'].type).to eql(PIntegerType.new(0,10))
     end
 
-    it 'raises an error when the an attribute overrides a function' do
+    it 'raises an error when an attribute overrides a function' do
       parent = <<-OBJECT
         attributes => {
           a => Integer
@@ -198,7 +242,7 @@ describe 'The Object Type' do
         "attempt to override attribute 'a' with a type that does not match")
     end
 
-    it 'raises an error when the an attribute overrides a final attribute' do
+    it 'raises an error when an attribute overrides a final attribute' do
       parent = <<-OBJECT
         attributes => {
           a => { type => Integer, final => true }
@@ -215,7 +259,7 @@ describe 'The Object Type' do
         "attempt to override final attribute 'a'")
     end
 
-    it 'raises an error when the an overriding attribute is not declared with override => true' do
+    it 'raises an error when an overriding attribute is not declared with override => true' do
       parent = <<-OBJECT
         attributes => {
           a => Integer
@@ -229,10 +273,10 @@ describe 'The Object Type' do
       OBJECT
       expect_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attribute 'a' attempts to override without having override defined")
+        "attribute 'a' attempts to override without having override => true")
     end
 
-    it 'raises an error when the an attribute declared with override => true does not override' do
+    it 'raises an error when an attribute declared with override => true does not override' do
       parent = <<-OBJECT
         attributes => {
           a => Integer
@@ -246,7 +290,7 @@ describe 'The Object Type' do
       OBJECT
       expect_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "expected attribute 'b' to override an inherited attribute")
+        "expected attribute 'b' to override an inherited attribute, but no such attribute was found")
     end
   end
 
@@ -264,7 +308,7 @@ describe 'The Object Type' do
       expect(tp.equality_attributes.keys).to eq(['a','b'])
     end
 
-    it 'a single attribute can be declared a name' do
+    it 'a single [<name>] can be declared as <name>' do
       obj = <<-OBJECT
         attributes => {
           a => Integer,
@@ -289,7 +333,7 @@ describe 'The Object Type' do
       expect(tp.equality_attributes.keys).to eq(['a','c'])
     end
 
-    it 'equalty_include_type is true by default' do
+    it 'equality_include_type is true by default' do
       obj = <<-OBJECT
         attributes => {
           a => Integer
@@ -332,7 +376,7 @@ describe 'The Object Type' do
       expect(tp.equality_attributes.keys).to eq(['a','b','c','d'])
     end
 
-    it 'will extend equality declared in parent' do
+    it 'extends equality declared in parent' do
       parent = <<-OBJECT
         attributes => {
           a => Integer,
@@ -353,7 +397,7 @@ describe 'The Object Type' do
       expect(tp.equality_attributes.keys).to eq(['a','c','d'])
     end
 
-    it 'will allow that equality contains parent attributes when parent equality does not' do
+    it 'parent defined attributes can be included in equality if not already included by a parent' do
       parent = <<-OBJECT
         attributes => {
           a => Integer,
@@ -441,7 +485,7 @@ describe 'The Object Type' do
         equality_include_type => false
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        'equality_include_type = false cannot be combined with attributes')
+        'equality_include_type = false cannot be combined with non empty equality specification')
     end
   end
 
@@ -492,13 +536,13 @@ describe 'The Object Type' do
       expect{ |b| members.each {|m| m.type.simple_name.tap(&b) }}.to(yield_successive_args('Integer', 'Callable', 'String', 'Boolean'))
     end
 
-    it 'will be assignable to its inherited type' do
+    it 'is assignable to its inherited type' do
       p = expect_object('MyObject', parent)
       t = parse_object('MyDerivedObject', derived)
       expect(p).to be_assignable(t)
     end
 
-    it 'will be assignable not consider inherited type to be assignable' do
+    it 'does not consider inherited type to be assignable' do
       p = expect_object('MyObject', parent)
       d = parse_object('MyDerivedObject', derived)
       expect(d).not_to be_assignable(p)
@@ -521,7 +565,7 @@ describe 'The Object Type' do
         }
       OBJECT
 
-      it 'will be assignable to all inherited types' do
+      it 'is assignable to all inherited types' do
         p = expect_object('MyObject', parent)
         d1 = expect_object('MyDerivedObject', derived)
         d2 = parse_object('MyDerivedObject2', derived2)
@@ -529,7 +573,7 @@ describe 'The Object Type' do
         expect(d1).to be_assignable(d2)
       end
 
-      it 'will not consider any of the inherited types to be assignable' do
+      it 'does not consider any of the inherited types to be assignable' do
         p = expect_object('MyObject', parent)
         d1 = expect_object('MyDerivedObject', derived)
         d2 = parse_object('MyDerivedObject2', derived2)
@@ -560,7 +604,7 @@ describe 'The Object Type' do
   end
 
   context 'when using the initialization hash' do
-    it 'produced hash use compact form attributes' do
+    it 'produced hash that contains features using short form (type instead of detailed hash when only type is declared)' do
       obj = t = parse_object('MyObject', <<-OBJECT).resolved_type
         attributes => {
           a => { type => Integer }
@@ -569,7 +613,7 @@ describe 'The Object Type' do
       expect(TypeFormatter.string(obj)).to eql("Object[{attributes => {'a' => Integer}}]")
     end
 
-    it 'produced hash does not include defaults' do
+    it 'produced hash that does not include defaults' do
       obj = t = parse_object('MyObject', <<-OBJECT).resolved_type
         attributes => {
           a => { type => Integer, value => 23, kind => constant, final => true },
@@ -593,6 +637,118 @@ describe 'The Object Type' do
       obj2 = PObjectType.new(obj.i12n_hash)
       expect(obj).to eql(obj2)
     end
+  end
+
+  context 'when used in Puppet expressions' do
+    include PuppetSpec::Compiler
+
+    it 'two empty objects are equal' do
+      code = <<-CODE
+      type MyFirstObject = Object[{}]
+      type MySecondObject = Object[{}]
+      notice(MyFirstObject == MySecondObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'two objects where one object inherits another object are different' do
+      code = <<-CODE
+      type MyFirstObject = Object[{}]
+      type MySecondObject = Object[{ parent => MyFirstObject }]
+      notice(MyFirstObject == MySecondObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['false'])
+    end
+
+    it 'two objects that inherits the same parent are equal' do
+      code = <<-CODE
+      type MyFirstObject = Object[{}]
+      type MySecondObject = Object[{ parent => MyFirstObject }]
+      type MyThirdObject = Object[{ parent => MyFirstObject }]
+      notice(MySecondObject == MyThirdObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'an object type is an instance of an object type type' do
+      code = <<-CODE
+      type MyObject = Object[{ attributes => { a => Integer }}]
+      notice(MyObject =~ Type[MyObject])
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'an object that inherits another object is an instance of the type of its parent' do
+      code = <<-CODE
+      type MyFirstObject = Object[{}]
+      type MySecondObject = Object[{ parent => MyFirstObject }]
+      notice(MySecondObject =~ Type[MyFirstObject])
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'notices the expanded string form expected content' do
+      code = <<-CODE
+      type MyFirstObject = Object[{
+        attributes => {
+          first_a => Integer,
+          first_b => { type => String, kind => constant, value => 'the first constant' },
+          first_c => { type => String, final => true, kind => derived },
+          first_d => { type => String, kind => given_or_derived },
+          first_e => { type => String }
+        },
+        functions => {
+          first_x => Callable[Integer],
+          first_y => Callable[String]
+        },
+        equality => first_a
+      }]
+      type MySecondObject = Object[{
+        parent => MyFirstObject,
+        attributes => {
+          second_a => Integer,
+          second_b => { type => String, kind => constant, value => 'the second constant' },
+          first_e => { type => Enum[foo,fee,fum], final => true, override => true, value => 'fee' }
+        },
+        functions => {
+          second_x => Callable[Integer],
+          second_y => Callable[String]
+        },
+        equality => second_a
+      }]
+      notice(MyFirstObject)
+      notice(MySecondObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql([
+        "MyFirstObject = Object[{"+
+          "attributes => {"+
+          "'first_a' => Integer, "+
+          "'first_b' => {type => String, kind => constant, value => 'the first constant'}, "+
+          "'first_c' => {type => String, final => true, kind => derived}, "+
+          "'first_d' => {type => String, kind => given_or_derived}, "+
+          "'first_e' => String"+
+          "}, "+
+          "functions => {"+
+          "'first_x' => Callable[Integer], "+
+          "'first_y' => Callable[String]"+
+          "}, "+
+          "equality => [first_a]"+
+          "}]",
+        "MySecondObject = Object[{"+
+          "parent => MyFirstObject, "+
+          "attributes => {"+
+          "'second_a' => Integer, "+
+          "'second_b' => {type => String, kind => constant, value => 'the second constant'}, "+
+          "'first_e' => {type => Enum['fee', 'foo', 'fum'], final => true, override => true, value => 'fee'}"+
+          "}, "+
+          "functions => {"+
+          "'second_x' => Callable[Integer], "+
+          "'second_y' => Callable[String]"+
+          "}, "+
+          "equality => [second_a]"+
+          "}]"
+        ])
+      end
   end
 end
 end
