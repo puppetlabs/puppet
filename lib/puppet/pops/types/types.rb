@@ -2468,9 +2468,9 @@ class PResourceType < PCatalogEntryType
   attr_reader :type_name, :title, :downcased_name
 
   def initialize(type_name, title = nil)
-    @type_name = type_name
-    @title = title
-    @downcased_name = type_name.nil? ? nil : @type_name.downcase
+    @type_name = type_name.freeze
+    @title = title.freeze
+    @downcased_name = type_name.nil? ? nil : @type_name.downcase.freeze
   end
 
   def eql?(o)

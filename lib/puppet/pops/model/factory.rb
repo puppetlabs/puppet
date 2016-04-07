@@ -266,7 +266,7 @@ class Factory
   end
 
   def build_QualifiedReference(o, name)
-    o.value = name.to_s.downcase
+    o.cased_value = name.to_s
     o
   end
 

@@ -24,7 +24,7 @@ shared_examples_for 'all functions transforming relative to absolute names' do |
   it 'raises and error for Resource that is not of class type' do
     expect {
       @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource('file')])
-    }.to raise_error(ArgumentError, /Cannot use a Resource\[file\] where a Resource\['class', name\] is expected/)
+    }.to raise_error(ArgumentError, /Cannot use a Resource\[File\] where a Resource\['class', name\] is expected/)
   end
 
   it 'raises and error for Resource that is unspecific' do

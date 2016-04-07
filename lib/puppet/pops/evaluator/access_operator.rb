@@ -442,7 +442,7 @@ class AccessOperator
     # Must know which concrete resource type to operate on in all cases.
     # It is not allowed to specify the type in an array arg - e.g. Resource[[File, 'foo']]
     # type_name is LHS type_name if set, else the first given arg
-    type_name = o.type_name || keys.shift
+    type_name = o.type_name || Types::TypeFormatter.singleton.capitalize_segments(keys.shift)
     type_name = case type_name
     when Types::PResourceType
       type_name.type_name
@@ -455,7 +455,7 @@ class AccessOperator
     end
 
     # type name must conform
-    if type_name.downcase !~ Patterns::CLASSREF
+    if type_name !~ Patterns::CLASSREF_EXT
       fail(Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
     end
 

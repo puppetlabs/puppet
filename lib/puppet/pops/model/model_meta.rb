@@ -502,7 +502,7 @@ module Puppet::Pops::Model
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).
   #
   class QualifiedReference < LiteralValue
-    has_attr 'value', String, :lowerBound => 1
+    has_attr 'cased_value', String, :lowerBound => 1
   end
 
   # A Variable expression looks up value of expr (some kind of name) in scope.

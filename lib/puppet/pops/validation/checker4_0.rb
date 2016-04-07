@@ -509,8 +509,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # DOH: QualifiedReferences are created with LOWER CASE NAMES at parse time
   def check_QualifiedReference(o)
     # Is this a valid qualified name?
-    if o.value !~ Patterns::CLASSREF
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.value})
+    if o.cased_value !~ Patterns::CLASSREF_EXT
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.cased_value})
     end
   end
 

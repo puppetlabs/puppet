@@ -511,7 +511,7 @@ describe 'the 4x function api' do
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
         Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
-        expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' references an unresolved type 'Myalias'/)
+        expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' references an unresolved type 'MyAlias'/)
       end
 
       it 'create local Type aliases' do

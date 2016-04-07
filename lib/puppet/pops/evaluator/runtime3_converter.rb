@@ -150,7 +150,7 @@ class Runtime3Converter
         else
           # Ensure that title is '' if nil
           # Resources with absolute name always results in error because tagging does not support leading ::
-          [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
+          [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
         end
       else
         raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
