@@ -377,7 +377,7 @@ Self Loopback: No
 Switch#
 eos
 
-        expect(@cisco.parse_trunking("FastEthernet0/1")).to eq({ :mode => :access, :access_vlan => "100" })
+        expect(@cisco.parse_trunking("FastEthernet0/1")).to eq({ :mode => :access, :access_vlan => "100", :native_vlan => "1" })
       end
 
       it "should parse auto/negotiate switchport information" do
