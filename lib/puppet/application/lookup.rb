@@ -217,7 +217,7 @@ EXAMPLE
   If you wanted to get the first value found for 'key_name_one' and 'key_name_two'
   within the scope of the agent.local node while merging values and knocking out
   the prefix 'foo' while merging, you would call lookup like this:
-  $ puppet lookup --node agent.local --merge deep --knock_out_prefix foo key_name_one key_name_two
+  $ puppet lookup --node agent.local --merge deep --knock-out-prefix foo key_name_one key_name_two
 
   If you wanted to lookup 'key_name' within the scope of the agent.local node,
   and return a default value of 'bar' if nothing was found, you would call
