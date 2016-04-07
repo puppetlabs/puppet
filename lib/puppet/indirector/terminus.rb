@@ -66,18 +66,18 @@ class Puppet::Indirector::Terminus
       # Yay, class/instance confusion.
       subclass.terminus_type = self.name
 
-      # Our subclass is specifically associated with an indirection.
+      # This subclass is specifically associated with an indirection.
       raise("Invalid name #{longname}") unless names.length > 0
-      indirection_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }.intern
+      processed_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }
 
-      if indirection_name == "" or indirection_name.nil?
+      if processed_name == "" || processed_name.nil?
         raise Puppet::DevError, "Could not discern indirection model from class constant"
       end
 
       # This will throw an exception if the indirection instance cannot be found.
       # Do this last, because it also registers the terminus type with the indirection,
       # which needs the above information.
-      subclass.indirection = indirection_name
+      subclass.indirection = processed_name.intern
 
       # And add this instance to the instance hash.
       Puppet::Indirector::Terminus.register_terminus_class(subclass)
