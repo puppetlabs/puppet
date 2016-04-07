@@ -306,9 +306,18 @@ class Loaders
 
     def create_loader_with_only_dependencies_visible(from_module_data)
       if from_module_data.unmet_dependencies?
-        Puppet.warning("ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
-          " - it will only see those that are resolved."+
-          " Use 'puppet module list --tree' to see information about modules")
+        if Puppet[:strict] != :off
+          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
+              " - it will only see those that are resolved."+
+              " Use 'puppet module list --tree' to see information about modules"
+          if Puppet[:strict] == :error
+            raise LoaderError.new(msg)
+          elsif Puppet[:strict] == :warning
+            Puppet.warn_once(:unresolved_module_dependencies,
+                             "unresolved_dependencies_for_module_#{from_module_data.name}",
+                             msg)
+          end
+        end
       end
       dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
       Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)
