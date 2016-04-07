@@ -2779,6 +2779,10 @@ class PTypeAliasType < PAnyType
     end
   end
 
+  def new_function(loader)
+    resolved_type.new_function(loader)
+  end
+
   private
 
   def guarded_recursion(guard, dflt)

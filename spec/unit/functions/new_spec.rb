@@ -522,4 +522,14 @@ describe 'the new function' do
     end
   end
 
+  context 'when invoked on a type alias' do
+    it 'delegates the new to the aliased type' do
+      expect(compile_to_catalog(<<-MANIFEST
+        type X = Boolean
+        $x = X.new('yes')
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Boolean, true]')
+    end
+  end
 end
