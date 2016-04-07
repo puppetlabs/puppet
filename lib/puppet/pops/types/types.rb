@@ -450,7 +450,12 @@ class PNotUndefType < PTypeWithContainedType
   end
 
   def new_function(loader)
-    type.new_function(loader)
+    # If only NotUndef, then use Unit's null converter
+    if type.nil?
+      PUnitType.new_function(self.class, loader)
+    else
+      type.new_function(loader)
+    end
   end
 
   DEFAULT = PNotUndefType.new
@@ -491,6 +496,19 @@ end
 class PUnitType < PAnyType
   def instance?(o, guard = nil)
     true
+  end
+
+  # A "null" implementation - that simply returns the given argument
+  def self.new_function(_, loader)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, loader) do
+      dispatch :from_args do
+        param          'Any',  :from
+      end
+
+      def from_args(from)
+        from
+      end
+    end
   end
 
   DEFAULT = PUnitType.new

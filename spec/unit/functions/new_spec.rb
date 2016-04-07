@@ -47,6 +47,14 @@ describe 'the new function' do
       MANIFEST
       )).to have_resource('Notify[Integer, 42]')
     end
+
+    it 'produces the given value when there is no type specified' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = NotUndef.new(42)
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Integer, 42]')
+    end
   end
 
   context 'when invoked on an Integer' do
