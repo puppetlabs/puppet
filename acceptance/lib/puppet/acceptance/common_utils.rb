@@ -86,7 +86,7 @@ module Puppet
         hosts.each do |host|
           next if host == master
           ssldir = on(host, puppet('agent --configprint ssldir')).stdout.chomp
-          (host[:platform] == 'cisco_nexus') ? on(host, "rm -rf #{ssldir}") : on(host, host_command("rm -rf '#{ssldir}'"))
+          (host[:platform] =~ /cisco_nexus/) ? on(host, "rm -rf #{ssldir}") : on(host, host_command("rm -rf '#{ssldir}'"))
         end
       end
 
