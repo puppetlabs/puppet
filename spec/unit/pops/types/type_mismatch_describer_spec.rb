@@ -78,7 +78,7 @@ describe 'the type mismatch describer' do
       check_tree({ 'x' => {'y' => {32 => 'n'}}})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\[1, 1\]]/))
+      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\[1, 1\]\]/))
   end
 
   it 'will use type normalization' do
