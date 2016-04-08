@@ -68,6 +68,10 @@ class PObjectType < PAnyType
   # @api public
   class PAnnotatedMember
 
+    # @return [PObjectType] the object type containing this member
+    # @api public
+    attr_reader :container
+
     # @return [String] the name of this member
     # @api public
     attr_reader :name
@@ -81,14 +85,16 @@ class PObjectType < PAnyType
     attr_reader :annotations
 
     # @param name [String] The name of the member
+    # @param container [PObjectType] The containing object type
     # @param i12n_hash [Hash{String=>Object}] Hash containing feature options
     # @option i12n_hash [PAnyType] 'type' The member type (required)
     # @option i12n_hash [Boolean] 'override' `true` if this feature must override an inherited feature. Default is `false`.
     # @option i12n_hash [Boolean] 'final' `true` if this feature cannot be overridden. Default is `false`.
     # @option i12n_hash [Hash{PType => Hash}] 'annotations' Annotations hash. Default is `nil`.
     # @api public
-    def initialize(name, i12n_hash)
+    def initialize(name, container, i12n_hash)
       @name = name
+      @container = container
       @type = i12n_hash[KEY_TYPE]
       @override = i12n_hash[KEY_OVERRIDE]
       @override = false if @override.nil?
@@ -131,10 +137,10 @@ class PObjectType < PAnyType
     # @raises [Puppet::ParseError] if the assertion fails
     # @api private
     def assert_can_be_overridden(member)
-      raise Puppet::ParseError, "#{member.label} overrides inherited #{feature_type}" unless self.class == member.class
-      raise Puppet::ParseError, "attempt to override final #{label}" if @final
-      raise Puppet::ParseError, "#{label} attempts to override without having override => true" unless member.override?
-      raise Puppet::ParseError, "attempt to override #{label} with a type that does not match" unless @type.assignable?(member.type)
+      raise Puppet::ParseError, "#{member.label} attempts to override #{label}" unless self.class == member.class
+      raise Puppet::ParseError, "#{member.label} attempts to override final #{label}" if @final
+      raise Puppet::ParseError, "#{member.label} attempts to override #{label} without having override => true" unless member.override?
+      raise Puppet::ParseError, "#{member.label} attempts to override #{label} with a type that does not match" unless @type.assignable?(member.type)
       member
     end
 
@@ -178,12 +184,21 @@ class PObjectType < PAnyType
 
     # @api private
     def feature_type
-      raise NotImplementedError, "'#{self.class.name}' should implement #feature_type"
+      self.class.feature_type
     end
 
     # @api private
     def label
-      "#{feature_type} '#{name}'"
+      self.class.label(@container, @name)
+    end
+
+    # @api private
+    def self.feature_type
+      raise NotImplementedError, "'#{self.class.name}' should implement #feature_type"
+    end
+
+    def self.label(container, name)
+      "#{feature_type} #{container.label}[#{name}]"
     end
   end
 
@@ -196,13 +211,14 @@ class PObjectType < PAnyType
     attr_reader :kind
 
     # @param name [String] The name of the attribute
+    # @param container [PObjectType] The containing object type
     # @param i12n_hash [Hash{String=>Object}] Hash containing attribute options
     # @option i12n_hash [PAnyType] 'type' The attribute type (required)
     # @option i12n_hash [Object] 'value' The default value, must be an instanceof the given `type` (optional)
     # @option i12n_hash [String] 'kind' The attribute kind, matching #TYPE_ATTRIBUTE_KIND
     # @api public
-    def initialize(name, i12n_hash)
-      super(name, TypeAsserter.assert_instance_of(["initializer for attribute '%s'", name], TYPE_ATTRIBUTE, i12n_hash))
+    def initialize(name, container, i12n_hash)
+      super(name, container, TypeAsserter.assert_instance_of(nil, TYPE_ATTRIBUTE, i12n_hash) { "initializer for #{self.class.label(container, name)}" })
       @kind = i12n_hash[KEY_KIND]
       if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
         if i12n_hash.include?(KEY_FINAL) && !@final
@@ -258,7 +274,7 @@ class PObjectType < PAnyType
     end
 
     # @api private
-    def feature_type
+    def self.feature_type
       'attribute'
     end
   end
@@ -266,12 +282,17 @@ class PObjectType < PAnyType
   # Describes a named Function in an Object type
   # @api public
   class PFunction < PAnnotatedMember
-    def initialize(name, i12n_hash)
-      super(name, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, i12n_hash))
+
+    # @param name [String] The name of the attribute
+    # @param container [PObjectType] The containing object type
+    # @param i12n_hash [Hash{String=>Object}] Hash containing function options
+    # @api public
+    def initialize(name, container, i12n_hash)
+      super(name, container, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, i12n_hash))
     end
 
     # @api private
-    def feature_type
+    def self.feature_type
       'function'
     end
   end
@@ -362,8 +383,8 @@ class PObjectType < PAnyType
     attr_specs = i12n_hash[KEY_ATTRIBUTES]
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
-        attr_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(["attribute '%s'", key], PType::DEFAULT, attr_spec) } unless attr_spec.is_a?(Hash)
-        attr = PAttribute.new(key, attr_spec)
+        attr_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" } } unless attr_spec.is_a?(Hash)
+        attr = PAttribute.new(key, self, attr_spec)
         [attr.name, attr.assert_override(parent_members)]
       end].freeze
     end
@@ -371,10 +392,10 @@ class PObjectType < PAnyType
     func_specs = i12n_hash[KEY_FUNCTIONS]
     unless func_specs.nil? || func_specs.empty?
       @functions = Hash[func_specs.map do |key, func_spec|
-        func_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(["function '%s'", key], TYPE_FUNCTION_TYPE, func_spec) } unless func_spec.is_a?(Hash)
-        func = PFunction.new(key, func_spec)
+        func_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, TYPE_FUNCTION_TYPE, func_spec) { "function #{label}[#{key}]" } } unless func_spec.is_a?(Hash)
+        func = PFunction.new(key, self, func_spec)
         name = func.name
-        raise Puppet::ParseError, "function '#{key}' conflicts with attribute with the same name" if @attributes.include?(name)
+        raise Puppet::ParseError, "#{func.label} conflicts with attribute with the same name" if @attributes.include?(name)
         [name, func.assert_override(parent_members)]
       end].freeze
     end
@@ -397,13 +418,14 @@ class PObjectType < PAnyType
             # Assert that attribute is not already include by parent equality
             parent_eq_attrs ||= parent_object_type.equality_attributes
             if parent_eq_attrs.include?(attr_name)
-              raise Puppet::ParseError, "equality is referencing attribute '#{attr_name}' which is already included by parent equality"
+              including_parent = find_equality_definer_of(attr)
+              raise Puppet::ParseError, "#{label} equality is referencing #{attr.label} which is included in equality of #{including_parent.label}"
             end
           end
 
-          raise Puppet::ParseError, "equality is referencing non existent attribute '#{attr_name}'" if attr.nil?
-          raise Puppet::ParseError, "equality is referencing function '#{attr_name}'" unless attr.is_a?(PAttribute)
-          raise Puppet::ParseError, "equality is referencing constant attribute '#{attr_name}'" if attr.kind == ATTRIBUTE_KIND_CONSTANT
+          raise Puppet::ParseError, "#{label} equality is referencing non existent attribute '#{attr_name}'" if attr.nil?
+          raise Puppet::ParseError, "#{label} equality is referencing #{attr.label}" unless attr.is_a?(PAttribute)
+          raise Puppet::ParseError, "#{label} equality is referencing constant #{attr.label}" if attr.kind == ATTRIBUTE_KIND_CONSTANT
         end
       end
       equality.freeze
@@ -606,6 +628,18 @@ class PObjectType < PAnyType
       end
       [feature.name, fh]
     end]
+  end
+
+  # @return [PObjectType] the topmost parent who's #equality_attributes include the given _attr_
+  def find_equality_definer_of(attr)
+    type = self
+    while !type.nil? do
+      p = type.parent
+      return type if p.nil?
+      return type unless p.equality_attributes.include?(attr.name)
+      type = p
+    end
+    nil
   end
 
   def guarded_recursion(guard, dflt)

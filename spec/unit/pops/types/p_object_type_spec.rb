@@ -28,7 +28,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute 'a' had wrong type, expected a Type value, got Integer/)
+        /attribute MyObject\[a\] had wrong type, expected a Type value, got Integer/)
     end
 
     it 'raises an error if the type is missing' do
@@ -48,7 +48,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute 'a' value had wrong type, expected an Integer value, got String/)
+        /attribute MyObject\[a\] value had wrong type, expected an Integer value, got String/)
     end
 
     it 'raises an error if the kind is invalid' do
@@ -98,7 +98,7 @@ describe 'The Object Type' do
           a => Integer
         }
       OBJECT
-      expect { tp['a'].value }.to raise_error(Puppet::Error, /attribute 'a' has no value/)
+      expect { tp['a'].value }.to raise_error(Puppet::Error, 'attribute MyObject[a] has no value')
     end
 
     context 'that are constants' do
@@ -125,7 +125,7 @@ describe 'The Object Type' do
           }
         OBJECT
         expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          /attribute 'a' of kind 'constant' requires a value/)
+          "attribute MyObject[a] of kind 'constant' requires a value")
       end
 
       it 'raises an error when final => false' do
@@ -139,7 +139,7 @@ describe 'The Object Type' do
           }
         OBJECT
         expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          /attribute 'a' of kind 'constant' cannot be combined with final => false/)
+          "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
       end
     end
   end
@@ -152,7 +152,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /function 'a' had wrong type, expected a Type\[Callable\] value, got Type\[String\]/)
+        /function MyObject\[a\] had wrong type, expected a Type\[Callable\] value, got Type\[String\]/)
     end
 
     it 'raises an error when a function has the same name as an attribute' do
@@ -165,7 +165,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "function 'a' conflicts with attribute with the same name")
+        'function MyObject[a] conflicts with attribute with the same name')
     end
   end
 
@@ -201,7 +201,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "function 'a' overrides inherited attribute")
+        'function MyDerivedObject[a] attempts to override attribute MyObject[a]')
     end
 
     it 'raises an error when the an function overrides an attribute' do
@@ -218,7 +218,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attribute 'a' overrides inherited function")
+        'attribute MyDerivedObject[a] attempts to override function MyObject[a]')
     end
 
     it 'raises an error on attempts to redefine inherited member to unassignable type' do
@@ -235,7 +235,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attempt to override attribute 'a' with a type that does not match")
+        'attribute MyDerivedObject[a] attempts to override attribute MyObject[a] with a type that does not match')
     end
 
     it 'raises an error when an attribute overrides a final attribute' do
@@ -252,7 +252,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attempt to override final attribute 'a'")
+        'attribute MyDerivedObject[a] attempts to override final attribute MyObject[a]')
     end
 
     it 'raises an error when an overriding attribute is not declared with override => true' do
@@ -269,7 +269,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attribute 'a' attempts to override without having override => true")
+        'attribute MyDerivedObject[a] attempts to override attribute MyObject[a] without having override => true')
     end
 
     it 'raises an error when an attribute declared with override => true does not override' do
@@ -286,7 +286,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "expected attribute 'b' to override an inherited attribute, but no such attribute was found")
+        "expected attribute MyDerivedObject[b] to override an inherited attribute, but no such attribute was found")
     end
   end
 
@@ -432,7 +432,7 @@ describe 'The Object Type' do
       OBJECT
       parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing attribute 'a' which is already included by parent equality")
+        "MyDerivedObject equality is referencing attribute MyObject[a] which is included in equality of MyObject")
     end
 
     it 'raises an error when equality references a constant attribute' do
@@ -444,7 +444,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing constant attribute 'b'")
+        "MyObject equality is referencing constant attribute MyObject[b]")
     end
 
     it 'raises an error when equality references a function' do
@@ -458,7 +458,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing function 'b'")
+        "MyObject equality is referencing function MyObject[b]")
     end
 
     it 'raises an error when equality references a non existent attributes' do
@@ -469,7 +469,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing non existent attribute 'b'")
+        "MyObject equality is referencing non existent attribute 'b'")
     end
 
     it 'raises an error when equality_include_type = false and attributes are provided' do
@@ -500,7 +500,7 @@ describe 'The Object Type' do
         a => { type => Integer, knid => constant }
       }
     OBJECT
-    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute 'a' had wrong type, unrecognized key 'knid'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute MyObject\[a\] had wrong type, unrecognized key 'knid'/)
   end
 
   context 'when inheriting from a another Object type' do
@@ -689,7 +689,8 @@ describe 'The Object Type' do
       type MySecondObject = Object[{ parent => MyObject, attributes => { a => { type => Integer[10], override => true }}}]
       notice(MySecondObject =~ Type)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /attempt to override final attribute 'a'/)
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
     it 'raises an error when object when circular inheritance is detected' do
