@@ -70,7 +70,7 @@ class Puppet::Indirector::Terminus
       raise("Invalid name #{longname}") unless names.length > 0
       processed_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }
 
-      if processed_name == "" || processed_name.nil?
+      if processed_name.empty?
         raise Puppet::DevError, "Could not discern indirection model from class constant"
       end
 
