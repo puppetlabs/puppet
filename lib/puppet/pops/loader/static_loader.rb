@@ -9,6 +9,7 @@ class StaticLoader < Loader
   def initialize
     @loaded = {}
     create_logging_functions()
+    create_built_in_types()
     create_resource_type_references()
   end
 
@@ -76,6 +77,14 @@ class StaticLoader < Loader
       # TODO:closure scope is fake (an empty hash) - waiting for new global scope to be available via lookup of :scopes
       func = fc.new({},self)
       @loaded[ typed_name ] = NamedEntry.new(typed_name, func, __FILE__)
+    end
+  end
+
+  def create_built_in_types
+    type_map = Puppet::Pops::Types::TypeParser.type_map
+    type_map.each do |name, type|
+      typed_name = TypedName.new(:type, name)
+      @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
     end
   end
 
