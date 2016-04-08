@@ -135,8 +135,8 @@ class TypeParser
   end
 
   # @api private
-  def type_map
-    @@type_map ||= {
+  def self.type_map
+    @type_map ||= {
        'integer'       => TypeFactory.integer,
        'float'         => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
@@ -174,7 +174,7 @@ class TypeParser
   # @api private
   def interpret_QualifiedReference(name_ast, context)
     name = name_ast.value
-    if found = type_map[name]
+    if found = self.class.type_map[name]
       found
     else
       loader = loader_from_context(name_ast, context)
