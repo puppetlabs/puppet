@@ -213,7 +213,7 @@ class TypeFormatter
   # @api private
   def string_PArrayType(t)
     if t.has_empty_range?
-      'Array[0, 0]'
+      append_array('Array', ['0', '0'])
     else
       append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
     end
@@ -222,7 +222,7 @@ class TypeFormatter
   # @api private
   def string_PHashType(t)
     if t.has_empty_range?
-      'Hash[0, 0]'
+      append_array('Hash', ['0', '0'])
     else
       append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
     end
