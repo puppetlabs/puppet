@@ -1157,7 +1157,7 @@ describe 'The type calculator' do
 
       it 'should accept empty array when tuple allows min of 0' do
         tuple1 = constrained_tuple_t(range_t(0, 1), Integer)
-        array = array_t(Integer, range_t(0, 0))
+        array = array_t(unit_t, range_t(0, 0))
         expect(calculator.assignable?(tuple1, array)).to eq(true)
         expect(calculator.assignable?(array, tuple1)).to eq(false)
       end
@@ -1210,9 +1210,9 @@ describe 'The type calculator' do
         expect(calculator.assignable?(hsh, struct1)).to eq(true)
       end
 
-      it 'should accept empty hash with key_type undef' do
+      it 'should accept empty hash with key_type unit' do
         struct1 = struct_t({'a'=>optional_t(Integer)})
-        hsh = hash_t(undef_t, undef_t, range_t(0, 0))
+        hsh = hash_t(unit_t, unit_t, range_t(0, 0))
         expect(calculator.assignable?(struct1, hsh)).to eq(true)
       end
     end

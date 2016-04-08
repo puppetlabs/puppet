@@ -784,6 +784,9 @@ class PCollectionType < PAnyType
   def initialize(element_type, size_type = nil)
     @element_type = element_type
     @size_type = size_type
+    if has_empty_range? && !@element_type.is_a?(PUnitType)
+      raise ArgumentError, 'An empty collection may not specify an element type'
+    end
   end
 
   def accept(visitor, guard)
@@ -817,6 +820,11 @@ class PCollectionType < PAnyType
   # Returns an array with from (min) size to (max) size
   def size_range
     (@size_type || DEFAULT_SIZE).range
+  end
+
+  def has_empty_range?
+    from, to = size_range
+    from == 0 && to == 0
   end
 
   def hash
@@ -1686,6 +1694,9 @@ class PHashType < PCollectionType
   def initialize(key_type, value_type, size_type = nil)
     super(value_type, size_type)
     @key_type = key_type
+    if has_empty_range? && !@key_type.is_a?(PUnitType)
+      raise ArgumentError, 'An empty hash may not specify a key type'
+    end
   end
 
   def accept(visitor, guard)
