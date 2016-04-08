@@ -135,100 +135,47 @@ class TypeParser
   end
 
   # @api private
+  def type_map
+    @@type_map ||= {
+       'integer'       => TypeFactory.integer,
+       'float'         => TypeFactory.float,
+        'numeric'      => TypeFactory.numeric,
+        'iterable'     => TypeFactory.iterable,
+        'iterator'     => TypeFactory.iterator,
+        'string'       => TypeFactory.string,
+        'enum'         => TypeFactory.enum,
+        'boolean'      => TypeFactory.boolean,
+        'pattern'      => TypeFactory.pattern,
+        'regexp'       => TypeFactory.regexp,
+        'data'         => TypeFactory.data,
+        'array'        => TypeFactory.array_of_data,
+        'hash'         => TypeFactory.hash_of_data,
+        'class'        => TypeFactory.host_class,
+        'resource'     => TypeFactory.resource,
+        'collection'   => TypeFactory.collection,
+        'scalar'       => TypeFactory.scalar,
+        'catalogentry' => TypeFactory.catalog_entry,
+        'undef'        => TypeFactory.undef,
+        'notundef'     => TypeFactory.not_undef(),
+        'default'      => TypeFactory.default(),
+        'any'          => TypeFactory.any,
+        'variant'      => TypeFactory.variant,
+        'optional'     => TypeFactory.optional,
+        'runtime'      => TypeFactory.runtime,
+        'type'         => TypeFactory.type_type,
+        'tuple'        => TypeFactory.tuple,
+        'struct'       => TypeFactory.struct,
+        'object'       => TypeFactory.object,
+      # A generic callable as opposed to one that does not accept arguments
+        'callable'     => TypeFactory.all_callables
+    }
+  end
+
+  # @api private
   def interpret_QualifiedReference(name_ast, context)
     name = name_ast.value
-    case name
-    when 'integer'
-      TypeFactory.integer
-
-    when 'float'
-      TypeFactory.float
-
-    when 'numeric'
-        TypeFactory.numeric
-
-    when 'iterable'
-      TypeFactory.iterable
-
-    when 'iterator'
-      TypeFactory.iterator
-
-    when 'string'
-      TypeFactory.string
-
-    when 'enum'
-      TypeFactory.enum
-
-    when 'boolean'
-      TypeFactory.boolean
-
-    when 'pattern'
-      TypeFactory.pattern
-
-    when 'regexp'
-      TypeFactory.regexp
-
-    when 'data'
-      TypeFactory.data
-
-    when 'array'
-      TypeFactory.array_of_data
-
-    when 'hash'
-      TypeFactory.hash_of_data
-
-    when 'class'
-      TypeFactory.host_class
-
-    when 'resource'
-      TypeFactory.resource
-
-    when 'collection'
-      TypeFactory.collection
-
-    when 'scalar'
-      TypeFactory.scalar
-
-    when 'catalogentry'
-      TypeFactory.catalog_entry
-
-    when 'undef'
-      TypeFactory.undef
-
-    when 'notundef'
-      TypeFactory.not_undef()
-
-    when 'default'
-      TypeFactory.default()
- 
-    when 'any'
-      TypeFactory.any
-
-    when 'variant'
-      TypeFactory.variant
-
-    when 'optional'
-      TypeFactory.optional
-
-    when 'runtime'
-      TypeFactory.runtime
-
-    when 'type'
-      TypeFactory.type_type
-
-    when 'tuple'
-      TypeFactory.tuple
-
-    when 'struct'
-      TypeFactory.struct
-
-    when 'object'
-      TypeFactory.object
-
-    when 'callable'
-      # A generic callable as opposed to one that does not accept arguments
-      TypeFactory.all_callables
-
+    if found = type_map[name]
+      found
     else
       loader = loader_from_context(name_ast, context)
       unless loader.nil?
