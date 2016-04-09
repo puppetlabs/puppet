@@ -64,6 +64,8 @@ module Puppet
       ensured for the given package. The meaning and format of these settings is
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
+    feature :settable_environment, "The provider accepts environment settings
+      to be applied to the installer command."
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
 
     ensurable do
@@ -294,6 +296,42 @@ module Puppet
       # This is the default title pattern for all types, except hard-wired to
       # set only name.
       [ [ /(.*)/m, [ [:name] ] ] ]
+    end
+
+# I am skipping the :required_features in the declaration, since that causes
+# the parameter to be [mostly] silently ignored.  I will enforce the existence
+# of the :settable_environment feature during validation, instead.
+#   newparam(:environment, :required_features=>:settable_environment) do
+    newparam(:environment) do
+      desc "Environment variables to be applied before the installer command is run.
+
+        The value of environment should be a hash of `name => value`
+        pairs.  A value of `undef` will cause `name` to be removed from
+        the environment."
+
+      validate do |value|
+# enforce provider feature here
+        unless provider.satisfies?([:settable_environment])
+          raise ArgumentError, "environment is not supported by the #{provider.class.name} provider"
+        end
+        unless value.is_a?(Hash)
+          raise ArgumentError, "environment must be a Hash not #{value.class}"
+        end
+        # make sure that:
+        # each key is a non-empty string
+        # each value is either undefined or a non-empty string
+        unless (value.reject { |k,v| k.is_a?(String) and (!k.empty?) }.empty?)
+          raise ArgumentError, "environment keys must be non-empty strings"
+        end
+        unless (value.reject { |k,v| (v == :undef) or (v.is_a?(String) and (!v.empty?)) }.empty?)
+          raise ArgumentError, "environment values must be `undef` or non-empty strings"
+        end
+      end
+
+      # convert :undef to nil
+      munge do |value|
+        Hash[value.map { |k,v| [k, if v == :undef then nil else v end] }]
+      end
     end
 
     newproperty(:package_settings, :required_features=>:package_settings) do

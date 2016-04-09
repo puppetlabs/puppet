@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :settable_environment
 
   commands :cmd => "yum", :rpm => "rpm"
 
@@ -24,6 +24,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   defaultfor :osfamily => :redhat
+
+  def execute(*args)
+    if @resource and @resource[:environment]
+      Puppet::Util::Execution.execute(*args, :custom_environment => @resource[:environment])
+    else
+      Puppet::Util::Execution.execute(*args)
+    end
+  end
 
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
@@ -42,14 +50,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @param enablerepo [Array<String>] A list of repositories to enable for this query
   # @param disablerepo [Array<String>] A list of repositories to disable for this query
   # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
+  # @param environment [Hash<String,String>] A hash of environment variables to use
   # @return [Hash<Symbol, String>]
-  def self.latest_package_version(package, enablerepo, disablerepo, disableexcludes)
+  def self.latest_package_version(package, enablerepo, disablerepo, disableexcludes, environment=nil)
 
     key = [enablerepo, disablerepo, disableexcludes]
 
     @latest_versions ||= {}
     if @latest_versions[key].nil?
-      @latest_versions[key] = check_updates(enablerepo, disablerepo, disableexcludes)
+      @latest_versions[key] = check_updates(enablerepo, disablerepo, disableexcludes, environment)
     end
 
     if @latest_versions[key][package]
@@ -64,15 +73,20 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @param enablerepo [Array<String>] A list of repositories to enable for this query
   # @param disablerepo [Array<String>] A list of repositories to disable for this query
   # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
+  # @param environment [Hash<String,String>] A hash of environment variables to use
   # @return [Hash<String, Array<Hash<String, String>>>] All packages that were
   #   found with a list of found versions for each package.
-  def self.check_updates(enablerepo, disablerepo, disableexcludes)
+  def self.check_updates(enablerepo, disablerepo, disableexcludes, environment=nil)
     args = [command(:cmd), 'check-update']
     args.concat(enablerepo.map { |repo| ["--enablerepo=#{repo}"] }.flatten)
     args.concat(disablerepo.map { |repo| ["--disablerepo=#{repo}"] }.flatten)
     args.concat(disableexcludes.map { |repo| ["--disableexcludes=#{repo}"] }.flatten)
 
-    output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
+    if environment.nil?
+      output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
+    else
+      output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false, :custom_environment => environment)
+    end
 
     updates = {}
     if output.exitstatus == 100
@@ -180,7 +194,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   # What's the latest package version available?
   def latest
-    upd = self.class.latest_package_version(@resource[:name], enablerepo, disablerepo, disableexcludes)
+    upd = self.class.latest_package_version(@resource[:name], enablerepo, disablerepo, disableexcludes, @resource[:environment])
     unless upd.nil?
       # FIXME: there could be more than one update for a package
       # because of multiarch

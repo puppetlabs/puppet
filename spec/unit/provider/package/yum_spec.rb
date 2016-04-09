@@ -33,6 +33,7 @@ describe provider_class do
     it { is_expected.to be_versionable }
     it { is_expected.to be_install_options }
     it { is_expected.to be_virtual_packages }
+    it { is_expected.to be_set_environment }
   end
 
   # provider should repond to the following methods
@@ -242,6 +243,14 @@ describe provider_class do
       provider.install
     end
 
+    it 'should accept environment settings' do
+      resource[:ensure] = :installed
+      resource[:environment] = { 'foo' => 'bar' }
+
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name], :custom_environment => { 'foo' => 'bar' })
+      provider.install
+    end
+
     it 'allow virtual packages' do
       resource[:ensure] = :installed
       resource[:allow_virtual] = true
@@ -271,7 +280,7 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [], [])
+      described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [], [], nil)
       provider.latest
     end
 
@@ -282,7 +291,7 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'], [])
+      described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'], [], nil)
       provider.latest
     end
 
@@ -293,13 +302,13 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'])
+      described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'], nil)
       provider.latest
     end
 
     describe 'and a newer version is not available' do
       before :each do
-        described_class.stubs(:latest_package_version).with(name, [], [], []).returns nil
+        described_class.stubs(:latest_package_version).with(name, [], [], [], nil).returns nil
       end
 
       it 'raises an error the package is not installed' do
@@ -327,7 +336,7 @@ describe provider_class do
       end
 
       it 'includes the epoch in the version string' do
-        described_class.stubs(:latest_package_version).with(name, [], [], []).returns(latest_version)
+        described_class.stubs(:latest_package_version).with(name, [], [], [], nil).returns(latest_version)
         expect(provider.latest).to eq('1:2.3.4-5')
       end
     end
@@ -361,19 +370,19 @@ describe provider_class do
     let(:enabled_versions) { {name => [mypackage_newerversion]} }
 
     it "returns the version hash if the package was found" do
-      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
       version = described_class.latest_package_version(name, [], [], [])
       expect(version).to eq(mypackage_version)
     end
 
     it "is nil if the package was not found in the query" do
-      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
       version = described_class.latest_package_version('nopackage', [], [], [])
       expect(version).to be_nil
     end
 
     it "caches the package list and reuses that for subsequent queries" do
-      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
 
       2.times {
         version = described_class.latest_package_version(name, [], [], [])
@@ -382,8 +391,8 @@ describe provider_class do
     end
 
     it "caches separate lists for each combination of 'enablerepo' and 'disablerepo' and 'disableexcludes'" do
-      described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
-      described_class.expects(:check_updates).with(['enabled'], ['disabled'], ['disableexcludes']).once.returns(enabled_versions)
+      described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
+      described_class.expects(:check_updates).with(['enabled'], ['disabled'], ['disableexcludes'], nil).once.returns(enabled_versions)
 
       2.times {
         version = described_class.latest_package_version(name, [], [], [])
