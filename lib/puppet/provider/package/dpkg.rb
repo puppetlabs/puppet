@@ -16,11 +16,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # @param args [Array<String>] any command line arguments to be appended to the command
   # @param block expected to be passed on to execpipe
   # @return whatever the block returns
-  # @see Puppet::Util::Execution.execpipe
+  # @see Puppet::Provider::Package.execpipe
   # @api private
   def self.dpkgquery_piped(*args, &block)
     cmd = args.unshift(command(:dpkgquery))
-    Puppet::Util::Execution.execpipe(cmd, &block)
+    execpipe(cmd, &block)
   end
 
   def self.instances

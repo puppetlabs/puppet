@@ -178,7 +178,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--enablerepo' => 'centosplus'},
         ]
         provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [], [])
+        described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [], [], nil)
         provider.latest
       end
       it "passes the value of disablerepo install_options when querying" do
@@ -187,7 +187,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--disablerepo' => 'centosplus'},
         ]
         provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'], [])
+        described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'], [], nil)
         provider.latest
       end
       it "passes the value of disableexcludes install_options when querying" do
@@ -196,12 +196,12 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--disableexcludes' => 'centosplus'},
         ]
         provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'])
+        described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'], nil)
         provider.latest
       end
       describe 'and a newer version is not available' do
         before :each do
-          described_class.stubs(:latest_package_version).with(name, [], [], []).returns nil
+          described_class.stubs(:latest_package_version).with(name, [], [], [], nil).returns nil
         end
         it 'raises an error the package is not installed' do
           provider.stubs(:properties).returns({:ensure => :absent})
@@ -225,7 +225,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           }
         end
         it 'includes the epoch in the version string' do
-          described_class.stubs(:latest_package_version).with(name, [], [], []).returns(latest_version)
+          described_class.stubs(:latest_package_version).with(name, [], [], [], nil).returns(latest_version)
           expect(provider.latest).to eq('1:2.3.4-5')
         end
       end
@@ -254,31 +254,31 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       let(:latest_versions) { {name => [mypackage_version]} }
       let(:enabled_versions) { {name => [mypackage_newerversion]} }
       it "returns the version hash if the package was found" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
-        version = described_class.latest_package_version(name, [], [], [])
+        described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
+        version = described_class.latest_package_version(name, [], [], [], nil)
         expect(version).to eq(mypackage_version)
       end
       it "is nil if the package was not found in the query" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
-        version = described_class.latest_package_version('nopackage', [], [], [])
+        described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
+        version = described_class.latest_package_version('nopackage', [], [], [], nil)
         expect(version).to be_nil
       end
       it "caches the package list and reuses that for subsequent queries" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+        described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
         2.times {
-          version = described_class.latest_package_version(name, [], [], [])
+          version = described_class.latest_package_version(name, [], [], [], nil)
           expect(version).to eq mypackage_version
         }
       end
       it "caches separate lists for each combination of 'enablerepo' and 'disablerepo' and 'disableexcludes'" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
-        described_class.expects(:check_updates).with(['enabled'], ['disabled'], ['disableexcludes']).once.returns(enabled_versions)
+        described_class.expects(:check_updates).with([], [], [], nil).once.returns(latest_versions)
+        described_class.expects(:check_updates).with(['enabled'], ['disabled'], ['disableexcludes'], nil).once.returns(enabled_versions)
         2.times {
-          version = described_class.latest_package_version(name, [], [], [])
+          version = described_class.latest_package_version(name, [], [], [], nil)
           expect(version).to eq mypackage_version
         }
         2.times {
-          version = described_class.latest_package_version(name, ['enabled'], ['disabled'], ['disableexcludes'])
+          version = described_class.latest_package_version(name, ['enabled'], ['disabled'], ['disableexcludes'], nil)
           expect(version).to eq(mypackage_newerversion)
         }
       end
@@ -288,47 +288,47 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         Puppet::Util::Execution.expects(:execute).with do |args, *rest|
           expect(args).to eq %W[/usr/bin/#{provider_name} check-update --enablerepo=updates --enablerepo=centosplus]
         end.returns(stub(:exitstatus => 0))
-        described_class.check_updates(%W[updates centosplus], [], [])
+        described_class.check_updates(%W[updates centosplus], [], [], nil)
       end
       it "passes repos to disable to '#{provider_name} check-update'" do
         Puppet::Util::Execution.expects(:execute).with do |args, *rest|
           expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disablerepo=updates --disablerepo=centosplus]
         end.returns(stub(:exitstatus => 0))
-        described_class.check_updates([],%W[updates centosplus], [])
+        described_class.check_updates([],%W[updates centosplus], [], nil)
       end
       it "passes a combination of repos to enable and disable to '#{provider_name} check-update'" do
         Puppet::Util::Execution.expects(:execute).with do |args, *rest|
           expect(args).to eq %W[/usr/bin/#{provider_name} check-update --enablerepo=os --enablerepo=contrib --disablerepo=updates --disablerepo=centosplus]
         end.returns(stub(:exitstatus => 0))
-        described_class.check_updates(%W[os contrib], %W[updates centosplus], [])
+        described_class.check_updates(%W[os contrib], %W[updates centosplus], [], nil)
       end
       it "passes disableexcludes to '#{provider_name} check-update'" do
         Puppet::Util::Execution.expects(:execute).with do |args, *rest|
           expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disableexcludes=main --disableexcludes=centosplus]
         end.returns(stub(:exitstatus => 0))
-        described_class.check_updates([], [], %W[main centosplus])
+        described_class.check_updates([], [], %W[main centosplus], nil)
       end
       it "passes all options to '#{provider_name} check-update'" do
         Puppet::Util::Execution.expects(:execute).with do |args, *rest|
           expect(args).to eq %W[/usr/bin/#{provider_name} check-update --enablerepo=a --enablerepo=b --disablerepo=c
                                 --disablerepo=d --disableexcludes=e --disableexcludes=f]
         end.returns(stub(:exitstatus => 0))
-        described_class.check_updates(%W[a b], %W[c d], %W[e f])
+        described_class.check_updates(%W[a b], %W[c d], %W[e f], nil)
       end
       it "returns an empty hash if '#{provider_name} check-update' returned 0" do
         Puppet::Util::Execution.expects(:execute).returns(stub :exitstatus => 0)
-        expect(described_class.check_updates([], [], [])).to be_empty
+        expect(described_class.check_updates([], [], [], nil)).to be_empty
       end
       it "returns a populated hash if '#{provider_name} check-update returned 100'" do
         output = stub(:exitstatus => 100)
         Puppet::Util::Execution.expects(:execute).returns(output)
         described_class.expects(:parse_updates).with(output).returns({:has => :updates})
-        expect(described_class.check_updates([], [], [])).to eq({:has => :updates})
+        expect(described_class.check_updates([], [], [], nil)).to eq({:has => :updates})
       end
       it "returns an empty hash if '#{provider_name} check-update' returned an exit code that was not 0 or 100" do
         Puppet::Util::Execution.expects(:execute).returns(stub(:exitstatus => 1))
         described_class.expects(:warning).with("Could not check for updates, \'/usr/bin/#{provider_name} check-update\' exited with 1")
-        expect(described_class.check_updates([], [], [])).to eq({})
+        expect(described_class.check_updates([], [], [], nil)).to eq({})
       end
     end
     describe "parsing a line from #{provider_name} check-update" do

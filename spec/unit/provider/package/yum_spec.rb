@@ -7,6 +7,53 @@ describe provider_class do
   include PuppetSpec::Fixtures
   it_behaves_like 'RHEL package provider', provider_class, 'yum'
 
+  describe 'yum-specific provider features' do
+    it { is_expected.to be_settable_environment }
+  end
+
+  describe 'when installing with environment settings' do
+
+    let(:name) { 'mypackage' }
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name     => name,
+        :ensure   => :installed,
+        :provider => 'yum'
+      )
+    end
+
+    let(:provider) do
+      provider = provider_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before do
+      provider_class.stubs(:command).with(:cmd).returns('/usr/bin/yum')
+      provider.stubs(:rpm).returns 'rpm'
+      provider.stubs(:get).with(:version).returns '1'
+      provider.stubs(:get).with(:release).returns '1'
+      provider.stubs(:get).with(:arch).returns 'i386'
+    end
+
+    it 'should accept a single environment setting' do
+      resource[:ensure] = :installed
+      resource[:environment] = 'foo=bar'
+
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name], :custom_environment => { 'foo' => 'bar' })
+      provider.install
+    end
+
+    it 'should accept multiple environment settings' do
+      resource[:ensure] = :installed
+      resource[:environment] = [ 'foo=bar', 'baz=quux' ]
+
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name], :custom_environment => { 'foo' => 'bar', 'baz' => 'quux' })
+      provider.install
+    end
+
+  end
+
   describe "parsing the output of check-update" do
     describe "with no multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-simple.txt")) }
