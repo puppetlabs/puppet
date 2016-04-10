@@ -423,9 +423,13 @@ class PObjectType < PAnyType
             end
           end
 
-          raise Puppet::ParseError, "#{label} equality is referencing non existent attribute '#{attr_name}'" if attr.nil?
-          raise Puppet::ParseError, "#{label} equality is referencing #{attr.label}" unless attr.is_a?(PAttribute)
-          raise Puppet::ParseError, "#{label} equality is referencing constant #{attr.label}" if attr.kind == ATTRIBUTE_KIND_CONSTANT
+          unless attr.is_a?(PAttribute)
+            raise Puppet::ParseError, "#{label} equality is referencing non existent attribute '#{attr_name}'" if attr.nil?
+            raise Puppet::ParseError, "#{label} equality is referencing #{attr.label}. Only attribute references are allowed"
+          end
+          if attr.kind == ATTRIBUTE_KIND_CONSTANT
+            raise Puppet::ParseError, "#{label} equality is referencing constant #{attr.label}. Reference to constant is not allowed in equality"
+          end
         end
       end
       equality.freeze

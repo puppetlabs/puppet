@@ -444,7 +444,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "MyObject equality is referencing constant attribute MyObject[b]")
+        'MyObject equality is referencing constant attribute MyObject[b]. Reference to constant is not allowed in equality')
     end
 
     it 'raises an error when equality references a function' do
@@ -458,7 +458,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "MyObject equality is referencing function MyObject[b]")
+        'MyObject equality is referencing function MyObject[b]. Only attribute references are allowed')
     end
 
     it 'raises an error when equality references a non existent attributes' do
