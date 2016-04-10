@@ -264,8 +264,7 @@ class Puppet::Parser::AST::PopsBridge
       loader = Puppet::Pops::Loaders.find_loader(modname)
 
       # Bind the type alias to the loader using the alias
-      typed_name, t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
-      loader.set_entry(typed_name, t, Puppet::Pops::Adapters::SourcePosAdapter.adapt(type_alias).to_uri)
+      Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
 
       nil # do not want the type alias to inadvertently leak into 3x
     end

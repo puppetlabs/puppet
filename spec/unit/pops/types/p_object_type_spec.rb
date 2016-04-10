@@ -10,17 +10,13 @@ describe 'The Object Type' do
   let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
 
   def type_object_t(name, body_string)
-    TypeFactory.type_alias(name, pp_parser.parse_string("Object[{#{body_string}}]").current)
-  end
-
-  def expect_object(name, body_string)
-    obj = type_object_t(name, body_string)
-    loader.expects(:load).with(:type, name.downcase).at_least_once.returns obj
-    obj
+    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
+    loader.set_entry(Loader::Loader::TypedName.new(:type, name.downcase), object)
+    object
   end
 
   def parse_object(name, body_string)
-    expect_object(name, body_string)
+    type_object_t(name, body_string)
     parser.parse(name, loader)
   end
 
@@ -32,7 +28,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute 'a' had wrong type, expected a Type value, got Integer/)
+        /attribute MyObject\[a\] had wrong type, expected a Type value, got Integer/)
     end
 
     it 'raises an error if the type is missing' do
@@ -52,7 +48,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute 'a' value had wrong type, expected an Integer value, got String/)
+        /attribute MyObject\[a\] value had wrong type, expected an Integer value, got String/)
     end
 
     it 'raises an error if the kind is invalid' do
@@ -102,7 +98,7 @@ describe 'The Object Type' do
           a => Integer
         }
       OBJECT
-      expect { tp['a'].value }.to raise_error(Puppet::Error, /attribute 'a' has no value/)
+      expect { tp['a'].value }.to raise_error(Puppet::Error, 'attribute MyObject[a] has no value')
     end
 
     context 'that are constants' do
@@ -129,7 +125,7 @@ describe 'The Object Type' do
           }
         OBJECT
         expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          /attribute 'a' of kind 'constant' requires a value/)
+          "attribute MyObject[a] of kind 'constant' requires a value")
       end
 
       it 'raises an error when final => false' do
@@ -143,7 +139,7 @@ describe 'The Object Type' do
           }
         OBJECT
         expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          /attribute 'a' of kind 'constant' cannot be combined with final => false/)
+          "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
       end
     end
   end
@@ -156,7 +152,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /function 'a' had wrong type, expected a Type\[Callable\] value, got Type\[String\]/)
+        /function MyObject\[a\] had wrong type, expected a Type\[Callable\] value, got Type\[String\]/)
     end
 
     it 'raises an error when a function has the same name as an attribute' do
@@ -169,7 +165,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "function 'a' conflicts with attribute with the same name")
+        'function MyObject[a] conflicts with attribute with the same name')
     end
   end
 
@@ -186,7 +182,7 @@ describe 'The Object Type' do
           a => { type => Integer[0,10], override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp['a'].type).to eql(PIntegerType.new(0,10))
     end
@@ -203,9 +199,9 @@ describe 'The Object Type' do
           a => { type => Callable, override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "function 'a' overrides inherited attribute")
+        'function MyDerivedObject[a] attempts to override attribute MyObject[a]')
     end
 
     it 'raises an error when the an function overrides an attribute' do
@@ -220,9 +216,9 @@ describe 'The Object Type' do
           a => { type => Integer, override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attribute 'a' overrides inherited function")
+        'attribute MyDerivedObject[a] attempts to override function MyObject[a]')
     end
 
     it 'raises an error on attempts to redefine inherited member to unassignable type' do
@@ -237,9 +233,9 @@ describe 'The Object Type' do
           a => { type => String, override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attempt to override attribute 'a' with a type that does not match")
+        'attribute MyDerivedObject[a] attempts to override attribute MyObject[a] with a type that does not match')
     end
 
     it 'raises an error when an attribute overrides a final attribute' do
@@ -254,9 +250,9 @@ describe 'The Object Type' do
           a => { type => Integer, override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attempt to override final attribute 'a'")
+        'attribute MyDerivedObject[a] attempts to override final attribute MyObject[a]')
     end
 
     it 'raises an error when an overriding attribute is not declared with override => true' do
@@ -271,9 +267,9 @@ describe 'The Object Type' do
           a => Integer
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "attribute 'a' attempts to override without having override => true")
+        'attribute MyDerivedObject[a] attempts to override attribute MyObject[a] without having override => true')
     end
 
     it 'raises an error when an attribute declared with override => true does not override' do
@@ -288,9 +284,9 @@ describe 'The Object Type' do
           b => { type => Integer, override => true }
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "expected attribute 'b' to override an inherited attribute, but no such attribute was found")
+        "expected attribute MyDerivedObject[b] to override an inherited attribute, but no such attribute was found")
     end
   end
 
@@ -370,7 +366,7 @@ describe 'The Object Type' do
           d => Integer
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp.equality).to be_nil
       expect(tp.equality_attributes.keys).to eq(['a','b','c','d'])
@@ -391,7 +387,7 @@ describe 'The Object Type' do
           d => Integer
         }
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp.equality).to be_nil
       expect(tp.equality_attributes.keys).to eq(['a','c','d'])
@@ -413,7 +409,7 @@ describe 'The Object Type' do
         },
         equality => [b,c]
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp.equality).to eq(['b','c'])
       expect(tp.equality_attributes.keys).to eq(['a','b','c'])
@@ -434,9 +430,9 @@ describe 'The Object Type' do
         },
         equality => a
       OBJECT
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       expect { parse_object('MyDerivedObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing attribute 'a' which is already included by parent equality")
+        "MyDerivedObject equality is referencing attribute MyObject[a] which is included in equality of MyObject")
     end
 
     it 'raises an error when equality references a constant attribute' do
@@ -448,7 +444,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing constant attribute 'b'")
+        'MyObject equality is referencing constant attribute MyObject[b]. Reference to constant is not allowed in equality')
     end
 
     it 'raises an error when equality references a function' do
@@ -462,7 +458,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing function 'b'")
+        'MyObject equality is referencing function MyObject[b]. Only attribute references are allowed')
     end
 
     it 'raises an error when equality references a non existent attributes' do
@@ -473,7 +469,7 @@ describe 'The Object Type' do
         equality => [a,b]
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-        "equality is referencing non existent attribute 'b'")
+        "MyObject equality is referencing non existent attribute 'b'")
     end
 
     it 'raises an error when equality_include_type = false and attributes are provided' do
@@ -490,21 +486,21 @@ describe 'The Object Type' do
   end
 
   it 'raises an error when initialization hash contains invalid keys' do
-    expect_object('MyObject', <<-OBJECT)
+    obj = <<-OBJECT
       attribrutes => {
         a => Integer
       }
     OBJECT
-    expect { parser.parse('MyObject', loader) }.to raise_error(TypeAssertionError, /object initializer had wrong type, extraneous key 'attribrutes'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /object initializer had wrong type, unrecognized key 'attribrutes'/)
   end
 
   it 'raises an error when attribute contains invalid keys' do
-    expect_object('MyObject', <<-OBJECT)
+    obj = <<-OBJECT
       attributes => {
         a => { type => Integer, knid => constant }
       }
     OBJECT
-    expect { parser.parse('MyObject', loader) }.to raise_error(TypeAssertionError, /initializer for attribute 'a' had wrong type, extraneous key 'knid'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute MyObject\[a\] had wrong type, unrecognized key 'knid'/)
   end
 
   context 'when inheriting from a another Object type' do
@@ -526,7 +522,7 @@ describe 'The Object Type' do
     OBJECT
 
     it 'includes the inherited type and its members' do
-      expect_object('MyObject', parent)
+      parse_object('MyObject', parent)
       t = parse_object('MyDerivedObject', derived)
       members = t.members.values
       expect{ |b| members.each {|m| m.name.tap(&b) }}.to yield_successive_args('c', 'd')
@@ -537,23 +533,15 @@ describe 'The Object Type' do
     end
 
     it 'is assignable to its inherited type' do
-      p = expect_object('MyObject', parent)
+      p = parse_object('MyObject', parent)
       t = parse_object('MyDerivedObject', derived)
       expect(p).to be_assignable(t)
     end
 
     it 'does not consider inherited type to be assignable' do
-      p = expect_object('MyObject', parent)
+      p = parse_object('MyObject', parent)
       d = parse_object('MyDerivedObject', derived)
       expect(d).not_to be_assignable(p)
-    end
-
-    it 'raises an error when object when circular inheritance is detected' do
-      obj = <<-OBJECT
-        parent => MyDerivedObject
-      OBJECT
-      expect_object('MyDerivedObject', derived)
-      expect { parse_object('MyObject', obj) }.to raise_error(Puppet::Error, /inherits from itself/)
     end
 
     context 'that in turn inherits another Object type' do
@@ -566,16 +554,16 @@ describe 'The Object Type' do
       OBJECT
 
       it 'is assignable to all inherited types' do
-        p = expect_object('MyObject', parent)
-        d1 = expect_object('MyDerivedObject', derived)
+        p = parse_object('MyObject', parent)
+        d1 = parse_object('MyDerivedObject', derived)
         d2 = parse_object('MyDerivedObject2', derived2)
         expect(p).to be_assignable(d2)
         expect(d1).to be_assignable(d2)
       end
 
       it 'does not consider any of the inherited types to be assignable' do
-        p = expect_object('MyObject', parent)
-        d1 = expect_object('MyDerivedObject', derived)
+        p = parse_object('MyObject', parent)
+        d1 = parse_object('MyDerivedObject', derived)
         d2 = parse_object('MyDerivedObject2', derived2)
         expect(d2).not_to be_assignable(p)
         expect(d2).not_to be_assignable(d1)
@@ -605,26 +593,26 @@ describe 'The Object Type' do
 
   context 'when using the initialization hash' do
     it 'produced hash that contains features using short form (type instead of detailed hash when only type is declared)' do
-      obj = t = parse_object('MyObject', <<-OBJECT).resolved_type
+      obj = t = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer }
         }
       OBJECT
-      expect(TypeFormatter.string(obj)).to eql("Object[{attributes => {'a' => Integer}}]")
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => Integer}}]")
     end
 
     it 'produced hash that does not include defaults' do
-      obj = t = parse_object('MyObject', <<-OBJECT).resolved_type
+      obj = t = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer, value => 23, kind => constant, final => true },
         },
         equality_include_type => true
       OBJECT
-      expect(TypeFormatter.string(obj)).to eql("Object[{attributes => {'a' => {type => Integer, kind => constant, value => 23}}}]")
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => {type => Integer, kind => constant, value => 23}}}]")
     end
 
     it 'can create an equal copy from produced hash' do
-      obj = t = parse_object('MyObject', <<-OBJECT).resolved_type
+      obj = t = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Struct[{x => Integer, y => Integer}], value => {x => 4, y => 9}, kind => constant },
           b => Integer
@@ -642,11 +630,11 @@ describe 'The Object Type' do
   context 'when used in Puppet expressions' do
     include PuppetSpec::Compiler
 
-    it 'two empty objects are equal' do
+    it 'two anonymous empty objects are equal' do
       code = <<-CODE
-      type MyFirstObject = Object[{}]
-      type MySecondObject = Object[{}]
-      notice(MyFirstObject == MySecondObject)
+      $x = Object[{}]
+      $y = Object[{}]
+      notice($x == $y)
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true'])
     end
@@ -660,12 +648,12 @@ describe 'The Object Type' do
       expect(eval_and_collect_notices(code)).to eql(['false'])
     end
 
-    it 'two objects that inherits the same parent are equal' do
+    it 'two anonymous objects that inherits the same parent are equal' do
       code = <<-CODE
       type MyFirstObject = Object[{}]
-      type MySecondObject = Object[{ parent => MyFirstObject }]
-      type MyThirdObject = Object[{ parent => MyFirstObject }]
-      notice(MySecondObject == MyThirdObject)
+      $x = Object[{ parent => MyFirstObject }]
+      $y = Object[{ parent => MyFirstObject }]
+      notice($x == $y)
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true'])
     end
@@ -685,6 +673,37 @@ describe 'The Object Type' do
       notice(MySecondObject =~ Type[MyFirstObject])
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'a named object is not added to the loader unless a type <name> = <definition> is made' do
+      code = <<-CODE
+      $x = Object[{ name => 'MyFirstObject' }]
+      notice($x == MyFirstObject)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Resource type not found: MyFirstObject/)
+    end
+
+    it 'a type alias on a named object overrides the name' do
+      code = <<-CODE
+      type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => { type => Integer, final => true }}}]
+      type MySecondObject = Object[{ parent => MyObject, attributes => { a => { type => Integer[10], override => true }}}]
+      notice(MySecondObject =~ Type)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
+    end
+
+    it 'raises an error when object when circular inheritance is detected' do
+      code = <<-CODE
+      type MyFirstObject = Object[{
+        parent => MySecondObject
+      }]
+      type MySecondObject = Object[{
+        parent => MyFirstObject
+      }]
+      notice(MySecondObject =~ Type[MyFirstObject])
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /inherits from itself/)
     end
 
     it 'notices the expanded string form expected content' do
@@ -720,7 +739,8 @@ describe 'The Object Type' do
       notice(MySecondObject)
       CODE
       expect(eval_and_collect_notices(code)).to eql([
-        "MyFirstObject = Object[{"+
+        "Object[{"+
+          "name => 'MyFirstObject', "+
           "attributes => {"+
           "'first_a' => Integer, "+
           "'first_b' => {type => String, kind => constant, value => 'the first constant'}, "+
@@ -734,7 +754,8 @@ describe 'The Object Type' do
           "}, "+
           "equality => [first_a]"+
           "}]",
-        "MySecondObject = Object[{"+
+        "Object[{"+
+          "name => 'MySecondObject', "+
           "parent => MyFirstObject, "+
           "attributes => {"+
           "'second_a' => Integer, "+

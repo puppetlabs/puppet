@@ -92,6 +92,6 @@ describe 'the assert_type function' do
       assert_type(Struct[{a=>Integer,b=>Boolean}], {a=>hej,x=>s})
     CODE
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
-      /entry 'a' expected an Integer value, got String.*expected a value for key 'b'.*extraneous key 'x'/m)
+      /entry 'a' expected an Integer value, got String.*expected a value for key 'b'.*unrecognized key 'x'/m)
   end
 end
