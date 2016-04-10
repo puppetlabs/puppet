@@ -55,6 +55,18 @@ class Puppet::Pops::Loader::Loader
     raise NotImplementedError.new
   end
 
+  # Returns an already loaded entry if one exists, or nil. This does not trigger loading
+  # of the given type/name.
+  #
+  # @param typed_name [TypedName] - the type, name combination to lookup
+  # @param check_dependencies [Boolean] - if dependencies should be checked in additiona to here and parent
+  # @return [NamedEntry, nil] the entry containing the loaded value, or nil if not found
+  # @api public
+  #
+  def loaded_entry(typed_name, check_dependencies = false)
+    raise NotImplementedError.new(self.class)
+  end
+
   # Produces the value associated with the given name if defined **in this loader**, or nil if not defined.
   # This lookup does not trigger any loading, or search of the given name.
   # An implementor of this method may not search or look up in any other loader, and it may not

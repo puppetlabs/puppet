@@ -38,6 +38,16 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     end
   end
 
+  # @api public
+  #
+  def loaded_entry(typed_name, check_dependencies = false)
+    if @named_values.has_key?(typed_name)
+      @named_values[typed_name]
+    elsif parent
+      parent.loaded_entry(typed_name, check_dependencies)
+    end
+  end
+
   # This method is final (subclasses should not override it)
   #
   # @api private
@@ -49,10 +59,21 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   # @api private
   #
   def set_entry(typed_name, value, origin = nil)
+
+    # It is never ok to redefine in the very same loader unless redefining a 'not found'
     if entry = @named_values[typed_name]
-      # only fail real redefines, not defines of earlier cached 'not found'
       fail_redefine(entry) unless entry.value.nil?
     end
+
+    # Check if new entry shadows existing entry and fail
+    # (unless special loader allows shadowing)
+    if typed_name.type == :type && !allow_shadowing?
+      entry = loaded_entry(typed_name)
+      if entry
+        fail_redefine(entry) unless entry.value.nil? #|| entry.value == value
+      end
+    end
+
     @last_result = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
     @last_name = typed_name
     @named_values[typed_name] = @last_result
@@ -74,10 +95,16 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     @named_values[typed_name] = named_entry
   end
 
+  protected
+
+  def allow_shadowing?
+    false
+  end
+
   private
 
   def fail_redefine(entry)
-    origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : "Set at unknown location"
+    origin_info = entry.origin ? "Originally set #{origin_label(entry.origin)}." : "Set at unknown location"
     raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}"
   end
 
@@ -85,12 +112,16 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   #
   def origin_label(origin)
     if origin && origin.is_a?(URI)
-      origin.to_s
+      format_uri(origin)
     elsif origin.respond_to?(:uri)
-      origin.uri.to_s
+      format_uri(origin.uri)
     else
       origin
     end
+  end
+
+  def format_uri(uri)
+    (uri.scheme == 'puppet' ? 'by ' : 'at ') + uri.to_s.sub(/^puppet:/,'')
   end
 
   # loads in priority order:

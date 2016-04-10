@@ -34,6 +34,10 @@ class StaticLoader < Loader
     "(StaticLoader)"
   end
 
+  def loaded_entry(typed_name, _)
+    @loaded[typed_name]
+  end
+
   private
 
   def load_constant(typed_name)
@@ -81,10 +85,11 @@ class StaticLoader < Loader
   end
 
   def create_built_in_types
+    origin_uri = URI("puppet:Puppet-Type-System/Static-Loader")
     type_map = Puppet::Pops::Types::TypeParser.type_map
     type_map.each do |name, type|
       typed_name = TypedName.new(:type, name)
-      @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
+      @loaded[ typed_name ] = NamedEntry.new(typed_name, type, origin_uri)#__FILE__)
     end
   end
 
