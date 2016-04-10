@@ -491,7 +491,7 @@ describe 'The Object Type' do
         a => Integer
       }
     OBJECT
-    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /object initializer had wrong type, extraneous key 'attribrutes'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /object initializer had wrong type, unrecognized key 'attribrutes'/)
   end
 
   it 'raises an error when attribute contains invalid keys' do
@@ -500,7 +500,7 @@ describe 'The Object Type' do
         a => { type => Integer, knid => constant }
       }
     OBJECT
-    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute 'a' had wrong type, extraneous key 'knid'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute 'a' had wrong type, unrecognized key 'knid'/)
   end
 
   context 'when inheriting from a another Object type' do

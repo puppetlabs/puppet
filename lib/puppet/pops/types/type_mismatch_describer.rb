@@ -214,7 +214,7 @@ module Types
 
   class ExtraneousKey < KeyMismatch
     def message(variant, position, tense = :present)
-      "#{variant}#{position} extraneous key '#{@key}'"
+      "#{variant}#{position} unrecognized key '#{@key}'"
     end
   end
 
