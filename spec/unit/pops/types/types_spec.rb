@@ -388,6 +388,20 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'When attempting to redefine a built in type' do
+    include PuppetSpec::Compiler
+
+    let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new("testing static loading") }
+    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(static_loader, "types_unit_test_loader") }
+    it 'such as Integer, an error is raised' do
+      code = <<-CODE
+        type Integer = String
+        notice 'hello' =~ Integer
+      CODE
+      expect{ eval_and_collect_notices(code) }.to raise_error(/Attempt to redefine entity 'type\/integer'. Originally set by Puppet-Type-System\/Static-Loader/)
+    end
+  end
+
   context 'instantiation via new_function is supported by' do
     let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "types_unit_test_loader") }
     it 'Integer' do
