@@ -2747,6 +2747,9 @@ class PTypeAliasType < PAnyType
         @resolved_type = nil
         raise
       end
+    else
+      # An alias may appoint an Object type that isn't resolved yet.
+      @resolved_type.resolve(type_parser, loader)
     end
     self
   end
@@ -2757,7 +2760,7 @@ class PTypeAliasType < PAnyType
 
   def accept(visitor, guard)
     guarded_recursion(guard, nil) do |g|
-      super
+      super(visitor, g)
       resolved_type.accept(visitor, g)
     end
   end

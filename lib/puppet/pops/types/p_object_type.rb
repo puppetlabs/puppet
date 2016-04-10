@@ -11,6 +11,7 @@ class PObjectType < PAnyType
   KEY_FINAL = 'final'.freeze
   KEY_FUNCTIONS = 'functions'.freeze
   KEY_KIND = 'kind'.freeze
+  KEY_NAME = 'name'.freeze
   KEY_OVERRIDE = 'override'.freeze
   KEY_PARENT = 'parent'.freeze
   KEY_TYPE = 'type'.freeze
@@ -25,6 +26,7 @@ class PObjectType < PAnyType
   TYPE_ANNOTATION_VALUE_TYPE = PStructType::DEFAULT #TBD
   TYPE_ANNOTATIONS = PHashType.new(TYPE_ANNOTATION_KEY_TYPE, TYPE_ANNOTATION_VALUE_TYPE)
 
+  TYPE_OBJECT_NAME = PPatternType.new([PRegexpType.new(Patterns::CLASSREF_EXT)])
   TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
@@ -52,6 +54,7 @@ class PObjectType < PAnyType
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
+    KEY_NAME => TypeFactory.optional(TYPE_OBJECT_NAME),
     KEY_PARENT => TypeFactory.optional(PType::DEFAULT),
     KEY_ATTRIBUTES => TypeFactory.optional(TYPE_ATTRIBUTES),
     KEY_FUNCTIONS => TypeFactory.optional(TYPE_FUNCTIONS),
@@ -273,6 +276,7 @@ class PObjectType < PAnyType
     end
   end
 
+  attr_reader :name
   attr_reader :parent
   attr_reader :attributes
   attr_reader :functions
@@ -280,19 +284,74 @@ class PObjectType < PAnyType
   attr_reader :checks
   attr_reader :annotations
 
-  # @param i12n_hash [Hash{String=>Object}] The hash describing the Object features
+  # Initialize an Object Type instance. The initialization will use either a name and an initialization
+  # hash expression, or a fully resolved initialization hash.
   #
-  # @api public
-  def initialize(i12n_hash)
-    TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, i12n_hash)
-
+  # @overload initialize(name, i12n_hash_expression)
+  #   Used when the Object type is loaded using a type alias expression. When that happens, it is important that
+  #   the actual resolution of the expression is deferred until all definitions have been made known to the current
+  #   loader. The object will then be resolved when it is loaded by the {TypeParser}. "resolved" here, means that
+  #   the hash expression is fully resolved, and then passed to the {#initialize_from_hash} method.
+  #   @param name [String] The name of the object
+  #   @param i12n_hash_expression [Model::LiteralHash] The hash describing the Object features or the name of the Object
+  #
+  # @overload initialize(i12n_hash)
+  #   Used when the object is created by the {TypeFactory}. The i12n_hash must be fully resolved.
+  #   @param i12n_hash [Hash{String=>Object}] The hash describing the Object features or the name of the Object
+  #
+  # @api private
+  def initialize(name_or_i12n_hash, i12n_hash_expression = nil)
     @attributes = EMPTY_HASH
     @functions = EMPTY_HASH
+
+    if name_or_i12n_hash.is_a?(Hash)
+      initialize_from_hash(name_or_i12n_hash)
+    else
+      @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, name_or_i12n_hash)
+      @i12n_hash_expression = i12n_hash_expression
+    end
+  end
+
+  # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
+  # interpret the contained expression and the resolved type is remembered. This method also
+  # checks and remembers if the resolve type contains self recursion.
+  #
+  # @param type_parser [TypeParser] type parser that will interpret the type expression
+  # @param loader [Loader::Loader] loader to use when loading type aliases
+  # @return [PTypeAliasType] the receiver of the call, i.e. `self`
+  # @api private
+  def resolve(type_parser, loader)
+    unless @i12n_hash_expression.nil?
+      @self_recursion = true # assumed while it being found out below
+
+      i12n_hash_expression = @i12n_hash_expression
+      @i12n_hash_expression = nil
+      initialize_from_hash(type_parser.interpret_LiteralHash(i12n_hash_expression, loader))
+
+      # Find out if this type is recursive. A recursive type has performance implications
+      # on several methods and this knowledge is used to avoid that for non-recursive
+      # types.
+      guard = RecursionGuard.new
+      accept(NoopTypeAcceptor::INSTANCE, guard)
+      @self_recursion = guard.recursive_this?(self)
+    end
+    self
+  end
+
+  # @api private
+  def initialize_from_hash(i12n_hash)
+    TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, i12n_hash)
+
+    # Name given to the loader have higher precedence than a name declared in the type
+    @name ||= i12n_hash[KEY_NAME]
+    @name.freeze unless @name.nil?
+
     @parent = i12n_hash[KEY_PARENT]
 
     parent_members = EMPTY_HASH
     parent_object_type = nil
     unless @parent.nil?
+      check_self_recursion(self)
       rp = resolved_parent
       if rp.is_a?(PObjectType)
         parent_object_type = rp
@@ -355,8 +414,6 @@ class PObjectType < PAnyType
 
     @annotations = i12n_hash[KEY_ANNOTATIONS]
     @annotations.freeze unless @annotations.nil?
-
-    @hash = [parent, @attributes, @functions, @equality, @checks].hash
   end
 
   def [](name)
@@ -364,11 +421,13 @@ class PObjectType < PAnyType
   end
 
   def accept(visitor, guard)
-    super
-    @parent.accept(visitor, guard) unless parent.nil?
-    @attributes.values.each { |a| a.accept(visitor, guard) }
-    @functions.values.each { |f| f.accept(visitor, guard) }
-    @annotations.each_key { |key| key.accept(visitor, guard) } unless @annotations.nil?
+    guarded_recursion(guard, nil) do |g|
+      super(visitor, g)
+      @parent.accept(visitor, g) unless parent.nil?
+      @attributes.values.each { |a| a.accept(visitor, g) }
+      @functions.values.each { |f| f.accept(visitor, g) }
+      @annotations.each_key { |key| key.accept(visitor, g) } unless @annotations.nil?
+    end
   end
 
   def callable_args?(callable, guard)
@@ -382,6 +441,7 @@ class PObjectType < PAnyType
   # @api public
   def i12n_hash
     result = {}
+    result[KEY_NAME] = @name unless @name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
@@ -393,6 +453,7 @@ class PObjectType < PAnyType
 
   def eql?(o)
     self.class == o.class &&
+      @name == o.name &&
       @parent == o.parent &&
       @attributes == o.attributes &&
       @functions == o.functions &&
@@ -401,7 +462,7 @@ class PObjectType < PAnyType
   end
 
   def hash
-    @hash
+    @name.nil? ? [@parent, @attributes, @functions].hash : @name.hash
   end
 
   def kind_of_callable?(optional=true, guard = nil)
@@ -471,9 +532,22 @@ class PObjectType < PAnyType
   # @api private
   def check_self_recursion(originator)
     unless @parent.nil?
-      raise Puppet::Error, "The Object type aliased by '#{originator}' inherits from itself" if @parent.equal?(originator)
+      raise Puppet::Error, "The Object type '#{originator.label}' inherits from itself" if @parent.equal?(originator)
       @parent.check_self_recursion(originator)
     end
+  end
+
+  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
+  #
+  # @return [String] the expanded form of this alias
+  # @api public
+  def to_s
+    TypeFormatter.singleton.alias_expanded_string(self)
+  end
+
+  # @api private
+  def label
+    @name || '<anonymous object type>'
   end
 
   protected
@@ -521,11 +595,6 @@ class PObjectType < PAnyType
     nil
   end
 
-  # @api private
-  def label
-    'object'
-  end
-
   private
 
   def compressed_members_hash(features)
@@ -537,6 +606,15 @@ class PObjectType < PAnyType
       end
       [feature.name, fh]
     end]
+  end
+
+  def guarded_recursion(guard, dflt)
+    if @self_recursion
+      guard ||= RecursionGuard.new
+      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
+    else
+      yield(guard)
+    end
   end
 
   def resolved_parent

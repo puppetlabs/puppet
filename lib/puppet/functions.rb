@@ -308,8 +308,7 @@ module Puppet::Functions
       # Add the loaded types to the builder
       aliases.local_types.each do |type_alias_expr|
         # Bind the type alias to the local_loader using the alias
-        typed_name, t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias_expr, aliases.loader)
-        aliases.loader.set_entry(typed_name, t, Puppet::Pops::Adapters::SourcePosAdapter.adapt(type_alias_expr).to_uri)
+        t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias_expr, aliases.loader)
 
         # Also define a method for convenient access to the defined type alias.
         # Since initial capital letter in Ruby means a Constant these names use a prefix of 

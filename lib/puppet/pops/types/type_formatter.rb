@@ -35,11 +35,11 @@ class TypeFormatter
   # @api public
   #
   def alias_expanded_string(t)
-    @expand_aliases = true
+    @expanded = true
     begin
       string(t)
     ensure
-      @expand_aliases = false
+      @expanded = false
     end
   end
 
@@ -248,37 +248,37 @@ class TypeFormatter
 
   # @api private
   def string_PObjectType(t)
-    stringified = Hash[t.i12n_hash.map do |k,v|
-      case k
-      when PObjectType::KEY_PARENT
-        # never print parent expanded
-        save_expanded = @expand_aliases
-        begin
-          @expand_aliases = false
-          v = string(v)
-        ensure
-          @expand_aliases = save_expanded
-        end
-      when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
-        v = append_hash('', Hash[v.map do |fk, fv|
-          if fv.is_a?(Hash)
-            fv = append_hash('', Hash[fv.map  do |fak,fav|
-                fav = string(fav) unless fak == PObjectType::KEY_KIND
-                [fak, fav]
-              end])
+    if @expanded
+      begin
+        @expanded = false
+        stringified = Hash[t.i12n_hash.map do |k,v|
+          case k
+          when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+            v = append_hash('', Hash[v.map do |fk, fv|
+              if fv.is_a?(Hash)
+                fv = append_hash('', Hash[fv.map  do |fak,fav|
+                    fav = string(fav) unless fak == PObjectType::KEY_KIND
+                    [fak, fav]
+                  end])
+              else
+                fv = string(fv)
+              end
+              [string(fk), fv]
+            end])
+          when PObjectType::KEY_EQUALITY
+            v = append_array('', v) if v.is_a?(Array)
           else
-            fv = string(fv)
+            v = string(v)
           end
-          [string(fk), fv]
-        end])
-      when PObjectType::KEY_EQUALITY
-        v = append_array('', v) if v.is_a?(Array)
-      else
-        v = string(v)
+          [k, v]
+        end]
+        append_array('Object', [append_hash('', stringified)])
+      ensure
+        @expanded = true
       end
-      [k, v]
-    end]
-    append_array('Object', [append_hash('', stringified)])
+    else
+      t.label
+    end
   end
 
   # @api private
@@ -298,7 +298,7 @@ class TypeFormatter
 
   # @api private
   def string_PTypeAliasType(t)
-    expand = @expand_aliases
+    expand = @expanded
     if expand && t.self_recursion?
       @guard ||= RecursionGuard.new
       expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0

@@ -42,14 +42,36 @@ class TypeDefinitionInstantiator
     # the loader is known - hence this mechanism
     private_loader = loader.private_loader
     Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
-
-    Types::PTypeAliasType.new(name, type_definition.type_expr)
+    create_type(type_definition, loader)
   end
 
   def self.create_from_model(type_definition, loader)
-    name = type_definition.name
-    [Loader::TypedName.new(:type, name.downcase), Types::PTypeAliasType.new(name, type_definition.type_expr)]
+    typed_name = Loader::TypedName.new(:type, type_definition.name.downcase)
+    type = create_type(type_definition, loader)
+    loader.set_entry(
+      typed_name,
+      type,
+      Adapters::SourcePosAdapter.adapt(type_definition).to_uri)
+    type
   end
+
+  def self.create_type(type_definition, loader)
+    type_expr = type_definition.type_expr
+    name = type_definition.name
+    if object_definition?(type_expr)
+      # No need for an alias. The Object type itself will receive the name instead
+      i12n_hash_expr = type_expr.keys.empty? ? nil : type_expr.keys[0]
+      Types::PObjectType.new(name, i12n_hash_expr)
+    else
+      Types::PTypeAliasType.new(name, type_expr)
+    end
+  end
+  private_class_method :create_type
+
+  def self.object_definition?(te)
+    te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) && left.cased_value == 'Object'
+  end
+  private_class_method :object_definition?
 end
 end
 end
