@@ -1483,7 +1483,11 @@ class PStructElement < TypedModelObject
   end
 
   def eql?(o)
-     self.class == o.class && value_type == o.value_type && key_type == o.key_type
+    self == o
+  end
+
+  def ==(o)
+    self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
 end
 
@@ -1601,16 +1605,26 @@ class PStructType < PAnyType
     elsif o.is_a?(Types::PHashType)
       required = 0
       required_elements_assignable = elements.all? do |e|
-        if e.key_type.assignable?(PUndefType::DEFAULT)
+        key_type = e.key_type
+        if key_type.assignable?(PUndefType::DEFAULT)
+          # Element is optional so Hash does not need to provide it
           true
         else
           required += 1
-          e.value_type.assignable?(o.element_type, guard)
+          if e.value_type.assignable?(o.element_type, guard)
+            # Hash must have something that is assignable. We don't care about the name or size of the key though
+            # because we have no instance of a hash to compare against.
+            key_type.generalize.assignable?(o.key_type)
+          else
+            false
+          end
         end
       end
       if required_elements_assignable
         size_o = o.size_type || PCollectionType::DEFAULT_SIZE
         PIntegerType.new(required, elements.size).assignable?(size_o, guard)
+      else
+        false
       end
     else
       false

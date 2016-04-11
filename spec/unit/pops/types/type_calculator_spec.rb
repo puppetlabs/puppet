@@ -902,6 +902,18 @@ describe 'The type calculator' do
         t2 = struct_t({not_undef_t('other_member') => string_t})
         expect(t2).not_to be_assignable_to(t1)
       end
+
+      it 'A hash of string is not assignable to struct with integer value' do
+        t1 = struct_t({'foo' => integer_t, 'bar' => string_t})
+        t2 = hash_t(string_t, string_t, range_t(2, 2))
+        expect(t1.assignable?(t2)).to eql(false)
+      end
+
+      it 'A hash of with integer key is not assignable to struct with string key' do
+        t1 = struct_t({'foo' => string_t, 'bar' => string_t})
+        t2 = hash_t(integer_t, string_t, range_t(2, 2))
+        expect(t1.assignable?(t2)).to eql(false)
+      end
     end
 
     context 'for Callable, such that' do
