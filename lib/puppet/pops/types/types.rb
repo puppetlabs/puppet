@@ -1598,7 +1598,9 @@ class PCallableType < PAnyType
 
     # NOTE: these tests are made in reverse as it is calling the callable that is constrained
     # (it's lower bound), not its upper bound
-    return false unless o.param_types.assignable?(@param_types, guard)
+    other_param_types = o.param_types
+
+    return false if other_param_types.nil? ||  !other_param_types.assignable?(@param_types, guard)
     # names are ignored, they are just information
     # Blocks must be compatible
     this_block_t = @block_type || PUndefType::DEFAULT
