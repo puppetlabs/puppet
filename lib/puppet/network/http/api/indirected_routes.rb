@@ -113,7 +113,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   def do_http_control_exception(response, exception)
     msg = exception.message
-    Puppet.info(msg)
+    Puppet.debug(msg)
     response.respond_with(exception.status, "text/plain", msg)
   end
 
