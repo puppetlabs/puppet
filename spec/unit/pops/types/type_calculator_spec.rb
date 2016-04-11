@@ -926,6 +926,14 @@ describe 'The type calculator' do
           PNotUndefType]
         tested_types.each {|t2| expect(t).to_not be_assignable_to(t2::DEFAULT) }
       end
+
+      it 'a callable with parameter is assignable to the default callable' do
+        expect(callable_t(string_t)).to be_assignable_to(Puppet::Pops::Types::PCallableType::DEFAULT)
+      end
+
+      it 'the default callable is not assignable to a callable with parameter' do
+        expect(Puppet::Pops::Types::PCallableType::DEFAULT).not_to be_assignable_to(callable_t(string_t))
+      end
     end
 
     it 'should recognize mapped ruby types' do
