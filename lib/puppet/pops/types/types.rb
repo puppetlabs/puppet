@@ -1311,6 +1311,8 @@ class PStructType < PAnyType
       if required_elements_assignable
         size_o = o.size_type || PCollectionType::DEFAULT_SIZE
         PIntegerType.new(required, elements.size).assignable?(size_o, guard)
+      else
+        false
       end
     else
       false
