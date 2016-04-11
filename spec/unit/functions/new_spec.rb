@@ -461,8 +461,8 @@ describe 'the new function' do
   end
 
   context 'when invoked on Hash' do
-    { {}            => 'Notify[Hash[Unit, Unit, 0, 0], {}]',
-      []            => 'Notify[Hash[Unit, Unit, 0, 0], {}]',
+    { {}            => 'Notify[Hash[0, 0], {}]',
+      []            => 'Notify[Hash[0, 0], {}]',
       {'a'=>true}   => 'Notify[Hash[String, Boolean], {a => true}]',
       [1,2,3,4]     => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',
       [[1,2],[3,4]] => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',

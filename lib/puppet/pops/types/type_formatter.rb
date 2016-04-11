@@ -192,14 +192,26 @@ class TypeFormatter
     append_array('Runtime', [string(t.runtime), string(t.runtime_type_name)])
   end
 
+  def is_empty_range?(from, to)
+    from == 0 && to == 0
+  end
+
   # @api private
   def string_PArrayType(t)
-    append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
+    if t.has_empty_range?
+      append_array('Array', ['0', '0'])
+    else
+      append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
+    end
   end
 
   # @api private
   def string_PHashType(t)
-    append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
+    if t.has_empty_range?
+      append_array('Hash', ['0', '0'])
+    else
+      append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
+    end
   end
 
   # @api private

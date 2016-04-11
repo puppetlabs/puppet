@@ -42,7 +42,7 @@ require 'puppet_spec/language'
     # @return [Array] array of notice output entries
     #
     def eval_collect_notices(arg_list, body, call_params)
-      call = call_params.is_a?(String) ? call_params : "example(#{call_params.join(',')})"
+      call = call_params.is_a?(String) ? call_params : "example(#{call_params.map {|p| p.nil? ? 'undef' : (p.is_a?(String) ? "'#{p}'" : p )}.join(',')})"
       body = func_bodies[body] if body.is_a?(Integer)
       evaluator = Puppet::Pops::Parser::EvaluatingParser.new()
       collect_notices("function example(#{arg_list}) #{body}") do
@@ -330,6 +330,24 @@ require 'puppet_spec/language'
       expect_fail([<<-SOURCE, 0], [], /The parameter 'a' is declared more than once/ )
       $a = 2,
       $a = 5
+      SOURCE
+    end
+
+    it 'will permit undef for optional parameters' do
+      expect_log([<<-SOURCE, 1], [nil], ['$a == '])
+      Optional[Integer] $a
+      SOURCE
+    end
+
+    it 'undef will override parameter default', :if => call_type == 'Function' do
+      expect_log([<<-SOURCE, 1], [nil], ['$a == '])
+      Optional[Integer] $a = 4
+      SOURCE
+    end
+
+    it 'undef will not override parameter default', :unless => call_type == 'Function' do
+      expect_log([<<-SOURCE, 1], [nil], ['$a == 4'])
+      Optional[Integer] $a = 4
       SOURCE
     end
   end

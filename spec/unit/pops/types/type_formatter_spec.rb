@@ -94,9 +94,14 @@ describe 'The type formatter' do
       expect(s.string(f.array_of_data)).to eq('Array')
     end
 
-    it "should yield 'Array[Unit, 0, 0]' for an empty array" do
+    it "should yield 'Array[0, 0]' for an empty array" do
       t = f.array_of(PUnitType::DEFAULT, f.range(0,0))
-      expect(s.string(t)).to eq('Array[Unit, 0, 0]')
+      expect(s.string(t)).to eq('Array[0, 0]')
+    end
+
+    it "should yield 'Hash[0, 0]' for an empty hash" do
+      t = f.hash_of(PUnitType::DEFAULT, PUnitType::DEFAULT, f.range(0,0))
+      expect(s.string(t)).to eq('Hash[0, 0]')
     end
 
     it "should yield 'Collection' and from/to for PCollectionType" do

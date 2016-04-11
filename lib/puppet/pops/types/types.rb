@@ -67,7 +67,7 @@ class PAnyType < TypedModelObject
   # @api public
   def assignable?(o, guard = nil)
     case o
-      when Class
+    when Class
       # Safe to call _assignable directly since a Class never is a Unit or Variant
       _assignable?(TypeCalculator.singleton.type(o), guard)
     when PUnitType
@@ -202,8 +202,18 @@ class PAnyType < TypedModelObject
   # Returns true if the given argument _o_ is an instance of this type
   # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
   # @return [Boolean]
+  # @api public
   def instance?(o, guard = nil)
     true
+  end
+
+  # An object is considered to really be an instance of a type when something other than a
+  # TypeAlias or a Variant responds true to a call to {#instance?}.
+  #
+  # @return [Integer] -1 = is not instance, 0 = recursion detected, 1 = is instance
+  # @api private
+  def really_instance?(o, guard = nil)
+    instance?(o, guard) ? 1 : -1
   end
 
   def eql?(o)
@@ -979,7 +989,7 @@ class PFloatType < PNumericType
             # support a binary as float
             if from[0] == '0' && from[1].downcase == 'b'
               from = Integer(from)
-            end 
+            end
             Float(from)
           rescue TypeError => e
             raise TypeConversionError.new(e.message)
@@ -1009,6 +1019,9 @@ class PCollectionType < PAnyType
   def initialize(element_type, size_type = nil)
     @element_type = element_type
     @size_type = size_type
+    if has_empty_range? && !@element_type.is_a?(PUnitType)
+      raise ArgumentError, 'An empty collection may not specify an element type'
+    end
   end
 
   def accept(visitor, guard)
@@ -1042,6 +1055,11 @@ class PCollectionType < PAnyType
   # Returns an array with from (min) size to (max) size
   def size_range
     (@size_type || DEFAULT_SIZE).range
+  end
+
+  def has_empty_range?
+    from, to = size_range
+    from == 0 && to == 0
   end
 
   def hash
@@ -2020,6 +2038,9 @@ class PHashType < PCollectionType
   def initialize(key_type, value_type, size_type = nil)
     super(value_type, size_type)
     @key_type = key_type
+    if has_empty_range? && !@key_type.is_a?(PUnitType)
+      raise ArgumentError, 'An empty hash may not specify a key type'
+    end
   end
 
   def accept(visitor, guard)
@@ -2253,6 +2274,14 @@ class PVariantType < PAnyType
   def instance?(o, guard = nil)
     # instance of variant if o is instance? of any of variant's types
     @types.any? { |type| type.instance?(o, guard) }
+  end
+
+  def really_instance?(o, guard = nil)
+    @types.inject(-1) do |memo, type|
+      ri = type.really_instance?(o, guard)
+      memo = ri if ri > memo
+      memo
+    end
   end
 
   def kind_of_callable?(optional = true, guard = nil)
@@ -2632,6 +2661,14 @@ class PTypeAliasType < PAnyType
     @self_recursion = false
   end
 
+  def assignable?(o, guard = nil)
+    if @self_recursion
+      guard ||= RecursionGuard.new
+      return true if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+    end
+    super(o, guard)
+  end
+
   # Returns the resolved type. The type must have been resolved by a call prior to calls to this
   # method or an error will be raised.
   #
@@ -2655,12 +2692,7 @@ class PTypeAliasType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if @self_recursion
-      guard ||= RecursionGuard.new
-      guard.add_that(o)
-      return guard.that_count > 1 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
-    end
-    resolved_type.instance?(o, guard)
+    really_instance?(o, guard) == 1
   end
 
   def iterable?(guard = nil)
@@ -2695,6 +2727,24 @@ class PTypeAliasType < PAnyType
     end
   end
 
+  # Acceptor used when re-checking for self recursion after a self recursion has been detected
+  #
+  # @api private
+  class AssertSelfRecursionStatusAcceptor
+    def visit(type, _)
+      type.set_self_recursion_status if type.is_a?(PTypeAliasType)
+    end
+  end
+
+  def set_self_recursion_status
+    return if @self_recursion || @resolved_type.is_a?(PTypeReferenceType)
+    @self_recursion = true
+    guard = RecursionGuard.new
+    accept(NoopTypeAcceptor::INSTANCE, guard)
+    @self_recursion = guard.recursive_this?(self)
+    when_self_recursion_detected if @self_recursion # no difference
+  end
+
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.
@@ -2721,27 +2771,10 @@ class PTypeAliasType < PAnyType
           raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
         end
         @self_recursion = guard.recursive_this?(self)
-        @resolved_type.check_self_recursion(self) if @self_recursion
-        if @self_recursion && @resolved_type.is_a?(PVariantType)
-          # Drop variants that are not real types
-          resolved_types = @resolved_type.types
-          real_types = resolved_types.select do |type|
-            next false if type == self
-            real_type_asserter = AssertOtherTypeAcceptor.new
-            accept(real_type_asserter, RecursionGuard.new)
-            real_type_asserter.other_type_detected?
-          end
-          if real_types.size != resolved_types.size
-            if real_types.size == 1
-              @resolved_type = real_types[0]
-            else
-              @resolved_type = PVariantType.new(real_types)
-            end
-            # Drop self recursion status in case it's not self recursive anymore
-            guard = RecursionGuard.new
-            accept(NoopTypeAcceptor::INSTANCE, guard)
-            @self_recursion = guard.recursive_this?(self)
-          end
+        # All aliases involved must re-check status since this alias is now resolved
+        if @self_recursion
+          accept(AssertSelfRecursionStatusAcceptor.new, RecursionGuard.new)
+          when_self_recursion_detected
         end
       rescue
         @resolved_type = nil
@@ -2787,17 +2820,20 @@ class PTypeAliasType < PAnyType
     resolved_type.send(name, *arguments, &block)
   end
 
+  # @api private
+  def really_instance?(o, guard = nil)
+    if @self_recursion
+      guard ||= RecursionGuard.new
+      guard.add_that(o)
+      return 0 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+    end
+    resolved_type.really_instance?(o, guard)
+  end
+
   protected
 
   def _assignable?(o, guard)
-    guard ||= RecursionGuard.new
-    if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
-      # Recursion detected both in self and other. This means that other is assignable
-      # to self. This point would not have been reached otherwise
-      true
-    else
-      resolved_type.assignable?(o, guard)
-    end
+    resolved_type.assignable?(o, guard)
   end
 
   def new_function(loader)
@@ -2813,6 +2849,31 @@ class PTypeAliasType < PAnyType
     else
       yield(guard)
     end
+  end
+
+  def when_self_recursion_detected
+    if @resolved_type.is_a?(PVariantType)
+      # Drop variants that are not real types
+      resolved_types = @resolved_type.types
+      real_types = resolved_types.select do |type|
+        next false if type == self
+        real_type_asserter = AssertOtherTypeAcceptor.new
+        accept(real_type_asserter, RecursionGuard.new)
+        real_type_asserter.other_type_detected?
+      end
+      if real_types.size != resolved_types.size
+        if real_types.size == 1
+          @resolved_type = real_types[0]
+        else
+          @resolved_type = PVariantType.new(real_types)
+        end
+        # Drop self recursion status in case it's not self recursive anymore
+        guard = RecursionGuard.new
+        accept(NoopTypeAcceptor::INSTANCE, guard)
+        @self_recursion = guard.recursive_this?(self)
+      end
+    end
+    @resolved_type.check_self_recursion(self) if @self_recursion
   end
 
   DEFAULT = PTypeAliasType.new('UnresolvedAlias', nil, PTypeReferenceType::DEFAULT)
