@@ -338,6 +338,18 @@ describe 'Puppet Type System' do
       expect(eval_and_collect_notices(code)).to eq(['true'])
     end
 
+    it 'will allow an alias where a variant references an alias with a variant that references itself' do
+      code = <<-CODE
+      type X = Variant[Y, Integer]
+      type Y = Variant[X, String]
+
+      notice(X >= X)
+      notice(X >= Y)
+      notice(Y >= X)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true','true','true'])
+    end
+
     it 'will detect a mismatch in an alias that directly references itself in a variant with other types' do
       code = <<-CODE
       type Foo = Variant[Foo,String]
