@@ -268,19 +268,6 @@ class PAnyType < TypedModelObject
     o.is_a?(PAnyType)
   end
 
-  NAME_SEGMENT_SEPARATOR = '::'.freeze
-
-  # @api private
-  def class_from_string(str)
-    begin
-      str.split(NAME_SEGMENT_SEPARATOR).reduce(Object) do |memo, name_segment|
-        memo.const_get(name_segment)
-      end
-    rescue NameError
-      return nil
-    end
-  end
-
   # Produces the tuple entry at the given index given a tuple type, its from/to constraints on the last
   # type, and an index.
   # Produces nil if the index is out of bounds
@@ -2438,58 +2425,6 @@ class PVariantType < PAnyType
   end
 end
 
-# @api public
-#
-class PRuntimeType < PAnyType
-  attr_reader :runtime, :runtime_type_name
-
-  def initialize(runtime, runtime_type_name = nil)
-    @runtime = runtime
-    @runtime_type_name = runtime_type_name
-  end
-
-  def hash
-    @runtime.hash ^ @runtime_type_name.hash
-  end
-
-  def eql?(o)
-    self.class == o.class && @runtime == o.runtime && @runtime_type_name == o.runtime_type_name
-  end
-
-  def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
-  end
-
-  def iterable?(guard = nil)
-    c = class_from_string(@runtime_type_name)
-    c.nil? ? false : c < Iterable
-  end
-
-  def iterable_type(guard = nil)
-    iterable?(guard) ? PIterableType.new(self) : nil
-  end
-
-  DEFAULT = PRuntimeType.new(nil)
-
-  protected
-
-  # Assignable if o's has the same runtime and the runtime name resolves to
-  # a class that is the same or subclass of t1's resolved runtime type name
-  # @api private
-  def _assignable?(o, guard)
-    return false unless o.is_a?(PRuntimeType)
-    return false unless @runtime == o.runtime
-    return true if @runtime_type_name.nil?   # t1 is wider
-    return false if o.runtime_type_name.nil?  # t1 not nil, so o can not be wider
-
-    # NOTE: This only supports Ruby, must change when/if the set of runtimes is expanded
-    c1 = class_from_string(@runtime_type_name)
-    c2 = class_from_string(o.runtime_type_name)
-    return false unless c1.is_a?(Module) && c2.is_a?(Module)
-    !!(c2 <= c1)
-  end
-end
-
 # Abstract representation of a type that can be placed in a Catalog.
 # @api public
 #
@@ -2898,3 +2833,4 @@ end
 end
 
 require_relative 'p_object_type'
+require_relative 'p_runtime_type'

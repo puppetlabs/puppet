@@ -189,7 +189,7 @@ class TypeFormatter
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime', [string(t.runtime), string(t.runtime_type_name)])
+    append_array('Runtime', [string(t.runtime), string(t.name_or_pattern)])
   end
 
   def is_empty_range?(from, to)
