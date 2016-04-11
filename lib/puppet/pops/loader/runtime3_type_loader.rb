@@ -34,12 +34,12 @@ class Runtime3TypeLoader < BaseLoader
           # checking if the type was created. If it was, an entry will already be stored in
           # this loader. If not, then it was created before this loader was instantiated and
           # we must therefore add it.
-          value = get_entry(typed_name)
-          value = set_entry(typed_name, Types::TypeFactory.resource(name.capitalize)) if value.nil?
-          value
+          te = get_entry(typed_name)
+          te = set_entry(typed_name, Types::TypeFactory.resource(Types::TypeFormatter.singleton.capitalize_segments(name))) if te.nil? || te.value.nil?
+          te
         end
       else
-        set_entry(typed_name, Types::TypeFactory.resource(name.capitalize))
+        set_entry(typed_name, Types::TypeFactory.resource(Types::TypeFormatter.singleton.capitalize_segments(name)))
       end
     else
       nil
