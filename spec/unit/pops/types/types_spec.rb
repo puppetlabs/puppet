@@ -185,6 +185,16 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Struct type' do
+    context 'can be used as key in hash' do
+      it 'compacts optional in optional in optional to just optional' do
+        key1 = tf.struct({'foo' => tf.string})
+        key2 = tf.struct({'foo' => tf.string})
+        expect({key1 => 'hi'}[key2]).to eq('hi')
+      end
+    end
+  end
+
   context 'Optional type' do
     let!(:overlapping_ints) { tf.variant(tf.range(10, 20), tf.range(18, 28)) }
     let!(:optoptopt) { tf.optional(tf.optional(tf.optional(overlapping_ints))) }

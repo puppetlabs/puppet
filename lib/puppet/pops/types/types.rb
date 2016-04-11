@@ -1189,7 +1189,11 @@ class PStructElement < TypedModelObject
   end
 
   def eql?(o)
-     self.class == o.class && value_type == o.value_type && key_type == o.key_type
+    self == o
+  end
+
+  def ==(o)
+    self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
 end
 
