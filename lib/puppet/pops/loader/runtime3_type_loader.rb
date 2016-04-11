@@ -45,6 +45,15 @@ class Runtime3TypeLoader < BaseLoader
       nil
     end
   end
+
+  # Allows shadowing since this loader is populalted with all loaded resource types at time
+  # of loading. This loading will, for built in types override the aliases configured in the static
+  # loader.
+  #
+  def allow_shadowing?
+    true
+  end
+
 end
 end
 end
