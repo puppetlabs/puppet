@@ -14,14 +14,6 @@ describe provider_class do
     @client.stubs(:call).with('package_releases', 'fake_package').returns([])
   end
 
-  describe 'provider features' do
-    it { is_expected.to be_installable }
-    it { is_expected.to be_uninstallable }
-    it { is_expected.to be_upgradeable }
-    it { is_expected.to be_versionable }
-    it { is_expected.to be_install_options }
-  end
-
   describe "parse" do
 
     it "should return a hash on valid input" do
@@ -63,6 +55,7 @@ describe provider_class do
               provider_class.expects(:which).with(cmd).returns(nil)
             end
           end
+          provider_class.stubs(:pip_version).returns('8.0.1')
           provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
           p = stub("process")
           p.expects(:collect).yields("real_package==1.2.5")
@@ -127,52 +120,97 @@ describe provider_class do
   end
 
   describe "latest" do
-    context "connecting directly" do
-
+    context "with pip version < 1.5.4" do
       before :each do
-        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", nil).returns(@client)
+        provider_class.stubs(:pip_version).returns('1.0.1')
+        provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
+        provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
       end
 
-      it "should find a version number for real_package" do
+      it "should find a version number for new_pip_package" do
+        p = StringIO.new(
+          <<-EOS
+          Downloading/unpacking fake-package
+            Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
+            Downloading real-package-0.10.1.tar.gz (544Kb): 544Kb downloaded
+          Saved ./foo/real-package-0.10.1.tar.gz
+          Successfully downloaded real-package
+          EOS
+        )
+        Puppet::Util::Execution.expects(:execpipe).yields(p).once
         @resource[:name] = "real_package"
-        expect(@provider.latest).not_to eq(nil)
+        expect(@provider.latest).to eq('0.10.1')
       end
 
       it "should not find a version number for fake_package" do
+        p = StringIO.new(
+          <<-EOS
+          Downloading/unpacking fake-package
+            Could not fetch URL http://pypi.python.org/simple/fake_package: HTTP Error 404: Not Found
+            Will skip URL http://pypi.python.org/simple/fake_package when looking for download links for fake-package
+            Could not fetch URL http://pypi.python.org/simple/fake_package/: HTTP Error 404: Not Found
+            Will skip URL http://pypi.python.org/simple/fake_package/ when looking for download links for fake-package
+            Could not find any downloads that satisfy the requirement fake-package
+          No distributions at all found for fake-package
+          Exception information:
+          Traceback (most recent call last):
+            File "/usr/lib/python2.7/dist-packages/pip/basecommand.py", line 126, in main
+              self.run(options, args)
+            File "/usr/lib/python2.7/dist-packages/pip/commands/install.py", line 223, in run
+              requirement_set.prepare_files(finder, force_root_egg_info=self.bundle, bundle=self.bundle)
+            File "/usr/lib/python2.7/dist-packages/pip/req.py", line 948, in prepare_files
+              url = finder.find_requirement(req_to_install, upgrade=self.upgrade)
+            File "/usr/lib/python2.7/dist-packages/pip/index.py", line 152, in find_requirement
+              raise DistributionNotFound('No distributions at all found for %s' % req)
+          DistributionNotFound: No distributions at all found for fake-package
+
+          Storing complete log in /root/.pip/pip.log
+          EOS
+        )
+        Puppet::Util::Execution.expects(:execpipe).yields(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
-
-      it "should handle a timeout gracefully" do
-        @resource[:name] = "fake_package"
-        @client.stubs(:call).raises(Timeout::Error)
-        expect { @provider.latest }.to raise_error(Puppet::Error)
-      end
     end
 
-    context "connecting via a proxy" do
+    context "with pip version >= 1.5.4" do
+      # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
+      # with regards to custom repositories, proxies and the like
+
       before :each do
-        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
-        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
-        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", "some_host:some_port").returns(@client)
+        provider_class.stubs(:pip_version).returns('1.5.4')
+        provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
+        provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
       end
 
       it "should find a version number for real_package" do
+        p = StringIO.new(
+          <<-EOS
+          Collecting real-package==versionplease
+            Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.1.3, 1.2, 1.9b1)
+          No matching distribution found for real-package==versionplease
+          EOS
+        )
+        Puppet::Util::Execution.expects(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).yields(p).once
         @resource[:name] = "real_package"
-        expect(@provider.latest).not_to eq(nil)
+        latest = @provider.latest
+        expect(latest).to eq('1.9b1')
       end
 
       it "should not find a version number for fake_package" do
+        p = StringIO.new(
+          <<-EOS
+          Collecting fake-package==versionplease
+            Could not find a version that satisfies the requirement fake-package==versionplease (from versions: )
+          No matching distribution found for fake-package==versionplease
+          EOS
+        )
+        Puppet::Util::Execution.expects(:execpipe).with(["/fake/bin/pip", "install", "fake_package==versionplease"]).yields(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
-
-      it "should handle a timeout gracefully" do
-        @resource[:name] = "fake_package"
-        @client.stubs(:call).raises(Timeout::Error)
-        expect { @provider.latest }.to raise_error(Puppet::Error)
-      end
     end
+
   end
 
   describe "install" do
@@ -258,6 +296,23 @@ describe provider_class do
     it "should just call install" do
       @provider.expects(:install).returns(nil)
       @provider.update
+    end
+
+  end
+
+  describe "pip_version" do
+
+    it "should return nil on missing pip" do
+      provider_class.stubs(:pip_cmd).returns(nil)
+      expect(provider_class.pip_version).to eq(nil)
+    end
+
+    it "should look up version if pip is present" do
+      provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
+      p = stub("process")
+      p.expects(:collect).yields('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
+      provider_class.expects(:execpipe).with(['/fake/bin/pip', '--version']).yields(p)
+      expect(provider_class.pip_version).to eq('8.0.2')
     end
 
   end
