@@ -54,14 +54,14 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       end
     end
 
-    describe "an error from IndirectedRoutes" do
-      require 'rack/mock'
+    describe "an error from IndirectedRoutes", :if => Puppet.features.rack? do
+      require 'rack/mock' if Puppet.features.rack?
 
       let(:handler) { Puppet::Network::HTTP::RackREST.new }
-      let(:response) { Rack::Response.new }
 
       describe "returns json" do
         it "when a standard error" do
+          response = Rack::Response.new
           request = Rack::Request.new(
             Rack::MockRequest.env_for("/puppet/v3/invalid-indirector"))
 
@@ -73,6 +73,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
           expect(resp["issue_kind"]).to be_a_kind_of(String)
         end
         it "when a server error" do
+          response = Rack::Response.new
           request = Rack::Request.new(
             Rack::MockRequest.env_for("/puppet/v3/unknown_indirector"))
 
