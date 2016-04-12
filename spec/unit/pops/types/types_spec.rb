@@ -151,6 +151,22 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Iterable type' do
+    include PuppetSpec::Compiler
+
+    it 'can be parameterized with element type' do
+      code = <<-CODE
+      function foo(Iterable[String] $x) {
+        $x.each |$e| {
+          notice $e
+        }
+      }
+      foo([bar, baz, cake])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['bar', 'baz', 'cake'])
+    end
+  end
+
   context 'Iterator type' do
     let!(:iterint) { tf.iterator(tf.integer) }
 
