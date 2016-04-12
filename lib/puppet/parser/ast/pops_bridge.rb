@@ -102,6 +102,10 @@ class Puppet::Parser::AST::PopsBridge
           # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
           instantiate_TypeAlias(d, modname)
           next
+        when Puppet::Pops::Model::TypeMapping
+          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
+          instantiate_TypeMapping(d, modname)
+          next
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
         else
@@ -267,6 +271,14 @@ class Puppet::Parser::AST::PopsBridge
       Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
 
       nil # do not want the type alias to inadvertently leak into 3x
+    end
+
+    # Propagates a found TypeMapping to the appropriate loader.
+    # This is for 4x evaluator/loader
+    #
+    def instantiate_TypeMapping(type_alias, modname)
+      # TODO: Register the type mapping
+      nil
     end
 
     def code()

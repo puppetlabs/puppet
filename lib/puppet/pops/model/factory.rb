@@ -348,8 +348,14 @@ class Factory
   end
 
   def build_TypeAlias(o, name, type_expr)
-    o.type_expr = build(type_expr)
-    o.name = name
+    o.type_expr = to_ops(type_expr)
+    o.name = to_ops(name).cased_value
+    o
+  end
+
+  def build_TypeMapping(o, lhs, rhs)
+    o.type_expr = to_ops(lhs)
+    o.mapping_expr = to_ops(rhs)
     o
   end
 
@@ -819,8 +825,12 @@ class Factory
     new(LambdaExpression, parameters, body)
   end
 
-  def self.TYPE_ALIAS(name, type_expr)
-    new(TypeAlias, name, type_expr)
+  def self.TYPE_ASSIGNMENT(lhs, rhs)
+    if lhs.current.is_a?(AccessExpression)
+      new(TypeMapping, lhs, rhs)
+    else
+      new(TypeAlias, lhs, rhs)
+    end
   end
 
   def self.TYPE_DEFINITION(name, parent, body)

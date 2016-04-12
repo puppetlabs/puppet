@@ -684,8 +684,8 @@ parameter_type
 
 #--TYPE ALIAS
 type_alias
-  : TYPE CLASSREF EQUALS expression {
-      result = add_definition(Factory.TYPE_ALIAS(val[1][:value], val[3]))
+  : TYPE parameter_type EQUALS expression {
+      result = add_definition(Factory.TYPE_ASSIGNMENT(val[1], val[3]))
       loc(result, val[0], val[3])
     }
 

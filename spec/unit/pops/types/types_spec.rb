@@ -336,6 +336,8 @@ describe 'Puppet Type System' do
   end
 
   context 'Runtime type' do
+    include PuppetSpec::Compiler
+
     it 'can be created with a runtime and a runtime type name' do
       expect(tf.runtime('ruby', 'Hash').to_s).to eq("Runtime[ruby, 'Hash']")
     end

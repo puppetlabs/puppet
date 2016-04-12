@@ -419,6 +419,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ['type-alias', o.name, do_dump(o.type_expr)]
   end
 
+  def dump_TypeMapping(o)
+    ['type-mapping', do_dump(o.type_expr), do_dump(o.mapping_expr)]
+  end
+
   def dump_TypeDefinition(o)
     ['type-definition', o.name, o.parent, do_dump(o.body)]
   end

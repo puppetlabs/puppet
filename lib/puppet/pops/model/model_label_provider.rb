@@ -96,6 +96,7 @@ class ModelLabelProvider
   def label_CatalogCollector o            ; "Catalog-Collector"                 end
   def label_ExportedCollector o           ; "Exported-Collector"                end
   def label_TypeAlias o                   ; "Type Alias"                        end
+  def label_TypeMapping o                 ; "Type Mapping"                      end
   def label_TypeDefinition o              ; "Type Definition"                   end
 
   def label_PResourceType o
