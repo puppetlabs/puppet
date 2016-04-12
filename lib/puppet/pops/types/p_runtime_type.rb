@@ -47,10 +47,12 @@ class PRuntimeType < PAnyType
     iterable?(guard) ? PIterableType.new(self) : nil
   end
 
+  # @api private
   def runtime_type_name
     @name_or_pattern.is_a?(String) ? @name_or_pattern : nil
   end
 
+  # @api private
   def from_puppet_name(puppet_name)
     if @name_or_pattern.is_a?(Array)
       substituted = puppet_name.sub(*@name_or_pattern)
