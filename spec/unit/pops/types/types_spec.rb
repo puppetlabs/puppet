@@ -168,6 +168,8 @@ describe 'Puppet Type System' do
   end
 
   context 'Iterator type' do
+    include PuppetSpec::Compiler
+
     let!(:iterint) { tf.iterator(tf.integer) }
 
     context 'when testing instance?' do
@@ -198,6 +200,18 @@ describe 'Puppet Type System' do
       it 'a typed iterator type returns the an equally typed iterable type' do
         expect(iterint.iterable_type).to eq(tf.iterable(tf.integer))
       end
+    end
+
+    it 'can be parameterized with an element type' do
+      code = <<-CODE
+      function foo(Iterator[String] $x) {
+        $x.each |$e| {
+          notice $e
+        }
+      }
+      foo([bar, baz, cake].reverse_each)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['cake', 'baz', 'bar'])
     end
   end
 
