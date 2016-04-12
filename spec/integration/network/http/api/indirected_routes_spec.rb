@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
+require 'puppet/network/http/rack/rest'
 require 'puppet/indirector_proxy'
 require 'puppet_spec/files'
 require 'puppet_spec/network'
@@ -49,6 +50,38 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
           expect(file['checksum']['type']).to eq(checksum_type)
           expect(checksum_valid(checksum_type, checksum, file['checksum']['value'])).to be_truthy
+        end
+      end
+    end
+
+    describe "an error from IndirectedRoutes" do
+      require 'rack/mock'
+
+      let(:handler) { Puppet::Network::HTTP::RackREST.new }
+      let(:response) { Rack::Response.new }
+
+      describe "returns json" do
+        it "when a standard error" do
+          request = Rack::Request.new(
+            Rack::MockRequest.env_for("/puppet/v3/invalid-indirector"))
+
+          handler.process(request, response)
+
+          expect(response.header["Content-Type"]).to match(/json/)
+          resp = JSON.parse(response.body.first)
+          expect(resp["message"]).to match(/The indirection name must be purely alphanumeric/)
+          expect(resp["issue_kind"]).to be_a_kind_of(String)
+        end
+        it "when a server error" do
+          request = Rack::Request.new(
+            Rack::MockRequest.env_for("/puppet/v3/unknown_indirector"))
+
+          handler.process(request, response)
+
+          expect(response.header["Content-Type"]).to match(/json/)
+          resp = JSON.parse(response.body.first)
+          expect(resp["message"]).to match(/Could not find indirection/)
+          expect(resp["issue_kind"]).to be_a_kind_of(String)
         end
       end
     end

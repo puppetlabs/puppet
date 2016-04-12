@@ -47,15 +47,12 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     Puppet.override(:trusted_information => trusted) do
       send("do_#{method}", indirection, key, params, request, response)
     end
-  rescue Puppet::Network::HTTP::Error::HTTPError => e
-    return do_http_control_exception(response, e)
-  rescue StandardError => e
-    return do_exception(response, e)
   end
 
   def uri2indirection(http_method, uri, params)
     # the first field is always nil because of the leading slash,
     indirection_type, version, indirection_name, key = uri.split("/", 5)[1..-1]
+
     url_prefix = "/#{indirection_type}/#{version}"
     environment = params.delete(:environment)
 
@@ -110,24 +107,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   private
-
-  def do_http_control_exception(response, exception)
-    msg = exception.message
-    Puppet.info(msg)
-    response.respond_with(exception.status, "text/plain", msg)
-  end
-
-  def do_exception(response, exception, status=400)
-    if exception.is_a?(Puppet::Network::AuthorizationError)
-      # make sure we return the correct status code
-      # for authorization issues
-      status = 403 if status == 400
-    end
-
-    Puppet.log_exception(exception)
-
-    response.respond_with(status, "text/plain", exception.to_s)
-  end
 
   # Execute our find.
   def do_find(indirection, key, params, request, response)

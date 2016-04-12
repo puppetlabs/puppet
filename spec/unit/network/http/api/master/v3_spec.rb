@@ -1,8 +1,11 @@
 require 'spec_helper'
 
 require 'puppet/network/http'
+require 'puppet_spec/network'
 
 describe Puppet::Network::HTTP::API::Master::V3 do
+  include PuppetSpec::Network
+
   let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
   let(:master_url_prefix) { "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3" }
   let(:master_routes) {
@@ -29,11 +32,11 @@ describe Puppet::Network::HTTP::API::Master::V3 do
     expect(response.code).to eq(200)
   end
 
-  it "responds to unknown paths with a 404" do
+  it "responds to unknown paths by raising not_found_error" do
     request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/unknown")
-    master_routes.process(request, response)
 
-    expect(response.code).to eq(404)
-    expect(response.body).to match("Not Found: Could not find indirection 'unknown'")
+    expect {
+      master_routes.process(request, response)
+    }.to raise_error(not_found_error)
   end
 end
