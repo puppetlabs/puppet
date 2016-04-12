@@ -321,6 +321,21 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Runtime type' do
+    it 'can be created with a runtime and a runtime type name' do
+      expect(tf.runtime('ruby', 'Hash').to_s).to eq("Runtime[ruby, 'Hash']")
+    end
+
+    it 'can be created with a runtime and, puppet name pattern, and runtime replacement' do
+      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, 'MyModule::\\1']]")
+    end
+
+    it 'will map a Puppet name to a runtime type' do
+      t = tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1'])
+      expect(t.from_puppet_name('MyPackage::MyType').to_s).to eq("Runtime[ruby, 'MyModule::MyType']")
+    end
+  end
+
   context 'Type aliases' do
     include PuppetSpec::Compiler
 
