@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
+require 'rack/mock' if Puppet.features.rack?
 require 'puppet/network/http/rack/rest'
 require 'puppet/indirector_proxy'
 require 'puppet_spec/files'
@@ -55,8 +56,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     describe "an error from IndirectedRoutes", :if => Puppet.features.rack? do
-      require 'rack/mock' if Puppet.features.rack?
-
       let(:handler) { Puppet::Network::HTTP::RackREST.new }
 
       describe "returns json" do

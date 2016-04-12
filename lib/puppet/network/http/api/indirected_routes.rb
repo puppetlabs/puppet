@@ -52,7 +52,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   def uri2indirection(http_method, uri, params)
     # the first field is always nil because of the leading slash,
     indirection_type, version, indirection_name, key = uri.split("/", 5)[1..-1]
-
     url_prefix = "/#{indirection_type}/#{version}"
     environment = params.delete(:environment)
 
