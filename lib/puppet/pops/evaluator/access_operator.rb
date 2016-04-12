@@ -366,7 +366,7 @@ class AccessOperator
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
-    Types::PCollectionType.new(size_t)
+    Types::PCollectionType.new(nil, size_t)
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.

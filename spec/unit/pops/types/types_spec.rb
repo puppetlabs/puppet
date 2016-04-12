@@ -185,6 +185,18 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Collection type' do
+    include PuppetSpec::Compiler
+
+    it 'can be parameterized with a range' do
+      code = <<-CODE
+      notice(Collection[5, default] == Collection[5])
+      notice(Collection[5, 5] > Tuple[Integer, 0, 10])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'false'])
+    end
+  end
+
   context 'Struct type' do
     context 'can be used as key in hash' do
       it 'compacts optional in optional in optional to just optional' do
