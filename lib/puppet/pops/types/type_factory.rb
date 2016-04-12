@@ -99,7 +99,7 @@ module TypeFactory
   # @api public
   #
   def self.variant(*types)
-    PVariantType.new(types.map {|v| type_of(v) })
+    PVariantType.maybe_create(types.map {|v| type_of(v) })
   end
 
   # Produces the Struct type, either a non parameterized instance representing

@@ -54,7 +54,7 @@ module Puppet::Pops::Types
           Iterator.new(PUnitType::DEFAULT, o.each)
         else
           tc = TypeCalculator.singleton
-          Iterator.new(tc.unwrap_single_variant(PVariantType.new(o.map {|e| tc.infer_set(e) })), o.each)
+          Iterator.new(PVariantType.maybe_create(o.map {|e| tc.infer_set(e) }), o.each)
         end
       when Hash
         # Each element is a two element [key, value] tuple.
@@ -63,8 +63,8 @@ module Puppet::Pops::Types
         else
           tc = TypeCalculator.singleton
           Iterator.new(PTupleType.new([
-            tc.unwrap_single_variant(PVariantType.new(o.keys.map {|e| tc.infer_set(e) })),
-            tc.unwrap_single_variant(PVariantType.new(o.values.map {|e| tc.infer_set(e) }))], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
+            PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
+            PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
         end
       when Integer
         if o == 0
