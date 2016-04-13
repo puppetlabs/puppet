@@ -1448,7 +1448,7 @@ class PTupleType < PAnyType
   def size_range
     if @size_type.nil?
       types_size = @types.size
-      [types_size, types_size]
+      types_size == 0 ? [0, Float::INFINITY] : [types_size, types_size]
     else
       @size_type.range
     end
@@ -1485,36 +1485,33 @@ class PTupleType < PAnyType
   # @api private
   def _assignable?(o, guard)
     return true if self == o
+    return false unless o.is_a?(PTupleType) || o.is_a?(PArrayType)
     s_types = types
-    return true if s_types.empty? && (o.is_a?(PArrayType))
     size_s = size_type || PIntegerType.new(*size_range)
 
     if o.is_a?(PTupleType)
       size_o = o.size_type || PIntegerType.new(*o.size_range)
-
-      # not assignable if the number of types in o is outside number of types in t1
-      if size_s.assignable?(size_o, guard)
+      return false unless size_s.assignable?(size_o, guard)
+      unless s_types.empty?
         o_types = o.types
+        return false if o_types.empty?
         o_types.size.times do |index|
           return false unless (s_types[index] || s_types[-1]).assignable?(o_types[index], guard)
         end
-        return true
-      else
-        return false
       end
-    elsif o.is_a?(PArrayType)
-      o_entry = o.element_type
-      # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
-      # was handled at the top of this method.
-      #
-      return false if o_entry.nil?
+    else
       size_o = o.size_type || PCollectionType::DEFAULT_SIZE
       return false unless size_s.assignable?(size_o, guard)
-      [s_types.size, size_o.range[1]].min.times { |index| return false unless (s_types[index] || s_types[-1]).assignable?(o_entry, guard) }
-      true
-    else
-      false
+      unless s_types.empty?
+        o_entry = o.element_type
+        # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
+        # was handled at the top of this method.
+        #
+        return false if o_entry.nil?
+        [s_types.size, size_o.range[1]].min.times { |index| return false unless (s_types[index] || s_types[-1]).assignable?(o_entry, guard) }
+      end
     end
+    true
   end
 end
 
