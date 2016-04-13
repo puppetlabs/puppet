@@ -76,11 +76,9 @@ class ClassLoader
   end
 
   def self.provide_from_string(name)
-    name_path = name.split('::')
+    name_path = name.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
     # always from the root, so remove an empty first segment
-    if name_path[0].empty?
-      name_path = name_path[1..-1]
-    end
+    name_path.shift if name_path[0].empty?
     provide_from_name_path(name, name_path)
   end
 
