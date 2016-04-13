@@ -126,6 +126,10 @@ module Puppet
     module Migration
       require 'puppet/pops/migration/migration_checker'
     end
+
+    module Serialization
+      require 'puppet/pops/serialization'
+    end
   end
 
   require 'puppet/parser/ast/pops_bridge'
