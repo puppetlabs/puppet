@@ -273,11 +273,15 @@ class Puppet::Parser::AST::PopsBridge
       nil # do not want the type alias to inadvertently leak into 3x
     end
 
-    # Propagates a found TypeMapping to the appropriate loader.
+    # Adds the TypeMapping to the ImplementationRegistry
     # This is for 4x evaluator/loader
     #
-    def instantiate_TypeMapping(type_alias, modname)
-      # TODO: Register the type mapping
+    def instantiate_TypeMapping(type_mapping, modname)
+      loader = Puppet::Pops::Loaders.find_loader(modname)
+      tf = Puppet::Pops::Types::TypeParser.new
+      lhs = tf.interpret(type_mapping.type_expr, loader)
+      rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
+      Puppet::Pops::Loaders.implementation_registry.register_type_mapping(lhs, rhs, loader)
       nil
     end
 

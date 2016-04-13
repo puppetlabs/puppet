@@ -5,6 +5,8 @@ require 'puppet_spec/compiler'
 module Puppet::Pops
 module Types
 describe 'Puppet Type System' do
+  include PuppetSpec::Compiler
+
   let(:tf) { TypeFactory }
   context 'Integer type' do
     let!(:a) { tf.range(10, 20) }
@@ -152,8 +154,6 @@ describe 'Puppet Type System' do
   end
 
   context 'Iterable type' do
-    include PuppetSpec::Compiler
-
     it 'can be parameterized with element type' do
       code = <<-CODE
       function foo(Iterable[String] $x) {
@@ -168,8 +168,6 @@ describe 'Puppet Type System' do
   end
 
   context 'Iterator type' do
-    include PuppetSpec::Compiler
-
     let!(:iterint) { tf.iterator(tf.integer) }
 
     context 'when testing instance?' do
@@ -216,8 +214,6 @@ describe 'Puppet Type System' do
   end
 
   context 'Collection type' do
-    include PuppetSpec::Compiler
-
     it 'can be parameterized with a range' do
       code = <<-CODE
       notice(Collection[5, default] == Collection[5])
@@ -336,8 +332,6 @@ describe 'Puppet Type System' do
   end
 
   context 'Runtime type' do
-    include PuppetSpec::Compiler
-
     it 'can be created with a runtime and a runtime type name' do
       expect(tf.runtime('ruby', 'Hash').to_s).to eq("Runtime[ruby, 'Hash']")
     end
@@ -353,8 +347,6 @@ describe 'Puppet Type System' do
   end
 
   context 'Type aliases' do
-    include PuppetSpec::Compiler
-
     it 'will resolve nested objects using self recursion' do
       code = <<-CODE
       type Tree = Hash[String,Variant[String,Tree]]
@@ -469,11 +461,41 @@ describe 'Puppet Type System' do
     end
   end
 
-  context 'When attempting to redefine a built in type' do
-    include PuppetSpec::Compiler
+  context 'Type mappings' do
+    it 'can register a singe type mapping' do
+      source = <<-CODE
+        type MyModule::ImplementationRegistry = Object[{}]
+        type Runtime[ruby, 'Puppet::Pops::Types::ImplementationRegistry'] = MyModule::ImplementationRegistry
+        notice(true)
+      CODE
+      collect_notices(source) do |compiler|
+        compiler.compile do |catalog|
+          type = Loaders.implementation_registry.type_for_module(ImplementationRegistry)
+          expect(type).to be_a(PObjectType)
+          expect(type.name).to eql('MyModule::ImplementationRegistry')
+          catalog
+        end
+      end
+    end
 
-    let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new("testing static loading") }
-    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(static_loader, "types_unit_test_loader") }
+    it 'can register a regexp based mapping' do
+      source = <<-CODE
+        type MyModule::TypeMismatchDescriber = Object[{}]
+        type Runtime[ruby, [/^Puppet::Pops::Types::(\\w+)$/, 'MyModule::\\1']] = [/^MyModule::(\\w+)$/, 'Puppet::Pops::Types::\\1']
+        notice(true)
+      CODE
+      collect_notices(source) do |compiler|
+        compiler.compile do |catalog|
+          type = Loaders.implementation_registry.type_for_module(TypeMismatchDescriber)
+          expect(type).to be_a(PObjectType)
+          expect(type.name).to eql('MyModule::TypeMismatchDescriber')
+          catalog
+        end
+      end
+    end
+  end
+
+  context 'When attempting to redefine a built in type' do
     it 'such as Integer, an error is raised' do
       code = <<-CODE
         type Integer = String
@@ -484,7 +506,7 @@ describe 'Puppet Type System' do
   end
 
   context 'instantiation via new_function is supported by' do
-    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "types_unit_test_loader") }
+    let(:loader) { Loader::BaseLoader.new(nil, "types_unit_test_loader") }
     it 'Integer' do
       func_class = tf.integer.new_function(loader)
       expect(func_class).to be_a(Class)
@@ -499,7 +521,7 @@ describe 'Puppet Type System' do
   end
 
   context 'instantiation via new_function is not supported by' do
-    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "types_unit_test_loader") }
+    let(:loader) { Loader::BaseLoader.new(nil, "types_unit_test_loader") }
 
       it 'Any, Scalar, Collection' do
         [tf.any, tf.scalar, tf.collection ].each do |t|
