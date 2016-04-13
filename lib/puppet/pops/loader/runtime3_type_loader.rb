@@ -21,29 +21,27 @@ class Runtime3TypeLoader < BaseLoader
   # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
   #
   def find(typed_name)
-    if typed_name.type == :type
-      name = typed_name.name
-      value = @environment.known_resource_types.find_definition(name)
+    return nil unless typed_name.type == :type
+
+    name = typed_name.name
+    value = @environment.known_resource_types.find_definition(name)
+    if value.nil?
+      # Look for Puppet::Type
+      value = Puppet::Type.type(name)
       if value.nil?
-        # Look for Puppet::Type
-        if Puppet::Type.type(name).nil?
-          # Cache the fact that it wasn't found
-          set_entry(typed_name, nil)
-        else
-          # Loaded types doesn't have the same life cycle as this loader, so we must start by
-          # checking if the type was created. If it was, an entry will already be stored in
-          # this loader. If not, then it was created before this loader was instantiated and
-          # we must therefore add it.
-          te = get_entry(typed_name)
-          te = set_entry(typed_name, Types::TypeFactory.resource(Types::TypeFormatter.singleton.capitalize_segments(name))) if te.nil? || te.value.nil?
-          te
-        end
-      else
-        set_entry(typed_name, Types::TypeFactory.resource(Types::TypeFormatter.singleton.capitalize_segments(name)))
+        # Cache the fact that it wasn't found
+        set_entry(typed_name, nil)
+        return nil
       end
-    else
-      nil
     end
+
+    # Loaded types doesn't have the same life cycle as this loader, so we must start by
+    # checking if the type was created. If it was, an entry will already be stored in
+    # this loader. If not, then it was created before this loader was instantiated and
+    # we must therefore add it.
+    te = get_entry(typed_name)
+    te = set_entry(typed_name, Types::TypeFactory.resource(value.name.to_s)) if te.nil? || te.value.nil?
+    te
   end
 
   # Allows shadowing since this loader is populalted with all loaded resource types at time
