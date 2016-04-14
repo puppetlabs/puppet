@@ -493,6 +493,22 @@ describe 'Puppet Type System' do
         end
       end
     end
+
+    it 'a type mapping affects type inference' do
+      source = <<-CODE
+        type MyModule::ImplementationRegistry = Object[{}]
+        type Runtime[ruby, 'Puppet::Pops::Types::ImplementationRegistry'] = MyModule::ImplementationRegistry
+        notice(true)
+      CODE
+      collect_notices(source) do |compiler|
+        compiler.compile do |catalog|
+          type = TypeCalculator.singleton.infer(Loaders.implementation_registry)
+          expect(type).to be_a(PObjectType)
+          expect(type.name).to eql('MyModule::ImplementationRegistry')
+          catalog
+        end
+      end
+    end
   end
 
   context 'When attempting to redefine a built in type' do
