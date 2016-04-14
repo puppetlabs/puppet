@@ -1,7 +1,7 @@
 {
   :install => [
     'facter#2.x',
-    'hiera#stable',
+    'hiera#1.3.4',
     'puppet',
   ],
   :pre_suite => [
