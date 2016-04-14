@@ -305,6 +305,12 @@ module Puppet::Pops::Model
     contains_one_uni 'type_expr', Expression
   end
 
+  # A type mapping assignment
+  class TypeMapping < Definition
+    contains_one_uni 'type_expr', Expression
+    contains_one_uni 'mapping_expr', Expression
+  end
+
   # A type definition
   class TypeDefinition < QRefDefinition
     has_attr 'parent', String

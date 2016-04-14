@@ -6,6 +6,7 @@ class Loaders
   attr_reader :puppet_system_loader
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
+  attr_reader :implementation_registry
 
   def initialize(environment)
 
@@ -24,14 +25,17 @@ class Loaders
     #
     @private_environment_loader = create_environment_loader(environment)
 
-    # 3. module loaders are set up from the create_environment_loader, they register themselves
+    # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
+    #    the current environment
+    @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
+
+    # 4. module loaders are set up from the create_environment_loader, they register themselves
   end
 
   # Clears the cached static and puppet_system loaders (to enable testing)
   #
   def self.clear
     @@static_loader = nil
-    @puppet_system_loader = nil
   end
 
   # Calls {#loaders} to obtain the {{Loaders}} instance and then uses it to find the appropriate loader
@@ -48,6 +52,11 @@ class Loaders
   def self.static_loader
     # The static loader can only be changed after a reboot
     @@static_loader ||= Loader::StaticLoader.new()
+  end
+
+  def self.implementation_registry
+    loaders = Puppet.lookup(:loaders) { nil }
+    loaders.nil? ? nil : loaders.implementation_registry
   end
 
   # Register the given type with the Runtime3TypeLoader. The registration will not happen unless

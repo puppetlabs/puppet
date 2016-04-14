@@ -280,6 +280,14 @@ module Issues
     "Illegal name. The given name '#{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/"
   end
 
+  ILLEGAL_SINGLE_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
+    "Illegal type mapping. Expected a Type on the left side, got #{label.a_an_uc(semantic)}"
+  end
+
+  ILLEGAL_REGEXP_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
+    "Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got #{label.a_an_uc(semantic)}"
+  end
+
   ILLEGAL_PARAM_NAME = hard_issue :ILLEGAL_PARAM_NAME, :name do
     "Illegal parameter name. The given name '#{name}' does not conform to the naming rule /^[a-z_]\\w*$/"
   end

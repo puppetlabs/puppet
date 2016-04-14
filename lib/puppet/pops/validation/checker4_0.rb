@@ -362,6 +362,50 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     internal_check_type_ref(o, o.type_expr)
   end
 
+  def check_TypeMapping(o)
+    top(o.eContainer, o)
+    lhs = o.type_expr
+    lhs_type = 0 # Not Runtime
+    if lhs.is_a?(Model::AccessExpression)
+      left = lhs.left_expr
+      if left.is_a?(Model::QualifiedReference) && left.cased_value == 'Runtime'
+        lhs_type = 1 # Runtime
+        keys = lhs.keys
+
+        # Must be a literal string or pattern replacement
+        lhs_type = 2 if keys.size == 2 && pattern_with_replacement?(keys[1])
+      end
+    end
+
+    if lhs_type == 0
+      # This is not a TypeMapping. Something other than Runtime[] on LHS
+      acceptor.accept(Issues::UNSUPPORTED_EXPRESSION, o)
+    else
+      rhs = o.mapping_expr
+      if pattern_with_replacement?(rhs)
+        acceptor.accept(Issues::ILLEGAL_SINGLE_TYPE_MAPPING, o) if lhs_type == 1
+      elsif type_ref?(rhs)
+        acceptor.accept(Issues::ILLEGAL_REGEXP_TYPE_MAPPING, o) if lhs_type == 2
+      else
+        acceptor.accept(lhs_type == 1 ? Issues::ILLEGAL_SINGLE_TYPE_MAPPING : Issues::ILLEGAL_REGEXP_TYPE_MAPPING, o)
+      end
+    end
+  end
+
+  def pattern_with_replacement?(o)
+    if o.is_a?(Model::LiteralList)
+      v = o.values
+      v.size == 2 && v[0].is_a?(Model::LiteralRegularExpression) && v[1].is_a?(Model::LiteralString)
+    else
+      false
+    end
+  end
+
+  def type_ref?(o)
+    o = o.left_expr if o.is_a?(Model::AccessExpression)
+    o.is_a?(Model::QualifiedReference)
+  end
+
   def check_TypeDefinition(o)
     top(o.eContainer, o)
     internal_check_reserved_type_name(o, o.name)

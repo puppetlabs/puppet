@@ -240,6 +240,13 @@ class PAnyType < TypedModelObject
     TypeFormatter.string(self)
   end
 
+  # Returns the name of the type, without parameters
+  # @return [String] the name of the type
+  # @api public
+  def name
+    simple_name
+  end
+
   def new_function(loader)
     self.class.new_function(self, loader)
   end
@@ -2843,3 +2850,4 @@ end
 
 require_relative 'p_object_type'
 require_relative 'p_runtime_type'
+require_relative 'implementation_registry'
