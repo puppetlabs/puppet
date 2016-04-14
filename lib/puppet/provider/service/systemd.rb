@@ -40,6 +40,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     output = systemctl(:disable, @resource[:name])
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
+  ensure
+    @cached_enabled = nil
   end
 
   def get_start_link_count
@@ -53,9 +55,14 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     Dir.glob("/etc/rc*.d/S??#{link_name}").length
   end
 
-  def enabled?
+  def cached_enabled?
+    return @cached_enabled if @cached_enabled
     cmd = [command(:systemctl), 'is-enabled', @resource[:name]]
-    output = execute(cmd, :failonfail => false).strip
+    @cached_enabled = execute(cmd, :failonfail => false).strip
+  end
+
+  def enabled?
+    output = cached_enabled?
 
     # The masked state is equivalent to the disabled state in terms of
     # comparison so we only care to check if it is masked if we want to keep
@@ -64,8 +71,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # We only return :mask if we're trying to mask the service. This prevents
     # flapping when simply trying to disable a masked service.
     return :mask if (@resource[:enable] == :mask) && (output == 'masked')
-    return :true if output == 'enabled'
-    return :false if ['disabled', 'linked', 'static', 'indirect', 'masked'].include? output
+    return :true if ['static', 'enabled'].include? output
+    return :false if ['disabled', 'linked', 'indirect', 'masked'].include? output
     if (output.empty?) && (Facter.value(:osfamily).downcase == 'debian')
       ret = debian_enabled?
       return ret if ret
@@ -104,6 +111,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     output = systemctl("enable", @resource[:name])
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
+  ensure
+    @cached_enabled = nil
   end
 
   def mask
@@ -112,6 +121,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       output = systemctl("mask", @resource[:name])
     rescue Puppet::ExecutionFailure
       raise Puppet::Error, "Could not mask #{self.name}: #{output}", $!.backtrace
+    ensure
+      @cached_enabled = nil
     end
   end
 
@@ -120,6 +131,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       output = systemctl("unmask", @resource[:name])
     rescue Puppet::ExecutionFailure
       raise Puppet::Error, "Could not unmask #{self.name}: #{output}", $!.backtrace
+    ensure
+      @cached_enabled = nil
     end
   end
 
