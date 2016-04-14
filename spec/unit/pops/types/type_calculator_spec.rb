@@ -841,6 +841,12 @@ describe 'The type calculator' do
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
+      it 'A tuple with parameters is assignable to the default Tuple' do
+        t = Puppet::Pops::Types::PTupleType::DEFAULT
+        t2 = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PStringType::DEFAULT])
+        expect(t2).to be_assignable_to(t)
+      end
+
       it 'Tuple is not assignable to any disjunct type' do
         tested_types = all_types - [
           PAnyType,
@@ -1119,11 +1125,11 @@ describe 'The type calculator' do
       end
 
       it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
-        tuple1 = constrained_tuple_t(range_t(0, :default), Object)
-        tuple2 = tuple_t
+        tuple1 = constrained_tuple_t(range_t(0, :default))
+        tuple2 = tuple_t()
 
         expect(calculator.assignable?(tuple1, tuple2)).to eq(true)
-        expect(calculator.assignable?(tuple2, tuple1)).to eq(false)
+        expect(calculator.assignable?(tuple2, tuple1)).to eq(true)
       end
 
       it 'should accept matching tuples' do

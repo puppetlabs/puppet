@@ -261,7 +261,7 @@ describe TypeParser do
 
   it 'parses a parameterized callable type with 0 min/max' do
     t = parser.parse("Callable[0,0]")
-    expect(t).to be_the_type(types.callable())
+    expect(t).to be_the_type(types.callable(0,0))
     expect(t.param_types.types).to be_empty
   end
 
