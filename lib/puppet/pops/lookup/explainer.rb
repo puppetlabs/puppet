@@ -367,13 +367,46 @@ module Puppet::Pops::Lookup
     end
   end
 
+  class ExplainSubLookup < ExplainTreeNode
+    def initialize(parent, sub_key)
+      super(parent)
+      @sub_key = sub_key
+    end
+
+    def dump_on(io, indent, first_indent)
+      io << indent << 'Sub key: "' << @sub_key.join('.') << "\"\n"
+      indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
+      dump_outcome(io, indent)
+    end
+
+    def type
+      :sub_key
+    end
+  end
+
+  class ExplainKeySegment < ExplainTreeNode
+    def initialize(parent, segment)
+      super(parent)
+      @segment = segment
+    end
+
+    def dump_on(io, indent, first_indent)
+      dump_outcome(io, indent)
+    end
+
+    def type
+      :segment
+    end
+  end
+
   class ExplainScope < ExplainTreeNode
     def initialize(parent)
       super(parent)
     end
 
     def dump_on(io, indent, first_indent)
-      io << indent << 'Global Scope' << "\"\n"
+      io << indent << 'Global Scope' << "\n"
       indent = increase_indent(indent)
       dump_outcome(io, indent)
     end
@@ -406,6 +439,10 @@ module Puppet::Pops::Lookup
           ExplainMerge.new(@current, qualifier)
         when :scope
           ExplainScope.new(@current)
+        when :sub_lookup
+          ExplainSubLookup.new(@current, qualifier)
+        when :segment
+          ExplainKeySegment.new(@current, qualifier)
         when :meta, :data
           ExplainTop.new(@current, qualifier_type, qualifier)
         when :invalid_key

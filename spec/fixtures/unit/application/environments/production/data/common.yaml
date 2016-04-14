@@ -3,5 +3,18 @@ a: This is A
 b: This is B
 c: "This is%{cx}"
 
+d:
+  one:
+    two:
+      three: the value
+
+e.one.two.three: the value
+
+f.one:
+  two.three:
+    - first value
+    - second value
+    - third value
+
 lookup_options:
   a: first

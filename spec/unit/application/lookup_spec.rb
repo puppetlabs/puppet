@@ -166,7 +166,8 @@ describe Puppet::Application::Lookup do
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.command_line.stubs(:args).returns(['a'])
-      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      begin
+        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy first
   Data Binding "hiera"
     No such key: "a"
@@ -177,13 +178,17 @@ Merge strategy first
         Original path: "common"
         Found key: "a" value: "This is A"
   Merged result: "This is A"
-      EXPLANATION
+        EXPLANATION
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
     end
 
     it '--explain produces human readable text of a hash merge when using --explain-options' do
       lookup.options[:node] = node
       lookup.options[:explain_options] = true
-      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      begin
+        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy hash
   Data Binding "hiera"
     No such key: "lookup_options"
@@ -198,7 +203,10 @@ Merge strategy hash
   Merged result: {
     "a" => "first"
   }
-      EXPLANATION
+        EXPLANATION
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
     end
 
     it '--explain produces human readable text of a hash merge when using both --explain and --explain-options' do
@@ -206,7 +214,8 @@ Merge strategy hash
       lookup.options[:explain] = true
       lookup.options[:explain_options] = true
       lookup.command_line.stubs(:args).returns(['a'])
-      expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      begin
+        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Searching for "lookup_options"
   Merge strategy hash
     Data Binding "hiera"
@@ -233,7 +242,10 @@ Searching for "a"
           Original path: "common"
           Found key: "a" value: "This is A"
     Merged result: "This is A"
-      EXPLANATION
+        EXPLANATION
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
     end
 
     it 'can produce a yaml explanation' do
@@ -247,6 +259,8 @@ Searching for "a"
         $stdout = StringIO.new
         lookup.run_command
         output = $stdout.string
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
       ensure
         $stdout = save_stdout
       end
@@ -264,10 +278,66 @@ Searching for "a"
         $stdout = StringIO.new
         lookup.run_command
         output = $stdout.string
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
       ensure
         $stdout = save_stdout
       end
       expect(JSON.parse(output)).to eq(expected_json_hash)
+    end
+
+    it 'can access values using dotted keys' do
+      lookup.options[:node] = node
+      lookup.options[:render_as] = :json
+      lookup.command_line.stubs(:args).returns(['d.one.two.three'])
+      save_stdout = $stdout
+      output = nil
+      begin
+        $stdout = StringIO.new
+        lookup.run_command
+        output = $stdout.string
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      ensure
+        $stdout = save_stdout
+      end
+      expect(JSON.parse("[#{output}]")).to eq(['the value'])
+    end
+
+    it 'can access values using quoted dotted keys' do
+      lookup.options[:node] = node
+      lookup.options[:render_as] = :json
+      lookup.command_line.stubs(:args).returns(['"e.one.two.three"'])
+      save_stdout = $stdout
+      output = nil
+      begin
+        $stdout = StringIO.new
+        lookup.run_command
+        output = $stdout.string
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      ensure
+        $stdout = save_stdout
+      end
+      expect(JSON.parse("[#{output}]")).to eq(['the value'])
+    end
+
+    it 'can access values using mix of dotted keys and quoted dotted keys' do
+      lookup.options[:node] = node
+      lookup.options[:render_as] = :json
+      lookup.command_line.stubs(:args).returns(['"f.one"."two.three".1'])
+      save_stdout = $stdout
+      output = nil
+      begin
+        $stdout = StringIO.new
+        lookup.run_command
+        output = $stdout.string
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      ensure
+        $stdout = save_stdout
+      end
+      expect(JSON.parse("[#{output}]")).to eq(['second value'])
     end
 
     context 'the global scope' do
@@ -281,7 +351,11 @@ Searching for "a"
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+        begin
+          expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+        rescue SystemExit => e
+          expect(e.status).to eq(0)
+        end
       end
     end
 
@@ -291,14 +365,22 @@ Searching for "a"
       it "works OK in the absense of '--compile'" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        expect { lookup.run_command }.to output("--- This is C from data.pp\n...\n").to_stdout
+        begin
+          expect { lookup.run_command }.to output("--- This is C from data.pp\n...\n").to_stdout
+        rescue SystemExit => e
+          expect(e.status).to eq(0)
+        end
       end
 
       it "global scope is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+        begin
+          expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
+        rescue SystemExit => e
+          expect(e.status).to eq(0)
+        end
       end
     end
   end

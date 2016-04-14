@@ -56,6 +56,24 @@ describe "when using function data provider" do
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
   end
 
+  it 'gets data from puppet function delivering environment data' do
+    Puppet[:code] = <<-CODE
+      function environment::data() {
+        { 'cls::test1' => 'env_puppet1',
+          'cls::test2' => 'env_puppet2'
+        }
+      }
+      class cls ($test1, $test2) {
+        notify { $test1: }
+        notify { $test2: }
+      }
+      include cls
+    CODE
+    node = Puppet::Node.new('testnode', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'production')
+    catalog = Puppet::Parser::Compiler.new(node).compile
+    expect(resources_in(catalog)).to include('Notify[env_puppet1]', 'Notify[env_puppet2]')
+  end
+
   it 'raises an error if the environment data function does not return a hash' do
     Puppet[:code] = 'include abc'
     # find the loaders to patch with faulty function

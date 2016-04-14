@@ -40,31 +40,46 @@ module SubLookup
   # implements the '#[]' method.
   #
   # @param key [String] the original key (only used for error messages)
+  # @param lookup_invocation [Invocation] The current lookup invocation
   # @param segments [Array<String>] the segments to use for lookup
   # @param value [Object] the value to access using the segments
   # @return [Object] the value obtained when accessing the value
   #
   # @api public
-  def sub_lookup(key, segments, value)
-    segments.each do |segment|
-      throw :no_such_key if value.nil?
-      if segment =~ /^[0-9]+$/
-        segment = segment.to_i
-        unless value.instance_of?(Array)
-          raise Puppet::DataBinding::LookupError,
-            "Data Provider type mismatch: Got #{value.class.name} when Array was expected to access value using '#{segment}' from key '#{key}'"
+  def sub_lookup(key, lookup_invocation, segments, value)
+    lookup_invocation.with(:sub_lookup, segments) do
+      segments.each do |segment|
+        lookup_invocation.with(:segment, segment) do
+          if value.nil?
+            lookup_invocation.report_not_found(segment)
+            throw :no_such_key
+          end
+          if segment =~ /^[0-9]+$/
+            segment = segment.to_i
+            unless value.instance_of?(Array)
+              raise Puppet::DataBinding::LookupError,
+                "Data Provider type mismatch: Got #{value.class.name} when Array was expected to access value using '#{segment}' from key '#{key}'"
+            end
+            unless segment < value.size
+              lookup_invocation.report_not_found(segment)
+              throw :no_such_key
+            end
+          else
+            unless value.respond_to?(:'[]') && !(value.instance_of?(Array) || value.instance_of?(String))
+              raise Puppet::DataBinding::LookupError,
+                "Data Provider type mismatch: Got #{value.class.name} when a hash-like object was expected to access value using '#{segment}' from key '#{key}'"
+            end
+            unless value.include?(segment)
+              lookup_invocation.report_not_found(segment)
+              throw :no_such_key
+            end
+          end
+          value = value[segment]
+          lookup_invocation.report_found(segment, value)
         end
-        throw :no_such_key unless segment < value.size
-      else
-        unless value.respond_to?(:'[]') && !(value.instance_of?(Array) || value.instance_of?(String))
-          raise Puppet::DataBinding::LookupError,
-            "Data Provider type mismatch: Got #{value.class.name} when a hash-like object was expected to access value using '#{segment}' from key '#{key}'"
-        end
-        throw :no_such_key unless value.include?(segment)
       end
-      value = value[segment]
+      value
     end
-    value
   end
 end
 end

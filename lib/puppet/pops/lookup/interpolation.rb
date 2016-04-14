@@ -50,8 +50,9 @@ module Interpolation
           raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
 
           segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
-          value = interpolate_method(method_key).call(segments[0], lookup_invocation)
-          value = sub_lookup(key, segments.drop(1), value) if segments.size > 1
+          root_key = segments.shift
+          value = interpolate_method(method_key).call(root_key, lookup_invocation)
+          value = sub_lookup(key, lookup_invocation, segments, value) unless segments.empty?
           value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
