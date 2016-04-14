@@ -193,6 +193,13 @@ describe Puppet::Parser::Resource do
       expect(@compiler.catalog).to be_edge(foo_stage, resource)
     end
 
+    it 'should allow a resource reference to be undef' do
+      Puppet[:code] = "notify { 'hello': message=>'yo', notify => undef }"
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+      edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
+      expect(edges).to include(['Class[main]', 'Notify[hello]'])
+    end
+
     it "should allow edges to propagate multiple levels down the scope hierarchy" do
       Puppet[:code] = <<-MANIFEST
         stage { before: before => Stage[main] }
