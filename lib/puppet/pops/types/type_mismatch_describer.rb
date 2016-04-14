@@ -262,7 +262,7 @@ module Types
 
     def initialize(path, expected, actual)
       super(path)
-      @expected = (expected.is_a?(Array) ? PVariantType.new(expected) : expected).normalize
+      @expected = (expected.is_a?(Array) ? PVariantType.maybe_create(expected) : expected).normalize
       @actual = actual.normalize
     end
 

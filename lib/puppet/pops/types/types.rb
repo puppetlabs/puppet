@@ -1535,8 +1535,8 @@ class PStructType < PAnyType
       tc = TypeCalculator.singleton
       PIterableType.new(
         PTupleType.new([
-          tc.unwrap_single_variant(PVariantType.new(@elements.map {|se| se.key_type })),
-          tc.unwrap_single_variant(PVariantType.new(@elements.map {|se| se.value_type }))],
+          PVariantType.maybe_create(@elements.map {|se| se.key_type }),
+          PVariantType.maybe_create(@elements.map {|se| se.value_type })],
           PHashType::KEY_PAIR_TUPLE_SIZE))
     end
   end
@@ -1718,7 +1718,7 @@ class PTupleType < PAnyType
   end
 
   def iterable_type(guard = nil)
-    PIterableType.new(TypeCalculator.singleton.unwrap_single_variant(PVariantType.new(types)))
+    PIterableType.new(PVariantType.maybe_create(types))
   end
 
   # Returns the number of elements accepted [min, max] in the tuple
@@ -2194,9 +2194,21 @@ class PVariantType < PAnyType
 
   attr_reader :types
 
+  # Checks if the number of unique types in the given array is greater than one, and if so
+  # creates a Variant with those types and returns it. If only one unique type is found,
+  # that type is instead returned.
+  #
+  # @param types [Array<PAnyType>] the variants
+  # @return [PAnyType] the resulting type
+  # @api public
+  def self.maybe_create(types)
+    types = types.uniq
+    types.size == 1 ? types[0] : new(types)
+  end
+
   # @param types [Array[PAnyType]] the variants
   def initialize(types)
-    @types = types.uniq.freeze
+    @types = types.freeze
   end
 
   def accept(visitor, guard)
@@ -2216,7 +2228,7 @@ class PVariantType < PAnyType
     if self == DEFAULT || self == DATA
       self
     else
-      alter_type_array(@types, :generalize) { |altered| PVariantType.new(altered) }
+      alter_type_array(@types, :generalize) { |altered| PVariantType.maybe_create(altered) }
     end
   end
 
@@ -2237,7 +2249,7 @@ class PVariantType < PAnyType
         types[0]
       elsif types.any? { |t| t.is_a?(PUndefType) }
         # Undef entry present. Use an OptionalType with a normalized Variant of all types that are not Undef
-        POptionalType.new(PVariantType.new(types.reject { |ot| ot.is_a?(PUndefType) }).normalize(guard)).normalize(guard)
+        POptionalType.new(PVariantType.maybe_create(types.reject { |ot| ot.is_a?(PUndefType) }).normalize(guard)).normalize(guard)
       else
         # Merge all variants into this one
         types = types.map do |t|
@@ -2261,7 +2273,7 @@ class PVariantType < PAnyType
         if types.size == 1
           types[0]
         else
-          modified || types.size != size_before_merge ? PVariantType.new(types) : self
+          modified || types.size != size_before_merge ? PVariantType.maybe_create(types) : self
         end
       end
     end
@@ -2333,7 +2345,7 @@ class PVariantType < PAnyType
       optionals = parts[0]
       if optionals.size > 1
         others = parts[1]
-        others <<  POptionalType.new(PVariantType.new(optionals.map { |optional| optional.type }).normalize)
+        others <<  POptionalType.new(PVariantType.maybe_create(optionals.map { |optional| optional.type }).normalize)
         array = others
       end
     end
@@ -2347,7 +2359,7 @@ class PVariantType < PAnyType
       not_undefs = parts[0]
       if not_undefs.size > 1
         others = parts[1]
-        others <<  PNotUndefType.new(PVariantType.new(not_undefs.map { |not_undef| not_undef.type }).normalize)
+        others <<  PNotUndefType.new(PVariantType.maybe_create(not_undefs.map { |not_undef| not_undef.type }).normalize)
         array = others
       end
     end
@@ -2813,7 +2825,7 @@ class PTypeAliasType < PAnyType
         if real_types.size == 1
           @resolved_type = real_types[0]
         else
-          @resolved_type = PVariantType.new(real_types)
+          @resolved_type = PVariantType.maybe_create(real_types)
         end
         # Drop self recursion status in case it's not self recursive anymore
         guard = RecursionGuard.new

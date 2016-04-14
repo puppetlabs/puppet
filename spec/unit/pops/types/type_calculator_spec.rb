@@ -472,19 +472,21 @@ describe 'The type calculator' do
       a_t1 = integer_t
       a_t2 = enum_t('b')
       v_a = variant_t(a_t1, a_t2)
-      b_t1 = enum_t('a')
-      v_b = variant_t(b_t1)
+      b_t1 = integer_t
+      b_t2 = enum_t('a')
+      v_b = variant_t(b_t1, b_t2)
       common_t = calculator.common_type(v_a, v_b)
       expect(common_t.class).to eq(PVariantType)
-      expect(Set.new(common_t.types)).to  eq(Set.new([a_t1, a_t2, b_t1]))
+      expect(Set.new(common_t.types)).to  eq(Set.new([a_t1, a_t2, b_t1, b_t2]))
     end
 
     it 'computed variant commonality to type union where added types are sub-types' do
       a_t1 = integer_t
       a_t2 = string_t
       v_a = variant_t(a_t1, a_t2)
-      b_t1 = enum_t('a')
-      v_b = variant_t(b_t1)
+      b_t1 = integer_t
+      b_t2 = enum_t('a')
+      v_b = variant_t(b_t1, b_t2)
       common_t = calculator.common_type(v_a, v_b)
       expect(common_t.class).to eq(PVariantType)
       expect(Set.new(common_t.types)).to  eq(Set.new([a_t1, a_t2]))
@@ -628,7 +630,7 @@ describe 'The type calculator' do
         ]).map {|c| c::DEFAULT }
 
         # Add a non-empty variant
-        all_instances << variant_t(PAnyType::DEFAULT)
+        all_instances << variant_t(PAnyType::DEFAULT, PUnitType::DEFAULT)
         # Add a type alias that doesn't resolve to 't'
         all_instances << type_alias_t('MyInt', 'Integer').resolve(TypeParser.new, nil)
 
@@ -656,21 +658,15 @@ describe 'The type calculator' do
         }
       end
 
-      it 'a Variant of scalar, hash, or array is assignable to Data' do
+      it 'a scalar, hash, or array is assignable to Data' do
         t = PDataType::DEFAULT
-        data_compatible_types.each { |t2| expect(variant_t(type_from_class(t2))).to be_assignable_to(t) }
+        data_compatible_types.each { |t2| expect(type_from_class(t2)).to be_assignable_to(t) }
       end
 
       it 'Data is not assignable to any of its subtypes' do
         t = PDataType::DEFAULT
         types_to_test = data_compatible_types- [PDataType]
         types_to_test.each {|t2| expect(t).not_to be_assignable_to(type_from_class(t2)) }
-      end
-
-      it 'Data is not assignable to a Variant of Data subtype' do
-        t = PDataType::DEFAULT
-        types_to_test = data_compatible_types- [PDataType]
-        types_to_test.each { |t2| expect(t).not_to be_assignable_to(variant_t(type_from_class(t2))) }
       end
 
       it 'Data is not assignable to any disjunct type' do

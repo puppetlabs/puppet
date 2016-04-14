@@ -429,7 +429,7 @@ class TypeCalculator
 
     if t1.is_a?(PVariantType) && t2.is_a?(PVariantType)
       # The common type is one that complies with either set
-      return PVariantType.new(t1.types | t2.types)
+      return PVariantType.maybe_create(t1.types | t2.types)
     end
 
     if t1.is_a?(PRegexpType) && t2.is_a?(PRegexpType)
@@ -699,8 +699,8 @@ class TypeCalculator
     elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
       PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(size_as_type(k), [k]), infer_set(v)) })
     else
-      ktype = PVariantType.new(o.keys.map {|k| infer_set(k) })
-      etype = PVariantType.new(o.values.map {|e| infer_set(e) })
+      ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
+      etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
       PHashType.new(unwrap_single_variant(ktype), unwrap_single_variant(etype), size_as_type(o))
     end
   end
