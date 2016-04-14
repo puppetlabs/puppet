@@ -4,14 +4,15 @@ require 'puppet'
 require 'puppet/data_providers/hiera_config'
 require 'puppet/data_providers/hiera_interpolate'
 
-describe 'Puppet::DataProviders::HieraInterpolate' do
+module Puppet::Pops
+describe 'Puppet::Pops::Lookup::Interpolation' do
 
-  let(:interpolator) { Class.new { include Puppet::DataProviders::HieraInterpolate }.new }
+  let(:interpolator) { Class.new { include Lookup::Interpolation }.new }
   let(:scope) { {} }
-  let(:lookup_invocation) { Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, nil) }
+  let(:lookup_invocation) { Lookup::Invocation.new(scope, {}, {}, nil) }
 
   def expect_lookup(*keys)
-    keys.each { |key| Puppet::Pops::Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(data[key]) }
+    keys.each { |key| Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(data[key]) }
   end
 
   context 'when interpolating nested data' do
@@ -221,7 +222,7 @@ describe 'Puppet::DataProviders::HieraInterpolate' do
 
     it 'should not find a subkey that is matched within a string' do
       expect_lookup('key')
-      expect{ interpolator.interpolate('%{hiera("key.subkey")}', lookup_invocation, true) }.to raise_error(/Got String when a hash-like object was expected to enable lookup using key 'subkey'/)
+      expect{ interpolator.interpolate('%{hiera("key.subkey")}', lookup_invocation, true) }.to raise_error(/Got String when a hash-like object was expected to access value using 'subkey' from key 'key.subkey'/)
     end
   end
 
@@ -308,4 +309,5 @@ describe 'Puppet::DataProviders::HieraInterpolate' do
       expect { interpolator.interpolate("%{flubber(\"hello\")}", lookup_invocation, true)}.to raise_error("Unknown interpolation method 'flubber'")
     end
   end
+end
 end

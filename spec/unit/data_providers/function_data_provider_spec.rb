@@ -43,7 +43,7 @@ describe "when using function data provider" do
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
-    resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]"]
+    resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]", "Notify[env_test2-ipl]"]
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
   end
 

@@ -1,10 +1,10 @@
 require 'pathname'
-require_relative 'hiera_interpolate'
+require 'puppet/pops/lookup/interpolation'
 
 module Puppet::DataProviders
   class HieraConfig
     include Puppet::Plugins::DataProviders
-    include HieraInterpolate
+    include Puppet::Pops::Lookup::Interpolation
 
     DEFAULT_CONFIG = {
       'version' => 4,

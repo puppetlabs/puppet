@@ -1,5 +1,9 @@
+require 'puppet/pops/lookup/interpolation'
+
 module Puppet::Plugins::DataProviders
   module DataProvider
+    include Puppet::Pops::Lookup::Interpolation
+
     # Performs a lookup with an endless recursion check.
     #
     # @param key [String] The key to lookup
@@ -31,8 +35,8 @@ module Puppet::Plugins::DataProviders
       end
     end
 
-    # Perform optional post processing of found value. This hook is used by the hiera style
-    # providers to perform interpolation. The default method simply returns the given _value_.
+    # Perform optional post processing of found value. The default implementation resolves
+    # interpolation expressions
     #
     # @param value [Object] The value to perform post processing on
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
@@ -40,7 +44,7 @@ module Puppet::Plugins::DataProviders
     #
     # @api public
     def post_process(value, lookup_invocation)
-      value
+      interpolate(value, lookup_invocation, true)
     end
 
     # Gets the data from the compiler, or initializes it by calling #initialize_data if not present in the compiler.
