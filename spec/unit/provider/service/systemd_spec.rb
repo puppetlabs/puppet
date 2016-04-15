@@ -151,7 +151,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('unmask', 'sshd.service')
+      provider.expects(:systemctl).with(:unmask, 'sshd.service')
       provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
@@ -206,8 +206,8 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#enable" do
     it "should run systemctl enable to enable a service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:systemctl).with('unmask', 'sshd.service')
-      provider.expects(:systemctl).with('enable', 'sshd.service')
+      provider.expects(:systemctl).with(:unmask, 'sshd.service')
+      provider.expects(:systemctl).with(:enable, 'sshd.service')
       provider.enable
     end
   end
@@ -227,7 +227,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       # a string.
       # This should be made consistent in the future and all tests updated.
       provider.expects(:systemctl).with(:disable, 'sshd.service')
-      provider.expects(:systemctl).with('mask', 'sshd.service')
+      provider.expects(:systemctl).with(:mask, 'sshd.service')
       provider.mask
     end
   end

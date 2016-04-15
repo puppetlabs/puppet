@@ -36,12 +36,21 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return []
   end
 
-  def disable
-    output = systemctl(:disable, @resource[:name])
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
+  # This helper ensures that the enable state cache is always reset
+  # after a systemctl enable operation. A particular service state is not guaranteed
+  # after such an operation, so the cache must be emptied to prevent inconsistencies
+  # in the provider's believed state of the service and the actual state.
+  # @param action [String,Symbol] One of 'enable', 'disable', 'mask' or 'unmask'
+  def systemctl_change_enable(action)
+    output = systemctl(action, @resource[:name])
+  rescue
+    raise Puppet::Error, "Could not #{action} #{self.name}: #{output}", $!.backtrace
   ensure
     @cached_enabled = nil
+  end
+
+  def disable
+    systemctl_change_enable(:disable)
   end
 
   def get_start_link_count
@@ -108,32 +117,16 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def enable
     self.unmask
-    output = systemctl("enable", @resource[:name])
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
-  ensure
-    @cached_enabled = nil
+    systemctl_change_enable(:enable)
   end
 
   def mask
     self.disable
-    begin
-      output = systemctl("mask", @resource[:name])
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not mask #{self.name}: #{output}", $!.backtrace
-    ensure
-      @cached_enabled = nil
-    end
+    systemctl_change_enable(:mask)
   end
 
   def unmask
-    begin
-      output = systemctl("unmask", @resource[:name])
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not unmask #{self.name}: #{output}", $!.backtrace
-    ensure
-      @cached_enabled = nil
-    end
+    systemctl_change_enable(:unmask)
   end
 
   def restartcmd
