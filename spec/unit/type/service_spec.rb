@@ -218,6 +218,22 @@ describe Puppet::Type.type(:service), "when changing the host" do
     @service.property(:enable).sync
   end
 
+  it "should always consider the enable state of a static service to be in sync" do
+    @service.provider.class.stubs(:supports_parameter?).returns(true)
+    @service.provider.expects(:cached_enabled?).returns('static')
+    @service[:enable] = false
+    Puppet.expects(:debug).with("Unable to enable or disable static service yay")
+    expect(@service.property(:enable).insync?(:true)).to eq(true)
+  end
+
+  it "should determine insyncness normally when the service is not static" do
+    @service.provider.class.stubs(:supports_parameter?).returns(true)
+    @service.provider.expects(:cached_enabled?).returns('true')
+    @service[:enable] = true
+    Puppet.expects(:debug).never
+    expect(@service.property(:enable).insync?(:true)).to eq(true)
+  end
+
   it "should sync the service's enable state when changing the state of :ensure if :enable is being managed" do
     @service.provider.class.stubs(:supports_parameter?).returns(true)
     @service[:enable] = false

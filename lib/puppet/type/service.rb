@@ -73,6 +73,17 @@ module Puppet
         provider.enabled?
       end
 
+      # This only makes sense on systemd systems. Static services cannot be enabled
+      # or disabled manually.
+      def insync?(current)
+        if provider.respond_to?(:cached_enabled?) && provider.cached_enabled? == 'static'
+          Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
+          return true
+        end
+
+        super(current)
+      end
+
       validate do |value|
         if value == :manual and !Puppet.features.microsoft_windows?
           raise Puppet::Error.new("Setting enable to manual is only supported on Microsoft Windows.")
