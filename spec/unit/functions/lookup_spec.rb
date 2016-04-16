@@ -298,6 +298,38 @@ describe "when performing lookup" do
     end
   end
 
+  context 'when using dotted keys' do
+    it 'can access values in data using dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { a => { b => { c => 'the data' }}}
+      }
+      notice(lookup('a.b.c'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
+    end
+
+    it 'can find data using quoted dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { 'a.b.c' => 'the data' }
+      }
+      notice(lookup('"a.b.c"'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
+    end
+
+    it 'can access values in data using a mix of dot notation and quoted dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { 'a' => { 'b.c' => 'the data' }}
+      }
+      notice(lookup('a."b.c"'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
+    end
+  end
+
   context 'when passing a hash as the only parameter' do
     it 'can pass a single name correctly' do
       resources = assemble_and_compile('${r}', "{name => 'abc::a'}")
@@ -557,6 +589,28 @@ Merge strategy first
 EOS
       end
     end
+
+    it 'will explain value access caused by dot notation in key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::f.k1.s1', Puppet::Pops::Types::TypeParser.new.parse('String'), nil, false, nil, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "abc::f.k1.s1"
+  Data Provider "FunctionEnvDataProvider"
+    Sub key: "k1.s1"
+      Found key: "k1" value: {
+        "s1" => "env_f11",
+        "s2" => "env_f12"
+      }
+      Found key: "s1" value: "env_f11"
+    Found key: "abc::f.k1.s1" value: "env_f11"
+  Merged result: "env_f11"
+EOS
+      end
+    end
+
 
     it 'will provide a hash containing all explanation elements' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|

@@ -186,7 +186,7 @@ Merge strategy first
       Path "#{environmentpath}/hiera_misc/data/common.yaml"
         Original path: "common"
         Interpolation on "Value from interpolation %{scope("target_scope")}"
-          Global Scope"
+          Global Scope
             Found key: "target_scope" value: "with scope"
         Found key: "km_scope" value: "Value from interpolation with scope"
   Merged result: "Value from interpolation with scope"
