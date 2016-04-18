@@ -1,0 +1,18 @@
+---
+HOSTS:
+  master:
+    roles:
+      - master
+    platform: el-7-x86_64
+    hypervisor: vcloud
+    template: redhat-7-x86_64
+  huawei-ce6850-2-debian-vm-eth0.ops.puppetlabs.net:
+    roles:
+      - agent
+    platform: huaweios-6-powerpc
+    hypervisor: none
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/

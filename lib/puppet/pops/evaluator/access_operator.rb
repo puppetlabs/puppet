@@ -293,6 +293,30 @@ class AccessOperator
     end
   end
 
+  def access_PIterableType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Iterable-Type', :actual => keys[0].class})
+      end
+      Types::PIterableType.new(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Iterable-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
+  def access_PIteratorType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Iterator-Type', :actual => keys[0].class})
+      end
+      Types::PIteratorType.new(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Iterator-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PRuntimeType(o, scope, keys)
     keys.flatten!
     assert_keys(keys, o, 2, 2, String, String)
@@ -366,7 +390,7 @@ class AccessOperator
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
-    Types::PCollectionType.new(size_t)
+    Types::PCollectionType.new(nil, size_t)
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.

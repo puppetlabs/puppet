@@ -45,14 +45,19 @@ class Closure < CallableSignature
     if enforce_parameters
       # Push a temporary parameter scope used while resolving the parameter defaults
       @enclosing_scope.with_parameter_scope(parameter_names) do |param_scope|
-        args_hash.each { |k, v| param_scope[k] = v unless v.nil? && parameter_names.include?(k) }
+        # Assign all non-nil values, even those that represent non-existent paramaters.
+        args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
         parameters.each do |p|
           name = p.name
-          # only set result of default expr if it is defined (it is otherwise not possible to differentiate
-          # between explicit undef and no default expression
           arg = args_hash[name]
-          if arg.nil? && !p.value.nil?
-            param_scope[name] = param_scope.evaluate(name, p.value, @enclosing_scope, @evaluator)
+          if arg.nil?
+            # Arg either wasn't given, or it was undef
+            if p.value.nil?
+              # No default. Assign nil if the args_hash included it
+              param_scope[name] = nil if args_hash.include?(name)
+            else
+              param_scope[name] = param_scope.evaluate(name, p.value, @enclosing_scope, @evaluator)
+            end
           end
         end
         args_hash = param_scope.to_hash

@@ -1,4 +1,5 @@
 test_name "should not destroy a group that doesn't exist"
+confine :except, :platform => /^cisco_/ # See PUP-5828
 
 name = "test-group-#{Time.new.to_i}"
 
