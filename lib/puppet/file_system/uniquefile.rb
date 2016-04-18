@@ -175,7 +175,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       mkdir(lock)
       yield
     ensure
-      rmdir(lock) if lock
+      rmdir(lock) if Puppet::FileSystem.exist?(lock)
     end
 
     def mkdir(*args)

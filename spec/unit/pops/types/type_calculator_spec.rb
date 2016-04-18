@@ -833,6 +833,12 @@ describe 'The type calculator' do
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
+      it 'A tuple with parameters is assignable to the default Tuple' do
+        t = Puppet::Pops::Types::PTupleType::DEFAULT
+        t2 = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PStringType::DEFAULT])
+        expect(t2).to be_assignable_to(t)
+      end
+
       it 'Tuple is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PAnyType,
@@ -894,6 +900,18 @@ describe 'The type calculator' do
         t2 = struct_t({not_undef_t('other_member') => string_t})
         expect(t2).not_to be_assignable_to(t1)
       end
+
+      it 'A hash of string is not assignable to struct with integer value' do
+        t1 = struct_t({'foo' => integer_t, 'bar' => string_t})
+        t2 = hash_t(string_t, string_t, range_t(2, 2))
+        expect(t1.assignable?(t2)).to eql(false)
+      end
+
+      it 'A hash of with integer key is not assignable to struct with string key' do
+        t1 = struct_t({'foo' => string_t, 'bar' => string_t})
+        t2 = hash_t(integer_t, string_t, range_t(2, 2))
+        expect(t1.assignable?(t2)).to eql(false)
+      end
     end
 
     context 'for Callable, such that' do
@@ -905,6 +923,14 @@ describe 'The type calculator' do
           Puppet::Pops::Types::POptionalType,
           Puppet::Pops::Types::PNotUndefType]
         tested_types.each {|t2| expect(t).to_not be_assignable_to(t2::DEFAULT) }
+      end
+
+      it 'a callable with parameter is assignable to the default callable' do
+        expect(callable_t(string_t)).to be_assignable_to(Puppet::Pops::Types::PCallableType::DEFAULT)
+      end
+
+      it 'the default callable is not assignable to a callable with parameter' do
+        expect(Puppet::Pops::Types::PCallableType::DEFAULT).not_to be_assignable_to(callable_t(string_t))
       end
     end
 
@@ -1091,11 +1117,11 @@ describe 'The type calculator' do
       end
 
       it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
-        tuple1 = constrained_tuple_t(range_t(0, :default), Object)
-        tuple2 = tuple_t
+        tuple1 = constrained_tuple_t(range_t(0, :default))
+        tuple2 = tuple_t()
 
         expect(calculator.assignable?(tuple1, tuple2)).to eq(true)
-        expect(calculator.assignable?(tuple2, tuple1)).to eq(false)
+        expect(calculator.assignable?(tuple2, tuple1)).to eq(true)
       end
 
       it 'should accept matching tuples' do
@@ -1157,7 +1183,7 @@ describe 'The type calculator' do
 
       it 'should accept empty array when tuple allows min of 0' do
         tuple1 = constrained_tuple_t(range_t(0, 1), Integer)
-        array = array_t(Integer, range_t(0, 0))
+        array = array_t(unit_t, range_t(0, 0))
         expect(calculator.assignable?(tuple1, array)).to eq(true)
         expect(calculator.assignable?(array, tuple1)).to eq(false)
       end
@@ -1210,9 +1236,9 @@ describe 'The type calculator' do
         expect(calculator.assignable?(hsh, struct1)).to eq(true)
       end
 
-      it 'should accept empty hash with key_type undef' do
+      it 'should accept empty hash with key_type unit' do
         struct1 = struct_t({'a'=>optional_t(Integer)})
-        hsh = hash_t(undef_t, undef_t, range_t(0, 0))
+        hsh = hash_t(unit_t, unit_t, range_t(0, 0))
         expect(calculator.assignable?(struct1, hsh)).to eq(true)
       end
     end

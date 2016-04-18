@@ -151,6 +151,92 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Iterable type' do
+    include PuppetSpec::Compiler
+
+    it 'can be parameterized with element type' do
+      code = <<-CODE
+      function foo(Iterable[String] $x) {
+        $x.each |$e| {
+          notice $e
+        }
+      }
+      foo([bar, baz, cake])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['bar', 'baz', 'cake'])
+    end
+  end
+
+  context 'Iterator type' do
+    include PuppetSpec::Compiler
+
+    let!(:iterint) { tf.iterator(tf.integer) }
+
+    context 'when testing instance?' do
+      it 'will consider an iterable on an integer is an instance of Iterator[Integer]' do
+        expect(iterint.instance?(Iterable.on(3))).to be_truthy
+      end
+
+      it 'will consider an iterable on string to be an instance of Iterator[Integer]' do
+        expect(iterint.instance?(Iterable.on('string'))).to be_falsey
+      end
+    end
+
+    context 'when testing assignable?' do
+      it 'will consider an iterator with an assignable type as assignable' do
+        expect(tf.iterator(tf.numeric).assignable?(iterint)).to be_truthy
+      end
+
+      it 'will not consider an iterator with a non assignable type as assignable' do
+        expect(tf.iterator(tf.string).assignable?(iterint)).to be_falsey
+      end
+    end
+
+    context 'when asked for an iterable type' do
+      it 'the default iterator type returns the default iterable type' do
+        expect(PIteratorType::DEFAULT.iterable_type).to be(PIterableType::DEFAULT)
+      end
+
+      it 'a typed iterator type returns the an equally typed iterable type' do
+        expect(iterint.iterable_type).to eq(tf.iterable(tf.integer))
+      end
+    end
+
+    it 'can be parameterized with an element type' do
+      code = <<-CODE
+      function foo(Iterator[String] $x) {
+        $x.each |$e| {
+          notice $e
+        }
+      }
+      foo([bar, baz, cake].reverse_each)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['cake', 'baz', 'bar'])
+    end
+  end
+
+  context 'Collection type' do
+    include PuppetSpec::Compiler
+
+    it 'can be parameterized with a range' do
+      code = <<-CODE
+      notice(Collection[5, default] == Collection[5])
+      notice(Collection[5, 5] > Tuple[Integer, 0, 10])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'false'])
+    end
+  end
+
+  context 'Struct type' do
+    context 'can be used as key in hash' do
+      it 'compacts optional in optional in optional to just optional' do
+        key1 = tf.struct({'foo' => tf.string})
+        key2 = tf.struct({'foo' => tf.string})
+        expect({key1 => 'hi'}[key2]).to eq('hi')
+      end
+    end
+  end
+
   context 'Optional type' do
     let!(:overlapping_ints) { tf.variant(tf.range(10, 20), tf.range(18, 28)) }
     let!(:optoptopt) { tf.optional(tf.optional(tf.optional(overlapping_ints))) }
@@ -170,6 +256,7 @@ describe 'Puppet Type System' do
   context 'NotUndef type' do
     let!(:nununu) { tf.not_undef(tf.not_undef(tf.not_undef(tf.any))) }
     let!(:nuopt) { tf.not_undef(tf.optional(tf.any)) }
+    let!(:nuoptint) { tf.not_undef(tf.optional(tf.integer)) }
 
     context 'when normalizing' do
       it 'compacts NotUndef in NotUndef in NotUndef to just NotUndef' do
@@ -178,6 +265,10 @@ describe 'Puppet Type System' do
 
       it 'compacts Optional in NotUndef to just NotUndef' do
         expect(nuopt.normalize).to eq(tf.not_undef(tf.any))
+      end
+
+      it 'compacts NotUndef[Optional[Integer]] in NotUndef to just Integer' do
+        expect(nuoptint.normalize).to eq(tf.integer)
       end
     end
   end
@@ -236,6 +327,12 @@ describe 'Puppet Type System' do
         )
       end
     end
+
+    context 'when generalizing' do
+      it 'will generalize and compact contained types' do
+        expect(tf.variant(tf.string(tf.range(3,3)), tf.string(tf.range(5,5))).generalize).to eq(tf.variant(tf.string))
+      end
+    end
   end
 
   context 'Type aliases' do
@@ -291,6 +388,67 @@ describe 'Puppet Type System' do
       notice(a =~ Foo)
       CODE
       expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'will allow an alias where a variant references an alias with a variant that references itself' do
+      code = <<-CODE
+      type X = Variant[Y, Integer]
+      type Y = Variant[X, String]
+
+      notice(X >= X)
+      notice(X >= Y)
+      notice(Y >= X)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true','true','true'])
+    end
+
+    it 'will detect a mismatch in an alias that directly references itself in a variant with other types' do
+      code = <<-CODE
+      type Foo = Variant[Foo,String]
+      notice(3 =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false'])
+    end
+
+    it 'will normalize a Variant containing a self reference so that the self reference is removed' do
+      code = <<-CODE
+      type Foo = Variant[Foo,String,Integer]
+      assert_type(Foo, /x/)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expected a value of type String or Integer, got Regexp/)
+    end
+
+    it 'will handle a scalar correctly in combinations of nested aliased variants' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Integer]
+      type Foo = Variant[Bar,String]
+      notice(a =~ Foo)
+      notice(1 =~ Foo)
+      notice(/x/ =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
+    end
+
+    it 'will handle a non scalar correctly in combinations of nested aliased array with nested variants' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Integer]
+      type Foo = Array[Variant[Bar,String]]
+      notice([a] =~ Foo)
+      notice([1] =~ Foo)
+      notice([/x/] =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
+    end
+
+    it 'will handle a non scalar correctly in combinations of nested aliased variants with array' do
+      code = <<-CODE
+      type Bar = Variant[Foo,Array[Integer]]
+      type Foo = Variant[Bar,Array[String]]
+      notice([a] =~ Foo)
+      notice([1] =~ Foo)
+      notice([/x/] =~ Foo)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
     end
   end
 end
