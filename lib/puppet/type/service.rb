@@ -250,5 +250,9 @@ module Puppet
         debug "Skipping restart; service is not running"
       end
     end
+
+    def self.needs_ensure_retrieved
+      false
+    end
   end
 end
