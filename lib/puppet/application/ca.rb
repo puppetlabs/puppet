@@ -6,5 +6,6 @@ class Puppet::Application::Ca < Puppet::Application::FaceBase
 
   def setup
     Puppet::SSL::Oids.register_puppet_oids
+    super
   end
 end
