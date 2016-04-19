@@ -5,6 +5,10 @@ require 'puppet/util/monkey_patches'
 
 
 describe Symbol do
+  after :all do
+    $unique_warnings.delete('symbol_comparison') if $unique_warnings
+  end
+
   it "should return self from #intern" do
     symbol = :foo
     expect(symbol).to equal symbol.intern
