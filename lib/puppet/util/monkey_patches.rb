@@ -129,7 +129,8 @@ if Puppet::Util::Platform.windows?
       # cert store, see https://rt.openssl.org/Ticket/Display.html?id=2158
       unless @puppet_certs_loaded
         @puppet_certs_loaded = true
-        Puppet::Util::Windows::RootCerts.instance.to_a.uniq.each do |x509|
+
+        Puppet::Util::Windows::RootCerts.instance.to_a.uniq{ |h| h.to_der }.each do |x509|
           begin
             add_cert(x509)
           rescue OpenSSL::X509::StoreError => e

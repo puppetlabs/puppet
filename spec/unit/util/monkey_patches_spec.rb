@@ -237,8 +237,9 @@ end
 
 
 describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
-  let(:store) { described_class.new }
-  let(:cert)  { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
+  let(:store)    { described_class.new }
+  let(:cert)     { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
+  let(:samecert) { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
 
   def with_root_certs(certs)
     Puppet::Util::Windows::RootCerts.expects(:instance).returns(certs)
@@ -259,9 +260,10 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
   end
 
   it "ignores duplicate root certs" do
-    with_root_certs([cert, cert])
+    with_root_certs([cert, samecert])
 
     store.expects(:add_cert).with(cert).once
+    store.expects(:add_cert).with(samecert).never
 
     store.set_default_paths
   end
