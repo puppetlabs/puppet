@@ -243,6 +243,67 @@ describe "Puppet::FileSystem" do
       end
     end
 
+    it "should return false for exist? when resolving a cyclic symlink chain" do
+      # point symlink -> file
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
+
+      # point symlink2 -> symlink
+      symlink2 = tmpfile("somefile_link2")
+      Puppet::FileSystem.symlink(symlink, symlink2)
+
+      # point symlink3 -> symlink2
+      symlink3 = tmpfile("somefile_link3")
+      Puppet::FileSystem.symlink(symlink2, symlink3)
+
+      # yank file, temporarily dangle
+      ::File.delete(file)
+
+      # and trash it so that we can recreate it OK on windows
+      Puppet::FileSystem.unlink(symlink)
+
+      # point symlink -> symlink3 to create a cycle
+      Puppet::FileSystem.symlink(symlink3, symlink)
+
+      expect(Puppet::FileSystem.exist?(symlink3)).to be_falsey
+    end
+
+    it "should return true for exist? when resolving a symlink chain pointing to a file" do
+      # point symlink -> file
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
+
+      # point symlink2 -> symlink
+      symlink2 = tmpfile("somefile_link2")
+      Puppet::FileSystem.symlink(symlink, symlink2)
+
+      # point symlink3 -> symlink2
+      symlink3 = tmpfile("somefile_link3")
+      Puppet::FileSystem.symlink(symlink2, symlink3)
+
+      expect(Puppet::FileSystem.exist?(symlink3)).to be_truthy
+    end
+
+    it "should return false for exist? when resolving a symlink chain that dangles" do
+      # point symlink -> file
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
+
+      # point symlink2 -> symlink
+      symlink2 = tmpfile("somefile_link2")
+      Puppet::FileSystem.symlink(symlink, symlink2)
+
+      # point symlink3 -> symlink2
+      symlink3 = tmpfile("somefile_link3")
+      Puppet::FileSystem.symlink(symlink2, symlink3)
+
+      # yank file, and make symlink dangle
+      ::File.delete(file)
+
+      # symlink3 is now indirectly dangled
+      expect(Puppet::FileSystem.exist?(symlink3)).to be_falsey
+    end
+
     it "should not create a symlink when the :noop option is specified" do
       [file, dir].each do |target|
         symlink = tmpfile("#{Puppet::FileSystem.basename(target)}_link")
