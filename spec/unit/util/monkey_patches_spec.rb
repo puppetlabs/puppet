@@ -5,6 +5,10 @@ require 'puppet/util/monkey_patches'
 
 
 describe Symbol do
+  after :all do
+    $unique_warnings.delete('symbol_comparison') if $unique_warnings
+  end
+
   it "should return self from #intern" do
     symbol = :foo
     expect(symbol).to equal symbol.intern
@@ -173,8 +177,9 @@ end
 
 
 describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
-  let(:store) { described_class.new }
-  let(:cert)  { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
+  let(:store)    { described_class.new }
+  let(:cert)     { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
+  let(:samecert) { cert.dup() }
 
   def with_root_certs(certs)
     Puppet::Util::Windows::RootCerts.expects(:instance).returns(certs)
@@ -186,10 +191,21 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
     store.set_default_paths
   end
 
+  it "doesn't warn when calling set_default_paths multiple times" do
+    with_root_certs([cert])
+    store.expects(:warn).never
+
+    store.set_default_paths
+    store.set_default_paths
+  end
+
   it "ignores duplicate root certs" do
-    with_root_certs([cert, cert])
+    # prove that even though certs have identical contents, their hashes differ
+    expect(cert.hash).to_not eq(samecert.hash)
+    with_root_certs([cert, samecert])
 
     store.expects(:add_cert).with(cert).once
+    store.expects(:add_cert).with(samecert).never
 
     store.set_default_paths
   end

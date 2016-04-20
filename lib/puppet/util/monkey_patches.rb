@@ -114,15 +114,20 @@ if Puppet::Util::Platform.windows?
   require 'openssl'
 
   class OpenSSL::X509::Store
+    @puppet_certs_loaded = false
     alias __original_set_default_paths set_default_paths
     def set_default_paths
       # This can be removed once openssl integrates with windows
       # cert store, see https://rt.openssl.org/Ticket/Display.html?id=2158
-      Puppet::Util::Windows::RootCerts.instance.to_a.uniq.each do |x509|
-        begin
-          add_cert(x509)
-        rescue OpenSSL::X509::StoreError => e
-          warn "Failed to add #{x509.subject.to_s}"
+      unless @puppet_certs_loaded
+        @puppet_certs_loaded = true
+
+        Puppet::Util::Windows::RootCerts.instance.to_a.uniq { |cert| cert.to_der }.each do |x509|
+          begin
+            add_cert(x509)
+          rescue OpenSSL::X509::StoreError => e
+            warn "Failed to add #{x509.subject.to_s}"
+          end
         end
       end
 

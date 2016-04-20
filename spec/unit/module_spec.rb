@@ -609,21 +609,21 @@ describe Puppet::Module do
 
   it "should have metadata if it has a metadata file and its data is not empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
+    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "{\"foo\" : \"bar\"}"
 
     expect(@module).to be_has_metadata
   end
 
   it "should have metadata if it has a metadata file and its data is not empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
+    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "{\"foo\" : \"bar\"}"
 
     expect(@module).to be_has_metadata
   end
 
   it "should not have metadata if has a metadata file and its data is empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file).returns "This is some invalid json.\n"
+    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "This is some invalid json.\n"
     expect(@module).not_to be_has_metadata
   end
 
@@ -646,7 +646,7 @@ describe Puppet::Module do
 
   it "should tolerate failure to parse" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file).returns(my_fixture('trailing-comma.json'))
+    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
     expect(@module.has_metadata?).to be_falsey
   end
@@ -656,7 +656,7 @@ describe Puppet::Module do
 
     mod = Puppet::Module.new("foo", "/path", mock("env"))
     mod.stubs(:metadata_file).returns "/my/file"
-    File.stubs(:read).with("/my/file").returns text
+    File.stubs(:read).with("/my/file", {:encoding => 'utf-8'}).returns text
     mod
   end
 
@@ -681,12 +681,36 @@ describe Puppet::Module do
       it "should fail if #{attr} is not present in the metadata file" do
         @data.delete(attr.to_sym)
         @text = @data.to_pson
-        File.stubs(:read).with("/my/file").returns @text
+        File.stubs(:read).with("/my/file", {:encoding => 'utf-8'}).returns @text
         expect { @module.load_metadata }.to raise_error(
           Puppet::Module::MissingMetadata,
           "No #{attr} module metadata provided for foo"
         )
       end
+    end
+  end
+
+  describe "when loading the metadata file from disk" do
+    it "should properly parse utf-8 contents" do
+      rune_utf8 = "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
+      metadata_json = tmpfile('metadata.json')
+      File.open(metadata_json, 'w') do |file|
+        file.puts <<-EOF
+  {
+    "license" : "GPL2",
+    "author" : "#{rune_utf8}",
+    "version" : "1.0",
+    "source" : "http://foo/",
+    "dependencies" : []
+  }
+        EOF
+      end
+
+      mod = Puppet::Module.new('foo', '/path', mock('env'))
+      mod.stubs(:metadata_file).returns metadata_json
+
+      mod.load_metadata
+      expect(mod.author).to eq(rune_utf8)
     end
   end
 
