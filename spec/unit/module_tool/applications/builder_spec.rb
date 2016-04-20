@@ -56,37 +56,41 @@ describe Puppet::ModuleTool::Applications::Builder do
       Puppet::FileSystem.touch(File.join(path, 'gitdirectory/gitartifact'))
       Puppet::FileSystem.touch(File.join(path, 'gitdirectory/gitimportantfile'))
       Puppet::FileSystem.touch(File.join(path, 'gitdirectory/sub/artifact'))
+      Puppet::FileSystem.touch(File.join(path, "git\u16A0\u16C7\u16BB"))
       Puppet::FileSystem.touch(File.join(path, 'pmtignored.foo'))
       Puppet::FileSystem.mkpath(File.join(path, 'pmtdirectory/sub'))
       Puppet::FileSystem.touch(File.join(path, 'pmtdirectory/pmtimportantfile'))
       Puppet::FileSystem.touch(File.join(path, 'pmtdirectory/pmtartifact'))
       Puppet::FileSystem.touch(File.join(path, 'pmtdirectory/sub/artifact'))
+      Puppet::FileSystem.touch(File.join(path, "pmt\u16A0\u16C7\u16BB"))
     end
 
     def create_pmtignore_file
-      Puppet::FileSystem.open(File.join(path, '.pmtignore'), 0600, 'w') do |f|
+      File.open(File.join(path, '.pmtignore'), 'w', 0600, :encoding => 'utf-8') do |f|
         f << <<-PMTIGNORE
 pmtignored.*
 pmtdirectory/sub/**
 pmtdirectory/pmt*
 !pmtimportantfile
+pmt\u16A0\u16C7\u16BB
 PMTIGNORE
       end
     end
 
     def create_gitignore_file
-      Puppet::FileSystem.open(File.join(path, '.gitignore'), 0600, 'w') do |f|
+      File.open(File.join(path, '.gitignore'), 'w', 0600, :encoding => 'utf-8') do |f|
         f << <<-GITIGNORE
 gitignored.*
 gitdirectory/sub/**
 gitdirectory/git*
 !gitimportantfile
+git\u16A0\u16C7\u16BB
 GITIGNORE
       end
     end
 
     def create_symlink_gitignore_file
-      Puppet::FileSystem.open(File.join(path, '.gitignore'), 0600, 'w') do |f|
+      File.open(File.join(path, '.gitignore'), 'w', 0600, :encoding => 'utf-8') do |f|
         f << <<-GITIGNORE
 symlinkfile
     GITIGNORE
@@ -152,6 +156,10 @@ symlinkfile
         expect(target_exists?('gitignored.foo')).to eq true
       end
 
+      it "leaves UTF-8 files" do
+        expect(target_exists?("git\u16A0\u16C7\u16BB")).to eq true
+      end
+
       it "leaves directories" do
         expect(target_exists?('gitdirectory')).to eq true
       end
@@ -176,6 +184,10 @@ symlinkfile
     shared_examples "gitignored files are not present" do
       it "ignores regular files" do
         expect(target_exists?('gitignored.foo')).to eq false
+      end
+
+      it "ignores UTF-8 files" do
+        expect(target_exists?("git\u16A0\u16C7\u16BB")).to eq false
       end
 
       it "ignores directories" do
@@ -204,6 +216,10 @@ symlinkfile
         expect(target_exists?('pmtignored.foo')).to eq true
       end
 
+      it "leaves UTF-8 files" do
+        expect(target_exists?("pmt\u16A0\u16C7\u16BB")).to eq true
+      end
+
       it "leaves directories" do
         expect(target_exists?('pmtdirectory')).to eq true
       end
@@ -228,6 +244,10 @@ symlinkfile
     shared_examples "pmtignored files are not present" do
       it "ignores regular files" do
         expect(target_exists?('pmtignored.foo')).to eq false
+      end
+
+      it "ignores UTF-8 files" do
+        expect(target_exists?("pmt\u16A0\u16C7\u16BB")).to eq false
       end
 
       it "ignores directories" do
