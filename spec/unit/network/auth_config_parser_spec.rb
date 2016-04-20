@@ -4,6 +4,7 @@ require 'puppet/network/auth_config_parser'
 require 'puppet/network/authconfig'
 
 describe Puppet::Network::AuthConfigParser do
+  include PuppetSpec::Files
 
   let(:fake_authconfig) do
     "path ~ ^/catalog/([^/])\nmethod find\nallow *\n"
@@ -96,6 +97,21 @@ describe Puppet::Network::AuthConfigParser do
       Puppet::Network::Rights::Right.any_instance.expects(:restrict_authenticated).with('yes')
 
       described_class.new("path /certificates\nauthenticated yes").parse_rights
+    end
+  end
+
+  describe "when parsing rights from files" do
+    it "can read UTF-8" do
+      rune_path = "/\u16A0\u16C7\u16BB" # ᚠᛇᚻ
+      config = tmpfile('config')
+
+      File.open(config, 'w', :encoding => 'utf-8') do |file|
+        file.puts <<-EOF
+path #{rune_path}
+      EOF
+    end
+
+      expect(described_class.new_from_file(config).parse_rights[rune_path]).to be
     end
   end
 end
