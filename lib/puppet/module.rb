@@ -48,7 +48,7 @@ class Puppet::Module
 
   def self.is_module_namespaced_name?(name)
     # it must match the full module name according to forge validator
-    return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/   
+    return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
     return false
   end
 
@@ -90,7 +90,7 @@ class Puppet::Module
     return false unless Puppet::FileSystem.exist?(metadata_file)
 
     begin
-      metadata =  JSON.parse(File.read(metadata_file))
+      metadata =  JSON.parse(File.read(metadata_file, :encoding => 'utf-8'))
     rescue JSON::JSONError => e
       Puppet.debug("#{name} has an invalid and unparsable metadata.json file.  The parse error: #{e.message}")
       return false
@@ -145,7 +145,7 @@ class Puppet::Module
   end
 
   def load_metadata
-    @metadata = data = JSON.parse(File.read(metadata_file))
+    @metadata = data = JSON.parse(File.read(metadata_file, :encoding => 'utf-8'))
     @forge_name = data['name'].gsub('-', '/') if data['name']
 
     [:source, :author, :version, :license, :dependencies].each do |attr|

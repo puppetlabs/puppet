@@ -1189,7 +1189,7 @@ Generated on #{Time.now}.
   # Read the file in.
   # @api private
   def read_file(file)
-    return Puppet::FileSystem.read(file)
+    return Puppet::FileSystem.read(file, :encoding => 'utf-8')
   end
 
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.

@@ -4,7 +4,7 @@ module Puppet::Network
 class AuthConfigParser
 
   def self.new_from_file(file)
-    self.new(File.read(file))
+    self.new(Puppet::FileSystem.read(file, :encoding => 'utf-8'))
   end
 
   def initialize(string)

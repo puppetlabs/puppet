@@ -107,7 +107,7 @@ describe 'loaders' do
     end
 
     it 'loader allows loading a function more than once' do
-      File.stubs(:read).with(user_metadata_path).returns ''
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns ''
 
       env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
       loaders = Puppet::Pops::Loaders.new(env)
@@ -166,7 +166,7 @@ describe 'loaders' do
     end
 
     it 'all dependent modules are visible' do
-      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -183,7 +183,7 @@ describe 'loaders' do
         {:from => from, :called => 'a ruby function', :expects => "I'm the function usee::usee_ruby()"} ].each_with_index do |desc, called_idx|
         case_number = from_idx * 3 + called_idx + 1
         it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
-          File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
@@ -201,7 +201,7 @@ describe 'loaders' do
         end
 
         it 'can not call ruby function in a dependent module from outside a function if dependency is missing in existing metadata.json' do
-          File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => []).to_pson
+          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
         end
@@ -209,7 +209,7 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -225,7 +225,7 @@ describe 'loaders' do
     end
 
     it "a type can reference a type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(Usee::One, 1)
@@ -234,7 +234,7 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(User::WithUseeZero, [0])
         notice(ok)
@@ -242,7 +242,7 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(User::WithUseeOne, [1])

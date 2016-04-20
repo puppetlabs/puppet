@@ -76,12 +76,22 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
         expect(subject.find(request)).to be_nil
       end
 
+      it "can load a UTF-8 file from disk" do
+        rune_utf8 = "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
+
+        with_content(model.new(rune_utf8).to_msgpack) do
+          instance = subject.find(request)
+          expect(instance).to be_an_instance_of model
+          expect(instance.value).to eq(rune_utf8)
+        end
+      end
+
       it "raises a descriptive error when the file can't be read" do
         with_content(model.new('foo').to_msgpack) do
           # I don't like this, but there isn't a credible alternative that
           # also works on Windows, so a stub it is. At least the expectation
           # will fail if the implementation changes. Sorry to the next dev.
-          File.expects(:read).with(file).raises(Errno::EPERM)
+          Puppet::FileSystem.expects(:read).with(file, {:encoding => 'utf-8'}).raises(Errno::EPERM)
           expect { subject.find(request) }.
             to raise_error Puppet::Error, /Could not read MessagePack/
         end
