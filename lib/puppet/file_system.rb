@@ -34,6 +34,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.open(path, mode, options, &block)
+    # TODO: this is a problem
     @impl.open(assert_path(path), mode, options, &block)
   end
 
@@ -107,6 +108,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.exclusive_open(path, mode, options = 'r', timeout = 300, &block)
+    # TODO: this is a problem
     @impl.exclusive_open(assert_path(path), mode, options, timeout, &block)
   end
 
@@ -115,6 +117,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.each_line(path, &block)
+    # TODO: this is a problem
     @impl.each_line(assert_path(path), &block)
   end
 
@@ -136,6 +139,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.read_preserve_line_endings(path)
+    # TODO: this is a problem
     @impl.read_preserve_line_endings(assert_path(path))
   end
 
@@ -312,6 +316,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.compare_stream(path, stream)
+    # TODO: this is a problem
     @impl.compare_stream(assert_path(path), stream)
   end
 
@@ -357,6 +362,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.exclusive_create(path, mode, &block)
+    # TODO: this is a problem
     @impl.exclusive_create(assert_path(path), mode, &block)
   end
 

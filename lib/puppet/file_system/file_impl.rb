@@ -23,6 +23,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def open(path, mode, options, &block)
+    # TODO: this is a problem
     ::File.open(path, options, mode, &block)
   end
 
@@ -39,11 +40,13 @@ class Puppet::FileSystem::FileImpl
   end
 
   def exclusive_create(path, mode, &block)
+    # TODO: this is a problem
     opt = File::CREAT | File::EXCL | File::WRONLY
     self.open(path, mode, opt, &block)
   end
 
   def exclusive_open(path, mode, options = 'r', timeout = 300, &block)
+    # TODO: this is a problem
     wait = 0.001 + (Kernel.rand / 1000)
     written = false
     while !written
@@ -64,6 +67,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def each_line(path, &block)
+    # TODO: this is a problem
     ::File.open(path) do |f|
       f.each_line do |line|
         yield line
@@ -76,6 +80,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def read_preserve_line_endings(path)
+    # TODO: this is a problem
     read(path)
   end
 
@@ -140,6 +145,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def compare_stream(path, stream)
+    # TODO: this is a problem
     open(path, 0, 'rb') { |this| FileUtils.compare_stream(this, stream) }
   end
 
