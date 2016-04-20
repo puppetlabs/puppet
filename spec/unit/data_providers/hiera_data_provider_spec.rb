@@ -45,7 +45,7 @@ describe "when using a hiera data provider" do
 
   it 'reads hiera.yaml in environment root and configures multiple json and yaml providers' do
     resources = compile_and_get_notifications('hiera_env_config')
-    expect(resources).to include('env data param_a is 10, env data param_b is 20, env data param_c is 30, env data param_d is 40, env data param_e is 50')
+    expect(resources).to include("env data param_a is 10, env data param_b is 20, env data param_c is 30, env data param_d is 40, env data param_e is 50, env data param_yaml_utf8 is \u16EB\u16D2\u16E6, env data param_json_utf8 is \u16A0\u16C7\u16BB")
   end
 
   it 'reads hiera.yaml in module root and configures multiple json and yaml providers' do

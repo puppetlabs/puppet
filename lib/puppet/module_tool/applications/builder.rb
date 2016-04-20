@@ -65,9 +65,9 @@ module Puppet::ModuleTool
           gitignore = File.join(@path, '.gitignore')
 
           if File.file? pmtignore
-            @ignored_files = PathSpec.new File.read(pmtignore)
+            @ignored_files = PathSpec.new Puppet::FileSystem.read(pmtignore, :encoding => 'utf-8')
           elsif File.file? gitignore
-            @ignored_files = PathSpec.new File.read(gitignore)
+            @ignored_files = PathSpec.new Puppet::FileSystem.read(gitignore, :encoding => 'utf-8')
           else
             @ignored_files = PathSpec.new
           end

@@ -6,11 +6,15 @@
   - :name: "one path"
     :backend: yaml
     :path: "single"
-  - :name: "two paths"
+  - :name: "utf8"
+    :backend: yaml
+    :path: "utf8"
+  - :name: "three paths"
     :backend: json
     :paths:
       - "first"
       - "second"
+      - "third_utf8"
   - :name:  'other datadir'
     :backend: yaml
     :datadir: "data2"

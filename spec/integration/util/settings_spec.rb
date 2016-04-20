@@ -44,6 +44,32 @@ describe Puppet::Settings do
     expect(Puppet::FileSystem.stat(settings[:maindir]).mode & 007777).to eq(0750)
   end
 
+  it "will properly parse a UTF-8 configuration file" do
+    rune_utf8 = "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
+    config = tmpfile("config")
+    define_settings(:main,
+      :config => {
+        :type => :file,
+        :default => config,
+        :desc => "a"
+      },
+      :environment => {
+        :default => 'dingos',
+        :desc => 'test',
+      }
+    )
+
+    File.open(config, 'w') do |file|
+      file.puts <<-EOF
+[main]
+environment=#{rune_utf8}
+      EOF
+    end
+
+    settings.initialize_global_settings
+    expect(settings[:environment]).to eq(rune_utf8)
+  end
+
   it "reparses configuration if configuration file is touched", :if => !Puppet.features.microsoft_windows? do
     config = tmpfile("config")
     define_settings(:main,

@@ -58,7 +58,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     msgpack = nil
 
     begin
-      msgpack = File.read(file)
+      msgpack = Puppet::FileSystem.read(file, :encoding => 'utf-8')
     rescue Errno::ENOENT
       return nil
     rescue => detail
