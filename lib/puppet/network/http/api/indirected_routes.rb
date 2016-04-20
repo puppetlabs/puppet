@@ -88,7 +88,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       params[:environment] = configured_environment
     end
 
-    check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
+    begin
+      check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
+    rescue Puppet::Network::AuthorizationError => e
+      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError.new(e.message)
+    end
 
     if configured_environment.nil?
       raise ArgumentError, "Could not find environment '#{environment}'"

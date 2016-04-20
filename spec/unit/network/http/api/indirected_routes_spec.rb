@@ -210,14 +210,16 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   end
 
   describe "when processing a request" do
-    it "should perform an authorization check" do
+    it "should raise not_authorized_error when authorization fails" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_heads(data)
 
-      handler.expects(:check_authorization)
+      handler.expects(:check_authorization).raises(Puppet::Network::AuthorizationError.new("forbidden"))
 
-      handler.call(request, response)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_authorized_error)
     end
 
     it "should raise not_found_error if the indirection does not support remote requests" do
