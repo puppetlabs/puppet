@@ -118,7 +118,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
       end
 
       it "should return the all the serial numbers from the lines matching the provided name" do
-        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n", "0x002 blah blah /CN=me\n"]
+        File.expects(:readlines).with(cert_inventory, :encoding => 'utf-8').returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n", "0x002 blah blah /CN=me\n"]
 
         expect(@inventory.serials("me")).to eq([15, 2])
       end

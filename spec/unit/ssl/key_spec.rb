@@ -63,7 +63,7 @@ describe Puppet::SSL::Key do
 
     it "should be able to read keys from disk" do
       path = "/my/path"
-      File.expects(:read).with(path).returns("my key")
+      Puppet::FileSystem.expects(:read).with(path, {:encoding => 'utf-8'}).returns("my key")
       key = mock 'key'
       OpenSSL::PKey::RSA.expects(:new).returns(key)
       expect(@key.read(path)).to equal(key)
@@ -76,9 +76,9 @@ describe Puppet::SSL::Key do
 
       path = "/my/path"
 
-      File.stubs(:read).with(path).returns("my key")
+      Puppet::FileSystem.stubs(:read).with(path, {:encoding => 'utf-8'}).returns("my key")
       OpenSSL::PKey::RSA.expects(:new).with("my key", nil).returns(mock('key'))
-      File.expects(:read).with("/path/to/password").never
+      Puppet::FileSystem.expects(:read).with("/path/to/password", {:encoding => 'utf-8'}).never
 
       @key.read(path)
     end
@@ -88,8 +88,8 @@ describe Puppet::SSL::Key do
       @key.password_file = "/path/to/password"
 
       path = "/my/path"
-      File.expects(:read).with(path).returns("my key")
-      File.expects(:read).with("/path/to/password").returns("my password")
+      Puppet::FileSystem.expects(:read).with(path, {:encoding => 'utf-8'}).returns("my key")
+      Puppet::FileSystem.expects(:read).with("/path/to/password", {:encoding => 'utf-8'}).returns("my password")
 
       key = mock 'key'
       OpenSSL::PKey::RSA.expects(:new).with("my key", "my password").returns(key)
@@ -155,7 +155,7 @@ describe Puppet::SSL::Key do
     describe "with a password file set" do
       it "should return a nil password if the password file does not exist" do
         Puppet::FileSystem.expects(:exist?).with("/path/to/pass").returns false
-        File.expects(:read).with("/path/to/pass").never
+        Puppet::FileSystem.expects(:read).with("/path/to/pass", {:encoding => 'utf-8'}).never
 
         @instance.password_file = "/path/to/pass"
 
@@ -164,7 +164,7 @@ describe Puppet::SSL::Key do
 
       it "should return the contents of the password file as its password" do
         Puppet::FileSystem.expects(:exist?).with("/path/to/pass").returns true
-        File.expects(:read).with("/path/to/pass").returns "my password"
+        Puppet::FileSystem.expects(:read).with("/path/to/pass", {:encoding => 'utf-8'}).returns "my password"
 
         @instance.password_file = "/path/to/pass"
 

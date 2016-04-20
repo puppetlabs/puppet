@@ -38,15 +38,15 @@ DOC
   def password
     return nil unless password_file and Puppet::FileSystem.exist?(password_file)
 
-    ::File.read(password_file)
+    Puppet::FileSystem.read(password_file, :encoding => 'utf-8')
   end
 
   # Optionally support specifying a password file.
   def read(path)
     return super unless password_file
 
-    #@content = wrapped_class.new(::File.read(path), password)
-    @content = wrapped_class.new(::File.read(path), password)
+    #@content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => 'utf-8'), password)
+    @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => 'utf-8'), password)
   end
 
   def to_s

@@ -60,7 +60,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should be able to read requests from disk" do
       path = "/my/path"
-      File.expects(:read).with(path).returns("my request")
+      Puppet::FileSystem.expects(:read).with(path, {:encoding => 'utf-8'}).returns("my request")
       my_req = mock 'request'
       OpenSSL::X509::Request.expects(:new).with("my request").returns(my_req)
       expect(request.read(path)).to equal(my_req)
