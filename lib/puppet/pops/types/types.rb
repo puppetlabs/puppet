@@ -12,8 +12,6 @@ require_relative 'type_parser'
 require_relative 'class_loader'
 require_relative 'type_mismatch_describer'
 
-require 'rgen/metamodel_builder'
-
 module Puppet::Pops
 module Types
 
