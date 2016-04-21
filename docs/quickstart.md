@@ -49,7 +49,7 @@ To run puppet itself (for a resource lookup say):
 
 ## Running Spec Tests
 
-Puppet Labs projects use a common convention of using Rake to run unit tests.
+Puppet projects use a common convention of using Rake to run unit tests.
 The tests can be run with the following rake task:
 
     bundle exec rake spec
