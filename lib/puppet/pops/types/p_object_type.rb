@@ -496,7 +496,7 @@ class PObjectType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable(TypeCalculator.infer(o), guard)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   def iterable?(guard = nil)
