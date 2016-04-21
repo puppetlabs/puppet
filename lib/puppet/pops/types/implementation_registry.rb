@@ -22,8 +22,8 @@ module Types
       @type_name_substitutions = []
       @impl_name_substitutions = []
 
-      register_implementation('PCore::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', static_loader)
-      register_implementation_namespace('PCore::AST', 'Puppet::Pops::Model', static_loader)
+      register_implementation('Pcore::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', static_loader)
+      register_implementation_namespace('Pcore::AST', 'Puppet::Pops::Model', static_loader)
 
       # Register all known type implementations. The Type and Class does not follow the standard naming convention
       register_implementation('Type', 'Puppet::Pops::Types::PType', static_loader)
