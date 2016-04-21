@@ -45,6 +45,8 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
       @named_values[typed_name]
     elsif parent
       parent.loaded_entry(typed_name, check_dependencies)
+    else
+      nil
     end
   end
 
