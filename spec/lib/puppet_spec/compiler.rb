@@ -60,7 +60,14 @@ module PuppetSpec::Compiler
 
   def eval_and_collect_notices(code, node = Puppet::Node.new('foonode'))
     collect_notices(code, node) do |compiler|
-      compiler.compile
+      if block_given?
+        compiler.compile do |catalog|
+          yield(compiler.topscope, catalog)
+          catalog
+        end
+      else
+        compiler.compile
+      end
     end
   end
 end

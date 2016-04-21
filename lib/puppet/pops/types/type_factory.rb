@@ -464,11 +464,10 @@ module TypeFactory
 
   # Returns the type that represents a type reference with a given name and optional
   # parameters.
-  # @param name [String] the name of the type
-  # @param parameters [Array] the parameters
+  # @param type_string [String] the string form of the type
   # @return [PTypeReferenceType] the type reference
-  def self.type_reference(name, parameters = nil)
-    PTypeReferenceType.new(name, parameters)
+  def self.type_reference(type_string = nil)
+    type_string == nil ? PTypeReferenceType::DEFAULT : PTypeReferenceType.new(type_string)
   end
 
   # Returns true if the given type t is of valid range parameter type (integer

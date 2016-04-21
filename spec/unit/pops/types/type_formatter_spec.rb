@@ -270,12 +270,12 @@ describe 'The type formatter' do
 
     it "should yield the name of an unparameterized type reference" do
       t = f.type_reference('What')
-      expect(s.string(t)).to eq('What')
+      expect(s.string(t)).to eq("TypeReference['What']")
     end
 
     it "should yield the name and arguments of an parameterized type reference" do
-      t = f.type_reference('What', [f.undef, f.string])
-      expect(s.string(t)).to eq('What[Undef, String]')
+      t = f.type_reference('What[Undef, String]')
+      expect(s.string(t)).to eq("TypeReference['What[Undef, String]']")
     end
 
     it "should yield the name of a type alias" do
@@ -292,11 +292,12 @@ describe 'The type formatter' do
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType]).each do |t|
+      (all_types - [PType, PHostClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
       expect(PType::DEFAULT.simple_name).to eql('Type')
+      expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
     end
   end
 end

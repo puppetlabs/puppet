@@ -894,7 +894,7 @@ module Types
 
       def visit(type, guard)
         if @unresolved.nil? && type.is_a?(PTypeReferenceType)
-          @unresolved = type
+          @unresolved = type.type_string
         end
       end
     end

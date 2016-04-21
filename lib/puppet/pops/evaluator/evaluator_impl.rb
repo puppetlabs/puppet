@@ -279,7 +279,7 @@ class EvaluatorImpl
   #
   def eval_QualifiedReference(o, scope)
     type = @@type_parser.interpret(o, scope)
-    fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.to_s }) if type.is_a?(Types::PTypeReferenceType)
+    fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.type_string }) if type.is_a?(Types::PTypeReferenceType)
     type
   end
 
@@ -703,7 +703,7 @@ class EvaluatorImpl
         evaluated_name.type_name # assume validated
 
       when Types::PTypeReferenceType
-        fail(Issues::UNKNOWN_RESOURCE_TYPE, o.type_name, {:type_name => evaluated_name.to_s})
+        fail(Issues::UNKNOWN_RESOURCE_TYPE, o.type_string, {:type_name => evaluated_name.to_s})
 
       else
         actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
