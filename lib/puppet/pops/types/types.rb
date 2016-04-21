@@ -2465,6 +2465,8 @@ end
 class PHostClassType < PCatalogEntryType
   attr_reader :class_name
 
+  NAME = 'Class'.freeze
+
   def initialize(class_name)
     @class_name = class_name
   end
@@ -2474,6 +2476,10 @@ class PHostClassType < PCatalogEntryType
   end
   def eql?(o)
     self.class == o.class && @class_name == o.class_name
+  end
+
+  def simple_name
+    NAME
   end
 
   DEFAULT = PHostClassType.new(nil)

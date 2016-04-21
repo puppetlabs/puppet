@@ -292,11 +292,12 @@ describe 'The type formatter' do
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType]).each do |t|
+      (all_types - [PType, PHostClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
       expect(PType::DEFAULT.simple_name).to eql('Type')
+      expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
     end
   end
 end
