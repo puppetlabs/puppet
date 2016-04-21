@@ -7,6 +7,11 @@ extend Puppet::Acceptance::EnvironmentUtils
 
   tmp_file = {}
   agents.each do |agent|
+    if agent.platform =~ /^(eos-4-i386|cumulus-2\.5|osx|sles-10|)/
+      # skip_test doesn't work in with_puppet_running_on blocks (tableflip)
+      #   so we can't easily use expect_failure here
+      skip_test 'PUP-6217'
+    end
     tmp_file[agent.hostname] = agent.tmpfile(tmp_environment)
   end
 
