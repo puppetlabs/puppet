@@ -2575,11 +2575,10 @@ class POptionalType < PTypeWithContainedType
 end
 
 class PTypeReferenceType < PAnyType
-  attr_reader :name, :parameters
+  attr_reader :type_string
 
-  def initialize(name, parameters = nil)
-    @name = name
-    @parameters = parameters.nil? ? EMPTY_ARRAY : parameters
+  def initialize(type_string)
+    @type_string = type_string
   end
 
   def callable?(args)
@@ -2591,11 +2590,15 @@ class PTypeReferenceType < PAnyType
   end
 
   def hash
-    @name.hash ^ @parameters.hash
+    @type_string.hash
   end
 
   def eql?(o)
-    super && o.name == @name && o.parameters == @parameters
+    super && o.type_string == @type_string
+  end
+
+  def resolve(type_parser, loader)
+    type_parser.parse(@type_string, loader)
   end
 
   protected
@@ -2748,8 +2751,9 @@ class PTypeAliasType < PAnyType
         raise
       end
     else
-      # An alias may appoint an Object type that isn't resolved yet.
-      @resolved_type.resolve(type_parser, loader)
+      # An alias may appoint an Object type that isn't resolved yet. The default type
+      # reference is used to prevent endless recursion and should not be resolved here.
+      @resolved_type.resolve(type_parser, loader) unless @resolved_type.equal?(PTypeReferenceType::DEFAULT)
     end
     self
   end

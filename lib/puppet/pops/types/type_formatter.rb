@@ -320,11 +320,7 @@ class TypeFormatter
 
   # @api private
   def string_PTypeReferenceType(t)
-    if t.parameters.empty?
-      t.name
-    else
-      append_array(t.name, t.parameters.map {|p| string(p) })
-    end
+    append_array('TypeReference', [string(t.type_string)])
   end
 
   # @api private

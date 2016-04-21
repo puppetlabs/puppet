@@ -47,8 +47,8 @@ describe 'The type calculator' do
     TypeFactory.type_alias(name, type_expr)
   end
 
-  def type_reference_t(name, *args)
-    TypeFactory.type_reference(name, args)
+  def type_reference_t(type_string)
+    TypeFactory.type_reference(type_string)
   end
 
   def integer_t

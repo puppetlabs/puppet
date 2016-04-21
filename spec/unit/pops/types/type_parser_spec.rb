@@ -167,6 +167,11 @@ describe TypeParser do
       loader.expects(:load).with(:type, 'file').returns nil
       expect(parser.parse("Resource[File, '/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
+
+    it "parses a resource type with title using 'Resource[Type[title]]'" do
+      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(parser.parse("Resource[Nonesuch['fife']]", scope)).to be_the_type(types.resource('nonesuch', 'fife'))
+    end
   end
 
   context 'with loader context' do
@@ -207,7 +212,7 @@ describe TypeParser do
     end
 
     it "interprets anything that is not a built in type with parameterers to be type reference with parameters" do
-      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference('File', ['/tmp/foo']))
+      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference("File['/tmp/foo']"))
     end
   end
 
@@ -275,7 +280,7 @@ describe TypeParser do
   it 'parses all known literals' do
     t = parser.parse('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
     expect(t).to be_a(PTypeReferenceType)
-    expect(t.parameters).to eql([{'a' =>nil,'b'=>true,'c'=>false,'d'=>:default,'e'=>'string','f'=>0,'g'=>1.0,'h'=>[1,2,3]}])
+    expect(t.type_string).to eql('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
   end
 
   matcher :be_the_type do |type|

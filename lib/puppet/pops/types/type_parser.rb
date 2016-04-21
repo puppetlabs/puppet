@@ -46,7 +46,6 @@ class TypeParser
   # @api private
   def interpret(ast, context)
     result = @type_transformer.visit_this_1(self, ast, context)
-    result = result.body if result.is_a?(Model::Program)
     raise_invalid_type_specification_error unless result.is_a?(PAnyType)
     result
   end
@@ -63,7 +62,7 @@ class TypeParser
 
   # @api private
   def interpret_Program(o, context)
-    interpret(o.body, context)
+    interpret_any(o.body, context)
   end
 
   def interpret_LambdaExpression(o, context)
@@ -281,16 +280,18 @@ class TypeParser
     when 'resource'
       type = parameters[0]
       if type.is_a?(PTypeReferenceType)
-        tps = type.parameters
-        if tps.empty?
-          create_resource(type.name, parameters)
+        type_str = type.type_string
+        param_start = type_str.index('[')
+        if param_start.nil?
+          type = type_str
         else
-          raise_invalid_parameters_error(type.name, '1', tps.size) unless tps.size == 1
-          create_resource(type.name, tps)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
+          type = type_str[0..param_start-1]
+          parameters = [type] + tps
         end
-      else
-        create_resource(type, parameters)
       end
+      create_resource(type, parameters)
 
     when 'regexp'
       # 1 parameter being a string, or regular expression
@@ -454,7 +455,7 @@ class TypeParser
       end
 
       if type.nil?
-        TypeFactory.type_reference(qref.cased_value, parameters)
+        TypeFactory.type_reference(original_text_of(qref.eContainer))
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(type_name, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
