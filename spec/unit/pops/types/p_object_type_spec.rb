@@ -544,6 +544,12 @@ describe 'The Object Type' do
       expect(d).not_to be_assignable(p)
     end
 
+    it 'ruby access operator can retrieve parent member' do
+      p = parse_object('MyObject', parent)
+      d = parse_object('MyDerivedObject', derived)
+      expect(d['b'].container).to equal(p)
+    end
+
     context 'that in turn inherits another Object type' do
       let(:derived2) { <<-OBJECT }
         parent => MyDerivedObject,
