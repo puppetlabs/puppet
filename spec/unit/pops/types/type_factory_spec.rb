@@ -73,6 +73,10 @@ describe 'The type factory' do
       expect(TypeFactory.undef().class()).to eq(PUndefType)
     end
 
+    it 'undef() returns PUndefType' do
+      expect(TypeFactory.type_alias().class()).to eq(PTypeAliasType)
+    end
+
     it 'default() returns PDefaultType' do
       expect(TypeFactory.default().class()).to eq(PDefaultType)
     end
