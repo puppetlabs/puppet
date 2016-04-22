@@ -581,6 +581,15 @@ class PObjectType < PAnyType
     @name || '<anonymous object type>'
   end
 
+  # @api private
+  def resolved_parent
+    parent = @parent
+    while parent.is_a?(PTypeAliasType)
+      parent = parent.resolved_type
+    end
+    parent
+  end
+
   protected
 
   # An Object type is only assignable from another Object type. The other type
@@ -658,14 +667,6 @@ class PObjectType < PAnyType
     else
       yield(guard)
     end
-  end
-
-  def resolved_parent
-    parent = @parent
-    while parent.is_a?(PTypeAliasType)
-      parent = parent.resolved_type
-    end
-    parent
   end
 end
 end
