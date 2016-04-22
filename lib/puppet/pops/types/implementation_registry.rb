@@ -21,6 +21,7 @@ module Types
       @implementations_per_type_name = {}
       @type_name_substitutions = []
       @impl_name_substitutions = []
+      @type_parser = Types::TypeParser.new
 
       register_implementation('Pcore::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', static_loader)
       register_implementation_namespace('Pcore::AST', 'Puppet::Pops::Model', static_loader)
@@ -74,7 +75,7 @@ module Types
     # @param impl_name_subst [Array(Regexp,String)] regexp and replacement mapping runtime names to type names
     # @param loader [Loader::Loader] the loader to use when resolving names
     def register_implementation_regexp(type_name_subst, impl_name_subst, loader)
-      @type_name_substitutions << type_name_subst
+      @type_name_substitutions << [type_name_subst, loader]
       @impl_name_substitutions << [impl_name_subst, loader]
       nil
     end
@@ -88,7 +89,7 @@ module Types
       type = type.name if type.is_a?(PAnyType)
       impl_module = impl_module.name if impl_module.is_a?(Module)
       @type_names_per_implementation[impl_module] = [type, loader]
-      @implementations_per_type_name[type] = impl_module
+      @implementations_per_type_name[type] = [impl_module, loader]
       nil
     end
 
@@ -106,8 +107,9 @@ module Types
     # @param type [PAnyType,String] the name of the type
     # @return [Module,nil] the name of the implementation module, or `nil` if no mapping was found
     def module_for_type(type)
-      name = module_name_for_type(type)
-      name.nil? ? nil : ClassLoader.provide(name)
+      name_and_loader = module_name_for_type(type)
+      # TODO Shouldn't ClassLoader be module specific?
+      name_and_loader.nil? ? nil : ClassLoader.provide(name_and_loader[0])
     end
 
     # Find the type name and loader that corresponds to the given runtime module or module name
@@ -120,12 +122,18 @@ module Types
     end
 
     # Find the name for, and then load, the type  that corresponds to the given runtime module or module name
+    # The method will return `nil` if no mapping is found, a TypeReference if a mapping was found but the
+    # loader didn't find the type, or the loaded type.
     #
     # @param impl_module [Module,String] the implementation class or class name
     # @return [PAnyType,nil] the type, or `nil` if no mapping was found
     def type_for_module(impl_module)
       name_and_loader = type_name_for_module(impl_module)
-      name_and_loader.nil? ? nil : name_and_loader[1].load(:type, name_and_loader[0].downcase)
+      if name_and_loader.nil?
+        nil
+      else
+        @type_parser.parse(*name_and_loader)
+      end
     end
 
     def find_mapping(name, names, substitutions)
