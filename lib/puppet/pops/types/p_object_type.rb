@@ -443,7 +443,12 @@ class PObjectType < PAnyType
   end
 
   def [](name)
-    @attributes[name] || @functions[name] || super
+    member = @attributes[name] || @functions[name]
+    if member.nil?
+      rp = resolved_parent
+      member = rp[name] if rp.is_a?(PObjectType)
+    end
+    member
   end
 
   def accept(visitor, guard)
