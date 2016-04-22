@@ -238,7 +238,6 @@ module Puppet::Test
       #
       # I would make these even shorter, but OpenSSL doesn't support anything
       # below 512 bits.  Sad, really, because a 0 bit key would be just fine.
-      Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
 
       # Although we setup a testing context during initialization, some tests
