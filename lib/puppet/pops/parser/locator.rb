@@ -1,6 +1,8 @@
+module Puppet::Pops
+module Parser
 # Helper class that keeps track of where line breaks are located and can answer questions about positions.
 #
-class Puppet::Pops::Parser::Locator
+class Locator
   # Creates, or recreates a Locator. A Locator is created if index is not given (a scan is then
   # performed of the given source string.
   #
@@ -73,14 +75,14 @@ class Puppet::Pops::Parser::Locator
   #
   # Note that leading_offset must be the same for all lines and measured in characters.
   #
-  class SubLocator < Puppet::Pops::Parser::Locator
+  class SubLocator < Locator
     attr_reader :locator
     attr_reader :leading_line_count
     attr_reader :leading_offset
     attr_reader :leading_line_offset
 
     def self.sub_locator(string, file, leading_line_count, leading_offset, leading_line_offset)
-      self.new(Puppet::Pops::Parser::Locator.locator(string, file),
+      self.new(Locator.locator(string, file),
         leading_line_count,
         leading_offset,
         leading_line_offset)
@@ -130,7 +132,7 @@ class Puppet::Pops::Parser::Locator
 
   private
 
-  class AbstractLocator < Puppet::Pops::Parser::Locator
+  class AbstractLocator < Locator
     attr_accessor :line_index
     attr_accessor :string
     attr_accessor :prev_offset
@@ -285,4 +287,6 @@ class Puppet::Pops::Parser::Locator
       string.byteslice(offset, length)
     end
   end
+end
+end
 end
