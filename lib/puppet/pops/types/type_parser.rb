@@ -165,6 +165,8 @@ class TypeParser
         'tuple'        => TypeFactory.tuple,
         'struct'       => TypeFactory.struct,
         'object'       => TypeFactory.object,
+        'typealias'    => TypeFactory.type_alias,
+        'typereference' => TypeFactory.type_reference,
       # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables
     }
