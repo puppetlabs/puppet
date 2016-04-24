@@ -28,12 +28,13 @@ describe provider_class, :if => Puppet.features.posix? do
     end
 
     it "should get a list of services (excluding legacy)" do
-      provider_class.expects(:svcs).with('-H').returns File.read(my_fixture('svcs.out'))
+      provider_class.expects(:svcs).with('-H', '-o', 'state,fmri').returns File.read(my_fixture('svcs.out'))
       instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       # we dont manage legacy
-      expect(instances.size).to eq(2)
+      expect(instances.size).to eq(3)
       expect(instances[0]).to eq({:name => 'svc:/system/svc/restarter:default', :ensure => :running })
       expect(instances[1]).to eq({:name => 'svc:/network/cswrsyncd:default', :ensure => :maintenance })
+      expect(instances[2]).to eq({:name => 'svc:/network/dns/client:default', :ensure => :degraded })
     end
   end
 
@@ -86,6 +87,10 @@ describe provider_class, :if => Puppet.features.posix? do
       @provider.stubs(:svcs).returns("maintenance\t-")
       expect(@provider.status).to eq(:maintenance)
     end
+    it "should return degraded if in degraded in svcs output" do
+      @provider.stubs(:svcs).returns("degraded\t-")
+      expect(@provider.status).to eq(:degraded)
+    end
     it "should return target state if transitioning in svcs output" do
       @provider.stubs(:svcs).returns("online\tdisabled")
       expect(@provider.status).to eq(:stopped)
@@ -113,6 +118,13 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should execute external command 'svcadm clear /system/myservice' if in maintenance" do
       @provider.stubs(:status).returns :maintenance
+      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :clear, "/system/myservice"], true)
+      @provider.expects(:wait).with('online')
+      @provider.start
+    end
+
+    it "should execute external command 'svcadm clear /system/myservice' if in degraded" do
+      @provider.stubs(:status).returns :degraded
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :clear, "/system/myservice"], true)
       @provider.expects(:wait).with('online')
       @provider.start

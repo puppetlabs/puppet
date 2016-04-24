@@ -99,7 +99,7 @@ module TypeFactory
   # @api public
   #
   def self.variant(*types)
-    PVariantType.new(types.map {|v| type_of(v) })
+    PVariantType.maybe_create(types.map {|v| type_of(v) })
   end
 
   # Produces the Struct type, either a non parameterized instance representing
@@ -110,7 +110,7 @@ module TypeFactory
   # The value can be a ruby class, a String (interpreted as the name of a ruby class) or
   # a Type.
   #
-  # @param hash [Hash<Object, Object>] key => value hash
+  # @param hash [{String,PAnyType=>PAnyType}] key => value hash
   # @return [PStructType] the created Struct type
   #
   def self.struct(hash = {})
@@ -146,6 +146,15 @@ module TypeFactory
       PStructElement.new(key_type, value_type)
     end
     PStructType.new(elements)
+  end
+
+  # Produces an `Object` type from the given _hash_ that represents the features of the object
+  #
+  # @param hash [{String=>Object}] the hash of feature groups
+  # @return [PObjectType] the created type
+  #
+  def self.object(hash = nil)
+    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
   end
 
   def self.tuple(types = [], size_type = nil)
@@ -301,15 +310,19 @@ module TypeFactory
   # name.  (There is no resource-type subtyping in Puppet (yet)).
   #
   def self.resource(type_name = nil, title = nil)
-    type_name = type_name.type_name if type_name.is_a?(PResourceType)
-    type_name = type_name.downcase unless type_name.nil?
-    unless type_name.nil? || type_name =~ Patterns::CLASSREF
-      raise ArgumentError, "Illegal type name '#{type.type_name}'"
+    case type_name
+    when PResourceType
+      PResourceType.new(type_name.type_name, title)
+    when String
+      type_name = TypeFormatter.singleton.capitalize_segments(type_name)
+      raise ArgumentError, "Illegal type name '#{type_name}'" unless type_name =~ Patterns::CLASSREF_EXT
+      PResourceType.new(type_name, title)
+    when nil
+      raise ArgumentError, 'The type name cannot be nil, if title is given' unless title.nil?
+      PResourceType::DEFAULT
+    else
+      raise ArgumentError, "The type name cannot be a #{type_name.class.name}"
     end
-    if type_name.nil? && !title.nil?
-      raise ArgumentError, 'The type name cannot be nil, if title is given'
-    end
-    PResourceType.new(type_name, title)
   end
 
   # Produces PHostClassType with a string class_name.  A PHostClassType with
@@ -339,6 +352,17 @@ module TypeFactory
   #
   def self.hash_of(value, key = scalar, size_type = nil)
     PHashType.new(type_of(key), type_of(value), size_type)
+  end
+
+  # Produces a type for Hash[key,value,size]
+  # @param key_type [PAnyType] the key type
+  # @param value_type [PAnyType] the value type
+  # @param size_type [PIntegerType]
+  # @return [PHashType] the created hash type
+  # @api public
+  #
+  def self.hash_kv(key_type, value_type, size_type = nil)
+    PHashType.new(key_type, value_type, size_type)
   end
 
   # Produces a type for Array[Data]
@@ -434,17 +458,16 @@ module TypeFactory
   # @param name [String] the name of the unresolved type
   # @param expression [Model::Expression] an expression that will evaluate to a type
   # @return [PTypeAliasType] the type alias
-  def self.type_alias(name, expression)
-    PTypeAliasType.new(name, expression)
+  def self.type_alias(name = nil, expression = nil)
+    name.nil? ? PTypeAliasType::DEFAULT : PTypeAliasType.new(name, expression)
   end
 
   # Returns the type that represents a type reference with a given name and optional
   # parameters.
-  # @param name [String] the name of the type
-  # @param parameters [Array] the parameters
+  # @param type_string [String] the string form of the type
   # @return [PTypeReferenceType] the type reference
-  def self.type_reference(name, parameters = nil)
-    PTypeReferenceType.new(name, parameters)
+  def self.type_reference(type_string = nil)
+    type_string == nil ? PTypeReferenceType::DEFAULT : PTypeReferenceType.new(type_string)
   end
 
   # Returns true if the given type t is of valid range parameter type (integer

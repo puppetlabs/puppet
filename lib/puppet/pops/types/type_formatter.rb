@@ -35,11 +35,11 @@ class TypeFormatter
   # @api public
   #
   def alias_expanded_string(t)
-    @expand_aliases = true
+    @expanded = true
     begin
       string(t)
     ensure
-      @expand_aliases = false
+      @expanded = false
     end
   end
 
@@ -54,20 +54,6 @@ class TypeFormatter
       @debug = false
     end
   end
-
-  # @api private
-  def string_Module(t)
-    string(TypeCalculator.singleton.type(t))
-  end
-
-  # @api private
-  def string_NilClass(t)     ; '?'       ; end
-
-  # @api private
-  def string_String(t)       ; t.inspect ; end
-
-  # @api private
-  def string_Symbol(t)       ; t.to_s    ; end
 
   # @api private
   def string_PAnyType(t)     ; 'Any'     ; end
@@ -203,17 +189,29 @@ class TypeFormatter
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime', [string(t.runtime), string(t.runtime_type_name)])
+    append_array('Runtime', [string(t.runtime), string(t.name_or_pattern)])
+  end
+
+  def is_empty_range?(from, to)
+    from == 0 && to == 0
   end
 
   # @api private
   def string_PArrayType(t)
-    append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
+    if t.has_empty_range?
+      append_array('Array', ['0', '0'])
+    else
+      append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
+    end
   end
 
   # @api private
   def string_PHashType(t)
-    append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
+    if t.has_empty_range?
+      append_array('Hash', ['0', '0'])
+    else
+      append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
+    end
   end
 
   # @api private
@@ -251,6 +249,51 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PAnnotatedMember(m)
+    hash = m.i12n_hash
+    if hash.size == 1
+      string(m.type)
+    else
+      string(hash)
+    end
+  end
+
+  # @api private
+  def string_PObjectType(t)
+    if @expanded
+      begin
+        @expanded = false
+        stringified = Hash[t.i12n_hash.map do |k,v|
+          case k
+          when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+            v = append_hash('', Hash[v.map do |fk, fv|
+              if fv.is_a?(Hash)
+                fv = append_hash('', Hash[fv.map  do |fak,fav|
+                    fav = string(fav) unless fak == PObjectType::KEY_KIND
+                    [fak, fav]
+                  end])
+              else
+                fv = string(fv)
+              end
+              [string(fk), fv]
+            end])
+          when PObjectType::KEY_EQUALITY
+            v = append_array('', v) if v.is_a?(Array)
+          else
+            v = string(v)
+          end
+          [k, v]
+        end]
+        append_array('Object', [append_hash('', stringified)])
+      ensure
+        @expanded = true
+      end
+    else
+      t.label
+    end
+  end
+
+  # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
     if optional_type.nil?
@@ -267,7 +310,7 @@ class TypeFormatter
 
   # @api private
   def string_PTypeAliasType(t)
-    expand = @expand_aliases
+    expand = @expanded
     if expand && t.self_recursion?
       @guard ||= RecursionGuard.new
       expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
@@ -277,21 +320,80 @@ class TypeFormatter
 
   # @api private
   def string_PTypeReferenceType(t)
-    if t.parameters.empty?
-      t.name
-    else
-      append_array(t.name.clone, t.parameters.map {|p| string(p) })
-    end
+    append_array('TypeReference', [string(t.type_string)])
   end
+
+  # @api private
+  def string_Array(t)
+    t.empty? ? '[]' : append_array('', t.map { |e| string(e) })
+  end
+
+  # @api private
+  def string_FalseClass(t)   ; 'false'       ; end
+
+  # @api private
+  def string_Hash(t)
+    append_hash('', Hash[t.map {|k,v| [string(k), string(v)]}])
+  end
+
+  # @api private
+  def string_Module(t)
+    string(TypeCalculator.singleton.type(t))
+  end
+
+  # @api private
+  def string_NilClass(t)     ; '?'       ; end
+
+  # @api private
+  def string_Numeric(t)      ; t.to_s    ; end
+
+  # @api private
+  def string_Regexp(t)       ; "/#{t.source}/"; end
+
+  # @api private
+  def string_String(t)
+    # Use single qoute on strings that does not contain single quotes, control characters, or backslashes.
+    # TODO: This should move to StringConverter when this formatter is changed to take advantage of it
+    t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect
+  end
+
+  # @api private
+  def string_Symbol(t)       ; t.to_s    ; end
+
+  # @api private
+  def string_TrueClass(t)    ; 'true'       ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s
     '[a TypeFormatter]'
   end
 
-  private
-
   NAME_SEGMENT_SEPARATOR = '::'.freeze
+  STARTS_WITH_ASCII_CAPITAL = /^[A-Z]/
+
+  # Capitalizes each segment in a name separated with the {NAME_SEPARATOR} conditionally. The name
+  # will not be subject to capitalization if it already starts with a capital letter. This to avoid
+  # that existing camel casing is lost.
+  #
+  # @param qualified_name [String] the name to capitalize
+  # @return [String] the capitalized name
+  #
+  # @api private
+  def capitalize_segments(qualified_name)
+    if !qualified_name.is_a?(String) || qualified_name =~ STARTS_WITH_ASCII_CAPITAL
+      qualified_name
+    else
+      segments = qualified_name.split(NAME_SEGMENT_SEPARATOR)
+      if segments.size == 1
+        qualified_name.capitalize
+      else
+        segments.each(&:capitalize!)
+        segments.join(NAME_SEGMENT_SEPARATOR)
+      end
+    end
+  end
+
+  private
 
   COMMA_SEP = ', '.freeze
 
@@ -301,30 +403,29 @@ class TypeFormatter
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
   end
 
-  def append_array(bld, array)
+  def append_array(start, array)
     case array.size
     when 0
+      start
     when 1
-      bld << '[' << array[0] << ']'
+      "#{start}[#{array[0]}]"
     else
-      bld << '['
+      bld = ''
+      bld << start << '['
       array.each { |elem| bld << elem << COMMA_SEP }
       bld.chomp!(COMMA_SEP)
       bld << ']'
+      bld
     end
-    bld
   end
 
-  def append_hash(bld, hash_entries)
-    bld << '{'
+  def append_hash(start, hash_entries)
+    bld = ''
+    bld << start << '{'
     hash_entries.each { |k, v| bld << k  << HASH_ENTRY_OP << v << COMMA_SEP }
     bld.chomp!(COMMA_SEP)
     bld << '}'
     bld
-  end
-
-  def capitalize_segments(s)
-    s.split(NAME_SEGMENT_SEPARATOR).map(&:capitalize).join(NAME_SEGMENT_SEPARATOR)
   end
 
   @singleton = new

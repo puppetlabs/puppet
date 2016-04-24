@@ -1,34 +1,33 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
-require_relative 'pops/parser/parser_rspec_helper'
 require 'puppet/parser/environment_compiler'
 
 describe "Application instantiation" do
   include PuppetSpec::Compiler
-  # We pull this in because we need access to with_app_management; and
-  # since that has to root around in the guts of the Pops parser, there's
-  # no really elegant way to do this
-  include ParserRspecHelper
+
+  let(:env) { Puppet::Node::Environment.create(:testing, []) }
+  let(:node) { Puppet::Node.new('test', :environment => env) }
+  let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
   def compile_to_env_catalog(string, code_id=nil)
     Puppet[:code] = string
-    env = Puppet::Node::Environment.create("test", ["/dev/null"])
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
-
-  before :each do
-    with_app_management(true)
-    Puppet::Type.newtype :cap, :is_capability => true do
-      newparam :name
-      newparam :host
+  around :each do |example|
+    Puppet[:app_management] = true
+    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+    Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
+    Puppet.override(:loaders => loaders, :current_environment => env) do
+      Puppet::Type.newtype :cap, :is_capability => true do
+        newparam :name
+        newparam :host
+      end
+      example.run
+      Puppet::Type.rmtype(:cap)
     end
-  end
-
-  after :each do
-    Puppet::Type.rmtype(:cap)
-    with_app_management(false)
+    Puppet[:app_management] = false
   end
 
   MANIFEST = <<-EOS
@@ -318,29 +317,29 @@ MANIFEST_WITH_CLASS = <<-EOS
 EOS
 
 
-  describe "a node catalog" do
+  context 'a node catalog' do
     it "is unaffected for a non-participating node" do
-      catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other'))
+      catalog = compile_to_catalog(MANIFEST, Puppet::Node.new('other', :environment => env))
       types = catalog.resource_keys.map { |type, _| type }.uniq.sort
       expect(types).to eq(["Class", "Stage"])
     end
 
     it "an application instance must be contained in a site" do
-      expect { compile_to_catalog(FAULTY_MANIFEST, Puppet::Node.new('first'))
+      expect { compile_to_catalog(FAULTY_MANIFEST, Puppet::Node.new('first', :environment => env))
       }.to raise_error(/Application instances .* can only be contained within a Site/)
     end
 
     it "does not raise an error when node mappings are not provided" do
-      expect { compile_to_catalog(MANIFEST_WO_NODE) }.to_not raise_error
+      expect { compile_to_catalog(MANIFEST_WO_NODE, node) }.to_not raise_error
     end
 
     it "raises an error if node mapping is a string" do
-      expect { compile_to_catalog(MANIFEST_WITH_STRING_NODES)
+      expect { compile_to_catalog(MANIFEST_WITH_STRING_NODES, node)
       }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
     end
 
     it "raises an error if node mapping is false" do
-      expect { compile_to_catalog(MANIFEST_WITH_FALSE_NODES)
+      expect { compile_to_catalog(MANIFEST_WITH_FALSE_NODES, node)
       }.to raise_error(/Invalid node mapping in .*: Mapping must be a hash/)
     end
 
@@ -360,7 +359,7 @@ EOS
     end
 
     context "for producing node" do
-      let(:compiled_node) { Puppet::Node.new('first') }
+      let(:compiled_node) { Puppet::Node.new('first', :environment => env) }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}
 
       { "App[anapp]"         => 'application instance',
@@ -379,7 +378,7 @@ EOS
     end
 
     context "for consuming node" do
-      let(:compiled_node) { Puppet::Node.new('second') }
+      let(:compiled_node) { Puppet::Node.new('second', :environment => env) }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}
       let(:cap) {
         the_cap = Puppet::Resource.new("Cap", "cap")
@@ -407,7 +406,7 @@ EOS
     end
 
     context "for node with class producer" do
-      let(:compiled_node) { Puppet::Node.new('first') }
+      let(:compiled_node) { Puppet::Node.new('first', :environment => env) }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST_WITH_CLASS, compiled_node)}
 
       { "App[anapp]"      => 'application instance',
@@ -427,7 +426,7 @@ EOS
     end
 
     context "for node with class consumer" do
-      let(:compiled_node) { Puppet::Node.new('second') }
+      let(:compiled_node) { Puppet::Node.new('second', :environment => env) }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST_WITH_CLASS, compiled_node)}
       let(:cap) {
         the_cap = Puppet::Resource.new("Cap", "cap")
@@ -460,7 +459,7 @@ EOS
       # that are used to instantiate an application. The application instances are needed.
       #
       it "the node expressions is evaluated" do
-        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
+        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other', :environment => env))
         types = catalog.resource_keys.map { |type, _| type }.uniq.sort
         expect(types).to eq(["Class", "Node", "Notify", "Stage"])
         expect(catalog.resource("Notify[on a node]")).to_not be_nil
@@ -471,7 +470,7 @@ EOS
 
     context "when using a site expression" do
       it "the site expression is not evaluated in a node compilation" do
-        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other'))
+        catalog = compile_to_catalog(MANIFEST_WITH_SITE, Puppet::Node.new('other', :environment => env))
         types = catalog.resource_keys.map { |type, _| type }.uniq.sort
         expect(types).to eq(["Class", "Node", "Notify", "Stage"])
         expect(catalog.resource("Notify[on a node]")).to_not be_nil
@@ -589,7 +588,7 @@ EOS
 
   describe "when validation of nodes" do
     it 'validates that the key of a node mapping is a Node' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other', :environment => env))
         application app {
         }
 
@@ -605,7 +604,7 @@ EOS
     end
 
     it 'validates that the value of a node mapping is a resource' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other', :environment => env))
         application app {
         }
 
@@ -621,7 +620,7 @@ EOS
     end
 
     it 'validates that the value can be an array or resources' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other'))
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('other', :environment => env))
         define p {
           notify {$title:}
         }
@@ -643,7 +642,7 @@ EOS
     end
 
     it 'validates that the is bound to exactly one node' do
-      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('first'))
+      expect { compile_to_catalog(<<-EOS, Puppet::Node.new('first', :environment => env))
         define p {
           notify {$title:}
         }

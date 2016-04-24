@@ -43,7 +43,7 @@ describe "when using function data provider" do
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
-    resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]"]
+    resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]", "Notify[env_test2-ipl]"]
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
   end
 
@@ -54,6 +54,24 @@ describe "when using function data provider" do
     catalog = compiler.compile()
     resources_created_in_fixture = ["Notify[env_test1]", "Notify[env_test2]", "Notify[module_test3]"]
     expect(resources_in(catalog)).to include(*resources_created_in_fixture)
+  end
+
+  it 'gets data from puppet function delivering environment data' do
+    Puppet[:code] = <<-CODE
+      function environment::data() {
+        { 'cls::test1' => 'env_puppet1',
+          'cls::test2' => 'env_puppet2'
+        }
+      }
+      class cls ($test1, $test2) {
+        notify { $test1: }
+        notify { $test2: }
+      }
+      include cls
+    CODE
+    node = Puppet::Node.new('testnode', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'production')
+    catalog = Puppet::Parser::Compiler.new(node).compile
+    expect(resources_in(catalog)).to include('Notify[env_puppet1]', 'Notify[env_puppet2]')
   end
 
   it 'raises an error if the environment data function does not return a hash' do

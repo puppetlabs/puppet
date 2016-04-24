@@ -6,10 +6,9 @@ class Loaders
   attr_reader :puppet_system_loader
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
+  attr_reader :implementation_registry
 
   def initialize(environment)
-    # The static loader can only be changed after a reboot
-    @@static_loader ||= Loader::StaticLoader.new()
 
     # Create the set of loaders
     # 1. Puppet, loads from the "running" puppet - i.e. bundled functions, types, extension points and extensions
@@ -26,28 +25,66 @@ class Loaders
     #
     @private_environment_loader = create_environment_loader(environment)
 
-    # 3. module loaders are set up from the create_environment_loader, they register themselves
+    # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
+    #    the current environment
+    @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
+
+    # 4. module loaders are set up from the create_environment_loader, they register themselves
   end
 
   # Clears the cached static and puppet_system loaders (to enable testing)
   #
   def self.clear
     @@static_loader = nil
-    @puppet_system_loader = nil
   end
 
-  # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context and then uses it to
-  # find the appropriate loader for the given `module_name`, or for the environment in case `module_name`
-  # is `nil` or empty.
+  # Calls {#loaders} to obtain the {{Loaders}} instance and then uses it to find the appropriate loader
+  # for the given `module_name`, or for the environment in case `module_name` is `nil` or empty.
   #
   # @param module_name [String,nil] the name of the module
   # @return [Loader::Loader] the found loader
   # @raise [Puppet::ParseError] if no loader can be found
   # @api private
   def self.find_loader(module_name)
+    loaders.find_loader(module_name)
+  end
+
+  def self.static_loader
+    # The static loader can only be changed after a reboot
+    @@static_loader ||= Loader::StaticLoader.new()
+  end
+
+  def self.implementation_registry
+    loaders = Puppet.lookup(:loaders) { nil }
+    loaders.nil? ? nil : loaders.implementation_registry
+  end
+
+  # Register the given type with the Runtime3TypeLoader. The registration will not happen unless
+  # the type system has been initialized.
+  #
+  # @param name [String,Symbol] the name of the entity being set
+  # @param origin [URI] the origin or the source where the type is defined
+  # @api private
+  def self.register_runtime3_type(name, origin)
+    loaders = Puppet.lookup(:loaders) { nil }
+    unless loaders.nil?
+      name = name.to_s
+      caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
+      typed_name = Loader::Loader::TypedName.new(:type, name.downcase)
+      loaders.runtime3_type_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
+    end
+    nil
+  end
+
+  # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context
+  #
+  # @return [Loaders] the loaders instance
+  # @raise [Puppet::ParseError] if loader has been bound to the global context
+  # @api private
+  def self.loaders
     loaders = Puppet.lookup(:loaders) { nil }
     raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing" if loaders.nil?
-    loaders.find_loader(module_name)
+    loaders
   end
 
   # Finds the appropriate loader for the given `module_name`, or for the environment in case `module_name`
@@ -77,11 +114,15 @@ class Loaders
   end
 
   def static_loader
-    @@static_loader
+    self.class.static_loader
   end
 
   def puppet_system_loader
     @puppet_system_loader
+  end
+
+  def runtime3_type_loader
+    @runtime3_type_loader
   end
 
   def public_loader_for_module(module_name)
@@ -130,12 +171,16 @@ class Loaders
     module_name = nil
     loader_name = "environment:#{environment.name}"
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
+
+    # Create the 3.x resource type loader
+    @runtime3_type_loader = Loader::Runtime3TypeLoader.new(puppet_system_loader, environment)
+
     if env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf)
       # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
-      loader = Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
+      loader = Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, loader_name)
     else
       # View the environment as a module to allow loading from it - this module is always called 'environment'
-      loader = Loader::ModuleLoaders.module_loader_from(puppet_system_loader, self, 'environment', env_conf.path_to_env)
+      loader = Loader::ModuleLoaders.module_loader_from(@runtime3_type_loader, self, 'environment', env_conf.path_to_env)
     end
 
     # An environment has a module path even if it has a null loader
@@ -270,9 +315,19 @@ class Loaders
 
     def create_loader_with_only_dependencies_visible(from_module_data)
       if from_module_data.unmet_dependencies?
-        Puppet.warning("ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
-          " - it will only see those that are resolved."+
-          " Use 'puppet module list --tree' to see information about modules")
+        if Puppet[:strict] != :off
+          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies" \
+              " - it will only see those that are resolved." \
+              " Use 'puppet module list --tree' to see information about modules"
+          case Puppet[:strict]
+          when :error
+              raise LoaderError.new(msg)
+          when :warning
+            Puppet.warn_once(:unresolved_module_dependencies,
+                             "unresolved_dependencies_for_module_#{from_module_data.name}",
+                             msg)
+          end
+        end
       end
       dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
       Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)

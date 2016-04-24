@@ -429,7 +429,7 @@ class TypeCalculator
 
     if t1.is_a?(PVariantType) && t2.is_a?(PVariantType)
       # The common type is one that complies with either set
-      return PVariantType.new(t1.types | t2.types)
+      return PVariantType.maybe_create(t1.types | t2.types)
     end
 
     if t1.is_a?(PRegexpType) && t2.is_a?(PRegexpType)
@@ -552,7 +552,10 @@ class TypeCalculator
 
   # @api private
   def infer_Object(o)
-    PRuntimeType.new(:ruby, o.class.name)
+    name = o.class.name
+    ir = Loaders.implementation_registry
+    type = ir.nil? ? nil : ir.type_for_module(name)
+    type.nil? ? PRuntimeType.new(:ruby, name) : type
   end
 
   # The type of all types is PType
@@ -652,7 +655,7 @@ class TypeCalculator
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     title = '' if :undef == title
-    PType.new(PResourceType.new(o.type.to_s.downcase, title))
+    PType.new(PResourceType.new(o.type.to_s, title))
   end
 
   # @api private
@@ -697,10 +700,10 @@ class TypeCalculator
     if o.empty?
       PHashType::EMPTY
     elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
-      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(nil, [k]), infer_set(v)) })
+      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(size_as_type(k), [k]), infer_set(v)) })
     else
-      ktype = PVariantType.new(o.keys.map {|k| infer_set(k) })
-      etype = PVariantType.new(o.values.map {|e| infer_set(e) })
+      ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
+      etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
       PHashType.new(unwrap_single_variant(ktype), unwrap_single_variant(etype), size_as_type(o))
     end
   end

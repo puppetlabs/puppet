@@ -40,7 +40,9 @@ class Puppet::Pops::Visitor
       return receiver.send(method_name, thing, *args)
     else
       thing.class.ancestors().each do |ancestor|
-        method_name = :"#{@message}_#{ancestor.name.split(DOUBLE_COLON).last}"
+        name = ancestor.name
+        next if name.nil?
+        method_name = :"#{@message}_#{name.split(DOUBLE_COLON).last}"
         next unless receiver.respond_to?(method_name, true)
         @cache[thing.class] = method_name
         return receiver.send(method_name, thing, *args)

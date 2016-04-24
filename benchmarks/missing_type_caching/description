@@ -1,0 +1,3 @@
+Benchmark scenario: heavy use of defined types found in init.pp
+Benchmark target: catalog compilation
+

@@ -4,6 +4,7 @@ module Puppet::Util::Windows
     class UserProfile; end
     class Group; end
   end
+  module File; end
   module Registry
   end
   module SID

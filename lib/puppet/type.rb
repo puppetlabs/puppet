@@ -1044,6 +1044,12 @@ class Type
     insync
   end
 
+  # Says if the ensure property should be retrieved if the resource is ensurable
+  # Defaults to true. Some resource type classes can override it
+  def self.needs_ensure_retrieved
+    true
+  end
+
   # Retrieves the current value of all contained properties.
   # Parameters and meta-parameters are not included in the result.
   # @todo As oposed to all non contained properties? How is this different than any of the other
@@ -1058,7 +1064,7 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    if ensure_prop = property(:ensure) or (self.class.needs_ensure_retrieved and self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
@@ -1531,12 +1537,12 @@ class Type
             :event => self.class.events,
             :callback => method
           }
-          self.debug("subscribes to #{related_resource.ref}")
+          self.debug { "subscribes to #{related_resource.ref}" }
         else
           # If there's no callback, there's no point in even adding
           # a label.
           subargs = nil
-          self.debug("requires #{related_resource.ref}")
+          self.debug { "subscribes to #{related_resource.ref}" }
         end
 
         Puppet::Relationship.new(source, target, subargs)

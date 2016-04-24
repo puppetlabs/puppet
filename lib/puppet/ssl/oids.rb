@@ -69,7 +69,7 @@ module Puppet::SSL::Oids
     end
   end
 
-  # Parse and load custom OID mapping file that enables custom OIDs to be resolved
+  # Parse custom OID mapping file that enables custom OIDs to be resolved
   # into user-friendly names.
   #
   # @param custom_oid_file [String] File to obtain custom OIDs mapping from
@@ -84,7 +84,7 @@ module Puppet::SSL::Oids
   #  '1.3.6.1.4.1.34380.1.2.1.2':
   #    shortname: 'myothershortname'
   #    longname: 'Other Long name'
-  def self.load_custom_oid_file(custom_oid_file, map_key='oid_mapping')
+  def self.parse_custom_oid_file(custom_oid_file, map_key='oid_mapping')
     if File.exists?(custom_oid_file) && File.readable?(custom_oid_file)
       mapping = nil
       begin
@@ -110,6 +110,28 @@ module Puppet::SSL::Oids
         oid_defns << [oid, shortname, longname]
       end
 
+      oid_defns
+    end
+  end
+
+  # Load custom OID mapping file that enables custom OIDs to be resolved
+  # into user-friendly names.
+  #
+  # @param custom_oid_file [String] File to obtain custom OIDs mapping from
+  # @param map_key [String] Hash key in which custom OIDs mapping is stored
+  #
+  # @example Custom OID mapping file
+  # ---
+  # oid_mapping:
+  #  '1.3.6.1.4.1.34380.1.2.1.1':
+  #    shortname : 'myshortname'
+  #    longname  : 'Long name'
+  #  '1.3.6.1.4.1.34380.1.2.1.2':
+  #    shortname: 'myothershortname'
+  #    longname: 'Other Long name'
+  def self.load_custom_oid_file(custom_oid_file, map_key='oid_mapping')
+    oid_defns = parse_custom_oid_file(custom_oid_file, map_key)
+    unless oid_defns.nil?
       begin
         oid_defns.each do |oid_defn|
           OpenSSL::ASN1::ObjectId.register(*oid_defn)

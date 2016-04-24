@@ -1548,10 +1548,10 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts a Resource as a Type' do
         catalog = compile_to_catalog(<<-MANIFEST)
+          define bar($text) { }
           define foo(Type[Bar] $x) {
             notify { 'test': message => $x[text] }
           }
-          define bar($text) { }
           bar { 'joke': text => 'knock knock' }
           foo { 'test': x => Bar[joke] }
         MANIFEST
@@ -1564,7 +1564,7 @@ describe Puppet::Parser::Compiler do
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
-        end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' has no 'c' key/m)
+        end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' unrecognized key 'c'/m)
       end
     end
 
@@ -1634,10 +1634,10 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts a Resource as a Type' do
         catalog = compile_to_catalog(<<-MANIFEST)
+          define bar($text) { }
           class foo(Type[Bar] $x) {
             notify { 'test': message => $x[text] }
           }
-          define bar($text) { }
           bar { 'joke': text => 'knock knock' }
           class { 'foo': x => Bar[joke] }
         MANIFEST

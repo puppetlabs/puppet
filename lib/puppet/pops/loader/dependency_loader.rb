@@ -48,13 +48,38 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
     end
   end
 
-  def to_s()
+  # @api public
+  #
+  def loaded_entry(typed_name, check_dependencies = false)
+    super || (check_dependencies ? loaded_entry_in_dependency(typed_name, check_dependencies) : nil)
+  end
+
+  def to_s
     "(DependencyLoader '#{@loader_name}' [" + @dependency_loaders.map {|loader| loader.to_s }.join(' ,') + "])"
   end
 
   private
 
-  def index()
+  def loaded_entry_in_dependency(typed_name, check_dependencies)
+    if typed_name.qualified?
+      if l = index[typed_name.name_parts[0]]
+        l.loaded_entry(typed_name)
+      else
+        # no module entered as dependency with name matching first segment of wanted name
+        nil
+      end
+    else
+      # a non name-spaced name, have to search since it can be anywhere.
+      # (Note: superclass caches the result in this loader as it would have to repeat this search for every
+      # lookup otherwise).
+      @dependency_loaders.reduce(nil) do |previous, loader|
+        break previous if !previous.nil?
+        loader.loaded_entry(typed_name, check_dependencies)
+      end
+    end
+  end
+
+  def index
     @index ||= @dependency_loaders.reduce({}) { |index, loader| index[loader.module_name] = loader; index }
   end
 end

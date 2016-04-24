@@ -168,6 +168,25 @@ describe "egrammar parsing basic expressions" do
       expect(parse("[]").current.body.length).to eq(2)
       expect(parse("[ ]").current.body.length).to eq(3)
     end
+
+    {
+      'keyword' => %w(type function),
+      'reserved word' => %w(application site produces consumes)
+    }.each_pair do |word_type, words|
+      words.each do |word|
+        it "allows the #{word_type} '#{word}' in a list" do
+          expect(dump(parse("$a = [#{word}]"))).to(eq("(= $a ([] '#{word}'))"))
+        end
+
+        it "allows the #{word_type} '#{word}' as a key in a hash" do
+          expect(dump(parse("$a = {#{word}=>'x'}"))).to(eq("(= $a ({} ('#{word}' 'x')))"))
+        end
+
+        it "allows the #{word_type} '#{word}' as a value in a hash" do
+          expect(dump(parse("$a = {'x'=>#{word}}"))).to(eq("(= $a ({} ('x' '#{word}')))"))
+        end
+      end
+    end
   end
 
   context "When parsing indexed access" do

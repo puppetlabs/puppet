@@ -69,7 +69,7 @@ Puppet::Functions.create_function(:assert_type, Puppet::Functions::InternalFunct
   #
   def assert_type(type, value)
     unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
-      inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value)
+      inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value)
       if block_given?
         # Give the inferred type to allow richer comparison in the given block (if generalized
         # information is lost).

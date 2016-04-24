@@ -46,6 +46,26 @@ describe Puppet::FileSystem::Uniquefile do
     expect(Puppet::FileSystem.exist?(filename)).to be_falsey
   end
 
+  it "propagates lock creation failures" do
+    # use an arbitrary exception so as not accidentally collide
+    # with the ENOENT that occurs when trying to call rmdir
+    Puppet::FileSystem::Uniquefile.stubs(:mkdir).raises 'arbitrary failure'
+    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+
+    expect {
+      Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
+    }.to raise_error('arbitrary failure')
+  end
+
+  it "only removes lock files that exist" do
+    # prevent the .lock directory from being created
+    Puppet::FileSystem::Uniquefile.stubs(:mkdir) { }
+
+    # and expect cleanup to be skipped
+    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+
+    Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
+  end
 
   context "Ruby 1.9.3 Tempfile tests" do
     # the remaining tests in this file are ported directly from the ruby 1.9.3 source,

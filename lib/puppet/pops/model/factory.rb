@@ -157,8 +157,8 @@ class Factory
   end
 
   def build_KeyedEntry(o, k, v)
-    o.key = to_ops(k)
-    o.value = to_ops(v)
+    o.key = to_collection_entry(to_ops(k))
+    o.value = to_collection_entry(to_ops(v))
     o
   end
 
@@ -167,8 +167,21 @@ class Factory
     o
   end
 
+  def to_collection_entry(o)
+    if o.is_a?(Model::ReservedWord)
+      case o.word
+      when 'application', 'site', 'produces', 'consumes'
+        build(o.word)
+      else
+        o
+      end
+    else
+      o
+    end
+  end
+
   def build_LiteralList(o, *values)
-    o.values = values.map {|v| build(v) }
+    o.values = values.map {|v| to_collection_entry(build(v)) }
     o
   end
 
@@ -266,7 +279,7 @@ class Factory
   end
 
   def build_QualifiedReference(o, name)
-    o.value = name.to_s.downcase
+    o.cased_value = name.to_s
     o
   end
 
@@ -335,8 +348,14 @@ class Factory
   end
 
   def build_TypeAlias(o, name, type_expr)
-    o.type_expr = build(type_expr)
-    o.name = name
+    o.type_expr = to_ops(type_expr)
+    o.name = to_ops(name).cased_value
+    o
+  end
+
+  def build_TypeMapping(o, lhs, rhs)
+    o.type_expr = to_ops(lhs)
+    o.mapping_expr = to_ops(rhs)
     o
   end
 
@@ -806,8 +825,12 @@ class Factory
     new(LambdaExpression, parameters, body)
   end
 
-  def self.TYPE_ALIAS(name, type_expr)
-    new(TypeAlias, name, type_expr)
+  def self.TYPE_ASSIGNMENT(lhs, rhs)
+    if lhs.current.is_a?(AccessExpression)
+      new(TypeMapping, lhs, rhs)
+    else
+      new(TypeAlias, lhs, rhs)
+    end
   end
 
   def self.TYPE_DEFINITION(name, parent, body)

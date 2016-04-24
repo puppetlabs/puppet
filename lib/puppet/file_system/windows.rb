@@ -4,21 +4,7 @@ require 'puppet/util/windows'
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
   def exist?(path)
-    if ! Puppet.features.manages_symlinks?
-      return ::File.exist?(path)
-    end
-
-    path = path.to_str if path.respond_to?(:to_str) # support WatchedFile
-    path = path.to_s # support String and Pathname
-
-    begin
-      if Puppet::Util::Windows::File.symlink?(path)
-        path = Puppet::Util::Windows::File.readlink(path)
-      end
-      ! Puppet::Util::Windows::File.stat(path).nil?
-    rescue # generally INVALID_HANDLE_VALUE which means 'file not found'
-      false
-    end
+    return Puppet::Util::Windows::File.exist?(path)
   end
 
   def symlink(path, dest, options = {})

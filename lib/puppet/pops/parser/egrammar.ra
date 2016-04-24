@@ -684,8 +684,8 @@ parameter_type
 
 #--TYPE ALIAS
 type_alias
-  : TYPE CLASSREF EQUALS expression {
-      result = add_definition(Factory.TYPE_ALIAS(val[1][:value], val[3]))
+  : TYPE parameter_type EQUALS expression {
+      result = add_definition(Factory.TYPE_ASSIGNMENT(val[1], val[3]))
       loc(result, val[0], val[3])
     }
 
@@ -720,10 +720,10 @@ reserved_word
 #
 
 array
-  : LISTSTART assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LISTSTART                       RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
-  | LBRACK    assignments endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
-  | LBRACK                          RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
+  : LISTSTART collection_entries endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LISTSTART                              RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
+  | LBRACK    collection_entries endcomma  RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LBRACK                                 RBRACK { result = Factory.literal([]) ; loc result, val[0], val[1] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
@@ -735,7 +735,24 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : assignment FARROW assignment { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : collection_entry FARROW collection_entry { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+
+collection_entry:
+  : assignment
+  | collection_entry_keyword { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+
+collection_entries
+  : collection_entry                           { result = [val[0]] }
+  | collection_entries COMMA collection_entry  { result = val[0].push(val[2]) }
+
+# Keywords valid as a collection value
+collection_entry_keyword
+  : TYPE
+  | FUNCTION
+  | APPLICATION
+  | CONSUMES
+  | PRODUCES
+  | SITE
 
 quotedtext
   : string

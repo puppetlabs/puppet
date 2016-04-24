@@ -28,8 +28,9 @@ class Puppet::Parser::Compiler
         end
       elsif Puppet[:strict] != :off
         # all other relationships requires the referenced resource to exist when mode is strict
-        refs = param.value.is_a?(Array) ? param.value : [param.value]
+        refs = param.value.is_a?(Array) ? param.value.flatten : [param.value]
         refs.each do |r|
+          next if r.nil?
           unless catalog.resource(r.to_s)
             msg = "Could not find resource '#{r.to_s}' in parameter '#{param.name.to_s}'"
             if Puppet[:strict] == :error

@@ -1,20 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
+require_relative 'parser_rspec_helper'
 
 describe "egrammar parsing of site expression" do
   include ParserRspecHelper
 
-  before(:each) do
-    with_app_management(true)
-  end
-
-  after(:each) do
-    with_app_management(false)
-  end
+  before(:each) { Puppet[:app_management] = true }
+  after(:each) { Puppet[:app_management] = false }
 
   context "when parsing 'site'" do
     it "an empty body is allowed" do
@@ -33,6 +26,22 @@ describe "egrammar parsing of site expression" do
       prog = "site { $x = 1 $y = 2}"
       ast = "(site (block\n  (= $x 1)\n  (= $y 2)\n))"
       expect(dump(parse(prog))).to eq(ast)
+    end
+  end
+
+  context 'When parsing collections containing application management specific keywords' do
+    %w(application site produces consumes).each do |keyword|
+      it "allows the keyword '#{keyword}' in a list" do
+        expect(dump(parse("$a = [#{keyword}]"))).to(eq("(= $a ([] '#{keyword}'))"))
+      end
+
+      it "allows the keyword '#{keyword}' as a key in a hash" do
+        expect(dump(parse("$a = {#{keyword}=>'x'}"))).to(eq("(= $a ({} ('#{keyword}' 'x')))"))
+      end
+
+      it "allows the keyword '#{keyword}' as a value in a hash" do
+        expect(dump(parse("$a = {'x'=>#{keyword}}"))).to(eq("(= $a ({} ('x' '#{keyword}')))"))
+      end
     end
   end
 end

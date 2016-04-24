@@ -170,7 +170,7 @@ describe "when performing lookup" do
     it 'will not accept a succesful lookup of an undef value when the type rejects it' do
       expect do
         assemble_and_compile('${r}', "'abc::n'", 'String')
-      end.to raise_error(Puppet::ParseError, /Found value has wrong type, expected a String value, got Undef/)
+      end.to raise_error(Puppet::ParseError, /Found value had wrong type, expected a String value, got Undef/)
     end
 
     it 'will raise an exception when value is not found for array key and no default is provided' do
@@ -249,7 +249,7 @@ describe "when performing lookup" do
         expect do
           assemble_and_compile('${r[a]}_${r[b]}', "'abc::x'", 'Hash[String,String]', 'undef', "{'a' => 'dflt_x', 'b' => 32}")
         end.to raise_error(Puppet::ParseError,
-          /Default value has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
+          /Default value had wrong type, entry 'b' expected a String value, got Integer/)
       end
     end
 
@@ -283,7 +283,7 @@ describe "when performing lookup" do
         expect do
           assemble_and_compile_with_block('${r[a]}_${r[b]}', "{'a' => 'dflt_x', 'b' => 32}", "'abc::x'", 'Hash[String,String]')
         end.to raise_error(Puppet::ParseError,
-          /Value returned from default block has wrong type, expected a Hash\[String, String\] value, got Struct\[\{'a' => String, 'b' => Integer\}\]/)
+          /Value returned from default block had wrong type, entry 'b' expected a String value, got Integer/)
       end
 
       it 'receives a single name parameter' do
@@ -295,6 +295,38 @@ describe "when performing lookup" do
         resources = assemble_and_compile_with_block('${r[0]}_${r[1]}', 'true', "['name_x', 'name_y']")
         expect(resources).to include('name_x_name_y')
       end
+    end
+  end
+
+  context 'when using dotted keys' do
+    it 'can access values in data using dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { a => { b => { c => 'the data' }}}
+      }
+      notice(lookup('a.b.c'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
+    end
+
+    it 'can find data using quoted dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { 'a.b.c' => 'the data' }
+      }
+      notice(lookup('"a.b.c"'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
+    end
+
+    it 'can access values in data using a mix of dot notation and quoted dot notation' do
+      source = <<-CODE
+      function environment::data() {
+        { 'a' => { 'b.c' => 'the data' }}
+      }
+      notice(lookup('a."b.c"'))
+      CODE
+      expect(eval_and_collect_notices(source)).to include('the data')
     end
   end
 
@@ -557,6 +589,28 @@ Merge strategy first
 EOS
       end
     end
+
+    it 'will explain value access caused by dot notation in key' do
+      assemble_and_compile('${r}', "'abc::a'") do |scope|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+        Puppet::Pops::Lookup.lookup('abc::f.k1.s1', Puppet::Pops::Types::TypeParser.new.parse('String'), nil, false, nil, lookup_invocation)
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "abc::f.k1.s1"
+  Data Provider "FunctionEnvDataProvider"
+    Sub key: "k1.s1"
+      Found key: "k1" value: {
+        "s1" => "env_f11",
+        "s2" => "env_f12"
+      }
+      Found key: "s1" value: "env_f11"
+    Found key: "abc::f.k1.s1" value: "env_f11"
+  Merged result: "env_f11"
+EOS
+      end
+    end
+
 
     it 'will provide a hash containing all explanation elements' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|

@@ -27,13 +27,16 @@ module Puppet
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
     require 'puppet/pops/lookup'
+    require 'puppet/pops/lookup/interpolation'
     require 'puppet/pops/lookup/invocation'
+    require 'puppet/pops/lookup/sub_lookup'
     require 'puppet/pops/lookup/explainer'
 
     require 'puppet/pops/model/model'
 
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
+    require 'puppet/pops/types/string_converter'
 
     require 'puppet/pops/merge_strategy'
 

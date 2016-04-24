@@ -314,7 +314,13 @@ module Puppet
     :always_cache_features => {
       :type     => :boolean,
       :default  => false,
+      :hook     => proc { |value|
+        Puppet.deprecation_warning "Setting 'always_cache_features' is
+deprecated and has been replaced by 'always_retry_plugins'."
+      },
       :desc     => <<-'EOT'
+        This setting is deprecated and has been replaced by always_retry_plugins.
+
         Affects how we cache attempts to load Puppet 'features'.  If false, then
         calls to `Puppet.features.<feature>?` will always attempt to load the
         feature (which can be an expensive operation) unless it has already been
@@ -328,6 +334,27 @@ module Puppet
         for all subsequent attempts to load the feature.  This behavior is almost
         always appropriate for the server, and can result in a significant performance
         improvement for features that are checked frequently.
+      EOT
+    },
+    :always_retry_plugins => {
+        :type     => :boolean,
+        :default  => true,
+        :desc     => <<-'EOT'
+        Affects how we cache attempts to load Puppet resource types and features.  If
+        true, then calls to `Puppet.type.<type>?` `Puppet.feature.<feature>?`
+        will always attempt to load the type or feature (which can be an
+        expensive operation) unless it has already been loaded successfully.
+        This makes it possible for a single agent run to, e.g., install a
+        package that provides the underlying capabilities for a type or feature,
+        and then later load that type or feature during the same run (even if
+        the type or feature had been tested earlier and had not been available).
+
+        If this setting is set to false, then types and features will only be
+        checked once, and if they are not available, the negative result is
+        cached and returned for all subsequent attempts to load the type or
+        feature.  This behavior is almost always appropriate for the server,
+        and can result in a significant performance improvement for types and
+        features that are checked frequently.
       EOT
     },
     :diff_args => {
@@ -570,6 +597,10 @@ module Puppet
           :default  => false,
           :type     => :boolean,
           :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
+          :hook     => proc do |value|
+            # Statically loaded resource types differ depending on setting
+            Puppet::Pops::Loaders.clear
+          end
       }
   )
 
@@ -630,22 +661,38 @@ module Puppet
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
-The comma-separated list of alternative DNS names to use for the local host.
+A comma-separated list of alternate DNS names for Puppet Server. These are extra
+hostnames (in addition to its `certname`) that the server is allowed to use when
+serving agents. Puppet checks this setting when automatically requesting a
+certificate for Puppet agent or Puppet Server, and when manually generating a
+certificate with `puppet cert generate`.
 
-When the node generates a CSR for itself, these are added to the request
-as the desired `subjectAltName` in the certificate: additional DNS labels
-that the certificate is also valid answering as.
+In order to handle agent requests at a given hostname (like
+"puppet.example.com"), Puppet Server needs a certificate that proves it's
+allowed to use that name; if a server shows a certificate that doesn't include
+its hostname, Puppet agents will refuse to trust it. If you use a single
+hostname for Puppet traffic but load-balance it to multiple Puppet Servers, each
+of those servers needs to include the official hostname in its list of extra
+names.
 
-This is generally required if you use a non-hostname `certname`, or if you
-want to use `puppet kick` or `puppet resource -H` and the primary certname
-does not match the DNS name you use to communicate with the host.
+**Note:** The list of alternate names is locked in when the server's
+certificate is signed. If you need to change the list later, you can't just
+change this setting; you also need to:
 
-This is unnecessary for agents, unless you intend to use them as a server for
-`puppet kick` or remote `puppet resource` management.
+* On the server: Stop Puppet Server.
+* On the CA server: Revoke and clean the server's old certificate. (`puppet cert clean <NAME>`)
+* On the server: Delete the old certificate (and any old certificate signing requests)
+  from the [ssldir](https://docs.puppetlabs.com/puppet/latest/reference/dirs_ssldir.html).
+* On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
+* On the CA server: Sign the certificate request, explicitly allowing alternate names
+  (`puppet cert sign --allow-dns-alt-names <NAME>`).
+* On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to retrieve the cert.
+* On the server: Start Puppet Server again.
 
-It is rarely necessary for servers; it is usually helpful only if you need to
-have a pool of multiple load balanced masters, or for the same master to
-respond on two physically separate networks under different names.
+To see all the alternate names your servers are using, log into your CA server
+and run `puppet cert list -a`, then check the output for `(alt names: ...)`.
+Most agent nodes should NOT have alternate names; the only certs that should
+have them are Puppet Server nodes that you want other agents to trust.
 EOT
     },
     :csr_attributes => {

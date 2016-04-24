@@ -20,12 +20,20 @@ describe Puppet::Resource::CapabilityFinder do
         end
       end
       begin
-        make_cap_type
-        example.run
+        Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+        Puppet.override(:loaders => loaders, :current_environment => env) do
+          make_cap_type
+          example.run
+        end
       ensure
         Puppet::Util.send(:remove_const, 'Puppetdb') if mock_pdb
+        Puppet::Type.rmtype(:cap)
+        Puppet::Pops::Loaders.clear
       end
     end
+
+    let(:env) { Puppet::Node::Environment.create(:testing, []) }
+    let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
     let(:response_body) { [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}}] }
     let(:response) { stub('response', :body => response_body.to_json) }

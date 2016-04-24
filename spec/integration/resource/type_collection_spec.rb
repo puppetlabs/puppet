@@ -12,6 +12,14 @@ describe Puppet::Resource::TypeCollection do
       @dir = tmpfile("autoload_testing")
       FileUtils.mkdir_p @dir
 
+      loader = Object.new
+      loader.stubs(:load).returns nil
+      loader.stubs(:set_entry)
+
+      loaders = Object.new
+      loaders.expects(:runtime3_type_loader).at_most_once.returns loader
+      Puppet::Pops::Loaders.expects(:loaders).at_most_once.returns loaders
+
       environment = Puppet::Node::Environment.create(:env, [@dir])
       @code = environment.known_resource_types
     end

@@ -6,6 +6,24 @@ describe 'The type formatter' do
   let(:s) { TypeFormatter.new }
   let(:f) { TypeFactory }
 
+  context 'when representing a literal as a string' do
+    {
+      'true' => true,
+      'false' => false,
+      '?' => nil,
+      '23.4' => 23.4,
+      '145' => 145,
+      "'string'" => 'string',
+      '/expr/' => /expr/,
+      '[1, 2, 3]' => [1, 2, 3],
+      "{'a' => 32, 'b' => [1, 2, 3]}" => {'a' => 32,'b' => [1, 2, 3]}
+    }.each_pair do |str, value|
+      it "should yield '#{str}' for a value of #{str}" do
+        expect(s.string(value)).to eq(str)
+      end
+    end
+  end
+
   context 'when representing the type as string' do
     include_context 'types_setup'
 
@@ -76,9 +94,14 @@ describe 'The type formatter' do
       expect(s.string(f.array_of_data)).to eq('Array')
     end
 
-    it "should yield 'Array[Unit, 0, 0]' for an empty array" do
+    it "should yield 'Array[0, 0]' for an empty array" do
       t = f.array_of(PUnitType::DEFAULT, f.range(0,0))
-      expect(s.string(t)).to eq('Array[Unit, 0, 0]')
+      expect(s.string(t)).to eq('Array[0, 0]')
+    end
+
+    it "should yield 'Hash[0, 0]' for an empty hash" do
+      t = f.hash_of(PUnitType::DEFAULT, PUnitType::DEFAULT, f.range(0,0))
+      expect(s.string(t)).to eq('Hash[0, 0]')
     end
 
     it "should yield 'Collection' and from/to for PCollectionType" do
@@ -247,12 +270,12 @@ describe 'The type formatter' do
 
     it "should yield the name of an unparameterized type reference" do
       t = f.type_reference('What')
-      expect(s.string(t)).to eq('What')
+      expect(s.string(t)).to eq("TypeReference['What']")
     end
 
     it "should yield the name and arguments of an parameterized type reference" do
-      t = f.type_reference('What', [f.undef, f.string])
-      expect(s.string(t)).to eq('What[Undef, String]')
+      t = f.type_reference('What[Undef, String]')
+      expect(s.string(t)).to eq("TypeReference['What[Undef, String]']")
     end
 
     it "should yield the name of a type alias" do
@@ -261,19 +284,20 @@ describe 'The type formatter' do
     end
 
     it "should yield 'Type[Runtime[ruby, Puppet]]' for the Puppet module" do
-      expect(s.string(Puppet)).to eq('Runtime[ruby, "Puppet"]')
+      expect(s.string(Puppet)).to eq("Runtime[ruby, 'Puppet']")
     end
 
     it "should yield 'Type[Runtime[ruby, Puppet::Pops]]' for the Puppet::Resource class" do
-      expect(s.string(Puppet::Resource)).to eq('Runtime[ruby, "Puppet::Resource"]')
+      expect(s.string(Puppet::Resource)).to eq("Runtime[ruby, 'Puppet::Resource']")
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType]).each do |t|
+      (all_types - [PType, PHostClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
       expect(PType::DEFAULT.simple_name).to eql('Type')
+      expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
     end
   end
 end

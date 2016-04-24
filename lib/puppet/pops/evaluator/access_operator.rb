@@ -260,6 +260,15 @@ class AccessOperator
     end
   end
 
+  def access_PObjectType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      Types::TypeFactory.object(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Object-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PNotUndefType(o, scope, keys)
     keys.flatten!
     case keys.size
@@ -290,6 +299,30 @@ class AccessOperator
       Types::PType.new(keys[0])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
+  def access_PIterableType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Iterable-Type', :actual => keys[0].class})
+      end
+      Types::PIterableType.new(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Iterable-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
+  def access_PIteratorType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Iterator-Type', :actual => keys[0].class})
+      end
+      Types::PIteratorType.new(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Iterator-Type', :min => 1, :actual => keys.size})
     end
   end
 
@@ -366,7 +399,7 @@ class AccessOperator
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
-    Types::PCollectionType.new(size_t)
+    Types::PCollectionType.new(nil, size_t)
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.
@@ -414,6 +447,11 @@ class AccessOperator
     access(t, scope, *keys)
   end
 
+  # If a type reference is encountered here, it's an error
+  def access_PTypeReferenceType(o, scope, keys)
+    fail(Issues::UNKNOWN_RESOURCE_TYPE, @semantic, {:type_name => o.type_string })
+  end
+
   # A Resource can create a new more specific Resource type, and/or an array of resource types
   # If the given type has title set, it can not be specified further.
   # @example
@@ -437,12 +475,12 @@ class AccessOperator
     # Must know which concrete resource type to operate on in all cases.
     # It is not allowed to specify the type in an array arg - e.g. Resource[[File, 'foo']]
     # type_name is LHS type_name if set, else the first given arg
-    type_name = o.type_name || keys.shift
+    type_name = o.type_name || Types::TypeFormatter.singleton.capitalize_segments(keys.shift)
     type_name = case type_name
     when Types::PResourceType
       type_name.type_name
     when String
-      type_name.downcase
+      type_name
     else
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
@@ -450,7 +488,7 @@ class AccessOperator
     end
 
     # type name must conform
-    if type_name !~ Patterns::CLASSREF
+    if type_name !~ Patterns::CLASSREF_EXT
       fail(Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
     end
 
@@ -541,6 +579,8 @@ class AccessOperator
                  c.type_name
                elsif c.is_a?(String)
                  c.downcase
+               elsif c.is_a?(Types::PTypeReferenceType)
+                 c.type_string.downcase
                else
                  fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
                end

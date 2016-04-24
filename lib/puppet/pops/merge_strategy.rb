@@ -279,7 +279,6 @@ module Puppet::Pops
   #   hash.deep_merge!({:x => [1,2]}, {:knockout_prefix => '--'})
   #   - 'knockout_prefix' Set to string value to signify prefix which deletes elements from existing element. Defaults is _undef_
   #   - 'sort_merged_arrays' Set to _true_ to sort all arrays that are merged together. Default is _false_
-  #   - 'unpack_arrays' Set to string value used as a deliminator to join all array values and then split them again. Default is _undef_
   #   - 'merge_hash_arrays' Set to _true_ to merge hashes within arrays. Default is _false_
   #
   # Selected Options Details:
@@ -295,14 +294,6 @@ module Puppet::Pops
   #    dest   = {:x => [1,2,3]}
   #    dest.ko_deep_merge!(source)
   #    Results: {:x => ""}
-  # :unpack_arrays => The purpose of this is to permit compound elements to be passed
-  #   in as strings and to be converted into discrete array elements
-  #   irsource = {:x => ['1,2,3', '4']}
-  #   dest   = {:x => ['5','6','7,8']}
-  #   dest.deep_merge!(source, {:unpack_arrays => ','})
-  #   Results: {:x => ['1','2','3','4','5','6','7','8']}
-  #   Why: If receiving data from an HTML form, this makes it easy for a checkbox
-  #    to pass multiple values from within a single HTML element
   #
   # :merge_hash_arrays => merge hashes within arrays
   #   source = {:x => [{:y => 1}]}
@@ -335,7 +326,6 @@ module Puppet::Pops
           'merge_debug=>Optional[Boolean],'\
           'merge_hash_arrays=>Optional[Boolean],'\
           'sort_merge_arrays=>Optional[Boolean],'\
-          'unpack_arrays=>Optional[String]'\
           '}]')
     end
 

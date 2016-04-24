@@ -34,7 +34,7 @@ module HarnessOptions
     :xml => true,
     :timesync => false,
     :repo_proxy => true,
-    :add_el_extras => true,
+    :add_el_extras => false,
     :preserve_hosts => 'onfail',
     :forge_host => 'forge-aio01-petest.puppetlabs.com',
     :'master-start-curl-retries' => 30
@@ -273,6 +273,32 @@ def config
   ENV['BEAKER_HOSTS']
 end
 
+
+def get_test_sample
+  # This set represents a reasonable sample of puppet acceptance tests,
+  # covering a wide range of features and code susceptible to regressions.
+  tests = [ 'tests/direct_puppet/cached_catalog_remediate_local_drift.rb',
+            'tests/resource/file/content_attribute.rb',
+            'tests/environment/environment_scenario-default.rb',
+            'tests/puppet_apply_basics.rb',
+            'tests/modules/install/basic_install.rb',
+            'tests/face/loadable_from_modules.rb',
+            'tests/language/functions_in_puppet_language.rb',
+            'tests/node/check_woy_cache_works.rb',
+            'tests/parser_functions/calling_all_functions.rb',
+            'tests/ticket_4622_filebucket_diff_test.rb',
+            'tests/pluginsync/4420_pluginfacts_should_be_resolvable_on_agent.rb',
+            'tests/ssl/puppet_cert_generate_and_autosign.rb',
+            'tests/resource/service/puppet_mcollective_service_management.rb'
+          ]
+
+  # Add any tests modified within the last two weeks to the list
+  modified = `git log --name-only --pretty="format:" --since 2.weeks ./tests`
+  tests += modified.split("\n").reject { |s| s.empty? }.collect { |s| s.sub('acceptance/', '')}
+
+  tests.uniq
+end
+
 namespace :ci do
   task :check_env do
     raise(USAGE) unless sha
@@ -291,6 +317,17 @@ You may also optionally set the git server to checkout repos from using GIT_SERV
 Or you may set PUPPET_GIT_SERVER='my.host.with.git.daemon', specifically, if you have set up a `git daemon` to pull local commits from.  (You will need to allow the git daemon to serve the repo (see `git help daemon` and the docs/acceptance_tests.md for more details)).
 If there is a Beaker options hash in a ./local_options.rb, it will be included.  Commandline options set through the above environment variables will override settings in this file.
 EOS
+
+    desc <<-EOS
+Run a limited but representative subset of acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation. This task is intended to reduce testing time on a per-commit basis.
+
+  $ env SHA=<full sha> bundle exec rake ci:test:quick
+EOS
+
+  task :quick => 'ci:check_env' do
+    ENV['TESTS'] = get_test_sample.join(",")
+    beaker_test(:aio)
+  end
 
     desc <<-EOS
 Run the acceptance tests through Beaker and install packages as part of the AIO puppet-agent installation.

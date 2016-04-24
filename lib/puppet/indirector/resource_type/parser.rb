@@ -100,4 +100,9 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
     environment.check_for_reparse
     environment.known_resource_types
   end
+
+  def allow_remote_requests?
+    Puppet.deprecation_warning("The resource_type endpoint is deprecated in favor of the environment_classes endpoint. See https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.html")
+    super
+  end
 end

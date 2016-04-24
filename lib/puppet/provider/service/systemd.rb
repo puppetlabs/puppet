@@ -36,10 +36,21 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return []
   end
 
+  # This helper ensures that the enable state cache is always reset
+  # after a systemctl enable operation. A particular service state is not guaranteed
+  # after such an operation, so the cache must be emptied to prevent inconsistencies
+  # in the provider's believed state of the service and the actual state.
+  # @param action [String,Symbol] One of 'enable', 'disable', 'mask' or 'unmask'
+  def systemctl_change_enable(action)
+    output = systemctl(action, @resource[:name])
+  rescue
+    raise Puppet::Error, "Could not #{action} #{self.name}: #{output}", $!.backtrace
+  ensure
+    @cached_enabled = nil
+  end
+
   def disable
-    output = systemctl(:disable, @resource[:name])
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
+    systemctl_change_enable(:disable)
   end
 
   def get_start_link_count
@@ -53,38 +64,27 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     Dir.glob("/etc/rc*.d/S??#{link_name}").length
   end
 
+  def cached_enabled?
+    return @cached_enabled if @cached_enabled
+    cmd = [command(:systemctl), 'is-enabled', @resource[:name]]
+    @cached_enabled = execute(cmd, :failonfail => false).strip
+  end
+
   def enabled?
-    begin
-      systemctl_info = systemctl(
-         'show',
-         @resource[:name],
-         '--property', 'LoadState',
-         '--property', 'UnitFileState',
-         '--no-pager'
-      )
+    output = cached_enabled?
 
-      svc_info = Hash.new
-      systemctl_info.split.each do |svc|
-        entry_pair = svc.split('=')
-        svc_info[entry_pair.first.to_sym] = entry_pair.last
-      end
-
-      # The masked state is equivalent to the disabled state in terms of
-      # comparison so we only care to check if it is masked if we want to keep
-      # it masked.
-      #
-      # We only return :mask if we're trying to mask the service. This prevents
-      # flapping when simply trying to disable a masked service.
-      return :mask if (@resource[:enable] == :mask) && (svc_info[:LoadState] == 'masked')
-      return :true if svc_info[:UnitFileState] == 'enabled'
-      if Facter.value(:osfamily).downcase == 'debian'
-        ret = debian_enabled?(svc_info)
-        return ret if ret
-      end
-    rescue Puppet::ExecutionFailure
-      # The execution of the systemd command can fail for quite a few reasons.
-      # In all of these cases, the failure of the query indicates that the
-      # service is disabled and therefore we simply return :false.
+    # The masked state is equivalent to the disabled state in terms of
+    # comparison so we only care to check if it is masked if we want to keep
+    # it masked.
+    #
+    # We only return :mask if we're trying to mask the service. This prevents
+    # flapping when simply trying to disable a masked service.
+    return :mask if (@resource[:enable] == :mask) && (output == 'masked')
+    return :true if ['static', 'enabled'].include? output
+    return :false if ['disabled', 'linked', 'indirect', 'masked'].include? output
+    if (output.empty?) && (Facter.value(:osfamily).downcase == 'debian')
+      ret = debian_enabled?
+      return ret if ret
     end
 
     return :false
@@ -95,51 +95,38 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # have a Systemd unit file, we need to go through the old init script to determine
   # whether it is enabled or not. See PUP-5016 for more details.
   #
-  def debian_enabled?(svc_info)
-    # If UnitFileState == UnitFileState then we query the older way.
-    if svc_info[:UnitFileState] == 'UnitFileState'
-      system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
-      if [104, 106].include?($CHILD_STATUS.exitstatus)
+  def debian_enabled?
+    system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+    if [104, 106].include?($CHILD_STATUS.exitstatus)
+      return :true
+    elsif [101, 105].include?($CHILD_STATUS.exitstatus)
+      # 101 is action not allowed, which means we have to do the check manually.
+      # 105 is unknown, which generally means the iniscript does not support query
+      # The debian policy states that the initscript should support methods of query
+      # For those that do not, peform the checks manually
+      # http://www.debian.org/doc/debian-policy/ch-opersys.html
+      if get_start_link_count >= 4
         return :true
-      elsif [101, 105].include?($CHILD_STATUS.exitstatus)
-        # 101 is action not allowed, which means we have to do the check manually.
-        # 105 is unknown, which generally means the iniscript does not support query
-        # The debian policy states that the initscript should support methods of query
-        # For those that do not, peform the checks manually
-        # http://www.debian.org/doc/debian-policy/ch-opersys.html
-        if get_start_link_count >= 4
-          return :true
-        else
-          return :false
-        end
       else
         return :false
       end
+    else
+      return :false
     end
   end
 
   def enable
     self.unmask
-    output = systemctl("enable", @resource[:name])
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
+    systemctl_change_enable(:enable)
   end
 
   def mask
     self.disable
-    begin
-      output = systemctl("mask", @resource[:name])
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not mask #{self.name}: #{output}", $!.backtrace
-    end
+    systemctl_change_enable(:mask)
   end
 
   def unmask
-    begin
-      output = systemctl("unmask", @resource[:name])
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not unmask #{self.name}: #{output}", $!.backtrace
-    end
+    systemctl_change_enable(:unmask)
   end
 
   def restartcmd

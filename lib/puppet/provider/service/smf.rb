@@ -34,11 +34,12 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def self.instances
-   svcs("-H").split("\n").select{|l| l !~ /^legacy_run/ }.collect do |line|
-     state,stime,fmri = line.split(/\s+/)
+   svcs("-H", "-o", "state,fmri" ).split("\n").select{|l| l !~ /^legacy_run/ }.collect do |line|
+     state,fmri = line.split(/\s+/)
      status =  case state
                when /online/; :running
                when /maintenance/; :maintenance
+               when /degraded/; :degraded
                else :stopped
                end
      new({:name => fmri, :ensure => status})
@@ -69,7 +70,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   def startcmd
     self.setupservice
     case self.status
-    when :maintenance
+    when :maintenance, :degraded
       [command(:adm), :clear, @resource[:name]]
     else
       [command(:adm), :enable, "-s", @resource[:name]]
@@ -140,6 +141,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       return :stopped
     when "maintenance"
       return :maintenance
+    when "degraded"
+      return :degraded
     when "legacy_run"
       raise Puppet::Error,
         "Cannot manage legacy services through SMF"

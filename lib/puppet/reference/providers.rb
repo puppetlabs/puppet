@@ -1,9 +1,8 @@
-# This doesn't get stored in trac, since it changes every time.
 providers = Puppet::Util::Reference.newreference :providers, :title => "Provider Suitability Report", :depth => 1, :dynamic => true, :doc => "Which providers are valid for this machine" do
   types = []
   Puppet::Type.loadall
   Puppet::Type.eachtype do |klass|
-    next unless klass.providers.length > 0
+    next unless klass && klass.providers.length > 0
     types << klass
   end
   types.sort! { |a,b| a.name.to_s <=> b.name.to_s }

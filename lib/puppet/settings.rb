@@ -562,7 +562,7 @@ class Puppet::Settings
           # will have associated hooks that it ends up being less work this
           # way overall.
           if setting.call_hook_on_initialize?
-            @hooks_to_call_on_application_initialization << setting
+            @hooks_to_call_on_application_initialization |= [ setting ]
           else
             setting.handle(ChainedValues.new(
               preferred_run_mode,
@@ -908,7 +908,7 @@ class Puppet::Settings
         if tryconfig.call_hook_on_define?
           call << tryconfig
         elsif tryconfig.call_hook_on_initialize?
-          @hooks_to_call_on_application_initialization << tryconfig
+          @hooks_to_call_on_application_initialization |= [ tryconfig ]
         end
       end
 
@@ -1191,7 +1191,7 @@ Generated on #{Time.now}.
   # Read the file in.
   # @api private
   def read_file(file)
-    return Puppet::FileSystem.read(file)
+    return Puppet::FileSystem.read(file, :encoding => 'utf-8')
   end
 
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.

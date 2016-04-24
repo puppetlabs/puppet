@@ -737,7 +737,7 @@ describe Puppet::Settings do
 
       Puppet::FileSystem.expects(:exist?).with(myfile).returns(true)
 
-      Puppet::FileSystem.expects(:read).with(myfile).returns "[main]"
+      Puppet::FileSystem.expects(:read).with(myfile, :encoding => 'utf-8').returns "[main]"
 
       @settings.send(:parse_config_files)
     end

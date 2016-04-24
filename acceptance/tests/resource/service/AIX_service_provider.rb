@@ -10,11 +10,11 @@ sloth_daemon_script = <<SCRIPT
 while true; do sleep 1; done
 SCRIPT
 
-def assert_service_enable(host, service, expected_status)
+def lsitab_assert_enable(host, service, expected_status)
   case expected_status
-  when "true"
+  when true
     expected_output = service
-  when "false"
+  when false
     expected_output = ''
   else
     raise "This test doesn't know what to do with an expected enable status of #{expected_status}"
@@ -27,11 +27,11 @@ def assert_service_enable(host, service, expected_status)
   end
 end
 
-def assert_service_status(host, service, expected_status)
+def lssrc_assert_status(host, service, expected_status)
   case expected_status
-  when "running"
+  when true
     expected_output = 'active'
-  when "stopped"
+  when false
     expected_output = 'inoperative'
   else
     raise "This test doesn't know what to do with an expected status of #{expected_status}"
@@ -55,6 +55,9 @@ agents.each do |agent|
   on agent, "chmod +x #{sloth_daemon_path}"
   on agent, "mkssys -s sloth_daemon -p #{sloth_daemon_path} -u 0 -S -n 15 -f 9"
 
+  # Creating the service also starts it. Stop it before beginning the test.
+  ensure_service_on_host(agent, 'sloth_daemon', {:ensure => 'stopped'})
+
   teardown do
     on agent, "rmssys -s sloth_daemon"
     on agent, "rm #{sloth_daemon_path}"
@@ -68,21 +71,25 @@ agents.each do |agent|
 
   ## Start the service
   step "Start the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'ensure', 'running'
-  assert_service_status agent, 'sloth_daemon', 'running'
+  ensure_service_on_host(agent, 'sloth_daemon', {:ensure => 'running'}) do
+    lssrc_assert_status(agent, 'sloth_daemon', true)
+  end
 
   ## Stop the service
   step "Stop the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'ensure', 'stopped'
-  assert_service_status agent, 'sloth_daemon', 'stopped'
+  ensure_service_on_host(agent, 'sloth_daemon', {:ensure => 'stopped'}) do
+    lssrc_assert_status(agent, 'sloth_daemon', false)
+  end
 
   ## Enable the service
   step "Enable the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'enable', 'true'
-  assert_service_enable agent, 'sloth_daemon', 'true'
+  ensure_service_on_host(agent, 'sloth_daemon', {:enable => 'true'}) do
+    lsitab_assert_enable(agent, 'sloth_daemon', true)
+  end
 
   ## Disable the service
   step "Disable the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'enable', 'false'
-  assert_service_enable agent, 'sloth_daemon', 'false'
+  ensure_service_on_host(agent, 'sloth_daemon', {:enable => 'false'}) do
+    lsitab_assert_enable(agent, 'sloth_daemon', false)
+  end
 end

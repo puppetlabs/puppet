@@ -57,7 +57,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
-      end
+    end
+
+    it 'should error when it encounters an unknown resource' do
+      expect {parser.evaluate_string(scope, '$a = SantaClause', __FILE__)}.to raise_error(/Resource type not found: SantaClause/)
+    end
+
+    it 'should error when it encounters an unknown resource with a parameter' do
+      expect {parser.evaluate_string(scope, '$b = ToothFairy[emea]', __FILE__)}.to raise_error(/Resource type not found: ToothFairy/)
+    end
   end
 
   context "When the evaluator evaluates Lists and Hashes" do
@@ -253,9 +261,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "xxx in bananas"                => false,
       "/ana/ in bananas"              => true,
       "/xxx/ in bananas"              => false,
-      "ANA in bananas"                => false, # ANA is a type, not a String
+      "FILE in profiler"              => false, # FILE is a type, not a String
+      "'FILE' in profiler"            => true,
       "String[1] in bananas"          => false, # Philosophically true though :-)
-      "'ANA' in bananas"              => true,
       "ana in 'BANANAS'"              => true,
       "/ana/ in 'BANANAS'"            => false,
       "/ANA/ in 'BANANAS'"            => true,
@@ -307,13 +315,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     {
       'Any'  => ['NotUndef', 'Data', 'Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
-                    'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File', 'NotYetKnownResourceType'],
+                    'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File' ],
 
       # Note, Data > Collection is false (so not included)
       'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
       'Scalar' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
       'Numeric' => ['Integer', 'Float'],
-      'CatalogEntry' => ['Class', 'Resource', 'File', 'NotYetKnownResourceType'],
+      'CatalogEntry' => ['Class', 'Resource', 'File'],
       'Integer[1,10]' => ['Integer[2,3]'],
     }.each do |general, specials|
       specials.each do |special |

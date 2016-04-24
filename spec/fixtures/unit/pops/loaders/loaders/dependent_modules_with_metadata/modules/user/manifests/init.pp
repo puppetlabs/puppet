@@ -11,6 +11,12 @@ function puppet_init_calling_ruby() {
 }
 
 class user {
+  # Dummy resource. Added just to assert that a ruby type in another module is loaded correctly
+  # by the auto loader
+  Usee_type {
+    name => 'pelle'
+  }
+
   case $::case_number {
     1: {
       # Call a puppet function that resides in usee/functions directly from init.pp

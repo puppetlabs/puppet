@@ -305,6 +305,12 @@ module Puppet::Pops::Model
     contains_one_uni 'type_expr', Expression
   end
 
+  # A type mapping assignment
+  class TypeMapping < Definition
+    contains_one_uni 'type_expr', Expression
+    contains_one_uni 'mapping_expr', Expression
+  end
+
   # A type definition
   class TypeDefinition < QRefDefinition
     has_attr 'parent', String
@@ -502,7 +508,7 @@ module Puppet::Pops::Model
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).
   #
   class QualifiedReference < LiteralValue
-    has_attr 'value', String, :lowerBound => 1
+    has_attr 'cased_value', String, :lowerBound => 1
   end
 
   # A Variable expression looks up value of expr (some kind of name) in scope.

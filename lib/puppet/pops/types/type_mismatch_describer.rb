@@ -17,8 +17,10 @@ module Types
       self.class == o.class && key == o.key
     end
 
-    alias :eql? :==
-  end
+    def eql?(o)
+      self == o
+    end
+   end
 
   class SubjectPathElement < TypePathElement
     def to_s
@@ -26,15 +28,15 @@ module Types
     end
   end
 
-  class MemberPathElement < TypePathElement
+  class EntryValuePathElement < TypePathElement
     def to_s
-      "struct member #{key}"
+      "entry '#{key}'"
     end
   end
 
-  class MemberKeyPathElement < TypePathElement
+  class EntryKeyPathElement < TypePathElement
     def to_s
-      "struct member key #{key}"
+      "key of entry '#{key}'"
     end
   end
 
@@ -104,6 +106,15 @@ module Types
         'did not have a'
       end
     end
+
+    def it_references(tense)
+      case tense
+        when :present
+          'references'
+        else
+          'referenced'
+      end
+    end
   end
 
   class Mismatch
@@ -130,7 +141,9 @@ module Types
       self.class == o.class && canonical_path == o.canonical_path
     end
 
-    alias :eql? :==
+    def eql?(o)
+      self == o
+    end
 
     def hash
       canonical_path.hash
@@ -201,7 +214,7 @@ module Types
 
   class ExtraneousKey < KeyMismatch
     def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_has_no(tense)} '#{@key}' key"
+      "#{variant}#{position} unrecognized key '#{@key}'"
     end
   end
 
@@ -223,12 +236,33 @@ module Types
     end
   end
 
+  class UnresolvedTypeReference < Mismatch
+    attr_reader :unresolved
+
+    def initialize(path, unresolved)
+      super(path)
+      @unresolved = unresolved
+    end
+
+    def ==(o)
+      super.==(o) && @unresolved == o.unresolved
+    end
+
+    def hash
+      @unresolved.hash
+    end
+
+    def message(variant, position, tense = :present)
+      "#{variant}#{position} #{it_references(tense)} an unresolved type '#{@unresolved}'"
+    end
+  end
+
   class ExpectedActualMismatch < Mismatch
     attr_reader :expected, :actual
 
     def initialize(path, expected, actual)
       super(path)
-      @expected = (expected.is_a?(Array) ? PVariantType.new(expected) : expected).normalize
+      @expected = (expected.is_a?(Array) ? PVariantType.maybe_create(expected) : expected).normalize
       @actual = actual.normalize
     end
 
@@ -301,6 +335,22 @@ module Types
 
     private
 
+    # Answers the question if `e` is a specialized type of `a`
+    # @param e [PAnyType] the expected type
+    # @param a [PAnyType] the actual type
+    # @return [Boolean] `true` when the _e_ is a specialization of _a_
+    #
+    def specialization(e, a)
+      case e
+      when PStructType
+        a.is_a?(PHashType)
+      when PTupleType
+        a.is_a?(PArrayType)
+      else
+        false
+      end
+    end
+
     # Decides whether or not the report must be fully detailed, or if generalization can be permitted
     # in the mismatch report. All comparisons are made using resolved aliases rather than the alias
     # itself.
@@ -313,7 +363,7 @@ module Types
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
       else
-        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType)
+        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType) || specialization(e, a)
       end
     end
 
@@ -695,6 +745,28 @@ module Types
       end
     end
 
+    def describe_PHashType(expected, actual, path)
+      descriptions = []
+      key_type = expected.key_type || PAnyType::DEFAULT
+      value_type = expected.element_type || PAnyType::DEFAULT
+      if actual.is_a?(PStructType)
+        elements = actual.elements
+        expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE
+        actual_size = PIntegerType.new(elements.count { |a| !a.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
+        if expected_size.assignable?(actual_size)
+          elements.each do |a|
+            descriptions.concat(describe(key_type, a.key_type, path + [EntryKeyPathElement.new(a.name)])) unless key_type.assignable?(a.key_type)
+            descriptions.concat(describe(value_type, a.value_type, path + [EntryValuePathElement.new(a.name)])) unless value_type.assignable?(a.value_type)
+          end
+        else
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
+        end
+      else
+        descriptions << TypeMismatch.new(path, expected, actual)
+      end
+      descriptions
+    end
+
     def describe_PStructType(expected, actual, path)
       elements = expected.elements
       descriptions = []
@@ -706,22 +778,18 @@ module Types
           if e2.nil?
             descriptions << MissingKey.new(path, key) unless e1.key_type.assignable?(PUndefType::DEFAULT)
           else
-            descriptions.concat(describe(e1.key_type, e2.key_type, path + [MemberKeyPathElement.new(key)])) unless e1.key_type.assignable?(e2.key_type)
-            descriptions.concat(describe(e1.value_type, e2.value_type, path + [MemberPathElement.new(key)])) unless e1.value_type.assignable?(e2.value_type)
+            descriptions.concat(describe(e1.key_type, e2.key_type, path + [EntryKeyPathElement.new(key)])) unless e1.key_type.assignable?(e2.key_type)
+            descriptions.concat(describe(e1.value_type, e2.value_type, path + [EntryValuePathElement.new(key)])) unless e1.value_type.assignable?(e2.value_type)
           end
         end
         h2.each_key { |key| descriptions << ExtraneousKey.new(path, key) }
       elsif actual.is_a?(PHashType)
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
-        expected_size = PIntegerType.new(elements.count { |e| !e.type.assignable?(PUndefType::DEFAULT) }, elements.size)
+        expected_size = PIntegerType.new(elements.count { |e| !e.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
         if expected_size.assignable?(actual_size)
-          if actual_size.to == 0 || PStringType::NON_EMPTY.assignable?(actual.key_type)
-            descriptions.concat(describe(e.type, actual.element_type, path + [MemberPathElement.new(e.key)]))
-          else
-            descriptions << TypeMismatch(path, @non_empty_string_, actual.key_type)
-          end
+          descriptions << TypeMismatch.new(path, expected, actual)
         else
-          descriptions << SizeMismatch(path, expected_size, actual_size)
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
       else
         descriptions << TypeMismatch.new(path, expected, actual)
@@ -815,26 +883,51 @@ module Types
       expected.assignable?(actual) ? EMPTY_ARRAY : [TypeMismatch.new(path, expected, actual)]
     end
 
+    class UnresolvedTypeFinder
+      include TypeAcceptor
+
+      attr_reader :unresolved
+
+      def initialize
+        @unresolved = nil
+      end
+
+      def visit(type, guard)
+        if @unresolved.nil? && type.is_a?(PTypeReferenceType)
+          @unresolved = type.type_string
+        end
+      end
+    end
+
     def describe(expected, actual, path)
-      case expected
-      when PVariantType
-        describe_PVariantType(expected, actual, path)
-      when PStructType
-        describe_PStructType(expected, actual, path)
-      when PTupleType
-        describe_PTupleType(expected, actual, path)
-      when PCallableType
-        describe_PCallableType(expected, actual, path)
-      when POptionalType
-        describe_POptionalType(expected, actual, path)
-      when PPatternType
-        describe_PPatternType(expected, actual, path)
-      when PEnumType
-        describe_PEnumType(expected, actual, path)
-      when PTypeAliasType
-        describe_PTypeAliasType(expected, actual, path)
+      ures_finder = UnresolvedTypeFinder.new
+      expected.accept(ures_finder, nil)
+      unresolved = ures_finder.unresolved
+      if unresolved
+        [UnresolvedTypeReference.new(path, unresolved)]
       else
-        describe_PAnyType(expected, actual, path)
+        case expected
+        when PVariantType
+          describe_PVariantType(expected, actual, path)
+        when PStructType
+          describe_PStructType(expected, actual, path)
+        when PHashType
+          describe_PHashType(expected, actual, path)
+        when PTupleType
+          describe_PTupleType(expected, actual, path)
+        when PCallableType
+          describe_PCallableType(expected, actual, path)
+        when POptionalType
+          describe_POptionalType(expected, actual, path)
+        when PPatternType
+          describe_PPatternType(expected, actual, path)
+        when PEnumType
+          describe_PEnumType(expected, actual, path)
+        when PTypeAliasType
+          describe_PTypeAliasType(expected, actual, path)
+        else
+          describe_PAnyType(expected, actual, path)
+        end
       end
     end
 

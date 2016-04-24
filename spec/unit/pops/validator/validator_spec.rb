@@ -2,9 +2,7 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/pops'
-
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '../parser/parser_rspec_helper')
+require_relative '../parser/parser_rspec_helper'
 
 describe "validating 4x" do
   include ParserRspecHelper
@@ -424,16 +422,53 @@ describe "validating 4x" do
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_EXPRESSION)
       end
     end
+
+    context 'that are type mappings' do
+      it 'accepts a valid type mapping expression' do
+        source = <<-CODE
+          type Runtime[ruby, 'MyModule::MyObject'] = MyPackage::MyObject
+          notice(true)
+        CODE
+        expect(validate(parse(source))).not_to have_any_issues
+      end
+
+      it 'accepts a valid regexp based type mapping expression' do
+        source = <<-CODE
+          type Runtime[ruby, [/^MyPackage::(\w+)$/, 'MyModule::\1']] = [/^MyModule::(\w+)$/, 'MyPackage::\1']
+          notice(true)
+        CODE
+        expect(validate(parse(source))).not_to have_any_issues
+      end
+
+      it 'raises an error when a regexp based Runtime type is paired with a Puppet Type' do
+        source = <<-CODE
+          type Runtime[ruby, [/^MyPackage::(\w+)$/, 'MyModule::\1']] = MyPackage::MyObject
+          notice(true)
+        CODE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_REGEXP_TYPE_MAPPING)
+      end
+
+      it 'raises an error when a singleton Runtime type is paired with replacement pattern' do
+        source = <<-CODE
+          type Runtime[ruby, 'MyModule::MyObject'] = [/^MyModule::(\w+)$/, 'MyPackage::\1']
+          notice(true)
+        CODE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_SINGLE_TYPE_MAPPING)
+      end
+
+      it 'raises errors unless LHS is Runtime type' do
+        source = <<-CODE
+          type Pattern[/^MyPackage::(\w+)$/, 'MyModule::\1'] = [/^MyModule::(\w+)$/, 'MyPackage::\1']
+          notice(true)
+        CODE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_EXPRESSION)
+      end
+    end
   end
 
   context "capability annotations" do
-    before(:each) do
-      with_app_management(true)
-    end
-
-    after(:each) do
-      with_app_management(false)
-    end
+    before(:each) { Puppet[:app_management] = true }
+    after(:each) { Puppet[:app_management] = false }
 
     ['produces', 'consumes'].each do |word|
       it "rejects illegal resource types in #{word} clauses" do

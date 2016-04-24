@@ -521,7 +521,7 @@ class Puppet::Property < Puppet::Parameter
     if features = self.class.value_option(self.class.value_name(value), :required_features)
       features = Array(features)
       needed_features = features.collect { |f| f.to_s }.join(", ")
-      raise ArgumentError, "Provider must have features '#{needed_features}' to set '#{self.class.name}' to '#{value}'" unless provider.satisfies?(features)
+      raise ArgumentError, "Provider #{provider.class.name} must have features '#{needed_features}' to set '#{self.class.name}' to '#{value}'" unless provider.satisfies?(features)
     end
   end
 

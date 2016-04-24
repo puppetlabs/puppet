@@ -46,7 +46,6 @@ class TypeParser
   # @api private
   def interpret(ast, context)
     result = @type_transformer.visit_this_1(self, ast, context)
-    result = result.body if result.is_a?(Model::Program)
     raise_invalid_type_specification_error unless result.is_a?(PAnyType)
     result
   end
@@ -63,7 +62,11 @@ class TypeParser
 
   # @api private
   def interpret_Program(o, context)
-    interpret(o.body, context)
+    interpret_any(o.body, context)
+  end
+
+  def interpret_LambdaExpression(o, context)
+    o
   end
 
   # @api private
@@ -72,32 +75,13 @@ class TypeParser
   end
 
   # @api private
-  def interpret_LiteralString(o, context)
+  def interpret_LiteralBoolean(o, context)
     o.value
-  end
-
-  def interpret_LiteralRegularExpression(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_String(o, context)
-    o
   end
 
   # @api private
   def interpret_LiteralDefault(o, context)
     :default
-  end
-
-  # @api private
-  def interpret_LiteralInteger(o, context)
-    o.value
-  end
-
-  # @api private
-  def interpret_UnaryMinusExpression(o, context)
-    -@type_transformer.visit_this_1(self, o.expr, context)
   end
 
   # @api private
@@ -115,112 +99,102 @@ class TypeParser
   end
 
   # @api private
+  def interpret_LiteralInteger(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralList(o, context)
+    o.values.map { |value| @type_transformer.visit_this_1(self, value, context) }
+  end
+
+  # @api private
+  def interpret_LiteralRegularExpression(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralString(o, context)
+    o.value
+  end
+
+  # @api private
+  def interpret_LiteralUndef(o, context)
+    nil
+  end
+
+  # @api private
+  def interpret_String(o, context)
+    o
+  end
+
+  # @api private
+  def interpret_UnaryMinusExpression(o, context)
+    -@type_transformer.visit_this_1(self, o.expr, context)
+  end
+
+  # @api private
+  def self.type_map
+    @type_map ||= {
+       'integer'       => TypeFactory.integer,
+       'float'         => TypeFactory.float,
+        'numeric'      => TypeFactory.numeric,
+        'iterable'     => TypeFactory.iterable,
+        'iterator'     => TypeFactory.iterator,
+        'string'       => TypeFactory.string,
+        'enum'         => TypeFactory.enum,
+        'boolean'      => TypeFactory.boolean,
+        'pattern'      => TypeFactory.pattern,
+        'regexp'       => TypeFactory.regexp,
+        'data'         => TypeFactory.data,
+        'array'        => TypeFactory.array_of_data,
+        'hash'         => TypeFactory.hash_of_data,
+        'class'        => TypeFactory.host_class,
+        'resource'     => TypeFactory.resource,
+        'collection'   => TypeFactory.collection,
+        'scalar'       => TypeFactory.scalar,
+        'catalogentry' => TypeFactory.catalog_entry,
+        'undef'        => TypeFactory.undef,
+        'notundef'     => TypeFactory.not_undef(),
+        'default'      => TypeFactory.default(),
+        'any'          => TypeFactory.any,
+        'variant'      => TypeFactory.variant,
+        'optional'     => TypeFactory.optional,
+        'runtime'      => TypeFactory.runtime,
+        'type'         => TypeFactory.type_type,
+        'tuple'        => TypeFactory.tuple,
+        'struct'       => TypeFactory.struct,
+        'object'       => TypeFactory.object,
+        'typealias'    => TypeFactory.type_alias,
+        'typereference' => TypeFactory.type_reference,
+      # A generic callable as opposed to one that does not accept arguments
+        'callable'     => TypeFactory.all_callables
+    }
+  end
+
+  # @api private
   def interpret_QualifiedReference(name_ast, context)
     name = name_ast.value
-    case name
-    when 'integer'
-      TypeFactory.integer
-
-    when 'float'
-      TypeFactory.float
-
-    when 'numeric'
-        TypeFactory.numeric
-
-    when 'iterable'
-      TypeFactory.iterable
-
-    when 'iterator'
-      TypeFactory.iterator
-
-    when 'string'
-      TypeFactory.string
-
-    when 'enum'
-      TypeFactory.enum
-
-    when 'boolean'
-      TypeFactory.boolean
-
-    when 'pattern'
-      TypeFactory.pattern
-
-    when 'regexp'
-      TypeFactory.regexp
-
-    when 'data'
-      TypeFactory.data
-
-    when 'array'
-      TypeFactory.array_of_data
-
-    when 'hash'
-      TypeFactory.hash_of_data
-
-    when 'class'
-      TypeFactory.host_class
-
-    when 'resource'
-      TypeFactory.resource
-
-    when 'collection'
-      TypeFactory.collection
-
-    when 'scalar'
-      TypeFactory.scalar
-
-    when 'catalogentry'
-      TypeFactory.catalog_entry
-
-    when 'undef'
-      TypeFactory.undef
-
-    when 'notundef'
-      TypeFactory.not_undef()
-
-    when 'default'
-      TypeFactory.default()
- 
-    when 'any'
-      TypeFactory.any
-
-    when 'variant'
-      TypeFactory.variant
-
-    when 'optional'
-      TypeFactory.optional
-
-    when 'runtime'
-      TypeFactory.runtime
-
-    when 'type'
-      TypeFactory.type_type
-
-    when 'tuple'
-      TypeFactory.tuple
-
-    when 'struct'
-      TypeFactory.struct
-
-    when 'callable'
-      # A generic callable as opposed to one that does not accept arguments
-      TypeFactory.all_callables
-
+    if found = self.class.type_map[name]
+      found
     else
-      if context.nil?
-        TypeFactory.type_reference(name.capitalize)
-      else
-        if context.is_a?(Puppet::Pops::Loader::Loader)
-          loader = context
-        else
-          loader = Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(name_ast, context)
-        end
-        unless loader.nil?
-          type = loader.load(:type, name)
-          type = type.resolve(self, loader) unless type.nil?
-        end
-        type || TypeFactory.resource(name)
+      loader = loader_from_context(name_ast, context)
+      unless loader.nil?
+        type = loader.load(:type, name)
+        type = type.resolve(self, loader) unless type.nil?
       end
+      type || TypeFactory.type_reference(name_ast.cased_value)
+    end
+  end
+
+  # @api private
+  def loader_from_context(ast, context)
+    if context.nil?
+      nil
+    elsif context.is_a?(Puppet::Pops::Loader::Loader)
+      context
+    else
+      Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(ast, context)
     end
   end
 
@@ -228,11 +202,11 @@ class TypeParser
   def interpret_AccessExpression(parameterized_ast, context)
     parameters = parameterized_ast.keys.collect { |param| interpret_any(param, context) }
 
-    unless parameterized_ast.left_expr.is_a?(Model::QualifiedReference)
-      raise_invalid_type_specification_error
-    end
+    qref = parameterized_ast.left_expr
+    raise_invalid_type_specification_error unless qref.is_a?(Model::QualifiedReference)
 
-    case parameterized_ast.left_expr.value
+    type_name = qref.value
+    case type_name
     when 'array'
       case parameters.size
       when 1
@@ -306,13 +280,20 @@ class TypeParser
       TypeFactory.host_class(parameters[0])
 
     when 'resource'
-      if parameters.size == 1
-        TypeFactory.resource(parameters[0])
-      elsif parameters.size != 2
-        raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)
-      else
-        TypeFactory.resource(parameters[0], parameters[1])
+      type = parameters[0]
+      if type.is_a?(PTypeReferenceType)
+        type_str = type.type_string
+        param_start = type_str.index('[')
+        if param_start.nil?
+          type = type_str
+        else
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
+          type = type_str[0..param_start-1]
+          parameters = [type] + tps
+        end
       end
+      create_resource(type, parameters)
 
     when 'regexp'
       # 1 parameter being a string, or regular expression
@@ -382,6 +363,10 @@ class TypeParser
        TypeFactory.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
+    when 'object'
+      raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
+      TypeFactory.object(parameters[0])
+
     when 'iterable'
       if parameters.size != 1
         raise_invalid_parameters_error('Iterable', 1, parameters.size)
@@ -438,7 +423,7 @@ class TypeParser
       TypeFactory.optional(param)
 
     when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default'
-      raise_unparameterized_type_error(parameterized_ast.left_expr)
+      raise_unparameterized_type_error(qref)
 
     when 'notundef'
       case parameters.size
@@ -464,22 +449,36 @@ class TypeParser
       TypeFactory.runtime(*parameters)
 
     else
-      type_name = parameterized_ast.left_expr.value
-      if context.nil?
-        # Will be impossible to tell from a typed alias (when implemented) so a type reference
-        # is returned here for now
-        TypeFactory.type_reference(type_name.capitalize, parameters)
+      loader = loader_from_context(qref, context)
+      type = nil
+      unless loader.nil?
+        type = loader.load(:type, type_name)
+        type = type.resolve(self, loader) unless type.nil?
+      end
+
+      if type.nil?
+        TypeFactory.type_reference(original_text_of(qref.eContainer))
+      elsif type.is_a?(PResourceType)
+        raise_invalid_parameters_error(type_name, 1, parameters.size) unless parameters.size == 1
+        TypeFactory.resource(type.type_name, parameters[0])
       else
-        # It is a resource such a File['/tmp/foo']
-       if parameters.size != 1
-          raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
-        end
-        TypeFactory.resource(type_name, parameters[0])
+        # Must be a type alias. They can't use parameters (yet)
+        raise_unparameterized_type_error(qref)
       end
     end
   end
 
   private
+
+  def create_resource(name, parameters)
+    if parameters.size == 1
+      TypeFactory.resource(name)
+    elsif parameters.size == 2
+      TypeFactory.resource(name, parameters[1])
+    else
+      raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)
+    end
+  end
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(PAnyType)

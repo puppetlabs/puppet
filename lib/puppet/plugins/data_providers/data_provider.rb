@@ -1,5 +1,9 @@
+require 'puppet/pops/lookup/interpolation'
+
 module Puppet::Plugins::DataProviders
   module DataProvider
+    include Puppet::Pops::Lookup::Interpolation
+
     # Performs a lookup with an endless recursion check.
     #
     # @param key [String] The key to lookup
@@ -19,10 +23,13 @@ module Puppet::Plugins::DataProviders
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
+      segments = split_key(key)
+      root_key = segments.shift
       lookup_invocation.with(:data_provider, self) do
-        hash = data(data_key(key, lookup_invocation), lookup_invocation)
-        value = hash[key]
-        if value || hash.include?(key)
+        hash = data(data_key(root_key, lookup_invocation), lookup_invocation)
+        value = hash[root_key]
+        if value || hash.include?(root_key)
+          value = sub_lookup(key, lookup_invocation, segments, value) unless segments.empty?
           lookup_invocation.report_found(key, post_process(value, lookup_invocation))
         else
           lookup_invocation.report_not_found(key)
@@ -31,8 +38,8 @@ module Puppet::Plugins::DataProviders
       end
     end
 
-    # Perform optional post processing of found value. This hook is used by the hiera style
-    # providers to perform interpolation. The default method simply returns the given _value_.
+    # Perform optional post processing of found value. The default implementation resolves
+    # interpolation expressions
     #
     # @param value [Object] The value to perform post processing on
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
@@ -40,7 +47,7 @@ module Puppet::Plugins::DataProviders
     #
     # @api public
     def post_process(value, lookup_invocation)
-      value
+      interpolate(value, lookup_invocation, true)
     end
 
     # Gets the data from the compiler, or initializes it by calling #initialize_data if not present in the compiler.
@@ -223,6 +230,9 @@ module Puppet::Plugins::DataProviders
     #
     # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
+      segments = split_key(key)
+      root_key = segments.shift
+
       module_name = @parent_data_provider.nil? ? nil : @parent_data_provider.data_key(key, lookup_invocation)
       lookup_invocation.with(:data_provider, self) do
         merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
@@ -231,8 +241,9 @@ module Puppet::Plugins::DataProviders
             lookup_invocation.with(:path, path) do
               if path.exists?
                 hash = load_data(path.path, module_name, lookup_invocation)
-                value = hash[key]
-                if value || hash.include?(key)
+                value = hash[root_key]
+                if value || hash.include?(root_key)
+                  value = sub_lookup(key, lookup_invocation, segments, value) unless segments.empty?
                   lookup_invocation.report_found(key, post_process(value, lookup_invocation))
                 else
                   lookup_invocation.report_not_found(key)

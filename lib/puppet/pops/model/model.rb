@@ -107,6 +107,14 @@ module Puppet::Pops
       end
     end
 
+    class QualifiedReference
+      module ClassModule
+        def value
+          @value ||= cased_value.downcase
+        end
+      end
+    end
+
     class Program < PopsObject
       module ClassModule
         def locator

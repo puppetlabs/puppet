@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'matchers/match_tokens2'
 require 'puppet/pops'
 require 'puppet/pops/parser/lexer2'
-require_relative './parser_rspec_helper'
 
 module EgrammarLexer2Spec
   def tokens_scanned_from(s)
@@ -20,7 +19,6 @@ end
 
 describe 'Lexer2' do
   include EgrammarLexer2Spec
-  include ParserRspecHelper
 
   {
     :LISTSTART => '[',
@@ -116,13 +114,8 @@ describe 'Lexer2' do
   end
 
   context 'when app_managment is (turned) on' do
-    before(:each) do
-      with_app_management(true)
-    end
-
-    after(:each) do
-      with_app_management(false)
-    end
+    before(:each) { Puppet[:app_management] = true }
+    after(:each) { Puppet[:app_management] = false }
 
     {
       "application"  => :APPLICATION,
