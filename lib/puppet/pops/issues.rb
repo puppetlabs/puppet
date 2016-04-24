@@ -228,6 +228,10 @@ module Issues
     "No value for required key '#{key}' in assignment to variables from hash"
   end
 
+  MISSING_MULTI_ASSIGNMENT_VARIABLE = hard_issue :MISSING_MULTI_ASSIGNMENT_VARIABLE, :name do
+    "No value for required variable '$#{name}' in assignment to variables from class reference"
+  end
+
   APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
     "The operator '#{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals"
   end
