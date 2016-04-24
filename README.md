@@ -73,3 +73,8 @@ commercial customers. Please see the following page for more details:
 
 [Puppet Enterprise Support Lifecycle](https://puppetlabs.com/misc/puppet-enterprise-lifecycle)
 
+Maintainers
+-------
+
+* Kylo Ginsberg, kylo@puppet.com, github:kylog, jira:kylo
+* Henrik Lindberg, henrik.lindberg@puppet.com, github:hlindberg, jira:henrik.lindberg
