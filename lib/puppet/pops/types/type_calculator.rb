@@ -552,10 +552,14 @@ class TypeCalculator
 
   # @api private
   def infer_Object(o)
-    name = o.class.name
-    ir = Loaders.implementation_registry
-    type = ir.nil? ? nil : ir.type_for_module(name)
-    type.nil? ? PRuntimeType.new(:ruby, name) : type
+    if o.is_a?(PuppetObject)
+      o._ptype
+    else
+      name = o.class.name
+      ir = Loaders.implementation_registry
+      type = ir.nil? ? nil : ir.type_for_module(name)
+      type.nil? ? PRuntimeType.new(:ruby, name) : type
+    end
   end
 
   # The type of all types is PType

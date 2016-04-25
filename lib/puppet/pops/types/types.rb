@@ -2856,6 +2856,7 @@ end
 end
 end
 
+require_relative 'puppet_object'
 require_relative 'p_object_type'
 require_relative 'p_runtime_type'
 require_relative 'implementation_registry'
