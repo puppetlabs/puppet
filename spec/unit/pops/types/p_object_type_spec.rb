@@ -822,7 +822,7 @@ describe 'The Object Type' do
           "'first_x' => Callable[Integer], "+
           "'first_y' => Callable[String]"+
           "}, "+
-          "equality => [first_a]"+
+          "equality => ['first_a']"+
           "}]",
         "Object[{"+
           "name => 'MySecondObject', "+
@@ -836,7 +836,7 @@ describe 'The Object Type' do
           "'second_x' => Callable[Integer], "+
           "'second_y' => Callable[String]"+
           "}, "+
-          "equality => [second_a]"+
+          "equality => ['second_a']"+
           "}]"
         ])
       end

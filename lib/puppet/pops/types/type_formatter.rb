@@ -28,7 +28,47 @@ class TypeFormatter
   # @api public
   #
   def string(t)
-    @@string_visitor.visit_this_0(self, t)
+    @bld = ''
+    append_string(t)
+    @bld
+  end
+
+  # Produces an string containing newline characters and indentation that represents the given
+  # type or literal _t_.
+  #
+  # @param t [Object] the type or literal to produce a string for
+  # @param indent [Integer] the current indentation level
+  # @param indent_width [Integer] the number of spaces to use for one indentation
+  #
+  # @api public
+  def indented_string(t, indent = 0, indent_width = 2)
+    @indent = indent
+    @indent_width = indent_width
+    begin
+      @bld = ''
+      (@indent * @indent_width).times { @bld << ' ' }
+      append_string(t)
+      @bld << "\n"
+      @bld
+    ensure
+      @indent = nil
+      @indent_width = nil
+    end
+  end
+
+  def append_string(t)
+    if @ruby && t.is_a?(PAnyType)
+      @ruby = false
+      begin
+        @bld << @ref_ctor << "('"
+        @@string_visitor.visit_this_0(self, t)
+        @bld << "')"
+      ensure
+        @ruby = true
+      end
+    else
+      @@string_visitor.visit_this_0(self, t)
+    end
   end
 
   # Produces a string representing the type where type aliases have been expanded
@@ -56,196 +96,202 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PAnyType(t)     ; 'Any'     ; end
+  def string_PAnyType(_)     ; @bld << 'Any'     ; end
 
   # @api private
-  def string_PUndefType(t)   ; 'Undef'   ; end
+  def string_PUndefType(_)   ; @bld << 'Undef'   ; end
 
   # @api private
-  def string_PDefaultType(t) ; 'Default' ; end
+  def string_PDefaultType(_) ; @bld << 'Default' ; end
 
   # @api private
-  def string_PBooleanType(t) ; 'Boolean' ; end
+  def string_PBooleanType(_) ; @bld << 'Boolean' ; end
 
   # @api private
-  def string_PScalarType(t)  ; 'Scalar'  ; end
+  def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
 
   # @api private
-  def string_PDataType(t)    ; 'Data'    ; end
+  def string_PDataType(_)    ; @bld << 'Data'    ; end
 
   # @api private
-  def string_PNumericType(t) ; 'Numeric' ; end
+  def string_PNumericType(_) ; @bld << 'Numeric' ; end
 
   # @api private
   def string_PIntegerType(t)
-    append_array('Integer', range_array_part(t))
+    append_array('Integer', t.unbounded?) { append_elements(range_array_part(t)) }
   end
 
   # @api private
   def string_PType(t)
-    append_array('Type', t.type.nil? ? EMPTY_ARRAY : [string(t.type)])
+    append_array('Type', t.type.nil?) { append_string(t.type) }
   end
 
   # @api private
   def string_PIterableType(t)
-    append_array('Iterable', t.element_type.nil? ? EMPTY_ARRAY : [string(t.element_type)])
+    append_array('Iterable', t.element_type.nil?)  { append_string(t.element_type) }
   end
 
   # @api private
   def string_PIteratorType(t)
-    append_array('Iterator', t.element_type.nil? ? EMPTY_ARRAY : [string(t.element_type)])
+    append_array('Iterator', t.element_type.nil?) { append_string(t.element_type) }
   end
 
   # @api private
   def string_PFloatType(t)
-    append_array('Float', range_array_part(t))
+    append_array('Float', t.unbounded? ) { append_elements(range_array_part(t)) }
   end
 
   # @api private
   def string_PRegexpType(t)
-    append_array('Regexp', t.pattern.nil? ? EMPTY_ARRAY : [t.regexp.inspect])
+    append_array('Regexp', t.pattern.nil?) { append_string(t.regexp) }
   end
 
   # @api private
   def string_PStringType(t)
-    elements = range_array_part(t.size_type)
-    elements += t.values.map {|s| "'#{s}'" } if @debug
-    append_array('String', elements)
+    range = range_array_part(t.size_type)
+    append_array('String', range.empty?) do
+      if @debug
+        append_elements(range, true)
+        append_strings(t.values, true)
+        chomp_list
+      else
+        append_elements(range)
+      end
+    end
   end
 
   # @api private
   def string_PEnumType(t)
-    append_array('Enum', t.values.map {|s| "'#{s}'" })
+    append_array('Enum', t.values.empty?) { append_strings(t.values) }
   end
 
   # @api private
   def string_PVariantType(t)
-    append_array('Variant', t.types.map {|t2| string(t2) })
+    append_array('Variant', t.types.empty?) { append_strings(t.types) }
   end
 
   # @api private
   def string_PTupleType(t)
-    type_strings = t.types.map {|t2| string(t2) }
-    type_strings += range_array_part(t.size_type) unless type_strings.empty?
-    append_array('Tuple', type_strings)
+    append_array('Tuple', t.types.empty?) do
+      append_strings(t.types, true)
+      append_elements(range_array_part(t.size_type), true)
+      chomp_list
+    end
   end
 
   # @api private
   def string_PCallableType(t)
-    elements = EMPTY_ARRAY
-    unless t.param_types.nil?
+    append_array('Callable', t.param_types.nil?) do
       # translate to string, and skip Unit types
-      elements = t.param_types.types.map {|t2| string(t2) unless t2.class == PUnitType }.compact
+      append_strings(t.param_types.types.reject {|t2| t2.class == PUnitType }, true)
 
       if t.param_types.types.empty?
-        elements += ['0', '0']
+        append_strings([0, 0], true)
       else
-        elements += range_array_part(t.param_types.size_type)
+        append_elements(range_array_part(t.param_types.size_type), true)
       end
 
       # Add block T last (after min, max) if present)
       #
-      unless t.block_type.nil?
-        elements << string(t.block_type)
-      end
+      append_strings([t.block_type], true) unless t.block_type.nil?
+      chomp_list
     end
-    append_array('Callable', elements)
   end
 
   # @api private
   def string_PStructType(t)
-    args = t.elements.empty? ? EMPTY_ARRAY : [append_hash('', t.elements.map {|e| hash_entry_PStructElement(e)})]
-    append_array('Struct', args)
+    append_array('Struct', t.elements.empty?) { append_hash(Hash[t.elements.map {|e| struct_element_pair(e) }]) }
   end
 
   # @api private
-  def hash_entry_PStructElement(t)
+  def struct_element_pair(t)
     k = t.key_type
     value_optional = t.value_type.assignable?(PUndefType::DEFAULT)
-    key_string =
-      if k.is_a?(POptionalType)
-        # Output as literal String
-        value_optional ? "'#{t.name}'" : string(k)
-      else
-        value_optional ? "NotUndef['#{t.name}']" : "'#{t.name}'"
-      end
-    [key_string, string(t.value_type)]
+    if k.is_a?(POptionalType)
+      # Output as literal String
+      k = t.name if value_optional
+    else
+      k = value_optional ? PNotUndefType.new(k) : t.name
+    end
+    [k, t.value_type]
   end
 
   # @api private
   def string_PPatternType(t)
-    append_array('Pattern', t.patterns.map {|s| "#{s.regexp.inspect}" })
+    append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
 
   # @api private
   def string_PCollectionType(t)
-    append_array('Collection', range_array_part(t.size_type))
+    range = range_array_part(t.size_type)
+    append_array('Collection', range.empty? ) { append_elements(range) }
   end
 
   # @api private
-  def string_PUnitType(t)
-    'Unit'
+  def string_PUnitType(_)
+    @bld << 'Unit'
   end
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime', [string(t.runtime), string(t.name_or_pattern)])
-  end
-
-  def is_empty_range?(from, to)
-    from == 0 && to == 0
+    append_array('Runtime') { append_strings([t.runtime, t.name_or_pattern]) }
   end
 
   # @api private
   def string_PArrayType(t)
     if t.has_empty_range?
-      append_array('Array', ['0', '0'])
+      append_array('Array') { append_strings([0, 0]) }
     else
-      append_array('Array', t == PArrayType::DATA ? EMPTY_ARRAY : [string(t.element_type)] + range_array_part(t.size_type))
+      append_array('Array', t == PArrayType::DATA) do
+        append_strings([t.element_type], true)
+        append_elements(range_array_part(t.size_type), true)
+        chomp_list
+      end
     end
   end
 
   # @api private
   def string_PHashType(t)
     if t.has_empty_range?
-      append_array('Hash', ['0', '0'])
+      append_array('Hash') { append_strings([0, 0]) }
     else
-      append_array('Hash', t == PHashType::DATA ? EMPTY_ARRAY : [string(t.key_type), string(t.element_type)] + range_array_part(t.size_type))
+      append_array('Hash', t == PHashType::DATA) do
+        append_strings([t.key_type, t.element_type], true)
+        append_elements(range_array_part(t.size_type), true)
+        chomp_list
+      end
     end
   end
 
   # @api private
-  def string_PCatalogEntryType(t)
-    'CatalogEntry'
+  def string_PCatalogEntryType(_)
+    @bld << 'CatalogEntry'
   end
 
   # @api private
   def string_PHostClassType(t)
-    append_array('Class', t.class_name.nil? ? EMPTY_ARRAY : [t.class_name])
+    append_array('Class', t.class_name.nil?) { append_elements([t.class_name]) }
   end
 
   # @api private
   def string_PResourceType(t)
     if t.type_name
-      append_array(capitalize_segments(t.type_name), t.title.nil? ? EMPTY_ARRAY : ["'#{t.title}'"])
+      append_array(capitalize_segments(t.type_name), t.title.nil?) { append_string(t.title) }
     else
-      'Resource'
+      @bld << 'Resource'
     end
   end
 
   # @api private
   def string_PNotUndefType(t)
     contained_type = t.type
-    if contained_type.nil? || contained_type.class == PAnyType
-      args = EMPTY_ARRAY
-    else
+    append_array('NotUndef', contained_type.nil? || contained_type.class == PAnyType) do
       if contained_type.is_a?(PStringType) && contained_type.values.size == 1
-        args = [ "'#{contained_type.values[0]}'" ]
+        append_string(contained_type.values[0])
       else
-        args = [ string(contained_type) ]
+        append_string(contained_type)
       end
     end
-    append_array('NotUndef', args)
   end
 
   # @api private
@@ -258,54 +304,62 @@ class TypeFormatter
     end
   end
 
+  # Used when printing names of well known keys in an Object type. Placed in a separate
+  # method to allow override.
+  # @api private
+  def symbolic_key(key)
+    key
+  end
+
   # @api private
   def string_PObjectType(t)
     if @expanded
       begin
         @expanded = false
-        stringified = Hash[t.i12n_hash.map do |k,v|
-          case k
-          when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
-            v = append_hash('', Hash[v.map do |fk, fv|
-              if fv.is_a?(Hash)
-                fv = append_hash('', Hash[fv.map  do |fak,fav|
-                    fav = string(fav) unless fak == PObjectType::KEY_KIND
-                    [fak, fav]
-                  end])
-              else
-                fv = string(fv)
+        append_array('Object') do
+          append_hash(t.i12n_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+            case k
+            when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+              # Types might need to be output as type references
+              append_hash(v) do |_, fv|
+                if fv.is_a?(Hash)
+                  append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak,fav|
+                    case fak
+                    when PObjectType::KEY_KIND
+                      @bld << fav
+                    else
+                      append_string(fav)
+                    end
+                  end
+                else
+                  append_string(fv)
+                end
               end
-              [string(fk), fv]
-            end])
-          when PObjectType::KEY_EQUALITY
-            v = append_array('', v) if v.is_a?(Array)
-          else
-            v = string(v)
+            when PObjectType::KEY_EQUALITY
+              append_array('') { append_strings(v) } if v.is_a?(Array)
+            else
+              append_string(v)
+            end
           end
-          [k, v]
-        end]
-        append_array('Object', [append_hash('', stringified)])
+        end
       ensure
         @expanded = true
       end
     else
-      t.label
+      @bld << t.label
     end
   end
 
   # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
-    if optional_type.nil?
-      args = EMPTY_ARRAY
-    else
+    append_array('Optional', optional_type.nil?) do
       if optional_type.is_a?(PStringType) && optional_type.values.size == 1
-        args = [ "'#{optional_type.values[0]}'" ]
+        append_string(optional_type.values[0])
       else
-        args = [ string(optional_type) ]
+        append_string(optional_type)
       end
     end
-    append_array('Optional', args)
   end
 
   # @api private
@@ -315,53 +369,57 @@ class TypeFormatter
       @guard ||= RecursionGuard.new
       expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
     end
-    expand ? "#{t.name} = #{string(t.resolved_type)}" : t.name
+    @bld << t.name
+    if expand
+      @bld << ' = '
+      append_string(t.resolved_type)
+    end
   end
 
   # @api private
   def string_PTypeReferenceType(t)
-    append_array('TypeReference', [string(t.type_string)])
+    append_array('TypeReference') { append_string(t.type_string) }
   end
 
   # @api private
   def string_Array(t)
-    t.empty? ? '[]' : append_array('', t.map { |e| string(e) })
+    append_array('') { append_strings(t) }
   end
 
   # @api private
-  def string_FalseClass(t)   ; 'false'       ; end
+  def string_FalseClass(t)   ; @bld << 'false'       ; end
 
   # @api private
   def string_Hash(t)
-    append_hash('', Hash[t.map {|k,v| [string(k), string(v)]}])
+    append_hash(t)
   end
 
   # @api private
   def string_Module(t)
-    string(TypeCalculator.singleton.type(t))
+    append_string(TypeCalculator.singleton.type(t))
   end
 
   # @api private
-  def string_NilClass(t)     ; '?'       ; end
+  def string_NilClass(t)     ; @bld << '?' ; end
 
   # @api private
-  def string_Numeric(t)      ; t.to_s    ; end
+  def string_Numeric(t)      ; @bld << t.to_s    ; end
 
   # @api private
-  def string_Regexp(t)       ; "/#{t.source}/"; end
+  def string_Regexp(t)       ; @bld << t.inspect; end
 
   # @api private
   def string_String(t)
     # Use single qoute on strings that does not contain single quotes, control characters, or backslashes.
     # TODO: This should move to StringConverter when this formatter is changed to take advantage of it
-    t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect
+    @bld << (t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect)
   end
 
   # @api private
-  def string_Symbol(t)       ; t.to_s    ; end
+  def string_Symbol(t)       ; @bld << t.to_s    ; end
 
   # @api private
-  def string_TrueClass(t)    ; 'true'       ; end
+  def string_TrueClass(t)    ; @bld << 'true'       ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s
@@ -403,29 +461,76 @@ class TypeFormatter
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
   end
 
-  def append_array(start, array)
+  def append_elements(array, to_be_continued = false)
     case array.size
     when 0
-      start
     when 1
-      "#{start}[#{array[0]}]"
+      @bld << array[0]
+      @bld << COMMA_SEP if to_be_continued
     else
-      bld = ''
-      bld << start << '['
-      array.each { |elem| bld << elem << COMMA_SEP }
-      bld.chomp!(COMMA_SEP)
-      bld << ']'
-      bld
+      array.each { |elem| @bld << elem << COMMA_SEP }
+      chomp_list unless to_be_continued
     end
   end
 
-  def append_hash(start, hash_entries)
-    bld = ''
-    bld << start << '{'
-    hash_entries.each { |k, v| bld << k  << HASH_ENTRY_OP << v << COMMA_SEP }
-    bld.chomp!(COMMA_SEP)
-    bld << '}'
-    bld
+  def append_strings(array, to_be_continued = false)
+    case array.size
+    when 0
+    when 1
+      append_string(array[0])
+      @bld << COMMA_SEP if to_be_continued
+    else
+      array.each do |elem|
+        append_string(elem)
+        @bld << COMMA_SEP
+      end
+      chomp_list unless to_be_continued
+    end
+  end
+
+  def append_array(start, empty = false)
+    @bld << start
+    unless empty
+      @bld << '['
+      yield
+      @bld << ']'
+    end
+  end
+
+  def append_hash(hash, key_proc = nil)
+    @bld << '{'
+    @indent += 1 if @indent
+    hash.each do |k, v|
+      newline if @indent
+      if key_proc.nil?
+        append_string(k)
+      else
+        key_proc.call(k)
+      end
+      @bld << HASH_ENTRY_OP
+      if block_given?
+        yield(k, v)
+      else
+        append_string(v)
+      end
+      @bld << COMMA_SEP
+    end
+    chomp_list
+    if @indent
+      @indent -= 1
+      newline
+    end
+    @bld << '}'
+  end
+
+  def newline
+    @bld.rstrip!
+    @bld << "\n"
+    (@indent * @indent_width).times { @bld << ' ' }
+  end
+
+  def chomp_list
+    @bld.chomp!(COMMA_SEP)
   end
 
   @singleton = new
