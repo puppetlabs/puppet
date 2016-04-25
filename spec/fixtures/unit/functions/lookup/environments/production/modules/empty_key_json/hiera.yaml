@@ -1,0 +1,5 @@
+---
+:version: 4
+:hierarchy:
+  - :name: empty_key
+    :backend: json
