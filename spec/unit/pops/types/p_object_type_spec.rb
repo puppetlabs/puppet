@@ -6,8 +6,9 @@ module Puppet::Pops
 module Types
 describe 'The Object Type' do
   let(:parser) { TypeParser.new }
-  let(:pp_parser) { Puppet::Pops::Parser::EvaluatingParser.new }
-  let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
+  let(:pp_parser) { Parser::EvaluatingParser.new }
+  let(:loader) { Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
+  let(:factory) { TypeFactory }
 
   def type_object_t(name, body_string)
     object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
@@ -574,6 +575,69 @@ describe 'The Object Type' do
         expect(d2).not_to be_assignable(p)
         expect(d2).not_to be_assignable(d1)
       end
+    end
+  end
+
+  context 'when producing an i12n_type' do
+    it 'produces a struct of all attributes that are not derived or constant' do
+      t = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer },
+          b => { type => Integer, kind => given_or_derived },
+          c => { type => Integer, kind => derived },
+          d => { type => Integer, kind => constant, value => 4 }
+        }
+      OBJECT
+      expect(t.i12n_type).to eql(factory.struct({
+        'a' => factory.integer,
+        'b' => factory.integer
+      }))
+    end
+
+    it 'produces a struct where optional entires are denoted with an optional key' do
+      t = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer },
+          b => { type => Integer, value => 4 }
+        }
+      OBJECT
+      expect(t.i12n_type).to eql(factory.struct({
+        'a' => factory.integer,
+        factory.optional('b') => factory.integer
+      }))
+    end
+
+    it 'produces a struct that includes parameters from parent type' do
+      t1 = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer }
+        }
+      OBJECT
+      t2 = parse_object('MyDerivedObject', <<-OBJECT)
+        parent => MyObject,
+        attributes => {
+          b => { type => Integer }
+        }
+      OBJECT
+      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer }))
+      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+    end
+
+    it 'produces a struct that reflects overrides made in derived type' do
+      t1 = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer },
+          b => { type => Integer }
+        }
+      OBJECT
+      t2 = parse_object('MyDerivedObject', <<-OBJECT)
+        parent => MyObject,
+        attributes => {
+          b => { type => Integer, override => true, value => 5 }
+        }
+      OBJECT
+      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, factory.optional('b') => factory.integer }))
     end
   end
 

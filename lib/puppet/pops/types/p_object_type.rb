@@ -465,6 +465,24 @@ class PObjectType < PAnyType
     @parent.nil? ? false : @parent.callable_args?(callable, guard)
   end
 
+  # Returns the variant of Tuple/Struct that constraints the initialization object used when creating dynamic instances
+  # of this type.
+  #
+  # @return [PStructType] the initialization type
+  def i12n_type
+    struct_elems = {}
+    attributes(true).values.each do |attr|
+      unless attr.kind == ATTRIBUTE_KIND_CONSTANT || attr.kind == ATTRIBUTE_KIND_DERIVED
+        if attr.value?
+          struct_elems[TypeFactory.optional(attr.name)] = attr.type
+        else
+          struct_elems[attr.name] = attr.type
+        end
+      end
+    end
+    TypeFactory.struct(struct_elems)
+  end
+
   # The i12n_hash is primarily intended for serialization and string representation purposes. It creates a hash
   # suitable for passing to {PObjectType#new(i12n_hash)}
   #
