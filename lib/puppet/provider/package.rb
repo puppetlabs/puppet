@@ -30,6 +30,59 @@ class Puppet::Provider::Package < Puppet::Provider
     true
   end
 
+  # Wrap the has_command function to use this class's `execute` function
+  def self.has_command(name, path, &block)
+    if self.class.declared_feature?(:settable_environment)
+      super(name, path) do
+        executor Puppet::Provider::Package
+        self.instance_eval(block) if block
+      end
+    else
+      super(name, path, block)
+    end
+  end
+
+  # Wrap the Puppet::Util::Execution.execute function to automatically
+  # import the resource[:environment] hash into the execution environment,
+  # if the :settable_environment is available
+  def execute(command, options = nil)
+    if self.class.declared_feature?(:settable_environment) and @resource and resource[:environment]
+      if options.nil?
+        # no options hash provided, provide our own
+        options = { :custom_environment => @resource[:environment] }
+      elsif options.has_key?(:custom_environment)
+        # make a "safe" copy of options before modifying
+        options = options.dup
+        options[:custom_environment] = options[:custom_environment].merge(@resource[:environment])
+      else
+        # merge creates a new copy of the hash before merging
+        options = options.merge(:custom_environment => @resource[:environment])
+      end
+    end
+    if options.nil?
+      Puppet::Util::Execution.execute(command)
+    else
+      Puppet::Util::Execution.execute(command, options)
+    end
+  end
+
+  # Wrap the Puppet::Util::Execution.execpipe function to automatically
+  # import the resource[:environment] hash into the execution environment,
+  # if the :settable_environment is available
+  def self.execpipe(command, failonfail = nil)
+    execpipe_env = ENV.to_hash
+    if self.class.declared_feature?(:settable_environment) and @resource and resource[:environment]
+      execpipe_env.merge!( resource[:environment] )
+    end
+    Puppet::Util.withenv(execpipe_env) do
+      if failonfail.nil?
+        Puppet::Util::Execution.execpipe(command)
+      else
+        Puppet::Util::Execution.execpipe(command, failonfail)
+      end
+    end
+  end
+
   # Turns a array of options into flags to be passed to a command.
   # The options can be passed as a string or hash. Note that passing a hash
   # should only be used in case --foo=bar must be passed,

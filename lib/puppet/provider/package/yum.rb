@@ -25,14 +25,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :osfamily => :redhat
 
-  def execute(*args)
-    if @resource and @resource[:environment]
-      Puppet::Util::Execution.execute(*args, :custom_environment => @resource[:environment])
-    else
-      Puppet::Util::Execution.execute(*args)
-    end
-  end
-
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
