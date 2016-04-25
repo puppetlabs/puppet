@@ -242,6 +242,8 @@ class Puppet::Provider
       @optional = false
       @confiner = confiner
       @custom_environment = {}
+      @command_resolver = Puppet::Util
+      @command_executor = Puppet::Util::Execution
     end
 
     def is_optional
@@ -252,12 +254,20 @@ class Puppet::Provider
       @custom_environment = @custom_environment.merge(env)
     end
 
+    def resolver(res)
+      @command_resolver = res
+    end
+
+    def executor(exec)
+      @command_executor = exec
+    end
+
     def command
       if not @optional
         @confiner.confine :exists => @path, :for_binary => true
       end
 
-      Puppet::Provider::Command.new(@name, @path, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
+      Puppet::Provider::Command.new(@name, @path, @command_resolver, @command_executor, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
     end
   end
 
