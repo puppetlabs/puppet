@@ -56,6 +56,19 @@ class TypeFormatter
     end
   end
 
+  # @api private
+  def ruby_string(ref_ctor, indent, t)
+    @ruby = true
+    @ref_ctor = ref_ctor
+    begin
+      indented_string(t, indent)
+    ensure
+      @ruby = nil
+      @ref_ctor = nil
+    end
+  end
+
+
   def append_string(t)
     if @ruby && t.is_a?(PAnyType)
       @ruby = false
@@ -308,7 +321,7 @@ class TypeFormatter
   # method to allow override.
   # @api private
   def symbolic_key(key)
-    key
+    @ruby ? "'#{key}'" : key
   end
 
   # @api private
@@ -400,7 +413,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << '?' ; end
+  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : '?') ; end
 
   # @api private
   def string_Numeric(t)      ; @bld << t.to_s    ; end

@@ -26,7 +26,7 @@ class PObjectType < PAnyType
   TYPE_ANNOTATION_VALUE_TYPE = PStructType::DEFAULT #TBD
   TYPE_ANNOTATIONS = PHashType.new(TYPE_ANNOTATION_KEY_TYPE, TYPE_ANNOTATION_VALUE_TYPE)
 
-  TYPE_OBJECT_NAME = PPatternType.new([PRegexpType.new(Patterns::CLASSREF_EXT)])
+  TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
   TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
@@ -314,11 +314,11 @@ class PObjectType < PAnyType
   #   loader. The object will then be resolved when it is loaded by the {TypeParser}. "resolved" here, means that
   #   the hash expression is fully resolved, and then passed to the {#initialize_from_hash} method.
   #   @param name [String] The name of the object
-  #   @param i12n_hash_expression [Model::LiteralHash] The hash describing the Object features or the name of the Object
+  #   @param i12n_hash_expression [Model::LiteralHash] The hash describing the Object features
   #
   # @overload initialize(i12n_hash)
   #   Used when the object is created by the {TypeFactory}. The i12n_hash must be fully resolved.
-  #   @param i12n_hash [Hash{String=>Object}] The hash describing the Object features or the name of the Object
+  #   @param i12n_hash [Hash{String=>Object}] The hash describing the Object features
   #
   # @api private
   def initialize(name_or_i12n_hash, i12n_hash_expression = nil)
@@ -333,13 +333,17 @@ class PObjectType < PAnyType
     end
   end
 
+  def include_class_in_equality?
+    @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
+  end
+
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.
   #
   # @param type_parser [TypeParser] type parser that will interpret the type expression
   # @param loader [Loader::Loader] loader to use when loading type aliases
-  # @return [PTypeAliasType] the receiver of the call, i.e. `self`
+  # @return [PObjectType] the receiver of the call, i.e. `self`
   # @api private
   def resolve(type_parser, loader)
     unless @i12n_hash_expression.nil?
@@ -347,7 +351,12 @@ class PObjectType < PAnyType
 
       i12n_hash_expression = @i12n_hash_expression
       @i12n_hash_expression = nil
-      initialize_from_hash(type_parser.interpret_LiteralHash(i12n_hash_expression, loader))
+      if i12n_hash_expression.is_a?(Model::LiteralHash)
+        i12n_hash = resolve_literal_hash(type_parser, loader, i12n_hash_expression)
+      else
+        i12n_hash = resolve_hash(type_parser, loader, i12n_hash_expression)
+      end
+      initialize_from_hash(i12n_hash)
 
       # Find out if this type is recursive. A recursive type has performance implications
       # on several methods and this knowledge is used to avoid that for non-recursive
@@ -357,6 +366,27 @@ class PObjectType < PAnyType
       @self_recursion = guard.recursive_this?(self)
     end
     self
+  end
+
+  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
+    type_parser.interpret_LiteralHash(i12n_hash_expression, loader)
+  end
+
+  def resolve_hash(type_parser, loader, i12n_hash)
+    resolve_type_refs(type_parser, loader, i12n_hash)
+  end
+
+  def resolve_type_refs(type_parser, loader, o)
+    case o
+    when Hash
+      Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
+    when Array
+      o.map { |e| resolve_type_refs(type_parser, loader, e) }
+    when PTypeReferenceType
+      o.resolve(type_parser, loader)
+    else
+      o
+    end
   end
 
   # @api private
@@ -488,9 +518,9 @@ class PObjectType < PAnyType
   #
   # @return [Hash{String=>Object}] the features hash
   # @api public
-  def i12n_hash
+  def i12n_hash(include_name = true)
     result = {}
-    result[KEY_NAME] = @name unless @name.nil?
+    result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
