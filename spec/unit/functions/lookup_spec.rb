@@ -432,6 +432,58 @@ describe "when performing lookup" do
     end
   end
 
+  context 'when accessing nil values' do
+    it 'will find a key with undef value in a yaml file' do
+      Puppet[:code] = 'include empty_key_yaml'
+      compiler.compile do |catalog|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('empty_key_yaml::has_undef_value',nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "empty_key_yaml::has_undef_value"
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "empty_key_yaml::has_undef_value"
+  Module "empty_key_yaml" using Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/modules/empty_key_yaml/hiera.yaml"
+    Data Provider "empty_key"
+      Path "#{environmentpath}/production/modules/empty_key_yaml/data/empty_key.yaml"
+        Original path: "empty_key"
+        Found key: "empty_key_yaml::has_undef_value" value: nil
+  Merged result: nil
+EOS
+      end
+    end
+
+    it 'will find a key with undef value in a json file' do
+      Puppet[:code] = 'include empty_key_json'
+      compiler.compile do |catalog|
+        lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
+        begin
+          Puppet::Pops::Lookup.lookup('empty_key_json::has_undef_value',nil, nil, false, nil, lookup_invocation)
+        rescue Puppet::Error
+        end
+        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "empty_key_json::has_undef_value"
+  Data Provider "FunctionEnvDataProvider"
+    No such key: "empty_key_json::has_undef_value"
+  Module "empty_key_json" using Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/modules/empty_key_json/hiera.yaml"
+    Data Provider "empty_key"
+      Path "#{environmentpath}/production/modules/empty_key_json/data/empty_key.json"
+        Original path: "empty_key"
+        Found key: "empty_key_json::has_undef_value" value: nil
+  Merged result: nil
+EOS
+      end
+    end
+  end
+
   context 'when using explain' do
     it 'will explain that module is not found' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|

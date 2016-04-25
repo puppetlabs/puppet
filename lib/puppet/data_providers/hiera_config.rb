@@ -27,8 +27,6 @@ module Puppet::DataProviders
         Hash[struct.map { |k,v| [k.to_s, symkeys_to_string(v)] }]
       when Array
         struct.map { |v| symkeys_to_string(v) }
-      when nil
-        {}
       else
         struct
       end

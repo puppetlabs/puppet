@@ -18,7 +18,8 @@ module Puppet::DataProviders
     include HieraInterpolate
 
     def initialize_data(path, lookup_invocation)
-      HieraConfig.symkeys_to_string(YAML.load_file(path))
+      data = YAML.load_file(path)
+      HieraConfig.symkeys_to_string(data.nil? ? {} : data)
     rescue YAML::SyntaxError => ex
       # Psych errors includes the absolute path to the file, so no need to add that
       # to the message
