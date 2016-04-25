@@ -6,6 +6,15 @@ describe 'The type formatter' do
   let(:s) { TypeFormatter.new }
   let(:f) { TypeFactory }
 
+  def drop_indent(str)
+    ld = str.index("\n")
+    if ld.nil?
+      str
+    else
+      str.gsub(Regexp.compile("^ {#{ld - 1}}"), '')
+    end
+  end
+
   context 'when representing a literal as a string' do
     {
       'true' => true,
@@ -23,6 +32,41 @@ describe 'The type formatter' do
       end
     end
   end
+
+  context 'when using indent' do
+    it 'should put hash entries on new indented lines' do
+      expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]})).to eq(<<-FORMATTED)
+{
+  'a' => 32,
+  'b' => [1, 2, {
+    'c' => 'd'
+  }]
+}
+FORMATTED
+    end
+
+    it 'should start on given indent level' do
+      expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 3)).to eq(<<-FORMATTED)
+      {
+        'a' => 32,
+        'b' => [1, 2, {
+          'c' => 'd'
+        }]
+      }
+FORMATTED
+    end
+
+    it 'should use given indent width' do
+      expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 2, 4)).to eq(<<-FORMATTED)
+        {
+            'a' => 32,
+            'b' => [1, 2, {
+                'c' => 'd'
+            }]
+        }
+    FORMATTED
+  end
+end
 
   context 'when representing the type as string' do
     include_context 'types_setup'

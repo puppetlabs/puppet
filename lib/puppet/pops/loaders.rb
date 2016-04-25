@@ -28,6 +28,7 @@ class Loaders
     # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
     #    the current environment
     @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
+    Pcore.init(@puppet_system_loader, @implementation_registry)
 
     # 4. module loaders are set up from the create_environment_loader, they register themselves
   end
@@ -57,6 +58,20 @@ class Loaders
   def self.implementation_registry
     loaders = Puppet.lookup(:loaders) { nil }
     loaders.nil? ? nil : loaders.implementation_registry
+  end
+
+  def register_implementations(*obj_classes)
+    loader = @private_environment_loader
+    types = obj_classes.map do |obj_class|
+      type = obj_class._ptype
+      typed_name = Loader::Loader::TypedName.new(:type, type.name.downcase)
+      entry = loader.loaded_entry(typed_name)
+      loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
+      type
+    end
+    # Resolve lazy so that all types can cross reference eachother
+    parser = Types::TypeParser.new
+    types.each { |type| type.resolve(parser, loader) }
   end
 
   # Register the given type with the Runtime3TypeLoader. The registration will not happen unless
