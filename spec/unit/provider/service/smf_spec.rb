@@ -20,6 +20,7 @@ describe provider_class, :if => Puppet.features.posix? do
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:file?).with('/usr/bin/svcs').returns true
     FileTest.stubs(:executable?).with('/usr/bin/svcs').returns true
+    Facter.stubs(:value).with(:kernelrelease).returns '5.11'
   end
 
   describe ".instances" do
@@ -183,8 +184,7 @@ describe provider_class, :if => Puppet.features.posix? do
 
     context 'with :kernelrelease == 5.10' do
       it "should call 'svcadm restart /system/myservice'" do
-        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
-        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.10' } }
+        Facter.stubs(:value).with(:kernelrelease).returns '5.10'
         @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "/system/myservice"], true)
         @provider.expects(:wait).with('online')
         @provider.restart
@@ -193,8 +193,6 @@ describe provider_class, :if => Puppet.features.posix? do
 
     context 'with :kernelrelease == 5.11' do
       it "should call 'svcadm restart -s /system/myservice'" do
-        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
-        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.11' } }
         @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
         @provider.expects(:wait).with('online')
         @provider.restart
@@ -203,8 +201,7 @@ describe provider_class, :if => Puppet.features.posix? do
 
     context 'with :kernelrelease > 5.11' do
       it "should call 'svcadm restart -s /system/myservice'" do
-        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
-        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.12' } }
+        Facter.stubs(:value).with(:kernelrelease).returns '5.12'
         @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
         @provider.expects(:wait).with('online')
         @provider.restart
