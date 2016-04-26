@@ -1561,9 +1561,11 @@ EOT
     },
     :lastrunreport =>  {
       :default  => "$statedir/last_run_report.yaml",
-      :type     => :file,
+      :type     => :multi_file,
       :mode     => "0640",
-      :desc     => "Where puppet agent stores the last run report in yaml format."
+      :desc     => "Where puppet agent stores the last run report in yaml format. Can be
+        provided as a '#{File::PATH_SEPARATOR}' separated list of paths to write. The
+        report will be written to all listed paths."
     },
     :graph => {
       :default  => false,

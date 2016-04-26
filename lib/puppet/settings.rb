@@ -17,6 +17,7 @@ class Puppet::Settings
   require 'puppet/settings/symbolic_enum_setting'
   require 'puppet/settings/array_setting'
   require 'puppet/settings/file_setting'
+  require 'puppet/settings/multi_file_setting'
   require 'puppet/settings/directory_setting'
   require 'puppet/settings/file_or_directory_setting'
   require 'puppet/settings/path_setting'
@@ -655,6 +656,7 @@ class Puppet::Settings
   SETTING_TYPES = {
       :string     => StringSetting,
       :file       => FileSetting,
+      :multi_file => MultiFileSetting,
       :directory  => DirectorySetting,
       :file_or_directory => FileOrDirectorySetting,
       :path       => PathSetting,
@@ -930,11 +932,11 @@ class Puppet::Settings
       next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
-      next if catalog.resource(resource.ref)
-
-      Puppet.debug {"Using settings: adding file resource '#{key}': '#{resource.inspect}'"}
-
-      catalog.add_resource(resource)
+      [resource].flatten.each do |res|
+        next if catalog.resource(res.ref)
+        Puppet.debug {"Using settings: adding file resource '#{key}': '#{res.inspect}'"}
+        catalog.add_resource(res)
+      end
     end
 
     add_user_resources(catalog, sections)
