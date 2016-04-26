@@ -1,8 +1,8 @@
 # How to contribute
 
-Third-party patches are essential for keeping puppet great. We simply can't
+Third-party patches are essential for keeping Puppet great. We simply can't
 access the huge number of platforms and myriad configurations for running
-puppet. We want to keep it as easy as possible to contribute changes that
+Puppet. We want to keep it as easy as possible to contribute changes that
 get things working in your environment. There are a few guidelines that we
 need contributors to follow so that we can have a chance of keeping on
 top of things.
@@ -90,7 +90,7 @@ a ticket number.
 
 ## Submitting Changes
 
-* Sign the [Contributor License Agreement](http://links.puppetlabs.com/cla).
+* Sign the [Contributor License Agreement](http://links.puppet.com/cla).
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the puppetlabs organization.
 * Update your Jira ticket to mark that you have submitted code and are ready for it to be reviewed (Status: Ready for Merge).
@@ -106,9 +106,9 @@ a ticket number.
 
 # Additional Resources
 
-* [Puppet Labs community guidelines](https://docs.puppetlabs.com/community/community_guidelines.html)
+* [Puppet community guidelines](https://docs.puppet.com/community/community_guidelines.html)
 * [Bug tracker (Jira)](https://tickets.puppetlabs.com)
-* [Contributor License Agreement](http://links.puppetlabs.com/cla)
+* [Contributor License Agreement](http://links.puppet.com/cla)
 * [General GitHub documentation](https://help.github.com/)
 * [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
 * #puppet-dev IRC channel on freenode.org ([Archive](https://botbot.me/freenode/puppet-dev/))
