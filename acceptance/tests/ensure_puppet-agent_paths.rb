@@ -43,7 +43,6 @@ def config_options(agent)
     # code
     {:name => :codedir,         :expected => codedir,                     :installed => :dir},
     {:name => :environmentpath, :expected => "#{codedir}/environments"},
-    {:name => :hiera_config,    :expected => "#{codedir}/hiera.yaml"},
 
     # confdir
     {:name => :confdir,         :expected => confdir,                     :installed => :dir},
@@ -57,6 +56,7 @@ def config_options(agent)
     {:name => :config,          :expected => "#{confdir}/puppet.conf",    :installed => :file},
     {:name => :route_file,      :expected => "#{confdir}/routes.yaml"},
     {:name => :ssldir,          :expected => "#{confdir}/ssl",            :installed => :dir},
+    {:name => :hiera_config,    :expected => "#{confdir}/hiera.yaml"},
 
     # vardir
     {:name => :vardir,          :expected => "#{vardir}",                 :installed => :dir},
