@@ -5,6 +5,8 @@ require 'puppet_spec/compiler'
 module Puppet::Pops
 module Types
 describe 'The Object Type' do
+  include PuppetSpec::Compiler
+
   let(:parser) { TypeParser.new }
   let(:pp_parser) { Parser::EvaluatingParser.new }
   let(:loader) { Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
@@ -698,8 +700,6 @@ describe 'The Object Type' do
   end
 
   context 'when used in Puppet expressions' do
-    include PuppetSpec::Compiler
-
     it 'two anonymous empty objects are equal' do
       code = <<-CODE
       $x = Object[{}]
@@ -839,7 +839,221 @@ describe 'The Object Type' do
           "equality => ['second_a']"+
           "}]"
         ])
+    end
+  end
+
+  context "when used with function 'new'" do
+    context 'with ordered parameters' do
+      it 'creates an instance with initialized attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => Integer,
+            b => String
+          }
+        }]
+        $obj = MyFirstObject.new(3, 'hi')
+        notice($obj.a)
+        notice($obj.b)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['3', 'hi'])
       end
+
+      it 'creates an instance with default attribute values' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, value => 'the default' }
+          }
+        }]
+        $obj = MyFirstObject.new
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['the default'])
+      end
+
+      it 'creates an instance with constant attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, kind => constant, value => 'the constant' }
+          }
+        }]
+        $obj = MyFirstObject.new
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['the constant'])
+      end
+
+      it 'creates an instance with overridden attribute defaults' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, value => 'the default' }
+          }
+        }]
+        $obj = MyFirstObject.new('not default')
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['not default'])
+      end
+
+      it 'fails on an attempt to provide a constant attribute value' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, kind => constant, value => 'the constant' }
+          }
+        }]
+        $obj = MyFirstObject.new('not constant')
+        notice($obj.a)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects no arguments/)
+      end
+
+      it 'fails when a required key is missing' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => String
+          }
+        }]
+        $obj = MyFirstObject.new
+        notice($obj.a)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects 1 argument, got none/)
+      end
+
+      it 'creates a derived instance with initialized attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => Integer,
+            b => { type => String, kind => constant, value => 'the first constant' },
+            c => String
+          }
+        }]
+        type MySecondObject = Object[{
+          parent => MyFirstObject,
+          attributes => {
+            d => { type => Integer, value => 34 }
+          }
+        }]
+        $obj = MySecondObject.new(3, 'hi')
+        notice($obj.a)
+        notice($obj.b)
+        notice($obj.c)
+        notice($obj.d)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['3', 'the first constant', 'hi', '34'])
+      end
+    end
+
+    context 'with named parameters' do
+      it 'creates an instance with initialized attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => Integer,
+            b => String
+          }
+        }]
+        $obj = MyFirstObject.new({b => 'hi', a => 3})
+        notice($obj.a)
+        notice($obj.b)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['3', 'hi'])
+      end
+
+      it 'creates an instance with default attribute values' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, value => 'the default' }
+          }
+        }]
+        $obj = MyFirstObject.new({})
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['the default'])
+      end
+
+      it 'creates an instance with constant attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, kind => constant, value => 'the constant' }
+          }
+        }]
+        $obj = MyFirstObject.new({})
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['the constant'])
+      end
+
+      it 'creates an instance with overridden attribute defaults' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, value => 'the default' }
+          }
+        }]
+        $obj = MyFirstObject.new({a => 'not default'})
+        notice($obj.a)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['not default'])
+      end
+
+      it 'fails on an attempt to provide a constant attribute value' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => { type => String, kind => constant, value => 'the constant' }
+          }
+        }]
+        $obj = MyFirstObject.new({a => 'not constant'})
+        notice($obj.a)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /unrecognized key 'a'/)
+      end
+
+      it 'fails when a required key is missing' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => String
+          }
+        }]
+        $obj = MyFirstObject.new({})
+        notice($obj.a)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects size to be 1, got 0/)
+      end
+
+      it 'creates a derived instance with initialized attributes' do
+        code = <<-CODE
+        type MyFirstObject = Object[{
+          attributes => {
+            a => Integer,
+            b => { type => String, kind => constant, value => 'the first constant' },
+            c => String
+          }
+        }]
+        type MySecondObject = Object[{
+          parent => MyFirstObject,
+          attributes => {
+            d => { type => Integer, value => 34 }
+          }
+        }]
+        $obj = MySecondObject.new({c => 'hi', a => 3})
+        notice($obj.a)
+        notice($obj.b)
+        notice($obj.c)
+        notice($obj.d)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['3', 'the first constant', 'hi', '34'])
+      end
+    end
   end
 end
 end
