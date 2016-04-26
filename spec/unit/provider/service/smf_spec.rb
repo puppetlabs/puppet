@@ -174,16 +174,41 @@ describe provider_class, :if => Puppet.features.posix? do
   end
 
   describe "when restarting" do
-    it "should call 'svcadm restart /system/myservice'" do
-      @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "/system/myservice"], true)
-      @provider.expects(:wait).with('online')
-      @provider.restart
-    end
 
     it "should error if timeout occurs while restarting the service" do
-      @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "/system/myservice"], true)
+      @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.restart }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')
+    end
+
+    context 'with :kernelrelease == 5.10' do
+      it "should call 'svcadm restart /system/myservice'" do
+        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
+        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.10' } }
+        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "/system/myservice"], true)
+        @provider.expects(:wait).with('online')
+        @provider.restart
+      end
+    end
+
+    context 'with :kernelrelease == 5.11' do
+      it "should call 'svcadm restart -s /system/myservice'" do
+        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
+        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.11' } }
+        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
+        @provider.expects(:wait).with('online')
+        @provider.restart
+      end
+    end
+
+    context 'with :kernelrelease > 5.11' do
+      it "should call 'svcadm restart -s /system/myservice'" do
+        Facter.instance_variable_get(:@collection).instance_variable_get(:@facts).delete_if{|k,v| k==:kernelrelease}
+        Facter.stubs(:fact).with(:kernelrelease).returns Facter.add(:kernelrelease) { has_weight 500; setcode { '5.12' } }
+        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
+        @provider.expects(:wait).with('online')
+        @provider.restart
+      end
     end
 
   end
