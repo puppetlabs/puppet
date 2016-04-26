@@ -40,6 +40,7 @@ class PObjectType < PAnyType
     KEY_VALUE => PAnyType::DEFAULT
   })
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
 
@@ -194,6 +195,34 @@ class PObjectType < PAnyType
       self.class.label(@container, @name)
     end
 
+    # Performs type checking of arguments and invokes the method that corresponds to this
+    # method. The result of the invocation is returned
+    #
+    # @param scope [Puppet::Parser::Scope] The caller scope
+    # @param args [Array] Array of arguments. First argument must be the object instance
+    # @return [Object] The result returned by the member function or attribute
+    #
+    # @api private
+    def invoke(scope, args, &block)
+      obj = args[0]
+      args = args[1..-1]
+
+      @dispatch ||= create_dispatch(obj)
+
+      args_type = TypeCalculator.infer_set(block_given? ? args + [block] : args)
+      unless @dispatch.type.callable?(args_type)
+        raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, [@dispatch], args_type)
+      end
+      @dispatch.invoke(obj, scope, args, &block)
+    end
+
+    # @api private
+    def create_dispatch(instance)
+      # TODO: Assumes Ruby implementation for now
+      Functions::Dispatch.new(callable_type, name, [],
+        callable_type.block_type.nil? ? nil : 'block', nil, nil, false)
+    end
+
     # @api private
     def self.feature_type
       raise NotImplementedError, "'#{self.class.name}' should implement #feature_type"
@@ -238,6 +267,10 @@ class PObjectType < PAnyType
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
         @value = :undef # Not to be confused with nil or :default
       end
+    end
+
+    def callable_type
+      TYPE_ATTRIBUTE_CALLABLE
     end
 
     # @api public
@@ -291,6 +324,10 @@ class PObjectType < PAnyType
     # @api public
     def initialize(name, container, i12n_hash)
       super(name, container, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, i12n_hash))
+    end
+
+    def callable_type
+      type
     end
 
     # @api private
