@@ -50,7 +50,7 @@ group(:development, :test) do
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
 
-  gem 'webmock'
+  gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
 end
 
