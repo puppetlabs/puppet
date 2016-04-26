@@ -21,7 +21,7 @@ agents.each do |agent|
 
   step 'Add symlink to module' do
     on(agent, "touch #{tmpdir}/hello")
-    on(agent, "ln -s #{tmpdir}/hello #{modname}/tests/symlink")
+    on(agent, "ln -s #{tmpdir}/hello #{modname}/examples/symlink")
   end
 
   step 'Build module should fail with message about needing symlinks removed' do
