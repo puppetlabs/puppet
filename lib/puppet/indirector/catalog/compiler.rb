@@ -254,7 +254,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise Puppet::Error, "Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'." unless checksum_type
     end
 
-    str = "Compiled %s for #{node.name}" % [checksum_type ? 'static catalog' : 'catalog']
+    str = "Compiled %s for " % [checksum_type ? 'static catalog' : 'catalog']
+    str += node.name
     str += " in environment #{node.environment}" if node.environment
     config = nil
 

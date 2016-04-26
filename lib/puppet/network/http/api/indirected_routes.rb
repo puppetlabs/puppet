@@ -104,8 +104,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise ArgumentError, "No request key specified in #{uri}"
     end
 
-    key = URI.unescape(key)
-
     [indirection, method, key, params]
   end
 
