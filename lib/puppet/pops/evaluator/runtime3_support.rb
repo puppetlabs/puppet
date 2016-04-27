@@ -266,6 +266,14 @@ module Runtime3Support
   end
 
   def call_function(name, args, o, scope, &block)
+    if args.size >= 1
+      receiver_type = Types::TypeCalculator.infer(args[0])
+      if receiver_type.is_a?(Types::PObjectType)
+        member = receiver_type[name]
+        return member.invoke(scope, args, &block) unless member.nil?
+      end
+    end
+
     loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
     if loader && func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
