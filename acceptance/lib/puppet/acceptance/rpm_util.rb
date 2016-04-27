@@ -70,6 +70,7 @@ Summary: A very simple toy bin rpm package
 Name: #{o[:pkg]}
 Version: #{o[:version]}
 Release: 1
+Epoch: #{o[:epoch] || 0}
 License: GPL+
 Group: Development/Tools
 SOURCE0 : %{name}-%{version}.tar.gz
