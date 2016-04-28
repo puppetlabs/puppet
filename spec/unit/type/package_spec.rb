@@ -35,13 +35,17 @@ describe Puppet::Type.type(:package) do
     expect(Puppet::Type.type(:package).provider_feature(:package_settings).methods).to eq([:package_settings_insync?, :package_settings, :package_settings=])
   end
 
+  it "should have a :settable_environment feature" do
+    expect(Puppet::Type.type(:package).provider_feature(:settable_environment)).not_to be_nil
+  end
+
   it "should default to being installed" do
     pkg = Puppet::Type.type(:package).new(:name => "yay", :provider => :apt)
     expect(pkg.should(:ensure)).to eq(:present)
   end
 
   describe "when validating attributes" do
-    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :allow_virtual, :reinstall_on_refresh].each do |param|
+    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :allow_virtual, :reinstall_on_refresh, :environment].each do |param|
       it "should have a #{param} parameter" do
         expect(Puppet::Type.type(:package).attrtype(param)).to eq(:param)
       end
@@ -123,6 +127,69 @@ describe Puppet::Type.type(:package) do
         Puppet::Type.type(:package).new(:name => ["error"])
       end.to raise_error(Puppet::ResourceError, /Name must be a String/)
     end
+
+    it "should support :environment if the provider has the :settable_environment feature" do
+      @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :environment => { "foo" => "bar" }) }.to_not raise_error
+    end
+
+    it "should not support :environment if the provider does not have the :settable_environment feature" do
+      @provider.expects(:satisfies?).with([:settable_environment]).returns(false)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :environment => { "foo" => "bar" }) }.to raise_error(Puppet::Error)
+    end
+
+    it "should support :environment hashes of strings to strings" do
+      @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+      pkg = Puppet::Type.type(:package).new(:name => "yay", :environment => { "foo" => "bar" })
+      expect(pkg[:environment]).to eq({ "foo" => "bar" })
+    end
+
+    it "should support :environment hashes of strings to `undef`" do
+      @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+      pkg = Puppet::Type.type(:package).new(:name => "yay", :environment => { "foo" => :undef })
+      expect(pkg[:environment]).to eq({ "foo" => nil })
+    end
+
+    it "should not support :environment hashes with empty strings" do
+      samples = [
+        { "foo" => "" } ,
+        { "" => "bar" } ,
+      ]
+      samples.each do |env|
+        @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+        expect { Puppet::Type.type(:package).new(:name => "yay", :environment => env) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    it "should not support :environment hashes with undef keys" do
+      @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :environment => { :undef => "bar" }) }.to raise_error(Puppet::Error)
+    end
+
+    it "should not support :environment hashes with non-string keys or values" do
+      samples = [
+        { "foo" => 2 } ,
+        { "foo" => [2] } ,
+        { "foo" => {2=>2} } ,
+        { 1 => "bar" } ,
+        { 1 => 2 } ,
+        { 1 => [2] } ,
+        { 1 => {2=>2} } ,
+        { [1] => "bar" } ,
+        { [1] => 2 } ,
+        { [1] => [2] } ,
+        { [1] => {2=>2} } ,
+        { {1=>1} => "bar" } ,
+        { {1=>1} => 2 } ,
+        { {1=>1} => [2] } ,
+        { {1=>1} => {2=>2} } ,
+      ]
+      samples.each do |env|
+        @provider.expects(:satisfies?).with([:settable_environment]).returns(true)
+        expect { Puppet::Type.type(:package).new(:name => "yay", :environment => env) }.to raise_error(Puppet::Error)
+      end
+    end
+
   end
 
   module PackageEvaluationTesting
