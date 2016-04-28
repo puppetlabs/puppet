@@ -2,6 +2,7 @@ require 'openssl'
 require 'cgi'
 require 'puppet/network/http/handler'
 require 'puppet/util/ssl'
+require 'uri'
 
 class Puppet::Network::HTTP::RackREST
   include Puppet::Network::HTTP::Handler
@@ -79,7 +80,15 @@ class Puppet::Network::HTTP::RackREST
 
   # what path was requested? (this is, without any query parameters)
   def path(request)
-    request.path
+    # The value that Passenger provides for 'path' is escaped
+    # (URL percent-encoded), see
+    # https://github.com/phusion/passenger/blob/release-5.0.26/src/apache2_module/Hooks.cpp#L885
+    # for the implementation as hooked up to an Apache web server.  Code
+    # in the indirector / HTTP layer which consumes this path, however, assumes
+    # that it has already been unescaped, so it is unescaped here.
+    if request.path
+      URI.unescape(request.path)
+    end
   end
 
   # return the request body

@@ -94,6 +94,13 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.find(@request)
     end
 
+    it "should pass node containing percent character to the compiler" do
+      node_with_percent_character = Puppet::Node.new "%6de"
+      Puppet::Node.indirection.stubs(:find).returns(node_with_percent_character)
+      Puppet::Parser::Compiler.expects(:compile).with(node_with_percent_character, anything)
+      @compiler.find(@request)
+    end
+
     it "should extract and save any facts from the request" do
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns @node
       @compiler.expects(:extract_facts_from_request).with(@request)

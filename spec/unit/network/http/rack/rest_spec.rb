@@ -65,6 +65,13 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         expect(@handler.path(req)).to eq("/foo/bar")
       end
 
+      it "should return the unescaped path for an escaped request path" do
+        unescaped_path = '/foo/bar baz'
+        escaped_path = URI.escape(unescaped_path)
+        req = mk_req(escaped_path)
+        expect(@handler.path(req)).to eq(unescaped_path)
+      end
+
       it "should return the request body as the body" do
         req = mk_req('/foo/bar', :input => 'mybody')
         expect(@handler.body(req)).to eq("mybody")

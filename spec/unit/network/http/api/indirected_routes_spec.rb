@@ -127,22 +127,17 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }).to raise_error(ArgumentError)
     end
 
-    it "should URI unescape the indirection key" do
+    it "should not URI unescape the indirection key" do
       escaped = URI.escape("foo bar")
-      indirection, method, key, final_params = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
-      expect(key).to eq("foo bar")
+      indirection, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
+      expect(key).to eq(escaped)
     end
 
-    it "should pass through a proper environment param in a call to check_authorization" do
-      handler.expects(:check_authorization).with(anything,
-                                                 anything,
-                                                 all_of(
-                                                   has_entry(:environment,
-                                                             is_a(Puppet::Node::Environment)),
-                                                   has_entry(:environment,
-                                                             responds_with(:name,
-                                                                           :env))))
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)
+    it "should not unescape the URI passed through in a call to check_authorization" do
+      key_escaped = URI.escape("foo bar")
+      uri_escaped = "#{master_url_prefix}/node/#{key_escaped}"
+      handler.expects(:check_authorization).with(anything, uri_escaped, anything)
+      indirection, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
     end
 
     it "should not pass through an environment to check_authorization and fail if the environment is unknown" do
@@ -153,6 +148,19 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
                                               "#{master_url_prefix}/node/bar",
                                               {:environment => 'bogus'}) }).to raise_error(ArgumentError)
     end
+
+    it "should not URI unescape the indirection key as passed through to a call to check_authorization" do
+      handler.expects(:check_authorization).with(anything,
+                                                 anything,
+                                                 all_of(
+                                                     has_entry(:environment,
+                                                               is_a(Puppet::Node::Environment)),
+                                                     has_entry(:environment,
+                                                               responds_with(:name,
+                                                                             :env))))
+      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)
+    end
+
   end
 
   describe "when converting a request into a URI" do
