@@ -1,5 +1,6 @@
 test_name "Zone: ticket #4840 - verify that the given manifest works."
-confine :to, :platform => 'solaris:pending'
+skip_test "This test is blocked by PUP-6245"
+confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils

@@ -1,6 +1,6 @@
 test_name "puppet module upgrade (with scattered dependencies)"
 
-skip_test 'needs triage'
+skip_test "This test is blocked by PUP-6244"
 
 step 'Setup'
 
