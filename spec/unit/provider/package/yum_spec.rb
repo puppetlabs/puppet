@@ -249,6 +249,32 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name])
       provider.install
     end
+
+    context 'with arch arguments in package name' do
+      let(:package_name) { 'mypackage' }
+      let(:arch_string) { 'x86_64' }
+      let(:name) { "#{package_name}.#{arch_string}" }
+
+      it 'should be able to set version with a name with arch string' do
+        version = '1.2'
+        resource[:ensure] = version
+        Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "#{package_name}-#{version}.#{arch_string}"])
+        provider.stubs(:query).returns :ensure => version
+        provider.install
+      end
+
+      it 'should be able to set installed with a name with arch string' do
+        resource[:ensure] = :installed
+        Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "#{package_name}.#{arch_string}"])
+        provider.install
+      end
+
+      it 'should be able to set installed with a name with arch string' do
+        resource[:ensure] = :installed
+        Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "#{package_name}.#{arch_string}"])
+        provider.install
+      end
+    end
   end
 
   describe 'when uninstalling' do
