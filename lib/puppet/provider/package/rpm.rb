@@ -298,27 +298,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     0 == rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is))
   end
 
-  private
-  # @param line [String] one line of rpm package query information
-  # @return [Hash] of NEVRA_FIELDS strings parsed from package info
-  # or an empty hash if we failed to parse
-  # @api private
-  def self.nevra_to_hash(line)
-    line.strip!
-    hash = {}
-
-    if match = self::NEVRA_REGEX.match(line)
-      self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
-      hash[:provider] = self.name
-      hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
-      hash[:ensure].prepend("#{hash[:epoch]}:") if hash[:epoch] != '0'
-    else
-      Puppet.debug("Failed to match rpm line #{line}")
-    end
-
-    return hash
-  end
-
   # parse a rpm "version" specification
   # this re-implements rpm's
   # rpmUtils.miscutils.stringToVersion() in ruby
@@ -397,5 +376,26 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       return -1
     end
     return rpmvercmp(s1, s2)
+  end
+
+  private
+  # @param line [String] one line of rpm package query information
+  # @return [Hash] of NEVRA_FIELDS strings parsed from package info
+  # or an empty hash if we failed to parse
+  # @api private
+  def self.nevra_to_hash(line)
+    line.strip!
+    hash = {}
+
+    if match = self::NEVRA_REGEX.match(line)
+      self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
+      hash[:provider] = self.name
+      hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
+      hash[:ensure].prepend("#{hash[:epoch]}:") if hash[:epoch] != '0'
+    else
+      Puppet.debug("Failed to match rpm line #{line}")
+    end
+
+    return hash
   end
 end
