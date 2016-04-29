@@ -2274,6 +2274,7 @@ class PVariantType < PAnyType
         types = merge_patterns(types)
         types = merge_int_ranges(types)
         types = merge_float_ranges(types)
+        types = merge_version_ranges(types)
 
         if types.size == 1
           types[0]
@@ -2414,6 +2415,15 @@ class PVariantType < PAnyType
       parts = array.partition {|t| t.is_a?(PFloatType) }
       ranges = parts[0]
       array = merge_ranges(ranges) + parts[1] if ranges.size > 1
+    end
+    array
+  end
+
+  def merge_version_ranges(array)
+    if array.size > 1
+      parts = array.partition {|t| t.is_a?(PSemVerType) }
+      ranges = parts[0]
+      array = [PSemVerType.new(*ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
     end
     array
   end

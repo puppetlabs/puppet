@@ -7,6 +7,14 @@ module Types
 describe 'Semantic Versions' do
   include PuppetSpec::Compiler
 
+  context 'the SemVer type' do
+    it 'is normalized in a Variant' do
+      t = TypeFactory.variant(TypeFactory.sem_ver('>=1.0.0 <2.0.0'), TypeFactory.sem_ver('>=1.5.0 <4.0.0')).normalize
+      expect(t).to be_a(PSemVerType)
+      expect(t).to eql(TypeFactory.sem_ver('>=1.0.0 <4.0.0'))
+    end
+  end
+
   context 'when used in Puppet expressions' do
 
     context 'the SemVer type' do
