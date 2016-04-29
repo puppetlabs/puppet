@@ -501,6 +501,14 @@ module Puppet
       defaultto true
     end
 
+    newparam(:downgrade, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+      desc 'Instructs the package provider to downgrade the specified package
+      if the already installed version is greater than the version specified
+      in the package ensure parameter.'
+
+      defaultto true
+    end
+
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|

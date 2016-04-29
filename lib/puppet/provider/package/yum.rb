@@ -147,13 +147,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # pass
       should = nil
     else
-      # Add the package version
-      wanted += "-#{should}"
       is = self.query
       if is && yum_compareEVR(yum_parse_evr(should), yum_parse_evr(is[:ensure])) < 0
-        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
-        operation = :downgrade
+        if @resource.downgrade?
+          self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
+          operation = :downgrade
+        else
+          self.debug "Maintaining installed package version of #{is[:ensure]}"
+          return
+        end
       end
+      # Add the package version
+      wanted += "-#{should}"
     end
 
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;

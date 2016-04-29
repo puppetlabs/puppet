@@ -120,6 +120,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     # RPM gets upset if you try to install an already installed package
     return if @resource.should(:ensure) == version || (@resource.should(:ensure) == :latest && version == latest)
+    # Do now downgrade the package if :dowgrade = false
+    return if @resource.should(:ensure) <= version && !@resource.downgrade?
 
     flag = ["-i"]
     flag = ["-U", "--oldpackage"] if version && (version != :absent && version != :purged)
