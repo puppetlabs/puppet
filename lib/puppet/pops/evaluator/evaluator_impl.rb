@@ -521,9 +521,15 @@ class EvaluatorImpl
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
     if pattern.is_a?(Types::PAnyType)
       # evaluate as instance? of type check
-      matched = @@type_calculator.instance?(pattern, left)
+      matched = pattern.instance?(left)
       # convert match result to Boolean true, or false
       return o.operator == :'=~' ? !!matched : !matched
+    end
+
+    if pattern.is_a?(Semantic::VersionRange)
+      # evaluate if range includes version
+      matched = Types::PSemVerRangeType.include?(pattern, left)
+      return o.operator == :'=~' ? matched : !matched
     end
 
     begin

@@ -672,6 +672,16 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Version(o)
+    PSemVerType::DEFAULT
+  end
+
+  # @api private
+  def infer_VersionRange(o)
+    PSemVerRangeType::DEFAULT
+  end
+
+  # @api private
   def infer_Hash(o)
     if o.empty?
       PHashType::EMPTY
@@ -710,6 +720,11 @@ class TypeCalculator
       etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
       PHashType.new(unwrap_single_variant(ktype), unwrap_single_variant(etype), size_as_type(o))
     end
+  end
+
+  # @api private
+  def infer_set_Version(o)
+    PSemVerType.new(PSemVerRangeType.new(o, o))
   end
 
   def unwrap_single_variant(possible_variant)

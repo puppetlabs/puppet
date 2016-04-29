@@ -335,6 +335,10 @@ end
       expect(s.string(Puppet::Resource)).to eq("Runtime[ruby, 'Puppet::Resource']")
     end
 
+    it "should yield \"SemVer['1.x', '3.x']\" for the PSemVerType['1.x', '3.x']" do
+      expect(s.string(PSemVerType.new('1.x', '3.x'))).to eq("SemVer['1.x', '3.x']")
+    end
+
     it 'should present a valid simple name' do
       (all_types - [PType, PHostClassType]).each do |t|
         name = t::DEFAULT.simple_name

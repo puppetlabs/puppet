@@ -154,6 +154,12 @@ class AccessOperator
     Types::TypeFactory.variant(*keys)
   end
 
+  def access_PSemVerType(o, scope, keys)
+    keys.flatten!
+    assert_keys(keys, o, 1, Float::INFINITY, String, Semantic::VersionRange)
+    Types::TypeFactory.sem_ver(*keys)
+  end
+
   def access_PTupleType(o, scope, keys)
     keys.flatten!
     if Types::TypeFactory.is_range_parameter?(keys[-2]) && Types::TypeFactory.is_range_parameter?(keys[-1])

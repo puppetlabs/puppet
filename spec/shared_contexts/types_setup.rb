@@ -32,6 +32,8 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PDefaultType,
       Puppet::Pops::Types::PTypeReferenceType,
       Puppet::Pops::Types::PTypeAliasType,
+      Puppet::Pops::Types::PSemVerType,
+      Puppet::Pops::Types::PSemVerRangeType,
     ]
   end
 
@@ -47,6 +49,8 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PBooleanType,
       Puppet::Pops::Types::PPatternType,
       Puppet::Pops::Types::PEnumType,
+      Puppet::Pops::Types::PSemVerType,
+      Puppet::Pops::Types::PSemVerRangeType,
     ]
   end
 

@@ -184,6 +184,16 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PSemVerType(t)
+    append_array('SemVer', t.ranges.empty?) { append_strings(t.ranges) }
+  end
+
+  # @api private
+  def string_PSemVerRangeType(t)
+    @bld << 'SemVerRange'
+  end
+
+  # @api private
   def string_PTupleType(t)
     append_array('Tuple', t.types.empty?) do
       append_strings(t.types, true)
@@ -432,7 +442,13 @@ class TypeFormatter
   def string_Symbol(t)       ; @bld << t.to_s    ; end
 
   # @api private
-  def string_TrueClass(t)    ; @bld << 'true'       ; end
+  def string_TrueClass(t)    ; @bld << 'true'    ; end
+
+  # @api private
+  def string_Version(t)      ; @bld << "'#{t}'"  ; end
+
+  # @api private
+  def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

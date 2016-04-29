@@ -92,8 +92,13 @@ class CompareOperator
     end
   end
 
+  def cmp_Version(a, b)
+    raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(Semantic::Version)
+    a <=> b
+  end
+
   def cmp_Object(a, b)
-    raise ArgumentError.new("Only Strings and Numbers are comparable")
+    raise ArgumentError.new('Only Strings, Numbers, and Versions are comparable')
   end
 
 
@@ -144,6 +149,8 @@ class CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
+    when Semantic::Version
+      a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
       a.each {|element| return true if b.instance?(element) }
       return false
@@ -157,6 +164,10 @@ class CompareOperator
     include?(a.keys, b, scope)
   end
 
+  def include_VersionRange(a, b, scope)
+    Types::PSemVerRangeType.include?(a, b)
+  end
+
   # Matches in general by using == operator
   def match_Object(pattern, a, scope)
     equals(a, pattern)
@@ -168,6 +179,11 @@ class CompareOperator
     matched = regexp.match(left)
     set_match_data(matched, scope) # creates or clears ephemeral
     !!matched # convert to boolean
+  end
+
+  # Matches against semvers and strings
+  def match_VersionRange(range, left, scope)
+    Types::PSemVerRangeType.include?(range, left)
   end
 
   def match_PAnyType(any_type, left, scope)
