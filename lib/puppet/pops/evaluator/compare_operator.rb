@@ -21,7 +21,6 @@ class CompareOperator
     @@compare_visitor ||= Visitor.new(self, "cmp", 1, 1)
     @@match_visitor ||= Visitor.new(self, "match", 2, 2)
     @@include_visitor ||= Visitor.new(self, "include", 2, 2)
-    @type_calculator = Types::TypeCalculator.new()
   end
 
   def equals (a, b)
@@ -146,7 +145,7 @@ class CompareOperator
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
     when Types::PAnyType
-      a.each {|element| return true if @type_calculator.instance?(b, element) }
+      a.each {|element| return true if b.instance?(element) }
       return false
     else
       a.each {|element| return true if equals(element, b) }
@@ -176,7 +175,7 @@ class CompareOperator
     # (The reverse is not terribly meaningful - computing which of the case options that first produces
     # an instance of a given type).
     #
-    @type_calculator.instance?(any_type, left)
+    any_type.instance?(left)
   end
 
   def match_Array(array, left, scope)
