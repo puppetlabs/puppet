@@ -81,7 +81,7 @@ class RubyGenerator < TypeFormatter
     end
     bld.chomp!("\n")
 
-    common_prefix.each { |cp| bld << "end\n" }
+    common_prefix.size.times { bld << "end\n" }
   end
 
   def implementation_names(object_types)
@@ -115,8 +115,8 @@ class RubyGenerator < TypeFormatter
 
     bld << "\n"
     bld << "  def self._ptype\n"
-    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
-    bld << TypeFormatter.new.ruby_string('ref', 2, obj.i12n_hash(false)) << ")\n"
+    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "',\n"
+    bld << TypeFormatter.new.ruby_string('ref', 3, obj.i12n_hash(false)) << "    )\n"
     bld << "  end\n"
 
     class_body(obj, segments, bld)
@@ -131,7 +131,7 @@ class RubyGenerator < TypeFormatter
     if obj.parent.nil?
       bld << "\n  include " << namespace_relative(segments, Puppet::Pops::Types::PuppetObject.name) << "\n\n" # marker interface
       bld << "  def self.ref(type_string)\n"
-      bld << "    " << namespace_relative(segments, Puppet::Pops::Types::PTypeReferenceType.name) << ".new(type_string)\n"
+      bld << '    ' << namespace_relative(segments, Puppet::Pops::Types::PTypeReferenceType.name) << ".new(type_string)\n"
       bld << "  end\n"
     end
 
@@ -148,19 +148,12 @@ class RubyGenerator < TypeFormatter
 
     # Output type safe hash constructor
     bld << "\n  def self.from_hash(i12n)\n"
-    bld << '    ' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-    bld << "'" << obj.label << " initializer', _ptype.i12n_type, i12n)\n"
-    non_opt.each { |ip| bld << '    ' << ip.name << " = i12n['" << ip.name << "']\n" }
-    opt.each { |ip| bld << '    ' << ip.name << " = i12n.fetch('" << ip.name << "') { _ptype['" << ip.name << "'].value }\n" }
-    bld << '    new'
-    unless init_params.empty?
-      bld << '('
-      non_opt.each { |a| bld << a.name << ', ' }
-      opt.each { |a| bld << a.name << ', ' }
-      bld.chomp!(', ')
-      bld << ')'
-    end
-    bld << "\n  end\n"
+    bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
+    bld << "'" << obj.label << " initializer', _ptype.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new(\n"
+    non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
+    opt.each { |ip| bld << "      i12n.fetch('" << ip.name << "') { _ptype['" << ip.name << "'].value },\n" }
+    bld.chomp!(",\n")
+    bld << ")\n  end\n"
 
     # Output type safe constructor
     bld << "\n  def self.create"

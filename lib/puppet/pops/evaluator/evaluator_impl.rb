@@ -77,7 +77,7 @@ class EvaluatorImpl
       @@eval_visitor.visit_this_1(self, target, scope)
 
     rescue SemanticError => e
-      # A raised issue may not know the semantic target, use errors call stack, but fill in the 
+      # A raised issue may not know the semantic target, use errors call stack, but fill in the
       # rest from a supplied semantic object, or the target instruction if there is not semantic
       # object.
       #
@@ -837,12 +837,12 @@ class EvaluatorImpl
     # the call is taken as an instantiation of the given type
     #
     functor = o.functor_expr
-    if functor.is_a?(Model::QualifiedReference) || 
+    if functor.is_a?(Model::QualifiedReference) ||
       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # instantiation
       type = evaluate(functor, scope)
       return call_function_with_block('new', unfold([type], o.arguments || [], scope), o, scope)
-    end 
+    end
 
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
@@ -871,6 +871,17 @@ class EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = name.value # the string function name
+
+    obj = receiver[0]
+    receiver_type = Types::TypeCalculator.infer(obj)
+    if receiver_type.is_a?(Types::PObjectType)
+      member = receiver_type[name]
+      unless member.nil?
+        args = unfold([], o.arguments || [], scope)
+        return o.lambda.nil? ? member.invoke(obj, scope, args) : member.invoke(obj, scope, args, &proc_from_lambda(o.lambda, scope))
+      end
+    end
+
     call_function_with_block(name, unfold(receiver, o.arguments || [], scope), o, scope)
   end
 
@@ -878,11 +889,16 @@ class EvaluatorImpl
     if o.lambda.nil?
       call_function(name, evaluated_arguments, o, scope)
     else
-      closure = Closure.new(self, o.lambda, scope)
-      call_function(name, evaluated_arguments, o, scope, &PuppetProc.new(closure) { |*args| closure.call(*args) })
+      call_function(name, evaluated_arguments, o, scope, &proc_from_lambda(o.lambda, scope))
     end
   end
   private :call_function_with_block
+
+  def proc_from_lambda(lambda, scope)
+    closure = Closure.new(self, lambda, scope)
+    PuppetProc.new(closure) { |*args| closure.call(*args) }
+  end
+  private :proc_from_lambda
 
   # @example
   #   $x ? { 10 => true, 20 => false, default => 0 }

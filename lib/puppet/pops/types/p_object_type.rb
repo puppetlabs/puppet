@@ -1,3 +1,5 @@
+require_relative 'ruby_generator'
+
 module Puppet::Pops
 module Types
 
@@ -38,6 +40,7 @@ class PObjectType < PAnyType
     KEY_VALUE => PAnyType::DEFAULT
   })
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
 
@@ -192,6 +195,32 @@ class PObjectType < PAnyType
       self.class.label(@container, @name)
     end
 
+    # Performs type checking of arguments and invokes the method that corresponds to this
+    # method. The result of the invocation is returned
+    #
+    # @param receiver [Object] The receiver of the call
+    # @param scope [Puppet::Parser::Scope] The caller scope
+    # @param args [Array] Array of arguments.
+    # @return [Object] The result returned by the member function or attribute
+    #
+    # @api private
+    def invoke(receiver, scope, args, &block)
+      @dispatch ||= create_dispatch(receiver)
+
+      args_type = TypeCalculator.infer_set(block_given? ? args + [block] : args)
+      unless @dispatch.type.callable?(args_type)
+        raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, [@dispatch], args_type)
+      end
+      @dispatch.invoke(receiver, scope, args, &block)
+    end
+
+    # @api private
+    def create_dispatch(instance)
+      # TODO: Assumes Ruby implementation for now
+      Functions::Dispatch.new(callable_type, name, [],
+        callable_type.block_type.nil? ? nil : 'block', nil, nil, false)
+    end
+
     # @api private
     def self.feature_type
       raise NotImplementedError, "'#{self.class.name}' should implement #feature_type"
@@ -236,6 +265,10 @@ class PObjectType < PAnyType
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
         @value = :undef # Not to be confused with nil or :default
       end
+    end
+
+    def callable_type
+      TYPE_ATTRIBUTE_CALLABLE
     end
 
     # @api public
@@ -291,6 +324,10 @@ class PObjectType < PAnyType
       super(name, container, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, i12n_hash))
     end
 
+    def callable_type
+      type
+    end
+
     # @api private
     def self.feature_type
       'function'
@@ -333,6 +370,86 @@ class PObjectType < PAnyType
     end
   end
 
+  # @api private
+  def new_function(loader)
+    @new_function ||= create_new_function(loader)
+  end
+
+  # @api private
+  def create_new_function(loader)
+    impl_name = Loaders.implementation_registry.module_name_for_type(self)
+    if impl_name.nil?
+      # Use generator to create a default implementation
+      impl_class = RubyGenerator.new.create_class(self)
+      class_name = "Anonymous Ruby class for #{name}"
+    else
+      # Can the mapping be loaded?
+      class_name = impl_name[0]
+      impl_class = ClassLoader.provide(class_name)
+
+      raise Puppet::Error, "Unable to load class #{class_name}" if impl_class.nil?
+      unless impl_class < PuppetObject
+        raise Puppet::Error, "Unable to create an instance of #{name}. #{class_name} does not include module #{PuppetObject.name}"
+      end
+    end
+
+    i12n_t = i12n_type
+    from_hash_type = TypeFactory.callable(i12n_t, 1, 1)
+
+    # Create a types and a names array where optional entries ends up last
+    opt_types = []
+    opt_names = []
+    non_opt_types = []
+    non_opt_names = []
+    i12n_t.elements.each do |se|
+      if se.key_type.is_a?(POptionalType)
+        opt_names << se.name
+        opt_types << se.value_type
+      else
+        non_opt_names << se.name
+        non_opt_types << se.value_type
+      end
+    end
+    param_names = non_opt_names + opt_names
+    param_types = non_opt_types + opt_types
+
+    # Create the callable with a size that reflects the required and optional parameters
+    param_types << non_opt_types.size
+    param_types << param_names.size
+    create_type = TypeFactory.callable(*param_types)
+
+    # Create and return a #new_XXX function where the dispatchers are added programmatically.
+    Puppet::Functions.create_loaded_function(:"new_#{name}", loader) do
+
+      # The class that creates new instances must be available to the constructor methods
+      # and is therefore declared as a variable and accessor on the class that represents
+      # this added function.
+      @impl_class = impl_class
+
+      def self.impl_class
+        @impl_class
+      end
+
+      # It's recommended that an implementor of an Object type provides the method #from_asserted_hash.
+      # This method should accept a hash and assume that type assertion has been made already (it is made
+      # by the dispatch added here).
+      if impl_class.respond_to?(:from_asserted_hash)
+        dispatcher.add_dispatch(from_hash_type, :from_hash, ['hash'], nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+        def from_hash(hash)
+          self.class.impl_class.from_asserted_hash(hash)
+        end
+      end
+
+      # Add the dispatch that uses the standard #new method on the class. It's assumed that the #new
+      # method performs no assertions.
+      dispatcher.add_dispatch(create_type, :create, param_names, nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+      def create(*args)
+        self.class.impl_class.new(*args)
+      end
+    end
+  end
+
+  # @api private
   def include_class_in_equality?
     @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
   end
@@ -495,11 +612,19 @@ class PObjectType < PAnyType
     @parent.nil? ? false : @parent.callable_args?(callable, guard)
   end
 
-  # Returns the variant of Tuple/Struct that constraints the initialization object used when creating dynamic instances
-  # of this type.
+  # Returns the type that a initialization hash used for creating instances of this type must conform to.
   #
-  # @return [PStructType] the initialization type
+  # @return [PStructType] the initialization hash type
+  # @api public
   def i12n_type
+    @i12n_type ||= create_i12n_type
+  end
+
+  # Creates the type that a initialization hash used for creating instances of this type must conform to.
+  #
+  # @return [PStructType] the initialization hash type
+  # @api private
+  def create_i12n_type
     struct_elems = {}
     attributes(true).values.each do |attr|
       unless attr.kind == ATTRIBUTE_KIND_CONSTANT || attr.kind == ATTRIBUTE_KIND_DERIVED
