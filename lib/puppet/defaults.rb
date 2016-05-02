@@ -1010,7 +1010,8 @@ EOT
     },
     :req_bits => {
       :default    => 4096,
-      :desc       => "The bit length of the certificates.",
+      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
+      :deprecated => :completely,
     },
     :keylength => {
       :default    => 4096,
